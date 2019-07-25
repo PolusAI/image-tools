@@ -1,0 +1,33 @@
+1- Install Conda:
+wget https://repo.anaconda.com/archive/Anaconda3-2019.03-Linux-x86_64.sh
+conda create --name PyTorch_Dist Python=3.7.3 flask
+conda activate PyTorch_Dist
+
+2- Install Dependencies in Conda:
+conda install numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing
+
+3- Install PyTorch:
+git clone --recursive https://github.com/pytorch/pytorch
+cd pytorch
+git submodule sync
+git submodule update --init --recursive
+
+4- Install openmpi and PyTorch:
+export NO_CUDA=1
+conda install -c conda-forge openmpi
+export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
+python setup.py install >> output.txt 2>&1
+
+5- Execute the Code:
+Single machine, multiple processes:
+mpirun -np 2 python example.py 
+
+Multiple machines, multiple processes:
+mpirun --hostfile nodes.txt --map-by node -np 2 python example.py
+#The nodes.txt file is a simple text file listing machine IPs on each line. 
+
+6- References:
+https://github.com/pytorch/pytorch#from-source
+https://pytorch.org/tutorials/intermediate/dist_tuto.html
+
+
