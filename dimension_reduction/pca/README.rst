@@ -1,0 +1,134 @@
+===================================
+PCA Implementation
+===================================
+
+Please refer to `this link <https://labshare.atlassian.net/wiki/spaces/WIPP/pages/690585601/PCA+Implementations+in+PyTorch>`_ for detailed theoretical background about PCA.
+PCA has been implemented in PyTorch in two ways for Shared-Memory systems and
+Distributed-Memory systems. The Shared-Memory implementation is an ideal solution 
+for relatively small-sized dataset where the entire data can be fit into the memory. 
+For larger dataset, Distributed-Memory implementation is recommended where the
+dataset is divided among multiple machines and each machine will perform independent
+computing on a subset of the dataset. 
+
+------------------------------------
+Shared-Memory Systems Implementation
+------------------------------------
+
+The code requires five input arguments as listed in order below.
+
+1- ``readOption``: This parameter is either 'direct' or 'mapping'. 'direct' 
+                   represents the case where the entire data is brought to memory
+                   and 'mapping' represents the case where data cannot fit into
+                   the memory and reading is performed through mapping. 
+2- ``deviceName``: This parameter defines the compute device and is either 'cpu' or 'cuda:0'. 
+3- ``applySignFlip``: If this parameter is set to 'yes' the sign of the projected data in PCs space is flipped.
+4- ``inputPath``: The full path to the input csv file which contains raw data.
+                   In this file, the observations are stored in rows and the features 
+                   in columns.
+5- ``outputPath``: The full path to the csv file where the projected data in PCs space 
+                   are saved. This argument is optional and the default path is the
+                   current directory with the file name PCA_Projected_Data_Final.csv
+                   
+--------------------------------------------
+Installing PyTorch for Shared-Memory Systems
+--------------------------------------------
+The first step is to install conda as shown below.
+
+.. code:: bash
+
+    wget https://repo.anaconda.com/archive/Anaconda3-2019.03-Linux-x86_64.sh
+    conda create --name PyTorch_Shared Python=3.7.3 flask
+    conda activate PyTorch_Shared 
+    
+Next, PyTorch is installed from the source as follows.
+                     
+ .. code:: bash
+
+    #Install Dependencies in Conda:                  
+    conda install numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing pandas dask                 
+    conda install -c pytorch magma-cuda101
+    git clone --recursive https://github.com/pytorch/pytorch
+    cd pytorch
+    # if you are updating an existing checkout
+    git submodule sync
+    git submodule update --init --recursive
+    export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}              
+    python setup.py install >> output.txt 2>&1
+    
+Now, PyTorch can be exectued simply as illustrated in the following example.                   
+
+.. code:: bash               
+            
+    python PCA_SVD_SharedMemory.py direct cpu yes /Path/input.csv /Path/output.csv
+                
+-----------------------------------------
+Distributed-Memory Systems Implementation
+-----------------------------------------
+
+The code requires three input arguments as listed in order below.
+
+1- ``deviceName``: The name of computing device which is either 'cpu' or 'gpu'. For now, 
+                   the code has been tested for 'cpu' using MPI communication.
+2- ``inputPath`` : The full path to the input csv file which contains raw data.
+                   In this file, the observations are stored in rows and the features 
+                   in columns.
+3- ``outputPath``: The full path to the csv file where the projected data in PCs space 
+                   are saved. This argument is optional and the default path is the
+                   current directory with the file name PCA_Projected_Data_Final.csv
+
+Also, for launching PyTorch using mpirun, the number of processors should also be defined after flag "-np".
+An example of exectuing the code is given below. In this example, 2 processors will run the code simultaneously. 
+
+.. code:: bash
+mpirun -np 2 python PCA_Cov_DistributedMemory.py cpu /Path/input.csv /Path/output.csv
+
+-------------------------------------------------
+Installing PyTorch for Distributed-Memory Systems
+-------------------------------------------------
+The first step is to install conda as shown below.
+
+.. code:: bash
+
+    wget https://repo.anaconda.com/archive/Anaconda3-2019.03-Linux-x86_64.sh
+    conda create --name PyTorch_Dist Python=3.7.3 flask
+    conda activate PyTorch_Dist
+
+Next, the MPI version of PyTorch is installed as follows.
+
+.. code:: bash
+
+    #Install Dependencies in Conda:
+    conda install numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing
+    #Install PyTorch:
+    git clone --recursive https://github.com/pytorch/pytorch
+    cd pytorch
+    git submodule sync
+    git submodule update --init --recursive
+    #Install openmpi and PyTorch:
+    export NO_CUDA=1
+    conda install -c conda-forge openmpi
+    export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
+    python setup.py install >> output.txt 2>&1
+
+Now, PyTorch can be launched on multiple distributed machines as follows.
+
+.. code:: bash
+
+    #Execute the Code on Single machine, multiple processes:
+    mpirun -np 2 python example.py 
+
+    #Execute the Code on Multiple machines, multiple processes:
+    mpirun --hostfile nodes.txt --map-by node -np 2 python example.py
+    #The nodes.txt file is a simple text file where machines IP are listed on each line. 
+
+For more information about the installing PyTorch for distributed machines, refer to the following links:
+https://github.com/pytorch/pytorch#from-source
+https://pytorch.org/tutorials/intermediate/dist_tuto.html
+
+
+
+
+
+
+
+
