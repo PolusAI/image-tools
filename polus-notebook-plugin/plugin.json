@@ -1,0 +1,39 @@
+{
+    "name": "Polus Jupyter Notebook executor",
+	"version": "0.1.3",
+	"title": "Polus Jupyter Notebook executor",
+	"description": "Execute Jupyter notebook on image collection.",
+	"containerId": "labshare/polus-notebook-plugin:0.1.3",
+
+	"inputs": [
+		{
+			"name": "input",
+			"type": "collection",
+			"description": "Image inputs for the plugin."
+        },
+        {
+            "name": "notebook",
+            "type": "string",
+            "description": "Jupyter Notebook filename to execute"
+        }
+	],
+	"outputs": [
+		{
+			"name": "output",
+			"type": "collection",
+			"description": "Output data for the plugin"
+		}
+	],
+	"ui": [
+		{
+			"key": "inputs.input",
+			"title": "Image Collection: ",
+			"description": "Pick a collection..."
+        },
+        {
+            "key": "inputs.notebook",
+            "title": "Notebook: ",
+            "description": "Pick a notebook to execute..."
+        }
+	]
+}
