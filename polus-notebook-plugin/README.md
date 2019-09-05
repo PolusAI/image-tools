@@ -21,7 +21,7 @@ This plugin takes two input parameters and one output parameter:
 ## Build the plugin
 
 ```bash
-docker build . -t labshare/polus-notebook-plugin:0.1.2
+docker build . -t labshare/polus-notebook-plugin:0.1.3
 ```
 
 
@@ -30,8 +30,14 @@ docker build . -t labshare/polus-notebook-plugin:0.1.2
 ### Manually
 
 ```bash
-docker run -v /path/to/data:/data labshare/polus-notebook-plugin:0.1.2 \
+docker run -v /path/to/data:/data labshare/polus-notebook-plugin:0.1.3 \
   --input /data/input \
   --notebook /data/notebook.ipynb \
   --output /data/output
 ```
+
+## Known issues
+
+- Papermill only supports Python, R and Matlab notebooks
+- Custom translators are added to support Polyglot SoS Notebooks, however Notebook parameters (input and output paths) can only be set in SoS or Python cells of Polyglot notebook.
+- Bash cells in SoS notebooks are failing and stopping the execution of all the cells below the Notebook without throwing a global error (Workflow is marked as succeeded)

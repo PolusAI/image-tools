@@ -1,5 +1,7 @@
 FROM labshare/polyglot-notebook:0.2.0
 
+COPY VERSION /
+
 ARG EXEC_DIR="/opt/executables"
 
 #Copy executable
