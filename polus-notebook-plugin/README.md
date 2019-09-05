@@ -11,11 +11,11 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 This plugin takes two input parameters and one output parameter:
 
-| Name       | Description            | I/O    | Type |
-|------------|------------------------|--------|------|
-| `input`    | Input image collection | Input  | Path |
-| `notebook` | Notebook filename      | Input  | Path |
-| `output`   | Output image colee     | Output | List |
+| Name       | Description             | I/O    | Type |
+|------------|-------------------------|--------|------|
+| `input`    | Input image collection  | Input  | Path |
+| `notebook` | Notebook filename       | Input  | Path |
+| `output`   | Output image collection | Output | List |
 
 
 ## Build the plugin
