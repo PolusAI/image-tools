@@ -10,5 +10,7 @@ RUN pip install git+https://github.com/ktaletsk/papermill.git
 
 WORKDIR ${EXEC_DIR}
 
+USER root
+
 # Default command. Additional arguments are provided through the command line
 ENTRYPOINT ["python", "execute_notebook.py"]
