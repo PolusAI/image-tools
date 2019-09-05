@@ -14,8 +14,8 @@ def main():
     parser.add_argument('--output', dest='output', type=str, help='output directory', required=True)
     args = parser.parse_args()
     
-    input = '/data/inputs/notebooks/' + args.input
-    notebook = args.notebook
+    input = args.input
+    notebook = '/data/inputs/notebooks/' + args.notebook
     output = args.output
 
     print('Arguments:')    

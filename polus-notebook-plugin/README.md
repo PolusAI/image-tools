@@ -21,7 +21,7 @@ This plugin takes two input parameters and one output parameter:
 ## Build the plugin
 
 ```bash
-docker build . -t labshare/polus-notebook-plugin:0.1.0
+docker build . -t labshare/polus-notebook-plugin:0.1.1
 ```
 
 
@@ -30,7 +30,7 @@ docker build . -t labshare/polus-notebook-plugin:0.1.0
 ### Manually
 
 ```bash
-docker run -v /path/to/data:/data labshare/wipp-plugin-jupyter-notebook:0.0.0 \
+docker run -v /path/to/data:/data labshare/polus-notebook-plugin:0.1.1 \
   --input /data/input \
   --notebook /data/notebook.ipynb \
   --output /data/output
