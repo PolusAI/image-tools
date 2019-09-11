@@ -26,11 +26,13 @@ def main():
     print('Beginning notebook execution...')
     process_start = time.time()
 
-    pm.execute_notebook(
+    out = pm.execute_notebook(
        notebook,
        '/tmp/output.ipynb',
        parameters=dict(input_path=input, output_path=output)
     )
+
+    print(out)
     
     print(' ')
     print('Execution completed in {} seconds!'.format(time.time() - process_start))
