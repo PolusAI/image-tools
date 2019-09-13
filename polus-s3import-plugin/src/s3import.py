@@ -14,18 +14,22 @@ with open(os.path.join('.','bflist.csv'),'r') as outfile:
 
 """ Function that checks if a file extension is supported by bioformats """
 def isBFormatsImage(fname):
-    ext = ''.join(pathlib.Path(fname).suffixes)[1:]
-    if ext in supported_formats:
+    ext = pathlib.Path(fname).suffixes
+    if len(ext)==0:
+        return False
+    if ''.join(ext)[1:] in supported_formats or ext[-1][1:] in supported_formats:
         return True
     else:
         return False
 
 def main():
     """ Initialize the logger """
-    logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
-
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    
     """ Initialize argument parser """
-    logging.info("Parsing arguments...")
+    logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(prog='s3import', description='Pull data from an S3 bucket.')
 
     """ Define the arguments """
@@ -58,7 +62,7 @@ def main():
                         dest='get_metadata',
                         type=str,
                         help='If true, grabs metadata rather than images',
-                        required=True)
+                        required=False)
     
     """ Get the input arguments """
     args = parser.parse_args()
@@ -72,49 +76,55 @@ def main():
 
     # If the key ends with a file separator, no files will be downloaded.
     # Remove trailing file separator if present.
-    if s3_key[-1] == os.path.sep
+    if s3_key[-1] == os.path.sep:
         s3_key = s3_key[0:-1]
 
-    logging.info('s3_bucket = {}'.format(s3_bucket))
-    logging.info('s3_key = {}'.format(s3_key))
-    logging.info('aws_access_key = {}'.format(aws_access_key))
-    logging.info('aws_access_secret = {}'.format(aws_access_secret))
-    logging.info('output_dir = {}'.format(output_dir))
-    logging.info('get_metadata = {}'.format(get_metadata))
+    logger.info('s3_bucket = {}'.format(s3_bucket))
+    logger.info('s3_key = {}'.format(s3_key))
+    logger.info('aws_access_key = {}'.format(aws_access_key))
+    logger.info('aws_access_secret = {}'.format(aws_access_secret))
+    logger.info('output_dir = {}'.format(output_dir))
+    logger.info('get_metadata = {}'.format(get_metadata))
 
     """ Initialize the S3 client """
-    logging.info('Initializing boto3 client...')
+    logger.info('Initializing boto3 client...')
     try:
         client = boto3.session.Session(aws_access_key_id=aws_access_key,
                                        aws_secret_access_key=aws_access_secret)    
         s3 = client.resource('s3')
         bucket = s3.Bucket(s3_bucket)
-    except Exception as e:
-        logging.exception("Failed to create an S3 session.")
-    logging.info('Client initialized! Starting file transfer...')
+    except Exception:
+        logger.exception("Failed to create an S3 session.")
+    logger.info('Client initialized! Starting file transfer...')
     
     """ Download files """
     download_start = time.time()
     all_files = bucket.objects.all()
     for f in all_files:
         p, fname = os.path.split(f.key)
-        out_path = output_dir
+        
+        # If the name is blank, it's a directory so skip
+        if fname=="":
+            continue
+        # If the directory does not match the input, skip it
+        if p!=s3_key:
+            continue
         
         if get_metadata and isBFormatsImage(fname):
-            logging.info("Skipping file: " + fname)
+            logger.info("Skipping file: " + fname)
             continue
         if not isBFormatsImage(fname) and not get_metadata:
-            logging.info("Skipping file: " + fname)
+            logger.info("Skipping file: " + fname)
             continue
             
         if p==s3_key and fname != "":
             try:
-                logging.info('{} >>> {}'.format(fname,out_path + os.path.sep + fname))
-                bucket.Object(f.key).download_file(out_path + os.path.sep + fname)
+                logger.info('{} >>> {}'.format(fname,output_dir + os.path.sep + fname))
+                bucket.Object(f.key).download_file(output_dir + os.path.sep + fname)
             except Exception as e:
-                logging.exception("Failed to download file: {}".format(fname))
+                logger.exception("Failed to download file: {}".format(fname))
     
-    logging.info('All files downloaded in {} seconds!'.format(time.time() - download_start))
+    logger.info('All files downloaded in {} seconds!'.format(time.time() - download_start))
         
 if __name__ == "__main__":
     main()

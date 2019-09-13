@@ -34,7 +34,7 @@
       "name": "getMeta",
       "type": "boolean",
       "description": "Grab metadata instead of images?",
-      "required": true
+      "required": false
     }
   ],
   "outputs": [
