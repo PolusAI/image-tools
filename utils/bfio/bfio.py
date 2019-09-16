@@ -359,8 +359,6 @@ class BioWriter():
                                           'Closes currently open file(s) and frees allocated memory.')
         writer = w_klass()
         writer.setInterleaved(False)
-        writer.setTileSizeX = self._TILE_SIZE
-        writer.setTileSizeY = self._TILE_SIZE
         writer.setCompression("LZW")
         script = """
         importClass(Packages.loci.formats.services.OMEXMLService,
@@ -368,6 +366,8 @@ class BioWriter():
         var service = new ServiceFactory().getInstance(OMEXMLService);
         var metadata = service.createOMEXMLMetadata(xml);
         writer.setMetadataRetrieve(metadata);
+        writer.setTileSizeX(1024)
+        writer.setTileSizeY(1024)
         writer.setId(path)
         """
         jutil.run_script(script,
@@ -507,7 +507,7 @@ class BioWriter():
         br = BioReader(image_path)
         
         # Load the full image
-        image = br.read_image()
+        image = br.read_image()1. Path to czi file folder
         
         # Save the image, rename the channels
         bw = BioWriter("New_" + image_path,image=image)
