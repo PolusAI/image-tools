@@ -1,0 +1,5 @@
+czifile==2019.7.2
+python_bioformats==1.5.2
+numpy==1.16.2
+javabridge==1.0.18
+bioformats==0.1.15
