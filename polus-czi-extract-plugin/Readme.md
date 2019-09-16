@@ -24,8 +24,6 @@ To build the Docker image for the conversion plugin, run
 
 If WIPP is running, navigate to the plugins page and add a new plugin. Paste the contents of `plugin.json` into the pop-up window and submit.
 
-There is currently no publicly available docker image, so a docker image will need to be built and sent to the kubernetes cluster WIPP is running on.
-
 ## Options
 
 This plugin takes one input argument and one output argument:
