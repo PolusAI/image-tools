@@ -1,9 +1,9 @@
 {
     "name": "Polus Jupyter Notebook executor",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"title": "Polus Jupyter Notebook executor",
 	"description": "Execute Jupyter notebook on image collection.",
-	"containerId": "labshare/polus-notebook-plugin:debug",
+	"containerId": "labshare/polus-notebook-plugin:0.2.1",
 
 	"inputs": [
 		{

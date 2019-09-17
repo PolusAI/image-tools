@@ -1,4 +1,4 @@
-FROM labshare/polyglot-notebook:0.2.0
+FROM labshare/polyglot-notebook:0.3.2
 
 COPY VERSION /
 
