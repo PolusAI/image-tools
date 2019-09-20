@@ -306,7 +306,6 @@ class BioWriter():
             self._pix['interleaved'] = False
             self._metadata = self._minimal_xml()
         else:
-            print("Metadata: [Creating minimal metadata]")
             x = X if X else 1
             y = Y if Y else 1
             z = Z if Z else 1
@@ -526,11 +525,9 @@ class BioWriter():
         # again, a new interpreter will need to be spawned to start the vm.
         jutil.kill_vm()
         '''
-        print("Asserting image dimensions...")
         assert len(image.shape)==5, "Image must be 5-dimensional (x,y,z,c,t)."
         
         # Set pixel bounds
-        print("Setting the pixel bounds...")
         if not X:
             X = [0]
         if not Y:
@@ -544,7 +541,6 @@ class BioWriter():
         C = C if C else [c for c in range(0,self._xyzct['C'])]
         T = T if T else [t for t in range(0,self._xyzct['T'])]
         
-        print("Validating inputs...")
         # Validate inputs
         self._val_xyz(X,'X')
         self._val_xyz(Y,'Y')
@@ -556,12 +552,10 @@ class BioWriter():
         save_in_parts = (X[1]-X[0])*(Y[1]-Y[0])>self._pix['chunk']  # open in parts if more than max_bytes
         
         # Initialize the writer if it hasn't already been initialized
-        print("Determining saving methods...")
         if not self.__writer:
             self._init_writer()
         
         # Do the work\
-        print("Do the work!...")
         for ti,t in zip(range(0,len(T)),T):
             for zi,z in zip(range(0,Z[1]-Z[0]),range(Z[0],Z[1])):
                 if not save_in_parts:
