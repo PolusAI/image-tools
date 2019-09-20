@@ -15,13 +15,13 @@ python-bioformats
 numpy
 czifile
 
-Version: 0.0.1
+Version: 0.0.2
 
 Note: Prior to conversion, the javabridge session must be started.
 """
 
 import czifile
-import bfio.bfio as bfio
+from bfio.bfio import BioWriter
 import numpy as np
 import re
 from pathlib import Path
@@ -123,7 +123,7 @@ def write_ome_tiffs(file_path,out_path):
                 _get_image_dim(s,'Z'),
                 _get_image_dim(s,'C'),
                 _get_image_dim(s,'T')]
-        data = s.data_segment().data().res15c263ef1af7b24018bce73416484e7916fcae2chape(dims)
+        data = s.data_segment().data().reshape(dims)
         
         Z = None if len(ind['Z'])==0 else ind['Z'][i]
         C = None if len(ind['C'])==0 else ind['C'][i]
@@ -135,12 +135,13 @@ def write_ome_tiffs(file_path,out_path):
                                                               Z=Z,
                                                               C=C,
                                                               T=T))
-        bw = bfio.BioWriter(out_file_path,data)
+        
+        bw = BioWriter(out_file_path,data)
         bw.channel_names([chan_name[C]])
         bw.physical_size_x(pix_size['X'],'µm')
         bw.physical_size_y(pix_size['Y'],'µm')
         if pix_size['Z'] is not None:
             bw.physical_size_y(pix_size['Z'],'µm')
-            
+        
         bw.write_image(data)
         bw.close_image()
