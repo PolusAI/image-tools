@@ -27,6 +27,7 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 ## Options
 
 This plugin takes one input argument and one output argument:
+
 | Name       | Description             | I/O    | Type |
 |------------|-------------------------|--------|------|
 | `inpDir`   | Input image collection  | Input  | Path |

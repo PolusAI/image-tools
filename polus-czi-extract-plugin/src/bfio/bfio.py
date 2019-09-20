@@ -14,8 +14,6 @@ Note: Prior to reading or writing using these classes, the javabridge session
       must be started. This may be automated in the future.
 """
 import bioformats
-import bioformats.omexml
-import bioformats.formatwriter
 import numpy
 import os
 import javabridge as jutil
