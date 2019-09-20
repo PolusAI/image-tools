@@ -504,7 +504,7 @@ class BioWriter():
         br = BioReader(image_path)
         
         # Load the full image
-        image = br.read_image()1. Path to czi file folder
+        image = br.read_image()
         
         # Save the image, rename the channels
         bw = BioWriter("New_" + image_path,image=image)
