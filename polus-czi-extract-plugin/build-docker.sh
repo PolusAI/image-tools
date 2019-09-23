@@ -1,4 +1,4 @@
 #!/bin/bash
 
-version=1.0.1
+version=$(<VERSION)
 docker build . -t labshare/polus-czi-extract-plugin:${version}

@@ -1,6 +1,10 @@
 ### 1. Get Linux
-FROM python:slim
+FROM python:3.7-slim
 
+COPY VERSION /
+
+# Below was mostly copied from the openjdk:11-slim repository, with a few additions to allow python package compilation
+# https://github.com/docker-library/openjdk/blob/451e66427f3c53fada288aaff950617c5864745f/11/jdk/slim/Dockerfile
 RUN set -eux; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends \
@@ -113,7 +117,7 @@ RUN set -ex; \
 	apt-get update; \
 	apt-get install -y build-essential;
 
-RUN pip3 install -r ${EXEC_DIR}/requirements.txt
+RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
 WORKDIR ${EXEC_DIR}
 
