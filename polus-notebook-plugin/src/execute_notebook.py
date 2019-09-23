@@ -3,6 +3,7 @@ import os
 import time
 import pathlib
 import papermill as pm
+import json
 
 def main():
     # Setup the Argument parsing
@@ -26,11 +27,17 @@ def main():
     print('Beginning notebook execution...')
     process_start = time.time()
 
-    pm.execute_notebook(
+    with open(notebook) as nbfile:
+        is_sos = json.load(nbfile)['metadata']['kernelspec']['language'] == 'sos'
+
+    out = pm.execute_notebook(
        notebook,
        '/tmp/output.ipynb',
+       engine_name="sos" if is_sos else None,
        parameters=dict(input_path=input, output_path=output)
     )
+
+    print(out)
     
     print(' ')
     print('Execution completed in {} seconds!'.format(time.time() - process_start))

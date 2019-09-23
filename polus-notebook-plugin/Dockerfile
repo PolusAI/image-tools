@@ -1,4 +1,4 @@
-FROM labshare/polyglot-notebook:0.2.0
+FROM labshare/polyglot-notebook:0.3.2
 
 COPY VERSION /
 
@@ -8,7 +8,8 @@ ARG EXEC_DIR="/opt/executables"
 COPY src ${EXEC_DIR}/
 
 # Install papermill
-RUN pip install git+https://github.com/ktaletsk/papermill.git
+RUN pip install papermill
+RUN pip install git+https://github.com/vatlab/sos-papermill.git
 
 WORKDIR ${EXEC_DIR}
 

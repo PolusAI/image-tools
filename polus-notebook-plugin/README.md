@@ -21,7 +21,7 @@ This plugin takes two input parameters and one output parameter:
 ## Build the plugin
 
 ```bash
-docker build . -t labshare/polus-notebook-plugin:0.1.3
+docker build . -t labshare/polus-notebook-plugin:0.2.1
 ```
 
 
@@ -29,11 +29,22 @@ docker build . -t labshare/polus-notebook-plugin:0.1.3
 
 ### Manually
 
+Create a local folder to emulate WIPP data folder with the name `<LOCAL_WIPP_FOLDER>`. Folder should have the following structure:
+```
+.
+├── <LOCAL_WIPP_FOLDER>
+|   ├── input
+|   ├── notebooks
+|   |   └── <NOTEBOOK_NAME.ipynb>
+|   └── output
+```
+
+Then, run the docker container 
 ```bash
-docker run -v /path/to/data:/data labshare/polus-notebook-plugin:0.1.3 \
-  --input /data/input \
-  --notebook /data/notebook.ipynb \
-  --output /data/output
+docker run -v <LOCAL_WIPP_FOLDER>:/data/inputs labshare/polus-notebook-plugin:0.2.1 \
+  --input /data/inputs/input \
+  --notebook <NOTEBOOK_NAME.ipynb> \
+  --output /data/inputs/output
 ```
 
 ## Known issues
