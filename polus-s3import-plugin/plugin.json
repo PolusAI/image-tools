@@ -1,0 +1,75 @@
+{
+  "name": "Polus S3 Import Plugin",
+  "version": "1.0.1",
+  "title": "Import S3 Bucket as Collection",
+  "description": "Imports the contents of a folder in an S3 bucket as a collection.",
+  "containerId": "labshare/polus-s3import-plugin:1.0.1",
+  "inputs": [
+
+    {
+      "name": "s3Bucket",
+      "type": "string",
+      "description": "Name of S3 bucket.",
+      "required": true
+    },
+    {
+      "name": "s3Key",
+      "type": "string",
+      "description": "Path to folder in S3 bucket.",
+      "required": true
+    },
+    {
+      "name": "awsAccessKey",
+      "type": "string",
+      "description": "The AWS Access Key Id for the bucket.",
+      "required": true
+    },
+    {
+      "name": "awsAccessSecret",
+      "type": "string",
+      "description": "The AWS Access Secret Key for the bucket.",
+      "required": true
+    },
+    {
+      "name": "getMeta",
+      "type": "boolean",
+      "description": "Grab metadata instead of images?",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output data for the plugin"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.s3Bucket",
+      "title": "S3 Bucket: ",
+      "description": "Name of bucket..."
+    },
+    {
+      "key": "inputs.s3Key",
+      "title": "Path to data: ",
+      "description": "Path to data in bucket..."
+    },
+    {
+      "key": "inputs.awsAccessKey",
+      "title": "AWS Access Key Id: ",
+      "description": "What is the Access Key Id for accessing the S3 bucket?"
+    },
+    {
+      "key": "inputs.awsAccessSecret",
+      "title": "AWS Secret Access Key: ",
+      "description": "What is the Secret Access Key for accessing the S3 bucket?"
+    },
+    {
+      "key": "inputs.getMeta",
+      "title": "Get metadata: ",
+      "description": "Get metadata instead of images: ",
+      "default": false
+    }
+  ]
+}
