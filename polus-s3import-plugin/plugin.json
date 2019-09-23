@@ -1,9 +1,9 @@
 {
   "name": "Polus S3 Import Plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "title": "Import S3 Bucket as Collection",
   "description": "Imports the contents of a folder in an S3 bucket as a collection.",
-  "containerId": "labshare/polus-s3import-plugin:1.0.0",
+  "containerId": "labshare/polus-s3import-plugin:1.0.1",
   "inputs": [
 
     {

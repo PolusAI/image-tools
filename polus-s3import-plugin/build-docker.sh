@@ -1,3 +1,3 @@
 #!/bin/bash
-version=1.0.0
+version=$(<VERSION)
 docker build . -t labshare/polus-s3import-plugin:${version}
