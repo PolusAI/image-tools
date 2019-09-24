@@ -10,12 +10,10 @@ write_ome_tiffs("Path/To/File.czi","Path/To/Output/Directory")
 javabridge.kill_vm()
 
 Required packages:
-javabridge (also requires jdk > 8)
+javabridge (also requires jdk >= 8)
 python-bioformats
 numpy
 czifile
-
-Version: 0.0.2
 
 Note: Prior to conversion, the javabridge session must be started.
 """

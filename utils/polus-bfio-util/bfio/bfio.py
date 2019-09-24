@@ -14,7 +14,7 @@ Note: Prior to reading or writing using these classes, the javabridge session
       must be started. This may be automated in the future.
 """
 import bioformats
-import numpy
+import numpy as np
 import os
 import javabridge as jutil
 
@@ -146,9 +146,9 @@ class BioReader():
         if not ct:
             ct = [t for t in range(0,self._xyzct[axis])] # number of timepoints
         else:
-            if numpy.any(numpy.greater_equal(self._xyzct[axis],ct)):
+            if np.any(np.greater_equal(self._xyzct[axis],ct)):
                 ValueError('At least one of the {}-indices was larger than largest index ({}).'.format(axis,self._xyzct[axis]-1))
-            elif numpy.any(numpy.less(0,ct)):
+            elif np.any(np.less(0,ct)):
                 ValueError('At least one of the {}-indices was less than 0.'.format(axis))
             elif len(ct)==0:
                 ValueError('At least one {}-index must be selected.'.format(axis))
@@ -204,7 +204,7 @@ class BioReader():
         open_in_parts = (X[1]-X[0])*(Y[1]-Y[0])>self._pix['chunk']  # open in parts if more than max_bytes
         
         # Initialize the output
-        I = numpy.zeros([Y[1]-Y[0],X[1]-X[0],Z[1]-Z[0],len(C),len(T)],self._pix['type'])
+        I = np.zeros([Y[1]-Y[0],X[1]-X[0],Z[1]-Z[0],len(C),len(T)],self._pix['type'])
         
         # Do the work
         with bioformats.ImageReader(self._file_path) as reader:
@@ -222,19 +222,19 @@ class BioReader():
                     else:
                         if self._pix['interleaved']:
                             for x in range(X[0],X[1],self._TILE_SIZE):
-                                x_max = numpy.min([x+self._TILE_SIZE,X[1]])
+                                x_max = np.min([x+self._TILE_SIZE,X[1]])
                                 x_range = x_max - x
                                 for y in range(Y[0],Y[1],self._TILE_SIZE):
-                                    y_max = numpy.min([y+self._TILE_SIZE,Y[1]])
+                                    y_max = np.min([y+self._TILE_SIZE,Y[1]])
                                     y_range = y_max - y
                                     I[y-Y[0]:y_max-Y[0],x-X[0]:x_max-X[0],zi,:,ti] = reader.read(c=None,z=z,t=t,rescale=False,XYWH=(x,y,x_range,y_range))
                         else:
                             for ci,c in zip(range(0,len(C)),C):
                                 for x in range(X[0],X[1],self._TILE_SIZE):
-                                    x_max = numpy.min([x+self._TILE_SIZE,X[1]])
+                                    x_max = np.min([x+self._TILE_SIZE,X[1]])
                                     x_range = x_max - x
                                     for y in range(Y[0],Y[1],self._TILE_SIZE):
-                                        y_max = numpy.min([y+self._TILE_SIZE,Y[1]])
+                                        y_max = np.min([y+self._TILE_SIZE,Y[1]])
                                         y_range = y_max - y
                                         I[y-Y[0]:y_max-Y[0],x-X[0]:x_max-X[0],zi,ci,ti] = reader.read(c=c,z=z,t=t,rescale=False,XYWH=(x,y,x_range,y_range))
             
@@ -287,7 +287,7 @@ class BioWriter():
             self._metadata.image(0).Name = file_path
             self._metadata.image().Pixels.channel_count = self._xyzct['C']
             self._metadata.image().Pixels.DimensionOrder = bioformats.omexml.DO_XYZCT
-        elif numpy.any(image):
+        elif np.any(image):
             assert len(image.shape)==5, "Image must be 5-dimensional (x,y,z,c,t)."
             x = X if X else image.shape[1]
             y = Y if Y else image.shape[0]
@@ -470,9 +470,9 @@ class BioWriter():
             ValueError('{}[1] cannot be greater than the maximum of the dimension ({}).'.format(axis,self._xyzct[axis]))
     
     def _val_ct(self,ct,axis):
-        if numpy.any(numpy.greater_equal(self._xyzct[axis],ct)):
+        if np.any(np.greater_equal(self._xyzct[axis],ct)):
             ValueError('At least one of the {}-indices was larger than largest index ({}).'.format(axis,self._xyzct[axis]-1))
-        elif numpy.any(numpy.less(0,ct)):
+        elif np.any(np.less(0,ct)):
             ValueError('At least one of the {}-indices was less than 0.'.format(axis))
         elif len(ct)==0:
             ValueError('At least one {}-index must be selected.'.format(axis))
@@ -567,10 +567,10 @@ class BioWriter():
                     for ci,c in zip(range(0,len(C)),C):
                         index = z + self._xyzct['Z'] * c + self._xyzct['Z'] * self._xyzct['C'] * t
                         for x in range(X[0],X[1],self._TILE_SIZE):
-                            x_max = numpy.min([x+self._TILE_SIZE,X[1]])
+                            x_max = np.min([x+self._TILE_SIZE,X[1]])
                             x_range = x_max - x
                             for y in range(Y[0],Y[1],self._TILE_SIZE):
-                                y_max = numpy.min([y+self._TILE_SIZE,Y[1]])
+                                y_max = np.min([y+self._TILE_SIZE,Y[1]])
                                 y_range = y_max - y
                                 
                                 pixel_buffer = bioformats.formatwriter.convert_pixels_to_buffer(image[y-Y[0]:y_max-Y[0],x-X[0]:x_max-X[0],zi,ci,ti], self._pix['type'])
