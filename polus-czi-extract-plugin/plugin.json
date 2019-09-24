@@ -1,9 +1,9 @@
 {
   "name": "Polus CZI Extraction Plugin",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "title": "Extract TIFFs From CZI",
   "description": "Extracts individual fields of view from a CZI file. Saves as OME TIFF.",
-  "containerId": "labshare/polus-czi-extract-plugin:1.0.2",
+  "containerId": "labshare/polus-czi-extract-plugin:1.0.3",
   "inputs": [
 
     {
