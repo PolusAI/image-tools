@@ -1,4 +1,4 @@
-# Polus Exploit Stitching Vector Plugin
+# Polus Recycle Stitching Vector Plugin
 
 This WIPP plugin applies an existing stitching vector to an image collection. Currently, the [WIPP image assembling plugin](https://github.com/usnistgov/WIPP-image-assembling-plugin) and the [WIPP pyramid building plugin](https://github.com/usnistgov/WIPP-pyramid-plugin) do not have a way to apply a stitching vector to new sets of images. For example, it is not currently possible to stitch the first channel of a multi-channel image and apply the same stitching vector to the other channels. This plugin creates a new stitching vector that will apply a single stitching vector to each channel in an image.
 
@@ -41,7 +41,7 @@ This plugin takes 5 input arguments and 1 output argument:
 ### Run the Docker Container
 
 ```bash
-docker run -v /path/to/data:/data polus-exploit-stitch-plugin \
+docker run -v /path/to/data:/data polus-recycle-stitch-plugin \
   --stitchDir "Path/To/StitchVectors/" \
   --collectionDir "Path/To/Images" \
   --stitchRegex "File_x{xxx}_y{yyy}_c{ccc}.ome.tif" \

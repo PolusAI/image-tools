@@ -1,9 +1,9 @@
 {
-  "name": "Polus Exploit Stitching Vector Plugin",
+  "name": "Polus Recycle Stitching Vector Plugin",
   "version": "1.0.0",
-  "title": "Exploit Existing Stitching Vector",
+  "title": "Recycle Existing Stitching Vector",
   "description": "Apply existing stitching vector to an image collection.",
-  "containerId": "labshare/polus-exploit-stitch-plugin:1.0.0",
+  "containerId": "labshare/polus-recycle-stitch-plugin:1.0.0",
   "inputs": [
 
     {
