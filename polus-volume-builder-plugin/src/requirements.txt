@@ -1,0 +1,2 @@
+bfio==1.0.0
+neuroglancer_scripts==0.4.0.dev0
