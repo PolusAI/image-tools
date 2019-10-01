@@ -10,31 +10,34 @@ def main():
     parser = argparse.ArgumentParser(prog='script', description='Script to execute Jupyter Notebooks')
 
     # Parse input arguments from WIPP format: '--PARAMETER VALUE'
-    parser.add_argument('--input', dest='input', type=str, help='input image collection', required=True)
-    parser.add_argument('--notebook', dest='notebook', type=str, help='Jupyter notebook to run', required=True)
-    parser.add_argument('--output', dest='output', type=str, help='output directory', required=True)
+    parser.add_argument('--input-collection', dest='input_collection', type=str, help='input image collection', required=True)
+    parser.add_argument('--input-notebook', dest='input_notebook', type=str, help='Jupyter notebook to run', required=True)
+    parser.add_argument('--output-collection', dest='output_collection', type=str, help='output collection', required=True)
+    parser.add_argument('--output-notebook', dest='output_notebook', type=str, help='executed notebook', required=True)
     args = parser.parse_args()
     
-    input = args.input
-    notebook = '/data/inputs/notebooks/' + args.notebook
-    output = args.output
+    input_collection = args.input_collection
+    input_notebook = os.path.join(args.input_notebook, 'notebook.ipynb')
+    output_collection = args.output_collection
+    output_notebook = os.path.join(args.output_notebook, 'notebook.ipynb')
 
     print('Arguments:')    
-    print(input)
-    print(notebook)
-    print(output)
+    print(f'Input collection: {input_collection}')
+    print(f'Input notebook: {input_notebook}')
+    print(f'Output collection: {output_collection}')
+    print(f'Output notebook: {output_notebook}')
     
     print('Beginning notebook execution...')
     process_start = time.time()
 
-    with open(notebook) as nbfile:
+    with open(input_notebook) as nbfile:
         is_sos = json.load(nbfile)['metadata']['kernelspec']['language'] == 'sos'
 
     out = pm.execute_notebook(
-       notebook,
-       '/tmp/output.ipynb',
+       input_notebook,
+       output_notebook,
        engine_name="sos" if is_sos else None,
-       parameters=dict(input_path=input, output_path=output)
+       parameters=dict(input_path=input_collection, output_path=output_collection)
     )
 
     print(out)

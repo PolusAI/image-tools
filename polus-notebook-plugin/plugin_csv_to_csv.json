@@ -1,0 +1,44 @@
+{
+    "name": "Notebook executor (CSV->CSV)",
+	"version": "0.3.2",
+	"title": "Jupyter Notebook executor",
+	"description": "Execute Jupyter notebook which take input of csv collection and outputs to csv collection.",
+	"containerId": "labshare/polus-notebook-plugin:0.3.2",
+
+	"inputs": [
+		{
+			"name": "input-collection",
+			"type": "csvCollection",
+			"description": "Input csv collection for the plugin."
+        },
+        {
+            "name": "input-notebook",
+            "type": "notebook",
+            "description": "Jupyter Notebook to execute"
+        }
+	],
+	"outputs": [
+		{
+			"name": "output-collection",
+			"type": "csvCollection",
+			"description": "Output csv collection for the plugin"
+		},
+		{
+            "name": "output-notebook",
+            "type": "notebook",
+            "description": "Jupyter Notebook after execution"
+        }
+	],
+	"ui": [
+		{
+			"key": "inputs.input-collection",
+			"title": "CSV Collection: ",
+			"description": "Pick a collection..."
+        },
+        {
+            "key": "inputs.input-notebook",
+            "title": "Notebook: ",
+            "description": "Pick a notebook to execute..."
+        }
+	]
+}
