@@ -41,7 +41,7 @@ pipeline {
                             script: "git diff --name-only ${GIT_PREVIOUS_SUCCESSFUL_COMMIT} ${GIT_COMMIT} | grep ${pluginName}/VERSION",
                             returnStatus: true
                         )}"""
-                        if (isChanged == "0") {
+                        if (isChanged == "0" && pluginName != "utils") {
                             dir("${WORKSPACE}/${pluginName}") {
                                 def dockerVersion = readFile(file: 'VERSION').trim()
                                 docker.withRegistry('https://registry-1.docker.io/v2/', 'f16c74f9-0a60-4882-b6fd-bec3b0136b84') {
