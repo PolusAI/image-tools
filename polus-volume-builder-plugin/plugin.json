@@ -1,9 +1,9 @@
 {
-  "name": "Polus CZI Extraction Plugin",
-  "version": "1.0.3",
-  "title": "Extract TIFFs From CZI",
-  "description": "Extracts individual fields of view from a CZI file. Saves as OME TIFF.",
-  "containerId": "labshare/polus-czi-extract-plugin:1.0.3",
+  "name": "Polus Precompute Slide Plugin",
+  "version": "0.0.1",
+  "title": "Precompute Slide Viewer",
+  "description": "Precomputes a single image plane for viewing in Polus Volume.",
+  "containerId": "labshare/polus-precompute-slide-plugin:0.0.1",
   "inputs": [
 
     {
@@ -16,8 +16,8 @@
   "outputs": [
     {
       "name": "outDir",
-      "type": "collection",
-      "description": "Output data for the plugin"
+      "type": "pyramid",
+      "description": "Precomputed output"
     }
   ],
   "ui": [

@@ -1,2 +1,5 @@
+python_bioformats==1.5.2
+javabridge==1.0.18
 bfio==1.0.0
-neuroglancer_scripts==0.4.0.dev0
+tqdm==4.31.1
+numpy==1.16.2
