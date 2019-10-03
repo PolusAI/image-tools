@@ -1,1 +1,12 @@
+# VS Code
 .vscode
+
+# IntelliJ
+.idea
+
+# NPM
+node_modules
+package-lock.json
+
+# Mac
+.DS_Store
