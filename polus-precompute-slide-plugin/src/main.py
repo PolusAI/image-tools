@@ -237,12 +237,9 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath):
     return info
 
 def main():
-    import logging
     import argparse
     import javabridge as jutil
     import bioformats
-    from pathlib import Path
-    import pprint
     
     # Setup the Argument parsing
     logger.info("Parsing arguments...")
@@ -301,16 +298,7 @@ def main():
                 else:
                     x_max = x+CHUNK_SIZE
             
-                image = _get_lower_res(int(file_info['scales'][-1]['key']),bf,file_writer,encoder,logger,X=[x,x_max],Y=[y,y_max])
-            
-                # Rearrange the image for Neuroglancer
-                image_shifted = np.moveaxis(image.reshape(image.shape[0],image.shape[1],1,1),
-                                            (0, 1, 2, 3), (2, 3, 1, 0))
-                # Encode the chunk
-                image_encoded = encoder.encode(image_shifted)
-                # Write the chunk
-                logger.info("Saving (S,x-X,y-Y): ({},{}-{},{}-{})".format(file_info['scales'][-1]['key'],x,x_max,y,y_max))
-                file_writer.store_chunk(image_encoded,file_info['scales'][-1]['key'],(x,x_max,y,y_max,0,1))
+                _get_lower_res(int(file_info['scales'][-1]['key']),bf,file_writer,encoder,logger,X=[x,x_max],Y=[y,y_max])
     
     logger.info("Finished precomputing. Closing the javabridge and exiting...")
     jutil.kill_vm()
