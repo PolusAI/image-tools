@@ -1,9 +1,9 @@
 {
   "name": "Polus Precompute Slide Plugin",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "title": "Precompute Slide Viewer",
   "description": "Precomputes a single image plane for viewing in Polus Volume.",
-  "containerId": "labshare/polus-precompute-slide-plugin:0.0.1",
+  "containerId": "labshare/polus-precompute-slide-plugin:0.1.0",
   "inputs": [
 
     {

@@ -4,6 +4,7 @@ import json
 import copy
 import os
 from pathlib import Path
+import logging
 
 # Data types used by Neuroglancer
 NEUROGLANCER_DATA_TYPES = ("uint8", "uint16", "uint32", "uint64", "float32")
@@ -18,6 +19,12 @@ UNITS = {'m':  10**9,
 
 # Chunk Scale
 CHUNK_SIZE = 1024
+
+# Initialize the logger    
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    datefmt='%d-%b-%y %H:%M:%S')
+logger = logging.getLogger("main")
+logger.setLevel(logging.INFO)
 
 def _avg2(image):
     image = image.astype('uint64')
@@ -94,6 +101,7 @@ def _get_lower_res(S,bfio_reader,slide_writer,encoder,logger,X=None,Y=None):
     # Encode the chunk
     image_encoded = encoder.encode(image_shifted)
     # Write the chunk
+    logger.info("Saving (S,x-X,y-Y): ({},{}-{},{}-{})".format(S,X[0],X[1],Y[0],Y[1]))
     slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],0,1))
     
     return image
@@ -236,12 +244,6 @@ def main():
     from pathlib import Path
     import pprint
     
-    # Initialize the logger
-    logging.basicConfig(format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-                        datefmt='%d-%b-%y %H:%M:%S')
-    logger = logging.getLogger("main")
-    logger.setLevel(logging.INFO)
-    
     # Setup the Argument parsing
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='Generate a precomputed slice for Polus Viewer.')
@@ -266,46 +268,49 @@ def main():
     image_path = Path(input_dir)
     images = [i for i in image_path.iterdir() if "".join(i.suffixes)==".ome.tif"]
     
-    # Create the BioReader object
-    logger.info('Getting the BioReader...')
-    bf = BioReader(str(images[0].absolute()))
-    logger.info('Done!')
-    
-    # Create the output path and info file
-    file_info = bfio_metadata_to_slide_info(bf,output_dir)
-    logger.info("info:")
-    logger.info(pprint.pformat(file_info))
-    
-    # Create the classes needed to generate a precomputed slice
-    logger.info("Creating encoder...")
-    encoder = ChunkEncoder(file_info)
-    logger.info("Creating file_writer...")
-    file_writer = SlideWriter(output_dir)
+    for image in images:
+        out_dir = Path(output_dir).joinpath(image.name)
+        out_dir.mkdir()
+        out_dir = str(out_dir.absolute())
+        
+        # Create the BioReader object
+        logger.info('Getting the BioReader for file: {}'.format(str(image.absolute())))
+        bf = BioReader(str(image.absolute()))
+        
+        # Create the output path and info file
+        file_info = bfio_metadata_to_slide_info(bf,out_dir)
+        logger.info("data_type: {}".format(file_info['data_type']))
+        logger.info("num_channels: {}".format(file_info['num_channels']))
+        logger.info("number of scales: {}".format(len(file_info['scales'])))
+        logger.info("type: {}".format(file_info['type']))
+        
+        # Create the classes needed to generate a precomputed slice
+        logger.info("Creating encoder...")
+        encoder = ChunkEncoder(file_info)
+        logger.info("Creating file_writer...")
+        file_writer = SlideWriter(out_dir)
 
-    for y in range(0,file_info['scales'][-1]['size'][1],CHUNK_SIZE):
-        logger.info("y: {}".format(y))
-        if y+CHUNK_SIZE > file_info['scales'][-1]['size'][1]:
-            y_max = file_info['scales'][-1]['size'][1]
-        else:
-            y_max = y+CHUNK_SIZE
-        for x in range(0,file_info['scales'][-1]['size'][0],CHUNK_SIZE):
-            logger.info("x: {}".format(x))
-            if x+CHUNK_SIZE > file_info['scales'][-1]['size'][0]:
-                x_max = file_info['scales'][-1]['size'][0]
+        for y in range(0,file_info['scales'][-1]['size'][1],CHUNK_SIZE):
+            if y+CHUNK_SIZE > file_info['scales'][-1]['size'][1]:
+                y_max = file_info['scales'][-1]['size'][1]
             else:
-                x_max = x+CHUNK_SIZE
-        
-            logger.info("Run: _get_lower_res")
-            image = _get_lower_res(int(file_info['scales'][-1]['key']),bf,file_writer,encoder,logger,X=[x,x_max],Y=[y,y_max])
-        
-            # Rearrange the image for Neuroglancer
-            image_shifted = np.moveaxis(image.reshape(image.shape[0],image.shape[1],1,1),
-                                        (0, 1, 2, 3), (2, 3, 1, 0))
-            # Encode the chunk
-            image_encoded = encoder.encode(image_shifted)
-            # Write the chunk
-            logger.info("Saving (S,x-X,y-Y): ({},{}-{},{}-{})".format(file_info['scales'][-1]['key'],x,x_max,y,y_max))
-            file_writer.store_chunk(image_encoded,file_info['scales'][-1]['key'],(x,x_max,y,y_max,0,1))
+                y_max = y+CHUNK_SIZE
+            for x in range(0,file_info['scales'][-1]['size'][0],CHUNK_SIZE):
+                if x+CHUNK_SIZE > file_info['scales'][-1]['size'][0]:
+                    x_max = file_info['scales'][-1]['size'][0]
+                else:
+                    x_max = x+CHUNK_SIZE
+            
+                image = _get_lower_res(int(file_info['scales'][-1]['key']),bf,file_writer,encoder,logger,X=[x,x_max],Y=[y,y_max])
+            
+                # Rearrange the image for Neuroglancer
+                image_shifted = np.moveaxis(image.reshape(image.shape[0],image.shape[1],1,1),
+                                            (0, 1, 2, 3), (2, 3, 1, 0))
+                # Encode the chunk
+                image_encoded = encoder.encode(image_shifted)
+                # Write the chunk
+                logger.info("Saving (S,x-X,y-Y): ({},{}-{},{}-{})".format(file_info['scales'][-1]['key'],x,x_max,y,y_max))
+                file_writer.store_chunk(image_encoded,file_info['scales'][-1]['key'],(x,x_max,y,y_max,0,1))
     
     logger.info("Finished precomputing. Closing the javabridge and exiting...")
     jutil.kill_vm()
