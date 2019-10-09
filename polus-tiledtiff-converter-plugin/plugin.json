@@ -1,0 +1,62 @@
+{
+	"name": "Polus OME Tiled Tiff Converter",
+	"version": "1.0.0",
+	"title": "Polus OME Tiled Tiff Converter",
+	"description": "Convert any Bioformats image file type to tiled tiff.",
+	"containerId": "labshare/polus-tiledtiff-converter-plugin:1.0.0",
+
+	"inputs": [
+		{
+			"name": "input",
+			"type": "collection",
+			"description": "Image inputs for the plugin."
+		},
+		{
+			"name": "tileSizeX",
+			"type": "number",
+			"description": "Width of tile."
+		},
+		{
+			"name": "tileSizeY",
+			"type": "number",
+			"description": "Height of tile."
+		},
+		{
+			"name": "useMetadata",
+			"type": "boolean",
+			"description": "Convert files in metadata to tiled tiff."
+		}
+	],
+	"outputs": [
+		{
+			"name": "output",
+			"type": "collection",
+			"options": {
+				"format": "tiledtiff"
+			},
+			"description": "Output data for the plugin"
+		}
+	],
+	"ui": [
+		{
+			"key": "inputs.input",
+			"title": "Image Collection: ",
+			"description": "Pick a collection..."
+		},
+		{
+			"key": "inputs.tileSizeX",
+			"title": "Tile width: ",
+			"default": 1024
+		},
+		{
+			"key": "inputs.tileSizeY",
+			"title": "Tile height: ",
+			"default": 1024
+		},
+		{
+			"key": "inputs.useMetadata",
+			"title": "Convert metadata to tiled tiff: ",
+			"default": false
+		}
+	]
+}
