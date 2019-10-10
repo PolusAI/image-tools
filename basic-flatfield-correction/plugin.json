@@ -1,0 +1,75 @@
+{
+  "name": "BaSiC Flatfield Correction Plugin",
+  "version": "1.0.0",
+  "title": "Flatfield correction using BaSiC algorithm.",
+  "description": "Corrects background illumination aritfacts using BaSiC.",
+  "containerId": "labshare/flatfield-correction-plugin:1.0.0",
+  "inputs": [
+
+    {
+      "name": "s3Bucket",
+      "type": "string",
+      "description": "Name of S3 bucket.",
+      "required": true
+    },
+    {
+      "name": "s3Key",
+      "type": "string",
+      "description": "Path to folder in S3 bucket.",
+      "required": true
+    },
+    {
+      "name": "awsAccessKey",
+      "type": "string",
+      "description": "The AWS Access Key Id for the bucket.",
+      "required": true
+    },
+    {
+      "name": "awsAccessSecret",
+      "type": "string",
+      "description": "The AWS Access Secret Key for the bucket.",
+      "required": true
+    },
+    {
+      "name": "getMeta",
+      "type": "boolean",
+      "description": "Grab metadata instead of images?",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output data for the plugin"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.s3Bucket",
+      "title": "S3 Bucket: ",
+      "description": "Name of bucket..."
+    },
+    {
+      "key": "inputs.s3Key",
+      "title": "Path to data: ",
+      "description": "Path to data in bucket..."
+    },
+    {
+      "key": "inputs.awsAccessKey",
+      "title": "AWS Access Key Id: ",
+      "description": "What is the Access Key Id for accessing the S3 bucket?"
+    },
+    {
+      "key": "inputs.awsAccessSecret",
+      "title": "AWS Secret Access Key: ",
+      "description": "What is the Secret Access Key for accessing the S3 bucket?"
+    },
+    {
+      "key": "inputs.getMeta",
+      "title": "Get metadata: ",
+      "description": "Get metadata instead of images: ",
+      "default": false
+    }
+  ]
+}
