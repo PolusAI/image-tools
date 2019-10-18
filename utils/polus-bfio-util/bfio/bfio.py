@@ -379,9 +379,9 @@ class BioWriter():
         if dtype:
             assert not self.__writer, "The image has started to be written. To modify the xml again, reinitialize."
             assert dtype in self._BPP.keys(), "Invalid data type."
-            self._metadata.images(0).Pixels.PixelType = dtype
+            self._metadata.image(0).Pixels.PixelType = dtype
         else:
-            return self._metadata.images(0).Pixels.PixelType
+            return self._metadata.image(0).Pixels.PixelType
         
     def channel_names(self,cnames=None):
         if cnames:
