@@ -380,6 +380,7 @@ class BioWriter():
             assert not self.__writer, "The image has started to be written. To modify the xml again, reinitialize."
             assert dtype in self._BPP.keys(), "Invalid data type."
             self._metadata.image(0).Pixels.PixelType = dtype
+            self._pix['type'] = dtype
         else:
             return self._metadata.image(0).Pixels.PixelType
         
