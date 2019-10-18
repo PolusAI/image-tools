@@ -483,7 +483,7 @@ def main():
                 bw.pixel_type('float')
                 bw.num_x(X)
                 bw.num_y(Y)
-                bw.write_image(flatfield)
+                bw.write_image(np.reshape(flatfield),(Y,X,1,1,1))
                 
                 if get_darkfield:
                     logger.info('Saving darkfield image...')
@@ -492,7 +492,7 @@ def main():
                     bw.pixel_type('float')
                     bw.num_x(X)
                     bw.num_y(Y)
-                    bw.write_image(darkfield)
+                    bw.write_image(darkfield,(Y,X,1,1,1))
                     
                 if get_photobleach:
                     logger.info('Saving photobleach offsets...')
@@ -500,105 +500,5 @@ def main():
     jutil.kill_vm()
         
 if __name__ == "__main__":
-    import bioformats
-    import javabridge as jutil
-    from matplotlib import pyplot as plt
     
-    # Start the javabridge
-    jutil.start_vm(class_path=bioformats.JARS)
-    
-    fpath = "/media/nick/My2TBSSD/BrainData/images"
-    inp_regex = "S1_R1_C1-C11_A1_y{yyy}_x{xxx}_c000.ome.tif"
-    
-    # Start the javabridge
-    jutil.start_vm(class_path=bioformats.JARS)
-    
-    regex,variables = _parse_regex(inp_regex)
-    files = _parse_files(fpath,regex,variables)
-    
-    get_darkfield = False
-    get_photobleach = False
-    output_dir = '.'
-    
-    zs = [key for key in files.keys()]
-    zs.sort()
-    for z in zs:
-        ts = [t for t in files[z].keys()]
-        ts.sort()
-        for t in ts:
-            cs = [c for c in files[z][t].keys()]
-            cs.sort()
-            for c in cs:
-                logger.info('Loading images for [z][t][c]: {}'.format([z,t,c]))
-                img_stk,X,Y = _get_resized_image_stack(fpath,files[z][t][c]['file'])
-    
-                logger.info('Sorting images...')
-                img_stk_sort = np.sort(img_stk)
-    
-                new_options = _initialize_options(img_stk_sort,get_darkfield,options)
-
-                logger.info('Estimating flatfield...')
-                flatfield_old = np.ones((new_options['size'],new_options['size']),dtype=np.float64)
-                darkfield_old = np.random.normal(size=(new_options['size'],new_options['size'])).astype(np.float64)
-                for w in range(new_options['max_reweight_iterations']):
-                    logger.info('Reweight iteration: {}'.format(w+1))
-                    A1_hat, E1_hat, A_offset = _inexact_alm_l1(copy.deepcopy(img_stk_sort),new_options)
-                    
-                    logger.info('Calculating flatfield and reweighting...')
-                    flatfield, darkfield, new_options = _get_flatfield_and_reweight(A1_hat,E1_hat,A_offset,new_options)
-                    
-                    logger.info('Calculating differences...')
-                    mad_flat = np.sum(np.abs(flatfield-flatfield_old))/np.sum(np.abs(flatfield_old))
-                    temp_diff = np.sum(np.abs(darkfield - darkfield_old))
-                    if temp_diff < 10**-7:
-                        mad_dark =0
-                    else:
-                        mad_dark = temp_diff/np.max(np.sum(np.abs(darkfield_old)),initial=10**-6)
-                    flatfield_old = flatfield
-                    darkfield_old = darkfield
-                    
-                    if np.max(mad_flat,initial=mad_dark) < new_options['reweight_tol']:
-                        break
-                    
-                if get_photobleach:
-                    logger.info('Calculating photobleach offsets...')
-                    pb = _get_photobleach(copy.deepcopy(img_stk),flatfield,darkfield)
-                
-                logger.info('Resizing images...')
-                flatfield = cv2.resize(flatfield,(Y,X),interpolation=cv2.INTER_CUBIC).astype(np.float32)
-                if options['darkfield']:
-                    darkfield = cv2.resize(darkfield,(Y,X),interpolation=cv2.INTER_CUBIC).astype(np.float32)
-                    
-                out_dict = {}
-                if z in variables:
-                    out_dict['z'] = z
-                if t in variables:
-                    out_dict['t'] = t
-                if c in variables:
-                    out_dict['c'] = c
-                base_output = _get_output_name(inp_regex,out_dict)
-                
-                logger.info('Saving flatfield image...')
-                logger.info('Base output name: {}'.format(base_output))
-                flatfield_out = base_output.replace('.ome.tif','_flatfield.ome.tif')
-                logger.info('flatfield output name: {}'.format(flatfield_out))
-                logger.info('Fullpath: {}'.format(str(Path(output_dir).joinpath(flatfield_out))))
-                bw = BioWriter(str(Path(output_dir).joinpath(flatfield_out)))
-                bw.pixel_type('float')
-                bw.num_x(X)
-                bw.num_y(Y)
-                bw.write_image(flatfield)
-                
-                if get_darkfield:
-                    logger.info('Saving darkfield image...')
-                    darkfield_out = base_output.replace('.ome.tif','_darkfield.ome.tif')
-                    bw = BioWriter(str(Path(output_dir).joinpath(darkfield_out)))
-                    bw.pixel_type('float')
-                    bw.num_x(X)
-                    bw.num_y(Y)
-                    bw.write_image(darkfield)
-                    
-                if get_photobleach:
-                    logger.info('Saving photobleach offsets...')
-    
-    #main()
+    main()
