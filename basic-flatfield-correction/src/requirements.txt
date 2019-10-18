@@ -1,1 +1,4 @@
-boto3==1.9.183
+bfio==1.0.0
+javabridge==1.0.18
+numpy==1.16.2
+python_bioformats==1.5.2

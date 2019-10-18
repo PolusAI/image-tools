@@ -2,39 +2,33 @@
   "name": "BaSiC Flatfield Correction Plugin",
   "version": "1.0.0",
   "title": "Flatfield correction using BaSiC algorithm.",
-  "description": "Corrects background illumination aritfacts using BaSiC.",
-  "containerId": "labshare/flatfield-correction-plugin:1.0.0",
+  "description": "Generates images used for flatfield correction using the BaSiC algorithm.",
+  "containerId": "labshare/basic-flatfield-plugin:1.0.0",
   "inputs": [
 
     {
-      "name": "s3Bucket",
-      "type": "string",
-      "description": "Name of S3 bucket.",
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Input image collection.",
       "required": true
     },
     {
-      "name": "s3Key",
-      "type": "string",
-      "description": "Path to folder in S3 bucket.",
-      "required": true
-    },
-    {
-      "name": "awsAccessKey",
-      "type": "string",
-      "description": "The AWS Access Key Id for the bucket.",
-      "required": true
-    },
-    {
-      "name": "awsAccessSecret",
-      "type": "string",
-      "description": "The AWS Access Secret Key for the bucket.",
-      "required": true
-    },
-    {
-      "name": "getMeta",
+      "name": "darkfield",
       "type": "boolean",
-      "description": "Grab metadata instead of images?",
-      "required": false
+      "description": "Calculate darkfield image.",
+      "required": true
+    },
+    {
+      "name": "photobleach",
+      "type": "boolean",
+      "description": "Calculate photobleaching offsets.",
+      "required": true
+    },
+    {
+      "name": "inpRegex",
+      "type": "string",
+      "description": "Filename patter used to separate images by channel, z-slice, or timepoint.",
+      "required": true
     }
   ],
   "outputs": [
@@ -46,30 +40,24 @@
   ],
   "ui": [
     {
-      "key": "inputs.s3Bucket",
-      "title": "S3 Bucket: ",
-      "description": "Name of bucket..."
+      "key": "inputs.inpDir",
+      "title": "Input image collection: ",
+      "description": "Image collection..."
     },
     {
-      "key": "inputs.s3Key",
-      "title": "Path to data: ",
-      "description": "Path to data in bucket..."
+      "key": "inputs.darkfield",
+      "title": "Calculate darkfield: ",
+      "description": "If selected, will generate a darkfield image"
     },
     {
-      "key": "inputs.awsAccessKey",
-      "title": "AWS Access Key Id: ",
-      "description": "What is the Access Key Id for accessing the S3 bucket?"
+      "key": "inputs.photobleach",
+      "title": "Calclate photobleaching offset: ",
+      "description": "If selected, will generate an offset scalar for each image"
     },
     {
-      "key": "inputs.awsAccessSecret",
-      "title": "AWS Secret Access Key: ",
-      "description": "What is the Secret Access Key for accessing the S3 bucket?"
-    },
-    {
-      "key": "inputs.getMeta",
-      "title": "Get metadata: ",
-      "description": "Get metadata instead of images: ",
-      "default": false
+      "key": "inputs.inpRegex",
+      "title": "Filename pattern: ",
+      "description": "Use a filename pattern to calculate flatfield information by subsets"
     }
   ]
 }
