@@ -145,15 +145,11 @@ def _get_resized_image_stack(fpath,flist):
 
 def _dct2(D):
     # 2D DCT type-II
-    # d = dct(D,norm='ortho',axis=0,type=2).astype(np.float64)
-    # d = dct(d,norm='ortho',axis=1,type=2).astype(np.float64)
     d = cv2.dct(D).astype(np.float64)
     return d
 
 def _idct2(D):
     # 2D DCT type-III - this is the inverse of the 2D DCT type-II
-    # d = dct(D,norm='ortho',axis=0,type=3).astype(np.float64)
-    # d = dct(d,norm='ortho',axis=1,type=3).astype(np.float64)
     d = cv2.dct(D,flags=cv2.DCT_INVERSE).astype(np.float64)
     return d
 
@@ -383,7 +379,7 @@ def main():
                         dest='photobleach',
                         type=str,
                         help='If true, calculates a photobleaching scalar.',
-                        required=True)
+                        required=False)
     parser.add_argument('--inpRegex',                 # Output directory
                         dest='inp_regex',
                         type=str,
@@ -400,7 +396,10 @@ def main():
 
     fpath = args.inpDir
     get_darkfield = args.darkfield == 'true'
-    output_dir = args.output_dir
+    output_dir = Path(args.output_dir).joinpath('images')
+    output_dir.mkdir(exist_ok=True)
+    metadata_dir = Path(args.output_dir).joinpath('metadata_files')
+    metadata_dir.mkdir(exist_ok=True)
     inp_regex = args.inp_regex
     get_photobleach = args.photobleach == 'true'
 
@@ -462,43 +461,46 @@ def main():
                 
                 logger.info('Resizing images...')
                 flatfield = cv2.resize(flatfield,(Y,X),interpolation=cv2.INTER_CUBIC).astype(np.float32)
-                if options['darkfield']:
+                if new_options['darkfield']:
                     darkfield = cv2.resize(darkfield,(Y,X),interpolation=cv2.INTER_CUBIC).astype(np.float32)
                     
                 out_dict = {}
-                if z in variables:
+                if 'z' in variables:
                     out_dict['z'] = z
-                if t in variables:
+                if 't' in variables:
                     out_dict['t'] = t
-                if c in variables:
+                if 'c' in variables:
                     out_dict['c'] = c
                 base_output = _get_output_name(inp_regex,out_dict)
                 
                 logger.info('Saving flatfield image...')
-                logger.info('Base output name: {}'.format(base_output))
                 flatfield_out = base_output.replace('.ome.tif','_flatfield.ome.tif')
-                logger.info('flatfield output name: {}'.format(flatfield_out))
-                logger.info('Fullpath: {}'.format(str(Path(output_dir).joinpath(flatfield_out))))
-                bw = BioWriter(str(Path(output_dir).joinpath(flatfield_out)))
+                bw = BioWriter(str(output_dir.joinpath(flatfield_out)))
                 bw.pixel_type('float')
                 bw.num_x(X)
                 bw.num_y(Y)
-                bw.write_image(np.reshape(flatfield),(Y,X,1,1,1))
+                bw.write_image(np.reshape(flatfield,(Y,X,1,1,1)))
+                bw.close_image()
                 
-                if get_darkfield:
+                if new_options['darkfield']:
                     logger.info('Saving darkfield image...')
                     darkfield_out = base_output.replace('.ome.tif','_darkfield.ome.tif')
-                    bw = BioWriter(str(Path(output_dir).joinpath(darkfield_out)))
+                    bw = BioWriter(str(output_dir.joinpath(darkfield_out)))
                     bw.pixel_type('float')
                     bw.num_x(X)
                     bw.num_y(Y)
-                    bw.write_image(darkfield,(Y,X,1,1,1))
+                    bw.write_image(np.reshape(darkfield,(Y,X,1,1,1)))
+                    bw.close_image()
                     
                 if get_photobleach:
                     logger.info('Saving photobleach offsets...')
+                    offsets_out = base_output.replace('.ome.tif','_offsets.txt')
+                    with open(str(metadata_dir.joinpath(offsets_out)),'w') as fw:
+                        for f,o in zip(files[z][t][c]['file'],pb[0,:].tolist()):
+                            fw.write("file: {}; offset: {};\n".format(f,o))
                     
     jutil.kill_vm()
-        
+    
 if __name__ == "__main__":
     
     main()
