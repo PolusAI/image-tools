@@ -1,0 +1,23 @@
+# Get the base Ubuntu image from Docker Hub
+FROM ubuntu:latest
+ 
+# Update apps on the base image
+RUN apt-get -y update && apt-get install -y
+ 
+# Install the compiler
+RUN apt-get -y install g++
+
+#Create a new directory
+RUN mkdir -p /usr/src/dataset
+ 
+# Copy the current folder which contains C++ source code to the Docker image under /usr/src
+COPY . /usr/src/dataset
+ 
+# Specify the working directory
+WORKDIR /usr/src/dataset
+ 
+# Use Clang to compile the Test.cpp source file
+RUN g++ -o Out.exe KNN_Serial_Code.cpp -O2
+ 
+# Run the output program from the previous step
+CMD ["time ./Out.exe 400_All.csv 250774 165 15 0.8 5"]

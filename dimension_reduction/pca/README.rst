@@ -98,7 +98,7 @@ Next, the MPI version of PyTorch is installed as follows.
 .. code:: bash
 
     #Install Dependencies in Conda:
-    conda install numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing
+    conda install numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing pandas
     #Install PyTorch:
     git clone --recursive https://github.com/pytorch/pytorch
     cd pytorch
@@ -115,15 +115,18 @@ Now, PyTorch can be launched on multiple distributed machines as follows.
 .. code:: bash
 
     #Execute the Code on Single machine, multiple processes:
-    mpirun -np 2 python example.py 
+    mpirun -np 2 python example.py PCA_Cov_DistributedMemory.py cpu /Path/input.csv /Path/output.csv
 
     #Execute the Code on Multiple machines, multiple processes:
-    mpirun --hostfile nodes.txt --map-by node -np 2 python example.py
+    mpirun --hostfile nodes.txt --map-by node -np 2 python example.py PCA_Cov_DistributedMemory.py cpu /Path/input.csv /Path/output.csv
     #The nodes.txt file is a simple text file where machines IP are listed on each line. 
 
 For more information about the installing PyTorch for distributed machines, refer to the following links:
 https://github.com/pytorch/pytorch#from-source
 https://pytorch.org/tutorials/intermediate/dist_tuto.html
+
+
+
 
 
 
