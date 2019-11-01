@@ -37,6 +37,8 @@ The first step is to install conda as shown below.
 .. code:: bash
 
     wget https://repo.anaconda.com/archive/Anaconda3-2019.03-Linux-x86_64.sh
+    chmod 755 Anaconda3-2019.03-Linux-x86_64.sh
+    ./Anaconda3-2019.03-Linux-x86_64.sh
     conda create --name PyTorch_Shared Python=3.7.3 flask
     conda activate PyTorch_Shared 
     
@@ -115,10 +117,10 @@ Now, PyTorch can be launched on multiple distributed machines as follows.
 .. code:: bash
 
     #Execute the Code on Single machine, multiple processes:
-    mpirun -np 2 python example.py PCA_Cov_DistributedMemory.py cpu /Path/input.csv /Path/output.csv
+    mpirun -np 2 python PCA_Cov_DistributedMemory.py cpu /Path/input.csv /Path/output.csv
 
     #Execute the Code on Multiple machines, multiple processes:
-    mpirun --hostfile nodes.txt --map-by node -np 2 python example.py PCA_Cov_DistributedMemory.py cpu /Path/input.csv /Path/output.csv
+    mpirun --hostfile nodes.txt --map-by node -np 2 python PCA_Cov_DistributedMemory.py cpu /Path/input.csv /Path/output.csv
     #The nodes.txt file is a simple text file where machines IP are listed on each line. 
 
 For more information about the installing PyTorch for distributed machines, refer to the following links:
