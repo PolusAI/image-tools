@@ -1,0 +1,29 @@
+FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
+FROM continuumio/anaconda3
+
+RUN apt-get update -y  && \
+    apt-get install wget -y && \
+    apt-get install gcc g++ -y && \
+    apt-get install git -y
+
+RUN mkdir -p /home/PCA
+WORKDIR /home/PCA
+COPY . .
+
+RUN conda install flask numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing               
+
+RUN git clone --recursive https://github.com/pytorch/pytorch
+WORKDIR pytorch
+
+RUN git submodule sync && \
+    git submodule update --init --recursive
+
+ENV NO_CUDA 1
+RUN conda install -c conda-forge openmpi
+
+ENV CMAKE_PREFIX_PATH ${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
+
+RUN python setup.py install
+
+WORKDIR /home/PCA
+CMD ["mpirun","-np","2","python","PCA_Cov_DistributedMemory.py","cpu","10.csv","output.csv"]
