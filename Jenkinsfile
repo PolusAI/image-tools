@@ -37,10 +37,14 @@ pipeline {
                         // Truncate hanging "/" for each directory
                         def pluginName = repo.getAt(0..(repo.length() - 2))
                         // Check if VERSION file for each plugin file has changed
-                        def isChanged = """${sh (
-                            script: "git diff --name-only ${GIT_PREVIOUS_SUCCESSFUL_COMMIT} ${GIT_COMMIT} | grep ${pluginName}/VERSION",
-                            returnStatus: true
-                        )}"""
+                        def isChanged = "0"
+
+                        if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT) {
+                            isChanged = """${sh (
+                                script: "git diff --name-only ${GIT_PREVIOUS_SUCCESSFUL_COMMIT} ${GIT_COMMIT} | grep ${pluginName}/VERSION",
+                                returnStatus: true
+                            )}"""
+                        }
                         if (isChanged == "0" && pluginName != "utils") {
                             dir("${WORKSPACE}/${pluginName}") {
                                 def dockerVersion = readFile(file: 'VERSION').trim()
