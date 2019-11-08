@@ -1,0 +1,30 @@
+{
+  "name": "Graph Pyramid Building Plugin",
+  "version": "1.0.0",
+  "title": "Graph Pyramid Building",
+  "description": "Generates heatmaps from the data in a csv and builds a DeepZoom pyramid for visualization.",
+  "containerId": "labshare/graph-pyramid-builder:1.0.0",
+  "inputs": [
+
+    {
+      "name": "inpDir",
+      "type": "csvCollection",
+      "description": "Input collection",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "pyramid",
+      "description": "DeepZoom pyramid output"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "Input CSV collection: ",
+      "description": "Collection name..."
+    }
+  ]
+}
