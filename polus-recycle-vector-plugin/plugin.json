@@ -1,8 +1,13 @@
 {
-  "name": "Polus Recycle Stitching Vector Plugin",
+  "name": "Recycle Stitching Vector Plugin",
   "version": "1.0.0",
   "title": "Recycle Existing Stitching Vector",
   "description": "Apply existing stitching vector to an image collection.",
+  "author": "Nick Schaub (nick.schaub@nih.gov)",
+  "institution": "National Center for the Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
   "containerId": "labshare/polus-recycle-vector-plugin:1.0.0",
   "inputs": [
 
