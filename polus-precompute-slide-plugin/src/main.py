@@ -9,7 +9,7 @@ import logging
 # Data types used by Neuroglancer
 NEUROGLANCER_DATA_TYPES = ("uint8", "uint16", "uint32", "uint64", "float32")
 
-# Conversion factors to nm
+# Conversion factors to nm, these are based off of supported Bioformats length units
 UNITS = {'m':  10**9,
          'cm': 10**7,
          'mm': 10**6,
@@ -197,7 +197,11 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath):
     # Get metadata info from the bfio reader
     sizes = [bfio_reader.num_x(),bfio_reader.num_y(),bfio_reader.num_z()]
     phys_x = bfio_reader.physical_size_x()
+    if None in phys_x:
+        phys_x = (1000,'nm')
     phys_y = bfio_reader.physical_size_y()
+    if None in phys_y:
+        phys_y = (1000,'nm')
     resolution = [phys_x[0] * UNITS[phys_x[1]]]
     resolution.append(phys_y[0] * UNITS[phys_y[1]])
     resolution.append((phys_y[0] * UNITS[phys_y[1]] + phys_x[0] * UNITS[phys_x[1]])/2) # Just used as a placeholder
@@ -217,7 +221,7 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath):
     info = {
         "data_type": dtype,
         "num_channels":1,
-        "scales": [scales],       # Will build scales belows
+        "scales": [scales],       # Will build scales below
         "type": "image"
     }
     
