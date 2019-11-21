@@ -6,7 +6,7 @@ import logging
 import re
 
 STITCH_VARS = ['file','correlation','posX','posY','gridX','gridY'] # image stitching values
-VARIABLES = 'pxyzct'                                               # possible variables in input regular expression
+VARIABLES = 'pxyzctr'                                              # possible variables in input filename pattern
 
 # The variables z and t must match across different images in order for an existing stitching
 # vector to be applied to them. If neither z nor t is supplied in the stitching vector regex,
@@ -18,11 +18,11 @@ def _parse_regex(regex):
     # Parse variables
     expr = []
     variables = []
-    for g in re.finditer(r"\{[pxyzct]+\}",regex):
+    for g in re.finditer(r"\{[pxyzctr]+\}",regex):
         expr.append(g.group(0))
         variables.append(expr[-1][1])
         
-    # Verify variables are one of pxyzct
+    # Verify variables are one of pxyzctr
     for v in variables:
         assert v in VARIABLES, "Invalid variable: {}".format(v)
             
@@ -60,13 +60,16 @@ def _parse_stitch(stitchPath,regex,variables):
             stitch_groups = list(stitch_groups.groups())
             groups = re.match(regex,stitch_groups[0])
             groups = list(groups.groups())
-            z = _get_zct(groups,variables,'z')
-            t = _get_zct(groups,variables,'t')
-            if z not in stitch_ind.keys():
-                stitch_ind[z] = {}
+            z = _get_zctr(groups,variables,'z')
+            t = _get_zctr(groups,variables,'t')
+            r = _get_zctr(groups,variables,'r')
+            if r not in stitch_ind.keys():
+                stitch_ind[r] = {}
+            if z not in stitch_ind[r].keys():
+                stitch_ind[r][z] = {}
             if t not in stitch_ind[z].keys():
-                stitch_ind[z][t] = {}
-                stitch_ind[z][t].update({key:[] for key in variables if key not in STATICS})
+                stitch_ind[r][z][t] = {}
+                stitch_ind[r][z][t].update({key:[] for key in variables if key not in STATICS})
             fr.seek(0)
             
             # Parse all lines of the stitch vector
@@ -81,16 +84,16 @@ def _parse_stitch(stitchPath,regex,variables):
                         continue
                     if key in VARIABLES:
                         group = int(group)
-                    stitch_ind[z][t][key].append(group)
+                    stitch_ind[r][z][t][key].append(group)
                     
     return stitch_ind
 
-""" Get the z, c, or t variable if it exists. Return 0 otherwise. """
-def _get_zct(var_list,variables,zct):
-    if zct not in variables:
+""" Get the z, c, t, or r variable if it exists. Return 0 otherwise. """
+def _get_zctr(var_list,variables,zctr):
+    if zctr not in variables:
         return 0
     else:
-        return int(var_list[[ind for ind,v in zip(range(0,len(variables)),variables) if v==zct][0]])
+        return int(var_list[[ind for ind,v in zip(range(0,len(variables)),variables) if v==zctr][0]])
 
 """ Parse files in an image collection according to a regular expression. """
 def _parse_files(fpath,regex,variables):
@@ -100,23 +103,26 @@ def _parse_files(fpath,regex,variables):
         groups = re.match(regex,f)
         if groups == None:
             continue
-        z = _get_zct(groups.groups(),variables,'z')
-        t = _get_zct(groups.groups(),variables,'t')
-        c = _get_zct(groups.groups(),variables,'c')
+        z = _get_zctr(groups.groups(),variables,'z')
+        t = _get_zctr(groups.groups(),variables,'t')
+        c = _get_zctr(groups.groups(),variables,'c')
+        r = _get_zctr(groups.groups(),variables,'r')
+        if r not in file_ind.keys():
+            file_ind[r] = {}
         if z not in file_ind.keys():
-            file_ind[z] = {}
-        if t not in file_ind[z].keys():
-            file_ind[z][t] = {}
-        if c not in file_ind[z][t].keys():
-            file_ind[z][t][c] = {'file': []}
-            file_ind[z][t][c].update({key:[] for key in variables if key not in STATICS})
-        file_ind[z][t][c]['file'].append(f)
+            file_ind[r][z] = {}
+        if t not in file_ind[r][z].keys():
+            file_ind[r][z][t] = {}
+        if c not in file_ind[r][z][t].keys():
+            file_ind[r][z][t][c] = {'file': []}
+            file_ind[r][z][t][c].update({key:[] for key in variables if key not in STATICS})
+        file_ind[r][z][t][c]['file'].append(f)
         for key,group in zip(variables,groups.groups()):
             if key in STATICS:
                 continue
             elif key in VARIABLES:
                 group = int(group)
-            file_ind[z][t][c][key].append(group)
+            file_ind[r][z][t][c][key].append(group)
             
     return file_ind
 
@@ -179,6 +185,7 @@ def main():
     parser.add_argument('--outDir', dest='output_dir', type=str,
                         help='The directory in which to save stitching vectors.', required=True)
 
+    # Get the arguments
     args = parser.parse_args()
     stitch_dir = args.stitch_dir
     collection_dir = args.collection_dir
@@ -191,61 +198,81 @@ def main():
     logger.info('collection_regex = {}'.format(collection_regex))
     logger.info('output_dir = {}'.format(output_dir))
     
+    # Parse the regular expression from the file name pattern
     logger.info("Parsing regular expressions...")
     new_stitch_regex, stitch_variables = _parse_regex(stitch_regex)
     new_collection_regex, collection_variables = _parse_regex(collection_regex)
     logger.info("Parsed stitch regex: {}".format(new_stitch_regex))
     logger.info("Parsed collection regex: {}".format(new_collection_regex))
     
+    # Validate variables - make sure the only variables are x,y,z,c,t,r
     logger.info("Validating variables...")
     _validate_vars(stitch_variables,collection_variables)
     logger.info("Passed variable checks.")
     
+    # Parse all files in the stitching vector directory to get position information
     logger.info("Parsing stitching vectors...")
     stitch_vector = _parse_stitch(stitch_dir,new_stitch_regex,stitch_variables)
-    logger.info("Found the following [z][t] combinations:")
-    zs = [key for key in stitch_vector.keys()]
-    zs.sort()
-    for z in zs:
-        ts = [key for key in stitch_vector[z].keys()]
-        ts.sort()
-        for t in ts:
-            logger.info("[z][t]: [{}][{}]".format(z,t))
-            
+    logger.info("Found the following [r][z][t] combinations:")
+    rs = [key for key in stitch_vector.keys()]
+    rs.sort()
+    for r in rs:
+        zs = [key for key in stitch_vector[r].keys()]
+        zs.sort()
+        for z in zs:
+            ts = [key for key in stitch_vector[r][z].keys()]
+            ts.sort()
+            for t in ts:
+                logger.info("[r][z][t]: [{}][{}][{}]".format(r,z,t))
+    
+    # Parse all files in the image collection directory to get position, channel, etc
     logger.info("Parsing files in collection...")
     collection_index = _parse_files(collection_dir,new_collection_regex,collection_variables)
-    logger.info("Found the following [z][t][c] combinations:")
-    zs = [key for key in collection_index.keys()]
-    zs.sort()
-    for z in zs:
-        ts = [key for key in collection_index[z].keys()]
-        ts.sort()
-        for t in ts:
-            cs = [key for key in collection_index[z][t].keys()]
-            cs.sort()
-            for c in cs:
-                logger.info("[z][t][c]: [{}][{}][{}]".format(z,t,c))
+    logger.info("Found the following [r][z][t][c] combinations:")
+    rs = [key for key in stitch_vector.keys()]
+    rs.sort()
+    for r in rs:
+        zs = [key for key in collection_index[r].keys()]
+        zs.sort()
+        for z in zs:
+            ts = [key for key in collection_index[r][z].keys()]
+            ts.sort()
+            for t in ts:
+                cs = [key for key in collection_index[r][z][t].keys()]
+                cs.sort()
+                for c in cs:
+                    logger.info("[r][z][t][c]: [{}][{}][{}][{}]".format(r,z,t,c))
     
+    # Use the r,z,t information from the existing stitching vectors to generate new stitching vectors
+    # using image names from the image collection.
+    # The if-statements below are used to catch instances where a value for a variable is present in
+    # the stitching vectors but not in the image collections. For example, if there is a vector where
+    # r=1 in the stitching vector but there is no image set with r=1, then move to the next vector.
     logger.info("Generating stitching vectors...")
     out_index = 1
-    zs = [z for z in stitch_vector.keys()]
-    zs.sort()
-    for z in zs:
-        if z not in collection_index.keys():
+    rs = [key for key in stitch_vector.keys()]
+    rs.sort()
+    for r in rs:
+        if r not in collection_index.keys():
             continue
-        ts = [t for t in stitch_vector[z].keys()]
-        ts.sort()
-        for t in ts:
-            if t not in collection_index[z].keys():
+        zs = [z for z in stitch_vector[r].keys()]
+        zs.sort()
+        for z in zs:
+            if z not in collection_index[r].keys():
                 continue
-            cs = [c for c in collection_index[z][t].keys()]
-            cs.sort()
-            for c in cs:
-                fname = "img-global-positions-{}.txt".format(out_index)
-                logger.info("Generating vector: {}".format(fname))
-                fout = os.path.join(output_dir,fname)
-                out_index += 1
-                _generate_stitch(fout,stitch_vector[z][t],collection_index[z][t][c])
+            ts = [t for t in stitch_vector[r][z].keys()]
+            ts.sort()
+            for t in ts:
+                if t not in collection_index[r][z].keys():
+                    continue
+                cs = [c for c in collection_index[r][z][t].keys()]
+                cs.sort()
+                for c in cs:
+                    fname = "img-global-positions-{}.txt".format(out_index)
+                    logger.info("Generating vector: {}".format(fname))
+                    fout = os.path.join(output_dir,fname)
+                    out_index += 1
+                    _generate_stitch(fout,stitch_vector[r][z][t],collection_index[r][z][t][c])
                 
     logger.info("Plugin completed all operations!")
 
