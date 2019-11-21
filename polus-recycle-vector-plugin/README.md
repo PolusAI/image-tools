@@ -13,7 +13,7 @@ This plugin uses [filename patterns](https://github.com/USNISTGOV/MIST/wiki/User
 
 All filename patterns must include `x` and `y` grid positions for each image or a sequential position `p`, but not both. This differs from MIST in that `r` and `c` are used to indicate grid row and column rather than `y` and `x` respectively. This change was made to remain consistent with Bioformats dimension names and to permit use of `c` as a channel variable.
 
-In addition to the position variables (both `x` and `y`, or `p`), the only other variables that can be used are `z`, `c`, and `t`. Images with the same `z` and `t` will have the same stitching vector applied to them.
+In addition to the position variables (both `x` and `y`, or `p`), the only other variables that can be used are `r`, `z`, `c`, and `t`. Images with the same `r`, `z`, and `t` will have the same stitching vector applied to them.
 
 ## Build the plugin
 
