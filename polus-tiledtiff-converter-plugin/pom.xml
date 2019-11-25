@@ -3,13 +3,15 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>axle.polus.wipp</groupId>
 	<artifactId>polus-tiledtiff-converter-plugin</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 
+ 	<!-- Compile with Java 8 -->
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
 	
+	<!-- Jar dependencies -->
 	<dependencies>
 		<dependency>
 			<groupId>commons-io</groupId>
@@ -34,6 +36,7 @@
 		</dependency>
 	</dependencies>
 
+	<!-- External OME repository -->
 	<repositories>
 		<repository>
 			<id>ome.external</id>
@@ -49,6 +52,7 @@
 		</repository>
 	</repositories>
 
+	<!-- Build settings -->
 	<build>
 		<plugins>
 			<plugin>

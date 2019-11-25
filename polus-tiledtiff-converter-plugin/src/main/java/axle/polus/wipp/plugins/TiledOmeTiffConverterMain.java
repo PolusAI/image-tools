@@ -16,6 +16,9 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FilenameUtils;
 
 import axle.polus.data.utils.converters.TiledOmeTiffConverter;
+import loci.common.services.DependencyException;
+import loci.common.services.ServiceException;
+import loci.formats.FormatException;
 import loci.formats.ImageReader;
 
 public class TiledOmeTiffConverterMain {
@@ -23,6 +26,19 @@ public class TiledOmeTiffConverterMain {
 	private static final Logger LOG = Logger.getLogger(
 			TiledOmeTiffConverterMain.class.getName());
 	
+	/**
+	 * WIPP Plugin entrance point
+	 * 
+	 * This function handles arguments passed in from the command line, finds all Bioformats compatible
+	 * input files, and starts a tiled tiff conversion thread for each file.
+	 * 
+	 * Note: Bioformats supports importing images from txt, csv, and excel spreadsheet formats. This
+	 * plugin deliberately excludes txt, csv, and excel spreadsheet formats from conversion.
+	 * 
+	 * @param args
+	 * @throws IOException
+	 * @throws Exception
+	 */
 	public static void main(String[] args) throws IOException, Exception {
 		// sanity checks
 		int i = 0;
@@ -39,17 +55,9 @@ public class TiledOmeTiffConverterMain {
 		Option output = new Option("o", "output", true, "output folder");
 		output.setRequired(true);
 		options.addOption(output);
-
-		Option tileSizeX = new Option("xtile", "tileSizeX", true, "The tile width.");
-		tileSizeX.setRequired(true);
-		options.addOption(tileSizeX);
-
-		Option tileSizeY = new Option("ytile", "tileSizeY", true, "The tile height.");
-		tileSizeY.setRequired(true);
-		options.addOption(tileSizeY);
 		
 		Option useMetadata = new Option("useMeta", "useMetadata", true, "Convert metadata to tiled tiff.");
-		useMetadata.setRequired(true);
+		useMetadata.setRequired(false);
 		options.addOption(useMetadata);
 
 		// parse the options
@@ -67,7 +75,12 @@ public class TiledOmeTiffConverterMain {
 			return;
 		}
 		
-		boolean useMeta = Boolean.valueOf(cmd.getOptionValue("useMetadata"));
+		boolean useMeta;
+		if (cmd.getOptionValue("useMetadata")==null) {
+			useMeta = false;
+		} else {
+			useMeta = Boolean.valueOf(cmd.getOptionValue("useMetadata"));
+		}
 
 		String inputFileDir = cmd.getOptionValue("input");
 		if (useMeta) {
@@ -78,26 +91,11 @@ public class TiledOmeTiffConverterMain {
 		LOG.log(Level.INFO, "inputFileDir=" + inputFileDir);
 		LOG.log(Level.INFO, "outputFileDir=" + outputFileDir);
 
-		String tileSizeXStr = cmd.getOptionValue("tileSizeX");
-		String tileSizeYStr = cmd.getOptionValue("tileSizeY");
-
-		int tileSizeXPix = Integer.valueOf(tileSizeXStr);
-		int tileSizeYPix = Integer.valueOf(tileSizeYStr);
+		int tileSizeXPix = 1024;
+		int tileSizeYPix = 1024;
 
 		File inputFolder = new File (inputFileDir);
 		File outputFolder = new File (outputFileDir);
-		
-		if((tileSizeXPix % 16) != 0 || tileSizeXPix < 16){
-			LOG.log(Level.SEVERE, "tileSizeX must be positive and a multiple of 16.");
-			System.err.println("ERROR: tileSizeX must be positive and a multiple of 16.");
-			return;
-		}
-		
-		if((tileSizeYPix % 16) != 0 || tileSizeYPix < 16){
-			LOG.log(Level.SEVERE, "tileSizeY must be positive and a multiple of 16.");
-			System.err.println("ERROR: tileSizeY must be positive and a multiple of 16.");
-			return;
-		}
 
 		LOG.log(Level.INFO, "tileSizeXPix=" + tileSizeXPix);
 		LOG.log(Level.INFO, "tileSizeYPix=" + tileSizeYPix);
@@ -107,6 +105,13 @@ public class TiledOmeTiffConverterMain {
         	
 			public boolean accept(File dir, String name) {
 				for (String ftype : suffixes) {
+					if (name.toLowerCase().endsWith("csv") || 
+							name.toLowerCase().endsWith("txt") || 
+							name.toLowerCase().endsWith("xlsx") ||
+							name.toLowerCase().endsWith("xls")) {
+						LOG.log(Level.INFO, "File will not be converted to tiled tiff: " + name);
+						return false;
+					}
 					if (name.toLowerCase().endsWith(ftype.toLowerCase())) {
 						return true;
 					}
@@ -128,12 +133,33 @@ public class TiledOmeTiffConverterMain {
 		LOG.log(Level.INFO, "Starting tile tiff converter!!");
 		
 		for (File image : images) {
-			String outFile = outputFileDir.concat(File.separator).concat(FilenameUtils.getBaseName(image.getName())).concat(".ome.tif");
 			
-			TiledOmeTiffConverter tiledReadWriter = new TiledOmeTiffConverter(image.getAbsolutePath(), outFile, tileSizeXPix, tileSizeYPix);
-			// initialize the files
-			tiledReadWriter.run();
+			Thread thread = new Thread() {
+				public void run() {
+					String outFile = outputFileDir.concat(File.separator).concat(FilenameUtils.getBaseName(image.getName())).concat(".ome.tif");
+					
+					TiledOmeTiffConverter tiledReadWriter = new TiledOmeTiffConverter(image.getAbsolutePath(), outFile, tileSizeXPix, tileSizeYPix);
+					
+					// initialize the files
+					try {
+						tiledReadWriter.run();
+					} catch (FormatException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (DependencyException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (ServiceException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			};
 			
+			thread.start();
 		}
 
 		int exitVal = 0;

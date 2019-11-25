@@ -1,25 +1,20 @@
 {
-	"name": "Polus OME Tiled Tiff Converter",
-	"version": "1.0.0",
-	"title": "Polus OME Tiled Tiff Converter",
+	"name": "OME Tiled Tiff Converter",
+	"version": "1.0.1",
+	"title": "OME Tiled Tiff Converter",
 	"description": "Convert any Bioformats image file type to tiled tiff.",
-	"containerId": "labshare/polus-tiledtiff-converter-plugin:1.0.0",
+	"author": "Nick Schaub (nick.schaub@nih.gov)",
+  	"institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  	"repository": "https://github.com/labshare/polus-plugins",
+  	"website": "https://ncats.nih.gov/preclinical/core/informatics",
+  	"citation": "",
+	"containerId": "labshare/polus-tiledtiff-converter-plugin:1.0.1",
 
 	"inputs": [
 		{
 			"name": "input",
 			"type": "collection",
 			"description": "Image inputs for the plugin."
-		},
-		{
-			"name": "tileSizeX",
-			"type": "number",
-			"description": "Width of tile."
-		},
-		{
-			"name": "tileSizeY",
-			"type": "number",
-			"description": "Height of tile."
 		},
 		{
 			"name": "useMetadata",
@@ -42,16 +37,6 @@
 			"key": "inputs.input",
 			"title": "Image Collection: ",
 			"description": "Pick a collection..."
-		},
-		{
-			"key": "inputs.tileSizeX",
-			"title": "Tile width: ",
-			"default": 1024
-		},
-		{
-			"key": "inputs.tileSizeY",
-			"title": "Tile height: ",
-			"default": 1024
 		},
 		{
 			"key": "inputs.useMetadata",
