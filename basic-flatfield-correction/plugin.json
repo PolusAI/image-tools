@@ -1,6 +1,6 @@
 {
   "name": "BaSiC Flatfield Correction Plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "title": "Flatfield correction using BaSiC algorithm.",
   "description": "Generates images used for flatfield correction using the BaSiC algorithm.",
   "containerId": "labshare/basic-flatfield-plugin:1.0.0",
@@ -43,7 +43,7 @@
       "key": "inputs.inpDir",
       "title": "Input image collection: ",
       "description": "Image collection..."
-    },
+    
     {
       "key": "inputs.darkfield",
       "title": "Calculate darkfield: ",
