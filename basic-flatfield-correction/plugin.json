@@ -27,7 +27,7 @@
     {
       "name": "inpRegex",
       "type": "string",
-      "description": "Filename patter used to separate images by channel, z-slice, or timepoint.",
+      "description": "Filename patter used to separate images by channel, timepoint, and replicate.",
       "required": true
     }
   ],
