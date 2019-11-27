@@ -9,13 +9,9 @@ An image pattern field is provided for the WIPP input that permits subdividing t
 ## Input Regular Expressions
 This plugin uses [filename patterns](https://github.com/USNISTGOV/MIST/wiki/User-Guide#input-parameters) similar to that of what MIST uses. In particular, defining a filename variable is surrounded by `{}`, and the variable name and number of spaces dedicated to the variable are denoted by repeated characters for the variable. For example, if all filenames follow the structure `filename_TTT.ome.tif`, where TTT indicates the timepoint the image was captured at, then the filename pattern would be `filename_{ttt}.ome.tif`.
 
-All filename patterns must include `x` and `y` grid positions for each image or a sequential position `p`, but not both. This differs from MIST in that `r` and `c` are used to indicate grid row and column rather than `y` and `x` respectively. This change was made to remain consistent with Bioformats dimension names and to permit use of `c` as a channel variable.
+The available variables for filename patterns are `x`, `y`, `p`, `z`, `c` (channel), `t` (timepoint), and `r` (replicate). For position variables, only `x` and `y` grid positions or a sequential position `p` may be present, but not both. This differs from MIST in that `r` and `c` are used to indicate grid row and column rather than `y` and `x` respectively. This change was made to remain consistent with Bioformats dimension names and to permit use of `c` as a channel variable.
 
-In addition to the position variables (both `x` and `y`, or `p`), the only other variables that can be used are `z`, `c`, and `t`. Images with the same `z`, `t`, and `c` will be grouped to calculate a flatfield, darkfield, and photobleach offset.
-
-## Known Issues
-
-This plugin was tested on a reasonably large collection (18,500 images with 55 subsets). As the plugin cycled through each image subset, loading images became progressively slower (from about 0.3 seconds to 3 seconds to load each image).
+**NOTE:** Files with matching `r`, `t`, and `c` will have the BaSiC algorithm run on them. Therefore, positioning variables (`xyzp`) must be present in the filename pattern or flatfield estimation will not be performed.
 
 ## Build the plugin
 
