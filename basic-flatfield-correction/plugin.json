@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "labshare/basic-flatfield-plugin:1.0.0",
+  "containerId": "labshare/basic-flatfield-plugin:1.0.1",
   "inputs": [
 
     {
