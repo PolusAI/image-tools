@@ -1,14 +1,8 @@
-import argparse, time, logging, re, bioformats
+import argparse, time, logging, subprocess, multiprocessing
 from pathlib import Path
-from bfio.bfio import BioReader,BioWriter
-import subprocess
-import javabridge as jutil
 from utils import _parse_files_p,_parse_files_xy,_parse_regex
 
 if __name__ == "__main__":
-    import pprint
-    import multiprocessing
-    
     # Initialize the logger
     logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                         datefmt='%d-%b-%y %H:%M:%S')
@@ -26,7 +20,6 @@ if __name__ == "__main__":
     parser.add_argument('--filePattern', dest='file_pattern', type=str,
                         help='The output directory for ome.tif files', required=True)
 
-
     args = parser.parse_args()
     input_dir = args.input_dir
     output_dir = args.output_dir
@@ -35,7 +28,7 @@ if __name__ == "__main__":
     logger.info('output_dir = {}'.format(output_dir))
     logger.info('file_pattern = {}'.format(file_pattern))
     
-    # Parse the regex
+    # Parse the filename pattern
     regex,variables = _parse_regex(file_pattern)
     
     # Parse files based on regex
@@ -46,26 +39,29 @@ if __name__ == "__main__":
         logger.info('Using p as the position variable...')
         files = _parse_files_p(input_dir,regex,variables)
     
-    init_time = time.time()
-    
-    ts = [t for t in files.keys()]
-    ts.sort()
-    
+    # Initialize variables for process management
     processes = []
     process_timer = []
     pnum = 0
     
+    # Cycle through image timepoint variables
+    ts = [t for t in files.keys()] # sorted list of timepoint values
+    ts.sort()
     for t in ts:
-        cs = [c for c in files[t].keys()]
+        # Cycle through image channel variables
+        cs = [c for c in files[t].keys()] # sorted list of channel values
         cs.sort()
         for c in cs:
             if 'p' not in variables:
-                xs = [x for x in files[t][c].keys()]
+                # Cycle through image x positions
+                xs = [x for x in files[t][c].keys()] # sorted list of x-positions
                 xs.sort()
                 for x in xs:
-                    ys = [y for y in files[t][c][x].keys()]
+                    # Cycle through image y positions
+                    ys = [y for y in files[t][c][x].keys()] # sorted list of y-positions
                     ys.sort()
                     for y in ys:
+                        # If there are num_cores - 1 processes running, wait until one finishes
                         if len(processes) >= multiprocessing.cpu_count()-1:
                             free_process = False
                             while not free_process:
@@ -76,6 +72,8 @@ if __name__ == "__main__":
                             logger.info("Finished process {} of {} in {}s!".format(pnum,len(ts)*len(cs)*len(xs)*len(ys),time.time() - process_timer[free_process]))
                             del processes[free_process]
                             del process_timer[free_process]
+                        
+                        # Spawn a pyramid building process and record the starting time
                         processes.append(subprocess.Popen("python3 merge_layers.py --inpDir {} --outDir {} --regex {} --X {} --Y {} --C {} --T {}".format(input_dir,
                                                                                                                                                           output_dir,
                                                                                                                                                           file_pattern,
@@ -83,13 +81,14 @@ if __name__ == "__main__":
                                                                                                                                                           y,
                                                                                                                                                           c,
                                                                                                                                                           t),
-                                                                                                                                                          shell=True,
-                                                                                                                                                          stderr=subprocess.DEVNULL))
+                                                                                                                                                          shell=True))
                         process_timer.append(time.time())
             else:
+                # Cycle through image sequence positions
                 ps = [p for p in files[t][c].keys()]
                 ps.sort()
                 for p in ps:
+                    # If there are num_cores - 1 processes running, wait until one finishes
                     if len(processes) >= multiprocessing.cpu_count()-1:
                         free_process = False
                         while not free_process:
@@ -100,14 +99,15 @@ if __name__ == "__main__":
                         logger.info("Finished process {} of {} in {}s!".format(pnum,len(ts)*len(cs)*len(ps),time.time() - process_timer[free_process]))
                         del processes[free_process]
                         del process_timer[free_process]
+                    
+                    # Spawn a pyramid building process and record the starting time
                     processes.append(subprocess.Popen("python3 merge_layers.py --inpDir {} --outDir {} --regex {} --P {} --C {} --T {}".format(input_dir,
                                                                                                                                                output_dir,
                                                                                                                                                file_pattern,
                                                                                                                                                p,
                                                                                                                                                c,
                                                                                                                                                t),
-                                                                                                                                               shell=True,
-                                                                                                                                               stderr=subprocess.DEVNULL))
+                                                                                                                                               shell=True))
                     process_timer.append(time.time())
     
     while len(processes)>1:

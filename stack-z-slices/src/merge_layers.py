@@ -6,23 +6,27 @@ from utils import _parse_files_xy,_parse_files_p,_parse_regex
 import argparse
 
 def _merge_layers(input_dir,input_files,output_dir,output_file):
-    zs = [z for z in input_files.keys()]
+    zs = [z for z in input_files.keys()] # sorted list of filenames by z-value
     
+    # Initialize the output file
     br = BioReader(str(Path(input_dir).joinpath(input_files[zs[0]][0]).absolute()))
     bw = BioWriter(str(Path(output_dir).joinpath(output_file).absolute()),metadata=br.read_metadata())
     bw.num_z(Z = len(zs))
     del br
     
+    # Load each image and save to the volume file
     for z,i in zip(zs,range(len(zs))):
         br = BioReader(str(Path(input_dir).joinpath(input_files[z][0]).absolute()))
         bw.write_image(br.read_image(),Z=[i,i+1])
         del br
-        
+    
+    # Close the output image and delete
     bw.close_image()
     del bw
 
 if __name__ == "__main__":
-    jutil.start_vm(class_path=bioformats.JARS,run_headless=True)
+    log_config = Path(__file__).parent.joinpath("log4j.properties")
+    jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
     parser = argparse.ArgumentParser(prog='merge_layers', description='Merge images into a single volume.')
     
     parser.add_argument('--inpDir', dest='input_dir', type=str,
@@ -66,6 +70,7 @@ if __name__ == "__main__":
     else:
         files = _parse_files_p(input_dir,regex,variables)
     
+    # Stack images based on positioning variable used
     if P == None:
         zs = [z for z in files[T][C][X][Y].keys()]
         zs.sort()
