@@ -48,7 +48,7 @@
       "key": "inputs.inpDir",
       "title": "Input image collection: ",
       "description": "Image collection..."
-    
+    },
     {
       "key": "inputs.darkfield",
       "title": "Calculate darkfield: ",
