@@ -10,9 +10,6 @@ logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
 def main():
-    import bioformats
-    import javabridge as jutil
-    
     """ Initialize argument parser """
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='Calculate flatfield information from an image collection.')
@@ -80,7 +77,7 @@ def main():
             cs.sort()
             for c in cs:
                 # The optimization process seems to use up to ~6 cores, so limit # of processes accordingly
-                if len(processes) >= multiprocessing.cpu_count()//4:
+                if len(processes) >= multiprocessing.cpu_count()-1:
                     free_process = -1
                     while free_process<0:
                         for process in range(len(processes)):
@@ -88,7 +85,7 @@ def main():
                                 free_process = process
                                 break
                         # Wait between checks to free up some processing power
-                        time.sleep(5)
+                        time.sleep(3)
                     pnum += 1
                     logger.info("Finished process {} of {} in {}s!".format(pnum,len(rs)*len(ts)*len(cs),time.time() - process_timer[free_process]))
                     del processes[free_process]
@@ -108,11 +105,14 @@ def main():
 
     # Wait for all processes to finish
     while len(processes)>1:
-        free_process = False
-        while not free_process:
+        free_process = -1
+        while free_process<0:
             for process in range(len(processes)):
                 if processes[process].poll() is not None:
                     free_process = process
+                    break
+            # Wait between checks to free up some processing power
+            time.sleep(3)
         pnum += 1
         logger.info("Finished process {} of {} in {}s!".format(pnum,len(rs)*len(ts)*len(cs),time.time() - process_timer[free_process]))
         del processes[free_process]
@@ -121,7 +121,7 @@ def main():
     processes[0].wait()
     
     logger.info("Finished process {} of {} in {}s!".format(len(rs)*len(ts)*len(cs),len(rs)*len(ts)*len(cs),time.time() - process_timer[0]))
-    logger.info("Finished precomputing!")
+    logger.info("Finished all processes!")
     
 if __name__ == "__main__":
     
