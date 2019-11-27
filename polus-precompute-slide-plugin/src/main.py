@@ -1,4 +1,4 @@
-import logging, argparse, time, multiprocessing, subprocess, bioformats
+import logging, argparse, time, multiprocessing, subprocess
 from pathlib import Path
 import javabridge as jutil
 from utils import _get_higher_res, ChunkEncoder, CHUNK_SIZE
@@ -42,11 +42,14 @@ def main():
     # equal to number of cpus - 1.
     for image in images:
         if len(processes) >= multiprocessing.cpu_count()-1:
-            free_process = False
-            while not free_process:
+            free_process = -1
+            while free_process<0:
                 for process in range(len(processes)):
                     if processes[process].poll() is not None:
                         free_process = process
+                        break
+                time.sleep(3)
+                
             pnum += 1
             logger.info("Finished process {} of {} in {}s!".format(pnum,len(images),time.time() - process_timer[free_process]))
             del processes[free_process]
@@ -54,18 +57,18 @@ def main():
         processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir {} --outDir {} --image {}".format(input_dir,
                                                                                                                output_dir,
                                                                                                                image.name),
-                                                                                                               shell=True,
-                                                                                                               stderr=subprocess.DEVNULL,
-                                                                                                               stdout=subprocess.PIPE))
+                                                                                                               shell=True))
         process_timer.append(time.time())
     
     # Wait for all processes to finish
     while len(processes)>1:
-        free_process = False
-        while not free_process:
+        free_process = -1
+        while free_process<0:
             for process in range(len(processes)):
                 if processes[process].poll() is not None:
                     free_process = process
+                    break
+            time.sleep(3)
         pnum += 1
         logger.info("Finished process {} of {} in {}s!".format(pnum,len(images),time.time() - process_timer[free_process]))
         del processes[free_process]
@@ -74,7 +77,7 @@ def main():
     processes[0].wait()
     
     logger.info("Finished process {} of {} in {}s!".format(len(images),len(images),time.time() - process_timer[0]))
-    logger.info("Finished precomputing!")
+    logger.info("Finished all processes!")
 
 if __name__ == "__main__":
     main()
