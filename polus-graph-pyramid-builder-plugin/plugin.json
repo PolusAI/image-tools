@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "title": "Graph Pyramid Building",
   "description": "Generates heatmaps from the data in a csv and builds a DeepZoom pyramid for visualization.",
-  "containerId": "labshare/graph-pyramid-builder:1.0.0",
+  "author": "Nick Schaub (nick.schaub@nih.gov)",
+  "institution": "National Center for the Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "labshare/polus-graph-pyramid-builder-plugin:1.0.0",
   "inputs": [
 
     {
