@@ -3,6 +3,11 @@
   "version": "1.0.1",
   "title": "Stack Z-slices into a single tiled tiff file",
   "description": "Use a file name pattern to stack individual z-slices into a single image.",
+  "author": "Nick Schaub (nick.schaub@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
   "containerId": "labshare/polus-stack-z-slice-plugin:1.0.1",
   "inputs": [
 
