@@ -7,8 +7,8 @@
   "institution": "National Center for the Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
-  "citation": "",
-  "containerId": "labshare/basic-flatfield-plugin:1.0.1",
+  "citation": "Peng et al. \"A BaSiC tool for background and shading correction of optical microscopy images\" Nature Communications (2017)",
+  "containerId": "labshare/polus-basic-flatfield-correction-plugin:1.0.1",
   "inputs": [
 
     {
