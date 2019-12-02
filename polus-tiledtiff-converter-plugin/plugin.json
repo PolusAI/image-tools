@@ -1,0 +1,47 @@
+{
+	"name": "OME Tiled Tiff Converter",
+	"version": "1.0.1",
+	"title": "OME Tiled Tiff Converter",
+	"description": "Convert any Bioformats image file type to tiled tiff.",
+	"author": "Nick Schaub (nick.schaub@nih.gov)",
+  	"institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  	"repository": "https://github.com/labshare/polus-plugins",
+  	"website": "https://ncats.nih.gov/preclinical/core/informatics",
+  	"citation": "",
+	"containerId": "labshare/polus-tiledtiff-converter-plugin:1.0.1",
+
+	"inputs": [
+		{
+			"name": "input",
+			"type": "collection",
+			"description": "Image inputs for the plugin."
+		},
+		{
+			"name": "useMetadata",
+			"type": "boolean",
+			"description": "Convert files in metadata to tiled tiff."
+		}
+	],
+	"outputs": [
+		{
+			"name": "output",
+			"type": "collection",
+			"options": {
+				"format": "tiledtiff"
+			},
+			"description": "Output data for the plugin"
+		}
+	],
+	"ui": [
+		{
+			"key": "inputs.input",
+			"title": "Image Collection: ",
+			"description": "Pick a collection..."
+		},
+		{
+			"key": "inputs.useMetadata",
+			"title": "Convert metadata to tiled tiff: ",
+			"default": false
+		}
+	]
+}
