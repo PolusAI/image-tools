@@ -3,7 +3,7 @@
   "version": "1.0.1",
   "title": "Stack Z-slices into a single tiled tiff file",
   "description": "Use a file name pattern to stack individual z-slices into a single image.",
-  "containerId": "labshare/polus-stack-z-slices-plugin:1.0.1",
+  "containerId": "labshare/polus-stack-z-slice-plugin:1.0.1",
   "inputs": [
 
     {

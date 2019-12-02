@@ -90,8 +90,8 @@ def _get_output_name(fpattern,file_ind,ind):
     fname = fpattern
     for e,v in zip(expr,variables):
         if v not in STATICS:
-            minval = min(file_ind[v])
-            maxval = max(file_ind[v])
+            minval = min([int(z) for z in file_ind.keys()])
+            maxval = max([int(z) for z in file_ind.keys()])
             fname = fname.replace(e,'<' + str(minval).zfill(len(e)-2) +
                                     '-' + str(maxval).zfill(len(e)-2) + '>')
         elif v not in ind.keys():
@@ -137,13 +137,13 @@ def _parse_files_p(fpath,regex,variables):
         
         if r not in file_ind.keys():
             file_ind[r] = {}
-        if t not in file_ind.keys():
+        if t not in file_ind[r].keys():
             file_ind[r][t] = {}
-        if c not in file_ind[t].keys():
+        if c not in file_ind[r][t].keys():
             file_ind[r][t][c] = {}
-        if p not in file_ind[t][c].keys():
+        if p not in file_ind[r][t][c].keys():
             file_ind[r][t][c][p] = {}
-        if z not in file_ind[t][c][p].keys():
+        if z not in file_ind[r][t][c][p].keys():
             file_ind[r][t][c][p][z] = []
             
         file_ind[r][t][c][p][z].append(f)
@@ -168,15 +168,15 @@ def _parse_files_xy(fpath,regex,variables):
         
         if r not in file_ind.keys():
             file_ind[r] = {}
-        if t not in file_ind.keys():
+        if t not in file_ind[r].keys():
             file_ind[r][t] = {}
-        if c not in file_ind[t].keys():
+        if c not in file_ind[r][t].keys():
             file_ind[r][t][c] = {}
-        if x not in file_ind[t][c].keys():
+        if x not in file_ind[r][t][c].keys():
             file_ind[r][t][c][x] = {}
-        if y not in file_ind[t][c][x].keys():
+        if y not in file_ind[r][t][c][x].keys():
             file_ind[r][t][c][x][y] = {}
-        if z not in file_ind[t][c][x][y].keys():
+        if z not in file_ind[r][t][c][x][y].keys():
             file_ind[r][t][c][x][y][z] = []
             
         file_ind[r][t][c][x][y][z].append(f)

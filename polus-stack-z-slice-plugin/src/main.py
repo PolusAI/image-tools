@@ -72,6 +72,10 @@ if __name__ == "__main__":
                                     for process in range(len(processes)):
                                         if processes[process].poll() is not None:
                                             free_process = process
+                                            break
+                                    # Only check intermittently to free up processing power
+                                    if free_process<0:
+                                        time.sleep(3)
                                 pnum += 1
                                 logger.info("Finished process {} of {} in {}s!".format(pnum,len(ts)*len(cs)*len(xs)*len(ys),time.time() - process_timer[free_process]))
                                 del processes[free_process]
@@ -100,6 +104,10 @@ if __name__ == "__main__":
                                 for process in range(len(processes)):
                                     if processes[process].poll() is not None:
                                         free_process = process
+                                        break
+                                # Only check intermittently to free up processing power
+                                if free_process<0:
+                                    time.sleep(3)
                             pnum += 1
                             logger.info("Finished process {} of {} in {}s!".format(pnum,len(ts)*len(cs)*len(ps),time.time() - process_timer[free_process]))
                             del processes[free_process]
@@ -123,6 +131,10 @@ if __name__ == "__main__":
             for process in range(len(processes)):
                 if processes[process].poll() is not None:
                     free_process = process
+                    break
+            # Only check intermittently to free up processing power
+            if free_process<0:
+                time.sleep(3)
         pnum += 1
         if 'p' not in variables:
             logger.info("Finished process {} of {} in {}s!".format(pnum,len(ts)*len(cs)*len(xs)*len(ys),time.time() - process_timer[free_process]))

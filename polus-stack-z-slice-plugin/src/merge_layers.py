@@ -50,6 +50,8 @@ if __name__ == "__main__":
                         help='T image position', required=True)
     parser.add_argument('--C', dest='C', type=str,
                         help='C image position', required=True)
+    parser.add_argument('--R', dest='R', type=str,
+                        help='R image position', required=True)
     
     # Initialize variables
     args = parser.parse_args()
