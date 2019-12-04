@@ -1,0 +1,31 @@
+{
+    "author": "Data Scientist",
+    "email": "data.scientist@labshare.org",
+    "github_username": "datascientist",
+    "project_name": "WIPP Widget",
+    "project_short_description": "Everything you need to start a WIPP plugin.",
+    "version": "0.1.0",
+    "use_bfio": true,
+    "_inputs": {
+        "inpDir": {
+            "type": "collection",
+            "title": "Input collection",
+            "description": "Input image collection to be processed by this plugin",
+            "required": "True"
+        },
+        "filePattern": {
+            "type": "string",
+            "title": "Filename pattern",
+            "description": "Filename pattern used to separate data",
+            "required": "True"
+        }
+    },
+    "_outputs": {
+        "outDir": {
+            "type": "collection",
+            "description": "Output collection"
+        }
+    },
+    
+    "project_slug": "polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin"
+}
