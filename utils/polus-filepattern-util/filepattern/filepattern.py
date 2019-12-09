@@ -427,12 +427,3 @@ class FilePattern():
                 elif v == shallowest:
                     break
                 iter_vars[v] = copy.deepcopy(self.uniques[v])
-
-if __name__=="__main__":
-    file_path = "/media/schaubnj/ExtraDrive1/Carina - SLAS Data/CD_SOD1_2_E1023884 __1"
-    pattern = ".*.tif"
-
-    files = FilePattern(file_path,pattern)
-
-    for f_list in files.iterate():
-        print(f_list['file'])
