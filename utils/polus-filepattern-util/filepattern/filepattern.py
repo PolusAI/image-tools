@@ -4,6 +4,21 @@ from pathlib import Path
 VARIABLES = 'rtczyxp'
 
 def val_variables(variables):
+    """ Validate file pattern variables
+    
+    Variables for a file pattern should only contain the values in filepattern.VARIABLES.
+    In addition to this, only a linear positioning variable (p) or an x,y positioning
+    variable should be present, but not both.
+
+    There is no return value for this function. It throws an error if an invalid variable
+    is present.
+
+    Inputs:
+        variables - a string of variables, e.g. 'rtxy'
+    Outputs:
+        None
+    """
+
     for v in variables:
         assert v in VARIABLES, "File patter variables must be one of {}".format(VARIABLES)
 
@@ -19,6 +34,9 @@ def get_regex(pattern):
     The only possible variables that can be passed into the filename pattern are
     p, x, y, z, c, t, and r. In the case of p, x, and y, both x&y must be specified
     or p must be specified, but if all three are specified then an error is thrown.
+
+    If no filepattern is provided, then a universal expression is returned.
+
     Inputs:
         pattern - Filename pattern
     Outputs:
@@ -51,6 +69,7 @@ def get_regex(pattern):
 
 def output_name(pattern,files,ind):
     """ Returns an output name for a single file resulting from multiple images
+
     This function returns a file output name for the image volume
     based on the name of multiple files used to generate it.
     All variables are kept the same as in the original filename,
@@ -132,20 +151,24 @@ def parse_filename(file_name,pattern=None,regex=None,variables=None,return_empty
     Outputs:
         index - The value of the dimension
     """
-    # Get the regex is not defined
+    # Get the regex if not defined, and validate inputs
     if pattern != None:
         regex,variables = get_regex(pattern)
     elif regex == None:
         ValueError('Either pattern or regex must be specified.')
     elif variables == None:
         ValueError('If regex is an input, then variables must be an input.')
+    else:
+        val_variables(variables)
 
+    # Get variable values from the filename
     groups = re.match(regex,file_name)
-    if groups == None:
+    if groups == None:  # Don't return anything if the filename doesn't match the regex
         return None
 
-    r = {}
+    r = {}  # Initialize the output
 
+    # Initialize variable iterator, include undefined variables
     iter_vars = VARIABLES
     if 'p' in variables:
         iter_vars = iter_vars.replace('x','')
@@ -153,6 +176,7 @@ def parse_filename(file_name,pattern=None,regex=None,variables=None,return_empty
     else:
         iter_vars = iter_vars.replace('p','')
 
+    # Generate the output
     for v in iter_vars:
         if v not in variables:
             if return_empty:
@@ -163,12 +187,61 @@ def parse_filename(file_name,pattern=None,regex=None,variables=None,return_empty
     return r
 
 def parse_directory(file_path,pattern,var_order='rtczyx'):
+    """ Sort files by variable in a dictionary
     
+    This function extracts the variables in from each filename in a directory and places
+    them in a dictionary that allow retrieval using variable values. For example, if there
+    is a folder with filenames using the pattern file_x{xxx}_y{yyy}_c{ccc}.ome.tif, then
+    the output will be a dictionary with the following structure:
+    output_dictionary[r][t][c][z][y][x]
+
+    To access the filename with values x=2, y=3, and c=1:
+    output_dictionary[-1][-1][1][-1][3][2]
+
+    The -1 values are placeholders for variables that were undefined by the pattern. The value
+    stored in the deepest layer of the dictionary is a list of all files that match the variable
+    values. For a well formed filename pattern, the length of the list at each set of
+    coordinates should be one, but there are some use cases which makes it beneficial to
+    store many filenames at each set of coordinates (see below).
+
+    A custom variable order can be returned using the var_order keyword argument. When set,
+    this changes the structure of the output dictionary. Using the previous example,
+    if the var_order value was set to `xyc`, then to access the filename matching x=2, y=3,
+    and c=1:
+    output_dictionary[2][3][1]
+
+    The variables in var_order do not need to match the variables in the pattern, but this
+    will cause overloaded lists to be returned. Again using the same example as before,
+    if the var_order was set to 'xy', then accessing the file associated with x=2 and y=3
+    will return a list of all filenames that match x=2 and y=3, but each filename will have
+    a different c value. This may be useful in applications where filenames want to be grouped
+    by a particular attribute (channel, replicate, etc).
+
+    NOTE: The uvals return value is a list of unique values for each variable index, but not
+    all combinations of variables are valid in the dictionary. It is possible that one level
+    of the dictionary has different child values.
+
+    Inputs:
+        file_path - path to a folder containing files to parse
+        pattern - A file name pattern. Either this or regex must be defined (not both).
+        var_order - A string indicating the order of variables in a nested output dictionary
+    Outputs:
+        file_ind - The output dictionary containing all files matching the file pattern, sorted
+                   by variable value
+        uvals - Unique variables for each 
+    """
+
     # validate the variable order
     val_variables(var_order)
 
+    # get regular expression from file pattern
+    regex, variables = get_regex(pattern)
+
     # initialize the output
-    file_ind = {}
+    if len(variables) == 0:
+        file_ind = []
+    else:
+        file_ind = {}
     files = [f.name for f in Path(file_path).iterdir() if f.is_file()]
 
     # Unique values for each variable
@@ -179,31 +252,58 @@ def parse_directory(file_path,pattern,var_order='rtczyx'):
         
         # Parse filename values
         variables = parse_filename(f,pattern)
-        if variables == None:
-            continue
         
         # Generate the layered dictionary using the specified ordering
         temp_dict = file_ind
-        for key in var_order:
-            if variables[key] not in temp_dict.keys():
-                if variables[key] not in uvals[key]:
-                    uvals[key].append(variables[key])
-                if var_order[-1] != key:
-                    temp_dict[variables[key]] = {}
-                else:
-                    temp_dict[variables[key]] = []
-            temp_dict = temp_dict[variables[key]]
+        if isinstance(file_ind,dict):
+            for key in var_order:
+                if variables[key] not in temp_dict.keys():
+                    if variables[key] not in uvals[key]:
+                        uvals[key].append(variables[key])
+                    if var_order[-1] != key:
+                        temp_dict[variables[key]] = {}
+                    else:
+                        temp_dict[variables[key]] = []
+                temp_dict = temp_dict[variables[key]]
         
         # At the file information at the deepest layer
         new_entry = {}
         new_entry['file'] = str(Path(file_path).joinpath(f).absolute())
-        for key, value in variables.items():
-            new_entry[key] = value
+        if variables != None:
+            for key, value in variables.items():
+                new_entry[key] = value
         temp_dict.append(new_entry)
             
     return file_ind, uvals
 
 def get_matching(files,var_order,out_var=None,**kwargs):
+    """ Get filenames that have defined variable values
+    
+    This gets all filenames that match a set of variable values. Variables must be one of
+    filename.VARIABLES, and the inputs must be uppercase. The following example code would
+    return all files that have c=0:
+    pattern = "file_x{xxx}_y{yyy}_c{ccc}.ome.tif"
+    file_path = "./path/to/files"
+    files = parse_directory(file_path,pattern,var_order='cyx')
+    channel_zero = get_matching(files,'cyx',C=0)
+
+    Multiple coordinates can be used simultaneously, so in addition to C=0 in the above example,
+    it is also possible to include Y=0. Further, each variable can be a list of values, and the
+    returned output will contain filenames matching any of the input values.
+
+    Inputs:
+        files - A file dictionary (see parse_directory)
+        var_order - A string indicating the order of variables in a nested output dictionary
+        out_var - Variable to store results, used for recursion
+        kwargs - One of filepatter.VARIABLES, must be uppercase, can be single values or a list of values
+    Outputs:
+        out_var - A list of all files matching the input values
+    """
+    # If the input is a list, then no parsing took place
+    if isinstance(files,list):
+        return files
+
+    # Initialize the output variable if needed
     if out_var == None:
         out_var = []
         
@@ -234,6 +334,14 @@ def get_matching(files,var_order,out_var=None,**kwargs):
     return out_var
 
 class FilePattern():
+    """ Main class for handling filename patterns
+    
+    Most of the functions in filepattern.py return complicated variable structures that might
+    be difficult to use in an abstract way. This class provides tools to use the above functions
+    more simple. In particular, the iterate function is an iterable that permits simple
+    iteration over filenames with specific values and grouped by any desired variable.
+
+    """
     var_order = 'rtczyx'
     files = {}
     uniques = {}
@@ -242,18 +350,51 @@ class FilePattern():
         self.pattern = get_regex(pattern)
 
         if var_order:
+            val_variables(var_order)
             self.var_order = var_order
 
         self.files, self.uniques = parse_directory(file_path,pattern,var_order=self.var_order)
 
     # Get filenames matching values for specified variables
     def get_matching(self,**kwargs):
+        """ Get all filenames matching specific values
+    
+        This function runs the get_matching function using the objects file dictionary.
+
+        Inputs:
+            kwargs - One of filepatter.VARIABLES, must be uppercase, can be single values or a list of values
+        Outputs:
+            files - A list of all files matching the input values
+        """
         # get matching files
         files = get_matching(self.files,self.var_order,out_var=None,**kwargs)
         return files
 
     def iterate(self,group_by=[],**kwargs):
-        
+        """ Iterate through filenames
+    
+        This function is an iterable. On each call, it returns a list of filenames that matches a set of
+        variable values. It iterates through every combination of variable values.
+
+        Variables designated in the group_by input argument are grouped together. So, if group_by='zc', 
+        then each iteration will return all filenames that have constant values for each variable except z
+        and c.
+
+        In addition to the group_by variable, specific variable arguments can also be included as with the
+        get_matching function.
+
+        Inputs:
+            group_by - String of variables by which the output filenames will be grouped
+            kwargs - One of filepatter.VARIABLES, must be uppercase, can be single values or a list of values
+        Outputs:
+            iter_files - A list of all files matching the input values
+        """
+        # If self.files, no parsing took place so just loop through the files
+        if isinstance(self.files,list):
+            for f in self.files:
+                yield f
+            return
+
         # Generate the values to iterate through
         iter_vars = {}
         for v in self.var_order:
@@ -286,3 +427,12 @@ class FilePattern():
                 elif v == shallowest:
                     break
                 iter_vars[v] = copy.deepcopy(self.uniques[v])
+
+if __name__=="__main__":
+    file_path = "/media/schaubnj/ExtraDrive1/Carina - SLAS Data/CD_SOD1_2_E1023884 __1"
+    pattern = ".*.tif"
+
+    files = FilePattern(file_path,pattern)
+
+    for f_list in files.iterate():
+        print(f_list['file'])
