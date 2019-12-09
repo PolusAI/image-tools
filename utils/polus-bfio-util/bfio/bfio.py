@@ -117,7 +117,12 @@ class BioReader():
     def read_metadata(self,update=False):
         if self._metadata and not update:
             return self._metadata
-        rdr = jutil.JClassWrapper('loci.formats.in.OMETiffReader')()
+        # For some reason, tif files need to use the generic ImageReader while everything else
+        # can use the OMETiffReader.
+        if self._file_path.endswith('.ome.tif'):
+            rdr = jutil.JClassWrapper('loci.formats.in.OMETiffReader')()
+        else:
+            rdr = jutil.JClassWrapper('loci.formats.ImageReader')()
         rdr.setOriginalMetadataPopulated(True)
         clsOMEXMLService = jutil.JClassWrapper('loci.formats.services.OMEXMLService')
         serviceFactory = jutil.JClassWrapper('loci.common.services.ServiceFactory')()
