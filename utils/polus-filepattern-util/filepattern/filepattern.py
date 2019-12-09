@@ -1,6 +1,14 @@
-import re
+import re, copy
+from pathlib import Path
 
-VARIABLES = 'pxyzctr'
+VARIABLES = 'rtczyxp'
+
+def val_variables(variables):
+    for v in variables:
+        assert v in VARIABLES, "File patter variables must be one of {}".format(VARIABLES)
+
+    if 'p' in variables:
+        assert 'x' not in variables and 'y' not in variables, "Either x and/or y may be defined or p may be defined, but not both."
 
 def get_regex(pattern):
     """ Parse a filename pattern into a regular expression
@@ -28,22 +36,13 @@ def get_regex(pattern):
     # Parse variables
     expr = []
     variables = []
-    for g in re.finditer(r"\{[{pxyzctr}]+\}",pattern):
+    for g in re.finditer("{{[{}]+}}".format(VARIABLES),pattern):
         expr.append(g.group(0))
         variables.append(expr[-1][1])
         
-    # Verify variables are one of pxyzctr
-    for v in variables:
-        assert v in VARIABLES, "Invalid variable: {}".format(v)
-            
-    # Verify that either x&y are defined or p is defined, but not both
-    if 'x' in variables and 'y' in variables:
-        assert 'p' not in variables, "Variable p cannot be defined if x and y are defined."
-    elif 'p' in variables:
-        assert 'x' not in variables and 'y' not in variables, "Neither x nor y can be defined if p is defined."
-    else:
-        ValueError("Either p must be defined or x and y must be defined.")
-        
+    # Validate variable choices
+    val_variables(variables)
+    
     # Generate the regular expression pattern
     for e in expr:
         regex = regex.replace(e,"([0-9]{"+str(len(e)-2)+"})")
@@ -90,7 +89,7 @@ def output_name(pattern,files,ind):
     # Parse variables
     expr = []
     variables = []
-    for g in re.finditer(r"\{[pxyzctr]+\}",pattern):
+    for g in re.finditer("{{[{}]+}}".format(VARIABLES),pattern):
         expr.append(g.group(0))
         variables.append(expr[-1][1])
         
@@ -109,42 +108,181 @@ def output_name(pattern,files,ind):
         
     return fname
 
-# def get_values(filename,pattern):
-#     """ Parse the x, y, p, z, c, t, or r value from a filename
+def parse_filename(file_name,pattern=None,regex=None,variables=None,return_empty=True):
+    """ Get the x, y, p, z, c, t, and r indices from a file name
     
-#     When files are parsed, the variables are used in an index to provide
-#     a method to reference a specific file name by its dimensions. This
-#     function returns the variable index based on the input filename pattern.
-#     Inputs:
-#         var_list - List of values parsed from a filename using regex
-#         variables - List of permitted variables taken from the filename pattern
-#         xypzctr - Dimension to return (i.e. 'r' or 't')
-#     Outputs:
-#         index - The value of the variable
-#     """
+    Extract the variable values from a file name. Return as a dictionary.
 
+    For example, if a file name and file pattern are:
+    file_x000_y000_c000.ome.tif
+    file_x{xxx}_y{yyy}_c{ccc}.ome.tif
 
-#     if xypzctr not in variables:
-#         return 0
-#     else:
-#         return int(var_list[[ind for ind,v in zip(range(0,len(variables)),variables) if v==xypzctr][0]])
+    This function will return:
+    {
+        'x': 0,
+        'y': 0,
+        'c': 0
+    }
 
-def get_nested(d):
-    for a in d.keys():
-        if isinstance(d[a],dict):
-            for n in get_nested(d[a]):
-                yield get_nested(n)
+    Inputs:
+        file_name - List of values parsed from a filename using a filename pattern
+        pattern - A file name pattern. Either this or regex must be defined (not both).
+        regex - A regular expression used to parse the filename.
+        return_empty - Returns undefined variables as -1
+    Outputs:
+        index - The value of the dimension
+    """
+    # Get the regex is not defined
+    if pattern != None:
+        regex,variables = get_regex(pattern)
+    elif regex == None:
+        ValueError('Either pattern or regex must be specified.')
+    elif variables == None:
+        ValueError('If regex is an input, then variables must be an input.')
+
+    groups = re.match(regex,file_name)
+    if groups == None:
+        return None
+
+    r = {}
+
+    iter_vars = VARIABLES
+    if 'p' in variables:
+        iter_vars = iter_vars.replace('x','')
+        iter_vars = iter_vars.replace('y','')
+    else:
+        iter_vars = iter_vars.replace('p','')
+
+    for v in iter_vars:
+        if v not in variables:
+            if return_empty:
+                r[v] = -1
         else:
-            yield d[a]
+            r[v] = int(groups.groups()[[ind for ind,i in zip(range(0,len(variables)),variables) if i==v][0]])
 
-if __name__ == '__main__':
-    a = {}
-    a['a'] = {}
-    a['a'][1] = 10
-    a['a'][2] = 20
-    a['b'] = {}
-    a['b'][1] = 30
-    a['b'][2] = 40
+    return r
 
-    for n in get_nested(a):
-        print(n)
+def parse_directory(file_path,pattern,var_order='rtczyx'):
+    
+    # validate the variable order
+    val_variables(var_order)
+
+    # initialize the output
+    file_ind = {}
+    files = [f.name for f in Path(file_path).iterdir() if f.is_file()]
+
+    # Unique values for each variable
+    uvals = {key:[] for key in var_order}
+
+    # Build the output dictionary
+    for f in files:
+        
+        # Parse filename values
+        variables = parse_filename(f,pattern)
+        if variables == None:
+            continue
+        
+        # Generate the layered dictionary using the specified ordering
+        temp_dict = file_ind
+        for key in var_order:
+            if variables[key] not in temp_dict.keys():
+                if variables[key] not in uvals[key]:
+                    uvals[key].append(variables[key])
+                if var_order[-1] != key:
+                    temp_dict[variables[key]] = {}
+                else:
+                    temp_dict[variables[key]] = []
+            temp_dict = temp_dict[variables[key]]
+        
+        # At the file information at the deepest layer
+        new_entry = {}
+        new_entry['file'] = str(Path(file_path).joinpath(f).absolute())
+        for key, value in variables.items():
+            new_entry[key] = value
+        temp_dict.append(new_entry)
+            
+    return file_ind, uvals
+
+def get_matching(files,var_order,out_var=None,**kwargs):
+    if out_var == None:
+        out_var = []
+        
+    # If there is no var_order, then files should be a list of files.
+    if len(var_order)==0:
+        if not isinstance(files,list):
+            TypeError('Expected files to be a list since var_order is empty.')
+        out_var.extend(files)
+        return
+
+    for arg in kwargs.keys():
+        assert arg==arg.upper() and arg.lower() in VARIABLES, "Input keyword arguments must be uppercase variables (one of R, T, C, Z, Y, X, P)"
+    
+    if var_order[0].upper() in kwargs.keys():
+        if isinstance(kwargs[var_order[0].upper()],list): # If input was already a list
+            v_iter = kwargs[var_order[0].upper()]
+        else:                                             # If input was not a list, make it a list
+            v_iter = [kwargs[var_order[0].upper()]]
+    else:
+        v_iter = [i for i in files.keys()]
+    v_iter.sort()
+    
+    for v_i in v_iter:
+        if v_i not in files.keys():
+            continue
+        get_matching(files[v_i],var_order[1:],out_var,**kwargs)
+
+    return out_var
+
+class FilePattern():
+    var_order = 'rtczyx'
+    files = {}
+    uniques = {}
+
+    def __init__(self,file_path,pattern,var_order=None):
+        self.pattern = get_regex(pattern)
+
+        if var_order:
+            self.var_order = var_order
+
+        self.files, self.uniques = parse_directory(file_path,pattern,var_order=self.var_order)
+
+    # Get filenames matching values for specified variables
+    def get_matching(self,**kwargs):
+        # get matching files
+        files = get_matching(self.files,self.var_order,out_var=None,**kwargs)
+        return files
+
+    def iterate(self,group_by=[],**kwargs):
+        
+        # Generate the values to iterate through
+        iter_vars = {}
+        for v in self.var_order:
+            if v in group_by:
+                continue
+            elif v.upper() in kwargs.keys():
+                iter_vars[v] = kwargs[v]
+            else:
+                iter_vars[v] = copy.deepcopy(self.uniques[v])
+        
+        # iterate over the values until the most superficial values are empty
+        for v in self.var_order:
+            if v not in group_by:
+                shallowest = v
+                break
+        while len(iter_vars[shallowest])>0:
+            # Get list of filenames and return as iterator
+            iter_files = []
+            iter_files = get_matching(self.files,self.var_order,**{key.upper():iter_vars[key][0] for key in iter_vars.keys()})
+            if len(iter_files)>0:
+                yield iter_files
+
+            # Delete last iteration indices
+            for v in reversed(self.var_order):
+                if v in group_by or v.upper() in kwargs.keys():
+                    continue
+                del iter_vars[v][0]
+                if len(iter_vars[v])>0:
+                    break
+                elif v == shallowest:
+                    break
+                iter_vars[v] = copy.deepcopy(self.uniques[v])
