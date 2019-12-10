@@ -49,6 +49,10 @@ def load_csv(fpath):
             if data[fname][0] == 'F':
                 cnames.append([fname,ind])
     
+    # If data is not coded, initialize all columns
+    if not is_coded:
+        cnames = data.columns
+    
     # Load the data
     if is_coded:
         data = pandas.read_csv(fpath,skiprows=[1],usecols=cnames)
@@ -86,6 +90,8 @@ def bin_data(data,column_names):
 
     # Transform data into bin positions for fast binning
     data = ((data - bin_stats['min'])/column_bin_size).apply(np.floor)
+    data_ind = pandas.notnull(data)  # Handle NaN values
+    data[~data_ind] = 255          # Handle NaN values
     data = data.astype(np.uint16) # cast to save memory
     data[data==200] = 199         # in case of numerical precision issues
 
@@ -111,10 +117,22 @@ def bin_data(data,column_names):
 
         for feat2 in range(feat1+1,nfeats):
             name2 = column_names[feat2]
-            feat2_sort = np.sort(feat1_tf + data[name2])     # sort linear matrix indices
+            
+            # Remove all NaN values
+            feat2_tf = data[name2]
+            feat2_tf = feat2_tf[data_ind[name1] & data_ind[name2]]
+            
+            if feat2_tf.size<=1:
+                continue
+            
+            # sort linear matrix indices
+            feat2_sort = np.sort(feat1_tf[data_ind[name1] & data_ind[name2]] + feat2_tf)
+            
+            # Do math to get the indices
             ind2 = np.diff(feat2_sort)                       
             ind2 = np.nonzero(ind2)[0]                       # nonzeros are cumulative sum of all bin values
             ind2 = np.append(ind2,feat2_sort.size-1)
+            # print(feat2_sort.shape)
             rows = (feat2_sort[ind2]/200).astype(np.uint8)   # calculate row from linear index
             cols = np.mod(feat2_sort[ind2],200)              # calculate column from linear index
             counts = np.diff(ind2)                           # calculate the number of values in each bin
@@ -344,7 +362,7 @@ def metadata_to_graph_info(bins,outPath,outFile):
     of.mkdir(exist_ok=True)
     
     # Get metadata info from the bfio reader
-    ngraphs = bins.shape[0] * (bins.shape[0] - 1)/2
+    ngraphs = len(linear_index)
     rows = np.ceil(np.sqrt(ngraphs))
     cols = np.floor(np.sqrt(ngraphs))
     sizes = [cols*CHUNK_SIZE,rows*CHUNK_SIZE]
@@ -362,8 +380,7 @@ def metadata_to_graph_info(bins,outPath,outFile):
     info = {
         "scales": [scales],       # Will build scales belows
         "rows": rows,
-        "cols": cols,
-        "nfeats": bins.shape[0]
+        "cols": cols
     }
     
     # create the information for each scale
@@ -412,14 +429,17 @@ def _get_higher_res(S,info,outpath,out_file,X=None,Y=None):
     # If requesting from the lowest scale, then just generate the graph
     if S==int(info['scales'][0]['key']):
         index = int((int(Y[0]/512) + int(X[0]/512) * info['rows']))
-        image = gen_plot(linear_index[index][0],
-                         linear_index[index][1],
-                         bins,
-                         column_names,
-                         bin_stats,
-                         fig,
-                         ax,
-                         data)
+        if index>=len(linear_index):
+            image = np.ones((512,512,4),dtype=np.uint8) * 255
+        else:
+            image = gen_plot(linear_index[index][0],
+                             linear_index[index][1],
+                             bins,
+                             column_names,
+                             bin_stats,
+                             fig,
+                             ax,
+                             data)
     else:
         # Set the subgrid dimensions
         subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]]]
@@ -492,14 +512,17 @@ def _get_higher_res_par(S,info,outpath,out_file,X=None,Y=None):
     # If requesting from the lowest scale, then just generate the graph
     if S==int(info['scales'][0]['key']):
         index = (int(Y[0]/512) + int(X[0]/512) * info['rows'])
-        image = gen_plot(linear_index[index][0],
-                         linear_index[index][1],
-                         bins,
-                         column_names,
-                         bin_stats,
-                         fig,
-                         ax,
-                         data)
+        if index>=len(linear_index):
+            image = np.ones((512,512,4),dtype=np.uint8) * 255
+        else:
+            image = gen_plot(linear_index[index][0],
+                             linear_index[index][1],
+                             bins,
+                             column_names,
+                             bin_stats,
+                             fig,
+                             ax,
+                             data)
     else:
         # Set the subgrid dimensions
         subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]]]
