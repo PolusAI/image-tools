@@ -1,0 +1,63 @@
+{
+    "name": "Montage",
+    "version": "0.1.0",
+    "title": "Montage",
+    "description": "Advanced montaging plugin.",
+    "author": "Nick Schaub (nick.schaub@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-montage-plugin:0.1.0",
+    "inputs": [
+      {
+        "name": "filePattern",
+        "type": "string",
+        "description": "Filename pattern used to parse data",
+        "required": true
+      },
+      {
+        "name": "inpDir",
+        "type": "collection",
+        "description": "Input image collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "layout",
+        "type": "array",
+        "description": "Specify montage organization",
+        "required": false,
+        "options": {
+            "items": { 
+              "type": "string", 
+              "title": "Subgrid dimensions",
+              "widget": "string"
+          }
+        }
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "stitchingVector",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.filePattern",
+        "title": "Filename pattern",
+        "description": "Filename pattern used to parse data"
+      },
+      {
+        "key": "inputs.inpDir",
+        "title": "Input collection",
+        "description": "Input image collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.layout",
+        "title": "Grid layout",
+        "description": "Specify montage organization"
+      }
+    ]
+  }
