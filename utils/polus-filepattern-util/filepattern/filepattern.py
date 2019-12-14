@@ -252,6 +252,10 @@ def parse_directory(file_path,pattern,var_order='rtczyx'):
         
         # Parse filename values
         variables = parse_filename(f,pattern)
+
+        # If the filename doesn't match the patter, don't include it
+        if variables == None:
+            continue
         
         # Generate the layered dictionary using the specified ordering
         temp_dict = file_ind
@@ -273,7 +277,10 @@ def parse_directory(file_path,pattern,var_order='rtczyx'):
             for key, value in variables.items():
                 new_entry[key] = value
         temp_dict.append(new_entry)
-            
+
+    for key in uvals.keys():
+        uvals[key].sort()
+    
     return file_ind, uvals
 
 def get_matching(files,var_order,out_var=None,**kwargs):
@@ -299,10 +306,6 @@ def get_matching(files,var_order,out_var=None,**kwargs):
     Outputs:
         out_var - A list of all files matching the input values
     """
-    # If the input is a list, then no parsing took place
-    if isinstance(files,list):
-        return files
-
     # Initialize the output variable if needed
     if out_var == None:
         out_var = []
@@ -330,7 +333,6 @@ def get_matching(files,var_order,out_var=None,**kwargs):
         if v_i not in files.keys():
             continue
         get_matching(files[v_i],var_order[1:],out_var,**kwargs)
-
     return out_var
 
 class FilePattern():
@@ -347,7 +349,7 @@ class FilePattern():
     uniques = {}
 
     def __init__(self,file_path,pattern,var_order=None):
-        self.pattern = get_regex(pattern)
+        self.pattern, self.variables = get_regex(pattern)
 
         if var_order:
             val_variables(var_order)
@@ -389,7 +391,7 @@ class FilePattern():
         Outputs:
             iter_files - A list of all files matching the input values
         """
-        # If self.files, no parsing took place so just loop through the files
+        # If self.files is a list, no parsing took place so just loop through the files
         if isinstance(self.files,list):
             for f in self.files:
                 yield f
@@ -405,11 +407,19 @@ class FilePattern():
             else:
                 iter_vars[v] = copy.deepcopy(self.uniques[v])
         
-        # iterate over the values until the most superficial values are empty
+        # Find the shallowest variable in the dictionary structure
+        shallowest = None
         for v in self.var_order:
-            if v not in group_by:
+            if v not in group_by and self.uniques[v][0]>=0:
                 shallowest = v
                 break
+
+        # If shallowest is undefined, return all file names
+        if shallowest == None:
+            yield get_matching(self.files,self.var_order,**{key.upper():iter_vars[key][0] for key in iter_vars.keys()})
+            return
+
+        # Loop through every combination of files
         while len(iter_vars[shallowest])>0:
             # Get list of filenames and return as iterator
             iter_files = []
