@@ -8,9 +8,36 @@ import numpy as np
 import time
 
 SPACING = 10
+MULTIPLIER = 4
 STITCH_VARS = ['file','correlation','posX','posY','gridX','gridY'] # image stitching values
 
-def _get_rc_index(files,dims,layout):
+def _get_xy_index(files,dims,layout):
+    """ Get the x and y indices from a list of filename dictionaries
+
+    The FilePattern iterate function returns a list of dictionaries containing
+    a filename and variable values parsed from a filename. This function uses
+    that list of dictionaries and assigns them to a position in a grid. If dims
+    contains two characters, then the images are assigned an x-position based on
+    the first character and a y-position based on the second character. If dims
+    contains a single character, then this function assigns positions to images
+    so that they would fit into the smallest square possible.
+
+    The grid positions are stored in the file dictionaries based on the position
+    of the dims position in layout. The layout variable indicates all variables
+    at every grid layer, starting from the smallest and ending with the largest
+    grid. Using the notation from DeepZooms folder structure, the highest
+    resolution values are stored with the largest index. So, if dims is the first
+    element in the layout list and layout has 3 items in the list, then the 
+    grid positions will be stored in the file dictionary as '2_gridX' and
+    '2_gridY'.
+    
+    Inputs:
+        files - a list of dictionaries containing file information
+        dims - the dimensions by which the grid will be organized
+        layout - a list indicating the grid layout
+    Outputs:
+        grid_dims - Dimensions of the grid
+    """
 
     grid_dims = []
 
@@ -89,9 +116,11 @@ if __name__=="__main__":
     logger.info('outDir = {}'.format(outDir))
 
     # Set up the file pattern parser
+    logger.info('Parsing the file pattern...')
     fp = FilePattern(inpDir,pattern)
     
     # Parse the layout
+    logger.info('Parsing the layout...')
     regex, variables = get_regex(pattern)
     layout = layout.replace(' ','')
     layout = layout.split(',')
@@ -115,6 +144,7 @@ if __name__=="__main__":
             layout.append(v)
 
     # Start javabridge - used for bioformats to determine image sizes
+    logger.info('Starting the javabridge...')
     log_config = Path(__file__).parent.joinpath("log4j.properties")
     jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
 
@@ -124,6 +154,7 @@ if __name__=="__main__":
                          'tile_size':[[] for r in range(len(layout))]}  # dimensions of each tile in the grid
 
     # Get the size of each image
+    logger.info('Get the size of every image...')
     grid_width = 0
     grid_height = 0
     for files in fp.iterate(group_by=layout[0]):
@@ -132,6 +163,7 @@ if __name__=="__main__":
         layout_dimensions['grid_size'][len(layout)-1].append(grid_size)
 
         # Get the height and width of each image
+        start_time = time.time()
         for f in files:
             time_start = time.time()
             br = BioReader(f['file'])
@@ -142,12 +174,14 @@ if __name__=="__main__":
                 grid_width = f['width']
             if grid_height < f['height']:
                 grid_height = f['height']
+        logger.info('Got the size of {} images...'.format(len(files)))
 
         # Set the pixel and tile dimensions
         layout_dimensions['tile_size'][len(layout)-1].append([grid_width,grid_height])
         layout_dimensions['size'][len(layout)-1].append([grid_width*grid_size[0],grid_height*grid_size[1]])
     
     # No longer need the jvm, so get rid of it
+    logger.info('Finished getting image sizes, closing javabridge...')
     jutil.kill_vm()
 
     # Find the largest subgrid size for the lowest subgrid
@@ -167,6 +201,7 @@ if __name__=="__main__":
     layout_dimensions['tile_size'][len(layout)-1] = [tile_size[0] + SPACING, tile_size[1] + SPACING]
     layout_dimensions['size'][len(layout)-1] = [layout_dimensions['grid_size'][len(layout)-1][0] * layout_dimensions['tile_size'][len(layout)-1][0],
                                                 layout_dimensions['grid_size'][len(layout)-1][1] * layout_dimensions['tile_size'][len(layout)-1][1]]
+    logger.info('Grid size for layer ({}): {}'.format(layout[0],grid_size))
 
     # Build the rest of the subgrid indexes
     for i in range(1,len(layout)):
@@ -187,11 +222,13 @@ if __name__=="__main__":
             if g[1] > grid_size[1]:
                 grid_size[1] = g[1]
         layout_dimensions['grid_size'][index] = grid_size
-        layout_dimensions['tile_size'][index] = [layout_dimensions['tile_size'][index][0] + (2**i) * SPACING, layout_dimensions['tile_size'][index][1] + (2**i) * SPACING]
+        layout_dimensions['tile_size'][index] = [layout_dimensions['tile_size'][index][0] + (MULTIPLIER**i) * SPACING, layout_dimensions['tile_size'][index][1] + (MULTIPLIER**i) * SPACING]
         layout_dimensions['size'][len(layout)-1] = [layout_dimensions['grid_size'][index][0] * layout_dimensions['tile_size'][index][0],
                                                     layout_dimensions['grid_size'][index][1] * layout_dimensions['tile_size'][index][1]]
+        logger.info('Grid size for layer ({}): {}'.format(layout[i],grid_size))
 
     # Build stitching vector
+    logger.info('Building the stitching vector....')
     fpath = str(Path(outDir).joinpath("img-global-positions-1.txt").absolute())
     max_dim = len(layout_dimensions['grid_size'])-1
     with open(fpath,'w') as fw:
@@ -221,3 +258,5 @@ if __name__=="__main__":
                                                                                         posY,
                                                                                         gridX,
                                                                                         gridY))
+
+    logger.info('Done!')
