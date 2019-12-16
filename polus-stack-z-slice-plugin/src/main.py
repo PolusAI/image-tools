@@ -66,7 +66,7 @@ if __name__ == "__main__":
                         ys.sort() # sorted list of y-positions
                         for y in ys:
                             # If there are num_cores - 1 processes running, wait until one finishes
-                            if len(processes) >= multiprocessing.cpu_count()-1:
+                            if len(processes) >= multiprocessing.cpu_count()-1 and len(processes) > 0:
                                 free_process = -1
                                 while free_process<0:
                                     for process in range(len(processes)):
@@ -98,7 +98,7 @@ if __name__ == "__main__":
                     ps.sort()
                     for p in ps:
                         # If there are num_cores - 1 processes running, wait until one finishes
-                        if len(processes) >= multiprocessing.cpu_count()-1:
+                        if len(processes) >= multiprocessing.cpu_count()-1 and len(processes) > 0:
                             free_process = -1
                             while free_process<0:
                                 for process in range(len(processes)):
