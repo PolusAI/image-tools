@@ -364,7 +364,7 @@ def metadata_to_graph_info(bins,outPath,outFile):
     # Get metadata info from the bfio reader
     ngraphs = len(linear_index)
     rows = np.ceil(np.sqrt(ngraphs))
-    cols = np.floor(np.sqrt(ngraphs))
+    cols = np.round(np.sqrt(ngraphs))
     sizes = [cols*CHUNK_SIZE,rows*CHUNK_SIZE]
     
     # Calculate the number of pyramid levels
