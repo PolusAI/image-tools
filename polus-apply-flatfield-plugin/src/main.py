@@ -144,6 +144,10 @@ if __name__=="__main__":
         process_timer.append(time.time())
         processes.append(subprocess.Popen(pstring,shell=True))
 
+    # If the process generator finishes and no processes were generated, throw an error so an empty image collection isn't generated
+    if pnum==0:
+        ValueError("No processes were generated. This could mean no brightfield images were found using the specified filepattern.")
+
     # Wait for all processes to finish
     while len(processes)>0:
         free_process = -1
