@@ -19,5 +19,6 @@ This plugin takes one input argument and one output argument:
 
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
-{% for inp,val in cookiecutter._inputs|dictsort %}| `--{{ inp }}` | {{ val.description }} | Input | {{ val.type }} |{% endfor %}
-{% for out,val in cookiecutter._outputs|dictsort %}| `--{{ out }}` | {{ val.description }} | Output | {{ val.type }} |{% endfor %}
+{% for inp,val in cookiecutter._inputs|dictsort %}| `--{{ inp }}` | {{ val.description }} | Input | {{ val.type }} |
+{% endfor %}{% for out,val in cookiecutter._outputs|dictsort %}| `--{{ out }}` | {{ val.description }} | Output | {{ val.type }} |
+{% endfor %}

@@ -14,7 +14,7 @@
         "name": "{{ inp }}",
         "type": "{{ val.type }}",
         "description": "{{ val.description }}",
-        "required": {{ val.required }}
+        "required": {{ val.required.lower() }}
       }{% if not loop.last %},{% endif %}{% endfor %}
     ],
     "outputs": [{% for out,val in cookiecutter._outputs|dictsort %}
