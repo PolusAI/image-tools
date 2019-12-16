@@ -350,6 +350,7 @@ class FilePattern():
 
     def __init__(self,file_path,pattern,var_order=None):
         self.pattern, self.variables = get_regex(pattern)
+        self.path = file_path
 
         if var_order:
             val_variables(var_order)
@@ -403,14 +404,19 @@ class FilePattern():
             if v in group_by:
                 continue
             elif v.upper() in kwargs.keys():
-                iter_vars[v] = kwargs[v]
+                if isinstance(kwargs[v.upper()],list):
+                    iter_vars[v] = copy.deepcopy(kwargs[v.upper()])
+                else:
+                    iter_vars[v] = [kwargs[v.upper()]]
             else:
                 iter_vars[v] = copy.deepcopy(self.uniques[v])
         
         # Find the shallowest variable in the dictionary structure
         shallowest = None
-        for v in self.var_order:
-            if v not in group_by and self.uniques[v][0]>=0:
+        for v in iter_vars.keys():
+            if -1 in iter_vars[v] and len(iter_vars[v]):
+                continue
+            else:
                 shallowest = v
                 break
 
@@ -429,7 +435,7 @@ class FilePattern():
 
             # Delete last iteration indices
             for v in reversed(self.var_order):
-                if v in group_by or v.upper() in kwargs.keys():
+                if v in group_by:
                     continue
                 del iter_vars[v][0]
                 if len(iter_vars[v])>0:
