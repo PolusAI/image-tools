@@ -14,7 +14,7 @@ In addition to the position variables (both `x` and `y`, or `p`), the only other
 
 ## Montage Layout
 
-The montage layout is specified by an array of strings. Each element in the array specifies the variables from the filename pattern that are used in every subgrid, starting from the most granular subgrid to the largest grid. This means that if the filename pattern is `filename_{xxx}_{yyy}_{ttt}.ome.tif` and the input array is `x,y,t`, this means that the images with the same `y` and `t` values but different `x` values are placed next to each other in a grid of images. Then, each grid of images is placed in another grid `t` is constant but `y` changes. Finally, all subgrids are placed into a grid according to `t`.
+The montage layout is specified by an array of strings. Each element in the array specifies the variables from the filename pattern that are used in every subgrid, starting from the most granular subgrid to the largest grid. This means that if the filename pattern is `filename_{xxx}_{yyy}_{ttt}.ome.tif` and the input array is `x,y,t`, this means that the images with the same `y` and `t` values but different `x` values are placed next to each other in a grid of images. Then, each grid of images is placed in another grid where `t` is constant but `y` changes. Finally, all subgrids are placed into a grid according to `t`.
 
 Each element in the layout array must contain one or two variables from a filename pattern. For example, if the filename pattern is `filename_{xxx}_{yyy}_{ttt}.ome.tif`, then a layout array could be `xy,t`. When variables are groups together, images are placed in the grid according to the variable values with one variable assigning the x-position and the other assigning the y-position. In the case of input layout `xy,t`, the smallest grid will place images with the same `t` value into a grid where the `x` variable indicating the x-position in the grid and the `y` variabled indicating the y-position. If the order of the variables was flipped (`yx`), then the positions of images would be transposed. There are no restrictions on which variables can be placed together, so it would be possible to have `xt,y` as a layout array.
 
@@ -35,7 +35,7 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-This plugin takes one input argument and one output argument:
+There are three input arguments and one output argument:
 
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|

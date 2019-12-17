@@ -1,11 +1,6 @@
-import argparse, logging
-from bfio import BioReader
+import argparse, logging, time, imagesize, math
 from pathlib import Path
 from filepattern import FilePattern, get_regex, VARIABLES
-import javabridge as jutil
-import bioformats
-import numpy as np
-import time
 
 SPACING = 10
 MULTIPLIER = 4
@@ -66,10 +61,10 @@ def _get_xy_index(files,dims,layout):
     else:
         # determine number of rows and columns
         pos = [f[dims[0]] for f in files]
-        pos = np.unique(pos).tolist()
+        pos = list(set(pos))
         pos_min = min(pos)
-        col_max = int(np.ceil(np.sqrt(len(pos))))
-        row_max = int(np.round(np.sqrt(len(pos))))
+        col_max = int(math.ceil(math.sqrt(len(pos))))
+        row_max = int(round(math.sqrt(len(pos))))
         grid_dims.append(row_max)
         grid_dims.append(col_max)
 
@@ -80,7 +75,7 @@ def _get_xy_index(files,dims,layout):
                 break
             index -= 1
         for f in files:
-            f[str(index) + '_gridX'] = int(np.mod(f[dims[0]]-pos_min,col_max))
+            f[str(index) + '_gridX'] = int((f[dims[0]]-pos_min) % col_max)
             f[str(index) + '_gridY'] = int((f[dims[0]]-pos_min)//col_max)
         
     return grid_dims
@@ -143,11 +138,6 @@ if __name__=="__main__":
         if not is_defined:
             layout.append(v)
 
-    # Start javabridge - used for bioformats to determine image sizes
-    logger.info('Starting the javabridge...')
-    log_config = Path(__file__).parent.joinpath("log4j.properties")
-    jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
-
     # Layout dimensions, used to calculate positions later on
     layout_dimensions = {'grid_size':[[] for r in range(len(layout))],  # number of tiles in each dimension in the subgrid
                          'size':[[] for r in range(len(layout))],       # total size of subgrid in pixels
@@ -159,16 +149,12 @@ if __name__=="__main__":
     grid_height = 0
     for files in fp.iterate(group_by=layout[0]):
         # Determine number of rows and columns in the smallest subgrid
-        grid_size = _get_rc_index(files,layout[0],layout)
+        grid_size = _get_xy_index(files,layout[0],layout)
         layout_dimensions['grid_size'][len(layout)-1].append(grid_size)
 
         # Get the height and width of each image
-        start_time = time.time()
         for f in files:
-            time_start = time.time()
-            br = BioReader(f['file'])
-            f['width'] = br.num_x()
-            f['height'] = br.num_y()
+            f['width'], f['height'] = imagesize.get(f['file'])
 
             if grid_width < f['width']:
                 grid_width = f['width']
@@ -179,10 +165,6 @@ if __name__=="__main__":
         # Set the pixel and tile dimensions
         layout_dimensions['tile_size'][len(layout)-1].append([grid_width,grid_height])
         layout_dimensions['size'][len(layout)-1].append([grid_width*grid_size[0],grid_height*grid_size[1]])
-    
-    # No longer need the jvm, so get rid of it
-    logger.info('Finished getting image sizes, closing javabridge...')
-    jutil.kill_vm()
 
     # Find the largest subgrid size for the lowest subgrid
     grid_size = [0,0]
@@ -211,7 +193,7 @@ if __name__=="__main__":
         
         for files in fp.iterate(group_by=''.join(layout[:i+1])):
             # determine number of rows and columns in the current subgrid
-            grid_size = _get_rc_index(files,layout[i],layout)
+            grid_size = _get_xy_index(files,layout[i],layout)
             layout_dimensions['grid_size'][index].append(grid_size)
 
         # Get the current subgrid size
