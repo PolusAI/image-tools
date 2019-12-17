@@ -12,7 +12,7 @@
     "inputs": [
       {
         "name": "inpDir",
-        "type": "collection",
+        "type": "csvCollection",
         "description": "Input image collection to be processed by this plugin",
         "required": true
       },
