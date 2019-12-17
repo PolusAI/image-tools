@@ -1,0 +1,46 @@
+{
+    "name": "CSV Merger",
+    "version": "0.1.0",
+    "title": "CSV Merger",
+    "description": "Merge all csv files in a csv collection into a single csv file.",
+    "author": "Nick Schaub (nick.schaub@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-csv-merger-plugin:0.1.0",
+    "inputs": [
+      {
+        "name": "inpDir",
+        "type": "collection",
+        "description": "Input image collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "stripExtension",
+        "type": "boolean",
+        "description": "Should csv be removed from the filename when indicating which file a row in a csv file came from?",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "csvCollection",
+        "description": "Output csv file"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.inpDir",
+        "title": "Input collection",
+        "description": "Input image collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.stripExtension",
+        "title": "Remove CSV Extension",
+        "description": "Should csv be removed from the filename when indicating which file a row in a csv file came from?",
+        "default": true
+      }
+    ]
+  }
