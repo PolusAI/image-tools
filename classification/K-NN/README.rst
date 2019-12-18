@@ -6,6 +6,24 @@ Please consider the following instruction for the execution of K-NN Code
 for Shared-Memory systems. The full description of the code is available 
 `Here <https://labshare.atlassian.net/wiki/spaces/WIPP/pages/699039829/K-NN+Implementations+in+C+>`_.
 
+------------------------
+Installing Boost Library
+------------------------
+
+Both the K-NN codes for Shared-Memory and Distributed-Memory use Boost library for mapping data into memory and reading from the command line. The steps for installing
+ Boost library are displayed below.
+ 
+.. code:: bash
+    
+    wget https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
+    tar xfz boost_1_71_0.tar.gz 
+    cd boost_1_71_0/
+    ./bootstrap.sh
+    ./b2
+    export LD_LIBRARY_PATH=currentpath/stage/lib:$LD_LIBRARY_PATH
+
+It is recommended to include the last line in the above into .bashrc file at home directory. 
+
 -----------------
 Runtime Arguments
 -----------------
@@ -13,15 +31,24 @@ Runtime Arguments
 The code requires 6 parameters as the input that are listed in order below.
 
 1- ``filePath``: The full path to the input csv file containig the dataset.
-2- ``N``: Size of input dataset without the header (i.e.(#Rows in input dataset)-1).
-3- ``Dim``: Dimension of input dataset (#Columns)
-4- ``K``: the desired number of Nearest Neighbours to be computed.
-5- ``sampleRate``: the rate at which we do sampling. This parameter plays a key role
+2- ``K``: The desired number of Nearest Neighbours to be computed.
+3- ``sampleRate``: The rate at which we do sampling. This parameter plays a key role
    in the performance. This parameter is a trades-off between the performance 
    and the accuracy of the results. Values closer to 1 provides more accurate
    results but the execution instead takes longer.    
-6- ``convThreshold``: An integer that controls the convergence of the model. A fixed
+4- ``convThreshold``: An integer that controls the convergence of the model. A fixed
    integer is used here instead of delta*N*K that was given in the paper.  
+5- ``colIndex1`` and ``colIndex2`` (Optional): The index of columns from the input csv file where raw data exists continuously in between. If these two arguments were left blank, the code assumes that the entire input csv file is raw data and automatically computes the number of columns in the input csv file. The numbering of these 2 indices begin from 1. Please note that the code assumes that the first line in the input csv file is the header.
+
+-----------
+The Outputs
+-----------
+
+The code produces the following output files:
+
+1- ``KNN_Indices.csv``: The indices of K-NNs for the entire dataset. The order of data here is the same as the order of data at the input csv file.
+2- ``KNN_Distances.csv``: The corresponding distances of K-NNs which was saved at KNN_Indices.csv.
+3- ``Setting.txt``: The logging file containing the error and informational messages. 
 
 --------------------------------
 An Example of Executing the code
@@ -30,18 +57,15 @@ An Example of Executing the code
 .. code:: bash
 
     ulimit -s unlimited
-    g++ -O2 KNN_Serial_Code.cpp -o a.out
-    time ./a.out /home/K-NN_Implementation/Dataset.csv 37615 33 15 0.8 5
-
+    g++ -I/Path_To_Boost_Library/boost_1_71_0 KNN_Serial_Code.cpp -o a.out -L/Path_To_Boost_Library/boost_1_71_0/stage/lib -lboost_iostreams -O2 
+    time ./a.out /home/K-NN_Implementation/Dataset.csv 15 0.8 5
+    time ./a.out /home/K-NN_Implementation/Dataset.csv 15 0.8 5 3 26
+    
 ---------------------------
 An Advise About Performance
 ---------------------------
-2 parameters of sampleRate and largestDistance have significant impact on 
-the performance. It is advised that their exact values to be determined for
-every project. If the largest possible distance between pairs of datapoints
-is much smaller than the pre-set value of largestDistance, it is highly 
-recommended to update this parameter with the largest possible distance. 
 
+The parameter sampleRate has a significant impact on the performance. It is advised that its optimal value to be determined for every project. 
 
 ========================================
 K-NN Code for Distributed-Memory Systems
@@ -67,24 +91,6 @@ Also, the execution performance has been improved by using OpenMP directives (mu
 .. code:: bash
     export OMP_NUM_THREADS=2
 
-------------------------
-Installing Boost Library
-------------------------
-
-The code uses Boost library for mapping data into memory. The steps for installing
- Boost library are displayed below.
- 
-.. code:: bash
-    
-    wget https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
-    tar xfz boost_1_71_0.tar.gz 
-    cd boost_1_71_0/
-    ./bootstrap.sh
-    ./b2
-    export LD_LIBRARY_PATH=currentpath/stage/lib:$LD_LIBRARY_PATH
-
-It is recommended to include the last line in the above into .bashrc file at home directory. 
-
 --------------------------------
 An Example of Executing the code
 --------------------------------
@@ -103,8 +109,7 @@ Description of the Other Important Parameters of the Code
 The code also has a few other parameters (listed below) that are a a part of the Kd Tree design. 
 These parameters were initialized to the values suggested in the referencing paper (Patwary et al., 2016). 
 For the complicated cases, these values might need to be changed for the optimized performance.     
-    
-  
+ 
 1- ``globalKdTreeSamples``: The number of data sampled by each processor to collaboratively compute dimensions with the highest variability.
 2- ``globalKdTreeSamplesMedian``: The number of data sampled by each processor to collaboratively compute the median of the chosen dimension for each splitting node within the global Kd Tree.
 3- ``Parallel_IO``: A flag that defines if the input csv file can be read in parallel by all the processors. 
