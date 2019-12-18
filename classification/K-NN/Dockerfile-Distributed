@@ -1,13 +1,11 @@
 FROM ubuntu:latest
 
-RUN apt-get -y update && apt-get install -y
-RUN apt-get -y install g++
+RUN apt-get -y update && apt-get -y install g++ make wget
 RUN mkdir -p /home/DistributedKNN
 
 COPY . /home/DistributedKNN
 WORKDIR /home/DistributedKNN
 
-RUN apt-get -y install make wget
 RUN wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.0.tar.gz
 RUN tar xfz openmpi-4.0.0.tar.gz
 RUN rm openmpi-4.0.0.tar.gz
@@ -27,7 +25,6 @@ RUN ./b2
 ENV LD_LIBRARY_PATH="/home/DistributedKNN/boost_1_71_0/stage/lib:${LD_LIBRARY_PATH}"
 
 WORKDIR /home/DistributedKNN
-RUN ulimit -s unlimited
 RUN mpicxx -I/home/DistributedKNN/boost_1_71_0 KNN_Distributed_code-OpenMP.cpp -o output.exe -L/home/DistributedKNN/boost_1_71_0/stage/lib -lboost_iostreams -O2 -fopenmp
 ENV OMP_NUM_THREADS=2
 CMD ["mpirun","-np","1","./output.exe","inputfile.csv","165","9"]

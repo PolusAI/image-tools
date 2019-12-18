@@ -2,22 +2,29 @@
 FROM ubuntu:latest
  
 # Update apps on the base image
-RUN apt-get -y update && apt-get install -y
+RUN apt-get -y update && apt-get install -y g++ wget make
  
-# Install the compiler
-RUN apt-get -y install g++
-
 #Create a new directory
-RUN mkdir -p /usr/src/dataset
+RUN mkdir -p /home/SharedKNN
  
 # Copy the current folder which contains C++ source code to the Docker image under /usr/src
-COPY . /usr/src/dataset
+COPY . /home/SharedKNN
  
 # Specify the working directory
-WORKDIR /usr/src/dataset
+WORKDIR /home/SharedKNN
  
-# Use Clang to compile the Test.cpp source file
-RUN g++ -o Out.exe KNN_Serial_Code.cpp -O2
+# Install Boost Library 
+RUN wget https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
+RUN tar xfz boost_1_71_0.tar.gz 
+RUN rm boost_1_71_0.tar.gz
+WORKDIR /home/SharedKNN/boost_1_71_0
+RUN ./bootstrap.sh
+RUN ./b2
+ENV LD_LIBRARY_PATH="/home/SharedKNN/boost_1_71_0/stage/lib:${LD_LIBRARY_PATH}" 
+
+# Use g++ to compile the source file 
+WORKDIR /home/SharedKNN
+RUN g++ -I/home/SharedKNN/boost_1_71_0 KNN_Serial_Code.cpp -O2 -o Out.exe -L/home/SharedKNN/boost_1_71_0/stage/lib -lboost_iostreams
  
 # Run the output program from the previous step
-CMD ["time ./Out.exe 400_All.csv 250774 165 15 0.8 5"]
+ENTRYPOINT ["time ./Out.exe 400_All.csv 15 0.8 5"]
