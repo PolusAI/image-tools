@@ -1,0 +1,56 @@
+{
+    "name": "Feature Heatmap Pyramid",
+    "version": "0.1.0",
+    "title": "Feature Heatmap Pyramid",
+    "description": "Build a heatmap pyramid for features values in a csv as an overlay for another pyramid.",
+    "author": "Nick Schaub (nick.schaub@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-feature-heatmap-pyramid-plugin:0.1.0",
+    "inputs": [
+      {
+        "name": "features",
+        "type": "csvCollection",
+        "description": "CSV collection containing features",
+        "required": true
+      },
+      {
+        "name": "inpDir",
+        "type": "collection",
+        "description": "Input image collection used to build a pyramid that this plugin will make an overlay for",
+        "required": true
+      },
+      {
+        "name": "vector",
+        "type": "stitchingVector",
+        "description": "Stitching vector used to buld the image pyramid.",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "pyramid",
+        "description": "Heatmap overlay"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.features",
+        "title": "Features",
+        "description": "CSV collection containing features"
+      },
+      {
+        "key": "inputs.inpDir",
+        "title": "Input collection",
+        "description": "Input image collection used to build a pyramid that this plugin will make an overlay for"
+      },
+      {
+        "key": "inputs.vector",
+        "title": "Stitching Vector",
+        "description": "Stitching vector used to buld the image pyramid."
+      }
+    ]
+  }
