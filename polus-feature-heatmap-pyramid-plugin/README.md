@@ -22,5 +22,5 @@ This plugin takes three input arguments and two output arguments:
 | `--features` | CSV collection containing features | Input | csvCollection |
 | `--inpDir` | Input image collection used to build a pyramid that this plugin will make an overlay for | Input | collection |
 | `--vector` | Stitching vector used to buld the image pyramid. | Input | stitchingVector |
-| `--outImages` | Output image directory for heatmap images | Output | pyramid |
-| `--outVectors` | Output image directory for heatmap vectors | Output | pyramid |
+| `--outImages` | Output image directory for heatmap images | Output | collection |
+| `--outVectors` | Output image directory for heatmap vectors | Output | stitchingVector |

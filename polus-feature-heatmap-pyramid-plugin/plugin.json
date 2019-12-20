@@ -1,6 +1,6 @@
 {
     "name": "Feature Heatmap Pyramid",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "title": "Feature Heatmap Pyramid",
     "description": "Build a heatmap pyramid for features values in a csv as an overlay for another pyramid.",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-heatmap-pyramid-plugin:0.1.0",
+    "containerId": "labshare/polus-feature-heatmap-pyramid-plugin:0.1.1",
     "inputs": [
       {
         "name": "features",
@@ -31,9 +31,14 @@
     ],
     "outputs": [
       {
-        "name": "outDir",
-        "type": "pyramid",
-        "description": "Heatmap overlay"
+        "name": "outImages",
+        "type": "collection",
+        "description": "Heatmap images"
+      },
+      {
+        "name": "outVectors",
+        "type": "stitchingVector",
+        "description": "Heatmap images"
       }
     ],
     "ui": [
