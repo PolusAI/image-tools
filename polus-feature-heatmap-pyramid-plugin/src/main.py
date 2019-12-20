@@ -233,7 +233,7 @@ if __name__=="__main__":
     logger.info('Generating the heatmap...')
     file_name = '{}_{}_{}.ome.tif'
     for num,feat in enumerate(feature_list):
-        fpath = str(Path(outVectors).joinpath('-global-positions-' + str(num+1) + '.txt').absolute())
+        fpath = str(Path(outVectors).joinpath('img-global-positions-' + str(num+1) + '.txt').absolute())
         with open(fpath,'w') as fw:
             for f in fp.iterate():
                 if feat not in f.keys():
