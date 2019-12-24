@@ -16,6 +16,7 @@
 #include <boost/iostreams/stream.hpp>             
 #include <set>
 #include <omp.h>
+#include <iomanip>
 
 using namespace std;
 /**
@@ -43,12 +44,12 @@ bool sortinrev(const pair<double,int> &a,const pair<double,int> &b) {
 } 
 /**
  * Compute the variance of a sampled data over data dimensions and Sort dimensions according to their variability
- * @param  DataCounts  Number of total data from which we take the samples
- * @paramn  odeData0 Dataset containing the data available for sampling
+ * @param   DataCounts  Number of total data from which we take the samples
+ * @param   nodeData0 Dataset containing the data available for sampling
  * @param   featureCounts Number of features in dataset (equal to number of columns in the input csv file)
  * @param   world_size  Total number of MPI processors
  * @param	globalKdTreeSamples Number of Samples from dataset for computation here 	 
- * @return VectorGlobalSqrtSum A sorted pair containig the index of the dimensions with the highest variability 
+ * @return  VectorGlobalSqrtSum A sorted pair containig the index of the dimensions with the highest variability 
  */
 auto findMaxVarDims(int DataCounts,double **nodeData0, int featureCounts, int world_size, int globalKdTreeSamples) {
 	double samplingData[globalKdTreeSamples][featureCounts];
@@ -89,9 +90,9 @@ auto findMaxVarDims(int DataCounts,double **nodeData0, int featureCounts, int wo
 /**
  * Compute the distance between 2 data points within the same bucket
  * @param  index Index of the first data point
- * @paramn  index2 Index of the second data point
- * @param   mappedData2 2D array containing dataset	owned by each processor	 
- * @param   featureCounts Number of features in dataset (equal to number of columns in the input csv file)
+ * @param  index2 Index of the second data point
+ * @param  mappedData2 2D array containing dataset	owned by each processor	 
+ * @param  featureCounts Number of features in dataset (equal to number of columns in the input csv file)
  * @return sqrt(dist) The distance between 2 data points within the same bucket
  */
 double computeDistance (int index,int index2, double** mappedData2, int featureCounts){		
@@ -104,8 +105,8 @@ double computeDistance (int index,int index2, double** mappedData2, int featureC
 }
 /**
  * Compute the distance between 2 data points during querying
- * @param  index Index of the first data point
- * @paramn  i Index of the processor that has sent query
+ * @param   index Index of the first data point
+ * @param   i Index of the processor that has sent query
  * @param   jj Beginning index of the desired data point in the received data from the querying processor
  * @param   mappedData2 2D array containing dataset	owned by the current processor	 	 
  * @param   receivingPointCoordinates 2D array containing data received from the querying processors	 
@@ -123,7 +124,7 @@ double computeDistance2 (int index, int i, int jj, double** mappedData2, double*
 /**
  * Compute the median of data at a dividing node of the global Kd Tree
  * @param  maxVarDimension Index of the chosen dimension for computing median
- * @paramn  nodeDataIndex0 Vector containing the indices of data available at the dividing node
+ * @param  nodeDataIndex0 Vector containing the indices of data available at the dividing node
  * @param   globalKdTreeSamplesMedian Number of data sampled by each processor to collaboratively compute the median at the dividing node of the global Kd tree
  * @param   Epsilon The acceptable buffer in estimating the median	 
  * @param   world_size Total number of MPI processors
@@ -187,13 +188,16 @@ double globalFindMedian (int maxVarDimension, vector<int> nodeDataIndex0, int gl
 			accumulatedLeftCounts=globalleftCounts;
 			sampledDataValues.clear();
 			sampledDataValues=rightSampledDataValues;    
-			whileFlag=true;
 		}
-		else if (ratio > 0.5+Epsilon){
-			whileFlag=true;
-		}
+
 		++whileCount;
-		if (whileCount/10000*10000 == whileCount) cout<< "Too Many Trials for Global KD Tree Median, Processor =  = "<<world_rank<<endl;
+		// For diagnosis, the following error hints at the difficulty of finding the median 	
+		MPI_File logfile;
+		char line[1024];
+		if (whileCount/10000*10000 == whileCount) {
+			sprintf(line,"Too Many Trials for Global KD Tree Median, Processor = %d \n",world_rank);
+			MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
+		}
 	}
 }
 /**
@@ -337,19 +341,58 @@ void Build_Max_Heap2(int KNNCounts, double* receivingHeapArrayDistances2DCopy, i
 		Max_Heapify2(ii,receivingHeapArrayDistances2DCopy,receivingHeapArray2DCopy,KNNCounts);
 	}
 }
+
+
 /**
  * Main Function of the Code
  */			
 int main(int argc, char * const argv[]) {
-	/**
-	 * The three following arguments are passed to the code (in order) from the command line:
-	 * fileName is the full path to the input csv dataset
-	 * featureCounts is the number of columns in the input csv datastet (number of data dimensions)
-	 * KNNCounts is the number of K-NNs for each data point to be computed in this program
+	/**	
+	 * MPI Parallel Logfile
+	 */		
+	MPI_File logfile;
+	char line[1024];
+	/**	
+	 * Beginning MPI communications
+	 */			
+	MPI_Init(NULL, NULL);
+	/**	
+	 * world_size is defined here as total number of MPI processors
 	 */	
-	string fileName = argv[1]; 
-	const int featureCounts = atoi(argv[2]); 	
-	const int KNNCounts = atoi(argv[3]); 
+	int world_size;
+	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+	/**	
+	 * world_rank is defined here as the rank of MPI processors
+	 */	
+	int world_rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+	/**
+	 * The errors and informational messages are outputted to the log file 
+	 */	
+	MPI_File_open(MPI_COMM_WORLD, "Setting.txt", MPI_MODE_WRONLY | MPI_MODE_CREATE,MPI_INFO_NULL, &logfile);		
+	/**
+	 * The following arguments are passed to the code (in order) from the command line:
+	 * fileName is the full path to the input csv dataset
+	 * KNNCounts is the desired number of K-NNs for each data point to be computed in this code
+	 * featureCounts is the number of columns in the input csv datastet (number of data dimensions)
+	 */	
+	string fileName = argv[1]; 	
+	const int KNNCounts = atoi(argv[2]); 		
+
+	int featureCounts, colIndex1, colIndex2;
+	if (argc == 3) {
+		string cmd0="head -n 1 "+ fileName + " |tr '\\,' '\\n' |wc -l ";
+		featureCounts = stoi(exec(cmd0.c_str())); 
+	} else if (argc == 5) {
+		string cmd0="head -n 1 "+ fileName + " |tr '\\,' '\\n' |wc -l ";
+		featureCounts = stoi(exec(cmd0.c_str())); 
+		colIndex1 = atoi(argv[3]); 
+		colIndex2 = atoi(argv[4]); 
+	} else 	{
+		sprintf(line,"Wrong Input Arguments\n");
+		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE); 
+		return -1;
+	}
 	/**	
 	 * The following important parameters are used in the design of algorithm. Their values are
 	 * initialized according to the suggested values in the referencing paper.
@@ -369,63 +412,42 @@ int main(int argc, char * const argv[]) {
 	const int bucketSize=32;
 	const int estimatedExtraLayers=1;
 	/**	
-	 * The precision of cout outputs are defined here
-	 */	
-	cout.precision(17);
-	/**	
 	 * Seed for random number generation
 	 */	
-	srand(17);	
-	/**	
-	 * Beginning MPI communications
-	 */			
-	MPI_Init(NULL, NULL);
-	/**	
-	 * world_size is defined here as total number of MPI processors
-	 */	
-	int world_size;
-	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-	/**	
-	 * world_rank is defined here as the rank of MPI processors
-	 */	
-	int world_rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+	srand(17);
 	/**	
 	 * total number of MPI processors should be a power of 2 due to algorithm design for global Kd Tree.
 	 * Otherwise, output an error and exit the program
 	 */	
 	bool powerOfTwo = !(world_size == 0) && !(world_size & (world_size - 1));
 	if (powerOfTwo!=true) {
-		if (world_rank==0) cout <<"Number of Processors should be a power of 2"<<endl;
+		if (world_rank==0) {
+			sprintf(line,"Number of Processors should be a power of 2\n");
+			MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
+		}
 		MPI_Finalize();
 		return 0;
-	}
+	}	
+	int numericWidth=floor(log10(world_size) + 1);		
 	/**	
 	 * The master processor splits the input csv file as each processor could have its own non-overlapping set of input data
 	 */
 	if (world_rank==0) {
-		string cmd=string("split -n l/")+to_string(world_size)+" "+ fileName+" -d tmpFile --additional-suffix=.csv"; 
-		system(cmd.c_str());
+		string cmd=string("split -n l/")+to_string(world_size)+" "+ fileName+" -a "+to_string(numericWidth)+" -d tmpFile --additional-suffix=.csv"; 
+		int returnValue=system(cmd.c_str());
 	}
 	/**	
 	 * All procesors neeed to stop here until master processor returns
 	 */
 	MPI_Barrier(MPI_COMM_WORLD);
 	/**	
-	 * Each processor read its own set of data from a unique csv file named localFileName
-	 */
-	string localFileName;
-	if (world_size <11) localFileName="tmpFile0"+to_string(world_rank)+".csv";
-	else if (world_size <101) {
-		localFileName="tmpFile"+to_string(world_rank)+".csv";
-		if (world_rank<10) localFileName="tmpFile0"+to_string(world_rank)+".csv";
-	}	
-	else if (world_size <1001){
-		localFileName="tmpFile"+to_string(world_rank)+".csv";
-		if (world_rank<10) localFileName="tmpFile00"+to_string(world_rank)+".csv";
-		else if (world_rank>=10 && world_rank<100) localFileName="tmpFile0"+to_string(world_rank)+".csv";
-	}
-	else cout << "Error: Too Many Processes" << endl;
+	 * Each processor reads its own set of data from a unique csv file (localFileName)
+	 */	
+	int worldRankWidth=floor(log10(world_rank) + 1);
+	std::stringstream ss;
+	ss << std::setw(numericWidth-worldRankWidth) << std::setfill('0') << world_rank;
+	std::string s = ss.str();
+	string localFileName="tmpFile"+s+".csv";
 
 	ifstream infile;   
 	infile.open(localFileName); 
@@ -433,8 +455,8 @@ int main(int argc, char * const argv[]) {
 	 * Output error in case the localFileName was not opened for reading
 	 */	
 	if(infile.fail())  
-	{ 
-		cout << "error in opening the input file" << endl; 
+	{ 	sprintf(line,"error in opening the input file\n");
+		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
 		return 1; 
 	} 
 	/**	
@@ -469,28 +491,45 @@ int main(int argc, char * const argv[]) {
 		for (int j=0; j<i+1; ++j) {
 			tmpFileLineCountsArrayCum[i]+=tmpFileLineCountsArray[j];
 		}
-	}
+	}	
+	if (world_rank==0) {
+		sprintf(line,"The input csv file contains %d rows of raw data (w/o header) with %d columns\n",tmpFileLineCountsArrayCum[world_size-1],featureCounts);
+		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);		
+	}		
 	/**	
 	 * Parse data from csv file and store them in a 2D array
 	 */
 	double ** inputdata= new double*[tmpFileLineCounts];;
 	for (int i=0; i<tmpFileLineCounts; ++i) { inputdata[i] = new double[featureCounts]; }
 
-	for (int i=0; i<tmpFileLineCounts; ++i) {
-		string temp, temp2;
-		getline(infile, temp);	
-		for (int j=0; j<featureCounts; ++j){
-			temp2 =temp.substr(0, temp.find(","));
-			inputdata[i][j]=atof(temp2.c_str());
-			temp.erase(0, temp.find(",") + 1);
+	if (argc==3){
+		for (int i=0; i<tmpFileLineCounts; ++i) {
+			string temp, temp2;
+			getline(infile, temp);	
+			for (int j=0; j<featureCounts; ++j){
+				temp2 =temp.substr(0, temp.find(","));
+				inputdata[i][j]=atof(temp2.c_str());
+				temp.erase(0, temp.find(",") + 1);
+			}
 		}
+	} else {
+		for (int i=0; i<tmpFileLineCounts; ++i) {
+			string temp, temp2;
+			getline(infile, temp);	
+			for (int j=0; j<featureCounts; ++j){
+				temp2 =temp.substr(0, temp.find(","));
+				if (j >= colIndex1-1 && j < colIndex2) inputdata[i][j] = atof(temp2.c_str());
+				temp.erase(0, temp.find(",") + 1);
+			}
+		}	
 	}
+	if (argc == 5) featureCounts=colIndex2-colIndex1+1;
 	/**	
 	 * Remove the local input files as their data has been already parsed and read
 	 */
 	infile.close();
 	string cmd2= string("rm ")+localFileName;
-	system(cmd2.c_str());
+	int returnValue=system(cmd2.c_str());
 	/**	
 	 * Compute dimensions with the highest variance
 	 */	
@@ -508,7 +547,10 @@ int main(int argc, char * const argv[]) {
 	double medianNodeData;
 
 	while (nodeCounts!= world_size){ 
-		if (world_rank ==0) cout << "Constructing Global Kd Tree: Layer =" << nodesLayer<< endl;
+		if (world_rank ==0) {
+			sprintf(line,"Constructing Global Kd Tree: Layer = %d \n",nodesLayer);
+			MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
+		}
 		int indexMaxVarDim=VectorGlobalSqrtSum[nodesLayer].second; 
 
 		for (int i=0; i<nodeCounts; ++i){
@@ -536,7 +578,15 @@ int main(int argc, char * const argv[]) {
 			nodeDataIndex[i]=nextLayerNodeDataIndex[i];	
 			nextLayerNodeDataIndex[i].clear();	
 		}
-	}		
+	}	
+	
+	int indexMaxVarDim=VectorGlobalSqrtSum[nodesLayer].second; 
+	for (int i=0; i<nodeCounts; ++i){
+		int countLeft=0, countRight=0;
+		medianNodeData=globalFindMedian(indexMaxVarDim,nodeDataIndex[i], globalKdTreeSamplesMedian,Epsilon, world_size,world_rank, inputdata);						
+		globalMedianValuesforNodes.push_back(medianNodeData); 			
+	}
+	
 	/**	
 	 * Once the number of dividing nodes in the global Kd Tree became equal to the number of MPI processors
 	 * each processor will be responsible for the data of one dividing node
@@ -661,7 +711,10 @@ int main(int argc, char * const argv[]) {
 	 * Tree construction continues until all data is stored in the buckets of size bucketSize
 	 * or maxAllowedLayers is reached 
 	 */
-	if (world_rank==0) cout << "Constructing the Local Kd Tree"<<endl;
+	if (world_rank==0) {
+		sprintf(line,"Constructing the Local Kd Tree\n");
+		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
+	}
 
 	int layerNodeCounts=1;  
 	int localNodesLayer=0;
@@ -687,9 +740,12 @@ int main(int argc, char * const argv[]) {
 	 */
 	int estimatedLayers=int(log2(localNodeDataIndex[0].size()/bucketSize))+1;  
 	int maxAllowedLayers=estimatedLayers+estimatedExtraLayers;
-	if (maxAllowedLayers+nodesLayer > featureCounts) cout << "Error in Exceeding Dimensions, increase BucketSize"<<endl;    
+	if (maxAllowedLayers+nodesLayer > featureCounts){
+		sprintf(line,"Error in Exceeding Dimensions, increase BucketSize\n");
+		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
+	}
 
-	if (localNodeDataIndex[0].size() <= bucketSize) {isBucket.push_back(1); localFlag=false;}
+	if (localNodeDataIndex[0].size() <= bucketSize+1) {isBucket.push_back(1); localFlag=false;}  
 	else {isBucket.push_back(0);}	
 
 	while (localFlag){
@@ -705,10 +761,9 @@ int main(int argc, char * const argv[]) {
 			localNodeDataIndex.push_back(std::vector<int>());
 			localNodeDataIndex.push_back(std::vector<int>());
 
-			if (isBucket[globalID]==1) {isBucket.push_back(0); isBucket.push_back(0); continue;}
-			if (localNodeDataIndex[globalID].size()==0) {isBucket.push_back(0); isBucket.push_back(0); continue;}		
+			if (isBucket[globalID]==1) {isBucket.push_back(0); isBucket.push_back(0); localMedianNodeData.push_back(0); continue;}
+			if (localNodeDataIndex[globalID].size()==0) {isBucket.push_back(0); isBucket.push_back(0); localMedianNodeData.push_back(0); continue;}		
 			if (localKdTreeSamplesMedian > localNodeDataIndex[globalID].size()/2) localKdTreeSamplesMedian=localNodeDataIndex[globalID].size()/2;			
-
 			vector <double> sampledDataValues;	
 			for (int i=0; i< localKdTreeSamplesMedian; ++i){
 				int randomIndex=rand()%localNodeDataIndex[globalID].size();
@@ -723,7 +778,6 @@ int main(int argc, char * const argv[]) {
 			for (int j=0; j< localNodeDataIndex[globalID].size(); ++j){ 
 				int index0=localNodeDataIndex[globalID][j];
 				int index=indexLookupArray[index0];
-
 				if (mappedData[index][indexMaxVarDim] < localMedianNodeData[globalID]){ 
 					localNodeDataIndex[leftNodeGlobalIndex].push_back(index0);
 					++countLeft;
@@ -731,21 +785,34 @@ int main(int argc, char * const argv[]) {
 				else{
 					localNodeDataIndex[rightNodeGlobalIndex].push_back(index0);
 					++countRight;
-				}   
+				} 
 			}
 
-			if ((countLeft <= bucketSize && countLeft >0)|| ((localNodesLayer == maxAllowedLayers-1) && countLeft >0) ) {
+			if (countLeft ==1) {
+				localNodeDataIndex[rightNodeGlobalIndex].push_back(localNodeDataIndex[leftNodeGlobalIndex][0]);
+				localNodeDataIndex[leftNodeGlobalIndex].pop_back();
+				--countLeft;
+			}
+
+			if (countRight ==1) {
+				localNodeDataIndex[leftNodeGlobalIndex].push_back(localNodeDataIndex[rightNodeGlobalIndex][0]);
+				localNodeDataIndex[rightNodeGlobalIndex].pop_back();
+				--countRight;
+			}
+
+
+			if ((countLeft <= bucketSize+1 && countLeft >0)|| ((localNodesLayer == maxAllowedLayers-1) && countLeft >0) ) {  
 				isBucket.push_back(1);			
 
 				for (int j=0; j< localNodeDataIndex[leftNodeGlobalIndex].size(); ++j){ 
 					int index0=localNodeDataIndex[leftNodeGlobalIndex][j];
 					int index=indexLookupArray[index0];
-					nodeIndexofaPoint[index]=leftNodeGlobalIndex;		
+					nodeIndexofaPoint[index]=leftNodeGlobalIndex;							
 				} 
 			}
 			else {isBucket.push_back(0);}
 
-			if ((countRight <= bucketSize && countRight >0) || ((localNodesLayer == maxAllowedLayers-1) && countRight >0) ) {
+			if ((countRight <= bucketSize+1 && countRight >0) || ((localNodesLayer == maxAllowedLayers-1) && countRight >0) ) {  
 				isBucket.push_back(1);
 
 				for (int j=0; j< localNodeDataIndex[rightNodeGlobalIndex].size(); ++j){ 
@@ -759,8 +826,9 @@ int main(int argc, char * const argv[]) {
 
 		localFlag=false;
 		for (int i=0; i<layerNodeCounts; ++i){
-			int globalID=numberofNodeSofar + i;	    
-			if (isBucket[globalID]==0 && localNodeDataIndex[globalID].size()>0 ) {localFlag=true; break;}
+			int globalID=numberofNodeSofar + i;	   
+			if (isBucket[globalID]==0 && localNodeDataIndex[globalID].size()>0 ) {localFlag=true; break;
+			}
 		}
 		layerNodeCounts*=2;
 		++localNodesLayer;	
@@ -779,8 +847,10 @@ int main(int argc, char * const argv[]) {
 	 * To improve the performance, the data locality was considered for main arrays of localNodeDataIndex2 and mappedData2 
 	 * and the data within the same bucket arranged close to each other in the new arrays
 	 */
-	if (world_rank==0) cout <<"Computing K-NNs for the points within the Same Bucket"<<endl;	
-
+	if (world_rank==0) {
+		sprintf(line,"Computing K-NNs for the points within the Same Bucket\n");
+		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
+	}
 	int KNNIDsinBucketsFilledCounts[cnts];
 	int localIndexConvertor[cnts];
 	int counter=0;
@@ -812,7 +882,6 @@ int main(int argc, char * const argv[]) {
 		int pointID=localIndexConvertor[i];
 		int index=indexLookupArray[pointID]; 
 		nodeIndexofaPoint2[i]=nodeIndexofaPoint[index];
-
 		for (int j=0; j<featureCounts; ++j){
 			mappedData2[i][j]=mappedData[index][j];
 		}
@@ -829,16 +898,14 @@ int main(int argc, char * const argv[]) {
 	}
 
 	for (int i=FirstBucket; i< localNodeDataIndex2.size(); ++i){ 
-		if (isBucket[i] == 0) {continue;}
-
+		if (isBucket[i] == 0) {continue;}		
 		for (int j=0; j< localNodeDataIndex2[i].size()-1; ++j){ 
-			int index=localNodeDataIndex2[i][j];
-
+			int index=localNodeDataIndex2[i][j];		
 			for (int k=j+1; k<localNodeDataIndex2[i].size(); ++k){ 
-				int index2=localNodeDataIndex2[i][k];			
+				int index2=localNodeDataIndex2[i][k];		
 				int emptyIndex = KNNIDsinBucketsFilledCounts[index];
 				double dist=computeDistance(index,index2,mappedData2,featureCounts); 
-
+				
 				if  (emptyIndex < KNNCounts) {
 					KNNIDsinBuckets[index][emptyIndex]=localIndexConvertor[index2];                    
 					++KNNIDsinBucketsFilledCounts[index];                      
@@ -874,7 +941,10 @@ int main(int argc, char * const argv[]) {
 	 * A neighboring processor is selected if its distance from the given point is less than 
 	 * the maximum distance in the heap of that point (first entry of heap)
 	 */
-	if (world_rank==0) cout <<"Finding the Spatial Neighboring Processors"<<endl;	
+	if (world_rank==0) {
+		sprintf(line,"Finding the Spatial Neighboring Processors\n");
+		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
+	}
 
 	vector<int> ScatterVlocalNodeDataIndex[world_size];
 	vector<int> ScatterVKNNIDsinBucketsFilledCounts[world_size];
@@ -913,7 +983,7 @@ int main(int argc, char * const argv[]) {
 					int nodesLayer0=int(log2(nodeID+1));
 					int indexMaxVarDim=VectorGlobalSqrtSum[nodesLayer0].second;
 
-					if (dValue < rPrime){
+					if (dValue < rPrime){		
 						double dPrime= mappedData2[index1][indexMaxVarDim] - globalMedianValuesforNodes[nodeID];
 						if (dPrime < 0) { 
 							C1NodeID=2*nodeID+1; 
@@ -1062,17 +1132,19 @@ int main(int argc, char * const argv[]) {
 	 * the local Kd Tree of the neighboring processors identified above
 	 * This section is the implementation of Algorithm 1 in the referencing paper and is computationally the most expensive part of the code
 	 */
-	if (world_rank==0) cout<<"Beginning Algorithm-1 of the Paper"<<endl;
-
+	if (world_rank==0) {
+		sprintf(line,"Computing K-NNs for Queries\n");
+		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
+	}
 	/**	 
-	* C1NodeID is the closer child, and C2NodeID is the other child
-	*/
+	 * C1NodeID is the closer child, and C2NodeID is the other child
+	 */
 	int C1NodeID,C2NodeID;
 
 	for (int i=0; i<world_size; ++i){
-	    /**	
-	     * To improve the performance, multi-threading using OpenMP is implemented here
-	     */
+		/**	
+		 * To improve the performance, multi-threading using OpenMP is implemented here
+		 */
         #pragma omp parallel for private(C1NodeID,C2NodeID)
 		for (int j=0; j<receivingCountsMatrix[i]; ++j){
 
@@ -1081,9 +1153,9 @@ int main(int argc, char * const argv[]) {
 
 			double * receivingHeapArrayDistances2DCopy=new double[KNNCounts];
 			int * receivingHeapArray2DCopy=new int[KNNCounts];
-	        /**	
-	        * To improve the performance, 1D arrays receivingHeapArray2DCopy and receivingHeapArrayDistances2DCopy are used here
-	        */
+			/**	
+			 * To improve the performance, 1D arrays receivingHeapArray2DCopy and receivingHeapArrayDistances2DCopy are used here
+			 */
 			for (int k=0; k<KNNCounts; ++k){
 				receivingHeapArray2DCopy[k]=receivingHeapArray[i][j*KNNCounts+k];
 				receivingHeapArrayDistances2DCopy[k]=receivingHeapArrayDistances[i][j*KNNCounts+k];
@@ -1170,8 +1242,10 @@ int main(int argc, char * const argv[]) {
 	/**	
 	 * Now, Send the newly computed K-NNs from the above (Algorithm 1) to the original processor contained it
 	 */
-	if (world_rank==0) cout <<"Sending the Outputs of Algorithm-1 Back to the Original Node"<<endl;
-
+	if (world_rank==0) {
+		sprintf(line,"Sending the Outputs of Query Computations Back to the Original Node\n");
+		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
+	}
 	int sendbuffer4return[TotalReceiveCounts*KNNCounts];
 	double sendbuffer6return[TotalReceiveCounts*KNNCounts];
 
@@ -1218,29 +1292,38 @@ int main(int argc, char * const argv[]) {
 	 * received from the neighboring processors or was initially computed from the points within the same bucket
 	 * after sorting, choose only the desired number (KNNCounts) of K-NNs with the shortest distance 
 	 */
-	if (world_rank==0) cout<<"Preparing the Final Outputs"<<endl;
+	if (world_rank==0) {
+		sprintf(line,"Preparing the Final Outputs\n");
+		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
+	}
+
+	ofstream outputFileIndex,outputFileDistance;
+	string filename1= "KNN_Indices_"+to_string(world_rank)+".csv";
+	outputFileIndex.open(filename1);	
+	string filename2= "KNN_Distances_"+to_string(world_rank)+".csv";
+	outputFileDistance.open(filename2);
 
 	for (int i=0; i<cnts; ++i){
-	    /**	
-	    * Set container removes the duplicates and sort data accroding to their distance
-	    */
+		/**	
+		 * Set container removes the duplicates and sort data accroding to their distance
+		 */
 		set <pair<double,int>> setContainer;
 		int pointID=localIndexConvertor[i];
-	    /**	
-	    * Insert into Set container the K-NNs initially computed from the points within the same bucket
-	    */
+		/**	
+		 * Insert into Set container the K-NNs initially computed from the points within the same bucket
+		 */
 		for (int j=0; j<KNNCounts; ++j){
 			if (KNNIDsinBuckets[i][j] != -1) setContainer.insert(make_pair(KNNDistanceinBuckets[i][j],KNNIDsinBuckets[i][j]));
 		}
-	    /**	
-	    * Insert into Set container the K-NNs computed from the querying in the same processor
-	    */
+		/**	
+		 * Insert into Set container the K-NNs computed from the querying in the same processor
+		 */
 		for (int k=0; k<KNNCounts; ++k){
 			setContainer.insert(make_pair(originalNodereceivingHeapArrayDistances[world_rank][i*KNNCounts+k],originalNodereceivingHeapArray[world_rank][i*KNNCounts+k]));
 		} 
-	    /**	
-	    * Insert into Set container the K-NNs computed from the querying of the other neighboring processors
-	    */
+		/**	
+		 * Insert into Set container the K-NNs computed from the querying of the other neighboring processors
+		 */
 		for (int j=0; j<world_size-1; ++j){
 			int neighborID=NeighboringNodes[i][j];
 			if (neighborID == -1) continue;
@@ -1252,27 +1335,57 @@ int main(int argc, char * const argv[]) {
 				setContainer.insert(make_pair(originalNodereceivingHeapArrayDistances[neighborID][index*KNNCounts+k],originalNodereceivingHeapArray[neighborID][index*KNNCounts+k]));  
 			} 
 		}
-	    /**	
-	    * Output the results as sorted in the Set container
-	    */
+		/**	
+		 * Output the results as sorted in the Set container
+		 */
 		set <pair<double,int>>::iterator pairIt;
-		int countsofKNN=0;
-		for (pairIt=setContainer.begin(); pairIt!=setContainer.end(); ++pairIt){
-			if ((*pairIt).second==-1) continue;
-			//cout<<pointID<<"  "<<(*pairIt).first<<"    "<<(*pairIt).second<<endl; 
-			if (pointID==1190) cout<<pointID<<"  "<<(*pairIt).first<<"    "<<(*pairIt).second<<endl; 
-			++countsofKNN;
-			if (countsofKNN==KNNCounts) break;
+		pairIt=setContainer.begin();
+		int outputCounter=0;
+		for (int ii=0; ii<KNNCounts*2; ++ii){
+			if (outputCounter==KNNCounts) break;
+
+			if ((*pairIt).second==-1) {pairIt++; continue;}
+			if (outputCounter == 0) outputFileIndex<<pointID<<",";
+
+			if (outputCounter != KNNCounts-1) { outputFileIndex<<(*pairIt).second<<",";
+			} else {outputFileIndex<<(*pairIt).second<<endl;}
+
+			if (outputCounter == 0) outputFileDistance<<pointID<<",";
+
+			if (outputCounter != KNNCounts-1) { outputFileDistance<<(*pairIt).first<<",";
+			} else {outputFileDistance<<(*pairIt).first<<endl;}		
+			pairIt++;
+			outputCounter++;			
 		}
-		//cout<<endl;
-
 	} //loop cnts
-
 
 	delete[] receivingHeapArray[world_size];
 	delete[] receivingHeapArrayDistances[world_size];
 
-	MPI_Finalize();
+	outputFileIndex.close();
+	outputFileDistance.close();	
+	/**	
+	 * All procesors neeed to stop here until master processor returns
+	 */
+	MPI_Barrier(MPI_COMM_WORLD);
+	/**	
+	 * Concatenate the Outputs from various processors into a single file and remove the extra output files
+	 */	
+	
+	if (world_rank==0) {
+		string cmd4= string("cat KNN_Indices_*.csv > KNN_Indices.csv");
+		int returnValue=system(cmd4.c_str());	
+		string cmd5= string("cat KNN_Distances_*.csv > KNN_Distances.csv");
+		returnValue=system(cmd5.c_str());
+
+		string cmd6= string("rm KNN_Indices_*");
+		returnValue=system(cmd6.c_str());
+		string cmd7= string("rm KNN_Distances_*");
+		returnValue=system(cmd7.c_str());
+	}
+
+	MPI_File_close(&logfile);
+	MPI_Finalize();		
 	return 0;			
 }
 

@@ -350,12 +350,14 @@ int main(int argc, char * const argv[]) {
 		sort(aggregateResults.begin(), aggregateResults.end());	
 
 		for (int j=0; j<K; ++j){
-			outputFileIndex<<aggregateResults[j].second<<",";
+			if (j != K-1) {outputFileIndex<<aggregateResults[j].second<<",";}
+			else {outputFileIndex<<aggregateResults[j].second<<endl; }
 		}
 		outputFileIndex<<endl;
 
 		for (int j=0; j<K; ++j){
-			outputFileDistance<<aggregateResults[j].first<<",";
+			if (j != K-1) {outputFileDistance<<aggregateResults[j].first<<",";}
+			else {outputFileDistance<<aggregateResults[j].first<<endl; }
 		}
 		outputFileDistance<<endl;	
 	}

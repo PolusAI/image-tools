@@ -38,7 +38,7 @@ The code requires 6 parameters as the input that are listed in order below.
    results but the execution instead takes longer.    
 4- ``convThreshold``: An integer that controls the convergence of the model. A fixed
    integer is used here instead of delta*N*K that was given in the paper.  
-5- ``colIndex1`` and ``colIndex2`` (Optional): The index of columns from the input csv file where raw data exists continuously in between. If these two arguments were left blank, the code assumes that the entire input csv file is raw data and automatically computes the number of columns in the input csv file. The numbering of these 2 indices begin from 1. Please note that the code assumes that the first line in the input csv file is the header.
+5- ``colIndex1`` and ``colIndex2`` (Optional): The index of columns from the input csv file where raw data exists continuously in between. If these two arguments were left blank, the code assumes that the entire input csv file is raw data and automatically computes the number of columns in the input csv file. The numbering for these 2 indices begin from 1. Please note that the code assumes that the first line in the input csv file is the header.
 
 -----------
 The Outputs
@@ -79,12 +79,12 @@ for Distributed-Memory systems. The full description of the code is available
 Runtime Arguments
 -----------------
 
-The code requires 4 input parameters that are listed in the order below.
+The code requires the following input parameters that are listed in the order.
 
 1- ``Number of Processors``: Due to the design of global Kd Tree, the number of processors should be a power of 2 (1,2,4,8,16,...). 
 2- ``filePath``: The full path to the input csv file containig the raw dataset.
-3- ``featureCounts``: The dimension of the input dataset (#Columns in the filePath)
-4- ``KNNCounts``: The desired number of Nearest Neighbours to be computed.
+3- ``KNNCounts``: The desired number of Nearest Neighbours to be computed.
+4- ``colIndex1`` and ``colIndex2`` (Optional): The index of columns from the input csv file where raw data exists continuously in between. If these two arguments were left blank, the code assumes that the entire input csv file is raw data and automatically computes the number of columns in the input csv file. The numbering for these 2 indices begin from 1. Please note that the code assumes that the first line in the input csv file is the header.
 
 Also, the execution performance has been improved by using OpenMP directives (multi-threading) in addition to the current MPI directives (multi-node). The number of threads in the OpenMP parallelized region of the code is set using an environment variable as shown below: 
 
@@ -100,8 +100,19 @@ An Example of Executing the code
     ulimit -s unlimited
     export OMP_NUM_THREADS=2
     mpicxx -I/Path_To_Boost_Library/boost_1_71_0 KNN_Distributed_code-OpenMP.cpp -o output.exe -L/Path_To_Boost_Library/boost_1_71_0/stage/lib -lboost_iostreams -O2 -fopenmp
-    time mpirun -np 4 ./output.exe /fullPath/inputfile.csv 165 9
+    time mpirun -np 4 ./output.exe /fullPath/inputfile.csv 15
+    time mpirun -np 4 ./output.exe /fullPath/inputfile.csv 15 3 26
     
+-----------
+The Outputs
+-----------
+
+Similar to the shared memory KNN code, the distributed memory code produces the following output files:
+
+1- ``KNN_Indices.csv``: The indices of K-NNs for the entire dataset. The first entry of each row contains the index of that point according to the index from the input csv file.
+2- ``KNN_Distances.csv``: The corresponding distances of K-NNs which was saved at KNN_Indices.csv. The first entry of each row contains the index of that point according to the index from the input csv file.
+3- ``Setting.txt``: The logging file containing the error and informational messages. 
+   
 ---------------------------------------------------------
 Description of the Other Important Parameters of the Code
 ---------------------------------------------------------
