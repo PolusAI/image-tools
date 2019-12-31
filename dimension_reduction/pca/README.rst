@@ -14,7 +14,7 @@ computing on a subset of the dataset.
 Shared-Memory Systems Implementation
 ------------------------------------
 
-The code requires five input arguments as listed in order below.
+The code requires six input arguments as listed in order below.
 
 1- ``readOption``: This parameter is either 'direct' or 'mapping'. 'direct' 
                    represents the case where the entire data is brought to memory
@@ -22,12 +22,26 @@ The code requires five input arguments as listed in order below.
                    the memory and reading is performed through mapping. 
 2- ``deviceName``: This parameter defines the compute device and is either 'cpu' or 'cuda:0'. 
 3- ``applySignFlip``: If this parameter is set to 'yes' the sign of the projected data in PCs space is flipped.
-4- ``inputPath``: The full path to the input csv file which contains raw data.
+4- ``computeStdev``:  If this parameter is set to 'yes' the post-compute analysis will be performed on the PC axes 
+                       and the standard deviation of the projected data will be computed along PC axes (column 1) along with
+                       the ratio of (standard deviation for each axes)/(sum of standard deviations for all PC axes)*100 in (column 2)
+5- ``inputPath``: The full path to the input csv file which contains raw data.
                    In this file, the observations are stored in rows and the features 
                    in columns.
-5- ``outputPath``: The full path to the csv file where the projected data in PCs space 
+6- ``outputPath``: The full path to the csv file where the projected data in PCs space 
                    are saved. This argument is optional and the default path is the
-                   current directory with the file name PCA_Projected_Data_Final.csv
+                   current directory with the file name PCA_Projected_Data_Final.csv                
+                   
+The code produces the following outputs.
+
+1- ``outputPath.csv``: The output file where the projected data in PCs space are saved. 
+                       The name of this output csv file was inserted from the input argument and the default name is PCA_Projected_Data_Final.csv
+2- ``PCs.csv``:        The rows of this file represents the PC directions
+3- ``SingularValues.csv``:  The singular values which were derived from SVD decompisition  
+4- ``Setting.txt``:    The logging file containing the error and informational messages. 
+5- ``Stdev.csv``:      This file is produced only if the input argument of "computeStdev" is set to "yes". 
+                       This file contains 2 columns: the standard deviation of the projected data computed along PC axes (column 1) 
+                       and the ratio of (standard deviation for each axes)/(sum of standard deviations for all PC axes)*100 in (column 2)
                    
 --------------------------------------------
 Installing PyTorch for Shared-Memory Systems
@@ -36,9 +50,9 @@ The first step is to install conda as shown below.
 
 .. code:: bash
 
-    wget https://repo.anaconda.com/archive/Anaconda3-2019.03-Linux-x86_64.sh
-    chmod 755 Anaconda3-2019.03-Linux-x86_64.sh
-    ./Anaconda3-2019.03-Linux-x86_64.sh
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+    chmod 755 Miniconda3-latest-Linux-x86_64.sh
+    ./Miniconda3-latest-Linux-x86_64.sh
     conda create --name PyTorch_Shared Python=3.7.3 flask
     conda activate PyTorch_Shared 
     
@@ -61,7 +75,7 @@ Now, PyTorch can be exectued simply as illustrated in the following example.
 
 .. code:: bash               
             
-    python PCA_SVD_SharedMemory.py direct cpu yes /Path/input.csv /Path/output.csv
+    python PCA_SVD_SharedMemory.py direct cpu yes yes /Path/input.csv /Path/output.csv
                 
 -----------------------------------------
 Distributed-Memory Systems Implementation
