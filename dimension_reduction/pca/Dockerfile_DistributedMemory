@@ -1,24 +1,34 @@
 FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
-FROM continuumio/anaconda3
 
-RUN apt-get update -y  && \
-    apt-get install wget -y && \
-    apt-get install gcc g++ -y && \
-    apt-get install git -y
+ARG PYTHON_VERSION=3.7
+ARG CONDA_PYTHON_VERSION=3
+ARG CONDA_DIR=/opt/conda
+
+# Instal basic utilities
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git wget gcc g++ && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Instal Conda    
+ENV PATH $CONDA_DIR/bin:$PATH
+RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda$CONDA_PYTHON_VERSION-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
+echo 'export PATH=$CONDA_DIR/bin:$PATH' > /etc/profile.d/conda.sh && \
+    /bin/bash /tmp/miniconda.sh -b -p $CONDA_DIR && \
+    rm -rf /tmp/* && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /home/PCA
 WORKDIR /home/PCA
 COPY . .
 
-RUN conda install flask numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing               
+RUN conda install flask numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing pandas
 
 RUN git clone --recursive https://github.com/pytorch/pytorch
 WORKDIR pytorch
 
-RUN git submodule sync && \
-    git submodule update --init --recursive
-
-ENV NO_CUDA 1
+ENV USE_CUDA 0
 RUN conda install -c conda-forge openmpi
 
 ENV CMAKE_PREFIX_PATH ${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
@@ -26,4 +36,5 @@ ENV CMAKE_PREFIX_PATH ${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
 RUN python setup.py install
 
 WORKDIR /home/PCA
-CMD ["mpirun","-np","2","python","PCA_Cov_DistributedMemory.py","cpu","10.csv","output.csv"]
+RUN rm -rf pytorch
+ENTRYPOINT ["mpirun","-np","2","python","PCA_Cov_DistributedMemory.py","cpu","10.csv","output.csv"]

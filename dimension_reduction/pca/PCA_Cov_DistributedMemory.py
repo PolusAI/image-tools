@@ -13,6 +13,7 @@ import subprocess
 from subprocess import check_output
 import math
 import argparse
+import logging
 
 '''
 readInput reads the input file and returns it as a numpy 2D array
@@ -75,7 +76,7 @@ def Normalize(data):
     #compute Z-Score Normalization for local data 
     xNormalized=torch.sub(x,xMean[None,:])/xStd[None,:]
     #delete pytorch tensor for the local data 
-    del x
+    del x,xSum,xMean,xStd,xSquared,xCounts
     #return tensor of normalized data
     return xNormalized
     
@@ -91,6 +92,8 @@ def ComputePCA(xNormalized):
     covMatrix = torch.mul(covMatrix,coefficient)
     torch.distributed.all_reduce(covMatrix,op=dist.ReduceOp.SUM,async_op=False) 
     eigenValues, eigenVectors = torch.symeig(covMatrix, eigenvectors=True)
+    np.savetxt("eigenValues.csv",eigenValues.cpu().numpy(), delimiter=",") 
+    np.savetxt("eigenVectors.csv",eigenVectors.cpu().numpy(), delimiter=",") 
     return eigenVectors 
     
 '''
@@ -129,21 +132,22 @@ def init_processes(rank, size, backend='mpi'):
     startTime = datetime.now()
     TmpOutputData = readInput(rank,size)
     Duration = datetime.now() - startTime
-    print("Rank # "+str(rank)+ " says, it took "+str(Duration) + " for READING INPUT FILE") 
+    logging.info("Rank # "+str(rank)+ " says, it took "+str(Duration) + " for READING INPUT FILE") 
     startTime = datetime.now()
     TmpOutputNormalized = Normalize(TmpOutputData)
     TmpOutputEigenVectors = ComputePCA(TmpOutputNormalized)
     Duration = datetime.now() - startTime
-    print("Rank # "+str(rank)+ " says, it took "+str(Duration)+ " for COMPUTING PCA") 
+    logging.info("Rank # "+str(rank)+ " says, it took "+str(Duration)+ " for COMPUTING PCA") 
     startTime = datetime.now()
     Project_Data(TmpOutputNormalized,TmpOutputEigenVectors,rank,size)
     Duration = datetime.now() - startTime
-    print("Rank # "+str(rank) + " says, it took "+str(Duration)+ " for WRITING OUTPUTS")    
+    logging.info("Rank # "+str(rank) + " says, it took "+str(Duration)+ " for WRITING OUTPUTS")    
 
 '''
 Code begins from here 
 ''' 
 if __name__ == "__main__":
+    logging.basicConfig(filename="Setting.txt", level=logging.INFO)
     argparser = argparse.ArgumentParser()
     argparser.add_argument('deviceName', type=str)
     argparser.add_argument('inputPath', type=str)

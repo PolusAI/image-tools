@@ -98,6 +98,15 @@ An example of exectuing the code is given below. In this example, 2 processors w
 .. code:: bash
 mpirun -np 2 python PCA_Cov_DistributedMemory.py cpu /Path/input.csv /Path/output.csv
 
+
+The code produces the following outputs.
+
+1- ``outputPath.csv``: The output file where the projected data in PCs space are saved. 
+                       The name of this output csv file was inserted from the input argument and the default name is PCA_Projected_Data_Final.csv
+2- ``Setting.txt``:    The logging file containing the error and informational messages.  
+3- ``eigenValues.csv``:  The eigen values of covariance matrix ordered in ascending order.
+4- ``eigenVectors.csv``:  The corresponding eigen vectors of covariance matrix .                       
+
 -------------------------------------------------
 Installing PyTorch for Distributed-Memory Systems
 -------------------------------------------------
@@ -106,6 +115,8 @@ The first step is to install conda as shown below.
 .. code:: bash
 
     wget https://repo.anaconda.com/archive/Anaconda3-2019.03-Linux-x86_64.sh
+    chmod 755 Anaconda3-2019.03-Linux-x86_64.sh
+    ./Anaconda3-2019.03-Linux-x86_64.sh
     conda create --name PyTorch_Dist Python=3.7.3 flask
     conda activate PyTorch_Dist
 
@@ -114,14 +125,12 @@ Next, the MPI version of PyTorch is installed as follows.
 .. code:: bash
 
     #Install Dependencies in Conda:
-    conda install numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing pandas
+    conda install numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing pandas git
     #Install PyTorch:
     git clone --recursive https://github.com/pytorch/pytorch
     cd pytorch
-    git submodule sync
-    git submodule update --init --recursive
     #Install openmpi and PyTorch:
-    export NO_CUDA=1
+    export USE_CUDA=0
     conda install -c conda-forge openmpi
     export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
     python setup.py install >> output.txt 2>&1
