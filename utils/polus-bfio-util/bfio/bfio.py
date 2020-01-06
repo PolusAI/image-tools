@@ -28,20 +28,6 @@ def make_ome_tiff_writer_class():
         new_fn = jutil.make_new('loci/formats/out/OMETiffWriter', '()V')
         
         def __init__(self):
-            self.setId = jutil.make_method('setId', '(Ljava/lang/String;)V',
-                                           'Sets the current file name.')
-            self.saveBytesXYWH = jutil.make_method('saveBytes', '(I[BIIII)V',
-                                                   'Saves the given byte array to the current file')
-            self.close = jutil.make_method('close','()V',
-                                           'Closes currently open file(s) and frees allocated memory.')
-            self.setTileSizeX = jutil.make_method('setTileSizeX','(I)I',
-                                                  'Set tile size width in pixels.')
-            self.setTileSizeY = jutil.make_method('setTileSizeY','(I)I',
-                                                  'Set tile size height in pixels.')
-            self.getTileSizeX = jutil.make_method('getTileSizeX','()I',
-                                                  'Set tile size width in pixels.')
-            self.getTileSizeY = jutil.make_method('getTileSizeY','()I',
-                                                  'Set tile size height in pixels.')
 
             self.new_fn()
 
@@ -356,9 +342,21 @@ class BioWriter():
             os.remove(self._file_path)
         
         w_klass = make_ome_tiff_writer_class()
+        w_klass.setId = jutil.make_method('setId', '(Ljava/lang/String;)V',
+                                        'Sets the current file name.')
+        w_klass.saveBytesXYWH = jutil.make_method('saveBytes', '(I[BIIII)V',
+                                                'Saves the given byte array to the current file')
+        w_klass.close = jutil.make_method('close','()V',
+                                        'Closes currently open file(s) and frees allocated memory.')
+        w_klass.setTileSizeX = jutil.make_method('setTileSizeX','(I)I',
+                                                'Set tile size width in pixels.')
+        w_klass.setTileSizeY = jutil.make_method('setTileSizeY','(I)I',
+                                                'Set tile size height in pixels.')
+        w_klass.getTileSizeX = jutil.make_method('getTileSizeX','()I',
+                                                'Set tile size width in pixels.')
+        w_klass.getTileSizeY = jutil.make_method('getTileSizeY','()I',
+                                                'Set tile size height in pixels.')
         writer = w_klass()
-        writer.setInterleaved(False)
-        writer.setCompression("LZW")
         script = """
         importClass(Packages.loci.formats.services.OMEXMLService,
                     Packages.loci.common.services.ServiceFactory);
@@ -371,9 +369,11 @@ class BioWriter():
                          dict(path=self._file_path,
                               xml=self._metadata.to_xml(),
                               writer=writer))
-        writer.setTileSizeX(self._TILE_SIZE)
-        writer.setTileSizeY(self._TILE_SIZE)
         writer.setId(self._file_path)
+        writer.setInterleaved(False)
+        writer.setCompression("LZW")
+        x = writer.setTileSizeX(self._TILE_SIZE)
+        y = writer.setTileSizeY(self._TILE_SIZE)
         
         self._pix['chunk'] = self._MAX_BYTES/(self._pix['spp']*self._pix['bpp'])      # number of pixels to load at a time
         self.__writer = writer
@@ -581,8 +581,4 @@ class BioWriter():
                                 self.__writer.saveBytesXYWH(index, pixel_buffer,x,y,x_range,y_range)
                                 
     def close_image(self):
-        script = """
-        writer.close()
-        """
-        jutil.run_script(script,
-                         dict(writer=self.__writer))
+        self.__writer.close()
