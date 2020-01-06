@@ -5,7 +5,7 @@
     "project_name": "WIPP Widget",
     "project_short_description": "Everything you need to start a WIPP plugin.",
     "version": "0.1.0",
-    "use_bfio": true,
+    "use_bfio": "True",
     "_inputs": {
         "inpDir": {
             "type": "collection",
