@@ -1,6 +1,6 @@
 {
   "name": "Stack Z-slices",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "title": "Stack Z-slices into a single tiled tiff file",
   "description": "Use a file name pattern to stack individual z-slices into a single image.",
   "author": "Nick Schaub (nick.schaub@nih.gov)",
