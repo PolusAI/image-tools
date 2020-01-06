@@ -52,6 +52,7 @@ def _parse_stitch(stitchPath,fp):
         with open(fpath,'r') as fr:
 
             # Read each line in the stitching vector
+            line_num = 0
             for line in fr:
                 # Read and parse values from the current line
                 stitch_groups = re.match(line_regex,line)
@@ -67,6 +68,8 @@ def _parse_stitch(stitchPath,fp):
                 # Set the stitching vector values in the file dictionary
                 current_image.update({key:val for key,val in stitch_groups.items() if key != 'file'})
                 current_image['vector'] = vind
+                current_image['line'] = line_num
+                line_num += 1
 
                 # Get the image size
                 current_image['width'], current_image['height'] = imagesize.get(current_image['file'])
@@ -235,12 +238,18 @@ if __name__=="__main__":
     for num,feat in enumerate(feature_list):
         fpath = str(Path(outVectors).joinpath('img-global-positions-' + str(num+1) + '.txt').absolute())
         with open(fpath,'w') as fw:
-            for f in fp.iterate():
-                if feat not in f.keys():
-                    continue
-                fw.write("file: {}; corr: {}; position: ({}, {}); grid: ({}, {});\n".format(file_name.format(f['width'],f['height'],f[feat]),
-                                                                                            f['correlation'],
-                                                                                            f['posX'],
-                                                                                            f['posY'],
-                                                                                            f['gridX'],
-                                                                                            f['gridY']))
+            line = 0
+            while True:
+                for f in fp.iterate():
+                    if f['line'] == line:
+                        break
+                if f['line'] == line:
+                    fw.write("file: {}; corr: {}; position: ({}, {}); grid: ({}, {});\n".format(file_name.format(f['width'],f['height'],f[feat]),
+                                                                                                f['correlation'],
+                                                                                                f['posX'],
+                                                                                                f['posY'],
+                                                                                                f['gridX'],
+                                                                                                f['gridY']))
+                    line += 1
+                else:
+                    break

@@ -243,6 +243,7 @@ def parse_directory(file_path,pattern,var_order='rtczyx'):
     else:
         file_ind = {}
     files = [f.name for f in Path(file_path).iterdir() if f.is_file()]
+    files.sort()
 
     # Unique values for each variable
     uvals = {key:[] for key in var_order}
