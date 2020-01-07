@@ -16,13 +16,33 @@ logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
 def get_number(s):
+    """ Check that s is number
+    
+    In this plugin, heatmaps are created only for columns that contain numbers. This
+    function checks to make sure an input value is able to be converted into a number.
+
+    Inputs:
+        s - An input string or number
+    Outputs:
+        value - Either float(s) or False if s cannot be cast to float
+    """
     try:
         return float(s)
     except ValueError:
         return False
 
 def _get_file_dict(fp,fname):
-    # Find an image matching fname in the collection
+    """ Find an image matching fname in the collection
+    
+    This function searches files in a FilePattern object to find the image dictionary
+    that matches the file name, fname.
+
+    Inputs:
+        fp - A FilePattern object
+        fname - The name of the file to find in fp
+    Outputs:
+        current_image - The image dictionary matching fname, None if no matches found
+    """
     current_image = None
     for f in fp.iterate():
         if Path(f['file']).name == fname:
@@ -31,8 +51,24 @@ def _get_file_dict(fp,fname):
     
     return current_image
 
-""" Load and parse image stitching vectors """
 def _parse_stitch(stitchPath,fp):
+    """ Load and parse image stitching vectors
+    
+    This function adds keys to the FilePattern object (fp) that indicate image positions
+    extracted from the stitching vectors found at the stitchPath location.
+
+    As the stitching vector is parsed, images in the stitching vector are analyzed to
+    determine the unique sets of image widths and heights. This information is required
+    when generating the heatmap images to create overlays that are identical in size to
+    the images in the original pyramid.
+
+    Inputs:
+        fp - A FilePattern object
+        stitchPath - A path to stitching vectors
+    Outputs:
+        unique_width - List of all unique widths (in pixels) in the image stitching vectors
+        unique_height - List of all unique heights (in pixels) in the image stitching vectors
+    """
     # Get the stitch files
     txt_files = [f.name for f in Path(stitchPath).iterdir() if f.is_file() and f.suffix=='.txt']
     global_regex = ".*-global-positions-([0-9]+).txt"
@@ -84,8 +120,22 @@ def _parse_stitch(stitchPath,fp):
 
     return unique_width,unique_height
 
-""" Load and parse the feature list """
 def _parse_features(featurePath,fp):
+    """ Load and parse the feature list
+    
+    This function adds mean feature values to the FilePattern object (fp) for every image
+    in the FilePattern object if the image is listed in the feature csv file.
+
+    For example, if there are 100 object values in an "area" column for one image, then
+    an "area" key is created in the image dictionary with the mean value of all 100 values.
+
+    Inputs:
+        fp - A FilePattern object
+        stitchPath - A path to stitching vectors
+    Outputs:
+        unique_width - List of all unique widths (in pixels) in the image stitching vectors
+        unique_height - List of all unique heights (in pixels) in the image stitching vectors
+    """
     # Get the csv files containing features
     csv_files = [f.name for f in Path(featurePath).iterdir() if f.is_file() and f.suffix=='.csv']
 
