@@ -37,4 +37,4 @@ RUN python setup.py install
 
 WORKDIR /home/PCA
 RUN rm -rf pytorch
-ENTRYPOINT ["mpirun","-np","2","python","PCA_Cov_DistributedMemory.py","cpu","10.csv","output.csv"]
+ENTRYPOINT ["mpirun","-np","2","python","PCA_Cov_DistributedMemory.py"]

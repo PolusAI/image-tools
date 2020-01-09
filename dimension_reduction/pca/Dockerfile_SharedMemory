@@ -38,4 +38,4 @@ RUN python setup.py install
 WORKDIR /home/PCA
 RUN rm -rf pytorch
 
-ENTRYPOINT ["python", "PCA_SVD_SharedMemory.py", "direct", "cpu", "yes", "10.csv", "output.csv"]
+ENTRYPOINT ["python", "PCA_SVD_SharedMemory.py"]
