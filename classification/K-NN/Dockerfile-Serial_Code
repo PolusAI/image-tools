@@ -7,7 +7,7 @@ RUN apt-get -y update && apt-get install -y g++ wget make
 #Create a new directory
 RUN mkdir -p /home/SharedKNN
  
-# Copy the current folder which contains C++ source code to the Docker image under /usr/src
+# Copy the current folder which contains C++ source code to the Docker image
 COPY . /home/SharedKNN
  
 # Specify the working directory
@@ -27,4 +27,4 @@ WORKDIR /home/SharedKNN
 RUN g++ -I/home/SharedKNN/boost_1_71_0 KNN_Serial_Code.cpp -O2 -o Out.exe -L/home/SharedKNN/boost_1_71_0/stage/lib -lboost_iostreams
  
 # Run the output program from the previous step
-ENTRYPOINT ["time ./Out.exe 400_All.csv 15 0.8 5"]
+ENTRYPOINT ["time ./Out.exe"]
