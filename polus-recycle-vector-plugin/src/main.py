@@ -109,7 +109,7 @@ def _parse_files(fpath,regex,variables):
         r = _get_zctr(groups.groups(),variables,'r')
         if r not in file_ind.keys():
             file_ind[r] = {}
-        if z not in file_ind.keys():
+        if z not in file_ind[r].keys():
             file_ind[r][z] = {}
         if t not in file_ind[r][z].keys():
             file_ind[r][z][t] = {}
