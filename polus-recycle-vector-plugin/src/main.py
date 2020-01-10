@@ -67,7 +67,7 @@ def _parse_stitch(stitchPath,regex,variables):
                 stitch_ind[r] = {}
             if z not in stitch_ind[r].keys():
                 stitch_ind[r][z] = {}
-            if t not in stitch_ind[z].keys():
+            if t not in stitch_ind[r][z].keys():
                 stitch_ind[r][z][t] = {}
                 stitch_ind[r][z][t].update({key:[] for key in variables if key not in STATICS})
             fr.seek(0)
