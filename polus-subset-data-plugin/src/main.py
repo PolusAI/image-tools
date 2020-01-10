@@ -1,5 +1,4 @@
 import argparse, logging, shutil
-import numpy as np
 from pathlib import Path
 from filepattern import FilePattern
 
