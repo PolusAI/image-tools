@@ -1,2 +1,1 @@
-
-bfio==1.0.1
+imagesize==1.1.0

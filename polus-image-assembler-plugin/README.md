@@ -1,6 +1,6 @@
 # Image Assembler
 
-This WIPP plugin does things, some of which involve math and science. There is likely a lot of handwaving involved when describing how it works, but handwaving should be replaced with a good description. However, someone forgot to edit the README, so handwaving will have to do for now. Contact [Nick Schaub](mailto:nick.schaub@nih.gov) for more information.
+This WIPP plugin assembles images into a stitched image using an image stitching vector. The need for this plugin is due to limitations of the NIST [WIPP Image Assembling Plugin](https://github.com/usnistgov/WIPP-image-assembling-plugin) that limits image sizes to less than 2^32 pixels. The NIST plugin works faster since it is built on optimized C-code. If your image has less than 2^32 pixels, it is recommended to use NISTs image assembling algorithm.
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
@@ -15,11 +15,11 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-This plugin takes one input argument and one output argument:
+This plugin takes two input arguments and one output argument:
 
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
-| `--filePattern` | Filename pattern used to separate data | Input | stitchingVector |
-| `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--outDir` | Output collection | Output | collection |
+| `--stitchPath` | Path to stitching vector | Input | stitchingVector |
+| `--imgPath` | Path to input image collection | Input | collection |
+| `--outDir` | Path to output image collection | Output | collection |
 

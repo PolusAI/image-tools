@@ -11,13 +11,13 @@
     "containerId": "labshare/polus-image-assembler-plugin:0.1.0",
     "inputs": [
       {
-        "name": "vector",
+        "name": "stitchPath",
         "type": "stitchingVector",
         "description": "Filename pattern used to separate data",
         "required": true
       },
       {
-        "name": "inpDir",
+        "name": "imgPath",
         "type": "collection",
         "description": "Input image collection to be processed by this plugin",
         "required": true
@@ -32,12 +32,12 @@
     ],
     "ui": [
       {
-        "key": "inputs.vector",
+        "key": "inputs.stitchPath",
         "title": "Stitching Vector",
-        "description": "Filename pattern used to separate data"
+        "description": "Stitching vectors to use"
       },
       {
-        "key": "inputs.inpDir",
+        "key": "inputs.imgPath",
         "title": "Input collection",
         "description": "Input image collection to be processed by this plugin"
       }
