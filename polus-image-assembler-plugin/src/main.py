@@ -149,7 +149,7 @@ if __name__=="__main__":
 
     for v in vectors:
         # Parse the stitching vector
-        logger.info('Analyzing vector: {}'.format(v))
+        logger.info('Analyzing vector: {}'.format(Path(v).name))
         outvals = _parse_stitch(v,imgPath)
         logger.info('Building image: {}'.format(outvals['name']))
         logger.info('Output image size (width, height): {},{}'.format(outvals['width'],outvals['height']))
@@ -186,6 +186,7 @@ if __name__=="__main__":
                                 del img_processes[process]
                                 del img_paths[process]
                                 free_process = -2
+                                break
                         if free_process == -2:
                             break
 
