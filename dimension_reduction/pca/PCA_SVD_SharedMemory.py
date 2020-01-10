@@ -7,21 +7,27 @@ import dask.dataframe as ddf
 import dask.multiprocessing
 import argparse
 import logging
+import os
+import glob
 
 logging.basicConfig(filename="Setting.txt", level=logging.INFO)
 argparser = argparse.ArgumentParser()
-argparser.add_argument('readOption', type=str)
-argparser.add_argument('deviceName', type=str)
-argparser.add_argument('applySignFlip', type=str)
-argparser.add_argument('computeStdev', type=str)
-argparser.add_argument('inputPath', type=str)
-argparser.add_argument('outputPath', type=str, nargs='?', default='./PCA_Projected_Data_Final.csv')
+argparser.add_argument('--readOption', dest='readOption', type=str)
+argparser.add_argument('--deviceName', dest='deviceName', type=str)
+argparser.add_argument('--applySignFlip', dest='applySignFlip', type=str)
+argparser.add_argument('--computeStdev', dest='computeStdev', type=str)
+argparser.add_argument('--inputPath', dest='inputPath', type=str)
+argparser.add_argument('--outputPath', dest='outputPath', type=str, nargs='?', default='./PCA_Projected_Data_Final.csv')
 args = argparser.parse_args()
+
+# Find the first CSV file in the input folder
+inputPath = glob.glob(os.path.join(args.inputPath, "*.csv"))[0]
+outputPath = os.path.join(args.outputPath, 'output.csv')
 
 startTime = datetime.now()
 #Reading input data directly and creating a numpy array.
 if args.readOption=='direct':
-    df = ddf.read_csv(args.inputPath,sep=',')   
+    df = ddf.read_csv(inputPath,sep=',')   
     d = df.compute(scheduler='threads') 
     data = np.float32(d)  
     del d
@@ -29,7 +35,7 @@ if args.readOption=='direct':
 #Mapping Data to Memory and create a numpy array.
 #This method is good if data cannot be fit into the memory.
 elif args.readOption == 'mapping':
-    fileName = open(args.inputPath, "r")
+    fileName = open(inputPath, "r")
     m = mmap.mmap(fileName.fileno(), 0, prot=mmap.PROT_READ)
     #Remove Header Row
     m.readline() 
@@ -91,7 +97,7 @@ logging.info("Duration of Execution == "+str(duration))
 startTime = datetime.now()
 
 #Output the results
-np.savetxt (args.outputPath, projectedData.cpu().numpy(), delimiter=",")
+np.savetxt (outputPath, projectedData.cpu().numpy(), delimiter=",")
 duration = datetime.now() - startTime
 logging.info("Duration of Writing Data == "+str(duration))
 
