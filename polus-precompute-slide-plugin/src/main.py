@@ -18,19 +18,23 @@ def main():
                         help='Path to folder with CZI files', required=True)
     parser.add_argument('--outDir', dest='output_dir', type=str,
                         help='The output directory for ome.tif files', required=True)
-
+    parser.add_argument('--pyramidType', dest='pyramid_type', type=str,
+                        help='Build a DeepZoom or Neuroglancer pyramid', required=True)
 
     # Parse the arguments
     args = parser.parse_args()
     input_dir = args.input_dir
     output_dir = args.output_dir
+    pyramid_type = args.pyramid_type
     logger.info('input_dir = {}'.format(input_dir))
     logger.info('output_dir = {}'.format(output_dir))
+    logger.info('pyramid_type = {}'.format(pyramid_type))
     
     # Get a list of all images in a directory
     logger.info('Getting the images...')
     image_path = Path(input_dir)
     images = [i for i in image_path.iterdir() if "".join(i.suffixes)==".ome.tif"]
+    images.sort()
     
     # Set up lists for tracking processes
     processes = []

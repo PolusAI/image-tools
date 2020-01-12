@@ -2,7 +2,7 @@ import logging, argparse, bioformats
 import javabridge as jutil
 from bfio.bfio import BioReader, BioWriter
 from pathlib import Path
-from utils import ChunkEncoder, SlideWriter, CHUNK_SIZE, bfio_metadata_to_slide_info, _get_higher_res      
+from utils    
 
 if __name__=="__main__":
     # Setup the Argument parsing
@@ -14,12 +14,14 @@ if __name__=="__main__":
                         help='The output directory for ome.tif files', required=True)
     parser.add_argument('--image', dest='image', type=str,
                         help='The image to turn into a pyramid', required=True)
-
+    parser.add_argument('--pyramidType', dest='pyramid_type', type=str,
+                        help='Build a DeepZoom or Neuroglancer pyramid', required=True)
 
     args = parser.parse_args()
     input_dir = args.input_dir
     output_dir = args.output_dir
     image = args.image
+    pyramid_type = args.pyramid_type
 
     # Initialize the logger    
     logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(image),
@@ -29,10 +31,12 @@ if __name__=="__main__":
 
     logger.info("Starting to build...")
     
+    # Initialize the javabridge
     logger.info('Initializing the javabridge...')
     log_config = Path(__file__).parent.joinpath("log4j.properties")
     jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
 
+    # Make the output directory
     image = Path(input_dir).joinpath(image)
     out_dir = Path(output_dir).joinpath(image.name)
     out_dir.mkdir()
@@ -43,17 +47,25 @@ if __name__=="__main__":
     bf = BioReader(str(image.absolute()))
     
     # Create the output path and info file
-    file_info = bfio_metadata_to_slide_info(bf,out_dir)
+    if pyramid_type == "Neuroglancer":
+        file_info = utils.neuroglancer_info_file(bf,out_dir)
+    elif pyramid_type == "DeepZoom":
+        file_info = utils.dzi_file(bf,out_dir)
+    else:
+        ValueError("pyramid_type must be Neuroglancer or DeepZoom")
     logger.info("data_type: {}".format(file_info['data_type']))
     logger.info("num_channels: {}".format(file_info['num_channels']))
     logger.info("number of scales: {}".format(len(file_info['scales'])))
     logger.info("type: {}".format(file_info['type']))
     
     # Create the classes needed to generate a precomputed slice
-    logger.info("Creating encoder...")
-    encoder = ChunkEncoder(file_info)
-    logger.info("Creating file_writer...")
-    file_writer = SlideWriter(out_dir)
+    logger.info("Creating encoder and file writer...")
+    if pyramid_type == "Neuroglancer":
+        encoder = utils.NeuroglancerChunkEncoder(bf,out_dir)
+        file_writer = utils.NeuglancerWriter(out_dir)
+    elif pyramid_type == "DeepZoom":
+        encoder = utils.DeepZoomChunkEncoder(bf,out_dir)
+        file_writer = utils.DeepZoomWriter(out_dir)
 
     _get_higher_res(0,bf,file_writer,encoder)
     
