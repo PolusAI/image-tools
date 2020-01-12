@@ -1,21 +1,30 @@
 {
   "name": "Polus Precompute Slide Plugin",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "title": "Precompute Slide Viewer",
-  "description": "Precomputes a single image plane for viewing in Polus Volume.",
+  "description": "Precomputes a single image plane for viewing in Neuroglancer or DeepZoom.",
   "author": "Nick Schaub (nick.schaub@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "labshare/polus-precompute-slide-plugin:0.2.1",
+  "containerId": "labshare/polus-precompute-slide-plugin:0.3.0",
   "inputs": [
-
     {
       "name": "inpDir",
       "type": "collection",
       "description": "Input collection",
       "required": true
+    },
+    {
+			"name": "pyramidType",
+			"type": "enum",
+			"options": {
+				"values": [
+					         "DeepZoom",
+                   "Neuroglancer"
+				]
+      }
     }
   ],
   "outputs": [
