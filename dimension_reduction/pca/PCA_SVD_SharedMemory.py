@@ -84,7 +84,8 @@ if args.computeStdev == 'yes':
     SumStdev = torch.sum(Stdev).to(device)
     normalizedStdev= torch.mul(torch.div(Stdev,SumStdev).to(device),100).to(device)
     np.savetxt ('Stdev.csv', torch.stack((Stdev,normalizedStdev),1).cpu().numpy(), delimiter=",")
-del u,s,v,Stdev,SumStdev,normalizedStdev
+    del Stdev,SumStdev,normalizedStdev
+del u,s,v
 
 #Apply Sign Flip for the projected data
 if args.applySignFlip == 'yes':
