@@ -10,7 +10,6 @@ import logging
 import os
 import glob
 
-logging.basicConfig(filename="Setting.txt", level=logging.INFO)
 argparser = argparse.ArgumentParser()
 argparser.add_argument('--readOption', dest='readOption', type=str)
 argparser.add_argument('--deviceName', dest='deviceName', type=str)
@@ -22,7 +21,14 @@ args = argparser.parse_args()
 
 # Find the first CSV file in the input folder
 inputPath = glob.glob(os.path.join(args.inputPath, "*.csv"))[0]
-outputPath = os.path.join(args.outputPath, 'output.csv')
+# Set the path to the output files
+outputPath = os.path.join(args.outputPath, 'PCA_Projected_Data_Final.csv')
+SingularValuesOutputPath = os.path.join(args.outputPath, 'SingularValues.csv')
+PCsOutputPath = os.path.join(args.outputPath, 'PCs.csv')
+StdevOutputPath = os.path.join(args.outputPath, 'Stdev.csv')
+SettingOutputPath = os.path.join(args.outputPath, 'Setting.txt')
+
+logging.basicConfig(filename=SettingOutputPath , level=logging.INFO)
 
 startTime = datetime.now()
 #Reading input data directly and creating a numpy array.
@@ -73,8 +79,8 @@ del XStd
 #Compute SVD decomposition of the normalized tensor x
 #PyTorch outputs v Matrix and not v.t()
 u, s, v = torch.svd(x,some=True,compute_uv=True)
-np.savetxt ('SingularValues.csv', s.cpu().numpy(), delimiter=",")
-np.savetxt ('PCs.csv', v.t().cpu().numpy(), delimiter=",")
+np.savetxt (SingularValuesOutputPath, s.cpu().numpy(), delimiter=",")
+np.savetxt (PCsOutputPath, v.t().cpu().numpy(), delimiter=",")
 #and Project Data to new PCs
 projectedData = torch.matmul(u,torch.diag(s)).to(device)
 
@@ -83,7 +89,7 @@ if args.computeStdev == 'true':
     Stdev = torch.std(projectedData,0).to(device)
     SumStdev = torch.sum(Stdev).to(device)
     normalizedStdev= torch.mul(torch.div(Stdev,SumStdev).to(device),100).to(device)
-    np.savetxt ('Stdev.csv', torch.stack((Stdev,normalizedStdev),1).cpu().numpy(), delimiter=",")
+    np.savetxt (StdevOutputPath, torch.stack((Stdev,normalizedStdev),1).cpu().numpy(), delimiter=",")
     del Stdev,SumStdev,normalizedStdev
 del u,s,v
 

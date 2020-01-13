@@ -76,7 +76,13 @@ Now, PyTorch can be exectued simply as illustrated in the following example.
 .. code:: bash               
             
     python PCA_SVD_SharedMemory.py direct cpu yes yes /Path/input.csv /Path/output.csv
-                
+
+
+The docker can also be run as followed.   
+ .. code:: bash    
+ 
+   sudo docker run -v /path/to/Docker:/data/inputs -v /path/to/Docker:/data/outputs  dockerImageName  --readOption direct --deviceName cpu --applySignFlip yes --computeStdev yes --inputPath /data/inputs  --outputPath /data/outputs
+        
 -----------------------------------------
 Distributed-Memory Systems Implementation
 -----------------------------------------
