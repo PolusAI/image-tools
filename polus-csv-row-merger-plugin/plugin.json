@@ -1,8 +1,8 @@
 {
-    "name": "CSV Merger",
+    "name": "CSV Row Merger",
     "version": "0.1.0",
     "title": "CSV Merger",
-    "description": "Merge all csv files in a csv collection into a single csv file.",
+    "description": "Merge all csv files in a csv collection into a single csv file (row merging).",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/labshare/polus-plugins",
