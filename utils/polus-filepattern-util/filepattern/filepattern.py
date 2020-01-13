@@ -1,6 +1,7 @@
 import re, copy
 from pathlib import Path
 
+STITCH_VARS = ['file','correlation','posX','posY','gridX','gridY'] # image stitching values
 VARIABLES = 'rtczyxp'
 
 def val_variables(variables):
@@ -186,8 +187,40 @@ def parse_filename(file_name,pattern=None,regex=None,variables=None,return_empty
 
     return r
 
+def parse_vector_line(vector_line,pattern=None,regex=None,variables=None,return_empty=True):
+    """ Get the file, corr, posX, posY, gridX, and gridY information from a vector
+    
+    This function parses a single line from a stitching vector. It uses parse_filename
+    to extract variable values from the file name. It returns a dictionary similar
+    to what is returned by parse_filename, except it includes stitching variables
+    in the dictionary.
+
+    Inputs:
+        vector_line - A single line from a stitching vector
+        pattern - A file name pattern. Either this or regex must be defined (not both).
+        regex - A regular expression used to parse the filename.
+        return_empty - Returns undefined variables as -1
+    Outputs:
+        index - The value of the dimension
+    """
+
+    # regular expression used to parse the vector information
+    line_regex = r"file: (.*); corr: (.*); position: \((.*), (.*)\); grid: \((.*), (.*)\);"
+    
+    # parse the information from the stitching vector line
+    stitch_groups = list(re.match(line_regex,vector_line).groups())
+    stitch_info = {key:value for key,value in zip(STITCH_VARS,stitch_groups)}
+    
+    # parse the filename (this does all the sanity checks as well)
+    r = parse_filename(stitch_info['file'],pattern,regex,variables,return_empty)
+    if r == None:
+        return None
+    r.update(stitch_info)
+
+    return r
+
 def parse_directory(file_path,pattern,var_order='rtczyx'):
-    """ Sort files by variable in a dictionary
+    """ Parse files in a directory
     
     This function extracts the variables in from each filename in a directory and places
     them in a dictionary that allow retrieval using variable values. For example, if there
@@ -223,7 +256,7 @@ def parse_directory(file_path,pattern,var_order='rtczyx'):
 
     Inputs:
         file_path - path to a folder containing files to parse
-        pattern - A file name pattern. Either this or regex must be defined (not both).
+        pattern - A file name pattern.
         var_order - A string indicating the order of variables in a nested output dictionary
     Outputs:
         file_ind - The output dictionary containing all files matching the file pattern, sorted
@@ -254,7 +287,7 @@ def parse_directory(file_path,pattern,var_order='rtczyx'):
         # Parse filename values
         variables = parse_filename(f,pattern)
 
-        # If the filename doesn't match the patter, don't include it
+        # If the filename doesn't match the pattern, don't include it
         if variables == None:
             continue
         
@@ -271,13 +304,89 @@ def parse_directory(file_path,pattern,var_order='rtczyx'):
                         temp_dict[variables[key]] = []
                 temp_dict = temp_dict[variables[key]]
         
-        # At the file information at the deepest layer
+        # Add the file information at the deepest layer
         new_entry = {}
         new_entry['file'] = str(Path(file_path).joinpath(f).absolute())
         if variables != None:
             for key, value in variables.items():
                 new_entry[key] = value
         temp_dict.append(new_entry)
+
+    for key in uvals.keys():
+        uvals[key].sort()
+    
+    return file_ind, uvals
+
+def parse_vector(file_path,pattern,var_order='rtczyx'):
+    """ Parse files in a stitching vector
+    
+    This function works exactly as parse_directory, except it parses files in a stitching
+    vector. In addition to the variable values contained in the file dictionary returned
+    by this function, the values associated with the file are also contained in the
+    dictionary.
+    
+    The format for a line in the stitching vector is as follows:
+    file: (filename); corr: (correlation)); position: (posX, posY); grid: (gridX, gridY);
+    
+    posX and posY are the pixel positions of an image within a larger stitched image, and
+    gridX and gridY are the grid positions for each image.
+    
+    NOTE: A key difference between this function and parse_directory is the value stored
+          under the 'file' key. This function returns only the name of an image parsed
+          from the stitching vector, while the value returned by parse_dictionary is a
+          full path to an image.
+
+    Inputs:
+        file_path - path to a folder containing files to parse
+        pattern - A file name pattern.
+        var_order - A string indicating the order of variables in a nested output dictionary
+    Outputs:
+        file_ind - The output dictionary containing all files matching the file pattern, sorted
+                   by variable value
+        uvals - Unique variables for each 
+    """
+
+    # validate the variable order
+    val_variables(var_order)
+
+    # get regular expression from file pattern
+    regex, variables = get_regex(pattern)
+
+    # initialize the output
+    if len(variables) == 0:
+        file_ind = []
+    else:
+        file_ind = {}
+
+    # Unique values for each variable
+    uvals = {key:[] for key in var_order}
+
+    # Build the output dictionary
+    with open(file_path,'r') as fr:
+        for f in fr:
+            
+            # Parse filename values
+            variables = parse_vector_line(f,pattern)
+
+            # If the filename doesn't match the patter, don't include it
+            if variables == None:
+                continue
+            
+            # Generate the layered dictionary using the specified ordering
+            temp_dict = file_ind
+            if isinstance(file_ind,dict):
+                for key in var_order:
+                    if variables[key] not in temp_dict.keys():
+                        if variables[key] not in uvals[key]:
+                            uvals[key].append(variables[key])
+                        if var_order[-1] != key:
+                            temp_dict[variables[key]] = {}
+                        else:
+                            temp_dict[variables[key]] = []
+                    temp_dict = temp_dict[variables[key]]
+            
+            # Add the file information at the deepest layer
+            temp_dict.append(variables)
 
     for key in uvals.keys():
         uvals[key].sort()
@@ -444,3 +553,27 @@ class FilePattern():
                 elif v == shallowest:
                     break
                 iter_vars[v] = copy.deepcopy(self.uniques[v])
+                
+class VectorPattern(FilePattern):
+    """ Main class for handling stitching vectors
+    
+    This class works nearly identically to FilePattern, except it works with lines
+    inside of a stitching vector. As with FilePattern, the iterate method will iterate
+    through values, which in the case of VectorPattern are parsed lines of a stitching
+    vector.
+
+    """
+    
+    var_order = 'rtczyx'
+    files = {}
+    uniques = {}
+    
+    def __init__(self,file_path,pattern,var_order=None):
+        self.pattern, self.variables = get_regex(pattern)
+        self.path = file_path
+
+        if var_order:
+            val_variables(var_order)
+            self.var_order = var_order
+
+        self.files, self.uniques = parse_vector(file_path,pattern,var_order=self.var_order)
