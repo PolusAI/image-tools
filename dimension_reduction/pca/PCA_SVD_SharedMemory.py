@@ -79,15 +79,16 @@ np.savetxt ('PCs.csv', v.t().cpu().numpy(), delimiter=",")
 projectedData = torch.matmul(u,torch.diag(s)).to(device)
 
 #Compute the Standard Deviation of the projected data along each PC axis
-if args.computeStdev == 'yes':
+if args.computeStdev == 'true':
     Stdev = torch.std(projectedData,0).to(device)
     SumStdev = torch.sum(Stdev).to(device)
     normalizedStdev= torch.mul(torch.div(Stdev,SumStdev).to(device),100).to(device)
     np.savetxt ('Stdev.csv', torch.stack((Stdev,normalizedStdev),1).cpu().numpy(), delimiter=",")
-del u,s,v,Stdev,SumStdev,normalizedStdev
+    del Stdev,SumStdev,normalizedStdev
+del u,s,v
 
 #Apply Sign Flip for the projected data
-if args.applySignFlip == 'yes':
+if args.applySignFlip == 'true':
     absProjectedData = torch.abs(projectedData).to(device)
     temp = torch.eq(absProjectedData,torch.max(absProjectedData,-2,keepdim=True).values).type(torch.FloatTensor).to(device)
     signMatrix = torch.sign(torch.sum(projectedData*temp,-2,keepdim=True).to(device)).to(device)
