@@ -1,26 +1,6 @@
-FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
+FROM pytorch/pytorch:1.3-cuda10.1-cudnn7-runtime
 
-ARG PYTHON_VERSION=3.7
-ARG CONDA_PYTHON_VERSION=3
-ARG CONDA_DIR=/opt/conda
-
-# Install basic utilities
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends git wget gcc && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install Conda    
-ENV PATH $CONDA_DIR/bin:$PATH
-RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda$CONDA_PYTHON_VERSION-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
-echo 'export PATH=$CONDA_DIR/bin:$PATH' > /etc/profile.d/conda.sh && \
-    /bin/bash /tmp/miniconda.sh -b -p $CONDA_DIR && \
-    rm -rf /tmp/* && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN conda install flask numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing pandas dask   && \              
-    conda install -c pytorch magma-cuda101 pytorch torchvision cudatoolkit=10.1
+RUN conda install flask numpy ninja pyyaml cmake cffi typing pandas dask
 
 RUN mkdir -p /home/PCA
 WORKDIR /home/PCA
