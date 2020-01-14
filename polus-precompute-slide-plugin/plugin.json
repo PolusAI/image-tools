@@ -1,6 +1,6 @@
 {
   "name": "Polus Precompute Slide Plugin",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "title": "Precompute Slide Viewer",
   "description": "Precomputes a single image plane for viewing in Polus Volume.",
   "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "labshare/polus-precompute-slide-plugin:0.2.0",
+  "containerId": "labshare/polus-precompute-slide-plugin:0.2.1",
   "inputs": [
 
     {
