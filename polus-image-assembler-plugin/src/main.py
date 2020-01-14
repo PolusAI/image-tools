@@ -245,13 +245,6 @@ if __name__=="__main__":
         )
         img_paths.append([tile_outdir,outFile])
 
-        for process in range(len(img_processes)):
-            if img_processes[process].poll() is not None:
-                Path(img_paths[process][0]).rmdir()
-                logger.info('Finished building image: {}'.format(Path(img_paths[process][1]).name))
-                del img_processes[process]
-                del img_paths[process]
-
     # Wait for all image building processes to finish
     while len(img_processes)>0:
         for process in range(len(img_processes)):
@@ -260,4 +253,5 @@ if __name__=="__main__":
                 logger.info('Finished building image: {}'.format(Path(img_paths[process][1]).name))
                 del img_processes[process]
                 del img_paths[process]
+                break
     logger.info('Finished all processes successfully!')
