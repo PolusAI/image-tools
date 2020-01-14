@@ -1,14 +1,14 @@
 {
-    "name": "CSV Row Merger",
-    "version": "0.1.0",
-    "title": "CSV Row Merger",
-    "description": "Merge all csv files in a csv collection into a single csv file (row merging).",
+    "name": "CSV Merger",
+    "version": "0.2.0",
+    "title": "CSV Merger",
+    "description": "Merge all csv files in a csv collection into a single csv file.",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-csv-row-merger-plugin:0.1.0",
+    "containerId": "labshare/polus-csv-merger-plugin:0.2.0",
     "inputs": [
       {
         "name": "inpDir",
@@ -20,6 +20,18 @@
         "name": "stripExtension",
         "type": "boolean",
         "description": "Should csv be removed from the filename when indicating which file a row in a csv file came from?",
+        "required": true
+      },
+      {
+        "name": "dim",
+        "type": "enum",
+        "options": {
+            "values": [
+                "rows",
+                "columns"
+            ]
+        },
+        "description": "Merging dimension",
         "required": true
       }
     ],
@@ -40,6 +52,12 @@
         "key": "inputs.stripExtension",
         "title": "Remove CSV Extension",
         "description": "Should csv be removed from the filename when indicating which file a row in a csv file came from?",
+        "default": true
+      },
+      {
+        "key": "inputs.dim",
+        "title": "Merging dimension",
+        "description": "Merge along rows or columns?",
         "default": true
       }
     ]
