@@ -71,17 +71,16 @@ Next, PyTorch is installed from the source as follows.
     export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}              
     python setup.py install >> output.txt 2>&1
     
-Now, PyTorch can be exectued simply as illustrated in the following example.                   
+Now, the python code can be executed as follows. Please note that inputPath should only contain a single csv file which is the main input data. 
+ 
+ .. code:: bash  
+ 
+    python PCA_SVD_SharedMemory.py --readOption direct --deviceName cpu --applySignFlip true --computeStdev true --inputPath . --outputPath . 
 
-.. code:: bash               
-            
-    python PCA_SVD_SharedMemory.py direct cpu yes yes /Path/input.csv /Path/output.csv
-
-
-The docker can also be run as followed.   
+docker can be run as follows.   
  .. code:: bash    
  
-   sudo docker run -v /path/to/Docker:/data/inputs -v /path/to/Docker:/data/outputs  dockerImageName  --readOption direct --deviceName cpu --applySignFlip yes --computeStdev yes --inputPath /data/inputs  --outputPath /data/outputs
+   sudo docker run -v /path/to/Docker:/data/inputs -v /path/to/Docker:/data/outputs  dockerImageName  --readOption direct --deviceName cpu --applySignFlip true --computeStdev true --inputPath /data/inputs  --outputPath /data/outputs
         
 -----------------------------------------
 Distributed-Memory Systems Implementation

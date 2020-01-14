@@ -69,6 +69,9 @@ if device.type == 'cuda':
 
 #Convert numpy array to pytorch tensor
 x = torch.from_numpy(data).float().to(device)
+featureCounts=np.shape(data)[-1]
+#del data
+
 #Create tensor x which is normalize input data on each column
 XMean = torch.mean(x,0).to(device)
 XStd = torch.std(x,0).to(device)
@@ -79,8 +82,13 @@ del XStd
 #Compute SVD decomposition of the normalized tensor x
 #PyTorch outputs v Matrix and not v.t()
 u, s, v = torch.svd(x,some=True,compute_uv=True)
-np.savetxt (SingularValuesOutputPath, s.cpu().numpy(), delimiter=",")
-np.savetxt (PCsOutputPath, v.t().cpu().numpy(), delimiter=",")
+
+np.savetxt (SingularValuesOutputPath, s.cpu().numpy(), delimiter=",", header="Singluar Values", comments='')
+
+strs = ["Axis" for x in range(featureCounts)]
+nums=list(range(1,featureCounts+1))
+headerLiterals=''.join(n+str(s)+',' for (n,s) in zip(strs, nums))
+np.savetxt (PCsOutputPath, v.t().cpu().numpy(), delimiter=",", header=headerLiterals, comments='')
 #and Project Data to new PCs
 projectedData = torch.matmul(u,torch.diag(s)).to(device)
 
@@ -89,7 +97,8 @@ if args.computeStdev == 'true':
     Stdev = torch.std(projectedData,0).to(device)
     SumStdev = torch.sum(Stdev).to(device)
     normalizedStdev= torch.mul(torch.div(Stdev,SumStdev).to(device),100).to(device)
-    np.savetxt (StdevOutputPath, torch.stack((Stdev,normalizedStdev),1).cpu().numpy(), delimiter=",")
+    headerLiteral="Standard Deviation of Data Along each PC, Normalized Value in Percent" 
+    np.savetxt (StdevOutputPath, torch.stack((Stdev,normalizedStdev),1).cpu().numpy(), delimiter=",", header=headerLiteral, comments='')
     del Stdev,SumStdev,normalizedStdev
 del u,s,v
 
@@ -104,7 +113,11 @@ logging.info("Duration of Execution == "+str(duration))
 startTime = datetime.now()
 
 #Output the results
-np.savetxt (outputPath, projectedData.cpu().numpy(), delimiter=",")
+strs = ["PC" for x in range(featureCounts)]
+nums=list(range(1,featureCounts+1))
+headerLiterals=''.join(n+str(s)+',' for (n,s) in zip(strs, nums))
+np.savetxt (outputPath, projectedData.cpu().numpy(), delimiter=",", header=headerLiterals, comments='')
+
 duration = datetime.now() - startTime
 logging.info("Duration of Writing Data == "+str(duration))
 
