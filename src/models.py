@@ -130,7 +130,7 @@ model=unet()
 model.load_weights('unet.h5')
 filenames= sorted(os.listdir(input_dir))
 count=0
-for ind in range(0,len(filenames),3):
+for ind in range(0,len(filenames)):
     count+=1
     if count%50==0:
         print(count)
