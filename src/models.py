@@ -20,8 +20,6 @@ import bioformats
 
 
 
-
-
 def unet(in_shape=(256,256,3), alpha=0.1, dropout=None):
 
     #    dropout = [0.1,0.2,0.25,0.3,0.5]
@@ -121,25 +119,17 @@ args = parser.parse_args()
 
 input_dir = args.input_directory
 output_dir = args.output_directory
-    
-# input_dir = '/home/gauhar/Data-Science-Bowl-2018/sample'
-# output_dir = '/home/gauhar/Data-Science-Bowl-2018/sample_output'
-
-
 model=unet()
 model.load_weights('unet.h5')
 filenames= sorted(os.listdir(input_dir))
-count=0
+
 for ind in range(0,len(filenames)):
-    count+=1
-    if count%50==0:
-        print(count)
     filename=filenames[ind]    
     bf = bfio.BioReader(os.path.join(input_dir,filename))
     img = bf.read_image()
-    img=(img[:,:,0,0,0])/65535
+    img=(img[:,:,0,0,0])
+    img=np.interp(img, (img.min(), img.max()), (0,1))
     img=np.dstack((img,img,img))
-    # img=cv2.imread(os.path.join(input_dir,filename))
     padded_img,pad_dimensions=padding(img)
     final_img=np.zeros((padded_img.shape[0],padded_img.shape[1]))
     for i in range(int(padded_img.shape[0]/256)):
@@ -151,16 +141,14 @@ for ind in range(0,len(filenames)):
             final_img[i*256:(i+1)*256,j*256:(j+1)*256]=out    
     top_pad,bottom_pad,left_pad,right_pad=pad_dimensions
     out_image=final_img[top_pad:final_img.shape[0]-bottom_pad,left_pad:final_img.shape[1]-right_pad]
-    out_image = np.rint(np.interp(out_image, (out_image.min(), out_image.max()), (0, 255)))
-    out_image = out_image.astype(np.uint8)
+    out_image=np.rint(out_image)*255 
+    out_image = out_image.astype(np.uint8)    
     output_image_5channel=np.zeros((out_image.shape[0],out_image.shape[1],1,1,1),dtype='uint8')
     output_image_5channel[:,:,0,0,0]=out_image
     bw = bfio.BioWriter(os.path.join(output_dir,filename),image=output_image_5channel)
     bw.write_image(output_image_5channel)
-    bw.close_image() 
+    bw.close_image()     
     
-    
-
 
 javabridge.kill_vm()
 
