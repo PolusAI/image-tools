@@ -41,6 +41,7 @@ if __name__=="__main__":
     
     ''' If sameRows is set to true, nothing fancy to do. Just do the work and get out '''
     if dim=='columns' and same_rows:
+        logger.info("Merging data with identical number of rows...")
             
         # Determine the number of output files, and a list of files to be merged in each file
         out_files = {}
@@ -54,12 +55,14 @@ if __name__=="__main__":
             
         count = 1
         for key in out_files.keys():
+            
             outPath = str(Path(outDir).joinpath('merged_{}.csv'.format(count)).absolute())
             count += 1
             
             inp_files = [open(f) for f in out_files[key]]
             
             with open(outPath,'w') as fw:
+                logger.info("Generating file: {}".format(Path(outPath).name))
                 for l in range(key):
                     fw.write(','.join([f.readline().rstrip('\n') for f in inp_files]))
                     fw.write('\n')
@@ -68,19 +71,42 @@ if __name__=="__main__":
         # Get the column headers
         logger.info("Getting all unique headers...")
         headers = set([])
+        identifiers = {}
         for in_file in inpDir_files:
             with open(in_file,'r') as fr:
+                
+                # Get header information
                 line = fr.readline()
                 
                 if dim=='columns' and 'file' not in line[0:-1].split(','):
                     ValueError('No file columns found in csv: {}'.format(in_file))
                 
-                headers.update(line[0:-1].split(','))
+                h = line.rstrip('\n').split(',')
+                headers.update(h)
+                
+                # Check to see if column identifiers exist in the 2nd row
+                line = fr.readline()
+                ident = line.rstrip('\n').split(',')
+                no_identifier = sum(1 for f in ident if f not in 'FC')
+                if not no_identifier:
+                    for ind,t in enumerate(h):
+                        if t in identifiers.keys() and identifiers[t] != ident[i]:
+                            logger.info('Header "{}" was previously identified as "{}", but was labeled in {} as "{}". Ignoring new identifier.'.format(t,
+                                                                                                                                                        identifiers[t],
+                                                                                                                                                        in_file,
+                                                                                                                                                        ident[i]))
+                        else:
+                            identifiers[t] = ident[ind]
+                
         if 'file' in headers:
             headers.remove('file')
         headers = list(headers)
         headers.sort()
         headers.insert(0,'file')
+        if identifiers:
+            for h in headers:
+                if h not in identifiers.keys():
+                    identifiers[h] = 'F'
         logger.info("Unique headers: {}".format(headers))
 
         # Generate the line template
@@ -95,6 +121,8 @@ if __name__=="__main__":
             logger.info("Merging the data along rows...")
             with open(outPath,'w') as out_file:
                 out_file.write(','.join(headers) + '\n')
+                if identifiers:
+                    out_file.write(line_template.format(**identifiers))
                 for f in inpDir_files:
                     file_dict = copy.deepcopy(line_dict)
                     if stripExtension:
@@ -108,20 +136,28 @@ if __name__=="__main__":
                         file_map = file_map.split(',')
                         numel = len(file_map)
                         file_map = {ind:key for ind,key in enumerate(file_map)}
+                        
+                        # Check to see if column identifiers are present in the file, skip 2nd row if they are present
+                        if identifiers:
+                            line = in_file.readline()
+                            ident = line.rstrip('\n').split(',')
+                            no_identifier = sum(1 for f in ident if f not in 'FC')
+                            in_file.seek(0)
+                            in_file.readline()
+                            if not no_identifier:
+                                in_file.readline()
 
                         for line in in_file:
                             for el,val in enumerate(line.rstrip('\n').split(',')):
                                 file_dict[file_map[el]] = val
                             out_file.write(line_template.format(**file_dict))
-        elif dim=='columns' and not same_rows:
+        elif dim=='columns':
             logger.info("Merging the data along columns...")
             outPath = str(Path(outDir).joinpath('merged.csv').absolute())
             
             # Load the first csv and generate a dictionary to hold all values
             out_dict = {}
             with open(inpDir_files[0],'r') as in_file:
-                file_dict = copy.deepcopy(line_dict)
-                
                 file_map = in_file.readline().rstrip('\n')
                 file_map = file_map.split(',')
                 numel = len(file_map)
@@ -164,6 +200,7 @@ if __name__=="__main__":
                                 
             # Write the output file
             with open(outPath,'w') as out_file:
+                # Write headers
                 out_file.write(','.join(headers) + '\n')
                 
                 for val in out_dict.values():
