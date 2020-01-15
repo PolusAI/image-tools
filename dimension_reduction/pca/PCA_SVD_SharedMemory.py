@@ -88,6 +88,7 @@ np.savetxt (SingularValuesOutputPath, s.cpu().numpy(), delimiter=",", header="Si
 strs = ["Axis" for x in range(featureCounts)]
 nums=list(range(1,featureCounts+1))
 headerLiterals=''.join(n+str(s)+',' for (n,s) in zip(strs, nums))
+headerLiterals=headerLiterals.rstrip(',')
 np.savetxt (PCsOutputPath, v.t().cpu().numpy(), delimiter=",", header=headerLiterals, comments='')
 #and Project Data to new PCs
 projectedData = torch.matmul(u,torch.diag(s)).to(device)
@@ -116,6 +117,7 @@ startTime = datetime.now()
 strs = ["PC" for x in range(featureCounts)]
 nums=list(range(1,featureCounts+1))
 headerLiterals=''.join(n+str(s)+',' for (n,s) in zip(strs, nums))
+headerLiterals=headerLiterals.rstrip(',')
 np.savetxt (outputPath, projectedData.cpu().numpy(), delimiter=",", header=headerLiterals, comments='')
 
 duration = datetime.now() - startTime
