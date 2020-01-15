@@ -1,6 +1,6 @@
 {
     "name": "CSV Merger",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "title": "CSV Merger",
     "description": "Merge all csv files in a csv collection into a single csv file.",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-csv-merger-plugin:0.2.0",
+    "containerId": "labshare/polus-csv-merger-plugin:0.3.0",
     "inputs": [
       {
         "name": "inpDir",
@@ -32,6 +32,12 @@
             ]
         },
         "description": "Merging dimension",
+        "required": true
+      },
+      {
+        "name": "sameRows",
+        "type": "boolean",
+        "description": "Perform column merge on all files with the same number of rows?",
         "required": true
       }
     ],
@@ -59,6 +65,13 @@
         "title": "Merging dimension",
         "description": "Merge along rows or columns?",
         "default": true
+      },
+      {
+        "key": "inputs.sameRows",
+        "title": "Merge CSVs with equal rows:",
+        "description": "Merge only csvs with matching number of rows?",
+        "default": false,
+        "condition": "model.inputs.dim=='columns'"
       }
     ]
   }
