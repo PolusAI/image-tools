@@ -63,10 +63,7 @@ if __name__=="__main__":
         logger.info('{:.2f}% complete...'.format(100*ind/len(images)))
         br = BioReader(str(img.absolute()))
         X,Y = get_coords(img.name)
-        for x in range(0,br.num_x(),1024):
-            for y in range(0,br.num_y(),1024):
-                image = br.read_image(X=[x,min(x+1024,br.num_x())],Y=[y,min(y+1024,br.num_y())])
-                bw.write_image(image,X=[int(X)+x],Y=[int(Y)+y])
+        bw.write_image(br.read_image(),X=[int(X)],Y=[int(Y)])
         img.unlink()
         del br
     logger.info('100% complete...')
