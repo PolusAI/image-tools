@@ -54,7 +54,7 @@ if __name__=="__main__":
     {%- endfor %}
     {%- for inp,val in cookiecutter._inputs|dictsort -%}
     {%- for out,n in cookiecutter._outputs|dictsort -%}
-    {% if val.type=="collection" -%}
+    {% if val.type=="collection" and cookiecutter.use_bfio-%}
     # Loop through files in {{ inp }} image collection and process
     for f in {{ inp }}_files:
         # Load an image
