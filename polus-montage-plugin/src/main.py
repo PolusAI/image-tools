@@ -46,8 +46,8 @@ def _get_xy_index(files,dims,layout):
         row_min = min(rows)
         col_max = max(cols)
         row_max = max(rows)
-        grid_dims.append(row_max - row_min + 1)
         grid_dims.append(col_max - col_min + 1)
+        grid_dims.append(row_max - row_min + 1)
 
         # convert to 0 based grid indexing, store in dictionary
         index = len(layout)-1
@@ -65,8 +65,8 @@ def _get_xy_index(files,dims,layout):
         pos_min = min(pos)
         col_max = int(math.ceil(math.sqrt(len(pos))))
         row_max = int(round(math.sqrt(len(pos))))
-        grid_dims.append(row_max)
         grid_dims.append(col_max)
+        grid_dims.append(row_max)
 
         # Store grid positions in the dictionary
         index = len(layout)-1
