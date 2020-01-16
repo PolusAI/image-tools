@@ -67,7 +67,7 @@ if __name__=="__main__":
         bw.write_image(image,X=[int(X)],Y=[int(Y)])
         img.unlink()
         del br
-    logger.info('100% complete...'.format(ind/len(images)))
+    logger.info('100% complete...')
     
     bw.close_image()
 
