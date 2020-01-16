@@ -35,11 +35,13 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-There are three input arguments and one output argument:
+There are three to five input arguments and one output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--filePattern` | Filename pattern used to parse data | Input | string |
-| `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--layout` | Specify montage organization | Input | array |
-| `--outDir` | Output collection | Output | stitchingVector |
+| Name             | Description                                           | I/O    | Type            |
+|------------------|-------------------------------------------------------|--------|-----------------|
+| `--filePattern`  | Filename pattern used to parse data                   | Input  | string          |
+| `--inpDir`       | Input image collection to be processed by this plugin | Input  | collection      |
+| `--layout`       | Specify montage organization                          | Input  | array           |
+| `--gridSpacing`  | Specify spacing between images in the lowest grid     | Input  | string          |
+| `--imageSpacing` | Specify spacing multiplier between grids              | Input  | string          |
+| `--outDir`       | Output collection                                     | Output | stitchingVector |

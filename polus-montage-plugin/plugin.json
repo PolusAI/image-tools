@@ -1,6 +1,6 @@
 {
     "name": "Montage",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "title": "Montage",
     "description": "Advanced montaging plugin.",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-montage-plugin:0.1.0",
+    "containerId": "labshare/polus-montage-plugin:0.1.1",
     "inputs": [
       {
         "name": "filePattern",
@@ -34,6 +34,18 @@
               "widget": "string"
           }
         }
+      },
+      {
+        "name": "imageSpacing",
+        "type": "number",
+        "description": "Spacing between images at the lowest subgrid",
+        "required": false
+      },
+      {
+        "name": "gridSpacing",
+        "type": "number",
+        "description": "Input image collection to be processed by this plugin",
+        "required": false
       }
     ],
     "outputs": [
@@ -58,6 +70,16 @@
         "key": "inputs.layout",
         "title": "Grid layout",
         "description": "Specify montage organization"
+      },
+      {
+        "key": "inputs.imageSpacing",
+        "title": "Image spacing",
+        "description": "Space between images"
+      },
+      {
+        "key": "inputs.gridSpacing",
+        "title": "Grid spacing multiplier",
+        "description": "Spacing between subgrids"
       }
     ]
   }

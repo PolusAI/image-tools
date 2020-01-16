@@ -98,6 +98,10 @@ if __name__=="__main__":
                         help='Specify montage organization', required=False)
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
+    parser.add_argument('--imageSpacing', dest='imageSpacing', type=str,
+                        help='Spacing between images in the smallest subgrid', required=False)
+    parser.add_argument('--gridSpacing', dest='gridSpacing', type=str,
+                        help='Multiplier', required=False)
     
     # Parse the arguments
     args = parser.parse_args()
@@ -109,6 +113,16 @@ if __name__=="__main__":
     logger.info('layout = {}'.format(layout))
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
+    image_spacing = args.imageSpacing
+    logger.info('image_spacing = {}'.format(image_spacing))
+    grid_spacing = args.gridSpacing
+    logger.info('grid_spacing = {}'.format(grid_spacing))
+    
+    # Set new image spacing and grid spacing arguments if present
+    if image_spacing != None:
+        SPACING = int(image_spacing)
+    if grid_spacing != None:
+        MULTIPLIER = int(grid_spacing)
 
     # Set up the file pattern parser
     logger.info('Parsing the file pattern...')
