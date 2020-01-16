@@ -171,7 +171,7 @@ def _parse_features(featurePath,fp):
                 # Get the image associated with the current line
                 current_image = _get_file_dict(fp,p_line['file'])
 
-                if current_image == None:
+                if current_image == None or 'line' not in current_image.keys():
                     line = fr.readline()
                     continue
 
@@ -253,6 +253,8 @@ if __name__=="__main__":
         feature_ranges[key] = max(val)-feature_mins[key]
     unique_levels = set()
     for fl in fp.iterate():
+        if 'line' not in fl.keys():
+            continue
         for ft in feature_list:
             try:
                 fl[ft] = round((fl[ft] - feature_mins[ft])/feature_ranges[ft] * 254 + 1)
@@ -291,9 +293,9 @@ if __name__=="__main__":
             line = 0
             while True:
                 for f in fp.iterate():
-                    if f['line'] == line:
+                    if 'line' in f and f['line'] == line:
                         break
-                if f['line'] == line:
+                if 'line' in f and f['line'] == line:
                     fw.write("file: {}; corr: {}; position: ({}, {}); grid: ({}, {});\n".format(file_name.format(f['width'],f['height'],f[feat]),
                                                                                                 f['correlation'],
                                                                                                 f['posX'],
