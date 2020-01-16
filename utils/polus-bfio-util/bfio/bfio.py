@@ -361,7 +361,7 @@ class BioWriter():
         writer = w_klass()
         
         # Set the BigTiff flag if needed, must be done before anything else
-        if self.num_x() * self.num_y() * self._pix['spp'] * self._pix['bpp']:
+        if self.num_x() * self.num_y() * self._pix['spp'] * self._pix['bpp'] > self._MAX_BYTES:
             writer.setBigTiff(True)
         
         script = """
