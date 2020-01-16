@@ -84,6 +84,8 @@ if __name__=="__main__":
     template = make_tile(x,X_range,y,Y_range,stitchPath,imgPath)
 
     bw = BioWriter(str(Path(outDir).joinpath('x{}_y{}.ome.tif'.format(x,y)).absolute()),image=template)
+    bw.num_x(template.shape[1])
+    bw.num_y(template.shape[0])
     bw.write_image(template)    
     bw.close_image()
 
