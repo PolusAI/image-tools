@@ -359,6 +359,11 @@ class BioWriter():
         w_klass.setBigTiff = jutil.make_method('setBigTiff','(Z)V',
                                                'Set the BigTiff flag.')
         writer = w_klass()
+        
+        # Set the BigTiff flag if needed, must be done before anything else
+        if self.num_x() * self.num_y() * self._pix['spp'] * self._pix['bpp']:
+            writer.setBigTiff(True)
+        
         script = """
         importClass(Packages.loci.formats.services.OMEXMLService,
                     Packages.loci.common.services.ServiceFactory);
@@ -378,10 +383,6 @@ class BioWriter():
         y = writer.setTileSizeY(self._TILE_SIZE)
         
         self._pix['chunk'] = self._MAX_BYTES/(self._pix['spp']*self._pix['bpp'])      # number of pixels to load at a time
-        
-        # Set the BigTiff flag if needed
-        if self.num_x() * self.num_y() * self._pix['spp'] * self._pix['bpp']:
-            writer.setBigTiff(True)
             
         self.__writer = writer
         
