@@ -110,47 +110,52 @@ def padding(image):
         final_image[:,:,i]=cv2.copyMakeBorder(image[:,:,i], top, bottom, left, right, cv2.BORDER_REFLECT)   
     return final_image,pad_dimensions
 
-javabridge.start_vm(class_path=bioformats.JARS)
+def main():
+    javabridge.start_vm(class_path=bioformats.JARS)
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--inpDir',dest='input_directory',type=str,required=True)
+    parser.add_argument('--outDir',dest='output_directory',type=str,required=True)
+    args = parser.parse_args()
 
-parser=argparse.ArgumentParser()
-parser.add_argument('--inpDir',dest='input_directory',type=str,required=True)
-parser.add_argument('--outDir',dest='output_directory',type=str,required=True)
-args = parser.parse_args()
+    input_dir = args.input_directory
+    output_dir = args.output_directory
+    model=unet()
+    model.load_weights('unet.h5')
+    filenames= sorted(os.listdir(input_dir))
 
-input_dir = args.input_directory
-output_dir = args.output_directory
-model=unet()
-model.load_weights('unet.h5')
-filenames= sorted(os.listdir(input_dir))
+    for ind in range(0,len(filenames)):
+        filename=filenames[ind]    
+        bf = bfio.BioReader(os.path.join(input_dir,filename))
+        img = bf.read_image()
+        img=(img[:,:,0,0,0])
+        img=np.interp(img, (img.min(), img.max()), (0,1))
+        img=np.dstack((img,img,img))
+        padded_img,pad_dimensions=padding(img)
+        final_img=np.zeros((padded_img.shape[0],padded_img.shape[1]))
+        for i in range(int(padded_img.shape[0]/256)):
+            for j in range(int(padded_img.shape[1]/256)):
+                temp_img=padded_img[i*256:(i+1)*256,j*256:(j+1)*256]
+                inp = np.expand_dims(temp_img, axis=0)   
+                x=model.predict(inp)
+                out=x[0,:,:,0] 
+                final_img[i*256:(i+1)*256,j*256:(j+1)*256]=out    
+        top_pad,bottom_pad,left_pad,right_pad=pad_dimensions
+        out_image=final_img[top_pad:final_img.shape[0]-bottom_pad,left_pad:final_img.shape[1]-right_pad]
+        out_image=np.rint(out_image)*255 
+        out_image = out_image.astype(np.uint8)    
+        output_image_5channel=np.zeros((out_image.shape[0],out_image.shape[1],1,1,1),dtype='uint8')
+        output_image_5channel[:,:,0,0,0]=out_image
+        bw = bfio.BioWriter(os.path.join(output_dir,filename),image=output_image_5channel)
+        bw.write_image(output_image_5channel)
+        bw.close_image()     
 
-for ind in range(0,len(filenames)):
-    filename=filenames[ind]    
-    bf = bfio.BioReader(os.path.join(input_dir,filename))
-    img = bf.read_image()
-    img=(img[:,:,0,0,0])
-    img=np.interp(img, (img.min(), img.max()), (0,1))
-    img=np.dstack((img,img,img))
-    padded_img,pad_dimensions=padding(img)
-    final_img=np.zeros((padded_img.shape[0],padded_img.shape[1]))
-    for i in range(int(padded_img.shape[0]/256)):
-        for j in range(int(padded_img.shape[1]/256)):
-            temp_img=padded_img[i*256:(i+1)*256,j*256:(j+1)*256]
-            inp = np.expand_dims(temp_img, axis=0)   
-            x=model.predict(inp)
-            out=x[0,:,:,0] 
-            final_img[i*256:(i+1)*256,j*256:(j+1)*256]=out    
-    top_pad,bottom_pad,left_pad,right_pad=pad_dimensions
-    out_image=final_img[top_pad:final_img.shape[0]-bottom_pad,left_pad:final_img.shape[1]-right_pad]
-    out_image=np.rint(out_image)*255 
-    out_image = out_image.astype(np.uint8)    
-    output_image_5channel=np.zeros((out_image.shape[0],out_image.shape[1],1,1,1),dtype='uint8')
-    output_image_5channel[:,:,0,0,0]=out_image
-    bw = bfio.BioWriter(os.path.join(output_dir,filename),image=output_image_5channel)
-    bw.write_image(output_image_5channel)
-    bw.close_image()     
+
+    javabridge.kill_vm()
+
+if __name__ == "__main__":
+    main()
     
-
-javabridge.kill_vm()
+    
 
 
 
