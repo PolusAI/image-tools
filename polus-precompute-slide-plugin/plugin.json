@@ -24,7 +24,9 @@
 					         "DeepZoom",
                    "Neuroglancer"
 				]
-      }
+      },
+      "description": "Build a DeepZoom or Neuroglancer pyramid",
+      "required": true
     }
   ],
   "outputs": [
@@ -39,6 +41,11 @@
       "key": "inputs.inpDir",
       "title": "Input collection: ",
       "description": "Collection name..."
+    },
+    {
+      "key": "inputs.pyramidType",
+      "title": "Pyramid Type: ",
+      "description": "Build a DeepZoom or Neuroglancer pyramid?"
     }
   ]
 }
