@@ -2,11 +2,11 @@ import logging, argparse, bioformats
 import javabridge as jutil
 from bfio.bfio import BioReader, BioWriter
 from pathlib import Path
-from utils    
+import utils    
 
 if __name__=="__main__":
     # Setup the Argument parsing
-    parser = argparse.ArgumentParser(prog='main', description='Generate a precomputed slice for Polus Viewer.')
+    parser = argparse.ArgumentParser(prog='build_pyramid', description='Generate a precomputed slice for Polus Viewer.')
 
     parser.add_argument('--inpDir', dest='input_dir', type=str,
                         help='Path to folder with CZI files', required=True)
@@ -61,10 +61,10 @@ if __name__=="__main__":
     # Create the classes needed to generate a precomputed slice
     logger.info("Creating encoder and file writer...")
     if pyramid_type == "Neuroglancer":
-        encoder = utils.NeuroglancerChunkEncoder(bf,out_dir)
-        file_writer = utils.NeuglancerWriter(out_dir)
+        encoder = utils.NeuroglancerChunkEncoder(out_dir)
+        file_writer = utils.NeuroglancerWriter(out_dir)
     elif pyramid_type == "DeepZoom":
-        encoder = utils.DeepZoomChunkEncoder(bf,out_dir)
+        encoder = utils.DeepZoomChunkEncoder(out_dir)
         file_writer = utils.DeepZoomWriter(out_dir)
 
     _get_higher_res(0,bf,file_writer,encoder)
