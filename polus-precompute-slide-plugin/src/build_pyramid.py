@@ -2,11 +2,11 @@ import logging, argparse, bioformats
 import javabridge as jutil
 from bfio.bfio import BioReader, BioWriter
 from pathlib import Path
-from utils    
+import utils    
 
 if __name__=="__main__":
     # Setup the Argument parsing
-    parser = argparse.ArgumentParser(prog='main', description='Generate a precomputed slice for Polus Viewer.')
+    parser = argparse.ArgumentParser(prog='build_pyramid', description='Generate a precomputed slice for Polus Viewer.')
 
     parser.add_argument('--inpDir', dest='input_dir', type=str,
                         help='Path to folder with CZI files', required=True)
@@ -16,12 +16,15 @@ if __name__=="__main__":
                         help='The image to turn into a pyramid', required=True)
     parser.add_argument('--pyramidType', dest='pyramid_type', type=str,
                         help='Build a DeepZoom or Neuroglancer pyramid', required=True)
+    parser.add_argument('--imageNum', dest='image_num', type=str,
+                        help='Image number, will be stored as a timeframe', required=True)
 
     args = parser.parse_args()
     input_dir = args.input_dir
     output_dir = args.output_dir
     image = args.image
     pyramid_type = args.pyramid_type
+    image_num = args.image_num
 
     # Initialize the logger    
     logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(image),
@@ -38,7 +41,10 @@ if __name__=="__main__":
 
     # Make the output directory
     image = Path(input_dir).joinpath(image)
-    out_dir = Path(output_dir).joinpath(image.name)
+    if pyramid_type == "Neuroglancer":
+        out_dir = Path(output_dir).joinpath(image.name)
+    elif pyramid_type == "DeepZoom":
+        out_dir = Path(output_dir).joinpath(image_num)
     out_dir.mkdir()
     out_dir = str(out_dir.absolute())
     
@@ -50,7 +56,7 @@ if __name__=="__main__":
     if pyramid_type == "Neuroglancer":
         file_info = utils.neuroglancer_info_file(bf,out_dir)
     elif pyramid_type == "DeepZoom":
-        file_info = utils.dzi_file(bf,out_dir)
+        file_info = utils.dzi_file(bf,out_dir,image_num)
     else:
         ValueError("pyramid_type must be Neuroglancer or DeepZoom")
     logger.info("data_type: {}".format(file_info['data_type']))
@@ -61,13 +67,13 @@ if __name__=="__main__":
     # Create the classes needed to generate a precomputed slice
     logger.info("Creating encoder and file writer...")
     if pyramid_type == "Neuroglancer":
-        encoder = utils.NeuroglancerChunkEncoder(bf,out_dir)
-        file_writer = utils.NeuglancerWriter(out_dir)
+        encoder = utils.NeuroglancerChunkEncoder(file_info)
+        file_writer = utils.NeuroglancerWriter(out_dir)
     elif pyramid_type == "DeepZoom":
-        encoder = utils.DeepZoomChunkEncoder(bf,out_dir)
+        encoder = utils.DeepZoomChunkEncoder(file_info)
         file_writer = utils.DeepZoomWriter(out_dir)
 
-    _get_higher_res(0,bf,file_writer,encoder)
+    utils._get_higher_res(0,bf,file_writer,encoder)
     
     logger.info("Finished precomputing. Closing the javabridge and exiting...")
     jutil.kill_vm()

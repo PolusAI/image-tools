@@ -1,7 +1,5 @@
 import logging, argparse, time, multiprocessing, subprocess
 from pathlib import Path
-import javabridge as jutil
-from utils import _get_higher_res, ChunkEncoder, CHUNK_SIZE
 
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -44,6 +42,7 @@ def main():
     # Build one pyramid for each image in the input directory
     # Each pyramid is built within its own process, with a maximum number of processes
     # equal to number of cpus - 1.
+    im_count = 1
     for image in images:
         if len(processes) >= multiprocessing.cpu_count()-1 and len(processes)>0:
             free_process = -1
@@ -58,10 +57,14 @@ def main():
             logger.info("Finished process {} of {} in {}s!".format(pnum,len(images),time.time() - process_timer[free_process]))
             del processes[free_process]
             del process_timer[free_process]
-        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir {} --outDir {} --image {}".format(input_dir,
-                                                                                                               output_dir,
-                                                                                                               image.name),
-                                                                                                               shell=True))
+            
+        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir {} --outDir {} --pyramidType {} --image {} --imageNum {}".format(input_dir,
+                                                                                                                                              output_dir,
+                                                                                                                                              pyramid_type,
+                                                                                                                                              '"' + image.name + '"',
+                                                                                                                                              im_count),
+                                                                                                                                        shell=True))
+        im_count += 1
         process_timer.append(time.time())
     
     # Wait for all processes to finish
