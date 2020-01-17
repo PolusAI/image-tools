@@ -1,7 +1,5 @@
 import logging, argparse, time, multiprocessing, subprocess
 from pathlib import Path
-import javabridge as jutil
-from utils import _get_higher_res, ChunkEncoder, CHUNK_SIZE
 
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -58,10 +56,12 @@ def main():
             logger.info("Finished process {} of {} in {}s!".format(pnum,len(images),time.time() - process_timer[free_process]))
             del processes[free_process]
             del process_timer[free_process]
-        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir {} --outDir {} --image {}".format(input_dir,
-                                                                                                               output_dir,
-                                                                                                               image.name),
-                                                                                                               shell=True))
+        print(image.name)
+        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir {} --outDir {} --pyramidType {} --image {}".format(input_dir,
+                                                                                                                                output_dir,
+                                                                                                                                pyramid_type,
+                                                                                                                                '"' + image.name + '"'),
+                                                                                                                                shell=True))
         process_timer.append(time.time())
     
     # Wait for all processes to finish

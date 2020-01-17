@@ -146,6 +146,7 @@ class PyramidWriter():
     """
 
     can_write = True
+    chunk_pattern = None
 
     def __init__(self, base_dir):
         self.base_path = Path(base_dir)
@@ -158,8 +159,6 @@ class PyramidWriter():
             key - pyramid scale, folder to save chunk to
             chunk_coords - X,Y,Z coordinates of data in buf
         """
-        chunk_path = self._chunk_path(key, chunk_coords)
-        mode = "wb"
         try:
             self._write_chunk(key,chunk_coords,buf)
         except OSError as exc:
@@ -171,14 +170,14 @@ class PyramidWriter():
     def _chunk_path(self, key, chunk_coords, pattern=None):
         if pattern is None:
             pattern = self.chunk_pattern
-        chunk_coords = self._get_coords(chunk_coords)
+        chunk_coords = self._chunk_coords(chunk_coords)
         chunk_filename = pattern.format(*chunk_coords, key=key)
         return self.base_path / chunk_filename
 
     def _chunk_coords(self,chunk_coords):
         return chunk_coords
 
-    def _write_chunk(self,chunk_path,buf):
+    def _write_chunk(self,key,chunk_path,buf):
         NotImplementedError("_write_chunk was never implemented.")
 
 class NeuroglancerWriter(PyramidWriter):
@@ -195,7 +194,7 @@ class NeuroglancerWriter(PyramidWriter):
     def _write_chunk(self,key,chunk_coords,buf):
         chunk_path = self._chunk_path(key,chunk_coords)
         os.makedirs(str(chunk_path.parent), exist_ok=True)
-        with open(str(chunk_path.with_name(chunk_path.name)),mode) as f:
+        with open(str(chunk_path.with_name(chunk_path.name)),'wb') as f:
             f.write(buf)
 
 class DeepZoomWriter(PyramidWriter):
@@ -304,8 +303,6 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath):
     Outputs:
         info - A dictionary containing the information in the info file
     """
-    # Create an output path object for the info file
-    op = Path(outPath).joinpath("info")
     
     # Get metadata info from the bfio reader
     sizes = [bfio_reader.num_x(),bfio_reader.num_y(),bfio_reader.num_z()]
@@ -351,14 +348,22 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath):
     return info
 
 def neuroglancer_info_file(bfio_reader,outPath):
+    # Create an output path object for the info file
+    op = Path(outPath).joinpath("info")
+    
     # Get pyramid info
     info = bfio_metadata_to_slide_info(bfio_reader,outPath)
 
     # Write the neuroglancer info file
     with open(op,'w') as writer:
         writer.write(json.dumps(info))
+        
+    return info
 
 def dzi_file(bfio_reader,outPath):
+    # Create an output path object for the info file
+    op = Path(outPath).joinpath("info")
+    
     # DZI file template
     DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="{}" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
     
@@ -366,5 +371,7 @@ def dzi_file(bfio_reader,outPath):
     info = bfio_metadata_to_slide_info(bfio_reader,outPath)
 
     # write the dzi file
-    with open(op,'w') as writer:
+    with open(outPath,'w') as writer:
         writer.write(DZI.format(CHUNK_SIZE,info['scales'][0]['size'][0],info['scales'][0]['size'][1]))
+        
+    return info
