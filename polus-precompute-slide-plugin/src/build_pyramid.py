@@ -44,7 +44,7 @@ if __name__=="__main__":
     if pyramid_type == "Neuroglancer":
         out_dir = Path(output_dir).joinpath(image.name)
     elif pyramid_type == "DeepZoom":
-        out_dir = Path(output_dir).joinpath(image_num)
+        out_dir = Path(output_dir).joinpath('{}_files'.format(image_num))
     out_dir.mkdir()
     out_dir = str(out_dir.absolute())
     
