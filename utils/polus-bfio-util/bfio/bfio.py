@@ -374,7 +374,7 @@ class BioWriter():
         """
         jutil.run_script(script,
                          dict(path=self._file_path,
-                              xml=self._metadata.to_xml(),
+                              xml=self._metadata.to_xml().replace('<ome:','<').replace('</ome:','</'),
                               writer=writer))
         writer.setId(self._file_path)
         writer.setInterleaved(False)
