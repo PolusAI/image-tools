@@ -2,6 +2,7 @@ from bfio.bfio import BioReader
 import numpy as np
 import json, copy, os
 from pathlib import Path
+import imageio
 
 # Conversion factors to nm, these are based off of supported Bioformats length units
 UNITS = {'m':  10**9,
@@ -127,7 +128,7 @@ def _get_higher_res(S,bfio_reader,slide_writer,encoder,X=None,Y=None):
                 image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1]] = _avg2(sub_image)
 
     # Encode the chunk
-    image_encoded = encoder.encode(image_shifted)
+    image_encoded = encoder.encode(image)
     # Write the chunk
     slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],0,1))
     
@@ -209,13 +210,13 @@ class DeepZoomWriter(PyramidWriter):
         self.chunk_pattern = "{key}/{0}_{1}.png"
 
     def _chunk_coords(self,chunk_coords):
-        file_coords = [chunk_coords[0]/CHUNK_SIZE,chunk_coords[2]/CHUNK_SIZE]
+        chunk_coords = [chunk_coords[0]//CHUNK_SIZE,chunk_coords[2]//CHUNK_SIZE]
         return chunk_coords
 
     def _write_chunk(self,key,chunk_coords,buf):
         chunk_path = self._chunk_path(key,chunk_coords)
         os.makedirs(str(chunk_path.parent), exist_ok=True)
-        imageio.imwrite(str(chunk_path.with_name(chunk_path.name)),image,format='PNG-FI',compression=1)
+        imageio.imwrite(str(chunk_path.with_name(chunk_path.name)),buf,format='PNG-FI',compression=1)
 
 # Modified and condensed from multiple functions and classes
 # https://github.com/HumanBrainProject/neuroglancer-scripts/blob/master/src/neuroglancer_scripts/chunk_encoding.py
@@ -286,7 +287,6 @@ class DeepZoomChunkEncoder(NeuroglancerChunkEncoder):
         """
         # Check to make sure the data is formatted properly
         assert chunk.ndim == 2
-        assert chunk.shape[0] == self.num_channels
         return chunk
 
 def bfio_metadata_to_slide_info(bfio_reader,outPath):
@@ -360,9 +360,9 @@ def neuroglancer_info_file(bfio_reader,outPath):
         
     return info
 
-def dzi_file(bfio_reader,outPath):
+def dzi_file(bfio_reader,outPath,imageNum):
     # Create an output path object for the info file
-    op = Path(outPath).joinpath("info")
+    op = Path(outPath).parent.joinpath("{}.dzi".format(imageNum))
     
     # DZI file template
     DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="{}" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
@@ -371,7 +371,7 @@ def dzi_file(bfio_reader,outPath):
     info = bfio_metadata_to_slide_info(bfio_reader,outPath)
 
     # write the dzi file
-    with open(outPath,'w') as writer:
+    with open(op,'w') as writer:
         writer.write(DZI.format(CHUNK_SIZE,info['scales'][0]['size'][0],info['scales'][0]['size'][1]))
         
     return info
