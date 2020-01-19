@@ -11,7 +11,7 @@ def make_tile(x,X_range,y,Y_range,stitchPath,imgPath):
     #       While the output image can be any size, the input image size will be limited by system memory.
 
     # Parse the stitching vector
-    outvals = _parse_stitch(stitchPath,imgPath)
+    outvals = _parse_stitch(stitchPath,imgPath,True)
 
     # Get the data type
     br = BioReader(str(Path(imgPath).joinpath(outvals['filePos'][0]['file'])))

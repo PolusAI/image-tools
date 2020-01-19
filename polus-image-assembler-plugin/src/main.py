@@ -22,7 +22,7 @@ def get_number(s):
     except ValueError:
         return s
 
-def _parse_stitch(stitchPath,imagePath):
+def _parse_stitch(stitchPath,imagePath,timepointName=False):
     """ Load and parse image stitching vectors
     
     This function creates a list of file dictionaries that include the filename and
@@ -33,6 +33,7 @@ def _parse_stitch(stitchPath,imagePath):
     Inputs:
         stitchPath - A path to stitching vectors
         imagePath - A path to tiled tiff images
+        timepointName - Use the vector timeslice as the image name
     Outputs:
         out_dict - Dictionary with keys (width, height, name, filePos)
     """
@@ -83,42 +84,57 @@ def _parse_stitch(stitchPath,imagePath):
             out_dict['filePos'].append(stitch_groups)
 
             # Determine the difference between first name and current name
-            for i in name_ind:
-                if name[i] != stitch_groups['file'][i]:
-                    if i not in name_pos.keys():
-                        name_pos[i] = set()
-                        name_pos[i].update([get_number(stitch_groups['file'][i])])
-                        name_pos[i].update([get_number(name[i])])
-                    else:
-                        name_pos[i].update([get_number(stitch_groups['file'][i])])
+            if not timepointName:
+                for i in name_ind:
+                    if name[i] != stitch_groups['file'][i]:
+                        if i not in name_pos.keys():
+                            name_pos[i] = set()
+                            name_pos[i].update([get_number(stitch_groups['file'][i])])
+                            name_pos[i].update([get_number(name[i])])
+                        else:
+                            name_pos[i].update([get_number(stitch_groups['file'][i])])
     
     # Generate the output file name
     # NOTE: This should be rewritten later to determine numeric values rather than position values.
     #       Output file names should be 
     indices = sorted(name_pos.keys())
-    out_dict['name'] = name[0:indices[0]]
-    minvals = []
-    maxvals = []
-    for v,i in enumerate(indices):
-        if len(minvals)==0:
-            out_dict['name'] += '<'
-        minvals.append(min(name_pos[i]))
-        maxvals.append(max(name_pos[i]))
-        if i == indices[-1] or indices[v+1] - i > 1:
-            out_dict['name'] += ''.join([str(ind) for ind in minvals])
-            out_dict['name'] += '-'
-            out_dict['name'] += ''.join([str(ind) for ind in maxvals])
-            out_dict['name'] += '>'
-            if i ==  indices[-1]:
-                out_dict['name'] += name[indices[-1]+1:]
-            else:
-                out_dict['name'] += name[indices[v]+1:indices[v+1]]
-            minvals = []
-            maxvals = []
+    if timepointName:
+        global_regex = ".*global-positions-([0-9]+).txt"
+        name = re.match(global_regex,Path(stitchPath).name).groups()[0]
+        name += '.ome.tif'
+        out_dict['name'] = name
+    elif len(indices) > 0:
+        out_dict['name'] = name[0:indices[0]]
+        minvals = []
+        maxvals = []
+        for v,i in enumerate(indices):
+            if len(minvals)==0:
+                out_dict['name'] += '<'
+            minvals.append(min(name_pos[i]))
+            maxvals.append(max(name_pos[i]))
+            if i == indices[-1] or indices[v+1] - i > 1:
+                out_dict['name'] += ''.join([str(ind) for ind in minvals])
+                out_dict['name'] += '-'
+                out_dict['name'] += ''.join([str(ind) for ind in maxvals])
+                out_dict['name'] += '>'
+                if i ==  indices[-1]:
+                    out_dict['name'] += name[indices[-1]+1:]
+                else:
+                    out_dict['name'] += name[indices[v]+1:indices[v+1]]
+                minvals = []
+                maxvals = []
+    else:
+        out_dict['name'] = name
 
     return out_dict
 
 if __name__=="__main__":
+    # Initialize the logger
+    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+                        datefmt='%d-%b-%y %H:%M:%S')
+    logger = logging.getLogger("main")
+    logger.setLevel(logging.INFO)
+    
     # Setup the argument parsing
     parser = argparse.ArgumentParser(prog='main', description='Assemble images from a single stitching vector.')
     parser.add_argument('--stitchPath', dest='stitchPath', type=str,
@@ -127,21 +143,23 @@ if __name__=="__main__":
                         help='Input image collection to be processed by this plugin', required=True)
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
+    parser.add_argument('--timesliceNaming', dest='timesliceNaming', type=str,
+                        help='Use timeslice number as image name', required=True)
 
     # Parse the arguments
     args = parser.parse_args()
     stitchPath = args.stitchPath
+    logger.info('stichPath: {}'.format(stitchPath))
     imgPath = args.imgPath
+    logger.info('imgPath: {}'.format(imgPath))
     outDir = args.outDir
-
-    # Initialize the logger
-    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
-                        datefmt='%d-%b-%y %H:%M:%S')
-    logger = logging.getLogger("main")
-    logger.setLevel(logging.INFO)
+    logger.info('outDir: {}'.format(outDir))
+    timesliceNaming = args.timesliceNaming == 'true'
+    logger.info('timesliceNaming: {}'.format(timesliceNaming))
 
     # Get a list of stitching vectors
     vectors = [str(p.absolute()) for p in Path(stitchPath).iterdir() if p.is_file() and "".join(p.suffixes)=='.txt']
+    vectors.sort()
 
     # Variables for image building processes
     img_processes = []
@@ -150,7 +168,7 @@ if __name__=="__main__":
     for v in vectors:
         # Parse the stitching vector
         logger.info('Analyzing vector: {}'.format(Path(v).name))
-        outvals = _parse_stitch(v,imgPath)
+        outvals = _parse_stitch(v,imgPath,timesliceNaming)
         logger.info('Building image: {}'.format(outvals['name']))
         logger.info('Output image size (width, height): {},{}'.format(outvals['width'],outvals['height']))
 
