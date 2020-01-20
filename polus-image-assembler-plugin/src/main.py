@@ -138,24 +138,31 @@ if __name__=="__main__":
     # Setup the argument parsing
     parser = argparse.ArgumentParser(prog='main', description='Assemble images from a single stitching vector.')
     parser.add_argument('--stitchPath', dest='stitchPath', type=str,
-                        help='Complete path to a stitching vector', required=True)
+                        help='Complete path to a stitching vector', required=False)
     parser.add_argument('--imgPath', dest='imgPath', type=str,
                         help='Input image collection to be processed by this plugin', required=True)
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
     parser.add_argument('--timesliceNaming', dest='timesliceNaming', type=str,
                         help='Use timeslice number as image name', required=True)
+    parser.add_argument('--vectorInMetadata', dest='vectorInMetadata', type=str,
+                        help='Use stitching vectors stored in the metadata', required=True)
 
     # Parse the arguments
     args = parser.parse_args()
-    stitchPath = args.stitchPath
-    logger.info('stichPath: {}'.format(stitchPath))
+    vectorInMetadata = args.vectorInMetadata
+    logger.info('vectorInMetadata: {}'.format(vectorInMetadata))
     imgPath = args.imgPath
     logger.info('imgPath: {}'.format(imgPath))
     outDir = args.outDir
     logger.info('outDir: {}'.format(outDir))
     timesliceNaming = args.timesliceNaming == 'true'
     logger.info('timesliceNaming: {}'.format(timesliceNaming))
+    if vectorInMetadata:
+        stitchPath = str(Path(imgPath).parent.joinpath('metadata_files').absolute())
+    else:
+        stitchPath = args.stitchPath
+        logger.info('stichPath: {}'.format(stitchPath))
 
     # Get a list of stitching vectors
     vectors = [str(p.absolute()) for p in Path(stitchPath).iterdir() if p.is_file() and "".join(p.suffixes)=='.txt']
