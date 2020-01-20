@@ -180,7 +180,7 @@ def _parse_features(featurePath,fp):
                 np_line = {var_ind[ind]:val for ind,val in enumerate(line.rstrip('\n').split(','))}
                 while line and p_line['file'] == np_line['file']:
                     # Store the values in a feature list
-                    for key,val in p_line.items():
+                    for key,val in np_line.items():
                         if isinstance(val,list):
                             try:
                                 p_line[key].append(float(val))
@@ -217,8 +217,10 @@ if __name__=="__main__":
                         help='Stitching vector used to buld the image pyramid.', required=True)
     parser.add_argument('--outImages', dest='outImages', type=str,
                         help='Heatmap Output Images', required=True)
+    parser.add_argument('--vectorInMetadata', dest='vectorInMetadata', type=str,
+                        help='Store stitching vector in metadata', required=True)
     parser.add_argument('--outVectors', dest='outVectors', type=str,
-                        help='Heatmap Output Vectors', required=True)
+                        help='Heatmap Output Vectors', required=False)
     
     # Parse the arguments
     args = parser.parse_args()
@@ -229,8 +231,18 @@ if __name__=="__main__":
     vector = args.vector
     logger.info('vector = {}'.format(vector))
     outImages = args.outImages
+    vectorInMetadata = args.vectorInMetadata == 'true'
+    logger.info('vectorInMetadata = {}'.format(vectorInMetadata))
+    if vectorInMetadata:
+        outVectors = Path(outImages).joinpath('metadata_files')
+        outVectors.mkdir()
+        outVectors = str(outVectors.absolute())
+        outImages = Path(outImages).joinpath('images')
+        outImages.mkdir()
+        outImages = str(outImages.absolute())
+    else:
+        outVectors = args.outVectors
     logger.info('outImages = {}'.format(outImages))
-    outVectors = args.outVectors
     logger.info('outVectors = {}'.format(outVectors))
 
     # Set up the fileparser
