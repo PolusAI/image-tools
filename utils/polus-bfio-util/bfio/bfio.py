@@ -360,9 +360,10 @@ class BioWriter():
                                                'Set the BigTiff flag.')
         writer = w_klass()
         
-        # Set the BigTiff flag if needed, must be done before anything else
-        if self.num_x() * self.num_y() * self._pix['spp'] * self._pix['bpp'] > self._MAX_BYTES:
-            writer.setBigTiff(True)
+        # Always set bigtiff flag. There have been some instances where bioformats does not
+        # properly write images that are less than 2^32 if bigtiff is not set. So, just always
+        # set it since it doesn't drastically alter file size.
+        writer.setBigTiff(True)
         
         script = """
         importClass(Packages.loci.formats.services.OMEXMLService,
