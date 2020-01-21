@@ -153,7 +153,6 @@ if __name__=="__main__":
     vectorInMetadata = args.vectorInMetadata == 'true'
     logger.info('vectorInMetadata: {}'.format(vectorInMetadata))
     imgPath = args.imgPath
-    logger.info('imgPath: {}'.format(imgPath))
     outDir = args.outDir
     logger.info('outDir: {}'.format(outDir))
     timesliceNaming = args.timesliceNaming == 'true'
@@ -164,10 +163,19 @@ if __name__=="__main__":
         stitchPath = args.stitchPath
         if stitchPath == None:
             ValueError('If vectorInMetadata==False, then stitchPath must be defined')
-        logger.info('stichPath: {}'.format(stitchPath))
 
     # Get a list of stitching vectors
-    vectors = [str(p.absolute()) for p in Path(stitchPath).iterdir() if p.is_file() and "".join(p.suffixes)=='.txt']
+    try:
+        vectors = [str(p.absolute()) for p in Path(stitchPath).iterdir() if p.is_file() and "".join(p.suffixes)=='.txt']
+    except FileNotFoundError:
+        # Workaround for WIPP bug
+        if Path(stitchPath).name == 'metadata_files':
+            stitchPath = str(Path(imgPath).joinpath('metadata_files').absolute())
+            imgPath = str(Path(imgPath).joinpath('images').absolute())
+            vectors = [str(p.absolute()) for p in Path(stitchPath).iterdir() if p.is_file() and "".join(p.suffixes)=='.txt']
+        
+    logger.info('imgPath: {}'.format(imgPath))
+    logger.info('stichPath: {}'.format(stitchPath))
     vectors.sort()
 
     # Variables for image building processes
