@@ -9,8 +9,8 @@ import keras.callbacks as CallBacks
 from keras import backend as K
 import tensorflow as tf
 import cv2
-import matplotlib.pyplot as plt
-import glob
+
+
 import argparse
 import os
 import math
