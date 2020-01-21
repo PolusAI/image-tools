@@ -1,9 +1,9 @@
 {
     "name": "Cell Nuclei Segmentation",
-	"version": "0.1.0",
+	"version": "0.1.2",
 	"title": "Jupyter Notebook executor",
 	"description": "Cell Nuclei Segmentation using U-Net in Tensorflow. Neural net architecture and pretrained weights are taken from Data Science Bowl 2018 entry by Muhammad Asim",
-	"containerId": "labshare/polus-cell-nuclei-segmentation:0.1.0",
+	"containerId": "labshare/polus-cell-nuclei-segmentation:0.1.2",
 
 	"inputs": [
 		{

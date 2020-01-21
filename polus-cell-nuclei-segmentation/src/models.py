@@ -15,10 +15,10 @@ import argparse
 import os
 import math
 import bfio
-import javabridge
+import javabridge as jutil
 import bioformats 
-
-
+import logging
+from pathlib import Path
 
 def unet(in_shape=(256,256,3), alpha=0.1, dropout=None):
 
@@ -137,9 +137,17 @@ def padding(image):
 
 
 def main():
-    # start the vm
-    javabridge.start_vm(class_path=bioformats.JARS)
+    # Initialize the logger
+    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+                        datefmt='%d-%b-%y %H:%M:%S')
+    logger = logging.getLogger("main")
+    logger.setLevel(logging.INFO)
     
+    # start the vm
+    logger.info("Starting the javabridge...")
+    # Start the javabridge with proper java logging
+    log_config = Path(__file__).parent.joinpath("log4j.properties")
+    jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
     
     parser=argparse.ArgumentParser()
     parser.add_argument('--inpDir',dest='input_directory',type=str,required=True)
@@ -148,9 +156,12 @@ def main():
     
     # Input and output directory
     input_dir = args.input_directory
+    logger.info("input_dir: {}".format(input_dir))
     output_dir = args.output_directory
+    logger.info("output_dir: {}".format(output_dir))
     
     # Load Model Architecture and model weights
+    logger.info("Loading unit...")
     model=unet()
     model.load_weights('unet.h5')
     
@@ -160,6 +171,7 @@ def main():
     # Iterate over the files to be processed
     for ind in range(0,len(filenames)):
         filename=filenames[ind]  
+        logger.info("Processing image: {}".format(filename))
         
         # Use bfio to read the image
         bf = bfio.BioReader(os.path.join(input_dir,filename))
@@ -215,17 +227,14 @@ def main():
         output_image_5channel[:,:,0,0,0]=out_image
         
         # Export the output to the desired directory
-        bw = bfio.BioWriter(os.path.join(output_dir,filename),image=output_image_5channel)
+        bw = bfio.BioWriter(os.path.join(output_dir,filename),metadata=bf.read_metadata())
         bw.write_image(output_image_5channel)
         bw.close_image()     
 
     # Stop the VM
-    javabridge.kill_vm()
+    logger.info("Processed all image, closing javabridge...")
+    jutil.kill_vm()
 
 if __name__ == "__main__":
     main()
     
-    
-
-
-
