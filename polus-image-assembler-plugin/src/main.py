@@ -161,9 +161,9 @@ if __name__=="__main__":
     if vectorInMetadata:
         stitchPath = str(Path(imgPath).parent.joinpath('metadata_files').absolute())
     else:
+        stitchPath = args.stitchPath
         if stitchPath == None:
             ValueError('If vectorInMetadata==False, then stitchPath must be defined')
-        stitchPath = args.stitchPath
         logger.info('stichPath: {}'.format(stitchPath))
 
     # Get a list of stitching vectors
