@@ -144,13 +144,13 @@ if __name__=="__main__":
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
     parser.add_argument('--timesliceNaming', dest='timesliceNaming', type=str,
-                        help='Use timeslice number as image name', required=True)
+                        help='Use timeslice number as image name', required=False)
     parser.add_argument('--vectorInMetadata', dest='vectorInMetadata', type=str,
-                        help='Use stitching vectors stored in the metadata', required=True)
+                        help='Use stitching vectors stored in the metadata', required=False)
 
     # Parse the arguments
     args = parser.parse_args()
-    vectorInMetadata = args.vectorInMetadata
+    vectorInMetadata = args.vectorInMetadata == 'true'
     logger.info('vectorInMetadata: {}'.format(vectorInMetadata))
     imgPath = args.imgPath
     logger.info('imgPath: {}'.format(imgPath))
@@ -161,6 +161,8 @@ if __name__=="__main__":
     if vectorInMetadata:
         stitchPath = str(Path(imgPath).parent.joinpath('metadata_files').absolute())
     else:
+        if stitchPath == None:
+            ValueError('If vectorInMetadata==False, then stitchPath must be defined')
         stitchPath = args.stitchPath
         logger.info('stichPath: {}'.format(stitchPath))
 
