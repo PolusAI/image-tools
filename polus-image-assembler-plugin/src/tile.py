@@ -22,13 +22,16 @@ def make_tile(x,X_range,y,Y_range,stitchPath,imgPath):
 
     # get images in bounds of current super tile
     for f in outvals['filePos']:
-        if (f['posX'] > x and f['posX'] < X_range) or (f['posX']+f['width'] > x and f['posX']+f['width'] < X_range):
-            if (f['posY'] > y and f['posY'] < Y_range) or (f['posY']+f['height'] > y and f['posY']+f['height'] < Y_range):
+        print(f)
+        if (f['posX'] >= x and f['posX'] <= X_range) or (f['posX']+f['width'] >= x and f['posX']+f['width'] <= X_range):
+            if (f['posY'] >= y and f['posY'] <= Y_range) or (f['posY']+f['height'] >= y and f['posY']+f['height'] <= Y_range):
                 br = BioReader(str(Path(imgPath).joinpath(f['file'])))
                 image = br.read_image()
             else:
+                print('skipping image based on y criteria')
                 continue
         else:
+            print('skipping image based on x criteria')
             continue
         
         # get bounds of image within the tile
