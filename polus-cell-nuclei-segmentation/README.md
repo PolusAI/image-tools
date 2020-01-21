@@ -1,6 +1,6 @@
 # Polus Cell Nuclei Segmentation Plugin
 
-Reference :https://github.com/axium/Data-Science-Bowl-2018
+Citation : For neural network architecture and pretrained weights : https://github.com/axium/Data-Science-Bowl-2018
 
 The plugin takes 2 inputs : (i) The input Directory (ii) The output directory. Additional information regarding the directory structure is described below. The plugin segments nuclei in a grayscale image and outputs a binary image (same size as the input) highlighting the segmented nuclei. The input directory should consist of only the grayscale images to be segmented.
 
