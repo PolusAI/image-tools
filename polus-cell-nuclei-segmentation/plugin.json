@@ -1,6 +1,6 @@
 {
     "name": "Cell Nuclei Segmentation",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"title": "Cell Nuclei Segmentaion using U-net",
 	"description": " Segments cell nuclei using U-Net in Tensorflow. Neural net architecture and pretrained weights are taken from Data Science Bowl 2018 entry by Muhammad Asim",
 	"author": "Gauhar Bains (gauhar.bains@labshare.org), Konstantin Taletskiy (Konstantin.Taletskiy@labshare.org)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "For neural network architecture and pretrained weights : https://github.com/axium/Data-Science-Bowl-2018",
-	"containerId": "labshare/polus-cell-nuclei-segmentation:0.1.2",
+	"containerId": "labshare/polus-cell-nuclei-segmentation:0.1.3",
 
 	"inputs": [
 		{
