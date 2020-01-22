@@ -38,6 +38,9 @@ if __name__=="__main__":
     darkPattern = args.darkPattern
     logger.info('darkPattern = {}'.format(darkPattern))
     ffDir = args.ffDir
+    # catch the case that ffDir is the output within a workflow
+    if Path(ffDir).joinpath('images').is_dir():
+        ffDir = str(Path(ffDir).joinpath('images').absolute())
     logger.info('ffDir = {}'.format(ffDir))
     brightPattern = args.brightPattern
     logger.info('brightPattern = {}'.format(brightPattern))
