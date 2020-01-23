@@ -6,7 +6,6 @@ from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-
 # Chunk Scale
 CHUNK_SIZE = 512
 
@@ -20,6 +19,12 @@ logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
 """ 1. Loading and binning data """
+def is_number(value):
+    try:
+        float(value)
+        return True
+    except:
+        return False
 
 def load_csv(fpath):
     """ Load a csv and select data
@@ -45,19 +50,24 @@ def load_csv(fpath):
     for ind,fname in zip(range(len(data.columns)),data.columns):
         if data[fname][0] != 'F' and data[fname][0] != 'C':
             is_coded = False
-        else:
-            if data[fname][0] == 'F':
+            if is_number(data[fname][0]):
                 cnames.append([fname,ind])
+            else:
+                logging.info('Column {} does not appear to contain numeric values. Not building graphs for this column.'.format(fname))
+        elif data[fname][0] == 'F':
+            cnames.append([fname,ind])
+        else:
+            logging.info('Skipping column {} for reason: one hot encodings'.format(fname))
     
     # If data is not coded, initialize all columns
-    if not is_coded:
-        cnames = data.columns
+    # if not is_coded:
+    #     cnames = data.columns
     
     # Load the data
     if is_coded:
-        data = pandas.read_csv(fpath,skiprows=[1],usecols=cnames)
+        data = pandas.read_csv(fpath,skiprows=[1],usecols=[c[0] for c in cnames])
     else:
-        data = pandas.read_csv(fpath)
+        data = pandas.read_csv(fpath,usecols=[c[0] for c in cnames])
         cnames = [[fname,ind] for ind,fname in zip(range(len(data.columns)),data.columns)]
 
     return data, cnames
@@ -86,6 +96,7 @@ def bin_data(data,column_names):
     nfeats = len(column_names)
     bin_stats = {'min': data.min(),
                  'max': data.max()}
+    print(bin_stats)
     column_bin_size = (bin_stats['max'] * (1 + 10**-6) - bin_stats['min'])/200
 
     # Transform data into bin positions for fast binning
