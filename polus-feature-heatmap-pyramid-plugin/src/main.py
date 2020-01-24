@@ -1,7 +1,7 @@
 from bfio import BioWriter
 import bioformats
 import javabridge as jutil
-import argparse, logging, time, imagesize, os, re, statistics
+import argparse, logging, time, imagesize, os, re
 from filepattern import FilePattern
 import numpy as np
 from pathlib import Path
@@ -15,6 +15,20 @@ logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(messa
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
+def mean(data_list):
+    """ Fast mean
+    
+    Calculates the artithmetic mean. This is faster than the method of the same name
+    in the statistics package (1.5-10x speed improvement based on list size).
+
+    Inputs:
+        data_list - a list of floats
+    Outputs:
+        val - The arithmetic mean of data_list
+    """
+    val = sum(data_list)/len(data_list)
+    return val
+
 def get_number(s):
     """ Check that s is number
     
@@ -27,7 +41,11 @@ def get_number(s):
         value - Either float(s) or False if s cannot be cast to float
     """
     try:
-        return float(s)
+        s = float(s)
+        if s==float('-inf') or s==float('inf') or str(s)=='nan':
+            return False
+        else:
+            return float(s)
     except ValueError:
         return False
 
@@ -167,6 +185,8 @@ def _parse_features(featurePath,fp):
                     v = get_number(val)
                     if isinstance(v,float):
                         p_line[key] = [v]
+                    elif key != 'file':
+                        p_line[key] = []
 
                 # Get the image associated with the current line
                 current_image = _get_file_dict(fp,p_line['file'])
@@ -181,11 +201,9 @@ def _parse_features(featurePath,fp):
                 while line and p_line['file'] == np_line['file']:
                     # Store the values in a feature list
                     for key,val in np_line.items():
-                        if isinstance(val,list):
-                            try:
-                                p_line[key].append(float(val))
-                            except ValueError:
-                                continue
+                        v = get_number(val)
+                        if isinstance(v,float):
+                            p_line[key].append(float(val))
 
                     # Get the next line
                     line = fr.readline()
@@ -194,7 +212,7 @@ def _parse_features(featurePath,fp):
                 # Get the mean of the feature list, save in the file dictionary
                 for key,val in p_line.items():
                     if isinstance(val,list):
-                        current_image[key] = statistics.mean(val)
+                        current_image[key] = mean(val)
                         feature_list[key].append(current_image[key])
                 
                 # Checkpoint
@@ -246,7 +264,7 @@ if __name__=="__main__":
     logger.info('outVectors = {}'.format(outVectors))
 
     # Set up the fileparser
-    fp = FilePattern(inpDir,'.*.tif')
+    fp = FilePattern(inpDir,'.*.ome.tif')
 
     # Parse the stitching vector
     logger.info('Parsing stitching vectors...')
@@ -274,7 +292,7 @@ if __name__=="__main__":
             except ZeroDivisionError:
                 fl[ft] = 0
                 unique_levels.update([0])
-
+                
     # Start the javabridge with proper java logging
     logger.info('Initializing the javabridge...')
     log_config = Path(__file__).parent.joinpath("log4j.properties")
