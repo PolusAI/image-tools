@@ -279,8 +279,12 @@ if __name__=="__main__":
     feature_mins = {}
     feature_ranges = {}
     for key,val in feature_list.items():
-        feature_mins[key] = min(val)
-        feature_ranges[key] = max(val)-feature_mins[key]
+        if len(val) == 0:
+            feature_mins[key] = 0
+            feature_ranges[key] = 0
+        else:
+            feature_mins[key] = min(val)
+            feature_ranges[key] = max(val)-feature_mins[key]
     unique_levels = set()
     for fl in fp.iterate():
         if 'line' not in fl.keys():
