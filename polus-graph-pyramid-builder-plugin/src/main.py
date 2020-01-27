@@ -59,16 +59,11 @@ def load_csv(fpath):
         else:
             logging.info('Skipping column {} for reason: one hot encodings'.format(fname))
     
-    # If data is not coded, initialize all columns
-    # if not is_coded:
-    #     cnames = data.columns
-    
     # Load the data
     if is_coded:
         data = pandas.read_csv(fpath,skiprows=[1],usecols=[c[0] for c in cnames])
     else:
         data = pandas.read_csv(fpath,usecols=[c[0] for c in cnames])
-        cnames = [[fname,ind] for ind,fname in zip(range(len(data.columns)),data.columns)]
 
     return data, cnames
 
