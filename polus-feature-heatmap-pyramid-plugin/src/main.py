@@ -212,8 +212,11 @@ def _parse_features(featurePath,fp):
                 # Get the mean of the feature list, save in the file dictionary
                 for key,val in p_line.items():
                     if isinstance(val,list):
-                        current_image[key] = mean(val)
-                        feature_list[key].append(current_image[key])
+                        try:
+                            current_image[key] = mean(val)
+                            feature_list[key].append(current_image[key])
+                        except ZeroDivisionError:
+                            current_image[key] = 'NaN'
                 
                 # Checkpoint
                 fnum += 1
@@ -291,8 +294,12 @@ if __name__=="__main__":
             continue
         for ft in feature_list:
             try:
-                fl[ft] = round((fl[ft] - feature_mins[ft])/feature_ranges[ft] * 254 + 1)
-                unique_levels.update([fl[ft]])
+                if get_number(fl[ft]):
+                    fl[ft] = round((fl[ft] - feature_mins[ft])/feature_ranges[ft] * 254 + 1)
+                    unique_levels.update([fl[ft]])
+                else:
+                    fl[ft] = 0
+                    unique_levels.update([0])
             except ZeroDivisionError:
                 fl[ft] = 0
                 unique_levels.update([0])
