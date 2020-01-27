@@ -1,4 +1,4 @@
-from utility import ConvertImage, Analysis, Df_Csv
+from utility import ConvertImage, Df_Csv
 import argparse, logging
 
 
@@ -44,16 +44,16 @@ def main():
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
     logger.info("Started")
+    
     image_convert = ConvertImage(inpDir ,segDir)
     df, filenames = image_convert.convert_tiled_tiff(boxSize, angleStart, angleStop, pixelDistance)
-    logger.info("Finished converting image")
     csv_file= Df_Csv(df, outDir)
     del df
     del filenames
     csv_final = csv_file.csvfile()
     del csv_final
     logger.info("Finished all processes!")
-
+    
 if __name__ == "__main__":
     main()
     
