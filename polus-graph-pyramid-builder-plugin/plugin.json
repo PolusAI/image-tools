@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "labshare/polus-graph-pyramid-builder-plugin:1.0.21",
+  "containerId": "labshare/polus-graph-pyramid-builder-plugin:1.0.2",
   "inputs": [
 
     {
