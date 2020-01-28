@@ -1,8 +1,8 @@
 {
     "name": "Feature Extraction",
     "version": "0.1.0",
-    "title": "Feature Extraction",
-    "description": "Everything you need to start a WIPP plugin.",
+    "title": "Extract features from images",
+    "description": "Extract shape and intensity features from images",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@labshare.org)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/labshare/polus-plugins",
