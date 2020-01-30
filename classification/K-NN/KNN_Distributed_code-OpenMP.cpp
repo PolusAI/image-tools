@@ -195,6 +195,7 @@ double globalFindMedian (int maxVarDimension, vector<int> nodeDataIndex0, int gl
 		MPI_File logfile;
 		char line[1024];
 		if (whileCount/10000*10000 == whileCount) {
+			printf("Too Many Trials for Global KD Tree Median, Processor = %d \n",world_rank);
 			sprintf(line,"Too Many Trials for Global KD Tree Median, Processor = %d \n",world_rank);
 			MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
 		}
@@ -389,6 +390,7 @@ int main(int argc, char * const argv[]) {
 		colIndex1 = atoi(argv[3]); 
 		colIndex2 = atoi(argv[4]); 
 	} else 	{
+		printf("Wrong Input Arguments\n");
 		sprintf(line,"Wrong Input Arguments\n");
 		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE); 
 		return -1;
@@ -422,6 +424,7 @@ int main(int argc, char * const argv[]) {
 	bool powerOfTwo = !(world_size == 0) && !(world_size & (world_size - 1));
 	if (powerOfTwo!=true) {
 		if (world_rank==0) {
+			printf("Number of Processors should be a power of 2\n");
 			sprintf(line,"Number of Processors should be a power of 2\n");
 			MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
 		}
@@ -454,8 +457,9 @@ int main(int argc, char * const argv[]) {
 	/**	
 	 * Output error in case the localFileName was not opened for reading
 	 */	
-	if(infile.fail())  
-	{ 	sprintf(line,"error in opening the input file\n");
+	if(infile.fail()) { 
+		printf("error in opening the input file\n");
+		sprintf(line,"error in opening the input file\n");
 		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
 		return 1; 
 	} 
@@ -493,6 +497,7 @@ int main(int argc, char * const argv[]) {
 		}
 	}	
 	if (world_rank==0) {
+		printf("The input csv file contains %d rows of raw data (w/o header) with %d columns\n",tmpFileLineCountsArrayCum[world_size-1],featureCounts);
 		sprintf(line,"The input csv file contains %d rows of raw data (w/o header) with %d columns\n",tmpFileLineCountsArrayCum[world_size-1],featureCounts);
 		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);		
 	}		
@@ -548,6 +553,7 @@ int main(int argc, char * const argv[]) {
 
 	while (nodeCounts!= world_size){ 
 		if (world_rank ==0) {
+			printf("Constructing Global Kd Tree: Layer = %d \n",nodesLayer);
 			sprintf(line,"Constructing Global Kd Tree: Layer = %d \n",nodesLayer);
 			MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
 		}
@@ -712,6 +718,7 @@ int main(int argc, char * const argv[]) {
 	 * or maxAllowedLayers is reached 
 	 */
 	if (world_rank==0) {
+		printf("Constructing the Local Kd Tree\n");
 		sprintf(line,"Constructing the Local Kd Tree\n");
 		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
 	}
@@ -741,6 +748,7 @@ int main(int argc, char * const argv[]) {
 	int estimatedLayers=int(log2(localNodeDataIndex[0].size()/bucketSize))+1;  
 	int maxAllowedLayers=estimatedLayers+estimatedExtraLayers;
 	if (maxAllowedLayers+nodesLayer > featureCounts){
+		printf("Error in Exceeding Dimensions, increase BucketSize\n");
 		sprintf(line,"Error in Exceeding Dimensions, increase BucketSize\n");
 		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
 	}
@@ -848,6 +856,7 @@ int main(int argc, char * const argv[]) {
 	 * and the data within the same bucket arranged close to each other in the new arrays
 	 */
 	if (world_rank==0) {
+		printf("Computing K-NNs for the points within the Same Bucket\n");
 		sprintf(line,"Computing K-NNs for the points within the Same Bucket\n");
 		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
 	}
@@ -942,6 +951,7 @@ int main(int argc, char * const argv[]) {
 	 * the maximum distance in the heap of that point (first entry of heap)
 	 */
 	if (world_rank==0) {
+		printf("Finding the Spatial Neighboring Processors\n");
 		sprintf(line,"Finding the Spatial Neighboring Processors\n");
 		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
 	}
@@ -1133,6 +1143,7 @@ int main(int argc, char * const argv[]) {
 	 * This section is the implementation of Algorithm 1 in the referencing paper and is computationally the most expensive part of the code
 	 */
 	if (world_rank==0) {
+		printf("Computing K-NNs for Queries\n");
 		sprintf(line,"Computing K-NNs for Queries\n");
 		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
 	}
@@ -1243,6 +1254,7 @@ int main(int argc, char * const argv[]) {
 	 * Now, Send the newly computed K-NNs from the above (Algorithm 1) to the original processor contained it
 	 */
 	if (world_rank==0) {
+		printf("Sending the Outputs of Query Computations Back to the Original Node\n");
 		sprintf(line,"Sending the Outputs of Query Computations Back to the Original Node\n");
 		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
 	}
@@ -1293,6 +1305,7 @@ int main(int argc, char * const argv[]) {
 	 * after sorting, choose only the desired number (KNNCounts) of K-NNs with the shortest distance 
 	 */
 	if (world_rank==0) {
+		printf("Preparing the Final Outputs\n");
 		sprintf(line,"Preparing the Final Outputs\n");
 		MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
 	}

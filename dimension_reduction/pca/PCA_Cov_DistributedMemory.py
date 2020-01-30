@@ -133,16 +133,18 @@ def init_processes(rank, size, backend='mpi'):
     TmpOutputData = readInput(rank,size)
     Duration = datetime.now() - startTime
     logging.info("Rank # "+str(rank)+ " says, it took "+str(Duration) + " for READING INPUT FILE") 
+    print("Rank # "+str(rank)+ " says, it took "+str(Duration) + " for READING INPUT FILE") 
     startTime = datetime.now()
     TmpOutputNormalized = Normalize(TmpOutputData)
     TmpOutputEigenVectors = ComputePCA(TmpOutputNormalized)
     Duration = datetime.now() - startTime
     logging.info("Rank # "+str(rank)+ " says, it took "+str(Duration)+ " for COMPUTING PCA") 
+    print("Rank # "+str(rank)+ " says, it took "+str(Duration)+ " for COMPUTING PCA") 
     startTime = datetime.now()
     Project_Data(TmpOutputNormalized,TmpOutputEigenVectors,rank,size)
     Duration = datetime.now() - startTime
     logging.info("Rank # "+str(rank) + " says, it took "+str(Duration)+ " for WRITING OUTPUTS")    
-
+    print("Rank # "+str(rank) + " says, it took "+str(Duration)+ " for WRITING OUTPUTS")  
 '''
 Code begins from here 
 ''' 

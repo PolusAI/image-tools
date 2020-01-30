@@ -58,15 +58,18 @@ elif args.readOption == 'mapping':
 
 duration = datetime.now() - startTime
 logging.info("Duration of Reading Data == "+str(duration))
+print("Duration of Reading Data == "+str(duration))
 startTime = datetime.now()
 
 #Some outputs about the computing device
 device = torch.device(args.deviceName)
 logging.info("Using device:"+str(device))
+print("Using device:"+str(device))
 if device.type == 'cuda':
     logging.info('torch.cuda.current_device()= '+ str(torch.cuda.current_device()))
+    print('torch.cuda.current_device()= '+ str(torch.cuda.current_device()))
     logging.info('torch.cuda.is_available()= '+ str(torch.cuda.is_available()))
-
+    print('torch.cuda.is_available()= '+ str(torch.cuda.is_available()))
 #Convert numpy array to pytorch tensor
 x = torch.from_numpy(data).float().to(device)
 featureCounts=np.shape(data)[-1]
@@ -111,6 +114,7 @@ if args.applySignFlip == 'true':
     projectedData = projectedData*signMatrix.to(device)
 duration = datetime.now() - startTime
 logging.info("Duration of Execution == "+str(duration))
+print("Duration of Execution == "+str(duration))
 startTime = datetime.now()
 
 #Output the results
@@ -122,6 +126,7 @@ np.savetxt (outputPath, projectedData.cpu().numpy(), delimiter=",", header=heade
 
 duration = datetime.now() - startTime
 logging.info("Duration of Writing Data == "+str(duration))
+print("Duration of Writing Data == "+str(duration))
 
 #Output some useful information if the compute was performed on cuda 
 if device.type == 'cuda':
@@ -129,5 +134,8 @@ if device.type == 'cuda':
     logging.info('Memory Usage:')
     logging.info('Allocated:'+ str(round(torch.cuda.memory_allocated(0)/1024**3,1))+ 'GB')
     logging.info('Cached:   '+ str(round(torch.cuda.memory_cached(0)/1024**3,1))+ 'GB')
-
+    print(torch.cuda.get_device_name(0))
+    print('Memory Usage:')
+    print('Allocated:'+ str(round(torch.cuda.memory_allocated(0)/1024**3,1))+ 'GB')
+    print('Cached:   '+ str(round(torch.cuda.memory_cached(0)/1024**3,1))+ 'GB')
 

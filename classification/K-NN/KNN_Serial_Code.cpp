@@ -43,11 +43,13 @@ int main(int argc, char * const argv[]) {
 	 */
 	string filePath = argv[1]; 
 	logFile<<"The full path to the input file: "<< filePath<<endl;
+	cout<<"The full path to the input file: "<< filePath<<endl;
 	/**
 	 * K in K-NN that means the desired number of Nearest Neighbours to be computed.
 	 */
 	const int K = atoi(argv[2]); 
 	logFile<<"The desired number of NN to be computed: "<< K <<endl;
+	cout<<"The desired number of NN to be computed: "<< K <<endl;
 	/**
 	 * The rate at which we do sampling. This parameter plays a key role in the performance.
 	 * This parameter is a trades-off between the performance and the accuracy of the results.
@@ -55,11 +57,13 @@ int main(int argc, char * const argv[]) {
 	 */
 	float sampleRate = stof(argv[3]);
 	logFile<<"The sampleRate(The rate at which we do sampling): "<< sampleRate <<endl; 
+	cout<<"The sampleRate(The rate at which we do sampling): "<< sampleRate <<endl; 
 	/**
 	 * Convergance Threshold. A fixed integer is used here instead of delta*N*K.
 	 */
 	const int convThreshold = atoi(argv[4]); 	
 	logFile<<"The convergance threshold: "<< convThreshold <<endl; 
+	cout<<"The convergance threshold: "<< convThreshold <<endl; 
 	/**
 	 * Size of Dataset without the header (i.e.(#Rows in dataset)-1).
 	 */	
@@ -80,9 +84,14 @@ int main(int argc, char * const argv[]) {
 		Dim = stoi(exec(cmd2.c_str())); 
 		colIndex1 = atoi(argv[5]); 
 		colIndex2 = atoi(argv[6]); 
-	} else 	{logFile<<"Wrong Input Arguments."; return -1;}
+	} else 	{
+	logFile<<"Wrong Input Arguments."; 
+	cout<<"Wrong Input Arguments."; 
+	return -1;
+	}
 
 	logFile<<"The input csv file contains "<<N<<" rows of raw data with "<< Dim<< " columns(features)"<<endl; 
+	cout<<"The input csv file contains "<<N<<" rows of raw data with "<< Dim<< " columns(features)"<<endl; 
 	/**
 	 * A 2D Array containing the entire input dataset (read from filePath).
 	 */
@@ -137,6 +146,7 @@ int main(int argc, char * const argv[]) {
 	if (infile.fail())
 	{
 		logFile << "error in Opening Input File" << endl;
+		cout << "error in Opening Input File" << endl;
 		return 1;
 	}
 	/**
@@ -315,7 +325,10 @@ int main(int argc, char * const argv[]) {
 							dist += pow((dataPoints[*it][i] - dataPoints[*it2][i]), 2);
 						}
 						double dista = sqrt(dist);
-						if (dista < epsilon) {logFile << "Found Duplicate Data for Points "<< *it << " and " << *it2; }
+						if (dista < epsilon) {
+						logFile << "Found Duplicate Data for Points "<< *it << " and " << *it2; 
+						cout << "Found Duplicate Data for Points "<< *it << " and " << *it2; 
+						}
 
 						c_criteria += UpdateNN(*it, *it2, dista, 1);
 						c_criteria += UpdateNN(*it2, *it, dista, 1);
@@ -324,6 +337,7 @@ int main(int argc, char * const argv[]) {
 			}
 		}
 		logFile << "c_criteria = " << c_criteria << " With Threshold Convergence of " << convThreshold << endl;
+		cout << "c_criteria = " << c_criteria << " With Threshold Convergence of " << convThreshold << endl;
 		if (c_criteria < convThreshold) { iterate = false; }
 		/**
 		 * Clear the contents of the used data structures
@@ -353,13 +367,11 @@ int main(int argc, char * const argv[]) {
 			if (j != K-1) {outputFileIndex<<aggregateResults[j].second<<",";}
 			else {outputFileIndex<<aggregateResults[j].second<<endl; }
 		}
-		outputFileIndex<<endl;
 
 		for (int j=0; j<K; ++j){
 			if (j != K-1) {outputFileDistance<<aggregateResults[j].first<<",";}
 			else {outputFileDistance<<aggregateResults[j].first<<endl; }
 		}
-		outputFileDistance<<endl;	
 	}
 
 	outputFileIndex.close();
