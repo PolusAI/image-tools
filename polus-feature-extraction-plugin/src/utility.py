@@ -50,7 +50,7 @@ class ConvertImage(object):
         index=0
                 
         for file_names,file_names1 in zip(filenames,filenames1):
-            print('Processing Image - ',file_names)
+            #print('Processing Image - ',file_names)
             #Read metadata from the intensity image
             os.chdir(self.input_dir)
             xmlstr = bioformats.get_omexml_metadata(file_names)    
@@ -87,10 +87,11 @@ class ConvertImage(object):
                 del img_list_actual
                 label_image =  np.asarray(maskimg)
                 del maskimg
-            analysis = Analysis(intensity_image, label_image, filenames, boxSize, angleStart, angleStop, pixelDistance)
+            
+            analysis = Analysis(intensity_image, label_image, file_names, boxSize, angleStart, angleStop, pixelDistance)
             df = analysis.feature_extraction()
-            title = filenames[index]
-            df.insert(0, 'Image', title)
+            #title = filenames[index]
+            #df.insert(0, 'Image', title)
             del img_file
             del msk_file         
             del intensity_image
@@ -109,7 +110,7 @@ class ConvertImage(object):
       
 class Analysis(ConvertImage):
     
-    def __init__(self, intensity_image, label_image, filenames, boxSize, angleStart, angleStop, pixelDistance):
+    def __init__(self, intensity_image, label_image, file_names, boxSize, angleStart, angleStop, pixelDistance):
         self.objneighbors = []
         self.numneighbors = []
         self.labels = []
@@ -154,7 +155,7 @@ class Analysis(ConvertImage):
         self.intensity_image = intensity_image
         del intensity_image
         
-        self.filenames = filenames
+        self.filenames = file_names
         
     def properties(self,label_image,intensity_image):
         region_properties = measure.regionprops(label_image,intensity_image)
@@ -746,8 +747,8 @@ class Analysis(ConvertImage):
             
             #Calculate Ferte Diameter
             feretdiam = self.feret_diameter(edges,self.thetastart, self.thetastop)
-            
-            
+            title = self.filenames
+            print('Processing Image - ',title)           
             for region, neigh, feret in zip(regions, neighbor, feretdiam):
                 label = region.label
                 area = region.area
@@ -785,6 +786,7 @@ class Analysis(ConvertImage):
                 entropy = -np.sum(np.multiply(hist_greater_zero, np.log2(hist_greater_zero)))
                 kurtosiss = kurtosis(intensity_image[img],axis=0,fisher=False, bias=True)
                 df = pd.DataFrame({'Label':label,'Area':  area,'Perimeter':perimeter,'Neighbor_metric' : neighbor_metric,'Orientation': orientation,'Solidity': solidity,'MinFeret':minferet, 'MaxFeret': maxferet,'Hexagonality score':hexagonality_score,'Polygonality score': polygonality_score,'Hexagonality SD':hexagonality_sd, 'CentroidX': centroidx,'CentroidY': centroidy,'Convex Area': convex_areaa, 'Eccentricity': eccentricity,'Equivalent diameter': equivalent_diameter,'Euler Number':euler_number,'Major Axis Length':major_axis_length,'Minor Axis Length': minor_axis_length,'Mean_intensity': mean_intensity,'Maximum intensity':max_intensity,'Minimum intensity': min_intensity, 'Median': median, 'Mode': modes, 'Standard Deviation': sd, 'Skewness':skewness,'Kurtosis': kurtosiss, 'Entropy': entropy}, index=[0])
+                df.insert(0, 'Image', title)
                 self.df2=self.df2.append(df)
                 del df
                 del region
