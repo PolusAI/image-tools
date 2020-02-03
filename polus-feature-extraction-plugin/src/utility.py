@@ -48,7 +48,11 @@ class ConvertImage(object):
         jutil.start_vm(class_path=bioformats.JARS)      
         
         index=0
-                
+        filenames.sort()
+        filenames1.sort()
+        print('intensity filenames=',filenames)
+        print('seg filenames1=',filenames1)
+        
         for file_names,file_names1 in zip(filenames,filenames1):
             #print('Processing Image - ',file_names)
             #Read metadata from the intensity image
@@ -129,7 +133,7 @@ class Analysis(ConvertImage):
         self.pixeldistance = pixelDistance
         
         if self.pixeldistance is None:
-            self.pixeldistance = 1
+            self.pixeldistance = 5
         else:
             self.pixeldistance = pixelDistance
             
