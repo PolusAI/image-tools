@@ -41,7 +41,7 @@ def main():
     # Each pyramid is built within its own process, with a maximum number of processes
     # equal to number of cpus - 1.
     for image in images:
-        if len(processes) >= multiprocessing.cpu_count()-1:
+        if len(processes) >= multiprocessing.cpu_count()-1 and len(processes)>0:
             free_process = -1
             while free_process<0:
                 for process in range(len(processes)):

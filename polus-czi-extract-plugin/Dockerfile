@@ -1,5 +1,5 @@
 # Get image containing bfio
-FROM labshare/polus-bfio-util:1.0.0
+FROM labshare/polus-bfio-util:1.0.5
 
 COPY VERSION /
 		
