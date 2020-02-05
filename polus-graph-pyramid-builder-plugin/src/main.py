@@ -10,7 +10,7 @@ from pathlib import Path
 CHUNK_SIZE = 512
 
 # DZI file template
-DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="512" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
+DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="CHUNK_SIZE" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
 
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -73,7 +73,7 @@ def bin_data(data,column_names):
     Data from a pandas Dataframe is binned in two dimensions. Binning is performed by
     binning data in one column along one axis and another column is binned along the
     other axis. All combinations of columns are binned without repeats or transposition.
-    There are only 20 bins in each dimension, and each bin is 1/20th the size of the
+    There are only 200 bins in each dimension, and each bin is 1/200th the size of the
     difference between the maximum and minimum of each column.
 
     Inputs:
@@ -87,21 +87,27 @@ def bin_data(data,column_names):
 
     """
 
-    # Get basic column statistics and bin sizes
-    nfeats = len(column_names)
-    bin_stats = {'min': data.min(),
+    # GET BASIC COLUMN STATISTICS AND BIN SIZES
+    # nfeats represents the number of features
+    # bin_stats takes the maximum and minimum of each feature
+    # bincount represents the number of bins we want to create for each feature.  (Matrix size of resulting graph is bincount x bincount)
+    # column_bin_size is calculating the interval size for each feature's bins. 
+    nfeats = len(column_names)           
+    bin_stats = {'min': data.min(),                                                                                                                                                                       
                  'max': data.max()}
-    print(bin_stats)
-    column_bin_size = (bin_stats['max'] * (1 + 10**-6) - bin_stats['min'])/200
+    #print(bin_stats)
+    bincount = 10
+    column_bin_size = (bin_stats['max'] * (1 + 10**-6) - bin_stats['min'])/bincount
 
-    # Transform data into bin positions for fast binning
+    # TRANSFORM DATA INTO BIN POSITIONS FOR FAST BINNIN0G
+    # data is placed into proper bins ranging from (0:(bincount - 1))
     data = ((data - bin_stats['min'])/column_bin_size).apply(np.floor)
     data_ind = pandas.notnull(data)  # Handle NaN values
-    data[~data_ind] = 255          # Handle NaN values
+    data[~data_ind] = bincount + 55          # Handle NaN values
     data = data.astype(np.uint16) # cast to save memory
-    data[data==200] = 199         # in case of numerical precision issues
+    data[data==bincount] = bincount - 1         # in case of numerical precision issues
 
-    # initialize bins, try to be memory efficient
+    # initialize bins with zeros, try to be memory efficient
     nrows = data.shape[0]
     if nrows < 2**8:
         dtype = np.uint8
@@ -111,36 +117,56 @@ def bin_data(data,column_names):
         dtype = np.uint32
     else:
         dtype = np.uint64
-    bins = np.zeros((nfeats,nfeats,200,200),dtype=dtype)
+    bins = np.zeros((nfeats,nfeats,bincount,bincount),dtype=dtype)
 
     # Create a linear index for feature bins
     linear_index = []
 
     # Bin the data
+    # OPTIMIZING TECHNIQUE:  
+    # Rather than plotting data in a 2D array, we first plot in 1D array then convert it back to 2D array. 
+    # 2D = (bincount x bincount)  
+    # 1D = ((bincount^2) x 1). 
+    # 'Plot' the 2 features against each other in the 1D array:
+        # Data_Plotted_in_1D_array = (Feature1 * bincount) + Feature2. 
+        # Sort Data_Plotted_in_1D_array -> Sorted_Plotted_Data_1DArray
+        # Create a new list, IndexCount, that is IndexCount(i) = Sorted_Plotted_Data_1DArray (i + 1) - Sorted_Plotted_Data_1DArray (i).  
+            # Example: Sorted_Plotted_Data_1DArray = [1, 1, 1, 1, 2, 2, 2, 5, 5, 5, 5, 5, 6, 6] -> 
+            #                           IndexCount = [0, 0, 0, 1, 0, 0, 3, 0, 0, 0, 0, 1, 0]  
+        # The differences in index of nonzero values in IndexCount is the number of values in that corresponding bin (except for the first bin).  
+            # Indexes = [3, 6, 11] and then add (length(SortedPlotted_Data_1D array) - 1) to the end of it -> 
+        #               [3, 6, 11, 13]
+        # The first bin has index(1) + 1 values.  
+        # Calculate row value for bins
+        # Calculate column value for bins
+        # Plot in rows and column to 'plot' in 2D array
+
     for feat1 in range(nfeats):
         name1 = column_names[feat1]
-        feat1_tf = data[name1] * 200   # Convert to linear matrix index
-
+        feat1_tf = data[name1] * bincount   # Convert to linear matrix index
+        
         for feat2 in range(feat1+1,nfeats):
             name2 = column_names[feat2]
             
-            # Remove all NaN values
+            # Remove all NaN values 
             feat2_tf = data[name2]
             feat2_tf = feat2_tf[data_ind[name1] & data_ind[name2]]
-            
+            feat1_tf = feat1_tf[data_ind[name1] & data_ind[name2]]
+
             if feat2_tf.size<=1:
                 continue
             
             # sort linear matrix indices
-            feat2_sort = np.sort(feat1_tf[data_ind[name1] & data_ind[name2]] + feat2_tf)
+            feat2_sort = np.sort(feat1_tf + feat2_tf)
             
             # Do math to get the indices
-            ind2 = np.diff(feat2_sort)                       
-            ind2 = np.nonzero(ind2)[0]                       # nonzeros are cumulative sum of all bin values
-            ind2 = np.append(ind2,feat2_sort.size-1)
+            ind2_zero = np.diff(feat2_sort)                                 
+            ind2_minus = np.nonzero(ind2_zero)[0]                       # nonzeros are cumulative sum of all bin values
+            ind2 = np.append(ind2_minus,feat2_sort.size-1)
+            
             # print(feat2_sort.shape)
-            rows = (feat2_sort[ind2]/200).astype(np.uint8)   # calculate row from linear index
-            cols = np.mod(feat2_sort[ind2],200)              # calculate column from linear index
+            rows = (feat2_sort[ind2]/bincount).astype(np.uint8)   # calculate row from linear index
+            cols = np.mod(feat2_sort[ind2],bincount)              # calculate column from linear index
             counts = np.diff(ind2)                           # calculate the number of values in each bin
             bins[feat1,feat2,rows[0],cols[0]] = ind2[0] + 1
             bins[feat1,feat2,rows[1:],cols[1:]] = counts
@@ -434,9 +460,9 @@ def _get_higher_res(S,info,outpath,out_file,X=None,Y=None):
     
     # If requesting from the lowest scale, then just generate the graph
     if S==int(info['scales'][0]['key']):
-        index = int((int(Y[0]/512) + int(X[0]/512) * info['rows']))
+        index = int((int(Y[0]/CHUNK_SIZE) + int(X[0]/CHUNK_SIZE) * info['rows']))
         if index>=len(linear_index):
-            image = np.ones((512,512,4),dtype=np.uint8) * 255
+            image = np.ones((CHUNK_SIZE,CHUNK_SIZE,4),dtype=np.uint8) * 255
         else:
             image = gen_plot(linear_index[index][0],
                              linear_index[index][1],
@@ -517,9 +543,9 @@ def _get_higher_res_par(S,info,outpath,out_file,X=None,Y=None):
     
     # If requesting from the lowest scale, then just generate the graph
     if S==int(info['scales'][0]['key']):
-        index = (int(Y[0]/512) + int(X[0]/512) * info['rows'])
+        index = (int(Y[0]/CHUNK_SIZE) + int(X[0]/CHUNK_SIZE) * info['rows'])
         if index>=len(linear_index):
-            image = np.ones((512,512,4),dtype=np.uint8) * 255
+            image = np.ones((CHUNK_SIZE,CHUNK_SIZE,4),dtype=np.uint8) * 255
         else:
             image = gen_plot(linear_index[index][0],
                              linear_index[index][1],
