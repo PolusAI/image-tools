@@ -232,6 +232,9 @@ int main(int argc, char * const argv[]) {
 		if(allEntriesFilled[u1]==0){		
 			for (int j = 0; j < K; j++) {	
 				if (B_Dist[u1][j] < 0) {
+				    
+				    for (int jj = 0; jj < j; jj++) {if (B_Index[u1][jj] == u2) return 0;}
+				
 					B_Dist[u1][j] = distance;
 					B_Index[u1][j] = u2;
 					B_IsNew[u1][j] = flag;
