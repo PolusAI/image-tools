@@ -8,7 +8,7 @@ from pathlib import Path
 
 # Chunk Scale
 CHUNK_SIZE = 512
-
+bincount = 200
 # DZI file template
 DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="CHUNK_SIZE" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
 
@@ -96,7 +96,7 @@ def bin_data(data,column_names):
     bin_stats = {'min': data.min(),                                                                                                                                                                       
                  'max': data.max()}
     #print(bin_stats)
-    bincount = 10
+    #bincount = 200
     column_bin_size = (bin_stats['max'] * (1 + 10**-6) - bin_stats['min'])/bincount
 
     # TRANSFORM DATA INTO BIN POSITIONS FOR FAST BINNIN0G
@@ -315,10 +315,10 @@ def get_default_fig(cmap):
     """
     fig, ax = plt.subplots(dpi=int(CHUNK_SIZE/4),figsize=(4,4),tight_layout={'h_pad':1,'w_pad':1})
     data = ax.pcolorfast(np.zeros((CHUNK_SIZE,CHUNK_SIZE),np.uint64),cmap=cmap)
-    ticks = [t for t in range(0,199,20)]
-    ticks.append(199)
-    ax.set_xlim(0,199)
-    ax.set_ylim(0,199)
+    ticks = [t for t in range(0,bincount - 1,20)]
+    ticks.append(bincount-1)
+    ax.set_xlim(0,(bincount-1))
+    ax.set_ylim(0,bincount-1)
     ax.set_xticks(ticks)
     ax.set_yticks(ticks)
     ax.set_xlabel(" ")
@@ -396,12 +396,12 @@ def metadata_to_graph_info(bins,outPath,outFile):
     # Get metadata info from the bfio reader
     ngraphs = len(linear_index)
     rows = np.ceil(np.sqrt(ngraphs))
-    cols = np.round(np.sqrt(ngraphs))
+    cols = np.round(np.sqrt(ngraphs)) 
     sizes = [cols*CHUNK_SIZE,rows*CHUNK_SIZE]
     
     # Calculate the number of pyramid levels
     num_scales = np.ceil(np.log2(rows*CHUNK_SIZE)).astype(np.uint8)
-    
+
     # create a scales template, use the full resolution
     scales = {
         "size":sizes,
@@ -415,11 +415,15 @@ def metadata_to_graph_info(bins,outPath,outFile):
         "cols": cols
     }
     
+    
     # create the information for each scale
     for i in range(1,num_scales+1):
         previous_scale = info['scales'][-1]
+        print(previous_scale)
         current_scale = copy.deepcopy(previous_scale)
+        print(current_scale)
         current_scale['key'] = str(num_scales - i)
+        print(current_scale['key'])
         current_scale['size'] = [int(np.ceil(previous_scale['size'][0]/2)),int(np.ceil(previous_scale['size'][1]/2))]
         info['scales'].append(current_scale)
     
@@ -673,8 +677,8 @@ if __name__=="__main__":
         logger.info('Writing layout file...!')
         write_csv(cnames,linear_index,info,output_path,folder)
         logger.info('Done!')
-
+        """
         # Create the pyramid
         logger.info('Building pyramid...')
         image = _get_higher_res(0,info,output_path,folder)
-    
+        """
