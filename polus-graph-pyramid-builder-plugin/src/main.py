@@ -13,7 +13,7 @@ CHUNK_SIZE = 1024
 bincount = 200
 
 # DZI file template
-DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="CHUNK_SIZE" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
+DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="' + str(CHUNK_SIZE) + '" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
 
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -142,7 +142,7 @@ def bin_data(data,column_names):
         # The first bin has index(1) + 1 values.  
         # Calculate row value for bins
         # Calculate column value for bins
-        # Plot in rows and column to 'plot' in 2D array
+        # 'Plot' in the bins to its coresponding rows and column to convert it back to 2D array. 
 
     for feat1 in range(nfeats):
         name1 = column_names[feat1]
@@ -219,9 +219,15 @@ def format_ticks(fmin,fmax,nticks):
                 21: 'Z',  # zetta
                 24: 'Y',  # yotta
                 }
-    out = [t for t in np.arange(fmin,fmax,(fmax-fmin)/(nticks-1))]
+    # if you have range of zeros, skip that data. load_csv function. 
+    
+    out = [t for t in np.arange(fmin,fmax,(fmax-fmin)/(nticks-1))] #kind of like linspace
     out.append(fmax)
-    scale = np.log10(np.abs(out))
+    if(fmin == 0):
+        scale = 0
+    else:
+        scale = np.log10(np.abs(out))
+
     scale[np.isinf(scale)] = 0
     scale_order = np.int8(3*np.sign(scale)*np.int8(scale/3))
     fticks = []
@@ -387,6 +393,9 @@ def _avg2(image):
             avg_img[-1,-1,z] = image[-1,-1,z]
     return avg_img
 
+# Setting up Metadata to allow for DeepZooming.
+# Image pyramid parameters: tile size and number of levels determine relationship between 
+    # amount of storage, number of network connections and bandwidth required for displaying high resolution images
 def metadata_to_graph_info(bins,outPath,outFile):
     
     # Create an output path object for the info file
@@ -402,7 +411,7 @@ def metadata_to_graph_info(bins,outPath,outFile):
     cols = np.round(np.sqrt(ngraphs)) 
     sizes = [cols*CHUNK_SIZE,rows*CHUNK_SIZE]
     
-    # Calculate the number of pyramid levels
+    # Calculate the number of pyramid levels (Description on line 425)
     num_scales = np.ceil(np.log2(rows*CHUNK_SIZE)).astype(np.uint8)
 
     # create a scales template, use the full resolution
@@ -418,7 +427,9 @@ def metadata_to_graph_info(bins,outPath,outFile):
         "cols": cols
     }
     
-    
+    #DEEP ZOOM IMAGES HAVE TWO PARTS: a dzi file and subdirectory of image files. 
+    # Deep Zoom Image converter generates an image pyramid by taking the original image, dividing its dimensions 
+        # by two in every step and slicing it into tiles until it reaches the lowest pyramid level with size of 1x1 pixels
     # create the information for each scale
     for i in range(1,num_scales+1):
         previous_scale = info['scales'][-1]
@@ -426,11 +437,12 @@ def metadata_to_graph_info(bins,outPath,outFile):
         current_scale['key'] = str(num_scales - i)
         current_scale['size'] = [int(np.ceil(previous_scale['size'][0]/2)),int(np.ceil(previous_scale['size'][1]/2))]
         info['scales'].append(current_scale)
-    
-    # write the dzi file
+    # write the dzi (deep zoom image) file:
+    # contains information about the size of the tiles that make up the image, overlap, original dimensions of image in CHUNKSIZE
+
     with open(op,'w') as writer:
         writer.write(DZI.format(int(info['cols']*CHUNK_SIZE),int(info['rows']*CHUNK_SIZE)))
-    
+
     return info
 
 # The following function builds the image pyramid at scale S by building up only the necessary information
@@ -452,13 +464,15 @@ def _get_higher_res(S,info,outpath,out_file,X=None,Y=None):
         X = [0,scale_info['size'][0]]
     if Y == None:
         Y = [0,scale_info['size'][1]]
-    
+    #print(scale_info)
     # Modify upper bound to stay within resolution dimensions
     if X[1] > scale_info['size'][0]:
         X[1] = scale_info['size'][0]
     if Y[1] > scale_info['size'][1]:
         Y[1] = scale_info['size'][1]
-    
+    print("\n")
+    print("NEW TIME FUNCTION CALLED")
+    print(X, Y)
     # Initialize the output
     image = np.zeros((int(Y[1]-Y[0]),int(X[1]-X[0]),4),dtype=np.uint8)
     
@@ -479,17 +493,26 @@ def _get_higher_res(S,info,outpath,out_file,X=None,Y=None):
     else:
         # Set the subgrid dimensions
         subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]]]
+        print(X[0], X[1], Y[0], Y[1])
+        print("subgrid dimensions: ", subgrid_dims)
         for dim in subgrid_dims:
             while dim[1]-dim[0] > CHUNK_SIZE:
                 dim.insert(1,dim[0] + ((dim[1] - dim[0]-1)//CHUNK_SIZE) * CHUNK_SIZE)
-        
+                print("new dim: ", dim)
         for y in range(0,len(subgrid_dims[1])-1):
+            print("y: ", y)
             y_ind = [subgrid_dims[1][y] - subgrid_dims[1][0],subgrid_dims[1][y+1] - subgrid_dims[1][0]]
+            print("y_ind: ", y_ind)
             y_ind = [np.ceil(yi/2).astype('int') for yi in y_ind]
+            print("y_ind: ", y_ind)
             for x in range(0,len(subgrid_dims[0])-1):
                 x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
+                print("x_ind: ", x_ind)
                 x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
+                print("x_ind: ", x_ind)
+                print(S, (info['scales']))
                 if S==(info['scales'][0]['key'] - 5):
+                    print("par ", subgrid_dims[0][x:x+2], subgrid_dims[1][y:y+2])
                     sub_image = _get_higher_res_par(S+1,
                                                    info,
                                                    outpath,
@@ -497,6 +520,7 @@ def _get_higher_res(S,info,outpath,out_file,X=None,Y=None):
                                                    X=subgrid_dims[0][x:x+2],
                                                    Y=subgrid_dims[1][y:y+2])
                 else:
+                    print("res")
                     sub_image = _get_higher_res(S+1,
                                                info,
                                                outpath,
@@ -527,24 +551,25 @@ def _get_higher_res_par(S,info,outpath,out_file,X=None,Y=None):
     for res in info['scales']:
         if int(res['key'])==S:
             scale_info = res
+            print("Scale information: ", scale_info)
             break
     if scale_info==None:
         ValueError("No scale information for resolution {}.".format(S))
-        
     if X == None:
         X = [0,scale_info['size'][0]]
     if Y == None:
         Y = [0,scale_info['size'][1]]
-    
+    print("X, Y: ", X, Y)
     # Modify upper bound to stay within resolution dimensions
     if X[1] > scale_info['size'][0]:
         X[1] = scale_info['size'][0]
     if Y[1] > scale_info['size'][1]:
         Y[1] = scale_info['size'][1]
-    
+    print("transformed X, Y: ", X, Y)
     # Initialize the output
     image = np.zeros((Y[1]-Y[0],X[1]-X[0],4),dtype=np.uint8)
-    
+    print(image.shape)
+
     # If requesting from the lowest scale, then just generate the graph
     if S==int(info['scales'][0]['key']):
         index = (int(Y[0]/CHUNK_SIZE) + int(X[0]/CHUNK_SIZE) * info['rows'])
@@ -672,7 +697,7 @@ if __name__=="__main__":
         # Generate the dzi file
         logger.info('Generating pyramid metadata...')
         info = metadata_to_graph_info(bins,output_path,folder)
-        logger.info('Done!')©
+        logger.info('Done!')
         
         logger.info('Writing layout file...!')
         write_csv(cnames,linear_index,info,output_path,folder)
