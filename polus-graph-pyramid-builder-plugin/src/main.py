@@ -64,14 +64,11 @@ def load_csv(fpath):
     # Load the data
     if is_coded:
         data = pandas.read_csv(fpath,skiprows=[1],usecols=[c[0] for c in cnames])
-        data_log = pandas.read_csv(fpath, skiprows=[1], usecols=[c[0] for c in cnames])
-        print(type(data_log))
+
     else:
         data = pandas.read_csv(fpath,usecols=[c[0] for c in cnames])
-        data_log = pandas.read_csv(fpath,usecols=[c[0] for c in cnames])
-        print(type(data_log))
 
-    return data, data_log, cnames
+    return data, cnames
 
 def bin_data(data,column_names):
     """ Bin the data
@@ -631,7 +628,7 @@ if __name__=="__main__":
         
         # Load the data
         logger.info('Loading csv: {}'.format(f))
-        data, data_log, cnames = load_csv(f)
+        data, cnames = load_csv(f)
         column_names = data.columns
         logger.info('Done loading csv!')
 
