@@ -5,18 +5,20 @@ from multiprocessing import Pool
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 from pathlib import Path
+import logging                                                                                                                                                            
+import sys
 
 # Chunk Scale
 CHUNK_SIZE = 1024
 
-# Number of bins in each feature set
+# Number of Bins for Each Feature
 bincount = 200
 
 # DZI file template
 DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="' + str(CHUNK_SIZE) + '" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
 
 # Initialize the logger    
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+logging.basicConfig(filename = "logfile", format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
@@ -36,14 +38,11 @@ def load_csv(fpath):
     returned in a pandas Dataframe. The second row of the csv may contain
     column classifiers, so the second row is first loaded and checked to
     determine if the classifiers are present.
-
     Inputs:
         fpath - Path to csv file
-
     Outputs:
         data - A pandas Dataframe
         cnames - Names of columns
-
     """
 
     # Check if the first row is column coding, and if it is then find valid columns
@@ -65,10 +64,14 @@ def load_csv(fpath):
     # Load the data
     if is_coded:
         data = pandas.read_csv(fpath,skiprows=[1],usecols=[c[0] for c in cnames])
+        data_log = pandas.read_csv(fpath, skiprows=[1], usecols=[c[0] for c in cnames])
+        print(type(data_log))
     else:
         data = pandas.read_csv(fpath,usecols=[c[0] for c in cnames])
+        data_log = pandas.read_csv(fpath,usecols=[c[0] for c in cnames])
+        print(type(data_log))
 
-    return data, cnames
+    return data, data_log, cnames
 
 def bin_data(data,column_names):
     """ Bin the data
@@ -76,41 +79,32 @@ def bin_data(data,column_names):
     Data from a pandas Dataframe is binned in two dimensions. Binning is performed by
     binning data in one column along one axis and another column is binned along the
     other axis. All combinations of columns are binned without repeats or transposition.
-    There are only 200 bins in each dimension, and each bin is 1/200th the size of the
+    There are only 20 bins in each dimension, and each bin is 1/20th the size of the
     difference between the maximum and minimum of each column.
-
     Inputs:
         data - A pandas Dataframe, with nfeats number of columns
         column_names - Names of Dataframe columns
-
     Outputs:
-        bins - A numpy matrix that has shape (nfeats,nfeats,200,200)
+        bins - A numpy matrix that has shape (nfeats,nfeats,bincount,bincount)
         bin_feats - A list containing the minimum and maximum values of each column
         linear_index - Numeric value of column index from original csv
-
     """
 
-    # GET BASIC COLUMN STATISTICS AND BIN SIZES
-    # nfeats represents the number of features
-    # bin_stats takes the maximum and minimum of each feature
-    # bincount represents the number of bins we want to create for each feature.  (Matrix size of resulting graph is bincount x bincount)
-    # column_bin_size is calculating the interval size for each feature's bins. 
-    nfeats = len(column_names)           
-    bin_stats = {'min': data.min(),                                                                                                                                                                       
+    # Get basic column statistics and bin sizes
+    nfeats = len(column_names)
+    bin_stats = {'min': data.min(),
                  'max': data.max()}
-    #print(bin_stats)
-    #bincount = 200
+    print(bin_stats)
     column_bin_size = (bin_stats['max'] * (1 + 10**-6) - bin_stats['min'])/bincount
 
-    # TRANSFORM DATA INTO BIN POSITIONS FOR FAST BINNIN0G
-    # data is placed into proper bins ranging from (0:(bincount - 1))
+    # Transform data into bin positions for fast binning
     data = ((data - bin_stats['min'])/column_bin_size).apply(np.floor)
     data_ind = pandas.notnull(data)  # Handle NaN values
     data[~data_ind] = bincount + 55          # Handle NaN values
     data = data.astype(np.uint16) # cast to save memory
     data[data==bincount] = bincount - 1         # in case of numerical precision issues
 
-    # initialize bins with zeros, try to be memory efficient
+    # initialize bins, try to be memory efficient
     nrows = data.shape[0]
     if nrows < 2**8:
         dtype = np.uint8
@@ -126,47 +120,27 @@ def bin_data(data,column_names):
     linear_index = []
 
     # Bin the data
-    # OPTIMIZING TECHNIQUE:  
-    # Rather than plotting data in a 2D array, we first plot in 1D array then convert it back to 2D array. 
-    # 2D = (bincount x bincount)  
-    # 1D = ((bincount^2) x 1). 
-    # 'Plot' the 2 features against each other in the 1D array:
-        # Data_Plotted_in_1D_array = (Feature1 * bincount) + Feature2. 
-        # Sort Data_Plotted_in_1D_array -> Sorted_Plotted_Data_1DArray
-        # Create a new list, IndexCount, that is IndexCount(i) = Sorted_Plotted_Data_1DArray (i + 1) - Sorted_Plotted_Data_1DArray (i).  
-            # Example: Sorted_Plotted_Data_1DArray = [1, 1, 1, 1, 2, 2, 2, 5, 5, 5, 5, 5, 6, 6] -> 
-            #                           IndexCount = [0, 0, 0, 1, 0, 0, 3, 0, 0, 0, 0, 1, 0]  
-        # The differences in index of nonzero values in IndexCount is the number of values in that corresponding bin (except for the first bin).  
-            # Indexes = [3, 6, 11] and then add (length(SortedPlotted_Data_1D array) - 1) to the end of it -> 
-        #               [3, 6, 11, 13]
-        # The first bin has index(1) + 1 values.  
-        # Calculate row value for bins
-        # Calculate column value for bins
-        # 'Plot' in the bins to its coresponding rows and column to convert it back to 2D array. 
-
     for feat1 in range(nfeats):
         name1 = column_names[feat1]
         feat1_tf = data[name1] * bincount   # Convert to linear matrix index
-        
+
         for feat2 in range(feat1+1,nfeats):
             name2 = column_names[feat2]
             
-            # Remove all NaN values 
+            # Remove all NaN values
             feat2_tf = data[name2]
             feat2_tf = feat2_tf[data_ind[name1] & data_ind[name2]]
-            feat1_tf = feat1_tf[data_ind[name1] & data_ind[name2]]
-
+            
             if feat2_tf.size<=1:
                 continue
             
             # sort linear matrix indices
-            feat2_sort = np.sort(feat1_tf + feat2_tf)
+            feat2_sort = np.sort(feat1_tf[data_ind[name1] & data_ind[name2]] + feat2_tf)
             
             # Do math to get the indices
-            ind2_zero = np.diff(feat2_sort)                                 
-            ind2_minus = np.nonzero(ind2_zero)[0]                       # nonzeros are cumulative sum of all bin values
-            ind2 = np.append(ind2_minus,feat2_sort.size-1)
-            
+            ind2 = np.diff(feat2_sort)                       
+            ind2 = np.nonzero(ind2)[0]                       # nonzeros are cumulative sum of all bin values
+            ind2 = np.append(ind2,feat2_sort.size-1)
             # print(feat2_sort.shape)
             rows = (feat2_sort[ind2]/bincount).astype(np.uint8)   # calculate row from linear index
             cols = np.mod(feat2_sort[ind2],bincount)              # calculate column from linear index
@@ -181,25 +155,20 @@ def bin_data(data,column_names):
 # Tick formatting to mimick D3
 def format_ticks(fmin,fmax,nticks):
     """ Generate tick labels
-
     Polus Plots uses D3 to generate the plots. This function tries to mimic
     the formatting of tick labels. Tick labels have a fixed width, and in
     place of using scientific notation a scale prefix is appended to the end
     of the number. See _prefix comments to see the suffixes that are used.
-
     Numbers that are larger or smaller than 10**24 or 10**-24 respectively
     are not handled and may throw an error. Values outside of this range
     do not currently have an agreed upon prefix in the measurement science
     community.
-
     Inputs:
         fmin - the minimum tick value
         fmax - the maximum tick value
         nticks - the number of ticks
-
     Outputs:
         fticks - a list of strings containing formatted tick labels
-
     """
     _prefix = {-24: 'y',  # yocto
                -21: 'z',  # zepto
@@ -219,16 +188,11 @@ def format_ticks(fmin,fmax,nticks):
                 21: 'Z',  # zetta
                 24: 'Y',  # yotta
                 }
-    # if you have range of zeros, skip that data. load_csv function. 
-    
-    out = [t for t in np.arange(fmin,fmax,(fmax-fmin)/(nticks-1))] #kind of like linspace
+    out = [t for t in np.arange(fmin,fmax,(fmax-fmin)/(nticks-1))]
     out.append(fmax)
-    if(fmin == 0):
-        scale = 0
-    else:
-        scale = np.log10(np.abs(out))
-
+    scale = np.log10(np.abs(out))   #Ignore Warning.  Run python -W ignore main.py on command prompt
     scale[np.isinf(scale)] = 0
+    #logger.info("SCALE(INF): " + str(scale))
     scale_order = np.int8(3*np.sign(scale)*np.int8(scale/3))
     fticks = []
     for i in range(nticks):
@@ -260,9 +224,7 @@ def gen_plot(col1,
              ax,
              data):
     """ Generate a heatmap
-
     Generate a heatmap of data for column 1 against column 2.
-
     Inputs:
         col1 - the column plotted on the y-axis
         col2 - column plotted on the x-axis
@@ -272,10 +234,8 @@ def gen_plot(col1,
         fig - pregenerated figure
         ax - pregenerated axis
         data - pregenerated heatmap bbox artist
-
     Outputs:
         hmap - A numpy array containing pixels of the heatmap
-
     """
     if col2>col1:
         d = np.squeeze(bins[col1,col2,:,:])
@@ -286,7 +246,7 @@ def gen_plot(col1,
         r = col2
         c = col1
     else:
-        d = np.zeros((200,200))
+        d = np.zeros((bincount,bincount))
         r = col1
         c = col2
         
@@ -307,27 +267,23 @@ def gen_plot(col1,
 
 def get_default_fig(cmap):
     """ Generate a default figure, axis, and heatmap artist
-
     Generate a figure and draw an empty graph with useful settings for repeated
     drawing of new figures. By passing the existing figure, axis, and heatmap
     artist to the plot generator, many things do not need to be drawn from
     scratch. This decreases the plot drawing time by a factor of 2-3 times.
-
     Inputs:
         cmap - the heatmap colormap
-
     Outputs:
         fig - A reference to the figure object
         ax - A reference to the axis object
         data - A reference to the heatmap artist
-
     """
     fig, ax = plt.subplots(dpi=int(CHUNK_SIZE/4),figsize=(4,4),tight_layout={'h_pad':1,'w_pad':1})
     data = ax.pcolorfast(np.zeros((CHUNK_SIZE,CHUNK_SIZE),np.uint64),cmap=cmap)
-    ticks = [t for t in range(0,bincount - 1,20)]
-    ticks.append(bincount-1)
-    ax.set_xlim(0,(bincount-1))
-    ax.set_ylim(0,bincount-1)
+    ticks = [t for t in range(0,199,20)]
+    ticks.append(199)
+    ax.set_xlim(0,199)
+    ax.set_ylim(0,199)
     ax.set_xticks(ticks)
     ax.set_yticks(ticks)
     ax.set_xlabel(" ")
@@ -393,9 +349,6 @@ def _avg2(image):
             avg_img[-1,-1,z] = image[-1,-1,z]
     return avg_img
 
-# Setting up Metadata to allow for DeepZooming.
-# Image pyramid parameters: tile size and number of levels determine relationship between 
-    # amount of storage, number of network connections and bandwidth required for displaying high resolution images
 def metadata_to_graph_info(bins,outPath,outFile):
     
     # Create an output path object for the info file
@@ -408,12 +361,12 @@ def metadata_to_graph_info(bins,outPath,outFile):
     # Get metadata info from the bfio reader
     ngraphs = len(linear_index)
     rows = np.ceil(np.sqrt(ngraphs))
-    cols = np.round(np.sqrt(ngraphs)) 
+    cols = np.round(np.sqrt(ngraphs))
     sizes = [cols*CHUNK_SIZE,rows*CHUNK_SIZE]
     
-    # Calculate the number of pyramid levels (Description on line 425)
+    # Calculate the number of pyramid levels
     num_scales = np.ceil(np.log2(rows*CHUNK_SIZE)).astype(np.uint8)
-
+    
     # create a scales template, use the full resolution
     scales = {
         "size":sizes,
@@ -427,9 +380,6 @@ def metadata_to_graph_info(bins,outPath,outFile):
         "cols": cols
     }
     
-    #DEEP ZOOM IMAGES HAVE TWO PARTS: a dzi file and subdirectory of image files. 
-    # Deep Zoom Image converter generates an image pyramid by taking the original image, dividing its dimensions 
-        # by two in every step and slicing it into tiles until it reaches the lowest pyramid level with size of 1x1 pixels
     # create the information for each scale
     for i in range(1,num_scales+1):
         previous_scale = info['scales'][-1]
@@ -437,12 +387,11 @@ def metadata_to_graph_info(bins,outPath,outFile):
         current_scale['key'] = str(num_scales - i)
         current_scale['size'] = [int(np.ceil(previous_scale['size'][0]/2)),int(np.ceil(previous_scale['size'][1]/2))]
         info['scales'].append(current_scale)
-    # write the dzi (deep zoom image) file:
-    # contains information about the size of the tiles that make up the image, overlap, original dimensions of image in CHUNKSIZE
-
+    
+    # write the dzi file
     with open(op,'w') as writer:
         writer.write(DZI.format(int(info['cols']*CHUNK_SIZE),int(info['rows']*CHUNK_SIZE)))
-
+    
     return info
 
 # The following function builds the image pyramid at scale S by building up only the necessary information
@@ -453,6 +402,8 @@ def _get_higher_res(S,info,outpath,out_file,X=None,Y=None):
 
     # Get the scale info
     scale_info = None
+    logger.info("S: " + str(S))
+    logger.info(info['scales'])
     for res in info['scales']:
         if int(res['key'])==S:
             scale_info = res
@@ -464,23 +415,24 @@ def _get_higher_res(S,info,outpath,out_file,X=None,Y=None):
         X = [0,scale_info['size'][0]]
     if Y == None:
         Y = [0,scale_info['size'][1]]
-    #print(scale_info)
+    logger.info(str(X) + str(Y))
     # Modify upper bound to stay within resolution dimensions
     if X[1] > scale_info['size'][0]:
         X[1] = scale_info['size'][0]
     if Y[1] > scale_info['size'][1]:
         Y[1] = scale_info['size'][1]
-    print("\n")
-    print("NEW TIME FUNCTION CALLED")
-    print(X, Y)
+    logger.info(str(X) + str(Y))
+    
     # Initialize the output
     image = np.zeros((int(Y[1]-Y[0]),int(X[1]-X[0]),4),dtype=np.uint8)
+    logger.info(image.shape)
+    
     
     # If requesting from the lowest scale, then just generate the graph
     if S==int(info['scales'][0]['key']):
         index = int((int(Y[0]/CHUNK_SIZE) + int(X[0]/CHUNK_SIZE) * info['rows']))
         if index>=len(linear_index):
-            image = np.ones((CHUNK_SIZE,CHUNK_SIZE,4),dtype=np.uint8) * 255
+            image = np.ones((CHUNK_SIZE,CHUNK_SIZE,4),dtype=np.uint8) * (bincount + 55)
         else:
             image = gen_plot(linear_index[index][0],
                              linear_index[index][1],
@@ -493,26 +445,27 @@ def _get_higher_res(S,info,outpath,out_file,X=None,Y=None):
     else:
         # Set the subgrid dimensions
         subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]]]
-        print(X[0], X[1], Y[0], Y[1])
-        print("subgrid dimensions: ", subgrid_dims)
+        logger.info("SUBGRID DIMENSIONS: " + str(subgrid_dims))
+        
         for dim in subgrid_dims:
             while dim[1]-dim[0] > CHUNK_SIZE:
                 dim.insert(1,dim[0] + ((dim[1] - dim[0]-1)//CHUNK_SIZE) * CHUNK_SIZE)
-                print("new dim: ", dim)
+        logger.info("SUBGRID DIMENSIONS ADDED: " + str(subgrid_dims))
+        
+
         for y in range(0,len(subgrid_dims[1])-1):
-            print("y: ", y)
             y_ind = [subgrid_dims[1][y] - subgrid_dims[1][0],subgrid_dims[1][y+1] - subgrid_dims[1][0]]
-            print("y_ind: ", y_ind)
+            logger.info("Y index: " + str(y_ind))
             y_ind = [np.ceil(yi/2).astype('int') for yi in y_ind]
-            print("y_ind: ", y_ind)
+            logger.info("Y index: " + str(y_ind))
             for x in range(0,len(subgrid_dims[0])-1):
                 x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
-                print("x_ind: ", x_ind)
+                logger.info("X index: " + str(x_ind))
                 x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
-                print("x_ind: ", x_ind)
-                print(S, (info['scales']))
-                if S==(info['scales'][0]['key'] - 5):
-                    print("par ", subgrid_dims[0][x:x+2], subgrid_dims[1][y:y+2])
+                logger.info("X index: " + str(x_ind))
+                logger.info("What X would be: " + str(subgrid_dims[0][x:x+2]))
+                logger.info("What Y would be: " + str(subgrid_dims[0][y:y+2]))
+                if S==(info['scales'][0]['key'] - 5): #to use multiple processors to compute faster.
                     sub_image = _get_higher_res_par(S+1,
                                                    info,
                                                    outpath,
@@ -520,7 +473,6 @@ def _get_higher_res(S,info,outpath,out_file,X=None,Y=None):
                                                    X=subgrid_dims[0][x:x+2],
                                                    Y=subgrid_dims[1][y:y+2])
                 else:
-                    print("res")
                     sub_image = _get_higher_res(S+1,
                                                info,
                                                outpath,
@@ -551,30 +503,29 @@ def _get_higher_res_par(S,info,outpath,out_file,X=None,Y=None):
     for res in info['scales']:
         if int(res['key'])==S:
             scale_info = res
-            print("Scale information: ", scale_info)
             break
     if scale_info==None:
         ValueError("No scale information for resolution {}.".format(S))
+        
     if X == None:
         X = [0,scale_info['size'][0]]
     if Y == None:
         Y = [0,scale_info['size'][1]]
-    print("X, Y: ", X, Y)
+    
     # Modify upper bound to stay within resolution dimensions
     if X[1] > scale_info['size'][0]:
         X[1] = scale_info['size'][0]
     if Y[1] > scale_info['size'][1]:
         Y[1] = scale_info['size'][1]
-    print("transformed X, Y: ", X, Y)
+    
     # Initialize the output
     image = np.zeros((Y[1]-Y[0],X[1]-X[0],4),dtype=np.uint8)
-    print(image.shape)
-
+    
     # If requesting from the lowest scale, then just generate the graph
     if S==int(info['scales'][0]['key']):
         index = (int(Y[0]/CHUNK_SIZE) + int(X[0]/CHUNK_SIZE) * info['rows'])
         if index>=len(linear_index):
-            image = np.ones((CHUNK_SIZE,CHUNK_SIZE,4),dtype=np.uint8) * 255
+            image = np.ones((CHUNK_SIZE,CHUNK_SIZE,4),dtype=np.uint8) * (bincount + 55)
         else:
             image = gen_plot(linear_index[index][0],
                              linear_index[index][1],
@@ -642,6 +593,8 @@ def write_csv(cnames,linear_index,f_info,out_path,out_file):
             l_ind += 1
         
 if __name__=="__main__":
+    
+    
     """ Initialize argument parser """
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='Build an image pyramid from data in a csv file.')
@@ -678,7 +631,7 @@ if __name__=="__main__":
         
         # Load the data
         logger.info('Loading csv: {}'.format(f))
-        data, cnames = load_csv(f)
+        data, data_log, cnames = load_csv(f)
         column_names = data.columns
         logger.info('Done loading csv!')
 
@@ -702,8 +655,7 @@ if __name__=="__main__":
         logger.info('Writing layout file...!')
         write_csv(cnames,linear_index,info,output_path,folder)
         logger.info('Done!')
-        
+
         # Create the pyramid
         logger.info('Building pyramid...')
         image = _get_higher_res(0,info,output_path,folder)
-        
