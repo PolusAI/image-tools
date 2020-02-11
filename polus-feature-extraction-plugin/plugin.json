@@ -1,14 +1,14 @@
 {
     "name": "Feature Extraction",
-    "version": "0.1.4",
-    "title": "Extract features from images",
-    "description": "Extract shape and intensity features from images",
+    "version": "0.2.0",
+    "title": "Feature Extraction",
+    "description": "Extract shape and intensity features from images.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@labshare.org)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-extraction-plugin:0.1.2",
+    "containerId": "labshare/polus-feature-extraction-plugin:0.2.0",
     "inputs": [
       {
         "name": "angleStart",
@@ -29,6 +29,18 @@
         "required": false
       },
       {
+        "name": "csvfile",
+        "type": "array",
+        "description": "Select option to save csv file separately for each image or one csv for all images",
+        "required": true
+      },
+      {
+        "name": "features",
+        "type": "array",
+        "description": "Select required features",
+        "required": true
+      },
+      {
         "name": "inpDir",
         "type": "collection",
         "description": "Input image collection to be processed by this plugin",
@@ -44,7 +56,7 @@
         "name": "segDir",
         "type": "collection",
         "description": "Input image collection containing image segmentations",
-        "required": true
+        "required": false
       }
     ],
     "outputs": [
@@ -69,6 +81,16 @@
         "key": "inputs.boxSize",
         "title": "Input value",
         "description": "Boxsize to calculate feret diameter"
+      },
+      {
+        "key": "inputs.csvfile",
+        "title": "Output csv file",
+        "description": "Select option to save csv file separately for each image or one csv for all images"
+      },
+      {
+        "key": "inputs.features",
+        "title": "Select features",
+        "description": "Select required features"
       },
       {
         "key": "inputs.inpDir",

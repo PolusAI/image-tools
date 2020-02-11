@@ -1,4 +1,4 @@
-from utility import ConvertImage, Df_Csv
+from utility import ConvertImage, Df_Csv_single
 import argparse, logging
 
 
@@ -12,6 +12,10 @@ logger.setLevel(logging.INFO)
 def main():
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='Everything you need to start a Feature Extraction plugin.')
+    parser.add_argument('--features', dest='features', type=str,
+                        help='Features to calculate', required=True)
+    parser.add_argument('--csvfile', dest='csvfile', type=str,
+                        help='Save csv as separate or single file', required=True)
     parser.add_argument('--angleStart', dest='angleStart', type=int,
                         help='Angle start degree to calculate feret diameter', required=False)
     parser.add_argument('--angleStop', dest='angleStop', type=int,
@@ -29,6 +33,10 @@ def main():
     
     # Parse the arguments
     args = parser.parse_args()
+    features = args.features.split(',')
+    logger.info('features = {}'.format(features))
+    csvfile = args.csvfile
+    logger.info('csvfile = {}'.format(csvfile))
     angleStart = args.angleStart
     logger.info('angleStart = {}'.format(angleStart))
     angleStop = args.angleStop
@@ -46,12 +54,14 @@ def main():
     logger.info("Started")
     
     image_convert = ConvertImage(inpDir ,segDir)
-    df, filenames = image_convert.convert_tiled_tiff(boxSize, angleStart, angleStop, pixelDistance)
-    csv_file= Df_Csv(df, outDir)
-    del df
-    del filenames
-    csv_final = csv_file.csvfile()
-    del csv_final
+    df,filenames = image_convert.convert_tiled_tiff(features,csvfile,outDir,boxSize, angleStart, angleStop, pixelDistance)
+    if csvfile == 'csvone':
+        csv_file= Df_Csv_single(df, outDir)
+        csv_final = csv_file.csvfilesave()
+        del csv_final
+        del df
+        del filenames
+
     logger.info("Finished all processes!")
     
 if __name__ == "__main__":
