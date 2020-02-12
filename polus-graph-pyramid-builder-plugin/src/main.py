@@ -12,7 +12,7 @@ import sys
 CHUNK_SIZE = 1024
 
 # Number of Bins for Each Feature
-bincount = 200
+bincount = 10
 
 # DZI file template
 DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="' + str(CHUNK_SIZE) + '" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
@@ -22,6 +22,9 @@ logging.basicConfig(filename = "logfile", format='%(asctime)s - %(name)s - %(lev
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
+
+def root(root, value):
+    return round(value**(1/root), 6)
 
 """ 1. Loading and binning data """
 def is_number(value):
@@ -64,38 +67,80 @@ def load_csv(fpath):
     # Load the data
     if is_coded:
         data = pandas.read_csv(fpath,skiprows=[1],usecols=[c[0] for c in cnames])
-        data_log = pandas.read_csv(fpath, skiprows=[1], usecols=[c[0] for c in cnames])
-        print(type(data_log))
+
     else:
         data = pandas.read_csv(fpath,usecols=[c[0] for c in cnames])
-        data_log = pandas.read_csv(fpath,usecols=[c[0] for c in cnames])
-        print(type(data_log))
 
-    return data, data_log, cnames
+    return data, cnames
 
-def bin_data(data,column_names):
-    """ Bin the data
+def bin_data_log(data,column_names):
+
+    linear_index = []
+
+    #bin_sizes = []
+    bins = 0
+    nfeats = len(column_names)
+    column_bin_sizes = []
+    bin_stats = {'min': data.min(),
+                 'max': data.max()}
+    for i in range(0, nfeats):
+        if bin_stats['min'][i] > 0:
+            column_bin_sizes.append(root(bincount - 1, bin_stats['max'][i]/bin_stats['min'][i]))
+        elif bin_stats['min'][i] == 0:
+            column_bin_sizes.append(root(bincount - 1, bin_stats['max'][i]/1))
+        elif bin_stats['max'][i] < 0:
+            column_bin_sizes.append(root(bincount - 1, bin_stats['min'[i]]/bin_stats['max'][i]))
+        elif bin_stats['max'][i] == 0:
+            column_bin_sizes.append(root(bincount - 1, bin_stats['min'][i]/-1))
+        else:
+            neg_interval = root(bincount/2 - 1, bin_stats['min'][i]/-1)
+            pos_interval = root(bincount/2 - 1, bin_stats['max'][i]/1)
+            column_bin_sizes.append([neg_interval, pos_interval])
+    for item in column_bin_sizes:
+        print(item)
     
-    Data from a pandas Dataframe is binned in two dimensions. Binning is performed by
-    binning data in one column along one axis and another column is binned along the
-    other axis. All combinations of columns are binned without repeats or transposition.
-    There are only 20 bins in each dimension, and each bin is 1/20th the size of the
-    difference between the maximum and minimum of each column.
-    Inputs:
-        data - A pandas Dataframe, with nfeats number of columns
-        column_names - Names of Dataframe columns
-    Outputs:
-        bins - A numpy matrix that has shape (nfeats,nfeats,bincount,bincount)
-        bin_feats - A list containing the minimum and maximum values of each column
-        linear_index - Numeric value of column index from original csv
-    """
+    
 
+
+
+    # for i in range(0, nfeats):
+    #     if (bin_stats['min'][i] < 0 and bin_stats['max'][i] > 0):
+    #         neg_bins = (np.logspace(np.log(abs(bin_stats['min'][i])), 0, num = bincount/2, base = 10))*-1
+    #         pos_bins = np.logspace(0, np.log10(bin_stats['max'][i]), num = bincount/2, base = 10)
+    #         bin_sizes.append(np.append(neg_bins, pos_bins))
+    #         #bin_sizes.append(np.logspace(np.log10(abs(bin_stats['min'][i])), 0, num = bincount/2, base = 10))
+    #         #bin_sizes[-1] = bin_sizes[-1] + (np.logspace(0, np.log10(bin_stats['max'][i]), num = bincount/2, base = 10)) 
+    #         #print(bin_sizes[-1])
+    #         #print(np.logspace(0, np.log10(bin_stats['max'][i]), num = bincount/2, base = 10))
+    #     elif bin_stats['max'][i] < 0:
+    #         bin_sizes.append((np.logspace(np.log10(abs(bin_stats['min'][i])), np.log10(abs(bin_stats['max'][i])), num = bincount, base = 10))*-1)
+    #     else:
+    #         #print("minimum is greater than 0", bin_stats['min'][i])
+    #         if bin_stats['min'][i] == 0:
+    #             bin_sizes.append(np.logspace(0, np.log10(bin_stats['max'][i]), num = bincount, base = 10))
+    #         else:
+    #             bin_sizes.append(np.logspace(np.log10(bin_stats['min'][i]), np.log10(bin_stats['max'][i]), num = bincount, base = 10))
+
+
+    # for i in range(0, len(bin_sizes)):
+    #     print(column_names[i])
+    #     print(bin_sizes[i], bin_stats['min'][i], bin_stats['max'][i])
+    #     print(bin_sizes[i][1]/bin_sizes[i][0], bin_sizes[i][2]/bin_sizes[i][1])
+    #     print(bin_sizes[i][-1]/bin_sizes[i][-2], bin_sizes[i][-2]/bin_sizes[i][-3])
+    #     print('\n')
+    
+
+
+    return bins, bin_stats, linear_index
+
+def initializebins(data, column_names):
+   
     # Get basic column statistics and bin sizes
     nfeats = len(column_names)
     bin_stats = {'min': data.min(),
                  'max': data.max()}
-    print(bin_stats)
-    column_bin_size = (bin_stats['max'] * (1 + 10**-6) - bin_stats['min'])/bincount
+    #print(bin_stats)
+    column_bin_size = (bin_stats['max'] * (1 + 10**-6) - bin_stats['min'])/bincount #might be different for log scale??
 
     # Transform data into bin positions for fast binning
     data = ((data - bin_stats['min'])/column_bin_size).apply(np.floor)
@@ -115,6 +160,28 @@ def bin_data(data,column_names):
     else:
         dtype = np.uint64
     bins = np.zeros((nfeats,nfeats,bincount,bincount),dtype=dtype)
+ 
+    return bins, data, data_ind, nfeats, bin_stats
+
+def bin_data(data,column_names):
+    """ Bin the data
+    
+    Data from a pandas Dataframe is binned in two dimensions. Binning is performed by
+    binning data in one column along one axis and another column is binned along the
+    other axis. All combinations of columns are binned without repeats or transposition.
+    There are only 20 bins in each dimension, and each bin is 1/20th the size of the
+    difference between the maximum and minimum of each column.
+    Inputs:
+        data - A pandas Dataframe, with nfeats number of columns
+        column_names - Names of Dataframe columns
+    Outputs:
+        bins - A numpy matrix that has shape (nfeats,nfeats,bincount,bincount)
+        bin_feats - A list containing the minimum and maximum values of each column
+        linear_index - Numeric value of column index from original csv
+    """
+
+
+    bins, data, data_ind, nfeats, bin_stats = initializebins(data, column_names)
 
     # Create a linear index for feature bins
     linear_index = []
@@ -631,13 +698,15 @@ if __name__=="__main__":
         
         # Load the data
         logger.info('Loading csv: {}'.format(f))
-        data, data_log, cnames = load_csv(f)
+        data, cnames = load_csv(f)
         column_names = data.columns
         logger.info('Done loading csv!')
 
         # Bin the data
         logger.info('Binning data for {} features...'.format(column_names.size))
+        bins_log, bin_stats_log, linear_index_log = bin_data_log(data, column_names)
         bins, bin_stats, linear_index = bin_data(data,column_names)
+        
         logger.info('Done!')
         del data    # get rid of the original data to save memory
 
