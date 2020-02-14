@@ -79,7 +79,9 @@ class ConvertImage(object):
             intensity_filenames = glob.glob("*.ome.tif")#read only the .ome.tif files in the directory
             
             for seg_file_names1 in seg_filenames1:#run analysis for each segmented image in the list
+                print(seg_file_names1)
                 intensity =difflib.get_close_matches(seg_file_names1, intensity_filenames,n=1, cutoff=0.1)#match the filename in segmented image to the  list of intensity image filenames to match the files
+                print(intensity)
                 intensity = str(intensity[0])#get the filename of intensity image that has closest match
                 intensity_file = self.intensity_dir +"/"+ intensity#set the entire path for the bioreader to read the image
                 
