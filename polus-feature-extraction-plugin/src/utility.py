@@ -89,7 +89,7 @@ class ConvertImage(object):
                 intensity_image= np.squeeze(intensity_bfio)
                 
                 #Read the segmented image using bioreader from bfio
-                seg_file= self.segment_dir + "\ ".strip() + seg_file_names1#set the entire path for the bioreader to read the image
+                seg_file= self.segment_dir + "/" + seg_file_names1#set the entire path for the bioreader to read the image
                 br_seg= BioReader(seg_file)
                 segment_bfio = br_seg.read_image()
                 seg_file = np.squeeze(segment_bfio)
