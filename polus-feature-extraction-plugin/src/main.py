@@ -16,45 +16,42 @@ def main():
                         help='Features to calculate', required=True)
     parser.add_argument('--csvfile', dest='csvfile', type=str,
                         help='Save csv as separate or single file', required=True)
-    parser.add_argument('--angleStart', dest='angleStart', type=int,
-                        help='Angle start degree to calculate feret diameter', required=False)
-    parser.add_argument('--angleStop', dest='angleStop', type=int,
-                        help='Angle end degree to calculate feret diameter', required=False)
+    parser.add_argument('--angleDegree', dest='angleDegree', type=int,
+                        help='Angle to calculate feret diameter', required=False)
     parser.add_argument('--boxSize', dest='boxSize', type=int,
-                        help='Boxsize to calculate feret diameter', required=False)
-    parser.add_argument('--inpDir', dest='inpDir', type=str,
-                        help='Input image collection to be processed by this plugin', required=True)
+                        help='Boxsize to calculate neighbors and feret diameter', required=False)
+    parser.add_argument('--intDir', dest='intDir', type=str,
+                        help='Intensity image collection', required=False)
     parser.add_argument('--pixelDistance', dest='pixelDistance', type=int,
                         help='Pixel distance to calculate the neighbors touching cells', required=False)
     parser.add_argument('--segDir', dest='segDir', type=str,
-                        help='Input image collection containing image segmentations', required=True)
+                        help='Segmented image collection', required=True)
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
-    
+
     # Parse the arguments
     args = parser.parse_args()
-    features = args.features.split(',')
+    features = args.features.split(',')#features
     logger.info('features = {}'.format(features))
-    csvfile = args.csvfile
+    csvfile = args.csvfile#csvfile
     logger.info('csvfile = {}'.format(csvfile))
-    angleStart = args.angleStart
-    logger.info('angleStart = {}'.format(angleStart))
-    angleStop = args.angleStop
-    logger.info('angleStop = {}'.format(angleStop))
-    boxSize = args.boxSize
+    angleStop = args.angleDegree#angle to calculate feret diameter
+    logger.info('angleDegree = {}'.format(angleStop))
+    boxSize = args.boxSize#box size to calculate neighbors and feret diameter
     logger.info('boxSize = {}'.format(boxSize))
-    inpDir = args.inpDir
-    logger.info('inpDir = {}'.format(inpDir))
-    pixelDistance = args.pixelDistance
+    intDir = args.intDir#intensity image
+    logger.info('intDir = {}'.format(intDir))
+    pixelDistance = args.pixelDistance#pixel distance to calculate neighbors
     logger.info('pixelDistance = {}'.format(pixelDistance))
-    segDir = args.segDir
+    segDir = args.segDir#segmented image
     logger.info('segDir = {}'.format(segDir))
-    outDir = args.outDir
+    outDir = args.outDir#directory to save output files
     logger.info('outDir = {}'.format(outDir))
     logger.info("Started")
+    image_convert = ConvertImage(segDir,intDir)
     
-    image_convert = ConvertImage(inpDir ,segDir)
-    df,filenames = image_convert.convert_tiled_tiff(features,csvfile,outDir,boxSize, angleStart, angleStop, pixelDistance)
+    df,filenames= image_convert.convert_tiled_tiff(features,csvfile,outDir,boxSize, angleStop, pixelDistance)
+    #call csv function to save as a single file
     if csvfile == 'csvone':
         csv_file= Df_Csv_single(df, outDir)
         csv_final = csv_file.csvfilesave()
@@ -63,7 +60,7 @@ def main():
         del filenames
 
     logger.info("Finished all processes!")
-    
+
 if __name__ == "__main__":
     main()
     
