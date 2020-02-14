@@ -46,7 +46,7 @@ class ConvertImage(object):
         
         index=0#use index for knowing the images processed
         #If intensity image is not passed as a parameter
-        if self.intensity_dir == 'None':
+        if self.intensity_dir is None:
             os.chdir(self.segment_dir)#change directory to get all segmented images
             seg_filenames1 = glob.glob("*.ome.tif")#read only the .ome.tif files in the directory
             
