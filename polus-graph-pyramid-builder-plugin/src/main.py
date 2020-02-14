@@ -13,7 +13,7 @@ import math
 CHUNK_SIZE = 1024
 
 # Number of Bins for Each Feature
-bincount = 16
+bincount = 100
 
 # DZI file template
 DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="' + str(CHUNK_SIZE) + '" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
@@ -98,88 +98,162 @@ def bin_data_log(data,column_names):
             pos_interval = root(bincount/2 - 1, bin_stats['max'][i]/1)
             column_bin_sizes.append([neg_interval, pos_interval])
     
+    #TRANSFORM THE DATA 
+    for i in range(0, nfeats):
+        for val in data[column_names[i]]:
+            ogval = val
+            print("Original Value: ", ogval)
+            Range = [0, 0]
+            if val > 1:
+                if bin_stats['min'][i] < 0:
+                    val = int(math.floor((bincount - math.log(val/bin_stats['max'][i], 1/column_bin_sizes[i][-1])) - bincount/2))
+                    Range[0] = column_bin_sizes[i][-1]**(val - 1)
+                    Range[1] = column_bin_sizes[i][-1]**(val)
+                else:
+                    #ALL VALUES ARE POSITIVE
+                    val = int(math.floor(math.log(val/bin_stats['min'][i], column_bin_sizes[i][-1]) + 1))
+                    Range[0] = bin_stats['min'][i]*((column_bin_sizes[i][-1])**(val - 1))
+                    Range[1] = bin_stats['min'][i]*((column_bin_sizes[i][-1])**val)
+            elif val < -1:
+                if bin_stats['max'][i] > 0:
+                    val = int(math.floor((bincount - math.log(val/bin_stats['min'][i], 1/column_bin_sizes[i][-1])) - int(bincount/2)))
+                    Range[0] = -1*(column_bin_sizes[i][0]**(val))
+                    Range[1] = -1*(column_bin_sizes[i][0]**(val - 1))
+                    val = -1*val
+                else:
+                    val = None
+            else:
+                if bin_stats['min'][i] == 0:
+                    val = 1
+                    Range[1] = 1
+                elif bin_stats['max'][i] == 0:
+                    val = -1
+                    Range[1] = -1
+                else:
+                    val = 0
+                    Range[0] = -1
+                    Range[1] = 1
+
+            print("Transformed Value: ", val)
+            print("Range: ", Range)
+            if ogval >= Range[0] and ogval <= Range[1]:
+                print("TRUE")
+            else:
+                if ogval > Range[1]:
+                    val = val + 1
+                    print("adding one to val")
+                if ogval < Range[0]:
+                    val = val - 1
+                    print("subtracting one to val")
+                print("Fixed Value: ", val)
+                if val > 1:
+                    Range[0] = column_bin_sizes[i][-1]**(val - 1)
+                    Range[1] = column_bin_sizes[i][-1]**(val)
+                if val < -1:
+                    Range[0] = -1*(column_bin_sizes[i][0]**(-1*val))
+                    Range[1] = -1*(column_bin_sizes[i][0]**(-1*val - 1))
+                print("New Range: ", Range)
+            print("Bin Stats: ", bin_stats['min'][i], bin_stats['max'][i])
+            print("Bin Sizes: ", column_bin_sizes[i][0], column_bin_sizes[i][-1])
+            print(" ")
+
 
     #for i in range(0, nfeats):
     #    print(data[column_names[i]])
     
     #Transform the data
-    copydata = data
-    for i in range(0, nfeats):
-        for val in data[column_names[i]]:
-            transformval = val
-            Binnumber = 0
-            if val > 0:
-                print("Column ", column_names[i], " data: ", val)
-                print("Bin Stats: ", bin_stats['min'][i], bin_stats['max'][i])
-                print("Bin Sizes: ", column_bin_sizes[i][0], column_bin_sizes[i][-1])
-                if bin_stats['min'][i] < 0:
-                    print("Bin 1 Range: ", bin_stats['min'][i], bin_stats['min'][i]/column_bin_sizes[i][0])
-                    if val < bin_stats['min'][i]/column_bin_sizes[i][0]:
-                        Binnumber = 1
-                    for space in range(2, int(bincount/2)):
-                        LowBound = bin_stats['min'][i]/(column_bin_sizes[i][0]**(space - 1))
-                        UppBound = bin_stats['min'][i]/(column_bin_sizes[i][0]**(space))
-                        print("Bin", space, "Range: ", bin_stats['min'][i]/(column_bin_sizes[i][0]**(space - 1)), bin_stats['min'][i]/(column_bin_sizes[i][0]**(space)))
-                        if val > LowBound and val <= UppBound:
-                            Binnumber = space
-                    print("Bin", int(bincount/2),  "Range:  -1.00 1.00")
-                    if val > -1 and val <= 1.0:
-                        Binnumber = int(bincount/2)
-                    for space in range(int(bincount/2) - 1, 0, -1):
-                        LowBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**space)
-                        UppBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space - 1))
-                        print("Bin", bincount - space, "Range:", bin_stats['max'][i]/(column_bin_sizes[i][-1]**space), bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space - 1)))
-                        if val > LowBound and val <= UppBound:
-                            Binnumber = bincount-space
-                    transformval = math.log(column_bin_sizes[i][0], val)
-                else:
-                    for space in range(bincount -1, 0, -1):
-                        LowBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**space)
-                        UppBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space-1))
-                        print("All Positive Bin", bincount-space, "Range:", bin_stats['max'][i]/(column_bin_sizes[i][-1]**space), bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space-1)))
-                        if val > LowBound and val <= UppBound:
-                            Binnumber = bincount-space
-                    transformval = math.log(bincount, abs(val))
-                print("Binnumber: ", Binnumber)
-                print(transformval)
-                print(" ")
-                #val = root(column_bin_sizes[i][0], val/(bin_stats['max'][i]))
-            elif val < 0:
-                #val = root(column_bin_sizes[i][-1], val/abs
-                print("Column ", column_names[i], " data: ", val)
-                print("Bin Stats: ", bin_stats['min'][i], bin_stats['max'][i])
-                print("Bin Sizes: ", column_bin_sizes[i][0], column_bin_sizes[i][-1])
-                if bin_stats['max'][i] > 0:
-                    print("Bin 1 Range: ", bin_stats['min'][i], bin_stats['min'][i]/column_bin_sizes[i][0])
-                    if val < bin_stats['min'][i]/column_bin_sizes[i][0]:
-                        Binnumber = 1
-                    for space in range(2, int(bincount/2)):
-                        LowBound = bin_stats['min'][i]/(column_bin_sizes[i][0]**(space - 1))
-                        UppBound = bin_stats['min'][i]/(column_bin_sizes[i][0]**(space))
-                        print("Bin", space, "Range: ", bin_stats['min'][i]/(column_bin_sizes[i][0]**(space - 1)), bin_stats['min'][i]/(column_bin_sizes[i][0]**(space)))
-                        if val > LowBound and val <= UppBound:
-                            Binnumber = space
-                    print("Bin", int(bincount/2),  "Range:  -1.00 1.00")
-                    if val > -1 and val <= 1.0:
-                        Binnumber = int(bincount/2)
-                    for space in range(int(bincount/2) - 1, 0, -1):
-                        LowBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**space)
-                        UppBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space - 1))
-                        print("Bin", bincount - space, "Range:", bin_stats['max'][i]/(column_bin_sizes[i][-1]**space), bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space - 1)))
-                        if val > LowBound and val <= UppBound:
-                            Binnumber = bincount-space
-                    transformval = math.log(column_bin_sizes[i][0], abs(val))
-                else: 
-                    for space in range(bincount-1, 0, -1):
-                        print("Bin Range Unknown")
-                    transformval = math.log(column_bin_sizes[i][-1], abs(val))
-                print("Binnumber: ", Binnumber)
-                print(transformval)
-                print(" ")
-                #val = (root(column_bin_sizes[i][0], val/(bin_stats['min'][i])))*-1
-            else: 
-                print("VALUE IS ZERO: ", val)
-                print(" ")
+    # copydata = data
+    # for i in range(0, nfeats):
+    #     for val in data[column_names[i]]:
+    #         transformval = val
+    #         Binnumber = 0
+    #         if val > 0:
+    #             print("Column ", column_names[i], " data: ", val)
+    #             print("Bin Stats: ", bin_stats['min'][i], bin_stats['max'][i])
+    #             print("Bin Sizes: ", column_bin_sizes[i][0], column_bin_sizes[i][-1])
+    #             if bin_stats['min'][i] < 0:
+    #                 print("Bin", -(bincount - 2)/2, "Range: ", bin_stats['min'][i], bin_stats['min'][i]/column_bin_sizes[i][0])
+    #                 if val < bin_stats['min'][i]/column_bin_sizes[i][0]:
+    #                     Binnumber = 1
+    #                 for space in range(2, int(bincount/2)):
+    #                     LowBound = bin_stats['min'][i]/(column_bin_sizes[i][0]**(space - 1))
+    #                     UppBound = bin_stats['min'][i]/(column_bin_sizes[i][0]**(space))
+    #                     print("Bin", space - bincount/2, "Range: ", bin_stats['min'][i]/(column_bin_sizes[i][0]**(space - 1)), bin_stats['min'][i]/(column_bin_sizes[i][0]**(space)))
+    #                     if val > LowBound and val <= UppBound:
+    #                         Binnumber = space - bincount/2
+    #                 print("Bin 0 Range:  -1.00 1.00")
+    #                 for space in range(int(bincount/2) - 1, 0, -1):
+    #                     LowBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**space)
+    #                     UppBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space - 1))
+    #                     print("Bin", bincount - space - bincount/2, "Range:", bin_stats['max'][i]/(column_bin_sizes[i][-1]**space), bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space - 1)))
+    #                     if val > LowBound and val <= UppBound:
+    #                         Binnumber = bincount-space - (bincount/2)
+    #                 if val > -1 and val <= 1.0:
+    #                     Binnumber = 0.0
+    #                     transformval = 0
+    #                 else:
+    #                     transformval = (bincount - math.log(val/bin_stats['max'][i], 1/column_bin_sizes[i][-1])) - bincount/2
+    #             elif bin_stats['min'][i] > 0:
+    #                 for space in range(bincount -1, 0, -1):
+    #                     LowBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**space)
+    #                     UppBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space-1))
+    #                     print("All Positive Bin", bincount-space, "Range:", bin_stats['max'][i]/(column_bin_sizes[i][-1]**space), bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space-1)))
+    #                     if val > LowBound and val <= UppBound:
+    #                         Binnumber = bincount-space
+    #                 transformval = math.log(val/bin_stats['min'][i], column_bin_sizes[i][-1]) + 1
+    #             else:
+    #                 for space in range(bincount -1, 0, -1):
+    #                     LowBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**space)
+    #                     UppBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space-1))
+    #                     print("All Positive Bin", bincount-space, "Range:", bin_stats['max'][i]/(column_bin_sizes[i][-1]**space), bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space-1)))
+    #                     if val > LowBound and val <= UppBound:
+    #                         Binnumber = bincount-space
+    #                 transformval = math.log(val, column_bin_sizes[i][-1]) + 1
+    #             print("Binnumber: ", Binnumber)
+    #             print("Tranformed POS data: ", int(math.floor(transformval)))
+    #             print(" ")
+    #             #val = root(column_bin_sizes[i][0], val/(bin_stats['max'][i]))
+    #         elif val < 0:
+    #             #val = root(column_bin_sizes[i][-1], val/abs
+    #             print("Column ", column_names[i], " data: ", val)
+    #             print("Bin Stats: ", bin_stats['min'][i], bin_stats['max'][i])
+    #             print("Bin Sizes: ", column_bin_sizes[i][0], column_bin_sizes[i][-1])
+    #             if bin_stats['max'][i] > 0:
+    #                 print("Bin", -(bincount - 2)/2, "Range: ", bin_stats['min'][i], bin_stats['min'][i]/column_bin_sizes[i][0])
+    #                 if val < bin_stats['min'][i]/column_bin_sizes[i][0]:
+    #                     Binnumber = int(1 - (bincount/2))
+    #                 for space in range(2, int(bincount/2)):
+    #                     LowBound = bin_stats['min'][i]/(column_bin_sizes[i][0]**(space - 1))
+    #                     UppBound = bin_stats['min'][i]/(column_bin_sizes[i][0]**(space))
+    #                     print("Bin", space - bincount/2, "Range: ", bin_stats['min'][i]/(column_bin_sizes[i][0]**(space - 1)), bin_stats['min'][i]/(column_bin_sizes[i][0]**(space)))
+    #                     if val > LowBound and val <= UppBound:
+    #                         Binnumber = int(space - (bincount/2))
+    #                 print("Bin 0 Range:  -1.00 1.00")
+    #                 for space in range(int(bincount/2) - 1, 0, -1):
+    #                     LowBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**space)
+    #                     UppBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space - 1))
+    #                     print("Bin", bincount - space - bincount/2, "Range:", bin_stats['max'][i]/(column_bin_sizes[i][-1]**space), bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space - 1)))
+    #                     if val > LowBound and val <= UppBound:
+    #                         Binnumber = int(bincount-space - (bincount/2))
+    #                 if val > -1 and val <= 1.0:
+    #                     Binnumber = 0.0
+    #                     transformval = 0
+    #                 else:
+    #                     transformval = (bincount - math.log(val/bin_stats['min'][i], 1/column_bin_sizes[i][-1])) - int(bincount/2)
+    #             else: 
+    #                 for space in range(bincount-1, 0, -1):
+    #                     print("Bin Range Unknown")
+    #                 transformval = math.log(column_bin_sizes[i][-1], abs(val))
+    #             print("Binnumber: ", Binnumber)
+    #             print("Tranformed NEG data: ", -1*int(math.floor(transformval)))
+    #             print(" ")
+    #             #val = (root(column_bin_sizes[i][0], val/(bin_stats['min'][i])))*-1
+    #         else: 
+    #             print("VALUE IS ZERO: ", val)
+    #             print(" ")
+    #         if Binnumber != math.floor(transformval):
+    #             print("ERROR DOES NOT MATCH")
+    #             print(" ")
 
 
 
