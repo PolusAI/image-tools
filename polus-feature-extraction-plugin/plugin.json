@@ -1,6 +1,6 @@
 {
     "name": "Feature Extraction",
-    "version": "0.3.3",
+    "version": "0.3.4",
     "title": "Feature Extraction",
     "description": "Extract shape and intensity features from images.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@labshare.org)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-extraction-plugin:0.3.3",
+    "containerId": "labshare/polus-feature-extraction-plugin:0.3.4",
     "inputs": [
       {
         "name": "angleDegree",
