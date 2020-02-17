@@ -114,7 +114,7 @@ class ConvertImage(object):
 #create class to extract features from the images      
 class Analysis(ConvertImage):
     
-    def __init__(self,label_image,features, seg_file_names1, csvfile,outDir,boxSize,angleDegree, pixelDistance,intensity_image=None):
+    def __init__(self,label_image,features, seg_file_names1, csvfile,outDir,boxSize=3,angleDegree=180, pixelDistance=5,intensity_image=None):
         self.objneighbors = []
         self.numneighbors = []
         self.labels = []
@@ -130,20 +130,8 @@ class Analysis(ConvertImage):
         self.df_csv = pd.DataFrame([])
         self.boxsize = boxSize #box size to get the perimeter for calculating neighbors and feret diameter
         self.thetastart = 1 
-        self.thetastop = angleDegree+1#since python indexing is from 0, to calculate for 180 degree have added 1
+        self.thetastop = angleDegree#since python indexing is from 0, to calculate for 180 degree have added 1
         self.pixeldistance = pixelDistance
-        if self.pixeldistance is None:
-            self.pixeldistance = 5
-        else:
-            self.pixeldistance = pixelDistance
-        if self.boxsize is None:
-            self.boxsize = 3
-        else:
-            self.boxsize = boxSize
-        if self.thetastop is None:
-            self.thetastop = 181
-        else:
-            self.thetastop = angleDegree+1
         self.feature = features# list of features to calculate
         self.csv_file = csvfile#save the features(as single file for all images or 1 file for each image) in csvfile
         self.output_dir = outDir#directory to save output
@@ -427,11 +415,11 @@ class Analysis(ConvertImage):
         return numneighbors_array
 
     #function to calculate the feret diameter
-    def feret_diameter(self, perimeter_transpose, angleDegree):
+    def feret_diameter(self, perimeter_transpose, thetastart,thetastop):
         counts_scalar_copy=None
 
     #Convert to radians
-        theta = np.arange(self.thetastart,self.thetastop)
+        theta = np.arange(self.thetastart,self.thetastop+1)
         theta = np.asarray(theta)
         theta = np.radians(theta)
 
@@ -867,14 +855,14 @@ class Analysis(ConvertImage):
         #Calculate maxferet
         def maxferet(seg_img,*args):
             edges= self.box_border_search(seg_img, self.boxsize)
-            feretdiam = self.feret_diameter(edges,self.thetastop)
+            feretdiam = self.feret_diameter(edges,self.thetastart, self.thetastop)
             maxferet = [np.max(feret) for feret in feretdiam]
             return maxferet
         
         #Calculate minferet
         def minferet(seg_img,*args):
             edges= self.box_border_search(seg_img, self.boxsize)
-            feretdiam = self.feret_diameter(edges,self.thetastop)
+            feretdiam = self.feret_diameter(edges,self.thetastart, self.thetastop)
             minferet = [np.min(feret) for feret in feretdiam]
             return minferet
         
