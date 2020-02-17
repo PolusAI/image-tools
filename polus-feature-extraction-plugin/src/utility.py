@@ -130,7 +130,9 @@ class Analysis(ConvertImage):
         self.df_csv = pd.DataFrame([])
         self.boxsize = boxSize #box size to get the perimeter for calculating neighbors and feret diameter
         self.thetastart = 1
-        self.thetastop = 181 # angleDegree+1#since python indexing is from 0, to calculate for 180 degree have added 1
+        print('--->',angleDegree)
+        self.thetavalue = angleDegree
+        self.thetastop =  self.thetavalue + 1 # angleDegree+1#since python indexing is from 0, to calculate for 180 degree have added 1
         self.pixeldistance = pixelDistance
         self.feature = features# list of features to calculate
         self.csv_file = csvfile#save the features(as single file for all images or 1 file for each image) in csvfile
