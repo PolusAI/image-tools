@@ -129,7 +129,7 @@ class Analysis(ConvertImage):
         self.df_insert = pd.DataFrame([])
         self.df_csv = pd.DataFrame([])
         self.boxsize = boxSize #box size to get the perimeter for calculating neighbors and feret diameter
-        self.thetastart = 1 
+        self.thetastart = 1
         self.thetastop = angleDegree+1#since python indexing is from 0, to calculate for 180 degree have added 1
         self.pixeldistance = pixelDistance
         self.feature = features# list of features to calculate
@@ -415,7 +415,7 @@ class Analysis(ConvertImage):
         return numneighbors_array
 
     #function to calculate the feret diameter
-    def feret_diameter(self, perimeter_transpose):
+    def feret_diameter(self,perimeter_transpose,thetastart,thetastop):
         counts_scalar_copy=None
 
     #Convert to radians
@@ -855,14 +855,14 @@ class Analysis(ConvertImage):
         #Calculate maxferet
         def maxferet(seg_img,*args):
             edges= self.box_border_search(seg_img, self.boxsize)
-            feretdiam = self.feret_diameter(edges)
+            feretdiam = self.feret_diameter(edges,self.thetastart,self.thetastop)
             maxferet = [np.max(feret) for feret in feretdiam]
             return maxferet
         
         #Calculate minferet
         def minferet(seg_img,*args):
             edges= self.box_border_search(seg_img, self.boxsize)
-            feretdiam = self.feret_diameter(edges)
+            feretdiam = self.feret_diameter(edges,self.thetastart,self.thetastop)
             minferet = [np.min(feret) for feret in feretdiam]
             return minferet
         
