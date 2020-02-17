@@ -35,8 +35,8 @@ def main():
     logger.info('features = {}'.format(features))
     csvfile = args.csvfile#csvfile
     logger.info('csvfile = {}'.format(csvfile))
-    angleStop = args.angleDegree#angle to calculate feret diameter
-    logger.info('angleDegree = {}'.format(angleStop))
+    angleDegree = args.angleDegree#angle to calculate feret diameter
+    logger.info('angleDegree = {}'.format(angleDegree))
     boxSize = args.boxSize#box size to calculate neighbors and feret diameter
     logger.info('boxSize = {}'.format(boxSize))
     intDir = args.intDir#intensity image
@@ -50,7 +50,7 @@ def main():
     logger.info("Started")
     image_convert = ConvertImage(segDir,intDir)
     
-    df,filenames= image_convert.convert_tiled_tiff(features,csvfile,outDir,boxSize, angleStop, pixelDistance)
+    df,filenames= image_convert.convert_tiled_tiff(features,csvfile,outDir,boxSize, angleDegree, pixelDistance)
     #call csv function to save as a single file
     if csvfile == 'csvone':
         csv_file= Df_Csv_single(df, outDir)
