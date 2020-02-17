@@ -114,7 +114,7 @@ class ConvertImage(object):
 #create class to extract features from the images      
 class Analysis(ConvertImage):
     
-    def __init__(self,label_image,features, seg_file_names1, csvfile,outDir,boxSize=3,angleDegree=180, pixelDistance=5,intensity_image=None):
+    def __init__(self,label_image,features, seg_file_names1, csvfile,outDir,boxSize,angleDegree, pixelDistance,intensity_image=None):
         self.objneighbors = []
         self.numneighbors = []
         self.labels = []
@@ -130,10 +130,20 @@ class Analysis(ConvertImage):
         self.df_csv = pd.DataFrame([])
         self.boxsize = boxSize #box size to get the perimeter for calculating neighbors and feret diameter
         self.thetastart = 1
-        print('--->',angleDegree)
-        self.thetavalue = angleDegree
-        self.thetastop =  self.thetavalue + 1 # angleDegree+1#since python indexing is from 0, to calculate for 180 degree have added 1
+        self.thetastop =  angleDegree # angleDegree+1#since python indexing is from 0, to calculate for 180 degree have added 1
         self.pixeldistance = pixelDistance
+        if self.pixeldistance is None:
+            self.pixeldistance = 5
+        else:
+            self.pixeldistance = pixelDistance
+        if self.boxsize is None:
+            self.boxsize = 3
+        else:
+            self.boxsize = boxSize
+        if self.thetastop is None:
+            self.thetastop = 180
+        else:
+            self.thetastop = angleDegree
         self.feature = features# list of features to calculate
         self.csv_file = csvfile#save the features(as single file for all images or 1 file for each image) in csvfile
         self.output_dir = outDir#directory to save output
@@ -421,7 +431,7 @@ class Analysis(ConvertImage):
         counts_scalar_copy=None
 
     #Convert to radians
-        theta = np.arange(self.thetastart,self.thetastop)
+        theta = np.arange(self.thetastart,self.thetastop+1)
         theta = np.asarray(theta)
         theta = np.radians(theta)
 
