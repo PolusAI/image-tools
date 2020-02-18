@@ -217,7 +217,6 @@ int main(int argc, char ** argv) {
 	 */
 	double** B_Dist = new double*[N];
 	for (int i = 0; i < N; ++i) { B_Dist[i] = new double[K]; }
-
 	/**
 	 * Compute K-NN following the algorithm for shared-memory K-NN
 	 * @param filePath The full path to the input file containig the dataset.
@@ -235,7 +234,7 @@ int main(int argc, char ** argv) {
 	 * @return B_Dist corresponding distance for K-NN indices stored in B_Index	 
 	 */
 	computeKNNs(filePath, N, Dim, K, sampleRate, convThreshold,B_Index,B_Dist, logFile, distanceMetric, distanceV1, distanceV2,filePathOptionalArray);
-
+    
 	bool flag=false;
 	for (int i = 0; i < N; ++i) {
 		for (int j = 0; j < K; ++j) {

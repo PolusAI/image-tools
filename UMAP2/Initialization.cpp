@@ -7,6 +7,8 @@
 #include <omp.h>
 #include <Eigen/Sparse>
 
+#define SCALE 0.0001
+
 using namespace std;
 using namespace arma;
 using namespace Eigen;
@@ -160,7 +162,7 @@ void Initialization (bool randominitializing, double** embedding, ofstream& logF
 
 			for (int i = 0; i < N; ++i) {			
 				for (int j = 0; j < DimLowSpace; ++j) { 			
-					embedding[i][j] =embedding[i][j]* expansion+ 0.0001*distribution(generator);
+					embedding[i][j] =embedding[i][j]* expansion+ SCALE*distribution(generator);
 				}
 			}
 

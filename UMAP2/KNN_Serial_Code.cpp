@@ -107,7 +107,6 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 	/**
 	 * Reading the Entire Dataset
 	 */
-	//	if (argc==5){ //??
 	for (int i = 0; i < N; ++i) {
 		string temp, temp2;
 		getline(infile, temp);
@@ -117,22 +116,7 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 			temp.erase(0, temp.find(",") + 1);
 		}
 	}
-	//	} 
-	// 	else {
-
-	/*		for (int i = 0; i < N; ++i) {
-			string temp, temp2;
-			getline(infile, temp);
-			for (int j = 0; j < Dim; ++j) {
-			temp2 = temp.substr(0, temp.find(","));
-			if (j >= colIndex1-1 && j < colIndex2) dataPoints[i][j] = atof(temp2.c_str());
-			temp.erase(0, temp.find(",") + 1);
-			}
-			*/	//	}	
-	//	}
 	infile.close();
-
-	//	if (argc == 7) Dim=colIndex2-colIndex1+1;
 	/**
 	 * define a seed for random generator. Using a constant value produces
 	 * the same set of random numbers and is good for debugging. Alternatively,
@@ -292,6 +276,7 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 						if (dista < epsilon) {
 							logFile << "Found Duplicate Data for Points "<< *it << " and " << *it2; 
 							cout << "Found Duplicate Data for Points "<< *it << " and " << *it2;
+							exit(1);
 						}
 
 						c_criteria += UpdateNN(*it, *it2, dista, 1);

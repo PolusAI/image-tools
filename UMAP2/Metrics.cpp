@@ -7,6 +7,7 @@
 #include <iostream>
 #include <math.h>
 #include <fstream>
+#include <cstdlib>
 #include "KNN_Serial_Code.h"
 
 using namespace std;
@@ -68,7 +69,8 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 		int RecordCounts=stoi(outputCmd.substr(0, outputCmd.find(" ")))-1;
 		if (RecordCounts != Dim) {
 		logFile<<"ALERT: The Optional Vector has different length than the number of features in the input data set"<<endl;
-		cout<<"ALERT: The Optional Vector has different length than the number of features in the input data set"<<endl;		
+		cout<<"ALERT: The Optional Vector has different length than the number of features in the input data set"<<endl;
+        exit(1);		
 		}
 		/**
 		 * Compute the dimension of input array (#Columns)
@@ -77,8 +79,8 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 		string cmd2="head -n 1 "+ filePathOptionalArray + " |tr '\\,' '\\n' |wc -l ";
 		featureCounts = stoi(exec(cmd2.c_str())); 
 
-		logFile << "The lenght of the Optional Vector used in Metric computation is "<< RecordCounts <<" and its dimension is " << featureCounts << endl;
-		cout << "The lenght of the Optional Vector used in Metric computation is "<< RecordCounts <<" and its dimension is " << featureCounts << endl;
+		logFile << "The length of the Optional Vector used in Metric computation is "<< RecordCounts <<" and its dimension is " << featureCounts << endl;
+		cout << "The length of the Optional Vector used in Metric computation is "<< RecordCounts <<" and its dimension is " << featureCounts << endl;
 		/**
 		 * Make the 2D array containing the input array
 		 */
@@ -91,7 +93,7 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 		{
 			logFile << "Error in Opening Input File" << endl;
 			cout << "Error in Opening Input File" << endl;
-			return 0.0;
+            exit(1);
 		}
 		/**
 		 * Remove the header info
@@ -356,6 +358,11 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 
 		}
 		return v0[y_len] / normalisation; 
+	}
+	else {
+			logFile << "Wrong input for metric name!" << endl;
+			cout << "Wrong input for metric name!" << endl;
+            exit(1);
 	}
 
 }

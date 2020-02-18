@@ -75,7 +75,27 @@ An Example of Running the code
 .. code:: bash
 
     ulimit -s unlimited
-    g++ -I/path to boost directory/boost_1_71_0  -I/Path to eigen3 directory/eigen-3.3.7  main.cpp KNN_Serial_Code.cpp highDComputes.cpp Initialization.cpp LMOptimization.cpp Metrics.cpp SGD.cpp -o a.out -O2 - armadillo -L/path to boost directory/boost_1_71_0/stage/lib -lboost_iostreams -lboost_system -lboost_filesystem -fopenmp
-    time ./a.out --inputPath . --K 15 --sampleRate 0.8 --DimLowSpace 2 --randomInitializing true --outputPath . --n_epochs 500 --min_dist 0.001 --distanceMetric euclidean
     
+    g++ -I/path to boost directory/boost_1_71_0 -I/Path to eigen3 directory/eigen-3.3.7 \
+    main.cpp KNN_Serial_Code.cpp highDComputes.cpp Initialization.cpp LMOptimization.cpp \
+    Metrics.cpp SGD.cpp -o a.out -O2 - armadillo \
+    -L/path to boost directory/boost_1_71_0/stage/lib -lboost_iostreams \
+    -lboost_system -lboost_filesystem -fopenmp
+    
+    time ./a.out --inputPath . --K 15 --sampleRate 0.8 --DimLowSpace 2 \
+    --randomInitializing true --outputPath . --n_epochs 500 --min_dist 0.001 \
+    --distanceMetric euclidean
+    
+-------------------
+Install WIPP Plugin
+------------------- 
+If WIPP is running, navigate to the plugins page and add a new plugin. Paste the contents of plugin.json into the pop-up window and submit.
+   
+------------------------------------------
+An Example of Running the Docker Container
+------------------------------------------  
 
+docker run -v /path/to/data:/data/inputs -v /path/to/outputs:/data/outputs \
+    containername --inputPath /data/inputs --K 15 --sampleRate 0.8 \
+    --DimLowSpace 2 --randomInitializing true --outputPath /data/outputs \
+    --n_epochs 500 --min_dist 0.001 --distanceMetric euclidean

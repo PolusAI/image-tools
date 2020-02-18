@@ -1,6 +1,6 @@
 {
     "name": "UMAP (Shared-Memory)",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "title": "UMAP (Shared-Memory)",
     "description": "PCA Shared-Memory Code",
     "author": "Mahdi Maghrebi",
