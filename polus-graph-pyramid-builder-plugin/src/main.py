@@ -13,7 +13,7 @@ import math
 CHUNK_SIZE = 1024
 
 # Number of Bins for Each Feature
-bincount = 100
+bincount = 201
 
 # DZI file template
 DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="' + str(CHUNK_SIZE) + '" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
@@ -34,6 +34,38 @@ def is_number(value):
         return True
     except:
         return False
+
+def checkrange(original, transformed, Range, column_bin_sizes, max, min):
+    if original >= Range[0] and original <= Range[1]:
+        print("Final:", original, transformed, Range)
+        print(" ")
+        return original, transformed, Range
+    else:
+        if original > Range[1]:
+            transformed = transformed + 1
+            diff = original - Range[1]
+        if original < Range[0]:
+            transformed = transformed - 1
+            diff = original - Range[0]
+
+
+        if transformed > 1:
+            Range[0] = column_bin_sizes[-1]**(transformed - 1)
+            Range[1] = column_bin_sizes[-1]**(transformed)
+        if transformed < -1:
+            Range[0] = -1*(column_bin_sizes[0]**(-1*transformed))
+            Range[1] = -1*(column_bin_sizes[0]**(-1*transformed - 1))
+        if transformed == 1:
+            Range[0] = 1
+            Range[1] = column_bin_sizes[-1]**(transformed)
+        if transformed == -1:
+            Range[0] = -1*(column_bin_sizes[0]**(-1*transformed))
+            Range[1] = -1
+        print(" ")
+        print("Difference: ", diff)
+        print("Range Edited", Range)
+        print("Edited Transformation: ", transformed)
+        return checkrange(original, transformed, Range, column_bin_sizes, max, min)
 
 def load_csv(fpath):
     """ Load a csv and select data
@@ -83,7 +115,10 @@ def bin_data_log(data,column_names):
     nfeats = len(column_names)
     column_bin_sizes = []
     bin_stats = {'min': data.min(),
-                 'max': data.max()}
+                 'max': data.max(),
+                 'twenty5': data.quantile(0.25),
+                 'seventy5': data.quantile(0.75)}
+    print(bin_stats)
     for i in range(0, nfeats):
         if bin_stats['min'][i] > 0:
             column_bin_sizes.append([root(bincount - 1, bin_stats['max'][i]/bin_stats['min'][i])])
@@ -100,20 +135,29 @@ def bin_data_log(data,column_names):
     
     #TRANSFORM THE DATA 
     for i in range(0, nfeats):
+        print([column_names[i]])
         for val in data[column_names[i]]:
             ogval = val
             print("Original Value: ", ogval)
+            print("Interval Size: ", column_bin_sizes[i])
+            #print("Min and Max Data", bin_stats['min'][i], bin_stats['twenty5'][i], bin_stats['seventy5'][i], bin_stats['max'][i])
             Range = [0, 0]
             if val > 1:
                 if bin_stats['min'][i] < 0:
                     val = int(math.floor((bincount - math.log(val/bin_stats['max'][i], 1/column_bin_sizes[i][-1])) - bincount/2))
                     Range[0] = column_bin_sizes[i][-1]**(val - 1)
                     Range[1] = column_bin_sizes[i][-1]**(val)
-                else:
+                elif bin_stats['min'][i] > 0:
                     #ALL VALUES ARE POSITIVE
                     val = int(math.floor(math.log(val/bin_stats['min'][i], column_bin_sizes[i][-1]) + 1))
                     Range[0] = bin_stats['min'][i]*((column_bin_sizes[i][-1])**(val - 1))
                     Range[1] = bin_stats['min'][i]*((column_bin_sizes[i][-1])**val)
+                else: 
+                    if val == bin_stats['max'][i]:
+                        val = bincount - 1
+                    val = int(math.floor(math.log(val, column_bin_sizes[i][-1]) + 1))
+                    Range[0] = bin_stats['min'][i]*((column_bin_sizes[i][-1])**(val - 1))
+                    Range[1] = bin_stats['min'][i]*((column_bin_sizes[i][-1])**val) 
             elif val < -1:
                 if bin_stats['max'][i] > 0:
                     val = int(math.floor((bincount - math.log(val/bin_stats['min'][i], 1/column_bin_sizes[i][-1])) - int(bincount/2)))
@@ -136,27 +180,9 @@ def bin_data_log(data,column_names):
 
             print("Transformed Value: ", val)
             print("Range: ", Range)
-            if ogval >= Range[0] and ogval <= Range[1]:
-                print("TRUE")
-            else:
-                if ogval > Range[1]:
-                    val = val + 1
-                    print("adding one to val")
-                if ogval < Range[0]:
-                    val = val - 1
-                    print("subtracting one to val")
-                print("Fixed Value: ", val)
-                if val > 1:
-                    Range[0] = column_bin_sizes[i][-1]**(val - 1)
-                    Range[1] = column_bin_sizes[i][-1]**(val)
-                if val < -1:
-                    Range[0] = -1*(column_bin_sizes[i][0]**(-1*val))
-                    Range[1] = -1*(column_bin_sizes[i][0]**(-1*val - 1))
-                print("New Range: ", Range)
-            print("Bin Stats: ", bin_stats['min'][i], bin_stats['max'][i])
-            print("Bin Sizes: ", column_bin_sizes[i][0], column_bin_sizes[i][-1])
+            ogval, val, Range = checkrange(ogval, val, Range, column_bin_sizes[i], bin_stats['max'][i], bin_stats['min'][i])
             print(" ")
-
+            
 
     #for i in range(0, nfeats):
     #    print(data[column_names[i]])
