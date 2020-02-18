@@ -19,11 +19,12 @@ This plugin takes one input argument and one output argument:
 
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
-| `--angleStart` | Angle start degree to calculate feret diameter | Input | integer |
-| `--angleStop` | Angle end degree to calculate feret diameter | Input | integer |
+| `--angleDegree` | Angle degree to calculate feret diameter | Input | integer |
 | `--boxSize` | Boxsize to calculate feret diameter | Input | integer |
-| `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
+| `--intDir` | Intensity image collection| Input | collection |
 | `--pixelDistance` | Pixel distance to calculate the neighbors touching cells | Input | integer |
-| `--segDir` | Input image collection containing image segmentations | Input | collection |
+| `--segDir` | Segment image collection | Input | collection |
+| `--features` | Select intensity and shape features required | Input | collection |
+| `--csvfile` | Save csv file as one csv file for all images or separate csv file for each image | Input | collection |
 | `--outDir` | Output collection | Output | collection |
 
