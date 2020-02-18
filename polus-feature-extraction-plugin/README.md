@@ -45,8 +45,8 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes one input argument and one output argument:
 
-| Name            | Description             | I/O    | Type   |
-|-----------------|-------------------------|--------|--------|
+| Name                | Description             | I/O    | Type   |
+|---------------------|-------------------------|--------|--------|
 | `--angleDegree` | Angle degree to calculate feret diameter | Input | integer |
 | `--boxSize` | Boxsize to calculate feret diameter | Input | integer |
 | `--intDir` | Intensity image collection| Input | collection |
