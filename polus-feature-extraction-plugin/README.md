@@ -24,7 +24,7 @@ This plugin takes one input argument and one output argument:
 | `--intDir` | Intensity image collection| Input | collection |
 | `--pixelDistance` | Pixel distance to calculate the neighbors touching cells | Input | integer |
 | `--segDir` | Segment image collection | Input | collection |
-| `--features` | Select intensity and shape features required | Input | collection |
-| `--csvfile` | Save csv file as one csv file for all images or separate csv file for each image | Input | collection |
+| `--features` | Select intensity and shape features required | Input | array |
+| `--csvfile` | Save csv file as one csv file for all images or separate csv file for each image | Input | array |
 | `--outDir` | Output collection | Output | collection |
 
