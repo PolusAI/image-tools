@@ -194,7 +194,7 @@ double globalFindMedian (int maxVarDimension, vector<int> nodeDataIndex0, int gl
 		// For diagnosis, the following error hints at the difficulty of finding the median 	
 		MPI_File logfile;
 		char line[1024];
-		if (whileCount/10000*10000 == whileCount) {
+		if (whileCount % 10000 == 0) {
 			printf("Too Many Trials for Global KD Tree Median, Processor = %d \n",world_rank);
 			sprintf(line,"Too Many Trials for Global KD Tree Median, Processor = %d \n",world_rank);
 			MPI_File_write(logfile, line, strlen(line), MPI_CHAR, MPI_STATUS_IGNORE);
@@ -254,7 +254,7 @@ double localFindMedian (int localKdTreeSamplesMedian,vector<double> sampledDataV
 		}
 		++whileCount;
 
-		if (whileCount/10000*10000==whileCount) {
+		if (whileCount % 10000 == 0) {
 			if (Epsilon<0.25) Epsilon*=2; 
 			else return MedianCandidate;
 		}

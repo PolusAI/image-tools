@@ -1,5 +1,7 @@
 /**
- * @author      Mahdi Maghrebi <mahdi.maghrebi@nih.gov>
+ * This code is an implementation of the algorithm presented by Dong et al., 2012,
+ *"Efficient K-Nearest Neighbor Graph Construction for Generic Similarity Measures"  
+ * @author:   Mahdi Maghrebi <mahdi.maghrebi@nih.gov>
  * August 2019
  */
 
@@ -276,7 +278,7 @@ int main(int argc, char * const argv[]) {
 		 */
 		for (int i = 0; i < N; ++i) {
 			for (int j = 0; j < K; ++j) {
-				if (float(rand() % 100) / 100 < sampleRate) {
+				if (float(rand() % 100) < sampleRate*100) {
 					if (B_IsNew[i][j] == 1) {
 						New_Index[i].push_back(B_Index[i][j]);
 						B_IsNew[i][j] = 0;
@@ -297,7 +299,7 @@ int main(int argc, char * const argv[]) {
 		 */
 		for (int i = 0; i < N; ++i) {
 			for (int j = 0; j < Reverse_New_Index[i].size(); ++j) {
-				if (float(rand() % 100) / 100 < sampleRate) {
+				if (float(rand() % 100) < sampleRate*100) {
 					Sampled_Reverse_New_Index[i].push_back(Reverse_New_Index[i][j]);
 				}
 			}
@@ -380,40 +382,7 @@ int main(int argc, char * const argv[]) {
 	outputFileIndex.close();
 	outputFileDistance.close();
 	logFile.close();
-	/**
-	 * Output the computed K-NN for any desired point "index1"
-	 */
-	/*	int index1 = 1087;
-		for (int j = 0; j < K; ++j) {
-		cout << B_Index[index1][j] << ",";
-		}
-		cout << endl;
-		*/
-	/**
-	 * compute the theoretical K-NN for the point "index2" just for verification with the above results
-	 */
-	/*	int index2 = 1087;
-		ofstream outputFile;
-		outputFile.open("Actual_Distances.csv");
-		vector<int> Vector_for_Index;
-		vector<double> Vector_for_Index2;
-		for (int i = 0; i < N; ++i) {
-		if (i == index2) { continue; }
 
-		double dist = 0;
-		for (int j = 0; j < Dim; ++j) {
-		dist += pow((dataPoints[index2][j] - dataPoints[i][j]), 2);
-		}
-		dist = sqrt(dist);
-
-		Vector_for_Index.push_back(i);
-		Vector_for_Index2.push_back(dist);
-		}
-		for (int i = 0; i < Vector_for_Index.size(); ++i) {
-		outputFile << Vector_for_Index[i] << "," << Vector_for_Index2[i] << endl;
-		}
-		outputFile.close();
-		*/	
 	return 0;
 }
 
