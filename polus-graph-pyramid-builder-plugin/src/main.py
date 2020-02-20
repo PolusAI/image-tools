@@ -18,7 +18,7 @@ global datalen
 CHUNK_SIZE = 1024
 
 # Number of Bins for Each Feature
-bincount = 200
+bincount = 100
 
 # DZI file template
 DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="' + str(CHUNK_SIZE) + '" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
@@ -66,6 +66,27 @@ def neg2zero(data, length, commonratio, min, max):
             bin = float(math.floor(log + 2))
             replacedata.append(-1*bin)
     return pandas.Series(np.array(replacedata), index = range(0, length))
+
+def neg2pos(data, length, commonratio, min, max, alpha, smallbins, largebins):
+    replacedata = []
+    for val in data:
+        if val > 0: 
+            if val < alpha:
+                bin = 1.0
+                replacedata.append(1.0)
+            else:
+                log = math.log(val/max, commonratio)
+                bin = float(math.floor(log + 2))
+                replacedata.append(abs(bin)) 
+        else:
+            if val > alpha:
+                replacedata.append(-1.0)
+            else:
+                log = math.log(val/(-1*alpha), commonratio)
+                bin = float(math.floor(log + 2))
+                replacedata.append(-1*bin)
+    return pandas.Series(np.array(replacedata), index = range(0, length))  
+                 
 
 def root(root, value):
     return round(value**(1/root), 6)
@@ -152,7 +173,7 @@ def load_csv(fpath):
 
     return data, cnames
 
-def bin_data_log(data,column_names):
+def initializebins_log(data,column_names):
 
     linear_index = []
     #bin_sizes = []
@@ -171,6 +192,9 @@ def bin_data_log(data,column_names):
         quartile25to75.append(bin_stats['seventy5'][i] - bin_stats['twenty5'][i])
         alpha = firstAterm(quartile25to75[-1], datalen)
         if alpha == 0:
+            empty = [255] * datalen
+            print(empty)
+            data[column_names[i]] = pandas.Series(np.array(empty), index = range(0, datalen))
             continue
         column_bin_sizes.append(2)
         # if bin_stats['min'][i] > 0 and bin_stats['max'][i] > 0:
@@ -186,7 +210,44 @@ def bin_data_log(data,column_names):
             alpha = alpha * -1
             column_bin_sizes.append([root(bincount - 2, bin_stats['min'][i]/(alpha))])
             data[column_names[i]] = neg2zero(data[column_names[i]], datalen, column_bin_sizes[-1][0], bin_stats['min'][i], alpha)
-            
+        if bin_stats['min'][i] < 0 and bin_stats['max'][i] > 0:
+            small = 0
+            large = 0
+            if abs(bin_stats['max'][i]) < abs(bin_stats['min'][i]):
+                small = abs(bin_stats['max'][i])
+                large = abs(bin_stats['min'][i])
+            else:
+                small = abs(bin_stats['min'][i])
+                large = abs(bin_stats['max'][i])
+            ratio = root(bincount + 1, (small*small)/(alpha*large))
+            binssmall = int(math.floor(abs(1 + math.log(small/alpha, ratio))))
+            binslarge = int(math.floor(abs(1 + math.log(large/alpha, ratio))))
+            zfactor = binssmall/binslarge
+            binssmall = round(bincount/(2 + 1/zfactor), 0)
+            binslarge = bincount - (2*binssmall)
+            # small_interval = root(binssmall, small/alpha)
+            # large_interval = root(binslarge, large/alpha)
+            # column_bin_sizes.append([small_interval, large_interval])        
+            data[column_names[i]] = neg2pos(data[column_names[i]], datalen, ratio, bin_stats['min'][i], bin_stats['max'][i], alpha, binssmall, binslarge)
+    
+    data_ind = pandas.notnull(data)  # Handle NaN values
+    data[~data_ind] = bincount + 55          # Handle NaN values
+    data = data.astype(np.int16) # cast to save memory
+    #data[data==bincount] = bincount - 1         # in case of numerical precision issues
+    
+    # initialize bins, try to be memory efficient
+    nrows = data.shape[0]
+    if nrows < 2**8:
+        dtype = np.uint8
+    elif nrows < 2**16:
+        dtype = np.uint16
+    elif nrows < 2**32:
+        dtype = np.uint32
+    else:
+        dtype = np.uint64
+    bins = np.zeros((nfeats,nfeats,bincount,bincount),dtype=dtype)
+ 
+    return bins, data, data_ind, nfeats, bin_stats
     
     
     #TRANSFORM THE DATA 
@@ -384,9 +445,6 @@ def bin_data_log(data,column_names):
     #     print('\n')
     
 
-
-    return bins, bin_stats, linear_index
-
 def initializebins(data, column_names):
    
     # Get basic column statistics and bin sizes
@@ -416,6 +474,62 @@ def initializebins(data, column_names):
     bins = np.zeros((nfeats,nfeats,bincount,bincount),dtype=dtype)
  
     return bins, data, data_ind, nfeats, bin_stats
+
+def bin_data_log(data,column_names):
+    """ Bin the data
+    
+    Data from a pandas Dataframe is binned in two dimensions. Binning is performed by
+    binning data in one column along one axis and another column is binned along the
+    other axis. All combinations of columns are binned without repeats or transposition.
+    There are only 20 bins in each dimension, and each bin is 1/20th the size of the
+    difference between the maximum and minimum of each column.
+    Inputs:
+        data - A pandas Dataframe, with nfeats number of columns
+        column_names - Names of Dataframe columns
+    Outputs:
+        bins - A numpy matrix that has shape (nfeats,nfeats,bincount,bincount)
+        bin_feats - A list containing the minimum and maximum values of each column
+        linear_index - Numeric value of column index from original csv
+    """
+
+
+    bins, data, data_ind, nfeats, bin_stats = initializebins_log(data, column_names)
+    print(data)
+    # Create a linear index for feature bins
+    linear_index = []
+
+    # Bin the data
+    for feat1 in range(nfeats):
+        name1 = column_names[feat1]
+        feat1_tf = data[name1] * bincount   # Convert to linear matrix index
+
+        for feat2 in range(feat1+1,nfeats):
+            name2 = column_names[feat2]
+            
+            # Remove all NaN values
+            feat2_tf = data[name2]
+            feat2_tf = feat2_tf[data_ind[name1] & data_ind[name2]]
+            
+            if feat2_tf.size<=1:
+                continue
+            
+            # sort linear matrix indices
+            feat2_sort = np.sort(feat1_tf[data_ind[name1] & data_ind[name2]] + feat2_tf)
+            print(feat2_sort)
+            # Do math to get the indices
+            ind2 = np.diff(feat2_sort)                       
+            ind2 = np.nonzero(ind2)[0]                       # nonzeros are cumulative sum of all bin values
+            ind2 = np.append(ind2,feat2_sort.size-1)
+            # print(feat2_sort.shape)
+            rows = (feat2_sort[ind2]/bincount).astype(np.uint8)   # calculate row from linear index
+            print(rows)
+            cols = np.mod(feat2_sort[ind2],bincount)              # calculate column from linear index
+            print(cols)
+            counts = np.diff(ind2)                           # calculate the number of values in each bin
+            bins[feat1,feat2,rows[0],cols[0]] = ind2[0] + 1
+            bins[feat1,feat2,rows[1:],cols[1:]] = counts
+            linear_index.append([feat1,feat2])
+    return bins, bin_stats, linear_index
 
 def bin_data(data,column_names):
     """ Bin the data
