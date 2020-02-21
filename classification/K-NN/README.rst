@@ -10,8 +10,7 @@ for Shared-Memory systems. The full description of the code is available
 Installing Boost Library
 ------------------------
 
-Both the K-NN codes for Shared-Memory and Distributed-Memory use Boost library for mapping data into memory and reading from the command line. The steps for installing
- Boost library are displayed below.
+Both K-NN codes for Shared-Memory and Distributed-Memory use Boost library for mapping data into memory and reading from the command line. The steps for installing Boost library are displayed below.
  
 .. code:: bash
     
@@ -28,17 +27,19 @@ It is recommended to include the last line in the above into .bashrc file at hom
 Runtime Arguments
 -----------------
 
-The code requires 6 parameters as the input that are listed in order below.
+The code requires the following parameters as the input that are listed in order below.
 
-1- ``filePath``: The full path to the input csv file containig the dataset.
+1- ``filePath``: The full path to the input csv file containig the dataset. Please ensure there are no
+                   other csv files in this path. 
 2- ``K``: The desired number of Nearest Neighbours to be computed.
 3- ``sampleRate``: The rate at which we do sampling. This parameter plays a key role
    in the performance. This parameter is a trades-off between the performance 
    and the accuracy of the results. Values closer to 1 provides more accurate
    results but the execution instead takes longer.    
 4- ``convThreshold``: An integer that controls the convergence of the model. A fixed
-   integer is used here instead of delta*N*K that was given in the paper.  
-5- ``colIndex1`` and ``colIndex2`` (Optional): The index of columns from the input csv file where raw data exists continuously in between. If these two arguments were left blank, the code assumes that the entire input csv file is raw data and automatically computes the number of columns in the input csv file. The numbering for these 2 indices begin from 1. Please note that the code assumes that the first line in the input csv file is the header.
+   integer is used here instead of delta*N*K that was given in the paper. 
+5- ``outputPath``: The full path to the output csv files.    
+6,7- ``colIndex1`` and ``colIndex2`` (Optional): The indices of columns from the input csv file where raw data exists continuously in between. If these two arguments were left blank, the code assumes that the entire input csv file is raw data and automatically computes the number of columns in the input csv file. The numbering for these 2 indices begin from 1. Please note that the code assumes that the first line in the input csv file is the header.
 
 -----------
 The Outputs
@@ -51,21 +52,36 @@ The code produces the following output files:
 3- ``Setting.txt``: The logging file containing the error and informational messages. 
 
 --------------------------------
-An Example of Executing the code
+An Example of Executing the Code
 --------------------------------
 
 .. code:: bash
 
     ulimit -s unlimited
-    g++ -I/Path_To_Boost_Library/boost_1_71_0 KNN_Serial_Code.cpp -o a.out -L/Path_To_Boost_Library/boost_1_71_0/stage/lib -lboost_iostreams -O2 
-    time ./a.out /home/K-NN_Implementation/Dataset.csv 15 0.8 5
-    time ./a.out /home/K-NN_Implementation/Dataset.csv 15 0.8 5 3 26
+    g++ -I/Path_To_Boost_Library/boost_1_71_0 KNN_Serial_Code.cpp -o a.out -L/Path_To_Boost_Library/boost_1_71_0/stage/lib -lboost_iostreams -lboost_system -lboost_filesystem  -O2 
+    time ./a.out --inputPath . --K 10 --sampleRate 0.99  --convThreshold 5  --outputPath .
+    time ./a.out --inputPath . --K 10 --sampleRate 0.99  --convThreshold 5  --outputPath .  --colIndex1 3 --colIndex2 26
     
 ---------------------------
 An Advise About Performance
 ---------------------------
 
-The parameter sampleRate has a significant impact on the performance. It is advised that its optimal value to be determined for every project. 
+The parameter sampleRate has a significant impact on the performance. It is advised that its optimal value to be determined for every specific project. 
+
+-------------------
+Install WIPP Plugin
+------------------- 
+If WIPP is running, navigate to the plugins page and add a new plugin. Paste the contents of plugin.json into the pop-up window and submit.
+   
+------------------------------------------
+An Example of Running the Docker Container
+------------------------------------------  
+
+.. code:: bash
+
+    docker run -v /path/to/data:/data/inputs -v /path/to/outputs:/data/outputs \
+            containername --inputPath /data/inputs --K 10 --sampleRate 0.9 \
+            --convThreshold 5 --outputPath /data/outputs          
 
 ========================================
 K-NN Code for Distributed-Memory Systems

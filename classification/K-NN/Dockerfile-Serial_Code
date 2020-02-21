@@ -24,7 +24,7 @@ ENV LD_LIBRARY_PATH="/home/SharedKNN/boost_1_71_0/stage/lib:${LD_LIBRARY_PATH}"
 
 # Use g++ to compile the source file 
 WORKDIR /home/SharedKNN
-RUN g++ -I/home/SharedKNN/boost_1_71_0 KNN_Serial_Code.cpp -O2 -o Out.exe -L/home/SharedKNN/boost_1_71_0/stage/lib -lboost_iostreams
+RUN g++ -I/home/SharedKNN/boost_1_71_0 KNN_Serial_Code.cpp -O2 -o Out.exe -L/home/SharedKNN/boost_1_71_0/stage/lib -lboost_iostreams -lboost_system -lboost_filesystem 
  
 # Run the output program from the previous step
 ENTRYPOINT ["time ./Out.exe"]

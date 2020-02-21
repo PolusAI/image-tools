@@ -12,7 +12,7 @@
 #include <math.h>
 #include <fstream>
 #include <float.h>
-#include <boost/iostreams/stream.hpp>   
+#include <boost/filesystem.hpp> 
 
 using namespace std;
 
@@ -39,33 +39,113 @@ int main(int argc, char * const argv[]) {
 	 * The errors and informational messages are outputted to the log file 
 	 */
 	ofstream logFile;
-	logFile.open("Setting.txt");
+	string logFileName="Setting.txt";
+	logFile.open(logFileName);
+
 	/**
-	 * The full path to the input file containig the dataset.
-	 */
-	string filePath = argv[1]; 
-	logFile<<"The full path to the input file: "<< filePath<<endl;
-	cout<<"The full path to the input file: "<< filePath<<endl;
-	/**
-	 * K in K-NN that means the desired number of Nearest Neighbours to be computed.
-	 */
-	const int K = atoi(argv[2]); 
-	logFile<<"The desired number of NN to be computed: "<< K <<endl;
-	cout<<"The desired number of NN to be computed: "<< K <<endl;
-	/**
-	 * The rate at which we do sampling. This parameter plays a key role in the performance.
+	 * The input parameters are read from command line which are as follow.
+	 * inputPath: The full path to the input file containig the dataset.	 
+	 * outputPath: The full path to the output csv files.
+	 * K: K in K-NN that means the desired number of Nearest Neighbours to be computed.
+	 * sampleRate: The rate at which we do sampling. This parameter plays a key role in the performance.
 	 * This parameter is a trades-off between the performance and the accuracy of the results.
-	 * Values closer to 1 provides more accurate results but the execution takes longer.
-	 */
-	float sampleRate = stof(argv[3]);
+	 * Values closer to 1 provides more accurate results but the execution takes longer.	 
+	 * convThreshold: Convergance Threshold. A fixed integer is used here instead of delta*N*K.	
+	 * colIndex1 and colIndex2 (optional): The indices of columns from the input csv file where raw data exists continuously in between.
+	 * If these two arguments were left blank, the code assumes that the entire input csv file is raw data 
+	 * and automatically computes the number of columns in the input csv file. 	
+	 */	 
+	string filePath, outputPath, outputPath2, inputPath,LogoutputPath;
+	int K,convThreshold, colIndex1=-1, colIndex2=-1;
+	float sampleRate;	
+
+	for (int i=1; i<argc;++i){
+		if (string(argv[i])=="--inputPath") {
+			inputPath=argv[i+1];
+
+			if(!boost::filesystem::exists(inputPath) || !boost::filesystem::is_directory(inputPath))
+			{
+				logFile << "Incorrect input path";
+				cout << "Incorrect input path";
+				return 1;
+			}
+
+			const std::string ext = ".csv";
+			boost::filesystem::recursive_directory_iterator it(inputPath);
+			boost::filesystem::recursive_directory_iterator endit;
+
+			bool fileFound = false;
+			while(it != endit) {
+				if(boost::filesystem::is_regular_file(*it) && it->path().extension() == ext){
+					fileFound = true;
+					filePath = it->path().string();
+					break;
+				}
+				++it;
+			}
+			if (!fileFound){
+				logFile << "CSV file is not found in the input path";
+				cout << "CSV file is not found in the input path";
+				return 1;
+			}
+		}
+		else if (string(argv[i])=="--K") K=atoi(argv[i+1]);
+		else if (string(argv[i])=="--sampleRate") sampleRate=stof(argv[i+1]);
+		else if (string(argv[i])=="--convThreshold") convThreshold=stof(argv[i+1]);
+		else if (string(argv[i])=="--outputPath"){
+			boost::filesystem::path p(argv[i+1]);
+
+			if(!boost::filesystem::exists(p) || !boost::filesystem::is_directory(p))
+			{
+				logFile << "Incorrect output path";
+				cout << "Incorrect output path";
+				return 1;
+			}
+
+			LogoutputPath=argv[i+1];
+			boost::filesystem::path joinedPath = p / boost::filesystem::path("KNN_Indices.csv");
+			outputPath = joinedPath.string();
+			boost::filesystem::path joinedPath2 = p / boost::filesystem::path("KNN_Distances.csv");
+			outputPath2 = joinedPath2.string();
+		}
+		else if (string(argv[i])=="--colIndex1") {
+			colIndex1=stof(argv[i+1]);
+			if (colIndex1<1) {
+				logFile << "colIndex1 should be greater than 1";
+				cout << "colIndex1 should be greater than 1";
+				return 1;
+			}
+		}
+		else if (string(argv[i])=="--colIndex2") {
+			colIndex2=stof(argv[i+1]); 
+			if (colIndex2<1) {
+				logFile << "colIndex2 should be greater than 1";
+				cout << "colIndex2 should be greater than 1";
+				return 1;
+			}
+		}    
+	}	
+
+	logFile<<"------------The following Input Arguments were read------------"<<endl;
+	logFile<<"The full path to the input file: "<< filePath<<endl;	
+	logFile<<"The desired number of NN to be computed: "<< K <<endl;
 	logFile<<"The sampleRate(The rate at which we do sampling): "<< sampleRate <<endl; 
-	cout<<"The sampleRate(The rate at which we do sampling): "<< sampleRate <<endl; 
-	/**
-	 * Convergance Threshold. A fixed integer is used here instead of delta*N*K.
-	 */
-	const int convThreshold = atoi(argv[4]); 	
-	logFile<<"The convergance threshold: "<< convThreshold <<endl; 
-	cout<<"The convergance threshold: "<< convThreshold <<endl; 
+	logFile<<"The convergance threshold: "<< convThreshold <<endl; 				
+	logFile<<"The full path to the output file1: "<< outputPath<<endl;
+	logFile<<"The full path to the output file2: "<< outputPath2<<endl;
+	if (colIndex1 != -1) {logFile<<"The optioanl column index starts from: "<< colIndex1<<endl;}	
+	if (colIndex2 != -1) {logFile<<"The optioanl column index ends at: "<< colIndex2<<endl;}		
+
+	cout<<"------------The following Input Arguments were read------------"<<endl;	
+	cout<<"The full path to the input file: "<< filePath<<endl;
+	cout<<"The desired number of NN to be computed: "<< K <<endl;	
+	cout<<"The sampleRate(The rate at which we do sampling): "<< sampleRate <<endl; 	
+	cout<<"The convergance threshold: "<< convThreshold <<endl; 	
+	cout<<"The full path to the output file1: "<< outputPath<<endl;
+	cout<<"The full path to the output file2: "<< outputPath2<<endl;
+	if (colIndex1 != -1) {cout<<"The optioanl column index starts from: "<< colIndex1<<endl;}	
+	if (colIndex2 != -1) {cout<<"The optioanl column index ends at: "<< colIndex2<<endl;}	
+
 	/**
 	 * Size of Dataset without the header (i.e.(#Rows in dataset)-1).
 	 */	
@@ -77,20 +157,9 @@ int main(int argc, char * const argv[]) {
 	 * is computed automatically if not passed as argument in command line
 	 * otherwise, the range (beginning and end) for the column index of input csv file is needed
 	 */
-	int Dim, colIndex1, colIndex2;
-	if (argc == 5) {
-		string cmd2="head -n 1 "+ filePath + " |tr '\\,' '\\n' |wc -l ";
-		Dim = stoi(exec(cmd2.c_str())); 
-	} else if (argc == 7) {
-		string cmd2="head -n 1 "+ filePath + " |tr '\\,' '\\n' |wc -l ";
-		Dim = stoi(exec(cmd2.c_str())); 
-		colIndex1 = atoi(argv[5]); 
-		colIndex2 = atoi(argv[6]); 
-	} else 	{
-	logFile<<"Wrong Input Arguments."; 
-	cout<<"Wrong Input Arguments."; 
-	return -1;
-	}
+	int Dim;
+	string cmd2="head -n 1 "+ filePath + " |tr '\\,' '\\n' |wc -l ";
+	Dim = stoi(exec(cmd2.c_str())); 
 
 	logFile<<"The input csv file contains "<<N<<" rows of raw data with "<< Dim<< " columns(features)"<<endl; 
 	cout<<"The input csv file contains "<<N<<" rows of raw data with "<< Dim<< " columns(features)"<<endl; 
@@ -159,7 +228,7 @@ int main(int argc, char * const argv[]) {
 	/**
 	 * Reading the Entire Dataset
 	 */
-	if (argc==5){
+	if (argc==11){
 		for (int i = 0; i < N; ++i) {
 			string temp, temp2;
 			getline(infile, temp);
@@ -182,7 +251,12 @@ int main(int argc, char * const argv[]) {
 	}
 	infile.close();
 
-	if (argc == 7) Dim=colIndex2-colIndex1+1;
+	if (colIndex1 != -1) Dim=colIndex2-colIndex1+1;
+	if (Dim <1) {
+		logFile << "Error in Computing the Dimension of input csv file" << endl;
+		cout << "Error in Computing the Dimension of input csv file" << endl;
+		return 1;	
+	}
 	/**
 	 * define a seed for random generator. Using a constant value produces
 	 * the same set of random numbers and is good for debugging. Alternatively,
@@ -234,9 +308,9 @@ int main(int argc, char * const argv[]) {
 		if(allEntriesFilled[u1]==0){		
 			for (int j = 0; j < K; j++) {	
 				if (B_Dist[u1][j] < 0) {
-				    
-				    for (int jj = 0; jj < j; jj++) {if (B_Index[u1][jj] == u2) return 0;}
-				
+
+					for (int jj = 0; jj < j; jj++) {if (B_Index[u1][jj] == u2) return 0;}
+
 					B_Dist[u1][j] = distance;
 					B_Index[u1][j] = u2;
 					B_IsNew[u1][j] = flag;
@@ -331,8 +405,9 @@ int main(int argc, char * const argv[]) {
 						}
 						double dista = sqrt(dist);
 						if (dista < epsilon) {
-						logFile << "Found Duplicate Data for Points "<< *it << " and " << *it2; 
-						cout << "Found Duplicate Data for Points "<< *it << " and " << *it2; 
+							logFile << "Found Duplicate Data for Points "<< *it << " and " << *it2<<endl;; 
+							cout << "Found Duplicate Data for Points "<< *it << " and " << *it2<<endl; 
+							return 1;
 						}
 
 						c_criteria += UpdateNN(*it, *it2, dista, 1);
@@ -358,8 +433,8 @@ int main(int argc, char * const argv[]) {
 	 * Sort and output the results
 	 */
 	ofstream outputFileIndex,outputFileDistance;
-	outputFileIndex.open("KNN_Indices.csv");	
-	outputFileDistance.open("KNN_Distances.csv");
+	outputFileIndex.open(outputPath);	
+	outputFileDistance.open(outputPath2);
 
 	for (int i=0; i<N; ++i){
 		vector<pair<double,int>> aggregateResults;
@@ -382,6 +457,11 @@ int main(int argc, char * const argv[]) {
 	outputFileIndex.close();
 	outputFileDistance.close();
 	logFile.close();
+	/**
+	 * copy Logfile to the file system which could be accessed outside the docker container
+	 */ 
+	string cmd3="cp "+ logFileName+"  "+LogoutputPath;
+	string outputCmd3 = exec(cmd3.c_str());
 
 	return 0;
 }
