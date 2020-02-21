@@ -67,24 +67,54 @@ def neg2zero(data, length, commonratio, min, max):
             replacedata.append(-1*bin)
     return pandas.Series(np.array(replacedata), index = range(0, length))
 
-def neg2pos(data, length, commonratio, min, max, alpha, smallbins, largebins):
+def neg2pos(data, binsizes, length, commonratio, min, max, alpha, smallbins, largebins):
     replacedata = []
+    # print("Number of bins on both sides in function: ", smallbins, largebins, smallbins + largebins)
+    # print("Min and Max Data: ", min, max)
+    # print("Alpha: ", alpha)
+    # print("Commonratio: ", commonratio)
+    # print("Binsizes (small, large): ", binsizes)
+    binnumber = 0
     for val in data:
-        if val > 0: 
+        if val > 0:
+            if abs(max) > abs(min):
+                commonratio = binsizes[1]
+                binnumber = largebins
+            else:
+                commonratio = binsizes[0]
+                binnumber = smallbins 
             if val < alpha:
                 bin = 1.0
                 replacedata.append(1.0)
+            elif val == max:
+                replacedata.append(binnumber)
             else:
-                log = math.log(val/max, commonratio)
-                bin = float(math.floor(log + 2))
+                log = math.log(val/alpha, commonratio)
+                bin = float(math.floor(log + 1))
                 replacedata.append(abs(bin)) 
+                # if abs(max) > abs(min) and replacedata[-1] > largebins:
+                #     print("ERROR POS Large: ", val, replacedata[-1])
+                # if abs(max) < abs(min) and replacedata[-1] > smallbins:
+                #     print("ERROR POS Small: ", val, replacedata[-1])
         else:
-            if val > alpha:
+            if abs(max) > abs(min):
+                commonratio = binsizes[0]
+                binnumber = smallbins
+            else:
+                commonratio = binsizes[1]
+                binnumber = largebins
+            if val > (-1*alpha):
                 replacedata.append(-1.0)
+            elif val == min:
+                replacedata.append(-1*binnumber)
             else:
                 log = math.log(val/(-1*alpha), commonratio)
-                bin = float(math.floor(log + 2))
-                replacedata.append(-1*bin)
+                bin = -1*float(math.floor(log + 1))
+                replacedata.append(bin)
+                # if abs(max) > abs(min) and replacedata[-1] > smallbins:
+                #     print("ERROR NEG Large: ", val, replacedata[-1])
+                # if abs(max) < abs(min) and replacedata[-1] > largebins:
+                #     print("ERROR NEG Small: ", val, replacedata[-1])
     return pandas.Series(np.array(replacedata), index = range(0, length))  
                  
 
@@ -101,8 +131,6 @@ def is_number(value):
 
 def checkrange(original, transformed, Range, column_bin_sizes, max, min):
     if original >= Range[0] and original <= Range[1]:
-        print("Final:", original, transformed, Range)
-        print(" ")
         return original, transformed, Range
     else:
         if original > Range[1]:
@@ -193,7 +221,6 @@ def initializebins_log(data,column_names):
         alpha = firstAterm(quartile25to75[-1], datalen)
         if alpha == 0:
             empty = [255] * datalen
-            print(empty)
             data[column_names[i]] = pandas.Series(np.array(empty), index = range(0, datalen))
             continue
         column_bin_sizes.append(2)
@@ -224,11 +251,11 @@ def initializebins_log(data,column_names):
             binslarge = int(math.floor(abs(1 + math.log(large/alpha, ratio))))
             zfactor = binssmall/binslarge
             binssmall = round(bincount/(2 + 1/zfactor), 0)
-            binslarge = bincount - (2*binssmall)
-            # small_interval = root(binssmall, small/alpha)
-            # large_interval = root(binslarge, large/alpha)
-            # column_bin_sizes.append([small_interval, large_interval])        
-            data[column_names[i]] = neg2pos(data[column_names[i]], datalen, ratio, bin_stats['min'][i], bin_stats['max'][i], alpha, binssmall, binslarge)
+            binslarge = binssmall + (bincount - (2*binssmall))
+            small_interval = root(binssmall, small/alpha)
+            large_interval = root(binslarge, large/alpha)
+            column_bin_sizes.append([small_interval, large_interval])        
+            data[column_names[i]] = neg2pos(data[column_names[i]], column_bin_sizes[-1], datalen, ratio, bin_stats['min'][i], bin_stats['max'][i], alpha, binssmall, binslarge)
     
     data_ind = pandas.notnull(data)  # Handle NaN values
     data[~data_ind] = bincount + 55          # Handle NaN values
@@ -494,41 +521,93 @@ def bin_data_log(data,column_names):
 
 
     bins, data, data_ind, nfeats, bin_stats = initializebins_log(data, column_names)
-    print(data)
+    #print(data)
     # Create a linear index for feature bins
     linear_index = []
-
-    # Bin the data
+    Datapoints = []
+    Ind2 = []
+    Ind2zero = []
+    Position = []
+    datalen = bin_stats['size'][0]
+    
+    
+    
     for feat1 in range(nfeats):
         name1 = column_names[feat1]
-        feat1_tf = data[name1] * bincount   # Convert to linear matrix index
-
-        for feat2 in range(feat1+1,nfeats):
+        feat1_tf = data[name1]
+        for feat2 in range(feat1 + 1, nfeats):
+            Datapoints.append([])
+            Ind2.append([])
+            Ind2zero.append([])
+            Position.append([])
             name2 = column_names[feat2]
-            
-            # Remove all NaN values
             feat2_tf = data[name2]
+            
+            feat1_tf = feat1_tf[data_ind[name1] & data_ind[name2]]
             feat2_tf = feat2_tf[data_ind[name1] & data_ind[name2]]
             
-            if feat2_tf.size<=1:
-                continue
+            # print(feat1_tf, feat2_tf)
+            # print(" \n")
+            for val in range(0, datalen):
+                #print((feat1_tf[val], feat2_tf[val]))
+                Datapoints[-1].append((feat1_tf[val], feat2_tf[val]))
+            Datapoints[-1] = sorted(Datapoints[-1], key=lambda element: (element[0], element[1]))
+            for item in range(0, datalen - 1):
+                #print(Datapoints[-1][item], Datapoints[-1][item+1], Datapoints[-1][item][0] - Datapoints[-1][item+1][0], Datapoints[-1][item][1] - Datapoints[-1][item+1][1])
+                Ind2[-1].append([Datapoints[-1][item][0] - Datapoints[-1][item+1][0], Datapoints[-1][item][1] - Datapoints[-1][item+1][1]])
+                if Ind2[-1][-1] != [0, 0]:
+                    Ind2zero[-1].append(Ind2[-1][-1])
+                    Position[-1].append(item)
+            UniqueData = list(set(Datapoints[-1]))
+            UniqueData = sorted(UniqueData, key = lambda element: (element[0], element[1]))
+
+            # print("Length of No Zeros List: ", len(Ind2zero[-1]), Ind2zero[-1])
+            # print("Length of Position List: ", len(Position[-1]), Position[-1])
+            # print("Length of Unique Items: ", len(UniqueData), UniqueData)            
+            # print("Length of Indexes: ", len(Ind2[-1]), Ind2[-1])
+            # print("Length of Data: ", len(Datapoints[-1]), Datapoints[-1])
             
-            # sort linear matrix indices
-            feat2_sort = np.sort(feat1_tf[data_ind[name1] & data_ind[name2]] + feat2_tf)
-            print(feat2_sort)
-            # Do math to get the indices
-            ind2 = np.diff(feat2_sort)                       
-            ind2 = np.nonzero(ind2)[0]                       # nonzeros are cumulative sum of all bin values
-            ind2 = np.append(ind2,feat2_sort.size-1)
-            # print(feat2_sort.shape)
-            rows = (feat2_sort[ind2]/bincount).astype(np.uint8)   # calculate row from linear index
-            print(rows)
-            cols = np.mod(feat2_sort[ind2],bincount)              # calculate column from linear index
-            print(cols)
-            counts = np.diff(ind2)                           # calculate the number of values in each bin
-            bins[feat1,feat2,rows[0],cols[0]] = ind2[0] + 1
-            bins[feat1,feat2,rows[1:],cols[1:]] = counts
-            linear_index.append([feat1,feat2])
+            for i in range(0, len(UniqueData)):
+                if i == 0:
+                    print("There are", str(Position[-1][i] + 1), "observations of", str(UniqueData[i]))
+                elif (i == (len(UniqueData)-1)):
+                    print("There are", str(datalen - Position[-1][i - 1]), "observations of", str(UniqueData[i]))
+                else:
+                    print("There are", str(Position[-1][i] - Position[-1][i - 1]), "observations of", str(UniqueData[i]))    
+            print(name1, name2, "NEXT")
+            print(" ")
+            
+    # Bin the data
+    # for feat1 in range(nfeats):
+    #     name1 = column_names[feat1]
+    #     feat1_tf = data[name1] * bincount   # Convert to linear matrix index
+    #     #print(feat1_tf)
+    #     for feat2 in range(feat1+1,nfeats):
+    #         name2 = column_names[feat2]
+            
+    #         # Remove all NaN values
+    #         feat2_tf = data[name2]
+    #         feat2_tf = feat2_tf[data_ind[name1] & data_ind[name2]]
+            
+    #         if feat2_tf.size<=1:
+    #             continue
+            
+    #         # sort linear matrix indices
+    #         feat2_sort = np.sort(feat1_tf[data_ind[name1] & data_ind[name2]] + feat2_tf)
+    #         #print(feat2_sort)
+    #         # Do math to get the indices
+    #         ind2 = np.diff(feat2_sort)                       
+    #         ind2 = np.nonzero(ind2)[0]                       # nonzeros are cumulative sum of all bin values
+    #         ind2 = np.append(ind2,feat2_sort.size-1)
+    #         # print(feat2_sort.shape)
+    #         rows = (feat2_sort[ind2]/bincount).astype(np.int8)   # calculate row from linear index
+    #         cols = np.mod(feat2_sort[ind2],bincount)              # calculate column from linear index
+    #         # for item in rows:
+    #         #     print(name1, name2, rows[item], cols[item])
+    #         counts = np.diff(ind2)                           # calculate the number of values in each bin
+    #         bins[feat1,feat2,rows[0],cols[0]] = ind2[0] + 1
+    #         bins[feat1,feat2,rows[1:],cols[1:]] = counts
+    #         linear_index.append([feat1,feat2])
     return bins, bin_stats, linear_index
 
 def bin_data(data,column_names):
