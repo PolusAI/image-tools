@@ -1,0 +1,86 @@
+{
+    "name": "PCA (Shared-Memory)",
+    "version": "0.1.0",
+    "title": "PCA (Shared-Memory)",
+    "description": "PCA Shared-Memory Code",
+    "author": "Mahdi Maghrebi",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "containerId": "labshare/polus-pca-plugin:0.1.0",
+    "inputs": [
+        {
+            "name": "readOption",
+            "type": "enum",
+            "options": {
+                "values": [
+                    "direct",
+                    "mapping"
+                ]
+            },
+            "description": "Reading input data: direct or mapping",
+            "required": "True"
+        },
+        {
+            "name": "deviceName",
+            "type": "enum",
+            "options": {
+                "values": [
+                    "cpu",
+                    "cuda"
+                ]
+            },
+            "required": "True"
+        },
+        {
+            "name": "applySignFlip",
+            "type": "boolean",
+            "required": "True"
+        },
+        {
+            "name": "computeStdev",
+            "type": "boolean",
+            "description": "Post-Compute Process to Compute STDEV",
+            "required": "True"
+        },
+        {
+            "name": "inputPath",
+            "type": "csvCollection",
+            "description": "Input csv File",
+            "required": "True"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "outputPath",
+            "type": "csvCollection",
+            "description": "Full path of the output csv file"
+        }
+
+    ],
+    "ui": [
+        {
+            "key": "inputs.readOption",
+			"title": "Read Input File Directly?",
+			"description": "Pick a collection..."
+        },
+        {
+            "key": "inputs.deviceName",
+            "title": "Computing Device",
+            "description": "Which Device is Used for Computation: cpu or cuda"
+        },
+        {
+            "key": "inputs.applySignFlip",
+            "title": "Apply Sign Flip?",
+            "description": "Apply sign flip on the projected data along certain PC axes: yes or no"
+        },
+        {
+            "key": "inputs.computeStdev",
+            "title": "Compute the Standard Deviation?",
+            "description": "Compute the Standard Deviation of the projected data along each PC axis?"
+        },
+        {
+            "key": "inputs.inputPath",
+            "title": "Read Input File Directly?",
+            "description": "Full path to the input csv file"
+        }
+    ]
+}

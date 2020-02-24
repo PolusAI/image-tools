@@ -1,0 +1,65 @@
+{
+    "name": "K-NN (Shared-Memory)",
+    "version": "0.1.0",
+    "title": "K-NN (Shared-Memory)",
+    "description": "K-Nearest Neighbors Shared-Memory Code",
+    "author": "Mahdi Maghrebi",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "containerId": "labshare/polus-knn-plugin:0.1.0",
+    "inputs": [
+        {
+            "name": "inputPath",
+            "type": "csvCollection",
+            "description": "Input csv File",
+            "required": "True"
+        },
+        {
+            "name": "K",
+            "type": "number",
+            "description": "The desired number of Nearest Neighbours to be computed",
+            "required": "True"
+        },
+        {
+            "name": "sampleRate",
+            "type": "number",
+            "description": "The rate at which to do sampling. The values closer to 1 provides more accurate results but the execution takes longer.",
+            "required": "True"
+        },
+        {
+            "name": "convThreshold",
+            "type": "number",
+            "description": "The threshold for the convergence.",
+            "required": "True"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "outputPath",
+            "type": "csvCollection",
+            "description": "Full path of the output csv file"
+        }
+
+    ],
+    "ui": [
+        {
+            "key": "inputs.filePath",
+			"title": "The path to the input csv collection",
+			"description": "Name of the input CSV collection"
+        },
+        {
+            "key": "inputs.K",
+            "title": "The desired number of Nearest Neighbours to be computed",
+            "description": "Insert an integer"
+        },
+        {
+            "key": "inputs.sampleRate",
+            "title": "The sampling rate ",
+            "description": "Insert a value between 0 and 1"
+        },
+        {
+            "key": "inputs.convThreshold",
+            "title": "The threshold for the convergence",
+            "description": "Insert an integer. Smaller values result in more accurate solutions."
+        }
+    ]
+}
