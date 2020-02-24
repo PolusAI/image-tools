@@ -59,12 +59,12 @@ def neg2zero(data, length, commonratio, min, max):
     replacedata = []
     for val in data:
         if val > max:
-            replacedata.append(-1.0)
-            bin = -1.0
+            bin = (-1.0) + bincount
+            replacedata.append(bin)  
         else:
             log = math.log(val/max, commonratio)
             bin = float(math.floor(log + 2))
-            replacedata.append(-1*bin)
+            replacedata.append((-1*bin) + bincount)
     return pandas.Series(np.array(replacedata), index = range(0, length))
 
 def neg2pos(data, binsizes, length, commonratio, min, max, alpha, smallbins, largebins):
@@ -75,6 +75,10 @@ def neg2pos(data, binsizes, length, commonratio, min, max, alpha, smallbins, lar
     # print("Commonratio: ", commonratio)
     # print("Binsizes (small, large): ", binsizes)
     binnumber = 0
+    if abs(max) > abs(min):
+        yaxis = smallbins
+    else:
+        yaxis = largebins
     for val in data:
         if val > 0:
             if abs(max) > abs(min):
@@ -85,13 +89,13 @@ def neg2pos(data, binsizes, length, commonratio, min, max, alpha, smallbins, lar
                 binnumber = smallbins 
             if val < alpha:
                 bin = 1.0
-                replacedata.append(1.0)
+                replacedata.append(1.0 + yaxis)
             elif val == max:
-                replacedata.append(binnumber)
+                replacedata.append(binnumber + yaxis)
             else:
                 log = math.log(val/alpha, commonratio)
                 bin = float(math.floor(log + 1))
-                replacedata.append(abs(bin)) 
+                replacedata.append(abs(bin) + yaxis) 
                 # if abs(max) > abs(min) and replacedata[-1] > largebins:
                 #     print("ERROR POS Large: ", val, replacedata[-1])
                 # if abs(max) < abs(min) and replacedata[-1] > smallbins:
@@ -104,18 +108,18 @@ def neg2pos(data, binsizes, length, commonratio, min, max, alpha, smallbins, lar
                 commonratio = binsizes[1]
                 binnumber = largebins
             if val > (-1*alpha):
-                replacedata.append(-1.0)
+                replacedata.append(-1.0 + yaxis)
             elif val == min:
-                replacedata.append(-1*binnumber)
+                replacedata.append((-1*binnumber) + yaxis)
             else:
                 log = math.log(val/(-1*alpha), commonratio)
                 bin = -1*float(math.floor(log + 1))
-                replacedata.append(bin)
+                replacedata.append(bin + yaxis)
                 # if abs(max) > abs(min) and replacedata[-1] > smallbins:
                 #     print("ERROR NEG Large: ", val, replacedata[-1])
                 # if abs(max) < abs(min) and replacedata[-1] > largebins:
                 #     print("ERROR NEG Small: ", val, replacedata[-1])
-    return pandas.Series(np.array(replacedata), index = range(0, length))  
+    return yaxis, pandas.Series(np.array(replacedata), index = range(0, length))  
                  
 
 def root(root, value):
@@ -204,6 +208,7 @@ def load_csv(fpath):
 def initializebins_log(data,column_names):
 
     linear_index = []
+    yaxis = []
     #bin_sizes = []
     bins = 0
     column_bin_sizes = []
@@ -213,6 +218,7 @@ def initializebins_log(data,column_names):
                  'max': data.max(),
                  'twenty5': data.quantile(0.25),
                  'seventy5': data.quantile(0.75)}
+
     nfeats = bin_stats['size'][1] 
     datalen = bin_stats['size'][0]
 
@@ -222,20 +228,17 @@ def initializebins_log(data,column_names):
         if alpha == 0:
             empty = [255] * datalen
             data[column_names[i]] = pandas.Series(np.array(empty), index = range(0, datalen))
-            continue
-        column_bin_sizes.append(2)
-        # if bin_stats['min'][i] > 0 and bin_stats['max'][i] > 0:
-        #     column_bin_sizes.append([root(bincount - 1, bin_stats['max'][i]/bin_stats['min'][i])])
-        #     data[column_names[i]] = pos2pos(data[column_names[i]], datalen, column_bin_sizes[-1][0], bin_stats['min'][i], bin_stats['max'][i])
-        # if bin_stats['min'][i] < 0 and bin_stats['max'][i] < 0:
-        #     column_bin_sizes.append([root(bincount - 1, bin_stats['min'][i]/bin_stats['max'][i])])
-        #     data[column_names[i]] = neg2neg(data[column_names[i]], datalen, column_bin_sizes[-1][0], bin_stats['min'][i], bin_stats['max'][i])   
+            column_bin_sizes.append([0])
+            yaxis.append(0)
+            continue 
         if bin_stats['min'][i] >= 0 and bin_stats['max'][i] > 0:
             column_bin_sizes.append([root(bincount - 2, bin_stats['max'][i]/alpha)])
             data[column_names[i]] = zero2pos(data[column_names[i]], datalen, column_bin_sizes[-1][0], alpha, bin_stats['max'][i])
+            yaxis.append(0)
         if bin_stats['min'][i] < 0 and bin_stats['max'][i] <= 0:
             alpha = alpha * -1
             column_bin_sizes.append([root(bincount - 2, bin_stats['min'][i]/(alpha))])
+            yaxis.append(bincount)
             data[column_names[i]] = neg2zero(data[column_names[i]], datalen, column_bin_sizes[-1][0], bin_stats['min'][i], alpha)
         if bin_stats['min'][i] < 0 and bin_stats['max'][i] > 0:
             small = 0
@@ -246,6 +249,7 @@ def initializebins_log(data,column_names):
             else:
                 small = abs(bin_stats['min'][i])
                 large = abs(bin_stats['max'][i])
+
             ratio = root(bincount + 1, (small*small)/(alpha*large))
             binssmall = int(math.floor(abs(1 + math.log(small/alpha, ratio))))
             binslarge = int(math.floor(abs(1 + math.log(large/alpha, ratio))))
@@ -255,239 +259,31 @@ def initializebins_log(data,column_names):
             small_interval = root(binssmall, small/alpha)
             large_interval = root(binslarge, large/alpha)
             column_bin_sizes.append([small_interval, large_interval])        
-            data[column_names[i]] = neg2pos(data[column_names[i]], column_bin_sizes[-1], datalen, ratio, bin_stats['min'][i], bin_stats['max'][i], alpha, binssmall, binslarge)
-    
+            yval, data[column_names[i]] = neg2pos(data[column_names[i]], column_bin_sizes[-1], datalen, ratio, bin_stats['min'][i], bin_stats['max'][i], alpha, binssmall, binslarge)
+            yaxis.append(yval)
+
+    bin_stats_transformed = {'min': data.min(),
+                             'max': data.max()}
+
     data_ind = pandas.notnull(data)  # Handle NaN values
     data[~data_ind] = bincount + 55          # Handle NaN values
     data = data.astype(np.int16) # cast to save memory
-    #data[data==bincount] = bincount - 1         # in case of numerical precision issues
-    
-    # initialize bins, try to be memory efficient
-    nrows = data.shape[0]
-    if nrows < 2**8:
-        dtype = np.uint8
-    elif nrows < 2**16:
-        dtype = np.uint16
-    elif nrows < 2**32:
-        dtype = np.uint32
-    else:
-        dtype = np.uint64
-    bins = np.zeros((nfeats,nfeats,bincount,bincount),dtype=dtype)
- 
-    return bins, data, data_ind, nfeats, bin_stats
-    
-    
-    #TRANSFORM THE DATA 
-    # for i in range(0, nfeats):
-    #     if bin_stats['min'][i] > 0:
-    #         column_bin_sizes.append([root(bincount - 1, bin_stats['max'][i]/bin_stats['min'][i])])
-    #     elif bin_stats['min'][i] == 0:
-    #         column_bin_sizes.append([root(bincount - 1, bin_stats['max'][i]/1)])
-    #     elif bin_stats['max'][i] < 0:
-    #         column_bin_sizes.append([root(bincount - 1, bin_stats['min'[i]]/bin_stats['max'][i])])
-    #     elif bin_stats['max'][i] == 0:
-    #         column_bin_sizes.append([root(bincount - 1, bin_stats['min'][i]/-1)])
-    #     else:
-    #         neg_interval = root(bincount/2 - 1, bin_stats['min'][i]/-1)
-    #         pos_interval = root(bincount/2 - 1, bin_stats['max'][i]/1)
-    #         column_bin_sizes.append([neg_interval, pos_interval])
-    #     quartile25to75.append(bin_stats['seventy5'][i] - bin_stats['twenty5'][i])
-    #     alpha = firstAterm(quartile25to75[-1], datalen)
-    #     print("Data Column: ", column_names[i])
-    #     print("A term: ", alpha)
-    #     print("Data Range: ", bin_stats['min'][i], bin_stats['max'][i])
-    #     for val in data[column_names[i]]:
-    #         ogval = val
-    #         print("Original Value: ", ogval)
-            # print("Interval Size: ", column_bin_sizes[i])
-            # #print("Quartile 50 to 75 Range: ", quartile25to75[i])
-            # #print("Min and Max Data", bin_stats['min'][i], bin_stats['twenty5'][i], bin_stats['seventy5'][i], bin_stats['max'][i])
-            # Range = [0, 0]
-            # if val > 1:
-            #     if bin_stats['min'][i] < 0:
-            #         val = int(math.floor((bincount - math.log(val/bin_stats['max'][i], 1/column_bin_sizes[i][-1])) - bincount/2))
-            #         Range[0] = column_bin_sizes[i][-1]**(val - 1)
-            #         Range[1] = column_bin_sizes[i][-1]**(val)
-            #     elif bin_stats['min'][i] > 0:
-            #         #ALL VALUES ARE POSITIVE
-            #         val = int(math.floor(math.log(val/bin_stats['min'][i], column_bin_sizes[i][-1]) + 1))
-            #         Range[0] = bin_stats['min'][i]*((column_bin_sizes[i][-1])**(val - 1))
-            #         Range[1] = bin_stats['min'][i]*((column_bin_sizes[i][-1])**val)
-            #     else: 
-            #         if val == bin_stats['max'][i]:
-            #             val = bincount - 1
-            #         val = int(math.floor(math.log(val, column_bin_sizes[i][-1]) + 1))
-            #         Range[0] = bin_stats['min'][i]*((column_bin_sizes[i][-1])**(val - 1))
-            #         Range[1] = bin_stats['min'][i]*((column_bin_sizes[i][-1])**val) 
-            # elif val < -1:
-            #     if bin_stats['max'][i] > 0:
-            #         val = int(math.floor((bincount - math.log(val/bin_stats['min'][i], 1/column_bin_sizes[i][-1])) - int(bincount/2)))
-            #         Range[0] = -1*(column_bin_sizes[i][0]**(val))
-            #         Range[1] = -1*(column_bin_sizes[i][0]**(val - 1))
-            #         val = -1*val
-            #     else:
-            #         val = None
-            # else:
-            #     if bin_stats['min'][i] == 0:
-            #         val = 1
-            #         Range[1] = 1
-            #     elif bin_stats['max'][i] == 0:
-            #         val = -1
-            #         Range[1] = -1
-            #     else:
-            #         val = 0
-            #         Range[0] = -1
-            #         Range[1] = 1
-
-            # print("Transformed Value: ", val)
-            # print("Range: ", Range)
-            # ogval, val, Range = checkrange(ogval, val, Range, column_bin_sizes[i], bin_stats['max'][i], bin_stats['min'][i])
-            # print(" ")
-            
-
-    #for i in range(0, nfeats):
-    #    print(data[column_names[i]])
-    
-    #Transform the data
-    # copydata = data
-    # for i in range(0, nfeats):
-    #     for val in data[column_names[i]]:
-    #         transformval = val
-    #         Binnumber = 0
-    #         if val > 0:
-    #             print("Column ", column_names[i], " data: ", val)
-    #             print("Bin Stats: ", bin_stats['min'][i], bin_stats['max'][i])
-    #             print("Bin Sizes: ", column_bin_sizes[i][0], column_bin_sizes[i][-1])
-    #             if bin_stats['min'][i] < 0:
-    #                 print("Bin", -(bincount - 2)/2, "Range: ", bin_stats['min'][i], bin_stats['min'][i]/column_bin_sizes[i][0])
-    #                 if val < bin_stats['min'][i]/column_bin_sizes[i][0]:
-    #                     Binnumber = 1
-    #                 for space in range(2, int(bincount/2)):
-    #                     LowBound = bin_stats['min'][i]/(column_bin_sizes[i][0]**(space - 1))
-    #                     UppBound = bin_stats['min'][i]/(column_bin_sizes[i][0]**(space))
-    #                     print("Bin", space - bincount/2, "Range: ", bin_stats['min'][i]/(column_bin_sizes[i][0]**(space - 1)), bin_stats['min'][i]/(column_bin_sizes[i][0]**(space)))
-    #                     if val > LowBound and val <= UppBound:
-    #                         Binnumber = space - bincount/2
-    #                 print("Bin 0 Range:  -1.00 1.00")
-    #                 for space in range(int(bincount/2) - 1, 0, -1):
-    #                     LowBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**space)
-    #                     UppBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space - 1))
-    #                     print("Bin", bincount - space - bincount/2, "Range:", bin_stats['max'][i]/(column_bin_sizes[i][-1]**space), bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space - 1)))
-    #                     if val > LowBound and val <= UppBound:
-    #                         Binnumber = bincount-space - (bincount/2)
-    #                 if val > -1 and val <= 1.0:
-    #                     Binnumber = 0.0
-    #                     transformval = 0
-    #                 else:
-    #                     transformval = (bincount - math.log(val/bin_stats['max'][i], 1/column_bin_sizes[i][-1])) - bincount/2
-    #             elif bin_stats['min'][i] > 0:
-    #                 for space in range(bincount -1, 0, -1):
-    #                     LowBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**space)
-    #                     UppBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space-1))
-    #                     print("All Positive Bin", bincount-space, "Range:", bin_stats['max'][i]/(column_bin_sizes[i][-1]**space), bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space-1)))
-    #                     if val > LowBound and val <= UppBound:
-    #                         Binnumber = bincount-space
-    #                 transformval = math.log(val/bin_stats['min'][i], column_bin_sizes[i][-1]) + 1
-    #             else:
-    #                 for space in range(bincount -1, 0, -1):
-    #                     LowBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**space)
-    #                     UppBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space-1))
-    #                     print("All Positive Bin", bincount-space, "Range:", bin_stats['max'][i]/(column_bin_sizes[i][-1]**space), bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space-1)))
-    #                     if val > LowBound and val <= UppBound:
-    #                         Binnumber = bincount-space
-    #                 transformval = math.log(val, column_bin_sizes[i][-1]) + 1
-    #             print("Binnumber: ", Binnumber)
-    #             print("Tranformed POS data: ", int(math.floor(transformval)))
-    #             print(" ")
-    #             #val = root(column_bin_sizes[i][0], val/(bin_stats['max'][i]))
-    #         elif val < 0:
-    #             #val = root(column_bin_sizes[i][-1], val/abs
-    #             print("Column ", column_names[i], " data: ", val)
-    #             print("Bin Stats: ", bin_stats['min'][i], bin_stats['max'][i])
-    #             print("Bin Sizes: ", column_bin_sizes[i][0], column_bin_sizes[i][-1])
-    #             if bin_stats['max'][i] > 0:
-    #                 print("Bin", -(bincount - 2)/2, "Range: ", bin_stats['min'][i], bin_stats['min'][i]/column_bin_sizes[i][0])
-    #                 if val < bin_stats['min'][i]/column_bin_sizes[i][0]:
-    #                     Binnumber = int(1 - (bincount/2))
-    #                 for space in range(2, int(bincount/2)):
-    #                     LowBound = bin_stats['min'][i]/(column_bin_sizes[i][0]**(space - 1))
-    #                     UppBound = bin_stats['min'][i]/(column_bin_sizes[i][0]**(space))
-    #                     print("Bin", space - bincount/2, "Range: ", bin_stats['min'][i]/(column_bin_sizes[i][0]**(space - 1)), bin_stats['min'][i]/(column_bin_sizes[i][0]**(space)))
-    #                     if val > LowBound and val <= UppBound:
-    #                         Binnumber = int(space - (bincount/2))
-    #                 print("Bin 0 Range:  -1.00 1.00")
-    #                 for space in range(int(bincount/2) - 1, 0, -1):
-    #                     LowBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**space)
-    #                     UppBound = bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space - 1))
-    #                     print("Bin", bincount - space - bincount/2, "Range:", bin_stats['max'][i]/(column_bin_sizes[i][-1]**space), bin_stats['max'][i]/(column_bin_sizes[i][-1]**(space - 1)))
-    #                     if val > LowBound and val <= UppBound:
-    #                         Binnumber = int(bincount-space - (bincount/2))
-    #                 if val > -1 and val <= 1.0:
-    #                     Binnumber = 0.0
-    #                     transformval = 0
-    #                 else:
-    #                     transformval = (bincount - math.log(val/bin_stats['min'][i], 1/column_bin_sizes[i][-1])) - int(bincount/2)
-    #             else: 
-    #                 for space in range(bincount-1, 0, -1):
-    #                     print("Bin Range Unknown")
-    #                 transformval = math.log(column_bin_sizes[i][-1], abs(val))
-    #             print("Binnumber: ", Binnumber)
-    #             print("Tranformed NEG data: ", -1*int(math.floor(transformval)))
-    #             print(" ")
-    #             #val = (root(column_bin_sizes[i][0], val/(bin_stats['min'][i])))*-1
-    #         else: 
-    #             print("VALUE IS ZERO: ", val)
-    #             print(" ")
-    #         if Binnumber != math.floor(transformval):
-    #             print("ERROR DOES NOT MATCH")
-    #             print(" ")
-
-
-
-
-    # for i in range(0, nfeats):
-    #     if (bin_stats['min'][i] < 0 and bin_stats['max'][i] > 0):
-    #         neg_bins = (np.logspace(np.log(abs(bin_stats['min'][i])), 0, num = bincount/2, base = 10))*-1
-    #         pos_bins = np.logspace(0, np.log10(bin_stats['max'][i]), num = bincount/2, base = 10)
-    #         bin_sizes.append(np.append(neg_bins, pos_bins))
-    #         #bin_sizes.append(np.logspace(np.log10(abs(bin_stats['min'][i])), 0, num = bincount/2, base = 10))
-    #         #bin_sizes[-1] = bin_sizes[-1] + (np.logspace(0, np.log10(bin_stats['max'][i]), num = bincount/2, base = 10)) 
-    #         #print(bin_sizes[-1])
-    #         #print(np.logspace(0, np.log10(bin_stats['max'][i]), num = bincount/2, base = 10))
-    #     elif bin_stats['max'][i] < 0:
-    #         bin_sizes.append((np.logspace(np.log10(abs(bin_stats['min'][i])), np.log10(abs(bin_stats['max'][i])), num = bincount, base = 10))*-1)
-    #     else:
-    #         #print("minimum is greater than 0", bin_stats['min'][i])
-    #         if bin_stats['min'][i] == 0:
-    #             bin_sizes.append(np.logspace(0, np.log10(bin_stats['max'][i]), num = bincount, base = 10))
-    #         else:
-    #             bin_sizes.append(np.logspace(np.log10(bin_stats['min'][i]), np.log10(bin_stats['max'][i]), num = bincount, base = 10))
-
-
-    # for i in range(0, len(bin_sizes)):
-    #     print(column_names[i])
-    #     print(bin_sizes[i], bin_stats['min'][i], bin_stats['max'][i])
-    #     print(bin_sizes[i][1]/bin_sizes[i][0], bin_sizes[i][2]/bin_sizes[i][1])
-    #     print(bin_sizes[i][-1]/bin_sizes[i][-2], bin_sizes[i][-2]/bin_sizes[i][-3])
-    #     print('\n')
-    
-
-def initializebins(data, column_names):
-   
-    # Get basic column statistics and bin sizes
-    nfeats = len(column_names)
-    bin_stats = {'min': data.min(),
-                 'max': data.max()}
-    #print(bin_stats)
-    column_bin_size = (bin_stats['max'] * (1 + 10**-6) - bin_stats['min'])/bincount #might be different for log scale??
-
-    # Transform data into bin positions for fast binning
-    data = ((data - bin_stats['min'])/column_bin_size).apply(np.floor)
-    data_ind = pandas.notnull(data)  # Handle NaN values
-    data[~data_ind] = bincount + 55          # Handle NaN values
-    data = data.astype(np.uint16) # cast to save memory
     data[data==bincount] = bincount - 1         # in case of numerical precision issues
-
+    
+    # for i in range(0, nfeats):
+    #     count = 0
+    #     print("Column Name: ", column_names[i])
+    #     print("MINIMUM TO MAXIMUM RANGE: ", bin_stats['min'][i], bin_stats['max'][i])
+    #     print("Column Bin Sizes: ", column_bin_sizes[i])
+    #     print("Bin Min and Max: ", bin_stats_transformed['min'][i], bin_stats_transformed['max'][i])
+    #     print("Y Axis: ", yaxis[i])
+    #     totalbins = bin_stats_transformed['max'][i] - bin_stats_transformed['min'][i]
+    #     print("Range of Bins: ", totalbins)
+    #     print("\n")
+    #     # for item in data[column_names[i]]:
+    #     #     print(column_names[i], count, item)
+    #     #     count = count + 1
+    
     # initialize bins, try to be memory efficient
     nrows = data.shape[0]
     if nrows < 2**8:
@@ -500,7 +296,8 @@ def initializebins(data, column_names):
         dtype = np.uint64
     bins = np.zeros((nfeats,nfeats,bincount,bincount),dtype=dtype)
  
-    return bins, data, data_ind, nfeats, bin_stats
+    return bins, data, data_ind, nfeats, bin_stats, bin_stats_transformed, yaxis
+    
 
 def bin_data_log(data,column_names):
     """ Bin the data
@@ -520,7 +317,7 @@ def bin_data_log(data,column_names):
     """
 
 
-    bins, data, data_ind, nfeats, bin_stats = initializebins_log(data, column_names)
+    bins, data, data_ind, nfeats, bin_stats, bin_stats_transformed, yaxis = initializebins_log(data, column_names)
     #print(data)
     # Create a linear index for feature bins
     linear_index = []
@@ -545,21 +342,40 @@ def bin_data_log(data,column_names):
             
             feat1_tf = feat1_tf[data_ind[name1] & data_ind[name2]]
             feat2_tf = feat2_tf[data_ind[name1] & data_ind[name2]]
+                      
+            if feat2_tf.size<=1:
+                continue
             
+            # sort linear matrix indices
+            SortedFeats = np.sort(feat1_tf + feat2_tf)
+            
+            # Do math to get the indices
+            ind2 = np.diff(SortedFeats)                       
+            ind2 = np.nonzero(ind2)[0]                       # nonzeros are cumulative sum of all bin values
+            ind2 = np.append(ind2,SortedFeats.size-1)
+            # print(feat2_sort.shape)
+            rows = (SortedFeats[ind2]/bincount).astype(np.uint8)   # calculate row from linear index
+            cols = np.mod(SortedFeats[ind2],bincount)              # calculate column from linear index
+            counts = np.diff(ind2)                           # calculate the number of values in each bin
+            bins[feat1,feat2,rows[0],cols[0]] = ind2[0] + 1
+            bins[feat1,feat2,rows[1:],cols[1:]] = counts
+            linear_index.append([feat1,feat2])
+            
+
             # print(feat1_tf, feat2_tf)
             # print(" \n")
-            for val in range(0, datalen):
-                #print((feat1_tf[val], feat2_tf[val]))
-                Datapoints[-1].append((feat1_tf[val], feat2_tf[val]))
-            Datapoints[-1] = sorted(Datapoints[-1], key=lambda element: (element[0], element[1]))
-            for item in range(0, datalen - 1):
-                #print(Datapoints[-1][item], Datapoints[-1][item+1], Datapoints[-1][item][0] - Datapoints[-1][item+1][0], Datapoints[-1][item][1] - Datapoints[-1][item+1][1])
-                Ind2[-1].append([Datapoints[-1][item][0] - Datapoints[-1][item+1][0], Datapoints[-1][item][1] - Datapoints[-1][item+1][1]])
-                if Ind2[-1][-1] != [0, 0]:
-                    Ind2zero[-1].append(Ind2[-1][-1])
-                    Position[-1].append(item)
-            UniqueData = list(set(Datapoints[-1]))
-            UniqueData = sorted(UniqueData, key = lambda element: (element[0], element[1]))
+            # for val in range(0, datalen):
+            #     #print((feat1_tf[val], feat2_tf[val]))
+            #     Datapoints[-1].append((feat1_tf[val], feat2_tf[val]))
+            # Datapoints[-1] = sorted(Datapoints[-1], key=lambda element: (element[0], element[1]))
+            # for item in range(0, datalen - 1):
+            #     #print(Datapoints[-1][item], Datapoints[-1][item+1], Datapoints[-1][item][0] - Datapoints[-1][item+1][0], Datapoints[-1][item][1] - Datapoints[-1][item+1][1])
+            #     Ind2[-1].append([Datapoints[-1][item][0] - Datapoints[-1][item+1][0], Datapoints[-1][item][1] - Datapoints[-1][item+1][1]])
+            #     if Ind2[-1][-1] != [0, 0]:
+            #         Ind2zero[-1].append(Ind2[-1][-1])
+            #         Position[-1].append(item)
+            # UniqueData = list(set(Datapoints[-1]))
+            # UniqueData = sorted(UniqueData, key = lambda element: (element[0], element[1]))
 
             # print("Length of No Zeros List: ", len(Ind2zero[-1]), Ind2zero[-1])
             # print("Length of Position List: ", len(Position[-1]), Position[-1])
@@ -567,48 +383,20 @@ def bin_data_log(data,column_names):
             # print("Length of Indexes: ", len(Ind2[-1]), Ind2[-1])
             # print("Length of Data: ", len(Datapoints[-1]), Datapoints[-1])
             
-            for i in range(0, len(UniqueData)):
-                if i == 0:
-                    print("There are", str(Position[-1][i] + 1), "observations of", str(UniqueData[i]))
-                elif (i == (len(UniqueData)-1)):
-                    print("There are", str(datalen - Position[-1][i - 1]), "observations of", str(UniqueData[i]))
-                else:
-                    print("There are", str(Position[-1][i] - Position[-1][i - 1]), "observations of", str(UniqueData[i]))    
-            print(name1, name2, "NEXT")
-            print(" ")
+            # for i in range(0, len(UniqueData)):
+            #     if i == 0:
+            #         print("There are", str(Position[-1][i] + 1), "observations of", str(UniqueData[i]))
+            #         #bins[feat1, feat2, UniqueData[i][0], UniqueData[i][1]] = Position[-1][i] + 1
+            #     elif (i == (len(UniqueData)-1)):
+            #         print("There are", str(datalen - Position[-1][i - 1]), "observations of", str(UniqueData[i]))
+            #         #bins[feat1, feat2, UniqueData[i][0], UniqueData[i][1]] = datalen - Position[-1][i-1]
+            #     else:
+            #         print("There are", str(Position[-1][i] - Position[-1][i - 1]), "observations of", str(UniqueData[i]))    
+            #         #bins[feat1, feat2, UniqueData[i][0], UniqueData[i][1]] = Position[-1][i] - Position[-1][i - 1]
+            # print(name1, name2, "NEXT")
+            # print(" ")
             
-    # Bin the data
-    # for feat1 in range(nfeats):
-    #     name1 = column_names[feat1]
-    #     feat1_tf = data[name1] * bincount   # Convert to linear matrix index
-    #     #print(feat1_tf)
-    #     for feat2 in range(feat1+1,nfeats):
-    #         name2 = column_names[feat2]
-            
-    #         # Remove all NaN values
-    #         feat2_tf = data[name2]
-    #         feat2_tf = feat2_tf[data_ind[name1] & data_ind[name2]]
-            
-    #         if feat2_tf.size<=1:
-    #             continue
-            
-    #         # sort linear matrix indices
-    #         feat2_sort = np.sort(feat1_tf[data_ind[name1] & data_ind[name2]] + feat2_tf)
-    #         #print(feat2_sort)
-    #         # Do math to get the indices
-    #         ind2 = np.diff(feat2_sort)                       
-    #         ind2 = np.nonzero(ind2)[0]                       # nonzeros are cumulative sum of all bin values
-    #         ind2 = np.append(ind2,feat2_sort.size-1)
-    #         # print(feat2_sort.shape)
-    #         rows = (feat2_sort[ind2]/bincount).astype(np.int8)   # calculate row from linear index
-    #         cols = np.mod(feat2_sort[ind2],bincount)              # calculate column from linear index
-    #         # for item in rows:
-    #         #     print(name1, name2, rows[item], cols[item])
-    #         counts = np.diff(ind2)                           # calculate the number of values in each bin
-    #         bins[feat1,feat2,rows[0],cols[0]] = ind2[0] + 1
-    #         bins[feat1,feat2,rows[1:],cols[1:]] = counts
-    #         linear_index.append([feat1,feat2])
-    return bins, bin_stats, linear_index
+    return yaxis, bins, bin_stats, linear_index
 
 def bin_data(data,column_names):
     """ Bin the data
@@ -622,13 +410,36 @@ def bin_data(data,column_names):
         data - A pandas Dataframe, with nfeats number of columns
         column_names - Names of Dataframe columns
     Outputs:
-        bins - A numpy matrix that has shape (nfeats,nfeats,bincount,bincount)
+        bins - A numpy matrix that has shape (nfeats,nfeats,200,200)
         bin_feats - A list containing the minimum and maximum values of each column
         linear_index - Numeric value of column index from original csv
     """
 
+    # Get basic column statistics and bin sizes
+    nfeats = len(column_names)
+    bin_stats = {'min': data.min(),
+                 'max': data.max()}
+    print(bin_stats)
+    column_bin_size = (bin_stats['max'] * (1 + 10**-6) - bin_stats['min'])/bincount
 
-    bins, data, data_ind, nfeats, bin_stats = initializebins(data, column_names)
+    # Transform data into bin positions for fast binning
+    data = ((data - bin_stats['min'])/column_bin_size).apply(np.floor)
+    data_ind = pandas.notnull(data)  # Handle NaN values
+    data[~data_ind] = bincount + 55          # Handle NaN values
+    data = data.astype(np.uint16) # cast to save memory
+    data[data==bincount] = bincount - 1         # in case of numerical precision issues
+
+    # initialize bins, try to be memory efficient
+    nrows = data.shape[0]
+    if nrows < 2**8:
+        dtype = np.uint8
+    elif nrows < 2**16:
+        dtype = np.uint16
+    elif nrows < 2**32:
+        dtype = np.uint32
+    else:
+        dtype = np.uint64
+    bins = np.zeros((nfeats,nfeats,bincount,bincount),dtype=dtype)
 
     # Create a linear index for feature bins
     linear_index = []
@@ -1151,7 +962,7 @@ if __name__=="__main__":
 
         # Bin the data
         logger.info('Binning data for {} features...'.format(column_names.size))
-        bins_log, bin_stats_log, linear_index_log = bin_data_log(data, column_names)
+        #yaxis, bins_log, bin_stats_log, linear_index_log = bin_data_log(data, column_names)
         bins, bin_stats, linear_index = bin_data(data,column_names)
         
         logger.info('Done!')
