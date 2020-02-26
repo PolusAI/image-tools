@@ -18,7 +18,7 @@ global datalen
 CHUNK_SIZE = 1024
 
 # Number of Bins for Each Feature
-bincount = 100
+bincount = 100 #MUST BE EVEN NUMBER
 
 # DZI file template
 DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="' + str(CHUNK_SIZE) + '" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
@@ -205,14 +205,34 @@ def load_csv(fpath):
 
     return data, cnames
 
-def initializebins_log(data,column_names):
+
+def bin_data_log(data,column_names):
+    """ Bin the data
+    
+    Data from a pandas Dataframe is binned in two dimensions. Binning is performed by
+    binning data in one column along one axis and another column is binned along the
+    other axis. All combinations of columns are binned without repeats or transposition.
+    There are only 20 bins in each dimension, and each bin is 1/20th the size of the
+    difference between the maximum and minimum of each column.
+    Inputs:
+        data - A pandas Dataframe, with nfeats number of columns
+        column_names - Names of Dataframe columns
+    Outputs:
+        bins - A numpy matrix that has shape (nfeats,nfeats,bincount,bincount)
+        bin_feats - A list containing the minimum and maximum values of each column
+        linear_index - Numeric value of column index from original csv
+    """
+
 
     linear_index = []
     yaxis = []
-    #bin_sizes = []
-    bins = 0
     column_bin_sizes = []
     quartile25to75 = []
+    Datapoints = []
+    Ind2 = []
+    Ind2zero = []
+    Position = []
+    
     bin_stats = {'size': data.shape,
                  'min': data.min(),
                  'max': data.max(),
@@ -268,7 +288,7 @@ def initializebins_log(data,column_names):
     data_ind = pandas.notnull(data)  # Handle NaN values
     data[~data_ind] = bincount + 55          # Handle NaN values
     data = data.astype(np.int16) # cast to save memory
-    data[data==bincount] = bincount - 1         # in case of numerical precision issues
+    #data[data==bincount] = bincount - 1         # in case of numerical precision issues
     
     # for i in range(0, nfeats):
     #     count = 0
@@ -280,14 +300,14 @@ def initializebins_log(data,column_names):
     #     totalbins = bin_stats_transformed['max'][i] - bin_stats_transformed['min'][i]
     #     print("Range of Bins: ", totalbins)
     #     print("\n")
-    #     # for item in data[column_names[i]]:
-    #     #     print(column_names[i], count, item)
-    #     #     count = count + 1
+    #     for item in data[column_names[i]]:
+    #         print(column_names[i], count, item)
+    #         count = count + 1
     
     # initialize bins, try to be memory efficient
     nrows = data.shape[0]
     if nrows < 2**8:
-        dtype = np.uint8
+        dtype = np.u=uint8
     elif nrows < 2**16:
         dtype = np.uint16
     elif nrows < 2**32:
@@ -295,38 +315,9 @@ def initializebins_log(data,column_names):
     else:
         dtype = np.uint64
     bins = np.zeros((nfeats,nfeats,bincount,bincount),dtype=dtype)
- 
-    return bins, data, data_ind, nfeats, bin_stats, bin_stats_transformed, yaxis
-    
-
-def bin_data_log(data,column_names):
-    """ Bin the data
-    
-    Data from a pandas Dataframe is binned in two dimensions. Binning is performed by
-    binning data in one column along one axis and another column is binned along the
-    other axis. All combinations of columns are binned without repeats or transposition.
-    There are only 20 bins in each dimension, and each bin is 1/20th the size of the
-    difference between the maximum and minimum of each column.
-    Inputs:
-        data - A pandas Dataframe, with nfeats number of columns
-        column_names - Names of Dataframe columns
-    Outputs:
-        bins - A numpy matrix that has shape (nfeats,nfeats,bincount,bincount)
-        bin_feats - A list containing the minimum and maximum values of each column
-        linear_index - Numeric value of column index from original csv
-    """
-
-
-    bins, data, data_ind, nfeats, bin_stats, bin_stats_transformed, yaxis = initializebins_log(data, column_names)
     #print(data)
     # Create a linear index for feature bins
-    linear_index = []
-    Datapoints = []
-    Ind2 = []
-    Ind2zero = []
-    Position = []
-    datalen = bin_stats['size'][0]
-    
+  
     
     
     for feat1 in range(nfeats):
@@ -513,6 +504,7 @@ def format_ticks(fmin,fmax,nticks):
                 21: 'Z',  # zetta
                 24: 'Y',  # yotta
                 }
+
     out = [t for t in np.arange(fmin,fmax,(fmax-fmin)/(nticks-1))]
     out.append(fmax)
     scale = np.log10(np.abs(out))   #Ignore Warning.  Run python -W ignore main.py on command prompt
@@ -605,10 +597,17 @@ def get_default_fig(cmap):
     """
     fig, ax = plt.subplots(dpi=int(CHUNK_SIZE/4),figsize=(4,4),tight_layout={'h_pad':1,'w_pad':1})
     data = ax.pcolorfast(np.zeros((CHUNK_SIZE,CHUNK_SIZE),np.uint64),cmap=cmap)
-    ticks = [t for t in range(0,199,20)]
-    ticks.append(199)
-    ax.set_xlim(0,199)
-    ax.set_ylim(0,199)
+    ticks = [t for t in range(0,bincount - 1,int(bincount/10))]
+
+    #ticks = np.logspace(1, bincount, num = bincount/10)
+    #ticks = ticks.tolist()
+
+    
+    #print(log_ticks)
+    print(ticks)
+    ticks.append(bincount - 1)
+    ax.set_xlim(0,bincount - 1)
+    ax.set_ylim(0,bincount - 1)
     ax.set_xticks(ticks)
     ax.set_yticks(ticks)
     ax.set_xlabel(" ")
@@ -684,7 +683,7 @@ def metadata_to_graph_info(bins,outPath,outFile):
     of.mkdir(exist_ok=True)
     
     # Get metadata info from the bfio reader
-    ngraphs = len(linear_index)
+    ngraphs = len(linear_index) #(= NumberofColumns Choose 2)
     rows = np.ceil(np.sqrt(ngraphs))
     cols = np.round(np.sqrt(ngraphs))
     sizes = [cols*CHUNK_SIZE,rows*CHUNK_SIZE]
@@ -957,16 +956,25 @@ if __name__=="__main__":
         # Load the data
         logger.info('Loading csv: {}'.format(f))
         data, cnames = load_csv(f)
+        data_log, cnames_log = load_csv(f)
         column_names = data.columns
+        column_names_log = data_log.columns
         logger.info('Done loading csv!')
 
         # Bin the data
         logger.info('Binning data for {} features...'.format(column_names.size))
-        #yaxis, bins_log, bin_stats_log, linear_index_log = bin_data_log(data, column_names)
+        yaxis, log_bins, log_bin_stats, log_linear_index = bin_data_log(data_log, column_names_log)
         bins, bin_stats, linear_index = bin_data(data,column_names)
         
+        # for i in range(0, 20):
+        #     for i2 in range(i + 1, 20):
+        #         for data in range(0, bincount):
+        #             for data2 in range(0, bincount):
+        #                 print(bins[i][i2][data][data2], log_bins[i][i2][data][data2])
+
         logger.info('Done!')
         del data    # get rid of the original data to save memory
+        del data_log
 
         # Generate the default figure components
         logger.info('Generating colormap and default figure...')
@@ -976,11 +984,11 @@ if __name__=="__main__":
 
         # Generate the dzi file
         logger.info('Generating pyramid metadata...')
-        info = metadata_to_graph_info(bins,output_path,folder)
+        info = metadata_to_graph_info(log_bins,output_path,folder)
         logger.info('Done!')
         
         logger.info('Writing layout file...!')
-        write_csv(cnames,linear_index,info,output_path,folder)
+        write_csv(cnames,linear_index,info,output_path,folder)  
         logger.info('Done!')
 
         # Create the pyramid
