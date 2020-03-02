@@ -18,7 +18,7 @@ global datalen
 CHUNK_SIZE = 1024
 
 # Number of Bins for Each Feature
-bincount = 100 #MUST BE EVEN NUMBER
+bincount = 200 #MUST BE EVEN NUMBER
 
 # DZI file template
 DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="' + str(CHUNK_SIZE) + '" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
@@ -287,9 +287,9 @@ def bin_data_log(data,column_names):
 
     data_ind = pandas.notnull(data)  # Handle NaN values
     data[~data_ind] = bincount + 55          # Handle NaN values
-    data = data.astype(np.int16) # cast to save memory
-    #data[data==bincount] = bincount - 1         # in case of numerical precision issues
-    
+    data = data.astype(np.uint16) # cast to save memory
+    data[data==bincount] = bincount - 1         # in case of numerical precision issues
+
     # for i in range(0, nfeats):
     #     count = 0
     #     print("Column Name: ", column_names[i])
@@ -315,14 +315,15 @@ def bin_data_log(data,column_names):
     else:
         dtype = np.uint64
     bins = np.zeros((nfeats,nfeats,bincount,bincount),dtype=dtype)
-    #print(data)
+
     # Create a linear index for feature bins
   
     
     
     for feat1 in range(nfeats):
         name1 = column_names[feat1]
-        feat1_tf = data[name1]
+        feat1_tf = data[name1] * bincount
+
         for feat2 in range(feat1 + 1, nfeats):
             Datapoints.append([])
             Ind2.append([])
@@ -330,7 +331,6 @@ def bin_data_log(data,column_names):
             Position.append([])
             name2 = column_names[feat2]
             feat2_tf = data[name2]
-            
             feat1_tf = feat1_tf[data_ind[name1] & data_ind[name2]]
             feat2_tf = feat2_tf[data_ind[name1] & data_ind[name2]]
                       
@@ -339,7 +339,6 @@ def bin_data_log(data,column_names):
             
             # sort linear matrix indices
             SortedFeats = np.sort(feat1_tf + feat2_tf)
-            
             # Do math to get the indices
             ind2 = np.diff(SortedFeats)                       
             ind2 = np.nonzero(ind2)[0]                       # nonzeros are cumulative sum of all bin values
@@ -387,7 +386,7 @@ def bin_data_log(data,column_names):
             # print(name1, name2, "NEXT")
             # print(" ")
             
-    return yaxis, bins, bin_stats, linear_index
+    return yaxis, bins, bin_stats, bin_stats_transformed, linear_index
 
 def bin_data(data,column_names):
     """ Bin the data
@@ -410,7 +409,6 @@ def bin_data(data,column_names):
     nfeats = len(column_names)
     bin_stats = {'min': data.min(),
                  'max': data.max()}
-    print(bin_stats)
     column_bin_size = (bin_stats['max'] * (1 + 10**-6) - bin_stats['min'])/bincount
 
     # Transform data into bin positions for fast binning
@@ -422,7 +420,7 @@ def bin_data(data,column_names):
 
     # initialize bins, try to be memory efficient
     nrows = data.shape[0]
-    if nrows < 2**8:
+    if nrows < 2**8: 
         dtype = np.uint8
     elif nrows < 2**16:
         dtype = np.uint16
@@ -523,11 +521,11 @@ def get_cmap():
 
     cmap_values = [[1.0,1.0,1.0,1.0]]
     cmap_values.extend([[r/255,g/255,b/255,1] for r,g,b in zip(np.arange(0,255,2),
-                                                            np.arange(153,255+1/128,102/126),
-                                                            np.arange(34+1/128,0,-34/126))])
+                                                           np.arange(153,255+1/128,102/126),
+                                                           np.arange(34+1/128,0,-34/126))])
     cmap_values.extend([[r/255,g/255,b/255,1] for r,g,b in zip(np.arange(255,136-1/128,-119/127),
-                                                            np.arange(255,0,-2),
-                                                            np.arange(0,68+1/128,68/127))])
+                                                           np.arange(255,0,-2),
+                                                           np.arange(0,68+1/128,68/127))])
     cmap = ListedColormap(cmap_values)
 
     return cmap
@@ -566,20 +564,51 @@ def gen_plot(col1,
         d = np.zeros((bincount,bincount))
         r = col1
         c = col2
-        
+
     data.set_data(d)
-    data.set_clim(np.min(d),np.max(d))
+    data.set_clim(np.min(d),np.max(d)) #color limit
+    #data.set_cmap(cmap)
+
+    # count = 0 
+    # print(column_names[c], column_names[r])
+    # for item in d:
+    #     print(count, item)
+    #     count = count + 1
+    
+    # print(" ")
+
+    # ax.set_xlabel(column_names[c])
+    # ax.set_xticklabels(format_ticks(bin_stats['min'][column_names[c]],bin_stats['max'][column_names[c]],int(bincount/10 + 1)),
+    #                    rotation=45)
+    # ax.set_ylabel(column_names[r])
+    # ax.set_yticklabels(format_ticks(bin_stats['min'][column_names[r]],bin_stats['max'][column_names[r]],int(bincount/10 + 1)))
 
     ax.set_xlabel(column_names[c])
-    ax.set_xticklabels(format_ticks(bin_stats['min'][column_names[c]],bin_stats['max'][column_names[c]],11),
+    ax.set_xticklabels(format_ticks(0,bincount,int(bincount/10 + 1)),
                        rotation=45)
     ax.set_ylabel(column_names[r])
-    ax.set_yticklabels(format_ticks(bin_stats['min'][column_names[r]],bin_stats['max'][column_names[r]],11))
+    ax.set_yticklabels(format_ticks(0,bincount,int(bincount/10 + 1)))
     
-    fig.canvas.draw()
+    textlist = []
+    if len(ax.texts) == 0:
+        for i in range(0, bincount):
+            for j in range(0, bincount):
+                textingraph = ax.text(j, i, d[i,j], ha="center", va = "center", fontsize = 2.5)
+                textlist.append([i, j])
+                # print(textlist)
+    else:
+        for txt in ax.texts:
+            pos = str(txt)[5:-1]
+            pos = pos.split(",")
+            i = int(pos[1])
+            j = int(pos[0])
+            txt.set_text(d[i,j])
+            # print(txt, type(txt), pos, i, j)
 
+    fig.canvas.draw()
+    print(fig.canvas.draw())
     hmap = np.array(fig.canvas.renderer.buffer_rgba())
-    
+    print(column_names[c], column_names[r], hmap)
     return hmap
 
 def get_default_fig(cmap):
@@ -596,22 +625,19 @@ def get_default_fig(cmap):
         data - A reference to the heatmap artist
     """
     fig, ax = plt.subplots(dpi=int(CHUNK_SIZE/4),figsize=(4,4),tight_layout={'h_pad':1,'w_pad':1})
-    data = ax.pcolorfast(np.zeros((CHUNK_SIZE,CHUNK_SIZE),np.uint64),cmap=cmap)
+    datacolor = ax.pcolorfast(np.zeros((CHUNK_SIZE,CHUNK_SIZE),np.uint64),cmap=cmap)
     ticks = [t for t in range(0,bincount - 1,int(bincount/10))]
-
+ 
     #ticks = np.logspace(1, bincount, num = bincount/10)
     #ticks = ticks.tolist()
 
-    
-    #print(log_ticks)
-    print(ticks)
     ticks.append(bincount - 1)
     ax.set_xlim(0,bincount - 1)
     ax.set_ylim(0,bincount - 1)
     ax.set_xticks(ticks)
     ax.set_yticks(ticks)
     ax.set_xlabel(" ")
-    ax.set_xticklabels(["     ",
+    ax.set_xticklabels(["     ", 
                         "     ",
                         "     ",
                         "     ",
@@ -636,7 +662,7 @@ def get_default_fig(cmap):
                         "     ",
                         "     "])
     fig.canvas.draw()
-    return fig, ax, data
+    return fig, ax, datacolor
 
 """ 3. Pyramid generation functions """
 
@@ -758,14 +784,14 @@ def _get_higher_res(S,info,outpath,out_file,X=None,Y=None):
         if index>=len(linear_index):
             image = np.ones((CHUNK_SIZE,CHUNK_SIZE,4),dtype=np.uint8) * (bincount + 55)
         else:
-            image = gen_plot(linear_index[index][0],
-                             linear_index[index][1],
-                             bins,
-                             column_names,
-                             bin_stats,
+            image = gen_plot(log_linear_index[index][0],
+                             log_linear_index[index][1],
+                             log_bins,
+                             column_names_log,
+                             log_bin_trans,
                              fig,
                              ax,
-                             data)
+                             datacolor)
     else:
         # Set the subgrid dimensions
         subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]]]
@@ -851,14 +877,14 @@ def _get_higher_res_par(S,info,outpath,out_file,X=None,Y=None):
         if index>=len(linear_index):
             image = np.ones((CHUNK_SIZE,CHUNK_SIZE,4),dtype=np.uint8) * (bincount + 55)
         else:
-            image = gen_plot(linear_index[index][0],
-                             linear_index[index][1],
-                             bins,
-                             column_names,
-                             bin_stats,
+            image = gen_plot(log_linear_index[index][0],
+                             log_linear_index[index][1],
+                             log_bins,
+                             column_names_log,
+                             log_bin_trans,
                              fig,
                              ax,
-                             data)
+                             datacolor)
     else:
         # Set the subgrid dimensions
         subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]]]
@@ -963,14 +989,8 @@ if __name__=="__main__":
 
         # Bin the data
         logger.info('Binning data for {} features...'.format(column_names.size))
-        yaxis, log_bins, log_bin_stats, log_linear_index = bin_data_log(data_log, column_names_log)
+        yaxis, log_bins, log_bin_stats, log_bin_trans, log_linear_index = bin_data_log(data_log, column_names_log)
         bins, bin_stats, linear_index = bin_data(data,column_names)
-        
-        # for i in range(0, 20):
-        #     for i2 in range(i + 1, 20):
-        #         for data in range(0, bincount):
-        #             for data2 in range(0, bincount):
-        #                 print(bins[i][i2][data][data2], log_bins[i][i2][data][data2])
 
         logger.info('Done!')
         del data    # get rid of the original data to save memory
@@ -979,7 +999,7 @@ if __name__=="__main__":
         # Generate the default figure components
         logger.info('Generating colormap and default figure...')
         cmap = get_cmap()
-        fig, ax, data = get_default_fig(cmap)
+        fig, ax, datacolor = get_default_fig(cmap)
         logger.info('Done!')
 
         # Generate the dzi file
