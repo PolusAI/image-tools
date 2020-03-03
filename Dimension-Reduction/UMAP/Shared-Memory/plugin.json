@@ -22,7 +22,7 @@
         {
             "name": "sampleRate",
             "type": "number",
-            "description": "The rate at which to do sampling. This parameter plays a key role in the performance. This parameter is a trade-off between the performance and the accuracy of the results. Values closer to 1 provides more accurate results but the execution takes longer.",
+            "description": "The rate at which to do sampling. This parameter plays a key role in the performance. This parameter is a trade-off between the performance and the accuracy of the results. The Values closer to 1 provides more accurate results but the execution takes longer.",
             "required": "True"
         },
         {

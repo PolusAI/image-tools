@@ -297,7 +297,6 @@ int main(int argc, char ** argv) {
 	float MaxWeight=0;
 	for (int k=0; k<graphSM.outerSize(); ++k){
 		float sum=0;
-		int index=-1;
 		for (SparseMatrix<float>::InnerIterator it(graphSM,k); it; ++it) {
 			sum += it.value(); 
 			if (it.value() > MaxWeight) MaxWeight=it.value();  
@@ -355,7 +354,7 @@ int main(int argc, char ** argv) {
 	 * head is a vector containing the head index of the edge
 	 * tail is a vector containing the tail index of the edge
 	 */
-	vector<float> head, tail;
+	vector<int> head, tail;
 	vector<float> epochs_per_sample;
 
 	for (int k=0; k<graphSM.outerSize(); ++k){
@@ -397,10 +396,10 @@ int main(int argc, char ** argv) {
 	const double dEpsilon=1e-14;
 	double dist_squared;
 	// The main training loop     
-	for (int n = 0; n < n_epochs; ++n) {
+	for (int n = 1; n < n_epochs; ++n) {
 
 		//Loop over all edges of the graph 
-		if (n/10*10 == n){
+		if (n%10 == 0){
 			logFile << "SGD iteration = "<<n<<" from "<< n_epochs <<endl;
 			cout << "SGD iteration = "<<n<<" from "<< n_epochs <<endl;
 		}
@@ -416,17 +415,18 @@ int main(int argc, char ** argv) {
 				double grad_coeff;
 				if (dist_squared<dEpsilon) grad_coeff=0;  
 				else {grad_coeff= -2.0*aValue*bValue*pow(dist_squared,bValue-1)/(1.0+aValue*pow(dist_squared,bValue)); }
-
-				for (int jj = 0; jj < DimLowSpace; ++jj) { 
-					embedding[headIndex][jj] += alpha*clip(grad_coeff*(embedding[headIndex][jj]-embedding[tailIndex][jj]));
-
-					if (move_other==1) 	{
-						embedding[tailIndex][jj] += -alpha*clip(grad_coeff*(embedding[headIndex][jj]-embedding[tailIndex][jj]));							
-					}
+                
+                double grad_d;
+				for (int jj = 0; jj < DimLowSpace; ++jj) { 				
+					grad_d = alpha*clip(grad_coeff*(embedding[headIndex][jj]-embedding[tailIndex][jj]));
+                    embedding[headIndex][jj] += grad_d; 
+					//if (move_other==1) 	{					
+						embedding[tailIndex][jj] -= grad_d;							
+					//}
 				}
 
 				epoch_of_next_sample[i] += epochs_per_sample[i];
-				n_neg_samples = int((n - epoch_of_next_negative_sample[i])/ epochs_per_negative_sample[i]);     	      
+				n_neg_samples = int((float(n) - epoch_of_next_negative_sample[i])/ epochs_per_negative_sample[i]);     	      
 
 				for (int ll = 0; ll < n_neg_samples; ++ll) {	    	
 					int randomIndex = rand() % N;
