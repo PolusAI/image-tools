@@ -18,7 +18,7 @@ global datalen
 CHUNK_SIZE = 1024
 
 # Number of Bins for Each Feature
-bincount = 200 #MUST BE EVEN NUMBER
+bincount = 50 #MUST BE EVEN NUMBER
 
 # DZI file template
 DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="' + str(CHUNK_SIZE) + '" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
@@ -157,10 +157,10 @@ def checkrange(original, transformed, Range, column_bin_sizes, max, min):
         if transformed == -1:
             Range[0] = -1*(column_bin_sizes[0]**(-1*transformed))
             Range[1] = -1
-        print(" ")
-        print("Difference: ", diff)
-        print("Range Edited", Range)
-        print("Edited Transformation: ", transformed)
+        # print(" ")
+        # print("Difference: ", diff)
+        # print("Range Edited", Range)
+        # print("Edited Transformation: ", transformed)
         return checkrange(original, transformed, Range, column_bin_sizes, max, min)
 
 def firstAterm(IQR, datalen):
@@ -584,31 +584,29 @@ def gen_plot(col1,
     # ax.set_yticklabels(format_ticks(bin_stats['min'][column_names[r]],bin_stats['max'][column_names[r]],int(bincount/10 + 1)))
 
     ax.set_xlabel(column_names[c])
-    ax.set_xticklabels(format_ticks(0,bincount,int(bincount/10 + 1)),
+    ax.set_xticklabels(format_ticks(0,bincount,11),
                        rotation=45)
     ax.set_ylabel(column_names[r])
-    ax.set_yticklabels(format_ticks(0,bincount,int(bincount/10 + 1)))
+    ax.set_yticklabels(format_ticks(0,bincount,11))
     
-    textlist = []
-    if len(ax.texts) == 0:
-        for i in range(0, bincount):
-            for j in range(0, bincount):
-                textingraph = ax.text(j, i, d[i,j], ha="center", va = "center", fontsize = 2.5)
-                textlist.append([i, j])
-                # print(textlist)
-    else:
-        for txt in ax.texts:
-            pos = str(txt)[5:-1]
-            pos = pos.split(",")
-            i = int(pos[1])
-            j = int(pos[0])
-            txt.set_text(d[i,j])
+    # textlist = []
+    # if len(ax.texts) == 0:
+    #     for i in range(0, bincount):
+    #         for j in range(0, bincount):
+    #             textingraph = ax.text(j, i, d[i,j], ha="center", va = "center", fontsize = 2.5)
+    #             textlist.append([i, j])
+    # else:
+    #     for txt in ax.texts:
+    #         pos = str(txt)[5:-1]
+    #         pos = pos.split(",")
+    #         i = int(pos[1])
+    #         j = int(pos[0])
+    #         txt.set_text(d[i,j])
             # print(txt, type(txt), pos, i, j)
 
     fig.canvas.draw()
-    print(fig.canvas.draw())
     hmap = np.array(fig.canvas.renderer.buffer_rgba())
-    print(column_names[c], column_names[r], hmap)
+
     return hmap
 
 def get_default_fig(cmap):
@@ -625,42 +623,46 @@ def get_default_fig(cmap):
         data - A reference to the heatmap artist
     """
     fig, ax = plt.subplots(dpi=int(CHUNK_SIZE/4),figsize=(4,4),tight_layout={'h_pad':1,'w_pad':1})
-    datacolor = ax.pcolorfast(np.zeros((CHUNK_SIZE,CHUNK_SIZE),np.uint64),cmap=cmap)
-    ticks = [t for t in range(0,bincount - 1,int(bincount/10))]
+    #datacolor = ax.pcolorfast(np.zeros((CHUNK_SIZE,CHUNK_SIZE),np.uint64),cmap=cmap)
+    datacolor = ax.pcolorfast(np.zeros((bincount, bincount),np.uint64),cmap=cmap)
+    ticks = [t for t in range(0, bincount +1, int(bincount/10))]
  
     #ticks = np.logspace(1, bincount, num = bincount/10)
     #ticks = ticks.tolist()
 
-    ticks.append(bincount - 1)
-    ax.set_xlim(0,bincount - 1)
-    ax.set_ylim(0,bincount - 1)
+    #ticks.append(bincount - 1)
+    ax.set_xlim(0,bincount)
+    ax.set_ylim(0,bincount)
     ax.set_xticks(ticks)
     ax.set_yticks(ticks)
     ax.set_xlabel(" ")
-    ax.set_xticklabels(["     ", 
-                        "     ",
-                        "     ",
-                        "     ",
-                        "     ",
-                        "     ",
-                        "     ",
-                        "     ",
-                        "     ",
-                        "     ",
-                        "     "],
-                    rotation=45)
     ax.set_ylabel(" ")
-    ax.set_yticklabels(["     ",
-                        "     ",
-                        "     ",
-                        "     ",
-                        "     ",
-                        "     ",
-                        "     ",
-                        "     ",
-                        "     ",
-                        "     ",
-                        "     "])
+    ax.set_xticklabels(ticks, rotation = 45)
+    ax.set_yticklabels(ticks)
+    # ax.set_xticklabels(["     ", 
+    #                     "     ",
+    #                     "     ",
+    #                     "     ",
+    #                     "     ",
+    #                     "     ",
+    #                     "     ",
+    #                     "     ",
+    #                     "     ",
+    #                     "     ",
+    #                     "     "],
+    #                 rotation=45)
+    # ax.set_ylabel(" ")
+    # ax.set_yticklabels(["     ",
+    #                     "     ",
+    #                     "     ",
+    #                     "     ",
+    #                     "     ",
+    #                     "     ",
+    #                     "     ",
+    #                     "     ",
+    #                     "     ",
+    #                     "     ",
+    #                     "     "])
     fig.canvas.draw()
     return fig, ax, datacolor
 
@@ -699,7 +701,7 @@ def _avg2(image):
             avg_img[-1,-1,z] = image[-1,-1,z]
     return avg_img
 
-def metadata_to_graph_info(bins,outPath,outFile):
+def metadata_to_graph_info(bins,outPath,outFile, indexscale):
     
     # Create an output path object for the info file
     op = Path(outPath).joinpath("{}.dzi".format(outFile))
@@ -709,7 +711,7 @@ def metadata_to_graph_info(bins,outPath,outFile):
     of.mkdir(exist_ok=True)
     
     # Get metadata info from the bfio reader
-    ngraphs = len(linear_index) #(= NumberofColumns Choose 2)
+    ngraphs = len(indexscale) #(= NumberofColumns Choose 2)
     rows = np.ceil(np.sqrt(ngraphs))
     cols = np.round(np.sqrt(ngraphs))
     sizes = [cols*CHUNK_SIZE,rows*CHUNK_SIZE]
@@ -748,7 +750,7 @@ def metadata_to_graph_info(bins,outPath,outFile):
 # at high resolution layers of the pyramid. So, if 0 is the original resolution of the image, getting a tile
 # at scale 2 will generate only the necessary information at layers 0 and 1 to create the desired tile at
 # layer 2. This function is recursive and can be parallelized.
-def _get_higher_res(S,info,outpath,out_file,X=None,Y=None):
+def _get_higher_res(S,info,outpath,out_file,indexscale,bintype,binstats,X=None,Y=None,):
 
     # Get the scale info
     scale_info = None
@@ -781,14 +783,14 @@ def _get_higher_res(S,info,outpath,out_file,X=None,Y=None):
     # If requesting from the lowest scale, then just generate the graph
     if S==int(info['scales'][0]['key']):
         index = int((int(Y[0]/CHUNK_SIZE) + int(X[0]/CHUNK_SIZE) * info['rows']))
-        if index>=len(linear_index):
+        if index>=len(indexscale):
             image = np.ones((CHUNK_SIZE,CHUNK_SIZE,4),dtype=np.uint8) * (bincount + 55)
         else:
-            image = gen_plot(log_linear_index[index][0],
-                             log_linear_index[index][1],
-                             log_bins,
+            image = gen_plot(indexscale[index][0],
+                             indexscale[index][1],
+                             bintype,
                              column_names_log,
-                             log_bin_trans,
+                             binstats,
                              fig,
                              ax,
                              datacolor)
@@ -820,6 +822,9 @@ def _get_higher_res(S,info,outpath,out_file,X=None,Y=None):
                                                    info,
                                                    outpath,
                                                    out_file,
+                                                   indexscale,
+                                                   bintype,
+                                                   binstats,
                                                    X=subgrid_dims[0][x:x+2],
                                                    Y=subgrid_dims[1][y:y+2])
                 else:
@@ -827,6 +832,9 @@ def _get_higher_res(S,info,outpath,out_file,X=None,Y=None):
                                                info,
                                                outpath,
                                                out_file,
+                                               indexscale,
+                                               bintype,
+                                               binstats,
                                                X=subgrid_dims[0][x:x+2],
                                                Y=subgrid_dims[1][y:y+2])
                 # sub_image = _get_higher_res(S+1,
@@ -847,7 +855,7 @@ def _get_higher_res(S,info,outpath,out_file,X=None,Y=None):
 
 # This function performs the same operation as _get_highe_res, except it uses multiprocessing to grab higher
 # resolution layers at a specific layer.
-def _get_higher_res_par(S,info,outpath,out_file,X=None,Y=None):
+def _get_higher_res_par(S,info,outpath,out_file,indexscale, bintype, binstats, X=None,Y=None):
     # Get the scale info
     scale_info = None
     for res in info['scales']:
@@ -874,14 +882,14 @@ def _get_higher_res_par(S,info,outpath,out_file,X=None,Y=None):
     # If requesting from the lowest scale, then just generate the graph
     if S==int(info['scales'][0]['key']):
         index = (int(Y[0]/CHUNK_SIZE) + int(X[0]/CHUNK_SIZE) * info['rows'])
-        if index>=len(linear_index):
+        if index>=len(indexscale):
             image = np.ones((CHUNK_SIZE,CHUNK_SIZE,4),dtype=np.uint8) * (bincount + 55)
         else:
-            image = gen_plot(log_linear_index[index][0],
-                             log_linear_index[index][1],
-                             log_bins,
+            image = gen_plot(indexscale[index][0],
+                             indexscale[index][1],
+                             bintype,
                              column_names_log,
-                             log_bin_trans,
+                             binstats,
                              fig,
                              ax,
                              datacolor)
@@ -905,6 +913,9 @@ def _get_higher_res_par(S,info,outpath,out_file,X=None,Y=None):
                                                                            info,
                                                                            outpath,
                                                                            out_file,
+                                                                           indexscale,
+                                                                           bintype,
+                                                                           binstats,
                                                                            subgrid_dims[0][x:x+2],
                                                                            subgrid_dims[1][y:y+2])))
                     
@@ -955,20 +966,28 @@ if __name__=="__main__":
                         type=str,
                         help='Path to input images.',
                         required=True)
-    parser.add_argument('--outDir',               # Pyramid directory
-                        dest='outDir',
+    parser.add_argument('--outDirLinear',               # Pyramid directory
+                        dest='outDirLinear',
                         type=str,
-                        help='The output directory for the flatfield images.',
+                        help='The output directory for the flatfield images of Linear Scaled Graphs.',
+                        required=True)
+
+    parser.add_argument('--outDirLog',
+                        dest='outDirLog',
+                        type=str,
+                        help='The output directory for the flatfield images of Log Scaled Graphs.',
                         required=True)
     
     """ Get the input arguments """
     args = parser.parse_args()
 
     input_path = args.inpDir
-    output_path = Path(args.outDir)
+    linear_output_path = Path(args.outDirLinear)
+    log_output_path = Path(args.outDirLog)
 
     logger.info('inpDir = {}'.format(input_path))
-    logger.info('outDir = {}'.format(output_path))
+    logger.info('outDirLinear = {}'.format(linear_output_path))
+    logger.info('outDirLog = {}'.format(log_output_path))
 
     # Get the path to each csv file in the collection
     input_files = [str(f.absolute()) for f in Path(input_path).iterdir() if ''.join(f.suffixes)=='.csv']
@@ -989,7 +1008,7 @@ if __name__=="__main__":
 
         # Bin the data
         logger.info('Binning data for {} features...'.format(column_names.size))
-        yaxis, log_bins, log_bin_stats, log_bin_trans, log_linear_index = bin_data_log(data_log, column_names_log)
+        yaxis, log_bins, log_bin_stats, log_bin_trans, log_index = bin_data_log(data_log, column_names_log)
         bins, bin_stats, linear_index = bin_data(data,column_names)
 
         logger.info('Done!')
@@ -1004,13 +1023,16 @@ if __name__=="__main__":
 
         # Generate the dzi file
         logger.info('Generating pyramid metadata...')
-        info = metadata_to_graph_info(log_bins,output_path,folder)
+        info_linear = metadata_to_graph_info(bins,linear_output_path,folder, linear_index)
+        info_log = metadata_to_graph_info(log_bins, log_output_path,folder, log_index)
         logger.info('Done!')
         
         logger.info('Writing layout file...!')
-        write_csv(cnames,linear_index,info,output_path,folder)  
+        write_csv(cnames,linear_index,info_linear,linear_output_path,folder)  
+        write_csv(cnames_log, log_index, info_log, log_output_path, folder)
         logger.info('Done!')
 
         # Create the pyramid
         logger.info('Building pyramid...')
-        image = _get_higher_res(0,info,output_path,folder)
+        image_linear = _get_higher_res(0, info_linear,linear_output_path,folder,linear_index, bins, bin_stats)
+        image_log = _get_higher_res(0, info_log, log_output_path, folder, log_index,log_bins, log_bin_stats)
