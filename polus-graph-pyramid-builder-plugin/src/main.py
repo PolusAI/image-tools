@@ -232,6 +232,7 @@ def bin_data_log(data,column_names):
     Ind2 = []
     Ind2zero = []
     Position = []
+    alphavals = []
     
     bin_stats = {'size': data.shape,
                  'min': data.min(),
@@ -245,6 +246,7 @@ def bin_data_log(data,column_names):
     for i in range(0, nfeats):
         quartile25to75.append(bin_stats['seventy5'][i] - bin_stats['twenty5'][i])
         alpha = firstAterm(quartile25to75[-1], datalen)
+        alphavals.append(alpha)
         if alpha == 0:
             empty = [255] * datalen
             data[column_names[i]] = pandas.Series(np.array(empty), index = range(0, datalen))
@@ -386,7 +388,7 @@ def bin_data_log(data,column_names):
             # print(name1, name2, "NEXT")
             # print(" ")
             
-    return yaxis, bins, bin_stats, bin_stats_transformed, linear_index
+    return yaxis, bins, bin_stats, linear_index, column_bin_sizes, alphavals
 
 def bin_data(data,column_names):
     """ Bin the data
@@ -407,6 +409,7 @@ def bin_data(data,column_names):
 
     # Get basic column statistics and bin sizes
     nfeats = len(column_names)
+    yaxis = np.zeros(nfeats, dtype=int)
     bin_stats = {'min': data.min(),
                  'max': data.max()}
     column_bin_size = (bin_stats['max'] * (1 + 10**-6) - bin_stats['min'])/bincount
@@ -462,10 +465,57 @@ def bin_data(data,column_names):
             bins[feat1,feat2,rows[0],cols[0]] = ind2[0] + 1
             bins[feat1,feat2,rows[1:],cols[1:]] = counts
             linear_index.append([feat1,feat2])
-    return bins, bin_stats, linear_index
+    return yaxis, bins, bin_stats, linear_index, column_bin_size
 
 """ 2. Plot Generation """
+def format_ticks_log(fmin,fmax,nticks):
+    """ Generate tick labels
+    Polus Plots uses D3 to generate the plots. This function tries to mimic
+    the formatting of tick labels. Tick labels have a fixed width, and in
+    place of using scientific notation a scale prefix is appended to the end
+    of the number. See _prefix comments to see the suffixes that are used.
+    Numbers that are larger or smaller than 10**24 or 10**-24 respectively
+    are not handled and may throw an error. Values outside of this range
+    do not currently have an agreed upon prefix in the measurement science
+    community.
+    Inputs:
+        fmin - the minimum tick value
+        fmax - the maximum tick value
+        nticks - the number of ticks
+    Outputs:
+        fticks - a list of strings containing formatted tick labels
+    """
+    _prefix = {-24: 'y',  # yocto
+               -21: 'z',  # zepto
+               -18: 'a',  # atto
+               -15: 'f',  # femto
+               -12: 'p',  # pico
+                -9: 'n',  # nano
+                -6: 'u',  # micro
+                -3: 'm',  # mili
+                 0: ' ',
+                 3: 'k',  # kilo
+                 6: 'M',  # mega
+                 9: 'G',  # giga
+                12: 'T',  # tera
+                15: 'P',  # peta
+                18: 'E',  # exa
+                21: 'Z',  # zetta
+                24: 'Y',  # yotta
+                }
 
+    out = [t for t in np.arange(fmin,fmax,(fmax-fmin)/(nticks-1))]
+    out.append(fmax)
+    scale = np.log10(np.abs(out))   #Ignore Warning.  Run python -W ignore main.py on command prompt
+    scale[np.isinf(scale)] = 0
+    #logger.info("SCALE(INF): " + str(scale))
+    scale_order = np.int8(3*np.sign(scale)*np.int8(scale/3))
+    fticks = []
+    for i in range(nticks):
+        fticks.append('{:{width}.{prec}f}'.format(out[i]/10**scale_order[i],
+                                                  width=3,
+                                                  prec=2-np.mod(np.int8(scale[i]),3)) + _prefix[scale_order[i]])
+    return fticks
 # Tick formatting to mimick D3
 def format_ticks(fmin,fmax,nticks):
     """ Generate tick labels
@@ -577,17 +627,11 @@ def gen_plot(col1,
     
     # print(" ")
 
-    # ax.set_xlabel(column_names[c])
-    # ax.set_xticklabels(format_ticks(bin_stats['min'][column_names[c]],bin_stats['max'][column_names[c]],int(bincount/10 + 1)),
-    #                    rotation=45)
-    # ax.set_ylabel(column_names[r])
-    # ax.set_yticklabels(format_ticks(bin_stats['min'][column_names[r]],bin_stats['max'][column_names[r]],int(bincount/10 + 1)))
-
     ax.set_xlabel(column_names[c])
-    ax.set_xticklabels(format_ticks(0,bincount,11),
+    ax.set_xticklabels(format_ticks(bin_stats['min'][column_names[c]],bin_stats['max'][column_names[c]],11),
                        rotation=45)
     ax.set_ylabel(column_names[r])
-    ax.set_yticklabels(format_ticks(0,bincount,11))
+    ax.set_yticklabels(format_ticks(bin_stats['min'][column_names[r]],bin_stats['max'][column_names[r]],11))
     
     # textlist = []
     # if len(ax.texts) == 0:
@@ -1008,8 +1052,18 @@ if __name__=="__main__":
 
         # Bin the data
         logger.info('Binning data for {} features...'.format(column_names.size))
-        yaxis, log_bins, log_bin_stats, log_bin_trans, log_index = bin_data_log(data_log, column_names_log)
-        bins, bin_stats, linear_index = bin_data(data,column_names)
+        yaxis_log, log_bins, log_bin_stats, log_index, log_binsizes, alphavals = bin_data_log(data_log, column_names_log)
+        yaxis_linear, bins, bin_stats, linear_index, linear_binsizes = bin_data(data,column_names)
+
+
+        for i in range(0, len(log_binsizes)):
+            print("Data_", i+1)
+            print("LOG", log_binsizes[i], yaxis_linear[i])
+            print("\talpha value", alphavals[i])
+            print("LINEAR", linear_binsizes[i], yaxis_log[i])
+            print("\ttimes five = ", linear_binsizes[i]*bincount/10)
+            print(" ")
+
 
         logger.info('Done!')
         del data    # get rid of the original data to save memory
