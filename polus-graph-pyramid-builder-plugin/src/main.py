@@ -15,7 +15,7 @@ global datalen
 
 
 # Chunk Scale
-CHUNK_SIZE = 1024
+CHUNK_SIZE = 512
 
 # Number of Bins for Each Feature
 bincount = 50 #MUST BE EVEN NUMBER
@@ -410,6 +410,7 @@ def bin_data(data,column_names):
     # Get basic column statistics and bin sizes
     nfeats = len(column_names)
     yaxis = np.zeros(nfeats, dtype=int)
+    alphavals = yaxis
     bin_stats = {'min': data.min(),
                  'max': data.max()}
     column_bin_size = (bin_stats['max'] * (1 + 10**-6) - bin_stats['min'])/bincount
@@ -438,6 +439,10 @@ def bin_data(data,column_names):
 
     # Bin the data
     for feat1 in range(nfeats):
+        if bin_stats['min'][feat1] >= 0:
+            yaxis[feat1] = 0
+        else:
+            yaxis[feat1] = abs(bin_stats['min'][feat1])/column_bin_size[feat1] + 1
         name1 = column_names[feat1]
         feat1_tf = data[name1] * bincount   # Convert to linear matrix index
 
@@ -465,14 +470,14 @@ def bin_data(data,column_names):
             bins[feat1,feat2,rows[0],cols[0]] = ind2[0] + 1
             bins[feat1,feat2,rows[1:],cols[1:]] = counts
             linear_index.append([feat1,feat2])
-    return yaxis, bins, bin_stats, linear_index, column_bin_size
+    return yaxis, bins, bin_stats, linear_index, column_bin_size, alphavals
 
 """ 2. Plot Generation """
-def format_ticks_log(fmin,fmax,nticks):
+def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavals):
     """ Generate tick labels
     Polus Plots uses D3 to generate the plots. This function tries to mimic
     the formatting of tick labels. Tick labels have a fixed width, and in
-    place of using scientific notation a scale prefix is appended to the end
+    place of using scientific notation a scale prefix is appen ded to the end
     of the number. See _prefix comments to see the suffixes that are used.
     Numbers that are larger or smaller than 10**24 or 10**-24 respectively
     are not handled and may throw an error. Values outside of this range
@@ -506,6 +511,11 @@ def format_ticks_log(fmin,fmax,nticks):
 
     out = [t for t in np.arange(fmin,fmax,(fmax-fmin)/(nticks-1))]
     out.append(fmax)
+    print("LOG TICKS")
+    for i in range(0, len(out)):
+        print(out[i])
+        print(yaxis[i])
+
     scale = np.log10(np.abs(out))   #Ignore Warning.  Run python -W ignore main.py on command prompt
     scale[np.isinf(scale)] = 0
     #logger.info("SCALE(INF): " + str(scale))
@@ -582,12 +592,16 @@ def get_cmap():
 
 def gen_plot(col1,
              col2,
+             alphavals,
              bins,
+             binsizes,
              column_names,
              bin_stats,
              fig,
              ax,
-             data):
+             data,
+             axiszero,
+             typegraph):
     """ Generate a heatmap
     Generate a heatmap of data for column 1 against column 2.
     Inputs:
@@ -615,6 +629,7 @@ def gen_plot(col1,
         r = col1
         c = col2
 
+    #print("Row, Column:", r, c)
     data.set_data(d)
     data.set_clim(np.min(d),np.max(d)) #color limit
     #data.set_cmap(cmap)
@@ -625,17 +640,45 @@ def gen_plot(col1,
     #     print(count, item)
     #     count = count + 1
     
-    # print(" ")
+    print("Type of Graph and Binsizes")
+    print(typegraph)
+    print(binsizes)
 
     ax.set_xlabel(column_names[c])
-    ax.set_xticklabels(format_ticks(bin_stats['min'][column_names[c]],bin_stats['max'][column_names[c]],11),
-                       rotation=45)
     ax.set_ylabel(column_names[r])
-    ax.set_yticklabels(format_ticks(bin_stats['min'][column_names[r]],bin_stats['max'][column_names[r]],11))
+    if typegraph == "linear":
+        ax.set_xticklabels(format_ticks(bin_stats['min'][column_names[c]],bin_stats['max'][column_names[c]],11),
+                        rotation=45)
+        ax.set_yticklabels(format_ticks(bin_stats['min'][column_names[r]],bin_stats['max'][column_names[r]],11))
+    if typegraph == "log":
+        ax.set_xticklabels(format_ticks_log(0,bincount,11, axiszero, binsizes, alphavals),
+                        rotation=45)
+        ax.set_yticklabels(format_ticks_log(0,bincount,11, axiszero, binsizes, alphavals))
+
+    if len(ax.lines) == 0:
+        if axiszero[c] == 0:
+            ax.axvline(x=axiszero[c])
+        else:
+            ax.axvline(x=axiszero[c] + 0.5)
+        if axiszero[r] == 0:
+            ax.axhline(y=axiszero[r])
+        else:
+            ax.axhline(y=axiszero[r] + 0.5)
+    else:
+        ax.lines[-1].remove()
+        ax.lines[-1].remove()
+        if axiszero[c] == 0:
+            ax.axvline(x=axiszero[c])
+        else:
+            ax.axvline(x=axiszero[c] + 0.5)
+        if axiszero[r] == 0:
+            ax.axhline(y=axiszero[r])
+        else:
+            ax.axhline(y=axiszero[r] + 0.5)
     
     # textlist = []
     # if len(ax.texts) == 0:
-    #     for i in range(0, bincount):
+    #     for i in range(0, bincount):  
     #         for j in range(0, bincount):
     #             textingraph = ax.text(j, i, d[i,j], ha="center", va = "center", fontsize = 2.5)
     #             textlist.append([i, j])
@@ -669,7 +712,7 @@ def get_default_fig(cmap):
     fig, ax = plt.subplots(dpi=int(CHUNK_SIZE/4),figsize=(4,4),tight_layout={'h_pad':1,'w_pad':1})
     #datacolor = ax.pcolorfast(np.zeros((CHUNK_SIZE,CHUNK_SIZE),np.uint64),cmap=cmap)
     datacolor = ax.pcolorfast(np.zeros((bincount, bincount),np.uint64),cmap=cmap)
-    ticks = [t for t in range(0, bincount +1, int(bincount/10))]
+    ticks = [(t + 0.5) for t in range(0, bincount +1, int(bincount/10))]
  
     #ticks = np.logspace(1, bincount, num = bincount/10)
     #ticks = ticks.tolist()
@@ -794,8 +837,7 @@ def metadata_to_graph_info(bins,outPath,outFile, indexscale):
 # at high resolution layers of the pyramid. So, if 0 is the original resolution of the image, getting a tile
 # at scale 2 will generate only the necessary information at layers 0 and 1 to create the desired tile at
 # layer 2. This function is recursive and can be parallelized.
-def _get_higher_res(S,info,outpath,out_file,indexscale,bintype,binstats,X=None,Y=None,):
-
+def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,bintype,binstats, binsizes, axiszero, alphavals, X=None,Y=None):
     # Get the scale info
     scale_info = None
     logger.info("S: " + str(S))
@@ -832,12 +874,16 @@ def _get_higher_res(S,info,outpath,out_file,indexscale,bintype,binstats,X=None,Y
         else:
             image = gen_plot(indexscale[index][0],
                              indexscale[index][1],
+                             alphavals,
                              bintype,
-                             column_names_log,
+                             binsizes,
+                             cnames,
                              binstats,
                              fig,
                              ax,
-                             datacolor)
+                             datacolor,
+                             axiszero,
+                             typegraph)
     else:
         # Set the subgrid dimensions
         subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]]]
@@ -862,23 +908,33 @@ def _get_higher_res(S,info,outpath,out_file,indexscale,bintype,binstats,X=None,Y
                 logger.info("What X would be: " + str(subgrid_dims[0][x:x+2]))
                 logger.info("What Y would be: " + str(subgrid_dims[0][y:y+2]))
                 if S==(info['scales'][0]['key'] - 5): #to use multiple processors to compute faster.
-                    sub_image = _get_higher_res_par(S+1,
+                    sub_image = _get_higher_res_par(typegraph,
+                                                    S+1,
                                                    info,
+                                                   cnames,
                                                    outpath,
                                                    out_file,
                                                    indexscale,
                                                    bintype,
                                                    binstats,
+                                                   binsizes,
+                                                   axiszero,
+                                                   alphavals,
                                                    X=subgrid_dims[0][x:x+2],
                                                    Y=subgrid_dims[1][y:y+2])
                 else:
-                    sub_image = _get_higher_res(S+1,
+                    sub_image = _get_higher_res(typegraph,
+                                                S+1,
                                                info,
+                                               cnames,
                                                outpath,
                                                out_file,
                                                indexscale,
                                                bintype,
                                                binstats,
+                                               binsizes,
+                                               axiszero,
+                                               alphavals,
                                                X=subgrid_dims[0][x:x+2],
                                                Y=subgrid_dims[1][y:y+2])
                 # sub_image = _get_higher_res(S+1,
@@ -899,7 +955,7 @@ def _get_higher_res(S,info,outpath,out_file,indexscale,bintype,binstats,X=None,Y
 
 # This function performs the same operation as _get_highe_res, except it uses multiprocessing to grab higher
 # resolution layers at a specific layer.
-def _get_higher_res_par(S,info,outpath,out_file,indexscale, bintype, binstats, X=None,Y=None):
+def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, bintype, binstats, binsizes, axiszero, alphavals, X=None,Y=None):
     # Get the scale info
     scale_info = None
     for res in info['scales']:
@@ -931,12 +987,16 @@ def _get_higher_res_par(S,info,outpath,out_file,indexscale, bintype, binstats, X
         else:
             image = gen_plot(indexscale[index][0],
                              indexscale[index][1],
+                             alphavals,
                              bintype,
-                             column_names_log,
+                             binsizes,
+                             cnames,
                              binstats,
                              fig,
                              ax,
-                             datacolor)
+                             datacolor,
+                             axiszero,
+                             typegraph)
     else:
         # Set the subgrid dimensions
         subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]]]
@@ -953,13 +1013,18 @@ def _get_higher_res_par(S,info,outpath,out_file,indexscale, bintype, binstats, X
                 for x in range(0,len(subgrid_dims[0])-1):
                     x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
                     x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
-                    subgrid_images.append(pool.apply_async(_get_higher_res,(S+1,
+                    subgrid_images.append(pool.apply_async(_get_higher_res,(typegraph, 
+                                                                            S+1,
                                                                            info,
+                                                                           cnames,
                                                                            outpath,
                                                                            out_file,
                                                                            indexscale,
                                                                            bintype,
                                                                            binstats,
+                                                                           binsizes,
+                                                                           axiszero,
+                                                                           alphavals,
                                                                            subgrid_dims[0][x:x+2],
                                                                            subgrid_dims[1][y:y+2])))
                     
@@ -1052,15 +1117,14 @@ if __name__=="__main__":
 
         # Bin the data
         logger.info('Binning data for {} features...'.format(column_names.size))
-        yaxis_log, log_bins, log_bin_stats, log_index, log_binsizes, alphavals = bin_data_log(data_log, column_names_log)
-        yaxis_linear, bins, bin_stats, linear_index, linear_binsizes = bin_data(data,column_names)
+        yaxis_log, log_bins, log_bin_stats, log_index, log_binsizes, alphavals_log = bin_data_log(data_log, column_names_log)
+        yaxis_linear, bins, bin_stats, linear_index, linear_binsizes, alphavals_linear = bin_data(data,column_names)
 
 
         for i in range(0, len(log_binsizes)):
             print("Data_", i+1)
-            print("LOG", log_binsizes[i], yaxis_linear[i])
-            print("\talpha value", alphavals[i])
-            print("LINEAR", linear_binsizes[i], yaxis_log[i])
+            print("LOG", log_binsizes[i], yaxis_log[i])
+            print("LINEAR", linear_binsizes[i], yaxis_linear[i])
             print("\ttimes five = ", linear_binsizes[i]*bincount/10)
             print(" ")
 
@@ -1088,5 +1152,5 @@ if __name__=="__main__":
 
         # Create the pyramid
         logger.info('Building pyramid...')
-        image_linear = _get_higher_res(0, info_linear,linear_output_path,folder,linear_index, bins, bin_stats)
-        image_log = _get_higher_res(0, info_log, log_output_path, folder, log_index,log_bins, log_bin_stats)
+        image_linear = _get_higher_res("linear", 0, info_linear,column_names, linear_output_path,folder,linear_index, bins, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
+        image_log = _get_higher_res("log", 0, info_log, column_names_log, log_output_path, folder, log_index,log_bins, log_bin_stats, log_binsizes, yaxis_log, alphavals_log)
