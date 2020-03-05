@@ -62,7 +62,17 @@ An Example of Executing the Code
     g++ -I/Path_To_Boost_Library/boost_1_71_0 KNN_Serial_Code.cpp -o output.exe -L/Path_To_Boost_Library/boost_1_71_0/stage/lib -lboost_iostreams -lboost_system -lboost_filesystem  -O2 
     time ./output.exe --inputPath . --K 10 --sampleRate 0.99  --convThreshold 5  --outputPath .
     time ./output.exe --inputPath . --K 10 --sampleRate 0.99  --convThreshold 5  --outputPath .  --colIndex1 3 --colIndex2 26
-    
+
+Please note that the multi-threaded version of Shared-Memory K-NN can be compiled and run as follows. The number of threads in the OpenMP parallelized region of the code is also set using the environment variable OMP_NUM_THREADS.
+
+.. code:: bash
+
+    ulimit -s unlimited
+    export OMP_NUM_THREADS=2 
+    g++ -I/Path_To_Boost_Library/boost_1_71_0 KNN_Serial_Code.cpp -o output.exe -L/Path_To_Boost_Library/boost_1_71_0/stage/lib -lboost_iostreams -lboost_system -lboost_filesystem  -O2 -fopenmp
+    time ./output.exe --inputPath . --K 10 --sampleRate 0.99  --convThreshold 5  --outputPath .
+    time ./output.exe --inputPath . --K 10 --sampleRate 0.99  --convThreshold 5  --outputPath .  --colIndex1 3 --colIndex2 26   
+        
 ---------------------------
 An Advise About Performance
 ---------------------------
