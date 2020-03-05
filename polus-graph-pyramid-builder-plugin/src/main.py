@@ -8,6 +8,7 @@ from pathlib import Path
 import logging                                                                                                                                                            
 import sys
 import math
+from decimal import *
 
 
 global nfeats
@@ -15,7 +16,7 @@ global datalen
 
 
 # Chunk Scale
-CHUNK_SIZE = 512
+CHUNK_SIZE = 1024
 
 # Number of Bins for Each Feature
 bincount = 50 #MUST BE EVEN NUMBER
@@ -473,7 +474,7 @@ def bin_data(data,column_names):
     return yaxis, bins, bin_stats, linear_index, column_bin_size, alphavals
 
 """ 2. Plot Generation """
-def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavals):
+def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
     """ Generate tick labels
     Polus Plots uses D3 to generate the plots. This function tries to mimic
     the formatting of tick labels. Tick labels have a fixed width, and in
@@ -509,22 +510,47 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavals):
                 24: 'Y',  # yotta
                 }
 
-    out = [t for t in np.arange(fmin,fmax,(fmax-fmin)/(nticks-1))]
-    out.append(fmax)
-    print("LOG TICKS")
-    for i in range(0, len(out)):
-        print(out[i])
-        print(yaxis[i])
+    # out = [t for t in np.arange(fmin,fmax,(fmax-fmin)/(nticks-1))]
+    # out.append(fmax)
+    
+    out = [(alphavalue*(commonratio[-1]**(t-yaxis))) if yaxis<t else (-1*(alphavalue*(commonratio[0]**(yaxis-t))) if yaxis>t else 0) for t in np.arange(fmin,fmax,(fmax-fmin)/(nticks-1))]
+    if yaxis < fmax:
+        out.append(alphavalue*(commonratio[-1]**(fmax-yaxis)))
+    elif yaxis > fmax:
+        out.append(-1*(alphavalue*(commonratio[0]**(yaxis-fmax))))
+    else:
+        out.append(0)
 
-    scale = np.log10(np.abs(out))   #Ignore Warning.  Run python -W ignore main.py on command prompt
-    scale[np.isinf(scale)] = 0
+    # print("LOG TICKS")
+    # for i in range(0, len(out)-1):
+    #     print(out[i])
+    #     t = 0
+    #     if yaxis < out[i]:
+    #         t = alphavalue*(commonratio[-1]**(out[i]-yaxis))
+    #     elif yaxis > out[i]:
+    #         t = alphavalue*(commonratio[0]**(yaxis-out[i]))
+    #         t = -1*t
+    #     else:
+    #         t = 0
+
+    #scale = np.log10(np.abs(out))   #Ignore Warning.  Run python -W ignore main.py on command prompt
+    #scale[np.isinf(scale)] = 0
     #logger.info("SCALE(INF): " + str(scale))
-    scale_order = np.int8(3*np.sign(scale)*np.int8(scale/3))
+    
+    #scale_order = np.int8(3*np.sign(scale)*np.int8(scale/3))
+    
     fticks = []
     for i in range(nticks):
-        fticks.append('{:{width}.{prec}f}'.format(out[i]/10**scale_order[i],
-                                                  width=3,
-                                                  prec=2-np.mod(np.int8(scale[i]),3)) + _prefix[scale_order[i]])
+        formtick = "%#.3f" % out[i]
+        formtick = '%.2e' % Decimal(formtick)
+        fticks.append(formtick)
+        # fticks.append('{:{width}.{prec}f}'.format(out[i]/10**scale_order[i],
+        #                                           width=3,
+        #                                           prec=2-np.mod(np.int8(scale[i]),3)) + _prefix[scale_order[i]])
+    print("LOG")
+    print(out)
+    print(fticks)
+    print(" ")
     return fticks
 # Tick formatting to mimick D3
 def format_ticks(fmin,fmax,nticks):
@@ -565,15 +591,34 @@ def format_ticks(fmin,fmax,nticks):
 
     out = [t for t in np.arange(fmin,fmax,(fmax-fmin)/(nticks-1))]
     out.append(fmax)
-    scale = np.log10(np.abs(out))   #Ignore Warning.  Run python -W ignore main.py on command prompt
-    scale[np.isinf(scale)] = 0
+    # for item in out:
+    #     #print(np.format_float_scientific(item, precision=2))
+    #     print("Unformatted: ", item)
+    #     item = "%#.3f" % item
+    #     print("Formatted: ", item)
+    #     print("Converted to Float: ", float(item))
+    #     print("Decimal: ", Decimal(item), type(Decimal(item)))
+    #     decitem = Decimal(item)
+    #     print("Science Decimal: ", '%.2E' % decitem)
+    #     #item = np.format_float_positional(float(item), precision=3)
+    #     print(" ")
+    #scale = np.log10(np.abs(out))   #Ignore Warning.  Run python -W ignore main.py on command prompt
+    #scale[np.isinf(scale)] = 0
     #logger.info("SCALE(INF): " + str(scale))
-    scale_order = np.int8(3*np.sign(scale)*np.int8(scale/3))
+    #scale_order = np.int8(3*np.sign(scale)*np.int8(scale/3))
+    
     fticks = []
     for i in range(nticks):
-        fticks.append('{:{width}.{prec}f}'.format(out[i]/10**scale_order[i],
-                                                  width=3,
-                                                  prec=2-np.mod(np.int8(scale[i]),3)) + _prefix[scale_order[i]])
+        formtick = "%#.3f" % out[i]
+        formtick = '%.2e' % Decimal(formtick)
+        fticks.append(formtick)
+        # fticks.append('{:{width}.{prec}f}'.format(formtick/10**scale_order[i],
+        #                                           width=3,
+        #                                           prec=2-np.mod(np.int8(scale[i]),3)) + _prefix[scale_order[i]])
+    print("LINEAR")
+    print(out)
+    print(fticks)
+    print(" ")
     return fticks
 
 def get_cmap():
@@ -640,20 +685,22 @@ def gen_plot(col1,
     #     print(count, item)
     #     count = count + 1
     
-    print("Type of Graph and Binsizes")
-    print(typegraph)
-    print(binsizes)
-
     ax.set_xlabel(column_names[c])
     ax.set_ylabel(column_names[r])
     if typegraph == "linear":
+        print("Data Column: ", c)
         ax.set_xticklabels(format_ticks(bin_stats['min'][column_names[c]],bin_stats['max'][column_names[c]],11),
-                        rotation=45)
-        ax.set_yticklabels(format_ticks(bin_stats['min'][column_names[r]],bin_stats['max'][column_names[r]],11))
+                        rotation=45, fontsize = 5, ha='right')
+        print("Data Column: ", r)
+        ax.set_yticklabels(format_ticks(bin_stats['min'][column_names[r]],bin_stats['max'][column_names[r]],11), 
+                        fontsize = 5, ha='right')
     if typegraph == "log":
-        ax.set_xticklabels(format_ticks_log(0,bincount,11, axiszero, binsizes, alphavals),
-                        rotation=45)
-        ax.set_yticklabels(format_ticks_log(0,bincount,11, axiszero, binsizes, alphavals))
+        print("Data Column: ", c)
+        ax.set_xticklabels(format_ticks_log(0,bincount,11, axiszero[c], binsizes[c], alphavals[c]),
+                        rotation=45, fontsize = 5, ha='right')
+        print("Data Column: ", r)
+        ax.set_yticklabels(format_ticks_log(0,bincount,11, axiszero[r], binsizes[r], alphavals[r]),
+                        fontsize = 5, ha='right')
 
     if len(ax.lines) == 0:
         if axiszero[c] == 0:
@@ -676,20 +723,22 @@ def gen_plot(col1,
         else:
             ax.axhline(y=axiszero[r] + 0.5)
     
-    # textlist = []
-    # if len(ax.texts) == 0:
-    #     for i in range(0, bincount):  
-    #         for j in range(0, bincount):
-    #             textingraph = ax.text(j, i, d[i,j], ha="center", va = "center", fontsize = 2.5)
-    #             textlist.append([i, j])
-    # else:
-    #     for txt in ax.texts:
-    #         pos = str(txt)[5:-1]
-    #         pos = pos.split(",")
-    #         i = int(pos[1])
-    #         j = int(pos[0])
-    #         txt.set_text(d[i,j])
-            # print(txt, type(txt), pos, i, j)
+    textlist = []
+    if len(ax.texts) == 0:
+        for i in range(0, bincount):  
+            for j in range(0, bincount):
+                textingraph = ax.text(j + 0.5, i + 0.5, d[i,j], ha="center", va = "center", fontsize = 2.5)
+                textlist.append([i, j])
+    else:
+        for txt in ax.texts:
+            print(txt, type(txt))
+            pos = str(txt)[5:-1]
+            print(pos)
+            pos = pos.split(",")
+            i = float(pos[1])
+            j = float(pos[0])
+            txt.set_text(d[int(i - 0.5),int(j - 0.5)])
+            print(txt, type(txt), pos, i, j)
 
     fig.canvas.draw()
     hmap = np.array(fig.canvas.renderer.buffer_rgba())
