@@ -43,6 +43,7 @@ The code produces the following outputs.
 --------------------------------------------
 Installing PyTorch for Shared-Memory Systems
 --------------------------------------------
+
 The first step is to install conda as shown below.
 
 .. code:: bash
@@ -52,8 +53,10 @@ The first step is to install conda as shown below.
     ./Miniconda3-latest-Linux-x86_64.sh
     conda create --name PyTorch_Shared Python=3.7.3 flask
     conda activate PyTorch_Shared 
+
     
-Next, PyTorch is installed from the source as follows.
+Next, PyTorch is installed from the source as follows.  
+
                      
  .. code:: bash
 
@@ -67,15 +70,19 @@ Next, PyTorch is installed from the source as follows.
     git submodule update --init --recursive
     export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}              
     python setup.py install >> output.txt 2>&1
+
     
-Now, the python code can be executed as follows. 
+Now, the python code can be executed as follows.   
+
  
  .. code:: bash  
  
     python PCA_SVD_SharedMemory.py --readOption direct --deviceName cpu --applySignFlip true \
      --computeStdev true --inputPath . --outputPath . 
+     
 
 Also, the docker can be run as follows.  
+
  
  .. code:: bash    
  
@@ -114,6 +121,7 @@ The code produces the following outputs.
 -------------------------------------------------
 Installing PyTorch for Distributed-Memory Systems
 -------------------------------------------------
+
 The first step is to install conda as shown below.
 
 .. code:: bash
