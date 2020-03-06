@@ -547,10 +547,10 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
         # fticks.append('{:{width}.{prec}f}'.format(out[i]/10**scale_order[i],
         #                                           width=3,
         #                                           prec=2-np.mod(np.int8(scale[i]),3)) + _prefix[scale_order[i]])
-    print("LOG")
-    print(out)
-    print(fticks)
-    print(" ")
+    # print("LOG")
+    # print(out)
+    # print(fticks)
+    # print(" ")
     return fticks
 # Tick formatting to mimick D3
 def format_ticks(fmin,fmax,nticks):
@@ -615,10 +615,10 @@ def format_ticks(fmin,fmax,nticks):
         # fticks.append('{:{width}.{prec}f}'.format(formtick/10**scale_order[i],
         #                                           width=3,
         #                                           prec=2-np.mod(np.int8(scale[i]),3)) + _prefix[scale_order[i]])
-    print("LINEAR")
-    print(out)
-    print(fticks)
-    print(" ")
+    # print("LINEAR")
+    # print(out)
+    # print(fticks)
+    # print(" ")
     return fticks
 
 def get_cmap():
@@ -675,10 +675,15 @@ def gen_plot(col1,
         c = col2
 
     #print("Row, Column:", r, c)
-    data.set_data(d)
-    data.set_clim(np.min(d),np.max(d)) #color limit
-    #data.set_cmap(cmap)
-
+    data.set_data(np.ceil(d/d.max() *255))
+    data.set_clim(0, 254)
+    #data.set_clim(np.min(d),np.max(d)) #color limit
+    # print("GEN_PLOT")
+    # maxval = d.max()
+    # newscaledata = np.ceil(d/d.max() *255)
+    # print(d)
+    # print(newscaledata)
+    # print(maxval)
     # count = 0 
     # print(column_names[c], column_names[r])
     # for item in d:
@@ -688,17 +693,17 @@ def gen_plot(col1,
     ax.set_xlabel(column_names[c])
     ax.set_ylabel(column_names[r])
     if typegraph == "linear":
-        print("Data Column: ", c)
+        #print("Data Column: ", c)
         ax.set_xticklabels(format_ticks(bin_stats['min'][column_names[c]],bin_stats['max'][column_names[c]],11),
                         rotation=45, fontsize = 5, ha='right')
-        print("Data Column: ", r)
+        #print("Data Column: ", r)
         ax.set_yticklabels(format_ticks(bin_stats['min'][column_names[r]],bin_stats['max'][column_names[r]],11), 
                         fontsize = 5, ha='right')
     if typegraph == "log":
-        print("Data Column: ", c)
+        #print("Data Column: ", c)
         ax.set_xticklabels(format_ticks_log(0,bincount,11, axiszero[c], binsizes[c], alphavals[c]),
                         rotation=45, fontsize = 5, ha='right')
-        print("Data Column: ", r)
+        #print("Data Column: ", r)
         ax.set_yticklabels(format_ticks_log(0,bincount,11, axiszero[r], binsizes[r], alphavals[r]),
                         fontsize = 5, ha='right')
 
@@ -733,12 +738,10 @@ def gen_plot(col1,
         for txt in ax.texts:
             print(txt, type(txt))
             pos = str(txt)[5:-1]
-            print(pos)
             pos = pos.split(",")
             i = float(pos[1])
             j = float(pos[0])
             txt.set_text(d[int(i - 0.5),int(j - 0.5)])
-            print(txt, type(txt), pos, i, j)
 
     fig.canvas.draw()
     hmap = np.array(fig.canvas.renderer.buffer_rgba())
