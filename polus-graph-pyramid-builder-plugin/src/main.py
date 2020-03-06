@@ -9,6 +9,7 @@ import logging
 import sys
 import math
 from decimal import *
+import ctypes 
 
 
 global nfeats
@@ -29,6 +30,22 @@ logging.basicConfig(filename = "logfile", format='%(asctime)s - %(name)s - %(lev
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
+
+def GetTextDimensions(text, points, font):
+    class SIZE(ctypes.Structure):
+        _fields_ = [("cx", ctypes.c_long), ("cy", ctypes.c_long)]
+
+    hdc = ctypes.windll.user32.GetDC(0)
+    hfont = ctypes.windll.gdi32.CreateFontA(points, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, font)
+    hfont_old = ctypes.windll.gdi32.SelectObject(hdc, hfont)
+
+    size = SIZE(0, 0)
+    ctypes.windll.gdi32.GetTextExtentPoint32A(hdc, text, len(text), ctypes.byref(size))
+
+    ctypes.windll.gdi32.SelectObject(hdc, hfont_old)
+    ctypes.windll.gdi32.DeleteObject(hfont)
+
+    return (size.cx, size.cy)
 
 def pos2pos(data, length, commonratio, min, max):
     replacedata = []
@@ -677,21 +694,21 @@ def gen_plot(col1,
     #print("Row, Column:", r, c)
     data.set_data(np.ceil(d/d.max() *255))
     data.set_clim(0, 254)
-    #data.set_clim(np.min(d),np.max(d)) #color limit
-    # print("GEN_PLOT")
-    # maxval = d.max()
-    # newscaledata = np.ceil(d/d.max() *255)
-    # print(d)
-    # print(newscaledata)
-    # print(maxval)
-    # count = 0 
-    # print(column_names[c], column_names[r])
-    # for item in d:
-    #     print(count, item)
-    #     count = count + 1
+
+    # xlabelsize = GetTextDimensions(column_names[c], 5, "Times New Roman")
+    # ylabelsize = GetTextDimensions(column_names[r], 5, "Times New Roman")
+    fontsizelabel = 7
+    xlabelsize = len(column_names[c])
+    ylabelsize = len(column_names[r])
+
+
+    #ax.set_xlabel(column_names[c], wrap = False, fontsize = fontsizelabel, labelpad = 5)
+    #ax.set_ylabel(column_names[r], wrap = False, fontsize = fontsizelabel, labelpad = 5)
+
+    print("DATA SIZES for:", column_names[c], column_names[r])
+    print(str(xlabelsize), str(ylabelsize))
+    print(" ")
     
-    ax.set_xlabel(column_names[c])
-    ax.set_ylabel(column_names[r])
     if typegraph == "linear":
         #print("Data Column: ", c)
         ax.set_xticklabels(format_ticks(bin_stats['min'][column_names[c]],bin_stats['max'][column_names[c]],11),
@@ -728,20 +745,20 @@ def gen_plot(col1,
         else:
             ax.axhline(y=axiszero[r] + 0.5)
     
-    textlist = []
-    if len(ax.texts) == 0:
-        for i in range(0, bincount):  
-            for j in range(0, bincount):
-                textingraph = ax.text(j + 0.5, i + 0.5, d[i,j], ha="center", va = "center", fontsize = 2.5)
-                textlist.append([i, j])
-    else:
-        for txt in ax.texts:
-            print(txt, type(txt))
-            pos = str(txt)[5:-1]
-            pos = pos.split(",")
-            i = float(pos[1])
-            j = float(pos[0])
-            txt.set_text(d[int(i - 0.5),int(j - 0.5)])
+    # textlist = []
+    # if len(ax.texts) == 0:
+    #     for i in range(0, bincount):  
+    #         for j in range(0, bincount):
+    #             textingraph = ax.text(j + 0.5, i + 0.5, d[i,j], ha="center", va = "center", fontsize = 2.5)
+    #             textlist.append([i, j])
+    # else:
+    #     for txt in ax.texts:
+    #         print(txt, type(txt))
+    #         pos = str(txt)[5:-1]
+    #         pos = pos.split(",")
+    #         i = float(pos[1])
+    #         j = float(pos[0])
+    #         txt.set_text(d[int(i - 0.5),int(j - 0.5)])
 
     fig.canvas.draw()
     hmap = np.array(fig.canvas.renderer.buffer_rgba())
@@ -762,6 +779,9 @@ def get_default_fig(cmap):
         data - A reference to the heatmap artist
     """
     fig, ax = plt.subplots(dpi=int(CHUNK_SIZE/4),figsize=(4,4),tight_layout={'h_pad':1,'w_pad':1})
+    #fig, ax = plt.subplots(dpi=int(CHUNK_SIZE/4),figsize=(4,4),constrained_layout = True)
+    #plt.rcParams['figure.constrained_layout.use'] = True
+    #plt.rcParams['figure.figsize'] = 4.5, 4
     #datacolor = ax.pcolorfast(np.zeros((CHUNK_SIZE,CHUNK_SIZE),np.uint64),cmap=cmap)
     datacolor = ax.pcolorfast(np.zeros((bincount, bincount),np.uint64),cmap=cmap)
     ticks = [(t + 0.5) for t in range(0, bincount +1, int(bincount/10))]
