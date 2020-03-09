@@ -705,36 +705,40 @@ def gen_plot(col1,
         axlabel.text(0.5, 0.5, "\n".join(wrap(column_names[c], 60)), va = 'center', ha = 'center', fontsize = sizefont, wrap = True)
         bbxtext = (axlabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
         decreasefont = sizefont - 1
-        while bbxtext.x0 < 0 or bbxtext.x1 > CHUNK_SIZE:
+        while (bbxtext.x0 < 0 or bbxtext.x1 > CHUNK_SIZE) or (bbxtext.y0 < 0 or bbxtext.y1 > CHUNK_SIZE*.075):
             axlabel.texts[0].set_fontsize(decreasefont)
             bbxtext = (axlabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
             decreasefont = decreasefont - 1 
+        print("X Label Size: ", bbxtext)
     else:
         axlabel.texts[0].set_text("\n".join(wrap(column_names[c], 60)))
         axlabel.texts[0].set_fontsize(sizefont)
         bbxtext = (axlabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
         decreasefont = sizefont - 1
-        while bbxtext.x0 < 0 or bbxtext.x1 > CHUNK_SIZE:
+        while (bbxtext.x0 < 0 or bbxtext.x1 > CHUNK_SIZE) or (bbxtext.y0 < 0 or bbxtext.y1 > (CHUNK_SIZE*.075)):
             axlabel.texts[0].set_fontsize(decreasefont)
             bbxtext = (axlabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
             decreasefont = decreasefont - 1 
+        print("X Label Size: ", bbxtext)
     if len(aylabel.texts) == 0:
         aylabel.text(0.5, 0.5, "\n".join(wrap(column_names[r], 60)), va = 'center', ha = 'center', fontsize = sizefont, rotation = 90, wrap = True)
         bbytext = (aylabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
         decreasefont = sizefont - 1
-        while bbytext.y0 < 0 or bbytext.y1 > CHUNK_SIZE:
+        while (bbytext.y0 < 0 or bbytext.y1 > CHUNK_SIZE) or (bbytext.x0 < 0 or bbytext.x1 > (CHUNK_SIZE*.075)):
             aylabel.texts[0].set_fontsize(decreasefont)
             bbytext = (aylabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
             decreasefont = decreasefont - 1 
+        print("X Label Size: ", bbytext)
     else:
         aylabel.texts[0].set_text("\n".join(wrap(column_names[r], 60)))
         aylabel.texts[0].set_fontsize(sizefont)
         bbytext = (aylabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
         decreasefont = sizefont - 1
-        while bbytext.y0 < 0 or bbytext.y1 > CHUNK_SIZE:
+        while (bbytext.y0 < 0 or bbytext.y1 > CHUNK_SIZE) or (bbytext.x0 < 0 or bbytext.x1 > (CHUNK_SIZE*.075)):
             aylabel.texts[0].set_fontsize(decreasefont)
             bbytext = (aylabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
             decreasefont = decreasefont - 1 
+        print("X Label Size: ", bbytext)
     
     if typegraph == "linear":
         #print("Data Column: ", c)
@@ -772,20 +776,20 @@ def gen_plot(col1,
         else:
             ax.axhline(y=axiszero[r] + 0.5)
     
-    # textlist = []
-    # if len(ax.texts) == 0:
-    #     for i in range(0, bincount):  
-    #         for j in range(0, bincount):
-    #             textingraph = ax.text(j + 0.5, i + 0.5, d[i,j], ha="center", va = "center", fontsize = 2.5)
-    #             textlist.append([i, j])
-    # else:
-    #     for txt in ax.texts:
-    #         print(txt, type(txt))
-    #         pos = str(txt)[5:-1]
-    #         pos = pos.split(",")
-    #         i = float(pos[1])
-    #         j = float(pos[0])
-    #         txt.set_text(d[int(i - 0.5),int(j - 0.5)])
+    textlist = []
+    if len(ax.texts) == 0:
+        for i in range(0, bincount):  
+            for j in range(0, bincount):
+                textingraph = ax.text(j + 0.5, i + 0.5, d[i,j], ha="center", va = "center", fontsize = 2.5)
+                textlist.append([i, j])
+    else:
+        for txt in ax.texts:
+            print(txt, type(txt))
+            pos = str(txt)[5:-1]
+            pos = pos.split(",")
+            i = float(pos[1])
+            j = float(pos[0])
+            txt.set_text(d[int(i - 0.5),int(j - 0.5)])
 
     fig.canvas.draw()
     hmap = np.array(fig.canvas.renderer.buffer_rgba())
