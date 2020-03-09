@@ -6,11 +6,12 @@ from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 from pathlib import Path
 import logging                                                                                                                                                            
-import sys
+import sys 
 import math
 from decimal import *
 import ctypes 
-
+from textwrap import wrap
+from sys import getsizeof
 
 global nfeats
 global datalen
@@ -695,19 +696,45 @@ def gen_plot(col1,
     data.set_data(np.ceil(d/d.max() *255))
     data.set_clim(0, 254)
 
-    # xlabelsize = GetTextDimensions(column_names[c], 5, "Times New Roman")
-    # ylabelsize = GetTextDimensions(column_names[r], 5, "Times New Roman")
-    fontsizelabel = 7
-    xlabelsize = len(column_names[c])
-    ylabelsize = len(column_names[r])
 
+    sizefont = 12 
+    axlabel = fig.axes[1]
+    aylabel = fig.axes[2]
 
-    #ax.set_xlabel(column_names[c], wrap = False, fontsize = fontsizelabel, labelpad = 5)
-    #ax.set_ylabel(column_names[r], wrap = False, fontsize = fontsizelabel, labelpad = 5)
-
-    print("DATA SIZES for:", column_names[c], column_names[r])
-    print(str(xlabelsize), str(ylabelsize))
-    print(" ")
+    if len(axlabel.texts) == 0:
+        axlabel.text(0.5, 0.5, "\n".join(wrap(column_names[c], 60)), va = 'center', ha = 'center', fontsize = sizefont, wrap = True)
+        bbxtext = (axlabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
+        decreasefont = sizefont - 1
+        while bbxtext.x0 < 0 or bbxtext.x1 > CHUNK_SIZE:
+            axlabel.texts[0].set_fontsize(decreasefont)
+            bbxtext = (axlabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
+            decreasefont = decreasefont - 1 
+    else:
+        axlabel.texts[0].set_text("\n".join(wrap(column_names[c], 60)))
+        axlabel.texts[0].set_fontsize(sizefont)
+        bbxtext = (axlabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
+        decreasefont = sizefont - 1
+        while bbxtext.x0 < 0 or bbxtext.x1 > CHUNK_SIZE:
+            axlabel.texts[0].set_fontsize(decreasefont)
+            bbxtext = (axlabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
+            decreasefont = decreasefont - 1 
+    if len(aylabel.texts) == 0:
+        aylabel.text(0.5, 0.5, "\n".join(wrap(column_names[r], 60)), va = 'center', ha = 'center', fontsize = sizefont, rotation = 90, wrap = True)
+        bbytext = (aylabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
+        decreasefont = sizefont - 1
+        while bbytext.y0 < 0 or bbytext.y1 > CHUNK_SIZE:
+            aylabel.texts[0].set_fontsize(decreasefont)
+            bbytext = (aylabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
+            decreasefont = decreasefont - 1 
+    else:
+        aylabel.texts[0].set_text("\n".join(wrap(column_names[r], 60)))
+        aylabel.texts[0].set_fontsize(sizefont)
+        bbytext = (aylabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
+        decreasefont = sizefont - 1
+        while bbytext.y0 < 0 or bbytext.y1 > CHUNK_SIZE:
+            aylabel.texts[0].set_fontsize(decreasefont)
+            bbytext = (aylabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
+            decreasefont = decreasefont - 1 
     
     if typegraph == "linear":
         #print("Data Column: ", c)
@@ -790,39 +817,34 @@ def get_default_fig(cmap):
     #ticks = ticks.tolist()
 
     #ticks.append(bincount - 1)
+
+    #leg = ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad = 0)
+
     ax.set_xlim(0,bincount)
     ax.set_ylim(0,bincount)
     ax.set_xticks(ticks)
     ax.set_yticks(ticks)
     ax.set_xlabel(" ")
     ax.set_ylabel(" ")
+    
+
+
     ax.set_xticklabels(ticks, rotation = 45)
     ax.set_yticklabels(ticks)
-    # ax.set_xticklabels(["     ", 
-    #                     "     ",
-    #                     "     ",
-    #                     "     ",
-    #                     "     ",
-    #                     "     ",
-    #                     "     ",
-    #                     "     ",
-    #                     "     ",
-    #                     "     ",
-    #                     "     "],
-    #                 rotation=45)
-    # ax.set_ylabel(" ")
-    # ax.set_yticklabels(["     ",
-    #                     "     ",
-    #                     "     ",
-    #                     "     ",
-    #                     "     ",
-    #                     "     ",
-    #                     "     ",
-    #                     "     ",
-    #                     "     ",
-    #                     "     ",
-    #                     "     "])
+
     fig.canvas.draw()
+
+    axlabel = fig.add_axes([.075, 0, 1, .075], frameon = False, alpha = .5, facecolor = 'b')
+    axlabel.set_xticks([])
+    axlabel.set_yticks([])
+    axlabel.set_clip_on(True)
+    aylabel = fig.add_axes([0, .075, .075, 1], frameon = False, alpha = .5, facecolor = 'b')
+    aylabel.set_xticks([])
+    aylabel.set_yticks([])
+    aylabel.set_clip_on(True)
+    #axlabel.text(0.5, 0.5, '${Needs X Axes Label}$', ha = 'center', va = 'center')
+    #aylabel.text(0.5, 0.5, '${Needs Y Axes Label}$', ha = 'center', va = 'center', rotation = 90)
+    fig.add_axes(axlabel, aylabel)
     return fig, ax, datacolor
 
 """ 3. Pyramid generation functions """
