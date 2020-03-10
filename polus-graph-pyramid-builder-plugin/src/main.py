@@ -8,7 +8,8 @@ from pathlib import Path
 import logging                                                                                                                                                            
 import sys 
 import math
-from decimal import *
+import decimal
+from decimal import Decimal
 import ctypes 
 from textwrap import wrap
 from sys import getsizeof
@@ -27,26 +28,10 @@ bincount = 50 #MUST BE EVEN NUMBER
 DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="' + str(CHUNK_SIZE) + '" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
 
 # Initialize the logger    
-logging.basicConfig(filename = "logfile", format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
-
-def GetTextDimensions(text, points, font):
-    class SIZE(ctypes.Structure):
-        _fields_ = [("cx", ctypes.c_long), ("cy", ctypes.c_long)]
-
-    hdc = ctypes.windll.user32.GetDC(0)
-    hfont = ctypes.windll.gdi32.CreateFontA(points, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, font)
-    hfont_old = ctypes.windll.gdi32.SelectObject(hdc, hfont)
-
-    size = SIZE(0, 0)
-    ctypes.windll.gdi32.GetTextExtentPoint32A(hdc, text, len(text), ctypes.byref(size))
-
-    ctypes.windll.gdi32.SelectObject(hdc, hfont_old)
-    ctypes.windll.gdi32.DeleteObject(hfont)
-
-    return (size.cx, size.cy)
 
 def pos2pos(data, length, commonratio, min, max):
     replacedata = []
@@ -68,10 +53,13 @@ def zero2pos(data, length, commonratio, min, max):
     for val in data:
         if val < min:
             replacedata.append(1.0)
+            # Range = [0, min]
         else:
             log = math.log(val/min, commonratio)
             bin = float(math.floor(log + 2))
             replacedata.append(bin)
+            # Range = [min*(commonratio**(int(replacedata[-1]) - 2)), min*(commonratio**(int(replacedata[-1] -1)))]
+        # val, replacedata[-1], Range = checkrange(val, replacedata[-1], Range, [commonratio], max, min)
     return pandas.Series(np.array(replacedata), index = range(0, length))
 
 def neg2zero(data, length, commonratio, min, max):
@@ -156,12 +144,15 @@ def checkrange(original, transformed, Range, column_bin_sizes, max, min):
     if original >= Range[0] and original <= Range[1]:
         return original, transformed, Range
     else:
-        if original > Range[1]:
+        print("Original, ", original, "is not in Range, ", Range)
+        if original > Range[1] and original - Range[1] > 0:
             transformed = transformed + 1
             diff = original - Range[1]
-        if original < Range[0]:
+            print("\t Adding one bin number, different by:", diff)
+        if original < Range[0] and Range[0] - original > 0:
             transformed = transformed - 1
             diff = original - Range[0]
+            print("\t Subtracting one bin number, different by:", diff)
 
 
         if transformed > 1:
@@ -565,10 +556,10 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
         # fticks.append('{:{width}.{prec}f}'.format(out[i]/10**scale_order[i],
         #                                           width=3,
         #                                           prec=2-np.mod(np.int8(scale[i]),3)) + _prefix[scale_order[i]])
-    # print("LOG")
-    # print(out)
-    # print(fticks)
-    # print(" ")
+    print("LOG")
+    print(out)
+    print(fticks)
+    print(" ")
     return fticks
 # Tick formatting to mimick D3
 def format_ticks(fmin,fmax,nticks):
@@ -626,17 +617,66 @@ def format_ticks(fmin,fmax,nticks):
     #scale_order = np.int8(3*np.sign(scale)*np.int8(scale/3))
     
     fticks = []
+    convertprefix = []
+    decimalmove = " "
     for i in range(nticks):
         formtick = "%#.3f" % out[i]
         formtick = '%.2e' % Decimal(formtick)
+        convertexponent = int(formtick[-3:])
+        
+        if convertexponent > 0:
+            print("MOD BY 3: ", convertexponent % 3)
+            if convertexponent % 3 == 2:
+                decimalmove = "left"
+                print("ORIGINAL: ", convertexponent)
+                print("CHAGNING TO: ", convertexponent + 1)
+                newprefix = _prefix[int(convertexponent + 1)]
+                print("Converting Exponent: ", convertexponent, "to ", newprefix, "and moving decimal point to left")
+            elif convertexponent % 3 == 1:
+                decimalmove = "right"
+                print("ORIGINAL: ", convertexponent)
+                print("CHAGNING TO: ", convertexponent - 1)
+                newprefix = _prefix[int(convertexponent - 1)]
+                print("Converting Exponent: ", convertexponent, "to ", newprefix, "and moving decimal point to right")
+            else:
+                decimalmove = "none"
+                newprefix = _prefix[convertexponent]
+                print("No Conversion, but prefix is", newprefix, "for", convertexponent)
+        elif convertexponent < 0:
+            print("MOD BY -3: ", convertexponent % -3)
+            if convertexponent % -3 == -2:
+                decimalmove = "right"
+                print("ORIGINAL: ", convertexponent)
+                print("CHAGNING TO: ", convertexponent - 1)
+                newprefix = _prefix[int(convertexponent - 1)]
+                print("Converting Exponent: ", convertexponent, "to ", newprefix, "and moving decimal point to right")
+            elif convertexponent % -3 == -1:
+                decimalmove = "left"
+                print("ORIGINAL: ", convertexponent)
+                print("CHAGNING TO: ", convertexponent + 1)
+                newprefix = _prefix[int(convertexponent + 1)]
+                print("Converting Exponent: ", convertexponent, "to ", newprefix, "and moving decimal point to left")
+            else:
+                decimalmove = "none"
+                newprefix = _prefix[convertexponent]
+                print("No Conversion, but prefix is", newprefix, "for", convertexponent)
+                # print("PREFIX: ", newprefix)
+                # newprefix = _prefix[convertexponent]
+                # print("No Conversion, but prefix is", newprefix, "for", convertexponent)
+        else:
+            continue
+        convertprefix.append(convertexponent)
         fticks.append(formtick)
+        print(" ")
+    
         # fticks.append('{:{width}.{prec}f}'.format(formtick/10**scale_order[i],
         #                                           width=3,
         #                                           prec=2-np.mod(np.int8(scale[i]),3)) + _prefix[scale_order[i]])
     # print("LINEAR")
-    # print(out)
-    # print(fticks)
-    # print(" ")
+    # print("VALUE: ", out)
+    # print("LABELED AS: ", fticks)
+    # print("Prefix Value: ", convertprefix)
+    print(" ")
     return fticks
 
 def get_cmap():
@@ -694,7 +734,7 @@ def gen_plot(col1,
 
     #print("Row, Column:", r, c)
     data.set_data(np.ceil(d/d.max() *255))
-    data.set_clim(0, 254)
+    data.set_clim(0, 255)
 
 
     sizefont = 12 
@@ -709,7 +749,7 @@ def gen_plot(col1,
             axlabel.texts[0].set_fontsize(decreasefont)
             bbxtext = (axlabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
             decreasefont = decreasefont - 1 
-        print("X Label Size: ", bbxtext)
+        #print("X Label Size: ", bbxtext)
     else:
         axlabel.texts[0].set_text("\n".join(wrap(column_names[c], 60)))
         axlabel.texts[0].set_fontsize(sizefont)
@@ -719,7 +759,8 @@ def gen_plot(col1,
             axlabel.texts[0].set_fontsize(decreasefont)
             bbxtext = (axlabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
             decreasefont = decreasefont - 1 
-        print("X Label Size: ", bbxtext)
+        #print("X Label Size: ", bbxtext)
+
     if len(aylabel.texts) == 0:
         aylabel.text(0.5, 0.5, "\n".join(wrap(column_names[r], 60)), va = 'center', ha = 'center', fontsize = sizefont, rotation = 90, wrap = True)
         bbytext = (aylabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
@@ -728,7 +769,7 @@ def gen_plot(col1,
             aylabel.texts[0].set_fontsize(decreasefont)
             bbytext = (aylabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
             decreasefont = decreasefont - 1 
-        print("X Label Size: ", bbytext)
+        #print("X Label Size: ", bbytext)
     else:
         aylabel.texts[0].set_text("\n".join(wrap(column_names[r], 60)))
         aylabel.texts[0].set_fontsize(sizefont)
@@ -738,7 +779,7 @@ def gen_plot(col1,
             aylabel.texts[0].set_fontsize(decreasefont)
             bbytext = (aylabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
             decreasefont = decreasefont - 1 
-        print("X Label Size: ", bbytext)
+        #print("X Label Size: ", bbytext)
     
     if typegraph == "linear":
         #print("Data Column: ", c)
@@ -776,20 +817,20 @@ def gen_plot(col1,
         else:
             ax.axhline(y=axiszero[r] + 0.5)
     
-    textlist = []
-    if len(ax.texts) == 0:
-        for i in range(0, bincount):  
-            for j in range(0, bincount):
-                textingraph = ax.text(j + 0.5, i + 0.5, d[i,j], ha="center", va = "center", fontsize = 2.5)
-                textlist.append([i, j])
-    else:
-        for txt in ax.texts:
-            print(txt, type(txt))
-            pos = str(txt)[5:-1]
-            pos = pos.split(",")
-            i = float(pos[1])
-            j = float(pos[0])
-            txt.set_text(d[int(i - 0.5),int(j - 0.5)])
+    # textlist = []
+    # if len(ax.texts) == 0:
+    #     for i in range(0, bincount):  
+    #         for j in range(0, bincount):
+    #             textingraph = ax.text(j + 0.5, i + 0.5, d[i,j], ha="center", va = "center", fontsize = 2.5)
+    #             textlist.append([i, j])
+    # else:
+    #     for txt in ax.texts:
+    #         print(txt, type(txt))
+    #         pos = str(txt)[5:-1]
+    #         pos = pos.split(",")
+    #         i = float(pos[1])
+    #         j = float(pos[0])
+    #         txt.set_text(d[int(i - 0.5),int(j - 0.5)])
 
     fig.canvas.draw()
     hmap = np.array(fig.canvas.renderer.buffer_rgba())
@@ -1217,15 +1258,6 @@ if __name__=="__main__":
         logger.info('Binning data for {} features...'.format(column_names.size))
         yaxis_log, log_bins, log_bin_stats, log_index, log_binsizes, alphavals_log = bin_data_log(data_log, column_names_log)
         yaxis_linear, bins, bin_stats, linear_index, linear_binsizes, alphavals_linear = bin_data(data,column_names)
-
-
-        for i in range(0, len(log_binsizes)):
-            print("Data_", i+1)
-            print("LOG", log_binsizes[i], yaxis_log[i])
-            print("LINEAR", linear_binsizes[i], yaxis_linear[i])
-            print("\ttimes five = ", linear_binsizes[i]*bincount/10)
-            print(" ")
-
 
         logger.info('Done!')
         del data    # get rid of the original data to save memory
