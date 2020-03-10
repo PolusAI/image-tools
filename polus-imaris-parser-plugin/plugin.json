@@ -1,6 +1,6 @@
 {
     "name": "Imaris Parser",
-    "version": "0.2.1",
+    "version": "0.3.2",
     "title": "Imaris Parser",
     "description": "Parses metadata of Imaris files and outputs features in organized csv format.",
     "author": "Melanie Parham (melanie.parham@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-imaris-parser-plugin:0.2.1",
+    "containerId": "labshare/polus-imaris-parser-plugin:0.3.2",
     "inputs": [
       {
         "name": "inpdir",
