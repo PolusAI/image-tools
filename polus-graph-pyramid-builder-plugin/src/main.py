@@ -33,6 +33,35 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
+def neg2pos_ifelse(val, binsizes, length, commonratio, min, max, alpha, smallbins, largebins):
+    if (abs(max) > abs(min) and val > 0) and val < alpha:
+        return 1 + smallbins
+    elif (abs(max) > abs(min) and val > 0) and val == max:
+        return bincount 
+    elif (abs(max) > abs(min) and val > 0) and val >= alpha:
+        return abs(float(math.floor(math.log(val/alpha, binsizes[1]) + 1))) + smallbins
+        
+    elif (abs(max) <= abs(min) and val > 0) and val < alpha:
+        return 1.0 + largebins
+    elif (abs(max) <= abs(min) and val > 0) and val == max:
+        return bincount
+    elif (abs(max) <= abs(min) and val > 0) and val >= alpha:
+        return abs(float(math.floor(math.log(val/alpha, binsizes[0]) + 1))) + largebins 
+
+    elif (abs(max) > abs(min) and val <= 0) and val > (-1*alpha):
+        return -1 + smallbins
+    elif (abs(max) > abs(min) and val <= 0) and val == min:
+        return 0
+    elif (abs(max) > abs(min) and val <= 0) and val >= (-1*alpha):
+        return (-1*float(math.floor((math.log(val/(-1*alpha), binsizes[0])) + 1)))+ smallbins
+
+    elif (abs(max) <= abs(min) and val <= 0) and val > (-1*alpha):
+        return -1.0 + largebins
+    elif (abs(max) <= abs(min) and val <= 0) and val == min:
+        return 0
+    else:
+        return (-1*float(math.floor((math.log(val/(-1*alpha), binsizes[1])) + 1))) + largebins
+    
 def pos2pos(data, length, commonratio, min, max):
     replacedata = []
     for val in data:
@@ -41,37 +70,19 @@ def pos2pos(data, length, commonratio, min, max):
     return pandas.Series(np.array(replacedata), index = range(0, length))
 
 def neg2neg(data, length, commonratio, min, max):
-    replacedata = []
-    for val in data:
-        log = math.log(val/max, commonratio)
-        bin = float(math.floor(log + 1))
-        replacedata.append(-1*bin)
+    # for val in data:
+    #     log = math.log(val/max, commonratio)
+    #     bin = float(math.floor(log + 1))
+    #     replacedata.append(-1*bin)
+    replacedata = [-1*(float(math.floor(math.log(val/max, commonratio) + 1))) for val in data]
     return pandas.Series(np.array(replacedata), index = range(0, length))
 
 def zero2pos(data, length, commonratio, min, max):
-    replacedata = [] 
-    for val in data:
-        if val < min:
-            replacedata.append(1.0)
-            # Range = [0, min]
-        else:
-            log = math.log(val/min, commonratio)
-            bin = float(math.floor(log + 2))
-            replacedata.append(bin)
-            # Range = [min*(commonratio**(int(replacedata[-1]) - 2)), min*(commonratio**(int(replacedata[-1] -1)))]
-        # val, replacedata[-1], Range = checkrange(val, replacedata[-1], Range, [commonratio], max, min)
+    replacedata = [1 if val < min else float(math.floor(math.log(val/min, commonratio) + 2)) for val in data]     
     return pandas.Series(np.array(replacedata), index = range(0, length))
 
 def neg2zero(data, length, commonratio, min, max):
-    replacedata = []
-    for val in data:
-        if val > max:
-            bin = (-1.0) + bincount
-            replacedata.append(bin)  
-        else:
-            log = math.log(val/max, commonratio)
-            bin = float(math.floor(log + 2))
-            replacedata.append((-1*bin) + bincount)
+    replacedata = [-1.0 + bincount if val > max else (-1*(float(math.floor(math.log(val/max, commonratio) + 2)))) + bincount for val in data]
     return pandas.Series(np.array(replacedata), index = range(0, length))
 
 def neg2pos(data, binsizes, length, commonratio, min, max, alpha, smallbins, largebins):
@@ -81,51 +92,43 @@ def neg2pos(data, binsizes, length, commonratio, min, max, alpha, smallbins, lar
     # print("Alpha: ", alpha)
     # print("Commonratio: ", commonratio)
     # print("Binsizes (small, large): ", binsizes)
-    binnumber = 0
+    
     if abs(max) > abs(min):
         yaxis = smallbins
     else:
         yaxis = largebins
+
     for val in data:
-        if val > 0:
-            if abs(max) > abs(min):
-                commonratio = binsizes[1]
-                binnumber = largebins
-            else:
-                commonratio = binsizes[0]
-                binnumber = smallbins 
-            if val < alpha:
-                bin = 1.0
-                replacedata.append(1.0 + yaxis)
-            elif val == max:
-                replacedata.append(binnumber + yaxis)
-            else:
-                log = math.log(val/alpha, commonratio)
-                bin = float(math.floor(log + 1))
-                replacedata.append(abs(bin) + yaxis) 
-                # if abs(max) > abs(min) and replacedata[-1] > largebins:
-                #     print("ERROR POS Large: ", val, replacedata[-1])
-                # if abs(max) < abs(min) and replacedata[-1] > smallbins:
-                #     print("ERROR POS Small: ", val, replacedata[-1])
+
+        if (abs(max) > abs(min) and val > 0) and val < alpha:
+            replacedata.append(1.0 + smallbins)
+        elif (abs(max) > abs(min) and val > 0) and val == max:
+            replacedata.append(bincount)
+        elif (abs(max) > abs(min) and val > 0) and val >= alpha:
+            replacedata.append(abs(float(math.floor(math.log(val/alpha, binsizes[1]) + 1))) + smallbins) 
+        
+        elif (abs(max) <= abs(min) and val > 0) and val < alpha:
+            replacedata.append(1.0 + largebins)
+        elif (abs(max) <= abs(min) and val > 0) and val == max:
+            replacedata.append(bincount)
+        elif (abs(max) <= abs(min) and val > 0) and val >= alpha:
+            replacedata.append(abs(float(math.floor(math.log(val/alpha, binsizes[0]) + 1))) + largebins) 
+
+        elif (abs(max) > abs(min) and val <= 0) and val > (-1*alpha):
+            replacedata.append(-1.0 + smallbins)
+        elif (abs(max) > abs(min) and val <= 0) and val == min:
+            replacedata.append(0)
+        elif (abs(max) > abs(min) and val <= 0) and val >= (-1*alpha):
+            replacedata.append((-1*float(math.floor((math.log(val/(-1*alpha), binsizes[0])) + 1)))+ smallbins)
+
+        elif (abs(max) <= abs(min) and val <= 0) and val > (-1*alpha):
+            replacedata.append(-1.0 + largebins)
+        elif (abs(max) <= abs(min) and val <= 0) and val == min:
+            replacedata.append(0)
         else:
-            if abs(max) > abs(min):
-                commonratio = binsizes[0]
-                binnumber = smallbins
-            else:
-                commonratio = binsizes[1]
-                binnumber = largebins
-            if val > (-1*alpha):
-                replacedata.append(-1.0 + yaxis)
-            elif val == min:
-                replacedata.append((-1*binnumber) + yaxis)
-            else:
-                log = math.log(val/(-1*alpha), commonratio)
-                bin = -1*float(math.floor(log + 1))
-                replacedata.append(bin + yaxis)
-                # if abs(max) > abs(min) and replacedata[-1] > smallbins:
-                #     print("ERROR NEG Large: ", val, replacedata[-1])
-                # if abs(max) < abs(min) and replacedata[-1] > largebins:
-                #     print("ERROR NEG Small: ", val, replacedata[-1])
+            replacedata.append((-1*float(math.floor((math.log(val/(-1*alpha), binsizes[1])) + 1))) + largebins)
+    
+
     return yaxis, pandas.Series(np.array(replacedata), index = range(0, length))  
                  
 
@@ -293,9 +296,6 @@ def bin_data_log(data,column_names):
             column_bin_sizes.append([small_interval, large_interval])        
             yval, data[column_names[i]] = neg2pos(data[column_names[i]], column_bin_sizes[-1], datalen, ratio, bin_stats['min'][i], bin_stats['max'][i], alpha, binssmall, binslarge)
             yaxis.append(yval)
-
-    bin_stats_transformed = {'min': data.min(),
-                             'max': data.max()}
 
     data_ind = pandas.notnull(data)  # Handle NaN values
     data[~data_ind] = bincount + 55          # Handle NaN values
@@ -518,9 +518,6 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
                 21: 'Z',  # zetta
                 24: 'Y',  # yotta
                 }
-
-    # out = [t for t in np.arange(fmin,fmax,(fmax-fmin)/(nticks-1))]
-    # out.append(fmax)
     
     out = [(alphavalue*(commonratio[-1]**(t-yaxis))) if yaxis<t else (-1*(alphavalue*(commonratio[0]**(yaxis-t))) if yaxis>t else 0) for t in np.arange(fmin,fmax,(fmax-fmin)/(nticks-1))]
     if yaxis < fmax:
@@ -529,24 +526,6 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
         out.append(-1*(alphavalue*(commonratio[0]**(yaxis-fmax))))
     else:
         out.append(0)
-
-    # print("LOG TICKS")
-    # for i in range(0, len(out)-1):
-    #     print(out[i])
-    #     t = 0
-    #     if yaxis < out[i]:
-    #         t = alphavalue*(commonratio[-1]**(out[i]-yaxis))
-    #     elif yaxis > out[i]:
-    #         t = alphavalue*(commonratio[0]**(yaxis-out[i]))
-    #         t = -1*t
-    #     else:
-    #         t = 0
-
-    #scale = np.log10(np.abs(out))   #Ignore Warning.  Run python -W ignore main.py on command prompt
-    #scale[np.isinf(scale)] = 0
-    #logger.info("SCALE(INF): " + str(scale))
-    
-    #scale_order = np.int8(3*np.sign(scale)*np.int8(scale/3))
     
     fticks = []
     convertprefix = []
@@ -593,13 +572,7 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
                 formtick = str(decformtick[:4]) + _prefix[convertexponent]
         convertprefix.append(convertexponent)
         fticks.append(formtick)
-        # fticks.append('{:{width}.{prec}f}'.format(out[i]/10**scale_order[i],
-        #                                           width=3,
-        #                                           prec=2-np.mod(np.int8(scale[i]),3)) + _prefix[scale_order[i]])
-    # print("LOG")
-    # print(out)
-    # print(fticks)
-    # print(" ")
+
     return fticks
 # Tick formatting to mimick D3
 def format_ticks(fmin,fmax,nticks):
@@ -640,22 +613,7 @@ def format_ticks(fmin,fmax,nticks):
 
     out = [t for t in np.arange(fmin,fmax,(fmax-fmin)/(nticks-1))]
     out.append(fmax)
-    # for item in out:
-    #     #print(np.format_float_scientific(item, precision=2))
-    #     print("Unformatted: ", item)
-    #     item = "%#.3f" % item
-    #     print("Formatted: ", item)
-    #     print("Converted to Float: ", float(item))
-    #     print("Decimal: ", Decimal(item), type(Decimal(item)))
-    #     decitem = Decimal(item)
-    #     print("Science Decimal: ", '%.2E' % decitem)
-    #     #item = np.format_float_positional(float(item), precision=3)
-    #     print(" ")
-    #scale = np.log10(np.abs(out))   #Ignore Warning.  Run python -W ignore main.py on command prompt
-    #scale[np.isinf(scale)] = 0
-    #logger.info("SCALE(INF): " + str(scale))
-    #scale_order = np.int8(3*np.sign(scale)*np.int8(scale/3))
-    
+
     fticks = []
     convertprefix = []
     for i in range(nticks):
@@ -701,13 +659,7 @@ def format_ticks(fmin,fmax,nticks):
                 formtick = str(decformtick[:4]) + _prefix[convertexponent]
         convertprefix.append(convertexponent)
         fticks.append(formtick)
-        # fticks.append('{:{width}.{prec}f}'.format(formtick/10**scale_order[i],
-        #                                           width=3,
-        #                                           prec=2-np.mod(np.int8(scale[i]),3)) + _prefix[scale_order[i]])
-    # print("LINEAR")
-    # print("VALUE: ", out)
-    # print("LABELED AS: ", fticks)
-    # print("Prefix Value: ", convertprefix)
+
     return fticks
 
 def get_cmap():
