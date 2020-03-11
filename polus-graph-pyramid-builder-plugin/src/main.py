@@ -549,17 +549,57 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
     #scale_order = np.int8(3*np.sign(scale)*np.int8(scale/3))
     
     fticks = []
+    convertprefix = []
     for i in range(nticks):
         formtick = "%#.3f" % out[i]
-        formtick = '%.2e' % Decimal(formtick)
+        decformtick = '%.2e' % Decimal(formtick)
+        print(i, ")", formtick, decformtick)
+        convertexponent = int(decformtick[-3:])
+        numbers = float(decformtick[:-4])
+        if convertexponent > 0:
+            if convertexponent % 3 == 2:
+                movednum = round(numbers/10,2)
+                newprefix = _prefix[int(convertexponent + 1)]
+                formtick = str(movednum) + newprefix
+            elif convertexponent % 3 == 1:
+                movednum = round(numbers*10,1)
+                newprefix = _prefix[int(convertexponent - 1)]
+                formtick = str(movednum) + newprefix
+            else:
+                newprefix = _prefix[convertexponent]
+                if out[i] < 0:
+                    formtick = str(decformtick[:5]) + newprefix
+                else: 
+                    formtick = str(decformtick[:4]) + newprefix
+        elif convertexponent < 0:
+            if convertexponent % -3 == -2:
+                movednum = round(numbers*10,1)
+                newprefix = _prefix[int(convertexponent - 1)]
+                formtick = str(movednum) + newprefix
+            elif convertexponent % -3 == -1:
+                movednum = round(numbers/10,2)
+                newprefix = _prefix[int(convertexponent + 1)]
+                formtick = str(movednum) + newprefix
+            else:
+                newprefix = _prefix[convertexponent]
+                if out[i] < 0:
+                    formtick = str(decformtick[:5]) + newprefix
+                else: 
+                    formtick = str(decformtick[:4]) + newprefix
+        else:
+            if out[i] < 0:
+                formtick = str(decformtick[:5]) + _prefix[convertexponent]
+            else: 
+                formtick = str(decformtick[:4]) + _prefix[convertexponent]
+        convertprefix.append(convertexponent)
         fticks.append(formtick)
         # fticks.append('{:{width}.{prec}f}'.format(out[i]/10**scale_order[i],
         #                                           width=3,
         #                                           prec=2-np.mod(np.int8(scale[i]),3)) + _prefix[scale_order[i]])
-    print("LOG")
-    print(out)
-    print(fticks)
-    print(" ")
+    # print("LOG")
+    # print(out)
+    # print(fticks)
+    # print(" ")
     return fticks
 # Tick formatting to mimick D3
 def format_ticks(fmin,fmax,nticks):
@@ -618,57 +658,49 @@ def format_ticks(fmin,fmax,nticks):
     
     fticks = []
     convertprefix = []
-    decimalmove = " "
     for i in range(nticks):
         formtick = "%#.3f" % out[i]
-        formtick = '%.2e' % Decimal(formtick)
-        convertexponent = int(formtick[-3:])
-        
+        decformtick = '%.2e' % Decimal(formtick)
+        print(i, ")", formtick, decformtick)
+        convertexponent = int(decformtick[-3:])
+        numbers = float(decformtick[:-4])
         if convertexponent > 0:
-            print("MOD BY 3: ", convertexponent % 3)
             if convertexponent % 3 == 2:
-                decimalmove = "left"
-                print("ORIGINAL: ", convertexponent)
-                print("CHAGNING TO: ", convertexponent + 1)
+                movednum = round(numbers/10,2)
                 newprefix = _prefix[int(convertexponent + 1)]
-                print("Converting Exponent: ", convertexponent, "to ", newprefix, "and moving decimal point to left")
+                formtick = str(movednum) + newprefix
             elif convertexponent % 3 == 1:
-                decimalmove = "right"
-                print("ORIGINAL: ", convertexponent)
-                print("CHAGNING TO: ", convertexponent - 1)
+                movednum = round(numbers*10,1)
                 newprefix = _prefix[int(convertexponent - 1)]
-                print("Converting Exponent: ", convertexponent, "to ", newprefix, "and moving decimal point to right")
+                formtick = str(movednum) + newprefix
             else:
-                decimalmove = "none"
                 newprefix = _prefix[convertexponent]
-                print("No Conversion, but prefix is", newprefix, "for", convertexponent)
+                if out[i] < 0:
+                    formtick = str(decformtick[:5]) + newprefix
+                else: 
+                    formtick = str(decformtick[:4]) + newprefix
         elif convertexponent < 0:
-            print("MOD BY -3: ", convertexponent % -3)
             if convertexponent % -3 == -2:
-                decimalmove = "right"
-                print("ORIGINAL: ", convertexponent)
-                print("CHAGNING TO: ", convertexponent - 1)
+                movednum = round(numbers*10,1)
                 newprefix = _prefix[int(convertexponent - 1)]
-                print("Converting Exponent: ", convertexponent, "to ", newprefix, "and moving decimal point to right")
+                formtick = str(movednum) + newprefix
             elif convertexponent % -3 == -1:
-                decimalmove = "left"
-                print("ORIGINAL: ", convertexponent)
-                print("CHAGNING TO: ", convertexponent + 1)
+                movednum = round(numbers/10,2)
                 newprefix = _prefix[int(convertexponent + 1)]
-                print("Converting Exponent: ", convertexponent, "to ", newprefix, "and moving decimal point to left")
+                formtick = str(movednum) + newprefix
             else:
-                decimalmove = "none"
                 newprefix = _prefix[convertexponent]
-                print("No Conversion, but prefix is", newprefix, "for", convertexponent)
-                # print("PREFIX: ", newprefix)
-                # newprefix = _prefix[convertexponent]
-                # print("No Conversion, but prefix is", newprefix, "for", convertexponent)
+                if out[i] < 0:
+                    formtick = str(decformtick[:5]) + newprefix
+                else: 
+                    formtick = str(decformtick[:4]) + newprefix
         else:
-            continue
+            if out[i] < 0:
+                formtick = str(decformtick[:5]) + _prefix[convertexponent]
+            else: 
+                formtick = str(decformtick[:4]) + _prefix[convertexponent]
         convertprefix.append(convertexponent)
         fticks.append(formtick)
-        print(" ")
-    
         # fticks.append('{:{width}.{prec}f}'.format(formtick/10**scale_order[i],
         #                                           width=3,
         #                                           prec=2-np.mod(np.int8(scale[i]),3)) + _prefix[scale_order[i]])
@@ -676,7 +708,6 @@ def format_ticks(fmin,fmax,nticks):
     # print("VALUE: ", out)
     # print("LABELED AS: ", fticks)
     # print("Prefix Value: ", convertprefix)
-    print(" ")
     return fticks
 
 def get_cmap():
