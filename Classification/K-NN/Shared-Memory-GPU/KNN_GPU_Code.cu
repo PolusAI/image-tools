@@ -1,8 +1,9 @@
 /**
  * This code is an implementation of the algorithm presented by Dong et al., 2012,
- *"Efficient K-Nearest Neighbor Graph Construction for Generic Similarity Measures"  
+ *"Efficient K-Nearest Neighbor Graph Construction for Generic Similarity Measures" 
+ * and the performance has been improved by CUDA (GPU) directives.
  * @author:   Mahdi Maghrebi <mahdi.maghrebi@nih.gov>
- * August 2019
+ * March 2020
  */
 
 #include <vector>
@@ -13,9 +14,71 @@
 #include <fstream>
 #include <float.h>
 #include <boost/filesystem.hpp> 
-#include <omp.h>
+#include <curand.h>
+#include <curand_kernel.h>
+#include <algorithm>
 
 using namespace std;
+
+/**
+ * The Max number of Threads per Block. This is one of GPU hardware characteristics.
+ */
+#define MAXTPB 1024
+
+/**
+ * The Minimum number of computations that is needed to switch to GPU device (Otherwise stay in host)
+ */
+#define MinimumThreads 10
+
+/**
+ * Error handling for GPU Code
+ */
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+	if (code != cudaSuccess)
+	{
+		fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+		if (abort) exit(code);
+	}
+}
+
+/**
+ * GPU Kernel definition
+ */
+__global__ void ComputeDistancesKernel(int * device_New_Final_List_1D, int * device_New_Final_List_Index, int Dim, double * device_New_Final_List_Dist_1D, double * device_dataPointsGPU, int * device_New_Final_List_Dist_Index){
+
+	int localDim=Dim;
+	double localvalue=0;
+	int Cnts=device_New_Final_List_Index[blockIdx.x+1]-device_New_Final_List_Index[blockIdx.x];
+	int Cnts_Dist=device_New_Final_List_Dist_Index[blockIdx.x+1]-device_New_Final_List_Dist_Index[blockIdx.x];	
+	int par1, par2;
+	int cnt=0;
+	int flag=0;
+
+	if (threadIdx.x < Cnts_Dist){
+		for (int i=0; i < Cnts; ++i){
+			if (flag ==1) break;
+			for (int j=i+1; j < Cnts; ++j){
+				if (threadIdx.x == cnt) {
+					par1 = device_New_Final_List_1D[i + device_New_Final_List_Index[blockIdx.x]];
+					par2 = device_New_Final_List_1D[j + device_New_Final_List_Index[blockIdx.x]]; 
+					flag=1;
+					break;         
+				}
+				++cnt;
+			}
+		}
+
+		for (int i=0; i<localDim; ++i){
+			localvalue += pow((device_dataPointsGPU[par1*localDim+i] - device_dataPointsGPU[par2*localDim+i]), 2);
+		}	
+
+		int IndexIDWrite= device_New_Final_List_Dist_Index[blockIdx.x]+threadIdx.x;
+		device_New_Final_List_Dist_1D[IndexIDWrite] = localvalue;	
+	}
+	return;
+}												
 
 /**
  * Read the output of linux command execution 
@@ -34,6 +97,62 @@ std::string exec(const char* cmd) {
 	}
 	return result;
 }
+
+/**
+ * Replace the farthest point in B_Index (for u1) with u2 if u2 is closer
+ * <p>
+ * This method corresponds to UPDATENN(B[u1],<u2,l,true>) in the paper
+ * </p>
+ * @param  Dist  represents B_Dist
+ * @param  Index represents B_Index
+ * @param  IsNew represents B_IsNew
+ * @param  u1    the indice of point that we want to potentially update its K-NN with the point u2
+ * @param  u2    the indice of potential K-NN fpr point u1
+ * @param  distance the spatial distance between u1 and u2
+ * @param  flag updates B_IsNew
+ * @return 1 if B_Index[u1][.] is updated, 0 otherwise
+ */
+int UpdateNN (int** B_Index, double ** B_Dist, short** B_IsNew, short* allEntriesFilled, int K, int u1, int u2, double distance, int flag = 1) {
+
+	if(allEntriesFilled[u1]==0){		
+		for (int j = 0; j < K; j++) {	
+			if (B_Dist[u1][j] < 0) {
+
+				for (int jj = 0; jj < j; jj++) {if (B_Index[u1][jj] == u2) return 0;}
+
+				B_Dist[u1][j] = distance;
+				B_Index[u1][j] = u2;
+				B_IsNew[u1][j] = flag;
+				if (j==K-1) allEntriesFilled[u1]=1;
+				return 1;}
+		}
+	}
+
+	else{
+		for (int j = 0; j < K; j++) {
+			if (B_Index[u1][j] == u2) return 0;
+		}
+
+		double max = DBL_MIN;
+		int index = -1;
+		for (int j = 0; j < K; j++) {
+			if (B_Dist[u1][j] > max) {
+				max = B_Dist[u1][j];
+				index = j;
+			}
+		}
+		if (index == -1) { cout << "Error"<<endl; } 
+		if (distance < max) {
+			B_Dist[u1][index] = distance;
+			B_Index[u1][index] = u2;
+			B_IsNew[u1][index] = flag;
+			return 1;
+		}
+		else { return 0; }
+	}
+	return 0;  
+}
+
 
 int main(int argc, char * const argv[]) {
 	/**
@@ -164,19 +283,14 @@ int main(int argc, char * const argv[]) {
 
 	logFile<<"The input csv file contains "<<N<<" rows of raw data with "<< Dim<< " columns(features)"<<endl; 
 	cout<<"The input csv file contains "<<N<<" rows of raw data with "<< Dim<< " columns(features)"<<endl; 
-	
-	int threadCounts;
-	#pragma omp parallel
-    {
-	threadCounts=omp_get_num_threads(); 
-	}
-	cout <<"Total Number of Processes in the Parallel Region = "<< threadCounts <<endl;
-	
+
 	/**
 	 * A 2D Array containing the entire input dataset (read from filePath).
 	 */
 	double** dataPoints = new double*[N];
 	for (int i = 0; i < N; ++i) { dataPoints[i] = new double[Dim]; }
+
+	double* dataPointsGPU = new double[N*Dim];
 	/**
 	 * indices of K-NN for all the points in dataset
 	 */
@@ -239,7 +353,9 @@ int main(int argc, char * const argv[]) {
 			getline(infile, temp);
 			for (int j = 0; j < Dim; ++j) {
 				temp2 = temp.substr(0, temp.find(","));
-				dataPoints[i][j] = atof(temp2.c_str());
+				double tempV=atof(temp2.c_str());
+				dataPoints[i][j] = tempV;
+				dataPointsGPU[i*Dim+j] = tempV;
 				temp.erase(0, temp.find(",") + 1);
 			}
 		}
@@ -249,7 +365,11 @@ int main(int argc, char * const argv[]) {
 			getline(infile, temp);
 			for (int j = 0; j < Dim; ++j) {
 				temp2 = temp.substr(0, temp.find(","));
-				if (j >= colIndex1-1 && j < colIndex2) dataPoints[i][j] = atof(temp2.c_str());
+				if (j >= colIndex1-1 && j < colIndex2) {
+				double tempV=atof(temp2.c_str());
+				dataPoints[i][j] = tempV;
+				dataPointsGPU[i*Dim+j] = tempV;
+				}
 				temp.erase(0, temp.find(",") + 1);
 			}
 		}	
@@ -262,6 +382,17 @@ int main(int argc, char * const argv[]) {
 		cout << "Error in Computing the Dimension of input csv file" << endl;
 		return 1;	
 	}
+	/**
+	 * Copy the GPU version of input data (dataPointsGPU) to GPU memory (device_dataPointsGPU)
+	 */
+	cudaStream_t stream;
+	cudaStreamCreate(&stream);
+
+	double * device_dataPointsGPU;
+	cudaMalloc ((void **) &device_dataPointsGPU, N*Dim*sizeof(double));            
+	cudaMemcpyAsync (device_dataPointsGPU, dataPointsGPU, N*Dim*sizeof(double),cudaMemcpyHostToDevice, stream); 	
+	gpuErrchk(cudaPeekAtLastError());	
+
 	/**
 	 * define a seed for random generator. Using a constant value produces
 	 * the same set of random numbers and is good for debugging. Alternatively,
@@ -294,64 +425,14 @@ int main(int argc, char * const argv[]) {
 			}
 		}
 	}
-	/**
-	 * Replace the farthest point in B_Index (for u1) with u2 if u2 is closer
-	 * <p>
-	 * This method corresponds to UPDATENN(B[u1],<u2,l,true>) in the paper
-	 * </p>
-	 * @param  Dist  represents B_Dist
-	 * @param  Index represents B_Index
-	 * @param  IsNew represents B_IsNew
-	 * @param  u1    the indice of point that we want to potentially update its K-NN with the point u2
-	 * @param  u2    the indice of potential K-NN fpr point u1
-	 * @param  distance the spatial distance between u1 and u2
-	 * @param  flag updates B_IsNew
-	 * @return 1 if B_Index[u1][.] is updated, 0 otherwise
-	 */
-	auto UpdateNN = [&](int u1, int u2, double distance, int flag = 1) {
 
-		if(allEntriesFilled[u1]==0){		
-			for (int j = 0; j < K; j++) {	
-				if (B_Dist[u1][j] < 0) {
-
-					for (int jj = 0; jj < j; jj++) {if (B_Index[u1][jj] == u2) return 0;}
-
-					B_Dist[u1][j] = distance;
-					B_Index[u1][j] = u2;
-					B_IsNew[u1][j] = flag;
-					if (j==K-1) allEntriesFilled[u1]=1;
-					return 1;}
-			}
-		}
-
-		else{
-			for (int j = 0; j < K; j++) {
-				if (B_Index[u1][j] == u2) return 0;
-			}
-
-			double max = DBL_MIN;
-			int index = -1;
-			for (int j = 0; j < K; j++) {
-				if (B_Dist[u1][j] > max) {
-					max = B_Dist[u1][j];
-					index = j;
-				}
-			}
-			if (index == -1) { cout << "Error"; } 
-			if (distance < max) {
-				B_Dist[u1][index] = distance;
-				B_Index[u1][index] = u2;
-				B_IsNew[u1][index] = flag;
-				return 1;
-			}
-			else { return 0; }
-		}
-	};
 	/**
 	 * Main Loop of the Algorithm
 	 */
 	bool iterate = true;
 	while (iterate) {
+		int c_criteria = 0;
+		int abort=0;
 		/**
 		 * Create "New" for each Datapoint
 		 */
@@ -395,42 +476,195 @@ int main(int argc, char * const argv[]) {
 			}
 		}
 		/**
-		 * c=c+UPDATENN(B[u1],<u2,l,true>)
+		 * Remove duplicates from New_Final_List
 		 */
-		int c_criteria = 0;
-		int abort=0;
+		for (int i = 0; i < N; ++i) {	
+			sort(New_Final_List[i].begin(), New_Final_List[i].end());
+			auto last = std::unique(New_Final_List[i].begin(), New_Final_List[i].end());
+			New_Final_List[i].erase(last, New_Final_List[i].end());
+		}
 
-		for (int i = 0; i < N; ++i) {
-			if (abort != 0) break;
+		/**
+		 * Max_New_Final_List_Length is the maximum length of New_Final_List array
+		 */
+		int Max_New_Final_List_Length=0;
 
-            #pragma omp parallel for schedule(dynamic) 
-			for (int it = 0; it < New_Final_List[i].size(); ++it) {
-				int par1= New_Final_List[i][it];
-                
-				for (int it2 = it+1; it2 < New_Final_List[i].size(); ++it2) {
-					int par2= New_Final_List[i][it2];
-					if (par1 != par2 && abort ==0) {
+		for (int i = 0; i < N; ++i) {       
+			if (New_Final_List[i].size()> Max_New_Final_List_Length) Max_New_Final_List_Length=New_Final_List[i].size();
+		}
+		/**
+		 * ThreadsPerBlockNeeded is the required number of threads per block to compute the longest array of New_Final_List
+		 */
+		int ThreadsPerBlockNeeded=0;	
+		for (int i = 0; i < Max_New_Final_List_Length; ++i) {              
+			for (int j = i+1; j < Max_New_Final_List_Length; ++j) {				        
+				++ThreadsPerBlockNeeded;	
+			}
+		}
 
-						double dist = 0;
-						for (int j = 0; j < Dim; ++j) {
-							dist += pow((dataPoints[par1][j] - dataPoints[par2][j]), 2);
+		/**
+		 * Switch to GPU computations if the following conditions met. Otherwise proceed to CPU computations. 
+		 */		 
+		if (ThreadsPerBlockNeeded < MAXTPB  && ThreadsPerBlockNeeded > MinimumThreads) { 
+			/**
+			 * TotalCounts is the total number of elements in New_Final_List
+			 */		
+			int TotalCounts=0;		
+			for (int i = 0; i < N; ++i) {       
+				TotalCounts += New_Final_List[i].size();
+			}	
+			/**
+			 * New_Final_List_1D is the 1D representation of New_Final_List for transferring to GPU
+			 */										
+			int * New_Final_List_1D = new int [TotalCounts]; 
+			int cnt=0;
+
+			for (int i = 0; i < N; ++i) {
+				for (int j = 0; j < New_Final_List[i].size(); ++j) {	
+					New_Final_List_1D[cnt] = New_Final_List[i][j];
+					++cnt;
+				}
+			}	
+			/**
+			 * device_New_Final_List_1D is on the GPU memory and contains New_Final_List_1D
+			 */	
+			int *device_New_Final_List_1D;	
+			cudaMalloc ((void **) &device_New_Final_List_1D, TotalCounts*sizeof(int)); 
+			gpuErrchk(cudaMemcpy (device_New_Final_List_1D, New_Final_List_1D, TotalCounts* sizeof(int),cudaMemcpyHostToDevice)); 
+			/**
+			 * New_Final_List_Index is the index of New_Final_List[i] data. It is needed as New_Final_List has variable size in each row of data.
+			 */									 
+			int * New_Final_List_Index = new int [N+1];
+			New_Final_List_Index[0] = 0;
+			for (int i = 1; i < N+1; ++i) {	
+				New_Final_List_Index[i] = New_Final_List[i-1].size()+New_Final_List_Index[i-1];
+			}
+			/**
+			 * device_New_Final_List_Index is on the GPU memory and contains New_Final_List_Index
+			 */	
+			int *device_New_Final_List_Index;		
+			cudaMalloc ((void **) &device_New_Final_List_Index, (N+1)*sizeof(int)); 
+			gpuErrchk(cudaMemcpy (device_New_Final_List_Index, New_Final_List_Index, (N+1)* sizeof(int),cudaMemcpyHostToDevice));
+			/**
+			 * New_Final_List_Dist_Index is the index of pairs of distances computed in GPU. 
+			 */							     	       	
+			int * New_Final_List_Dist_Index = new int [N+1];         
+			int TotalCounts_Dist=0;
+
+			for (int i = 0; i < N; ++i) {
+				New_Final_List_Dist_Index[i]=TotalCounts_Dist;
+				for (int j = 0; j < New_Final_List[i].size(); ++j) {	
+					for (int k = j+1; k < New_Final_List[i].size(); ++k) {	
+						++TotalCounts_Dist;
+					}
+				}				
+			}
+			New_Final_List_Dist_Index[N]=TotalCounts_Dist;
+			/**
+			 * device_New_Final_List_Dist_Index is on the GPU memory and contains New_Final_List_Dist_Index
+			 */	
+			int * device_New_Final_List_Dist_Index;	            
+			cudaMalloc ((void **) &device_New_Final_List_Dist_Index, (N+1)*sizeof(int)); 		                
+			gpuErrchk(cudaMemcpy (device_New_Final_List_Dist_Index, New_Final_List_Dist_Index, (N+1) * sizeof(int),cudaMemcpyHostToDevice));
+			/**
+			 * device_New_Final_List_Dist_1D is on the GPU memory and contains 1D array of pairs of distances computed in GPU.
+			 */						        
+			double *device_New_Final_List_Dist_1D;  
+			cudaMalloc ((void **) &device_New_Final_List_Dist_1D, TotalCounts_Dist*sizeof(double)); 
+			/**
+			 * Launch the Kernel to compute the distance computations for all pairs of the points.
+			 * cudaDeviceSynchronize is required to ensure data transfer to GPU memory is already finished.
+			 */				        
+			gpuErrchk(cudaDeviceSynchronize());	
+
+			logFile<< "Number of Blocks = "<<N<< " and Number of Threads Per Block = "<<ThreadsPerBlockNeeded<<endl;
+			cout<< "Number of Blocks = "<<N<< " and Number of Threads Per Block = "<<ThreadsPerBlockNeeded<<endl;
+
+			ComputeDistancesKernel<<<N, ThreadsPerBlockNeeded>>>(device_New_Final_List_1D,device_New_Final_List_Index, Dim,device_New_Final_List_Dist_1D, device_dataPointsGPU,device_New_Final_List_Dist_Index);
+			gpuErrchk(cudaDeviceSynchronize());	
+			/**
+			 * New_Final_List_Dist_1D is on the host containing device_New_Final_List_Dist_1D
+			 */				
+			double * New_Final_List_Dist_1D = new double [TotalCounts_Dist]; 
+			gpuErrchk(cudaMemcpy (New_Final_List_Dist_1D, device_New_Final_List_Dist_1D, TotalCounts_Dist* sizeof(double),cudaMemcpyDeviceToHost)); 
+
+			/**
+			 * Now that we have computed all the distance pairs on GPU, we update the appropriate arrays on host 
+			 * c=c+UPDATENN(B[u1],<u2,l,true>)
+			 */
+
+			for (int i = 0; i < N; ++i) {
+				if (abort != 0) break;
+				int tmpcnt=0;
+
+				for (int it = 0; it < New_Final_List[i].size(); ++it) {
+					int par1= New_Final_List[i][it];
+
+					for (int it2 = it+1; it2 < New_Final_List[i].size(); ++it2) {
+						int par2= New_Final_List[i][it2];
+
+						if (abort ==0) {
+							double dist= New_Final_List_Dist_1D[New_Final_List_Dist_Index[i]+tmpcnt];
+							double dista = sqrt(dist);
+							++tmpcnt;
+
+							if (dista < epsilon) {
+								logFile << "Found Duplicate Data for Points "<< par1 << " and " << par2 <<endl;; 
+								cout << "Found Duplicate Data for Points "<< par1 << " and " << par2 <<endl; 
+								abort=1; iterate = false; 
+							}
+
+							c_criteria += UpdateNN(B_Index, B_Dist, B_IsNew, allEntriesFilled, K, par1, par2, dista, 1);
+							c_criteria += UpdateNN(B_Index, B_Dist, B_IsNew, allEntriesFilled, K, par2, par1, dista, 1);
+
 						}
-						double dista = sqrt(dist);
-						if (dista < epsilon) {
-							logFile << "Found Duplicate Data for Points "<< par1 << " and " << par2 <<endl;; 
-							cout << "Found Duplicate Data for Points "<< par1 << " and " << par2 <<endl; 
-							abort=1;
-							iterate = false; 
-						}
-                        #pragma omp critical
-						{
-							c_criteria += UpdateNN(par1, par2, dista, 1);
-							c_criteria += UpdateNN(par2, par1, dista, 1);
+					}
+				}
+			}
+
+		/**
+			 * Free the pointers' memory allocations on host and device
+			 */
+			 
+			cudaFree(device_New_Final_List_1D); 		   
+			cudaFree(device_New_Final_List_Index);
+			cudaFree(device_New_Final_List_Dist_Index);			
+			cudaFree(device_New_Final_List_Dist_1D);
+
+			delete [] New_Final_List_Dist_1D, New_Final_List_Index, New_Final_List_Dist_Index;
+			delete[]  New_Final_List_1D;
+
+		} else {
+			for (int i = 0; i < N; ++i) {
+				if (abort != 0) break;
+
+				for (int it = 0; it < New_Final_List[i].size(); ++it) {
+					int par1= New_Final_List[i][it];
+
+					for (int it2 = it+1; it2 < New_Final_List[i].size(); ++it2) {
+						int par2= New_Final_List[i][it2];
+						if (abort ==0) {
+
+							double dist = 0;
+							for (int j = 0; j < Dim; ++j) {
+								dist += pow((dataPoints[par1][j] - dataPoints[par2][j]), 2);
+							}
+
+							double dista = sqrt(dist);
+
+							if (dista < epsilon) {
+								logFile << "Found Duplicate Data for Points "<< par1 << " and " << par2 <<endl;; 
+								cout << "Found Duplicate Data for Points "<< par1 << " and " << par2 <<endl; 
+								abort=1;iterate = false; 
+							}						
+							c_criteria += UpdateNN(B_Index, B_Dist, B_IsNew, allEntriesFilled, K, par1, par2, dista, 1);
+							c_criteria += UpdateNN(B_Index, B_Dist, B_IsNew, allEntriesFilled, K, par2, par1, dista, 1);
 						}
 					}
 				}
 			}
 		}
+
 		logFile << "c_criteria = " << c_criteria << " With Threshold Convergence of " << convThreshold << endl;
 		cout << "c_criteria = " << c_criteria << " With Threshold Convergence of " << convThreshold << endl;
 		if (c_criteria < convThreshold) { iterate = false; }
@@ -444,6 +678,9 @@ int main(int argc, char * const argv[]) {
 			New_Final_List[i].clear();
 		}
 	}
+
+	cudaFree(device_dataPointsGPU);
+
 	/**
 	 * Sort and output the results
 	 */
@@ -480,5 +717,3 @@ int main(int argc, char * const argv[]) {
 
 	return 0;
 }
-
-
