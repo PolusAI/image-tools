@@ -1,8 +1,7 @@
 # Feature Extraction
 
-This WIPP plugin does things, some of which involve math and science. There is likely a lot of handwaving involved when describing how it works, but handwaving should be replaced with a good description. However, someone forgot to edit the README, so handwaving will have to do for now. Contact [Jayapriya Nagarajan](mailto:jayapriya.nagarajan@labshare.org) for more information.
-
-Available features:
+The feature extraction plugin extracts shape and intensity based features from images and outputs csv file.The input image should be in OME tiled tiff format.
+These are the features that can be extracted from this plugin:
    1. Area
    2. Perimeter
    3. Orientation
@@ -47,12 +46,11 @@ This plugin takes one input argument and one output argument:
 
 | Name                   | Description             | I/O    | Type   |
 |------------------------|-------------------------|--------|--------|
-| `--angleDegree` | Angle degree to calculate feret diameter | Input | integer |
-| `--boxSize` | Boxsize to calculate feret diameter | Input | integer |
 | `--intDir` | Intensity image collection| Input | collection |
 | `--pixelDistance` | Pixel distance to calculate the neighbors touching cells | Input | integer |
 | `--segDir` | Segment image collection | Input | collection |
 | `--features` | Select intensity and shape features required | Input | array |
-| `--csvfile` | Save csv file as one csv file for all images or separate csv file for each image | Input | array |
+| `--csvfile` | Save csv file as one csv file for all images or separate csv file for each image | Input | boolean |
 | `--outDir` | Output collection | Output | collection |
+
 

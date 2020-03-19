@@ -7,7 +7,6 @@ Created on Thu Dec 12 20:42:45 2019
 import javabridge as jutil
 import bioformats
 import os
-import glob
 import numpy as np
 import pandas as pd
 from skimage import measure
@@ -21,22 +20,31 @@ import math
 import bfio.bfio as bfio
 from bfio.bfio import BioReader
 import difflib
+import fnmatch
 
-#Create class to read .ome.tif files
+
 class ConvertImage(object):
+    """
+    This class reads .ome.tif files from the directory.
     
+    Attributes:
+        segment_dir: Path to segmented images.
+        intensity_dir: Path to intensity images.
+    
+    """
     def __init__(self,segDir, intDir):
+        """Inits ConvertImage with segment and intensity image."""
         self.segment_dir = segDir #segment image
         self.intensity_dir = intDir #intensity image
         
         
     def labeling(self, seg_file):
-        #Label the object in the image
+        """Label the object in the image."""
         all_labels = label(seg_file)
         return all_labels
         
-    def convert_tiled_tiff(self,features,csvfile,outDir,boxSize, angleDegree, pixelDistance):
-
+    def convert_tiled_tiff(self,features,csvfile,outDir,pixelDistance):
+        """ Read .ome.tif files."""
         df_feature = pd.DataFrame([])
         df = pd.DataFrame([])
         intensity_image = None
@@ -45,14 +53,19 @@ class ConvertImage(object):
         jutil.start_vm(class_path=bioformats.JARS)
         
         index=0#use index for knowing the images processed
+        
         #If intensity image is not passed as a parameter
         if self.intensity_dir is None:
-            os.chdir(self.segment_dir)#change directory to get all segmented images
-            seg_filenames1 = glob.glob("*.ome.tif")#read only the .ome.tif files in the directory
+            #Get list of .ome.tif files in the directory including sub folders for segmented images
+            configfiles = [os.path.join(dirpath, seg_file_name)
+            for dirpath, dirnames, files in os.walk(self.segment_dir)
+            for seg_file_name in fnmatch.filter(files, '*.ome.tif')]
             
-            for seg_file_names1 in seg_filenames1:#run analysis for each segmented image in the list
-                seg_file = self.segment_dir + "/" + seg_file_names1 #set the entire path for the bioreader to read the image
-                
+            for segfile in configfiles:#run analysis for each segmented image in the list
+                seg_file=os.path.normpath(segfile)
+                segfilename = seg_file.split('\\')#split to get only the filename
+                seg_file_names1 = segfilename[-1]
+                              
                 #Read the image using bioreader from bfio
                 br_seg = BioReader(seg_file)
                 segment_bfio = br_seg.read_image()
@@ -60,7 +73,7 @@ class ConvertImage(object):
                 label_image= self.labeling(seg_file)#call labeling function to label the objects in the segmented images
                 
                 #Call the feature_extraction function in Analysis class
-                analysis = Analysis(label_image,features,seg_file_names1, csvfile,outDir,boxSize, angleDegree, pixelDistance,intensity_image)
+                analysis = Analysis(label_image,features,seg_file_names1, csvfile,outDir,pixelDistance,intensity_image)
                 df = analysis.feature_extraction()
                 
                 #Check whether csvfile is csvone to save the features extracted from all the images in same csv file
@@ -72,16 +85,25 @@ class ConvertImage(object):
                 print("Number of images processed-",index)
         #If intensity image is passed as a parameter        
         else:
-            os.chdir(self.segment_dir)#change directory to get all segmented images
-            seg_filenames1 = glob.glob("*.ome.tif")#read only the .ome.tif files in the directory
-        
-            os.chdir(self.intensity_dir)#change directory to get all intensity images
-            intensity_filenames = glob.glob("*.ome.tif")#read only the .ome.tif files in the directory
+            #Get list of .ome.tif files in the directory including sub folders for segmented images
+            configfiles = [os.path.join(dirpath, seg_filename)
+            for dirpath, dirnames, files in os.walk(self.segment_dir)
+            for seg_filename in fnmatch.filter(files, '*.ome.tif')]
             
-            for seg_file_names1 in seg_filenames1:#run analysis for each segmented image in the list
-                intensity =difflib.get_close_matches(seg_file_names1, intensity_filenames,n=1, cutoff=0.1)#match the filename in segmented image to the  list of intensity image filenames to match the files
-                intensity = str(intensity[0])#get the filename of intensity image that has closest match
-                intensity_file = self.intensity_dir +"/"+ intensity#set the entire path for the bioreader to read the image
+            #Get list of .ome.tif files in the directory including sub folders for intensity images
+            configfiles_int = [os.path.join(dirpath, seg_filename)
+            for dirpath, dirnames, files in os.walk(self.intensity_dir)
+            for seg_filename in fnmatch.filter(files, '*.ome.tif')]
+            
+            for segfile in configfiles:
+    
+                seg_file=os.path.normpath(segfile)
+                segfilename = seg_file.split('\\')#split to get only the filename
+                seg_file_names1 = segfilename[-1]
+            
+            #for seg_file_names1 in seg_filenames1:#run analysis for each segmented image in the list
+                intensity =difflib.get_close_matches(seg_file_names1, configfiles_int,n=1, cutoff=0.1)#match the filename in segmented image to the  list of intensity image filenames to match the files
+                intensity_file = str(intensity[0])#get the filename of intensity image that has closest match
                 
                 #Read the intensity image using bioreader from bfio
                 br_int = BioReader(intensity_file)
@@ -89,14 +111,14 @@ class ConvertImage(object):
                 intensity_image= np.squeeze(intensity_bfio)
                 
                 #Read the segmented image using bioreader from bfio
-                seg_file= self.segment_dir + "/" + seg_file_names1#set the entire path for the bioreader to read the image
+                #seg_file= self.segment_dir + "/" + seg_file_names1#set the entire path for the bioreader to read the image
                 br_seg= BioReader(seg_file)
                 segment_bfio = br_seg.read_image()
                 seg_file = np.squeeze(segment_bfio)
                 label_image= self.labeling(seg_file)#labels the objects
                 
                 #Call the feature_extraction function in Analysis class
-                analysis = Analysis(label_image,features,seg_file_names1, csvfile,outDir,boxSize,angleDegree, pixelDistance,intensity_image)
+                analysis = Analysis(label_image,features,seg_file_names1, csvfile, outDir, pixelDistance, intensity_image)
                 df = analysis.feature_extraction()
                 
                 #Check whether csvfile is csvone to save the features extracted from all the images in same csv file
@@ -109,12 +131,29 @@ class ConvertImage(object):
 
 
         jutil.kill_vm()#kill the vm
-        return(df_feature,seg_filenames1)#return dataframe and the segment imag filename
+        return(df_feature,seg_file_names1)#return dataframe and the segment image filename
         
-#create class to extract features from the images      
+      
 class Analysis(ConvertImage):
+    """
+    This class extracts shape and intensity based features from the images.
     
-    def __init__(self,label_image,features, seg_file_names1, csvfile,outDir,boxSize,angleDegree, pixelDistance,intensity_image=None):
+    Attributes:
+        boxsize: A constant value to get the perimeter pixels for calculating neighbors and feret diameter.
+        thetastart: A constant value to set the starting angle range for calculting feret diameter.
+        thatastop: A constant value to set the ending angle range for calculting feret diameter.
+        pixeldistance: An integer value for distance between pixels to calculate the neighbors touching the object.
+        features: A string indicating the feature to be extracted.
+        csv_file: Option to save the csv file.
+        output_dir: Path to save csv file.
+        intensity_image: Intensity image array.
+        label_image: Labeled image array.
+        filenames: Filename of the segmented image.
+   
+    """
+    
+    def __init__(self,label_image,features, seg_file_names1, csvfile, outDir, pixelDistance, intensity_image=None):
+        """Inits Analysis with boxsize, thetastart, thetastop, pixel distance, csvfile, output directory."""
         self.objneighbors = []
         self.numneighbors = []
         self.labels = []
@@ -128,371 +167,247 @@ class Analysis(ConvertImage):
         self.perim_list=[]
         self.df_insert = pd.DataFrame([])
         self.df_csv = pd.DataFrame([])
-        self.boxsize = boxSize #box size to get the perimeter for calculating neighbors and feret diameter
+        self.boxsize = 3 #box size to get the perimeter for calculating neighbors and feret diameter
         self.thetastart = 1
-        self.thetastop =  angleDegree # angleDegree+1#since python indexing is from 0, to calculate for 180 degree have added 1
+        self.thetastop =  180
         self.pixeldistance = pixelDistance
         if self.pixeldistance is None:
             self.pixeldistance = 5
         else:
             self.pixeldistance = pixelDistance
-        if self.boxsize is None:
-            self.boxsize = 3
-        else:
-            self.boxsize = boxSize
-        if self.thetastop is None:
-            self.thetastop = 180
-        else:
-            self.thetastop = angleDegree
         self.feature = features# list of features to calculate
         self.csv_file = csvfile#save the features(as single file for all images or 1 file for each image) in csvfile
         self.output_dir = outDir#directory to save output
-        
         self.label_image = label_image#assign labeled image
-        del label_image
-        
         self.intensity_image = intensity_image#assign intensity image
-        del intensity_image
-        
+        del label_image,intensity_image
         self.filenames = seg_file_names1#assign filenames
         
-    #function to get borders for calculating neighbors and feret diameter
-    def box_border_search(self, label_image, boxSize):
-    #Get image shape values
+    def box_border_search(self, label_image, boxsize):
+        """Get perimeter pixels for calculating neighbors and feret diameter."""
+        #Get image shape values
         height, width = label_image.shape
 
-    #Get boxsize values
+        #Get boxsize values
         floor_offset = math.floor(self.boxsize/2)
         ceil_offset = math.ceil(self.boxsize/2)
 
-    #Create the integral image
+        #Create the integral image
         int_image = np.zeros((height+1, width+1))
         int_image[1:,1:] = np.cumsum(np.cumsum(np.double(label_image),0),1)
         int_image_transpose = int_image.T
-        del int_image
         int_image_int = int_image_transpose.astype(int)
-        del int_image_transpose
+        del int_image,int_image_transpose
 
-    #Create indices for the original image
+        #Create indices for the original image
         height_sequence = height-(self.boxsize-1)
         width_sequence = width-(self.boxsize-1)
         width_boxsize = np.linspace(0, width-self.boxsize, height_sequence)
-        del height_sequence
         height_boxsize = np.linspace(0, height-self.boxsize, width_sequence)
-        del width_sequence
         columns, rows = np.meshgrid(width_boxsize, height_boxsize)
-        del width_boxsize
-        del height_boxsize
         columns_flat = columns.flatten(order = 'F')
-        del columns
         columns_reshape = columns_flat.reshape(-1,1)
-        del columns_flat
         rows_flat = rows.flatten(order = 'F')
-        del rows
         rows_reshape = rows_flat.reshape(-1,1)
-        del rows_flat
         upper_left = (height+1)*columns_reshape+rows_reshape
-        del columns_reshape
-        del rows_reshape
         upper_left_int = upper_left.astype(int)
         upper_right = upper_left_int+(self.boxsize)*(height+1)
         upper_right_int = upper_right.astype(int)
-        del upper_right 
         lower_left = upper_left+self.boxsize
-        del upper_left
         lower_left_int = lower_left.astype(int)
-        del lower_left
         lower_right = upper_right_int+self.boxsize
         lower_right_int = lower_right.astype(int)
-        del lower_right
+        del height_sequence,width_sequence,width_boxsize,height_boxsize,columns,columns_flat,rows,rows_flat,columns_reshape,rows_reshape,upper_right,lower_left,upper_left,lower_right
     
-    #Get the sum of local neighborhood defined by boxSize
+        #Get the sum of local neighborhood defined by boxSize
         int_image_flat = int_image_int.flatten(order = 'F')
-        del int_image_int
         int_image_flat_transpose = int_image_flat.T
-        del int_image_flat
         neighborvals = (int_image_flat_transpose[upper_left_int]
                         + int_image_flat_transpose[lower_right_int] 
                         - int_image_flat_transpose[upper_right_int] 
                         - int_image_flat_transpose[lower_left_int])
-        del lower_left_int
-        del lower_right_int
-        del upper_right_int
-        del upper_left_int
-        del int_image_flat_transpose
+        del lower_left_int,lower_right_int,upper_right_int,upper_left_int,int_image_flat_transpose,int_image_flat,int_image_int
         
-    #Divide the pixel averages by the pixel value
+        #Divide the pixel averages by the pixel value
         reshape_vals = np.reshape(neighborvals, (height-2*floor_offset, width-2*floor_offset))
-        del neighborvals
-        #label_image = self.mask1
         double_image = label_image[ceil_offset-1: -floor_offset,ceil_offset-1: -floor_offset]
         pix_mask = reshape_vals / double_image
-        del reshape_vals
-        del ceil_offset
-        del double_image
         pad = np.pad(pix_mask, ((floor_offset, floor_offset), (floor_offset, floor_offset)), mode='constant')
-        del pix_mask
-        del floor_offset
         thresh = self.boxsize*self.boxsize
+        del neighborvals,reshape_vals,ceil_offset,double_image,pix_mask,floor_offset
         
-    #Get perimeter of the object    
+        #Get perimeter of the object    
         pad_array = np.array(pad)
-        del pad
         pad_flat = pad_array.flatten(order = 'F')
-        del pad_array
         perimeter_indices = np.where(pad_flat!=thresh)
-        del pad_flat
-        del thresh
         perimeter_indices_array = np.asarray(perimeter_indices)
-        del perimeter_indices
         perimeter_indices_reshape = perimeter_indices_array.reshape(-1,1)
-        del perimeter_indices_array
         perimeter_zeros = np.zeros(label_image.shape)
         perimeter_int = perimeter_zeros.astype(int)
-        del perimeter_zeros
         perimeter_flat = perimeter_int.flatten(order = 'F')
-        del perimeter_int
         image_flat = label_image.flatten(order = 'F')
         perimeter_flat[perimeter_indices_reshape] = image_flat[perimeter_indices_reshape]
-        del image_flat
-        del perimeter_indices_reshape
         perimeter_reshape = perimeter_flat.reshape(height, width)
-        del perimeter_flat
-        del height
-        del width
         perimeter_transpose = perimeter_reshape.T
-        del perimeter_reshape
+        del pad_array,pad_flat,thresh,perimeter_indices,perimeter_indices_array,perimeter_zeros,perimeter_int,image_flat,perimeter_indices_reshape,perimeter_flat,perimeter_reshape
         return perimeter_transpose
     
-    #function to calculate neighbors
     def neighbors(self,perimeter_transpose,pixelDistance):
-        
+        """Calculate neighbors touching the object."""
         obj_edges = self.box_border_search(perimeter_transpose, self.boxsize)
-    #Get the height and width of the labeled image
+        #Get the height and width of the labeled image
         height,width = obj_edges.shape
 
-    #Generate number of samples for creating numeric sequence
+        #Generate number of samples for creating numeric sequence
         num_sequence = (2*self.pixeldistance)+1    
         pixel_distance_range = np.linspace(-self.pixeldistance,self.pixeldistance,num_sequence)
-        del num_sequence
         
-    #Create a rectangular grid out of an array of pixel_distance_range and an array of pixel_distance_range1 values
+        #Create a rectangular grid out of an array of pixel_distance_range and an array of pixel_distance_range1 values
         column_index,row_index = np.meshgrid(pixel_distance_range,pixel_distance_range)
-        del pixel_distance_range
         
-    #Convert to single column vector
+        #Convert to single column vector
         column_index_transpose = column_index.T
         row_index_transpose = row_index.T
-        del column_index
-        del row_index
         column_index_reshape =  column_index_transpose.reshape(-1,1)
         row_index_reshape = row_index_transpose.reshape(-1,1)
         column_index_int = column_index_reshape.astype(int)
         row_index_int = row_index_reshape.astype(int)
-        del column_index_transpose
-        del row_index_transpose
-        del column_index_reshape
-        del row_index_reshape
+        del column_index_transpose,row_index_transpose,column_index_reshape,row_index_reshape,row_index,column_index,pixel_distance_range
         
-    #Generate pixel neighborhood reference
+        #Generate pixel neighborhood reference
         neighboroffsets = column_index_int*height+row_index_int
         neighboroffsets = neighboroffsets[neighboroffsets != 0]
         neighboroffsets = neighboroffsets.reshape(-1,1)
-        del column_index_int
-        del row_index_int
         
-    #Get inscribed image linear indices:    
+        #Get inscribed image linear indices:    
         width_sequence = width-(2*self.pixeldistance)
         height_sequence = height-(2*self.pixeldistance)
         columns_range = np.linspace(self.pixeldistance,width-self.pixeldistance-1,width_sequence)
         rows_range = np.linspace(self.pixeldistance,height-self.pixeldistance-1,height_sequence)
-        del width_sequence
-        del height_sequence
         columns,rows = np.meshgrid(columns_range,rows_range)
-        del columns_range
-        del rows_range
         columns_flat = columns.flatten(order = 'F')
-        del columns
-        del width
         columns_reshape = columns_flat.reshape(-1,1)
-        del columns_flat 
         rows_flat = rows.flatten(order = 'F')
-        del rows
         rows_reshape = rows_flat.reshape(-1,1)
-        del rows_flat
         linear_index = height*columns_reshape+rows_reshape
-        del height
-        del columns_reshape
-        del rows_reshape
         linear_index_int = linear_index.astype(int)
-        del linear_index
+        del columns_flat,rows,rows_flat,linear_index,columns_reshape,rows_reshape
         
-    #Consider indices that contain objects 
+        #Consider indices that contain objects 
         image_flatten = obj_edges.flatten(order = 'F')
         mask = image_flatten[linear_index_int]>0
         linear_index_mask = linear_index_int[mask]
-        del linear_index_int
-        del mask
         linear_index_reshape = linear_index_mask.reshape(-1,1)
-   #Get indices of neighbor pixels
+        #Get indices of neighbor pixels
         neighbor_index = (neighboroffsets+linear_index_reshape.T)
-        del neighboroffsets
-        del linear_index_reshape
-
-    #Get values of neighbor pixels       
-        neighborvals = image_flatten[neighbor_index]
-        del neighbor_index   
         
-    #Sort pixels by object    
+        #Get values of neighbor pixels       
+        neighborvals = image_flatten[neighbor_index]
+        del linear_index_int,mask,neighboroffsets,linear_index_reshape,neighbor_index   
+        
+        #Sort pixels by object    
         objnum = image_flatten[linear_index_mask]
-        del image_flatten
-        del linear_index_mask
         objnum_reshape = objnum.reshape(-1,1)
         index = list(range(len(objnum_reshape)))
-        del objnum_reshape
         index = np.asarray(index).reshape(objnum.shape)
         stack_index_objnum= np.column_stack((index,objnum))
-        del objnum
         sort_index_objnum = sorted(stack_index_objnum, key = itemgetter(1))
-        del stack_index_objnum
         index_objnum_array = np.asarray(sort_index_objnum)
-        del sort_index_objnum 
         index_split = index_objnum_array[:,0]
         objnum_split = index_objnum_array[:,1]
-        del index_objnum_array
         index_reshape = np.asarray(index_split).reshape(-1,1)
-        del index_split 
         objnum_reshape = np.asarray(objnum_split).reshape(-1,1)
-        del objnum_split 
-        del index
+        del image_flatten,linear_index_mask,objnum,stack_index_objnum,sort_index_objnum,index_split,objnum_split,index
         
-    #Find object index boundaries
+        #Find object index boundaries
         difference_objnum = np.diff(objnum_reshape,axis=0)
-        del objnum_reshape
         stack_objnum = np.vstack((1,difference_objnum,1))
-        del difference_objnum
         objbounds = np.where(stack_objnum)
-        del stack_objnum
         objbounds_array = np.asarray(objbounds)
-        del objbounds
         objbounds_split = objbounds_array[0,:]
-        del objbounds_array
         objbounds_reshape = objbounds_split.reshape(-1,1)
-        del objbounds_split 
+        del objbounds_split,objnum_reshape,difference_objnum,stack_objnum,objbounds,objbounds_array
+        
         self.objneighbors = []
-       
-    #Get border objects  
+        #Get border objects  
         for obj in range(len(objbounds_reshape)-1):
             allvals = neighborvals[:, index_reshape[np.arange(objbounds_reshape[obj],objbounds_reshape[obj+1])]]
             sortedvals = np.sort(allvals.ravel())
-            del allvals
             sortedvals_reshape = sortedvals.reshape(-1,1)
-            del sortedvals
             difference_sortedvals = np.diff(sortedvals_reshape,axis=0)
             difference_sortedvals_flat = difference_sortedvals.flatten(order = 'C')
-            del difference_sortedvals
             difference_sortedvals_stack = np.hstack((1,difference_sortedvals_flat))
-            del difference_sortedvals_flat
             uniqueindices = np.where(difference_sortedvals_stack)
-            del difference_sortedvals_stack
             uniqueindices_array = np.asarray(uniqueindices)
-            del uniqueindices
             uniqueindices_transpose = uniqueindices_array.T
-            del uniqueindices_array
             obj_neighbor = sortedvals_reshape[uniqueindices_transpose]
-            del uniqueindices_transpose
             obj_neighbor_flat = obj_neighbor.flatten(order = 'C')
-            del obj_neighbor
             self.objneighbors.append(obj_neighbor_flat)
-            del obj_neighbor_flat
+            del obj_neighbor_flat,allvals,sortedvals,difference_sortedvals,difference_sortedvals_flat,difference_sortedvals_stack,uniqueindices,uniqueindices_array,uniqueindices_transpose,obj_neighbor
         objneighbors_array = np.asarray(self.objneighbors)
-        del objbounds_reshape
-        del neighborvals
-        del index_reshape
+        del objbounds_reshape,neighborvals,index_reshape
         
         self.numneighbors = []
         self.objneighbors = []
-    #Get the number of neighbor objects and its label
+        #Get the number of neighbor objects and its label
         for neigh in objneighbors_array:
             len_neighbor = len(neigh)-1
             self.numneighbors.append(len_neighbor)
-            del len_neighbor
-            del neigh
-        del objneighbors_array
         numneighbors_arr = np.asarray(self.numneighbors)
-        del self.numneighbors
         numneighbors_array = numneighbors_arr.reshape(-1,1)
-        del numneighbors_arr
+        del numneighbors_arr,neigh,objneighbors_array,self.numneighbors
         self.labels =[]
         return numneighbors_array
 
-    #function to calculate the feret diameter
-    def feret_diameter(self,perimeter_transpose,thetastart,thetastop):
-        counts_scalar_copy=None
 
-    #Convert to radians
+    def feret_diameter(self,perimeter_transpose,thetastart,thetastop):
+        """Calculate feret diameter of the object."""
+        counts_scalar_copy=None
+        
+        #Convert to radians
         theta = np.arange(self.thetastart,self.thetastop+1)
         theta = np.asarray(theta)
         theta = np.radians(theta)
 
-    #Get border of objects
+        #Get border of objects
         obj_edges = self.box_border_search(perimeter_transpose, self.boxsize)
 
-    #Get indices and label of all pixels
+        #Get indices and label of all pixels
         obj_edges_flat = obj_edges.flatten(order = 'F')
         obj_edges_reshape = obj_edges_flat.reshape(-1,1)
-        del obj_edges_flat
         objnum = obj_edges_reshape[obj_edges_reshape!=0]
-        del obj_edges_reshape
         obj_edges_transpose = obj_edges.T
-        del obj_edges
         positionx = np.where(obj_edges_transpose)[0]
         positionx_reshape = positionx.reshape(-1,1)
-        del positionx
         positiony = np.where(obj_edges_transpose)[1]
-        del obj_edges_transpose
         positiony_reshape = positiony.reshape(-1,1)
-        del positiony
         index = list(range(len(objnum)))
         index = np.asarray(index).reshape(objnum.shape)
         stack_index_objnum = np.column_stack((index,objnum))
-        del objnum
-        del index
+        del obj_edges_flat,obj_edges_reshape,objnum,index,obj_edges,positionx,obj_edges_transpose,positiony
         
-    #Sort pixels by label
+        #Sort pixels by label
         sort_index_objnum = sorted(stack_index_objnum, key=itemgetter(1))
         index_objnum_array = np.asarray(sort_index_objnum)
-        del stack_index_objnum
-        del sort_index_objnum
         index_split = index_objnum_array[:,0]
         objnum_split = index_objnum_array[:,1]
-        del index_objnum_array
         positionx_index = positionx_reshape[index_split]
-        del positionx_reshape
         positiony_index = positiony_reshape[index_split]
-        del positiony_reshape
-        del index_split
+        del positiony_reshape,index_split,stack_index_objnum,sort_index_objnum,index_objnum_array,positionx_reshape
         
-   #Get number of pixels for each object    
+        #Get number of pixels for each object    
         objnum_reshape = np.asarray(objnum_split).reshape(-1,1)
-        del objnum_split
         difference_objnum = np.diff(objnum_reshape,axis=0)
         stack_objnum = np.vstack((1,difference_objnum,1))
-        del difference_objnum
         objbounds = np.where(stack_objnum)
-        del stack_objnum
         objbounds_array = np.asarray(objbounds)
-        del objbounds
         objbounds_split = objbounds_array[0,:]
-        del objbounds_array
         objbounds_reshape = objbounds_split.reshape(-1,1)
-        del objbounds_split
         objbounds_counts = objbounds_reshape[1:]-objbounds_reshape[:-1]
-        del objnum_reshape
-        del objbounds_reshape
+        del objnum_split,difference_objnum,stack_objnum,objbounds,objbounds_array,objbounds_split,objnum_reshape,objbounds_reshape
          
         self.uniqueindices_list = [] # Clear#
-    #Create cell with x, y positions of each objects border
+        #Create cell with x, y positions of each objects border
         for counts in objbounds_counts:
             counts_scalar = np.asscalar(counts)
             if counts_scalar == objbounds_counts[0]:
@@ -505,16 +420,12 @@ class Analysis(ConvertImage):
                 uniqueindices_y = positiony_index[counts_scalar_copy: index_range]
                 counts_scalar_copy = index_range
             uniqueindices_x_reshape = uniqueindices_x.reshape(-1,1)
-            del uniqueindices_x
             uniqueindices_y_reshape = uniqueindices_y.reshape(-1,1)
-            del uniqueindices_y
             uniqueindices_concate = np.concatenate((uniqueindices_x_reshape, uniqueindices_y_reshape),axis=1)
-            del uniqueindices_x_reshape 
-            del uniqueindices_y_reshape
             self.uniqueindices_list.append(uniqueindices_concate)
-            del uniqueindices_concate
+            del uniqueindices_concate,uniqueindices_x,uniqueindices_y,uniqueindices_x_reshape,uniqueindices_y_reshape
             
-    #Center points based on object centroid    
+        #Center points based on object centroid    
         uniqueindices_array = np.asarray(self.uniqueindices_list)
         self.meanind_list = [] # Clear#
         for indices in uniqueindices_array:
@@ -524,84 +435,61 @@ class Analysis(ConvertImage):
             sum_indices1 = np.sum(indices[:, 1])
             length_indices0 =(sum_indices0/len(indices))
             length_indices1 =(sum_indices1/len(indices))
-            del sum_indices0
-            del sum_indices1
             mean_tile0 = np.tile(length_indices0, repitations)
-            del length_indices0
             sub_mean0_indices = np.subtract(indices, mean_tile0)
-            del mean_tile0
             sub_mean0_indices = sub_mean0_indices[:,0]
             mean_tile1 = np.tile(length_indices1, repitations)
-            del repitations
-            del length_indices1
             sub_mean1_indices = np.subtract(indices, mean_tile1)
-            del indices
-            del mean_tile1
             sub_mean1_indices = sub_mean1_indices[:,1]
             meanind0_reshape = sub_mean0_indices.reshape(-1,1)
-            del sub_mean0_indices
             meanind1_reshape = sub_mean1_indices.reshape(-1,1)
-            del sub_mean1_indices
             meanind_concate = np.concatenate((meanind0_reshape, meanind1_reshape),axis=1)
-            del meanind0_reshape
-            del meanind1_reshape
             self.meanind_list.append(meanind_concate)
-            del meanind_concate
+            del meanind_concate,sum_indices0,sum_indices1,length_indices0,mean_tile0,repitations,length_indices1,indices,mean_tile1,sub_mean0_indices,sub_mean1_indices
         del uniqueindices_array    
         center_point = np.asarray(self.meanind_list)
 
-    #Create transformation matrix
+        #Create transformation matrix
         rot_trans = np.array((np.cos(theta), -np.sin(theta)))
         rot_trans = rot_trans.T
         self.rot_list = [] # Clear#
         
-    #Calculate rotation positions
+        #Calculate rotation positions
         for point in center_point:
             self.rot_position.clear()
             for rotation in rot_trans:
                 rot_mul = np.multiply(rotation,point)
-                del rotation
                 rot_add = np.add(rot_mul[:,0],rot_mul[:,1])#, out = aaa)
-                del rot_mul
                 self.rot_position.append(rot_add)
-                del rot_add
             rot_array = np.asarray(self.rot_position)
             self.rot_list.append(rot_array)
-            del rot_array
-        del center_point
+            del rot_array,rotation,rot_mul,rot_add
         self.rot_position.clear()
-        #del self.rot_position
-        del point
+        del point,center_point
 
         self.feretdiam = []    # Clear#
-    #Get Ferets diameter  
+        #Get Ferets diameter  
         for rot in self.rot_list:
             self.sub_rot_list.clear()
             for rt,trans in zip(rot,rot_trans):
                 sub_rot = np.subtract(np.max(rt),np.min(rt))
-                del rt
                 sub_rot_add = np.add(sub_rot, np.sum(abs(trans)))
-                del sub_rot
-                del trans
                 self.sub_rot_list.append(sub_rot_add)
-                del sub_rot_add
+                del sub_rot_add,sub_rot,trans,rt
             convert_array = np.asarray(self.sub_rot_list)
             convert_reshape = convert_array.reshape(-1,1)
-            del convert_array
             self.feretdiam.append(convert_reshape)
-            del convert_reshape
+            del convert_reshape,convert_array
         #del self.sub_rot_list
         self.sub_rot_list.clear()
-        del self.rot_list
-        del theta
-        del rot
         feret_diameter = np.asarray(self.feretdiam)
-        del self.feretdiam
+        del self.feretdiam,self.rot_list,theta,rot
         return feret_diameter
     
-    #function to calculate polygonality_score, hexagonality_score and hexagonality_standarddeviation
+   
     def polygonality_hexagonality(self,area, perimeter, neighbors, solidity, maxferet, minferet):
-
+        """ Calculate polygonality score, hexagonality score and hexagonality standarddeviation of the object."""
+        
         self.area_list=[]
         self.perim_list=[]
         
@@ -621,10 +509,10 @@ class Analysis(ConvertImage):
             poly_size_ratio = 1-math.sqrt((1-(perimeter_neighbors/(math.sqrt((4*area)/(neighbors*(1/(math.tan(math.pi/neighbors))))))))*(1-(perimeter_neighbors/(math.sqrt((4*area)/(neighbors*(1/(math.tan(math.pi/neighbors)))))))))
             poly_area_ratio = 1-math.sqrt((1-(area/(0.25*neighbors*perimeter_neighbors*perimeter_neighbors*(1/(math.tan(math.pi/neighbors))))))*(1-(area/(0.25*neighbors*perimeter_neighbors*perimeter_neighbors*(1/(math.tan(math.pi/neighbors)))))))
 
-        #Calculate Polygonality Score
+            #Calculate Polygonality Score
             poly_ave = 10*(poly_size_ratio+poly_area_ratio)/2
 
-        #Hexagonality metrics calculated based on a convex, regular, hexagon    
+            #Hexagonality metrics calculated based on a convex, regular, hexagon    
             apoth1 = math.sqrt(3)*perimeter/12
             apoth2 = math.sqrt(3)*maxferet/4
             apoth3 = minferet/2
@@ -633,7 +521,7 @@ class Analysis(ConvertImage):
             side3 = minferet/math.sqrt(3)
             side4 = perim_hull/6
 
-        #Unique area calculations from the derived and primary measures above        
+            #Unique area calculations from the derived and primary measures above        
             area1 = 0.5*(3*math.sqrt(3))*side1*side1
             area2 = 0.5*(3*math.sqrt(3))*side2*side2
             area3 = 0.5*(3*math.sqrt(3))*side3*side3
@@ -646,34 +534,28 @@ class Analysis(ConvertImage):
             area10 = area_hull
             area11 = area
             
-        #Create an array of all unique areas
+            #Create an array of all unique areas
             list_area=[area1, area2, area3, area4, area5, area6, area7, area8, area9, area10, area11]
             area_uniq = np.asarray(list_area,dtype= float)
-            del list_area
 
-        #Create an array of the ratio of all areas to eachother   
+            #Create an array of the ratio of all areas to eachother   
             for ib in range (0,len(area_uniq)):
                 for ic in range (ib+1,len(area_uniq)):
                     area_ratio = 1-math.sqrt((1-(area_uniq[ib]/area_uniq[ic]))*(1-(area_uniq[ib]/area_uniq[ic])))
                     self.area_list.append (area_ratio)
-                    del area_ratio
             area_array = np.asarray(self.area_list)
-            del self.area_list
             stat_value_area=stats.describe(area_array)
-            del area_array
-            del area_uniq
+            del area_uniq,list_area,area_array,self.area_list
 
-        #Create Summary statistics of all array ratios     
-            #area_ratio_min = stat_value_area.minmax[0]
-            #area_ratio_max = stat_value_area.minmax[1]
+            #Create Summary statistics of all array ratios     
             area_ratio_ave = stat_value_area.mean
             area_ratio_sd = math.sqrt(stat_value_area.variance)
 
-        #Set the hexagon area ratio equal to the average Area Ratio
+            #Set the hexagon area ratio equal to the average Area Ratio
             hex_area_ratio = area_ratio_ave
 
-        # Perimeter Ratio Calculations
-        # Two extra apothems are now useful                 
+            # Perimeter Ratio Calculations
+            # Two extra apothems are now useful                 
             apoth4 = math.sqrt(3)*perim_hull/12
             apoth5 = math.sqrt(4*area_hull/(4.5*math.sqrt(3)))
 
@@ -692,34 +574,30 @@ class Analysis(ConvertImage):
             perim13 = 2*area_hull/(apoth2)
             perim14 = 2*area_hull/(apoth3)
 
-        #Create an array of all unique Perimeters
+            #Create an array of all unique Perimeters
             list_perim=[perim1,perim2,perim3,perim4,perim5,perim6,perim7,perim8,perim9,perim10,perim11,perim12,perim13,perim14]
             perim_uniq = np.asarray(list_perim,dtype= float)
             del list_perim
 
-        #Create an array of the ratio of all Perimeters to eachother    
+            #Create an array of the ratio of all Perimeters to eachother    
             for ib in range (0,len(perim_uniq)):
                 for ic in range (ib+1,len(perim_uniq)):
                     perim_ratio = 1-math.sqrt((1-(perim_uniq[ib]/perim_uniq[ic]))*(1-(perim_uniq[ib]/perim_uniq[ic])))
                     self.perim_list.append (perim_ratio)
                     del perim_ratio
             perim_array = np.asarray(self.perim_list)
-            del self.perim_list
             stat_value_perim=stats.describe(perim_array)
-            del perim_array
-            del perim_uniq
+            del perim_uniq,self.perim_list,perim_array
 
-        #Create Summary statistics of all array ratios    
-            #perim_ratio_min = stat_value_perim.minmax[0]
-            #perim_ratio_max = stat_value_perim.minmax[1]
+            #Create Summary statistics of all array ratios    
             perim_ratio_ave = stat_value_perim.mean
             perim_ratio_sd = math.sqrt(stat_value_perim.variance)
 
-        #Set the HSR equal to the average Perimeter Ratio    
+            #Set the HSR equal to the average Perimeter Ratio    
             hex_size_ratio = perim_ratio_ave
             hex_sd = np.sqrt((area_ratio_sd**2+perim_ratio_sd**2)/2)
 
-        # Calculate Hexagonality score
+            # Calculate Hexagonality score
             hex_ave = 10*(hex_area_ratio+hex_size_ratio)/2
 
         if neighbors < 3:
@@ -732,116 +610,120 @@ class Analysis(ConvertImage):
             hex_sd=float("NAN")
  
         return(poly_ave, hex_ave,hex_sd)
-    #function to calculate the selected features 
+    
     def feature_extraction(self):
+       """Calculate shape and intensity based features.""" 
         
-        #Calculate area
-        def area(self,*args):
+       def area(self,*args):
+            """Calculate area."""
             data_dict = [region.area for region in regions]
             return data_dict
         
-        #Calculate perimeter
-        def perimeter(self,*args):
+       def perimeter(self,*args):
+            """Calculate perimeter."""
             data_dict = [region.perimeter for region in regions]
             return data_dict
         
-        #Calculate orientation
-        def orientation(self,*args):
+       def orientation(self,*args):
+            """Calculate orientation."""
             data_dict = [region.orientation for region in regions]
             return data_dict
         
-        #Calculate convex_area
-        def convex_area(self,*args):
+       def convex_area(self,*args):
+            """Calculate convex_area."""
             data_dict = [region.convex_area for region in regions]
             return data_dict
         
-        #Calculate centroidx
-        def centroid_row(self,*args):
+       def centroid_row(self,*args):
+            """Calculate centroidx."""
             centroid_value = [str(region.centroid) for region in regions]
             cent_x= [cent.split(',') for cent in centroid_value]
             data_dict = [centroid_x[0].replace('(','') for centroid_x in cent_x]
             return data_dict
         
-        #Calculate centroidy
-        def centroid_column(self,*args):
+       def centroid_column(self,*args):
+            """Calculate centroidy."""
             centroid_value = [str(region.centroid) for region in regions]
             cent_y = [cent.split(',') for cent in centroid_value]
             data_dict = [centroid_y[1].replace(')','') for centroid_y in cent_y]
             return data_dict
         
-        #Calculate eccentricity
-        def eccentricity(self,*args):
+       def eccentricity(self,*args):
+            """Calculate eccentricity."""
             data_dict = [region.eccentricity for region in regions]
             return data_dict
-        #Calculate equivalent_diameter
-        def equivalent_diameter(self,*args):
+        
+       def equivalent_diameter(self,*args):
+            """Calculate equivalent_diameter."""
             data_dict = [region.equivalent_diameter for region in regions]
             return data_dict
         
-        #Calculate euler_number
-        def euler_number(self,*args):
+       def euler_number(self,*args):
+            """Calculate euler_number."""
             data_dict = [region.euler_number for region in regions]
             return data_dict
         
-        #Calculate major_axis_length
-        def major_axis_length(self,*args):
+       def major_axis_length(self,*args):
+            """Calculate major_axis_length."""
             data_dict = [region.major_axis_length for region in regions]
             return data_dict
         
-        #Calculate minor_axis_length
-        def minor_axis_length(self,*args):
+       def minor_axis_length(self,*args):
+            """Calculate minor_axis_length."""
             data_dict = [region.minor_axis_length for region in regions]
             return data_dict
         
-        #Calculate solidity
-        def solidity(self,*args):
+       def solidity(self,*args):
+            """Calculate solidity."""
             data_dict = [region.solidity for region in regions]
             return data_dict
         
-        #Calculate mean_intensity
-        def mean_intensity(seg_img,int_img):
+       def mean_intensity(seg_img,int_img):
+            """Calculate mean_intensity."""
             data_dict = [int((region.mean_intensity)) for region in regions]
             return data_dict
-        #Calculate max_intensity
-        def max_intensity(seg_img,int_img):
+        
+       def max_intensity(seg_img,int_img):
+            """Calculate maximum intensity."""
             data_dict = [int((region.max_intensity))for region in regions]
             return data_dict
-        #Calculate min_intensity
-        def min_intensity(seg_img,int_img):
+        
+       def min_intensity(seg_img,int_img):
+            """Calculate minimum intensity."""
             data_dict = [int((region.min_intensity))for region in regions]
             return data_dict
         
-        #Calculate median
-        def median(seg_img,int_img):
+       def median(seg_img,int_img):
+            """Calculate median."""
             intensity_images = [region.intensity_image for region in regions]
             imgs = [region.image for region in regions]
             data_dict = [int((np.median(intensity[seg]))) for intensity, seg in zip(intensity_images,imgs)]
             return data_dict
         
-        #Calculate mode
-        def mode(seg_img,int_img):
+       def mode(seg_img,int_img):
+            """Calculate mode."""
             intensity_images = [region.intensity_image for region in regions]
             imgs = [region.image for region in regions]
             mode_list = [mod(intensity[seg])[0] for intensity, seg in zip(intensity_images,imgs)]
             data_dict = [str(mode_ls)[1:-1] for mode_ls in mode_list]
             return data_dict
         
-        #Calculate standard_deviation
-        def standard_deviation(seg_img,int_img):
+       def standard_deviation(seg_img,int_img):
+            """Calculate standard deviation."""
             intensity_images = [region.intensity_image for region in regions]
             imgs = [region.image for region in regions]
             data_dict = [(np.std(intensity[seg])) for intensity, seg in zip(intensity_images,imgs)]
             return data_dict
         
-        #Calculate skewness
-        def skewness(seg_img,int_img):
+       def skewness(seg_img,int_img):
+            """Calculate skewness."""
             intensity_images = [region.intensity_image for region in regions]
             imgs = [region.image for region in regions]
             data_dict = [skew(intensity[seg], axis=0, bias=True) for intensity, seg in zip(intensity_images,imgs)]
             return data_dict
         
-        #Calculate entropy
-        def entropy(seg_img,int_img):
+       def entropy(seg_img,int_img):
+            """Calculate entropy."""
             intensity_images = [region.intensity_image for region in regions]
             imgs = [region.image for region in regions]
             hist_dd = [np.histogramdd(np.ravel(intensity[seg]), bins = 256)[0]/intensity[seg].size for intensity, seg in zip(intensity_images,imgs)]
@@ -849,37 +731,37 @@ class Analysis(ConvertImage):
             data_dict = [-np.sum(np.multiply(hist_great, np.log2(hist_great))) for hist_great in hist_greater_zero]
             return data_dict
         
-        #Calculate kurtosis
-        def kurtosis(seg_img,int_img):
+       def kurtosis(seg_img,int_img):
+            """Calculate kurtosis."""
             intensity_images = [region.intensity_image for region in regions]
             imgs = [region.image for region in regions]
             data_dict = [kurto(intensity[seg],axis=0,fisher=False, bias=True) for intensity, seg in zip(intensity_images,imgs)]
             return data_dict
         
-        #Calculate neighbors
-        def neighbors(seg_img,*args):
+       def neighbors(seg_img,*args):
+            """Calculate neighbors."""
             edges= self.box_border_search(seg_img, self.boxsize)
             neighbor_array = self.neighbors(edges, self.pixeldistance)
             neighbor_list = neighbor_array.tolist()
             neighbor = [str(neigh)[1:-1] for neigh in neighbor_list]
             return neighbor
         
-        #Calculate maxferet
-        def maxferet(seg_img,*args):
+       def maxferet(seg_img,*args):
+            """Calculate maxferet."""
             edges= self.box_border_search(seg_img, self.boxsize)
             feretdiam = self.feret_diameter(edges,self.thetastart,self.thetastop)
             maxferet = [np.max(feret) for feret in feretdiam]
             return maxferet
         
-        #Calculate minferet
-        def minferet(seg_img,*args):
+       def minferet(seg_img,*args):
+            """Calculate minferet."""
             edges= self.box_border_search(seg_img, self.boxsize)
             feretdiam = self.feret_diameter(edges,self.thetastart,self.thetastop)
             minferet = [np.min(feret) for feret in feretdiam]
             return minferet
         
-        #Calculate polygonality_score
-        def polygonality_score(seg_img,*args):
+       def polygonality_score(seg_img,*args):
+            """Calculate polygonality score."""
             poly_area = area(seg_img)
             poly_peri = perimeter(seg_img)
             poly_neighbor = neighbors(seg_img)
@@ -890,8 +772,8 @@ class Analysis(ConvertImage):
             polygonality_score = [poly[0] for poly in poly_hex]
             return polygonality_score
         
-        #Calculate hexagonality_score
-        def hexagonality_score(seg_img,*args):
+       def hexagonality_score(seg_img,*args):
+            """Calculate hexagonality score."""
             poly_area = area(seg_img)
             poly_peri = perimeter(seg_img)
             poly_neighbor = neighbors(seg_img)
@@ -902,8 +784,8 @@ class Analysis(ConvertImage):
             hexagonality_score = [poly[1] for poly in poly_hex]
             return hexagonality_score
         
-        #Calculate hexagonality_sd
-        def hexagonality_sd(seg_img,*args):
+       def hexagonality_sd(seg_img,*args):
+            """Calculate hexagonality standard deviation."""
             poly_area = area(seg_img)#calculate area
             poly_peri = perimeter(seg_img)#calculate perimeter
             poly_neighbor = neighbors(seg_img)#calculate neighbors
@@ -914,8 +796,8 @@ class Analysis(ConvertImage):
             hexagonality_sd = [poly[2] for poly in poly_hex]
             return hexagonality_sd
         
-        #Calculate all features
-        def all(seg_img,int_img):
+       def all(seg_img,int_img):
+            """Calculate all features."""
             all_area = area(seg_img)#calculate area
             all_peri = perimeter(seg_img)#calculate perimeter
             all_neighbor = neighbors(seg_img)#calculate neighbors
@@ -950,7 +832,7 @@ class Analysis(ConvertImage):
             return (all_area,all_centroidx,all_centroidy,all_convex,all_eccentricity,all_equivalent_diameter,all_euler_number,all_hexagonality_score,all_hexagonality_sd,all_kurtosis,all_major_axis_length,all_maxferet,all_max_intensity,all_mean_intensity,all_median,all_min_intensity,all_minferet,all_minor_axis_length,all_mode,all_neighbor,all_orientation,all_peri,all_polygonality_score,all_sd,all_skewness,all_solidity)
         
         #Dictionary of input features
-        FEAT = {'area': area,
+       FEAT = {'area': area,
                 'perimeter': perimeter,
                 'orientation': orientation,
                 'convex_area': convex_area,
@@ -980,56 +862,73 @@ class Analysis(ConvertImage):
                 'all': all}
       
         #Calculate features given as input for all images
-        regions = measure.regionprops(self.label_image,self.intensity_image)#region properties
-        title = self.filenames#to pass the filename in csv
+       regions = measure.regionprops(self.label_image,self.intensity_image)#region properties
+       title = self.filenames#to pass the filename in csv
         
-        for each_feature in self.feature:
-            label = [r.label for r in regions]#get labels list for all regions
-            feature_value = FEAT[each_feature](self.label_image,self.intensity_image)#dynamically call the function based on the features required
+       for each_feature in self.feature:
+           label = [r.label for r in regions]#get labels list for all regions
+           feature_value = FEAT[each_feature](self.label_image,self.intensity_image)#dynamically call the function based on the features required
             
             #get all features
-            if each_feature  == 'all':
-                df=pd.DataFrame(feature_value)#create dataframe for all features
-                df = df.T#transpose
-                df.columns =['Area','Centroid row','Centroid column','Convex area','Eccentricity','Equivalent diameter','Euler number','Hexagonality score','Hexagonality sd','Kurtosis','Major axis length','Maxferet','Maximum intensity','Mean intensity','Median','Minimum intensity','Minferet','Minor axis length','Mode','Neighbors','Orientation','Perimeter','Polygonality score','Standard deviation','Skewness','Solidity']
-            else:    
-                df = pd.DataFrame({each_feature: feature_value})#create dataframe for features selected
-            self.df_insert = pd.concat([self.df_insert, df], axis=1)    
-        self.df_insert.insert(0, 'Image', title)#Insert filename as 1st column 
-        self.df_insert.insert(1, 'Label', label)#Insert label as 2nd column
-        self.df_insert.columns = map (lambda x: x.capitalize(),self.df_insert.columns)#Capitalize the first letter of header
+           if each_feature  == 'all':
+               df=pd.DataFrame(feature_value)#create dataframe for all features
+               df = df.T#transpose
+               df.columns =['Area','Centroid row','Centroid column','Convex area','Eccentricity','Equivalent diameter','Euler number','Hexagonality score','Hexagonality sd','Kurtosis','Major axis length','Maxferet','Maximum intensity','Mean intensity','Median','Minimum intensity','Minferet','Minor axis length','Mode','Neighbors','Orientation','Perimeter','Polygonality score','Standard deviation','Skewness','Solidity']
+           else:    
+               df = pd.DataFrame({each_feature: feature_value})#create dataframe for features selected
+           self.df_insert = pd.concat([self.df_insert, df], axis=1)    
+       self.df_insert.insert(0, 'Image', title)#Insert filename as 1st column 
+       self.df_insert.insert(1, 'Label', label)#Insert label as 2nd column
+       self.df_insert.columns = map (lambda x: x.capitalize(),self.df_insert.columns)#Capitalize the first letter of header
         
-        #save each cav file separately
-        if self.csv_file == 'csvmany':
-            csv_file= Df_Csv_multiple(self.df_insert, self.output_dir,title)
-            csv_final = csv_file.csvfilesave()
-        else:
-            self.df_csv = self.df_csv.append(self.df_insert)
-        return self.df_csv
+        #save each csv file separately
+       if self.csv_file == 'csvmany':
+           csv_file= Df_Csv_multiple(self.df_insert, self.output_dir,title)
+           csv_final = csv_file.csvfilesave()
+       else:
+           self.df_csv = self.df_csv.append(self.df_insert)
+       return self.df_csv
 
-#class to save features for all images in same file    
+  
 class Df_Csv_single(Analysis):
+    """
+    This class saves features for all images in same csv file.
+    
+    Attributes:
+        df_export: Dataframe that should be converted to csv file.
+        output_dir: Path to save csvfile.
+    """
     def __init__(self,df_csv, output_dir):
+        """Inits Df_csv_single with dataframe and output directory."""
         self.df_export = df_csv
         self.output_dir = output_dir
  
     def csvfilesave(self):
+        """Save as csv file in output directory."""
         os.chdir(self.output_dir)
         #Export to csv
         export_csv = self.df_export.to_csv (r'Feature_Extraction.csv', index = None, header=True)
-        del self.df_export
-        del export_csv
+        del self.df_export,export_csv
 
-#class to save features for each image in separate file          
+         
 class Df_Csv_multiple(Analysis):
+    """
+    This class saves features for each image in separate csv file.
+    
+    Attributes:
+        df_exportsep: Dataframe that should be converted to csv file.
+        output_dir: Path to save csvfile.
+        title: Filename of the image.
+    """
     def __init__(self,df_insert, output_dir,title):
+        """Inits Df_csv_multiple with dataframe and output directory."""
         self.df_exportsep = df_insert
         self.output_dir = output_dir
         self.title = title
 
     def csvfilesave(self):
+        """Save as csv file in output directory."""
         os.chdir(self.output_dir)
         #Export to csv
         export_csv = self.df_exportsep.to_csv (r'Feature_Extraction_%s.csv'%self.title, index = None, header=True)
-        del self.df_exportsep
-        del export_csv
+        del self.df_exportsep,export_csv
