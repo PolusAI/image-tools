@@ -5,24 +5,25 @@ from multiprocessing import Pool
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 from pathlib import Path
-import logging                                                                                                                                                            
+import logging
 import sys 
 import math
 import decimal
 from decimal import Decimal
-import ctypes 
 from textwrap import wrap
-from sys import getsizeof
+import time
+import pickle
+import os 
 
-global nfeats
-global datalen
 
+
+processID = os.getpid()
 
 # Chunk Scale
-CHUNK_SIZE = 1024
+CHUNK_SIZE = 512
 
 # Number of Bins for Each Feature
-bincount = 50 #MUST BE EVEN NUMBER
+bincount = 10 #MUST BE EVEN NUMBER
 
 # DZI file template
 DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="' + str(CHUNK_SIZE) + '" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
@@ -33,104 +34,232 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
-def neg2pos_ifelse(val, binsizes, length, commonratio, min, max, alpha, smallbins, largebins):
-    if (abs(max) > abs(min) and val > 0) and val < alpha:
-        return 1 + smallbins
-    elif (abs(max) > abs(min) and val > 0) and val == max:
-        return bincount 
-    elif (abs(max) > abs(min) and val > 0) and val >= alpha:
-        return abs(float(math.floor(math.log(val/alpha, binsizes[1]) + 1))) + smallbins
-        
-    elif (abs(max) <= abs(min) and val > 0) and val < alpha:
-        return 1.0 + largebins
-    elif (abs(max) <= abs(min) and val > 0) and val == max:
-        return bincount
-    elif (abs(max) <= abs(min) and val > 0) and val >= alpha:
-        return abs(float(math.floor(math.log(val/alpha, binsizes[0]) + 1))) + largebins 
+def dfneg2pos(data, alpha, datmin, datmax):
 
-    elif (abs(max) > abs(min) and val <= 0) and val > (-1*alpha):
-        return -1 + smallbins
-    elif (abs(max) > abs(min) and val <= 0) and val == min:
-        return 0
-    elif (abs(max) > abs(min) and val <= 0) and val >= (-1*alpha):
-        return (-1*float(math.floor((math.log(val/(-1*alpha), binsizes[0])) + 1)))+ smallbins
+    # if bin_stats['min'][i] < 0 and bin_stats['max'][i] > 0:
+    #         small = 0
+    #         large = 0
+    #         if abs(bin_stats['max'][i]) < abs(bin_stats['min'][i]):
+    #             small = abs(bin_stats['max'][i])
+    #             large = abs(bin_stats['min'][i])
+    #         else:
+    #             small = abs(bin_stats['min'][i])
+    #             large = abs(bin_stats['max'][i])
 
-    elif (abs(max) <= abs(min) and val <= 0) and val > (-1*alpha):
-        return -1.0 + largebins
-    elif (abs(max) <= abs(min) and val <= 0) and val == min:
-        return 0
-    else:
-        return (-1*float(math.floor((math.log(val/(-1*alpha), binsizes[1])) + 1))) + largebins
-    
-def pos2pos(data, length, commonratio, min, max):
-    replacedata = []
-    for val in data:
-        log = math.log(val/min, commonratio)
-        replacedata.append(float(math.floor(log + 1)))
-    return pandas.Series(np.array(replacedata), index = range(0, length))
-
-def neg2neg(data, length, commonratio, min, max):
-    # for val in data:
-    #     log = math.log(val/max, commonratio)
-    #     bin = float(math.floor(log + 1))
-    #     replacedata.append(-1*bin)
-    replacedata = [-1*(float(math.floor(math.log(val/max, commonratio) + 1))) for val in data]
-    return pandas.Series(np.array(replacedata), index = range(0, length))
-
-def zero2pos(data, length, commonratio, min, max):
-    replacedata = [1 if val < min else float(math.floor(math.log(val/min, commonratio) + 2)) for val in data]     
-    return pandas.Series(np.array(replacedata), index = range(0, length))
-
-def neg2zero(data, length, commonratio, min, max):
-    replacedata = [-1.0 + bincount if val > max else (-1*(float(math.floor(math.log(val/max, commonratio) + 2)))) + bincount for val in data]
-    return pandas.Series(np.array(replacedata), index = range(0, length))
-
-def neg2pos(data, binsizes, length, commonratio, min, max, alpha, smallbins, largebins):
-    replacedata = []
-    # print("Number of bins on both sides in function: ", smallbins, largebins, smallbins + largebins)
-    # print("Min and Max Data: ", min, max)
-    # print("Alpha: ", alpha)
-    # print("Commonratio: ", commonratio)
-    # print("Binsizes (small, large): ", binsizes)
-    
-    if abs(max) > abs(min):
-        yaxis = smallbins
-    else:
-        yaxis = largebins
-
-    for val in data:
-
-        if (abs(max) > abs(min) and val > 0) and val < alpha:
-            replacedata.append(1.0 + smallbins)
-        elif (abs(max) > abs(min) and val > 0) and val == max:
-            replacedata.append(bincount)
-        elif (abs(max) > abs(min) and val > 0) and val >= alpha:
-            replacedata.append(abs(float(math.floor(math.log(val/alpha, binsizes[1]) + 1))) + smallbins) 
-        
-        elif (abs(max) <= abs(min) and val > 0) and val < alpha:
-            replacedata.append(1.0 + largebins)
-        elif (abs(max) <= abs(min) and val > 0) and val == max:
-            replacedata.append(bincount)
-        elif (abs(max) <= abs(min) and val > 0) and val >= alpha:
-            replacedata.append(abs(float(math.floor(math.log(val/alpha, binsizes[0]) + 1))) + largebins) 
-
-        elif (abs(max) > abs(min) and val <= 0) and val > (-1*alpha):
-            replacedata.append(-1.0 + smallbins)
-        elif (abs(max) > abs(min) and val <= 0) and val == min:
-            replacedata.append(0)
-        elif (abs(max) > abs(min) and val <= 0) and val >= (-1*alpha):
-            replacedata.append((-1*float(math.floor((math.log(val/(-1*alpha), binsizes[0])) + 1)))+ smallbins)
-
-        elif (abs(max) <= abs(min) and val <= 0) and val > (-1*alpha):
-            replacedata.append(-1.0 + largebins)
-        elif (abs(max) <= abs(min) and val <= 0) and val == min:
-            replacedata.append(0)
+    #         ratio = root(bincount + 1, (small*small)/(alpha*large))
+    #         binssmall = int(math.floor(abs(1 + math.log(small/alpha, ratio))))
+    #         binslarge = int(math.floor(abs(1 + math.log(large/alpha, ratio))))
+    #         zfactor = binssmall/binslarge
+    #         binssmall = round(bincount/(2 + 1/zfactor), 0)
+    #         binslarge = binssmall + (bincount - (2*binssmall))
+    #         small_interval = root(binssmall, small/alpha)
+    #         large_interval = root(binslarge, large/alpha)
+    #         column_bin_sizes.append([small_interval, large_interval])        
+    #         if abs(bin_stats['max'][i]) > abs(bin_stats['min'][i]):
+    #             yaxis.append(binssmall)
+    #         else:
+    #             yaxis.append(binslarge)
+    #         data[column_names[i]] = neg2pos(data[column_names[i]], column_bin_sizes[-1], datalen, ratio, bin_stats['min'][i], bin_stats['max'][i], alpha, binssmall, binslarge)
+    yaxis = []
+    for col in data.columns:  
+        small = 0 
+        large = 0
+        posbigger = True
+        if abs(datmax[col]) > abs(datmin[col]):
+            small = abs(datmin[col])
+            large = abs(datmax[col])
         else:
-            replacedata.append((-1*float(math.floor((math.log(val/(-1*alpha), binsizes[1])) + 1))) + largebins)
-    
+            small = abs(datmax[col])
+            large = abs(datmin[col])
+            posbigger = False
 
-    return yaxis, pandas.Series(np.array(replacedata), index = range(0, length))  
-                 
+        ratio = ((small*small)/(alpha[col]*large))**(1/(bincount + 1))
+        binssmall = np.floor(abs(1 + np.log(small/alpha[col])/np.log(ratio)))
+        binslarge = np.floor(abs(1 + np.log(large/alpha[col])/np.log(ratio)))
+        zfactor = binssmall/binslarge
+        binssmall = round(bincount/(2 + 1/zfactor), 0)
+        binslarge = binssmall + (bincount - (2*binssmall))
+        small_interval = (small/alpha[col])**(1/binssmall)
+        large_interval = (large/alpha[col])**(1/binslarge)
+        datacol = data[col].to_numpy()
+        
+        condition1 = np.asarray((datacol > 0) & (datacol < alpha[col])).nonzero()
+        condition2 = np.asarray((datacol > 0) & (datacol == datmax[col])).nonzero()
+        condition3 = np.asarray((datacol > 0) & (datacol >= alpha[col])).nonzero()
+        condition4 = np.asarray((datacol < 0) & (datacol > -1*alpha[col])).nonzero()
+        condition5 = np.asarray((datacol < 0) & (datacol == datmin[col])).nonzero()
+        condition6 = np.asarray((datacol < 0) & (datacol <= -1*alpha[col])).nonzero()
+        condition7 = np.asarray(datacol == 0).nonzero()
+
+        if posbigger == True:
+            yaxis.append(binssmall)
+            logged3 = np.log(datacol[condition3]/alpha[col])/np.log(large_interval) + 1
+            floored3 = np.float64(np.floor(logged3))
+            absolute3 = abs(floored3) + binssmall
+            datacol[condition3] = absolute3
+
+            logged6 = np.log(datacol[condition6]/(-1*alpha[col]))/np.log(small_interval) + 1
+            floored6 = np.float64(np.floor(logged6))
+            absolute6 = -1*abs(floored6) + binssmall
+            datacol[condition6] = absolute6
+
+            datacol[condition1] = 1 + binssmall
+
+            datacol[condition2] = bincount
+
+            datacol[condition4] = -1 + binssmall
+
+            datacol[condition5] = 0
+
+            datacol[condition7] = -1 + binssmall
+
+        else:
+            yaxis.append(binslarge)
+            logged3 = np.log(datacol[condition3]/alpha[col])/np.log(small_interval) + 1
+            floored3 = np.float64(np.floor(logged3))
+            absolute3 = abs(floored3) + binslarge
+            datacol[condition3] = absolute3
+
+            logged6 = np.log(datacol[condition6]/(-1*alpha[col]))/np.log(large_interval) + 1
+            floored6 = np.float64(np.floor(logged6))
+            absolute6 = -1*abs(floored6) + binslarge
+            datacol[condition6] = absolute6
+
+            datacol[condition1] = 1 + binslarge
+
+            datacol[condition2] = bincount
+
+            datacol[condition4] = -1 + binslarge
+
+            datacol[condition5] = 0
+
+            datacol[condition7] = -1 + binslarge
+
+
+    return yaxis, data
+
+def neg2pos(val, binsizes, length, commonratio, datmin, datmax, alpha, smallbins, largebins):
+    tranval = val.to_numpy()
+    if abs(datmax) > abs(datmin):
+
+        condition1 = np.asarray((tranval > 0) & (tranval < alpha)).nonzero()
+        condition2 = np.asarray((tranval > 0) & (tranval == datmax)).nonzero()
+        condition3 = np.asarray((tranval > 0) & (tranval >= alpha)).nonzero()
+        condition4 = np.asarray((tranval < 0) & (tranval > -1*alpha)).nonzero()
+        condition5 = np.asarray((tranval < 0) & (tranval == datmin)).nonzero()
+        condition6 = np.asarray((tranval < 0) & (tranval <= -1*alpha)).nonzero()
+        condition7 = np.asarray(tranval == 0).nonzero()
+
+        logged3 = np.log(tranval[condition3]/alpha)/np.log(binsizes[1]) + 1
+        floored3 = np.float64(np.floor(logged3))
+        absolute3 = abs(floored3) + smallbins
+        tranval[condition3] = absolute3
+
+        logged6 = np.log(tranval[condition6]/(-1*alpha))/np.log(binsizes[0]) + 1
+        floored6 = np.float64(np.floor(logged6))
+        absolute6 = -1*abs(floored6) + smallbins
+        tranval[condition6] = absolute6
+
+        tranval[condition1] = 1 + smallbins
+
+        tranval[condition2] = bincount
+
+        tranval[condition4] = -1 + smallbins
+
+        tranval[condition5] = 0
+
+        tranval[condition7] = -1 + smallbins
+
+    else:
+
+        condition1 = np.asarray((tranval > 0) & (tranval < alpha)).nonzero()
+        condition2 = np.asarray((tranval > 0) & (tranval == datmax)).nonzero()
+        condition3 = np.asarray((tranval > 0) & (tranval >= alpha)).nonzero()
+        condition4 = np.asarray((tranval < 0) & (tranval > -1*alpha)).nonzero()
+        condition5 = np.asarray((tranval < 0) & (tranval == datmin)).nonzero()
+        condition6 = np.asarray((tranval < 0) & (tranval <= -1*alpha)).nonzero()
+        condition7 = np.asarray(tranval == 0).nonzero()
+
+        logged3 = np.log(tranval[condition3]/alpha)/np.log(binsizes[0]) + 1
+        floored3 = np.float64(np.floor(logged3))
+        absolute3 = abs(floored3) + largebins
+        tranval[condition3] = absolute3
+
+        logged6 = np.log(tranval[condition6]/(-1*alpha))/np.log(binsizes[0]) + 1
+        floored6 = np.float64(np.floor(logged6))
+        absolute6 = -1*abs(floored6) + largebins
+        tranval[condition6] = absolute6
+
+        tranval[condition1] = 1 + largebins
+
+        tranval[condition2] = bincount
+
+        tranval[condition4] = -1 + largebins
+
+        tranval[condition5] = 0
+
+        tranval[condition7] = -1 + largebins
+
+    return tranval
+
+def dfzero2pos(data, alpha, datmax):
+    for col in data.columns:
+        datacol = data[col].to_numpy()
+        condition1 = np.where(datacol < alpha[col])
+        condition2 = np.where(datacol >= alpha[col])
+
+        commonratio = (datmax[col]/alpha[col])**(1/(bincount - 2))
+
+        logged = np.log(datacol[condition2]/alpha[col])/np.log(commonratio)
+        floored = np.floor(logged + 2)
+        floated = np.float64(floored)
+
+        datacol[condition2] = floated
+        datacol[condition1] = 1
+    return data
+
+def zero2pos(data, length, commonratio, datmin, datmax):
+    data = data.to_numpy()
+    condition1 = np.where(data < datmin)
+    condition2 = np.where(data >= datmin)
+    
+    logged = np.log(data[condition2]/datmin)/np.log(commonratio)
+    floored = np.floor(logged + 2)
+    floated = np.float64(floored)
+
+    data[condition2] = floated
+    data[condition1] = 1
+    
+    return data
+def dfneg2zero(data, datmin, alpha):
+    for col in data.columns:
+        datacol = data[col].to_numpy()
+        condition1 = np.where(datacol > alpha)
+        condition2 = np.where(datacol <= alpha)
+
+        commonratio = (datmin[col]/alpha[col])**(1/(bincount - 2))
+
+        logged = np.log(datacol[condition2]/alpha[col])/np.log(commonratio)
+        floored = np.floor(logged + 2) 
+        floated = -1*np.float64(floored) + bincount   
+
+        datacol[condition2] = floated
+        datacol[condition1] = -1 + bincount  
+    return data
+
+def neg2zero(data, length, commonratio, datmin, datmax): 
+    data = data.to_numpy()
+    condition1 = np.where(data > datmax)
+    condition2 = np.where(data <= datmax)
+
+    logged = np.log(data[condition2]/datmax)/np.log(commonratio)
+    floored = np.floor(logged + 2) 
+    floated = -1*np.float64(floored) + bincount
+
+    data[condition2] = floated
+    data[condition1] = -1 + bincount
+
+    return data
 
 def root(root, value):
     return round(value**(1/root), 6)
@@ -142,39 +271,6 @@ def is_number(value):
         return True
     except:
         return False
-
-def checkrange(original, transformed, Range, column_bin_sizes, max, min):
-    if original >= Range[0] and original <= Range[1]:
-        return original, transformed, Range
-    else:
-        print("Original, ", original, "is not in Range, ", Range)
-        if original > Range[1] and original - Range[1] > 0:
-            transformed = transformed + 1
-            diff = original - Range[1]
-            print("\t Adding one bin number, different by:", diff)
-        if original < Range[0] and Range[0] - original > 0:
-            transformed = transformed - 1
-            diff = original - Range[0]
-            print("\t Subtracting one bin number, different by:", diff)
-
-
-        if transformed > 1:
-            Range[0] = column_bin_sizes[-1]**(transformed - 1)
-            Range[1] = column_bin_sizes[-1]**(transformed)
-        if transformed < -1:
-            Range[0] = -1*(column_bin_sizes[0]**(-1*transformed))
-            Range[1] = -1*(column_bin_sizes[0]**(-1*transformed - 1))
-        if transformed == 1:
-            Range[0] = 1
-            Range[1] = column_bin_sizes[-1]**(transformed)
-        if transformed == -1:
-            Range[0] = -1*(column_bin_sizes[0]**(-1*transformed))
-            Range[1] = -1
-        # print(" ")
-        # print("Difference: ", diff)
-        # print("Range Edited", Range)
-        # print("Edited Transformation: ", transformed)
-        return checkrange(original, transformed, Range, column_bin_sizes, max, min)
 
 def firstAterm(IQR, datalen):
     return (2*IQR)/(datalen**(1/3))
@@ -251,20 +347,51 @@ def bin_data_log(data,column_names):
                  'min': data.min(),
                  'max': data.max(),
                  'twenty5': data.quantile(0.25),
-                 'seventy5': data.quantile(0.75)}
+                 'seventy5': data.quantile(0.75),
+                 'alpha': (2*(data.quantile(0.75) - data.quantile(0.25)))/(data.shape[0]**(1/3))}
 
     nfeats = bin_stats['size'][1] 
     datalen = bin_stats['size'][0]
+   
+    positiverange = np.where((data.min() >= 0) & (data.max() > 0))[0]
+    negativerange = np.where((data.min() < 0) & (data.max() <= 0))[0]
+    neg2posrange =  np.where((data.min() < 0) & (data.max() > 0))[0]
+    zeroalpha = np.where((2*(data.quantile(0.75) - data.quantile(0.25)))/(data.shape[0]**(1/3)) == 0)[0]
+
+    positivedf = data.iloc[:, positiverange]
+    negativedf = data.iloc[:, negativerange]
+    neg2posdf = data.iloc[:, neg2posrange]
+    zerodf = data.iloc[:, zeroalpha]
+
+
+    positivenames = positivedf.columns
+    negativenames = negativedf.columns
+    neg2posnames = neg2posdf.columns
+    zeronames = zerodf.columns 
+
+    nfeats = nfeats - len(zeronames)
+    #print(bin_stats['alpha'][positivenames])
+    
+    positivedf = dfzero2pos(positivedf, bin_stats['alpha'][positivenames], bin_stats['max'][positivenames])
+    negativedf = dfneg2zero(negativedf, -1*bin_stats['alpha'][positivenames], bin_stats['min'][negativenames])
+    print(neg2posdf)
+    yvalues, neg2posdf = dfneg2pos(neg2posdf, bin_stats['alpha'][neg2posnames], bin_stats['min'][neg2posnames], bin_stats['max'][neg2posnames])
+    print(neg2posdf)
+    zerodf = pandas.DataFrame(bincount + 55, index= np.arange(datalen), columns = zeronames)
+    
+
 
     for i in range(0, nfeats):
         quartile25to75.append(bin_stats['seventy5'][i] - bin_stats['twenty5'][i])
         alpha = firstAterm(quartile25to75[-1], datalen)
         alphavals.append(alpha)
         if alpha == 0:
-            empty = [255] * datalen
+            empty = [bincount + 55] * datalen
             data[column_names[i]] = pandas.Series(np.array(empty), index = range(0, datalen))
             column_bin_sizes.append([0])
             yaxis.append(0)
+            data.drop(column_names[i], axis = 1, inplace = True)
+            nfeats = nfeats - 1
             continue 
         if bin_stats['min'][i] >= 0 and bin_stats['max'][i] > 0:
             column_bin_sizes.append([root(bincount - 2, bin_stats['max'][i]/alpha)])
@@ -294,13 +421,19 @@ def bin_data_log(data,column_names):
             small_interval = root(binssmall, small/alpha)
             large_interval = root(binslarge, large/alpha)
             column_bin_sizes.append([small_interval, large_interval])        
-            yval, data[column_names[i]] = neg2pos(data[column_names[i]], column_bin_sizes[-1], datalen, ratio, bin_stats['min'][i], bin_stats['max'][i], alpha, binssmall, binslarge)
-            yaxis.append(yval)
+            if abs(bin_stats['max'][i]) > abs(bin_stats['min'][i]):
+                yaxis.append(binssmall)
+            else:
+                yaxis.append(binslarge)
+            data[column_names[i]] = neg2pos(data[column_names[i]], column_bin_sizes[-1], datalen, ratio, bin_stats['min'][i], bin_stats['max'][i], alpha, binssmall, binslarge)
+        
 
     data_ind = pandas.notnull(data)  # Handle NaN values
     data[~data_ind] = bincount + 55          # Handle NaN values
     data = data.astype(np.uint16) # cast to save memory
     data[data==bincount] = bincount - 1         # in case of numerical precision issues
+
+
 
     # for i in range(0, nfeats):
     #     count = 0
@@ -319,7 +452,7 @@ def bin_data_log(data,column_names):
     # initialize bins, try to be memory efficient
     nrows = data.shape[0]
     if nrows < 2**8:
-        dtype = np.u=uint8
+        dtype = np.uint8
     elif nrows < 2**16:
         dtype = np.uint16
     elif nrows < 2**32:
@@ -529,10 +662,11 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
     
     fticks = []
     convertprefix = []
+
     for i in range(nticks):
         formtick = "%#.3f" % out[i]
         decformtick = '%.2e' % Decimal(formtick)
-        print(i, ")", formtick, decformtick)
+        #print(i, ")", formtick, decformtick)
         convertexponent = int(decformtick[-3:])
         numbers = float(decformtick[:-4])
         if convertexponent > 0:
@@ -619,7 +753,7 @@ def format_ticks(fmin,fmax,nticks):
     for i in range(nticks):
         formtick = "%#.3f" % out[i]
         decformtick = '%.2e' % Decimal(formtick)
-        print(i, ")", formtick, decformtick)
+        #print(i, ")", formtick, decformtick)
         convertexponent = int(decformtick[-3:])
         numbers = float(decformtick[:-4])
         if convertexponent > 0:
@@ -1065,6 +1199,7 @@ def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,bintyp
                 #                                 X=subgrid_dims[0][x:x+2],
                 #                                 Y=subgrid_dims[1][y:y+2])
                 
+
                 image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],:] = _avg2(sub_image)
                 del sub_image
 
@@ -1079,6 +1214,7 @@ def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,bintyp
 # resolution layers at a specific layer.
 def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, bintype, binstats, binsizes, axiszero, alphavals, X=None,Y=None):
     # Get the scale info
+    processID = os.getpid()
     scale_info = None
     for res in info['scales']:
         if int(res['key'])==S:
@@ -1100,7 +1236,6 @@ def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, 
     
     # Initialize the output
     image = np.zeros((Y[1]-Y[0],X[1]-X[0],4),dtype=np.uint8)
-    
     # If requesting from the lowest scale, then just generate the graph
     if S==int(info['scales'][0]['key']):
         index = (int(Y[0]/CHUNK_SIZE) + int(X[0]/CHUNK_SIZE) * info['rows'])
@@ -1157,6 +1292,16 @@ def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, 
                     x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
                     x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
                     image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],:] = _avg2(subgrid_images[y*(len(subgrid_dims[0])-1) + x].get())
+        # print("Subgrid Images")
+        # print(subgrid_images)
+
+        # for item in subgrid_images:
+        #     print(item.release())
+        # file_grid = open("data_subgrid_images.pkl", 'wb')
+        # # del subgrid_images['lock']
+        # pickle.dump(subgrid_images, file_grid)
+        # file_grid.close()
+
         del subgrid_images
 
     # Write the chunk
@@ -1196,7 +1341,9 @@ if __name__=="__main__":
                         dest='inpDir',
                         type=str,
                         help='Path to input images.',
-                        required=True)
+                        required=True,
+                        )
+
     parser.add_argument('--outDirLinear',               # Pyramid directory
                         dest='outDirLinear',
                         type=str,
@@ -1215,6 +1362,10 @@ if __name__=="__main__":
     input_path = args.inpDir
     linear_output_path = Path(args.outDirLinear)
     log_output_path = Path(args.outDirLog)
+
+    # input_path = "/Users/mmvihani/AxleInformatics/polus-plugins/polus-graph-pyramid-builder-plugin/input/"
+    # linear_output_path = "/Users/mmvihani/AxleInformatics/polus-plugins/polus-graph-pyramid-builder-plugin/outDirLinear/"
+    # log_output_path = "/Users/mmvihani/AxleInformatics/polus-plugins/polus-graph-pyramid-builder-plugin/outDirLog/"
 
     logger.info('inpDir = {}'.format(input_path))
     logger.info('outDirLinear = {}'.format(linear_output_path))
@@ -1239,9 +1390,14 @@ if __name__=="__main__":
 
         # Bin the data
         logger.info('Binning data for {} features...'.format(column_names.size))
+        start = time.time()
         yaxis_log, log_bins, log_bin_stats, log_index, log_binsizes, alphavals_log = bin_data_log(data_log, column_names_log)
+        endlog = time.time()
         yaxis_linear, bins, bin_stats, linear_index, linear_binsizes, alphavals_linear = bin_data(data,column_names)
-
+        endlinear = time.time()
+        print("Binning Data for Log Graphs take: ", endlog - start)
+        print("Binning Data for Linear Graphs take ", endlinear - endlog)
+        print("Binning data for Log Scale graphs are ", (endlog - start)/(endlinear - endlog), "times slower.")
         logger.info('Done!')
         del data    # get rid of the original data to save memory
         del data_log
@@ -1254,8 +1410,19 @@ if __name__=="__main__":
 
         # Generate the dzi file
         logger.info('Generating pyramid metadata...')
+        start = time.time()
         info_linear = metadata_to_graph_info(bins,linear_output_path,folder, linear_index)
+        endlinear = time.time()
         info_log = metadata_to_graph_info(log_bins, log_output_path,folder, log_index)
+        endlog = time.time()
+        # print("INFO LINEAR")
+        # print(info_linear)
+        # print("INFO LOG")
+        # print(info_log)
+        print("Info for for Log Graphs take: ", endlog - endlinear)
+        print("Info for Linear Graphs take ", endlinear - start)
+        print("Info for Log Scale graphs are ", (endlog - endlinear)/(endlinear - start), "times slower.")
+
         logger.info('Done!')
         
         logger.info('Writing layout file...!')
