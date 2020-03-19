@@ -1,6 +1,7 @@
 # Feature Extraction
 
 The feature extraction plugin extracts shape and intensity based features from images and outputs csv file.The input image should be in OME tiled tiff format.
+
 These are the features that can be extracted from this plugin:
    1. Area
    2. Perimeter
