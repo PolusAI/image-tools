@@ -1,6 +1,6 @@
 {
     "name": "Feature Extraction",
-    "version": "0.4.10",
+    "version": "0.5.1",
     "title": "Feature Extraction",
     "description": "Extract shape and intensity features from images.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@axleinfo.com)",
@@ -8,26 +8,19 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-extraction-plugin:0.4.10",
+    "containerId": "labshare/polus-feature-extraction-plugin:0.5.1",
     "inputs": [
       {
-        "name": "csvfile",
-        "type": "boolean",
-        "options": {
-	  "items": {
-	      "type": "string",
-	      "title": "Select csvtype",
-              "oneOf": 
-                  [
-		      { "description": "SeparateCSV", "enum": [ "csvmany" ] }
-                  ], 
-              "widget": "select" ,    
-              "minItems": 1, 
-              "uniqueItems": "false"   
-          },
-        "required": "true",
-	"description": "save csv file separately for each image or one csv for all images"   
-        }
+            "name": "csvfile",
+            "type": "enum",
+            "options": {
+                "values": [
+                    "singlecsv",
+                    "separatecsv"
+                ]
+            },
+            "required": "true",
+            "description": "csvfile : singlecsv for saving values in one csv file and separate csv to save values for each image in separate csv file."
       },   
       {
         "name": "features",

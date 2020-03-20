@@ -44,7 +44,7 @@ def main():
     
     df,filenames= image_convert.convert_tiled_tiff(features, csvfile, outDir, pixelDistance)
     #call csv function to save as a single file
-    if csvfile == 'csvone':
+    if csvfile == 'singlecsv':
         csv_file= Df_Csv_single(df, outDir)
         csv_final = csv_file.csvfilesave()
         del csv_final,df,filenames

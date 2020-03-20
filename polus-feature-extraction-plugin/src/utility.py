@@ -77,7 +77,7 @@ class ConvertImage(object):
                 df = analysis.feature_extraction()
                 
                 #Check whether csvfile is csvone to save the features extracted from all the images in same csv file
-                if csvfile == 'csvmany':
+                if csvfile == 'separatecsv':
                     df_feature = df#assign the dataframe to save as separate file                    
                 else:
                     df_feature = df_feature.append(df)#append the dataframe to save all in one csv file
@@ -123,7 +123,7 @@ class ConvertImage(object):
                 df = analysis.feature_extraction()
                 
                 #Check whether csvfile is csvone to save the features extracted from all the images in same csv file
-                if csvfile == 'csvmany':
+                if csvfile == 'separatecsv':
                     df_feature = df
                 else:
                     df_feature = df_feature.append(df)
@@ -883,7 +883,7 @@ class Analysis(ConvertImage):
        self.df_insert.columns = map (lambda x: x.capitalize(),self.df_insert.columns)#Capitalize the first letter of header
         
         #save each csv file separately
-       if self.csv_file == 'csvmany':
+       if self.csv_file == 'separatecsv':
            csv_file= Df_Csv_multiple(self.df_insert, self.output_dir,title)
            csv_final = csv_file.csvfilesave()
        else:
