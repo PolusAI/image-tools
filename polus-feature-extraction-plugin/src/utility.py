@@ -63,7 +63,7 @@ class ConvertImage(object):
             
             for segfile in configfiles:#run analysis for each segmented image in the list
                 seg_file=os.path.normpath(segfile)
-                segfilename = seg_file.split('\\')#split to get only the filename
+                segfilename = seg_file.split('/')#split to get only the filename
                 seg_file_names1 = segfilename[-1]
                               
                 #Read the image using bioreader from bfio
@@ -98,7 +98,7 @@ class ConvertImage(object):
             for segfile in configfiles:
     
                 seg_file=os.path.normpath(segfile)
-                segfilename = seg_file.split('\\')#split to get only the filename
+                segfilename = seg_file.split('/')#split to get only the filename
                 seg_file_names1 = segfilename[-1]
             
             #for seg_file_names1 in seg_filenames1:#run analysis for each segmented image in the list
