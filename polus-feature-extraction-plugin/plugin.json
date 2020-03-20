@@ -3,7 +3,7 @@
     "version": "0.4.6",
     "title": "Feature Extraction",
     "description": "Extract shape and intensity features from images.",
-    "author": "Jayapriya Nagarajan (jayapriya.nagarajan@labshare.org)",
+    "author": "Jayapriya Nagarajan (jayapriya.nagarajan@axkeinfo.com)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
