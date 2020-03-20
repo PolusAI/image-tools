@@ -77,12 +77,13 @@ class ConvertImage(object):
                 df = analysis.feature_extraction()
                 
                 #Check whether csvfile is csvone to save the features extracted from all the images in same csv file
-                if csvfile == 'csvone':
-                    df_feature = df_feature.append(df)#append the dataframe to save all in one csv file
+                if csvfile == 'csvmany':
+                    df_feature = df#assign the dataframe to save as separate file                    
                 else:
-                    df_feature = df#assign the dataframe to save as separate file
+                    df_feature = df_feature.append(df)#append the dataframe to save all in one csv file
                 index+=1
                 print("Number of images processed-",index)
+                
         #If intensity image is passed as a parameter        
         else:
             #Get list of .ome.tif files in the directory including sub folders for segmented images
@@ -122,10 +123,10 @@ class ConvertImage(object):
                 df = analysis.feature_extraction()
                 
                 #Check whether csvfile is csvone to save the features extracted from all the images in same csv file
-                if csvfile == 'csvone':
-                    df_feature = df_feature.append(df)
-                else:
+                if csvfile == 'csvmany':
                     df_feature = df
+                else:
+                    df_feature = df_feature.append(df)
                 index+=1
                 print("Number of images processed-",index)
 
