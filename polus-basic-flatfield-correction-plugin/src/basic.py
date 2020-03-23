@@ -1,11 +1,10 @@
-import argparse, time, csv, logging, re, copy, cv2, bioformats
+import argparse, logging, copy, cv2, bioformats
 
 import numpy as np
 import javabridge as jutil
-
+from filepattern import get_regex,output_name,FilePattern
 from bfio.bfio import BioReader,BioWriter
 from pathlib import Path
-from utils import _parse_files, _parse_fpattern, _get_output_name
 
 # Disable java logging
 def init_logger(self):
@@ -22,40 +21,38 @@ OPTIONS = {'max_iterations': 500,
           }
 
 """ Load files and create an image stack """
-def _get_resized_image_stack(fpath,flist):
+def _get_resized_image_stack(flist):
     """ Load all images in a list and resize to OPTIONS['size']
-    
+
     When files are parsed, the variables are used in an index to provide
     a method to reference a specific file name by its dimensions. This
     function returns the variable index based on the input filename pattern.
 
     Inputs:ed th
-        fpath - Location of images
-        flist - List of images to load and resize
+        flist - Paths of list of images to load and resize
     Outputs:
         img_stack - A 3D stack of 2D images
         X - width of image
         Y - height of image
     """
-    
+
     #Initialize the output
-    br = BioReader(str(Path(fpath).joinpath(flist[0])))
+    br = BioReader(str(flist[0]))
     X = br.num_x()
     Y = br.num_y()
     C = len(flist)
     img_stack = np.zeros((OPTIONS['size'],OPTIONS['size'],C),dtype=np.float32)
-    
+
     # Load every image as a z-slice
     for ind,fname in zip(range(len(flist)),flist):
-       br = BioReader(str(Path(fpath).joinpath(fname)))
+       br = BioReader(str(fname))
        I = np.squeeze(br.read_image())
        img_stack[:,:,ind] = cv2.resize(I,(OPTIONS['size'],OPTIONS['size']),interpolation=cv2.INTER_LINEAR).astype(np.float32)
-       
     return img_stack,X,Y
 
-def _dct2(D):
+def _dct2(imgf_stack):
     """ Discrete cosine transform
-    
+
     This function originally existed to replicate Matlabs dct function using scipy's dct function. It was necessary
     to perform the dct along the rows and columns. To simplify the container creation, the dct function from opencv
     was used. This function is slower, and scipy's version should be implemented in the future.
@@ -63,16 +60,16 @@ def _dct2(D):
     The scipy dct that was originally used was type-II.
 
     Inputs:
-        D - Input matrix to perform dct on
+        imgf_stack - Input matrix to perform dct on
     Outputs:
-        d - The dct of input, D
+        d - The dct of input, imgf_stack
     """
-    d = cv2.dct(D).astype(np.float64)
+    d = cv2.dct(imgf_stack).astype(np.float64)
     return d
 
-def _idct2(D):
+def _idct2(imgf_stack):
     """ Discrete cosine transform
-    
+
     This function originally existed to replicate Matlabs dct function using scipy's dct function. It was necessary
     to perform the dct along the rows and columns. To simplify the container creation, the dct function from opencv
     was used. This function is slower, and scipy's version should be implemented in the future.
@@ -80,16 +77,16 @@ def _idct2(D):
     The scipy dct that was originally used was type-III, which is the inverse of dct type-II
 
     Inputs:
-        D - Input matrix to perform dct on
+        imgf_stack - Input matrix to perform dct on
     Outputs:
-        d - The dct of input, D
+        d - The dct of input, imgf_stack
     """
-    d = cv2.dct(D,flags=cv2.DCT_INVERSE).astype(np.float64)
+    d = cv2.dct(imgf_stack,flags=cv2.DCT_INVERSE).astype(np.float64)
     return d
 
 def _initialize_options(img_stack,get_darkfield,options):
     """ Initialize optimization options
-    
+
     This function modifies the default OPTIONS using information about the images to be processed.
 
     Inputs:
@@ -110,9 +107,9 @@ def _initialize_options(img_stack,get_darkfield,options):
     new_options['darkfield'] = get_darkfield
     return new_options
 
-def _inexact_alm_l1(D,options):
+def _inexact_alm_l1(imgf_stack,options):
     """ L1 optimization using inexact augmented Legrangian multipliers (IALM)
-    
+
     This function finds the smallest number of features in Fourier space (frequencies) that minimizes the
     error when compared to images, using L1 loss and IALM optimization. By using L1 loss in Fourier space,
     the resulting background flatfield image should be an image with smooth gradients.
@@ -124,52 +121,52 @@ def _inexact_alm_l1(D,options):
     https://arxiv.org/pdf/1009.5055.pdf
 
     Inputs:
-        D - Stack of images used to estimate the flatfield
+        imgf_stack - Stack of images used to estimate the flatfield
         options - optimization options
     Outputs:
         new_options - Modified options
     """
     # Get basic image information and reshape input
-    p = D.shape[0]
-    q = D.shape[1]
-    m = p*q
-    n = D.shape[2]
-    D = np.reshape(D,(m,n))
-    options['weight'] = np.reshape(options['weight'],D.shape)
-    
+    img_width = imgf_stack.shape[0]
+    img_height = imgf_stack.shape[1]
+    img_size = img_width* img_height
+    img_color = imgf_stack.shape[2]
+    imgf_stack = np.reshape(imgf_stack,(img_size, img_color))
+    options['weight'] = np.reshape(options['weight'],imgf_stack.shape)
+
     # Matrix normalization factor
-    temp = np.linalg.svd(D,full_matrices=False,compute_uv=False)
+    temp = np.linalg.svd(imgf_stack,full_matrices=False,compute_uv=False)
     norm_two = np.float64(temp[0])
     del temp
-    
+
     # A is a low rank matrix that is being solved for
-    A = np.zeros(D.shape,dtype=np.float32)
-    A_coeff = np.ones((1,n),dtype=np.float64)   # per image scaling coefficient, accounts for things like photobleaching
-    A_offset = np.zeros((m,1),dtype=np.float64) # offset per pixel across all images
+    A = np.zeros(imgf_stack.shape,dtype=np.float32)
+    A_coeff = np.ones((1, img_color),dtype=np.float64)   # per image scaling coefficient, accounts for things like photobleaching
+    A_offset = np.zeros((img_size,1),dtype=np.float64) # offset per pixel across all images
 
     # E1 is the additive error. Since the goal is determining the background signal, this is the real signal at each pixel
-    E1 = np.zeros(D.shape,dtype=np.float32)
+    E1 = np.zeros(imgf_stack.shape,dtype=np.float32)
 
     # Normalization factors
     ent1 = np.float64(1)    # flatfield normalization
     ent2 = np.float64(10)   # darkfield normalization
 
     # Weights
-    W = _dct2(np.mean(np.reshape(A,(p,q,n)),2))
+    weight_upd = _dct2(np.mean(np.reshape(A,(img_width, img_height, img_color)),2))
 
     # Initialize gradient and weight normalization factors
-    Y1 = np.float64(0)          
+    Y1 = np.float64(0)
     mu = np.float64(12.5)/norm_two
     mu_bar = mu * 10**7
     rho = np.float64(1.5)
 
     # Frobenius norm
-    d_norm = np.linalg.norm(D,'fro')
+    d_norm = np.linalg.norm(imgf_stack,'fro')
 
     # Darkfield upper limit and offset
-    B1_uplimit = np.min(D)
+    B1_uplimit = np.min(imgf_stack)
     B1_offset = np.float64(0)
-    
+
     # Perform optimization
     iternum = 0
     converged = False
@@ -177,29 +174,29 @@ def _inexact_alm_l1(D,options):
         iternum += 1
 
         # Calculate the flatfield using existing weights, coefficients, and offsets
-        W_idct_hat = _idct2(W)
-        A = np.matmul(np.reshape(W_idct_hat,(m,1)),A_coeff) + A_offset
-        temp_W = np.divide(D - A - E1 + np.multiply(1/mu,Y1),ent1)
-        
+        W_idct_hat = _idct2(weight_upd)
+        A = np.matmul(np.reshape(W_idct_hat,(img_size,1)),A_coeff) + A_offset
+        temp_W = np.divide(imgf_stack - A - E1 + np.multiply(1/mu,Y1),ent1)
+
         # Update the weights
-        temp_W = np.reshape(temp_W,(p,q,n))
+        temp_W = np.reshape(temp_W,(img_width, img_height, img_color))
         temp_W = np.mean(temp_W,2)
-        W = W + _dct2(temp_W)
-        W = np.max(np.reshape(W - options['lambda']/(ent1*mu),(p,q,1)),-1,initial=0) + np.min(np.reshape(W + options['lambda']/(ent1*mu),(p,q,1)),-1,initial=0)
-        W_idct_hat = _idct2(W)
-        
+        weight_upd = weight_upd + _dct2(temp_W)
+        weight_upd = np.max(np.reshape(weight_upd - options['lambda']/(ent1*mu),(img_width, img_height,1)),-1,initial=0) + np.min(np.reshape(weight_upd + options['lambda']/(ent1*mu),(img_width, img_height,1)),-1,initial=0)
+        W_idct_hat = _idct2(weight_upd)
+
         # Calculate the flatfield using updated weights
-        A = np.matmul(np.reshape(W_idct_hat,(m,1)),A_coeff) + A_offset
-        
+        A = np.matmul(np.reshape(W_idct_hat,(img_size,1)),A_coeff) + A_offset
+
         # Determine the error
-        E1 = E1 + np.divide(D - A - E1 + np.multiply(1/mu,Y1),ent1)
-        E1 = np.max(np.reshape(E1 - options['weight']/(ent1*mu),(m,n,1)),-1,initial=0) + np.min(np.reshape(E1 + options['weight']/(ent1*mu),(m,n,1)),-1,initial=0)
-        
+        E1 = E1 + np.divide(imgf_stack - A - E1 + np.multiply(1/mu,Y1),ent1)
+        E1 = np.max(np.reshape(E1 - options['weight']/(ent1*mu),(img_size, img_color,1)),-1,initial=0) + np.min(np.reshape(E1 + options['weight']/(ent1*mu),(img_size, img_color,1)),-1,initial=0)
+
         # Calculate the flatfield coefficients by subtracting the errors from the original data
-        R1 = D-E1
-        A_coeff = np.reshape(np.mean(R1,0)/np.mean(R1),(1,n))
+        R1 = imgf_stack-E1
+        A_coeff = np.reshape(np.mean(R1,0)/np.mean(R1),(1, img_color))
         A_coeff[A_coeff<0] = 0       # pixel values should never be negative
-        
+
         # Calculate the darkfield component if specified by the user
         if options['darkfield']:
             # Get images with predominantly background pixels
@@ -210,7 +207,7 @@ def _inexact_alm_l1(D,options):
             R1_lower = np.mean(R1_lower[:,validA1coeff_idx],0)
             B1_coeff = (R1_upper-R1_lower)/np.mean(R1)
             k = validA1coeff_idx.size
-            
+
             # Calculate the darkfield offset
             temp1 = np.sum(np.square(A_coeff[0,validA1coeff_idx]))
             temp2 = np.sum(A_coeff[0,validA1coeff_idx])
@@ -224,16 +221,16 @@ def _inexact_alm_l1(D,options):
             B1_offset = np.max(B1_offset,initial=0)
             B1_offset = np.min(B1_offset,initial=B1_uplimit/(np.mean(W_idct_hat)+10**-7))
             B_offset = B1_offset * np.mean(W_idct_hat) - B1_offset*np.reshape(W_idct_hat,(-1,1))
-            
+
             # Calculate darkfield
             A1_offset = np.reshape(np.mean(R1[:,validA1coeff_idx],1),(-1,1)) - np.mean(A_coeff[0,validA1coeff_idx]) * np.reshape(W_idct_hat,(-1,1))
             A1_offset = A1_offset - np.mean(A1_offset)
             A_offset = A1_offset - np.mean(A1_offset) - B_offset
-            
+
             # Update darkfield weights
-            W_offset = _dct2(np.reshape(A_offset,(p,q)))
-            W_offset = np.max(np.reshape(W_offset - options['lambda_darkfield']/(ent2*mu),(p,q,1)),-1,initial=0) \
-                     + np.min(np.reshape(W_offset + options['lambda_darkfield']/(ent2*mu),(p,q,1)),-1,initial=0)
+            W_offset = _dct2(np.reshape(A_offset,(img_width, img_height)))
+            W_offset = np.max(np.reshape(W_offset - options['lambda_darkfield']/(ent2*mu),(img_width, img_height,1)),-1,initial=0) \
+                     + np.min(np.reshape(W_offset + options['lambda_darkfield']/(ent2*mu),(img_width, img_height,1)),-1,initial=0)
 
             # Calculate darkfield based on updated weights
             A_offset = _idct2(W_offset)
@@ -241,30 +238,30 @@ def _inexact_alm_l1(D,options):
             A_offset = np.max(np.reshape(A_offset - options['lambda_darkfield']/(ent2*mu),(A_offset.shape[0],A_offset.shape[1],1)),-1,initial=0) \
                      + np.min(np.reshape(A_offset + options['lambda_darkfield']/(ent2*mu),(A_offset.shape[0],A_offset.shape[1],1)),-1,initial=0)
             A_offset = A_offset + B_offset
-            
+
         # Loss
-        Z1 = D - A - E1
-        
+        Z1 = imgf_stack - A - E1
+
         # Update weight regularization term
         Y1 = Y1 + mu*Z1
-        
+
         # Update learning rate
         mu = np.min(mu*rho,initial=mu_bar)
-        
+
         # Stop if loss is below threshold
         stopCriterion = np.linalg.norm(Z1,ord='fro')/d_norm
         if stopCriterion < options['optimization_tol'] or iternum > options['max_iterations']:
             converged = True
-        
+
     # Calculate final darkfield image
     A_offset = A_offset + B1_offset * np.reshape(W_idct_hat,(-1,1))
-    
+
     return A,E1,A_offset
 
 
 def _get_flatfield_and_reweight(X_k_A,X_k_E,X_k_Aoffset,options):
     """ Format flatfield/darkfield and change weights
-    
+
     The inexact augmented legrangian multiplier method uses L1 loss, but this is only done
     since an exact solution to L0 problems do not exist. After each round of optimization, the
     starting weights are recalculated to give low weights to pixels that are not background and
@@ -278,7 +275,7 @@ def _get_flatfield_and_reweight(X_k_A,X_k_E,X_k_Aoffset,options):
     contains raw pixel values.
 
     Inputs:
-        D - Numpy stack of images
+        imgf_stack - Numpy stack of images
         flatfield - numpy floating precision matrix containing flatfield values
         darkfield - numpy floating precision matrix containing darkfield values
     Outputs:
@@ -290,20 +287,20 @@ def _get_flatfield_and_reweight(X_k_A,X_k_E,X_k_Aoffset,options):
     XE = np.reshape(X_k_E,(options['size'],options['size'],-1))
     XE_norm = XE/np.tile(np.reshape(np.mean(np.mean(XA,0),0)+10**-6,(1,1,-1)),(options['size'],options['size'],1))
     XAoffset = np.reshape(X_k_Aoffset,(options['size'],options['size']))
-    
+
     # Update the weights
     weight = 1/(np.abs(XE_norm) + options['epsilon'])
     options['weight'] = weight * weight.size / np.sum(weight)
-    
+
     # Calculate the mean flatfield and darkfield
     temp = np.mean(XA,2) - XAoffset
     flatfield = temp/np.mean(temp)
     darkfield = XAoffset
     return flatfield, darkfield, options
 
-def _get_photobleach(D,flatfield,darkfield=None):
+def _get_photobleach(imgf_stack,flatfield,darkfield=None):
     """ Calculate the global effect of photobleaching for each image
-    
+
     Using the original data, flatfield, and darkfield images, estimate the total contribution of photobleaching
     to an image in a series of images.
 
@@ -316,38 +313,38 @@ def _get_photobleach(D,flatfield,darkfield=None):
         A_coeff - A 1xn matrix of photobleaching offsets, where n is the number of input images
     """
     # Initialize matrices
-    D = np.reshape(D,(OPTIONS['size']*OPTIONS['size'],-1)).astype(np.float64)
+    imgf_stack = np.reshape(imgf_stack,(OPTIONS['size']*OPTIONS['size'],-1)).astype(np.float64)
     if darkfield is None:
         darkfield = np.zeros(flatfield.shape,dtype=np.float64)
-    
+
     # Initialize weights and tolerances
-    weights = np.ones(D.shape,dtype=np.float64)
+    weights = np.ones(imgf_stack.shape,dtype=np.float64)
     epsilon = np.float64(0.1)
     tol = np.float64(10**-6)
-    
+
     # Run optimization exactly 5 times
     for r in range(5):
         # Calculate weights, offsets and coefficients
         W_idct_hat = np.reshape(flatfield,(-1,1))
         A_offset = np.reshape(darkfield,(-1,1))
-        A_coeff = np.reshape(np.mean(D,0),(1,-1))
-        
+        A_coeff = np.reshape(np.mean(imgf_stack,0),(1,-1))
+
         # Initialization values and learning rates
-        temp = np.linalg.svd(D,full_matrices=False,compute_uv=False)
+        temp = np.linalg.svd(imgf_stack,full_matrices=False,compute_uv=False)
         norm_two = np.float64(temp[0])
         mu = np.float64(12.5)/norm_two
         mu_bar = mu * 10**7
         rho = np.float64(1.5)
         ent1 = 1
-        
+
         # Normalization factors
-        d_norm = np.linalg.norm(D,'fro')
-        
+        d_norm = np.linalg.norm(imgf_stack,'fro')
+
         # Initialize augmented representation and error
-        A = np.zeros(D.shape,dtype=np.float64)
-        E1 = np.zeros(D.shape,dtype=np.float64)
+        A = np.zeros(imgf_stack.shape,dtype=np.float64)
+        E1 = np.zeros(imgf_stack.shape,dtype=np.float64)
         Y1 = np.float64(0)
-        
+
         # Run optimization
         iternum = 0
         converged = False
@@ -356,35 +353,35 @@ def _get_photobleach(D,flatfield,darkfield=None):
 
             # Calculate augmented representation
             A = np.matmul(W_idct_hat,A_coeff) + A_offset
-            
+
             # Calculate errors
-            E1 = E1 + np.divide(D - A - E1 + np.multiply(1/mu,Y1),ent1)
-            E1 = np.max(np.reshape(E1 - weights/(ent1*mu),(D.shape[0],D.shape[1],1)),-1,initial=0) + np.min(np.reshape(E1 + weights/(ent1*mu),(D.shape[0],D.shape[1],1)),-1,initial=0)
-            
+            E1 = E1 + np.divide(imgf_stack - A - E1 + np.multiply(1/mu,Y1),ent1)
+            E1 = np.max(np.reshape(E1 - weights/(ent1*mu),(imgf_stack.shape[0],imgf_stack.shape[1],1)),-1,initial=0) + np.min(np.reshape(E1 + weights/(ent1*mu),(imgf_stack.shape[0],imgf_stack.shape[1],1)),-1,initial=0)
+
             # Calculate coefficients
-            R1 = D-E1
+            R1 = imgf_stack-E1
             A_coeff = np.reshape(np.mean(R1,0),(1, -1)) - np.mean(A_offset)
             A_coeff[A_coeff<0] = 0      # pixel values are never negative
-            
+
             # Loss
-            Z1 = D - A - E1
+            Z1 = imgf_stack - A - E1
 
             # Error updates
             Y1 = Y1 + mu*Z1
-            
+
             # Update learning rate
             mu = np.min(mu*rho,initial=mu_bar)
-            
+
             # Stop if below threshold
             stopCriterion = np.linalg.norm(Z1,'fro')/d_norm
             if stopCriterion < tol:
                 converged = True
-        
+
         # Update weights
         XE_norm = np.reshape(np.mean(A,0),(1,-1)) / E1
         weights = 1/np.abs(XE_norm + epsilon)
         weights = weights * weights.size/np.sum(weights)
-        
+
     return A_coeff
 
 if __name__ == "__main__":
@@ -432,7 +429,7 @@ if __name__ == "__main__":
                         type=int,
                         help='The output directory for the flatfield images.',
                         required=False)
-    
+
     """ Get the input arguments """
     args = parser.parse_args()
 
@@ -442,37 +439,41 @@ if __name__ == "__main__":
     metadata_dir = Path(args.output_dir).joinpath('metadata_files')
     inp_regex = args.inp_regex
     get_photobleach = str(args.photobleach).lower() == 'true'
+
     if args.R==None:
-        R = 0
+        R = -1
     else:
         R = args.R
     if args.T==None:
-        T = 0
+        T = -1
     else:
         T = args.T
     if args.C==None:
-        C = 0
+        C = -1
     else:
         C = args.C
-    
+
+
     # Initialize the logger
     logging.basicConfig(format='%(asctime)s - %(name)s - Process [{0},{1},{2}] - %(levelname)s - %(message)s'.format(R,T,C),
                         datefmt='%d-%b-%y %H:%M:%S')
     logger = logging.getLogger("BaSiC")
     logger.setLevel(logging.INFO)
-    
+
     # Start the javabridge
     log_config = Path(__file__).parent.joinpath("log4j.properties")
     jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
 
-    # Parse files into dictionary to acces by variable
-    regex,variables = _parse_fpattern(inp_regex)
-    files = _parse_files(fpath,regex,variables)
+    # Parse files into list to access by variable
+    regex, variables = get_regex(inp_regex)
+    test = FilePattern(fpath, inp_regex)
+    files = [i['file'] for i in test.get_matching(R=R,T=T,C=C)]
 
     # Load files and sort
     logger.info('Loading and sorting images...')
-    img_stk,X,Y = _get_resized_image_stack(fpath,files[R][T][C]['file'])
+    img_stk,X,Y = _get_resized_image_stack(files)
     img_stk_sort = np.sort(img_stk)
+
 
     # Initialize options
     new_options = _initialize_options(img_stk_sort,get_darkfield,OPTIONS)
@@ -486,10 +487,10 @@ if __name__ == "__main__":
     for w in range(new_options['max_reweight_iterations']):
         # Optimize using inexact augmented Legrangian multiplier method using L1 loss
         A, E1, A_offset = _inexact_alm_l1(copy.deepcopy(img_stk_sort),new_options)
-        
+
         # Calculate the flatfield/darkfield images and update training weights
         flatfield, darkfield, new_options = _get_flatfield_and_reweight(A,E1,A_offset,new_options)
-        
+
         # Calculate the change in flatfield and darkfield images between iterations
         mad_flat = np.sum(np.abs(flatfield-flatfield_old))/np.sum(np.abs(flatfield_old))
         temp_diff = np.sum(np.abs(darkfield - darkfield_old))
@@ -499,22 +500,22 @@ if __name__ == "__main__":
             mad_dark = temp_diff/np.max(np.sum(np.abs(darkfield_old)),initial=10**-6)
         flatfield_old = flatfield
         darkfield_old = darkfield
-        
+
         # Stop optimizing if the change in flatfield/darkfield is below threshold
         logger.info('Iteration {} loss: {}'.format(w+1,mad_flat))
         if np.max(mad_flat,initial=mad_dark) < new_options['reweight_tol']:
             break
-    
+
     # Calculate photobleaching effects if specified
     if get_photobleach:
         pb = _get_photobleach(copy.deepcopy(img_stk),flatfield,darkfield)
-    
+
     # Resize images back to original image size
     logger.info('Saving outputs...')
     flatfield = cv2.resize(flatfield,(Y,X),interpolation=cv2.INTER_CUBIC).astype(np.float32)
     if new_options['darkfield']:
         darkfield = cv2.resize(darkfield,(Y,X),interpolation=cv2.INTER_CUBIC).astype(np.float32)
-        
+
     # Generate output image name based on filename pattern variables
     out_dict = {}
     if 'r' in variables:
@@ -523,7 +524,7 @@ if __name__ == "__main__":
         out_dict['t'] = T
     if 'c' in variables:
         out_dict['c'] = C
-    base_output = _get_output_name(inp_regex,files[R][T][C],out_dict)
+    base_output = output_name(inp_regex,[i for i in test.get_matching(R=R ,T=T,C=C)],out_dict)
     
     # Export the flatfield image as a tiled tiff
     flatfield_out = base_output.replace('.ome.tif','_flatfield.ome.tif')
@@ -549,7 +550,7 @@ if __name__ == "__main__":
         offsets_out = base_output.replace('.ome.tif','_offsets.csv')
         with open(str(metadata_dir.joinpath(offsets_out)),'w') as fw:
             fw.write('file,offset\n')
-            for f,o in zip(files[R][T][C]['file'],pb[0,:].tolist()):
+            for f,o in zip(files,pb[0,:].tolist()):
                 fw.write("{},{}\n".format(f,o))
 
     jutil.kill_vm()
