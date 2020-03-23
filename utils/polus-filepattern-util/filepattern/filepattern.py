@@ -49,7 +49,7 @@ def get_regex(pattern):
     regex = pattern
 
     # If no regex was supplied, return universal matching regex
-    if pattern is None or pattern == '' :
+    if pattern == None or pattern == '' :
         return '.*', []
     
     # Parse variables
@@ -68,7 +68,7 @@ def get_regex(pattern):
         
     return regex, variables
 
-def output_name(pattern,files,  ind):
+def output_name(pattern,files,ind):
     """ Returns an output name for a single file resulting from multiple images
 
     This function returns a file output name for the image volume
