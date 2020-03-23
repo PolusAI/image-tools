@@ -1,4 +1,4 @@
-FROM labshare/polus-bfio-util:1.0.6
+FROM labshare/polus-bfio-util:1.0.8
 LABEL maintainer="Axle Informatics"
 
 COPY VERSION /
