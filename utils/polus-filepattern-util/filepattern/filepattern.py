@@ -21,7 +21,7 @@ def val_variables(variables):
     """
 
     for v in variables:
-        assert v in VARIABLES, "File patter variables must be one of {}".format(VARIABLES)
+        assert v in VARIABLES, "File pattern variables must be one of {}".format(VARIABLES)
 
     if 'p' in variables:
         assert 'x' not in variables and 'y' not in variables, "Either x and/or y may be defined or p may be defined, but not both."
@@ -93,6 +93,7 @@ def output_name(pattern,files,ind):
         files - A list  of file names
         ind - A dictionary containing the indices for the file name (i.e. {'r':1,'t':1})
     Outputs:
+
         fname - an output file name
     """
 
@@ -220,8 +221,8 @@ def parse_vector_line(vector_line,pattern=None,regex=None,variables=None,return_
 def parse_directory(file_path,pattern,var_order='rtczyx'):
     """ Parse files in a directory
     
-    This function extracts the variables in from each filename in a directory and places
-    them in a dictionary that allow retrieval using variable values. For example, if there
+    This function extracts the variables value  from each filename in a directory and places
+    them in a dictionary that allows retrieval using variable values. For example, if there
     is a folder with filenames using the pattern file_x{xxx}_y{yyy}_c{ccc}.ome.tif, then
     the output will be a dictionary with the following structure:
     output_dictionary[r][t][c][z][y][x]
@@ -410,7 +411,7 @@ def get_matching(files,var_order,out_var=None,**kwargs):
         files - A file dictionary (see parse_directory)
         var_order - A string indicating the order of variables in a nested output dictionary
         out_var - Variable to store results, used for recursion
-        kwargs - One of filepatter.VARIABLES, must be uppercase, can be single values or a list of values
+        kwargs - One of filepattern.VARIABLES, must be uppercase, can be single value or a list of values
     Outputs:
         out_var - A list of all files matching the input values
     """
@@ -448,7 +449,7 @@ class FilePattern():
     
     Most of the functions in filepattern.py return complicated variable structures that might
     be difficult to use in an abstract way. This class provides tools to use the above functions
-    more simple. In particular, the iterate function is an iterable that permits simple
+    in a  simpler way. In particular, the iterate function is an iterable that permits simple
     iteration over filenames with specific values and grouped by any desired variable.
 
     """
