@@ -16,14 +16,11 @@ import pickle
 import os 
 
 
-
-processID = os.getpid()
-
 # Chunk Scale
 CHUNK_SIZE = 512
 
 # Number of Bins for Each Feature
-bincount = 10 #MUST BE EVEN NUMBER
+bincount = 20 #MUST BE EVEN NUMBER
 
 # DZI file template
 DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="' + str(CHUNK_SIZE) + '" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
@@ -34,37 +31,18 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
+#Transforms the DataFrame that Range from a Negative Number to a Positive Number
 def dfneg2pos(data, alpha, datmin, datmax):
 
-    # if bin_stats['min'][i] < 0 and bin_stats['max'][i] > 0:
-    #         small = 0
-    #         large = 0
-    #         if abs(bin_stats['max'][i]) < abs(bin_stats['min'][i]):
-    #             small = abs(bin_stats['max'][i])
-    #             large = abs(bin_stats['min'][i])
-    #         else:
-    #             small = abs(bin_stats['min'][i])
-    #             large = abs(bin_stats['max'][i])
-
-    #         ratio = root(bincount + 1, (small*small)/(alpha*large))
-    #         binssmall = int(math.floor(abs(1 + math.log(small/alpha, ratio))))
-    #         binslarge = int(math.floor(abs(1 + math.log(large/alpha, ratio))))
-    #         zfactor = binssmall/binslarge
-    #         binssmall = round(bincount/(2 + 1/zfactor), 0)
-    #         binslarge = binssmall + (bincount - (2*binssmall))
-    #         small_interval = root(binssmall, small/alpha)
-    #         large_interval = root(binslarge, large/alpha)
-    #         column_bin_sizes.append([small_interval, large_interval])        
-    #         if abs(bin_stats['max'][i]) > abs(bin_stats['min'][i]):
-    #             yaxis.append(binssmall)
-    #         else:
-    #             yaxis.append(binslarge)
-    #         data[column_names[i]] = neg2pos(data[column_names[i]], column_bin_sizes[-1], datalen, ratio, bin_stats['min'][i], bin_stats['max'][i], alpha, binssmall, binslarge)
     yaxis = []
+    commonratios = []
+    alphas = []
     for col in data.columns:  
         small = 0 
         large = 0
         posbigger = True
+
+        # Determining which side requires more bins. 
         if abs(datmax[col]) > abs(datmin[col]):
             small = abs(datmin[col])
             large = abs(datmax[col])
@@ -81,8 +59,13 @@ def dfneg2pos(data, alpha, datmin, datmax):
         binslarge = binssmall + (bincount - (2*binssmall))
         small_interval = (small/alpha[col])**(1/binssmall)
         large_interval = (large/alpha[col])**(1/binslarge)
+            
+        commonratios.append([small_interval, large_interval])
+        alphas.append(alpha[col])
+
         datacol = data[col].to_numpy()
         
+        # Each value in the Range falls under one of the following conditions
         condition1 = np.asarray((datacol > 0) & (datacol < alpha[col])).nonzero()
         condition2 = np.asarray((datacol > 0) & (datacol == datmax[col])).nonzero()
         condition3 = np.asarray((datacol > 0) & (datacol >= alpha[col])).nonzero()
@@ -136,7 +119,7 @@ def dfneg2pos(data, alpha, datmin, datmax):
             datacol[condition7] = -1 + binslarge
 
 
-    return yaxis, data
+    return yaxis, alphas, commonratios, data
 
 def neg2pos(val, binsizes, length, commonratio, datmin, datmax, alpha, smallbins, largebins):
     tranval = val.to_numpy()
@@ -202,13 +185,18 @@ def neg2pos(val, binsizes, length, commonratio, datmin, datmax, alpha, smallbins
 
     return tranval
 
+# Transforms the Data that has a Positive Range
 def dfzero2pos(data, alpha, datmax):
+    alphas = []
+    commonratios = []
     for col in data.columns:
         datacol = data[col].to_numpy()
         condition1 = np.where(datacol < alpha[col])
         condition2 = np.where(datacol >= alpha[col])
 
+        alphas.append(alpha[col])
         commonratio = (datmax[col]/alpha[col])**(1/(bincount - 2))
+        commonratios.append([commonratio])
 
         logged = np.log(datacol[condition2]/alpha[col])/np.log(commonratio)
         floored = np.floor(logged + 2)
@@ -216,7 +204,8 @@ def dfzero2pos(data, alpha, datmax):
 
         datacol[condition2] = floated
         datacol[condition1] = 1
-    return data
+    
+    return alphas, commonratios, data
 
 def zero2pos(data, length, commonratio, datmin, datmax):
     data = data.to_numpy()
@@ -232,12 +221,17 @@ def zero2pos(data, length, commonratio, datmin, datmax):
     
     return data
 def dfneg2zero(data, datmin, alpha):
+    alphas = []
+    commonratios = []
+
     for col in data.columns:
         datacol = data[col].to_numpy()
         condition1 = np.where(datacol > alpha)
         condition2 = np.where(datacol <= alpha)
 
+        alphas.append(alpha[col])
         commonratio = (datmin[col]/alpha[col])**(1/(bincount - 2))
+        commonratios.append([commonratio])
 
         logged = np.log(datacol[condition2]/alpha[col])/np.log(commonratio)
         floored = np.floor(logged + 2) 
@@ -245,7 +239,7 @@ def dfneg2zero(data, datmin, alpha):
 
         datacol[condition2] = floated
         datacol[condition1] = -1 + bincount  
-    return data
+    return alphas, commonratios, data
 
 def neg2zero(data, length, commonratio, datmin, datmax): 
     data = data.to_numpy()
@@ -334,7 +328,7 @@ def bin_data_log(data,column_names):
 
 
     linear_index = []
-    yaxis = []
+    yaxis = [0]
     column_bin_sizes = []
     quartile25to75 = []
     Datapoints = []
@@ -368,64 +362,81 @@ def bin_data_log(data,column_names):
     negativenames = negativedf.columns
     neg2posnames = neg2posdf.columns
     zeronames = zerodf.columns 
-
-    nfeats = nfeats - len(zeronames)
-    #print(bin_stats['alpha'][positivenames])
     
-    positivedf = dfzero2pos(positivedf, bin_stats['alpha'][positivenames], bin_stats['max'][positivenames])
-    negativedf = dfneg2zero(negativedf, -1*bin_stats['alpha'][positivenames], bin_stats['min'][negativenames])
-    print(neg2posdf)
-    yvalues, neg2posdf = dfneg2pos(neg2posdf, bin_stats['alpha'][neg2posnames], bin_stats['min'][neg2posnames], bin_stats['max'][neg2posnames])
-    print(neg2posdf)
-    zerodf = pandas.DataFrame(bincount + 55, index= np.arange(datalen), columns = zeronames)
+    alphaspos, commonratiospos, positivedf = dfzero2pos(positivedf, bin_stats['alpha'][positivenames], bin_stats['max'][positivenames])
+    yaxis = yaxis * len(positivenames)
+    alphavals = alphaspos
+    column_bin_sizes = commonratiospos
+    positivedf.reset_index(drop = True, inplace = True)
+
+    alphasneg, commonratiosneg, negativedf = dfneg2zero(negativedf, -1*bin_stats['alpha'][positivenames], bin_stats['min'][negativenames])
+    yaxis = yaxis + ([bincount] * len(negativenames))
+    alphavals = alphavals + alphasneg
+    column_bin_sizes = column_bin_sizes + commonratiosneg
+    negativedf.reset_index(drop = True, inplace = True)
     
+    yvalues, alphasneg2pos, commonratiosneg2pos, neg2posdf = dfneg2pos(neg2posdf, bin_stats['alpha'][neg2posnames], bin_stats['min'][neg2posnames], bin_stats['max'][neg2posnames])
+    yaxis = yaxis + yvalues
+    alphavals = alphavals + alphasneg2pos
+    column_bin_sizes = column_bin_sizes + commonratiosneg2pos
+    neg2posdf.reset_index(drop = True, inplace = True)
 
+    # zerodf = pandas.DataFrame(bincount + 55, index= np.arange(datalen), columns = zeronames)
+    data = pandas.concat([positivedf, negativedf, neg2posdf], axis=1)
+    column_names = data.columns
 
-    for i in range(0, nfeats):
-        quartile25to75.append(bin_stats['seventy5'][i] - bin_stats['twenty5'][i])
-        alpha = firstAterm(quartile25to75[-1], datalen)
-        alphavals.append(alpha)
-        if alpha == 0:
-            empty = [bincount + 55] * datalen
-            data[column_names[i]] = pandas.Series(np.array(empty), index = range(0, datalen))
-            column_bin_sizes.append([0])
-            yaxis.append(0)
-            data.drop(column_names[i], axis = 1, inplace = True)
-            nfeats = nfeats - 1
-            continue 
-        if bin_stats['min'][i] >= 0 and bin_stats['max'][i] > 0:
-            column_bin_sizes.append([root(bincount - 2, bin_stats['max'][i]/alpha)])
-            data[column_names[i]] = zero2pos(data[column_names[i]], datalen, column_bin_sizes[-1][0], alpha, bin_stats['max'][i])
-            yaxis.append(0)
-        if bin_stats['min'][i] < 0 and bin_stats['max'][i] <= 0:
-            alpha = alpha * -1
-            column_bin_sizes.append([root(bincount - 2, bin_stats['min'][i]/(alpha))])
-            yaxis.append(bincount)
-            data[column_names[i]] = neg2zero(data[column_names[i]], datalen, column_bin_sizes[-1][0], bin_stats['min'][i], alpha)
-        if bin_stats['min'][i] < 0 and bin_stats['max'][i] > 0:
-            small = 0
-            large = 0
-            if abs(bin_stats['max'][i]) < abs(bin_stats['min'][i]):
-                small = abs(bin_stats['max'][i])
-                large = abs(bin_stats['min'][i])
-            else:
-                small = abs(bin_stats['min'][i])
-                large = abs(bin_stats['max'][i])
+    bin_stats = {'size': data.shape,
+                 'min': data.min(),
+                 'max': data.max()}
 
-            ratio = root(bincount + 1, (small*small)/(alpha*large))
-            binssmall = int(math.floor(abs(1 + math.log(small/alpha, ratio))))
-            binslarge = int(math.floor(abs(1 + math.log(large/alpha, ratio))))
-            zfactor = binssmall/binslarge
-            binssmall = round(bincount/(2 + 1/zfactor), 0)
-            binslarge = binssmall + (bincount - (2*binssmall))
-            small_interval = root(binssmall, small/alpha)
-            large_interval = root(binslarge, large/alpha)
-            column_bin_sizes.append([small_interval, large_interval])        
-            if abs(bin_stats['max'][i]) > abs(bin_stats['min'][i]):
-                yaxis.append(binssmall)
-            else:
-                yaxis.append(binslarge)
-            data[column_names[i]] = neg2pos(data[column_names[i]], column_bin_sizes[-1], datalen, ratio, bin_stats['min'][i], bin_stats['max'][i], alpha, binssmall, binslarge)
+    nfeats = bin_stats['size'][1] 
+    datalen = bin_stats['size'][0]
+
+    # for i in range(0, nfeats):
+    #     quartile25to75.append(bin_stats['seventy5'][i] - bin_stats['twenty5'][i])
+    #     alpha = firstAterm(quartile25to75[-1], datalen)
+    #     alphavals.append(alpha)
+    #     if alpha == 0:
+    #         empty = [bincount + 55] * datalen
+    #         data[column_names[i]] = pandas.Series(np.array(empty), index = range(0, datalen))
+    #         column_bin_sizes.append([0])
+    #         yaxis.append(0)
+    #         data.drop(column_names[i], axis = 1, inplace = True)
+    #         nfeats = nfeats - 1
+    #         continue 
+    #     if bin_stats['min'][i] >= 0 and bin_stats['max'][i] > 0:
+    #         column_bin_sizes.append([root(bincount - 2, bin_stats['max'][i]/alpha)])
+    #         data[column_names[i]] = zero2pos(data[column_names[i]], datalen, column_bin_sizes[-1][0], alpha, bin_stats['max'][i])
+    #         yaxis.append(0)
+    #     if bin_stats['min'][i] < 0 and bin_stats['max'][i] <= 0:
+    #         alpha = alpha * -1
+    #         column_bin_sizes.append([root(bincount - 2, bin_stats['min'][i]/(alpha))])
+    #         yaxis.append(bincount)
+    #         data[column_names[i]] = neg2zero(data[column_names[i]], datalen, column_bin_sizes[-1][0], bin_stats['min'][i], alpha)
+    #     if bin_stats['min'][i] < 0 and bin_stats['max'][i] > 0:
+    #         small = 0
+    #         large = 0
+    #         if abs(bin_stats['max'][i]) < abs(bin_stats['min'][i]):
+    #             small = abs(bin_stats['max'][i])
+    #             large = abs(bin_stats['min'][i])
+    #         else:
+    #             small = abs(bin_stats['min'][i])
+    #             large = abs(bin_stats['max'][i])
+
+    #         ratio = root(bincount + 1, (small*small)/(alpha*large))
+    #         binssmall = int(math.floor(abs(1 + math.log(small/alpha, ratio))))
+    #         binslarge = int(math.floor(abs(1 + math.log(large/alpha, ratio))))
+    #         zfactor = binssmall/binslarge
+    #         binssmall = round(bincount/(2 + 1/zfactor), 0)
+    #         binslarge = binssmall + (bincount - (2*binssmall))
+    #         small_interval = root(binssmall, small/alpha)
+    #         large_interval = root(binslarge, large/alpha)
+    #         column_bin_sizes.append([small_interval, large_interval])        
+    #         if abs(bin_stats['max'][i]) > abs(bin_stats['min'][i]):
+    #             yaxis.append(binssmall)
+    #         else:
+    #             yaxis.append(binslarge)
+    #         data[column_names[i]] = neg2pos(data[column_names[i]], column_bin_sizes[-1], datalen, ratio, bin_stats['min'][i], bin_stats['max'][i], alpha, binssmall, binslarge)
         
 
     data_ind = pandas.notnull(data)  # Handle NaN values
