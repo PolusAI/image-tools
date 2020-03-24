@@ -549,7 +549,10 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
                     formtick = str(decformtick[:4]) + _prefix[int(convertexponent)]
                 except ValueError:
                     print("Error, cannot convert to int:", convertexponent)
-        convertprefix.append(int(convertexponent))
+        try:
+            convertprefix.append(int(convertexponent))
+        except ValueError:
+            print(convertprefix[-1])
         fticks.append(formtick)
 
     return fticks
