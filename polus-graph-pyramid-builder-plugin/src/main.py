@@ -505,6 +505,7 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
         decformtick = '%.2e' % Decimal(formtick)
         print(i, " LOG)", out[i], formtick, decformtick)
         print("All the labels:", out)
+        print("Alphavalue", alphavalue)
         convertexponent = float(decformtick[-3:])
         try:
             numbers = float(decformtick[:-4])
@@ -1225,17 +1226,16 @@ if __name__=="__main__":
 
         # Generate the dzi file
         logger.info('Generating pyramid metadata...')
-        info_linear = metadata_to_graph_info(bins,linear_output_path,folder, linear_index)
         info_log = metadata_to_graph_info(log_bins, log_output_path,folder, log_index)
-
+        info_linear = metadata_to_graph_info(bins,linear_output_path,folder, linear_index)        
         logger.info('Done!')
         
         logger.info('Writing layout file...!')
-        write_csv(cnames,linear_index,info_linear,linear_output_path,folder)  
         write_csv(cnames_log, log_index, info_log, log_output_path, folder)
+        write_csv(cnames,linear_index,info_linear,linear_output_path,folder)  
         logger.info('Done!')
 
         # Create the pyramid
         logger.info('Building pyramid...')
-        image_linear = _get_higher_res("linear", 0, info_linear,column_names, linear_output_path,folder,linear_index, bins, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
         image_log = _get_higher_res("log", 0, info_log, column_names_log, log_output_path, folder, log_index,log_bins, log_bin_stats, log_binsizes, yaxis_log, alphavals_log)
+        image_linear = _get_higher_res("linear", 0, info_linear,column_names, linear_output_path,folder,linear_index, bins, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
