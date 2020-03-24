@@ -1220,11 +1220,11 @@ if __name__=="__main__":
         starttime = time.time() 
         yaxis_log, log_bins, log_bin_stats, log_index, log_binsizes, alphavals_log = bin_data_log(data_log, column_names_log)
         endlog = time.time()
-        #yaxis_linear, bins, bin_stats, linear_index, linear_binsizes, alphavals_linear = bin_data(data,column_names)
+        yaxis_linear, bins, bin_stats, linear_index, linear_binsizes, alphavals_linear = bin_data(data,column_names)
         endlinear = time.time()
-        #print("Time taken to Transform Data to Log Bins:", endlog - starttime)
-        #print("Time taken to Transform Data to Linear Bins:", endlinear - endlog)
-        #print("Creating Log Bins takes", (endlog-starttime)/(endlinear-endlog), "times than Linear Bins" )
+        print("Time taken to Transform Data to Log Bins:", endlog - starttime)
+        print("Time taken to Transform Data to Linear Bins:", endlinear - endlog)
+        print("Creating Log Bins takes", (endlog-starttime)/(endlinear-endlog), "times than Linear Bins" )
 
         del data    # get rid of the original data to save memory
         del data_log
