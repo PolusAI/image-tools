@@ -365,7 +365,7 @@ def bin_data_log(data,column_names):
             bins[feat1,feat2,rows[0],cols[0]] = ind2[0] + 1
             bins[feat1,feat2,rows[1:],cols[1:]] = counts
             linear_index.append([feat1,feat2])
-
+    print(alphavals)
     return yaxis, bins, bin_stats, linear_index, column_bin_sizes, alphavals
 
 def bin_data(data,column_names):
@@ -1209,11 +1209,11 @@ if __name__=="__main__":
         starttime = time.time() 
         yaxis_log, log_bins, log_bin_stats, log_index, log_binsizes, alphavals_log = bin_data_log(data_log, column_names_log)
         endlog = time.time()
-        yaxis_linear, bins, bin_stats, linear_index, linear_binsizes, alphavals_linear = bin_data(data,column_names)
+        #yaxis_linear, bins, bin_stats, linear_index, linear_binsizes, alphavals_linear = bin_data(data,column_names)
         endlinear = time.time()
-        print("Time taken to Transform Data to Log Bins:", endlog - starttime)
-        print("Time taken to Transform Data to Linear Bins:", endlinear - endlog)
-        print("Creating Log Bins takes", (endlog-starttime)/(endlinear-endlog), "times than Linear Bins" )
+        #print("Time taken to Transform Data to Log Bins:", endlog - starttime)
+        #print("Time taken to Transform Data to Linear Bins:", endlinear - endlog)
+        #print("Creating Log Bins takes", (endlog-starttime)/(endlinear-endlog), "times than Linear Bins" )
 
         del data    # get rid of the original data to save memory
         del data_log
@@ -1227,15 +1227,15 @@ if __name__=="__main__":
         # Generate the dzi file
         logger.info('Generating pyramid metadata...')
         info_log = metadata_to_graph_info(log_bins, log_output_path,folder, log_index)
-        info_linear = metadata_to_graph_info(bins,linear_output_path,folder, linear_index)        
+        #info_linear = metadata_to_graph_info(bins,linear_output_path,folder, linear_index)        
         logger.info('Done!')
         
         logger.info('Writing layout file...!')
         write_csv(cnames_log, log_index, info_log, log_output_path, folder)
-        write_csv(cnames,linear_index,info_linear,linear_output_path,folder)  
+        #write_csv(cnames,linear_index,info_linear,linear_output_path,folder)  
         logger.info('Done!')
 
         # Create the pyramid
         logger.info('Building pyramid...')
         image_log = _get_higher_res("log", 0, info_log, column_names_log, log_output_path, folder, log_index,log_bins, log_bin_stats, log_binsizes, yaxis_log, alphavals_log)
-        image_linear = _get_higher_res("linear", 0, info_linear,column_names, linear_output_path,folder,linear_index, bins, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
+        #image_linear = _get_higher_res("linear", 0, info_linear,column_names, linear_output_path,folder,linear_index, bins, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
