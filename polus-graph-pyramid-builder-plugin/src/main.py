@@ -12,7 +12,7 @@ import decimal
 from decimal import Decimal
 from textwrap import wrap
 import os
-
+import time
 
 
 
@@ -503,9 +503,14 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
     for i in range(nticks):
         formtick = "%#.3f" % out[i]
         decformtick = '%.2e' % Decimal(formtick)
-        #print(i, ")", formtick, decformtick)
-        convertexponent = int(decformtick[-3:])
-        numbers = float(decformtick[:-4])
+        print(i, " LOG)", formtick, decformtick)
+        convertexponent = float(decformtick[-3:])
+        try:
+            numbers = float(decformtick[:-4])
+        except ValueError:
+            print("Error with ", decformtick[:-4])
+        print("Exponent:", convertexponent)
+        print("Numbers:", numbers)
         if convertexponent > 0:
             if convertexponent % 3 == 2:
                 movednum = round(numbers/10,2)
@@ -531,17 +536,20 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
                 newprefix = _prefix[int(convertexponent + 1)]
                 formtick = str(movednum) + newprefix
             else:
-                newprefix = _prefix[convertexponent]
+                newprefix = _prefix[int(convertexponent)]
                 if out[i] < 0:
                     formtick = str(decformtick[:5]) + newprefix
                 else: 
                     formtick = str(decformtick[:4]) + newprefix
         else:
             if out[i] < 0:
-                formtick = str(decformtick[:5]) + _prefix[convertexponent]
+                formtick = str(decformtick[:5]) + _prefix[int(convertexponent)]
             else: 
-                formtick = str(decformtick[:4]) + _prefix[convertexponent]
-        convertprefix.append(convertexponent)
+                try:
+                    formtick = str(decformtick[:4]) + _prefix[int(convertexponent)]
+                except ValueError:
+                    print("Error, cannot convert to int:", convertexponent)
+        convertprefix.append(int(convertexponent))
         fticks.append(formtick)
 
     return fticks
@@ -590,9 +598,11 @@ def format_ticks(fmin,fmax,nticks):
     for i in range(nticks):
         formtick = "%#.3f" % out[i]
         decformtick = '%.2e' % Decimal(formtick)
-        #print(i, ")", formtick, decformtick)
-        convertexponent = int(decformtick[-3:])
+        print(i, " LINEAR)", formtick, decformtick)
+        convertexponent = float(decformtick[-3:])
         numbers = float(decformtick[:-4])
+        print("Exponent:", convertexponent)
+        print("Numbers:", numbers)
         if convertexponent > 0:
             if convertexponent % 3 == 2:
                 movednum = round(numbers/10,2)
@@ -603,7 +613,7 @@ def format_ticks(fmin,fmax,nticks):
                 newprefix = _prefix[int(convertexponent - 1)]
                 formtick = str(movednum) + newprefix
             else:
-                newprefix = _prefix[convertexponent]
+                newprefix = _prefix[int(convertexponent)]
                 if out[i] < 0:
                     formtick = str(decformtick[:5]) + newprefix
                 else: 
@@ -625,10 +635,10 @@ def format_ticks(fmin,fmax,nticks):
                     formtick = str(decformtick[:4]) + newprefix
         else:
             if out[i] < 0:
-                formtick = str(decformtick[:5]) + _prefix[convertexponent]
+                formtick = str(decformtick[:5]) + _prefix[int(convertexponent)]
             else: 
-                formtick = str(decformtick[:4]) + _prefix[convertexponent]
-        convertprefix.append(convertexponent)
+                formtick = str(decformtick[:4]) + _prefix[int(convertexponent)]
+        convertprefix.append(int(convertexponent))
         fticks.append(formtick)
 
     return fticks
@@ -1188,8 +1198,14 @@ if __name__=="__main__":
 
         # Bin the data
         logger.info('Binning data for {} features...'.format(column_names.size))
+        starttime = time.time() 
         yaxis_log, log_bins, log_bin_stats, log_index, log_binsizes, alphavals_log = bin_data_log(data_log, column_names_log)
+        endlog = time.time()
         yaxis_linear, bins, bin_stats, linear_index, linear_binsizes, alphavals_linear = bin_data(data,column_names)
+        endlinear = time.time()
+        print("Time taken to Transform Data to Log Bins:", endlog - starttime)
+        print("Time taken to Transform Data to Linear Bins:", endlinear - endlog)
+        print("Creating Log Bins takes", (endlog-starttime)/(endlinear-endlog), "times than Linear Bins" )
 
         del data    # get rid of the original data to save memory
         del data_log
