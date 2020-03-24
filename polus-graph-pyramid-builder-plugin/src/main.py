@@ -552,7 +552,7 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
         try:
             convertprefix.append(int(convertexponent))
         except ValueError:
-            print(convertprefix[-1])
+            print("Error, cannot convert float to int??", convertprefix[-1])
         fticks.append(formtick)
 
     return fticks
