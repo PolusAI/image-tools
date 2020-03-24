@@ -21,7 +21,7 @@ def val_variables(variables):
     """
 
     for v in variables:
-        assert v in VARIABLES, "File patter variables must be one of {}".format(VARIABLES)
+        assert v in VARIABLES, "File pattern variables must be one of {}".format(VARIABLES)
 
     if 'p' in variables:
         assert 'x' not in variables and 'y' not in variables, "Either x and/or y may be defined or p may be defined, but not both."
@@ -49,7 +49,7 @@ def get_regex(pattern):
     regex = pattern
 
     # If no regex was supplied, return universal matching regex
-    if pattern==None or pattern=='':
+    if pattern == None or pattern == '' :
         return '.*', []
     
     # Parse variables
@@ -90,15 +90,15 @@ def output_name(pattern,files,ind):
 
     Inputs:
         fpattern - A filename pattern indicating variables in filenames
-        files - A parsed dictionary of file names
+        files - A list  of file names
         ind - A dictionary containing the indices for the file name (i.e. {'r':1,'t':1})
     Outputs:
+
         fname - an output file name
     """
 
     # Determine the variables that shouldn't change in the filename pattern
     STATICS = [key for key in ind.keys()]
-
     # If no pattern was supplied, return default image name
     if pattern==None or pattern=='':
         return 'image.ome.tif'
@@ -112,13 +112,12 @@ def output_name(pattern,files,ind):
     for g in re.finditer("{{[{}]+}}".format(VARIABLES),pattern):
         expr.append(g.group(0))
         variables.append(expr[-1][1])
-        
     # Generate the output filename
     fname = pattern
     for e,v in zip(expr,variables):
         if v not in STATICS:
-            minval = min([int(i) for i in files.keys()])
-            maxval = max([int(i) for i in files.keys()])
+            minval = min([int(b) for i in files for a,b in i.items() if a==v])
+            maxval = max([int(b) for i in files for a,b in i.items() if a==v])
             fname = fname.replace(e,'<' + str(minval).zfill(len(e)-2) +
                                     '-' + str(maxval).zfill(len(e)-2) + '>')
         elif v not in ind.keys():
@@ -222,8 +221,8 @@ def parse_vector_line(vector_line,pattern=None,regex=None,variables=None,return_
 def parse_directory(file_path,pattern,var_order='rtczyx'):
     """ Parse files in a directory
     
-    This function extracts the variables in from each filename in a directory and places
-    them in a dictionary that allow retrieval using variable values. For example, if there
+    This function extracts the variables value  from each filename in a directory and places
+    them in a dictionary that allows retrieval using variable values. For example, if there
     is a folder with filenames using the pattern file_x{xxx}_y{yyy}_c{ccc}.ome.tif, then
     the output will be a dictionary with the following structure:
     output_dictionary[r][t][c][z][y][x]
@@ -412,7 +411,7 @@ def get_matching(files,var_order,out_var=None,**kwargs):
         files - A file dictionary (see parse_directory)
         var_order - A string indicating the order of variables in a nested output dictionary
         out_var - Variable to store results, used for recursion
-        kwargs - One of filepatter.VARIABLES, must be uppercase, can be single values or a list of values
+        kwargs - One of filepattern.VARIABLES, must be uppercase, can be single value or a list of values
     Outputs:
         out_var - A list of all files matching the input values
     """
@@ -450,7 +449,7 @@ class FilePattern():
     
     Most of the functions in filepattern.py return complicated variable structures that might
     be difficult to use in an abstract way. This class provides tools to use the above functions
-    more simple. In particular, the iterate function is an iterable that permits simple
+    in a  simpler way. In particular, the iterate function is an iterable that permits simple
     iteration over filenames with specific values and grouped by any desired variable.
 
     """
@@ -464,7 +463,7 @@ class FilePattern():
 
         if var_order:
             val_variables(var_order)
-            self.var_order = var_order
+            self.var_order =  var_order
 
         self.files, self.uniques = parse_directory(file_path,pattern,var_order=self.var_order)
 
@@ -492,6 +491,7 @@ class FilePattern():
         Variables designated in the group_by input argument are grouped together. So, if group_by='zc', 
         then each iteration will return all filenames that have constant values for each variable except z
         and c.
+
 
         In addition to the group_by variable, specific variable arguments can also be included as with the
         get_matching function.
