@@ -265,6 +265,16 @@ def bin_data_log(data,column_names):
     negativerange = np.where((data.min() < 0) & (data.max() <= 0))[0]
     neg2posrange =  np.where((data.min() < 0) & (data.max() > 0))[0]
     zeroalpha = np.where((2*(data.quantile(0.75) - data.quantile(0.25)))/(data.shape[0]**(1/3)) == 0)[0]
+    
+    # FIND COLUMNS THAT OVERLAP WITH ZEROALPHA
+    POSoverlap = np.intersect1d(zeroalpha, positiverange, assume_unique = True, return_indices=True)
+    NEGoverlap = np.intersect1d(zeroalpha, negativerange, assume_unique = True, return_indices=True)
+    NEG2POSoverlap = np.intersect1d(zeroalpha, neg2posrange, assume_unique=True, return_indices=True)
+    
+    # REMOVE COLUMNS THAT OVERLAP WITH ZEROALPHA
+    positiverange = np.delete(positiverange, POSoverlap[2])
+    negativerange = np.delete(negativerange, NEGoverlap[2])
+    NEG2POSoverlap = np.delete(neg2posrange, NEG2POSoverlap[2])
 
     # CREATING NEW DATA FRAMES OF THE DIFFERENT RANGE DESCRIPTIONS
         # Columns of data with a bin width value of zero is dropped in new dataframe. 
@@ -285,6 +295,7 @@ def bin_data_log(data,column_names):
                                                         bin_stats['max'][positivenames])
     yaxis = yaxis * len(positivenames)
     alphavals = alphaspos
+    print("POSITIVE ALPHAS", alphavals)
     column_bin_sizes = commonratiospos
     positivedf.reset_index(drop = True, inplace = True)
 
