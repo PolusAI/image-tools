@@ -503,7 +503,7 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
     for i in range(nticks):
         formtick = "%#.3f" % out[i]
         decformtick = '%.2e' % Decimal(formtick)
-        print(i, " LOG)", formtick, decformtick)
+        print(i, " LOG)", out[i], formtick, decformtick)
         convertexponent = float(decformtick[-3:])
         try:
             numbers = float(decformtick[:-4])
