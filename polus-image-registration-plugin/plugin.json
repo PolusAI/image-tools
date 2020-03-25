@@ -1,0 +1,78 @@
+{
+    "name": "Image Registration",
+    "version": "0.1.1",
+    "title": "Image Registration",
+    "description": "This plugin registers an image collection",
+    "author": "Gauhar Bains (gauhar.bains@labshare.org)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-image-registration-plugin:0.1.1",
+    "inputs": [
+      {
+        "name": "filePattern",
+        "type": "string",
+        "description": "Filename pattern used to separate data",
+        "required": true
+      },
+      {
+        "name": "inpDir",
+        "type": "collection",
+        "description": "Input image collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "registrationVariable",
+        "type": "string",
+        "description": "variable to help identify which images need to be registered to each other",
+        "required": true
+      },
+      {
+        "name": "template",
+        "type": "string",
+        "description": "Template image to be used for image registration",
+        "required": true
+      },
+      {
+        "name": "TransformationVariable",
+        "type": "string",
+        "description": "variable to help identify which images have similar transformation",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "collection",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.filePattern",
+        "title": "Filename pattern",
+        "description": "Filename pattern used to separate data"
+      },
+      {
+        "key": "inputs.inpDir",
+        "title": "Input collection",
+        "description": "Input image collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.registrationVariable",
+        "title": "Registration Variable",
+        "description": "variable to help identify which images need to be registered to each other"
+      },
+      {
+        "key": "inputs.template",
+        "title": "Template Image",
+        "description": "Template image to be used for image registration"
+      },
+      {
+        "key": "inputs.TransformationVariable",
+        "title": "Similar Transformation Variable",
+        "description": "variable to help identify which images have similar transformation"
+      }
+    ]
+  }
