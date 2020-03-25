@@ -134,7 +134,6 @@ def dfzero2pos(data, alpha, datmax):
         datacol = data[col].to_numpy()
         condition1 = np.where(datacol < alpha[col])
         condition2 = np.where(datacol >= alpha[col])
-
         alphas.append(alpha[col])
         commonratio = (datmax[col]/alpha[col])**(1/(bincount - 2))
         commonratios.append([commonratio])
@@ -158,8 +157,8 @@ def dfneg2zero(data, datmin, alpha):
 
     for col in data.columns:
         datacol = data[col].to_numpy()
-        condition1 = np.where(datacol > alpha)
-        condition2 = np.where(datacol <= alpha)
+        condition1 = np.where(datacol > alpha[col])
+        condition2 = np.where(datacol <= alpha[col])
 
         alphas.append(alpha[col])
         commonratio = (datmin[col]/alpha[col])**(1/(bincount - 2))
@@ -260,7 +259,7 @@ def bin_data_log(data,column_names):
     nfeats = bin_stats['size'][1] 
     datalen = bin_stats['size'][0]
    
-    # Columns of Data fall under these four range descriptions
+    # COLUMNS OF DATA FALL UNDER THESE FOUR RANGE DESCRIPTIONS
     positiverange = np.where((data.min() >= 0) & (data.max() > 0))[0]
     negativerange = np.where((data.min() < 0) & (data.max() <= 0))[0]
     neg2posrange =  np.where((data.min() < 0) & (data.max() > 0))[0]
@@ -295,13 +294,12 @@ def bin_data_log(data,column_names):
                                                         bin_stats['max'][positivenames])
     yaxis = yaxis * len(positivenames)
     alphavals = alphaspos
-    print("POSITIVE ALPHAS", alphavals)
     column_bin_sizes = commonratiospos
     positivedf.reset_index(drop = True, inplace = True)
 
     # NEGATIVE RANGE
     alphasneg, commonratiosneg, negativedf = dfneg2zero(negativedf, 
-                                                        -1*bin_stats['alpha'][positivenames], 
+                                                        -1*bin_stats['alpha'][negativenames], 
                                                         bin_stats['min'][negativenames])
     yaxis = yaxis + ([bincount] * len(negativenames))
     alphavals = alphavals + alphasneg
@@ -514,17 +512,8 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
     for i in range(nticks):
         formtick = "%#.3f" % out[i]
         decformtick = '%.2e' % Decimal(formtick)
-        print(i, " LOG)", out[i], formtick, decformtick)
-        print("All the labels:", out)
-        print("Alphavalue", alphavalue)
         convertexponent = float(decformtick[-3:])
-        try:
-            numbers = float(decformtick[:-4])
-        except ValueError:
-            print("Error with ", decformtick[:-4])
-            exit
-        print("Exponent:", convertexponent)
-        print("Numbers:", numbers)
+        numbers = float(decformtick[:-4])
         if convertexponent > 0:
             if convertexponent % 3 == 2:
                 movednum = round(numbers/10,2)
@@ -559,16 +548,8 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
             if out[i] < 0:
                 formtick = str(decformtick[:5]) + _prefix[int(convertexponent)]
             else: 
-                try:
-                    formtick = str(decformtick[:4]) + _prefix[int(convertexponent)]
-                except ValueError:
-                    print("Error, cannot convert to int:", convertexponent)
-                    exit
-        try:
-            convertprefix.append(int(convertexponent))
-        except ValueError:
-            print("Error, cannot convert float to int??", convertprefix[-1])
-            exit
+                formtick = str(decformtick[:4]) + _prefix[int(convertexponent)]
+        convertprefix.append(int(convertexponent))
         fticks.append(formtick)
 
     return fticks
@@ -1238,15 +1219,15 @@ if __name__=="__main__":
         # Generate the dzi file
         logger.info('Generating pyramid metadata...')
         info_log = metadata_to_graph_info(log_bins, log_output_path,folder, log_index)
-        #info_linear = metadata_to_graph_info(bins,linear_output_path,folder, linear_index)        
+        info_linear = metadata_to_graph_info(bins,linear_output_path,folder, linear_index)        
         logger.info('Done!')
         
         logger.info('Writing layout file...!')
         write_csv(cnames_log, log_index, info_log, log_output_path, folder)
-        #write_csv(cnames,linear_index,info_linear,linear_output_path,folder)  
+        write_csv(cnames,linear_index,info_linear,linear_output_path,folder)  
         logger.info('Done!')
 
         # Create the pyramid
         logger.info('Building pyramid...')
         image_log = _get_higher_res("log", 0, info_log, column_names_log, log_output_path, folder, log_index,log_bins, log_bin_stats, log_binsizes, yaxis_log, alphavals_log)
-        #image_linear = _get_higher_res("linear", 0, info_linear,column_names, linear_output_path,folder,linear_index, bins, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
+        image_linear = _get_higher_res("linear", 0, info_linear,column_names, linear_output_path,folder,linear_index, bins, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
