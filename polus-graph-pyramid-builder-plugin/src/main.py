@@ -598,11 +598,8 @@ def format_ticks(fmin,fmax,nticks):
     for i in range(nticks):
         formtick = "%#.3f" % out[i]
         decformtick = '%.2e' % Decimal(formtick)
-        print(i, " LINEAR)", formtick, decformtick)
         convertexponent = float(decformtick[-3:])
         numbers = float(decformtick[:-4])
-        print("Exponent:", convertexponent)
-        print("Numbers:", numbers)
         if convertexponent > 0:
             if convertexponent % 3 == 2:
                 movednum = round(numbers/10,2)
@@ -1203,9 +1200,9 @@ if __name__=="__main__":
         endlog = time.time()
         yaxis_linear, bins, bin_stats, linear_index, linear_binsizes, alphavals_linear = bin_data(data,column_names)
         endlinear = time.time()
-        print("Time taken to Transform Data to Log Bins:", endlog - starttime)
-        print("Time taken to Transform Data to Linear Bins:", endlinear - endlog)
-        print("Creating Log Bins takes", (endlog-starttime)/(endlinear-endlog), "times than Linear Bins" )
+        # print("Time taken to Transform Data to Log Bins:", endlog - starttime)
+        # print("Time taken to Transform Data to Linear Bins:", endlinear - endlog)
+        # print("Creating Log Bins takes", (endlog-starttime)/(endlinear-endlog), "times than Linear Bins" )
 
         del data    # get rid of the original data to save memory
         del data_log
