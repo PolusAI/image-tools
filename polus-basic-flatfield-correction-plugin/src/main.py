@@ -1,6 +1,6 @@
 import argparse, logging, multiprocessing, subprocess, time
 from pathlib import Path
-from filepattern import get_regex,FilePattern
+from filepattern import parse_directory
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
@@ -56,50 +56,39 @@ def main():
     logger.info('get_photobleach = {}'.format(get_photobleach))
     logger.info('inp_regex = {}'.format(inp_regex))
     logger.info('output_dir = {}'.format(output_dir))
-    test = FilePattern(fpath, inp_regex)
-    files = [i for i in test.get_matching()]
     # Set up lists for tracking processes
     processes = []
     process_timer = []
     pnum = 0
-    rs = list (set([b for key in files for a,b in key.items() if a =='r']))
-    rs.sort()
-    for r in rs:
-        ts = list (set([b for key in files for a,b in key.items() if a =='t']))
-        ts.sort()
-        for t in ts:
-            cs = list (set([b for key in files for a,b in key.items() if a =='c']))
-            cs.sort()
-            for c in cs:
-                # The optimization process seems to use up to ~6 cores, so limit # of processes accordingly
-                if len(processes) >= multiprocessing.cpu_count() - 1:
-                    free_process = -1
-                    while free_process < 0:
-                        for process in range(len(processes)):
-                            if processes[process].poll() is not None:
-                                free_process = process
-                                break
-                        # Wait between checks to free up some processing power
-                        time.sleep(3)
-                    pnum += 1
-                    logger.info("Finished process {} of {} in {}s!".format(pnum, len(rs) * len(ts) * len(cs),
+    file,uval=parse_directory(fpath,inp_regex)
+    if len(processes) >= multiprocessing.cpu_count() - 1:
+        free_process = -1
+        while free_process < 0:
+            for process in range(len(processes)):
+                if processes[process].poll() is not None:
+                    free_process = process
+                    break
+            # Wait between checks to free up some processing power
+            time.sleep(3)
+        pnum += 1
+        logger.info("Finished process {} of {} in {}s!".format(pnum, len(uval['r']) * len(uval['t']) * len(uval['c']),
                                                                            time.time() - process_timer[free_process]))
-                    del processes[free_process]
-                    del process_timer[free_process]
+        del processes[free_process]
+        del process_timer[free_process]
 
-                logger.info("Starting process [r,t,c]: [{},{},{}]".format(r, t, c))
-                processes.append(subprocess.Popen(
+    logger.info("Starting process [r,t,c]: [{},{},{}]".format(uval['r'][0], uval['t'][0], uval['c'][0]))
+    processes.append(subprocess.Popen(
                     "python3 basic.py --inpDir {} --outDir {} --darkfield {} --photobleach {} --inpRegex {} --R {} --T {} --C {}".format(
                         fpath,
                         args.output_dir,
                         get_darkfield,
                         get_photobleach,
                         inp_regex,
-                        r,
-                        t,
-                        c),
+                        uval['r'][0],
+                        uval['t'][0],
+                        uval['c'][0]),
                     shell=True))
-                process_timer.append(time.time())
+    process_timer.append(time.time())
     while len(processes) > 1:
         free_process = -1
         while free_process < 0:
@@ -110,13 +99,13 @@ def main():
             # Wait between checks to free up some processing power
             time.sleep(3)
         pnum += 1
-        logger.info("Finished process {} of {} in {}s!".format(pnum,len(rs)*len(ts)*len(cs), time.time() - process_timer[free_process]))
+        logger.info("Finished process {} of {} in {}s!".format(pnum,len(uval['r'])*len(uval['t'])*len(uval['c']), time.time() - process_timer[free_process]))
         del processes[free_process]
         del process_timer[free_process]
 
     processes[0].wait()
 
-    logger.info("Finished process {} of {} in {}s!".format(len(rs)*len(ts)*len(cs),len(rs)*len(ts)*len(cs), time.time() - process_timer[0]))
+    logger.info("Finished process {} of {} in {}s!".format(len(uval['r'])*len(uval['t'])*len(uval['c']),len(uval['r'])*len(uval['t'])*len(uval['c']), time.time() - process_timer[0]))
     logger.info("Finished all processes!")
 
 

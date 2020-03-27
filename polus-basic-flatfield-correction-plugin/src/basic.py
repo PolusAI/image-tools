@@ -130,8 +130,8 @@ def _inexact_alm_l1(imgf_stack,options):
     img_width = imgf_stack.shape[0]
     img_height = imgf_stack.shape[1]
     img_size = img_width* img_height
-    img_color = imgf_stack.shape[2]
-    imgf_stack = np.reshape(imgf_stack,(img_size, img_color))
+    img_3d = imgf_stack.shape[2]
+    imgf_stack = np.reshape(imgf_stack,(img_size, img_3d))
     options['weight'] = np.reshape(options['weight'],imgf_stack.shape)
 
     # Matrix normalization factor
@@ -141,7 +141,7 @@ def _inexact_alm_l1(imgf_stack,options):
 
     # A is a low rank matrix that is being solved for
     A = np.zeros(imgf_stack.shape,dtype=np.float32)
-    A_coeff = np.ones((1, img_color),dtype=np.float64)   # per image scaling coefficient, accounts for things like photobleaching
+    A_coeff = np.ones((1, img_3d),dtype=np.float64)   # per image scaling coefficient, accounts for things like photobleaching
     A_offset = np.zeros((img_size,1),dtype=np.float64) # offset per pixel across all images
 
     # E1 is the additive error. Since the goal is determining the background signal, this is the real signal at each pixel
@@ -152,7 +152,7 @@ def _inexact_alm_l1(imgf_stack,options):
     ent2 = np.float64(10)   # darkfield normalization
 
     # Weights
-    weight_upd = _dct2(np.mean(np.reshape(A,(img_width, img_height, img_color)),2))
+    weight_upd = _dct2(np.mean(np.reshape(A,(img_width, img_height, img_3d)),2))
 
     # Initialize gradient and weight normalization factors
     Y1 = np.float64(0)
@@ -179,7 +179,7 @@ def _inexact_alm_l1(imgf_stack,options):
         temp_W = np.divide(imgf_stack - A - E1 + np.multiply(1/mu,Y1),ent1)
 
         # Update the weights
-        temp_W = np.reshape(temp_W,(img_width, img_height, img_color))
+        temp_W = np.reshape(temp_W,(img_width, img_height, img_3d))
         temp_W = np.mean(temp_W,2)
         weight_upd = weight_upd + _dct2(temp_W)
         weight_upd = np.max(np.reshape(weight_upd - options['lambda']/(ent1*mu),(img_width, img_height,1)),-1,initial=0) + np.min(np.reshape(weight_upd + options['lambda']/(ent1*mu),(img_width, img_height,1)),-1,initial=0)
@@ -190,11 +190,11 @@ def _inexact_alm_l1(imgf_stack,options):
 
         # Determine the error
         E1 = E1 + np.divide(imgf_stack - A - E1 + np.multiply(1/mu,Y1),ent1)
-        E1 = np.max(np.reshape(E1 - options['weight']/(ent1*mu),(img_size, img_color,1)),-1,initial=0) + np.min(np.reshape(E1 + options['weight']/(ent1*mu),(img_size, img_color,1)),-1,initial=0)
+        E1 = np.max(np.reshape(E1 - options['weight']/(ent1*mu),(img_size, img_3d,1)),-1,initial=0) + np.min(np.reshape(E1 + options['weight']/(ent1*mu),(img_size, img_3d,1)),-1,initial=0)
 
         # Calculate the flatfield coefficients by subtracting the errors from the original data
         R1 = imgf_stack-E1
-        A_coeff = np.reshape(np.mean(R1,0)/np.mean(R1),(1, img_color))
+        A_coeff = np.reshape(np.mean(R1,0)/np.mean(R1),(1, img_3d))
         A_coeff[A_coeff<0] = 0       # pixel values should never be negative
 
         # Calculate the darkfield component if specified by the user
@@ -259,7 +259,7 @@ def _inexact_alm_l1(imgf_stack,options):
     return A,E1,A_offset
 
 
-def _get_flatfield_and_reweight(X_k_A,X_k_E,X_k_Aoffset,options):
+def _get_flatfield_and_reweight(flt_pxl,pxl_err,df_pxl,options):
     """ Format flatfield/darkfield and change weights
 
     The inexact augmented legrangian multiplier method uses L1 loss, but this is only done
@@ -273,20 +273,21 @@ def _get_flatfield_and_reweight(X_k_A,X_k_E,X_k_Aoffset,options):
 
     The flatfield image is normalized so that the mean pixel value is 1. The darkfield image
     contains raw pixel values.
-
     Inputs:
-        imgf_stack - Numpy stack of images
-        flatfield - numpy floating precision matrix containing flatfield values
-        darkfield - numpy floating precision matrix containing darkfield values
+        flt_pxl - Flatfield approximation per pixel per image
+        pxl_err - Error for every pixel
+        df_pxl - Darkfield approximation per pixel per image
+        options - optimization options
+
     Outputs:
         flatfield - A floating precision numpy matrix containing normalized flatfield values
         darkfield - A floating precision numpy matrix containing darkfield pixel values
         options - optimization options with new weights (this is passed only for code readability)
     """
-    XA = np.reshape(X_k_A,(options['size'],options['size'],-1))
-    XE = np.reshape(X_k_E,(options['size'],options['size'],-1))
+    XA = np.reshape(flt_pxl,(options['size'],options['size'],-1))
+    XE = np.reshape(pxl_err,(options['size'],options['size'],-1))
     XE_norm = XE/np.tile(np.reshape(np.mean(np.mean(XA,0),0)+10**-6,(1,1,-1)),(options['size'],options['size'],1))
-    XAoffset = np.reshape(X_k_Aoffset,(options['size'],options['size']))
+    XAoffset = np.reshape(df_pxl,(options['size'],options['size']))
 
     # Update the weights
     weight = 1/(np.abs(XE_norm) + options['epsilon'])
@@ -303,12 +304,11 @@ def _get_photobleach(imgf_stack,flatfield,darkfield=None):
 
     Using the original data, flatfield, and darkfield images, estimate the total contribution of photobleaching
     to an image in a series of images.
-
     Inputs:
-        X_k_A - Flatfield approximation per pixel per image
-        X_k_E - Error for every pixel
-        X_k_Aoffset - Darkfield approximation per pixel per image
-        options - optimization options
+        imgf_stack - Numpy stack of images
+        flatfield - numpy floating precision matrix containing flatfield values
+        darkfield - numpy floating precision matrix containing darkfield values
+
     Outputs:
         A_coeff - A 1xn matrix of photobleaching offsets, where n is the number of input images
     """
