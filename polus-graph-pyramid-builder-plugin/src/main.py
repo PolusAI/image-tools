@@ -374,7 +374,7 @@ def bin_data_log(data,column_names):
             bins[feat1,feat2,rows[0],cols[0]] = ind2[0] + 1
             bins[feat1,feat2,rows[1:],cols[1:]] = counts
             linear_index.append([feat1,feat2])
-    print(alphavals)
+
     return yaxis, bins, bin_stats, linear_index, column_bin_sizes, alphavals
 
 def bin_data(data,column_names):
@@ -457,6 +457,7 @@ def bin_data(data,column_names):
             bins[feat1,feat2,rows[0],cols[0]] = ind2[0] + 1
             bins[feat1,feat2,rows[1:],cols[1:]] = counts
             linear_index.append([feat1,feat2])
+            
     return yaxis, bins, bin_stats, linear_index, column_bin_size, alphavals
 
 """ 2. Plot Generation """
@@ -807,7 +808,6 @@ def get_default_fig(cmap):
     fig, ax = plt.subplots(dpi=int(CHUNK_SIZE/4),figsize=(4,4),tight_layout={'h_pad':1,'w_pad':1})
     datacolor = ax.pcolorfast(np.zeros((bincount, bincount),np.uint64),cmap=cmap)
     ticks = [(t+0.5) for t in range(0, bincount+1, int(bincount/(numticks - 1)))]
-    print(ticks)
 
     ax.set_xlim(0,bincount)
     ax.set_ylim(0,bincount)
@@ -873,7 +873,7 @@ def metadata_to_graph_info(bins,outPath,outFile, indexscale):
     
     # Create an output path object for the info file
     op = Path(outPath).joinpath("{}.dzi".format(outFile))
-    
+
     # create an output path for the images
     of = Path(outPath).joinpath('{}_files'.format(outFile))
     of.mkdir(exist_ok=True)
@@ -1153,28 +1153,36 @@ if __name__=="__main__":
                         required=True,
                         )
 
-    parser.add_argument('--outDirLinear',               # Pyramid directory
-                        dest='outDirLinear',
+    parser.add_argument('--outDir',
+                        dest='outDir',
                         type=str,
-                        help='The output directory for the flatfield images of Linear Scaled Graphs.',
-                        required=True)
+                        help='Path to output images.',
+                        required=True
+                        )
+    # parser.add_argument('--outDirLinear',               # Pyramid directory
+    #                     dest='outDirLinear',
+    #                     type=str,
+    #                     help='The output directory for the flatfield images of Linear Scaled Graphs.',
+    #                     required=True)
 
-    parser.add_argument('--outDirLog',
-                        dest='outDirLog',
-                        type=str,
-                        help='The output directory for the flatfield images of Log Scaled Graphs.',
-                        required=True)
+    # parser.add_argument('--outDirLog',
+    #                     dest='outDirLog',
+    #                     type=str,
+    #                     help='The output directory for the flatfield images of Log Scaled Graphs.',
+    #                     required=True)
     
     """ Get the input arguments """
     args = parser.parse_args()
 
     input_path = args.inpDir
-    linear_output_path = Path(args.outDirLinear)
-    log_output_path = Path(args.outDirLog)
+    output_path = Path(args.outDir)
+    # linear_output_path = Path(args.outDir)
+    # log_output_path = Path(args.outDir)
 
     logger.info('inpDir = {}'.format(input_path))
-    logger.info('outDirLinear = {}'.format(linear_output_path))
-    logger.info('outDirLog = {}'.format(log_output_path))
+    logger.info('outDir = {}'.format(output_path))
+    # logger.info('outDirLinear = {}'.format(linear_output_path))
+    # logger.info('outDirLog = {}'.format(log_output_path))
 
     # Get the path to each csv file in the collection
     input_files = [str(f.absolute()) for f in Path(input_path).iterdir() if ''.join(f.suffixes)=='.csv']
@@ -1183,10 +1191,16 @@ if __name__=="__main__":
         # Set the file path folder
         folder = Path(f)
         folder = folder.name.replace('.csv','')
+        
+        folder_log = Path(f)
+        folder_log = folder_log.name.replace('.csv','_log')
+
         logger.info('Processing: {}'.format(folder))
+        logger.info('Processing: {}'.format(folder_log))
         
         # Load the data
         logger.info('Loading csv: {}'.format(f))
+
         data, cnames = load_csv(f)
         data_log, cnames_log = load_csv(f)
         column_names = data.columns
@@ -1195,14 +1209,14 @@ if __name__=="__main__":
 
         # Bin the data
         logger.info('Binning data for {} features...'.format(column_names.size))
-        starttime = time.time() 
+        # starttime = time.time() 
         yaxis_log, log_bins, log_bin_stats, log_index, log_binsizes, alphavals_log = bin_data_log(data_log, column_names_log)
-        endlog = time.time()
+        # endlog = time.time()
         yaxis_linear, bins, bin_stats, linear_index, linear_binsizes, alphavals_linear = bin_data(data,column_names)
-        endlinear = time.time()
-        # print("Time taken to Transform Data to Log Bins:", endlog - starttime)
-        # print("Time taken to Transform Data to Linear Bins:", endlinear - endlog)
-        # print("Creating Log Bins takes", (endlog-starttime)/(endlinear-endlog), "times than Linear Bins" )
+        # endlinear = time.time()
+        # logger.info("Time taken to Transform Data to Log Bins:", endlog - starttime)
+        # logger.info("Time taken to Transform Data to Linear Bins:", endlinear - endlog)
+        # logger.info("Creating Log Bins takes", (endlog-starttime)/(endlinear-endlog), "times than Linear Bins" )
 
         del data    # get rid of the original data to save memory
         del data_log
@@ -1215,16 +1229,16 @@ if __name__=="__main__":
 
         # Generate the dzi file
         logger.info('Generating pyramid metadata...')
-        info_log = metadata_to_graph_info(log_bins, log_output_path,folder, log_index)
-        info_linear = metadata_to_graph_info(bins,linear_output_path,folder, linear_index)        
+        info_log = metadata_to_graph_info(log_bins, output_path,folder_log, log_index)
+        info_linear = metadata_to_graph_info(bins, output_path,folder, linear_index)        
         logger.info('Done!')
         
         logger.info('Writing layout file...!')
-        write_csv(cnames_log, log_index, info_log, log_output_path, folder)
-        write_csv(cnames,linear_index,info_linear,linear_output_path,folder)  
+        write_csv(cnames_log, log_index, info_log, output_path, folder_log)
+        write_csv(cnames,linear_index,info_linear,output_path,folder)  
         logger.info('Done!')
 
         # Create the pyramid
         logger.info('Building pyramid...')
-        image_log = _get_higher_res("log", 0, info_log, column_names_log, log_output_path, folder, log_index,log_bins, log_bin_stats, log_binsizes, yaxis_log, alphavals_log)
-        image_linear = _get_higher_res("linear", 0, info_linear,column_names, linear_output_path,folder,linear_index, bins, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
+        image_log = _get_higher_res("log", 0, info_log, column_names_log, output_path, folder_log, log_index,log_bins, log_bin_stats, log_binsizes, yaxis_log, alphavals_log)
+        image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder,linear_index, bins, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
