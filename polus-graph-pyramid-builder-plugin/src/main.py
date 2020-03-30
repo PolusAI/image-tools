@@ -34,6 +34,14 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
+DEBUG_LEVELV_NUM = 9 
+logging.addLevelName(DEBUG_LEVELV_NUM, "DEBUGV")
+def debugv(self, message, *args, **kws):
+    if self.isEnabledFor(DEBUG_LEVELV_NUM):
+        # Yes, logger takes its '*args' as 'args'.
+        self._log(DEBUG_LEVELV_NUM, message, args, **kws) 
+logging.Logger.debugv = debugv
+
 #Transforms the DataFrame that Range from a Negative Number to a Positive Number
 def dfneg2pos(data, alpha, datmin, datmax):
 
@@ -228,7 +236,6 @@ def bin_data_log(data,column_names):
     binning data in one column along one axis and another column is binned along the
     other axis. All combinations of columns are binned without repeats or transposition. 
     The Bin Width is calculated with the Freedman Diaconis Rule.  
-
     Inputs:
         data - A pandas Dataframe, with nfeats number of columns
         column_names - Names of Dataframe columns
@@ -1025,7 +1032,7 @@ def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,bintyp
     outpath = Path(outpath).joinpath('{}_files'.format(out_file),str(S))
     outpath.mkdir(exist_ok=True)
     imageio.imwrite(outpath.joinpath('{}_{}.png'.format(int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE))),image,format='PNG-FI',compression=1)
-    logger.info('Finished building tile (scale,X,Y): ({},{},{})'.format(S,int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE)))
+    logger.debugv('Finished building tile (scale,X,Y): ({},{},{})'.format(S,int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE)))
     return image
 
 # This function performs the same operation as _get_highe_res, except it uses multiprocessing to grab higher
@@ -1117,7 +1124,7 @@ def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, 
     outpath = Path(outpath).joinpath('{}_files'.format(out_file),str(S))
     outpath.mkdir(exist_ok=True)
     imageio.imwrite(outpath.joinpath('{}_{}.png'.format(int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE))),image,format='PNG-FI',compression=1)
-    logger.info('Finished building tile (scale,X,Y): ({},{},{})'.format(S,int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE)))
+    logger.debugv('Finished building tile (scale,X,Y): ({},{},{})'.format(S,int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE)))
     return image
 
 def write_csv(cnames,linear_index,f_info,out_path,out_file):
