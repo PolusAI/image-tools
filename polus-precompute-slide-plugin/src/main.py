@@ -1,3 +1,4 @@
+from setuptools import filepattern 
 import logging, argparse, time, multiprocessing, subprocess
 from pathlib import Path
 
@@ -30,8 +31,15 @@ def main():
     
     # Get a list of all images in a directory
     logger.info('Getting the images...')
+    
+    file_path = Path(input_dir)
+    pattern = "image_x{xxx}_y{yyy}_z{zzz}.ome.tif"
+    fp = FilePattern(file_path,pattern)
+
+    print(fp)
+    
     image_path = Path(input_dir)
-    images = [i for i in image_path.iterdir() if "".join(i.suffixes)==".ome.tif"]
+    images = [i for i in image_path.iterdir if "".join(i.suffixes)==".ome.tif"]
     images.sort()
     
     # Set up lists for tracking processes
