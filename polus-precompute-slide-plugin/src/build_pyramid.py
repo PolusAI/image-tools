@@ -1,5 +1,5 @@
 import logging, argparse, bioformats
-import javabridge as jutil
+import javabridge
 from bfio.bfio import BioReader, BioWriter
 from pathlib import Path
 import utils    
