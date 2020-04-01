@@ -25,7 +25,9 @@
                 { "description": "Kurtosis", "enum": [ "kurt" ] },
                 { "description": "Total Count", "enum": [ "count" ] },
                 { "description": "Maximum Value", "enum": [ "max" ] },
-                { "description": "Minimum Value", "enum": [ "min" ] }
+                { "description": "Minimum Value", "enum": [ "min" ] },
+                {"description": "Inter Quartile Range", "enum": [ "iqr" ]},
+                { "description": "All parameters","enum": [ "mean","median","std","var","skew","kurt","count","max","min","iqr"]}
             ], 
         "default": "Count",
         "widget": "select" ,    
