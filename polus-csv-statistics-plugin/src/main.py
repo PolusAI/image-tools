@@ -1,7 +1,7 @@
 import argparse, logging, math
 from pathlib import Path
-
-
+# import numpy as np
+# import time
 def get_number(s):
     """ Check that s is number
     
@@ -89,7 +89,25 @@ def kurtosis(data_list,data_dict):
     except ZeroDivisionError:
         data_dict['kurt'] = 'NaN'
     return data_dict
-    
+def iqr(data_list,data_dict):
+    if 'iqr  ' in data_dict.keys():
+        return
+    count(data_list, data_dict)
+    data_list.sort()
+    cnt=(int(data_dict['count']))//2
+    L_half = data_list[:cnt]
+    U_half = data_list[-cnt:]
+    data_dict['iqr'] = ((U_half[(len(U_half)-1)//2] + U_half[len(U_half)//2]) / 2)-((L_half[(len(L_half)-1)//2] + L_half[len(L_half)//2]) / 2)
+    return data_dict
+# Testing if numpy is faster
+# def num_median(data_list,data_dict):
+#     if 'median' in data_dict.keys():
+#         return
+#     data_list=np.array(data_list, dtype=np.float32)
+#     np.sort(data_list)git
+#     data_dict['median'] = np.median(data_list)
+#     return data_dict
+
 # Dictionary of input statistics
 STATS = {'mean': mean,
          'median': median,
@@ -99,7 +117,8 @@ STATS = {'mean': mean,
          'kurt': kurtosis,
          'count': count,
          'max': maxval,
-         'min': minval}
+         'min': minval,
+         'iqr': iqr}
 
 if __name__=="__main__":
     # Initialize the logger
@@ -122,14 +141,34 @@ if __name__=="__main__":
     args = parser.parse_args()
     statistics = args.statistics.split(',')
     logger.info('statistics = {}'.format(statistics))
+    inpDir = args.inpDir    # Initialize the logger
+    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+                        datefmt='%d-%b-%y %H:%M:%S')
+    logger = logging.getLogger("main")
+    logger.setLevel(logging.INFO)
+
+    # Setup the argument parsing
+    logger.info("Parsing arguments...")
+    parser = argparse.ArgumentParser(prog='main', description='Calculate simple statistics to groups of data in a csv file.')
+    parser.add_argument('--statistics', dest='statistics', type=str,
+                        help='Types of statistics to calculate', required=True)
+    parser.add_argument('--inpDir', dest='inpDir', type=str,
+                        help='Input csv collection to be processed by this plugin', required=True)
+    parser.add_argument('--outDir', dest='outDir', type=str,
+                        help='Output collection', required=True)
+
+    # Parse the arguments
+    args = parser.parse_args()
+    statistics = args.statistics.split(',')
+    logger.info('statistics = {}'.format(statistics))
     inpDir = args.inpDir
     logger.info('inpDir = {}'.format(inpDir))
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
-    
+
     # Get a list of all input files
     csv_files = [f for f in Path(inpDir).iterdir() if f.name.endswith('csv')]
-    
+
     # Open each csv files
     for feat_file in csv_files:
         fpath = str(feat_file.absolute())
@@ -140,11 +179,10 @@ if __name__=="__main__":
                 first_line = fr.readline()
                 headers = first_line.rstrip('\n').split(',')
                 var_ind = {key:val for key,val in enumerate(headers)} # map headers to line positions
-                
                 # If no column is labeled file, throw an error
                 if 'file' not in headers:
                     ValueError('At least one column must have a header title file.')
-                
+
                 # Generate the output dictionary template and format string
                 line_dict = {'file': 'NaN'}
                 for key in headers:
@@ -154,7 +192,6 @@ if __name__=="__main__":
                         line_dict[key + '_' + stat] = 'NaN'
                         # Generate the line template
                 line_template = ','.join([('{' + h + '}') for h in line_dict.keys()]) + '\n'
-
                 # Write headers to the new file
                 fw.write(','.join(line_dict.keys()) + '\n')
 
@@ -174,12 +211,95 @@ if __name__=="__main__":
                     # Loop through rows until the filename changes
                     line = fr.readline()
                     np_line = {var_ind[ind]:val for ind,val in enumerate(line.rstrip('\n').split(','))}
-                    while line and p_line['file'] == np_line['file']:
+                    while line and p_line['file'][0] == np_line['file']:
                         # Store the values in a feature list
                         for key,val in np_line.items():
-                            if isinstance(val,list):
-                                p_line[key].append(get_number(val))
+                            if isinstance(val,str):
+                                p_line[key].append(get_number(val[0]))
+                        # Get the next line
+                        line = fr.readline()
+                        np_line = {var_ind[ind]:val for ind,val in enumerate(line.rstrip('\n').split(','))}
 
+                    # Get the mean of the feature list, save in the file dictionary
+                    for key,val in p_line.items():
+                        # Set the file name
+                        if key=='file':
+                            line_dict['file'] = val[0]
+                            continue
+
+                        # Grab only float values
+                        inp_data = [d for d in val if isinstance(d,float)]
+                        # If inp_data contains no floats, skip it
+                        if len(inp_data) == 0:
+                            continue
+
+                        # Calculate the statistics for the feature
+                        data_dict = {}
+                        for stat in statistics:
+                            STATS[stat](inp_data,data_dict)
+                            line_dict[key + '_' + stat] = data_dict[stat]
+                    fw.write(line_template.format(**line_dict))
+                    line_dict = {key:'NaN' for key in line_dict.keys()}
+
+                    # Checkpoint
+                    fnum += 1
+                    if fnum//1000 > fcheck:
+                        fcheck += 1
+                        logger.info('Files parsed: {}'.format(fnum))
+    logger.info('inpDir = {}'.format(inpDir))
+    outDir = args.outDir
+    logger.info('outDir = {}'.format(outDir))
+    
+    # Get a list of all input files
+    csv_files = [f for f in Path(inpDir).iterdir() if f.name.endswith('csv')]
+
+    # Open each csv files
+    for feat_file in csv_files:
+        fpath = str(feat_file.absolute())
+        out = str(Path(outDir).joinpath(feat_file.name).absolute())
+        with open(fpath,'r') as fr:
+            with open(str(out),'w') as fw:
+                # Read the first line, which should contain headers
+                first_line = fr.readline()
+                headers = first_line.rstrip('\n').split(',')
+                var_ind = {key:val for key,val in enumerate(headers)} # map headers to line positions
+                # If no column is labeled file, throw an error
+                if 'file' not in headers:
+                    ValueError('At least one column must have a header title file.')
+                
+                # Generate the output dictionary template and format string
+                line_dict = {'file': 'NaN'}
+                for key in headers:
+                    if key=='file':
+                        continue
+                    for stat in statistics:
+                        line_dict[key + '_' + stat] = 'NaN'
+                        # Generate the line template
+                line_template = ','.join([('{' + h + '}') for h in line_dict.keys()]) + '\n'
+                # Write headers to the new file
+                fw.write(','.join(line_dict.keys()) + '\n')
+
+                # Get the first line of data
+                line = fr.readline()
+
+                # Read each line in the stitching vector
+                fnum = 0
+                fcheck = 0
+                while line:
+                    # Parse the current line as a dictionary
+                    p_line = {var_ind[ind]:val for ind,val in enumerate(line.rstrip('\n').split(','))}
+                    for key,val in p_line.items():
+                        v = get_number(val)
+                        p_line[key] = [v]
+
+                    # Loop through rows until the filename changes
+                    line = fr.readline()
+                    np_line = {var_ind[ind]:val for ind,val in enumerate(line.rstrip('\n').split(','))}
+                    while line and p_line['file'][0] == np_line['file']:
+                        # Store the values in a feature list
+                        for key,val in np_line.items():
+                            if isinstance(val,str):
+                                p_line[key].append(get_number(val[0]))
                         # Get the next line
                         line = fr.readline()
                         np_line = {var_ind[ind]:val for ind,val in enumerate(line.rstrip('\n').split(','))}
@@ -191,9 +311,8 @@ if __name__=="__main__":
                             line_dict['file'] = val[0]
                             continue
                         
-                        # Grab only float values
+                        # Grab only float valuesprint(time.process_time() - start)
                         inp_data = [d for d in val if isinstance(d,float)]
-                        
                         # If inp_data contains no floats, skip it
                         if len(inp_data) == 0:
                             continue
@@ -201,17 +320,14 @@ if __name__=="__main__":
                         # Calculate the statistics for the feature
                         data_dict = {}
                         for stat in statistics:
+                            #start = time.process_time()
                             STATS[stat](inp_data,data_dict)
-                            # print(key)
-                            # print(stat)
-                            # print(line_dict)
-                            # print(data_dict)
+                            #print(time.process_time() - start)
                             line_dict[key + '_' + stat] = data_dict[stat]
                     fw.write(line_template.format(**line_dict))
                     line_dict = {key:'NaN' for key in line_dict.keys()}
-                    
                     # Checkpoint
                     fnum += 1
-                    if fnum//1000 > fcheck:
+                    if fnum > fcheck:
                         fcheck += 1
-                        logger.info('Files parsed: {}'.format(fnum))
+                        logger.info('Unique Files parsed: {}'.format(fnum))
