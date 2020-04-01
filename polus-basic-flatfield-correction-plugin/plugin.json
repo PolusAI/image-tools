@@ -32,7 +32,7 @@
     {
       "name": "inpRegex",
       "type": "string",
-      "description": "Filename patter used to separate images by channel, timepoint, and replicate.",
+      "description": "Filename pattern used to separate images by channel, timepoint, and replicate.",
       "required": true
     }
   ],

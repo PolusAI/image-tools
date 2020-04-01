@@ -50,7 +50,7 @@ def _get_resized_image_stack(flist):
        img_stack[:,:,ind] = cv2.resize(I,(OPTIONS['size'],OPTIONS['size']),interpolation=cv2.INTER_LINEAR).astype(np.float32)
     return img_stack,X,Y
 
-def _dct2(imgf_stack):
+def _dct2(imgflt_stack):
     """ Discrete cosine transform
 
     This function originally existed to replicate Matlabs dct function using scipy's dct function. It was necessary
@@ -60,14 +60,14 @@ def _dct2(imgf_stack):
     The scipy dct that was originally used was type-II.
 
     Inputs:
-        imgf_stack - Input matrix to perform dct on
+        imgflt_stack - Input matrix to perform dct on
     Outputs:
-        d - The dct of input, imgf_stack
+        d - The dct of input, imgflt_stack
     """
-    d = cv2.dct(imgf_stack).astype(np.float64)
+    d = cv2.dct(imgflt_stack).astype(np.float64)
     return d
 
-def _idct2(imgf_stack):
+def _idct2(imgflt_stack):
     """ Discrete cosine transform
 
     This function originally existed to replicate Matlabs dct function using scipy's dct function. It was necessary
@@ -77,11 +77,11 @@ def _idct2(imgf_stack):
     The scipy dct that was originally used was type-III, which is the inverse of dct type-II
 
     Inputs:
-        imgf_stack - Input matrix to perform dct on
+        imgflt_stack - Input matrix to perform dct on
     Outputs:
-        d - The dct of input, imgf_stack
+        d - The dct of input, imgflt_stack
     """
-    d = cv2.dct(imgf_stack,flags=cv2.DCT_INVERSE).astype(np.float64)
+    d = cv2.dct(imgflt_stack,flags=cv2.DCT_INVERSE).astype(np.float64)
     return d
 
 def _initialize_options(img_stack,get_darkfield,options):
@@ -107,7 +107,7 @@ def _initialize_options(img_stack,get_darkfield,options):
     new_options['darkfield'] = get_darkfield
     return new_options
 
-def _inexact_alm_l1(imgf_stack,options):
+def _inexact_alm_l1(imgflt_stack,options):
     """ L1 optimization using inexact augmented Legrangian multipliers (IALM)
 
     This function finds the smallest number of features in Fourier space (frequencies) that minimizes the
@@ -121,31 +121,31 @@ def _inexact_alm_l1(imgf_stack,options):
     https://arxiv.org/pdf/1009.5055.pdf
 
     Inputs:
-        imgf_stack - Stack of images used to estimate the flatfield
+        imgflt_stack - Stack of images used to estimate the flatfield
         options - optimization options
     Outputs:
         new_options - Modified options
     """
     # Get basic image information and reshape input
-    img_width = imgf_stack.shape[0]
-    img_height = imgf_stack.shape[1]
+    img_width = imgflt_stack.shape[0]
+    img_height = imgflt_stack.shape[1]
     img_size = img_width* img_height
-    img_3d = imgf_stack.shape[2]
-    imgf_stack = np.reshape(imgf_stack,(img_size, img_3d))
-    options['weight'] = np.reshape(options['weight'],imgf_stack.shape)
+    img_3d = imgflt_stack.shape[2]
+    imgflt_stack = np.reshape(imgflt_stack,(img_size, img_3d))
+    options['weight'] = np.reshape(options['weight'],imgflt_stack.shape)
 
     # Matrix normalization factor
-    temp = np.linalg.svd(imgf_stack,full_matrices=False,compute_uv=False)
+    temp = np.linalg.svd(imgflt_stack,full_matrices=False,compute_uv=False)
     norm_two = np.float64(temp[0])
     del temp
 
     # A is a low rank matrix that is being solved for
-    A = np.zeros(imgf_stack.shape,dtype=np.float32)
+    A = np.zeros(imgflt_stack.shape,dtype=np.float32)
     A_coeff = np.ones((1, img_3d),dtype=np.float64)   # per image scaling coefficient, accounts for things like photobleaching
     A_offset = np.zeros((img_size,1),dtype=np.float64) # offset per pixel across all images
 
     # E1 is the additive error. Since the goal is determining the background signal, this is the real signal at each pixel
-    E1 = np.zeros(imgf_stack.shape,dtype=np.float32)
+    E1 = np.zeros(imgflt_stack.shape,dtype=np.float32)
 
     # Normalization factors
     ent1 = np.float64(1)    # flatfield normalization
@@ -161,10 +161,10 @@ def _inexact_alm_l1(imgf_stack,options):
     rho = np.float64(1.5)
 
     # Frobenius norm
-    d_norm = np.linalg.norm(imgf_stack,'fro')
+    d_norm = np.linalg.norm(imgflt_stack,'fro')
 
     # Darkfield upper limit and offset
-    B1_uplimit = np.min(imgf_stack)
+    B1_uplimit = np.min(imgflt_stack)
     B1_offset = np.float64(0)
 
     # Perform optimization
@@ -176,7 +176,7 @@ def _inexact_alm_l1(imgf_stack,options):
         # Calculate the flatfield using existing weights, coefficients, and offsets
         W_idct_hat = _idct2(weight_upd)
         A = np.matmul(np.reshape(W_idct_hat,(img_size,1)),A_coeff) + A_offset
-        temp_W = np.divide(imgf_stack - A - E1 + np.multiply(1/mu,Y1),ent1)
+        temp_W = np.divide(imgflt_stack - A - E1 + np.multiply(1/mu,Y1),ent1)
 
         # Update the weights
         temp_W = np.reshape(temp_W,(img_width, img_height, img_3d))
@@ -189,11 +189,11 @@ def _inexact_alm_l1(imgf_stack,options):
         A = np.matmul(np.reshape(W_idct_hat,(img_size,1)),A_coeff) + A_offset
 
         # Determine the error
-        E1 = E1 + np.divide(imgf_stack - A - E1 + np.multiply(1/mu,Y1),ent1)
+        E1 = E1 + np.divide(imgflt_stack - A - E1 + np.multiply(1/mu,Y1),ent1)
         E1 = np.max(np.reshape(E1 - options['weight']/(ent1*mu),(img_size, img_3d,1)),-1,initial=0) + np.min(np.reshape(E1 + options['weight']/(ent1*mu),(img_size, img_3d,1)),-1,initial=0)
 
         # Calculate the flatfield coefficients by subtracting the errors from the original data
-        R1 = imgf_stack-E1
+        R1 = imgflt_stack-E1
         A_coeff = np.reshape(np.mean(R1,0)/np.mean(R1),(1, img_3d))
         A_coeff[A_coeff<0] = 0       # pixel values should never be negative
 
@@ -240,7 +240,7 @@ def _inexact_alm_l1(imgf_stack,options):
             A_offset = A_offset + B_offset
 
         # Loss
-        Z1 = imgf_stack - A - E1
+        Z1 = imgflt_stack - A - E1
 
         # Update weight regularization term
         Y1 = Y1 + mu*Z1
@@ -299,13 +299,13 @@ def _get_flatfield_and_reweight(flt_pxl,pxl_err,df_pxl,options):
     darkfield = XAoffset
     return flatfield, darkfield, options
 
-def _get_photobleach(imgf_stack,flatfield,darkfield=None):
+def _get_photobleach(imgflt_stack,flatfield,darkfield=None):
     """ Calculate the global effect of photobleaching for each image
 
     Using the original data, flatfield, and darkfield images, estimate the total contribution of photobleaching
     to an image in a series of images.
     Inputs:
-        imgf_stack - Numpy stack of images
+        imgflt_stack - Numpy stack of images
         flatfield - numpy floating precision matrix containing flatfield values
         darkfield - numpy floating precision matrix containing darkfield values
 
@@ -313,12 +313,12 @@ def _get_photobleach(imgf_stack,flatfield,darkfield=None):
         A_coeff - A 1xn matrix of photobleaching offsets, where n is the number of input images
     """
     # Initialize matrices
-    imgf_stack = np.reshape(imgf_stack,(OPTIONS['size']*OPTIONS['size'],-1)).astype(np.float64)
+    imgflt_stack = np.reshape(imgflt_stack,(OPTIONS['size']*OPTIONS['size'],-1)).astype(np.float64)
     if darkfield is None:
         darkfield = np.zeros(flatfield.shape,dtype=np.float64)
 
     # Initialize weights and tolerances
-    weights = np.ones(imgf_stack.shape,dtype=np.float64)
+    weights = np.ones(imgflt_stack.shape,dtype=np.float64)
     epsilon = np.float64(0.1)
     tol = np.float64(10**-6)
 
@@ -327,10 +327,10 @@ def _get_photobleach(imgf_stack,flatfield,darkfield=None):
         # Calculate weights, offsets and coefficients
         W_idct_hat = np.reshape(flatfield,(-1,1))
         A_offset = np.reshape(darkfield,(-1,1))
-        A_coeff = np.reshape(np.mean(imgf_stack,0),(1,-1))
+        A_coeff = np.reshape(np.mean(imgflt_stack,0),(1,-1))
 
         # Initialization values and learning rates
-        temp = np.linalg.svd(imgf_stack,full_matrices=False,compute_uv=False)
+        temp = np.linalg.svd(imgflt_stack,full_matrices=False,compute_uv=False)
         norm_two = np.float64(temp[0])
         mu = np.float64(12.5)/norm_two
         mu_bar = mu * 10**7
@@ -338,11 +338,11 @@ def _get_photobleach(imgf_stack,flatfield,darkfield=None):
         ent1 = 1
 
         # Normalization factors
-        d_norm = np.linalg.norm(imgf_stack,'fro')
+        d_norm = np.linalg.norm(imgflt_stack,'fro')
 
         # Initialize augmented representation and error
-        A = np.zeros(imgf_stack.shape,dtype=np.float64)
-        E1 = np.zeros(imgf_stack.shape,dtype=np.float64)
+        A = np.zeros(imgflt_stack.shape,dtype=np.float64)
+        E1 = np.zeros(imgflt_stack.shape,dtype=np.float64)
         Y1 = np.float64(0)
 
         # Run optimization
@@ -355,16 +355,16 @@ def _get_photobleach(imgf_stack,flatfield,darkfield=None):
             A = np.matmul(W_idct_hat,A_coeff) + A_offset
 
             # Calculate errors
-            E1 = E1 + np.divide(imgf_stack - A - E1 + np.multiply(1/mu,Y1),ent1)
-            E1 = np.max(np.reshape(E1 - weights/(ent1*mu),(imgf_stack.shape[0],imgf_stack.shape[1],1)),-1,initial=0) + np.min(np.reshape(E1 + weights/(ent1*mu),(imgf_stack.shape[0],imgf_stack.shape[1],1)),-1,initial=0)
+            E1 = E1 + np.divide(imgflt_stack - A - E1 + np.multiply(1/mu,Y1),ent1)
+            E1 = np.max(np.reshape(E1 - weights/(ent1*mu),(imgflt_stack.shape[0],imgflt_stack.shape[1],1)),-1,initial=0) + np.min(np.reshape(E1 + weights/(ent1*mu),(imgflt_stack.shape[0],imgflt_stack.shape[1],1)),-1,initial=0)
 
             # Calculate coefficients
-            R1 = imgf_stack-E1
+            R1 = imgflt_stack-E1
             A_coeff = np.reshape(np.mean(R1,0),(1, -1)) - np.mean(A_offset)
             A_coeff[A_coeff<0] = 0      # pixel values are never negative
 
             # Loss
-            Z1 = imgf_stack - A - E1
+            Z1 = imgflt_stack - A - E1
 
             # Error updates
             Y1 = Y1 + mu*Z1
