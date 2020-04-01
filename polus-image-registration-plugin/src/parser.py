@@ -4,7 +4,7 @@ import itertools
 import numpy as np
 
 
-def collection_parser(directory_path,file_pattern,registration_variable, similarity_variable, template_image):
+def parse_collection(directory_path,file_pattern,registration_variable, similarity_variable, template_image):
     
     # Predefined variables order     
     #var_order = 'rtczyx'  

@@ -1,5 +1,5 @@
 
-FROM labshare/polus-bfio-util:1.0.5
+FROM labshare/polus-bfio-util:1.0.8
 
 COPY VERSION /
 		
