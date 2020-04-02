@@ -1,6 +1,7 @@
 import logging, argparse, time, multiprocessing, subprocess
 from pathlib import Path
-import setuptools
+import filepattern
+import os
 
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -8,7 +9,11 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
+pathforthisfile = str(__file__)[:-7]
+
 def main():
+
+    logger.info('path for this file {}'.format(pathforthisfile))
     # Setup the Argument parsing
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='Generate a precomputed slice for Polus Volume Viewer.')
@@ -29,13 +34,14 @@ def main():
     logger.info('output_dir = {}'.format(output_dir))
     logger.info('pyramid_type = {}'.format(pyramid_type))
     
+
     # Get a list of all images in a directory
     logger.info('Getting the images...')
     image_path = Path(input_dir)
     images = [i for i in image_path.iterdir() if "".join(i.suffixes)==".ome.tif"]
     images.sort()
 
-
+    pattern = "image_x{xxx}_y{yyy}_z{zzz}.ome.tif"
     
     # Set up lists for tracking processes
     processes = []
@@ -62,7 +68,7 @@ def main():
             del processes[free_process]
             del process_timer[free_process]
             
-        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir {} --outDir {} --pyramidType {} --image {} --imageNum {}".format(input_dir,
+        processes.append(subprocess.Popen("python3 " + pathforthisfile + "build_pyramid.py --inpDir {} --outDir {} --pyramidType {} --image {} --imageNum {}".format(input_dir,
                                                                                                                                               output_dir,
                                                                                                                                               pyramid_type,
                                                                                                                                               '"' + image.name + '"',
