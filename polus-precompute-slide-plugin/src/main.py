@@ -1,6 +1,6 @@
-from setuptools import filepattern 
 import logging, argparse, time, multiprocessing, subprocess
 from pathlib import Path
+import setuptools
 
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -31,16 +31,11 @@ def main():
     
     # Get a list of all images in a directory
     logger.info('Getting the images...')
-    
-    file_path = Path(input_dir)
-    pattern = "image_x{xxx}_y{yyy}_z{zzz}.ome.tif"
-    fp = FilePattern(file_path,pattern)
-
-    print(fp)
-    
     image_path = Path(input_dir)
-    images = [i for i in image_path.iterdir if "".join(i.suffixes)==".ome.tif"]
+    images = [i for i in image_path.iterdir() if "".join(i.suffixes)==".ome.tif"]
     images.sort()
+
+
     
     # Set up lists for tracking processes
     processes = []
@@ -50,6 +45,7 @@ def main():
     # Build one pyramid for each image in the input directory
     # Each pyramid is built within its own process, with a maximum number of processes
     # equal to number of cpus - 1.
+    logger.info("Got the images")
     im_count = 1
     for image in images:
         if len(processes) >= multiprocessing.cpu_count()-1 and len(processes)>0:
