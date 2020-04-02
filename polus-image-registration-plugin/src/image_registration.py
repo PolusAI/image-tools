@@ -7,6 +7,20 @@ import javabridge
 import argparse
 import logging
 
+
+"""
+This script consists of the image registration algorithm. 
+The two main functions in this script are (found at the end):
+1. register_images()
+2. apply_registration()
+All the other functions are utility functions. 
+
+register_images() registers the moving image with the template image
+and returns the set of transformation(rough and fine) required to do so.
+The apply_registration() function takes as an input these set of 
+transformations and applies it to an image.
+"""
+
 # change the max size of the image that can be read using PIL
 Image.MAX_IMAGE_PIXELS = 1500000000 
 
@@ -23,7 +37,7 @@ def image_transformation(moving_image,reference_image):
     '''
     # height, width of the reference image
     height, width = reference_image.shape
-    # max number of featured to be calculated using ORB 
+    # max number of features to be calculated using ORB 
     max_features=500000   
     # initialize orb feature matcher
     orb = cv2.ORB_create(max_features)
@@ -42,7 +56,7 @@ def image_transformation(moving_image,reference_image):
     numGoodMatches = int(len(matches) * good_match_percent)
     matches = matches[:numGoodMatches]
     
-    # extract the points coordinated from the keypoints
+    # extract the point coordinates from the keypoints
     points1 = np.zeros((len(matches), 2), dtype=np.float32)
     points2 = np.zeros((len(matches), 2), dtype=np.float32)    
     for i, match in enumerate(matches):
@@ -57,7 +71,7 @@ def image_transformation(moving_image,reference_image):
 
 def get_scaled_down_images(image,scale_factor):
     """
-    This function returns the scaled down version of the input image.    
+    This function returns the scaled down version of an image.    
     Inputs:
         image : 16 bit input image to be scaled down
         scale_factor : the factor by which the image needs
@@ -107,13 +121,13 @@ def apply_rough_homography(image,homography_largescale,reference_image_shape):
     size that it can transform and can't be used to warp the original moving image. 
     
     logic: 
-        transformed_image= homography * image
+        transformed_image_coordinates= homography * image_coordinates
         homography_inverse * transformed_image = image
     
     Inputs: 
         image : image to be transformed
         homography_largescale: the transformation matrix
-        reference_image_shape: the desired output shape of themoving image
+        reference_image_shape: the desired output shape of the moving image
         
     output:
         transformed_image : transformed output image
@@ -149,7 +163,7 @@ def apply_rough_homography(image,homography_largescale,reference_image_shape):
 
 def get_tile_by_tile_transformation(reference_image_tiles, moving_image_tiles, scale_matrix): 
     """
-    This function takes as input a set of tiles from the seferente image and moiving image and
+    This function takes as input a set of tiles from the reference image and moving image and
     calculates the homography tranformation between respective tiles. The transformation is
     calculated between scaled down versions of the images, the scale matrix is used to upscale
     the homography matrixes.
@@ -220,7 +234,10 @@ def apply_registration(moving_image_path,Template_image_shape,Rough_Homography_U
 def register_images(reference_image_path, moving_image_path):
     """
     This function registers the moving image with the reference image 
-    and returns the set of transformation required to do so.
+    and returns the set of transformations required to do so. At first 
+    the moving image undergoes a transformation to roughly align it with
+    the template image. Following that, the roughly transformed moving
+    image is tranformed tile-by-tile to get a finer transformation.
     
     Input:
         reference_image_path: path to the reference image
