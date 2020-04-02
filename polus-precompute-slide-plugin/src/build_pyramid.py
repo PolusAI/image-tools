@@ -1,5 +1,7 @@
-import logging, argparse, bioformats
-import javabridge
+import logging, argparse
+import bioformats
+import os
+import javabridge as jutil
 from bfio.bfio import BioReader, BioWriter
 from pathlib import Path
 import utils    
@@ -77,4 +79,3 @@ if __name__=="__main__":
     
     logger.info("Finished precomputing. Closing the javabridge and exiting...")
     jutil.kill_vm()
-    
