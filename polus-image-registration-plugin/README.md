@@ -8,29 +8,29 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 ## Description
 
-This plugin registers an image collection. First it parses the image collection using `parser.py` into registration sets. Each registration set consists of: moving image, template image, similiar transformation images. The registration algorithm(explained in the next section, can be found in `image_registration.py`) registers the moving image with the template image and stores the transformation required to do so. This stored transformation is used to transform each image in similar transformation list. 
+This plugin registers an image collection. First it parses the image collection using `parser.py` into registration sets. Each registration set consists of: moving image, template image, similiar transformation images. The registration algorithm(explained in the next section, can be found in `image_registration.py`) registers the moving image with template image and stores the transformation required to do so. This stored transformation is used to transform each image in similar transformation list. 
 
 ## Algorithm
 
 ### Parsing 
-The parsing algorithm uses the functions from the `file_pattern utility`. It takes the following inputs : Filename pattern, registration variable, similar transformation variable. The registration variable helps determine the moving and the template images where as the similar transformation variable helps deterine the similar transformation images. 
+The parsing algorithm uses the functions from the `file_pattern utility`. It takes the following inputs : Filename pattern, registration variable, similar transformation variable. The registration variable helps determine the moving and the template images where as the similar transformation variable helps determine the similar transformation images. 
 
 Some sample text files can be found in the examples folder. Short example shown below:    
 
 Parsing example :   
   
-Inputs:  
+`Inputs:`  
 Filepattern :   `x{xxx}_y{yyy}_z{zzz}_c{ccc}_t{ttt}.ome.tif`  
 Registration_variable :  `t`   
 similar_transformation_variable : `c`  
 template_ :  `x001_y001_z001_c001_t001.ome.tif`    
 
-Output set 1 :   
+`Output set 1 :`   
 Template Image:  x001_y001_z001_c001_t001.ome.tif  
 Moving Image:  x001_y001_z001_c001_t002.ome.tif  
 Similar Transformation Images :   [ x001_y001_z001_c002_t002.ome.tif , x001_y001_z001_c003_t002.ome.tif ]  
 
-Output set 2:    
+`Output set 2:`    
 Template Image:  x001_y002_z001_c001_t001.ome.tif    
 Moving Image:   x001_y002_z001_c001_t002.ome.tif    
 Similar Transformation Images :  [ x001_y002_z001_c002_t002.ome.tif , x001_y002_z001_c003_t002.ome.tif ]      
@@ -38,8 +38,29 @@ Similar Transformation Images :  [ x001_y002_z001_c002_t002.ome.tif , x001_y002_
 
 
 ### Registration 
-It uses projective transformation(Homography) to transform the moving image and align it with the reference image.
-Background information about homography can be found here: https://en.wikipedia.org/wiki/Homography
+The registration algorithm is present in `image_registration.py`. It uses projective transformation(Homography matrix) to alter the moving image and align it with the reference image. Background information about homography can be found here: https://en.wikipedia.org/wiki/Homography .    
+The moving image undergoes 2 transformations:     
+1. `Rough Transformation` : In this the whole moving image is transformed using the homography matrix calculated between the entire moving and template image.
+2. `Fine Transformation` : To carry out fine transformation ,the homography matrix is found between the corresponding tiles of the roughly transformed moving image and the template image. Each image is divided into 4 tiles. 
+
+To find the homography matrix(for fine or rough tranformation), we need coordinates of atleast 4 matching points in the template and the moving image. To do this the ORB feature detector has been used. However, its computationally very expensive to run feature matching on large images(our test data consists of 1.3 gigapixel images). To overcome this, the homography matrix at every step of our algorithm has been calculated between scaled down versions( 16 * 16 times smaller) of the respective images. To use this homography matrix on actual sized images, the matrix is scaled up using a scale matrix.  The proof for upscaling a homography matrix is shown below.   
+
+`Proof` :  
+
+Credit for proof : https://stackoverflow.com/questions/21019338/how-to-change-the-homography-with-the-scale-of-the-image/56623249    
+  
+![homography](https://user-images.githubusercontent.com/48079888/78402511-b04d8200-75c8-11ea-9d22-cee13f3912db.gif)  
+   
+     
+       
+if `sx=sy`, the result reduces to : 
+  
+  
+  
+ ![homography 1](https://user-images.githubusercontent.com/48079888/78402536-b93e5380-75c8-11ea-8609-844fcee707de.gif)
+
+
+
 
 ## Building
 
