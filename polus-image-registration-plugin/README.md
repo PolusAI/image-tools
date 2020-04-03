@@ -1,8 +1,23 @@
-# Image Registration
+# Polus Image Registration Plugin
 
-This WIPP plugin does things, some of which involve math and science. There is likely a lot of handwaving involved when describing how it works, but handwaving should be replaced with a good description. However, someone forgot to edit the README, so handwaving will have to do for now. Contact [Gauhar Bains](mailto:gauhar.bains@labshare.org) for more information.
+WIPP Plugin Title : Image Registration Plugin 
+
+Contact [Gauhar Bains](mailto:gauhar.bains@labshare.org) for more information.
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
+
+## Description
+
+This plugin registers an image collection. First it 
+ It uses projective transformation(Homography) to transform the moving image and align it with the reference image. 
+
+Background information about homography can be found here: https://en.wikipedia.org/wiki/Homography
+
+## Algorithm 
+
+
+
+ Initially, the plugin parses the input collection and divides it into sets. Each set consists of 3 things 
 
 ## Building
 
