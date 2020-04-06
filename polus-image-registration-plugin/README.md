@@ -52,12 +52,7 @@ Credit for proof : https://stackoverflow.com/questions/21019338/how-to-change-th
 ![homography](https://user-images.githubusercontent.com/48079888/78402511-b04d8200-75c8-11ea-9d22-cee13f3912db.gif)  
    
      
-       
-if `sx=sy`, the result reduces to : 
-  
-  
-  
- ![homography 1](https://user-images.githubusercontent.com/48079888/78402536-b93e5380-75c8-11ea-8609-844fcee707de.gif)
+
 
 
 
