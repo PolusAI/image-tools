@@ -27,7 +27,7 @@
                 { "description": "Maximum Value", "enum": [ "max" ] },
                 { "description": "Minimum Value", "enum": [ "min" ] },
                 {"description": "Inter Quartile Range", "enum": [ "iqr" ]},
-                { "description": "All parameters","enum": [ "mean","median","std","var","skew","kurt","count","max","min","iqr"]}
+                { "description": "All parameters","enum": [ "all"]}
             ], 
         "default": "Count",
         "widget": "select" ,    
