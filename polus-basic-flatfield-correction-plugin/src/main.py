@@ -1,6 +1,6 @@
-import argparse, logging, multiprocessing, subprocess, time
+import argparse, logging, multiprocessing, subprocess, time,os
 from pathlib import Path
-from filepattern import parse_directory
+from filepattern import FilePattern
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
@@ -41,8 +41,9 @@ def main():
 
     """ Get the input arguments """
     args = parser.parse_args()
-
     fpath = args.inpDir
+    if (os.path.isdir(Path(args.inpDir).joinpath('images'))):
+        fpath=Path(args.inpDir).joinpath('images')
     get_darkfield = str(args.darkfield).lower() == 'true'
     output_dir = Path(args.output_dir).joinpath('images')
     output_dir.mkdir(exist_ok=True)
@@ -60,35 +61,37 @@ def main():
     processes = []
     process_timer = []
     pnum = 0
-    file,uval=parse_directory(fpath,inp_regex)
-    if len(processes) >= multiprocessing.cpu_count() - 1:
-        free_process = -1
-        while free_process < 0:
-            for process in range(len(processes)):
-                if processes[process].poll() is not None:
-                    free_process = process
-                    break
-            # Wait between checks to free up some processing power
-            time.sleep(3)
-        pnum += 1
-        logger.info("Finished process {} of {} in {}s!".format(pnum, len(uval['r']) * len(uval['t']) * len(uval['c']),
+    file = FilePattern(fpath, inp_regex)
+    total_no = len(list(file.iterate(group_by='xyz')))
+    for i in file.iterate(group_by='xyz'):
+        if len(processes) >= multiprocessing.cpu_count() - 1:
+            free_process = -1
+            while free_process < 0:
+                for process in range(len(processes)):
+                    if processes[process].poll() is not None:
+                        free_process = process
+                        break
+                # Wait between checks to free up some processing power
+                time.sleep(3)
+            pnum += 1
+            logger.info("Finished process {} of {} in {}s!".format(pnum, total_no,
                                                                            time.time() - process_timer[free_process]))
-        del processes[free_process]
-        del process_timer[free_process]
+            del processes[free_process]
+            del process_timer[free_process]
 
-    logger.info("Starting process [r,t,c]: [{},{},{}]".format(uval['r'][0], uval['t'][0], uval['c'][0]))
-    processes.append(subprocess.Popen(
+        logger.info("Starting process [r,t,c]: [{},{},{}]".format(i[0]['r'], i[0]['t'], i[0]['c']))
+        processes.append(subprocess.Popen(
                     "python3 basic.py --inpDir {} --outDir {} --darkfield {} --photobleach {} --inpRegex {} --R {} --T {} --C {}".format(
                         fpath,
                         args.output_dir,
                         get_darkfield,
                         get_photobleach,
                         inp_regex,
-                        uval['r'][0],
-                        uval['t'][0],
-                        uval['c'][0]),
+                        i[0]['r'],
+                        i[0]['t'],
+                        i[0]['c']),
                     shell=True))
-    process_timer.append(time.time())
+        process_timer.append(time.time())
     while len(processes) > 1:
         free_process = -1
         while free_process < 0:
@@ -99,13 +102,13 @@ def main():
             # Wait between checks to free up some processing power
             time.sleep(3)
         pnum += 1
-        logger.info("Finished process {} of {} in {}s!".format(pnum,len(uval['r'])*len(uval['t'])*len(uval['c']), time.time() - process_timer[free_process]))
+        logger.info("Finished process {} of {} in {}s!".format(pnum,total_no, time.time() - process_timer[free_process]))
         del processes[free_process]
         del process_timer[free_process]
 
     processes[0].wait()
 
-    logger.info("Finished process {} of {} in {}s!".format(len(uval['r'])*len(uval['t'])*len(uval['c']),len(uval['r'])*len(uval['t'])*len(uval['c']), time.time() - process_timer[0]))
+    logger.info("Finished process {} of {} in {}s!".format(total_no,total_no, time.time() - process_timer[0]))
     logger.info("Finished all processes!")
 
 
