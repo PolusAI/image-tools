@@ -118,8 +118,6 @@ if __name__=="__main__":
     # Initialize the logger
     logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                         datefmt='%d-%b-%y %H:%M:%S')
-
-
     logger = logging.getLogger("main")
     logger.setLevel(logging.INFO)
 
@@ -132,7 +130,7 @@ if __name__=="__main__":
                         help='Input csv collection to be processed by this plugin', required=True)
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
-    
+
     # Parse the arguments
     args = parser.parse_args()
     if args.statistics == 'all':
@@ -146,8 +144,6 @@ if __name__=="__main__":
     logger.info('outDir = {}'.format(outDir))
 
     # Get a list of all input files
-
-
     csv_files = [f for f in Path(inpDir).iterdir() if f.name.endswith('csv')]
 
     # Open each csv files
@@ -171,8 +167,10 @@ if __name__=="__main__":
                         continue
                     for stat in statistics:
                         line_dict[key + '_' + stat] = 'NaN'
+
                         # Generate the line template
                 line_template = ','.join([('{' + h + '}') for h in line_dict.keys()]) + '\n'
+
                 # Write headers to the new file
                 fw.write(','.join(line_dict.keys()) + '\n')
 
@@ -197,6 +195,7 @@ if __name__=="__main__":
                         for key,val in np_line.items():
                             if isinstance(val,str):
                                 p_line[key].append(get_number(val[0]))
+
                         # Get the next line
                         line = fr.readline()
                         np_line = {var_ind[ind]:val for ind,val in enumerate(line.rstrip('\n').split(','))}
@@ -210,6 +209,7 @@ if __name__=="__main__":
 
                         # Grab only float values
                         inp_data = [d for d in val if isinstance(d,float)]
+
                         # If inp_data contains no floats, skip it
                         if len(inp_data) == 0:
                             continue
