@@ -42,6 +42,7 @@ def main():
     """ Get the input arguments """
     args = parser.parse_args()
     fpath = args.inpDir
+    """Checking if there is images subdirectory"""
     if (os.path.isdir(Path(args.inpDir).joinpath('images'))):
         fpath=Path(args.inpDir).joinpath('images')
     get_darkfield = str(args.darkfield).lower() == 'true'
@@ -61,6 +62,7 @@ def main():
     processes = []
     process_timer = []
     pnum = 0
+    # Iterator to group files with  constant r,t and c values
     file = FilePattern(fpath, inp_regex)
     total_no = len(list(file.iterate(group_by='xyz')))
     for i in file.iterate(group_by='xyz'):
