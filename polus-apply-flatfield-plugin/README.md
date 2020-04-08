@@ -2,7 +2,8 @@
 
 This WIPP plugin applies a flatfield operation on every image in a collection. The algorithm used to apply the flatfield is as follows:
 
-$$Corrected = \frac{Original - Darkfield}{Brightfield} - Photobleach + Offset$$
+![Corrected = \frac{Original - Darkfield}{Brightfield} - Photobleach + Offset](https://render.githubusercontent.com/render/math?math=Corrected%20%3D%20%5Cfrac%7BOriginal%20-%20Darkfield%7D%7BBrightfield%7D%20-%20Photobleach%20%2B%20Offset)
+
 
 A brief description of the variables:
 1. $Corrected$ is the flatfield corrected image
@@ -19,7 +20,7 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 Implement additional formulations of flatfield correction. Specifically, the formula specified by Young:
 
-$$ Corrected = \frac{Original - Darkfield}{Brightfield - Darkfield} $$
+![Corrected = \frac{Original - Darkfield}{Brightfield - Darkfield} ](https://render.githubusercontent.com/render/math?math=Corrected%20%3D%20%5Cfrac%7BOriginal%20-%20Darkfield%7D%7BBrightfield%20-%20Darkfield%7D%20)
 
 Additional formulations may also include reference image free algorithms for flatfield correction, such as the [rolling ball algorithm](https://www.computer.org/csdl/magazine/co/1983/01/01654163/13rRUwwJWBB).
 
@@ -42,6 +43,6 @@ Command line options:
 | `--ffDir` | Image collection containing flatfield and/or darkfield images | Input | collection |
 | `--flatPattern` | Filename pattern used to match flatfield files to image files | Input | string |
 | `--imgDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--imgPattern` | Filename pattern used to separate data and match with flatfied files | Input | string |
+| `--imgPattern` | Filename pattern used to separate data and match with flatfield files | Input | string |
 | `--photoPattern` | Filename pattern used to match photobleach files to image files | Input | string |
 | `--outDir` | Output collection | Output | collection |
