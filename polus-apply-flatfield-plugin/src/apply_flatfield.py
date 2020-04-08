@@ -1,5 +1,5 @@
 import bioformats,csv,logging,argparse
-from bfio import BioReader,BioWriter
+from bfio import  BioReader,BioWriter
 import javabridge as jutil
 import numpy as np
 from filepattern import FilePattern
