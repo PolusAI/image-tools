@@ -1,6 +1,6 @@
 {
   "name": "BaSiC Flatfield Correction Plugin",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "title": "Flatfield correction using BaSiC algorithm.",
   "description": "Generates images used for flatfield correction using the BaSiC algorithm.",
   "author": "Nick Schaub (nick.schaub@nih.gov)",
