@@ -1,6 +1,6 @@
 {
     "name": "CSV Statistics",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "title": "CSV Statistics",
     "description": "Calculate simple statistics to groups of data in a csv file.",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
