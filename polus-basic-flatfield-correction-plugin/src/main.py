@@ -1,4 +1,4 @@
-import argparse, logging, multiprocessing, subprocess, time,os
+import argparse, logging, multiprocessing, subprocess, time
 from pathlib import Path
 from filepattern import FilePattern
 # Initialize the logger    
@@ -43,7 +43,7 @@ def main():
     args = parser.parse_args()
     fpath = args.inpDir
     """Checking if there is images subdirectory"""
-    if (os.path.isdir(Path(args.inpDir).joinpath('images'))):
+    if (Path.is_dir(Path(args.inpDir).joinpath('images'))):
         fpath=Path(args.inpDir).joinpath('images')
     get_darkfield = str(args.darkfield).lower() == 'true'
     output_dir = Path(args.output_dir).joinpath('images')
