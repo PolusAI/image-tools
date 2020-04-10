@@ -99,22 +99,30 @@ An Example of Running the Docker Container
 GPU-Enabled K-NN Code for Shared-Memory Systems
 ==================================================    
 
-Alternatively, the performance of K-NN code for Shared-Memory Systems was improved by adding CUDA directives. The computation loads are then automatically switch between GPU and CPU.  
+Alternatively, the performance of K-NN code for Shared-Memory Systems was improved by adding CUDA directives. The computation loads are then automatically switched between GPU and CPU.  
 
 .. code:: bash
 
     ulimit -s unlimited
-    nvcc -I/Path_To_Boost_Library/boost_1_71_0 KNN_GPU_Code.cu -o output.exe -L/Path_To_Boost_Library/boost_1_71_0/stage/lib -lboost_iostreams -lboost_system -lboost_filesystem  -arch=sm_75
+    nvcc -I/Path_To_Boost_Library/boost_1_71_0 KNN_GPU_Code.cu -o output.exe -L/Path_To_Boost_Library/boost_1_71_0/stage/lib -lboost_iostreams -lboost_system -lboost_filesystem -O2 -arch=sm_75
     time ./output.exe --inputPath . --K 10 --sampleRate 0.99  --convThreshold 5  --outputPath .
 
 The following parameters are GPU-specific parameters. Their values might need to be adjusted for any given device. 
 
 1- ``MAXTPB``: The Max number of Threads per Block. It is by deafult 1024.
 
-2- ``MinimumThreads``: The Minimum number of computations that is needed to switch to GPU device (Otherwise stay in host). This parameter might have considerable impact on the performance. 
+2- ``MinimumThreads``: The Minimum number of computations that is needed to switch the computation to GPU device (Otherwise stay in host). This parameter might have considerable impact on the performance. 
 
 3- ``arch=sm_75``: This compilation flag should represent the GPU specificiation of the given machine. 
 
+
+The docker for GPU-Enabled K-NN code can also be run using the following command.
+
+.. code:: bash
+
+    docker run -it --gpus all -v /path/to/data:/data/inputs -v /path/to/outputs:/data/outputs \
+            containername --inputPath /data/inputs --K 10 --sampleRate 0.9 \
+            --convThreshold 5 --outputPath /data/outputs  
 
 ========================================
 K-NN Code for Distributed-Memory Systems

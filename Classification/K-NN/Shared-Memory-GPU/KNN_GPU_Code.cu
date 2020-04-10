@@ -382,6 +382,8 @@ int main(int argc, char * const argv[]) {
 		cout << "Error in Computing the Dimension of input csv file" << endl;
 		return 1;	
 	}
+	//Convert Pagged Memory to the Pinned Memory for better performance
+	cudaHostRegister(dataPointsGPU,N*Dim*sizeof(double),0);
 	/**
 	 * Copy the GPU version of input data (dataPointsGPU) to GPU memory (device_dataPointsGPU)
 	 */
@@ -678,7 +680,7 @@ int main(int argc, char * const argv[]) {
 			New_Final_List[i].clear();
 		}
 	}
-
+    cudaHostUnregister(dataPointsGPU);
 	cudaFree(device_dataPointsGPU);
 
 	/**
