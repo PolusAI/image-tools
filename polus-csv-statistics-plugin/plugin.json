@@ -1,6 +1,6 @@
 {
     "name": "CSV Statistics",
-    "version": "0.1.3",
+    "version": "0.1.9",
     "title": "CSV Statistics",
     "description": "Calculate simple statistics to groups of data in a csv file.",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,31 +8,91 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-csv-statistics-plugin:0.1.3",
+    "containerId": "labshare/polus-csv-statistics-plugin:0.1.9",
     "inputs": [
       {
         "name": "statistics",
         "type": "array",
-        "required": true,
-        "title": "Select statistic",
-        "oneOf": 
-            [
-                { "description": "Mean", "enum": [ "mean" ] },
-                { "description": "Median", "enum": [ "median" ] }, 
-                { "description": "Standard Deviation", "enum": [ "std" ] },
-                { "description": "Variance", "enum": [ "var" ] },
-                { "description": "Skewness", "enum": [ "skew" ] },
-                { "description": "Kurtosis", "enum": [ "kurt" ] },
-                { "description": "Total Count", "enum": [ "count" ] },
-                { "description": "Maximum Value", "enum": [ "max" ] },
-                { "description": "Minimum Value", "enum": [ "min" ] },
-                {"description": "Inter Quartile Range", "enum": [ "iqr" ]},
-                { "description": "All parameters","enum": [ "all"]}
-            ], 
-        "default": "Total Count",
-        "widget": "select" ,    
-        "minItems": 1, 
-        "uniqueItems": "true"
+        "options": {
+          "items": {
+            "type": "string",
+            "title": "Select statistic",
+            "oneOf": [
+              {
+                "description": "Mean",
+                "enum": [
+                  "mean"
+                ]
+              },
+              {
+                "description": "Median",
+                "enum": [
+                  "median"
+                ]
+              },
+              {
+                "description": "Standard Deviation",
+                "enum": [
+                  "std"
+                ]
+              },
+              {
+                "description": "Variance",
+                "enum": [
+                  "var"
+                ]
+              },
+              {
+                "description": "Skewness",
+                "enum": [
+                  "skew"
+                ]
+              },
+              {
+                "description": "Kurtosis",
+                "enum": [
+                  "kurt"
+                ]
+              },
+              {
+                "description": "Total Count",
+                "enum": [
+                  "count"
+                ]
+              },
+              {
+                "description": "Maximum Value",
+                "enum": [
+                  "max"
+                ]
+              },
+              {
+                "description": "Minimum Value",
+                "enum": [
+                  "min"
+                ]
+              },
+              {
+                "description": "Inter Quartile Range",
+                "enum": [
+                  "iqr"
+                ]
+              },
+              {
+                "description": "All parameters",
+                "enum": [
+                  "all"
+                ]
+              }
+            ],
+            "default": "count",
+            "widget": "select",
+            "minItems": 1,
+            "uniqueItems": "true"
+          },
+          "required": true,
+          "description": "Csv Statistics"
+        }
       },
       {
         "name": "inpDir",
