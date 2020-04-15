@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-sudo docker build . -t labshare/polus-csv-statistics-plugin:${version}
+ docker build . -t labshare/polus-csv-statistics-plugin:${version}
