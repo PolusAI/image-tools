@@ -1,6 +1,4 @@
-import logging, argparse
-import bioformats
-import os
+import logging, argparse, bioformats
 import javabridge as jutil
 from bfio.bfio import BioReader, BioWriter
 from pathlib import Path
@@ -20,6 +18,10 @@ if __name__=="__main__":
                         help='Build a DeepZoom or Neuroglancer pyramid', required=True)
     parser.add_argument('--imageNum', dest='image_num', type=str,
                         help='Image number, will be stored as a timeframe', required=True)
+    parser.add_argument('--stackNum', dest='stack_num', type=str,
+                        help='Stack number', required=True)
+    parser.add_argument('--firstimage', dest='first_im', type=str,
+                        help='Name of Stack', required=True)
 
     args = parser.parse_args()
     input_dir = args.input_dir
@@ -27,6 +29,8 @@ if __name__=="__main__":
     image = args.image
     pyramid_type = args.pyramid_type
     image_num = args.image_num
+    stacknum = args.stack_num
+    firstim = args.first_im
 
     # Initialize the logger    
     logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(image),
@@ -43,24 +47,56 @@ if __name__=="__main__":
 
     # Make the output directory
     image = Path(input_dir).joinpath(image)
+    print("IMAGE NAME")
+    print(image.name)
+    print("IMAGE NUMBER (stack number)")
+    print(image_num)
+    logger.info('Image Number: {}'.format(str(image_num)))
+    logger.info('Stack Number: {}'.format(str(stacknum)))
+    
     if pyramid_type == "Neuroglancer":
         out_dir = Path(output_dir).joinpath(image.name)
     elif pyramid_type == "DeepZoom":
-        out_dir = Path(output_dir).joinpath('{}_files'.format(image_num))
-    out_dir.mkdir()
-    out_dir = str(out_dir.absolute())
-    
+        out_dir = Path(output_dir).joinpath('{}_files'.format(stacknum))
+    if image_num == '1':
+        if pyramid_type == "Neuroglancer":
+            out_dir = Path(output_dir).joinpath(image.name)
+        elif pyramid_type == "DeepZoom":
+            out_dir = Path(output_dir).joinpath('{}_files'.format(stacknum))
+        out_dir.mkdir()
+        out_dir = str(out_dir.absolute())
+    else:
+        if pyramid_type == "Neuroglancer":
+            out_dir = Path(output_dir).joinpath(firstim)
+   
     # Create the BioReader object
     logger.info('Getting the BioReader...')
     bf = BioReader(str(image.absolute()))
     
     # Create the output path and info file
-    if pyramid_type == "Neuroglancer":
-        file_info = utils.neuroglancer_info_file(bf,out_dir)
-    elif pyramid_type == "DeepZoom":
-        file_info = utils.dzi_file(bf,out_dir,image_num)
-    else:
-        ValueError("pyramid_type must be Neuroglancer or DeepZoom")
+    # INFO FILE MUST BE UPDATED MADHU !!!!!!! DO NOT IGNORE!!!!!
+    # if pyramid_type == "Neuroglancer":
+    #     file_info = utils.neuroglancer_info_file(bf,out_dir)
+    # elif pyramid_type == "DeepZoom":
+    #     file_info = utils.dzi_file(bf,out_dir,image_num)
+    # else:
+    #     ValueError("pyramid_type must be Neuroglancer or DeepZoom")
+
+    if image_num == '1':
+        if pyramid_type == "Neuroglancer":
+            file_info = utils.neuroglancer_info_file(bf,out_dir, image_num)
+        elif pyramid_type == "DeepZoom":
+            file_info = utils.dzi_file(bf,out_dir,image_num,stacknum)
+        else:
+            ValueError("pyramid_type must be Neuroglancer or DeepZoom")
+    # else:
+    #     if pyramid_type == "DeepZoom": 
+    #         file_info = utils.dzi_file(bf,out_dir,image_num,stacknum)
+    #     elif pyramid_type == "Neuroglancer":
+    #         file_info = utils.neuroglancer_info_file(bf,out_dir, image_num)
+    #     else:
+    #         ValueError("pyramid_type must be Neuroglancer or DeepZoom")
+
     logger.info("data_type: {}".format(file_info['data_type']))
     logger.info("num_channels: {}".format(file_info['num_channels']))
     logger.info("number of scales: {}".format(len(file_info['scales'])))
@@ -79,3 +115,4 @@ if __name__=="__main__":
     
     logger.info("Finished precomputing. Closing the javabridge and exiting...")
     jutil.kill_vm()
+    

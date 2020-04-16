@@ -1,8 +1,11 @@
+import logging, argparse, bioformats 
 from bfio.bfio import BioReader
 import numpy as np
 import json, copy, os
 from pathlib import Path
 import imageio
+from dvc import logger
+
 
 # Conversion factors to nm, these are based off of supported Bioformats length units
 UNITS = {'m':  10**9,
@@ -42,7 +45,7 @@ def _avg2(image):
 
     return avg_img
 
-def _get_higher_res(S,bfio_reader,slide_writer,encoder,X=None,Y=None):
+def _get_higher_res(S,bfio_reader,slide_writer,encoder,X=None,Y=None,Z=None):
     """ Recursive function for pyramid building
     
     This is a recursive function that builds an image pyramid by indicating
@@ -82,9 +85,12 @@ def _get_higher_res(S,bfio_reader,slide_writer,encoder,X=None,Y=None):
     """
     # Get the scale info
     scale_info = None
+    print("encoder.info['scales'] in utils.py")
     for res in encoder.info['scales']:
+        print(res)
         if int(res['key'])==S:
             scale_info = res
+            print("scale info:", scale_info)
             break
     if scale_info==None:
         ValueError("No scale information for resolution {}.".format(S))
@@ -93,22 +99,28 @@ def _get_higher_res(S,bfio_reader,slide_writer,encoder,X=None,Y=None):
         X = [0,scale_info['size'][0]]
     if Y == None:
         Y = [0,scale_info['size'][1]]
+    if Z== None:
+        Z = [0,scale_info['size'][2]]
+    
     
     # Modify upper bound to stay within resolution dimensions
     if X[1] > scale_info['size'][0]:
         X[1] = scale_info['size'][0]
     if Y[1] > scale_info['size'][1]:
         Y[1] = scale_info['size'][1]
-    
+    if Z[1] > scale_info['size'][2]:
+        Z[1] = scale_info['size'][2] 
+
     # Initialize the output
-    image = np.zeros((Y[1]-Y[0],X[1]-X[0]),dtype=bfio_reader.read_metadata().image().Pixels.get_PixelType())
+    image = np.zeros((Y[1]-Y[0],X[1]-X[0],11),dtype=bfio_reader.read_metadata().image().Pixels.get_PixelType())
     
     # If requesting from the lowest scale, then just read the image
     if str(S)==encoder.info['scales'][0]['key']:
-        image = bfio_reader.read_image(X=X,Y=Y).squeeze()
+        image = bfio_reader.read_image(X=X,Y=Y,Z=Z).squeeze()
     else:
         # Set the subgrid dimensions
-        subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]]]
+        subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]],[Z[0], Z[1]]]
+        print("Subgrid_dimensions", subgrid_dims)
         for dim in subgrid_dims:
             while dim[1]-dim[0] > CHUNK_SIZE:
                 dim.insert(1,dim[0] + ((dim[1] - dim[0]-1)//CHUNK_SIZE) * CHUNK_SIZE)
@@ -138,7 +150,6 @@ def _get_higher_res(S,bfio_reader,slide_writer,encoder,X=None,Y=None):
 # https://github.com/HumanBrainProject/neuroglancer-scripts/blob/master/src/neuroglancer_scripts/file_accessor.py
 class PyramidWriter():
     """ Pyramid file writing base class
-
     This class should not be called directly. It should be inherited by a pyramid
     writing class type.
     
@@ -208,8 +219,11 @@ class DeepZoomWriter(PyramidWriter):
     def __init__(self, base_dir):
         super().__init__(base_dir)
         self.chunk_pattern = "{key}/{0}_{1}.png"
+        print("Chunk pattern: ", self.chunk_pattern)
 
     def _chunk_coords(self,chunk_coords):
+        print("CHUNK_coords")
+        print(chunk_coords)
         chunk_coords = [chunk_coords[0]//CHUNK_SIZE,chunk_coords[2]//CHUNK_SIZE]
         return chunk_coords
 
@@ -257,9 +271,18 @@ class NeuroglancerChunkEncoder:
             buf - encoded chunk (byte stream)
         """
         # Rearrange the image for Neuroglancer
+        print("chunk[0] shape before rearranging", chunk.shape[0])
         chunk = np.moveaxis(chunk.reshape(chunk.shape[0],chunk.shape[1],1,1),
                             (0, 1, 2, 3), (2, 3, 1, 0))
         chunk = np.asarray(chunk).astype(self.dtype, casting="safe")
+        print("chunk[0] shape after rearranging", chunk.shape[0])
+        # print("CHUNK", chunk)
+        # print("Chunk Shape", chunk.shape[0])
+        # print("num_channels", self.num_channels)
+        # i = 1
+        # for item in chunk[0][0]:
+        #     print(i, ") ", item, len(item))
+        #     i = i + 1
         assert chunk.ndim == 4
         assert chunk.shape[0] == self.num_channels
         buf = chunk.tobytes()
@@ -289,7 +312,7 @@ class DeepZoomChunkEncoder(NeuroglancerChunkEncoder):
         assert chunk.ndim == 2
         return chunk
 
-def bfio_metadata_to_slide_info(bfio_reader,outPath):
+def bfio_metadata_to_slide_info(bfio_reader,outPath, imagenum):
     """ Generate a Neuroglancer info file from Bioformats metadata
     
     Neuroglancer requires an info file in the root of the pyramid directory.
@@ -305,8 +328,13 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath):
     """
     
     # Get metadata info from the bfio reader
-    sizes = [bfio_reader.num_x(),bfio_reader.num_y(),bfio_reader.num_z()]
+    sizes = [bfio_reader.num_x(),bfio_reader.num_y(),bfio_reader.num_c()]
+    print("sizes")
+    print(sizes)
+    sizes[2] = 11
     phys_x = bfio_reader.physical_size_x()
+    print("pys_x")
+    print(phys_x)
     if None in phys_x:
         phys_x = (1000,'nm')
     phys_y = bfio_reader.physical_size_y()
@@ -316,12 +344,13 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath):
     resolution.append(phys_y[0] * UNITS[phys_y[1]])
     resolution.append((phys_y[0] * UNITS[phys_y[1]] + phys_x[0] * UNITS[phys_x[1]])/2) # Just used as a placeholder
     dtype = bfio_reader.read_metadata().image().Pixels.get_PixelType()
-    
+    print(dtype)
     num_scales = int(np.log2(max(sizes))) + 1
-    
+    print("num scales")
+    print(num_scales)
     # create a scales template, use the full resolution8
     scales = {
-        "chunk_sizes":[[CHUNK_SIZE,CHUNK_SIZE,1]],
+        "chunk_sizes":[[CHUNK_SIZE,CHUNK_SIZE,11]],
         "encoding":"raw",
         "key": str(num_scales),
         "resolution":resolution,
@@ -332,27 +361,30 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath):
     # initialize the json dictionary
     info = {
         "data_type": dtype,
-        "num_channels":1,
+        "num_channels":11,
         "scales": [scales],       # Will build scales below
         "type": "image"
     }
+    print("scales")
+    for item in info['scales']:
+        print(item)
     
     for i in range(1,num_scales+1):
         previous_scale = info['scales'][-1]
         current_scale = copy.deepcopy(previous_scale)
         current_scale['key'] = str(num_scales - i)
-        current_scale['size'] = [int(np.ceil(previous_scale['size'][0]/2)),int(np.ceil(previous_scale['size'][1]/2)),1]
+        current_scale['size'] = [int(np.ceil(previous_scale['size'][0]/2)),int(np.ceil(previous_scale['size'][1]/2)),11]
         current_scale['resolution'] = [2*previous_scale['resolution'][0],2*previous_scale['resolution'][1],previous_scale['resolution'][2]]
         info['scales'].append(current_scale)
     
     return info
 
-def neuroglancer_info_file(bfio_reader,outPath):
+def neuroglancer_info_file(bfio_reader,outPath, imagenum):
     # Create an output path object for the info file
-    op = Path(outPath).joinpath("info")
+    op = Path(outPath).joinpath("info" + imagenum)
     
     # Get pyramid info
-    info = bfio_metadata_to_slide_info(bfio_reader,outPath)
+    info = bfio_metadata_to_slide_info(bfio_reader,outPath, 11)
 
     # Write the neuroglancer info file
     with open(op,'w') as writer:
@@ -360,18 +392,29 @@ def neuroglancer_info_file(bfio_reader,outPath):
         
     return info
 
-def dzi_file(bfio_reader,outPath,imageNum):
+def dzi_file(bfio_reader,outPath,imageNum, stacknum):
     # Create an output path object for the info file
     op = Path(outPath).parent.joinpath("{}.dzi".format(imageNum))
+
     
     # DZI file template
-    DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="{}" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
+    DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="{}" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}" Length="{}"/></Image>'
     
     # Get pyramid info
-    info = bfio_metadata_to_slide_info(bfio_reader,outPath)
-
+    info = bfio_metadata_to_slide_info(bfio_reader,outPath, imageNum)
+    i = 1
+    print("INFO FILE")
+    print(info)
+    for item in info:
+        print(i, item)
+        i = i + 1
+    print("op value", op)
+    print("outpath value", outPath)
     # write the dzi file
+    # if str(op) == outPath:
     with open(op,'w') as writer:
-        writer.write(DZI.format(CHUNK_SIZE,info['scales'][0]['size'][0],info['scales'][0]['size'][1]))
-        
+        writer.write(DZI.format(CHUNK_SIZE,info['scales'][0]['size'][0],info['scales'][0]['size'][1], 11))
+    # else:
+    #     with open(Path(outPath), 'a+') as writer:
+    #         writer.write(DZI.format(CHUNK_SIZE,info['scales'][0]['size'][0],info['scales'][0]['size'][1]))
     return info
