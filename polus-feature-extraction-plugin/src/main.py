@@ -16,6 +16,8 @@ def main():
                         help='Features to calculate', required=True)
     parser.add_argument('--csvfile', dest='csvfile', type=str,
                         help='Save csv as separate or single file', required=True)
+    parser.add_argument('--labelimage', dest='labelimage', type=str,
+                        help='Input image need to be labeled or not', required=True)
     parser.add_argument('--intDir', dest='intDir', type=str,
                         help='Intensity image collection', required=False)
     parser.add_argument('--pixelDistance', dest='pixelDistance', type=int,
@@ -31,6 +33,8 @@ def main():
     logger.info('features = {}'.format(features))
     csvfile = args.csvfile#csvfile
     logger.info('csvfile = {}'.format(csvfile))
+    labelimage = args.labelimage#label image
+    logger.info('labelimage = {}'.format(labelimage))
     intDir = args.intDir#intensity image
     logger.info('intDir = {}'.format(intDir))
     pixelDistance = args.pixelDistance#pixel distance to calculate neighbors
@@ -42,7 +46,7 @@ def main():
     logger.info("Started")
     image_convert = ConvertImage(segDir,intDir)
     
-    df,filenames= image_convert.convert_tiled_tiff(features, csvfile, outDir, pixelDistance)
+    df,filenames= image_convert.convert_tiled_tiff(features, csvfile, labelimage, outDir, pixelDistance)
     #call csv function to save as a single file
     if csvfile == 'singlecsv':
         csv_file= Df_Csv_single(df, outDir)

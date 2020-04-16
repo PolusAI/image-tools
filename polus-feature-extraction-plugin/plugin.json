@@ -1,14 +1,14 @@
 {
     "name": "Feature Extraction",
-    "version": "0.5.1",
+    "version": "0.6.1",
     "title": "Feature Extraction",
     "description": "Extract shape and intensity features from images.",
-    "author": "Jayapriya Nagarajan (jayapriya.nagarajan@axleinfo.com)",
+    "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-extraction-plugin:0.5.1",
+    "containerId": "labshare/polus-feature-extraction-plugin:0.6.1",
     "inputs": [
       {
             "name": "csvfile",
@@ -21,6 +21,18 @@
             },
             "required": "true",
             "description": "csvfile : singlecsv for saving values in one csv file and separate csv to save values for each image in separate csv file."
+      },
+      {
+            "name": "labelimage",
+            "type": "enum",
+            "options": {
+                "values": [
+                    "Yes",
+                    "No"
+                ]
+            },
+            "required": "true",
+            "description": "labelimage : Whether images need to be labeled or not."
       },   
       {
         "name": "features",
@@ -100,6 +112,11 @@
         "key": "inputs.csvfile",
         "title": "Output csv file",
         "description": "save csv file separately for each image or one csv for all images"
+      },      
+      {
+        "key": "inputs.labelimage",
+        "title": "Label the images",
+        "description": "Labeled image"
       },
       {
         "key": "inputs.features",

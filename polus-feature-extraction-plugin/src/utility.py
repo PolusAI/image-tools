@@ -6,11 +6,13 @@ Created on Thu Dec 12 20:42:45 2019
 """
 import javabridge as jutil
 import bioformats
+import logging
 import os
 import numpy as np
 import pandas as pd
 from skimage import measure
 from skimage.measure import label
+from skimage.segmentation import clear_border
 from scipy.stats import skew
 from scipy.stats import kurtosis as kurto
 from scipy.stats import mode as mod
@@ -22,7 +24,8 @@ from bfio.bfio import BioReader
 import difflib
 import fnmatch
 
-
+logger = logging.getLogger("utility")
+logger.setLevel(logging.INFO)
 class ConvertImage(object):
     """
     This class reads .ome.tif files from the directory.
@@ -43,95 +46,143 @@ class ConvertImage(object):
         all_labels = label(seg_file)
         return all_labels
         
-    def convert_tiled_tiff(self,features,csvfile,outDir,pixelDistance):
+    def convert_tiled_tiff(self,features,csvfile,labelimage,outDir,pixelDistance):
         """ Read .ome.tif files."""
         df_feature = pd.DataFrame([])
         df = pd.DataFrame([])
         intensity_image = None
-
-        #Start the java vm for using bioformats        
-        jutil.start_vm(class_path=bioformats.JARS)
+        logger.info('Initializing the javabridge...')
+        try:
+            #Start the java vm for using bioformats        
+            jutil.start_vm(class_path=bioformats.JARS)
+            
+            index=0#use index for knowing the images processed
+            
+            #If intensity image is not passed as a parameter
+            if self.intensity_dir is None:
+                #Get list of .ome.tif files in the directory including sub folders for segmented images
+                configfiles = [os.path.join(dirpath, seg_file_name)
+                for dirpath, dirnames, files in os.walk(self.segment_dir)
+                for seg_file_name in fnmatch.filter(files, '*.ome.tif')]
+                if not configfiles:
+                    logger.error('No segment image .ome.tif files found.')
+                    ValueError('No segment image.ome.tif files found.')
+                
+                for segfile in configfiles:#run analysis for each segmented image in the list
+                    seg_file=os.path.normpath(segfile)
+                    #segfilename = seg_file.split('/')
+                    segfilename = os.path.split(seg_file)#split to get only the filename
+                    seg_file_names1 = segfilename[-1]
+                    
+                    #Read the image using bioreader from bfio
+                    br_seg = BioReader(seg_file)
+                    segment_bfio = br_seg.read_image()
+                    seg_invert = np.squeeze(segment_bfio)#squeeze the 5D array
+                    seg_ravel=np.ravel(seg_invert)
+                    
+                    #Invert image
+                    if np.bincount(seg_ravel).argmax()==0:
+                        seg_file = (seg_invert==0)
+                    else:
+                        seg_file = seg_invert
+                    #Label the images
+                    if labelimage == 'Yes':
+                        logger.info('Labeling the image ' + seg_file_names1)    
+                        label_image = self.labeling(seg_file)#call labeling function to label the objects in the segmented images
+                        logger.info('Finished labeling the image ' + seg_file_names1) 
+                    else:
+                        label_image = seg_file
+                    
+                    logger.info('Starting extraction of features from ' + seg_file_names1) 
+                    #Call the feature_extraction function in Analysis class
+                    analysis = Analysis(label_image,features,seg_file_names1, csvfile, labelimage, outDir,pixelDistance,intensity_image)
+                    df = analysis.feature_extraction()
+                  
+                    logger.info('Completed feature extraction for ' + seg_file_names1) 
+                    #Check whether csvfile is csvone to save the features extracted from all the images in same csv file
+                    if csvfile == 'separatecsv':
+                        df_feature = df#assign the dataframe to save as separate file                    
+                    else:
+                        df_feature = df_feature.append(df)#append the dataframe to save all in one csv file
+                    index+=1
+                    print("Number of images processed-",index)
+                    
+            #If intensity image is passed as a parameter        
+            else:
+                #Get list of .ome.tif files in the directory including sub folders for segmented images
+                configfiles = [os.path.join(dirpath, seg_filename)
+                for dirpath, dirnames, files in os.walk(self.segment_dir)
+                for seg_filename in fnmatch.filter(files, '*.ome.tif')]
+                
+                if not configfiles:
+                    logger.error('No segment image .ome.tif files found.')
+                    ValueError('No segment image.ome.tif files found.')
+                
+                #Get list of .ome.tif files in the directory including sub folders for intensity images
+                configfiles_int = [os.path.join(dirpath, seg_filename)
+                for dirpath, dirnames, files in os.walk(self.intensity_dir)
+                for seg_filename in fnmatch.filter(files, '*.ome.tif')]
+                
+                if not configfiles_int:
+                    logger.error('No intensity image .ome.tif files found.')
+                    ValueError('No intensity image .ome.tif files found.')
+                
+                for segfile in configfiles:
         
-        index=0#use index for knowing the images processed
-        
-        #If intensity image is not passed as a parameter
-        if self.intensity_dir is None:
-            #Get list of .ome.tif files in the directory including sub folders for segmented images
-            configfiles = [os.path.join(dirpath, seg_file_name)
-            for dirpath, dirnames, files in os.walk(self.segment_dir)
-            for seg_file_name in fnmatch.filter(files, '*.ome.tif')]
-            
-            for segfile in configfiles:#run analysis for each segmented image in the list
-                seg_file=os.path.normpath(segfile)
-                segfilename = seg_file.split('/')#split to get only the filename
-                seg_file_names1 = segfilename[-1]
-                              
-                #Read the image using bioreader from bfio
-                br_seg = BioReader(seg_file)
-                segment_bfio = br_seg.read_image()
-                seg_file = np.squeeze(segment_bfio)#squeeze the 5D array
-                label_image= self.labeling(seg_file)#call labeling function to label the objects in the segmented images
-                
-                #Call the feature_extraction function in Analysis class
-                analysis = Analysis(label_image,features,seg_file_names1, csvfile,outDir,pixelDistance,intensity_image)
-                df = analysis.feature_extraction()
-                
-                #Check whether csvfile is csvone to save the features extracted from all the images in same csv file
-                if csvfile == 'separatecsv':
-                    df_feature = df#assign the dataframe to save as separate file                    
-                else:
-                    df_feature = df_feature.append(df)#append the dataframe to save all in one csv file
-                index+=1
-                print("Number of images processed-",index)
-                
-        #If intensity image is passed as a parameter        
-        else:
-            #Get list of .ome.tif files in the directory including sub folders for segmented images
-            configfiles = [os.path.join(dirpath, seg_filename)
-            for dirpath, dirnames, files in os.walk(self.segment_dir)
-            for seg_filename in fnmatch.filter(files, '*.ome.tif')]
-            
-            #Get list of .ome.tif files in the directory including sub folders for intensity images
-            configfiles_int = [os.path.join(dirpath, seg_filename)
-            for dirpath, dirnames, files in os.walk(self.intensity_dir)
-            for seg_filename in fnmatch.filter(files, '*.ome.tif')]
-            
-            for segfile in configfiles:
+                    seg_file=os.path.normpath(segfile)
+                    #segfilename = seg_file.split('/')
+                    segfilename = os.path.split(seg_file)#split to get only the filename
+                    seg_file_names1 = segfilename[-1]
+                    
+                #for seg_file_names1 in seg_filenames1:#run analysis for each segmented image in the list
+                    intensity =difflib.get_close_matches(seg_file_names1, configfiles_int,n=1, cutoff=0.1)#match the filename in segmented image to the  list of intensity image filenames to match the files
+                    intensity_file = str(intensity[0])#get the filename of intensity image that has closest match
+                    
+                    #Read the intensity image using bioreader from bfio
+                    br_int = BioReader(intensity_file)
+                    intensity_bfio = br_int.read_image()
+                    shape_x,shape_y, shape_z, shape_c, shape_t = intensity_bfio.shape
+                    if shape_c == 3:
+                        intensity_bfio = br_int.read_image(C=[1])
+                    intensity_image= np.squeeze(intensity_bfio)
+                    
+                    #Read the segmented image using bioreader from bfio
+                    #seg_file= self.segment_dir + "/" + seg_file_names1#set the entire path for the bioreader to read the image
+                    br_seg= BioReader(seg_file)
+                    segment_bfio = br_seg.read_image()
+                    seg_invert = np.squeeze(segment_bfio)
+                    seg_ravel=np.ravel(seg_invert)
+                    
+                    #Invert image
+                    if np.bincount(seg_ravel).argmax()==0:
+                        seg_file = (seg_invert==0)
+                    else:
+                        seg_file = seg_invert
+                        
+                    #Label image
+                    if labelimage == 'Yes':
+                        logger.info('Labeling the image ' + seg_file_names1)    
+                        label_image = self.labeling(seg_file)#labels the objects
+                        logger.info('Finished labeling the image ' + seg_file_names1)    
+                    else:
+                        label_image = seg_file
+                        
+                    logger.info('Starting extraction of features from ' + seg_file_names1)               
+                    #Call the feature_extraction function in Analysis class
+                    analysis = Analysis(label_image,features,seg_file_names1, csvfile, labelimage, outDir, pixelDistance, intensity_image)
+                    df = analysis.feature_extraction()
+                    logger.info('Completed feature extraction for ' + seg_file_names1) 
+                    #Check whether csvfile is csvone to save the features extracted from all the images in same csv file
+                    if csvfile == 'separatecsv':
+                        df_feature = df
+                    else:
+                        df_feature = df_feature.append(df)
+                    index+=1
+                    print("Number of images processed-",index)
     
-                seg_file=os.path.normpath(segfile)
-                segfilename = seg_file.split('/')#split to get only the filename
-                seg_file_names1 = segfilename[-1]
-            
-            #for seg_file_names1 in seg_filenames1:#run analysis for each segmented image in the list
-                intensity =difflib.get_close_matches(seg_file_names1, configfiles_int,n=1, cutoff=0.1)#match the filename in segmented image to the  list of intensity image filenames to match the files
-                intensity_file = str(intensity[0])#get the filename of intensity image that has closest match
-                
-                #Read the intensity image using bioreader from bfio
-                br_int = BioReader(intensity_file)
-                intensity_bfio = br_int.read_image()
-                intensity_image= np.squeeze(intensity_bfio)
-                
-                #Read the segmented image using bioreader from bfio
-                #seg_file= self.segment_dir + "/" + seg_file_names1#set the entire path for the bioreader to read the image
-                br_seg= BioReader(seg_file)
-                segment_bfio = br_seg.read_image()
-                seg_file = np.squeeze(segment_bfio)
-                label_image= self.labeling(seg_file)#labels the objects
-                
-                #Call the feature_extraction function in Analysis class
-                analysis = Analysis(label_image,features,seg_file_names1, csvfile, outDir, pixelDistance, intensity_image)
-                df = analysis.feature_extraction()
-                
-                #Check whether csvfile is csvone to save the features extracted from all the images in same csv file
-                if csvfile == 'separatecsv':
-                    df_feature = df
-                else:
-                    df_feature = df_feature.append(df)
-                index+=1
-                print("Number of images processed-",index)
-
-
-        jutil.kill_vm()#kill the vm
+        finally:
+            logger.info('Closing the javabridge')
+            jutil.kill_vm()#kill the vm
         return(df_feature,seg_file_names1)#return dataframe and the segment image filename
         
       
@@ -153,7 +204,7 @@ class Analysis(ConvertImage):
    
     """
     
-    def __init__(self,label_image,features, seg_file_names1, csvfile, outDir, pixelDistance, intensity_image=None):
+    def __init__(self,label_image,features, seg_file_names1, csvfile, labelimage, outDir, pixelDistance, intensity_image=None):
         """Inits Analysis with boxsize, thetastart, thetastop, pixel distance, csvfile, output directory."""
         self.objneighbors = []
         self.numneighbors = []
@@ -178,6 +229,7 @@ class Analysis(ConvertImage):
             self.pixeldistance = pixelDistance
         self.feature = features# list of features to calculate
         self.csv_file = csvfile#save the features(as single file for all images or 1 file for each image) in csvfile
+        self.labelimage = labelimage
         self.output_dir = outDir#directory to save output
         self.label_image = label_image#assign labeled image
         self.intensity_image = intensity_image#assign intensity image
@@ -865,9 +917,29 @@ class Analysis(ConvertImage):
         #Calculate features given as input for all images
        regions = measure.regionprops(self.label_image,self.intensity_image)#region properties
        title = self.filenames#to pass the filename in csv
-        
+       cleared = clear_border(self.label_image)
+       regions1 = measure.regionprops(cleared,self.intensity_image)
+       
        for each_feature in self.feature:
-           label = [r.label for r in regions]#get labels list for all regions
+           if self.labelimage == 'Yes':
+               label = [r.label for r in regions]#get labels list for all regions
+               label_nt_touching = [nt_border.label for nt_border in regions1]
+           else:
+               label1 = [r.label for r in regions]
+               label = [lb/256 for lb in label1]
+               label_nt = [nt_border.label for nt_border in regions1]
+               label_nt_touching = [label_value/256 for label_value in label_nt]
+               #result =  all(elem in label  for elem in label_nt_touching)
+           #Find whether the object is touching border or not 
+           a = 'Yes'
+           b = 'No'
+           border_cells=[]
+           for element in label:
+               if element in label_nt_touching:
+                   border_cells.append(b)
+               else:
+                   border_cells.append(a)
+           
            feature_value = FEAT[each_feature](self.label_image,self.intensity_image)#dynamically call the function based on the features required
             
             #get all features
@@ -877,9 +949,12 @@ class Analysis(ConvertImage):
                df.columns =['Area','Centroid row','Centroid column','Convex area','Eccentricity','Equivalent diameter','Euler number','Hexagonality score','Hexagonality sd','Kurtosis','Major axis length','Maxferet','Maximum intensity','Mean intensity','Median','Minimum intensity','Minferet','Minor axis length','Mode','Neighbors','Orientation','Perimeter','Polygonality score','Standard deviation','Skewness','Solidity']
            else:    
                df = pd.DataFrame({each_feature: feature_value})#create dataframe for features selected
-           self.df_insert = pd.concat([self.df_insert, df], axis=1)    
+           self.df_insert = pd.concat([self.df_insert, df], axis=1)
+           
        self.df_insert.insert(0, 'Image', title)#Insert filename as 1st column 
        self.df_insert.insert(1, 'Label', label)#Insert label as 2nd column
+       self.df_insert.insert(2, 'Touching border', border_cells)
+       #self.df_insert['Touching border'] = self.df_insert['label'].apply(lambda x: 'True' if label_nt_touching in label else 'False')
        self.df_insert.columns = map (lambda x: x.capitalize(),self.df_insert.columns)#Capitalize the first letter of header
         
         #save each csv file separately
@@ -906,6 +981,7 @@ class Df_Csv_single(Analysis):
  
     def csvfilesave(self):
         """Save as csv file in output directory."""
+        logger.info('Saving the features as csv file')
         os.chdir(self.output_dir)
         #Export to csv
         export_csv = self.df_export.to_csv (r'Feature_Extraction.csv', index = None, header=True)
@@ -927,8 +1003,10 @@ class Df_Csv_multiple(Analysis):
         self.output_dir = output_dir
         self.title = title
 
+
     def csvfilesave(self):
         """Save as csv file in output directory."""
+        logger.info('Saving the features as csv file')
         os.chdir(self.output_dir)
         #Export to csv
         export_csv = self.df_exportsep.to_csv (r'Feature_Extraction_%s.csv'%self.title, index = None, header=True)
