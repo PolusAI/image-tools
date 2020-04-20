@@ -1,6 +1,6 @@
 {
     "name": "Feature Extraction",
-    "version": "0.6.2",
+    "version": "0.6.3",
     "title": "Feature Extraction",
     "description": "Extract shape and intensity features from images.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-extraction-plugin:0.6.2",
+    "containerId": "labshare/polus-feature-extraction-plugin:0.6.3",
     "inputs": [      
       {
         "name": "segDir",
@@ -43,6 +43,7 @@
       {
         "name": "features",
         "type": "array",
+	"description": "Select features for extraction",	
         "options": {
 	  "items": {
 	      "type": "string",
@@ -83,8 +84,7 @@
               "minItems": 1, 
               "uniqueItems": "true"
           },
-	"required": "true",
-	"description": "Extract features"
+	"required": "true"
 	}
       },
       {
@@ -112,13 +112,13 @@
             "description": "units : metric to define the features extracted"
       },
       {
-        "name": "length-of-unit",
+        "name": "unitLength",
         "type": "string",
         "description": "Enter the metric for unit conversion",
         "required": "false"
       },
       {
-        "name": "pixels-per-unit",
+        "name": "pixelsPerunit",
         "type": "float",
         "description": "Enter the number of pixels per unit of the metric",
         "required": "false"
@@ -169,12 +169,12 @@
         "description": "Metric to define the features extracted"
       },
       {
-        "key": "inputs.length-of-unit",
+        "key": "inputs.unitLength",
         "title": "Length of unit",
         "description": "Enter the metric for unit conversion"
       },
       {
-        "key": "inputs.pixels-per-unit",
+        "key": "inputs.pixelsPerunit",
         "title": "Pixels per unit",
         "description": "Enter the number of pixels per unit of the metric"
       }      
