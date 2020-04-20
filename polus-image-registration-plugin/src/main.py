@@ -3,6 +3,7 @@ import numpy as np
 from pathlib import Path
 from parser import parse_collection
 import os
+import psutil
 
 
 if __name__=="__main__":
@@ -22,7 +23,7 @@ if __name__=="__main__":
     parser.add_argument('--TransformationVariable', dest='TransformationVariable', type=str,help='variable to help identify which images have similar transformation', required=True)
     parser.add_argument('--outDir', dest='outDir', type=str, help='Output collection', required=True)
     
-   
+    
     # Parse the arguments     
     args = parser.parse_args()
     filePattern = args.filePattern
@@ -36,8 +37,11 @@ if __name__=="__main__":
     TransformationVariable = args.TransformationVariable
     logger.info('TransformationVariable = {}'.format(TransformationVariable))
     outDir = args.outDir
-    logger.info('outDir = {}'.format(outDir))      
+    logger.info('outDir = {}'.format(outDir))     
     
+    #memory usage    
+    mem = psutil.virtual_memory()
+    logger.info('Memory usage at this stage : {}'.format(mem))  
     
      # get template image path
     template_image_path=os.path.join(inpDir,template)  
@@ -56,7 +60,9 @@ if __name__=="__main__":
         # concatenate lists into a string to pass as an argument to argparse
         registration_string=' '.join(registration_set)
         similar_transformation_string=' '.join(similar_transformation_set)        
-        
+        #memory usage    
+        mem = psutil.virtual_memory()
+        logger.info('Memory usage at this stage : {}'.format(mem))
         # open subprocess image_registration.py
         registration = subprocess.Popen("python3 image_registration.py --registrationString '{}' --similarTransformationString '{}' --outDir {} --template {}".format(registration_string,similar_transformation_string,outDir,template ), shell=True )
         registration.wait()

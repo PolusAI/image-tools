@@ -13,7 +13,7 @@ This plugin registers an image collection. First it parses the image collection 
 ## Algorithm
 
 ### Parsing 
-The parsing algorithm uses the functions from the `file_pattern utility`. It takes the following inputs : Filename pattern, registration variable, similar transformation variable. The registration variable helps determine the moving and the template images where as the similar transformation variable helps determine the similar transformation images. 
+The parsing algorithm uses the functions from the `file_pattern utility`. It takes the following inputs : Filename pattern, registration variable, similar transformation variable. The registration variable helps determine the moving and the template images where as the similar transformation variable helps determine the similar transformation images. Note: The code produces the expected output when len(registration_variable)==len(similarity_variable)==1. The code will NOT spit out an error when the more than one variable is passed as registration or similarity variable, but additional testing needs to be done for this usecase.  
 
 Some sample text files can be found in the examples folder. Short example shown below:    
 

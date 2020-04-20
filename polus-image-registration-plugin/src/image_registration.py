@@ -7,6 +7,7 @@ import javabridge
 import argparse
 import logging
 import os
+import psutil
 
 
 """
@@ -106,13 +107,13 @@ def get_tiles(image,buffer):
     h,w=image.shape
     
     if not buffer:
-        tiles=[image[:int(h/2),:int(w/2)],image[:int(h/2),int(w/2):],
+        return [image[:int(h/2),:int(w/2)],image[:int(h/2),int(w/2):],
                          image[int(h/2):,:int(w/2)], image[int(h/2):,int(w/2):]]
     else:
-        tiles=[image[:int(5*h/8),:int(5*w/8)],image[:int(5*h/8),int(3*w/8):],
+        return [image[:int(5*h/8),:int(5*w/8)],image[:int(5*h/8),int(3*w/8):],
                          image[int(3*h/8):,:int(5*w/8)],image[int(3*h/8):,int(3*w/8):]] 
             
-    return tiles
+    
 
 def apply_rough_homography(image,homography_largescale,reference_image_shape):
     """
@@ -178,8 +179,9 @@ def get_tile_by_tile_transformation(reference_image_tiles, moving_image_tiles, s
         homography_set = list of homography matrixes 
         
     """   
+    NUMBER_OF_TILES=4
     homography_set=[]       
-    for k in range(4):
+    for k in range(NUMBER_OF_TILES):
         # cacluate transformation betwen corresponding tiles
         _ , homography_matrix=image_transformation(moving_image_tiles[k], reference_image_tiles[k] )
         # upscale and append the matrix
@@ -204,30 +206,53 @@ def apply_registration(moving_image_path,Template_image_shape,Rough_Homography_U
         moving_image_metadata: metadata from the moving image       
         
     """
+    
+    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+                        datefmt='%d-%b-%y %H:%M:%S')
+    logger = logging.getLogger("apply_registration()")
+    logger.setLevel(logging.INFO)
+    
     # read image using bfio
     bf = BioReader(moving_image_path)
     moving_image_metadata=bf.read_metadata()
     moving_image = bf.read_image(C=[0])    
     moving_image=moving_image[:,:,0,0,0] 
+    del bf
+    
+    mem = psutil.virtual_memory()
+    logger.info('Memory usage at this stage : {}'.format(mem))  
             
     height,width=Template_image_shape
     
     # apply rough transformation to the moving image
     rough_transformed_image=apply_rough_homography(moving_image,Rough_Homography_Upscaled,Template_image_shape)
+    del moving_image
     # get tiles
     moving_image_tiles=get_tiles(rough_transformed_image, buffer=True)
     # free up memory
-    del rough_transformed_image
+    del rough_transformed_image    
+ 
     
     # apply tile by tile transformation to the tiles
+    NUMBER_OF_TILES=4
     transformed_moving_image_tiles=[]
-    for k in range(4):
+    for k in range(NUMBER_OF_TILES):
         transformed_moving_image_tiles.append( cv2.warpPerspective(moving_image_tiles[k],fine_homography_set[k],(int(width/2),int(height/2))) )
     
-    # stack the tiles to get the output image
-    transformed_moving_image=np.vstack((np.hstack((transformed_moving_image_tiles[0],transformed_moving_image_tiles[1])),
-                                        np.hstack((transformed_moving_image_tiles[2],transformed_moving_image_tiles[3]))))    
-    del transformed_moving_image_tiles
+    # free up memory   
+    del moving_image_tiles         
+    # stack tiles to get desired output
+    logger.info("stack transformed tiles...")   
+    
+    upperhalf= np.hstack((transformed_moving_image_tiles[0],transformed_moving_image_tiles[1]))
+    transformed_moving_image_tiles.pop(0)
+    transformed_moving_image_tiles.pop(1)
+    lowerhalf=np.hstack((transformed_moving_image_tiles[0],transformed_moving_image_tiles[1]))
+    del transformed_moving_image_tiles     
+    transformed_moving_image=np.vstack((upperhalf,lowerhalf))    
+    del upperhalf
+    del lowerhalf     
+    logger.info("moving image registered...")  
 
     return transformed_moving_image , moving_image_metadata
     
@@ -281,6 +306,7 @@ def register_images(reference_image_path, moving_image_path):
     moving_image_metadata=bf.read_metadata()
     moving_image = bf.read_image(C=[0])
     moving_image=moving_image[:,:,0,0,0]
+    del bf
     
     # downscale the moving image
     moving_image_downscaled= get_scaled_down_images(moving_image,scale_factor)
@@ -289,12 +315,16 @@ def register_images(reference_image_path, moving_image_path):
     # calculate rough transformation between scaled down reference and moving image
     _,Rough_Homography_Downscaled = image_transformation(moving_image_downscaled,reference_image_downscaled)
     
+    del moving_image_downscaled
     # upscale the rough homography matrix
     Rough_Homography_Upscaled=Rough_Homography_Downscaled*scale_matrix    
     
     # apply upscale rough homography to original moving image
-    logger.info("applying rough homography to the moving image...")    
-    moving_image_transformed=apply_rough_homography(moving_image,Rough_Homography_Upscaled,reference_image_shape)
+    logger.info("applying rough homography to the moving image...")   
+  
+    moving_image_transformed=apply_rough_homography(moving_image,Rough_Homography_Upscaled,reference_image_shape)     
+    mem = psutil.virtual_memory()
+    logger.info('Memory usage at this stage : {}'.format(mem))  
     
     # free up memory
     del moving_image          
@@ -302,14 +332,19 @@ def register_images(reference_image_path, moving_image_path):
     # downscale the transformed moving image
     moving_image_transformed_downscaled=get_scaled_down_images(moving_image_transformed,16)
     # downscaled reference image tiles without buffer
-    reference_image_tiles=get_tiles(reference_image_downscaled, buffer=False)     
+    reference_image_tiles=get_tiles(reference_image_downscaled, buffer=False)
+    del reference_image_downscaled      
     # downscaled moving image tiles with buffer
     moving_image_tiles=get_tiles(moving_image_transformed_downscaled, buffer=True)
+    del moving_image_transformed_downscaled
     # get title by tile upscaled transformation matrices
     logger.info("get tile by tile transformation...")     
-    fine_homography_set=get_tile_by_tile_transformation(reference_image_tiles,moving_image_tiles, scale_matrix )    
+    fine_homography_set=get_tile_by_tile_transformation(reference_image_tiles,moving_image_tiles, scale_matrix ) 
+    del reference_image_tiles
+    del moving_image_tiles    
     # get tiles from original size moving image                                                                               
     moving_image_tiles=get_tiles(moving_image_transformed, buffer=True)  
+    del moving_image_transformed 
     # apply tile by tile transformation to the rough transformed moving image  
     transformed_moving_image_tiles=[]
     for k in range(4):
@@ -318,12 +353,16 @@ def register_images(reference_image_path, moving_image_path):
     del moving_image_tiles         
     # stack tiles to get desired output
     logger.info("stack transformed tiles...")   
-    # transformed_moving_image=stack_tiles(moving_image_transformed_tile1,moving_image_transformed_tile2,moving_image_transformed_tile3,moving_image_transformed_tile4)
-    transformed_moving_image=np.vstack((np.hstack((transformed_moving_image_tiles[0],transformed_moving_image_tiles[1])),
-                                        np.hstack((transformed_moving_image_tiles[2],transformed_moving_image_tiles[3]))))
-     
+    
+    upperhalf= np.hstack((transformed_moving_image_tiles[0],transformed_moving_image_tiles[1]))
+    transformed_moving_image_tiles.pop(0)
+    transformed_moving_image_tiles.pop(1)
+    lowerhalf=np.hstack((transformed_moving_image_tiles[0],transformed_moving_image_tiles[1]))
     del transformed_moving_image_tiles 
     
+    transformed_moving_image=np.vstack((upperhalf,lowerhalf))    
+    del upperhalf
+    del lowerhalf     
     logger.info("moving image registered...")  
     
     return transformed_moving_image, Rough_Homography_Upscaled, fine_homography_set, reference_image_shape,moving_image_metadata
@@ -360,10 +399,12 @@ if __name__=="__main__":
     registration_set=registration_string.split()
     similar_transformation_set=similar_transformation_string.split()
     
+    del registration_string
+    del similar_transformation_string
+    
     filename_len=len(template)
     
-    logger.info('calculating transformation to register image {} to {}'.format(registration_set[1][-1*filename_len:] ,registration_set[0][-1*filename_len:] ))  
-    
+    logger.info('calculating transformation to register image {} to {}'.format(registration_set[1][-1*filename_len:] ,registration_set[0][-1*filename_len:]))    
     # seperate the filename of the moving image from the complete path
     moving_image_name=registration_set[1][-1*filename_len:]        
     
@@ -375,6 +416,9 @@ if __name__=="__main__":
     transformed_moving_image_5channel=np.zeros((transformed_moving_image.shape[0],transformed_moving_image.shape[1],1,1,1),dtype='uint16')
     transformed_moving_image_5channel[:,:,0,0,0]=transformed_moving_image 
     
+    mem = psutil.virtual_memory()
+    logger.info('Memory usage at this stage : {}'.format(mem))  
+    
     del transformed_moving_image  
     logger.info("writing output using bfio...")        
     bw = BioWriter(os.path.join(outDir,moving_image_name), metadata=moving_image_metadata)
@@ -384,7 +428,8 @@ if __name__=="__main__":
     bw.num_c(1)
     bw.num_t(1)
     bw.write_image(transformed_moving_image_5channel)
-    bw.close_image()              
+    bw.close_image() 
+    del bw       
         
     del transformed_moving_image_5channel     
     
@@ -396,15 +441,19 @@ if __name__=="__main__":
         moving_image_name=moving_image_path[-1*filename_len:]            
         
         logger.info('applying transformation to image {}'.format(moving_image_name))
+        mem = psutil.virtual_memory()
+        logger.info('Memory usage at this stage : {}'.format(mem))  
                     
         # use the precalculated transformation to transform this image
         transformed_moving_img, moving_image_metadata =apply_registration(moving_image_path, template_img_shape, Rough_Homography_Upscaled, fine_homography_set)          
         
+        mem = psutil.virtual_memory()
+        logger.info('Memory usage at this stage : {}'.format(mem))  
         #write the output to the desired directory using bfio
         logger.info('writing output image...')
         transformed_moving_image_5channel=np.zeros((transformed_moving_img.shape[0],transformed_moving_img.shape[1],1,1,1),dtype='uint16')
-        transformed_moving_image_5channel[:,:,0,0,0]=transformed_moving_img
-        
+        transformed_moving_image_5channel[:,:,0,0,0]=transformed_moving_img       
+
         del transformed_moving_img             
         bw = BioWriter(os.path.join(outDir,moving_image_name ), metadata=moving_image_metadata)
         bw.num_x(transformed_moving_image_5channel.shape[1])
@@ -413,8 +462,8 @@ if __name__=="__main__":
         bw.num_c(1)
         bw.num_t(1)
         bw.write_image(transformed_moving_image_5channel)
-        bw.close_image()     
-        
+        bw.close_image()         
+        del bw  
         del transformed_moving_image_5channel         
 
     # Close the javabridge

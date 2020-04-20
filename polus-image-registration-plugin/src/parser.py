@@ -10,6 +10,9 @@ def parse_collection(directory_path,file_pattern,registration_variable, similari
     This function parses the input directory and returns a dictionary. Each key in the dictionary is a tuple 
     consisting of a template and a moving image. The value corresponding to each key is a list of images that have 
     similar transformation as the moving image. 
+    Note: The code produces the expected output when len(registration_variable)==len(similarity_variable)==1.
+          The code will NOT spit out an error when the more than one variable is passed as registration or
+          similarity variable, but additional testing needs to be done to validate the script for this usecase.
     
     inputs : 
         directory_path: path to the input collection
@@ -52,6 +55,8 @@ def parse_collection(directory_path,file_pattern,registration_variable, similari
     moving_variables_set=[uvals[var] for var in moving_variables]
     
     # iterate over the similar transformation variables
+    # Code produced expected output when len(registration_variable)==len(similarity_variable)==1
+    # refer to function description
     for char in similarity_variable:
         
         # append the variable to the moving variable set
