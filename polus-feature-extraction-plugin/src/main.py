@@ -16,6 +16,12 @@ def main():
                         help='Features to calculate', required=True)
     parser.add_argument('--csvfile', dest='csvfile', type=str,
                         help='Save csv as separate or single file', required=True)
+    parser.add_argument('--units', dest='units', type=str,
+                        help='Units for the features', required=True)
+    parser.add_argument('--length_of_unit', dest='length_of_unit', type=str,
+                        help='Length of the unit', required= False)
+    parser.add_argument('--pixels_per_unit', dest='pixels_per_unit', type=float,
+                        help='Pixels per unit', required= False)
     parser.add_argument('--labelimage', dest='labelimage', type=str,
                         help='Input image need to be labeled or not', required=True)
     parser.add_argument('--intDir', dest='intDir', type=str,
@@ -33,6 +39,12 @@ def main():
     logger.info('features = {}'.format(features))
     csvfile = args.csvfile#csvfile
     logger.info('csvfile = {}'.format(csvfile))
+    units = args.units#units
+    logger.info('units = {}'.format(units))
+    length_of_unit = args.length_of_unit#csvfile
+    logger.info('length of unit = {}'.format(length_of_unit))
+    pixels_per_unit = args.pixels_per_unit#csvfile
+    logger.info('pixels per unit = {}'.format(pixels_per_unit))
     labelimage = args.labelimage#label image
     logger.info('labelimage = {}'.format(labelimage))
     intDir = args.intDir#intensity image
@@ -46,7 +58,7 @@ def main():
     logger.info("Started")
     image_convert = ConvertImage(segDir,intDir)
     
-    df,filenames= image_convert.convert_tiled_tiff(features, csvfile, labelimage, outDir, pixelDistance)
+    df,filenames= image_convert.convert_tiled_tiff(features, csvfile, labelimage, outDir, pixelDistance, units, pixels_per_unit, length_of_unit)
     #call csv function to save as a single file
     if csvfile == 'singlecsv':
         csv_file= Df_Csv_single(df, outDir)

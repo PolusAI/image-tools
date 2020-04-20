@@ -33,7 +33,7 @@ These are the features that can be extracted from this plugin:
 ###Input image: 
 Extracting shape based intensity features, feret diameter, neighbors, hexagonality and polygonality scores require only black/white segmented image or labeled image. 
 If intensity based features also needs to be extracted then feed both black/white segmented image or labeled image and intensity image as input.
-Both segmented and intensity images should be OME tiled tiff(.ome.tif) format.
+Both segmented and intensity images should be me OME tiled tiff(.ome.tif) format.
 
 ###Labelimage:
 If the segmented images need to be labeled then choose the option as 'Yes'. If already feeding the labeled image as input then choose option as 'No'.
@@ -42,7 +42,6 @@ If the segmented images need to be labeled then choose the option as 'Yes'. If a
 There is option to choose only the required features for extraction. If all the features are required then choose option 'all'.
 
 ###Output -csvfile:
-
 Separatecsv - Allows to save all the features extracted for each image in separate csv file.
 Singlecsv - Allows to save all the features extracted from all the images in the same csv file.
 
@@ -67,8 +66,11 @@ This plugin takes one input argument and one output argument:
 | `--pixelDistance` | Pixel distance to calculate the neighbors touching cells | Input | integer |
 | `--segDir` | Segment image collection | Input | collection |
 | `--features` | Select intensity and shape features required | Input | array |
-| `--csvfile` | Save csv file as one csv file for all images or separate csv file for each image | Input | array |
-| `--labelimage` | Whether segmented images need to be labeled or not | Input | array |
+| `--csvfile` | Save csv file as one csv file for all images or separate csv file for each image | Input | enum |
+| `--labelimage` | Whether segmented images need to be labeled or not | Input | enum |
+| `--units` | Metric to define the features extracted | Input | enum |
+| `--length-of-unit` | Enter the metric for unit conversion | Input | string |
+| `--pixels-per-unit` | Enter the number of pixels per unit of the metric | Input | float |
 | `--outDir` | Output collection | Output | collection |
 
 

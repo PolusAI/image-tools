@@ -1,6 +1,6 @@
 {
     "name": "Feature Extraction",
-    "version": "0.6.1",
+    "version": "0.6.2",
     "title": "Feature Extraction",
     "description": "Extract shape and intensity features from images.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,19 +8,19 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-extraction-plugin:0.6.1",
-    "inputs": [
+    "containerId": "labshare/polus-feature-extraction-plugin:0.6.2",
+    "inputs": [      
       {
-            "name": "csvfile",
-            "type": "enum",
-            "options": {
-                "values": [
-                    "singlecsv",
-                    "separatecsv"
-                ]
-            },
-            "required": "true",
-            "description": "csvfile : singlecsv for saving values in one csv file and separate csv to save values for each image in separate csv file."
+        "name": "segDir",
+        "type": "collection",
+        "description": "Segmented image collection",
+        "required": "true"
+      },
+      {
+        "name": "intDir",
+        "type": "collection",
+        "description": "Intensity image collection",
+        "required": "false"
       },
       {
             "name": "labelimage",
@@ -32,8 +32,14 @@
                 ]
             },
             "required": "true",
-            "description": "labelimage : Whether images need to be labeled or not."
-      },   
+            "description": "labelimage : Whether images need to be labeled or not"
+      },
+      {
+        "name": "pixelDistance",
+        "type": "integer",
+        "description": "Pixel distance to calculate the neighbors touching cells",
+        "required": "false"
+      },
       {
         "name": "features",
         "type": "array",
@@ -82,23 +88,42 @@
 	}
       },
       {
-        "name": "intDir",
-        "type": "collection",
-        "description": "Intensity image collection",
+            "name": "csvfile",
+            "type": "enum",
+            "options": {
+                "values": [
+                    "singlecsv",
+                    "separatecsv"
+                ]
+            },
+            "required": "true",
+            "description": "csvfile : singlecsv for saving values in one csv file and separate csv to save values for each image in separate csv file"
+      },
+      {
+            "name": "units",
+            "type": "enum",
+            "options": {
+                "values": [
+                    "pixels",
+                    "others"
+                ]
+            },
+            "required": "true",
+            "description": "units : metric to define the features extracted"
+      },
+      {
+        "name": "length-of-unit",
+        "type": "string",
+        "description": "Enter the metric for unit conversion",
         "required": "false"
       },
       {
-        "name": "pixelDistance",
-        "type": "integer",
-        "description": "Pixel distance to calculate the neighbors touching cells",
+        "name": "pixels-per-unit",
+        "type": "float",
+        "description": "Enter the number of pixels per unit of the metric",
         "required": "false"
-      },
-      {
-        "name": "segDir",
-        "type": "collection",
-        "description": "Segmented image collection",
-        "required": "true"
       }
+      
     ],
     "outputs": [
       {
@@ -109,34 +134,50 @@
     ],
     "ui": [
       {
-        "key": "inputs.csvfile",
-        "title": "Output csv file",
-        "description": "save csv file separately for each image or one csv for all images"
-      },      
+        "key": "inputs.segDir",
+        "title": "Segment image collection",
+        "description": "Segmented image collection"
+      },
+      {
+        "key": "inputs.intDir",
+        "title": "Intensity image collection",
+        "description": "Intensity image collection"
+      },
       {
         "key": "inputs.labelimage",
         "title": "Label the images",
         "description": "Labeled image"
       },
       {
-        "key": "inputs.features",
-        "title": "features",
-        "description": "Select features"
-      },
-      {
-        "key": "inputs.intDir",
-        "title": "Input collection",
-        "description": "Intensity image collection"
-      },
-      {
         "key": "inputs.pixelDistance",
-        "title": "Input value",
+        "title": "Pixel Distance",
         "description": "Pixel distance to calculate the neighbors touching cells"
       },
       {
-        "key": "inputs.segDir",
-        "title": "Input collection",
-        "description": "Segmented image collection"
-      }
+        "key": "inputs.features",
+        "title": "Features",
+        "description": "Select features"
+      },
+      {
+        "key": "inputs.csvfile",
+        "title": "Output csv file",
+        "description": "Save csv file separately for each image or one csv for all images"
+      },      
+      {
+        "key": "inputs.units",
+        "title": "Units",
+        "description": "Metric to define the features extracted"
+      },
+      {
+        "key": "inputs.length-of-unit",
+        "title": "Length of unit",
+        "description": "Enter the metric for unit conversion"
+      },
+      {
+        "key": "inputs.pixels-per-unit",
+        "title": "Pixels per unit",
+        "description": "Enter the number of pixels per unit of the metric"
+      }      
+      
     ]
   }
