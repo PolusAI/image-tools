@@ -20,7 +20,7 @@ def main():
                         help='Units for the features', required=True)
     parser.add_argument('--length_of_unit', dest='length_of_unit', type=str,
                         help='Length of the unit', required= False)
-    parser.add_argument('--pixels_per_unit', dest='pixels_per_unit', type=float,
+    parser.add_argument('--pixels_per_unit', dest='pixels_per_unit', type=int,
                         help='Pixels per unit', required= False)
     parser.add_argument('--labelimage', dest='labelimage', type=str,
                         help='Input image need to be labeled or not', required=True)
