@@ -246,7 +246,7 @@ def apply_registration(moving_image_path,Template_image_shape,Rough_Homography_U
     
     upperhalf= np.hstack((transformed_moving_image_tiles[0],transformed_moving_image_tiles[1]))
     transformed_moving_image_tiles.pop(0)
-    transformed_moving_image_tiles.pop(1)
+    transformed_moving_image_tiles.pop(0)
     lowerhalf=np.hstack((transformed_moving_image_tiles[0],transformed_moving_image_tiles[1]))
     del transformed_moving_image_tiles     
     transformed_moving_image=np.vstack((upperhalf,lowerhalf))    
@@ -356,7 +356,7 @@ def register_images(reference_image_path, moving_image_path):
     
     upperhalf= np.hstack((transformed_moving_image_tiles[0],transformed_moving_image_tiles[1]))
     transformed_moving_image_tiles.pop(0)
-    transformed_moving_image_tiles.pop(1)
+    transformed_moving_image_tiles.pop(0)
     lowerhalf=np.hstack((transformed_moving_image_tiles[0],transformed_moving_image_tiles[1]))
     del transformed_moving_image_tiles 
     
