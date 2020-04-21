@@ -70,7 +70,7 @@ This plugin takes one input argument and one output argument:
 | `--labelimage` | Whether segmented images need to be labeled or not | Input | enum |
 | `--units` | Metric to define the features extracted | Input | enum |
 | `--unitLength` | Enter the metric for unit conversion | Input | string |
-| `--pixelsPerunit` | Enter the number of pixels per unit of the metric | Input | integer |
+| `--pixelsPerunit` | Enter the number of pixels per unit of the metric | Input | number |
 | `--outDir` | Output collection | Output | collection |
 
 
