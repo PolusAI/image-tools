@@ -904,7 +904,7 @@ class Analysis(ConvertImage):
             hexagonality_sd = [poly[2] for poly in poly_hex]
             return hexagonality_sd
         
-       def all(seg_img,units,int_img):
+       def all(seg_img,units,int_img,pixelsPerunit):
             """Calculate all features."""
             all_area = area(seg_img,units)#calculate area
             all_peri = perimeter(seg_img,units)#calculate perimeter
@@ -992,7 +992,7 @@ class Analysis(ConvertImage):
                else:
                    border_cells.append(label_yes)
 
-           feature_value = FEAT[each_feature](self.label_image,self.units,self.intensity_image)#dynamically call the function based on the features required
+           feature_value = FEAT[each_feature](self.label_image,self.units,self.intensity_image,self.pixelsPerunit)#dynamically call the function based on the features required
             
            #get all features
            if each_feature  == 'all':
