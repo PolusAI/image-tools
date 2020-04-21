@@ -1,6 +1,6 @@
 {
     "name": "Feature Extraction",
-    "version": "0.6.7",
+    "version": "0.6.8",
     "title": "Feature Extraction",
     "description": "Extract shape and intensity features from images.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-extraction-plugin:0.6.7",
+    "containerId": "labshare/polus-feature-extraction-plugin:0.6.8",
     "inputs": [      
       {
         "name": "segDir",
@@ -119,7 +119,7 @@
       },
       {
         "name": "pixelsPerunit",
-        "type": "integer",
+        "type": "number",
         "description": "Enter the number of pixels per unit of the metric",
         "required": "false"
       }
