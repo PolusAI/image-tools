@@ -19,7 +19,6 @@ from scipy.stats import mode as mod
 from scipy import stats
 from operator import itemgetter
 import math
-import bfio.bfio as bfio
 from bfio.bfio import BioReader
 import difflib
 import fnmatch
@@ -46,7 +45,7 @@ class ConvertImage(object):
         all_labels = label(seg_file)
         return all_labels
         
-    def convert_tiled_tiff(self,features,csvfile,labelimage,outDir,pixelDistance,units, pixels_per_unit,length_of_unit):
+    def convert_tiled_tiff(self,features,csvfile,labelimage,outDir,pixelDistance,units, pixelsPerunit,unitLength):
         """ Read .ome.tif files."""
         df_feature = pd.DataFrame([])
         df = pd.DataFrame([])
@@ -99,7 +98,7 @@ class ConvertImage(object):
                     
                     logger.info('Starting extraction of features from ' + seg_file_names1) 
                     #Call the feature_extraction function in Analysis class
-                    analysis = Analysis(label_image,features,seg_file_names1, csvfile, labelimage, outDir,pixelDistance,units, pixels_per_unit,length_of_unit,intensity_image)
+                    analysis = Analysis(label_image,features,seg_file_names1, csvfile, labelimage, outDir,pixelDistance,units, pixelsPerunit,unitLength,intensity_image)
                     df = analysis.feature_extraction()
                     logger.info('Completed feature extraction for ' + seg_file_names1) 
                     
@@ -173,7 +172,7 @@ class ConvertImage(object):
                         
                     logger.info('Starting extraction of features from ' + seg_file_names1)               
                     #Call the feature_extraction function in Analysis class
-                    analysis = Analysis(label_image,features,seg_file_names1, csvfile, labelimage, outDir, pixelDistance, units, pixels_per_unit,length_of_unit, intensity_image)
+                    analysis = Analysis(label_image,features,seg_file_names1, csvfile, labelimage, outDir, pixelDistance, units, pixelsPerunit,unitLength, intensity_image)
                     df = analysis.feature_extraction()
                     logger.info('Completed feature extraction for ' + seg_file_names1) 
                     #Check whether csvfile is csvone to save the features extracted from all the images in same csv file
@@ -208,7 +207,7 @@ class Analysis(ConvertImage):
    
     """
     
-    def __init__(self,label_image,features, seg_file_names1, csvfile, labelimage, outDir, pixelDistance, units, pixels_per_unit, length_of_unit,intensity_image=None):
+    def __init__(self,label_image,features, seg_file_names1, csvfile, labelimage, outDir, pixelDistance, units, pixelsPerunit, unitLength,intensity_image=None):
         """Inits Analysis with boxsize, thetastart, thetastop, pixel distance, csvfile, output directory."""
         self.objneighbors = []
         self.numneighbors = []
@@ -240,8 +239,8 @@ class Analysis(ConvertImage):
         del label_image,intensity_image
         self.filenames = seg_file_names1#assign filenames
         self.units  = units
-        self.pixels_per_unit = pixels_per_unit
-        self.length_of_unit = length_of_unit
+        self.pixelsPerunit = pixelsPerunit
+        self.unitLength = unitLength
         
     def box_border_search(self, label_image, boxsize):
         """Get perimeter pixels for calculating neighbors and feret diameter."""
@@ -679,7 +678,9 @@ class Analysis(ConvertImage):
             """Calculate area."""
             data_dict1 = [region.area for region in regions]
             if units == 'others':
-                data_dict = [dt_pixel/self.pixels_per_unit**2 for dt_pixel in data_dict1]
+                if not self.pixelsPerunit:
+                    raise ValueError('Enter pixels per unit value.')
+                data_dict = [dt_pixel/self.pixelsPerunit**2 for dt_pixel in data_dict1]
             else:
                 data_dict = data_dict1
             return data_dict
@@ -688,7 +689,9 @@ class Analysis(ConvertImage):
             """Calculate perimeter."""
             data_dict1 = [region.perimeter for region in regions]
             if units  == 'others':
-                data_dict = [dt_pixel/self.pixels_per_unit for dt_pixel in data_dict1]
+                if not self.pixelsPerunit:
+                    raise ValueError('Enter pixels per unit value.')
+                data_dict = [dt_pixel/self.pixelsPerunit for dt_pixel in data_dict1]
             else:
                 data_dict = data_dict1
             return data_dict
@@ -702,7 +705,9 @@ class Analysis(ConvertImage):
             """Calculate convex_area."""
             data_dict1 = [region.convex_area for region in regions]
             if units  == 'others':
-                data_dict = [dt_pixel/self.pixels_per_unit**2 for dt_pixel in data_dict1]
+                if not self.pixelsPerunit:
+                    raise ValueError('Enter pixels per unit value.')
+                data_dict = [dt_pixel/self.pixelsPerunit**2 for dt_pixel in data_dict1]
             else:
                 data_dict = data_dict1
             return data_dict
@@ -730,7 +735,9 @@ class Analysis(ConvertImage):
             """Calculate equivalent_diameter."""
             data_dict1 = [region.equivalent_diameter for region in regions]
             if units  == 'others':
-                data_dict = [dt_pixel/self.pixels_per_unit for dt_pixel in data_dict1]
+                if not self.pixelsPerunit:
+                    raise ValueError('Enter pixels per unit value.')
+                data_dict = [dt_pixel/self.pixelsPerunit for dt_pixel in data_dict1]
             else:
                 data_dict = data_dict1
             return data_dict
@@ -744,7 +751,9 @@ class Analysis(ConvertImage):
             """Calculate major_axis_length."""
             data_dict1 = [region.major_axis_length for region in regions]
             if units  == 'others':
-                data_dict = [dt_pixel/self.pixels_per_unit for dt_pixel in data_dict1]
+                if not self.pixelsPerunit:
+                    raise ValueError('Enter pixels per unit value.')
+                data_dict = [dt_pixel/self.pixelsPerunit for dt_pixel in data_dict1]
             else:
                 data_dict = data_dict1
             return data_dict
@@ -753,7 +762,9 @@ class Analysis(ConvertImage):
             """Calculate minor_axis_length."""
             data_dict1 = [region.minor_axis_length for region in regions]
             if units == 'others':
-                data_dict = [dt_pixel/self.pixels_per_unit for dt_pixel in data_dict1]
+                if not self.pixelsPerunit:
+                    raise ValueError('Enter pixels per unit value.')
+                data_dict = [dt_pixel/self.pixelsPerunit for dt_pixel in data_dict1]
             else:
                 data_dict = data_dict1
             return data_dict
@@ -837,7 +848,9 @@ class Analysis(ConvertImage):
             feretdiam = self.feret_diameter(edges,self.thetastart,self.thetastop)
             maxferet1 = [np.max(feret) for feret in feretdiam]
             if units == 'others':
-                maxferet = [dt_pixel/self.pixels_per_unit for dt_pixel in maxferet1]
+                if not self.pixelsPerunit:
+                    raise ValueError('Enter pixels per unit value.')
+                maxferet = [dt_pixel/self.pixelsPerunit for dt_pixel in maxferet1]
             else:
                 maxferet = maxferet1
             return maxferet
@@ -848,7 +861,9 @@ class Analysis(ConvertImage):
             feretdiam = self.feret_diameter(edges,self.thetastart,self.thetastop)
             minferet1 = [np.min(feret) for feret in feretdiam]
             if units == 'others':
-                minferet = [dt_pixel/self.pixels_per_unit for dt_pixel in minferet1]
+                if not self.pixelsPerunit:
+                    raise ValueError('Enter pixels per unit value.')
+                minferet = [dt_pixel/self.pixelsPerunit for dt_pixel in minferet1]
             else:
                 minferet = minferet1
             return minferet
@@ -986,12 +1001,10 @@ class Analysis(ConvertImage):
                if self.units  =='pixels':
                    df.columns =['Area-%s'%self.units ,'Centroid row','Centroid column','Convex area-%s'%self.units,'Eccentricity','Equivalent diameter-%s'%self.units ,'Euler number','Hexagonality score','Hexagonality sd','Kurtosis','Major axis length-%s'%self.units ,'Maxferet-%s'%self.units ,'Maximum intensity','Mean intensity','Median','Minimum intensity','Minferet-%s'%self.units ,'Minor axis length-%s'%self.units ,'Mode','Neighbors','Orientation','Perimeter-%s'%self.units ,'Polygonality score','Standard deviation','Skewness','Solidity']
                else:
-                   if not self.length_of_unit:
+                   if not self.unitLength:
                        raise ValueError('Enter length of unit value.')
-                   if not self.pixels_per_unit:
-                       raise ValueError('Enter pixels per unit value.')
-                   if self.length_of_unit != "":
-                       df.columns =['Area-%s2'%self.length_of_unit,'Centroid row','Centroid column','Convex area-%s2'%self.length_of_unit,'Eccentricity','Equivalent diameter-%s'%self.length_of_unit,'Euler number','Hexagonality score','Hexagonality sd','Kurtosis','Major axis length-%s'%self.length_of_unit,'Maxferet-%s'%self.length_of_unit,'Maximum intensity','Mean intensity','Median','Minimum intensity','Minferet-%s'%self.length_of_unit,'Minor axis length-%s'%self.length_of_unit,'Mode','Neighbors','Orientation','Perimeter-%s'%self.length_of_unit,'Polygonality score','Standard deviation','Skewness','Solidity']
+                   if self.unitLength != "":
+                       df.columns =['Area-%s2'%self.unitLength,'Centroid row','Centroid column','Convex area-%s2'%self.unitLength,'Eccentricity','Equivalent diameter-%s'%self.unitLength,'Euler number','Hexagonality score','Hexagonality sd','Kurtosis','Major axis length-%s'%self.unitLength,'Maxferet-%s'%self.unitLength,'Maximum intensity','Mean intensity','Median','Minimum intensity','Minferet-%s'%self.unitLength,'Minor axis length-%s'%self.unitLength,'Mode','Neighbors','Orientation','Perimeter-%s'%self.unitLength,'Polygonality score','Standard deviation','Skewness','Solidity']
         
            else:    
                df = pd.DataFrame({each_feature: feature_value})#create dataframe for features selected
@@ -1001,14 +1014,12 @@ class Analysis(ConvertImage):
                    if 'Equivalent diameter' or 'Major axis length' or 'Maxferet' or 'Minor axis length' or 'Minferet' or 'Perimeter' in df.columns:
                        df.rename({"equivalent_diameter": "Equivalent diameter-%s"%self.units, "major_axis_length": "Major axis length-%s"%self.units, "minor_axis_length": "Minor axis length-%s"%self.units,"maxferet": "Maxferet-%s"%self.units, "minferet": "Minferet-%s"%self.units,"perimeter": "Perimeter-%s"%self.units},axis='columns',inplace =True)
                else:
-                   if not self.length_of_unit:
+                   if not self.unitLength:
                        raise ValueError('Enter length of unit value.')
-                   if not self.pixels_per_unit:
-                       raise ValueError('Enter pixels per unit value.')
                    if 'Area'or'Convex area' in df.columns:
-                       df.rename({"area": "Area-%s2"%self.length_of_unit, "convex_area": "Convex area-%s2"%self.length_of_unit},axis='columns',inplace =True)
+                       df.rename({"area": "Area-%s2"%self.unitLength, "convex_area": "Convex area-%s2"%self.unitLength},axis='columns',inplace =True)
                    if 'Equivalent diameter' or 'Major axis length' or 'Maxferet' or 'Minor axis length' or 'Minferet' or 'Perimeter' in df.columns:
-                       df.rename({"equivalent_diameter": "Equivalent diameter-%s"%self.length_of_unit, "major_axis_length": "Major axis length-%s"%self.length_of_unit, "minor_axis_length": "Minor axis length-%s"%self.length_of_unit,"maxferet": "Maxferet-%s"%self.length_of_unit, "minferet": "Minferet-%s"%self.length_of_unit,"perimeter": "Perimeter-%s"%self.length_of_unit},axis='columns',inplace =True) 
+                       df.rename({"equivalent_diameter": "Equivalent diameter-%s"%self.unitLength, "major_axis_length": "Major axis length-%s"%self.unitLength, "minor_axis_length": "Minor axis length-%s"%self.unitLength,"maxferet": "Maxferet-%s"%self.unitLength, "minferet": "Minferet-%s"%self.unitLength,"perimeter": "Perimeter-%s"%self.unitLength},axis='columns',inplace =True) 
            self.df_insert = pd.concat([self.df_insert, df], axis=1)
            
        self.df_insert.insert(0, 'Image', title)#Insert filename as 1st column 
