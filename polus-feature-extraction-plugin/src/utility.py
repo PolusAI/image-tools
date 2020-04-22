@@ -23,6 +23,7 @@ from bfio.bfio import BioReader
 import difflib
 import fnmatch
 
+
 logger = logging.getLogger("utility")
 logger.setLevel(logging.INFO)
 class ConvertImage(object):
@@ -134,18 +135,21 @@ class ConvertImage(object):
                     segfilename = os.path.split(seg_file)#split to get only the filename
                     seg_file_names1 = segfilename[-1]
                     
-                #for seg_file_names1 in seg_filenames1:#run analysis for each segmented image in the list
+                    #for seg_file_names1 in seg_filenames1:#run analysis for each segmented image in the list
                     intensity =difflib.get_close_matches(seg_file_names1, configfiles_int,n=1, cutoff=0.1)#match the filename in segmented image to the  list of intensity image filenames to match the files
                     intensity_file = str(intensity[0])#get the filename of intensity image that has closest match
                     
                     #Read the intensity image using bioreader from bfio
                     br_int = BioReader(intensity_file)
-                    intensity_bfio = br_int.read_image()
-                    shape_x,shape_y, shape_z, shape_c, shape_t = intensity_bfio.shape
-                    if shape_c > 1:
-                         raise ValueError('Intensity image has more than 1 channel')
-                        #intensity_bfio = br_int.read_image(C=[1])
+                    intensity_bfio = br_int.read_image(C=[0])
                     intensity_image= np.squeeze(intensity_bfio)
+                    int_ravel=np.ravel(intensity_image)
+                    int_ravel1 = int_ravel / 255
+                    int_ravel_bool = np.array_equal(int_ravel1, int_ravel1.astype(bool))
+                    countzero = not np.any(int_ravel) #check whether the array contains only zero
+                    if int_ravel_bool == True or countzero == True:
+                        logger.warning('Intensity image ' + intensity_file + ' does not have any content' )
+                        continue
                     
                     #Read the segmented image using bioreader from bfio
                     br_seg= BioReader(seg_file)
@@ -956,6 +960,9 @@ class Analysis(ConvertImage):
        cleared = clear_border(self.label_image)
        regions1 = measure.regionprops(cleared,self.intensity_image)
        
+       if not self.feature:
+           raise ValueError('Select features for extraction.')
+           
        for each_feature in self.feature:
            if self.labelimage == 'Yes':
                label = [r.label for r in regions]#get labels list for all regions
@@ -965,7 +972,7 @@ class Analysis(ConvertImage):
                label = [lb/256 for lb in label1]
                label_nt = [nt_border.label for nt_border in regions1]
                label_nt_touching = [label_value/256 for label_value in label_nt]
-               #result =  all(elem in label  for elem in label_nt_touching)
+               
            #Find whether the object is touching border or not 
            label_yes = 'Yes'
            label_no = 'No'
@@ -975,10 +982,10 @@ class Analysis(ConvertImage):
                    border_cells.append(label_no)
                else:
                    border_cells.append(label_yes)
-           
+           #Check whether the unit length and pixels per unit contain values when selected other units option
            if self.units =='others':
                if not self.unitLength:
-                       raise ValueError('Enter length of unit value.')
+                    raise ValueError('Enter length of unit value.')
                if not self.pixelsPerunit:
                     raise ValueError('Enter pixels per unit value.')             
            
