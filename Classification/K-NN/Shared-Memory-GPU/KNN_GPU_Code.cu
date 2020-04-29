@@ -71,7 +71,9 @@ __global__ void ComputeDistancesKernel(int * device_New_Final_List_1D, int * dev
 		}
 
 		for (int i=0; i<localDim; ++i){
-			localvalue += pow((device_dataPointsGPU[par1*localDim+i] - device_dataPointsGPU[par2*localDim+i]), 2);
+		    double tmp=device_dataPointsGPU[par1*localDim+i] - device_dataPointsGPU[par2*localDim+i];
+		    localvalue += tmp*tmp;
+			//localvalue += pow((device_dataPointsGPU[par1*localDim+i] - device_dataPointsGPU[par2*localDim+i]), 2);
 		}	
 
 		int IndexIDWrite= device_New_Final_List_Dist_Index[blockIdx.x]+threadIdx.x;
