@@ -183,6 +183,10 @@ if __name__=="__main__":
     img_paths = []
 
     for v in vectors:
+        # Check to see if the file is a stitching vector
+        if not Path(v).name.startswith('img-global-positions'):
+            continue
+        
         # Parse the stitching vector
         logger.info('Analyzing vector: {}'.format(Path(v).name))
         outvals = _parse_stitch(v,imgPath,timesliceNaming)
