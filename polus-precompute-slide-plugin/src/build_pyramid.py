@@ -18,6 +18,12 @@ if __name__=="__main__":
                         help='Build a DeepZoom or Neuroglancer pyramid', required=True)
     parser.add_argument('--imageNum', dest='image_num', type=str,
                         help='Image number, will be stored as a timeframe', required=True)
+    parser.add_argument('--stackheight', dest='stack_height', type=int,
+                        help='The Height of the Stack', required=True)
+    parser.add_argument('--stackby', dest='stack_by', type=str,
+                        help='Variable that the images get stacked by', required=True)
+    parser.add_argument('--varsinstack', dest='vars_instack', type=str,
+                        help='Variables that the stack shares', required=True)
 
     args = parser.parse_args()
     input_dir = args.input_dir
@@ -25,6 +31,9 @@ if __name__=="__main__":
     image = args.image
     pyramid_type = args.pyramid_type
     image_num = args.image_num
+    stackheight = args.stack_height
+    stackby = args.stack_by
+    varsinstack = args.vars_instack
 
     # Initialize the logger    
     logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(image),
