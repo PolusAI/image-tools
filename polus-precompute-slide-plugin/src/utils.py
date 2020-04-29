@@ -15,6 +15,14 @@ UNITS = {'m':  10**9,
 # Chunk Scale
 CHUNK_SIZE = 1024
 
+def recursivefiles(files, stackvars, stackvals, stackheight):
+    channels = files
+    if len(stackvars) > 1:
+        return recursivefiles(files[stackvals[0]], stackvars[1:], stackvals[1:], stackheight)
+    else:
+        channels = [Path(files[stackvals[0]][i]['file']) for i in range(0, stackheight)]
+    return channels 
+
 def _avg2(image):
     """ Average pixels together with optical field 2x2 and stride 2
     
@@ -42,7 +50,7 @@ def _avg2(image):
 
     return avg_img
 
-def _get_higher_res(S,bfio_reader,slide_writer,encoder,X=None,Y=None):
+def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None):
     """ Recursive function for pyramid building
     
     This is a recursive function that builds an image pyramid by indicating
@@ -122,6 +130,7 @@ def _get_higher_res(S,bfio_reader,slide_writer,encoder,X=None,Y=None):
                 sub_image = _get_higher_res(X=subgrid_dims[0][x:x+2],
                                             Y=subgrid_dims[1][y:y+2],
                                             S=S+1,
+                                            zlevel=zlevel,
                                             bfio_reader=bfio_reader,
                                             slide_writer=slide_writer,
                                             encoder=encoder)
@@ -130,7 +139,7 @@ def _get_higher_res(S,bfio_reader,slide_writer,encoder,X=None,Y=None):
     # Encode the chunk
     image_encoded = encoder.encode(image)
     # Write the chunk
-    slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],0,1))
+    slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],zlevel,zlevel + 1))
     
     return image
 
@@ -288,7 +297,7 @@ class DeepZoomChunkEncoder(NeuroglancerChunkEncoder):
         assert chunk.ndim == 2
         return chunk
 
-def bfio_metadata_to_slide_info(bfio_reader,outPath):
+def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight):
     """ Generate a Neuroglancer info file from Bioformats metadata
     
     Neuroglancer requires an info file in the root of the pyramid directory.
@@ -304,7 +313,8 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath):
     """
     
     # Get metadata info from the bfio reader
-    sizes = [bfio_reader.num_x(),bfio_reader.num_y(),bfio_reader.num_z()]
+    # sizes = [bfio_reader.num_x(),bfio_reader.num_y(),bfio_reader.num_z()]
+    sizes = [bfio_reader.num_x(),bfio_reader.num_y(),stackheight]
     phys_x = bfio_reader.physical_size_x()
     if None in phys_x:
         phys_x = (1000,'nm')
@@ -340,18 +350,18 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath):
         previous_scale = info['scales'][-1]
         current_scale = copy.deepcopy(previous_scale)
         current_scale['key'] = str(num_scales - i)
-        current_scale['size'] = [int(np.ceil(previous_scale['size'][0]/2)),int(np.ceil(previous_scale['size'][1]/2)),1]
-        current_scale['resolution'] = [2*previous_scale['resolution'][0],2*previous_scale['resolution'][1],previous_scale['resolution'][2]]
+        current_scale['size'] = [int(np.ceil(previous_scale['size'][0]/2)),int(np.ceil(previous_scale['size'][1]/2)),stackheight]
+        current_scale['resolution'] = [2*previous_scale['resolution'][0],2*previous_scale['resolution'][1],2*previous_scale['resolution'][2]]
         info['scales'].append(current_scale)
     
     return info
 
-def neuroglancer_info_file(bfio_reader,outPath):
+def neuroglancer_info_file(bfio_reader,outPath, stackheight):
     # Create an output path object for the info file
     op = Path(outPath).joinpath("info")
     
     # Get pyramid info
-    info = bfio_metadata_to_slide_info(bfio_reader,outPath)
+    info = bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight)
 
     # Write the neuroglancer info file
     with open(op,'w') as writer:
