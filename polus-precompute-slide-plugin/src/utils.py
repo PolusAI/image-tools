@@ -3,6 +3,8 @@ import numpy as np
 import json, copy, os
 from pathlib import Path
 import imageio
+import filepattern
+import os
 
 # Conversion factors to nm, these are based off of supported Bioformats length units
 UNITS = {'m':  10**9,
@@ -15,13 +17,18 @@ UNITS = {'m':  10**9,
 # Chunk Scale
 CHUNK_SIZE = 1024
 
-def recursivefiles(files, stackvars, stackvals, stackheight):
+def recursivefiles(files, stackvars, stackvals, stackby, stackheight):
     channels = files
     if len(stackvars) > 1:
-        return recursivefiles(files[stackvals[0]], stackvars[1:], stackvals[1:], stackheight)
+        return recursivefiles(files[stackvals[0]], stackvars[1:], stackvals[1:], stackby, stackheight)
     else:
-        channels = [Path(files[stackvals[0]][i]['file']) for i in range(0, stackheight)]
-    return channels 
+        channels = [files[stackvals[0]][i]['file'] for i in range(0, stackheight)]
+        channelvals = [filepattern.parse_filename(os.path.basename(files[stackvals[0]][i]['file']), pattern = 'r{rrr}_c{ccc}_z{zzz}.ome.tif')[stackby] 
+                        for i in range(0, stackheight)]
+        channelvals.sort()
+        channels.sort()
+        channels = [Path(i) for i in channels]
+        return channels, channelvals
 
 def _avg2(image):
     """ Average pixels together with optical field 2x2 and stride 2

@@ -42,8 +42,9 @@ if __name__=="__main__":
 
     # Get images that are stacked together
     filesbuild = commonfiles = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=varsinstack)
-    channels = utils.recursivefiles(filesbuild[0], varsinstack, valsinstack, stackheight)
+    channels, channelvals = utils.recursivefiles(filesbuild[0], varsinstack, valsinstack, stackby, stackheight)
     image = channels[0]
+    
 
     # Initialize the logger    
     logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(image),
@@ -54,7 +55,9 @@ if __name__=="__main__":
     logger.info("Starting to build...")
     logger.info("Variables in Stack {}".format(varsinstack))
     logger.info("Values of Variables in Stack {}".format(valsinstack))
-    
+    logger.info("Height of Stack is {}".format(stackheight))
+    logger.info("{} values in stack: {}".format(stackby, channelvals))
+
     # Initialize the javabridge
     logger.info('Initializing the javabridge...')
     log_config = Path(__file__).parent.joinpath("log4j.properties")
@@ -102,10 +105,10 @@ if __name__=="__main__":
         logger.info("Stack contains {} Levels".format(stackheight))
         for i in range(0, stackheight):
             if i == 0:
-                utils._get_higher_res(0, i, bf,file_writer,encoder)
+                utils._get_higher_res(0, channelvals[i], bf,file_writer,encoder)
             else:
                 bf = BioReader(str(channels[i].absolute()))
-                utils._get_higher_res(0, i, bf,file_writer,encoder)
+                utils._get_higher_res(0, channelvals[i], bf,file_writer,encoder)
             logger.info("Finished Level {} in Stack".format(i))
     
     logger.info("Finished precomputing. Closing the javabridge and exiting...")

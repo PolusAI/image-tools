@@ -66,7 +66,16 @@ def main():
     common_varlists = [commonfiles[1][item] for item in commonfiles[1]]
     common_combos = list(itertools.product(*common_varlists))
 
-    heightofstack = int(len(all_combos)/len(common_combos))
+    # Get Height of Stacks
+    organizedheights = [0] * len(common_combos)
+    for item in all_combos:
+        if item[:-1] in common_combos:
+            idx = common_combos.index(item[:-1])
+            organizedheights[idx] = organizedheights[idx] + 1
+    logger.info("Height of Stacks: {}".format(organizedheights))
+    
+    # heightofstack = int(len(all_combos)/len(common_combos))
+    logger.info("Different Stack Variables: {} ".format(common_combos))
 
     # Set up lists for tracking processes
     processes = []
@@ -85,7 +94,7 @@ def main():
                 vals_instack = str(tup)
             else:
                 vals_instack = vals_instack + " " + str(tup)
-
+        heightofstack = organizedheights[stack_count -1]
         if len(processes) >= multiprocessing.cpu_count()-1 and len(processes)>0:
             free_process = -1
             while free_process<0:
