@@ -2,7 +2,8 @@ import logging, argparse, bioformats
 import javabridge as jutil
 from bfio.bfio import BioReader, BioWriter
 from pathlib import Path
-import utils    
+import utils
+import filepattern
 
 if __name__=="__main__":
     # Setup the Argument parsing
@@ -12,25 +13,37 @@ if __name__=="__main__":
                         help='Path to folder with CZI files', required=True)
     parser.add_argument('--outDir', dest='output_dir', type=str,
                         help='The output directory for ome.tif files', required=True)
-    parser.add_argument('--image', dest='image', type=str,
-                        help='The image to turn into a pyramid', required=True)
     parser.add_argument('--pyramidType', dest='pyramid_type', type=str,
                         help='Build a DeepZoom or Neuroglancer pyramid', required=True)
     parser.add_argument('--imageNum', dest='image_num', type=str,
                         help='Image number, will be stored as a timeframe', required=True)
-    parser.add_argument('--stackNum', dest='stack_num', type=str,
-                        help='Stack number', required=True)
-    parser.add_argument('--firstimage', dest='first_im', type=str,
-                        help='Name of Stack', required=True)
+    parser.add_argument('--stackheight', dest='stack_height', type=int,
+                        help='The Height of the Stack', required=True)
+    parser.add_argument('--stackby', dest='stack_by', type=str,
+                        help='Variable that the images get stacked by', required=True)
+    parser.add_argument('--varsinstack', dest='vars_instack', type=str,
+                        help='Variables that the stack shares', required=True)
+    parser.add_argument('--valsinstack', dest='vals_instack', type=int, nargs='+',
+                        help='Values of variables that the stack shares', required=True)
+    parser.add_argument('--imagepattern', dest='image_pattern', type=str,
+                        help='Filepattern of the images in input', required=True)
 
     args = parser.parse_args()
     input_dir = args.input_dir
     output_dir = args.output_dir
-    image = args.image
+    # image = args.image
     pyramid_type = args.pyramid_type
     image_num = args.image_num
-    stacknum = args.stack_num
-    firstim = args.first_im
+    stackheight = args.stack_height
+    stackby = args.stack_by
+    varsinstack = args.vars_instack
+    valsinstack = args.vals_instack
+    imagepattern = args.image_pattern
+
+    # Get images that are stacked together
+    filesbuild = commonfiles = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=varsinstack)
+    channels = utils.recursivefiles(filesbuild[0], varsinstack, valsinstack, stackheight)
+    image = channels[0]
 
     # Initialize the logger    
     logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(image),
@@ -39,64 +52,37 @@ if __name__=="__main__":
     logger.setLevel(logging.INFO)  
 
     logger.info("Starting to build...")
+    logger.info("Variables in Stack {}".format(varsinstack))
+    logger.info("Values of Variables in Stack {}".format(valsinstack))
     
     # Initialize the javabridge
     logger.info('Initializing the javabridge...')
     log_config = Path(__file__).parent.joinpath("log4j.properties")
     jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
 
+    # Get images that are stacked together
+    filesbuild = commonfiles = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=varsinstack)
+    channels = utils.recursivefiles(filesbuild[0], varsinstack, valsinstack, stackheight)
+
     # Make the output directory
-    image = Path(input_dir).joinpath(image)
-    print("IMAGE NAME")
-    print(image.name)
-    print("IMAGE NUMBER (stack number)")
-    print(image_num)
-    logger.info('Image Number: {}'.format(str(image_num)))
-    logger.info('Stack Number: {}'.format(str(stacknum)))
-    
     if pyramid_type == "Neuroglancer":
         out_dir = Path(output_dir).joinpath(image.name)
     elif pyramid_type == "DeepZoom":
-        out_dir = Path(output_dir).joinpath('{}_files'.format(stacknum))
-    if image_num == '1':
-        if pyramid_type == "Neuroglancer":
-            out_dir = Path(output_dir).joinpath(image.name)
-        elif pyramid_type == "DeepZoom":
-            out_dir = Path(output_dir).joinpath('{}_files'.format(stacknum))
-        out_dir.mkdir()
-        out_dir = str(out_dir.absolute())
-    else:
-        if pyramid_type == "Neuroglancer":
-            out_dir = Path(output_dir).joinpath(firstim)
-   
+        out_dir = Path(output_dir).joinpath('{}_files'.format(image_num))
+    out_dir.mkdir()
+    out_dir = str(out_dir.absolute())
+    
     # Create the BioReader object
     logger.info('Getting the BioReader...')
     bf = BioReader(str(image.absolute()))
     
     # Create the output path and info file
-    # INFO FILE MUST BE UPDATED MADHU !!!!!!! DO NOT IGNORE!!!!!
-    # if pyramid_type == "Neuroglancer":
-    #     file_info = utils.neuroglancer_info_file(bf,out_dir)
-    # elif pyramid_type == "DeepZoom":
-    #     file_info = utils.dzi_file(bf,out_dir,image_num)
-    # else:
-    #     ValueError("pyramid_type must be Neuroglancer or DeepZoom")
-
-    if image_num == '1':
-        if pyramid_type == "Neuroglancer":
-            file_info = utils.neuroglancer_info_file(bf,out_dir, image_num)
-        elif pyramid_type == "DeepZoom":
-            file_info = utils.dzi_file(bf,out_dir,image_num,stacknum)
-        else:
-            ValueError("pyramid_type must be Neuroglancer or DeepZoom")
-    # else:
-    #     if pyramid_type == "DeepZoom": 
-    #         file_info = utils.dzi_file(bf,out_dir,image_num,stacknum)
-    #     elif pyramid_type == "Neuroglancer":
-    #         file_info = utils.neuroglancer_info_file(bf,out_dir, image_num)
-    #     else:
-    #         ValueError("pyramid_type must be Neuroglancer or DeepZoom")
-
+    if pyramid_type == "Neuroglancer":
+        file_info = utils.neuroglancer_info_file(bf,out_dir,stackheight)
+    elif pyramid_type == "DeepZoom":
+        file_info = utils.dzi_file(bf,out_dir,image_num)
+    else:
+        ValueError("pyramid_type must be Neuroglancer or DeepZoom")
     logger.info("data_type: {}".format(file_info['data_type']))
     logger.info("num_channels: {}".format(file_info['num_channels']))
     logger.info("number of scales: {}".format(len(file_info['scales'])))
@@ -110,8 +96,17 @@ if __name__=="__main__":
     elif pyramid_type == "DeepZoom":
         encoder = utils.DeepZoomChunkEncoder(file_info)
         file_writer = utils.DeepZoomWriter(out_dir)
-
-    utils._get_higher_res(0,bf,file_writer,encoder)
+    
+    # Create the stacked images
+    if pyramid_type == "Neuroglancer":
+        logger.info("Stack contains {} Levels".format(stackheight))
+        for i in range(0, stackheight):
+            if i == 0:
+                utils._get_higher_res(0, i, bf,file_writer,encoder)
+            else:
+                bf = BioReader(str(channels[i].absolute()))
+                utils._get_higher_res(0, i, bf,file_writer,encoder)
+            logger.info("Finished Level {} in Stack".format(i))
     
     logger.info("Finished precomputing. Closing the javabridge and exiting...")
     jutil.kill_vm()
