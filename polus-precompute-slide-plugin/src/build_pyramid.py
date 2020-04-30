@@ -56,7 +56,6 @@ if __name__=="__main__":
     logger.info("{} values in stack {}, respectively".format(varsinstack, valsinstack))
     logger.info("{} values in stack: {}".format(stackby, channelvals))
     logger.info("Images in stack: {}".format(channels))
-    logger.info("Height of Stack is {}".format(stackheight))
     
 
     # Initialize the javabridge
@@ -100,14 +99,14 @@ if __name__=="__main__":
     
     # Create the stacked images
     if pyramid_type == "Neuroglancer":
-        logger.info("Stack contains {} Levels".format(stackheight))
+        logger.info("Stack contains {} Levels (Stack's height)".format(stackheight))
         for i in range(0, stackheight):
             if i == 0:
                 utils._get_higher_res(0, channelvals[i], bf,file_writer,encoder)
             else:
                 bf = BioReader(str(channels[i].absolute()))
                 utils._get_higher_res(0, channelvals[i], bf,file_writer,encoder)
-            logger.info("Finished Level {} in Stack".format(i))
+            logger.info("Finished Level {} in Stack".format(channelvals[i]))
     
     logger.info("Finished precomputing. Closing the javabridge and exiting...")
     jutil.kill_vm()
