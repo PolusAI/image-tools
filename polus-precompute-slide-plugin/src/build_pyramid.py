@@ -45,7 +45,6 @@ if __name__=="__main__":
     channels, channelvals = utils.recursivefiles(filesbuild[0], varsinstack, valsinstack, stackby, stackheight)
     image = channels[0]
     
-
     # Initialize the logger    
     logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(image),
                         datefmt='%d-%b-%y %H:%M:%S')
@@ -65,7 +64,7 @@ if __name__=="__main__":
 
     # Get images that are stacked together
     filesbuild = commonfiles = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=varsinstack)
-    channels = utils.recursivefiles(filesbuild[0], varsinstack, valsinstack, stackheight)
+    channels = utils.recursivefiles(filesbuild[0], varsinstack, valsinstack, stackby, stackheight)
 
     # Make the output directory
     if pyramid_type == "Neuroglancer":

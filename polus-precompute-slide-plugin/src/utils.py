@@ -358,7 +358,7 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight):
         current_scale = copy.deepcopy(previous_scale)
         current_scale['key'] = str(num_scales - i)
         current_scale['size'] = [int(np.ceil(previous_scale['size'][0]/2)),int(np.ceil(previous_scale['size'][1]/2)),stackheight]
-        current_scale['resolution'] = [2*previous_scale['resolution'][0],2*previous_scale['resolution'][1],2*previous_scale['resolution'][2]]
+        current_scale['resolution'] = [2*previous_scale['resolution'][0],2*previous_scale['resolution'][1],previous_scale['resolution'][2]]
         info['scales'].append(current_scale)
     
     return info
