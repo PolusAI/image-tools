@@ -41,13 +41,13 @@ def main():
     logger.info('image pattern = {}'.format(imagepattern))
     logger.info('images are stacked by variable {}'.format(stack_by))
     
-    # Get a list of all images in a directory
-    logger.info('Getting the images...')
-    image_path = Path(input_dir)
+
+    # Getting all images in directory
+    # image_path = Path(input_dir)
     # images = [i for i in image_path.iterdir() if "".join(i.suffixes)==".ome.tif"]
     # images.sort()
 
-    # Get the Height of the Stack
+    # Get Variables of Images
     regex = filepattern.get_regex(pattern = imagepattern)
     regexzero = regex[0]
     regexone = regex[1]
@@ -58,6 +58,8 @@ def main():
         else:
             vars_instack = vars_instack + item
     
+    # Get list of images that we are going to through
+    logger.info('Getting the images...')
     allfiles = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=vars_instack+stack_by)
     all_varlists = [allfiles[1][item] for item in allfiles[1]]
     all_combos = list(itertools.product(*all_varlists))
@@ -72,10 +74,10 @@ def main():
         if item[:-1] in common_combos:
             idx = common_combos.index(item[:-1])
             organizedheights[idx] = organizedheights[idx] + 1
-    logger.info("Height of Stacks: {}".format(organizedheights))
+    logger.info("Height of the {} Stacks: {}".format(len(organizedheights), organizedheights))
     
     # heightofstack = int(len(all_combos)/len(common_combos))
-    logger.info("Different Stack Variables of {}: {} ".format(vars_instack, common_combos))
+    logger.info("Different Stack Variables of {}: {}".format(vars_instack, common_combos))
 
     # Set up lists for tracking processes
     processes = []
@@ -83,7 +85,7 @@ def main():
     pnum = 0
     
     # Build one pyramid for each image in the input directory
-    # Each pyramid is built within its own process, with a maximum number of processes
+    # Each stack is built within its own process, with a maximum number of processes
     # equal to number of cpus - 1.
     stack_count = 1
     im_count = 1
