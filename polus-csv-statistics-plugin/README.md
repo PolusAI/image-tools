@@ -11,6 +11,7 @@ Available statistics are:
 5. [skew (Fisher-Pearson skewness)](https://www.itl.nist.gov/div898/handbook/eda/section3/eda35b.htm)
 6. [kurt (excess kurtosis)](https://www.itl.nist.gov/div898/handbook/eda/section3/eda35b.htm)
 7. count (number of rows sampled)
+8. [iqr (Interquartile_range)](https://en.wikipedia.org/wiki/Interquartile_range)
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
