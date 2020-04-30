@@ -41,10 +41,11 @@ if __name__=="__main__":
     imagepattern = args.image_pattern
 
     # Get images that are stacked together
-    filesbuild = commonfiles = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=varsinstack)
+    filesbuild = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=varsinstack)
     channels, channelvals = utils.recursivefiles(filesbuild[0], varsinstack, valsinstack, stackby, stackheight)
     image = channels[0]
-    
+
+     
     # Initialize the logger    
     logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(image),
                         datefmt='%d-%b-%y %H:%M:%S')
@@ -52,19 +53,17 @@ if __name__=="__main__":
     logger.setLevel(logging.INFO)  
 
     logger.info("Starting to build...")
-    logger.info("Variables in Stack {}".format(varsinstack))
-    logger.info("Values of Variables in Stack {}".format(valsinstack))
-    logger.info("Height of Stack is {}".format(stackheight))
+    logger.info("{} values in stack {}, respectively".format(varsinstack, valsinstack))
     logger.info("{} values in stack: {}".format(stackby, channelvals))
+    logger.info("Images in stack: {}".format(channels))
+    logger.info("Height of Stack is {}".format(stackheight))
+    
 
     # Initialize the javabridge
     logger.info('Initializing the javabridge...')
     log_config = Path(__file__).parent.joinpath("log4j.properties")
     jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
 
-    # Get images that are stacked together
-    filesbuild = commonfiles = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=varsinstack)
-    channels = utils.recursivefiles(filesbuild[0], varsinstack, valsinstack, stackby, stackheight)
 
     # Make the output directory
     if pyramid_type == "Neuroglancer":

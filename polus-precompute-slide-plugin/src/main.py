@@ -44,8 +44,8 @@ def main():
     # Get a list of all images in a directory
     logger.info('Getting the images...')
     image_path = Path(input_dir)
-    images = [i for i in image_path.iterdir() if "".join(i.suffixes)==".ome.tif"]
-    images.sort()
+    # images = [i for i in image_path.iterdir() if "".join(i.suffixes)==".ome.tif"]
+    # images.sort()
 
     # Get the Height of the Stack
     regex = filepattern.get_regex(pattern = imagepattern)
@@ -75,7 +75,7 @@ def main():
     logger.info("Height of Stacks: {}".format(organizedheights))
     
     # heightofstack = int(len(all_combos)/len(common_combos))
-    logger.info("Different Stack Variables: {} ".format(common_combos))
+    logger.info("Different Stack Variables of {}: {} ".format(vars_instack, common_combos))
 
     # Set up lists for tracking processes
     processes = []
@@ -106,7 +106,7 @@ def main():
                 
             pnum += 1
             logger.info("Finished stack process {} of {} in {}s (Stacked {} images out of {} images)!".
-                        format(pnum,len(common_combos),time.time() - process_timer[free_process], im_count, len(images)))
+                        format(pnum,len(common_combos),time.time() - process_timer[free_process], im_count, len(all_combos)))
             del processes[free_process]
             del process_timer[free_process]
             
