@@ -5,6 +5,7 @@ from pathlib import Path
 import utils
 import filepattern
 
+
 if __name__=="__main__":
     # Setup the Argument parsing
     parser = argparse.ArgumentParser(prog='build_pyramid', description='Generate a precomputed slice for Polus Viewer.')
@@ -42,7 +43,7 @@ if __name__=="__main__":
 
     # Get images that are stacked together
     filesbuild = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=varsinstack)
-    channels, channelvals = utils.recursivefiles(filesbuild[0], varsinstack, valsinstack, stackby, stackheight)
+    channels, channelvals = utils.recursivefiles(filesbuild[0], varsinstack, valsinstack, stackby, stackheight, pattern=imagepattern)
     image = channels[0]
 
      
@@ -102,12 +103,11 @@ if __name__=="__main__":
         logger.info("Stack contains {} Levels (Stack's height)".format(stackheight))
         for i in range(0, stackheight):
             if i == 0:
-                utils._get_higher_res(0, channelvals[i], bf,file_writer,encoder)
+                utils._get_higher_res(0, i, bf,file_writer,encoder)
             else:
                 bf = BioReader(str(channels[i].absolute()))
-                utils._get_higher_res(0, channelvals[i], bf,file_writer,encoder)
+                utils._get_higher_res(0, i, bf,file_writer,encoder)
             logger.info("Finished Level {} in Stack".format(channelvals[i]))
     
     logger.info("Finished precomputing. Closing the javabridge and exiting...")
     jutil.kill_vm()
-    
