@@ -3,6 +3,7 @@ from pathlib import Path
 import filepattern
 import itertools
 import os
+from filepattern import FilePattern as fp
 
 
 # Initialize the logger    
