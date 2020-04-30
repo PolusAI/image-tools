@@ -1,39 +1,56 @@
 {
   "name": "Polus Precompute Slide Plugin",
-  "version": "0.3.3",
+  "version": "0.4.0",
+  "containerId": "mmvihani/polus_precomputing_plugin:0.3.9",
   "title": "Precompute Slide Viewer",
-  "description": "Precomputes a single image plane for viewing in Neuroglancer or DeepZoom.",
-  "author": "Nick Schaub (nick.schaub@nih.gov)",
-  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-  "repository": "https://github.com/labshare/polus-plugins",
-  "website": "https://ncats.nih.gov/preclinical/core/informatics",
-  "citation": "",
-  "containerId": "labshare/polus-precompute-slide-plugin:0.3.3",
+  "description": "Precomputes a single image plane for DeepZoom or Z stacks for Neuroglancer",
+  "author": "N/A",
+  "institution": "N/A",
+  "repository": "https://github.com/mmvih/polus-plugins.git",
+  "website": null,
+  "citation": "N/A",
   "inputs": [
     {
       "name": "inpDir",
-      "type": "collection",
       "description": "Input collection",
+      "type": "collection",
+      "options": null,
       "required": true
     },
     {
-			"name": "pyramidType",
-			"type": "enum",
-			"options": {
-				"values": [
-					         "DeepZoom",
-                   "Neuroglancer"
-				]
-      },
+      "name": "pyramidType",
       "description": "Build a DeepZoom or Neuroglancer pyramid",
+      "type": "enum",
+      "options": {
+        "values": [
+          "DeepZoom",
+          "Neuroglancer"
+        ]
+      },
+      "required": true
+    },
+    {
+      "name": "imagepattern",
+      "description": "Pattern of the images in Input",
+      "type": "string",
+      "options": null,
+      "required": true
+    },
+    {
+      "name": "stackby",
+      "description": "One of the variables in image pattern that the Z stacks are  based on",
+      "type": "string",
+      "options": null,
       "required": true
     }
   ],
   "outputs": [
     {
       "name": "outDir",
+      "description": "Precomputed output",
       "type": "pyramid",
-      "description": "Precomputed output"
+      "options": null,
+      "required": true
     }
   ],
   "ui": [
@@ -46,6 +63,16 @@
       "key": "inputs.pyramidType",
       "title": "Pyramid Type: ",
       "description": "Build a DeepZoom or Neuroglancer pyramid?"
+    },
+    {
+      "key": "inputs.imagepattern",
+      "title": "Image Pattern: ",
+      "description": "Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). "
+    },
+    {
+      "key": "inputs.stackby",
+      "title": "Variable to stack by: ",
+      "description": "Variable in Image Pattern that the images are stack by."
     }
   ]
 }
