@@ -1,8 +1,6 @@
 import argparse, logging, multiprocessing, subprocess, time
-
 from pathlib import Path
-from utils import _parse_fpattern, _parse_files
-
+from filepattern import FilePattern
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
@@ -40,11 +38,13 @@ def main():
                         type=str,
                         help='The output directory for the flatfield images.',
                         required=True)
-    
+
     """ Get the input arguments """
     args = parser.parse_args()
-
     fpath = args.inpDir
+    """Checking if there is images subdirectory"""
+    if (Path.is_dir(Path(args.inpDir).joinpath('images'))):
+        fpath=Path(args.inpDir).joinpath('images')
     get_darkfield = str(args.darkfield).lower() == 'true'
     output_dir = Path(args.output_dir).joinpath('images')
     output_dir.mkdir(exist_ok=True)
@@ -58,55 +58,45 @@ def main():
     logger.info('get_photobleach = {}'.format(get_photobleach))
     logger.info('inp_regex = {}'.format(inp_regex))
     logger.info('output_dir = {}'.format(output_dir))
-    
-    regex,variables = _parse_fpattern(inp_regex)
-    files = _parse_files(fpath,regex,variables)
-    
     # Set up lists for tracking processes
     processes = []
     process_timer = []
     pnum = 0
-    
-    rs = [key for key in files.keys()]
-    rs.sort()
-    for r in rs:
-        ts = [t for t in files[r].keys()]
-        ts.sort()
-        for t in ts:
-            cs = [c for c in files[r][t].keys()]
-            cs.sort()
-            for c in cs:
-                # The optimization process seems to use up to ~6 cores, so limit # of processes accordingly
-                if len(processes) >= multiprocessing.cpu_count()-1:
-                    free_process = -1
-                    while free_process<0:
-                        for process in range(len(processes)):
-                            if processes[process].poll() is not None:
-                                free_process = process
-                                break
-                        # Wait between checks to free up some processing power
-                        time.sleep(3)
-                    pnum += 1
-                    logger.info("Finished process {} of {} in {}s!".format(pnum,len(rs)*len(ts)*len(cs),time.time() - process_timer[free_process]))
-                    del processes[free_process]
-                    del process_timer[free_process]
-            
-                logger.info("Starting process [r,t,c]: [{},{},{}]".format(r,t,c))
-                processes.append(subprocess.Popen("python3 basic.py --inpDir {} --outDir {} --darkfield {} --photobleach {} --inpRegex {} --R {} --T {} --C {}".format(fpath,
-                                                                                                                                                                       args.output_dir,
-                                                                                                                                                                       get_darkfield,
-                                                                                                                                                                       get_photobleach,
-                                                                                                                                                                       inp_regex,
-                                                                                                                                                                       r,
-                                                                                                                                                                       t,
-                                                                                                                                                                       c),
-                                                                                                                                                                       shell=True))
-                process_timer.append(time.time())
+    # Iterator to group files with  constant r,t and c values
+    file = FilePattern(fpath, inp_regex)
+    total_no = len(list(file.iterate(group_by='xyz')))
+    for i in file.iterate(group_by='xyz'):
+        if len(processes) >= multiprocessing.cpu_count() - 1:
+            free_process = -1
+            while free_process < 0:
+                for process in range(len(processes)):
+                    if processes[process].poll() is not None:
+                        free_process = process
+                        break
+                # Wait between checks to free up some processing power
+                time.sleep(3)
+            pnum += 1
+            logger.info("Finished process {} of {} in {}s!".format(pnum, total_no,
+                                                                           time.time() - process_timer[free_process]))
+            del processes[free_process]
+            del process_timer[free_process]
 
-    # Wait for all processes to finish
-    while len(processes)>1:
+        logger.info("Starting process [r,t,c]: [{},{},{}]".format(i[0]['r'], i[0]['t'], i[0]['c']))
+        processes.append(subprocess.Popen(
+                    "python3 basic.py --inpDir {} --outDir {} --darkfield {} --photobleach {} --inpRegex {} --R {} --T {} --C {}".format(
+                        fpath,
+                        args.output_dir,
+                        get_darkfield,
+                        get_photobleach,
+                        inp_regex,
+                        i[0]['r'],
+                        i[0]['t'],
+                        i[0]['c']),
+                    shell=True))
+        process_timer.append(time.time())
+    while len(processes) > 1:
         free_process = -1
-        while free_process<0:
+        while free_process < 0:
             for process in range(len(processes)):
                 if processes[process].poll() is not None:
                     free_process = process
@@ -114,15 +104,15 @@ def main():
             # Wait between checks to free up some processing power
             time.sleep(3)
         pnum += 1
-        logger.info("Finished process {} of {} in {}s!".format(pnum,len(rs)*len(ts)*len(cs),time.time() - process_timer[free_process]))
+        logger.info("Finished process {} of {} in {}s!".format(pnum,total_no, time.time() - process_timer[free_process]))
         del processes[free_process]
         del process_timer[free_process]
 
     processes[0].wait()
-    
-    logger.info("Finished process {} of {} in {}s!".format(len(rs)*len(ts)*len(cs),len(rs)*len(ts)*len(cs),time.time() - process_timer[0]))
+
+    logger.info("Finished process {} of {} in {}s!".format(total_no,total_no, time.time() - process_timer[0]))
     logger.info("Finished all processes!")
-    
+
+
 if __name__ == "__main__":
-    
     main()
