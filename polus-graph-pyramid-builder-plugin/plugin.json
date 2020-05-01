@@ -16,6 +16,21 @@
       "type": "csvCollection",
       "description": "Input collection",
       "required": true
+    },
+    {
+      "name": "bincount",
+      "type": "enum",
+      "options": {
+        "values": [
+          "20",
+          "50",
+          "100",
+          "150",
+          "200"
+        ]
+      },
+      "description": "The number of bins in each graph",
+      "required": true
     }
   ],
   "outputs": [
@@ -30,6 +45,11 @@
       "key": "inputs.inpDir",
       "title": "Input CSV collection: ",
       "description": "Collection name..."
+    },
+    {
+      "key": "inputs.bincount",
+      "title": "Bincount",
+      "description": "The number of bins for each column of data, less than 255 and must be even."
     }
   ]
 }

@@ -14,13 +14,11 @@ from textwrap import wrap
 import os
 import time
 
-
-
 # Chunk Scale
 CHUNK_SIZE = 512
 
 # Number of Bins for Each Feature
-bincount = 100 #MUST BE EVEN NUMBER
+# bincount = 200 #MUST BE EVEN NUMBER, cannot be greater than 255
 
 # Number of Ticks on the Axis Graph 
 numticks = 11
@@ -34,13 +32,13 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
-DEBUG_LEVELV_NUM = 9 
-logging.addLevelName(DEBUG_LEVELV_NUM, "DEBUGV")
-def debugv(self, message, *args, **kws):
-    if self.isEnabledFor(DEBUG_LEVELV_NUM):
-        # Yes, logger takes its '*args' as 'args'.
-        self._log(DEBUG_LEVELV_NUM, message, args, **kws) 
-logging.Logger.debugv = debugv
+# DEBUG_LEVELV_NUM = 9 
+# logging.addLevelName(DEBUG_LEVELV_NUM, "DEBUGV")
+# def debugv(self, message, *args, **kws):
+#     if self.isEnabledFor(DEBUG_LEVELV_NUM):
+#         # Yes, logger takes its '*args' as 'args'.
+#         self._log(DEBUG_LEVELV_NUM, message, args, **kws) 
+# logging.Logger.debugv = debugv
 
 #Transforms the DataFrame that Range from a Negative Number to a Positive Number
 def dfneg2pos(data, alpha, datmin, datmax):
@@ -62,6 +60,7 @@ def dfneg2pos(data, alpha, datmin, datmax):
             large = abs(datmin[col])
             posbigger = False
 
+        # Determine all the variables to transform the data
         ratio = ((small*small)/(alpha[col]*large))**(1/(bincount + 1))
         binssmall = np.floor(abs(1 + np.log(small/alpha[col])/np.log(ratio)))
         binslarge = np.floor(abs(1 + np.log(large/alpha[col])/np.log(ratio)))
@@ -272,7 +271,7 @@ def bin_data_log(data,column_names):
     neg2posrange =  np.where((data.min() < 0) & (data.max() > 0))[0]
     zeroalpha = np.where((2*(data.quantile(0.75) - data.quantile(0.25)))/(data.shape[0]**(1/3)) == 0)[0]
     
-    # FIND COLUMNS THAT OVERLAP WITH ZEROALPHA
+    # FIND COLUMNS THAT OVERLAP WITH ZEROALPHA(bin width is zero)
     POSoverlap = np.intersect1d(zeroalpha, positiverange, assume_unique = True, return_indices=True)
     NEGoverlap = np.intersect1d(zeroalpha, negativerange, assume_unique = True, return_indices=True)
     NEG2POSoverlap = np.intersect1d(zeroalpha, neg2posrange, assume_unique=True, return_indices=True)
@@ -334,8 +333,9 @@ def bin_data_log(data,column_names):
     nfeats = bin_stats['size'][1] 
     datalen = bin_stats['size'][0]
 
+
     data_ind = pandas.notnull(data)  # Handle NaN values
-    data[~data_ind] = bincount + 55          # Handle NaN values
+    data[~data_ind] = 255          # Handle NaN values
     data = data.astype(np.uint16) # cast to save memory
     data[data==bincount] = bincount - 1         # in case of numerical precision issues
 
@@ -1032,7 +1032,7 @@ def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,bintyp
     outpath = Path(outpath).joinpath('{}_files'.format(out_file),str(S))
     outpath.mkdir(exist_ok=True)
     imageio.imwrite(outpath.joinpath('{}_{}.png'.format(int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE))),image,format='PNG-FI',compression=1)
-    logger.debugv('Finished building tile (scale,X,Y): ({},{},{})'.format(S,int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE)))
+    logger.warning('Finished building tile (scale,X,Y): ({},{},{})'.format(S,int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE)))
     return image
 
 # This function performs the same operation as _get_highe_res, except it uses multiprocessing to grab higher
@@ -1124,7 +1124,7 @@ def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, 
     outpath = Path(outpath).joinpath('{}_files'.format(out_file),str(S))
     outpath.mkdir(exist_ok=True)
     imageio.imwrite(outpath.joinpath('{}_{}.png'.format(int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE))),image,format='PNG-FI',compression=1)
-    logger.debugv('Finished building tile (scale,X,Y): ({},{},{})'.format(S,int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE)))
+    logger.warning('Finished building tile (scale,X,Y): ({},{},{})'.format(S,int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE)))
     return image
 
 def write_csv(cnames,linear_index,f_info,out_path,out_file):
@@ -1166,23 +1166,20 @@ if __name__=="__main__":
                         help='Path to output images.',
                         required=True
                         )
-    # parser.add_argument('--outDirLinear',               # Pyramid directory
-    #                     dest='outDirLinear',
-    #                     type=str,
-    #                     help='The output directory for the flatfield images of Linear Scaled Graphs.',
-    #                     required=True)
-
-    # parser.add_argument('--outDirLog',
-    #                     dest='outDirLog',
-    #                     type=str,
-    #                     help='The output directory for the flatfield images of Log Scaled Graphs.',
-    #                     required=True)
     
+    parser.add_argument('--bincount',
+                        dest='bin_count',
+                        type=int,
+                        help='Number of bins',
+                        required=True
+                        )
+
     """ Get the input arguments """
     args = parser.parse_args()
 
     input_path = args.inpDir
     output_path = Path(args.outDir)
+    bincount = args.bin_count
     # linear_output_path = Path(args.outDir)
     # log_output_path = Path(args.outDir)
 
