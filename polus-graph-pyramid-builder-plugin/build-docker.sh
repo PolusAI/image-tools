@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t mmvihani/labshare:${version}
+docker build . -t labshare/polus-graph-pyramid-builder-plugin:${version}
