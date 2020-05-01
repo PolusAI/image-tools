@@ -7,7 +7,6 @@
 #include <sstream>
 #include <math.h>
 #include <Eigen/Eigen>
-
 #include <unsupported/Eigen/NonLinearOptimization>
 using namespace std;
 

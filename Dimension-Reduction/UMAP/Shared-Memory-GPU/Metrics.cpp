@@ -9,7 +9,6 @@
 #include <fstream>
 #include <cstdlib>
 #include "highDComputes.h"
-
 using namespace std;
 
 /**
@@ -41,6 +40,26 @@ double log_beta(double x, double y){
 
 double log_single_beta(double x){
 	return log(2.0) * (-2.0 * x + 0.5) + 0.5 * log(2.0 * pi() / x) + 0.125 / x;
+}
+
+
+/**
+ * Convert string of Metrics to int for easier GPU functionality
+ */
+int classification (string distanceKeyword){
+	if (distanceKeyword == "euclidean") return 1;
+	else if (distanceKeyword == "manhattan") return 2; 
+	else if (distanceKeyword == "minkowski") return 3; 
+	else if (distanceKeyword == "cosine") return 4; 
+	else if (distanceKeyword == "correlation") return 5; 
+	else if (distanceKeyword == "bray_curtis") return 6; 
+	else if (distanceKeyword == "ll_dirichlet") return 7; 
+	else if (distanceKeyword == "jaccard") return 8; 
+	else if (distanceKeyword == "dice") return 9; 
+	else if (distanceKeyword == "categorical_distance") return 10; 
+	else if (distanceKeyword == "ordinal_distance") return 11; 
+	else if (distanceKeyword == "count_distance") return 12; 
+	else if (distanceKeyword == "levenshtein") return 13;         
 }
 
 /**

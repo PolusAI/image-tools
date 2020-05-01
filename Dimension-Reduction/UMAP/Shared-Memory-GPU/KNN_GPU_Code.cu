@@ -16,6 +16,7 @@
 #include <boost/iostreams/stream.hpp> 
 #include "KNN_GPU_Code.cuh"
 #include "Metrics.h"  
+#include "Metrics.cuh"
 #include <curand.h>
 #include <curand_kernel.h>
 #include "highDComputes.h"
@@ -35,7 +36,7 @@ using namespace std;
 /**
  * GPU Kernel definition
  */
-__global__ void ComputeDistancesKernel(int * device_New_Final_List_1D, int * device_New_Final_List_Index, int Dim, double * device_New_Final_List_Dist_1D, double * device_dataPointsGPU, int * device_New_Final_List_Dist_Index){
+__global__ void ComputeDistancesKernel(int * device_New_Final_List_1D, int * device_New_Final_List_Index, int Dim, double * device_New_Final_List_Dist_1D, double * device_dataPointsGPU, int * device_New_Final_List_Dist_Index, int metricID, float distanceV1, float distanceV2, float * v0, float * v1){
 
 	int localDim=Dim;
 	double localvalue=0;
@@ -59,11 +60,8 @@ __global__ void ComputeDistancesKernel(int * device_New_Final_List_1D, int * dev
 			}
 		}
 
-		for (int i=0; i<localDim; ++i){
-			double tmp = device_dataPointsGPU[par1*localDim+i] - device_dataPointsGPU[par2*localDim+i];
-			localvalue += tmp * tmp; 
-		}	
-
+        localvalue= distanceCompute (localDim, device_dataPointsGPU, par1, par2, metricID, distanceV1, distanceV2, v0, v1);
+        
 		int IndexIDWrite= device_New_Final_List_Dist_Index[blockIdx.x]+threadIdx.x;
 		device_New_Final_List_Dist_1D[IndexIDWrite] = localvalue;	
 	}
@@ -210,8 +208,14 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 		}
 	}
 	infile.close();
-
-	//Converting Pagged Memory to Pinned Memory for better performance in cudaMemcpyAsync
+    
+	/**
+	 * Numeric of the metric
+	 */    
+    int metricID = classification(distanceMetric);
+	/**
+	 * Converting Pagged Memory to Pinned Memory for better performance in cudaMemcpyAsync
+	 */
 	cudaHostRegister(dataPointsGPU,N*Dim*sizeof(double),0);
 	/**
 	 * Copy the GPU version of input data (dataPointsGPU) to GPU memory (device_dataPointsGPU)
@@ -335,8 +339,9 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 
 		/**
 		 * Switch to GPU computations if the following conditions met. Otherwise proceed to CPU computations. 
+		 * For now, exclude the metrics depend on filePathOptionalArray from GPU computations
 		 */		 
-		if (ThreadsPerBlockNeeded < MAXTPB  && ThreadsPerBlockNeeded > MinimumThreads) { 
+		if (ThreadsPerBlockNeeded < MAXTPB  && ThreadsPerBlockNeeded > MinimumThreads && filePathOptionalArray=="") { 
 			/**
 			 * TotalCounts is the total number of elements in New_Final_List
 			 */		
@@ -402,6 +407,13 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 			 */						        
 			double *device_New_Final_List_Dist_1D;  
 			cudaMalloc ((void **) &device_New_Final_List_Dist_1D, TotalCounts_Dist*sizeof(double)); 
+			
+			/**
+			 * Creating 2 arrays on device for the case that the Metric is levenshtein
+			 */	
+            float *device_v0, *device_v1;
+			cudaMalloc ((void **) &device_v0, (Dim+1)*sizeof(float)); 
+			cudaMalloc ((void **) &device_v1, (Dim+1)*sizeof(float)); 			
 			/**
 			 * Launch the Kernel to compute the distance computations for all pairs of the points.
 			 * cudaDeviceSynchronize is required to ensure data transfer to GPU memory is already finished.
@@ -410,8 +422,8 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 
 			logFile<< "Number of Blocks = "<<N<< " and Number of Threads Per Block = "<<ThreadsPerBlockNeeded<<endl;
 			cout<< "Number of Blocks = "<<N<< " and Number of Threads Per Block = "<<ThreadsPerBlockNeeded<<endl;
-
-			ComputeDistancesKernel<<<N, ThreadsPerBlockNeeded>>>(device_New_Final_List_1D,device_New_Final_List_Index, Dim,device_New_Final_List_Dist_1D, device_dataPointsGPU,device_New_Final_List_Dist_Index);
+			
+			ComputeDistancesKernel<<<N, ThreadsPerBlockNeeded>>>(device_New_Final_List_1D,device_New_Final_List_Index, Dim,device_New_Final_List_Dist_1D, device_dataPointsGPU,device_New_Final_List_Dist_Index, metricID, distanceV1, distanceV2,device_v0,device_v1);
 			gpuErrchk(cudaDeviceSynchronize());	
 			/**
 			 * New_Final_List_Dist_1D is on the host containing device_New_Final_List_Dist_1D
@@ -435,8 +447,7 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 						int par2= New_Final_List[i][it2];
 
 						if (abort ==0) {
-							double dist= New_Final_List_Dist_1D[New_Final_List_Dist_Index[i]+tmpcnt];
-							double dista = sqrt(dist);
+							double dista= New_Final_List_Dist_1D[New_Final_List_Dist_Index[i]+tmpcnt];
 							++tmpcnt;
 
 							if (dista < epsilon) {
@@ -475,13 +486,9 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 					for (int it2 = it+1; it2 < New_Final_List[i].size(); ++it2) {
 						int par2= New_Final_List[i][it2];
 						if (abort ==0) {
-
-							double dist = 0;
-							for (int j = 0; j < Dim; ++j) {
-								dist += pow((dataPoints[par1][j] - dataPoints[par2][j]), 2);
-							}
-
-							double dista = sqrt(dist);
+		
+							double dista = computeDistance (distanceMetric, dataPoints, par1, par2, Dim, distanceV1, distanceV2, filePathOptionalArray, logFile);
+							
 
 							if (dista < epsilon) {
 								logFile << "Found Duplicate Data for Points "<< par1 << " and " << par2 <<endl;; 
@@ -518,5 +525,3 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 	cout<<"------------Ending K-NN Solution------------"<<endl;
 	return;
 }
-
-

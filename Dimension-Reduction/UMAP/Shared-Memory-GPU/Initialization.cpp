@@ -37,7 +37,6 @@ void Initialization (bool randominitializing, double** embedding, ofstream& logF
 			float** graph = new float*[N];
 			for (int i = 0; i < N; ++i) { graph[i] = new float[N]; }	
 
-#pragma omp parallel for
 			for (int i = 0; i < N; ++i){
 				for (int j = 0; j < N; ++j){
 					graph[i][j]=0;
@@ -53,7 +52,6 @@ void Initialization (bool randominitializing, double** embedding, ofstream& logF
 			/**
 			 * Removing the small weights in accordance to https://github.com/lmcinnes/umap/blob/master/umap/umap_.py#L1032
 			 */
-#pragma omp parallel for
 			for (int i = 0; i < N; ++i){			
 				for (int j = 0; j < N; ++j){
 					if (graph[i][j] <  epsilon) continue; 
