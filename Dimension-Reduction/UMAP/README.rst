@@ -115,3 +115,39 @@ An Example of Running the Docker Container
           containername --inputPath /data/inputs --K 15 --sampleRate 0.8 \
           --DimLowSpace 2 --randomInitializing true --outputPath /data/outputs \
           --n_epochs 500 --min_dist 0.001 --distanceMetric euclidean
+          
+===========================
+CUDA Implementation of UMAP
+===========================
+   
+The inputs and outputs to CUDA UMAP code are the same as the serial code explained before. The state-of-the-art CUDA implementation of UMAP has significantly improved the performance of UMAP code. Two hotspots in UMAP execution were parallelized using CUDA directives which are computing KNN and solving for SGD solution. For KNN part, the number of thread blocks are equal to the number of datapoints and the distance computations for each pair of points is performed by each thread of the block. The variable MAXTPB controls the hardward limitation on the number of threads per block, which is by default 1024. If the computations within a block requires more threads, the computations will be carried on CPU instead. Furthermore, if the number of threads per block is very low, the computations will be on CPU too due to the performance benefits. This latter is controlled by the variable MinimumThreads. For SGD part, the number of threads per block is controlled by the variable TPB, which is by default 32. 
+
+ 
+------------------------------
+An Example of Running the code
+------------------------------
+
+.. code:: bash
+
+    ulimit -s unlimited
+    
+    nvcc -I/path to boost directory/boost_1_71_0 -I/Path to eigen3 directory/eigen-3.3.7 \
+         main.cu highDComputes.cpp Initialization.cpp LMOptimization.cpp Metrics.cpp KNN_GPU_Code.cu \
+         -o a.out -larmadillo -L/path to boost directory/boost_1_71_0/stage/lib -lboost_iostreams \
+         -lboost_system -lboost_filesystem -arch=sm_75 -O2 --expt-relaxed-constexpr  
+    
+    time ./a.out --inputPath . --K 15 --sampleRate 0.8 --DimLowSpace 2 \
+         --randomInitializing true --outputPath . --n_epochs 500 --min_dist 0.001 \
+         --distanceMetric euclidean         
+         
+------------------------------------------
+An Example of Running the Docker Container
+------------------------------------------  
+
+.. code:: bash
+
+    docker run --gpus all -v /path/to/data:/data/inputs -v /path/to/outputs:/data/outputs \
+          containername --inputPath /data/inputs --K 15 --sampleRate 0.8 \
+          --DimLowSpace 2 --randomInitializing true --outputPath /data/outputs \
+          --n_epochs 500 --min_dist 0.001 --distanceMetric euclidean
+
