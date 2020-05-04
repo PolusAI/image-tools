@@ -29,14 +29,6 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
-# DEBUG_LEVELV_NUM = 9 
-# logging.addLevelName(DEBUG_LEVELV_NUM, "DEBUGV")
-# def debugv(self, message, *args, **kws):
-#     if self.isEnabledFor(DEBUG_LEVELV_NUM):
-#         # Yes, logger takes its '*args' as 'args'.
-#         self._log(DEBUG_LEVELV_NUM, message, args, **kws) 
-# logging.Logger.debugv = debugv
-
 """ 1. Loading and binning data """
 def is_number(value):
     try:
