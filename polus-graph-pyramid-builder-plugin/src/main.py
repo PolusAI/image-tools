@@ -17,9 +17,6 @@ import time
 # Chunk Scale
 CHUNK_SIZE = 512
 
-# Number of Bins for Each Feature
-# bincount = 200 #MUST BE EVEN NUMBER, cannot be greater than 255
-
 # Number of Ticks on the Axis Graph 
 numticks = 11
 
@@ -39,146 +36,6 @@ logger.setLevel(logging.INFO)
 #         # Yes, logger takes its '*args' as 'args'.
 #         self._log(DEBUG_LEVELV_NUM, message, args, **kws) 
 # logging.Logger.debugv = debugv
-
-#Transforms the DataFrame that Range from a Negative Number to a Positive Number
-def dfneg2pos(data, alpha, datmin, datmax):
-
-    yaxis = []
-    commonratios = []
-    alphas = []
-    for col in data.columns:  
-        small = 0 
-        large = 0
-        posbigger = True
-
-        # Determining which side requires more bins. 
-        if abs(datmax[col]) > abs(datmin[col]):
-            small = abs(datmin[col])
-            large = abs(datmax[col])
-        else:
-            small = abs(datmax[col])
-            large = abs(datmin[col])
-            posbigger = False
-
-        # Determine all the variables to transform the data
-        ratio = ((small*small)/(alpha[col]*large))**(1/(bincount + 1))
-        binssmall = np.floor(abs(1 + np.log(small/alpha[col])/np.log(ratio)))
-        binslarge = np.floor(abs(1 + np.log(large/alpha[col])/np.log(ratio)))
-        zfactor = binssmall/binslarge
-        binssmall = round(bincount/(2 + 1/zfactor), 0)
-        binslarge = binssmall + (bincount - (2*binssmall))
-        small_interval = (small/alpha[col])**(1/binssmall)
-        large_interval = (large/alpha[col])**(1/binslarge)
-            
-        commonratios.append([small_interval, large_interval])
-        alphas.append(alpha[col])
-
-        datacol = data[col].to_numpy()
-        
-        # Each value in the Range falls under one of the following conditions
-        condition1 = np.asarray((datacol > 0) & (datacol < alpha[col])).nonzero()
-        condition2 = np.asarray((datacol > 0) & (datacol == datmax[col])).nonzero()
-        condition3 = np.asarray((datacol > 0) & (datacol >= alpha[col])).nonzero()
-        condition4 = np.asarray((datacol < 0) & (datacol > -1*alpha[col])).nonzero()
-        condition5 = np.asarray((datacol < 0) & (datacol == datmin[col])).nonzero()
-        condition6 = np.asarray((datacol < 0) & (datacol <= -1*alpha[col])).nonzero()
-        condition7 = np.asarray(datacol == 0).nonzero()
-
-        
-        if posbigger == True:
-            yaxis.append(binssmall)
-            logged3 = np.log(datacol[condition3]/alpha[col])/np.log(large_interval) + 1
-            floored3 = np.float64(np.floor(logged3))
-            absolute3 = abs(floored3) + binssmall
-            datacol[condition3] = absolute3
-
-            logged6 = np.log(datacol[condition6]/(-1*alpha[col]))/np.log(small_interval) + 1
-            floored6 = np.float64(np.floor(logged6))
-            absolute6 = -1*abs(floored6) + binssmall
-            datacol[condition6] = absolute6
-
-            datacol[condition1] = 1 + binssmall
-
-            datacol[condition2] = bincount
-
-            datacol[condition4] = -1 + binssmall
-
-            datacol[condition5] = 0
-
-            datacol[condition7] = -1 + binssmall
-
-        else:
-            yaxis.append(binslarge)
-            logged3 = np.log(datacol[condition3]/alpha[col])/np.log(small_interval) + 1
-            floored3 = np.float64(np.floor(logged3))
-            absolute3 = abs(floored3) + binslarge
-            datacol[condition3] = absolute3
-
-            logged6 = np.log(datacol[condition6]/(-1*alpha[col]))/np.log(large_interval) + 1
-            floored6 = np.float64(np.floor(logged6))
-            absolute6 = -1*abs(floored6) + binslarge
-            datacol[condition6] = absolute6
-
-            datacol[condition1] = 1 + binslarge
-
-            datacol[condition2] = bincount
-
-            datacol[condition4] = -1 + binslarge
-
-            datacol[condition5] = 0
-
-            datacol[condition7] = -1 + binslarge
-
-
-    return yaxis, alphas, commonratios, data
-
-
-# Transforms the Data that has a Positive Range
-def dfzero2pos(data, alpha, datmax):
-    alphas = []
-    commonratios = []
-    for col in data.columns:
-        datacol = data[col].to_numpy()
-        condition1 = np.where(datacol < alpha[col])
-        condition2 = np.where(datacol >= alpha[col])
-        alphas.append(alpha[col])
-        commonratio = (datmax[col]/alpha[col])**(1/(bincount - 2))
-        commonratios.append([commonratio])
-
-        logged = np.log(datacol[condition2]/alpha[col])/np.log(commonratio)
-        floored = np.floor(logged + 2)
-        floated = np.float64(floored)
-
-        datacol[condition2] = floated
-        datacol[condition1] = 1
-    
-    return alphas, commonratios, data
-
-    
-    return data
-
-# Transform the Data that has a Negative Range
-def dfneg2zero(data, datmin, alpha):
-    alphas = []
-    commonratios = []
-
-    for col in data.columns:
-        datacol = data[col].to_numpy()
-        condition1 = np.where(datacol > alpha[col])
-        condition2 = np.where(datacol <= alpha[col])
-
-        alphas.append(alpha[col])
-        commonratio = (datmin[col]/alpha[col])**(1/(bincount - 2))
-        commonratios.append([commonratio])
-
-        logged = np.log(datacol[condition2]/alpha[col])/np.log(commonratio)
-        floored = np.floor(logged + 2) 
-        floated = -1*np.float64(floored) + bincount   
-
-        datacol[condition2] = floated
-        datacol[condition1] = -1 + bincount  
-    return alphas, commonratios, data
-
 
 """ 1. Loading and binning data """
 def is_number(value):
@@ -231,10 +88,28 @@ def load_csv(fpath):
 def bin_data_log(data,column_names):
     """ Bin the data
     
-    Data from a pandas Dataframe is binned in two dimensions. Binning is performed by
-    binning data in one column along one axis and another column is binned along the
-    other axis. All combinations of columns are binned without repeats or transposition. 
-    The Bin Width is calculated with the Freedman Diaconis Rule.  
+    Data from a pandas Dataframe is binned in two dimensions in a logarithmic scale. 
+    Binning is performed by binning data in one column along one axis and another column 
+    is binned along theother axis. All combinations of columns are binned without repeats 
+    or transposition. 
+
+    To figure out which bin the data belongs in is solved by using the geometric sequence
+    where:
+    a(n) = a1*(r^(n-1))
+        n = number of bins
+        a1 = first number in range (scale factor)
+        r = common ratio
+        where r (bin width) is calculated by the Freedman Diaconis Rule: 
+            https://en.wikipedia.org/wiki/Freedman–Diaconis_rule
+
+    Every column of data falls into three different categories:
+    1) dfzero2pos: All the numbers in the column are >= 0
+    2) dfneg2zero: All the numbers in the column are <= 0
+    3) dfneg2pos: The numbers in the column are either >=0 or <= 0 
+                    The number of bins, alpha, and ratio, vary to the left and right of the
+                    the y axis based on the range of the negative numbers and range of 
+                    postive numbers, respectively.
+            
     Inputs:
         data - A pandas Dataframe, with nfeats number of columns
         column_names - Names of Dataframe columns
@@ -243,7 +118,160 @@ def bin_data_log(data,column_names):
         bin_feats - A list containing the minimum and maximum values of each column
         linear_index - Numeric value of column index from original csv
     """
+    #Transforms the DataFrame that Range from a Negative Number to a Positive Number
+    def dfneg2pos(data, alpha, datmin, datmax):
 
+        yaxis = [] 
+        commonratios = []
+        alphas = []
+        for col in data.columns:  
+            small = 0 
+            large = 0
+            posbigger = True
+
+            # Determining which side requires more bins. 
+            if abs(datmax[col]) > abs(datmin[col]):
+                # Positive Range is larger
+                small = abs(datmin[col]) 
+                large = abs(datmax[col])
+            else:
+                # Negative Range is larger
+                small = abs(datmax[col])
+                large = abs(datmin[col])
+                posbigger = False
+
+            # Determine all the variables to transform the data
+            # Solving for ratio (r), use equations:
+                # x + y = bincount
+                    # where x is the number of bins used for the smaller range
+                    # where y is the number of bins used for the larger range
+                # small = alpha*(r^(x-1)) --> log(r)[small/alpha] = x -1
+                # large = alpha*(r^(y-1)) --> log(r)[large/alpha] = y - 1
+                # Combining all equations we get the following: 
+            ratio = ((small*large)/(alpha[col]*alpha[col]))**(1/(bincount-2))
+
+            # use ratio to solve for number bins for both the large and small ranges
+            binssmall = np.floor(abs(1 + np.log(small/alpha[col])/np.log(ratio)))
+            binslarge = np.floor(abs(1 + np.log(large/alpha[col])/np.log(ratio)))
+
+            # create a ratio for the numbers of bins for both the ranges
+            zfactor = binssmall/binslarge
+
+            # recalculate the number of bins for both ranges using the zfactor variable
+            binssmall = round(bincount/(2 + 1/zfactor), 0)
+            binslarge = binssmall + (bincount - (2*binssmall))
+
+            # recaulate the ratio value for both sides
+            small_interval = (small/alpha[col])**(1/binssmall)
+            large_interval = (large/alpha[col])**(1/binslarge)
+
+            commonratios.append([small_interval, large_interval])
+            alphas.append(alpha[col])
+
+            datacol = data[col].to_numpy()
+            
+            # Each value in the Range falls under one of the following conditions
+            condition1 = np.asarray((datacol > 0) & (datacol < alpha[col])).nonzero() # Value is positive and is smaller than the first value in the range
+            condition2 = np.asarray((datacol > 0) & (datacol == datmax[col])).nonzero() # Value is positive and is equal to the large value in the range
+            condition3 = np.asarray((datacol > 0) & (datacol >= alpha[col])).nonzero() # Value is positive and is smallest < value < max
+            condition4 = np.asarray((datacol < 0) & (datacol > -1*alpha[col])).nonzero() # Value is negative and is greater than the first value in the range
+            condition5 = np.asarray((datacol < 0) & (datacol == datmin[col])).nonzero() # Value is negative and is equal to the smallest value in the range
+            condition6 = np.asarray((datacol < 0) & (datacol <= -1*alpha[col])).nonzero() # Value is negative and is min < value < largest
+            condition7 = np.asarray(datacol == 0).nonzero()
+
+            
+            if posbigger == True: # if the abs(max) is greater than the abs(min)
+                yaxis.append(binssmall) # where to draw the y axis
+                logged3 = np.log(datacol[condition3]/alpha[col])/np.log(large_interval) + 1 
+                floored3 = np.float64(np.floor(logged3))
+                absolute3 = abs(floored3) + binssmall
+                datacol[condition3] = absolute3 # this is what value transforms to when it meets condition 3
+
+                logged6 = np.log(datacol[condition6]/(-1*alpha[col]))/np.log(small_interval) + 1 
+                floored6 = np.float64(np.floor(logged6))
+                absolute6 = -1*abs(floored6) + binssmall
+                datacol[condition6] = absolute6 # this is what value transforms to when it meets condition 6
+
+                datacol[condition1] = 1 + binssmall
+
+                datacol[condition2] = bincount
+
+                datacol[condition4] = -1 + binssmall
+
+                datacol[condition5] = 0
+
+                datacol[condition7] = -1 + binssmall
+
+            else:
+                yaxis.append(binslarge) # where to draw the y axis
+                logged3 = np.log(datacol[condition3]/alpha[col])/np.log(small_interval) + 1 # what condition3 is equal to
+                floored3 = np.float64(np.floor(logged3))
+                absolute3 = abs(floored3) + binslarge
+                datacol[condition3] = absolute3 # this is what value transforms to when it meets condition 3
+
+                logged6 = np.log(datacol[condition6]/(-1*alpha[col]))/np.log(large_interval) + 1 # 
+                floored6 = np.float64(np.floor(logged6))
+                absolute6 = -1*abs(floored6) + binslarge
+                datacol[condition6] = absolute6 # this is what value transforms to when it meets condition 6
+
+                datacol[condition1] = 1 + binslarge
+
+                datacol[condition2] = bincount
+
+                datacol[condition4] = -1 + binslarge
+
+                datacol[condition5] = 0
+
+                datacol[condition7] = -1 + binslarge
+
+
+        return yaxis, alphas, commonratios, data
+
+
+    # Transforms the Data that has a Positive Range
+    def dfzero2pos(data, alpha, datmax):
+        alphas = []
+        commonratios = []
+        for col in data.columns: 
+            datacol = data[col].to_numpy()
+            # each value in column falls under two conditions 
+            condition1 = np.where(datacol < alpha[col]) # smaller than the first value in range
+            condition2 = np.where(datacol >= alpha[col]) # greater than first value in range
+            alphas.append(alpha[col])
+            commonratio = (datmax[col]/alpha[col])**(1/(bincount - 2))
+            commonratios.append([commonratio])
+
+            logged = np.log(datacol[condition2]/alpha[col])/np.log(commonratio)
+            floored = np.floor(logged + 2)
+            floated = np.float64(floored)  # this is what value is transformed to when it meets condition 2
+
+            datacol[condition2] = floated
+            datacol[condition1] = 1 # this is what value is transformed to when it meets condition 1
+        
+        return alphas, commonratios, data
+
+    # Transform the Data that has a Negative Range
+    def dfneg2zero(data, datmin, alpha):
+        alphas = []
+        commonratios = []
+
+        for col in data.columns:
+            datacol = data[col].to_numpy()
+            # each value in column falls under two conditions 
+            condition1 = np.where(datacol > alpha[col]) # greater than the first value in range
+            condition2 = np.where(datacol <= alpha[col]) # smaller thsn the first value in range
+
+            alphas.append(alpha[col])
+            commonratio = (datmin[col]/alpha[col])**(1/(bincount - 2))
+            commonratios.append([commonratio])
+
+            logged = np.log(datacol[condition2]/alpha[col])/np.log(commonratio)
+            floored = np.floor(logged + 2) 
+            floated = -1*np.float64(floored) + bincount  # this is what value is transformed to when it meets condition 2
+
+            datacol[condition2] = floated
+            datacol[condition1] = -1 + bincount  # this is what value is transformed to when it meets condition 1  
+        return alphas, commonratios, data
 
     linear_index = []
     yaxis = [0]
@@ -260,7 +288,8 @@ def bin_data_log(data,column_names):
                  'max': data.max(),
                  'twenty5': data.quantile(0.25),
                  'seventy5': data.quantile(0.75),
-                 'alpha': (2*(data.quantile(0.75) - data.quantile(0.25)))/(data.shape[0]**(1/3))} # if alpha equals zero, then bin width is zero.
+                 'alpha': (2*(data.quantile(0.75) - data.quantile(0.25)))/(data.shape[0]**(1/3))} 
+                    # if alpha (from Freedman Diaconis) equals zero, then bin width is zero.
 
     nfeats = bin_stats['size'][1] 
     datalen = bin_stats['size'][0]
@@ -412,7 +441,7 @@ def bin_data(data,column_names):
     # Transform data into bin positions for fast binning
     data = ((data - bin_stats['min'])/column_bin_size).apply(np.floor)
     data_ind = pandas.notnull(data)  # Handle NaN values
-    data[~data_ind] = bincount + 55          # Handle NaN values
+    data[~data_ind] =  255          # Handle NaN values
     data = data.astype(np.uint16) # cast to save memory
     data[data==bincount] = bincount - 1         # in case of numerical precision issues
 
@@ -779,6 +808,7 @@ def gen_plot(col1,
         else:
             ax.axhline(y=axiszero[r] + 0.5)
     
+    # UNCOMMENT TO USE, HELPS TO DEBUG.
     # textlist = []
     # if len(ax.texts) == 0:
     #     for i in range(0, bincount):  
