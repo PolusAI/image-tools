@@ -1,6 +1,6 @@
 {
     "name": "Feature Extraction",
-    "version": "0.6.8",
+    "version": "0.7.1",
     "title": "Feature Extraction",
     "description": "Extract shape and intensity features from images.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,12 +8,12 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-extraction-plugin:0.6.8",
+    "containerId": "labshare/polus-feature-extraction-plugin:0.7.1",
     "inputs": [      
       {
         "name": "segDir",
         "type": "collection",
-        "description": "Segmented image collection",
+        "description": "Labeled image collection",
         "required": "true"
       },
       {
@@ -21,18 +21,6 @@
         "type": "collection",
         "description": "Intensity image collection",
         "required": "false"
-      },
-      {
-            "name": "labelimage",
-            "type": "enum",
-            "options": {
-                "values": [
-                    "Yes",
-                    "No"
-                ]
-            },
-            "required": "true",
-            "description": "labelimage : Whether images need to be labeled or not"
       },
       {
         "name": "pixelDistance",
@@ -100,16 +88,10 @@
             "description": "csvfile : singlecsv for saving values in one csv file and separate csv to save values for each image in separate csv file"
       },
       {
-            "name": "units",
-            "type": "enum",
-            "options": {
-                "values": [
-                    "pixels",
-                    "others"
-                ]
-            },
-            "required": "true",
-            "description": "units : metric to define the features extracted"
+	"name": "embeddedpixelsize",
+        "type": "boolean",
+        "description": "Consider embedded pixel sizes if present in metadata",
+        "required": "false"
       },
       {
         "name": "unitLength",
@@ -135,18 +117,13 @@
     "ui": [
       {
         "key": "inputs.segDir",
-        "title": "Segment image collection",
-        "description": "Segmented image collection"
+        "title": "Label image collection",
+        "description": "Labeled image collection"
       },
       {
         "key": "inputs.intDir",
         "title": "Intensity image collection",
         "description": "Intensity image collection"
-      },
-      {
-        "key": "inputs.labelimage",
-        "title": "Label the images",
-        "description": "Labeled image"
       },
       {
         "key": "inputs.pixelDistance",
@@ -164,9 +141,9 @@
         "description": "Save csv file separately for each image or one csv for all images"
       },      
       {
-        "key": "inputs.units",
-        "title": "Units",
-        "description": "Metric to define the features extracted"
+        "key": "inputs.embeddedpixelsize",
+        "title": "Embedded pixel size",
+        "description": "If selected, considers the embedded pixel size in the metadata"
       },
       {
         "key": "inputs.unitLength",

@@ -16,14 +16,12 @@ def main():
                         help='Features to calculate', required=True)
     parser.add_argument('--csvfile', dest='csvfile', type=str,
                         help='Save csv as separate or single file', required=True)
-    parser.add_argument('--units', dest='units', type=str,
-                        help='Units for the features', required=True)
-    parser.add_argument('--unitLength', dest='unitLength', type=str,
-                        help='Length of the unit', required= False)
+    parser.add_argument('--embeddedpixelsize', dest='embeddedpixelsize', type=str,
+                        help='Embedded pixel size if present', required=False)
     parser.add_argument('--pixelsPerunit', dest='pixelsPerunit', type=float,
                         help='Pixels per unit', required= False)
-    parser.add_argument('--labelimage', dest='labelimage', type=str,
-                        help='Input image need to be labeled or not', required=True)
+    parser.add_argument('--unitLength', dest='unitLength', type=str,
+                        help='Units of length', required= False)
     parser.add_argument('--intDir', dest='intDir', type=str,
                         help='Intensity image collection', required=False)
     parser.add_argument('--pixelDistance', dest='pixelDistance', type=int,
@@ -39,14 +37,12 @@ def main():
     logger.info('features = {}'.format(features))
     csvfile = args.csvfile#csvfile
     logger.info('csvfile = {}'.format(csvfile))
-    units = args.units#units
-    logger.info('units = {}'.format(units))
-    unitLength = args.unitLength#length of unit
-    logger.info('length of unit = {}'.format(unitLength))
+    embeddedpixelsize = args.embeddedpixelsize#units
+    logger.info('embeddedpixelsize = {}'.format(embeddedpixelsize))
+    unitLength = args.unitLength#pixels per unit
+    logger.info('unitLength = {}'.format(unitLength))
     pixelsPerunit = args.pixelsPerunit#pixels per unit
     logger.info('pixels per unit = {}'.format(pixelsPerunit))
-    labelimage = args.labelimage#label image
-    logger.info('labelimage = {}'.format(labelimage))
     intDir = args.intDir#intensity image
     logger.info('intDir = {}'.format(intDir))
     pixelDistance = args.pixelDistance#pixel distance to calculate neighbors
@@ -58,7 +54,7 @@ def main():
     logger.info("Started")
     image_convert = ConvertImage(segDir,intDir)
     
-    df,filenames= image_convert.convert_tiled_tiff(features, csvfile, labelimage, outDir, pixelDistance, units, pixelsPerunit, unitLength)
+    df,filenames= image_convert.convert_tiled_tiff(features, csvfile, outDir, pixelDistance, embeddedpixelsize, unitLength, pixelsPerunit)
     #call csv function to save as a single file
     if csvfile == 'singlecsv':
         csv_file= Df_Csv_single(df, outDir)

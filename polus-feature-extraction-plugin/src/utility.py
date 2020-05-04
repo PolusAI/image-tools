@@ -41,12 +41,23 @@ class ConvertImage(object):
         self.intensity_dir = intDir #intensity image
         
         
-    def labeling(self, seg_file):
-        """Label the object in the image."""
-        all_labels = label(seg_file)
-        return all_labels
+    def read(self, img_file):
+        """Read the image using BioReader."""
+        br_int = BioReader(img_file)
+        image_bfio = br_int.read_image(C=[0])
+        image_squeeze= np.squeeze(image_bfio)
+        img_bfio_unit = br_int.physical_size_y()
+        img_unit = img_bfio_unit[1]
+        return image_squeeze, img_unit
+    
+    def list_file(self,img_directory):
+        """List the .ome.tif files in the directory."""
+        list_of_files = [os.path.join(dirpath, seg_filename)
+        for dirpath, dirnames, files in os.walk(img_directory)
+        for seg_filename in fnmatch.filter(files, '*.ome.tif')]
+        return list_of_files
         
-    def convert_tiled_tiff(self,features,csvfile,labelimage,outDir,pixelDistance,units, pixelsPerunit,unitLength):
+    def convert_tiled_tiff(self,features,csvfile,outDir,pixelDistance,embeddedpixelsize,unitLength,pixelsPerunit):
         """ Read .ome.tif files."""
         df_feature = pd.DataFrame([])
         df = pd.DataFrame([])
@@ -57,92 +68,33 @@ class ConvertImage(object):
             jutil.start_vm(class_path=bioformats.JARS)
             
             index=0#use index for knowing the images processed
+
+            #Get list of .ome.tif files in the directory including sub folders for segmented images
+            configfiles = self.list_file(self.segment_dir)
+            if not configfiles:
+                raise ValueError('No segment image .ome.tif files found.')
             
-            #If intensity image is not passed as a parameter
-            if self.intensity_dir is None:
-                #Get list of .ome.tif files in the directory including sub folders for segmented images
-                configfiles = [os.path.join(dirpath, seg_file_name)
-                for dirpath, dirnames, files in os.walk(self.segment_dir)
-                for seg_file_name in fnmatch.filter(files, '*.ome.tif')]
-                if not configfiles:
-                    raise ValueError('No segment image .ome.tif files found.')
-                
-                for segfile in configfiles:#run analysis for each segmented image in the list
-                    seg_file=os.path.normpath(segfile)
-                    #segfilename = seg_file.split('/')
-                    segfilename = os.path.split(seg_file)#split to get only the filename
-                    seg_file_names1 = segfilename[-1]
-                    
-                    #Read the image using bioreader from bfio
-                    br_seg = BioReader(seg_file)
-                    segment_bfio = br_seg.read_image()
-                    seg_invert = np.squeeze(segment_bfio)#squeeze the 5D array
-                    seg_ravel=np.ravel(seg_invert)#flatten the array
-                    seg_ravel1 = seg_ravel / 255
-                    seg_ravel_bool = np.array_equal(seg_ravel1, seg_ravel1.astype(bool))#Check whether the array contains only 0's and 1's
-                    if seg_ravel_bool == False:
-                        raise ValueError('Segmented image should be black/white image')
-                    
-                    #Invert image
-                    if np.bincount(seg_ravel).argmax()==0:
-                        seg_file = (seg_invert==0)
-                    else:
-                        seg_file = seg_invert
-                        
-                    #Label the images
-                    if labelimage == 'Yes':
-                        logger.info('Labeling the image ' + seg_file_names1)    
-                        label_image = self.labeling(seg_file)#call labeling function to label the objects in the segmented images
-                        logger.info('Finished labeling the image ' + seg_file_names1) 
-                    else:
-                        label_image = seg_file
-                    
-                    logger.info('Starting extraction of features from ' + seg_file_names1) 
-                    #Call the feature_extraction function in Analysis class
-                    analysis = Analysis(label_image,features,seg_file_names1, csvfile, labelimage, outDir,pixelDistance,units, pixelsPerunit,unitLength,intensity_image)
-                    df = analysis.feature_extraction()
-                    logger.info('Completed feature extraction for ' + seg_file_names1) 
-                    
-                    #Check whether csvfile is csvone to save the features extracted from all the images in same csv file
-                    if csvfile == 'separatecsv':
-                        df_feature = df#assign the dataframe to save as separate file                    
-                    else:
-                        df_feature = df_feature.append(df)#append the dataframe to save all in one csv file
-                    index+=1
-                    print("Number of images processed-",index)
-                    
-            #If intensity image is passed as a parameter        
-            else:
-                #Get list of .ome.tif files in the directory including sub folders for segmented images
-                configfiles = [os.path.join(dirpath, seg_filename)
-                for dirpath, dirnames, files in os.walk(self.segment_dir)
-                for seg_filename in fnmatch.filter(files, '*.ome.tif')]
-                
-                if not configfiles:
-                    raise ValueError('No segment image.ome.tif files found.')
-                
-                #Get list of .ome.tif files in the directory including sub folders for intensity images
-                configfiles_int = [os.path.join(dirpath, seg_filename)
-                for dirpath, dirnames, files in os.walk(self.intensity_dir)
-                for seg_filename in fnmatch.filter(files, '*.ome.tif')]
-                
+            #Get list of .ome.tif files in the directory including sub folders for intensity images
+            if self.intensity_dir:
+                configfiles_int = self.list_file(self.intensity_dir)
                 if not configfiles_int:
                     raise ValueError('No intensity image .ome.tif files found.')
+            
+            for segfile in configfiles:#run analysis for each segmented image in the list
+                seg_file=os.path.normpath(segfile)
+                segfilename = os.path.split(seg_file)#split to get only the filename
+                seg_file_names1 = segfilename[-1]
                 
-                for segfile in configfiles:
-                    seg_file=os.path.normpath(segfile)
-                    #segfilename = seg_file.split('/')
-                    segfilename = os.path.split(seg_file)#split to get only the filename
-                    seg_file_names1 = segfilename[-1]
-                    
+                #Read the image using bioreader from bfio
+                label_image,img_emb_unit = self.read(seg_file)
+                               
+                if self.intensity_dir:
                     #for seg_file_names1 in seg_filenames1:#run analysis for each segmented image in the list
                     intensity =difflib.get_close_matches(seg_file_names1, configfiles_int,n=1, cutoff=0.1)#match the filename in segmented image to the  list of intensity image filenames to match the files
                     intensity_file = str(intensity[0])#get the filename of intensity image that has closest match
                     
                     #Read the intensity image using bioreader from bfio
-                    br_int = BioReader(intensity_file)
-                    intensity_bfio = br_int.read_image(C=[0])
-                    intensity_image= np.squeeze(intensity_bfio)
+                    intensity_image,img_emb_unit = self.read(intensity_file)
                     int_ravel=np.ravel(intensity_image)
                     int_ravel1 = int_ravel / 255
                     int_ravel_bool = np.array_equal(int_ravel1, int_ravel1.astype(bool))
@@ -150,42 +102,20 @@ class ConvertImage(object):
                     if int_ravel_bool == True or countzero == True:
                         logger.warning('Intensity image ' + intensity_file + ' does not have any content' )
                         continue
-                    
-                    #Read the segmented image using bioreader from bfio
-                    br_seg= BioReader(seg_file)
-                    segment_bfio = br_seg.read_image()
-                    seg_invert = np.squeeze(segment_bfio)
-                    seg_ravel=np.ravel(seg_invert)
-                    seg_ravel1 = seg_ravel / 255
-                    seg_ravel_bool = np.array_equal(seg_ravel1, seg_ravel1.astype(bool))
-                    if seg_ravel_bool == False:
-                        raise ValueError('Segmented image should be black/white image')
-                    #Invert image
-                    if np.bincount(seg_ravel).argmax()==0:
-                        seg_file = (seg_invert==0)
-                    else:
-                        seg_file = seg_invert
-                        
-                    #Label image
-                    if labelimage == 'Yes':
-                        logger.info('Labeling the image ' + seg_file_names1)    
-                        label_image = self.labeling(seg_file)#labels the objects
-                        logger.info('Finished labeling the image ' + seg_file_names1)    
-                    else:
-                        label_image = seg_file
-                        
-                    logger.info('Starting extraction of features from ' + seg_file_names1)               
-                    #Call the feature_extraction function in Analysis class
-                    analysis = Analysis(label_image,features,seg_file_names1, csvfile, labelimage, outDir, pixelDistance, units, pixelsPerunit,unitLength, intensity_image)
-                    df = analysis.feature_extraction()
-                    logger.info('Completed feature extraction for ' + seg_file_names1) 
-                    #Check whether csvfile is csvone to save the features extracted from all the images in same csv file
-                    if csvfile == 'separatecsv':
-                        df_feature = df
-                    else:
-                        df_feature = df_feature.append(df)
-                    index+=1
-                    print("Number of images processed-",index)
+     
+                logger.info('Starting extraction of features from ' + seg_file_names1)               
+                #Call the feature_extraction function in Analysis class
+                analysis = Analysis(label_image,features,seg_file_names1, csvfile,outDir, pixelDistance, embeddedpixelsize, img_emb_unit, unitLength, pixelsPerunit, intensity_image)
+                df = analysis.feature_extraction()
+                logger.info('Completed feature extraction for ' + seg_file_names1) 
+                
+                #Check whether csvfile is csvone to save the features extracted from all the images in same csv file
+                if csvfile == 'separatecsv':
+                    df_feature = df
+                else:
+                    df_feature = df_feature.append(df)
+                index+=1
+                print("Number of images processed-",index)
     
         finally:
             logger.info('Closing the javabridge')
@@ -203,15 +133,18 @@ class Analysis(ConvertImage):
         thatastop: A constant value to set the ending angle range for calculting feret diameter.
         pixeldistance: An integer value for distance between pixels to calculate the neighbors touching the object.
         features: A string indicating the feature to be extracted.
-        csv_file: Option to save the csv file.
+        csvfile: Option to save the csv file.
         output_dir: Path to save csv file.
         intensity_image: Intensity image array.
         label_image: Labeled image array.
         filenames: Filename of the segmented image.
+        embeddedpixelsize: unit of length in the metadata
+        unitlength: unit of length conversion metric
+        pixelsperunit: pixels per unit value for metric mentioned in unitlength
    
     """
     
-    def __init__(self,label_image,features, seg_file_names1, csvfile, labelimage, outDir, pixelDistance, units, pixelsPerunit, unitLength,intensity_image=None):
+    def __init__(self,label_image,features, seg_file_names1, csvfile,outDir, pixelDistance, embeddedpixelsize,img_emb_unit, unitLength,pixelsPerunit,intensity_image=None):
         """Inits Analysis with boxsize, thetastart, thetastop, pixel distance, csvfile, output directory."""
         self.objneighbors = []
         self.numneighbors = []
@@ -236,15 +169,15 @@ class Analysis(ConvertImage):
             self.pixeldistance = pixelDistance
         self.feature = features# list of features to calculate
         self.csv_file = csvfile#save the features(as single file for all images or 1 file for each image) in csvfile
-        self.labelimage = labelimage
         self.output_dir = outDir#directory to save output
         self.label_image = label_image#assign labeled image
         self.intensity_image = intensity_image#assign intensity image
         del label_image,intensity_image
         self.filenames = seg_file_names1#assign filenames
-        self.units  = units
-        self.pixelsPerunit = pixelsPerunit
-        self.unitLength = unitLength
+        self.embeddedpixelsize  = embeddedpixelsize#If true, get unit of length from metadata
+        self.emb_unit = img_emb_unit#unit of length from metadata
+        self.pixelsPerunit = pixelsPerunit#pixels per unit for the metric mentioned in unitlength
+        self.unitLength = unitLength# unit of length for metric conversion
         
     def box_border_search(self, label_image, boxsize):
         """Get perimeter pixels for calculating neighbors and feret diameter."""
@@ -678,10 +611,9 @@ class Analysis(ConvertImage):
        """Calculate shape and intensity based features.""" 
         
        def area(seg_img,units,*args): #label_image,intensity_image,units)
-
             """Calculate area."""
             data_dict1 = [region.area for region in regions]
-            if units == 'others':
+            if self.unitLength and not self.embeddedpixelsize:
                 data_dict = [dt_pixel/self.pixelsPerunit**2 for dt_pixel in data_dict1]
             else:
                 data_dict = data_dict1
@@ -690,7 +622,7 @@ class Analysis(ConvertImage):
        def perimeter(seg_img,units,*args):
             """Calculate perimeter."""
             data_dict1 = [region.perimeter for region in regions]
-            if units  == 'others':
+            if self.unitLength and not self.embeddedpixelsize:
                 data_dict = [dt_pixel/self.pixelsPerunit for dt_pixel in data_dict1]
             else:
                 data_dict = data_dict1
@@ -704,7 +636,7 @@ class Analysis(ConvertImage):
        def convex_area(seg_img,units,*args):
             """Calculate convex_area."""
             data_dict1 = [region.convex_area for region in regions]
-            if units  == 'others':
+            if self.unitLength and not self.embeddedpixelsize:
                 data_dict = [dt_pixel/self.pixelsPerunit**2 for dt_pixel in data_dict1]
             else:
                 data_dict = data_dict1
@@ -732,7 +664,7 @@ class Analysis(ConvertImage):
        def equivalent_diameter(seg_img,units,*args):
             """Calculate equivalent_diameter."""
             data_dict1 = [region.equivalent_diameter for region in regions]
-            if units  == 'others':
+            if self.unitLength and not self.embeddedpixelsize:
                 data_dict = [dt_pixel/self.pixelsPerunit for dt_pixel in data_dict1]
             else:
                 data_dict = data_dict1
@@ -746,7 +678,7 @@ class Analysis(ConvertImage):
        def major_axis_length(seg_img,units,*args):
             """Calculate major_axis_length."""
             data_dict1 = [region.major_axis_length for region in regions]
-            if units  == 'others':
+            if self.unitLength and not self.embeddedpixelsize:
                 data_dict = [dt_pixel/self.pixelsPerunit for dt_pixel in data_dict1]
             else:
                 data_dict = data_dict1
@@ -755,7 +687,7 @@ class Analysis(ConvertImage):
        def minor_axis_length(seg_img,units,*args):
             """Calculate minor_axis_length."""
             data_dict1 = [region.minor_axis_length for region in regions]
-            if units == 'others':
+            if self.unitLength and not self.embeddedpixelsize:
                 data_dict = [dt_pixel/self.pixelsPerunit for dt_pixel in data_dict1]
             else:
                 data_dict = data_dict1
@@ -839,7 +771,7 @@ class Analysis(ConvertImage):
             edges= self.box_border_search(seg_img, self.boxsize)
             feretdiam = self.feret_diameter(edges,self.thetastart,self.thetastop)
             maxferet1 = [np.max(feret) for feret in feretdiam]
-            if units == 'others':
+            if self.unitLength and not self.embeddedpixelsize:
                 maxferet = [dt_pixel/self.pixelsPerunit for dt_pixel in maxferet1]
             else:
                 maxferet = maxferet1
@@ -850,47 +782,42 @@ class Analysis(ConvertImage):
             edges= self.box_border_search(seg_img, self.boxsize)
             feretdiam = self.feret_diameter(edges,self.thetastart,self.thetastop)
             minferet1 = [np.min(feret) for feret in feretdiam]
-            if units == 'others':
+            if self.unitLength and not self.embeddedpixelsize:
                 minferet = [dt_pixel/self.pixelsPerunit for dt_pixel in minferet1]
             else:
                 minferet = minferet1
             return minferet
         
+       def poly_hex_score(seg_img,units):
+           """Calculate polygonality and hexagonality score"""
+           poly_area = area(seg_img,units)
+           poly_peri = perimeter(seg_img,units)
+           poly_neighbor = neighbors(seg_img)
+           poly_solidity = solidity(seg_img)
+           poly_maxferet = maxferet(seg_img,units)
+           poly_minferet = minferet(seg_img,units)
+           poly_hex= [self.polygonality_hexagonality(area_metric, perimeter_metric, int(neighbor_metric), solidity_metric, maxferet_metric, minferet_metric) for area_metric, perimeter_metric, neighbor_metric, solidity_metric, maxferet_metric, minferet_metric in zip(poly_area, poly_peri, poly_neighbor, poly_solidity, poly_maxferet, poly_minferet)]
+           return poly_hex
+           
+        
        def polygonality_score(seg_img,units,*args):
             """Calculate polygonality score."""
-            poly_area = area(seg_img,units)
-            poly_peri = perimeter(seg_img,units)
-            poly_neighbor = neighbors(seg_img)
-            poly_solidity = solidity(seg_img)
-            poly_maxferet = maxferet(seg_img,units)
-            poly_minferet = minferet(seg_img,units)
-            poly_hex= [self.polygonality_hexagonality(area_metric, perimeter_metric, int(neighbor_metric), solidity_metric, maxferet_metric, minferet_metric) for area_metric, perimeter_metric, neighbor_metric, solidity_metric, maxferet_metric, minferet_metric in zip(poly_area, poly_peri, poly_neighbor, poly_solidity, poly_maxferet, poly_minferet)]
+            poly_hex = poly_hex_score(seg_img,units)
             polygonality_score = [poly[0] for poly in poly_hex]
             return polygonality_score
         
        def hexagonality_score(seg_img,units,*args):
             """Calculate hexagonality score."""
-            poly_area = area(seg_img,units)
-            poly_peri = perimeter(seg_img,units)
-            poly_neighbor = neighbors(seg_img)
-            poly_solidity = solidity(seg_img)
-            poly_maxferet = maxferet(seg_img,units)
-            poly_minferet = minferet(seg_img,units)
-            poly_hex= [self.polygonality_hexagonality(area_metric, perimeter_metric, int(neighbor_metric), solidity_metric, maxferet_metric, minferet_metric) for area_metric, perimeter_metric, neighbor_metric, solidity_metric, maxferet_metric, minferet_metric in zip(poly_area, poly_peri, poly_neighbor, poly_solidity, poly_maxferet, poly_minferet)]
+            poly_hex = poly_hex_score(seg_img,units)
             hexagonality_score = [poly[1] for poly in poly_hex]
             return hexagonality_score
         
        def hexagonality_sd(seg_img,units,*args):
             """Calculate hexagonality standard deviation."""
-            poly_area = area(seg_img,units)#calculate area
-            poly_peri = perimeter(seg_img,units)#calculate perimeter
-            poly_neighbor = neighbors(seg_img)#calculate neighbors
-            poly_solidity = solidity(seg_img)#calculate solidity
-            poly_maxferet = maxferet(seg_img,units)#calculate maxferet
-            poly_minferet = minferet(seg_img,units)#calculate minferet
-            poly_hex= [self.polygonality_hexagonality(area_metric, perimeter_metric, int(neighbor_metric), solidity_metric, maxferet_metric, minferet_metric) for area_metric, perimeter_metric, neighbor_metric, solidity_metric, maxferet_metric, minferet_metric in zip(poly_area, poly_peri, poly_neighbor, poly_solidity, poly_maxferet, poly_minferet)]
+            poly_hex = poly_hex_score(seg_img,units)
             hexagonality_sd = [poly[2] for poly in poly_hex]
             return hexagonality_sd
+        
         
        def all(seg_img,units,int_img):
             """Calculate all features."""
@@ -910,10 +837,10 @@ class Analysis(ConvertImage):
             all_major_axis_length = major_axis_length(seg_img,units)#calculate major axis length
             all_minor_axis_length = minor_axis_length(seg_img,units)#calculate minor axis length
             all_solidity = solidity(seg_img)#calculate solidity
-            poly_hex= [self.polygonality_hexagonality(area_metric, perimeter_metric, int(neighbor_metric), solidity_metric, maxferet_metric, minferet_metric) for area_metric, perimeter_metric, neighbor_metric, solidity_metric, maxferet_metric, minferet_metric in zip(all_area, all_peri, all_neighbor, all_solidity, all_maxferet, all_minferet)]
+            poly_hex=  poly_hex_score(seg_img,units)
             all_polygonality_score = [poly[0] for poly in poly_hex]#calculate polygonality_score
             all_hexagonality_score = [poly[1] for poly in poly_hex]#calculate hexagonality_score
-            all_hexagonality_sd = [poly[2] for poly in poly_hex]#calculate hexagonality standarddeviation   
+            all_hexagonality_sd = [poly[2] for poly in poly_hex]#calculate hexagonality standarddeviation  
             all_mean_intensity =  mean_intensity(seg_img,int_img)#calculate mean intensity
             all_max_intensity = max_intensity(seg_img,int_img)#calculate maximum intensity value
             all_min_intensity = min_intensity(seg_img,int_img)#calculate minimum intensity value
@@ -964,15 +891,11 @@ class Analysis(ConvertImage):
            raise ValueError('Select features for extraction.')
            
        for each_feature in self.feature:
-           if self.labelimage == 'Yes':
-               label = [r.label for r in regions]#get labels list for all regions
-               label_nt_touching = [nt_border.label for nt_border in regions1]
-           else:
-               label1 = [r.label for r in regions]
-               label = [lb/256 for lb in label1]
-               label_nt = [nt_border.label for nt_border in regions1]
-               label_nt_touching = [label_value/256 for label_value in label_nt]
-               
+           label1 = [r.label for r in regions]
+           label = [lb/256 for lb in label1]
+           label_nt = [nt_border.label for nt_border in regions1]
+           label_nt_touching = [label_value/256 for label_value in label_nt]
+           
            #Find whether the object is touching border or not 
            label_yes = 'Yes'
            label_no = 'No'
@@ -982,37 +905,33 @@ class Analysis(ConvertImage):
                    border_cells.append(label_no)
                else:
                    border_cells.append(label_yes)
-           #Check whether the unit length and pixels per unit contain values when selected other units option
-           if self.units =='others':
-               if not self.unitLength:
-                    raise ValueError('Enter length of unit value.')
+           #Check whether the pixels per unit contain values when embeddedpixelsize is not required and metric for unitlength is entered
+           if self.unitLength and not self.embeddedpixelsize:
                if not self.pixelsPerunit:
-                    raise ValueError('Enter pixels per unit value.')             
-           
+                   raise ValueError('Enter pixels per unit value.')             
 
-           feature_value = FEAT[each_feature](self.label_image,self.units,self.intensity_image)#dynamically call the function based on the features required
+           feature_value = FEAT[each_feature](self.label_image,self.unitLength,self.intensity_image)#dynamically call the function based on the features required
             
            #get all features
            if each_feature  == 'all':
                df=pd.DataFrame(feature_value)#create dataframe for all features
                df = df.T#transpose
-               if self.units  =='pixels':
-                   df.columns =['Area-%s'%self.units ,'Centroid row','Centroid column','Convex area-%s'%self.units,'Eccentricity','Equivalent diameter-%s'%self.units ,'Euler number','Hexagonality score','Hexagonality sd','Kurtosis','Major axis length-%s'%self.units ,'Maxferet-%s'%self.units ,'Maximum intensity','Mean intensity','Median','Minimum intensity','Minferet-%s'%self.units ,'Minor axis length-%s'%self.units ,'Mode','Neighbors','Orientation','Perimeter-%s'%self.units ,'Polygonality score','Standard deviation','Skewness','Solidity']
-               else:
-                   df.columns =['Area-%s2'%self.unitLength,'Centroid row','Centroid column','Convex area-%s2'%self.unitLength,'Eccentricity','Equivalent diameter-%s'%self.unitLength,'Euler number','Hexagonality score','Hexagonality sd','Kurtosis','Major axis length-%s'%self.unitLength,'Maxferet-%s'%self.unitLength,'Maximum intensity','Mean intensity','Median','Minimum intensity','Minferet-%s'%self.unitLength,'Minor axis length-%s'%self.unitLength,'Mode','Neighbors','Orientation','Perimeter-%s'%self.unitLength,'Polygonality score','Standard deviation','Skewness','Solidity']
-        
+               if self.embeddedpixelsize:#if unit in metadata is considered
+                   df.columns =['Area-%s'%self.emb_unit,'Centroid row','Centroid column','Convex area-%s'%self.emb_unit,'Eccentricity','Equivalent diameter-%s'%self.emb_unit,'Euler number','Hexagonality score','Hexagonality sd','Kurtosis','Major axis length-%s'%self.emb_unit,'Maxferet-%s'%self.emb_unit,'Maximum intensity','Mean intensity','Median','Minimum intensity','Minferet-%s'%self.emb_unit,'Minor axis length-%s'%self.emb_unit,'Mode','Neighbors','Orientation','Perimeter-%s'%self.emb_unit,'Polygonality score','Standard deviation','Skewness','Solidity']
+               elif self.unitLength and not self.embeddedpixelsize:#if unitlength metric is considered
+                   df.columns =['Area-%s^2'%self.unitLength,'Centroid row','Centroid column','Convex area-%s^2'%self.unitLength,'Eccentricity','Equivalent diameter-%s'%self.unitLength,'Euler number','Hexagonality score','Hexagonality sd','Kurtosis','Major axis length-%s'%self.unitLength,'Maxferet-%s'%self.unitLength,'Maximum intensity','Mean intensity','Median','Minimum intensity','Minferet-%s'%self.unitLength,'Minor axis length-%s'%self.unitLength,'Mode','Neighbors','Orientation','Perimeter-%s'%self.unitLength,'Polygonality score','Standard deviation','Skewness','Solidity']
+               else:#unitsin pixels
+                   df.columns =['Area-pixels','Centroid row','Centroid column','Convex area-pixels','Eccentricity','Equivalent diameter-pixels','Euler number','Hexagonality score','Hexagonality sd','Kurtosis','Major axis length-pixels','Maxferet-pixels','Maximum intensity','Mean intensity','Median','Minimum intensity','Minferet-pixels','Minor axis length-pixels','Mode','Neighbors','Orientation','Perimeter-pixels','Polygonality score','Standard deviation','Skewness','Solidity']
+           
            else:    
                df = pd.DataFrame({each_feature: feature_value})#create dataframe for features selected
-               if self.units  =='pixels':
-                   if 'Area'or'Convex area' in df.columns:
-                       df.rename({"area": "Area-%s"%self.units , "convex_area": "Convex area-%s"%self.units },axis='columns',inplace =True)
-                   if 'Equivalent diameter' or 'Major axis length' or 'Maxferet' or 'Minor axis length' or 'Minferet' or 'Perimeter' in df.columns:
-                       df.rename({"equivalent_diameter": "Equivalent diameter-%s"%self.units, "major_axis_length": "Major axis length-%s"%self.units, "minor_axis_length": "Minor axis length-%s"%self.units,"maxferet": "Maxferet-%s"%self.units, "minferet": "Minferet-%s"%self.units,"perimeter": "Perimeter-%s"%self.units},axis='columns',inplace =True)
-               else:
-                   if 'Area'or'Convex area' in df.columns:
-                       df.rename({"area": "Area-%s2"%self.unitLength, "convex_area": "Convex area-%s2"%self.unitLength},axis='columns',inplace =True)
-                   if 'Equivalent diameter' or 'Major axis length' or 'Maxferet' or 'Minor axis length' or 'Minferet' or 'Perimeter' in df.columns:
-                       df.rename({"equivalent_diameter": "Equivalent diameter-%s"%self.unitLength, "major_axis_length": "Major axis length-%s"%self.unitLength, "minor_axis_length": "Minor axis length-%s"%self.unitLength,"maxferet": "Maxferet-%s"%self.unitLength, "minferet": "Minferet-%s"%self.unitLength,"perimeter": "Perimeter-%s"%self.unitLength},axis='columns',inplace =True) 
+               if 'Area' or 'Convex area' or 'Equivalent diameter' or 'Major axis length' or 'Maxferet' or 'Minor axis length' or 'Minferet' or 'Perimeter' in df.columns:
+                   if self.embeddedpixelsize:   
+                       df.rename({"area": "Area-%s"%self.emb_unit , "convex_area": "Convex area-%s"%self.emb_unit, "equivalent_diameter": "Equivalent diameter-%s"%self.emb_unit, "major_axis_length": "Major axis length-%s"%self.emb_unit, "minor_axis_length": "Minor axis length-%s"%self.emb_unit,"maxferet": "Maxferet-%s"%self.emb_unit, "minferet": "Minferet-%s"%self.emb_unit,"perimeter": "Perimeter-%s"%self.emb_unit},axis='columns',inplace =True)
+                   elif self.unitLength and not self.embeddedpixelsize:
+                       df.rename({"area": "Area-%s^2"%self.unitLength , "convex_area": "Convex area-%s^2"%self.unitLength, "equivalent_diameter": "Equivalent diameter-%s"%self.unitLength, "major_axis_length": "Major axis length-%s"%self.unitLength, "minor_axis_length": "Minor axis length-%s"%self.unitLength,"maxferet": "Maxferet-%s"%self.unitLength, "minferet": "Minferet-%s"%self.unitLength,"perimeter": "Perimeter-%s"%self.unitLength},axis='columns',inplace =True)
+                   else:
+                       df.rename({"area": "Area-pixels", "convex_area": "Convex area-pixels", "equivalent_diameter": "Equivalent diameter-pixels", "major_axis_length": "Major axis length-pixels", "minor_axis_length": "Minor axis length-pixels","maxferet": "Maxferet-pixels", "minferet": "Minferet-pixels","perimeter": "Perimeter-pixels"},axis='columns',inplace =True)
            self.df_insert = pd.concat([self.df_insert, df], axis=1)
            
        self.df_insert.insert(0, 'Image', title)#Insert filename as 1st column 
@@ -1047,7 +966,7 @@ class Df_Csv_single(Analysis):
         logger.info('Saving the features as csv file')
         os.chdir(self.output_dir)
         #Export to csv
-        export_csv = self.df_export.to_csv (r'Feature_Extraction.csv', index = None, header=True)
+        export_csv = self.df_export.to_csv (r'Feature_Extraction.csv', index = None, header=True,encoding='utf-8-sig')
         del self.df_export,export_csv
 
          
@@ -1072,5 +991,5 @@ class Df_Csv_multiple(Analysis):
         logger.info('Saving the features as csv file')
         os.chdir(self.output_dir)
         #Export to csv
-        export_csv = self.df_exportsep.to_csv (r'Feature_Extraction_%s.csv'%self.title, index = None, header=True)
+        export_csv = self.df_exportsep.to_csv (r'Feature_Extraction_%s.csv'%self.title, index = None, header=True,encoding='utf-8-sig')
         del self.df_exportsep,export_csv
