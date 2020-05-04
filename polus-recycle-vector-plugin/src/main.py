@@ -59,9 +59,10 @@ def main():
     fp = filepattern.FilePattern(collection_dir,collection_regex)
     
     # Loop through the stitching vectors
-    vectors = [v for v in Path(stitch_dir).iterdir()]
+    vectors = [v for v in Path(stitch_dir).iterdir() if Path(v).name.startswith('img-global-positions')]
     vector_count = 1
     for vector in vectors:
+        
         logger.info("Processing vector: {}".format(str(vector.absolute())))
         
         # Parse the stitching vector
