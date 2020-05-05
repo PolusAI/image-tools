@@ -3,7 +3,7 @@
 The feature extraction plugin extracts shape and intensity based features from images and outputs csv file.The input image should be in OME tiled tiff format.
 
 These are the features that can be extracted from this plugin:
-   1. Area
+   1. Area - 
          Number of pixels in the region.
    2. Perimeter
          The length of the outside boundary of the region.
