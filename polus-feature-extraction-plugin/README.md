@@ -105,7 +105,7 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-This plugin takes nine input argument and one output argument:
+This plugin takes eight input argument and one output argument:
 
 | Name                   | Description             | I/O    | Type   |
 |------------------------|-------------------------|--------|--------|
@@ -114,7 +114,6 @@ This plugin takes nine input argument and one output argument:
 | `--segDir` | Labeled image collection | Input | collection |
 | `--features` | Select intensity and shape features required | Input | array |
 | `--csvfile` | Save csv file as one csv file for all images or separate csv file for each image | Input | enum |
-| `--labelimage` | Whether segmented images need to be labeled or not | Input | enum |
 | `--embeddedpixelsize` | Consider the unit embedded in metadata, if present| Input | boolean |
 | `--unitLength` | Enter the metric for unit conversion | Input | string |
 | `--pixelsPerunit` | Enter the number of pixels per unit of the metric | Input | number |
