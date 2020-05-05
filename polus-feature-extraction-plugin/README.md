@@ -89,6 +89,9 @@ Note:
 2.	If Embedded pixel size is not selected and values are entered in Length of unit and Pixels per unit, then the metric mentioned in length of unit will be considered.
 3.	If Embedded pixel size, Length of unit and Pixels per unit is not selected then the units will be in pixels.
 
+## Output:
+   The output is a csv file containing the value of features required.
+
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
 ## Building
