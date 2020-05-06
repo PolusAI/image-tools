@@ -2,7 +2,7 @@ from utility import ConvertImage, Df_Csv_single
 import argparse, logging
 
 
- # Initialize the logger
+# Initialize the logger
 logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("main")
@@ -33,23 +33,32 @@ def main():
 
     # Parse the arguments
     args = parser.parse_args()
-    features = args.features.split(',')#features
+    #features
+    features = args.features.split(',')
     logger.info('features = {}'.format(features))
-    csvfile = args.csvfile#csvfile
+    #csvfile
+    csvfile = args.csvfile
     logger.info('csvfile = {}'.format(csvfile))
-    embeddedpixelsize = args.embeddedpixelsize#units
+    #embedded pixel size
+    embeddedpixelsize = args.embeddedpixelsize
     logger.info('embeddedpixelsize = {}'.format(embeddedpixelsize))
-    unitLength = args.unitLength#pixels per unit
+    #unit length
+    unitLength = args.unitLength
     logger.info('unitLength = {}'.format(unitLength))
-    pixelsPerunit = args.pixelsPerunit#pixels per unit
+    #pixels per unit
+    pixelsPerunit = args.pixelsPerunit
     logger.info('pixels per unit = {}'.format(pixelsPerunit))
-    intDir = args.intDir#intensity image
+    #intensity image
+    intDir = args.intDir
     logger.info('intDir = {}'.format(intDir))
-    pixelDistance = args.pixelDistance#pixel distance to calculate neighbors
+    #pixel distance to calculate neighbors
+    pixelDistance = args.pixelDistance
     logger.info('pixelDistance = {}'.format(pixelDistance))
-    segDir = args.segDir#segmented image
+    #Labeled image
+    segDir = args.segDir
     logger.info('segDir = {}'.format(segDir))
-    outDir = args.outDir#directory to save output files
+    #directory to save output files
+    outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
     logger.info("Started")
     image_convert = ConvertImage(segDir,intDir)
