@@ -20,6 +20,7 @@
 #include <curand.h>
 #include <curand_kernel.h>
 #include "highDComputes.h"
+#include <omp.h>
 
 using namespace std;
 
@@ -476,10 +477,10 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 			delete [] New_Final_List_Dist_1D, New_Final_List_Index, New_Final_List_Dist_Index;
 			delete [] New_Final_List_1D;
 
-		} else {
+		} else {		
 			for (int i = 0; i < N; ++i) {
 				if (abort != 0) break;
-
+                #pragma omp parallel for schedule(dynamic) 
 				for (int it = 0; it < New_Final_List[i].size(); ++it) {
 					int par1= New_Final_List[i][it];
 
@@ -494,9 +495,12 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 								logFile << "Found Duplicate Data for Points "<< par1 << " and " << par2 <<endl;; 
 								cout << "Found Duplicate Data for Points "<< par1 << " and " << par2 <<endl; 
 								abort=1;iterate = false; 
-							}						
+							}	
+							#pragma omp critical
+						    {					
 							c_criteria += UpdateNN(B_Index, B_Dist, B_IsNew, allEntriesFilled, K, par1, par2, dista, 1);
 							c_criteria += UpdateNN(B_Index, B_Dist, B_IsNew, allEntriesFilled, K, par2, par1, dista, 1);
+							}
 						}
 					}
 				}

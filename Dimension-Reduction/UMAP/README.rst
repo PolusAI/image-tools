@@ -134,7 +134,7 @@ An Example of Running the code
     nvcc -I/path to boost directory/boost_1_71_0 -I/Path to eigen3 directory/eigen-3.3.7 \
          main.cu highDComputes.cpp Initialization.cpp LMOptimization.cpp Metrics.cpp KNN_GPU_Code.cu \
          -o a.out -larmadillo -L/path to boost directory/boost_1_71_0/stage/lib -lboost_iostreams \
-         -lboost_system -lboost_filesystem -arch=sm_75 -O2 --expt-relaxed-constexpr  
+         -lboost_system -lboost_filesystem -arch=sm_75 -O2 --expt-relaxed-constexpr -Xcompiler -fopenmp 
     
     time ./a.out --inputPath . --K 15 --sampleRate 0.8 --DimLowSpace 2 \
          --randomInitializing true --outputPath . --n_epochs 500 --min_dist 0.001 \
