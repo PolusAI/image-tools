@@ -58,23 +58,6 @@ if __name__=="__main__":
     logger.info("Starting to build...")
     logger.info("{} values in stack are {}, respectively".format(varsinstack, valsinstack))
 
- 
-    # allfiles = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=varsinstack+stackby)
-    # all_varlists = [allfiles[1][item] for item in allfiles[1]]
-    # all_combos = list(itertools.product(*all_varlists))
-
-    # combos = {}
-    # for x in all_combos:
-    #     combos.setdefault(x[:len(varsinstack)], []).append(x)
-    # combokeys = []
-    # i = 0
-    # potentialvalues = []
-    # for item in combos:
-    #     if i == stackcount:
-    #         potentialvalues = combos[item]
-    #         break
-    #     else:
-    #         continue
 
     # logger.info("Combos {}".format(com))
 
@@ -100,8 +83,28 @@ if __name__=="__main__":
             i = i +1
     image = channels[0]
 
+    # allfiles = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=varsinstack+stackby)
+    # all_varlists = [allfiles[1][item] for item in allfiles[1]]
+    # all_combos = list(itertools.product(*all_varlists))
+
+    # combos = {}
+    # for x in all_combos:
+    #     combos.setdefault(x[:len(varsinstack)], []).append(x)
+    # combokeys = []
+    # i = 0
+    # potentialvalues = []
+    # for item in combos:
+    #     if i == stackcount:
+    #         potentialvalues = combos[item]
+    #         break
+    #     else:
+    #         continue
+    # missingimages = set([vals[-1] for vals in potentialvalues]) - set(channelvals)
+
     logger.info("{} values in stack: {}".format(stackby, channelvals))
     # logger.info("CHECK: Potential {} values in stack: {}".format(stackby, [vals[-1] for vals in potentialvalues]))
+    # for i in missingimages:
+    #     logger.info("Potential Gaps in Stack: {}".format(i))
     for i in channels:
         logger.info("Images in stack: {}".format(i))
     
