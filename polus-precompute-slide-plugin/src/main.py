@@ -1,7 +1,6 @@
 import logging, argparse, time, multiprocessing, subprocess
 from pathlib import Path
 import filepattern
-import itertools
 import os
 from filepattern import FilePattern as fp
 
@@ -61,24 +60,26 @@ def main():
     
     # Get list of images that we are going to through
     logger.info('Getting the images...')
-    allfiles = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=vars_instack+stack_by)
-    all_varlists = [allfiles[1][item] for item in allfiles[1]]
-    all_combos = list(itertools.product(*all_varlists))
-    
-    commonfiles = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=vars_instack)
-    common_varlists = [commonfiles[1][item] for item in commonfiles[1]]
-    common_combos = list(itertools.product(*common_varlists))
 
-    # Get Height of Stacks
-    organizedheights = [0] * len(common_combos)
-    for item in all_combos:
-        if item[:-1] in common_combos:
-            idx = common_combos.index(item[:-1])
-            organizedheights[idx] = organizedheights[idx] + 1
+    fpobject = fp(input_dir, imagepattern, var_order=vars_instack)
+    organizedheights = []
+    vals_instack = []
+    for item in fp.iterate(fpobject, group_by=stack_by):
+        organizedheights.append(len(item))
+        vals_instack.append("")
+        for filesitem in item:
+            for char in vars_instack:
+                if vals_instack[-1] == "":
+                    vals_instack[-1] = str(filesitem[char])
+                else:
+                    vals_instack[-1] = vals_instack[-1] + " " + str(filesitem[char])
+            break
+    numberofstacks = len(organizedheights)
+
     logger.info("Height of the {} Stacks: {}".format(len(organizedheights), organizedheights))
     
     # heightofstack = int(len(all_combos)/len(common_combos))
-    logger.info("Different Stack Variables of {}: {}".format(vars_instack, common_combos))
+    logger.info("Different Stack Variables of {}: {}".format(vars_instack, vals_instack))
 
     # Set up lists for tracking processes
     processes = []
@@ -90,13 +91,8 @@ def main():
     # equal to number of cpus - 1.
     stack_count = 1
     im_count = 1
-    for commontups in common_combos:
-        vals_instack = ''
-        for tup in commontups:
-            if vals_instack == '':
-                vals_instack = str(tup)
-            else:
-                vals_instack = vals_instack + " " + str(tup)
+    for iterate in fp.iterate(fpobject, group_by=stack_by):
+        val_instack = vals_instack[stack_count - 1]
         heightofstack = organizedheights[stack_count -1]
         if len(processes) >= multiprocessing.cpu_count()-1 and len(processes)>0:
             free_process = -1
@@ -109,19 +105,20 @@ def main():
                 
             pnum += 1
             logger.info("Finished stack process {} of {} in {}s (Stacked {} images out of {} images)!".
-                        format(pnum,len(common_combos),time.time() - process_timer[free_process], im_count, len(all_combos)))
+                        format(pnum,numberofstacks,time.time() - process_timer[free_process], im_count, sum(organizedheights)))
             del processes[free_process]
             del process_timer[free_process]
             
-        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir {} --outDir {} --pyramidType {} --imageNum {} --stackheight {} --stackby {} --varsinstack {} --valsinstack {} --imagepattern {}".format(input_dir,
+        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir {} --outDir {} --pyramidType {} --imageNum {} --stackheight {} --stackby {} --varsinstack {} --valinstack {} --imagepattern {} --stackcount {}".format(input_dir,
                                                                                                                                             output_dir,
                                                                                                                                             pyramid_type,
                                                                                                                                             im_count,
                                                                                                                                             heightofstack,
                                                                                                                                             stack_by,
                                                                                                                                             vars_instack,
-                                                                                                                                            vals_instack,
-                                                                                                                                            imagepattern),
+                                                                                                                                            val_instack,
+                                                                                                                                            imagepattern,
+                                                                                                                                            stack_count - 1),
                                                                                                                                         shell=True))
         im_count = (stack_count)*(heightofstack) 
         process_timer.append(time.time())
@@ -137,13 +134,13 @@ def main():
                     break
             time.sleep(3)
         pnum += 1
-        logger.info("Finished stack process {} of {} in {}s!".format(pnum,len(common_combos),time.time() - process_timer[free_process]))
+        logger.info("Finished stack process {} of {} in {}s!".format(pnum,numberofstacks,time.time() - process_timer[free_process]))
         del processes[free_process]
         del process_timer[free_process]
 
     processes[0].wait()
     
-    logger.info("Finished stack process {} of {} in {}s!".format(len(common_combos),len(common_combos),time.time() - process_timer[0]))
+    logger.info("Finished stack process {} of {} in {}s!".format(numberofstacks,numberofstacks,time.time() - process_timer[0]))
     logger.info("Finished all processes!")
 
 if __name__ == "__main__":
