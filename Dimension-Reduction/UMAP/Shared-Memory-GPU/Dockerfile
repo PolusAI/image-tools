@@ -4,7 +4,7 @@ FROM nvidia/cuda:10.2-devel-ubuntu18.04
 RUN apt-get -y update && apt-get install -y g++ wget make libarmadillo-dev
  
 #Create new directory 
-RUN mkdir -p /home/GPU_UMAP
+RUN mkdir -p /home/GPU_UMAP /home/Inputs /home/Outputs
  
 # Specify the working directory
 WORKDIR /home/GPU_UMAP
@@ -28,12 +28,9 @@ RUN rm eigen-3.3.7.tar.gz
 # Copy the current folder to the docker image
 COPY . /home/GPU_UMAP
 
-#RUN mkdir /home/GPU_UMAP/input
-#RUN cp /home/GPU_UMAP/mnist_784.csv /home/GPU_UMAP/input/
-
 # Compile the source file 
 WORKDIR /home/GPU_UMAP
-RUN nvcc -I/home/GPU_UMAP/boost_1_71_0 -I/home/GPU_UMAP/eigen-3.3.7 main.cu  highDComputes.cpp Initialization.cpp LMOptimization.cpp Metrics.cpp KNN_GPU_Code.cu -larmadillo -o Out.exe -L/home/GPU_UMAP/boost_1_71_0/stage/lib -lboost_iostreams -lboost_system -lboost_filesystem -arch=sm_75 -O2 --expt-relaxed-constexpr
+RUN nvcc -I/home/GPU_UMAP/boost_1_71_0 -I/home/GPU_UMAP/eigen-3.3.7 main.cu  highDComputes.cpp Initialization.cpp LMOptimization.cpp Metrics.cpp KNN_GPU_Code.cu -larmadillo -o Out.exe -L/home/GPU_UMAP/boost_1_71_0/stage/lib -lboost_iostreams -lboost_system -lboost_filesystem -arch=sm_75 -O2 --expt-relaxed-constexpr -Xcompiler -O2 -Xcompiler -fopenmp
 
 # Run the output program from the previous step
 ENTRYPOINT ["./Out.exe"]

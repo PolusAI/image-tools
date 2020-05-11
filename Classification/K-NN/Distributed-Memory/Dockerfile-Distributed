@@ -1,7 +1,7 @@
 FROM ubuntu:latest
 
 RUN apt-get -y update && apt-get -y install g++ make wget
-RUN mkdir -p /home/DistributedKNN
+RUN mkdir -p /home/DistributedKNN /home/Inputs /home/Outputs
 
 COPY . /home/DistributedKNN
 WORKDIR /home/DistributedKNN

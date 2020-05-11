@@ -5,7 +5,7 @@ FROM ubuntu:latest
 RUN apt-get -y update && apt-get install -y g++ wget make
  
 #Create a new directory
-RUN mkdir -p /home/SharedKNN
+RUN mkdir -p /home/SharedKNN /home/Inputs /home/Outputs
  
 # Copy the current folder which contains C++ source code to the Docker image
 COPY . /home/SharedKNN

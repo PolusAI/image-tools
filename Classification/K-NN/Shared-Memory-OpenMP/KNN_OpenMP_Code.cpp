@@ -165,13 +165,13 @@ int main(int argc, char * const argv[]) {
 	logFile<<"The input csv file contains "<<N<<" rows of raw data with "<< Dim<< " columns(features)"<<endl; 
 	cout<<"The input csv file contains "<<N<<" rows of raw data with "<< Dim<< " columns(features)"<<endl; 
 	
-	int threadCounts;
-	#pragma omp parallel
-    {
-	threadCounts=omp_get_num_threads(); 
-	}
-	cout <<"Total Number of Processes in the Parallel Region = "<< threadCounts <<endl;
-	
+	/**
+	 * Query about the number of available processors and set it for OpenMP
+	 */	
+	int nProcessors = omp_get_num_procs();
+    omp_set_num_threads(nProcessors-1);
+	cout <<"Total Number of Processes in the Parallel Region = "<< nProcessors-1 <<endl;
+
 	/**
 	 * A 2D Array containing the entire input dataset (read from filePath).
 	 */

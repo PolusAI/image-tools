@@ -7,7 +7,7 @@ RUN apt-get -y update && \
 
 
 #Create a new directory
-RUN mkdir -p /home/UMAP
+RUN mkdir -p /home/UMAP /home/Inputs /home/Outputs
 
 # Specify the working directory
 WORKDIR /home/UMAP

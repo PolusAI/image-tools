@@ -63,12 +63,11 @@ An Example of Executing the Code
     time ./output.exe --inputPath . --K 10 --sampleRate 0.99  --convThreshold 5  --outputPath .
     time ./output.exe --inputPath . --K 10 --sampleRate 0.99  --convThreshold 5  --outputPath .  --colIndex1 3 --colIndex2 26
 
-Please note that the multi-threaded version of Shared-Memory K-NN can be compiled and run as follows. The number of threads in the OpenMP parallelized region of the code is also set using the environment variable OMP_NUM_THREADS.
+Please note that the multi-threaded version of Shared-Memory K-NN can be compiled and run as follows. The number of threads in the OpenMP parallelized region of the code is automatically set equal to the number of threads in the machine minus 1.
 
 .. code:: bash
 
     ulimit -s unlimited
-    export OMP_NUM_THREADS=2 
     g++ -I/Path_To_Boost_Library/boost_1_71_0 KNN_Serial_Code.cpp -o output.exe -L/Path_To_Boost_Library/boost_1_71_0/stage/lib -lboost_iostreams -lboost_system -lboost_filesystem  -O2 -fopenmp
     time ./output.exe --inputPath . --K 10 --sampleRate 0.99  --convThreshold 5  --outputPath .
     time ./output.exe --inputPath . --K 10 --sampleRate 0.99  --convThreshold 5  --outputPath .  --colIndex1 3 --colIndex2 26   
@@ -90,9 +89,9 @@ An Example of Running the Docker Container
 
 .. code:: bash
 
-    docker run -v /path/to/data:/data/inputs -v /path/to/outputs:/data/outputs \
-            containername --inputPath /data/inputs --K 10 --sampleRate 0.9 \
-            --convThreshold 5 --outputPath /data/outputs    
+    docker run -v /path/to/data:/home/Inputs -v /path/to/outputs:/home/Outputs \
+            containername --inputPath /home/Inputs --K 10 --sampleRate 0.9 \
+            --convThreshold 5 --outputPath /home/Outputs    
             
               
 ==================================================
@@ -120,9 +119,9 @@ The docker for GPU-Enabled K-NN code can also be run using the following command
 
 .. code:: bash
 
-    docker run -it --gpus all -v /path/to/data:/data/inputs -v /path/to/outputs:/data/outputs \
-            containername --inputPath /data/inputs --K 10 --sampleRate 0.9 \
-            --convThreshold 5 --outputPath /data/outputs  
+    docker run --gpus all -v /path/to/data:/home/Inputs -v /path/to/outputs:/home/Outputs \
+            containername --inputPath /home/Inputs --K 10 --sampleRate 0.9 \
+            --convThreshold 5 --outputPath /home/Outputs  
 
 ========================================
 K-NN Code for Distributed-Memory Systems

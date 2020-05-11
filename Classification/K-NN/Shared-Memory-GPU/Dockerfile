@@ -4,7 +4,7 @@ FROM ktaletsk/gpu:bionic-20190612-cuda-10-2
 RUN apt-get -y update && apt-get install -y g++ wget make
  
 #Create new directory 
-RUN mkdir -p /home/GPU_KNN 
+RUN mkdir -p /home/GPU_KNN /home/Inputs /home/Outputs
  
 # Specify the working directory
 WORKDIR /home/GPU_KNN
