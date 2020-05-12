@@ -1,11 +1,11 @@
 {
-    "name": "K-NN (Serial)",
+    "name": "K-NN (CUDA)",
     "version": "0.1.0",
-    "title": "K-NN (Serial)",
-    "description": "K-Nearest Neighbors Serial Code",
+    "title": "K-NN (CUDA)",
+    "description": "K-Nearest Neighbors CUDA Code",
     "author": "Mahdi Maghrebi",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-    "containerId": "labshare/polus-knn-serial-plugin:0.1.0",
+    "containerId": "labshare/polus-knn-cuda-plugin:0.1.0",
     "inputs": [
         {
             "name": "inputPath",
