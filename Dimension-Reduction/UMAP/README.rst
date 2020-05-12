@@ -2,7 +2,7 @@
 UMAP Code for Shared-Memory Systems
 ===================================
 
-Please consider the following instruction for the execution of UMAP code for Shared-Memory systems. Please refer to `this link <https://labshare.atlassian.net/wiki/spaces/WIPP/pages/745537586/UMAP+Implementations+in+C+>`_ for detailed theoretical background about UMAP.
+Please consider the following instruction for the execution of UMAP code for Shared-Memory systems. Please refer to `this link <https://labshare.atlassian.net/wiki/spaces/WIPP/pages/745537586/UMAP+Implementations+in+C+>`_ for detailed theoretical background about UMAP. Please also note that the performance of UMAP code has been improved by using multi-threading OpenMP directives. The number of threads in the OpenMP parallelized region of the code is automatically set equal to the number of threads in the machine minus 1.
 
 -------------------------------
 Installing the Required Library
@@ -91,7 +91,7 @@ An Example of Running the code
     ulimit -s unlimited
     
     g++ -I/path to boost directory/boost_1_71_0 -I/Path to eigen3 directory/eigen-3.3.7 \
-         main.cpp KNN_Serial_Code.cpp highDComputes.cpp Initialization.cpp LMOptimization.cpp \
+         main.cpp KNN_OpenMP_Code.cpp highDComputes.cpp Initialization.cpp LMOptimization.cpp \
          Metrics.cpp SGD.cpp -o a.out -O2 - armadillo \
          -L/path to boost directory/boost_1_71_0/stage/lib -lboost_iostreams \
          -lboost_system -lboost_filesystem -fopenmp

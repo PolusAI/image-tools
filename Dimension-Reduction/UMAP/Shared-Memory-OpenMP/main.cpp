@@ -16,7 +16,7 @@
 #include <fstream>
 #include <float.h>
 #include <boost/filesystem.hpp>
-#include "KNN_Serial_Code.h"
+#include "KNN_OpenMP_Code.h"
 #include "highDComputes.h"
 #include "Initialization.h"
 #include "LMOptimization.h"
@@ -201,6 +201,14 @@ int main(int argc, char ** argv) {
 
 	logFile<<"------------END of INPUT READING------------"<< endl;	
 	cout<<"------------END of INPUT READING------------"<< endl;
+	
+	/**
+	 * Query about the number of available CPU processors and set it as OpenMP threads
+	 */	
+	int nProcessors = omp_get_num_procs();
+    omp_set_num_threads(nProcessors-1);
+	cout <<"Total Number of Processes in the OpenMP Parallel Region = "<< nProcessors-1 <<endl;	
+	
 	srand(17);	
 
 	/**

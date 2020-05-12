@@ -8,7 +8,7 @@
 #include <math.h>
 #include <fstream>
 #include <cstdlib>
-#include "KNN_Serial_Code.h"
+#include "KNN_OpenMP_Code.h"
 
 using namespace std;
 
