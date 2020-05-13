@@ -1,0 +1,61 @@
+{
+    "name": "Stitching vector merger",
+	"version": "0.1.1",
+	"title": "Stitching vector collections merger",
+	"description": "Merge two Stitching vector collections. You have an option to prepend collection name to avoid name conflicts.",	
+	"containerId": "labshare/polus-stitching-vector-merger-plugin:0.1.1",
+
+	"inputs": [
+		{
+			"name": "input-collection-a",
+			"type": "stitchingVector",
+			"description": "Input stitching vector collection A."
+        },
+        {
+            "name": "append-a",
+            "type": "boolean",
+            "required": "false",
+            "description": "Append collection name to collection A."
+        },
+        {
+			"name": "input-collection-b",
+			"type": "stitchingVector",
+			"description": "Input stitching vector collection B."
+        },
+        {
+            "name": "append-b",
+            "type": "boolean",
+            "required": "false",
+            "description": "Append collection name to collection B."
+        }
+	],
+	"outputs": [
+		{
+			"name": "output",
+			"type": "stitchingVector",
+			"description": "Output stitching vector collection for the plugin"
+		}
+	],
+	"ui": [
+		{
+			"key": "inputs.input-collection-a",
+			"title": "Stitching Vector Collection A: ",
+			"description": "Pick a collection..."
+        },
+        {
+			"key": "inputs.append-a",
+			"title": "Append collection name to filenames in A: ",
+			"description": "Pick an option..."
+        },
+        {
+			"key": "inputs.input-collection-b",
+			"title": "Stitching Vector Collection B: ",
+			"description": "Pick a collection..."
+        },
+        {
+			"key": "inputs.append-b",
+			"title": "Append collection name to filenames in B: ",
+			"description": "Pick an option..."
+        }
+	]
+}
