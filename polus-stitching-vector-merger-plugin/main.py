@@ -43,17 +43,16 @@ if __name__=="__main__":
     
     
     Collection_directories=[VectorCollection1,VectorCollection2,VectorCollection3,VectorCollection4,VectorCollection5]    
-    collection_dictionary={inpDir : (os.listdir(inpDir) if inpDir != None else None) for inpDir in Collection_directories}
-
+    
     count=0
-    # iterate over input collections
-    for inpDir, Collection in collection_dictionary.items():
-        if Collection != None:            
-            for vector_name in Collection:
+    for inpDir in Collection_directories:
+        if inpDir != None:
+            for vector_name in os.listdir(inpDir):
                 count+=1
                 logger.info('Copying stitching vector : {} from {}'.format(vector_name,inpDir))
                 shutil.copyfile(os.path.join(inpDir,vector_name),os.path.join(outDir,"img-global-positions-{}.txt".format(count)) )
                 
+
                 
                 
             
