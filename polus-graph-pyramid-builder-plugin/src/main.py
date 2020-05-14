@@ -1182,37 +1182,34 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser(prog='main', description='Build an image pyramid from data in a csv file.')
 
     """ Define the arguments """
-    # parser.add_argument('--inpDir',               # input image collection directory
-    #                     dest='inpDir',
-    #                     type=str,
-    #                     help='Path to input images.',
-    #                     required=True,
-    #                     )
+    parser.add_argument('--inpDir',               # input image collection directory
+                        dest='inpDir',
+                        type=str,
+                        help='Path to input images.',
+                        required=True,
+                        )
 
-    # parser.add_argument('--outDir',
-    #                     dest='outDir',
-    #                     type=str,
-    #                     help='Path to output images.',
-    #                     required=True
-    #                     )
+    parser.add_argument('--outDir',
+                        dest='outDir',
+                        type=str,
+                        help='Path to output images.',
+                        required=True
+                        )
     
-    # parser.add_argument('--bincount',
-    #                     dest='bin_count',
-    #                     type=int,
-    #                     help='Number of bins',
-    #                     required=True
-    #                     )
+    parser.add_argument('--bincount',
+                        dest='bin_count',
+                        type=int,
+                        help='Number of bins',
+                        required=True
+                        )
 
     """ Get the input arguments """
     args = parser.parse_args()
 
-    # input_path = args.inpDir
-    # output_path = Path(args.outDir)
-    # bincount = args.bin_count
+    input_path = args.inpDir
+    output_path = Path(args.outDir)
+    bincount = args.bin_count
 
-    input_path = "input/"
-    output_path = Path("output/")
-    bincount = 20
 
     # linear_output_path = Path(args.outDir)
     # log_output_path = Path(args.outDir)
