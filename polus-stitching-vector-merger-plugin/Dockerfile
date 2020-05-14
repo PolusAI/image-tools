@@ -1,4 +1,4 @@
-FROM alpine
+FROM python:3.6-alpine
 COPY VERSION /
-COPY script.sh script.sh
-ENTRYPOINT ["sh", "script.sh"]
+COPY main.py main.py
+ENTRYPOINT ["python3", "main.py"]
