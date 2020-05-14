@@ -1,9 +1,8 @@
-
 import logging, argparse, time, multiprocessing, subprocess
 from pathlib import Path
 import filepattern
-import itertools
 import os
+from filepattern import FilePattern as fp
 
 
 # Initialize the logger    
@@ -25,8 +24,6 @@ def main():
                         help='Build a DeepZoom or Neuroglancer pyramid', required=True)
     parser.add_argument('--imagepattern', dest='image_pattern', type=str,
                         help='Filepattern of the images in input', required=True)
-    parser.add_argument('--stackby', dest='stack_by', type=str,
-                        help='Variable that the images get stacked by', required=True)
 
     # Parse the arguments
     args = parser.parse_args()
@@ -34,40 +31,74 @@ def main():
     output_dir = args.output_dir
     pyramid_type = args.pyramid_type
     imagepattern = args.image_pattern
-    stack_by = args.stack_by
+
+    # Getting all images in directory
+    # image_path = Path(input_dir)
+    # images = [i for i in image_path.iterdir() if "".join(i.suffixes)==".ome.tif"]
+    # images.sort()
+
+    # Get Variables of Images
+    regex = filepattern.get_regex(pattern = imagepattern)
+    regexzero = regex[0]
+    regexone = regex[1]
+    vars_instack = ''
+    stack_by = ''
+    for item in regexone:
+        if (item == 'x' or item == 'y') or item == 'z':
+            vars_instack = vars_instack + item
+        else:
+            stack_by = stack_by + item
+
 
     logger.info('input_dir = {}'.format(input_dir))
     logger.info('output_dir = {}'.format(output_dir))
     logger.info('pyramid_type = {}'.format(pyramid_type))
     logger.info('image pattern = {}'.format(imagepattern))
-    logger.info('images are stacked by variable {}'.format(stack_by))
+    logger.info('images are stacked by variable(s) {}'.format(stack_by))
     
-    # Get a list of all images in a directory
+    # Get list of images that we are going to through
     logger.info('Getting the images...')
-    image_path = Path(input_dir)
-    images = [i for i in image_path.iterdir() if "".join(i.suffixes)==".ome.tif"]
-    images.sort()
 
-    # Get the Height of the Stack
-    regex = filepattern.get_regex(pattern = imagepattern)
-    regexzero = regex[0]
-    regexone = regex[1]
-    vars_instack = ''
-    for item in regexone:
-        if item == stack_by:
-            continue
-        else:
-            vars_instack = vars_instack + item
-    
-    allfiles = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=vars_instack+stack_by)
-    all_varlists = [allfiles[1][item] for item in allfiles[1]]
-    all_combos = list(itertools.product(*all_varlists))
-    
-    commonfiles = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=vars_instack)
-    common_varlists = [commonfiles[1][item] for item in commonfiles[1]]
-    common_combos = list(itertools.product(*common_varlists))
+    fpobject = fp(input_dir, pattern=imagepattern)
 
-    heightofstack = int(len(all_combos)/len(common_combos))
+    organizedheights = []
+    vals_instack = []
+    vals_stackby = []
+    directoryfiles = []
+
+    for item in fp.iterate(fpobject, group_by=vars_instack):
+        organizedheights.append(len(item))
+        vals_inonestack = [[]] * len(item)
+        i = 0
+        for filesitem in item:
+            vals_inonestack[i] = ""
+            vals_stackone = ""
+            directoryname = ""
+            for char in vars_instack:
+                if vals_inonestack[i] == "":
+                    vals_inonestack[i] = str(filesitem[char])
+                else:
+                    vals_inonestack[i] = vals_inonestack[i] + " " + str(filesitem[char])
+            for char in stack_by:
+                if vals_stackone == "":
+                    vals_stackone = str(filesitem[char])
+                    directoryname = char + str(filesitem[char])
+                else:
+                    vals_stackone = vals_stackone + " " + str(filesitem[char])
+                    directoryname = directoryname + "_" + char + str(filesitem[char])
+            i = i + 1
+        vals_instack.append(vals_inonestack)
+        vals_stackby.append(vals_stackone)
+        directoryfiles.append(directoryname)
+        newdirectory = Path(output_dir).joinpath(directoryname)
+        newdirectory.mkdir()
+            
+    numberofstacks = len(organizedheights)
+
+    logger.info("Directory Name: {}".format(directoryfiles))
+    logger.info("Height of the {} Stacks: {}".format(len(organizedheights), organizedheights))
+    # heightofstack = int(len(all_combos)/len(common_combos))
+    logger.info("Different Stack Variables of {}: {}".format(vars_instack, vals_instack))
 
     # Set up lists for tracking processes
     processes = []
@@ -75,18 +106,15 @@ def main():
     pnum = 0
     
     # Build one pyramid for each image in the input directory
-    # Each pyramid is built within its own process, with a maximum number of processes
+    # Each stack is built within its own process, with a maximum number of processes
     # equal to number of cpus - 1.
     stack_count = 1
     im_count = 1
-    for commontups in common_combos:
-        vals_instack = ''
-        for tup in commontups:
-            if vals_instack == '':
-                vals_instack = str(tup)
-            else:
-                vals_instack = vals_instack + " " + str(tup)
-
+    for iterate in fp.iterate(fpobject, group_by=vars_instack):
+        val_instack = vals_instack[stack_count-1]
+        heightofstack = organizedheights[stack_count-1]
+        logger.info("{} stack values: {}".format(stack_count, val_instack))
+        logger.info("{} stack height: {}".format(stack_count, heightofstack))
         if len(processes) >= multiprocessing.cpu_count()-1 and len(processes)>0:
             free_process = -1
             while free_process<0:
@@ -98,19 +126,20 @@ def main():
                 
             pnum += 1
             logger.info("Finished stack process {} of {} in {}s (Stacked {} images out of {} images)!".
-                        format(pnum,len(common_combos),time.time() - process_timer[free_process], im_count, len(images)))
+                        format(pnum,numberofstacks,time.time() - process_timer[free_process], im_count, sum(organizedheights)))
             del processes[free_process]
             del process_timer[free_process]
             
-        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir {} --outDir {} --pyramidType {} --imageNum {} --stackheight {} --stackby {} --varsinstack {} --valsinstack {} --imagepattern {}".format(input_dir,
+        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir {} --outDir {} --pyramidType {} --imageNum {} --stackheight {} --stackby {} --varsinstack {} --valinstack {} --imagepattern {} --stackcount {} >>textfile.txt".format(input_dir,
                                                                                                                                             output_dir,
                                                                                                                                             pyramid_type,
                                                                                                                                             im_count,
                                                                                                                                             heightofstack,
                                                                                                                                             stack_by,
                                                                                                                                             vars_instack,
-                                                                                                                                            vals_instack,
-                                                                                                                                            imagepattern),
+                                                                                                                                            val_instack,
+                                                                                                                                            imagepattern,
+                                                                                                                                            stack_count - 1),
                                                                                                                                         shell=True))
         im_count = (stack_count)*(heightofstack) 
         process_timer.append(time.time())
@@ -126,13 +155,13 @@ def main():
                     break
             time.sleep(3)
         pnum += 1
-        logger.info("Finished stack process {} of {} in {}s!".format(pnum,len(common_combos),time.time() - process_timer[free_process]))
+        logger.info("Finished stack process {} of {} in {}s!".format(pnum,numberofstacks,time.time() - process_timer[free_process]))
         del processes[free_process]
         del process_timer[free_process]
 
     processes[0].wait()
     
-    logger.info("Finished stack process {} of {} in {}s!".format(len(common_combos),len(common_combos),time.time() - process_timer[0]))
+    logger.info("Finished stack process {} of {} in {}s!".format(numberofstacks,numberofstacks,time.time() - process_timer[0]))
     logger.info("Finished all processes!")
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ from pathlib import Path
 import imageio
 import filepattern
 import os
+import logging
 
 # Conversion factors to nm, these are based off of supported Bioformats length units
 UNITS = {'m':  10**9,
@@ -15,20 +16,10 @@ UNITS = {'m':  10**9,
          'Å':  10**-1}
 
 # Chunk Scale
-CHUNK_SIZE = 1024
-
-def recursivefiles(files, stackvars, stackvals, stackby, stackheight, pattern):
-    channels = files
-    if len(stackvars) > 1:
-        return recursivefiles(files[stackvals[0]], stackvars[1:], stackvals[1:], stackby, stackheight, pattern)
-    else:
-        channels = [files[stackvals[0]][i]['file'] for i in range(0, stackheight)]
-        channelvals = [filepattern.parse_filename(os.path.basename(files[stackvals[0]][i]['file']), pattern=pattern)[stackby] 
-                        for i in range(0, stackheight)]
-        channelvals.sort()
-        channels.sort()
-        channels = [Path(i) for i in channels]
-        return channels, channelvals
+CHUNK_SIZE = 64
+def squeeze_generic(a, axes_to_keep):
+    out_s = [s for i,s in enumerate(a.shape) if i in axes_to_keep or s!=1]
+    return a.reshape(out_s)
 
 def _avg2(image):
     """ Average pixels together with optical field 2x2 and stride 2
@@ -38,26 +29,35 @@ def _avg2(image):
     Outputs:
         avg_img - numpy array with only two dimensions (round(m/2),round(n/2))
     """
+    print("In _avg2 function")
     image = image.astype('uint64')
-    y_max = image.shape[0] - image.shape[0] % 2
-    x_max = image.shape[1] - image.shape[1] % 2
+    z_max = image.shape[0] - image.shape[0] % 2
+    y_max = image.shape[1] - image.shape[1] % 2
+    x_max = image.shape[2] - image.shape[2] % 2
+    
+    print("Z max", z_max)
+    print("Y max", y_max)
+    print("X max", x_max)
     avg_img = np.zeros(np.ceil([d/2 for d in image.shape]).astype('int'))
-    avg_img[0:int(y_max/2),0:int(x_max/2)]= (image[0:y_max-1:2,0:x_max-1:2] + \
-                                             image[1:y_max:2,0:x_max-1:2] + \
-                                             image[0:y_max-1:2,1:x_max:2] + \
-                                             image[1:y_max:2,1:x_max:2]) / 4
-    if y_max != image.shape[0]:
-        avg_img[-1,:int(x_max/2)] = (image[-1,0:x_max-1:2] + \
-                                     image[-1,1:x_max:2]) / 2
+    print("Image Shape: ", image.shape)
+    print("Average Image Shape", avg_img.shape)
+    avg_img[0:int(z_max/2),0:int(y_max/2),:]= (image[0:z_max-1:2,0:y_max-1:2,:] + \
+                                             image[1:z_max:2,0:y_max-1:2,:] + \
+                                             image[0:z_max-1:2,1:y_max:2,:] + \
+                                             image[1:z_max:2,1:y_max:2,:]) / 4
+    print("After some line", avg_img.shape)
+    if z_max != image.shape[0]:
+        avg_img[-1,:int(y_max/2),:] = (image[-1,0:y_max-1:2,:] + \
+                                     image[-1,1:y_max:2,:]) / 2
     if x_max != image.shape[1]:
-        avg_img[:int(y_max/2),-1] = (image[0:y_max-1:2,-1] + \
-                                     image[1:y_max:2,-1]) / 2
-    if y_max != image.shape[0] and x_max != image.shape[1]:
-        avg_img[-1,-1] = image[-1,-1]
+        avg_img[:int(z_max/2),-1,:] = (image[0:z_max-1:2,-1,:] + \
+                                     image[1:z_max:2,-1,:]) / 2
+    if z_max != image.shape[0] and y_max != image.shape[1]:
+        avg_img[-1,-1,:] = image[-1,-1,:]
 
     return avg_img
 
-def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None):
+def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None,Z=None):
     """ Recursive function for pyramid building
     
     This is a recursive function that builds an image pyramid by indicating
@@ -108,46 +108,56 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None):
         X = [0,scale_info['size'][0]]
     if Y == None:
         Y = [0,scale_info['size'][1]]
+    if Z == None:
+        Z = [0,scale_info['size'][2]] #[0, stackheight]
     
     # Modify upper bound to stay within resolution dimensions
     if X[1] > scale_info['size'][0]:
         X[1] = scale_info['size'][0]
     if Y[1] > scale_info['size'][1]:
         Y[1] = scale_info['size'][1]
+    if Z[1] > scale_info['size'][2]:
+        Z[1] = scale_info['size'][2]
     
     # Initialize the output
-    image = np.zeros((Y[1]-Y[0],X[1]-X[0]),dtype=bfio_reader.read_metadata().image().Pixels.get_PixelType())
-    
+    image = np.zeros((Y[1]-Y[0],X[1]-X[0], Z[1]-Z[0]),dtype=bfio_reader.read_metadata().image().Pixels.get_PixelType())
+
     # If requesting from the lowest scale, then just read the image
     if str(S)==encoder.info['scales'][0]['key']:
-        image = bfio_reader.read_image(X=X,Y=Y).squeeze()
+        image = bfio_reader.read_image(X=X,Y=Y,Z=Z)
+        image = squeeze_generic(image, axes_to_keep=(0, 1, 2))
     else:
         # Set the subgrid dimensions
-        subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]]]
+        subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]], [2*Z[0],2*Z[1]]]
         for dim in subgrid_dims:
             while dim[1]-dim[0] > CHUNK_SIZE:
                 dim.insert(1,dim[0] + ((dim[1] - dim[0]-1)//CHUNK_SIZE) * CHUNK_SIZE)
+                print(dim)
         
-        for y in range(0,len(subgrid_dims[1])-1):
-            y_ind = [subgrid_dims[1][y] - subgrid_dims[1][0],subgrid_dims[1][y+1] - subgrid_dims[1][0]]
-            y_ind = [np.ceil(yi/2).astype('int') for yi in y_ind]
-            for x in range(0,len(subgrid_dims[0])-1):
-                x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
-                x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
-                sub_image = _get_higher_res(X=subgrid_dims[0][x:x+2],
-                                            Y=subgrid_dims[1][y:y+2],
-                                            S=S+1,
-                                            zlevel=zlevel,
-                                            bfio_reader=bfio_reader,
-                                            slide_writer=slide_writer,
-                                            encoder=encoder)
-                image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1]] = _avg2(sub_image)
+        for z in range(0, len(subgrid_dims[2]) - 1):
+            z_ind = [subgrid_dims[2][z] - subgrid_dims[2][0],subgrid_dims[1][z+1] - subgrid_dims[2][0]]
+            z_ind = [np.ceil(zi/2).astype('int') for zi in z_ind]
+            for y in range(0,len(subgrid_dims[1])-1):
+                y_ind = [subgrid_dims[1][y] - subgrid_dims[1][0],subgrid_dims[1][y+1] - subgrid_dims[1][0]]
+                y_ind = [np.ceil(yi/2).astype('int') for yi in y_ind]
+                for x in range(0,len(subgrid_dims[0])-1):
+                    x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
+                    x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
+                    sub_image = _get_higher_res(X=subgrid_dims[0][x:x+2],
+                                                Y=subgrid_dims[1][y:y+2],
+                                                Z=subgrid_dims[2][z:z+2],
+                                                S=S+1,
+                                                zlevel=zlevel,
+                                                bfio_reader=bfio_reader,
+                                                slide_writer=slide_writer,
+                                                encoder=encoder)
+                    print("In gethigherres", image.shape)
+                    image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],z_ind[0]:z_ind[1]] = _avg2(sub_image)
 
     # Encode the chunk
     image_encoded = encoder.encode(image)
     # Write the chunk
-    slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],zlevel,zlevel + 1))
-    
+    slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],Z[0],Z[1],zlevel,zlevel+1))
     return image
 
 # Modified and condensed from FileAccessor class in neuroglancer-scripts
@@ -205,7 +215,7 @@ class NeuroglancerWriter(PyramidWriter):
 
     def __init__(self, base_dir):
         super().__init__(base_dir)
-        self.chunk_pattern = "{key}/{0}-{1}_{2}-{3}_{4}-{5}"
+        self.chunk_pattern = "{key}/{0}-{1}_{2}-{3}_{4}-{5}_{6}-{7}"
 
     def _write_chunk(self,key,chunk_coords,buf):
         chunk_path = self._chunk_path(key,chunk_coords)
@@ -328,16 +338,20 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight):
     phys_y = bfio_reader.physical_size_y()
     if None in phys_y:
         phys_y = (1000,'nm')
+    phys_z = bfio_reader.physical_size_z()
+    if None in phys_z:
+        phys_z = (1000, 'nm')
     resolution = [phys_x[0] * UNITS[phys_x[1]]]
     resolution.append(phys_y[0] * UNITS[phys_y[1]])
-    resolution.append((phys_y[0] * UNITS[phys_y[1]] + phys_x[0] * UNITS[phys_x[1]])/2) # Just used as a placeholder
+    resolution.append(phys_z[0] * UNITS[phys_z[1]])
+    # resolution.append((phys_z[0] * UNITS[phys_z[1]] + phys_y[0] * UNITS[phys_y[1]] + phys_x[0] * UNITS[phys_x[1]])/2) # Just used as a placeholder
     dtype = bfio_reader.read_metadata().image().Pixels.get_PixelType()
     
     num_scales = int(np.log2(max(sizes))) + 1
     
     # create a scales template, use the full resolution8
     scales = {
-        "chunk_sizes":[[CHUNK_SIZE,CHUNK_SIZE,1]],
+        "chunk_sizes":[[CHUNK_SIZE,CHUNK_SIZE,CHUNK_SIZE]],
         "encoding":"raw",
         "key": str(num_scales),
         "resolution":resolution,
@@ -358,7 +372,7 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight):
         current_scale = copy.deepcopy(previous_scale)
         current_scale['key'] = str(num_scales - i)
         current_scale['size'] = [int(np.ceil(previous_scale['size'][0]/2)),int(np.ceil(previous_scale['size'][1]/2)),stackheight]
-        current_scale['resolution'] = [2*previous_scale['resolution'][0],2*previous_scale['resolution'][1],previous_scale['resolution'][2]]
+        current_scale['resolution'] = [2*previous_scale['resolution'][0],2*previous_scale['resolution'][1],2*previous_scale['resolution'][2]]
         info['scales'].append(current_scale)
     
     return info
