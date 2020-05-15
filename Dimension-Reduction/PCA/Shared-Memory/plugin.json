@@ -8,6 +8,12 @@
     "containerId": "labshare/polus-pca-plugin:0.1.0",
     "inputs": [
         {
+            "name": "inputPath",
+            "type": "csvCollection",
+            "description": "Input csv file containing the raw data",
+            "required": "True"
+        },
+        {
             "name": "readOption",
             "type": "enum",
             "options": {
@@ -38,13 +44,7 @@
         {
             "name": "computeStdev",
             "type": "boolean",
-            "description": "Post-Compute Process to Compute STDEV",
-            "required": "True"
-        },
-        {
-            "name": "inputPath",
-            "type": "csvCollection",
-            "description": "Input csv File",
+            "description": "Post-Compute Process to Compute the Standard Deviation",
             "required": "True"
         }
     ],
@@ -54,33 +54,34 @@
             "type": "csvCollection",
             "description": "Full path of the output csv file"
         }
-
     ],
     "ui": [
         {
+            "key": "inputs.inputPath",
+            "title": "Input CSV collection",
+            "description": "Insert the path to csv collection"
+        },
+        {
             "key": "inputs.readOption",
-			"title": "Read Input File Directly?",
+			"title": "The Method to Read the Input File",
 			"description": "Pick a collection..."
         },
         {
             "key": "inputs.deviceName",
             "title": "Computing Device",
-            "description": "Which Device is Used for Computation: cpu or cuda"
+            "description": "Which Device is Used for Computation: cpu or cuda",
+            "default": "cpu"          
         },
         {
             "key": "inputs.applySignFlip",
-            "title": "Apply Sign Flip?",
-            "description": "Apply sign flip on the projected data along certain PC axes: yes or no"
+            "title": "Apply Sign Flip to the Projected Outputs?",
+            "description": "Apply sign flip on the projected data along certain PC axes",
+            "default": true
         },
         {
             "key": "inputs.computeStdev",
-            "title": "Compute the Standard Deviation?",
+            "title": "Post-Compute the Standard Deviation?",
             "description": "Compute the Standard Deviation of the projected data along each PC axis?"
-        },
-        {
-            "key": "inputs.inputPath",
-            "title": "Read Input File Directly?",
-            "description": "Full path to the input csv file"
         }
     ]
 }

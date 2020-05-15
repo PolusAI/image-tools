@@ -115,7 +115,7 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 		/**
 		 * Now, we are able to compute the distance
 		 */
-		if (distanceKeyword =="standardised_euclidean") {
+		if (distanceKeyword =="standardisedEuclidean") {
 			double result = 0.0, tmp;
 			for (int i = 0; i < Dim; ++i) {
 				tmp = dataPoints[it][i] - dataPoints[it2][i];
@@ -124,7 +124,7 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 			return sqrt(result);
 		}
 
-		else if (distanceKeyword =="weighted_minkowski") {
+		else if (distanceKeyword =="weightedMinkowski") {
 			double result = 0.0;
 			for (int i = 0; i < Dim; ++i) {
 				result += pow(inputArray[i][0] * abs(dataPoints[it][i] - dataPoints[it2][i]), distanceV1);  

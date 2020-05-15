@@ -1,11 +1,11 @@
 {
-    "name": "UMAP (Multi-Threaded)",
+    "name": "UMAP (CUDA)",
     "version": "0.1.0",
-    "title": "UMAP (Multi-Threaded)",
-    "description": "UMAP Multi-Threaded (Shared-Memory) Code",
+    "title": "UMAP (CUDA)",
+    "description": "UMAP CUDA Code",
     "author": "Mahdi Maghrebi",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-    "containerId": "labshare/polus-umap-openmp-plugin:0.1.0",
+    "containerId": "labshare/polus-umap-cuda-plugin:0.1.0",
     "inputs": [
         {
             "name": "inputPath",

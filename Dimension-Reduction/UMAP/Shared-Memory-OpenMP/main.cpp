@@ -407,7 +407,7 @@ int main(int argc, char ** argv) {
 	for (int n = 1; n < n_epochs; ++n) {
 
 		//Loop over all edges of the graph 
-		if (n%10 == 0){
+		if (n%100 == 0){
 			logFile << "SGD iteration = "<<n<<" from "<< n_epochs <<endl;
 			cout << "SGD iteration = "<<n<<" from "<< n_epochs <<endl;
 		}
