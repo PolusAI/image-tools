@@ -12,13 +12,16 @@ import decimal
 from decimal import Decimal
 from textwrap import wrap
 import os
-import time
+# import time
+import scipy.special
 
 # Chunk Scale
 CHUNK_SIZE = 512
 
 # Number of Ticks on the Axis Graph 
 numticks = 11
+
+# global bin
 
 # DZI file template
 DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="' + str(CHUNK_SIZE) + '" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
@@ -447,11 +450,18 @@ def bin_data(data,column_names):
         dtype = np.uint32
     else:
         dtype = np.uint64
-    bins = np.zeros((nfeats,nfeats,bincount,bincount),dtype=dtype)
-
+    print("dtype", dtype)
+    totalgraphs = (scipy.special.factorial(nfeats))/(2*(scipy.special.factorial(nfeats-2)))
+    totalgraphs = totalgraphs.astype(np.uint32)
+    # bins = np.zeros((nfeats,nfeats,bincount,bincount),dtype=dtype)
+    bins = np.zeros((totalgraphs, bincount, bincount), dtype=dtype)
     # Create a linear index for feature bins
     linear_index = []
+    linear_dict = {}
 
+    # for feat1 in range(totalgraphs):
+        
+    i = 0
     # Bin the data
     for feat1 in range(nfeats):
         if bin_stats['min'][feat1] >= 0:
@@ -462,6 +472,8 @@ def bin_data(data,column_names):
         feat1_tf = data[name1] * bincount   # Convert to linear matrix index
 
         for feat2 in range(feat1+1,nfeats):
+            linear_dict[(feat1, feat2)] = i
+            # print(i, ": ", feat1, feat2, (feat1*nfeats)+((feat2-1)*feat1))
             name2 = column_names[feat2]
             
             # Remove all NaN values
@@ -471,6 +483,7 @@ def bin_data(data,column_names):
             if feat2_tf.size<=1:
                 continue
             
+            
             # sort linear matrix indices
             feat2_sort = np.sort(feat1_tf[data_ind[name1] & data_ind[name2]] + feat2_tf)
             
@@ -478,15 +491,15 @@ def bin_data(data,column_names):
             ind2 = np.diff(feat2_sort)                       
             ind2 = np.nonzero(ind2)[0]                       # nonzeros are cumulative sum of all bin values
             ind2 = np.append(ind2,feat2_sort.size-1)
-            # print(feat2_sort.shape)
             rows = (feat2_sort[ind2]/bincount).astype(np.uint8)   # calculate row from linear index
             cols = np.mod(feat2_sort[ind2],bincount)              # calculate column from linear index
             counts = np.diff(ind2)                           # calculate the number of values in each bin
-            bins[feat1,feat2,rows[0],cols[0]] = ind2[0] + 1
-            bins[feat1,feat2,rows[1:],cols[1:]] = counts
+            bins[i,rows[0],cols[0]] = ind2[0] + 1
+            bins[i,rows[1:],cols[1:]] = counts
             linear_index.append([feat1,feat2])
+            i = i + 1
             
-    return yaxis, bins, bin_stats, linear_index, column_bin_size, alphavals
+    return yaxis, bins, bin_stats, linear_index, linear_dict, column_bin_size, alphavals
 
 """ 2. Plot Generation """
 def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
@@ -685,8 +698,8 @@ def get_cmap():
 
 def gen_plot(col1,
              col2,
+             indexdict,
              alphavals,
-             bins,
              binsizes,
              column_names,
              bin_stats,
@@ -713,11 +726,11 @@ def gen_plot(col1,
         hmap - A numpy array containing pixels of the heatmap
     """
     if col2>col1:
-        d = np.squeeze(bins[col1,col2,:,:])
+        d = np.squeeze(bins[indexdict[col1, col2],:,:])
         r = col1
         c = col2
     elif col2<col1:
-        d = np.transpose(np.squeeze(bins[col2,col1,:,:]))
+        d = np.transpose(np.squeeze(bins[indexdict[(col1, col2)],:,:]))
         r = col2
         c = col1
     else:
@@ -954,12 +967,12 @@ def metadata_to_graph_info(bins,outPath,outFile, indexscale):
 # at high resolution layers of the pyramid. So, if 0 is the original resolution of the image, getting a tile
 # at scale 2 will generate only the necessary information at layers 0 and 1 to create the desired tile at
 # layer 2. This function is recursive and can be parallelized.
-def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,bintype,binstats, binsizes, axiszero, alphavals, X=None,Y=None):
+def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,indexdict,binstats, binsizes, axiszero, alphavals, X=None,Y=None):
     # Get the scale info
     scale_info = None
     logger.info("S: " + str(S))
     logger.info(info['scales'])
-    for res in info['scales']:
+    for res in info['scales']: 
         if int(res['key'])==S:
             scale_info = res
             break
@@ -991,8 +1004,8 @@ def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,bintyp
         else:
             image = gen_plot(indexscale[index][0],
                              indexscale[index][1],
+                             indexdict,
                              alphavals,
-                             bintype,
                              binsizes,
                              cnames,
                              binstats,
@@ -1032,7 +1045,7 @@ def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,bintyp
                                                    outpath,
                                                    out_file,
                                                    indexscale,
-                                                   bintype,
+                                                   indexdict,
                                                    binstats,
                                                    binsizes,
                                                    axiszero,
@@ -1047,7 +1060,7 @@ def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,bintyp
                                                outpath,
                                                out_file,
                                                indexscale,
-                                               bintype,
+                                               indexdict,
                                                binstats,
                                                binsizes,
                                                axiszero,
@@ -1066,7 +1079,7 @@ def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,bintyp
 
 # This function performs the same operation as _get_highe_res, except it uses multiprocessing to grab higher
 # resolution layers at a specific layer.
-def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, bintype, binstats, binsizes, axiszero, alphavals, X=None,Y=None):
+def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, indexdict, binstats, binsizes, axiszero, alphavals, X=None,Y=None):
     # Get the scale info
     processID = os.getpid()
     scale_info = None
@@ -1098,8 +1111,8 @@ def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, 
         else:
             image = gen_plot(indexscale[index][0],
                              indexscale[index][1],
+                             indexdict,
                              alphavals,
-                             bintype,
                              binsizes,
                              cnames,
                              binstats,
@@ -1131,7 +1144,7 @@ def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, 
                                                                            outpath,
                                                                            out_file,
                                                                            indexscale,
-                                                                           bintype,
+                                                                           indexdict,
                                                                            binstats,
                                                                            binsizes,
                                                                            axiszero,
@@ -1237,8 +1250,9 @@ if __name__=="__main__":
         logger.info('Done loading LINEAR csv!')
 
         # Bin the data
+        global bins
         logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
-        yaxis_linear, bins, bin_stats, linear_index, linear_binsizes, alphavals_linear = bin_data(data,column_names)
+        yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = bin_data(data,column_names)
         del data # get rid of the original data to save memory
 
         # Generate the default figure components
@@ -1258,7 +1272,7 @@ if __name__=="__main__":
 
         # Create the pyramid
         logger.info('Building LINEAR pyramids...')
-        image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder,linear_index, bins, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
+        image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
 
         del image_linear
         del info_linear
