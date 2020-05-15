@@ -268,7 +268,7 @@ def bin_data_log(data,column_names):
             datacol[condition1] = -1 + bincount  # this is what value is transformed to when it meets condition 1  
         return alphas, commonratios, data
 
-    linear_index = []
+    
     yaxis = [0]
     column_bin_sizes = []
     quartile25to75 = []
@@ -372,14 +372,21 @@ def bin_data_log(data,column_names):
         dtype = np.uint32
     else:
         dtype = np.uint64
-    bins = np.zeros((nfeats,nfeats,bincount,bincount),dtype=dtype)
+    
+    totalgraphs = (scipy.special.factorial(nfeats))/(2*(scipy.special.factorial(nfeats-2)))
+    totalgraphs = totalgraphs.astype(np.uint32)
+    bins = np.zeros((totalgraphs,bincount,bincount),dtype=dtype)
+    log_index = []
+    log_dict = {}
 
     # Create a linear index for feature bins
+    i = 0
     for feat1 in range(nfeats):
         name1 = column_names[feat1]
         feat1_tf = data[name1] * bincount
 
         for feat2 in range(feat1 + 1, nfeats):
+            log_dict[(feat1, feat2)] = i
             Datapoints.append([])
             Ind2.append([])
             Ind2zero.append([])
@@ -402,11 +409,11 @@ def bin_data_log(data,column_names):
             rows = (SortedFeats[ind2]/bincount).astype(np.uint8)   # calculate row from linear index
             cols = np.mod(SortedFeats[ind2],bincount)              # calculate column from linear index
             counts = np.diff(ind2)                           # calculate the number of values in each bin
-            bins[feat1,feat2,rows[0],cols[0]] = ind2[0] + 1
-            bins[feat1,feat2,rows[1:],cols[1:]] = counts
-            linear_index.append([feat1,feat2])
+            bins[i,rows[0],cols[0]] = ind2[0] + 1
+            bins[i,rows[1:],cols[1:]] = counts
+            log_index.append([feat1,feat2])
 
-    return yaxis, bins, bin_stats, linear_index, column_bin_sizes, alphavals
+    return yaxis, bins, bin_stats, log_index, log_dict, column_bin_sizes, alphavals
 
 def bin_data(data,column_names):
     """ Bin the data
@@ -427,6 +434,7 @@ def bin_data(data,column_names):
 
     # Get basic column statistics and bin sizes
     nfeats = len(column_names)
+    print(nfeats)
     yaxis = np.zeros(nfeats, dtype=int)
     alphavals = yaxis
     bin_stats = {'min': data.min(),
@@ -1250,8 +1258,8 @@ if __name__=="__main__":
         logger.info('Done loading LINEAR csv!')
 
         # Bin the data
-        global bins
         logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
+        global bins
         yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = bin_data(data,column_names)
         del data # get rid of the original data to save memory
 
@@ -1274,15 +1282,16 @@ if __name__=="__main__":
         logger.info('Building LINEAR pyramids...')
         image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
 
+        
         del image_linear
         del info_linear
         del yaxis_linear
-        del bins
         del bin_stats
         del linear_index
         del linear_binsizes
         del alphavals_linear
         del folder
+        bins = 0
 
         # Processes for LOG SCALED GRAPHS
         # Set the file path folder
@@ -1298,12 +1307,12 @@ if __name__=="__main__":
         
         # Bin the data
         logger.info('Binning data for {} LOG features...'.format(column_names_log.size))
-        yaxis_log, log_bins, log_bin_stats, log_index, log_binsizes, alphavals_log = bin_data_log(data_log, column_names_log)
+        yaxis_log, bins, log_bin_stats, log_index, log_dict, log_binsizes, alphavals_log = bin_data_log(data_log, column_names_log)
         del data_log # get rid of the original data to save memory
 
         # Generate the dzi file
         logger.info('Generating pyramid LOG metadata...')
-        info_log = metadata_to_graph_info(log_bins, output_path,folder_log, log_index)
+        info_log = metadata_to_graph_info(bins, output_path,folder_log, log_index)
         logger.info('Done!')
 
         logger.info('Writing LOG layout file...!')
@@ -1312,4 +1321,4 @@ if __name__=="__main__":
 
         # Create the pyramid
         logger.info('Building LOG pyramid...')
-        image_log = _get_higher_res("log", 0, info_log, column_names_log, output_path, folder_log, log_index,log_bins, log_bin_stats, log_binsizes, yaxis_log, alphavals_log)
+        image_log = _get_higher_res("log", 0, info_log, column_names_log, output_path, folder_log, log_index, log_dict, log_bin_stats, log_binsizes, yaxis_log, alphavals_log)
