@@ -40,6 +40,7 @@ if __name__=="__main__":
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))     
     
+
     #memory usage    
     mem = psutil.virtual_memory()
     logger.info('Memory usage at this stage : {}'.format(mem))  
@@ -74,7 +75,7 @@ if __name__=="__main__":
         mem = psutil.virtual_memory()
         logger.info('Memory usage at this stage : {}'.format(mem))
         # open subprocess image_registration.py
-        registration = subprocess.Popen("python3 image_registration.py --registrationString '{}' --similarTransformationString '{}' --outDir {} --template {}".format(registration_string,similar_transformation_string,outDir,template ), shell=True )
+        registration = subprocess.Popen("python3 image_registration.py --registrationString '{}' --similarTransformationString '{}' --outDir '{}' --template '{}'".format(registration_string,similar_transformation_string,outDir,template ), shell=True )
         registration.wait()
         
         
