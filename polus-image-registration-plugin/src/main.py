@@ -4,6 +4,7 @@ from pathlib import Path
 from parser import parse_collection
 import os
 import psutil
+import shutil
 
 
 if __name__=="__main__":
@@ -45,6 +46,9 @@ if __name__=="__main__":
     
      # get template image path
     template_image_path=os.path.join(inpDir,template)  
+    
+    # filename len
+    filename_len= len(template)
      
     # parse the input collection
     logger.info('Parsing the input collection and getting registration_dictionary')
@@ -54,7 +58,13 @@ if __name__=="__main__":
     for registration_set,similar_transformation_set in registration_dictionary.items():
         
         # registration_dictionary consists of set of already registered images as well
-        if registration_set[0]==registration_set[1]:
+        if registration_set[0]==registration_set[1]:            
+            similar_transformation_set=similar_transformation_set.tolist()
+            similar_transformation_set.append(registration_set[0])
+            for image_path in similar_transformation_set:
+                image_name=image_path[-1*filename_len:]
+                logger.info('Copying image {} to output directory'.format(image_name))
+                shutil.copy2(image_path,os.path.join(outDir,image_name))            
             continue
         
         # concatenate lists into a string to pass as an argument to argparse

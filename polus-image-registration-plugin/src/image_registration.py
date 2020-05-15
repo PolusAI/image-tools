@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-from PIL import Image
 from bfio.bfio import BioReader, BioWriter
 import bioformats     
 import javabridge 
@@ -23,8 +22,6 @@ The apply_registration() function takes as an input these set of
 transformations and applies it to an image.
 """
 
-# change the max size of the image that can be read using PIL
-Image.MAX_IMAGE_PIXELS = 1500000000 
 
 def image_transformation(moving_image,reference_image):    
     '''
