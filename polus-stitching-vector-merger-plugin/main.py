@@ -3,6 +3,7 @@ from pathlib import Path
 import shutil
 import os
 
+
 if __name__=="__main__":
     # Initialize the logger
     logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
@@ -47,10 +48,10 @@ if __name__=="__main__":
     count=0
     for inpDir in Collection_directories:
         if inpDir != None:
-            for vector_name in os.listdir(inpDir):
+            for vector_name in sorted(os.listdir(inpDir)):            
                 count+=1
                 logger.info('Copying stitching vector : {} from {}'.format(vector_name,inpDir))
-                shutil.copyfile(os.path.join(inpDir,vector_name),os.path.join(outDir,"img-global-positions-{}.txt".format(count)) )
+                shutil.copyfile(os.path.join(inpDir,vector_name),os.path.join(outDir,"img-global-positions-{}.txt".format(count)))
                 
 
                 
