@@ -79,6 +79,83 @@ def load_csv(fpath):
 
     return data, cnames
 
+def bin_the_data(data, yaxis, type, column_bins_sizes):
+
+    # Datapoints = []
+    # Ind2 = []
+    # Ind2zero = []
+    # Position = []
+
+    column_names = data.columns
+
+    bin_stats = {'size': data.shape,
+                 'min': data.min(),
+                 'max': data.max()}
+
+    nfeats = bin_stats['size'][1] 
+    datalen = bin_stats['size'][0]
+
+
+    data_ind = pandas.notnull(data)  # Handle NaN values
+    data[~data_ind] = 255          # Handle NaN values
+    data = data.astype(np.uint16) # cast to save memory
+    data[data==bincount] = bincount - 1         # in case of numerical precision issues
+
+    nrows = data.shape[0]
+    if nrows < 2**8:
+        dtype = np.uint8
+    elif nrows < 2**16:
+        dtype = np.uint16
+    elif nrows < 2**32:
+        dtype = np.uint32
+    else:
+        dtype = np.uint64
+    
+    totalgraphs = int((nfeats**2 - nfeats)/2)
+    bins = np.zeros((totalgraphs,bincount,bincount),dtype=dtype)
+    log_index = []
+    log_dict = {}
+
+    # Create a linear index for feature bins
+    i = 0
+    for feat1 in range(nfeats):
+        name1 = column_names[feat1]
+        if type == "linear":
+            if bin_stats['min'][feat1] >= 0:
+                yaxis[feat1] = 0
+            else:
+                yaxis[feat1] = abs(bin_stats['min'][feat1])/column_bin_size[feat1] + 1
+        feat1_tf = data[name1] * bincount
+
+        for feat2 in range(feat1 + 1, nfeats):
+            log_dict[(feat1, feat2)] = i
+            # Datapoints.append([])
+            # Ind2.append([])
+            # Ind2zero.append([])
+            # Position.append([])
+            name2 = column_names[feat2]
+            feat2_tf = data[name2]
+            feat1_tf = feat1_tf[data_ind[name1] & data_ind[name2]]
+            feat2_tf = feat2_tf[data_ind[name1] & data_ind[name2]]
+                      
+            if feat2_tf.size<=1:
+                continue
+            
+            # sort linear matrix indices
+            SortedFeats = np.sort(feat1_tf + feat2_tf)
+            # Do math to get the indices
+            ind2 = np.diff(SortedFeats)                       
+            ind2 = np.nonzero(ind2)[0]                       # nonzeros are cumulative sum of all bin values
+            ind2 = np.append(ind2,SortedFeats.size-1)
+            # print(feat2_sort.shape)
+            rows = (SortedFeats[ind2]/bincount).astype(np.uint8)   # calculate row from linear index
+            cols = np.mod(SortedFeats[ind2],bincount)              # calculate column from linear index
+            counts = np.diff(ind2)                           # calculate the number of values in each bin
+            bins[i,rows[0],cols[0]] = ind2[0] + 1
+            bins[i,rows[1:],cols[1:]] = counts
+            log_index.append([feat1,feat2])
+
+    return bins, bin_stats, log_index, log_dict
 
 def transform_data_log(data,column_names):
     """ Bin the data
@@ -146,11 +223,16 @@ def transform_data_log(data,column_names):
 
         # use ratio to solve for number bins for both the large and small ranges
         num_bins_for_smallrange = np.floor(abs(1 + np.log(smallside_an_values/alphavals)/np.log(ratios)))
-        num_bins_for_largerange = bincount - num_bins_for_smallrange
+        num_bins_for_largerange = np.floor(abs(1 + np.log(largeside_an_values/alphavals)/np.log(ratios)))
+            # sum of num_bins_for_smallrange + num_bins_for_largerange = bincount - 1
+                
 
-        # recaulate the ratio value for both sides
+        # recaulate the ratio value for both sides (subtle differences)
         small_interval_ratio = (smallside_an_values/alphavals)**(1/num_bins_for_smallrange)
         large_interval_ratio = (largeside_an_values/alphavals)**(1/num_bins_for_largerange)
+        
+        num_bins_for_largerange = num_bins_for_largerange + 1
+        # need to add a bin for values that fall between -alpha and alpha
 
         for col in data.columns:  
 
@@ -160,6 +242,8 @@ def transform_data_log(data,column_names):
             posbigger = ispositivebigger[colname]
             ratio = ratios[colname]
             alpha = alphavals[col]
+
+            print(colname, ratios[colname], small_interval_ratio[colname], large_interval_ratio[colname])
 
             # Determining number of bins for each side in column
             binssmall = num_bins_for_smallrange[colname]
@@ -186,7 +270,7 @@ def transform_data_log(data,column_names):
             condition7 = np.asarray(datacol == 0).nonzero()
 
             
-            if posbigger == True: # if the abs(max) is greater than the abs(min)
+            if posbigger: # if the abs(max) is greater than the abs(min)
                 yaxis.append(binssmall) # where to draw the y axis
                 logged3 = np.log(datacol[condition3]/alpha)/np.log(large_ratio) + 1 
                 floored3 = np.float64(np.floor(logged3))
@@ -275,10 +359,6 @@ def transform_data_log(data,column_names):
     yaxis = [0]
     column_bin_sizes = []
     quartile25to75 = []
-    Datapoints = []
-    Ind2 = []
-    Ind2zero = []
-    Position = []
     alphavals = []
     
     bin_stats = {'size': data.shape,
@@ -351,74 +431,11 @@ def transform_data_log(data,column_names):
 
     # NEW DATA FRAME DROPS COLUMNS THAT HAS A BIN WIDTH VALUE OF ZERO
     data = pandas.concat([positivedf, negativedf, neg2posdf], axis=1)
-    column_names = data.columns
-
-    bin_stats = {'size': data.shape,
-                 'min': data.min(),
-                 'max': data.max()}
-
-    nfeats = bin_stats['size'][1] 
-    datalen = bin_stats['size'][0]
-
-
-    data_ind = pandas.notnull(data)  # Handle NaN values
-    data[~data_ind] = 255          # Handle NaN values
-    data = data.astype(np.uint16) # cast to save memory
-    data[data==bincount] = bincount - 1         # in case of numerical precision issues
-
-    nrows = data.shape[0]
-    if nrows < 2**8:
-        dtype = np.uint8
-    elif nrows < 2**16:
-        dtype = np.uint16
-    elif nrows < 2**32:
-        dtype = np.uint32
-    else:
-        dtype = np.uint64
-    
-    totalgraphs = (scipy.special.factorial(nfeats))/(2*(scipy.special.factorial(nfeats-2)))
-    totalgraphs = totalgraphs.astype(np.uint32)
-    bins = np.zeros((totalgraphs,bincount,bincount),dtype=dtype)
-    log_index = []
-    log_dict = {}
-
-    # Create a linear index for feature bins
-    i = 0
-    for feat1 in range(nfeats):
-        name1 = column_names[feat1]
-        feat1_tf = data[name1] * bincount
-
-        for feat2 in range(feat1 + 1, nfeats):
-            log_dict[(feat1, feat2)] = i
-            Datapoints.append([])
-            Ind2.append([])
-            Ind2zero.append([])
-            Position.append([])
-            name2 = column_names[feat2]
-            feat2_tf = data[name2]
-            feat1_tf = feat1_tf[data_ind[name1] & data_ind[name2]]
-            feat2_tf = feat2_tf[data_ind[name1] & data_ind[name2]]
-                      
-            if feat2_tf.size<=1:
-                continue
-            
-            # sort linear matrix indices
-            SortedFeats = np.sort(feat1_tf + feat2_tf)
-            # Do math to get the indices
-            ind2 = np.diff(SortedFeats)                       
-            ind2 = np.nonzero(ind2)[0]                       # nonzeros are cumulative sum of all bin values
-            ind2 = np.append(ind2,SortedFeats.size-1)
-            # print(feat2_sort.shape)
-            rows = (SortedFeats[ind2]/bincount).astype(np.uint8)   # calculate row from linear index
-            cols = np.mod(SortedFeats[ind2],bincount)              # calculate column from linear index
-            counts = np.diff(ind2)                           # calculate the number of values in each bin
-            bins[i,rows[0],cols[0]] = ind2[0] + 1
-            bins[i,rows[1:],cols[1:]] = counts
-            log_index.append([feat1,feat2])
+    bins, bin_stats, log_index, log_dict = bin_the_data(data, yaxis, "log", column_bin_sizes)
 
     return yaxis, bins, bin_stats, log_index, log_dict, column_bin_sizes, alphavals
 
-def bin_data(data,column_names):
+def transform_data_linear(data,column_names):
     """ Bin the data
     
     Data from a pandas Dataframe is binned in two dimensions. Binning is performed by
@@ -437,7 +454,6 @@ def bin_data(data,column_names):
 
     # Get basic column statistics and bin sizes
     nfeats = len(column_names)
-    print(nfeats)
     yaxis = np.zeros(nfeats, dtype=int)
     alphavals = yaxis
     bin_stats = {'min': data.min(),
@@ -446,69 +462,7 @@ def bin_data(data,column_names):
 
     # Transform data into bin positions for fast binning
     data = ((data - bin_stats['min'])/column_bin_size).apply(np.floor)
-    data_ind = pandas.notnull(data)  # Handle NaN values
-    data[~data_ind] =  255          # Handle NaN values
-    data = data.astype(np.uint16) # cast to save memory
-    data[data==bincount] = bincount - 1         # in case of numerical precision issues
-
-    # initialize bins, try to be memory efficient
-    nrows = data.shape[0]
-    if nrows < 2**8: 
-        dtype = np.uint8
-    elif nrows < 2**16:
-        dtype = np.uint16
-    elif nrows < 2**32:
-        dtype = np.uint32
-    else:
-        dtype = np.uint64
-    print("dtype", dtype)
-    totalgraphs = (scipy.special.factorial(nfeats))/(2*(scipy.special.factorial(nfeats-2)))
-    totalgraphs = totalgraphs.astype(np.uint32)
-    # bins = np.zeros((nfeats,nfeats,bincount,bincount),dtype=dtype)
-    bins = np.zeros((totalgraphs, bincount, bincount), dtype=dtype)
-    # Create a linear index for feature bins
-    linear_index = []
-    linear_dict = {}
-
-    # for feat1 in range(totalgraphs):
-        
-    i = 0
-    # Bin the data
-    for feat1 in range(nfeats):
-        if bin_stats['min'][feat1] >= 0:
-            yaxis[feat1] = 0
-        else:
-            yaxis[feat1] = abs(bin_stats['min'][feat1])/column_bin_size[feat1] + 1
-        name1 = column_names[feat1]
-        feat1_tf = data[name1] * bincount   # Convert to linear matrix index
-
-        for feat2 in range(feat1+1,nfeats):
-            linear_dict[(feat1, feat2)] = i
-            # print(i, ": ", feat1, feat2, (feat1*nfeats)+((feat2-1)*feat1))
-            name2 = column_names[feat2]
-            
-            # Remove all NaN values
-            feat2_tf = data[name2]
-            feat2_tf = feat2_tf[data_ind[name1] & data_ind[name2]]
-            
-            if feat2_tf.size<=1:
-                continue
-            
-            
-            # sort linear matrix indices
-            feat2_sort = np.sort(feat1_tf[data_ind[name1] & data_ind[name2]] + feat2_tf)
-            
-            # Do math to get the indices
-            ind2 = np.diff(feat2_sort)                       
-            ind2 = np.nonzero(ind2)[0]                       # nonzeros are cumulative sum of all bin values
-            ind2 = np.append(ind2,feat2_sort.size-1)
-            rows = (feat2_sort[ind2]/bincount).astype(np.uint8)   # calculate row from linear index
-            cols = np.mod(feat2_sort[ind2],bincount)              # calculate column from linear index
-            counts = np.diff(ind2)                           # calculate the number of values in each bin
-            bins[i,rows[0],cols[0]] = ind2[0] + 1
-            bins[i,rows[1:],cols[1:]] = counts
-            linear_index.append([feat1,feat2])
-            i = i + 1
+    bins, bin_stats, linear_index, linear_dict = bin_the_data(data, yaxis, "linear", column_bin_size)
             
     return yaxis, bins, bin_stats, linear_index, linear_dict, column_bin_size, alphavals
 
@@ -724,7 +678,7 @@ def gen_plot(col1,
     Inputs:
         col1 - the column plotted on the y-axis
         col2 - column plotted on the x-axis
-        bins - bin data generated by bin_data()
+        bins - bin data generated by bin_the_data()
         binsizes -- the bin width
         column_names - list of column names
         bin_stats - a list containing the min,max values of each column
@@ -1250,21 +1204,21 @@ if __name__=="__main__":
 
         # Processes for LINEAR SCALED GRAPHS
         # Set the file path folder
-        # folder = Path(f)
-        # folder = folder.name.replace('.csv','')
-        # logger.info('Processing: {}'.format(folder))
+        folder = Path(f)
+        folder = folder.name.replace('.csv','')
+        logger.info('Processing: {}'.format(folder))
 
-        # # Load the data
-        # logger.info('Loading LINEAR csv: {}'.format(f))
-        # data, cnames = load_csv(f)
-        # column_names = data.columns
-        # logger.info('Done loading LINEAR csv!')
+        # Load the data
+        logger.info('Loading LINEAR csv: {}'.format(f))
+        data, cnames = load_csv(f)
+        column_names = data.columns
+        logger.info('Done loading LINEAR csv!')
 
-        # # Bin the data
-        # logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
-        # global bins
-        # yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = bin_data(data,column_names)
-        # del data # get rid of the original data to save memory
+        # Bin the data
+        logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
+        global bins
+        yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = transform_data_linear(data,column_names)
+        del data # get rid of the original data to save memory
 
         # Generate the default figure components
         logger.info('Generating colormap and default figure...')
@@ -1272,28 +1226,28 @@ if __name__=="__main__":
         fig, ax, datacolor = get_default_fig(cmap)
         logger.info('Done!')
 
-        # # Generate the dzi file
-        # logger.info('Generating pyramid LINEAR metadata...')
-        # info_linear = metadata_to_graph_info(bins, output_path,folder, linear_index)
-        # logger.info('Done!')
+        # Generate the dzi file
+        logger.info('Generating pyramid LINEAR metadata...')
+        info_linear = metadata_to_graph_info(bins, output_path,folder, linear_index)
+        logger.info('Done!')
 
-        # logger.info('Writing LINEAR layout file...!')
-        # write_csv(cnames,linear_index,info_linear,output_path,folder)
-        # logger.info('Done!')
+        logger.info('Writing LINEAR layout file...!')
+        write_csv(cnames,linear_index,info_linear,output_path,folder)
+        logger.info('Done!')
 
-        # # Create the pyramid
-        # logger.info('Building LINEAR pyramids...')
-        # image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
+        # Create the pyramid
+        logger.info('Building LINEAR pyramids...')
+        image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
 
         
-        # del image_linear
-        # del info_linear
-        # del yaxis_linear
-        # del bin_stats
-        # del linear_index
-        # del linear_binsizes
-        # del alphavals_linear
-        # del folder
+        del image_linear
+        del info_linear
+        del yaxis_linear
+        del bin_stats
+        del linear_index
+        del linear_binsizes
+        del alphavals_linear
+        del folder
         bins = 0
 
         # Processes for LOG SCALED GRAPHS
