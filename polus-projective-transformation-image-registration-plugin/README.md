@@ -1,4 +1,4 @@
-# Polus Image Registration Plugin
+# Polus Projective Transformation Image Registration Plugin
 
 WIPP Plugin Title : Image Registration Plugin 
 
