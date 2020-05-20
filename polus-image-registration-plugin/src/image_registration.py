@@ -6,7 +6,7 @@ import javabridge
 import argparse
 import logging
 import os
-import psutil
+
 
 
 """
@@ -215,9 +215,6 @@ def apply_registration(moving_image_path,Template_image_shape,Rough_Homography_U
     moving_image = bf.read_image(C=[0])    
     moving_image=moving_image[:,:,0,0,0] 
     del bf
-    
-    mem = psutil.virtual_memory()
-    logger.info('Memory usage at this stage : {}'.format(mem))  
             
     height,width=Template_image_shape
     
@@ -320,8 +317,6 @@ def register_images(reference_image_path, moving_image_path):
     logger.info("applying rough homography to the moving image...")   
   
     moving_image_transformed=apply_rough_homography(moving_image,Rough_Homography_Upscaled,reference_image_shape)     
-    mem = psutil.virtual_memory()
-    logger.info('Memory usage at this stage : {}'.format(mem))  
     
     # free up memory
     del moving_image          
@@ -413,8 +408,6 @@ if __name__=="__main__":
     transformed_moving_image_5channel=np.zeros((transformed_moving_image.shape[0],transformed_moving_image.shape[1],1,1,1),dtype='uint16')
     transformed_moving_image_5channel[:,:,0,0,0]=transformed_moving_image 
     
-    mem = psutil.virtual_memory()
-    logger.info('Memory usage at this stage : {}'.format(mem))  
     
     del transformed_moving_image  
     logger.info("writing output using bfio...")        
@@ -438,14 +431,10 @@ if __name__=="__main__":
         moving_image_name=moving_image_path[-1*filename_len:]            
         
         logger.info('applying transformation to image {}'.format(moving_image_name))
-        mem = psutil.virtual_memory()
-        logger.info('Memory usage at this stage : {}'.format(mem))  
                     
         # use the precalculated transformation to transform this image
         transformed_moving_img, moving_image_metadata =apply_registration(moving_image_path, template_img_shape, Rough_Homography_Upscaled, fine_homography_set)          
-        
-        mem = psutil.virtual_memory()
-        logger.info('Memory usage at this stage : {}'.format(mem))  
+
         #write the output to the desired directory using bfio
         logger.info('writing output image...')
         transformed_moving_image_5channel=np.zeros((transformed_moving_img.shape[0],transformed_moving_img.shape[1],1,1,1),dtype='uint16')
