@@ -80,7 +80,7 @@ def load_csv(fpath):
     return data, cnames
 
 
-def bin_data_log(data,column_names):
+def transform_data_log(data,column_names):
     """ Bin the data
     
     Data from a pandas Dataframe is binned in two dimensions in a logarithmic scale. 
@@ -114,109 +114,112 @@ def bin_data_log(data,column_names):
         linear_index - Numeric value of column index from original csv
     """
     #Transforms the DataFrame that Range from a Negative Number to a Positive Number
-    def dfneg2pos(data, alpha, datmin, datmax):
+    def dfneg2pos(data, alphavals, datmin, datmax):
 
         yaxis = [] 
         commonratios = []
         alphas = []
+
+        # DETERMINING NUMBER OF BINS ON EACH SIDE OF Y AXIS
+
+            # Need to figure out whether the negative range or 
+            #   positive range is bigger
+        minmax = pandas.concat([datmin, datmax], axis=1).abs()
+        ispositivebigger = minmax.iloc[:,0] < minmax.iloc[:,1] 
+        smallside_an_values = minmax.min(axis=1) 
+        largeside_an_values = minmax.max(axis=1)
+
+        # NEED TO SOLVE FOR HOW MANY BINS THE SMALL RANGE AND LARGE RANGE REQUIRES
+            # THREE VARIABLES ARE UNKNOWN
+            # 1) the ratio 
+            # 2) number of bins needed for smaller range
+            # 3) number of bins needed for larger range
+
+        # Solving for ratio (r), use equations:
+            # x + y = bincount
+                # where x is the number of bins used for the smaller range
+                # where y is the number of bins used for the larger range
+            # small = alpha*(r^(x-1)) --> log(r)[small/alpha] = x -1
+            # large = alpha*(r^(y-1)) --> log(r)[large/alpha] = y - 1
+            # Combining all equations we get the following: 
+        ratios = ((smallside_an_values*largeside_an_values)/(alphavals*alphavals))**(1/(bincount-2))
+
+        # use ratio to solve for number bins for both the large and small ranges
+        num_bins_for_smallrange = np.floor(abs(1 + np.log(smallside_an_values/alphavals)/np.log(ratios)))
+        num_bins_for_largerange = bincount - num_bins_for_smallrange
+
+        # recaulate the ratio value for both sides
+        small_interval_ratio = (smallside_an_values/alphavals)**(1/num_bins_for_smallrange)
+        large_interval_ratio = (largeside_an_values/alphavals)**(1/num_bins_for_largerange)
+
         for col in data.columns:  
-            small = 0 
-            large = 0
-            posbigger = True
 
-            # Determining which side requires more bins. 
-            if abs(datmax[col]) > abs(datmin[col]):
-                # Positive Range is larger
-                small = abs(datmin[col]) 
-                large = abs(datmax[col])
-            else:
-                # Negative Range is larger
-                small = abs(datmax[col])
-                large = abs(datmin[col])
-                posbigger = False
+            colvals = data[col]
 
-            # Determine all the variables to transform the data
-            # Solving for ratio (r), use equations:
-                # x + y = bincount
-                    # where x is the number of bins used for the smaller range
-                    # where y is the number of bins used for the larger range
-                # small = alpha*(r^(x-1)) --> log(r)[small/alpha] = x -1
-                # large = alpha*(r^(y-1)) --> log(r)[large/alpha] = y - 1
-                # Combining all equations we get the following: 
-            ratio = ((small*large)/(alpha[col]*alpha[col]))**(1/(bincount-2))
+            colname = colvals.name
+            posbigger = ispositivebigger[colname]
+            ratio = ratios[colname]
+            alpha = alphavals[col]
 
-            # use ratio to solve for number bins for both the large and small ranges
-            binssmall = np.floor(abs(1 + np.log(small/alpha[col])/np.log(ratio)))
-            binslarge = np.floor(abs(1 + np.log(large/alpha[col])/np.log(ratio)))
+            # Determining number of bins for each side in column
+            binssmall = num_bins_for_smallrange[colname]
+            binslarge = num_bins_for_largerange[colname]
 
-            # create a ratio for the numbers of bins for both the ranges
-            zfactor = binssmall/binslarge
+            # ratio values for both ranges in column
+            small_ratio = small_interval_ratio[colname]
+            large_ratio = large_interval_ratio[colname]
 
-            # recalculate the number of bins for both ranges using the zfactor variable
-            binssmall = round(bincount/(2 + 1/zfactor), 0)
-            binslarge = binssmall + (bincount - (2*binssmall))
+            commonratios.append([small_ratio, large_ratio])
+            alphas.append(alpha)
 
-            # recaulate the ratio value for both sides
-            small_interval = (small/alpha[col])**(1/binssmall)
-            large_interval = (large/alpha[col])**(1/binslarge)
-
-            commonratios.append([small_interval, large_interval])
-            alphas.append(alpha[col])
-
-            datacol = data[col].to_numpy()
+            datacol = colvals.to_numpy()
             
+            val_pos_nonzero = datacol > 0
+            val_neg_nonzero = datacol < 0
             # Each value in the Range falls under one of the following conditions
-            condition1 = np.asarray((datacol > 0) & (datacol < alpha[col])).nonzero() # Value is positive and is smaller than the first value in the range
-            condition2 = np.asarray((datacol > 0) & (datacol == datmax[col])).nonzero() # Value is positive and is equal to the large value in the range
-            condition3 = np.asarray((datacol > 0) & (datacol >= alpha[col])).nonzero() # Value is positive and is smallest < value < max
-            condition4 = np.asarray((datacol < 0) & (datacol > -1*alpha[col])).nonzero() # Value is negative and is greater than the first value in the range
-            condition5 = np.asarray((datacol < 0) & (datacol == datmin[col])).nonzero() # Value is negative and is equal to the smallest value in the range
-            condition6 = np.asarray((datacol < 0) & (datacol <= -1*alpha[col])).nonzero() # Value is negative and is min < value < largest
+            condition1 = np.asarray((val_pos_nonzero) & (datacol < alpha)).nonzero() # Value is positive and is smaller than the first value in the range
+            condition2 = np.asarray((val_pos_nonzero) & (datacol == datmax[col])).nonzero() # Value is positive and is equal to the large value in the range
+            condition3 = np.asarray((val_pos_nonzero) & (datacol >= alpha)).nonzero() # Value is positive and is smallest < value < max
+            condition4 = np.asarray((val_neg_nonzero) & (datacol > -1*alpha)).nonzero() # Value is negative and is greater than the first value in the range
+            condition5 = np.asarray((val_neg_nonzero) & (datacol == datmin[col])).nonzero() # Value is negative and is equal to the smallest value in the range
+            condition6 = np.asarray((val_neg_nonzero) & (datacol <= -1*alpha)).nonzero() # Value is negative and is min < value < largest
             condition7 = np.asarray(datacol == 0).nonzero()
 
             
             if posbigger == True: # if the abs(max) is greater than the abs(min)
                 yaxis.append(binssmall) # where to draw the y axis
-                logged3 = np.log(datacol[condition3]/alpha[col])/np.log(large_interval) + 1 
+                logged3 = np.log(datacol[condition3]/alpha)/np.log(large_ratio) + 1 
                 floored3 = np.float64(np.floor(logged3))
                 absolute3 = abs(floored3) + binssmall
                 datacol[condition3] = absolute3 # this is what value transforms to when it meets condition 3
 
-                logged6 = np.log(datacol[condition6]/(-1*alpha[col]))/np.log(small_interval) + 1 
+                logged6 = np.log(datacol[condition6]/(-1*alpha))/np.log(small_ratio) + 1 
                 floored6 = np.float64(np.floor(logged6))
                 absolute6 = -1*abs(floored6) + binssmall
                 datacol[condition6] = absolute6 # this is what value transforms to when it meets condition 6
 
                 datacol[condition1] = 1 + binssmall
-
                 datacol[condition2] = bincount
-
                 datacol[condition4] = -1 + binssmall
-
                 datacol[condition5] = 0
-
                 datacol[condition7] = -1 + binssmall
 
             else:
                 yaxis.append(binslarge) # where to draw the y axis
-                logged3 = np.log(datacol[condition3]/alpha[col])/np.log(small_interval) + 1 # what condition3 is equal to
+                logged3 = np.log(datacol[condition3]/alpha)/np.log(small_ratio) + 1 # what condition3 is equal to
                 floored3 = np.float64(np.floor(logged3))
                 absolute3 = abs(floored3) + binslarge
                 datacol[condition3] = absolute3 # this is what value transforms to when it meets condition 3
 
-                logged6 = np.log(datacol[condition6]/(-1*alpha[col]))/np.log(large_interval) + 1 # 
+                logged6 = np.log(datacol[condition6]/(-1*alpha))/np.log(large_ratio) + 1 # 
                 floored6 = np.float64(np.floor(logged6))
                 absolute6 = -1*abs(floored6) + binslarge
                 datacol[condition6] = absolute6 # this is what value transforms to when it meets condition 6
 
                 datacol[condition1] = 1 + binslarge
-
                 datacol[condition2] = bincount
-
                 datacol[condition4] = -1 + binslarge
-
                 datacol[condition5] = 0
-
                 datacol[condition7] = -1 + binslarge
 
 
@@ -1247,21 +1250,21 @@ if __name__=="__main__":
 
         # Processes for LINEAR SCALED GRAPHS
         # Set the file path folder
-        folder = Path(f)
-        folder = folder.name.replace('.csv','')
-        logger.info('Processing: {}'.format(folder))
+        # folder = Path(f)
+        # folder = folder.name.replace('.csv','')
+        # logger.info('Processing: {}'.format(folder))
 
-        # Load the data
-        logger.info('Loading LINEAR csv: {}'.format(f))
-        data, cnames = load_csv(f)
-        column_names = data.columns
-        logger.info('Done loading LINEAR csv!')
+        # # Load the data
+        # logger.info('Loading LINEAR csv: {}'.format(f))
+        # data, cnames = load_csv(f)
+        # column_names = data.columns
+        # logger.info('Done loading LINEAR csv!')
 
-        # Bin the data
-        logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
-        global bins
-        yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = bin_data(data,column_names)
-        del data # get rid of the original data to save memory
+        # # Bin the data
+        # logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
+        # global bins
+        # yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = bin_data(data,column_names)
+        # del data # get rid of the original data to save memory
 
         # Generate the default figure components
         logger.info('Generating colormap and default figure...')
@@ -1269,28 +1272,28 @@ if __name__=="__main__":
         fig, ax, datacolor = get_default_fig(cmap)
         logger.info('Done!')
 
-        # Generate the dzi file
-        logger.info('Generating pyramid LINEAR metadata...')
-        info_linear = metadata_to_graph_info(bins, output_path,folder, linear_index)
-        logger.info('Done!')
+        # # Generate the dzi file
+        # logger.info('Generating pyramid LINEAR metadata...')
+        # info_linear = metadata_to_graph_info(bins, output_path,folder, linear_index)
+        # logger.info('Done!')
 
-        logger.info('Writing LINEAR layout file...!')
-        write_csv(cnames,linear_index,info_linear,output_path,folder)
-        logger.info('Done!')
+        # logger.info('Writing LINEAR layout file...!')
+        # write_csv(cnames,linear_index,info_linear,output_path,folder)
+        # logger.info('Done!')
 
-        # Create the pyramid
-        logger.info('Building LINEAR pyramids...')
-        image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
+        # # Create the pyramid
+        # logger.info('Building LINEAR pyramids...')
+        # image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
 
         
-        del image_linear
-        del info_linear
-        del yaxis_linear
-        del bin_stats
-        del linear_index
-        del linear_binsizes
-        del alphavals_linear
-        del folder
+        # del image_linear
+        # del info_linear
+        # del yaxis_linear
+        # del bin_stats
+        # del linear_index
+        # del linear_binsizes
+        # del alphavals_linear
+        # del folder
         bins = 0
 
         # Processes for LOG SCALED GRAPHS
@@ -1307,7 +1310,7 @@ if __name__=="__main__":
         
         # Bin the data
         logger.info('Binning data for {} LOG features...'.format(column_names_log.size))
-        yaxis_log, bins, log_bin_stats, log_index, log_dict, log_binsizes, alphavals_log = bin_data_log(data_log, column_names_log)
+        yaxis_log, bins, log_bin_stats, log_index, log_dict, log_binsizes, alphavals_log = transform_data_log(data_log, column_names_log)
         del data_log # get rid of the original data to save memory
 
         # Generate the dzi file
