@@ -1,7 +1,7 @@
 {
   "name": "Polus Precompute Slide Plugin",
   "version": "0.4.5",
-  "containerId": "labshare/polus-precompute-slide-plugin:0.3.7",
+  "containerId": "labshare/polus-precompute-slide-plugin:0.3.9",
   "title": "Precompute Slide Viewer",
   "description": "Precomputes a single image plane for DeepZoom or Z stacks for Neuroglancer",
   "author": "N/A",
