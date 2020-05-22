@@ -40,7 +40,7 @@ def main():
     logger.info('pyramid_type = {}'.format(pyramid_type))
     logger.info('image pattern = {}'.format(imagepattern))
     logger.info('images are stacked by variable {}'.format(stack_by))
-    
+
 
     # Getting all images in directory
     # image_path = Path(input_dir)
@@ -109,7 +109,7 @@ def main():
             del processes[free_process]
             del process_timer[free_process]
             
-        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir {} --outDir {} --pyramidType {} --imageNum {} --stackheight {} --stackby {} --varsinstack {} --valinstack {} --imagepattern {} --stackcount {}".format(input_dir,
+        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --pyramidType '{}' --imageNum '{}' --stackheight '{}' --stackby '{}' --varsinstack '{}' --valinstack {} --imagepattern '{}' --stackcount '{}'".format(input_dir,
                                                                                                                                             output_dir,
                                                                                                                                             pyramid_type,
                                                                                                                                             im_count,
