@@ -15,7 +15,7 @@ Note: Prior to reading or writing using these classes, the javabridge session
 """
 import bioformats
 import numpy as np
-import os
+import os, struct
 import javabridge as jutil
 
 
@@ -397,6 +397,100 @@ class BioReader():
 
         return I
 
+    @classmethod
+    def image_size(cls,filepath):
+        """image_size Read image width and height from header
+
+        This class method only reads the header information of tiff files to
+        identify the image width and height. There are instances when the image
+        dimensions may want to be known without actually loading the image, and
+        reading only the header is considerably faster than loading bioformats
+        just to read simple metadata information.
+        
+        If the file is not a TIFF, returns width = height = -1.
+        
+        Unlike the other methods of the BioReader class, this method does not
+        require the javabridge to be started.
+        
+        This code was adapted to only operate on tiff images and includes
+        additional to read the header of little endian encoded BigTIFF files.
+        The original code can be found at:
+        https://github.com/shibukawa/imagesize_py
+
+        Args:
+            filepath (str): Path to tiff file
+
+        Returns:
+            (width, height): Tuple of ints indicating width and height.
+        
+        """
+        height = -1
+        width = -1
+
+        with open(str(filepath), 'rb') as fhandle:
+            head = fhandle.read(24)
+            size = len(head)
+
+            # handle big endian TIFF
+            if size >= 8 and head.startswith(b"\x4d\x4d\x00\x2a"):
+                offset = struct.unpack('>L', head[4:8])[0]
+                fhandle.seek(offset)
+                ifdsize = struct.unpack(">H", fhandle.read(2))[0]
+                for i in range(ifdsize):
+                    tag, datatype, count, data = struct.unpack(">HHLL", fhandle.read(12))
+                    if tag == 256:
+                        if datatype == 3:
+                            width = int(data / 65536)
+                        elif datatype == 4:
+                            width = data
+                        else:
+                            raise ValueError("Invalid TIFF file: width column data type should be SHORT/LONG.")
+                    elif tag == 257:
+                        if datatype == 3:
+                            height = int(data / 65536)
+                        elif datatype == 4:
+                            height = data
+                        else:
+                            raise ValueError("Invalid TIFF file: height column data type should be SHORT/LONG.")
+                    if width != -1 and height != -1:
+                        break
+                if width == -1 or height == -1:
+                    raise ValueError("Invalid TIFF file: width and/or height IDS entries are missing.")
+            # handle little endian Tiff
+            elif size >= 8 and head.startswith(b"\x49\x49\x2a\x00"):
+                offset = struct.unpack('<L', head[4:8])[0]
+                fhandle.seek(offset)
+                ifdsize = struct.unpack("<H", fhandle.read(2))[0]
+                for i in range(ifdsize):
+                    tag, datatype, count, data = struct.unpack("<HHLL", fhandle.read(12))
+                    if tag == 256:
+                        width = data
+                    elif tag == 257:
+                        height = data
+                    if width != -1 and height != -1:
+                        break
+                if width == -1 or height == -1:
+                    raise ValueError("Invalid TIFF file: width and/or height IDS entries are missing.")
+            # handle little endian BigTiff
+            elif size >= 8 and head.startswith(b"\x49\x49\x2b\x00"):
+                bytesize_offset = struct.unpack('<L', head[4:8])[0]
+                if bytesize_offset != 8:
+                    raise ValueError('Invalid BigTIFF file: Expected offset to be 8, found {} instead.'.format(offset))
+                offset = struct.unpack('<Q', head[8:16])[0]
+                fhandle.seek(offset)
+                ifdsize = struct.unpack("<Q", fhandle.read(8))[0]
+                for i in range(ifdsize):
+                    tag, datatype, count, data = struct.unpack("<HHQQ", fhandle.read(20))
+                    if tag == 256:
+                        width = data
+                    elif tag == 257:
+                        height = data
+                    if width != -1 and height != -1:
+                        break
+                if width == -1 or height == -1:
+                    raise ValueError("Invalid BigTIFF file: width and/or height IDS entries are missing.")
+
+        return width, height
 
 class BioWriter():
     """BioWriter Write OME tiled tiffs using Bioformats
