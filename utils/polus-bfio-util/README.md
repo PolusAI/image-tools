@@ -13,6 +13,7 @@ All containers contain the follow components:
 4. javabridge (version 1.0.18)
 5. python-bioformats (version 1.5.2)
 6. bfio (version 1.0.8)
+7. [loci-tools.jar](https://downloads.openmicroscopy.org/bio-formats/6.5.0/artifacts/) (Version 6.5.0)
 
 ## Containers
 
