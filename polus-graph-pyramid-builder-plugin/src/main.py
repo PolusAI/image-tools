@@ -312,13 +312,12 @@ def transform_data_log(data,column_names):
 
         for col in data.columns: 
             alpha = alphavals[col]
+            commonratio = commonratios[col]
             datacol = data[col].to_numpy()
 
             # each value in column falls under two conditions 
             condition1 = np.where(datacol < alpha) # smaller than the first value in range
             condition2 = np.where(datacol >= alpha) # greater than first value in range
-            
-            commonratio = commonratios[col]
 
             logged = np.log(datacol[condition2]/alpha)/np.log(commonratio)
             floored = np.floor(logged + 2)
@@ -336,19 +335,18 @@ def transform_data_log(data,column_names):
     def dfneg2zero(data, datmin, alphavals):
 
         commonratios = (datmin/alphavals)**(1/(bincount - 2))
-        
+
         for col in data.columns:
-            datacol = data[col].to_numpy()
             alpha = alphavals[col]
+            commonratio = commonratios[col]
+            datacol = data[col].to_numpy()
 
             # each value in column falls under two conditions 
             condition1 = np.where(datacol > alpha[col]) # greater than the first value in range
             condition2 = np.where(datacol <= alpha[col]) # smaller thsn the first value in range
 
-            commonratio = commonratios[col]
-
             logged = np.log(datacol[condition2]/alpha)/np.log(commonratio)
-            floored = np.floor(logged + 2) 
+            floored = np.floor(logged + 2)
             floated = -1*np.float64(floored) + bincount  # this is what value is transformed to when it meets condition 2
 
             datacol[condition2] = floated
@@ -414,8 +412,6 @@ def transform_data_log(data,column_names):
                                                         bin_stats['alpha'][positivenames], 
                                                         bin_stats['max'][positivenames])
     yaxis = yaxis * len(positivenames)
-    alphavals = alphaspos
-    column_bin_sizes = commonratiospos
     positivedf.reset_index(drop = True, inplace = True)
 
     # NEGATIVE RANGE
@@ -423,8 +419,6 @@ def transform_data_log(data,column_names):
                                                         -1*bin_stats['alpha'][negativenames], 
                                                         bin_stats['min'][negativenames])
     yaxis = yaxis + ([bincount] * len(negativenames))
-    alphavals = alphavals + alphasneg
-    column_bin_sizes = column_bin_sizes + commonratiosneg
     negativedf.reset_index(drop = True, inplace = True)
     
     # NEGATIVE TO POSITIVE RANGE
@@ -433,9 +427,12 @@ def transform_data_log(data,column_names):
                                                                        bin_stats['min'][neg2posnames], 
                                                                        bin_stats['max'][neg2posnames])
     yaxis = yaxis + yvalues
-    alphavals = alphavals + alphasneg2pos
-    column_bin_sizes = column_bin_sizes + commonratiosneg2pos
     neg2posdf.reset_index(drop = True, inplace = True)
+
+    # Concatenating alpha values and column bin sizes for the three dataframe transforms. 
+    alphavals = alphaspos + alphasneg + alphasneg2pos
+    column_bin_sizes = commonratiospos + commonratiosneg + commonratiosneg2pos
+    
 
     # NEW DATA FRAME DROPS COLUMNS THAT HAS A BIN WIDTH VALUE OF ZERO
     data = pandas.concat([positivedf, negativedf, neg2posdf], axis=1)
@@ -445,7 +442,7 @@ def transform_data_log(data,column_names):
     return yaxis, bins, bin_stats, log_index, log_dict, column_bin_sizes, alphavals
 
 def transform_data_linear(data,column_names):
-    """ Transform the data
+    """ Bin the data
     
     Data from a pandas Dataframe is binned in two dimensions. Binning is performed by
     binning data in one column along one axis and another column is binned along the
@@ -1207,9 +1204,14 @@ if __name__=="__main__":
     output_path = Path(args.outDir)
     bincount = args.bin_count
 
+    # linear_output_path = Path(args.outDir)
+    # log_output_path = Path(args.outDir)
+
     logger.info('inpDir = {}'.format(input_path))
     logger.info('outDir = {}'.format(output_path))
-    
+    # logger.info('outDirLinear = {}'.format(linear_output_path))
+    # logger.info('outDirLog = {}'.format(log_output_path))
+
     # Get the path to each csv file in the collection
     input_files = [str(f.absolute()) for f in Path(input_path).iterdir() if ''.join(f.suffixes)=='.csv']
 
