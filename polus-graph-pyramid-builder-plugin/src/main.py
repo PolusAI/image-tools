@@ -12,8 +12,6 @@ import decimal
 from decimal import Decimal
 from textwrap import wrap
 import os
-# import time
-import scipy.special
 
 # Chunk Scale
 CHUNK_SIZE = 1024
@@ -34,6 +32,7 @@ logger.setLevel(logging.INFO)
 
 """ 1. Loading and binning data """
 def is_number(value):
+    """ This function checks to see if the value can be converted to a number """
     try:
         float(value)
         return True
@@ -80,11 +79,7 @@ def load_csv(fpath):
     return data, cnames
 
 def binning_data(data, yaxis, typegraph, column_bin_size, bin_stats):
-
-    # column_names = None
-    # bin_stats = None
-    # nfeats = None
-    # datalen = None
+    """ This function bins the data """
 
     if typegraph == "log":
         bin_stats = {'size': data.shape,
@@ -311,48 +306,57 @@ def transform_data_log(data,column_names):
         return yaxis, alphas, commonratios, data
 
     # Transforms the Data that has a Positive Range
-    def dfzero2pos(data, alpha, datmax):
-        alphas = []
-        commonratios = []
-        for col in data.columns: 
-            datacol = data[col].to_numpy()
-            # each value in column falls under two conditions 
-            condition1 = np.where(datacol < alpha[col]) # smaller than the first value in range
-            condition2 = np.where(datacol >= alpha[col]) # greater than first value in range
-            alphas.append(alpha[col])
-            commonratio = (datmax[col]/alpha[col])**(1/(bincount - 2))
-            commonratios.append([commonratio])
+    def dfzero2pos(data, alphavals, datmax):
 
-            logged = np.log(datacol[condition2]/alpha[col])/np.log(commonratio)
+        commonratios = (datmax/alphavals)**(1/(bincount - 2))
+
+        for col in data.columns: 
+            alpha = alphavals[col]
+            datacol = data[col].to_numpy()
+
+            # each value in column falls under two conditions 
+            condition1 = np.where(datacol < alpha) # smaller than the first value in range
+            condition2 = np.where(datacol >= alpha) # greater than first value in range
+            
+            commonratio = commonratios[col]
+
+            logged = np.log(datacol[condition2]/alpha)/np.log(commonratio)
             floored = np.floor(logged + 2)
             floated = np.float64(floored)  # this is what value is transformed to when it meets condition 2
 
             datacol[condition2] = floated
             datacol[condition1] = 1 # this is what value is transformed to when it meets condition 1
-        
+
+        alphas = alphavals.to_list()
+        commonratios = commonratios.to_list()
+
         return alphas, commonratios, data
 
     # Transform the Data that has a Negative Range
-    def dfneg2zero(data, datmin, alpha):
-        alphas = []
-        commonratios = []
+    def dfneg2zero(data, datmin, alphavals):
 
+        commonratios = (datmin/alphavals)**(1/(bincount - 2))
+        
         for col in data.columns:
             datacol = data[col].to_numpy()
+            alpha = alphavals[col]
+
             # each value in column falls under two conditions 
             condition1 = np.where(datacol > alpha[col]) # greater than the first value in range
             condition2 = np.where(datacol <= alpha[col]) # smaller thsn the first value in range
 
-            alphas.append(alpha[col])
-            commonratio = (datmin[col]/alpha[col])**(1/(bincount - 2))
-            commonratios.append([commonratio])
+            commonratio = commonratios[col]
 
-            logged = np.log(datacol[condition2]/alpha[col])/np.log(commonratio)
+            logged = np.log(datacol[condition2]/alpha)/np.log(commonratio)
             floored = np.floor(logged + 2) 
             floated = -1*np.float64(floored) + bincount  # this is what value is transformed to when it meets condition 2
 
             datacol[condition2] = floated
             datacol[condition1] = -1 + bincount  # this is what value is transformed to when it meets condition 1  
+        
+        alphas = alphavals.to_list()
+        commonratios = commonratios.to_list()
+
         return alphas, commonratios, data
 
     
@@ -441,7 +445,7 @@ def transform_data_log(data,column_names):
     return yaxis, bins, bin_stats, log_index, log_dict, column_bin_sizes, alphavals
 
 def transform_data_linear(data,column_names):
-    """ Bin the data
+    """ Transform the data
     
     Data from a pandas Dataframe is binned in two dimensions. Binning is performed by
     binning data in one column along one axis and another column is binned along the
@@ -470,66 +474,6 @@ def transform_data_linear(data,column_names):
     data = ((data - bin_stats['min'])/column_bin_size).apply(np.floor)
 
     bins, bin_stats, linear_index, linear_dict, yaxis = binning_data(data, yaxis, "linear", column_bin_size, bin_stats)
-
-    # data_ind = pandas.notnull(data)  # Handle NaN values
-    # data[~data_ind] =  255          # Handle NaN values
-    # data = data.astype(np.uint16) # cast to save memory
-    # data[data==bincount] = bincount - 1         # in case of numerical precision issues
-
-    # # initialize bins, try to be memory efficient
-    # nrows = data.shape[0]
-    # if nrows < 2**8: d
-    #     dtype = np.uint8
-    # elif nrows < 2**16:
-    #     dtype = np.uint16
-    # elif nrows < 2**32:
-    #     dtype = np.uint32
-    # else:
-    #     dtype = np.uint64
-    # totalgraphs = int((nfeats**2 - nfeats)/2)
-    # # bins = np.zeros((nfeats,nfeats,bincount,bincount),dtype=dtype)
-    # bins = np.zeros((totalgraphs, bincount, bincount), dtype=dtype)
-    # # Create a linear index for feature bins
-    # linear_index = []
-    # linear_dict = {}
-
-    # # for feat1 in range(totalgraphs):
-        
-    # i = 0
-    # # Bin the data
-    # for feat1 in range(nfeats):
-    #     if bin_stats['min'][feat1] >= 0:
-    #         yaxis[feat1] = 0
-    #     else:
-    #         yaxis[feat1] = abs(bin_stats['min'][feat1])/column_bin_size[feat1] + 1
-    #     name1 = column_names[feat1]
-    #     feat1_tf = data[name1] * bincount   # Convert to linear matrix index
-
-    #     for feat2 in range(feat1+1,nfeats):
-    #         linear_dict[(feat1, feat2)] = i
-    #         # print(i, ": ", feat1, feat2, (feat1*nfeats)+((feat2-1)*feat1))
-    #         name2 = column_names[feat2]
-            
-    #         # Remove all NaN values
-    #         feat2_tf = data[name2]
-    #         feat2_tf = feat2_tf[data_ind[name1] & data_ind[name2]]
-            
-    #         if feat2_tf.size<=1:
-    #             continue
-    #         # sort linear matrix indices
-    #         feat2_sort = np.sort(feat1_tf[data_ind[name1] & data_ind[name2]] + feat2_tf)
-            
-    #         # Do math to get the indices
-    #         ind2 = np.diff(feat2_sort)                       
-    #         ind2 = np.nonzero(ind2)[0]                       # nonzeros are cumulative sum of all bin values
-    #         ind2 = np.append(ind2,feat2_sort.size-1)
-    #         rows = (feat2_sort[ind2]/bincount).astype(np.uint8)   # calculate row from linear index
-    #         cols = np.mod(feat2_sort[ind2],bincount)              # calculate column from linear index
-    #         counts = np.diff(ind2)                           # calculate the number of values in each bins
-    #         bins[i,rows[0],cols[0]] = ind2[0] + 1
-    #         bins[i,rows[1:],cols[1:]] = counts
-    #         linear_index.append([feat1,feat2])
-    #         i = i + 1
     
     return yaxis, bins, bin_stats, linear_index, linear_dict, column_bin_size, alphavals
 
@@ -780,14 +724,8 @@ def gen_plot(col1,
         r = col1
         c = col2
 
-    # if typegraph == "linear":
     data.set_data(np.ceil(d/d.max() *255))
     data.set_clim(0, 255)
-    # if typegraph == "log":
-    #     data.set_data(np.ceil(math.log(d,d.max())*255))
-    #     data.set_clim(0,255)
-    # print("DATA in gen_plot")
-    # print(data)
 
     sizefont = 12 
     axlabel = fig.axes[1]
@@ -1269,14 +1207,9 @@ if __name__=="__main__":
     output_path = Path(args.outDir)
     bincount = args.bin_count
 
-    # linear_output_path = Path(args.outDir)
-    # log_output_path = Path(args.outDir)
-
     logger.info('inpDir = {}'.format(input_path))
     logger.info('outDir = {}'.format(output_path))
-    # logger.info('outDirLinear = {}'.format(linear_output_path))
-    # logger.info('outDirLog = {}'.format(log_output_path))
-
+    
     # Get the path to each csv file in the collection
     input_files = [str(f.absolute()) for f in Path(input_path).iterdir() if ''.join(f.suffixes)=='.csv']
 
@@ -1284,51 +1217,51 @@ if __name__=="__main__":
 
         global bins
 
-        # # Processes for LINEAR SCALED GRAPHS
-        # # Set the file path folder
-        # folder = Path(f)
-        # folder = folder.name.replace('.csv','')
-        # logger.info('Processing: {}'.format(folder))
+        # Processes for LINEAR SCALED GRAPHS
+        # Set the file path folder
+        folder = Path(f)
+        folder = folder.name.replace('.csv','')
+        logger.info('Processing: {}'.format(folder))
 
-        # # Load the data
-        # logger.info('Loading LINEAR csv: {}'.format(f))
-        # data, cnames = load_csv(f)
-        # column_names = data.columns
-        # logger.info('Done loading LINEAR csv!')
+        # Load the data
+        logger.info('Loading LINEAR csv: {}'.format(f))
+        data, cnames = load_csv(f)
+        column_names = data.columns
+        logger.info('Done loading LINEAR csv!')
 
-        # # Bin the data
-        # logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
-        # yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = transform_data_linear(data,column_names)
-        # del data # get rid of the original data to save memory
+        # Bin the data
+        logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
+        yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = transform_data_linear(data,column_names)
+        del data # get rid of the original data to save memory
 
-        # # Generate the default figure components
-        # logger.info('Generating colormap and default figure...')
-        # cmap_linear = get_cmap("linear")
-        # fig, ax, datacolor = get_default_fig(cmap_linear)
-        # logger.info('Done!')
+        # Generate the default figure components
+        logger.info('Generating colormap and default figure...')
+        cmap_linear = get_cmap("linear")
+        fig, ax, datacolor = get_default_fig(cmap_linear)
+        logger.info('Done!')
 
-        # # Generate the dzi file
-        # logger.info('Generating pyramid LINEAR metadata...')
-        # info_linear = metadata_to_graph_info(bins, output_path,folder, linear_index)
-        # logger.info('Done!')
+        # Generate the dzi file
+        logger.info('Generating pyramid LINEAR metadata...')
+        info_linear = metadata_to_graph_info(bins, output_path,folder, linear_index)
+        logger.info('Done!')
 
-        # logger.info('Writing LINEAR layout file...!')
-        # write_csv(cnames,linear_index,info_linear,output_path,folder)
-        # logger.info('Done!')
+        logger.info('Writing LINEAR layout file...!')
+        write_csv(cnames,linear_index,info_linear,output_path,folder)
+        logger.info('Done!')
 
-        # # Create the pyramid
-        # logger.info('Building LINEAR pyramids...')
-        # image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
+        # Create the pyramid
+        logger.info('Building LINEAR pyramids...')
+        image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
 
         
-        # del image_linear
-        # del info_linear
-        # del yaxis_linear
-        # del bin_stats
-        # del linear_index
-        # del linear_binsizes
-        # del alphavals_linear
-        # del folder
+        del image_linear
+        del info_linear
+        del yaxis_linear
+        del bin_stats
+        del linear_index
+        del linear_binsizes
+        del alphavals_linear
+        del folder
         bins = 0
 
         # Processes for LOG SCALED GRAPHS
