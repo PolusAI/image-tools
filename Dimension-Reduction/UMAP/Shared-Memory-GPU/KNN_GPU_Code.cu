@@ -21,7 +21,11 @@
 #include <curand_kernel.h>
 #include "highDComputes.h"
 #include <omp.h>
+#include <boost/iostreams/device/mapped_file.hpp> 
+#include <boost/iostreams/stream.hpp>    
 
+using boost::iostreams::mapped_file_source;
+using boost::iostreams::stream;	
 using namespace std;
 
 /**
@@ -179,11 +183,11 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 	double epsilon = 1e-10; 
 	short* allEntriesFilled = new short[N];
 	/**
-	 * At first, let's Read Dataset from Input File
+	 * At first, let's Read Dataset from Input File Using Memory Mapping
 	 */
-	ifstream infile;
-	infile.open(filePath);
-	if (infile.fail())
+	mapped_file_source mmap(filePath);
+    stream<mapped_file_source> is(mmap, std::ios::binary);
+	if (is.fail())
 	{
 		logFile << "error in Opening Input File" << endl;
 		cout << "error in Opening Input File" << endl;
@@ -193,13 +197,13 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 	 * Remove the header info
 	 */
 	string dummyLine;
-	getline(infile, dummyLine);
+	getline(is, dummyLine);
 	/**
 	 * Reading the Entire Dataset
 	 */
 	for (int i = 0; i < N; ++i) {
 		string temp, temp2;
-		getline(infile, temp);
+		getline(is, temp);
 		for (int j = 0; j < Dim; ++j) {
 			temp2 = temp.substr(0, temp.find(","));
 			double tempV=atof(temp2.c_str());
@@ -208,7 +212,7 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 			temp.erase(0, temp.find(",") + 1);
 		}
 	}
-	infile.close();
+	mmap.close();
     
 	/**
 	 * Numeric of the metric

@@ -224,6 +224,12 @@ int main(int argc, char * const argv[]) {
 	 */
 	mapped_file_source mmap(filePath);
     stream<mapped_file_source> is(mmap, std::ios::binary);
+    if (is.fail())
+	{
+		logFile << "error in Opening Input File" << endl;
+		cout << "error in Opening Input File" << endl;
+		return ;
+	}
 	/**
 	 * Remove the header info
 	 */
