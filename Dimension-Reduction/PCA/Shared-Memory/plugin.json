@@ -14,18 +14,6 @@
             "required": "True"
         },
         {
-            "name": "readOption",
-            "type": "enum",
-            "options": {
-                "values": [
-                    "direct",
-                    "mapping"
-                ]
-            },
-            "description": "Reading input data: direct or mapping",
-            "required": "True"
-        },
-        {
             "name": "deviceName",
             "type": "enum",
             "options": {
@@ -60,11 +48,6 @@
             "key": "inputs.inputPath",
             "title": "Input CSV collection",
             "description": "Insert the path to csv collection"
-        },
-        {
-            "key": "inputs.readOption",
-			"title": "The Method to Read the Input File",
-			"description": "Pick a collection..."
         },
         {
             "key": "inputs.deviceName",

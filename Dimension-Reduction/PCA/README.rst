@@ -16,17 +16,15 @@ Shared-Memory Systems Implementation
 
 The code requires the following input arguments.
 
-1- ``readOption``: This parameter is either 'direct' or 'mapping'. 'direct' represents the case where the entire data can be transferred to memory while 'mapping' represents the case where the data cannot be entirely fit into the memory.
+1- ``deviceName``: This parameter defines the compute device and is either 'cpu' or 'cuda:0'.
  
-2- ``deviceName``: This parameter defines the compute device and is either 'cpu' or 'cuda:0'.
- 
-3- ``applySignFlip``: If this parameter is set to 'yes' the sign of the projected data in PCs space is allowed to be flipped.
+2- ``applySignFlip``: If this parameter is set to 'yes' the sign of the projected data in PCs space is allowed to be flipped.
 
-4- ``computeStdev``:  If this parameter is set to 'yes' the post-compute analysis will be performed on the PC axes and the standard deviation of the projected data will be computed along PC axes (column 1) along with the ratio of (standard deviation for each axes)/(sum of standard deviations for all PC axes)*100 in (column 2).
+3- ``computeStdev``:  If this parameter is set to 'yes' the post-compute analysis will be performed on the PC axes and the standard deviation of the projected data will be computed along PC axes (column 1) along with the ratio of (standard deviation for each axes)/(sum of standard deviations for all PC axes)*100 in (column 2).
 
-5- ``inputPath``: The full path to the input csv file which contains raw data. In this file, the records are stored in rows and the features in columns. Please note that inputPath should only contain a single csv file. 
+4- ``inputPath``: The full path to the input csv file which contains raw data. In this file, the records are stored in rows and the features in columns. Please note that inputPath should only contain a single csv file. 
 
-6- ``outputPath``: The full path to the csv file where the projected data in PCs space are saved. This argument is optional and the default path is the current directory with the file name PCA_Projected_Data_Final.csv                
+5- ``outputPath``: The full path to the csv file where the projected data in PCs space are saved. This argument is optional and the default path is the current directory with the file name PCA_Projected_Data_Final.csv                
                    
 The code produces the following outputs.
 
@@ -77,7 +75,7 @@ Now, the python code can be executed as follows.
  
  .. code:: bash  
  
-    python PCA_SVD_SharedMemory.py --readOption direct --deviceName cpu --applySignFlip true \
+    python PCA_SVD_SharedMemory.py --deviceName cpu --applySignFlip true \
      --computeStdev true --inputPath . --outputPath . 
      
 
@@ -87,7 +85,7 @@ Also, the docker can be run as follows.
  .. code:: bash    
  
    sudo docker run -v /path/to/Docker:/data/inputs -v /path/to/Docker:/data/outputs \ 
-   dockerImageName  --readOption direct --deviceName cpu --applySignFlip true \
+   dockerImageName  --deviceName cpu --applySignFlip true \
    --computeStdev true --inputPath /data/inputs  --outputPath /data/outputs
         
 -----------------------------------------
