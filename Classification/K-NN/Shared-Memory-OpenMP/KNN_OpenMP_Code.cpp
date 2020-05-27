@@ -14,6 +14,11 @@
 #include <float.h>
 #include <boost/filesystem.hpp> 
 #include <omp.h>
+#include <boost/iostreams/device/mapped_file.hpp> 
+#include <boost/iostreams/stream.hpp>    
+
+using boost::iostreams::mapped_file_source;
+using boost::iostreams::stream;	
 
 using namespace std;
 
@@ -215,28 +220,22 @@ int main(int argc, char * const argv[]) {
 	double epsilon = 1e-10; //
 	short* allEntriesFilled = new short[N];
 	/**
-	 * At first, let's Read Dataset from Input File
+	 * At first, let's Read Dataset from Input File Using Memory Mapping
 	 */
-	ifstream infile;
-	infile.open(filePath);
-	if (infile.fail())
-	{
-		logFile << "error in Opening Input File" << endl;
-		cout << "error in Opening Input File" << endl;
-		return 1;
-	}
+	mapped_file_source mmap(filePath);
+    stream<mapped_file_source> is(mmap, std::ios::binary);
 	/**
 	 * Remove the header info
 	 */
 	string dummyLine;
-	getline(infile, dummyLine);
+	getline(is, dummyLine);
 	/**
 	 * Reading the Entire Dataset
 	 */
 	if (argc==11){
 		for (int i = 0; i < N; ++i) {
 			string temp, temp2;
-			getline(infile, temp);
+			getline(is, temp);
 			for (int j = 0; j < Dim; ++j) {
 				temp2 = temp.substr(0, temp.find(","));
 				dataPoints[i][j] = atof(temp2.c_str());
@@ -246,7 +245,7 @@ int main(int argc, char * const argv[]) {
 	} else {
 		for (int i = 0; i < N; ++i) {
 			string temp, temp2;
-			getline(infile, temp);
+			getline(is, temp);
 			for (int j = 0; j < Dim; ++j) {
 				temp2 = temp.substr(0, temp.find(","));
 				if (j >= colIndex1-1 && j < colIndex2) dataPoints[i][j] = atof(temp2.c_str());
@@ -254,7 +253,7 @@ int main(int argc, char * const argv[]) {
 			}
 		}	
 	}
-	infile.close();
+	mmap.close();
 
 	if (colIndex1 != -1) Dim=colIndex2-colIndex1+1;
 	if (Dim <1) {
