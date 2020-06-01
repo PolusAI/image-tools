@@ -6,6 +6,7 @@ import javabridge
 import argparse
 import logging
 import os
+import traceback
 
 
 
@@ -115,8 +116,8 @@ def get_tiles(image,buffer):
 def apply_rough_homography(image,homography_largescale,reference_image_shape):
     """
     This function transforms the original moving image using the homography matrix.
-    In the image_transformation() function above, I've used the cv2.warpPerspective() function
-    to apply the homography matrix. cv2.warpPerspective() has a limit on the max image 
+    In the image_transformation() function above,  cv2.warpPerspective() function has been
+    used to apply the homography matrix. cv2.warpPerspective() has a limit on the max image 
     size that it can transform and can't be used to warp the original moving image. 
     
     logic: 
@@ -361,100 +362,106 @@ def register_images(reference_image_path, moving_image_path):
 ##################################################################################################################################################################
 
 if __name__=="__main__":
-    # Initialize the logger
-    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
-                        datefmt='%d-%b-%y %H:%M:%S')
-    logger = logging.getLogger("subprocess-image_registration.py")
-    logger.setLevel(logging.INFO)
+    
+    try:
+        # Initialize the logger
+        logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+                            datefmt='%d-%b-%y %H:%M:%S')
+        logger = logging.getLogger("subprocess-image_registration.py")
+        logger.setLevel(logging.INFO)
 
-    # Setup the argument parsing
-    logger.info("Parsing arguments...")
-    parser = argparse.ArgumentParser(prog='imageRegistration', description='This script registers an image collection')
-    parser.add_argument('--registrationString', dest='registration_string', type=str, required=True)
-    parser.add_argument('--similarTransformationString', dest='similar_transformation_string', type=str, required=True)
-    parser.add_argument('--outDir', dest='outDir', type=str, required=True)
-    parser.add_argument('--template', dest='template', type=str,  required=True)
+        # Setup the argument parsing
+        logger.info("Parsing arguments...")
+        parser = argparse.ArgumentParser(prog='imageRegistration', description='This script registers an image collection')
+        parser.add_argument('--registrationString', dest='registration_string', type=str, required=True)
+        parser.add_argument('--similarTransformationString', dest='similar_transformation_string', type=str, required=True)
+        parser.add_argument('--outDir', dest='outDir', type=str, required=True)
+        parser.add_argument('--template', dest='template', type=str,  required=True)
 
-    # parse the arguments 
-    args = parser.parse_args()
-    registration_string = args.registration_string
-    logger.info('registration_string = {}'.format(registration_string))
-    similar_transformation_string = args.similar_transformation_string
-    logger.info('similar_transformation_string = {}'.format(similar_transformation_string))
-    outDir = args.outDir   
-    template = args.template
-    
-    logger.info('starting javabridge...')
-    javabridge.start_vm(class_path=bioformats.JARS)
-    
-    # extract filenames from registration_string and similar_transformation_string
-    registration_set=registration_string.split()
-    similar_transformation_set=similar_transformation_string.split()
-    
-    del registration_string
-    del similar_transformation_string
-    
-    filename_len=len(template)
-    
-    logger.info('calculating transformation to register image {} to {}'.format(registration_set[1][-1*filename_len:] ,registration_set[0][-1*filename_len:]))    
-    # seperate the filename of the moving image from the complete path
-    moving_image_name=registration_set[1][-1*filename_len:]        
-    
-    # register the images and store the set of transformation used to carry out the registration
-    transformed_moving_image, Rough_Homography_Upscaled, fine_homography_set, template_img_shape,moving_image_metadata=register_images(registration_set[0], registration_set[1])
-    
-    logger.info('transformation calculated and creating 5 channel output of {}'.format(moving_image_name))
-    # write the output to the desired directory using bfio
-    transformed_moving_image_5channel=np.zeros((transformed_moving_image.shape[0],transformed_moving_image.shape[1],1,1,1),dtype='uint16')
-    transformed_moving_image_5channel[:,:,0,0,0]=transformed_moving_image 
-    
-    
-    del transformed_moving_image  
-    logger.info("writing output using bfio...")        
-    bw = BioWriter(os.path.join(outDir,moving_image_name), metadata=moving_image_metadata)
-    bw.num_x(transformed_moving_image_5channel.shape[1])
-    bw.num_y(transformed_moving_image_5channel.shape[0])
-    bw.num_z(1)
-    bw.num_c(1)
-    bw.num_t(1)
-    bw.write_image(transformed_moving_image_5channel)
-    bw.close_image() 
-    del bw       
+        # parse the arguments 
+        args = parser.parse_args()
+        registration_string = args.registration_string
+        logger.info('registration_string = {}'.format(registration_string))
+        similar_transformation_string = args.similar_transformation_string
+        logger.info('similar_transformation_string = {}'.format(similar_transformation_string))
+        outDir = args.outDir   
+        template = args.template
         
-    del transformed_moving_image_5channel     
-    
-    # iterate across all images which have the similar transformation as the moving image above  
-    logger.info('iterate over all images that have similar transformation')
-    for moving_image_path in similar_transformation_set:
+        logger.info('starting javabridge...')
+        javabridge.start_vm(class_path=bioformats.JARS)
         
-        # seperate image name from the path to it
-        moving_image_name=moving_image_path[-1*filename_len:]            
+        # extract filenames from registration_string and similar_transformation_string
+        registration_set=registration_string.split()
+        similar_transformation_set=similar_transformation_string.split()
         
-        logger.info('applying transformation to image {}'.format(moving_image_name))
-                    
-        # use the precalculated transformation to transform this image
-        transformed_moving_img, moving_image_metadata =apply_registration(moving_image_path, template_img_shape, Rough_Homography_Upscaled, fine_homography_set)          
-
-        #write the output to the desired directory using bfio
-        logger.info('writing output image...')
-        transformed_moving_image_5channel=np.zeros((transformed_moving_img.shape[0],transformed_moving_img.shape[1],1,1,1),dtype='uint16')
-        transformed_moving_image_5channel[:,:,0,0,0]=transformed_moving_img       
-
-        del transformed_moving_img             
-        bw = BioWriter(os.path.join(outDir,moving_image_name ), metadata=moving_image_metadata)
+        del registration_string
+        del similar_transformation_string
+        
+        filename_len=len(template)
+        
+        logger.info('calculating transformation to register image {} to {}'.format(registration_set[1][-1*filename_len:] ,registration_set[0][-1*filename_len:]))    
+        # seperate the filename of the moving image from the complete path
+        moving_image_name=registration_set[1][-1*filename_len:]        
+        
+        # register the images and store the set of transformation used to carry out the registration
+        transformed_moving_image, Rough_Homography_Upscaled, fine_homography_set, template_img_shape,moving_image_metadata=register_images(registration_set[0], registration_set[1])
+        
+        logger.info('transformation calculated and creating 5 channel output of {}'.format(moving_image_name))
+        # write the output to the desired directory using bfio
+        transformed_moving_image_5channel=np.zeros((transformed_moving_image.shape[0],transformed_moving_image.shape[1],1,1,1),dtype='uint16')
+        transformed_moving_image_5channel[:,:,0,0,0]=transformed_moving_image 
+        
+        
+        del transformed_moving_image  
+        logger.info("writing output using bfio...")        
+        bw = BioWriter(os.path.join(outDir,moving_image_name), metadata=moving_image_metadata)
         bw.num_x(transformed_moving_image_5channel.shape[1])
         bw.num_y(transformed_moving_image_5channel.shape[0])
         bw.num_z(1)
         bw.num_c(1)
         bw.num_t(1)
         bw.write_image(transformed_moving_image_5channel)
-        bw.close_image()         
-        del bw  
-        del transformed_moving_image_5channel         
+        bw.close_image() 
+        del bw       
+            
+        del transformed_moving_image_5channel     
+        
+        # iterate across all images which have the similar transformation as the moving image above  
+        logger.info('iterate over all images that have similar transformation')
+        for moving_image_path in similar_transformation_set:
+            
+            # seperate image name from the path to it
+            moving_image_name=moving_image_path[-1*filename_len:]            
+            
+            logger.info('applying transformation to image {}'.format(moving_image_name))
+                        
+            # use the precalculated transformation to transform this image
+            transformed_moving_img, moving_image_metadata =apply_registration(moving_image_path, template_img_shape, Rough_Homography_Upscaled, fine_homography_set)          
 
-    # Close the javabridge
-    logger.info('Closing the javabridge...')
-    javabridge.kill_vm()   
+            #write the output to the desired directory using bfio
+            logger.info('writing output image...')
+            transformed_moving_image_5channel=np.zeros((transformed_moving_img.shape[0],transformed_moving_img.shape[1],1,1,1),dtype='uint16')
+            transformed_moving_image_5channel[:,:,0,0,0]=transformed_moving_img       
+
+            del transformed_moving_img             
+            bw = BioWriter(os.path.join(outDir,moving_image_name ), metadata=moving_image_metadata)
+            bw.num_x(transformed_moving_image_5channel.shape[1])
+            bw.num_y(transformed_moving_image_5channel.shape[0])
+            bw.num_z(1)
+            bw.num_c(1)
+            bw.num_t(1)
+            bw.write_image(transformed_moving_image_5channel)
+            bw.close_image()         
+            del bw  
+            del transformed_moving_image_5channel  
+            
+    except Exception:
+        traceback.print_exc() 
+    
+    finally:    
+        # Close the javabridge
+        logger.info('Closing the javabridge...')
+        javabridge.kill_vm()   
     
     
     
