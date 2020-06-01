@@ -142,21 +142,38 @@ def apply_rough_homography(image,homography_largescale,reference_image_shape):
     height_2,width_2=image.shape
     
     # initialize the output image matrix
-    transformed_image=np.zeros((height_1,width_1),dtype='uint16')    
-    row_array=np.zeros((3,width_1) ,dtype='uint16')   
+    transformed_image=np.zeros((height_1,width_1),dtype='uint16')  
+    
+    if height_1< 2**16 and width_1 < 2**16:
+        dtype = np.uint16
+    elif height_1 < 2**32 and width_1 < 2**32:
+        dtype = np.uint32
+    else:
+        dtype = np.uint64
+
+    height_array = np.zeros((1,width_1),dtype=dtype)
+    width_array = np.arange(width_1,dtype=dtype)
+    depth_array = np.ones((1,width_1),dtype=dtype)   
+      
     # iterate over coordinate values row by row
-    for i in range(height_1):        
-        # store homogeneous coordinate([x1,y1,1], [x2,y2,1]...) values in the row array
-        row_array=np.array([[x for x in range(width_1)],[i for x in range(width_1)] ,[1 for x in range(width_1)]])
+    for i in range(height_1):   
+             
+        # store homogeneous coordinate([x1,y1,1], [x2,y2,1]...) values in the row array       
+        row_array=np.array(width_array,height_array[0],depth_array[0])
+        height_array = height_array + 1 # Do not use += here
+        
         #dot product of homography inverse and the row_array(coordinate_array)
         new_array=np.dot(homography_inverse,row_array)
+        
         # convert homogeneous coordinates to 2d coordinates
         new_array=np.round(new_array/new_array[2,:], decimals=0)
         new_array=new_array.astype(int)
+        
         # remove all coordinates which are out of bounds (negative coordinates, or that which lie outside the moving image)
         boo = (np.all(new_array>=0, axis =0)) * (new_array[0] <width_2) * (new_array[1] <height_2)
         new_array=new_array[:,boo]
         row_array=row_array[:,boo]
+        
         # fetch pixel values from the moving image and place them at their transformed position in the transformed image
         transformed_image[row_array[1,:], row_array[0,:]]= image[new_array[1,:], new_array[0,:]]    
     return transformed_image
