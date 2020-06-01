@@ -82,7 +82,7 @@ if __name__ == "__main__":
                                 del process_timer[free_process]
                             
                             # Spawn a stack building process and record the starting time
-                            processes.append(subprocess.Popen("python3 merge_layers.py --inpDir {} --outDir {} --regex {} --X {} --Y {} --C {} --T {} --R {}".format(input_dir,
+                            processes.append(subprocess.Popen("python3 merge_layers.py --inpDir '{}' --outDir '{}' --regex '{}' --X '{}' --Y '{}' --C '{}' --T '{}' --R '{}'".format(input_dir,
                                                                                                                                                                      output_dir,
                                                                                                                                                                      file_pattern,
                                                                                                                                                                      x,
