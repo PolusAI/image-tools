@@ -71,6 +71,7 @@ def main():
         vals_inonestack = [[]] * len(item)
         i = 0
         for filesitem in item:
+            logger.info("FILESITEM {}".format(item[0]['file']))
             vals_inonestack[i] = ""
             vals_ofstackone = ""
             directoryname = ""
@@ -86,12 +87,17 @@ def main():
                 else:
                     vals_ofstackone = vals_ofstackone + " " + str(filesitem[char])
                     directoryname = directoryname + "_" + char + str(filesitem[char])
+            if i == 0:
+                addingdir = Path(item[0]['file']).name
+                logger.info("NEW DIRECTORY {}".format((addingdir)))
+                newdirectory = Path(output_dir).joinpath(str(addingdir))
+                directoryfiles.append(str(addingdir))
+                newdirectory.mkdir()
             i = i + 1
         vals_instack.append(" ".join(vals_inonestack))
         vals_stackby.append(vals_ofstackone)
-        directoryfiles.append(directoryname)
-        newdirectory = Path(output_dir).joinpath(directoryname)
-        newdirectory.mkdir()
+        
+        
             
     numberofstacks = len(organizedheights)
 

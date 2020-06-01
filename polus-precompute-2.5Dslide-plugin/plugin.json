@@ -1,45 +1,66 @@
 {
-    "name": "WIPP Widget",
-    "version": "0.1.1",
-    "title": "WIPP Widget",
-    "description": "Everything you need to start a WIPP plugin.",
-    "author": "Data Scientist (data.scientist@labshare.org)",
-    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-    "repository": "https://github.com/labshare/polus-plugins",
-    "website": "https://ncats.nih.gov/preclinical/core/informatics",
-    "citation": "",
-    "containerId": "labshare/polus-precompute-volume-plugin:0.1.1",
-    "inputs": [
-      {
-        "name": "filePattern",
-        "type": "string",
-        "description": "Filename pattern used to separate data",
-        "required": true
+  "name": "Polus Precompute Slide 3D Plugin",
+  "version": "0.1.3",
+  "containerId": "mmvihani/polus-precompute-25slide-plugin:0.1.3",
+  "title": "Precompute Slide Viewer",
+  "description": "Precomputes voxels for Neuroglancer",
+  "author": "N/A",
+  "institution": "N/A",
+  "repository": "https://github.com/mmvih/polus-plugins.git",
+  "website": null,
+  "citation": "N/A",
+  "inputs": [
+    {
+      "name": "inpDir",
+      "description": "Input collection",
+      "type": "collection",
+      "options": null,
+      "required": true
+    },
+    {
+      "name": "pyramidType",
+      "description": "Build a DeepZoom or Neuroglancer pyramid",
+      "type": "enum",
+      "options": {
+        "values": [
+          "DeepZoom",
+          "Neuroglancer"
+        ]
       },
-      {
-        "name": "inpDir",
-        "type": "collection",
-        "description": "Input image collection to be processed by this plugin",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "outDir",
-        "type": "collection",
-        "description": "Output collection"
-      }
-    ],
-    "ui": [
-      {
-        "key": "inputs.filePattern",
-        "title": "Filename pattern",
-        "description": "Filename pattern used to separate data"
-      },
-      {
-        "key": "inputs.inpDir",
-        "title": "Input collection",
-        "description": "Input image collection to be processed by this plugin"
-      }
-    ]
-  }
+      "required": true
+    },
+    {
+      "name": "imagepattern",
+      "description": "Pattern of the images in Input",
+      "type": "string",
+      "options": null,
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "description": "Precomputed output",
+      "type": "pyramid",
+      "options": null,
+      "required": true
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "Input collection: ",
+      "description": "Collection name..."
+    },
+    {
+      "key": "inputs.pyramidType",
+      "title": "Pyramid Type: ",
+      "description": "Build a DeepZoom or Neuroglancer pyramid?"
+    },
+    {
+      "key": "inputs.imagepattern",
+      "title": "Image Pattern: ",
+      "description": "Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). "
+    }
+  ]
+}

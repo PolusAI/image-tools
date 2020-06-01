@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-precompute-volume-plugin:${version}
+docker build . -t mmvihani/polus-precompute-25slide-plugin:${version}
