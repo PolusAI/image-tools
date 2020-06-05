@@ -199,9 +199,6 @@ def transform_data_log(data,column_names):
         smallside_an_values = minmax.min(axis=1) 
         largeside_an_values = minmax.max(axis=1)
 
-        # print(smallside_an_values)
-        # print(largeside_an_values)
-        # print(alphavals)
 
         # NEED TO SOLVE FOR HOW MANY BINS THE SMALL RANGE AND LARGE RANGE REQUIRES
             # THREE VARIABLES ARE UNKNOWN
@@ -210,28 +207,22 @@ def transform_data_log(data,column_names):
             # 3) number of bins needed for larger range
 
         # Solving for ratio (r), use equations:
-            # x + y = bincount
+            # x + y + 1= bincount
                 # where x is the number of bins used for the smaller range
                 # where y is the number of bins used for the larger range
+                # where the +1 is for values that fall between -a1 and +a1
             # small = alpha*(r^(x-1)) --> log(r)[small/alpha] = x -1
             # large = alpha*(r^(y-1)) --> log(r)[large/alpha] = y - 1
             # Combining all equations we get the following: 
-        ratios = ((smallside_an_values*largeside_an_values)/(alphavals*alphavals))**(1/(bincount-2))
-        # print(ratios)
+        ratios = ((smallside_an_values*largeside_an_values)/(alphavals*alphavals))**(1/(bincount-3))
+
         # use ratio to solve for number bins for both the large and small ranges
         num_bins_for_smallrange = np.floor(abs(1 + np.log(smallside_an_values/alphavals)/np.log(ratios)))
         num_bins_for_largerange = np.floor(abs(1 + np.log(largeside_an_values/alphavals)/np.log(ratios)))
             # sum of num_bins_for_smallrange + num_bins_for_largerange = bincount - 1
-                
 
-        # recaulate the ratio value for both sides (subtle differences)
-        small_interval_ratio = (smallside_an_values/alphavals)**(1/num_bins_for_smallrange)
-        large_interval_ratio = (largeside_an_values/alphavals)**(1/num_bins_for_largerange)
-        # print(small_interval_ratio)
-        # print(large_interval_ratio)
         num_bins_for_largerange = num_bins_for_largerange + 1
         # need to add a bin for values that fall between -alpha and alpha
-
 
         for col in data.columns:  
 
@@ -250,12 +241,9 @@ def transform_data_log(data,column_names):
             binssmall = num_bins_for_smallrange[colname]
             binslarge = num_bins_for_largerange[colname]
 
-            # recaulate the ratio value for both sides
-            small_interval = small_interval_ratio[colname]
-            large_interval = large_interval_ratio[colname]
-
-            commonratios.append([small_interval, large_interval])
-            alphas.append(alpha)
+            # # recaulate the ratio value for both sides
+            ratio = ratios[colname]
+            
             
             val_pos_nonzero = datacol > 0
             val_neg_nonzero = datacol < 0
@@ -270,12 +258,12 @@ def transform_data_log(data,column_names):
 
             if posbigger == True: # if the abs(max) is greater than the abs(min)
                 yaxis.append(binssmall) # where to draw the y axis
-                logged3 = np.log(datacol[condition3]/alpha)/np.log(large_interval) + 1 
+                logged3 = np.log(datacol[condition3]/alpha)/np.log(ratio) + 1 
                 floored3 = np.float64(np.floor(logged3))
                 absolute3 = abs(floored3) + binssmall
                 datacol[condition3] = absolute3 # this is what value transforms to when it meets condition 3
 
-                logged6 = np.log(datacol[condition6]/(-1*alpha))/np.log(small_interval) + 1 
+                logged6 = np.log(datacol[condition6]/(-1*alpha))/np.log(ratio) + 1 
                 floored6 = np.float64(np.floor(logged6))
                 absolute6 = -1*abs(floored6) + binssmall
                 datacol[condition6] = absolute6 # this is what value transforms to when it meets condition 6
@@ -288,12 +276,12 @@ def transform_data_log(data,column_names):
 
             else:
                 yaxis.append(binslarge) # where to draw the y axis
-                logged3 = np.log(datacol[condition3]/alpha)/np.log(small_interval) + 1 # what condition3 is equal to
+                logged3 = np.log(datacol[condition3]/alpha)/np.log(ratio) + 1 # what condition3 is equal to
                 floored3 = np.float64(np.floor(logged3))
                 absolute3 = abs(floored3) + binslarge
                 datacol[condition3] = absolute3 # this is what value transforms to when it meets condition 3
 
-                logged6 = np.log(datacol[condition6]/(-1*alpha))/np.log(large_interval) + 1 # 
+                logged6 = np.log(datacol[condition6]/(-1*alpha))/np.log(ratio) + 1 # 
                 floored6 = np.float64(np.floor(logged6))
                 absolute6 = -1*abs(floored6) + binslarge
                 datacol[condition6] = absolute6 # this is what value transforms to when it meets condition 6
@@ -303,6 +291,9 @@ def transform_data_log(data,column_names):
                 datacol[condition4] = -1 + binslarge
                 datacol[condition5] = 0
                 datacol[condition7] = -1 + binslarge
+        
+        commonratios = ratios.to_list()
+        alphas = alphavals.to_list()
 
         return yaxis, alphas, commonratios, data
 
@@ -512,16 +503,16 @@ def format_ticks_log(yaxis, commonratio, alphavalue):
                 21: 'Z',  # zetta
                 24: 'Y',  # yotta
                 }
-    if type(commonratio) == float: 
-        commonratio = [commonratio]
     
-    out = [(alphavalue*(commonratio[-1]**(t-yaxis))) if yaxis<t else (-1*(alphavalue*(commonratio[0]**(yaxis-t))) if yaxis>t else 0) 
-           for t in np.arange(0,bincount,bincount/(numticks-1))]
+    # out = [(alphavalue*(commonratio[-1]**(t-yaxis))) if yaxis<t else (-1*(alphavalue*(commonratio[0]**(yaxis-t))) if yaxis>t else 0) 
+    #        for t in np.arange(0,bincount,bincount/(numticks-1))]
+    out = [(alphavalue*(commonratio**(t-yaxis))) if yaxis<t else (-1*(alphavalue*(commonratio**(yaxis-t))) if yaxis>t else 0) 
+        for t in np.arange(0,bincount,bincount/(numticks-1))]
 
     if yaxis < bincount:
-        out.append(alphavalue*(commonratio[-1]**(bincount-yaxis)))
+        out.append(alphavalue*(commonratio**(bincount-yaxis)))
     elif yaxis > bincount:
-        out.append(-1*(alphavalue*(commonratio[0]**(yaxis-bincount))))
+        out.append(-1*(alphavalue*(commonratio**(yaxis-bincount))))
     else:
         out.append(0)
     
@@ -1146,7 +1137,6 @@ def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, 
                     x_ind = [int(subgrid_dims[0][x] - subgrid_dims[0][0]),int(subgrid_dims[0][x+1] - subgrid_dims[0][0])]
                     x_ind = [int(np.ceil(xi/2).astype('int')) for xi in x_ind]
                     image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],:] = _avg2((subgrid_images[int(y*(len(subgrid_dims[0])-1) + x)]).get())
-
         del subgrid_images
 
     # Write the chunk
