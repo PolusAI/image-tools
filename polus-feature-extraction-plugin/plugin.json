@@ -1,6 +1,6 @@
 {
     "name": "Feature Extraction",
-    "version": "0.7.2",
+    "version": "0.7.3",
     "title": "Feature Extraction",
     "description": "Extract shape and intensity features from images.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-extraction-plugin:0.7.2",
+    "containerId": "labshare/polus-feature-extraction-plugin:0.7.3",
     "inputs": [      
       {
         "name": "segDir",
@@ -90,13 +90,13 @@
       {
 	"name": "embeddedpixelsize",
         "type": "boolean",
-        "description": "Consider embedded pixel sizes if present in metadata",
+        "description": "Use embedded pixel size",
         "required": "false"
       },
       {
         "name": "unitLength",
         "type": "string",
-        "description": "Enter the units required for conversion",
+        "description": "Unit name",
         "required": "false"
       },
       {
@@ -143,12 +143,12 @@
       {
         "key": "inputs.embeddedpixelsize",
         "title": "Embedded pixel size",
-        "description": "If selected, considers the embedded pixel size in the metadata"
+        "description": "Use embedded pixel size"
       },
       {
         "key": "inputs.unitLength",
         "title": "Length of unit",
-        "description": "Enter the units required for conversion"
+        "description": "Unit name"
       },
       {
         "key": "inputs.pixelsPerunit",

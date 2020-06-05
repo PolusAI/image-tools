@@ -1,4 +1,4 @@
-# Feature Extraction
+﻿# Feature Extraction
 
 The feature extraction plugin extracts shape and intensity based features from images and outputs csv file.The input image should be in OME tiled tiff format.
 
@@ -76,10 +76,10 @@ Separatecsv - Allows to save all the features extracted for each image in separa
 Singlecsv - Allows to save all the features extracted from all the images in the same csv file.
 
 ### Embedded pixel size:
-This is an optional parameter. If the units are present in the metadata and want to use those embedded units for the features extracted, then choose this option. If this option is selected, need not enter any value for the length of unit and pixels per unit parameter.
+This is an optional parameter. Use this parameter only if units are present in the metadata and want to use those embedded units for the features extraction. If this option is selected, need not enter any value for the length of unit and pixels per unit parameter.
 
 ### Length of unit:
-Mention the unit length for conversion metric. This is also an optional parameter. 
+Mention the unit name for conversion. This is also an optional parameter. 
 
 ### Pixels per unit:
 If there is a metric mentioned in Length of unit, then Pixels per unit cannot be left blank and hence the scale per unit value must be mentioned in this parameter. 
