@@ -217,7 +217,7 @@ def transform_data_log(data,column_names):
             # large = alpha*(r^(y-1)) --> log(r)[large/alpha] = y - 1
             # Combining all equations we get the following: 
         ratios = ((smallside_an_values*largeside_an_values)/(alphavals*alphavals))**(1/(bincount-2))
-
+        # print(ratios)
         # use ratio to solve for number bins for both the large and small ranges
         num_bins_for_smallrange = np.floor(abs(1 + np.log(smallside_an_values/alphavals)/np.log(ratios)))
         num_bins_for_largerange = np.floor(abs(1 + np.log(largeside_an_values/alphavals)/np.log(ratios)))
@@ -227,7 +227,8 @@ def transform_data_log(data,column_names):
         # recaulate the ratio value for both sides (subtle differences)
         small_interval_ratio = (smallside_an_values/alphavals)**(1/num_bins_for_smallrange)
         large_interval_ratio = (largeside_an_values/alphavals)**(1/num_bins_for_largerange)
-        
+        # print(small_interval_ratio)
+        # print(large_interval_ratio)
         num_bins_for_largerange = num_bins_for_largerange + 1
         # need to add a bin for values that fall between -alpha and alpha
 
@@ -475,7 +476,7 @@ def transform_data_linear(data,column_names):
     return yaxis, bins, bin_stats, linear_index, linear_dict, column_bin_size, alphavals
 
 """ 2. Plot Generation """
-def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
+def format_ticks_log(yaxis, commonratio, alphavalue):
     """ Generate tick labels
     Polus Plots uses D3 to generate the plots. This function tries to mimic
     the formatting of tick labels. Tick labels have a fixed width, and in
@@ -492,6 +493,7 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
     Outputs:
         fticks - a list of strings containing formatted tick labels
     """
+
     _prefix = {-24: 'y',  # yocto
                -21: 'z',  # zepto
                -18: 'a',  # atto
@@ -510,26 +512,35 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
                 21: 'Z',  # zetta
                 24: 'Y',  # yotta
                 }
+    if type(commonratio) == float:
+        commonratio = [commonratio]
     
     out = [(alphavalue*(commonratio[-1]**(t-yaxis))) if yaxis<t else (-1*(alphavalue*(commonratio[0]**(yaxis-t))) if yaxis>t else 0) 
-           for t in np.arange(fmin,fmax,(fmax-fmin)/(nticks-1))]
+           for t in np.arange(0,bincount,bincount/(numticks-1))]
 
-    if yaxis < fmax:
-        out.append(alphavalue*(commonratio[-1]**(fmax-yaxis)))
-    elif yaxis > fmax:
-        out.append(-1*(alphavalue*(commonratio[0]**(yaxis-fmax))))
+    if yaxis < bincount:
+        out.append(alphavalue*(commonratio[-1]**(bincount-yaxis)))
+    elif yaxis > bincount:
+        out.append(-1*(alphavalue*(commonratio[0]**(yaxis-bincount))))
     else:
         out.append(0)
     
     fticks = []
     convertprefix = []
-
-    for i in range(nticks):
-        formtick = "%#.3f" % out[i]
+    
+    print("OUT", len(out), out)
+    for i in out:
+        print(i)
+        formtick = "%#.3f" % i
         decformtick = '%.2e' % Decimal(formtick)
-        convertexponent = float(decformtick[-3:])
+        convertexponent = decformtick[-3]
+        if convertexponent == '+':
+            convertexponent = int(decformtick[-2:])
+        else:
+            convertexponent = int(decformtick[-3:])
         numbers = float(decformtick[:-4])
         if convertexponent > 0:
+            print(" if", convertexponent)
             if convertexponent % 3 == 2:
                 movednum = round(numbers/10,2)
                 newprefix = _prefix[int(convertexponent + 1)]
@@ -540,11 +551,13 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
                 formtick = str(movednum) + newprefix
             else:
                 newprefix = _prefix[convertexponent]
-                if out[i] < 0:
+                if i < 0:
                     formtick = str(decformtick[:5]) + newprefix
                 else: 
                     formtick = str(decformtick[:4]) + newprefix
+            print("formtick", formtick)
         elif convertexponent < 0:
+            print("elif", convertexponent)
             if convertexponent % -3 == -2:
                 movednum = round(numbers*10,1)
                 newprefix = _prefix[int(convertexponent - 1)]
@@ -555,17 +568,114 @@ def format_ticks_log(fmin,fmax,nticks, yaxis, commonratio, alphavalue):
                 formtick = str(movednum) + newprefix
             else:
                 newprefix = _prefix[int(convertexponent)]
-                if out[i] < 0:
+                if i < 0:
                     formtick = str(decformtick[:5]) + newprefix
                 else: 
                     formtick = str(decformtick[:4]) + newprefix
+            print("formtick", formtick)
         else:
-            if out[i] < 0:
+            print("else")
+            if i < 0:
                 formtick = str(decformtick[:5]) + _prefix[int(convertexponent)]
             else: 
                 formtick = str(decformtick[:4]) + _prefix[int(convertexponent)]
+            print("formtick", formtick)
         convertprefix.append(int(convertexponent))
         fticks.append(formtick)
+    print("fticks", len(fticks), fticks)
+    print("")
+
+    return fticks
+    # _prefix = {-24: 'y',  # yocto
+    #            -21: 'z',  # zepto
+    #            -18: 'a',  # atto
+    #            -15: 'f',  # femto
+    #            -12: 'p',  # pico
+    #             -9: 'n',  # nano
+    #             -6: 'u',  # micro
+    #             -3: 'm',  # mili
+    #              0: ' ',
+    #              3: 'k',  # kilo
+    #              6: 'M',  # mega
+    #              9: 'G',  # giga
+    #             12: 'T',  # tera
+    #             15: 'P',  # peta
+    #             18: 'E',  # exa
+    #             21: 'Z',  # zetta
+    #             24: 'Y',  # yotta
+    #             }
+    # # alphavalue = round(alphavalue, 6)
+    # # for item in commonratio:
+    # #     item = round(item, 6)
+
+
+    # out = []
+    # for t in np.arange(0,bincount,bincount/10):
+    #     if yaxis < t:
+    #         out.append((alphavalue*(commonratio[-1]**(t-yaxis))))
+    #     elif yaxis > t:
+    #         out.append(-1*(alphavalue*(commonratio[0]**(yaxis-t))))
+    #     else:
+    #         out.append(0)
+    # # out = [(alphavalue*(commonratio[-1]**(t-yaxis))) if yaxis<t else (-1*(alphavalue*(commonratio[0]**(yaxis-t))) if yaxis>t else 0)
+    # #     for t in range(0,bincount,bincount/(numticks-1))]
+    # print("out before", out, yaxis)
+    # if yaxis < bincount:
+    #     out.append(alphavalue*(commonratio[-1]**(bincount-yaxis)))
+    # elif yaxis > bincount:
+    #     out.append(-1*(alphavalue*(commonratio[0]**(yaxis-bincount))))
+    # else:
+    #     out.append(0)
+    # print("out after", out, yaxis)
+    
+    # fticks = []
+    # convertprefix = []
+
+    # for i in out:
+    #     print(i)
+    #     formtick = "%#.3f" % str(i)
+    #     print(formtick)
+    #     decformtick = '%.2e' % Decimal(formtick)
+    #     convertexponent = round(float(decformtick[-3:]), 6)
+    #     numbers = round(float(decformtick[:-4]), 6)
+    #     if convertexponent > 0:
+    #         if convertexponent % 3 == 2:
+    #             movednum = round(numbers/10,2)
+    #             newprefix = _prefix[int(convertexponent + 1)]
+    #             formtick = str(movednum) + newprefix
+    #         elif convertexponent % 3 == 1:
+    #             movednum = round(numbers*10,1)
+    #             newprefix = _prefix[int(convertexponent - 1)]
+    #             formtick = str(movednum) + newprefix
+    #         else:
+    #             newprefix = _prefix[convertexponent]
+    #             if out[i] < 0:
+    #                 formtick = str(decformtick[:5]) + newprefix
+    #             else: 
+    #                 formtick = str(decformtick[:4]) + newprefix
+    #     elif convertexponent < 0:
+    #         if convertexponent % -3 == -2:
+    #             movednum = round(numbers*10,1)
+    #             newprefix = _prefix[int(convertexponent - 1)]
+    #             formtick = str(movednum) + newprefix
+    #         elif convertexponent % -3 == -1:
+    #             movednum = round(numbers/10,2)
+    #             newprefix = _prefix[int(convertexponent + 1)]
+    #             formtick = str(movednum) + newprefix
+    #         else:
+    #             newprefix = _prefix[int(convertexponent)]
+    #             if out[i] < 0:
+    #                 formtick = str(decformtick[:5]) + newprefix
+    #             else: 
+    #                 formtick = str(decformtick[:4]) + newprefix
+    #     else:
+    #         if out[i] < 0:
+    #             formtick = str(decformtick[:5]) + _prefix[int(convertexponent)]
+    #         else: 
+    #             formtick = str(decformtick[:4]) + _prefix[int(convertexponent)]
+    #     convertprefix.append(int(convertexponent))
+    #     fticks.append(formtick)
+    #     print("fticks", fticks)
 
     return fticks
 # Tick formatting to mimick D3
@@ -610,8 +720,8 @@ def format_ticks(fmin,fmax,nticks):
 
     fticks = []
     convertprefix = []
-    for i in range(nticks):
-        formtick = "%#.3f" % out[i]
+    for i in out:
+        formtick = "%#.3f" % i
         decformtick = '%.2e' % Decimal(formtick)
         convertexponent = float(decformtick[-3:])
         numbers = float(decformtick[:-4])
@@ -626,7 +736,7 @@ def format_ticks(fmin,fmax,nticks):
                 formtick = str(movednum) + newprefix
             else:
                 newprefix = _prefix[int(convertexponent)]
-                if out[i] < 0:
+                if i < 0:
                     formtick = str(decformtick[:5]) + newprefix
                 else: 
                     formtick = str(decformtick[:4]) + newprefix
@@ -641,12 +751,12 @@ def format_ticks(fmin,fmax,nticks):
                 formtick = str(movednum) + newprefix
             else:
                 newprefix = _prefix[convertexponent]
-                if out[i] < 0:
+                if i < 0:
                     formtick = str(decformtick[:5]) + newprefix
                 else: 
                     formtick = str(decformtick[:4]) + newprefix
         else:
-            if out[i] < 0:
+            if i < 0:
                 formtick = str(decformtick[:5]) + _prefix[int(convertexponent)]
             else: 
                 formtick = str(decformtick[:4]) + _prefix[int(convertexponent)]
@@ -774,9 +884,9 @@ def gen_plot(col1,
         ax.set_yticklabels(format_ticks(bin_stats['min'][column_names[r]],bin_stats['max'][column_names[r]],numticks), 
                         fontsize = 5, ha='right')
     if typegraph == "log":
-        ax.set_xticklabels(format_ticks_log(0,bincount,numticks, axiszero[c], binsizes[c], alphavals[c]),
+        ax.set_xticklabels(format_ticks_log(axiszero[c], binsizes[c], alphavals[c]),
                         rotation=45, fontsize = 5, ha='right')
-        ax.set_yticklabels(format_ticks_log(0,bincount,numticks, axiszero[r], binsizes[r], alphavals[r]),
+        ax.set_yticklabels(format_ticks_log(axiszero[r], binsizes[r], alphavals[r]),
                         fontsize = 5, ha='right')
 
     # drawing the x axis and y axis lines on the graphs
@@ -871,7 +981,7 @@ def _avg2(image):
     
     # Convert 32-bit pixels to prevent overflow during averaging
     image = image.astype(np.uint32)
-    
+
     # Get the height and width of each image to the nearest even number
     y_max = image.shape[0] - image.shape[0] % 2
     x_max = image.shape[1] - image.shape[1] % 2
@@ -959,7 +1069,6 @@ def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,indexd
             break
     if scale_info==None:
         ValueError("No scale information for resolution {}.".format(S))
-        
     if X == None:
         X = [0,scale_info['size'][0]]
     if Y == None:
@@ -1132,14 +1241,13 @@ def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, 
                                                                            alphavals,
                                                                            subgrid_dims[0][x:x+2],
                                                                            subgrid_dims[1][y:y+2])))
-                    
             for y in range(0,len(subgrid_dims[1])-1):
-                y_ind = [subgrid_dims[1][y] - subgrid_dims[1][0],subgrid_dims[1][y+1] - subgrid_dims[1][0]]
-                y_ind = [np.ceil(yi/2).astype('int') for yi in y_ind]
+                y_ind = [int(subgrid_dims[1][y] - subgrid_dims[1][0]),int(subgrid_dims[1][y+1] - subgrid_dims[1][0])]
+                y_ind = [int(np.ceil(yi/2).astype('int')) for yi in y_ind]
                 for x in range(0,len(subgrid_dims[0])-1):
-                    x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
-                    x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
-                    image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],:] = _avg2(subgrid_images[y*(len(subgrid_dims[0])-1) + x].get())
+                    x_ind = [int(subgrid_dims[0][x] - subgrid_dims[0][0]),int(subgrid_dims[0][x+1] - subgrid_dims[0][0])]
+                    x_ind = [int(np.ceil(xi/2).astype('int')) for xi in x_ind]
+                    image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],:] = _avg2((subgrid_images[int(y*(len(subgrid_dims[0])-1) + x)]).get())
 
         del subgrid_images
 
@@ -1204,8 +1312,9 @@ if __name__=="__main__":
     output_path = Path(args.outDir)
     bincount = args.bin_count
 
-    # linear_output_path = Path(args.outDir)
-    # log_output_path = Path(args.outDir)
+    # input_path  = Path('/home/ec2-user/polus-plugins/polus-graph-pyramid-builder-plugin/input')
+    # output_path = Path('/home/ec2-user/polus-plugins/polus-graph-pyramid-builder-plugin/output')
+    # bincount = 50
 
     logger.info('inpDir = {}'.format(input_path))
     logger.info('outDir = {}'.format(output_path))
@@ -1219,51 +1328,51 @@ if __name__=="__main__":
 
         global bins
 
-        # Processes for LINEAR SCALED GRAPHS
-        # Set the file path folder
-        folder = Path(f)
-        folder = folder.name.replace('.csv','')
-        logger.info('Processing: {}'.format(folder))
+        # # Processes for LINEAR SCALED GRAPHS
+        # # Set the file path folder
+        # folder = Path(f)
+        # folder = folder.name.replace('.csv','')
+        # logger.info('Processing: {}'.format(folder))
 
-        # Load the data
-        logger.info('Loading LINEAR csv: {}'.format(f))
-        data, cnames = load_csv(f)
-        column_names = data.columns
-        logger.info('Done loading LINEAR csv!')
+        # # Load the data
+        # logger.info('Loading LINEAR csv: {}'.format(f))
+        # data, cnames = load_csv(f)
+        # column_names = data.columns
+        # logger.info('Done loading LINEAR csv!')
 
-        # Bin the data
-        logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
-        yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = transform_data_linear(data,column_names)
-        del data # get rid of the original data to save memory
+        # # Bin the data
+        # logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
+        # yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = transform_data_linear(data,column_names)
+        # del data # get rid of the original data to save memory
 
-        # Generate the default figure components
-        logger.info('Generating colormap and default figure...')
-        cmap_linear = get_cmap("linear")
-        fig, ax, datacolor = get_default_fig(cmap_linear)
-        logger.info('Done!')
+        # # Generate the default figure components
+        # logger.info('Generating colormap and default figure...')
+        # cmap_linear = get_cmap("linear")
+        # fig, ax, datacolor = get_default_fig(cmap_linear)
+        # logger.info('Done!')
 
-        # Generate the dzi file
-        logger.info('Generating pyramid LINEAR metadata...')
-        info_linear = metadata_to_graph_info(bins, output_path,folder, linear_index)
-        logger.info('Done!')
+        # # Generate the dzi file
+        # logger.info('Generating pyramid LINEAR metadata...')
+        # info_linear = metadata_to_graph_info(bins, output_path,folder, linear_index)
+        # logger.info('Done!')
 
-        logger.info('Writing LINEAR layout file...!')
-        write_csv(cnames,linear_index,info_linear,output_path,folder)
-        logger.info('Done!')
+        # logger.info('Writing LINEAR layout file...!')
+        # write_csv(cnames,linear_index,info_linear,output_path,folder)
+        # logger.info('Done!')
 
-        # Create the pyramid
-        logger.info('Building LINEAR pyramids...')
-        image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
+        # # Create the pyramid
+        # logger.info('Building LINEAR pyramids...')
+        # image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
 
         
-        del image_linear
-        del info_linear
-        del yaxis_linear
-        del bin_stats
-        del linear_index
-        del linear_binsizes
-        del alphavals_linear
-        del folder
+        # del image_linear
+        # del info_linear
+        # del yaxis_linear
+        # del bin_stats
+        # del linear_index
+        # del linear_binsizes
+        # del alphavals_linear
+        # del folder
         bins = 0
 
         # Processes for LOG SCALED GRAPHS
