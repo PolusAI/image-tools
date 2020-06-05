@@ -17,7 +17,9 @@ import bioformats
 import numpy as np
 import os
 import javabridge as jutil
+from concurrent.futures import ThreadPoolExecutor
 
+import time
 
 def make_ome_tiff_writer_class():
     '''Return a class that wraps loci.formats.out.OMETiffWriter'''
@@ -65,11 +67,6 @@ class BioReader():
         read_metadata(update): Returns an OMEXML class containing metadata for the image
         read_image(X,Y,Z,C,T,series): Returns a part or all of the image as numpy array
     """
-    # Note: the javabridge connection must be started before initializing a
-    # BioReader object. The reason for this is that the java VM can only be
-    # initialized once. Doing it within the code would cause it to run possibly
-    # without shutting down, so the javabridge connection must be handled
-    # outside of the class.
     _file_path = None
     _metadata = None
     _xyzct = None
@@ -86,6 +83,17 @@ class BioReader():
             'float': 4,
             'double': 8}
     _TILE_SIZE = 2**10
+    
+    # Buffering variables for iterating over an image
+    _raw_buffer = None
+    _data_in_buffer = False
+    _pixel_buffer = None
+    _fetch_thread = None
+    _tile_thread= None
+    _supertiles_loaded = 0
+    _tile_x_offset = 0
+    _tile_last_column = 0
+    _supertile_index = 0
 
     def __init__(self, file_path):
         """__init__ Initialize the a file for reading
@@ -256,13 +264,13 @@ class BioReader():
         Returns:
             list: list of ints indicating the first and last index in the dimension
         """
-        assert axis in 'xyz'
+        assert axis in 'XYZ'
         if not xyz:
             xyz = [0, self._xyzct[axis]]
         else:
             assert len(xyz) == 2,\
                 '{} must be a list or tuple of length 2.'.format(axis)
-            assert xyz[0] > 0,\
+            assert xyz[0] >= 0,\
                 '{}[0] must be greater than or equal to 0.'.format(axis)
             assert xyz[1] <= self._xyzct[axis],\
                 '{}[1] cannot be greater than the maximum of the dimension ({}).'.format(axis, self._xyzct[axis])
@@ -279,33 +287,53 @@ class BioReader():
         Returns:
             list: list of ints indicating the first and last index in the dimension
         """
-        assert axis in 'ct'
+        assert axis in 'CT'
         if not ct:
             # number of timepoints
             ct = list(range(0, self._xyzct[axis]))
         else:
-            assert np.any(np.greater_equal(self._xyzct[axis], ct)),\
+            assert np.any(np.greater(self._xyzct[axis], ct)),\
                 'At least one of the {}-indices was larger than largest index ({}).'.format(axis, self._xyzct[axis]-1)
-            assert np.any(np.less(0, ct)),\
+            assert np.any(np.less_equal(0, ct)),\
                 'At least one of the {}-indices was less than 0.'.format(axis)
-            assert len(ct) == 0,\
+            assert len(ct) != 0,\
                 'At least one {}-index must be selected.'.format(axis)
         return ct
+    
+    def pixel_type(self):
+        """pixel_type Get the pixel type
+
+        One of the following strings will be returned:
+        
+        'uint8':  Unsigned 8-bit pixel type
+        'int8':   Signed 8-bit pixel type
+        'uint16': Unsigned 8-bit pixel type
+        'int16':  Signed 16-bit pixel type
+        'uint32': Unsigned 32-bit pixel type
+        'int32':  Signed 32-bit pixel type
+        'float':  IEEE single-precision pixel type
+        'double': IEEE double precision pixel type
+
+        Returns:
+            str: One of the above data types.
+        """
+        
+        return self._metadata.image(0).Pixels.PixelType
 
     def read_image(self, X=None, Y=None, Z=None, C=None, T=None, series=None):
         """read_image Read the image
 
-        [extended_summary]
+        Read the image. A 5-dimmensional numpy.ndarray is always returned.
 
         Args:
-            X (tuple, optional): 2-tuple indicating the x-range of pixels to load.
-                If None, loads the full range.
+            X ([tuple,list], optional): 2-tuple indicating the (min,max) range of
+                pixels to load. If None, loads the full range.
                 Defaults to None.
-            Y (tuple, optional): 2-tuple indicating the y-range of pixels to load.
-                If None, loads the full range.
+            Y (tuple, optional): 2-tuple indicating the (min,max) range of
+                pixels to load. If None, loads the full range.
                 Defaults to None.
-            Z (tuple, optional): 2-tuple indicating the z-range of pixels to load.
-                If None, loads the full range.
+            Z (tuple, optional): 2-tuple indicating the (min,max) range of
+                pixels to load. If None, loads the full range.e.
                 Defaults to None.
             C ([tuple,list], optional): tuple or list of values indicating channel
                 indices to load. If None, loads the full range.
@@ -396,7 +424,270 @@ class BioReader():
                                             c=c, z=z, t=t, rescale=False, XYWH=(x, y, x_range, y_range))
 
         return I
+    
+    def _fetch(self,X,Y,Z=None,C=None,T=None):
+        """_fetch Method for fetching image supertiles
 
+        This method is intended to be run within a thread, and grabs a
+        chunk of the image according to the coordinate provided.
+        
+        Currently, this function will only grab the first Z, C, and T
+        positions regardless of what Z, C, and T coordinate are provided
+        to the function. This function will need to be changed in then
+        future to account for this.
+        
+        If the first value in X or Y is negative, then the image is
+        pre-padded with the number of pixels equal to the absolute value
+        of the negative number.
+        
+        If the last value in X or Y is larger than the size of the
+        image, then the image is post-padded with the difference between
+        the number and the size of the image.
+
+        Args:
+            X ([tuple,list]): 2-tuple indicating the (min,max) range of
+                pixels to load. If None, loads the full range.
+                Defaults to None.
+            Y ([tuple,list]): 2-tuple indicating the (min,max) range of
+                pixels to load.
+            Z (None): Placeholder, to be implemented.
+            C (None): Placeholder, to be implemented.
+            T (None): Placeholder, to be implemented.
+
+        Returns:
+            numpy.ndarray: 2-dimensional ndarray.
+        """
+        
+        # Attach the jvm to the thread
+        jutil.attach()
+        
+        # Determine padding if needed
+        x_min = X[0]
+        x_max = X[1]
+        y_min = Y[0]
+        y_max = Y[1]
+        prepad_x = 0
+        postpad_x = 0
+        prepad_y = 0
+        postpad_y = 0
+        if x_min < 0:
+            prepad_x = abs(x_min)
+            x_min = 0
+        if y_min < 0:
+            prepad_y = abs(y_min)
+            y_min = 0
+        if x_max > self.num_x():
+            postpad_x = x_max - self.num_x()
+            x_max = self.num_x()
+        if y_max > self.num_y():
+            postpad_y = y_max - self.num_y()
+            y_max = self.num_y()
+            
+        # Read the image
+        I = self.read_image([x_min,x_max],[y_min,y_max],[0,1],[0],[0])
+        
+        # Pad the image if needed
+        I = np.squeeze(I)
+        if sum(1 for p in [prepad_x,prepad_y,postpad_x,postpad_y] if p != 0) > 0:
+            I = np.pad(I,((prepad_y,postpad_y),(prepad_x,postpad_x)),mode='symmetric')
+
+        # Store the data in the buffer
+        self._raw_buffer = I
+        self._data_in_buffer = True
+        
+        # Detach the jvm
+        jutil.detach()
+        
+        return True
+    
+    def _get_tiles(self,X,Y,Z,C,T):
+        """_get_tiles Handle data buffering and tiling
+
+        This function returns tiles of data according to the input
+        coordinates. The X, Y, Z, C, and T are lists of lists, where
+        each internal list indicates a set of coordinates specifying
+        the range of pixel values to grab from an image.
+
+        Args:
+            X (list): List of 2-tuples indicating the (min,max)
+                range of pixels to load within a tile.
+            Y (list): List of 2-tuples indicating the (min,max)
+                range of pixels to load within a tile.
+            Z (None): Placeholder, to be implemented.
+            C (None): Placeholder, to be implemented.
+            T (None): Placeholder, to be implemented.
+
+        Returns:
+            numpy.ndarray: 2-dimensional ndarray.
+        """
+        
+        # Shift data in the pixel buffer if the first super tile has been served
+        if X[0][0] - self._tile_x_offset > 1024:
+            x_min = X[0][0] - self._tile_x_offset
+            x_max = self._pixel_buffer.shape[1] - x_min
+            self._pixel_buffer[:,0:x_max] = self._pixel_buffer[:,x_min:]
+            self._tile_x_offset = X[0][0]
+            self._supertiles_loaded -= 1
+            self._tile_last_column = x_max
+            
+        # Load a supertile into the extra pixel buffer space if available
+        if self._supertiles_loaded == 1 and self._data_in_buffer:
+            self._pixel_buffer[:self._raw_buffer.shape[0],self._tile_last_column:self._tile_last_column+self._raw_buffer.shape[1]] = self._raw_buffer
+            self._tile_last_column += self._raw_buffer.shape[1]
+            self._supertiles_loaded += 1
+            self._data_in_buffer = False
+            
+        # If no supertiles are loaded, then load the first supertile into the pixel buffer
+        elif self._supertiles_loaded == 0:
+            if not self._data_in_buffer:
+                self._fetch_thread.result()
+            self._pixel_buffer[:self._raw_buffer.shape[0],:self._raw_buffer.shape[1]] = self._raw_buffer
+            self._tile_last_column += self._raw_buffer.shape[1]
+            self._supertiles_loaded += 1
+            self._data_in_buffer = False
+            
+        # Tile the data
+        num_rows = Y[0][1] - Y[0][0]
+        num_cols = X[0][1] - X[0][0]
+        num_tiles = len(X)
+        images = np.zeros((num_tiles,num_rows,num_cols,1),dtype=self.pixel_type())
+        for ind in range(num_tiles):
+            images[ind,:,:,0] = self._pixel_buffer[Y[ind][0]-self._tile_y_offset:Y[ind][1]-self._tile_y_offset,
+                                                   X[ind][0]-self._tile_x_offset:X[ind][1]-self._tile_x_offset]
+        return images
+
+    def iterate(self,tile_size,tile_stride=None,batch_size=32,channels=[0]):
+        """iterate Iterate through tiles of an image
+
+        This method is an iterator to load tiles of an image. This method
+        buffers the loading of pixels asynchronously to quickly deliver
+        images of the appropriate size.
+
+        Args:
+            tile_size ([list,tuple]): A list/tuple of length 2, indicating
+                the height and width of the tiles to return.
+            tile_stride ([list,tuple], optional): A list/tuple of length 2,
+                indicating the row and column stride size. If None, then
+                tile_stride = tile_size.
+                Defaults to None.
+            batch_size (int, optional): Number of tiles to return on each
+                iteration. Defaults to 32.
+            channels (list, optional): A placeholder. Only the first channel
+                is ever loaded. Defaults to [0].
+
+        Yields:
+            numpy.ndarray: A 4-d array where the dimensions are
+                [tile_num,tile_size[0],tile_size[1],channels]
+        """
+        
+        # input error checking
+        assert len(tile_size) == 2, "tile_size must be a list with 2 elements"
+        if tile_stride != None:
+            assert len(tile_stride) == 2, "stride must be a list with 2 elements"
+        else:
+            stride = tile_size
+            
+        # calculate padding if needed
+        if not (set(tile_size) & set(tile_stride)):
+            xyoffset = [(tile_size[0]-tile_stride[0])/2,(tile_size[1]-tile_stride[1])/2]
+            xypad = [(tile_size[0]-tile_stride[0])/2,(tile_size[1]-tile_stride[1])/2]
+            xypad[0] = xyoffset[0] + (tile_stride[0] - np.mod(self.num_y(),tile_stride[0]))/2
+            xypad[1] = xyoffset[1] + (tile_stride[1] - np.mod(self.num_x(),tile_stride[1]))/2
+            xypad = ((int(xyoffset[0]),int(2*xypad[0] - xyoffset[0])),
+                    (int(xyoffset[1]),int(2*xypad[1] - xyoffset[1])))
+        else:
+            xyoffset = [0,0]
+            xypad = ((0,max([tile_size[0] - tile_stride[0],0])),
+                     (0,max([tile_size[1] - tile_stride[1],0])))
+            
+        # determine supertile sizes
+        y_tile_dim = (self.num_y()+xypad[0][1])//1024
+        x_tile_dim = 1
+            
+        # Initialize the pixel buffer
+        self._pixel_buffer = np.zeros((y_tile_dim*1024 + tile_stride[0],2*x_tile_dim*1024 + tile_stride[1]),dtype=self.pixel_type())
+        self._tile_x_offset = -xypad[1][0]
+        self._tile_y_offset = -xypad[0][0]
+        
+        # Generate the supertile loading order
+        tiles = []
+        y_tile_list = list(range(0,self.num_y()+xypad[0][1],1024*y_tile_dim))
+        if y_tile_list[0] != xypad[0][0]:
+            y_tile_list[0] = -xypad[0][0]
+        x_tile_list = list(range(0,self.num_x()+xypad[1][1],1024*x_tile_dim))
+        if x_tile_list[0] != xypad[1][0]:
+            x_tile_list[0] = -xypad[1][0]
+        for yi in range(len(y_tile_list)-1):
+            for xi in range(len(x_tile_list)-1):
+                y_range = [y_tile_list[yi],y_tile_list[yi+1]]
+                x_range = [x_tile_list[xi],x_tile_list[xi+1]]
+                tiles.append([x_range,y_range])
+                
+        # Start the thread pool and start loading the first supertile
+        thread_pool = ThreadPoolExecutor(max_workers=2)
+        self._fetch_thread = thread_pool.submit(self._fetch,tiles[0][0],tiles[0][1],[0,1],[0],[0])
+        self._supertile_index += 1
+        
+        # generate the indices for each tile
+        # TODO: modify this to grab more than just the first z-index
+        X = []
+        Y = []
+        Z = []
+        C = []
+        T = []
+        x_list = np.array(np.arange(-xypad[1][0],self.num_x()+xypad[1][1],tile_stride[1]))
+        y_list = np.array(np.arange(-xypad[0][0],self.num_y()+xypad[0][1],tile_stride[0]))
+        for t in tiles:
+            try:
+                xb = np.argwhere(x_list<=t[0][0])[-1]
+                yb = np.argwhere(y_list<=t[1][0])[-1]
+                xe = np.argwhere(x_list>=t[0][1])
+                xe = len(x_list)-1 if xe.size==0 else xe[0]
+                ye = np.argwhere(y_list>=t[1][1])[0]
+                ye = len(y_list)-1 if ye.size==0 else ye[0]
+            except:
+                print(x_list[-10:])
+                print(t)
+                raise
+            for x in range(int(x_list[xb]),int(x_list[xe]),tile_stride[1]):
+                for y in range(int(y_list[yb]),int(y_list[ye]),tile_stride[0]):
+                    X.append([x,x+tile_size[1]])
+                    Y.append([y,y+tile_size[0]])
+                    Z.append([0,1])
+                    C.append(channels)
+                    T.append([0])
+        
+        # Set up batches
+        batches = list(range(0,len(X),batch_size))
+        
+        # get the first batch
+        start = time.time()
+        b = min([batch_size,len(X)])
+        index = (X[0:b],Y[0:b],Z[0:b],C[0:b],T[0:b])
+        images = self._get_tiles(*index)
+        
+        # start looping through batches
+        for bn in batches[1:]:
+            # start the thread to get the next batch
+            b = min([bn+batch_size,len(X)])
+            self._tile_thread = thread_pool.submit(self._get_tiles,X[bn:b],Y[bn:b],Z[bn:b],C[bn:b],T[bn:b])
+            
+            # Load another supertile if possible
+            if self._supertile_index < len(tiles) and not self._data_in_buffer:
+                self._fetch_thread = thread_pool.submit(self._fetch,tiles[self._supertile_index][0],tiles[self._supertile_index][1],[0,1],[0],[0])
+                self._supertile_index += 1
+            
+            # return the curent set of images
+            yield images, index
+            
+            # get the images from the thread
+            index = (X[bn:b],Y[bn:b],Z[bn:b],C[bn:b],T[bn:b])
+            images = self._tile_thread.result()
+        
+        thread_pool.shutdown()
+        
+        # return the last set of images
+        return images, index
 
 class BioWriter():
     """BioWriter Write OME tiled tiffs using Bioformats
