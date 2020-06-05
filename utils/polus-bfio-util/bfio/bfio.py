@@ -69,6 +69,10 @@ class BioReader():
         read_metadata(update): Returns an OMEXML class containing metadata for the image
         read_image(X,Y,Z,C,T,series): Returns a part or all of the image as numpy array
     """
+<<<<<<< HEAD
+=======
+    
+>>>>>>> 0937f505ceca61b45e307bbd64a4954faa883719
     _file_path = None
     _metadata = None
     _xyzct = None
@@ -208,8 +212,8 @@ class BioReader():
     def read_metadata(self, update=False):
         """read_metadata Get the metadata for the image
 
-        This function calls the Bioformats metadata parser, which extracts metdata from
-        an image. This returns the python-bioformats OMEXML class, which is a
+        This function calls the Bioformats metadata parser, which extracts metadata
+        from an image. This returns the python-bioformats OMEXML class, which is a
         convenient handler for the complex xml metadata created by Bioformats.
         
         Most basic metadata information have their own BioReader methods, such as
@@ -331,11 +335,11 @@ class BioReader():
             X ([tuple,list], optional): 2-tuple indicating the (min,max) range of
                 pixels to load. If None, loads the full range.
                 Defaults to None.
-            Y (tuple, optional): 2-tuple indicating the (min,max) range of
+            Y ([tuple,list], optional): 2-tuple indicating the (min,max) range of
                 pixels to load. If None, loads the full range.
                 Defaults to None.
-            Z (tuple, optional): 2-tuple indicating the (min,max) range of
-                pixels to load. If None, loads the full range.e.
+            Z ([tuple,list], optional): 2-tuple indicating the (min,max) range of
+                pixels to load. If None, loads the full range.
                 Defaults to None.
             C ([tuple,list], optional): tuple or list of values indicating channel
                 indices to load. If None, loads the full range.
@@ -796,7 +800,7 @@ class BioWriter():
     OME Bioformats tool. Like the BioReader class, it handles writing
     large images (>2GB).
     
-    One the class is initialized, and once the write_image() function
+    Once the class is initialized, and once the write_image() function
     is called at least once, most of the methods to set the metadata
     information will throw an error. Therefore, make sure to set all
     metadata before image writing is started.
