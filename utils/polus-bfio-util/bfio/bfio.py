@@ -65,11 +65,7 @@ class BioReader():
         read_metadata(update): Returns an OMEXML class containing metadata for the image
         read_image(X,Y,Z,C,T,series): Returns a part or all of the image as numpy array
     """
-    # Note: the javabridge connection must be started before initializing a
-    # BioReader object. The reason for this is that the java VM can only be
-    # initialized once. Doing it within the code would cause it to run possibly
-    # without shutting down, so the javabridge connection must be handled
-    # outside of the class.
+    
     _file_path = None
     _metadata = None
     _xyzct = None
@@ -198,8 +194,8 @@ class BioReader():
     def read_metadata(self, update=False):
         """read_metadata Get the metadata for the image
 
-        This function calls the Bioformats metadata parser, which extracts metdata from
-        an image. This returns the python-bioformats OMEXML class, which is a
+        This function calls the Bioformats metadata parser, which extracts metadata
+        from an image. This returns the python-bioformats OMEXML class, which is a
         convenient handler for the complex xml metadata created by Bioformats.
         
         Most basic metadata information have their own BioReader methods, such as
@@ -256,13 +252,13 @@ class BioReader():
         Returns:
             list: list of ints indicating the first and last index in the dimension
         """
-        assert axis in 'xyz'
+        assert axis in 'XYZ'
         if not xyz:
             xyz = [0, self._xyzct[axis]]
         else:
             assert len(xyz) == 2,\
                 '{} must be a list or tuple of length 2.'.format(axis)
-            assert xyz[0] > 0,\
+            assert xyz[0] >= 0,\
                 '{}[0] must be greater than or equal to 0.'.format(axis)
             assert xyz[1] <= self._xyzct[axis],\
                 '{}[1] cannot be greater than the maximum of the dimension ({}).'.format(axis, self._xyzct[axis])
@@ -279,33 +275,33 @@ class BioReader():
         Returns:
             list: list of ints indicating the first and last index in the dimension
         """
-        assert axis in 'ct'
+        assert axis in 'CT'
         if not ct:
             # number of timepoints
             ct = list(range(0, self._xyzct[axis]))
         else:
-            assert np.any(np.greater_equal(self._xyzct[axis], ct)),\
+            assert np.any(np.greater(self._xyzct[axis], ct)),\
                 'At least one of the {}-indices was larger than largest index ({}).'.format(axis, self._xyzct[axis]-1)
-            assert np.any(np.less(0, ct)),\
+            assert np.any(np.less_equal(0, ct)),\
                 'At least one of the {}-indices was less than 0.'.format(axis)
-            assert len(ct) == 0,\
+            assert len(ct) != 0,\
                 'At least one {}-index must be selected.'.format(axis)
         return ct
 
     def read_image(self, X=None, Y=None, Z=None, C=None, T=None, series=None):
         """read_image Read the image
 
-        [extended_summary]
+        Read the image. A 5-dimmensional numpy.ndarray is always returned.
 
         Args:
-            X (tuple, optional): 2-tuple indicating the x-range of pixels to load.
-                If None, loads the full range.
+            X ([tuple,list], optional): 2-tuple indicating the (min,max) range of
+                pixels to load. If None, loads the full range.
                 Defaults to None.
-            Y (tuple, optional): 2-tuple indicating the y-range of pixels to load.
-                If None, loads the full range.
+            Y ([tuple,list], optional): 2-tuple indicating the (min,max) range of
+                pixels to load. If None, loads the full range.
                 Defaults to None.
-            Z (tuple, optional): 2-tuple indicating the z-range of pixels to load.
-                If None, loads the full range.
+            Z ([tuple,list], optional): 2-tuple indicating the (min,max) range of
+                pixels to load. If None, loads the full range.
                 Defaults to None.
             C ([tuple,list], optional): tuple or list of values indicating channel
                 indices to load. If None, loads the full range.
@@ -405,7 +401,7 @@ class BioWriter():
     OME Bioformats tool. Like the BioReader class, it handles writing
     large images (>2GB).
     
-    One the class is initialized, and once the write_image() function
+    Once the class is initialized, and once the write_image() function
     is called at least once, most of the methods to set the metadata
     information will throw an error. Therefore, make sure to set all
     metadata before image writing is started.
