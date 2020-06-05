@@ -18,6 +18,8 @@ import numpy as np
 import os
 import javabridge as jutil
 from concurrent.futures import ThreadPoolExecutor
+from queue import Queue
+from matplotlib import pyplot as plt
 
 import time
 
@@ -85,15 +87,15 @@ class BioReader():
     _TILE_SIZE = 2**10
     
     # Buffering variables for iterating over an image
-    _raw_buffer = None
-    _data_in_buffer = False
+    _raw_buffer = Queue(maxsize=1) # only preload one supertile at a time
+    _data_in_buffer = Queue(maxsize=1)
+    _supertile_index = Queue()
     _pixel_buffer = None
     _fetch_thread = None
     _tile_thread= None
     _supertiles_loaded = 0
     _tile_x_offset = 0
     _tile_last_column = 0
-    _supertile_index = 0
 
     def __init__(self, file_path):
         """__init__ Initialize the a file for reading
@@ -425,11 +427,11 @@ class BioReader():
 
         return I
     
-    def _fetch(self,X,Y,Z=None,C=None,T=None):
+    def _fetch(self):
         """_fetch Method for fetching image supertiles
 
         This method is intended to be run within a thread, and grabs a
-        chunk of the image according to the coordinate provided.
+        chunk of the image according to the coordinates in a queue.
         
         Currently, this function will only grab the first Z, C, and T
         positions regardless of what Z, C, and T coordinate are provided
@@ -444,24 +446,23 @@ class BioReader():
         image, then the image is post-padded with the difference between
         the number and the size of the image.
 
-        Args:
-            X ([tuple,list]): 2-tuple indicating the (min,max) range of
-                pixels to load. If None, loads the full range.
-                Defaults to None.
-            Y ([tuple,list]): 2-tuple indicating the (min,max) range of
-                pixels to load.
-            Z (None): Placeholder, to be implemented.
-            C (None): Placeholder, to be implemented.
-            T (None): Placeholder, to be implemented.
+        Input coordinate are read from the _supertile_index Queue object.
 
-        Returns:
-            numpy.ndarray: 2-dimensional ndarray.
+        Output data is stored in the _raw_buffer Queue object.
+        
+        As soon as the method is executed, a boolean value is put into the
+        _data_in_buffer Queue to indicate that data is either in the buffer
+        or will be put into the buffer.
         """
+        
+        self._data_in_buffer.put(True)
+        X,Y,Z,C,T = self._supertile_index.get()
         
         # Attach the jvm to the thread
         jutil.attach()
         
         # Determine padding if needed
+        reflect_x = False
         x_min = X[0]
         x_max = X[1]
         y_min = Y[0]
@@ -477,29 +478,80 @@ class BioReader():
             prepad_y = abs(y_min)
             y_min = 0
         if x_max > self.num_x():
-            postpad_x = x_max - self.num_x()
+            if x_min >= self.num_x():
+                x_min = 1024 * ((self.num_x()-1)//1024)
+                reflect_x = True
             x_max = self.num_x()
+            postpad_x = x_max - self.num_x()
         if y_max > self.num_y():
-            postpad_y = y_max - self.num_y()
             y_max = self.num_y()
+            postpad_y = y_max - self.num_y()
             
         # Read the image
-        I = self.read_image([x_min,x_max],[y_min,y_max],[0,1],[0],[0])
+        I = self.read_image([x_min,x_max],[y_min,y_max],[0,1],[0],[0]).squeeze()
+        if reflect_x:
+            I = np.fliplr(I)
         
         # Pad the image if needed
-        I = np.squeeze(I)
         if sum(1 for p in [prepad_x,prepad_y,postpad_x,postpad_y] if p != 0) > 0:
             I = np.pad(I,((prepad_y,postpad_y),(prepad_x,postpad_x)),mode='symmetric')
 
         # Store the data in the buffer
-        self._raw_buffer = I
-        self._data_in_buffer = True
+        self._raw_buffer.put(I)
         
         # Detach the jvm
         jutil.detach()
         
-        return True
+        return I
     
+    def _buffer_supertile(self,column_start,column_end):
+        """_buffer_supertile Process the pixel buffer
+
+        Give the column indices of the data to process, and determine if
+        the buffer needs to be processed. This method performs two operations
+        on the buffer. First, it checks to see if data in the buffer can be
+        shifted out of the buffer if it's already been processed, where data
+        before column_start is assumed to have been processed. Second, this
+        function loads data into the buffer if the image reader has made some
+        available and there is room in _pixel_buffer for it.
+
+        Args:
+            column_start ([type]): First column index of data to be loaded
+            column_end ([type]): Last column index of data to be loaded
+
+        """
+        
+        # If the column indices are outside what is available in the buffer,
+        # shift the buffer so more data can be loaded.
+        if column_end - self._tile_x_offset >= 1024:
+            x_min = column_start - self._tile_x_offset
+            x_max = self._pixel_buffer.shape[1] - x_min
+            self._pixel_buffer[:,0:x_max] = self._pixel_buffer[:,x_min:]
+            self._pixel_buffer[:,x_max:] = 0
+            self._tile_x_offset = column_start
+            self._supertiles_loaded -= 1
+            self._tile_last_column = np.argwhere((self._pixel_buffer==0).all(axis=0))[0,0]
+        
+        # Is there data in the buffer?
+        if (self._supertile_index.qsize() > 0 or self._data_in_buffer.qsize() > 0):
+            
+            # If there is data in the _raw_buffer, return if there isn't room to load
+            # it into the _pixel_buffer
+            if self._pixel_buffer.shape[1] - self._tile_last_column < 1024:
+                return
+    
+            I = self._raw_buffer.get()
+            if self._tile_last_column == 0:
+                self._pixel_buffer[:I.shape[0],:I.shape[1]] = I
+                self._tile_last_column = I.shape[1]
+                self._tile_x_offset = column_start
+            else:
+                self._pixel_buffer[:I.shape[0],self._tile_last_column:self._tile_last_column+I.shape[1]] = I
+                self._tile_last_column += I.shape[1]
+            
+            self._supertiles_loaded += 1
+            self._data_in_buffer.get()
+
     def _get_tiles(self,X,Y,Z,C,T):
         """_get_tiles Handle data buffering and tiling
 
@@ -520,43 +572,68 @@ class BioReader():
         Returns:
             numpy.ndarray: 2-dimensional ndarray.
         """
-        
-        # Shift data in the pixel buffer if the first super tile has been served
-        if X[0][0] - self._tile_x_offset > 1024:
-            x_min = X[0][0] - self._tile_x_offset
-            x_max = self._pixel_buffer.shape[1] - x_min
-            self._pixel_buffer[:,0:x_max] = self._pixel_buffer[:,x_min:]
-            self._tile_x_offset = X[0][0]
-            self._supertiles_loaded -= 1
-            self._tile_last_column = x_max
             
-        # Load a supertile into the extra pixel buffer space if available
-        if self._supertiles_loaded == 1 and self._data_in_buffer:
-            self._pixel_buffer[:self._raw_buffer.shape[0],self._tile_last_column:self._tile_last_column+self._raw_buffer.shape[1]] = self._raw_buffer
-            self._tile_last_column += self._raw_buffer.shape[1]
-            self._supertiles_loaded += 1
-            self._data_in_buffer = False
+        self._buffer_supertile(X[0][0],X[0][1])
             
-        # If no supertiles are loaded, then load the first supertile into the pixel buffer
-        elif self._supertiles_loaded == 0:
-            if not self._data_in_buffer:
-                self._fetch_thread.result()
-            self._pixel_buffer[:self._raw_buffer.shape[0],:self._raw_buffer.shape[1]] = self._raw_buffer
-            self._tile_last_column += self._raw_buffer.shape[1]
-            self._supertiles_loaded += 1
-            self._data_in_buffer = False
+        if X[-1][0] - self._tile_x_offset > 1024:
+            shift_buffer = True
+            split_ind = 0
+            while X[split_ind][0] - self._tile_x_offset < 1024:
+                split_ind += 1
+        else:
+            shift_buffer = False
+            split_ind = len(X)
             
         # Tile the data
         num_rows = Y[0][1] - Y[0][0]
         num_cols = X[0][1] - X[0][0]
         num_tiles = len(X)
         images = np.zeros((num_tiles,num_rows,num_cols,1),dtype=self.pixel_type())
-        for ind in range(num_tiles):
+        
+        for ind in range(split_ind):
             images[ind,:,:,0] = self._pixel_buffer[Y[ind][0]-self._tile_y_offset:Y[ind][1]-self._tile_y_offset,
                                                    X[ind][0]-self._tile_x_offset:X[ind][1]-self._tile_x_offset]
+        
+        if split_ind != num_tiles:
+            self._buffer_supertile(X[-1][0],X[-1][1])
+            for ind in range(split_ind,num_tiles):
+                images[ind,:,:,0] = self._pixel_buffer[Y[ind][0]-self._tile_y_offset:Y[ind][1]-self._tile_y_offset,
+                                                       X[ind][0]-self._tile_x_offset:X[ind][1]-self._tile_x_offset]
+        
         return images
+    
+    def maximum_batch_size(self,tile_size,tile_stride=None):
+        """maximum_batch_size Maximum allowable batch size for tiling
 
-    def iterate(self,tile_size,tile_stride=None,batch_size=32,channels=[0]):
+        The pixel buffer only loads at most two supertiles at a time. If the batch
+        size is too large, then the tiling function will attempt to create more
+        tiles than what the buffer holds. To prevent the tiling function from doing
+        this, there is a limit on the number of tiles that can be retrieved in a
+        single call. This function determines what the largest number of retreivable
+        batches is.
+
+        Args:
+            tile_size (list): The height and width of the tiles to retrieve
+            tile_stride (list, optional): If None, defaults to tile_size.
+                Defaults to None.
+
+        Returns:
+            int: Maximum allowed number of batches that can be retrieved by the
+                iterate method.
+        """
+        if tile_stride == None:
+            tile_stride = tile_size
+            
+        xyoffset = [(tile_size[0]-tile_stride[0])/2,(tile_size[1]-tile_stride[1])/2]
+        
+        num_tile_rows = int(np.ceil(self.num_y()/tile_stride[0]))
+        num_tile_cols = (1024 - xyoffset[1])//tile_stride[1]
+        if num_tile_cols == 0:
+            num_tile_cols = 1
+        
+        return int(num_tile_cols*num_tile_rows)
+
+    def iterate(self,tile_size,tile_stride=None,batch_size=None,channels=[0]):
         """iterate Iterate through tiles of an image
 
         This method is an iterator to load tiles of an image. This method
@@ -578,7 +655,29 @@ class BioReader():
         Yields:
             numpy.ndarray: A 4-d array where the dimensions are
                 [tile_num,tile_size[0],tile_size[1],channels]
+            list: 
+                
+        Example:
+            from bfio import BioReader
+            import matplotlib.pyplot as plt
+            
+            br = BioReader('/path/to/file')
+            
+            for tiles,ind in br.iterate(tile_size=[256,256],tile_stride=[200,200]):
+                for i in tiles.shape[0]:
+                    print('Displaying tile with X,Y coords: {},{}'.format(ind[i][0],ind[i][1]))
+                    plt.figure()
+                    plt.imshow(tiles[ind,:,:,0].squeeze())
+                    plt.show()
+                
         """
+        
+        # Enure that the number of tiles does not exceed the width of a supertile
+        if batch_size == None:
+            batch_size = min([32,self.maximum_batch_size(tile_size,tile_stride)])
+        else:
+            assert batch_size <= self.maximum_batch_size(tile_size,tile_stride),\
+                'batch_size must be less than or equal to {}.'.format(self.maximum_batch_size(tile_size,tile_stride))
         
         # input error checking
         assert len(tile_size) == 2, "tile_size must be a list with 2 elements"
@@ -601,20 +700,25 @@ class BioReader():
                      (0,max([tile_size[1] - tile_stride[1],0])))
             
         # determine supertile sizes
-        y_tile_dim = (self.num_y()+xypad[0][1])//1024
+        y_tile_dim = int(np.ceil((self.num_y()-1)/1024))
         x_tile_dim = 1
             
         # Initialize the pixel buffer
-        self._pixel_buffer = np.zeros((y_tile_dim*1024 + tile_stride[0],2*x_tile_dim*1024 + tile_stride[1]),dtype=self.pixel_type())
+        self._pixel_buffer = np.zeros((y_tile_dim*1024 + tile_size[0],2*x_tile_dim*1024 + tile_size[1]),dtype=self.pixel_type())
         self._tile_x_offset = -xypad[1][0]
         self._tile_y_offset = -xypad[0][0]
+        self._tile_crop = [tile_size[0] - tile_stride[0],tile_size[1] - tile_stride[1]]
         
         # Generate the supertile loading order
         tiles = []
         y_tile_list = list(range(0,self.num_y()+xypad[0][1],1024*y_tile_dim))
+        if y_tile_list[-1] != 1024*y_tile_dim:
+            y_tile_list.append(1024*y_tile_dim)
         if y_tile_list[0] != xypad[0][0]:
             y_tile_list[0] = -xypad[0][0]
         x_tile_list = list(range(0,self.num_x()+xypad[1][1],1024*x_tile_dim))
+        if x_tile_list[-1] < self.num_x()+xypad[1][1]:
+            x_tile_list.append(x_tile_list[-1]+1024)
         if x_tile_list[0] != xypad[1][0]:
             x_tile_list[0] = -xypad[1][0]
         for yi in range(len(y_tile_list)-1):
@@ -622,11 +726,11 @@ class BioReader():
                 y_range = [y_tile_list[yi],y_tile_list[yi+1]]
                 x_range = [x_tile_list[xi],x_tile_list[xi+1]]
                 tiles.append([x_range,y_range])
+                self._supertile_index.put((x_range,y_range,[0, 1],[0],[0]))
                 
         # Start the thread pool and start loading the first supertile
         thread_pool = ThreadPoolExecutor(max_workers=2)
-        self._fetch_thread = thread_pool.submit(self._fetch,tiles[0][0],tiles[0][1],[0,1],[0],[0])
-        self._supertile_index += 1
+        self._fetch_thread = thread_pool.submit(self._fetch)
         
         # generate the indices for each tile
         # TODO: modify this to grab more than just the first z-index
@@ -638,17 +742,12 @@ class BioReader():
         x_list = np.array(np.arange(-xypad[1][0],self.num_x()+xypad[1][1],tile_stride[1]))
         y_list = np.array(np.arange(-xypad[0][0],self.num_y()+xypad[0][1],tile_stride[0]))
         for t in tiles:
-            try:
-                xb = np.argwhere(x_list<=t[0][0])[-1]
-                yb = np.argwhere(y_list<=t[1][0])[-1]
-                xe = np.argwhere(x_list>=t[0][1])
-                xe = len(x_list)-1 if xe.size==0 else xe[0]
-                ye = np.argwhere(y_list>=t[1][1])[0]
-                ye = len(y_list)-1 if ye.size==0 else ye[0]
-            except:
-                print(x_list[-10:])
-                print(t)
-                raise
+            xb = np.argwhere(x_list<=t[0][0])[-1]
+            yb = np.argwhere(y_list<=t[1][0])[-1]
+            xe = np.argwhere(x_list>=t[0][1])
+            xe = len(x_list)-1 if xe.size==0 else xe[0]
+            ye = np.argwhere(y_list>=t[1][1])
+            ye = len(y_list)-1 if ye.size==0 else ye[0]
             for x in range(int(x_list[xb]),int(x_list[xe]),tile_stride[1]):
                 for y in range(int(y_list[yb]),int(y_list[ye]),tile_stride[0]):
                     X.append([x,x+tile_size[1]])
@@ -667,15 +766,16 @@ class BioReader():
         images = self._get_tiles(*index)
         
         # start looping through batches
+        supertile_count = 1
         for bn in batches[1:]:
             # start the thread to get the next batch
             b = min([bn+batch_size,len(X)])
             self._tile_thread = thread_pool.submit(self._get_tiles,X[bn:b],Y[bn:b],Z[bn:b],C[bn:b],T[bn:b])
             
             # Load another supertile if possible
-            if self._supertile_index < len(tiles) and not self._data_in_buffer:
-                self._fetch_thread = thread_pool.submit(self._fetch,tiles[self._supertile_index][0],tiles[self._supertile_index][1],[0,1],[0],[0])
-                self._supertile_index += 1
+            if self._supertile_index.qsize() > 0 and not self._fetch_thread.running():
+                supertile_count += 1
+                self._fetch_thread = thread_pool.submit(self._fetch)
             
             # return the curent set of images
             yield images, index
@@ -687,7 +787,7 @@ class BioReader():
         thread_pool.shutdown()
         
         # return the last set of images
-        return images, index
+        yield images, index
 
 class BioWriter():
     """BioWriter Write OME tiled tiffs using Bioformats
