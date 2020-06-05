@@ -512,7 +512,7 @@ def format_ticks_log(yaxis, commonratio, alphavalue):
                 21: 'Z',  # zetta
                 24: 'Y',  # yotta
                 }
-    if type(commonratio) == float:
+    if type(commonratio) == float: 
         commonratio = [commonratio]
     
     out = [(alphavalue*(commonratio[-1]**(t-yaxis))) if yaxis<t else (-1*(alphavalue*(commonratio[0]**(yaxis-t))) if yaxis>t else 0) 
@@ -527,10 +527,8 @@ def format_ticks_log(yaxis, commonratio, alphavalue):
     
     fticks = []
     convertprefix = []
-    
-    print("OUT", len(out), out)
+
     for i in out:
-        print(i)
         formtick = "%#.3f" % i
         decformtick = '%.2e' % Decimal(formtick)
         convertexponent = decformtick[-3]
@@ -540,7 +538,6 @@ def format_ticks_log(yaxis, commonratio, alphavalue):
             convertexponent = int(decformtick[-3:])
         numbers = float(decformtick[:-4])
         if convertexponent > 0:
-            print(" if", convertexponent)
             if convertexponent % 3 == 2:
                 movednum = round(numbers/10,2)
                 newprefix = _prefix[int(convertexponent + 1)]
@@ -555,9 +552,7 @@ def format_ticks_log(yaxis, commonratio, alphavalue):
                     formtick = str(decformtick[:5]) + newprefix
                 else: 
                     formtick = str(decformtick[:4]) + newprefix
-            print("formtick", formtick)
         elif convertexponent < 0:
-            print("elif", convertexponent)
             if convertexponent % -3 == -2:
                 movednum = round(numbers*10,1)
                 newprefix = _prefix[int(convertexponent - 1)]
@@ -572,110 +567,13 @@ def format_ticks_log(yaxis, commonratio, alphavalue):
                     formtick = str(decformtick[:5]) + newprefix
                 else: 
                     formtick = str(decformtick[:4]) + newprefix
-            print("formtick", formtick)
         else:
-            print("else")
             if i < 0:
                 formtick = str(decformtick[:5]) + _prefix[int(convertexponent)]
             else: 
                 formtick = str(decformtick[:4]) + _prefix[int(convertexponent)]
-            print("formtick", formtick)
         convertprefix.append(int(convertexponent))
         fticks.append(formtick)
-    print("fticks", len(fticks), fticks)
-    print("")
-
-    return fticks
-    # _prefix = {-24: 'y',  # yocto
-    #            -21: 'z',  # zepto
-    #            -18: 'a',  # atto
-    #            -15: 'f',  # femto
-    #            -12: 'p',  # pico
-    #             -9: 'n',  # nano
-    #             -6: 'u',  # micro
-    #             -3: 'm',  # mili
-    #              0: ' ',
-    #              3: 'k',  # kilo
-    #              6: 'M',  # mega
-    #              9: 'G',  # giga
-    #             12: 'T',  # tera
-    #             15: 'P',  # peta
-    #             18: 'E',  # exa
-    #             21: 'Z',  # zetta
-    #             24: 'Y',  # yotta
-    #             }
-    # # alphavalue = round(alphavalue, 6)
-    # # for item in commonratio:
-    # #     item = round(item, 6)
-
-
-    # out = []
-    # for t in np.arange(0,bincount,bincount/10):
-    #     if yaxis < t:
-    #         out.append((alphavalue*(commonratio[-1]**(t-yaxis))))
-    #     elif yaxis > t:
-    #         out.append(-1*(alphavalue*(commonratio[0]**(yaxis-t))))
-    #     else:
-    #         out.append(0)
-    # # out = [(alphavalue*(commonratio[-1]**(t-yaxis))) if yaxis<t else (-1*(alphavalue*(commonratio[0]**(yaxis-t))) if yaxis>t else 0)
-    # #     for t in range(0,bincount,bincount/(numticks-1))]
-    # print("out before", out, yaxis)
-    # if yaxis < bincount:
-    #     out.append(alphavalue*(commonratio[-1]**(bincount-yaxis)))
-    # elif yaxis > bincount:
-    #     out.append(-1*(alphavalue*(commonratio[0]**(yaxis-bincount))))
-    # else:
-    #     out.append(0)
-    # print("out after", out, yaxis)
-    
-    # fticks = []
-    # convertprefix = []
-
-    # for i in out:
-    #     print(i)
-    #     formtick = "%#.3f" % str(i)
-    #     print(formtick)
-    #     decformtick = '%.2e' % Decimal(formtick)
-    #     convertexponent = round(float(decformtick[-3:]), 6)
-    #     numbers = round(float(decformtick[:-4]), 6)
-    #     if convertexponent > 0:
-    #         if convertexponent % 3 == 2:
-    #             movednum = round(numbers/10,2)
-    #             newprefix = _prefix[int(convertexponent + 1)]
-    #             formtick = str(movednum) + newprefix
-    #         elif convertexponent % 3 == 1:
-    #             movednum = round(numbers*10,1)
-    #             newprefix = _prefix[int(convertexponent - 1)]
-    #             formtick = str(movednum) + newprefix
-    #         else:
-    #             newprefix = _prefix[convertexponent]
-    #             if out[i] < 0:
-    #                 formtick = str(decformtick[:5]) + newprefix
-    #             else: 
-    #                 formtick = str(decformtick[:4]) + newprefix
-    #     elif convertexponent < 0:
-    #         if convertexponent % -3 == -2:
-    #             movednum = round(numbers*10,1)
-    #             newprefix = _prefix[int(convertexponent - 1)]
-    #             formtick = str(movednum) + newprefix
-    #         elif convertexponent % -3 == -1:
-    #             movednum = round(numbers/10,2)
-    #             newprefix = _prefix[int(convertexponent + 1)]
-    #             formtick = str(movednum) + newprefix
-    #         else:
-    #             newprefix = _prefix[int(convertexponent)]
-    #             if out[i] < 0:
-    #                 formtick = str(decformtick[:5]) + newprefix
-    #             else: 
-    #                 formtick = str(decformtick[:4]) + newprefix
-    #     else:
-    #         if out[i] < 0:
-    #             formtick = str(decformtick[:5]) + _prefix[int(convertexponent)]
-    #         else: 
-    #             formtick = str(decformtick[:4]) + _prefix[int(convertexponent)]
-    #     convertprefix.append(int(convertexponent))
-    #     fticks.append(formtick)
-    #     print("fticks", fticks)
 
     return fticks
 # Tick formatting to mimick D3
@@ -1312,14 +1210,8 @@ if __name__=="__main__":
     output_path = Path(args.outDir)
     bincount = args.bin_count
 
-    # input_path  = Path('/home/ec2-user/polus-plugins/polus-graph-pyramid-builder-plugin/input')
-    # output_path = Path('/home/ec2-user/polus-plugins/polus-graph-pyramid-builder-plugin/output')
-    # bincount = 50
-
     logger.info('inpDir = {}'.format(input_path))
     logger.info('outDir = {}'.format(output_path))
-    # logger.info('outDirLinear = {}'.format(linear_output_path))
-    # logger.info('outDirLog = {}'.format(log_output_path))
 
     # Get the path to each csv file in the collection
     input_files = [str(f.absolute()) for f in Path(input_path).iterdir() if ''.join(f.suffixes)=='.csv']
