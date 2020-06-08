@@ -231,66 +231,67 @@ def transform_data_log(data,column_names):
         negbinssmall = num_bins_for_smallrange[ispositivebigger.iloc[:] == True]
         negbins = negbinslarge.append(negbinssmall)
 
-        num_bins_for_largerange = num_bins_for_largerange + 1
-        # need to add a bin for values that fall between -alpha and alpha
-
         for col in data.columns:  
 
             colvals = data[col]
 
-            datacol = data[col].to_numpy()
+            datacol = colvals.to_numpy()
             colname = colvals.name
 
+            # Number of bins for negative and positive sides, respectively
             negbin = negbins[colname]
             posbin = posbins[colname]
-            smallest_num = datmin[colname]
-            largest_num = datmax[colname]
-
+            
+            # alpha and ratio values for column
             alpha = alphavals[colname]
             ratio = ratios[colname]
 
-            ispositive = (datacol >= alpha)
-            isnegative = (datacol <= -1*alpha)
-            ismin = (datacol == smallest_num)
-            ismax = (datacol == largest_num)
+            # Different conditions of the values in the column
+            ispositive = (datacol >= alpha) # Any positive value that is large than the first value of range
+            isnegative = (datacol <= -1*alpha) # Any negative value that is smaller than the first value of range
+            ismin = (datacol ==  datmin[colname]) # Smallest value in column
+            ismax = (datacol ==  datmax[colname]) # Largest value in column
 
-            bin_data =  np.round(np.log(np.abs(datacol)/alpha)/np.log(ratio))
-            bin_data[bin_data==-0.0] = 0
+            bin_data =  np.round(np.log(np.abs(datacol)/alpha)/np.log(ratio)) # Calculate the bin for all values
+            bin_data[bin_data==-0.0] = 0 # To replace -0.0 values with 0
 
-            # Bins are 1-Indexed
-            datacol[bin_data<=0] = (negbin + 1)
-            datacol[ispositive] = (bin_data[ispositive] + negbin + 1)
+            # Bins are 1-Indexed, and shifting all bin values to positive range.
+                # Bin values are 0-Bincount
+            datacol[bin_data<=0] = (negbin + 1) # if -alpha < value < alpha, then it is negbin + 1
+            datacol[ispositive] = (bin_data[ispositive] + negbin + 1) 
             datacol[isnegative] = (negbin - bin_data[isnegative] + 1)
-            datacol[ismin] = 1
-            datacol[ismax] = bincount
+            datacol[ismin] = 1 # Smallest bin value is 1.
+            datacol[ismax] = bincount # Largest bin value is bincount
 
         commonratios = ratios.to_list()
         alphas = alphavals.to_list()
-        yaxis = (negbins + 1).to_list() 
+        yaxis = (negbins + 1).to_list()
 
         return yaxis, alphas, commonratios, data
 
     # Transforms the Data that has a Positive Range
     def dfzero2pos(data, alphavals, datmax):
 
-        commonratios = (datmax/alphavals)**(1/(bincount - 2))
+        commonratios = (datmax/alphavals)**(1/(bincount - 1))
 
         for col in data.columns: 
+
             alpha = alphavals[col]
-            commonratio = commonratios[col]
-            datacol = data[col].to_numpy()
+            ratio = commonratios[col]
 
-            # each value in column falls under two conditions 
-            condition1 = np.where(datacol < alpha) # smaller than the first value in range
-            condition2 = np.where(datacol >= alpha) # greater than first value in range
+            cols = data[col]
 
-            logged = np.log(datacol[condition2]/alpha)/np.log(commonratio)
-            floored = np.floor(logged + 2)
-            floated = np.float64(floored)  # this is what value is transformed to when it meets condition 2
+            datacol = cols.to_numpy()
+            colname = cols.name
 
-            datacol[condition2] = floated
-            datacol[condition1] = 1 # this is what value is transformed to when it meets condition 1
+            bin_data =  np.round(np.log(np.abs(datacol)/alpha)/np.log(ratio)) # Calculate the bin for all values
+            bin_data[bin_data==-0.0] = 0 # To replace -0.0 values with 0
+            ismax = (datacol == datmax[colname]) 
 
+            datacol[ismax] = bincount
+            datacol[bin_data<=0] = 1 # Negative bin value means that it was smaller than alpha
+            datacol[bin_data>0] = bin_data[bin_data>0]
+        
         alphas = alphavals.to_list()
         commonratios = commonratios.to_list()
 
@@ -299,30 +300,30 @@ def transform_data_log(data,column_names):
     # Transform the Data that has a Negative Range
     def dfneg2zero(data, datmin, alphavals):
 
-        commonratios = (datmin/alphavals)**(1/(bincount - 2))
+        commonratios = (datmin/alphavals)**(1/(bincount - 1))
 
         for col in data.columns:
             alpha = alphavals[col]
-            commonratio = commonratios[col]
-            datacol = data[col].to_numpy()
+            ratio = commonratios[col]
 
-            # each value in column falls under two conditions 
-            condition1 = np.where(datacol > alpha[col]) # greater than the first value in range
-            condition2 = np.where(datacol <= alpha[col]) # smaller thsn the first value in range
+            cols = data[col]
 
-            logged = np.log(datacol[condition2]/alpha)/np.log(commonratio)
-            floored = np.floor(logged + 2)
-            floated = -1*np.float64(floored) + bincount  # this is what value is transformed to when it meets condition 2
+            datacol = cols.to_numpy()
+            colname = cols.name
 
-            datacol[condition2] = floated
-            datacol[condition1] = -1 + bincount  # this is what value is transformed to when it meets condition 1  
+            bin_data =  np.round(np.log(np.abs(datacol)/alpha)/np.log(ratio)) # Calculate the bin for all values
+            bin_data[bin_data==-0.0] = 0 # To replace -0.0 values with 0
+            ismin = (datacol == datmin[colname]) 
+
+            datacol[ismin] = 1
+            datacol[bin_data<=0] = bincount # Negative bin value means that it was bigger than alpha
+            datacol[bin_data>0] = bincount - bin_data[bin_data>0] + 1
         
         alphas = alphavals.to_list()
         commonratios = commonratios.to_list()
 
         return alphas, commonratios, data
 
-    
     yaxis = [0]
     column_bin_sizes = []
     quartile25to75 = []
@@ -440,121 +441,17 @@ def transform_data_linear(data,column_names):
     return yaxis, bins, bin_stats, linear_index, linear_dict, column_bin_size, alphavals
 
 """ 2. Plot Generation """
-def format_ticks_log(yaxis, commonratio, alphavalue):
+def format_ticks(out):
     """ Generate tick labels
     Polus Plots uses D3 to generate the plots. This function tries to mimic
-    the formatting of tick labels. Tick labels have a fixed width, and in
-    place of using scientific notation a scale prefix is appen ded to the end
-    of the number. See _prefix comments to see the suffixes that are used.
-    Numbers that are larger or smaller than 10**24 or 10**-24 respectively
-    are not handled and may throw an error. Values outside of this range
-    do not currently have an agreed upon prefix in the measurement science
-    community.
+    the formatting of tick labels. In place of using scientific notation a 
+    scale prefix is appended to the end of the number. See _prefix comments 
+    to see the suffixes that are used. Numbers that are larger or smaller 
+    than 10**24 or 10**-24 respectively are not handled and may throw an 
+    error. Values outside of this range do not currently have an agreed 
+    upon prefix in the measurement science community.
     Inputs:
-        fmin - the minimum tick value
-        fmax - the maximum tick value
-        nticks - the number of ticks
-    Outputs:
-        fticks - a list of strings containing formatted tick labels
-    """
-
-    _prefix = {-24: 'y',  # yocto
-               -21: 'z',  # zepto
-               -18: 'a',  # atto
-               -15: 'f',  # femto
-               -12: 'p',  # pico
-                -9: 'n',  # nano
-                -6: 'u',  # micro
-                -3: 'm',  # mili
-                 0: ' ',
-                 3: 'k',  # kilo
-                 6: 'M',  # mega
-                 9: 'G',  # giga
-                12: 'T',  # tera
-                15: 'P',  # peta
-                18: 'E',  # exa
-                21: 'Z',  # zetta
-                24: 'Y',  # yotta
-                }
-    
-    # out = [(alphavalue*(commonratio[-1]**(t-yaxis))) if yaxis<t else (-1*(alphavalue*(commonratio[0]**(yaxis-t))) if yaxis>t else 0) 
-    #        for t in np.arange(0,bincount,bincount/(numticks-1))]
-    out = [(alphavalue*(commonratio**(t-yaxis))) if yaxis<t else (-1*(alphavalue*(commonratio**(yaxis-t))) if yaxis>t else 0) 
-        for t in np.arange(0,bincount,bincount/(numticks-1))]
-
-    if yaxis < bincount:
-        out.append(alphavalue*(commonratio**(bincount-yaxis)))
-    elif yaxis > bincount:
-        out.append(-1*(alphavalue*(commonratio**(yaxis-bincount))))
-    else:
-        out.append(0)
-    
-    fticks = []
-    convertprefix = []
-
-    for i in out:
-        formtick = "%#.3f" % i
-        decformtick = '%.2e' % Decimal(formtick)
-        convertexponent = decformtick[-3]
-        if convertexponent == '+':
-            convertexponent = int(decformtick[-2:])
-        else:
-            convertexponent = int(decformtick[-3:])
-        numbers = float(decformtick[:-4])
-        if convertexponent > 0:
-            if convertexponent % 3 == 2:
-                movednum = round(numbers/10,2)
-                newprefix = _prefix[int(convertexponent + 1)]
-                formtick = str(movednum) + newprefix
-            elif convertexponent % 3 == 1:
-                movednum = round(numbers*10,1)
-                newprefix = _prefix[int(convertexponent - 1)]
-                formtick = str(movednum) + newprefix
-            else:
-                newprefix = _prefix[convertexponent]
-                if i < 0:
-                    formtick = str(decformtick[:5]) + newprefix
-                else: 
-                    formtick = str(decformtick[:4]) + newprefix
-        elif convertexponent < 0:
-            if convertexponent % -3 == -2:
-                movednum = round(numbers*10,1)
-                newprefix = _prefix[int(convertexponent - 1)]
-                formtick = str(movednum) + newprefix
-            elif convertexponent % -3 == -1:
-                movednum = round(numbers/10,2)
-                newprefix = _prefix[int(convertexponent + 1)]
-                formtick = str(movednum) + newprefix
-            else:
-                newprefix = _prefix[int(convertexponent)]
-                if i < 0:
-                    formtick = str(decformtick[:5]) + newprefix
-                else: 
-                    formtick = str(decformtick[:4]) + newprefix
-        else:
-            if i < 0:
-                formtick = str(decformtick[:5]) + _prefix[int(convertexponent)]
-            else: 
-                formtick = str(decformtick[:4]) + _prefix[int(convertexponent)]
-        convertprefix.append(int(convertexponent))
-        fticks.append(formtick)
-
-    return fticks
-# Tick formatting to mimick D3
-def format_ticks(fmin,fmax,nticks):
-    """ Generate tick labels
-    Polus Plots uses D3 to generate the plots. This function tries to mimic
-    the formatting of tick labels. Tick labels have a fixed width, and in
-    place of using scientific notation a scale prefix is appended to the end
-    of the number. See _prefix comments to see the suffixes that are used.
-    Numbers that are larger or smaller than 10**24 or 10**-24 respectively
-    are not handled and may throw an error. Values outside of this range
-    do not currently have an agreed upon prefix in the measurement science
-    community.
-    Inputs:
-        fmin - the minimum tick value
-        fmax - the maximum tick value
-        nticks - the number of ticks
+        out - the values of the ticks used in graph
     Outputs:
         fticks - a list of strings containing formatted tick labels
     """
@@ -576,9 +473,6 @@ def format_ticks(fmin,fmax,nticks):
                 21: 'Z',  # zetta
                 24: 'Y',  # yotta
                 }
-
-    out = [t for t in np.arange(fmin,fmax,(fmax-fmin)/(nticks-1))]
-    out.append(fmax)
 
     fticks = []
     convertprefix = []
@@ -679,19 +573,21 @@ def gen_plot(col1,
     Outputs:
         hmap - A numpy array containing pixels of the heatmap
     """
-    # print("Column", col1, col2)
     if col2>col1:
         d = np.squeeze(bins[indexdict[col1, col2],:,:])
         r = col1
         c = col2
+        print("c", c)
     elif col2<col1:
         d = np.transpose(np.squeeze(bins[indexdict[(col1, col2)],:,:]))
         r = col2
         c = col1
+        print("c", c)
     else:
         d = np.zeros((bincount,bincount))
         r = col1
         c = col2
+        print("c", c)
 
     data.set_data(np.ceil(d/d.max() *255))
     data.set_clim(0, 255)
@@ -741,15 +637,48 @@ def gen_plot(col1,
     
     # Ticks are formatted differently for both log and linearly scaled graphs. 
     if typegraph == "linear":
-        ax.set_xticklabels(format_ticks(bin_stats['min'][column_names[c]],bin_stats['max'][column_names[c]],numticks),
-                        rotation=45, fontsize = 5, ha='right')
-        ax.set_yticklabels(format_ticks(bin_stats['min'][column_names[r]],bin_stats['max'][column_names[r]],numticks), 
-                        fontsize = 5, ha='right')
+        # Calculating the value of each tick in the graph (fixed width)
+        fmin = bin_stats['min'][column_names[c]]
+        fmax = bin_stats['max'][column_names[c]]
+        tick_vals = [t for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks-1))]
+        tick_vals.append(fmax)
+        ax.set_xticklabels(format_ticks(tick_vals), rotation=45, fontsize = 5, ha='right')
+
+        # Calculating the value of each tick in the graph (fixed width)
+        fmin = bin_stats['min'][column_names[r]]
+        fmax = bin_stats['max'][column_names[r]]
+        tick_vals = [t for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks-1))]
+        tick_vals.append(fmax)
+        ax.set_yticklabels(format_ticks(tick_vals), fontsize=5, ha='right')
+
     if typegraph == "log":
-        ax.set_xticklabels(format_ticks_log(axiszero[c], binsizes[c], alphavals[c]),
-                        rotation=45, fontsize = 5, ha='right')
-        ax.set_yticklabels(format_ticks_log(axiszero[r], binsizes[r], alphavals[r]),
-                        fontsize = 5, ha='right')
+        # Calculating the value of each tick in the graph 
+        yaxis = axiszero[c]
+        commonratio = binsizes[c]
+        alphavalue = alphavals[c]
+        tick_vals = [(alphavalue*(commonratio**(t-yaxis))) if yaxis<t else (-1*(alphavalue*(commonratio**(yaxis-t))) if yaxis>t else 0) 
+            for t in np.arange(0,bincount,bincount/(numticks-1))]
+        if yaxis < bincount:
+            tick_vals.append(alphavalue*(commonratio**(bincount-yaxis)))
+        elif yaxis > bincount:
+            tick_vals.append(-1*(alphavalue*(commonratio**(yaxis-bincount))))
+        else:
+            tick_vals.append(0)
+        ax.set_xticklabels(format_ticks(tick_vals),rotation=45, fontsize = 5, ha='right')
+
+        # Calculating the value of each tick in the graph 
+        yaxis = axiszero[r]
+        commonratio = binsizes[r]
+        alphavalue = alphavals[r]
+        tick_vals = [(alphavalue*(commonratio**(t-yaxis))) if yaxis<t else (-1*(alphavalue*(commonratio**(yaxis-t))) if yaxis>t else 0) 
+            for t in np.arange(0,bincount,bincount/(numticks-1))]
+        if yaxis < bincount:
+            tick_vals.append(alphavalue*(commonratio**(bincount-yaxis)))
+        elif yaxis > bincount:
+            tick_vals.append(-1*(alphavalue*(commonratio**(yaxis-bincount))))
+        else:
+            tick_vals.append(0)
+        ax.set_yticklabels(format_ticks(tick_vals), fontsize = 5, ha='right')
 
     # drawing the x axis and y axis lines on the graphs
     if len(ax.lines) == 0:
@@ -1183,51 +1112,51 @@ if __name__=="__main__":
 
         global bins
 
-        # # Processes for LINEAR SCALED GRAPHS
-        # # Set the file path folder
-        # folder = Path(f)
-        # folder = folder.name.replace('.csv','')
-        # logger.info('Processing: {}'.format(folder))
+        # Processes for LINEAR SCALED GRAPHS
+        # Set the file path folder
+        folder = Path(f)
+        folder = folder.name.replace('.csv','')
+        logger.info('Processing: {}'.format(folder))
 
-        # # Load the data
-        # logger.info('Loading LINEAR csv: {}'.format(f))
-        # data, cnames = load_csv(f)
-        # column_names = data.columns
-        # logger.info('Done loading LINEAR csv!')
+        # Load the data
+        logger.info('Loading LINEAR csv: {}'.format(f))
+        data, cnames = load_csv(f)
+        column_names = data.columns
+        logger.info('Done loading LINEAR csv!')
 
-        # # Bin the data
-        # logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
-        # yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = transform_data_linear(data,column_names)
-        # del data # get rid of the original data to save memory
+        # Bin the data
+        logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
+        yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = transform_data_linear(data,column_names)
+        del data # get rid of the original data to save memory
 
-        # # Generate the default figure components
-        # logger.info('Generating colormap and default figure...')
-        # cmap_linear = get_cmap("linear")
-        # fig, ax, datacolor = get_default_fig(cmap_linear)
-        # logger.info('Done!')
+        # Generate the default figure components
+        logger.info('Generating colormap and default figure...')
+        cmap_linear = get_cmap("linear")
+        fig, ax, datacolor = get_default_fig(cmap_linear)
+        logger.info('Done!')
 
-        # # Generate the dzi file
-        # logger.info('Generating pyramid LINEAR metadata...')
-        # info_linear = metadata_to_graph_info(bins, output_path,folder, linear_index)
-        # logger.info('Done!')
+        # Generate the dzi file
+        logger.info('Generating pyramid LINEAR metadata...')
+        info_linear = metadata_to_graph_info(bins, output_path,folder, linear_index)
+        logger.info('Done!')
 
-        # logger.info('Writing LINEAR layout file...!')
-        # write_csv(cnames,linear_index,info_linear,output_path,folder)
-        # logger.info('Done!')
+        logger.info('Writing LINEAR layout file...!')
+        write_csv(cnames,linear_index,info_linear,output_path,folder)
+        logger.info('Done!')
 
-        # # Create the pyramid
-        # logger.info('Building LINEAR pyramids...')
-        # image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
+        # Create the pyramid
+        logger.info('Building LINEAR pyramids...')
+        image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
 
         
-        # del image_linear
-        # del info_linear
-        # del yaxis_linear
-        # del bin_stats
-        # del linear_index
-        # del linear_binsizes
-        # del alphavals_linear
-        # del folder
+        del image_linear
+        del info_linear
+        del yaxis_linear
+        del bin_stats
+        del linear_index
+        del linear_binsizes
+        del alphavals_linear
+        del folder
         bins = 0
 
         # Processes for LOG SCALED GRAPHS
@@ -1248,7 +1177,6 @@ if __name__=="__main__":
         del data_log # get rid of the original data to save memory
 
         # Generate the default figure components
-        # print(data_log)
         logger.info('Generating colormap and default figure...')
         cmap_log = get_cmap("log")
         fig, ax, datacolor = get_default_fig(cmap_log)
