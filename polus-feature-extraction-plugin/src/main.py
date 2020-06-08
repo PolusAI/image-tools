@@ -1161,6 +1161,8 @@ def main():
             #Check whether .ome.tif files are present in the intensity image directory
             if not configfiles_int:
                 raise ValueError('No intensity image .ome.tif files found.')
+        else:
+            intensity_image = None
    
         
         #Run analysis for each labeled image in the list
@@ -1196,6 +1198,7 @@ def main():
                 if int_ravel_bool == True or countzero == True:
                     logger.warning('Intensity image ' + intensity_file + ' does not have any content' )
                     continue
+            
             #Dataframe contains the features extracted from images   
             df,title = feature_extraction(label_image, features, seg_file_names1, embeddedpixelsize, img_emb_uint, unitLength, pixelsPerunit, pixelDistance, intensity_image)
             
