@@ -537,7 +537,7 @@ def polygonality_hexagonality(area, perimeter, neighbors, solidity, maxferet, mi
         hex_sd = float("NAN")
     return(poly_ave, hex_ave, hex_sd)
     
-def feature_extraction(label_image, features, seg_file_names1, embeddedpixelsize, img_emb_uint, unitLength, pixelsPerunit, pixelDistance, intensity_image):
+def feature_extraction(label_image, features, seg_file_names1, embeddedpixelsize, img_emb_uint, unitLength, pixelsPerunit, pixelDistance=5, intensity_image=None):
     """Calculate shape and intensity based features.
       
     Args:
@@ -1197,7 +1197,7 @@ def main():
                     logger.warning('Intensity image ' + intensity_file + ' does not have any content' )
                     continue
             #Dataframe contains the features extracted from images   
-            df,title = feature_extraction(label_image, features, seg_file_names1, embeddedpixelsize, img_emb_uint, unitLength, pixelsPerunit, pixelDistance=5, intensity_image=None)
+            df,title = feature_extraction(label_image, features, seg_file_names1, embeddedpixelsize, img_emb_uint, unitLength, pixelsPerunit, pixelDistance, intensity_image)
             
             #Save each csv file separately
             os.chdir(outDir)
