@@ -98,9 +98,13 @@ def get_scaled_down_images(image,scale_factor):
     # opencv and numpy have a different coordinate system   
     rescaled_image=cv2.resize(image,(new_width,new_height))    
     
-    # convert to 8 bit if image is 16 bit
+    # check image dtype and convert to uint8
     if rescaled_image.dtype == 'uint16':    
         rescaled_image=(rescaled_image/256).astype('uint8')    
+    elif rescaled_image.dtype == 'uint32':
+        rescaled_image=(rescaled_image/2**24).astype('uint8') 
+    elif rescaled_image.dtype == 'uint64':
+        rescaled_image=rescaled_image=(rescaled_image/2**56).astype('uint8')         
         
     return rescaled_image
 
