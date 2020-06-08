@@ -199,7 +199,6 @@ def transform_data_log(data,column_names):
         smallside_an_values = minmax.min(axis=1) 
         largeside_an_values = minmax.max(axis=1)
 
-
         # NEED TO SOLVE FOR HOW MANY BINS THE SMALL RANGE AND LARGE RANGE REQUIRES
             # THREE VARIABLES ARE UNKNOWN
             # 1) the ratio 
@@ -217,9 +216,20 @@ def transform_data_log(data,column_names):
         ratios = ((smallside_an_values*largeside_an_values)/(alphavals*alphavals))**(1/(bincount-3))
 
         # use ratio to solve for number bins for both the large and small ranges
-        num_bins_for_smallrange = np.floor(abs(1 + np.log(smallside_an_values/alphavals)/np.log(ratios)))
-        num_bins_for_largerange = np.floor(abs(1 + np.log(largeside_an_values/alphavals)/np.log(ratios)))
+        num_bins_for_smallrange = np.round(abs(1 + np.log(smallside_an_values/alphavals)/np.log(ratios)))
+        num_bins_for_largerange = np.round(abs(1 + np.log(largeside_an_values/alphavals)/np.log(ratios)))
             # sum of num_bins_for_smallrange + num_bins_for_largerange = bincount - 1
+
+        # check to see if total bins == bincount - 1
+        total_bins_correct = num_bins_for_smallrange.add(num_bins_for_largerange)
+
+        posbinslarge = num_bins_for_largerange[ispositivebigger.iloc[:] == True]
+        posbinssmall = num_bins_for_smallrange[ispositivebigger.iloc[:] == False]
+        posbins = posbinslarge.append(posbinssmall)
+
+        negbinslarge = num_bins_for_largerange[ispositivebigger.iloc[:] == False]
+        negbinssmall = num_bins_for_smallrange[ispositivebigger.iloc[:] == True]
+        negbins = negbinslarge.append(negbinssmall)
 
         num_bins_for_largerange = num_bins_for_largerange + 1
         # need to add a bin for values that fall between -alpha and alpha
@@ -227,73 +237,36 @@ def transform_data_log(data,column_names):
         for col in data.columns:  
 
             colvals = data[col]
+
             datacol = data[col].to_numpy()
             colname = colvals.name
-            
-            small = smallside_an_values[colname]
-            large = largeside_an_values[colname]
 
-            posbigger = ispositivebigger[colname]
+            negbin = negbins[colname]
+            posbin = posbins[colname]
+            smallest_num = datmin[colname]
+            largest_num = datmax[colname]
+
             alpha = alphavals[colname]
             ratio = ratios[colname]
 
-            # use ratio to solve for number bins for both the large and small ranges
-            binssmall = num_bins_for_smallrange[colname]
-            binslarge = num_bins_for_largerange[colname]
+            ispositive = (datacol >= alpha)
+            isnegative = (datacol <= -1*alpha)
+            ismin = (datacol == smallest_num)
+            ismax = (datacol == largest_num)
 
-            # # recaulate the ratio value for both sides
-            ratio = ratios[colname]
-            
-            
-            val_pos_nonzero = datacol > 0
-            val_neg_nonzero = datacol < 0
-            # Each value in the Range falls under one of the following conditions
-            condition1 = np.asarray((val_pos_nonzero) & (datacol < alpha)).nonzero() # Value is positive and is smaller than the first value in the range
-            condition2 = np.asarray((val_pos_nonzero) & (datacol == datmax[col])).nonzero() # Value is positive and is equal to the large value in the range
-            condition3 = np.asarray((val_pos_nonzero) & (datacol >= alpha)).nonzero() # Value is positive and is smallest < value < max
-            condition4 = np.asarray((val_neg_nonzero) & (datacol > -1*alpha)).nonzero() # Value is negative and is greater than the first value in the range
-            condition5 = np.asarray((val_neg_nonzero) & (datacol == datmin[col])).nonzero() # Value is negative and is equal to the smallest value in the range
-            condition6 = np.asarray((val_neg_nonzero) & (datacol <= -1*alpha)).nonzero() # Value is negative and is min < value < largest
-            condition7 = np.asarray(datacol == 0).nonzero()
+            bin_data =  np.round(np.log(np.abs(datacol)/alpha)/np.log(ratio))
+            bin_data[bin_data==-0.0] = 0
 
-            if posbigger == True: # if the abs(max) is greater than the abs(min)
-                yaxis.append(binssmall) # where to draw the y axis
-                logged3 = np.log(datacol[condition3]/alpha)/np.log(ratio) + 1 
-                floored3 = np.float64(np.floor(logged3))
-                absolute3 = abs(floored3) + binssmall
-                datacol[condition3] = absolute3 # this is what value transforms to when it meets condition 3
+            # Bins are 1-Indexed
+            datacol[bin_data<=0] = (negbin + 1)
+            datacol[ispositive] = (bin_data[ispositive] + negbin + 1)
+            datacol[isnegative] = (negbin - bin_data[isnegative] + 1)
+            datacol[ismin] = 1
+            datacol[ismax] = bincount
 
-                logged6 = np.log(datacol[condition6]/(-1*alpha))/np.log(ratio) + 1 
-                floored6 = np.float64(np.floor(logged6))
-                absolute6 = -1*abs(floored6) + binssmall
-                datacol[condition6] = absolute6 # this is what value transforms to when it meets condition 6
-
-                datacol[condition1] = 1 + binssmall
-                datacol[condition2] = bincount
-                datacol[condition4] = -1 + binssmall
-                datacol[condition5] = 0
-                datacol[condition7] = -1 + binssmall
-
-            else:
-                yaxis.append(binslarge) # where to draw the y axis
-                logged3 = np.log(datacol[condition3]/alpha)/np.log(ratio) + 1 # what condition3 is equal to
-                floored3 = np.float64(np.floor(logged3))
-                absolute3 = abs(floored3) + binslarge
-                datacol[condition3] = absolute3 # this is what value transforms to when it meets condition 3
-
-                logged6 = np.log(datacol[condition6]/(-1*alpha))/np.log(ratio) + 1 # 
-                floored6 = np.float64(np.floor(logged6))
-                absolute6 = -1*abs(floored6) + binslarge
-                datacol[condition6] = absolute6 # this is what value transforms to when it meets condition 6
-
-                datacol[condition1] = 1 + binslarge
-                datacol[condition2] = bincount
-                datacol[condition4] = -1 + binslarge
-                datacol[condition5] = 0
-                datacol[condition7] = -1 + binslarge
-        
         commonratios = ratios.to_list()
         alphas = alphavals.to_list()
+        yaxis = (negbins + 1).to_list() 
 
         return yaxis, alphas, commonratios, data
 
