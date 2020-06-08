@@ -69,10 +69,6 @@ class BioReader():
         read_metadata(update): Returns an OMEXML class containing metadata for the image
         read_image(X,Y,Z,C,T,series): Returns a part or all of the image as numpy array
     """
-<<<<<<< HEAD
-=======
-    
->>>>>>> 0937f505ceca61b45e307bbd64a4954faa883719
     _file_path = None
     _metadata = None
     _xyzct = None
