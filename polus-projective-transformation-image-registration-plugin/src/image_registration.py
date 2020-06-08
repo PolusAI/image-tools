@@ -7,6 +7,7 @@ import argparse
 import logging
 import os
 import traceback
+import math
 
 
 
@@ -69,11 +70,24 @@ def image_transformation(moving_image,reference_image):
     warped_img = cv2.warpPerspective(moving_image, homography, (width, height))    
     return warped_img,homography  
 
+def get_scale_factor(height,width):
+    """
+    This function returns the appropriate scale factor w.r.t to 
+    a target size. Target size has been fixed to 5 megapixels.
+    Inputs: 
+        Image height and width
+    Outputs:
+            scale factor
+    """    
+    TARGET_SIZE=5000000 # 5 megapixels
+    scale_factor=math.sqrt((height*width)/TARGET_SIZE)    
+    return int(scale_factor) if scale_factor>1 else 1
+
 def get_scaled_down_images(image,scale_factor):
     """
     This function returns the scaled down version of an image.    
     Inputs:
-        image : 16 bit input image to be scaled down
+        image : input image to be scaled down, (either 8 bit or 16 bit image)
         scale_factor : the factor by which the image needs
                        to be scaled down
     Outputs:
@@ -82,14 +96,20 @@ def get_scaled_down_images(image,scale_factor):
     height,width=image.shape
     new_height,new_width=[int(height/scale_factor),int(width/scale_factor)] 
     # opencv and numpy have a different coordinate system   
-    rescaled_image=cv2.resize(image,(new_width,new_height))
-    # convert 16bit image to 8bit
-    rescaled_image=(rescaled_image/256).astype('uint8')
+    rescaled_image=cv2.resize(image,(new_width,new_height))    
+    
+    # convert to 8 bit if image is 16 bit
+    if rescaled_image.dtype == 'uint16':    
+        rescaled_image=(rescaled_image/256).astype('uint8')    
+        
     return rescaled_image
 
 def get_tiles(image,buffer):
     """
-    This function divides the image into 4 tiles.
+    This function divides the image into 4 tiles. The number of tiles has been
+    fixed to 4. Fixing the number of tiles may leed to memory problems. Following
+    versions of this plugin will address this issue. 
+    
     Inputs: 
         image: input image to be tiled
         buffer: True or false
@@ -142,7 +162,7 @@ def apply_rough_homography(image,homography_largescale,reference_image_shape):
     height_2,width_2=image.shape
     
     # initialize the output image matrix
-    transformed_image=np.zeros((height_1,width_1),dtype='uint16')  
+    transformed_image=np.zeros((height_1,width_1),dtype=image.dtype)  
     
     if height_1< 2**16 and width_1 < 2**16:
         dtype = np.uint16
@@ -159,7 +179,7 @@ def apply_rough_homography(image,homography_largescale,reference_image_shape):
     for i in range(height_1):   
              
         # store homogeneous coordinate([x1,y1,1], [x2,y2,1]...) values in the row array       
-        row_array=np.array(width_array,height_array[0],depth_array[0])
+        row_array=np.array([width_array,height_array[0],depth_array[0]])
         height_array = height_array + 1 # Do not use += here
         
         #dot product of homography inverse and the row_array(coordinate_array)
@@ -169,12 +189,21 @@ def apply_rough_homography(image,homography_largescale,reference_image_shape):
         new_array=np.round(new_array/new_array[2,:], decimals=0)
         new_array=new_array.astype(int)
         
-        # remove all coordinates which are out of bounds (negative coordinates, or that which lie outside the moving image)
+        # remove all coordinates which are out of bounds 
+        # (negative coordinates, or that which lie outside the moving image)
         boo = (np.all(new_array>=0, axis =0)) * (new_array[0] <width_2) * (new_array[1] <height_2)
         new_array=new_array[:,boo]
         row_array=row_array[:,boo]
         
-        # fetch pixel values from the moving image and place them at their transformed position in the transformed image
+        # fetch pixel values from the moving image and place them at their transformed 
+        # position in the transformed image        
+        # Note: 1) Performing transformation like this can result in multiple pixels in 
+        #       the moving image being assigned to the same pixel in the transformed
+        #       image. This issue will be resolved in the future versions of this
+        #       plugin.        
+        #       2) Also, some kind of interpolation is required here. It will be added in 
+        #          the following versions of this plugin.               
+               
         transformed_image[row_array[1,:], row_array[0,:]]= image[new_array[1,:], new_array[0,:]]    
     return transformed_image
 
@@ -193,10 +222,9 @@ def get_tile_by_tile_transformation(reference_image_tiles, moving_image_tiles, s
     Output:
         homography_set = list of homography matrixes 
         
-    """   
-    NUMBER_OF_TILES=4
+    """       
     homography_set=[]       
-    for k in range(NUMBER_OF_TILES):
+    for k in range(len(moving_image_tiles)):
         # cacluate transformation betwen corresponding tiles
         _ , homography_matrix=image_transformation(moving_image_tiles[k], reference_image_tiles[k] )
         # upscale and append the matrix
@@ -245,10 +273,9 @@ def apply_registration(moving_image_path,Template_image_shape,Rough_Homography_U
     del rough_transformed_image    
  
     
-    # apply tile by tile transformation to the tiles
-    NUMBER_OF_TILES=4
+    # apply tile by tile transformation to the tiles    
     transformed_moving_image_tiles=[]
-    for k in range(NUMBER_OF_TILES):
+    for k in range(len(moving_image_tiles)):
         transformed_moving_image_tiles.append( cv2.warpPerspective(moving_image_tiles[k],fine_homography_set[k],(int(width/2),int(height/2))) )
     
     # free up memory   
@@ -304,7 +331,7 @@ def register_images(reference_image_path, moving_image_path):
     reference_image_shape= reference_image.shape   
     height,width=reference_image_shape
     # intialize the scale factor and scale matrix(to be used to upscale the transformation matrices)
-    scale_factor=16
+    scale_factor=get_scale_factor(reference_image_shape[0],reference_image_shape[1])
     scale_matrix = np.array([[1,1,scale_factor],[1,1,scale_factor],[1/scale_factor,1/scale_factor,1]])
     
     # downscale the reference image
@@ -340,7 +367,7 @@ def register_images(reference_image_path, moving_image_path):
     del moving_image          
     
     # downscale the transformed moving image
-    moving_image_transformed_downscaled=get_scaled_down_images(moving_image_transformed,16)
+    moving_image_transformed_downscaled=get_scaled_down_images(moving_image_transformed,scale_factor)
     # downscaled reference image tiles without buffer
     reference_image_tiles=get_tiles(reference_image_downscaled, buffer=False)
     del reference_image_downscaled      
