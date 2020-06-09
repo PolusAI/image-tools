@@ -19,8 +19,6 @@ CHUNK_SIZE = 1024
 # Number of Ticks on the Axis Graph 
 numticks = 11
 
-# global bin
-
 # DZI file template
 DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="' + str(CHUNK_SIZE) + '" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
 
@@ -348,7 +346,7 @@ def transform_data_log(data,column_names):
     positiverange = np.where((bin_stats['min'] >= 0) & (bin_stats['max'] > 0))[0]
     negativerange = np.where((bin_stats['min'] < 0) & (bin_stats['max'] <= 0))[0]
     neg2posrange =  np.where((bin_stats['min'] < 0) & (bin_stats['max'] > 0))[0]
-    zeroalpha = np.where((2*(bin_stats['seventy5'] - bin_stats['twenty5']))/(datalen**(1/3)) == 0)[0]
+    zeroalpha = np.where(bin_stats['alpha'] == 0)[0]
     
     # FIND COLUMNS THAT OVERLAP WITH ZEROALPHA(bin width is zero)
     POSoverlap = np.intersect1d(zeroalpha, positiverange, assume_unique = True, return_indices=True)
@@ -577,17 +575,14 @@ def gen_plot(col1,
         d = np.squeeze(bins[indexdict[col1, col2],:,:])
         r = col1
         c = col2
-        print("c", c)
     elif col2<col1:
         d = np.transpose(np.squeeze(bins[indexdict[(col1, col2)],:,:]))
         r = col2
         c = col1
-        print("c", c)
     else:
         d = np.zeros((bincount,bincount))
         r = col1
         c = col2
-        print("c", c)
 
     data.set_data(np.ceil(d/d.max() *255))
     data.set_clim(0, 255)
@@ -1105,6 +1100,12 @@ if __name__=="__main__":
     logger.info('inpDir = {}'.format(input_path))
     logger.info('outDir = {}'.format(output_path))
 
+    linear_logger = logging.getLogger("main.LINEAR")
+    linear_logger.setLevel(logging.INFO)
+
+    log_logger = logging.getLogger("main.LOG")
+    log_logger.setLevel(logging.INFO)
+
     # Get the path to each csv file in the collection
     input_files = [str(f.absolute()) for f in Path(input_path).iterdir() if ''.join(f.suffixes)=='.csv']
 
@@ -1112,40 +1113,47 @@ if __name__=="__main__":
 
         global bins
 
-        # Processes for LINEAR SCALED GRAPHS
         # Set the file path folder
         folder = Path(f)
-        folder = folder.name.replace('.csv','')
-        logger.info('Processing: {}'.format(folder))
+        folder_linear = folder.name.replace('.csv','_linear')
+        folder_log = folder.name.replace('.csv','_log')
 
         # Load the data
-        logger.info('Loading LINEAR csv: {}'.format(f))
-        data, cnames = load_csv(f)
-        column_names = data.columns
-        logger.info('Done loading LINEAR csv!')
+        linear_logger.info('Loading LINEAR csv: {}'.format(f))
+        data_linear, cnames = load_csv(f)
+        column_names = data_linear.columns
+        linear_logger.info('Done loading LINEAR csv!')
+
+        # Load the data
+        log_logger.info('Loading LOG csv: {}'.format(f))
+        data_log = data_linear
+        log_logger.info('Done LOG loading csv!')
+
+        # Processes for LINEAR SCALED GRAPHS
+        linear_logger.info('Processing: {}'.format(folder_linear))
 
         # Bin the data
-        logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
-        yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = transform_data_linear(data,column_names)
-        del data # get rid of the original data to save memory
+        linear_logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
+        yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = transform_data_linear(data_linear,column_names)
+        del data_linear # get rid of the original data to save memory
 
         # Generate the default figure components
-        logger.info('Generating colormap and default figure...')
+        linear_logger.info('Generating colormap and default figure...')
         cmap_linear = get_cmap("linear")
         fig, ax, datacolor = get_default_fig(cmap_linear)
-        logger.info('Done!')
+        linear_logger.info('Done!')
 
         # Generate the dzi file
-        logger.info('Generating pyramid LINEAR metadata...')
-        info_linear = metadata_to_graph_info(bins, output_path,folder, linear_index)
-        logger.info('Done!')
+        linear_logger.info('Generating pyramid LINEAR metadata...')
+        info_linear = metadata_to_graph_info(bins, output_path,folder_linear, linear_index)
+        linear_logger.info('Done!')
 
-        logger.info('Writing LINEAR layout file...!')
-        write_csv(cnames,linear_index,info_linear,output_path,folder)
-        logger.info('Done!')
+        linear_logger.info('Writing LINEAR layout file...!')
+        write_csv(cnames,linear_index,info_linear,output_path,folder_linear)
+        linear_logger.info('Done!')
 
         # Create the pyramid
-        logger.info('Building LINEAR pyramids...')
+        linear_logger.info('Building LINEAR pyramids...')
         image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
 
         
@@ -1160,38 +1168,29 @@ if __name__=="__main__":
         bins = 0
 
         # Processes for LOG SCALED GRAPHS
-        # Set the file path folder
-        folder_log = Path(f)
-        folder_log = folder_log.name.replace('.csv','_log')
-        logger.info('Processing: {}'.format(folder_log))
-
-        # Load the data
-        logger.info('Loading LOG csv: {}'.format(f))
-        data_log, cnames_log = load_csv(f)
-        column_names_log = data_log.columns
-        logger.info('Done LOG loading csv!')
+        log_logger.info('Processing: {}'.format(folder_log))
         
         # Bin the data
-        logger.info('Binning data for {} LOG features...'.format(column_names_log.size))
-        yaxis_log, bins, log_bin_stats, log_index, log_dict, log_binsizes, alphavals_log = transform_data_log(data_log, column_names_log)
+        log_logger.info('Binning data for {} LOG features...'.format(column_names.size))
+        yaxis_log, bins, log_bin_stats, log_index, log_dict, log_binsizes, alphavals_log = transform_data_log(data_log, column_names)
         del data_log # get rid of the original data to save memory
 
         # Generate the default figure components
-        logger.info('Generating colormap and default figure...')
+        log_logger.info('Generating colormap and default figure...')
         cmap_log = get_cmap("log")
         fig, ax, datacolor = get_default_fig(cmap_log)
-        logger.info('Done!')
+        log_logger.info('Done!')
 
         # Generate the dzi file
-        logger.info('Generating pyramid LOG metadata...')
+        log_logger.info('Generating pyramid LOG metadata...')
         info_log = metadata_to_graph_info(bins, output_path,folder_log, log_index)
-        logger.info('Done!')
+        log_logger.info('Done!')
 
-        logger.info('Writing LOG layout file...!')
-        write_csv(cnames_log, log_index, info_log, output_path, folder_log)
-        logger.info('Done!')
+        log_logger.info('Writing LOG layout file...!')
+        write_csv(cnames, log_index, info_log, output_path, folder_log)
+        log_logger.info('Done!')
 
         # Create the pyramid
-        logger.info('Building LOG pyramid...')
-        image_log = _get_higher_res("log", 0, info_log, column_names_log, output_path, folder_log, log_index, log_dict, log_bin_stats, log_binsizes, yaxis_log, alphavals_log)
+        log_logger.info('Building LOG pyramid...')
+        image_log = _get_higher_res("log", 0, info_log, column_names, output_path, folder_log, log_index, log_dict, log_bin_stats, log_binsizes, yaxis_log, alphavals_log)
 
