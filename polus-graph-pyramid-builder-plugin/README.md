@@ -2,6 +2,10 @@
 
 This WIPP plugin will import a csv collection and build a DeepZoom pyramid of graphs, where each graph contains a heatmap of each column plotted against another column. All n-columns are plotted against each other, excluding tranposed graphs and graphs where each axis has the same column. This leads to a total of (n^2-n)/2 graphs.
 
+There are two types of graphs being produced: 
+1) Linear sclaed graphs
+2) Log scaled graphs
+
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
 ## Building
