@@ -1154,7 +1154,7 @@ if __name__=="__main__":
 
         # Create the pyramid
         linear_logger.info('Building LINEAR pyramids...')
-        image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
+        image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder_linear,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
 
         
         del image_linear
