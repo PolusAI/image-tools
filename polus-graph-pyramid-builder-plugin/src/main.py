@@ -91,6 +91,7 @@ def binning_data(data, yaxis, typegraph, column_bin_size, bin_stats):
     data_ind = pandas.notnull(data)  # Handle NaN values
     data[~data_ind] = 255          # Handle NaN values
     data = data.astype(np.uint16) # cast to save memory
+    print(data[data>=bincount])
     data[data>=bincount] = bincount - 1 # in case of numerical precision issues
 
     nrows = data.shape[0]
@@ -228,14 +229,7 @@ def transform_data_log(data,column_names):
         #     print(num_bins_for_smallrange[i], num_bins_for_largerange[i])
 
         # check to see if total bins == bincount - 1
-        total_bins_correct = num_bins_for_smallrange.add(num_bins_for_largerange)
-        print(total_bins_correct[small_lessthanalpha])
-        print(total_bins_correct[large_lessthanalpha])
-        # if total_bins_correct[small_lessthanalpha] != bincount - 1:
-        #     num_bins_for_largerange[small_lessthanalpha] = bincount - 1
-        # if total_bins_correct[large_lessthanalpha] != bincount - 1:
-        #     num_bins_for_smallrange[large_lessthanalpha] = bincount - 1
-
+        # total_bins_correct = num_bins_for_smallrange.add(num_bins_for_largerange)
 
         posbinslarge = num_bins_for_largerange[ispositivebigger.iloc[:] == True]
         posbinssmall = num_bins_for_smallrange[ispositivebigger.iloc[:] == False]
@@ -270,13 +264,6 @@ def transform_data_log(data,column_names):
             binzero = np.log(np.abs(datacol)/alpha)
             bin_data =  np.round(binzero/np.log(ratio)) # Calculate the bin for all values
             bin_data[bin_data==-0.0] = 0 # To replace -0.0 values with 0
-            bin_data[bin_data==np.inf] = 0
-            bin_data[bin_data==-np.inf] = 0 
-            # i = 0
-            # for val in bin_data:
-            #     if val < :
-            #         print("NEGATIVE TO POSITIVE", datacol[i], val, colname)
-            #     i = i + 1
 
             # Bins are 1-Indexed, and shifting all bin values to positive range.
                 # Bin values are 0-Bincount
@@ -287,14 +274,6 @@ def transform_data_log(data,column_names):
             datacol[ismax] = bincount # Largest bin value is bincount
             datacol[datacol == -np.inf] = negbin + 1
             datacol[datacol == np.inf] = negbin + 1
-
-            # print(alpha)
-            # print(ratio)
-            i = 0
-            for val in datacol: 
-                if val > bincount:
-                    print("NEGATIVE TO POSITIVE", val, colname)
-                i = i + 1
 
         commonratios = ratios.to_list()
         alphas = alphavals.to_list()
@@ -327,10 +306,6 @@ def transform_data_log(data,column_names):
             datacol[datacol == -np.inf] = 1
             datacol[datacol == np.inf] = 1
 
-            for val in datacol: 
-                if val > bincount - 1:
-                    print("ZERO TO POSITIVE", val, colname)
-        
         alphas = alphavals.to_list()
         commonratios = commonratios.to_list()
 
@@ -359,10 +334,6 @@ def transform_data_log(data,column_names):
             datacol[bin_data>0] = bincount - bin_data[bin_data>0] + 1
             datacol[datacol == -np.inf] = bincount 
             datacol[datacol == np.inf] = bincount
-            
-            for val in datacol: 
-                if val > bincount - 1:
-                    print("NEGATIVE TO ZERO", val, colname)
 
         alphas = alphavals.to_list()
         commonratios = commonratios.to_list()
@@ -388,9 +359,6 @@ def transform_data_log(data,column_names):
     
     nfeats = bin_stats['size'][1] 
     datalen = bin_stats['size'][0]
-
-    # for i in range(0, nfeats):
-    #     print(bin_stats['min'][i], bin_stats['max'][i])
    
     # COLUMNS OF DATA FALL UNDER THESE FOUR RANGE DESCRIPTIONS
     positiverange = np.where((bin_stats['min'] >= 0) &(bin_stats['max'] > 0))[0]
@@ -1184,36 +1152,36 @@ if __name__=="__main__":
 
         # Bin the data
         linear_logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
-        # yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = transform_data_linear(data_linear,column_names)
+        yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = transform_data_linear(data_linear,column_names)
         del data_linear # get rid of the original data to save memory
 
         # Generate the default figure components
-        # linear_logger.info('Generating colormap and default figure...')
-        # cmap_linear = get_cmap("linear")
-        # fig, ax, datacolor = get_default_fig(cmap_linear)
-        # linear_logger.info('Done!')
+        linear_logger.info('Generating colormap and default figure...')
+        cmap_linear = get_cmap("linear")
+        fig, ax, datacolor = get_default_fig(cmap_linear)
+        linear_logger.info('Done!')
 
-        # # Generate the dzi file
-        # linear_logger.info('Generating pyramid LINEAR metadata...')
-        # info_linear = metadata_to_graph_info(bins, output_path,folder_linear, linear_index)
-        # linear_logger.info('Done!')
+        # Generate the dzi file
+        linear_logger.info('Generating pyramid LINEAR metadata...')
+        info_linear = metadata_to_graph_info(bins, output_path,folder_linear, linear_index)
+        linear_logger.info('Done!')
 
-        # linear_logger.info('Writing LINEAR layout file...!')
-        # write_csv(cnames,linear_index,info_linear,output_path,folder_linear)
-        # linear_logger.info('Done!')
+        linear_logger.info('Writing LINEAR layout file...!')
+        write_csv(cnames,linear_index,info_linear,output_path,folder_linear)
+        linear_logger.info('Done!')
 
-        # # Create the pyramid
-        # linear_logger.info('Building LINEAR pyramids...')
-        # image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder_linear,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
+        # Create the pyramid
+        linear_logger.info('Building LINEAR pyramids...')
+        image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder_linear,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
 
         
-        # del image_linear
-        # del info_linear
-        # del yaxis_linear
-        # del bin_stats
-        # del linear_index
-        # del linear_binsizes
-        # del alphavals_linear
+        del image_linear
+        del info_linear
+        del yaxis_linear
+        del bin_stats
+        del linear_index
+        del linear_binsizes
+        del alphavals_linear
         bins = 0
 
         # Processes for LOG SCALED GRAPHS
