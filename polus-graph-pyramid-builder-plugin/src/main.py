@@ -91,7 +91,7 @@ def binning_data(data, yaxis, typegraph, column_bin_size, bin_stats):
     data_ind = pandas.notnull(data)  # Handle NaN values
     data[~data_ind] = 255          # Handle NaN values
     data = data.astype(np.uint16) # cast to save memory
-    data[data==bincount] = bincount - 1         # in case of numerical precision issues
+    data[data>=bincount] = bincount - 1 # in case of numerical precision issues
 
     nrows = data.shape[0]
     if nrows < 2**8:
@@ -229,7 +229,13 @@ def transform_data_log(data,column_names):
 
         # check to see if total bins == bincount - 1
         total_bins_correct = num_bins_for_smallrange.add(num_bins_for_largerange)
-        # print(total_bins_correct)
+        print(total_bins_correct[small_lessthanalpha])
+        print(total_bins_correct[large_lessthanalpha])
+        # if total_bins_correct[small_lessthanalpha] != bincount - 1:
+        #     num_bins_for_largerange[small_lessthanalpha] = bincount - 1
+        # if total_bins_correct[large_lessthanalpha] != bincount - 1:
+        #     num_bins_for_smallrange[large_lessthanalpha] = bincount - 1
+
 
         posbinslarge = num_bins_for_largerange[ispositivebigger.iloc[:] == True]
         posbinssmall = num_bins_for_smallrange[ispositivebigger.iloc[:] == False]
@@ -274,13 +280,13 @@ def transform_data_log(data,column_names):
 
             # Bins are 1-Indexed, and shifting all bin values to positive range.
                 # Bin values are 0-Bincount
-            datacol[binzero<=0] = negbin # if -alpha < value < alpha, then it is negbin + 1
-            datacol[ispositive] = (bin_data[ispositive] + negbin) 
-            datacol[isnegative] = (negbin - bin_data[isnegative])
-            datacol[ismin] = 0 # Smallest bin value is 1.
-            datacol[ismax] = bincount - 1 # Largest bin value is bincount
-            datacol[datacol == -np.inf] = negbin
-            datacol[datacol == np.inf] = negbin
+            datacol[binzero<=0] = negbin + 1# if -alpha < value < alpha, then it is negbin + 1
+            datacol[ispositive] = (bin_data[ispositive] + negbin + 1) 
+            datacol[isnegative] = (negbin - bin_data[isnegative] + 1)
+            datacol[ismin] = 1 # Smallest bin value is 1.
+            datacol[ismax] = bincount # Largest bin value is bincount
+            datacol[datacol == -np.inf] = negbin + 1
+            datacol[datacol == np.inf] = negbin + 1
 
             # print(alpha)
             # print(ratio)
@@ -292,7 +298,7 @@ def transform_data_log(data,column_names):
 
         commonratios = ratios.to_list()
         alphas = alphavals.to_list()
-        yaxis = negbins.to_list()
+        yaxis = (negbins + 1).to_list()
 
         return yaxis, alphas, commonratios, data
 
@@ -316,10 +322,10 @@ def transform_data_log(data,column_names):
             ismax = (datacol == datmax[colname]) 
 
             datacol[ismax] = bincount
-            datacol[bin_data<=0] = 0 # Negative bin value means that it was smaller than alpha
-            datacol[bin_data>0] = bin_data[bin_data>0]
-            datacol[datacol == -np.inf] = 0
-            datacol[datacol == np.inf] = 0
+            datacol[bin_data<=0] = 1 # Negative bin value means that it was smaller than alpha
+            datacol[bin_data>0] = bin_data[bin_data>0] + 1
+            datacol[datacol == -np.inf] = 1
+            datacol[datacol == np.inf] = 1
 
             for val in datacol: 
                 if val > bincount - 1:
@@ -348,11 +354,11 @@ def transform_data_log(data,column_names):
             bin_data[bin_data==-0.0] = 0 # To replace -0.0 values with 0
 
             ismin = (datacol == datmin[colname]) 
-            datacol[ismin] = 0
+            datacol[ismin] = 1
             datacol[bin_data<=0] = bincount -1 # Negative bin value means that it was bigger than alpha
-            datacol[bin_data>0] = bincount - bin_data[bin_data>0] 
-            datacol[datacol == -np.inf] = bincount - 1
-            datacol[datacol == np.inf] = bincount - 1
+            datacol[bin_data>0] = bincount - bin_data[bin_data>0] + 1
+            datacol[datacol == -np.inf] = bincount 
+            datacol[datacol == np.inf] = bincount
             
             for val in datacol: 
                 if val > bincount - 1:
