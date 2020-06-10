@@ -193,7 +193,7 @@ def transform_data_log(data,column_names):
             # Need to figure out whether the negative range or 
             #   positive range is bigger
         minmax = pandas.concat([datmin, datmax], axis=1).abs()
-        ispositivebigger = minmax.iloc[:,0] < minmax.iloc[:,1] 
+        ispositivebigger = minmax.iloc[:,0] < minmax.iloc[:,1]
         smallside_an_values = minmax.min(axis=1) 
         largeside_an_values = minmax.max(axis=1)
 
@@ -212,14 +212,24 @@ def transform_data_log(data,column_names):
             # large = alpha*(r^(y-1)) --> log(r)[large/alpha] = y - 1
             # Combining all equations we get the following: 
         ratios = ((smallside_an_values*largeside_an_values)/(alphavals*alphavals))**(1/(bincount-3))
-
+        
         # use ratio to solve for number bins for both the large and small ranges
         num_bins_for_smallrange = np.round(abs(1 + np.log(smallside_an_values/alphavals)/np.log(ratios)))
         num_bins_for_largerange = np.round(abs(1 + np.log(largeside_an_values/alphavals)/np.log(ratios)))
             # sum of num_bins_for_smallrange + num_bins_for_largerange = bincount - 1
 
+        small_lessthanalpha = smallside_an_values < alphavals
+        large_lessthanalpha = largeside_an_values < alphavals
+
+        num_bins_for_smallrange[small_lessthanalpha] = 0
+        num_bins_for_largerange[large_lessthanalpha] = 0
+
+        # for i in range(0, len(num_bins_for_smallrange)):
+        #     print(num_bins_for_smallrange[i], num_bins_for_largerange[i])
+
         # check to see if total bins == bincount - 1
         total_bins_correct = num_bins_for_smallrange.add(num_bins_for_largerange)
+        # print(total_bins_correct)
 
         posbinslarge = num_bins_for_largerange[ispositivebigger.iloc[:] == True]
         posbinssmall = num_bins_for_smallrange[ispositivebigger.iloc[:] == False]
@@ -239,6 +249,7 @@ def transform_data_log(data,column_names):
             # Number of bins for negative and positive sides, respectively
             negbin = negbins[colname]
             posbin = posbins[colname]
+            # print(negbin, posbin, colname)
             
             # alpha and ratio values for column
             alpha = alphavals[colname]
@@ -250,20 +261,38 @@ def transform_data_log(data,column_names):
             ismin = (datacol ==  datmin[colname]) # Smallest value in column
             ismax = (datacol ==  datmax[colname]) # Largest value in column
 
-            bin_data =  np.round(np.log(np.abs(datacol)/alpha)/np.log(ratio)) # Calculate the bin for all values
+            binzero = np.log(np.abs(datacol)/alpha)
+            bin_data =  np.round(binzero/np.log(ratio)) # Calculate the bin for all values
             bin_data[bin_data==-0.0] = 0 # To replace -0.0 values with 0
+            bin_data[bin_data==np.inf] = 0
+            bin_data[bin_data==-np.inf] = 0 
+            # i = 0
+            # for val in bin_data:
+            #     if val < :
+            #         print("NEGATIVE TO POSITIVE", datacol[i], val, colname)
+            #     i = i + 1
 
             # Bins are 1-Indexed, and shifting all bin values to positive range.
                 # Bin values are 0-Bincount
-            datacol[bin_data<=0] = (negbin + 1) # if -alpha < value < alpha, then it is negbin + 1
-            datacol[ispositive] = (bin_data[ispositive] + negbin + 1) 
-            datacol[isnegative] = (negbin - bin_data[isnegative] + 1)
-            datacol[ismin] = 1 # Smallest bin value is 1.
-            datacol[ismax] = bincount # Largest bin value is bincount
+            datacol[binzero<=0] = negbin # if -alpha < value < alpha, then it is negbin + 1
+            datacol[ispositive] = (bin_data[ispositive] + negbin) 
+            datacol[isnegative] = (negbin - bin_data[isnegative])
+            datacol[ismin] = 0 # Smallest bin value is 1.
+            datacol[ismax] = bincount - 1 # Largest bin value is bincount
+            datacol[datacol == -np.inf] = negbin
+            datacol[datacol == np.inf] = negbin
+
+            # print(alpha)
+            # print(ratio)
+            i = 0
+            for val in datacol: 
+                if val > bincount:
+                    print("NEGATIVE TO POSITIVE", val, colname)
+                i = i + 1
 
         commonratios = ratios.to_list()
         alphas = alphavals.to_list()
-        yaxis = (negbins + 1).to_list()
+        yaxis = negbins.to_list()
 
         return yaxis, alphas, commonratios, data
 
@@ -287,8 +316,14 @@ def transform_data_log(data,column_names):
             ismax = (datacol == datmax[colname]) 
 
             datacol[ismax] = bincount
-            datacol[bin_data<=0] = 1 # Negative bin value means that it was smaller than alpha
+            datacol[bin_data<=0] = 0 # Negative bin value means that it was smaller than alpha
             datacol[bin_data>0] = bin_data[bin_data>0]
+            datacol[datacol == -np.inf] = 0
+            datacol[datacol == np.inf] = 0
+
+            for val in datacol: 
+                if val > bincount - 1:
+                    print("ZERO TO POSITIVE", val, colname)
         
         alphas = alphavals.to_list()
         commonratios = commonratios.to_list()
@@ -305,18 +340,24 @@ def transform_data_log(data,column_names):
             ratio = commonratios[col]
 
             cols = data[col]
-
+            ogcol = cols.to_numpy()
             datacol = cols.to_numpy()
             colname = cols.name
 
-            bin_data =  np.round(np.log(np.abs(datacol)/alpha)/np.log(ratio)) # Calculate the bin for all values
+            bin_data =  np.round(np.log(datacol/alpha)/np.log(ratio)) # Calculate the bin for all values
             bin_data[bin_data==-0.0] = 0 # To replace -0.0 values with 0
-            ismin = (datacol == datmin[colname]) 
 
-            datacol[ismin] = 1
-            datacol[bin_data<=0] = bincount # Negative bin value means that it was bigger than alpha
-            datacol[bin_data>0] = bincount - bin_data[bin_data>0] + 1
-        
+            ismin = (datacol == datmin[colname]) 
+            datacol[ismin] = 0
+            datacol[bin_data<=0] = bincount -1 # Negative bin value means that it was bigger than alpha
+            datacol[bin_data>0] = bincount - bin_data[bin_data>0] 
+            datacol[datacol == -np.inf] = bincount - 1
+            datacol[datacol == np.inf] = bincount - 1
+            
+            for val in datacol: 
+                if val > bincount - 1:
+                    print("NEGATIVE TO ZERO", val, colname)
+
         alphas = alphavals.to_list()
         commonratios = commonratios.to_list()
 
@@ -338,12 +379,15 @@ def transform_data_log(data,column_names):
                  'seventy5': data.quantile(0.75),
                  'alpha': (2*(data.quantile(0.75) - data.quantile(0.25)))/(data.shape[0]**(1/3))} 
                     # if alpha (from Freedman Diaconis) equals zero, then bin width is zero.
-
+    
     nfeats = bin_stats['size'][1] 
     datalen = bin_stats['size'][0]
+
+    # for i in range(0, nfeats):
+    #     print(bin_stats['min'][i], bin_stats['max'][i])
    
     # COLUMNS OF DATA FALL UNDER THESE FOUR RANGE DESCRIPTIONS
-    positiverange = np.where((bin_stats['min'] >= 0) & (bin_stats['max'] > 0))[0]
+    positiverange = np.where((bin_stats['min'] >= 0) &(bin_stats['max'] > 0))[0]
     negativerange = np.where((bin_stats['min'] < 0) & (bin_stats['max'] <= 0))[0]
     neg2posrange =  np.where((bin_stats['min'] < 0) & (bin_stats['max'] > 0))[0]
     zeroalpha = np.where(bin_stats['alpha'] == 0)[0]
@@ -1112,9 +1156,9 @@ if __name__=="__main__":
     for f in input_files:
 
         global bins
+        folder = Path(f)
 
         # Set the file path folder
-        folder = Path(f)
         folder_linear = folder.name.replace('.csv','_linear')
         folder_log = folder.name.replace('.csv','_log')
 
@@ -1134,37 +1178,36 @@ if __name__=="__main__":
 
         # Bin the data
         linear_logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
-        yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = transform_data_linear(data_linear,column_names)
+        # yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = transform_data_linear(data_linear,column_names)
         del data_linear # get rid of the original data to save memory
 
         # Generate the default figure components
-        linear_logger.info('Generating colormap and default figure...')
-        cmap_linear = get_cmap("linear")
-        fig, ax, datacolor = get_default_fig(cmap_linear)
-        linear_logger.info('Done!')
+        # linear_logger.info('Generating colormap and default figure...')
+        # cmap_linear = get_cmap("linear")
+        # fig, ax, datacolor = get_default_fig(cmap_linear)
+        # linear_logger.info('Done!')
 
-        # Generate the dzi file
-        linear_logger.info('Generating pyramid LINEAR metadata...')
-        info_linear = metadata_to_graph_info(bins, output_path,folder_linear, linear_index)
-        linear_logger.info('Done!')
+        # # Generate the dzi file
+        # linear_logger.info('Generating pyramid LINEAR metadata...')
+        # info_linear = metadata_to_graph_info(bins, output_path,folder_linear, linear_index)
+        # linear_logger.info('Done!')
 
-        linear_logger.info('Writing LINEAR layout file...!')
-        write_csv(cnames,linear_index,info_linear,output_path,folder_linear)
-        linear_logger.info('Done!')
+        # linear_logger.info('Writing LINEAR layout file...!')
+        # write_csv(cnames,linear_index,info_linear,output_path,folder_linear)
+        # linear_logger.info('Done!')
 
-        # Create the pyramid
-        linear_logger.info('Building LINEAR pyramids...')
-        image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder_linear,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
+        # # Create the pyramid
+        # linear_logger.info('Building LINEAR pyramids...')
+        # image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder_linear,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
 
         
-        del image_linear
-        del info_linear
-        del yaxis_linear
-        del bin_stats
-        del linear_index
-        del linear_binsizes
-        del alphavals_linear
-        del folder
+        # del image_linear
+        # del info_linear
+        # del yaxis_linear
+        # del bin_stats
+        # del linear_index
+        # del linear_binsizes
+        # del alphavals_linear
         bins = 0
 
         # Processes for LOG SCALED GRAPHS
