@@ -209,7 +209,16 @@ class BioReader():
                                 I[:,:,zi,ci,ti] = I_temp[:,:,c]
                         else:
                             for ci,c in zip(range(0,len(C)),C):
-                                I[:,:,zi,ci,ti] = reader.read(c=c,z=z,t=t,rescale=False,XYWH=(X[0],Y[0],X[1]-X[0],Y[1]-Y[0]))
+                                # set the proper index
+                                order = reader.rdr.getDimensionOrder()[2:]
+                                vals = {'Z':z,'C':c,'T':t}
+                                index = vals[order[0]] + \
+                                        self._xyzct[order[0]]*vals[order[1]] + \
+                                        self._xyzct[order[0]]*self._xyzct[order[1]]*vals[order[2]]
+                                reader.rdr.setSeries(index)
+                                
+                                # read the image
+                                I[:,:,zi,ci,ti] = reader.read(c=0,z=0,t=0,rescale=False,XYWH=(X[0],Y[0],X[1]-X[0],Y[1]-Y[0]))
                     
                     else:
                         if self._pix['interleaved']:
@@ -219,16 +228,25 @@ class BioReader():
                                 for y in range(Y[0],Y[1],self._TILE_SIZE):
                                     y_max = np.min([y+self._TILE_SIZE,Y[1]])
                                     y_range = y_max - y
-                                    I[y-Y[0]:y_max-Y[0],x-X[0]:x_max-X[0],zi,:,ti] = reader.read(c=None,z=z,t=t,rescale=False,XYWH=(x,y,x_range,y_range))
+                                    I[y-Y[0]:y_max-Y[0],x-X[0]:x_max-X[0],zi,:,ti] = reader.read(c=0,z=z,t=t,rescale=False,XYWH=(x,y,x_range,y_range))
                         else:
                             for ci,c in zip(range(0,len(C)),C):
+                                # set the proper index
+                                order = reader.rdr.getDimensionOrder()[2:]
+                                vals = {'Z':z,'C':c,'T':t}
+                                index = vals[order[0]] + \
+                                        self._xyzct[order[0]]*vals[order[1]] + \
+                                        self._xyzct[order[0]]*self._xyzct[order[1]]*vals[order[2]]
+                                reader.rdr.setSeries(index)
+                                
+                                # Read the image
                                 for x in range(X[0],X[1],self._TILE_SIZE):
                                     x_max = np.min([x+self._TILE_SIZE,X[1]])
                                     x_range = x_max - x
                                     for y in range(Y[0],Y[1],self._TILE_SIZE):
                                         y_max = np.min([y+self._TILE_SIZE,Y[1]])
                                         y_range = y_max - y
-                                        I[y-Y[0]:y_max-Y[0],x-X[0]:x_max-X[0],zi,ci,ti] = reader.read(c=c,z=z,t=t,rescale=False,XYWH=(x,y,x_range,y_range))
+                                        I[y-Y[0]:y_max-Y[0],x-X[0]:x_max-X[0],zi,ci,ti] = reader.read(c=0,z=0,t=0,rescale=False,XYWH=(x,y,x_range,y_range))
             
         return I
     
