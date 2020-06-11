@@ -228,7 +228,7 @@ class BioReader():
                                 for y in range(Y[0],Y[1],self._TILE_SIZE):
                                     y_max = np.min([y+self._TILE_SIZE,Y[1]])
                                     y_range = y_max - y
-                                    I[y-Y[0]:y_max-Y[0],x-X[0]:x_max-X[0],zi,:,ti] = reader.read(c=0,z=z,t=t,rescale=False,XYWH=(x,y,x_range,y_range))
+                                    I[y-Y[0]:y_max-Y[0],x-X[0]:x_max-X[0],zi,:,ti] = reader.read(c=None,z=z,t=t,rescale=False,XYWH=(x,y,x_range,y_range))
                         else:
                             for ci,c in zip(range(0,len(C)),C):
                                 # set the proper index
