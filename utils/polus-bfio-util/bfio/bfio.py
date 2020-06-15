@@ -211,7 +211,7 @@ class BioReader():
                             for ci,c in zip(range(0,len(C)),C):
                                 
                                 # read the image
-                                I[:,:,zi,ci,ti] = reader.read(c=0,z=0,t=0,rescale=False,XYWH=(X[0],Y[0],X[1]-X[0],Y[1]-Y[0]))
+                                I[:,:,zi,ci,ti] = reader.read(c=c,z=z,t=t,rescale=False,XYWH=(X[0],Y[0],X[1]-X[0],Y[1]-Y[0]))
                     
                     else:
                         if self._pix['interleaved']:
@@ -232,7 +232,7 @@ class BioReader():
                                     for y in range(Y[0],Y[1],self._TILE_SIZE):
                                         y_max = np.min([y+self._TILE_SIZE,Y[1]])
                                         y_range = y_max - y
-                                        I[y-Y[0]:y_max-Y[0],x-X[0]:x_max-X[0],zi,ci,ti] = reader.read(c=0,z=0,t=0,rescale=False,XYWH=(x,y,x_range,y_range))
+                                        I[y-Y[0]:y_max-Y[0],x-X[0]:x_max-X[0],zi,ci,ti] = reader.read(c=c,z=z,t=t,rescale=False,XYWH=(x,y,x_range,y_range))
             
         return I
     
