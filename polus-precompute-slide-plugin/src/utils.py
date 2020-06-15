@@ -44,7 +44,7 @@ def _avg2(image):
 
     return avg_img
 
-def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None):
+def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None, slices=None):
     """ Recursive function for pyramid building
     
     This is a recursive function that builds an image pyramid by indicating
@@ -107,7 +107,10 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None):
     
     # If requesting from the lowest scale, then just read the image
     if str(S)==encoder.info['scales'][0]['key']:
-        image = bfio_reader.read_image(X=X,Y=Y).squeeze()
+        if slices == None:
+            image = bfio_reader.read_image(X=X,Y=Y).squeeze()
+        else:
+            image = bfio_reader.read_image(X=X,Y=Y,Z=slices).squeeze()
     else:
         # Set the subgrid dimensions
         subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]]]
@@ -127,7 +130,8 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None):
                                             zlevel=zlevel,
                                             bfio_reader=bfio_reader,
                                             slide_writer=slide_writer,
-                                            encoder=encoder)
+                                            encoder=encoder,
+                                            slices=slices)
                 image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1]] = _avg2(sub_image)
 
     # Encode the chunk
