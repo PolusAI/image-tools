@@ -126,7 +126,8 @@ if __name__=="__main__":
     # Create the BioReader object
     logger.info('Getting the BioReader...')
     bf = BioReader(str(image.absolute()))
-    
+    imgheight = bf.read_image().squeeze().shape[2]
+
     # Create the output path and info file
     if pyramid_type == "Neuroglancer":
         file_info = utils.neuroglancer_info_file(bf,out_dir,stackheight)
@@ -138,7 +139,8 @@ if __name__=="__main__":
     logger.info("num_channels: {}".format(file_info['num_channels']))
     logger.info("number of scales: {}".format(len(file_info['scales'])))
     logger.info("type: {}".format(file_info['type']))
-    
+
+
     # Create the classes needed to generate a precomputed slice
     logger.info("Creating encoder and file writer...")
     if pyramid_type == "Neuroglancer":
@@ -153,11 +155,18 @@ if __name__=="__main__":
         logger.info("Stack contains {} Levels (Stack's height)".format(stackheight))
         for i in range(0, stackheight):
             if i == 0:
-                utils._get_higher_res(0, channelvals[i], bf,file_writer,encoder)
+                utils._get_higher_res(0, channelvals[i], bf,file_writer,encoder, slices=[0,1])
             else:
                 bf = BioReader(str(channels[i].absolute()))
-                utils._get_higher_res(0, channelvals[i], bf,file_writer,encoder)
-            logger.info("Finished Level {} in Stack, {}".format(channelvals[i], channels[i]))
+                imgheight = bf.read_image().squeeze().shape[2]
+                utils._get_higher_res(0, channelvals[i], bf, file_writer,encoder, slices=[0,1])
+            if imgheight == 1:
+                logger.info("Finished Level {} in Stack ({})".format(channelvals[i], channels[i]))
+            else:
+                logger.info("Finished Level {} in Stack ({})".format(channelvals[i], channels[i]))
+                logger.info("IMAGE IN STACK HAD A Z DIMENSION OF {} UNITS".format(imgheight))
+                logger.info("Only processed Z dimension [0, 1]")
+
 
     
     logger.info("Finished precomputing. Closing the javabridge and exiting...")
