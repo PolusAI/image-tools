@@ -1,7 +1,7 @@
 {
   "name": "Polus Precompute Slide Plugin",
-  "version": "0.4.5",
-  "containerId": "labshare/polus-precompute-slide-plugin:0.3.11",
+  "version": "0.5.0",
+  "containerId": "labshare/polus-precompute-slide-plugin:0.4.0",
   "title": "Precompute Slide Viewer",
   "description": "Precomputes a single image plane for DeepZoom or Z stacks for Neuroglancer",
   "author": "N/A",
@@ -34,14 +34,14 @@
       "description": "Pattern of the images in Input",
       "type": "string",
       "options": null,
-      "required": true
+      "required": false
     },
     {
       "name": "stackby",
       "description": "One of the variables in image pattern that the Z stacks are  based on",
       "type": "string",
       "options": null,
-      "required": true
+      "required": false
     }
   ],
   "outputs": [
