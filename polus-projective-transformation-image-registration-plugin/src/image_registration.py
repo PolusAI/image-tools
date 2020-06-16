@@ -276,11 +276,13 @@ def apply_registration(moving_image_path,Template_image_shape,Rough_Homography_U
     # free up memory
     del rough_transformed_image    
  
-    
+    # get output tile shapes
+    h2,w2=(int(height/2), int(width/2))
+    tile_shapes=[(w2,h2),(width-w2,h2), (w2,height-h2), (width-w2,height-h2)]
     # apply tile by tile transformation to the tiles    
     transformed_moving_image_tiles=[]
     for k in range(len(moving_image_tiles)):
-        transformed_moving_image_tiles.append( cv2.warpPerspective(moving_image_tiles[k],fine_homography_set[k],(int(width/2),int(height/2))) )
+        transformed_moving_image_tiles.append( cv2.warpPerspective(moving_image_tiles[k],fine_homography_set[k],tile_shapes[k]))
     
     # free up memory   
     del moving_image_tiles         
@@ -386,10 +388,14 @@ def register_images(reference_image_path, moving_image_path):
     # get tiles from original size moving image                                                                               
     moving_image_tiles=get_tiles(moving_image_transformed, buffer=True)  
     del moving_image_transformed 
+    
+    # get output tile shapes
+    h2,w2=(int(height/2), int(width/2))
+    tile_shapes=[(w2,h2),(width-w2,h2), (w2,height-h2), (width-w2,height-h2)]    
     # apply tile by tile transformation to the rough transformed moving image  
     transformed_moving_image_tiles=[]
     for k in range(4):
-        transformed_moving_image_tiles.append(cv2.warpPerspective(moving_image_tiles[k],fine_homography_set[k],(int(width/2),int(height/2)))) 
+        transformed_moving_image_tiles.append(cv2.warpPerspective(moving_image_tiles[k],fine_homography_set[k],tile_shapes[k])) 
     # free up memory   
     del moving_image_tiles         
     # stack tiles to get desired output
