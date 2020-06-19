@@ -10,6 +10,7 @@ import itertools
 
 
 
+
 if __name__=="__main__":
     # Setup the Argument parsing
     parser = argparse.ArgumentParser(prog='build_pyramid', description='Generate a precomputed slice for Polus Viewer.')
@@ -125,8 +126,13 @@ if __name__=="__main__":
     
     # Create the BioReader object
     logger.info('Getting the BioReader...')
-    bf = BioReader(str(image.absolute()))
-    imgheight = bf.read_image().squeeze().shape[2]
+    # bf = BioReader(str(image.absolute()))
+    try:
+        bf = BioReader(str(image.absolute()))
+    except:
+        jutil.kill_vm()
+        exit
+    imgheight = bf.read_image().squeeze().shape
 
     # Create the output path and info file
     if pyramid_type == "Neuroglancer":
@@ -157,10 +163,14 @@ if __name__=="__main__":
             if i == 0:
                 utils._get_higher_res(0, channelvals[i], bf,file_writer,encoder, slices=[0,1])
             else:
-                bf = BioReader(str(channels[i].absolute()))
-                imgheight = bf.read_image().squeeze().shape[2]
+                try:
+                    bf = BioReader(str(image.absolute()))
+                except:
+                    jutil.kill_vm()
+                    exit
+                imgheight = bf.read_image().squeeze().shape
                 utils._get_higher_res(0, channelvals[i], bf, file_writer,encoder, slices=[0,1])
-            if imgheight == 1:
+            if len(imgheight) == 2:
                 logger.info("Finished Level {} in Stack ({})".format(channelvals[i], channels[i]))
             else:
                 logger.info("Finished Level {} in Stack ({})".format(channelvals[i], channels[i]))

@@ -68,6 +68,7 @@ def zslicefunction(input_dir, output_dir, pyramid_type):
 
 
 def stackbyfunction(input_dir, output_dir, pyramid_type, stack_by, imagepattern):
+    imagepattern = str(imagepattern)
     regex = filepattern.get_regex(pattern = imagepattern)
     regexzero = regex[0]
     regexone = regex[1]
@@ -197,10 +198,10 @@ def main():
     logger.info('input_dir = {}'.format(input_dir))
     logger.info('output_dir = {}'.format(output_dir))
     logger.info('pyramid_type = {}'.format(pyramid_type))
-    logger.info('image pattern = {}'.format(imagepattern))
+    logger.info('image pattern = {} ({})'.format(imagepattern, type(imagepattern)))
     logger.info('images are stacked by variable {}'.format(stack_by))
 
-    if stack_by != None:
+    if stack_by != None or imagepattern != None:
         stackbyfunction(input_dir, output_dir, pyramid_type, stack_by, imagepattern)
     else:
         zslicefunction(input_dir, output_dir, pyramid_type)
