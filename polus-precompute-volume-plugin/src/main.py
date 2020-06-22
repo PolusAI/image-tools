@@ -131,13 +131,14 @@ def main():
             del processes[free_process]
             del process_timer[free_process]
             
-        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir {} --outDir {} --pyramidType {} --imageNum {} --stackheight {} --stackby {} --valinstack {} --imagepattern {} --stackcount {} >>textfile.txt".format(input_dir,
+        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir {} --outDir {} --pyramidType {} --imageNum {} --stackheight {} --stackby {} --valinstack {} --dirname {} --imagepattern {} --stackcount {} >>textfile.txt".format(input_dir,
                                                                                                                                             newoutput,
                                                                                                                                             pyramid_type,
                                                                                                                                             im_count,
                                                                                                                                             heightofstack,
                                                                                                                                             stack_by,
                                                                                                                                             val_instack,
+                                                                                                                                            newoutput,
                                                                                                                                             imagepattern,
                                                                                                                                             stack_count - 1),
                                                                                                                                         shell=True))
