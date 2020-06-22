@@ -222,7 +222,7 @@ int main(int argc, char * const argv[]) {
 	{
 		logFile << "error in Opening Input File" << endl;
 		cout << "error in Opening Input File" << endl;
-		return ;
+		return 1;
 	}
 	/**
 	 * Remove the header info
@@ -345,6 +345,7 @@ int main(int argc, char * const argv[]) {
 			}
 			else { return 0; }
 		}
+		return 0;
 	};
 	/**
 	 * Main Loop of the Algorithm

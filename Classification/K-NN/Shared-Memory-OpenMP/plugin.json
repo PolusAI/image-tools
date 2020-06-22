@@ -1,11 +1,11 @@
 {
     "name": "K-NN (Multi-Threded)",
-    "version": "0.1.0",
+    "version": "openmp-0.1.0",
     "title": "K-NN (Multi-Threded)",
     "description": "K-Nearest Neighbors Multi-Threded Code",
     "author": "Mahdi Maghrebi",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-    "containerId": "labshare/polus-knn-openmp-plugin:0.1.0",
+    "containerId": "labshare/polus-knn-plugin:openmp-0.1.0",
     "inputs": [
         {
             "name": "inputPath",

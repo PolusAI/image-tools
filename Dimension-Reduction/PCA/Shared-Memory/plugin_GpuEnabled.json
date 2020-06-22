@@ -1,11 +1,11 @@
 {
     "name": "PCA (Shared-Memory)",
-    "version": "0.1.0",
+    "version": "Gpuenabled-0.1.3",
     "title": "PCA (Shared-Memory)",
     "description": "PCA Shared-Memory Code",
     "author": "Mahdi Maghrebi",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-    "containerId": "labshare/polus-pca-plugin:0.1.0",
+    "containerId": "labshare/polus-pca-plugin:Gpuenabled-0.1.3",
     "inputs": [
         {
             "name": "inputPath",
@@ -16,6 +16,7 @@
         {
             "name": "deviceName",
             "type": "enum",
+            "description": "Computing Device (CPU or GPU)",
             "options": {
                 "values": [
                     "cpu",
@@ -27,6 +28,7 @@
         {
             "name": "applySignFlip",
             "type": "boolean",
+            "description": "Apply sign flip on the projected data along certain PC axes",
             "required": "True"
         },
         {

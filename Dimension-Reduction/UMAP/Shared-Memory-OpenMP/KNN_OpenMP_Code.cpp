@@ -203,6 +203,7 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 			}
 			else { return 0; }
 		}
+		return 0;
 	};
 	/**
 	 * Main Loop of the Algorithm

@@ -46,16 +46,16 @@ int main(int argc, char ** argv) {
 	 * Values closer to 1 provides more accurate results but the execution takes longer.
 	 * DimLowSpace: Dimension of Low-D or embedding space (usually 1,2,or 3).
 	 * randomInitializing: Defining the Method for Initialization of data in low-D space
-	 * n_epochs: is the number of training epochs to be used in optimizing. Larger values result in more accurate embeddings
-	 * min_dist defines how tight the points are from each other in Low-D space
+	 * nepochs: is the number of training epochs to be used in optimizing. Larger values result in more accurate embeddings
+	 * mindist defines how tight the points are from each other in Low-D space
 	 * distanceMetric is the metric to compute the distance between the points in high-D space, by deafult should be euclidean
 	 * distanceV1 is the first optional variable needed for computing distance in some metrics
 	 * distanceV2 is the second optional variable needed for computing distance in some metrics
 	 * inputPathOptionalArray is the full path to the directory that contains a csv file of the optional array needed for computing distance in some metrics. 
 	 */
 	string filePath, filePathOptionalArray="", outputPath, LogoutputPath, inputPath;
-	int K,DimLowSpace,n_epochs;
-	float sampleRate,min_dist,distanceV1=0,distanceV2=0;
+	int K,DimLowSpace,nepochs;
+	float sampleRate,mindist,distanceV1=0,distanceV2=0;
 	bool randomInitializing;
 	string distanceMetric="euclidean";
 
@@ -91,7 +91,7 @@ int main(int argc, char ** argv) {
 		}
 		else if (string(argv[i])=="--K") K=atoi(argv[i+1]);
 		else if (string(argv[i])=="--sampleRate") sampleRate=stof(argv[i+1]);
-		else if (string(argv[i])=="--min_dist") min_dist=stof(argv[i+1]);
+		else if (string(argv[i])=="--mindist") mindist=stof(argv[i+1]);
 		else if (string(argv[i])=="--DimLowSpace") DimLowSpace=atoi(argv[i+1]);
 		else if (string(argv[i])=="--randomInitializing") {
 			std::stringstream ss(argv[i+1]);
@@ -112,7 +112,7 @@ int main(int argc, char ** argv) {
 			outputPath = joinedPath.string();
 
 		}
-		else if (string(argv[i])=="--n_epochs") n_epochs=atoi(argv[i+1]);
+		else if (string(argv[i])=="--nepochs") nepochs=atoi(argv[i+1]);
 		else if (string(argv[i])=="--distanceMetric") distanceMetric=argv[i+1];
 		else if (string(argv[i])=="--distanceV1") distanceV1=stof(argv[i+1]);
 		else if (string(argv[i])=="--distanceV2") distanceV2=stof(argv[i+1]);
@@ -155,8 +155,8 @@ int main(int argc, char ** argv) {
 	logFile<<"The Dimension of Low-D Space: "<< DimLowSpace <<endl; 
 	logFile << std::boolalpha;
 	logFile<<"Random Initialization of Points in Low-D Space: "<< randomInitializing <<endl; 
-	logFile<<"The number of training epochs: "<< n_epochs <<endl; 
-	logFile<<"The chosen min_dist parameter: "<< min_dist <<endl; 	
+	logFile<<"The number of training epochs: "<< nepochs <<endl; 
+	logFile<<"The chosen mindist parameter: "<< mindist <<endl; 	
 	logFile<<"The metric to compute the distance between the points in high-D space: "<< distanceMetric <<endl; 
 	logFile<<"The optional variable 1 for the distance: "<< distanceV1 <<endl; 
 	logFile<<"The optional variable 2 for the distance: "<< distanceV2 <<endl;
@@ -170,8 +170,8 @@ int main(int argc, char ** argv) {
 	cout<<"The Dimension of Low-D Space: "<< DimLowSpace <<endl; 
 	cout << std::boolalpha;
 	cout<<"Random Initialization of Points in Low-D Space: "<< randomInitializing <<endl; 
-	cout<<"The number of training epochs: "<< n_epochs <<endl; 
-	cout<<"The chosen min_dist parameter: "<< min_dist <<endl; 	
+	cout<<"The number of training epochs: "<< nepochs <<endl; 
+	cout<<"The chosen mindist parameter: "<< mindist <<endl; 	
 	cout<<"The metric to compute the distance between the points in high-D space: "<< distanceMetric <<endl; 
 	cout<<"The optional variable 1 for the distance: "<< distanceV1 <<endl; 
 	cout<<"The optional variable 2 for the distance: "<< distanceV2 <<endl;
@@ -331,7 +331,7 @@ int main(int argc, char ** argv) {
 	 * @param DimLowSpace Dimension of Low-D space 	 	 
 	 * @return embedding is the coordinates of the points in the low-D space	 	 	 
 	 */
-	Initialization (randomInitializing, embedding, logFile, N, graphSM, MaxWeight, DimLowSpace, n_epochs);
+	Initialization (randomInitializing, embedding, logFile, N, graphSM, MaxWeight, DimLowSpace, nepochs);
 
 	logFile<<"------------Starting Estimating Hyper-Parameters a and b ------------"<<endl;
 	cout<<"------------Starting Estimating Hyper-Parameters a and b ------------"<<endl;
@@ -343,7 +343,7 @@ int main(int argc, char ** argv) {
 	/**
 	 *  Estimation of Hyper-Parameters a and b by curve fitting and using Levenberg-Marquardt solution
 	 */		
-	estimateParameters(aValue, bValue, min_dist, spread, logFile);
+	estimateParameters(aValue, bValue, mindist, spread, logFile);
 
 	logFile<<"The Estimated Values for a is "<< aValue << " and for b is "<< bValue <<endl;
 	cout<<"The Estimated Values for a is "<< aValue << " and for b is "<< bValue <<endl;
@@ -367,7 +367,7 @@ int main(int argc, char ** argv) {
 
 	for (int k=0; k<graphSM.outerSize(); ++k){
 		for (SparseMatrix<float>::InnerIterator it(graphSM,k); it; ++it) {
-		    if (it.value() <  MaxWeight/n_epochs) continue;  
+		    if (it.value() <  MaxWeight/nepochs) continue;  
 			epochs_per_sample.push_back(MaxWeight/it.value());
 			head.push_back(it.col());
 			tail.push_back(it.row()); 
@@ -385,14 +385,19 @@ int main(int argc, char ** argv) {
 	int edgeCounts=epochs_per_sample.size();
 	const int negative_sample_rate=5;
 	int n_neg_samples;
-	float epoch_of_next_sample[edgeCounts];    
-	float epochs_per_negative_sample[edgeCounts]; 
-	float epoch_of_next_negative_sample[edgeCounts];  
+//Substituting with Vectors due to Stacksize run-time error
+//	float epoch_of_next_sample[edgeCounts];    
+//	float epochs_per_negative_sample[edgeCounts]; 
+//	float epoch_of_next_negative_sample[edgeCounts];  
+    vector<float> epoch_of_next_sample,epochs_per_negative_sample,epoch_of_next_negative_sample;
 
 	for (int i = 0; i < edgeCounts; ++i) {
-		epoch_of_next_sample[i]=epochs_per_sample[i];
-		epochs_per_negative_sample[i]=epochs_per_sample[i]/negative_sample_rate;
-		epoch_of_next_negative_sample[i]=epochs_per_negative_sample[i];
+//		epoch_of_next_sample[i]=epochs_per_sample[i];
+//		epochs_per_negative_sample[i]=epochs_per_sample[i]/negative_sample_rate;
+//		epoch_of_next_negative_sample[i]=epochs_per_negative_sample[i];
+        epoch_of_next_sample.push_back(epochs_per_sample[i]);
+        epochs_per_negative_sample.push_back(epochs_per_sample[i]/negative_sample_rate);
+        epoch_of_next_negative_sample.push_back(epochs_per_negative_sample[i]);
 	}  
 	/**
 	 *  move_other is equal to 1 if not embedding new previously unseen points to low-D space
@@ -404,12 +409,12 @@ int main(int argc, char ** argv) {
 	const double dEpsilon=1e-14;
 	double dist_squared;
 	// The main training loop     
-	for (int n = 1; n < n_epochs; ++n) {
+	for (int n = 1; n < nepochs; ++n) {
 
 		//Loop over all edges of the graph 
 		if (n%100 == 0){
-			logFile << "SGD iteration = "<<n<<" from "<< n_epochs <<endl;
-			cout << "SGD iteration = "<<n<<" from "<< n_epochs <<endl;
+			logFile << "SGD iteration = "<<n<<" from "<< nepochs <<endl;
+			cout << "SGD iteration = "<<n<<" from "<< nepochs <<endl;
 		}
 
 		for (int i = 0; i < edgeCounts; ++i) {  	
@@ -456,7 +461,7 @@ int main(int argc, char ** argv) {
 				epoch_of_next_negative_sample[i] += (n_neg_samples * epochs_per_negative_sample[i]);  
 			}   	
 		}    	
-		alpha=1.0-((float)n)/n_epochs;    	
+		alpha=1.0-((float)n)/nepochs;    	
 	}
 
 	logFile<<"------------Starting Outputing the Results------------"<<endl;

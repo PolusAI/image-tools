@@ -94,7 +94,7 @@ struct LMFunctor
 // our goal is to estimate 'n' parameters (2 in this case: a, b)
 // using LM optimization.
 //
-void estimateParameters(float &a, float &b, float min_dist, float spread, ofstream& logFile)
+void estimateParameters(float &a, float &b, float mindist, float spread, ofstream& logFile)
 {
 
 	std::vector<float> x_values;
@@ -114,8 +114,8 @@ void estimateParameters(float &a, float &b, float min_dist, float spread, ofstre
 		float tmp=minInterval+float(i)/float(intervalCounts)*(maxInterval-minInterval);    
 		x_values.push_back(tmp);
 
-		if (tmp <= min_dist) y_values.push_back(1.0);
-		else if (tmp > min_dist) y_values.push_back(exp((min_dist-tmp)/spread));
+		if (tmp <= mindist) y_values.push_back(1.0);
+		else if (tmp > mindist) y_values.push_back(exp((mindist-tmp)/spread));
 		else {
 			logFile<< "Error: Negative x_values during Parameter Estimation"<<endl;
 			cout<< "Error: Negative x_values during Parameter Estimation"<<endl;

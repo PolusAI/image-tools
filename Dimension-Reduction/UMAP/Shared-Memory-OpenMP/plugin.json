@@ -1,11 +1,11 @@
 {
     "name": "UMAP (Multi-Threaded)",
-    "version": "0.1.0",
+    "version": "openmp-0.1.6",
     "title": "UMAP (Multi-Threaded)",
     "description": "UMAP Multi-Threaded (Shared-Memory) Code",
     "author": "Mahdi Maghrebi",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-    "containerId": "labshare/polus-umap-openmp-plugin:0.1.0",
+    "containerId": "labshare/polus-umap-plugin:openmp-0.1.6",
     "inputs": [
         {
             "name": "inputPath",
@@ -38,13 +38,13 @@
             "required": "True"
         },
         {
-            "name": "n_epochs",
+            "name": "nepochs",
             "type": "number",
             "description": "The number of training epochs",
             "required": "True"
         },
         {
-            "name": "min_dist",
+            "name": "mindist",
             "type": "number",
             "description": "The variable that controls how tight (to each other) the data are placed in the embedding space",
             "required": "True"
@@ -59,13 +59,13 @@
   					"minkowski",
                     "cosine",
 					"correlation",
-                    "bray_curtis",                                        
-					"ll_dirichlet",
+                    "braycurtis",                                        
+					"lldirichlet",
                     "jaccard",
 					"dice",
-                    "categorical_distance",
-					"ordinal_distance",
-                    "count_distance",                      
+                    "categoricaldistance",
+					"ordinaldistance",
+                    "countdistance",                      
 					"levenshtein",
                     "standardisedEuclidean",
 					"weightedMinkowski",
@@ -131,14 +131,14 @@
             "default": true
         },
         {
-            "key": "inputs.n_epochs",
+            "key": "inputs.nepochs",
             "title": "The number of training epochs",
             "description": "Insert an integer (usually 200-500)",
             "default": 500
         },
         {
-            "key": "inputs.min_dist",
-            "title": "min_dist",
+            "key": "inputs.mindist",
+            "title": "mindist",
             "description": "Insert a value between 0 and 1",
             "default": 0.01
         },
@@ -151,13 +151,13 @@
             "key": "inputs.distanceV1",
             "title": "The optional input #1 needed for the chosen metric",      
             "description": "Insert a value",
-            "condition": "model.inputs.distanceMetric==['weightedMinkowski','minkowski','ordinal_distance','count_distance','levenshtein']"        
+            "condition": "model.inputs.distanceMetric==['weightedMinkowski','minkowski','ordinaldistance','countdistance','levenshtein']"        
         },
         {
             "key": "inputs.distanceV2",
             "title": "The optional input #2 needed for the chosen metric",  
             "description": "Insert a value",
-            "condition": "model.inputs.distanceMetric==['count_distance','levenshtein']"           
+            "condition": "model.inputs.distanceMetric==['countdistance','levenshtein']"           
         },
         {
             "key": "inputs.inputPathOptionalArray",
