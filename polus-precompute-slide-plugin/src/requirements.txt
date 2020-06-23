@@ -4,4 +4,3 @@ bfio==1.0.10
 pandas==1.0.3
 python_bioformats==1.5.2
 numpy==1.18.2
-bioformats==0.1.15

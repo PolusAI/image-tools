@@ -1,5 +1,4 @@
-
-FROM labshare/polus-bfio-util:1.0.5
+FROM labshare/polus-bfio-util:1.0.10-slim-buster
 
 COPY VERSION /
 		
@@ -11,8 +10,11 @@ RUN mkdir -p ${EXEC_DIR} \
     && mkdir ${DATA_DIR}/outputs
 
 COPY src ${EXEC_DIR}/
-WORKDIR ${EXEC_DIR}
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
+
+RUN python3 ${EXEC_DIR}/dl_fi.py
+
+WORKDIR ${EXEC_DIR}
 
 ENTRYPOINT ["python3", "main.py"]

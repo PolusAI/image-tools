@@ -2,7 +2,7 @@ import logging, argparse, bioformats
 import javabridge as jutil
 from bfio.bfio import BioReader, BioWriter
 from pathlib import Path
-import utils    
+import utils
 
 if __name__=="__main__":
     # Setup the Argument parsing
@@ -50,7 +50,11 @@ if __name__=="__main__":
     
     # Create the BioReader object
     logger.info('Getting the BioReader...')
-    bf = BioReader(str(image.absolute()))
+    try:
+        bf = BioReader(str(image.absolute()))
+    except:
+        jutil.kill_vm()
+        exit
     height = bf.read_image().squeeze().shape[2]
 
     logger.info("Image Shape: {}".format(height))

@@ -26,8 +26,8 @@ if __name__=="__main__":
                         help='The Height of the Stack', required=True)
     parser.add_argument('--stackby', dest='stack_by', type=str,
                         help='Variable that the images get stacked by', required=True)
-    # parser.add_argument('--varsinstack', dest='vars_instack', type=str,
-    #                     help='Variables that the stack shares', required=True)
+    parser.add_argument('--dirname', dest='vars_instack', type=str,
+                        help='Variables that the stack shares', required=True)
     parser.add_argument('--valinstack', dest='vals_instack', type=str, nargs='+',
                         help='Values of variables that the stack shares', required=True)
     parser.add_argument('--imagepattern', dest='image_pattern', type=str,
@@ -42,7 +42,7 @@ if __name__=="__main__":
     image_num = args.image_num
     stackheight = args.stack_height
     stackby = args.stack_by
-    # varsinstack = args.vars_instack
+    varsinstack = args.vars_instack
     valsinstack = args.vals_instack
     imagepattern = args.image_pattern
     stackcount = args.stack_count
@@ -50,7 +50,7 @@ if __name__=="__main__":
 
 
     # Initialize the logger    
-    logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(valsinstack),
+    logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(varsinstack),
                         datefmt='%d-%b-%y %H:%M:%S')
     logger = logging.getLogger("build_pyramid")
     logger.setLevel(logging.INFO) 
