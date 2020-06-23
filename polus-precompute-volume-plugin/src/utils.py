@@ -153,7 +153,8 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None,Z=
     
     # Initialize the output
     image = np.zeros((Y[1]-Y[0],X[1]-X[0], Z[1]-Z[0]),dtype=bfio_reader.read_metadata().image().Pixels.get_PixelType())
-
+    print("IMAGE INITIALIZED", image.shape)
+    print(S)
     # If requesting from the lowest scale, then just read the image
     if str(S)==encoder.info['scales'][0]['key']:
         image = bfio_reader.read_image(X=X,Y=Y)
@@ -161,12 +162,16 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None,Z=
         image = squeeze_generic(image, axes_to_keep=(0, 1, 2))
     else:
         # Set the subgrid dimensions
-        subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]], [2*Z[0],2*Z[1]]]
+        subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]],[2*Z[0],2*Z[1]]]
+        print("SUBGRID DIMS", subgrid_dims)
         for dim in subgrid_dims:
             while dim[1]-dim[0] > CHUNK_SIZE:
+                print("before inserting", dim)
                 dim.insert(1,dim[0] + ((dim[1] - dim[0]-1)//CHUNK_SIZE) * CHUNK_SIZE)
-        
+                print("after inserting", dim)
+
         for z in range(0, len(subgrid_dims[2]) - 1):
+            print("LENGTH OF Z", )
             z_ind = [subgrid_dims[2][z] - subgrid_dims[2][0],subgrid_dims[2][z+1] - subgrid_dims[2][0]]
             z_ind = [np.ceil(zi/2).astype('int') for zi in z_ind]
             for y in range(0,len(subgrid_dims[1])-1):
@@ -175,6 +180,7 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None,Z=
                 for x in range(0,len(subgrid_dims[0])-1):
                     x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
                     x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
+                    print("before creating sub_image, x, y, z", subgrid_dims, subgrid_dims[0][x:x+2], y, z)
                     sub_image = _get_higher_res(X=subgrid_dims[0][x:x+2],
                                                 Y=subgrid_dims[1][y:y+2],
                                                 Z=subgrid_dims[2][z:z+2],
@@ -185,11 +191,13 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None,Z=
                                                 encoder=encoder)
                     print("Right before avg2 function", image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],z_ind[0]:z_ind[1]].shape)
                     print("z indexes", z_ind[0], z_ind[1])
+                    print("y indexes", y_ind[0], y_ind[1])
+                    print("x indexes", x_ind[0], x_ind[1])
                     print("subgrid dims", subgrid_dims)
                     image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],z_ind[0]:z_ind[1]] = _avg2(sub_image)
 
     # Encode the chunk
-    print("RIGHT BEFORE TRYING: ", image.shape)
+    print("RIGHT BEFORE TRYING IMAGE ENCODED: ", image.shape)
     # try:
     image_encoded = encoder.encode(image, image.shape[2])
     # except:
@@ -197,8 +205,8 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None,Z=
     # finally:
     #     image_encoded = encoder.encode(image, 4)
     # Write the chunk
-    # slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],Z[0],Z[1], zlevel, zlevel+1))
-    slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],zlevel,zlevel+1))
+    slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],Z[0],Z[1], zlevel, zlevel+1))
+    # slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],zlevel,zlevel+1))
     return image
 
 # Modified and condensed from FileAccessor class in neuroglancer-scripts
@@ -256,7 +264,7 @@ class NeuroglancerWriter(PyramidWriter):
 
     def __init__(self, base_dir):
         super().__init__(base_dir)
-        self.chunk_pattern = "{key}/{0}-{1}_{2}-{3}_{4}-{5}"
+        self.chunk_pattern = "{key}/{0}-{1}_{2}-{3}_{4}-{5}_{6}-{7}"
 
     def _write_chunk(self,key,chunk_coords,buf):
         chunk_path = self._chunk_path(key,chunk_coords)
@@ -329,7 +337,9 @@ class NeuroglancerChunkEncoder:
         """
         # Rearrange the image for Neuroglancer
         
-        chunk = np.moveaxis(chunk.reshape(chunk.shape[0],chunk.shape[1],stackheight,1),
+        # chunk = np.moveaxis(chunk.reshape(chunk.shape[0],chunk.shape[1],stackheight,1),
+        #                     (0, 1, 2, 3), (2, 3, 1, 0))
+        chunk = np.moveaxis(chunk.reshape(chunk.shape[0],chunk.shape[1],chunk.shape[2],1),
                             (0, 1, 2, 3), (2, 3, 1, 0))
         chunk = np.asarray(chunk).astype(self.dtype, casting="safe")
         assert chunk.ndim == 4
@@ -377,8 +387,8 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight):
     """
     
     # Get metadata info from the bfio reader
-    # sizes = [bfio_reader.num_x(),bfio_reader.num_y(),bfio_reader.num_z()]
-    sizes = [bfio_reader.num_x(),bfio_reader.num_y(),stackheight]
+    sizes = [bfio_reader.num_x(),bfio_reader.num_y(),bfio_reader.num_z()]
+    # sizes = [bfio_reader.num_x(),bfio_reader.num_y(),stackheight]
     phys_x = bfio_reader.physical_size_x()
     if None in phys_x:
         phys_x = (1000,'nm')
