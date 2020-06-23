@@ -114,7 +114,11 @@ if __name__=="__main__":
 
     # Create the BioReader object
     logger.info('Getting the BioReader...')
-    bf = BioReader(str(image.absolute()))
+    try:
+        bf = BioReader(str(image.absolute()))
+    except:
+        jutil.kill_vm()
+        exit
 
     # Create the output path and info file
     if pyramid_type == "Neuroglancer":
@@ -147,7 +151,8 @@ if __name__=="__main__":
     elif pyramid_type == "DeepZoom":
         encoder = utils.DeepZoomChunkEncoder(file_info)
         file_writer = utils.DeepZoomWriter(out_dir)
-    
+    getimageshape = bf.read_image()
+    print("IMAGE SHAPE BEFORE UTILS", getimageshape.shape)
     # Create the stacked images
     if pyramid_type == "Neuroglancer":
         logger.info("Stack contains {} Levels (Stack's height)".format(stackheight))
@@ -155,7 +160,11 @@ if __name__=="__main__":
             if i == 0:
                 utils._get_higher_res(0, i, bf,file_writer,encoder)
             else:
-                bf = BioReader(str(channels[i].absolute()))
+                try:
+                    bf = BioReader(str(image.absolute()))
+                except:
+                    jutil.kill_vm()
+                    exit
                 # out_dir = Path(output_dir).joinpath(channels[i].absolute().name)
                 # out_dir.mkdir()
                 # out_dir = str(out_dir.absolute())
