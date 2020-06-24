@@ -1,0 +1,25 @@
+# FTL Label
+
+This plugin is an n-dimensional connected component algorithm that is similar to the [Light Speed Labeling](http://www-soc.lip6.fr/~lacas/Publications/ICIP09_LSL.pdf) algorithm. This algorithm works in n-dimensions and uses run length encoding to compress the image and accelerate computation. This algorithm generally performs better than SciPy's `label` method, except on images with random noise in which it performs up to 10x slower and uses 2x more memory. In most of our real test images, this algorithm ran 2x faster and used 4x less memory.
+
+For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
+
+## Building
+
+To build the Docker image for the conversion plugin, run
+`./build-docker.sh`.
+
+## Install WIPP Plugin
+
+If WIPP is running, navigate to the plugins page and add a new plugin. Paste the contents of `plugin.json` into the pop-up window and submit.
+
+## Options
+
+This plugin takes one input argument and one output argument:
+
+| Name             | Description                                           | I/O    | Type       |
+|------------------|-------------------------------------------------------|--------|------------|
+| `--connectivity` | City block connectivity                               | Input  | enum       |
+| `--inpDir`       | Input image collection to be processed by this plugin | Input  | collection |
+| `--outDir`       | Output collection                                     | Output | collection |
+
