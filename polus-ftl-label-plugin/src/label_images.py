@@ -76,7 +76,6 @@ if __name__ == '__main__':
     images = args.images.split(',')
     outDir = args.outDir
     process = args.process
-    print(images)
     
     # Initialize the logger
     logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
