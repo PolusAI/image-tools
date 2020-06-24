@@ -18,7 +18,7 @@
       },
       {
         "name": "connectivity",
-        "type": "enum",
+        "type": "number",
         "description": "City block connectivity",
         "required": true
       }
