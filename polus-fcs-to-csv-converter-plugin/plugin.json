@@ -15,7 +15,7 @@
         "type": "collection",
         "description": "Fcs file collection",
         "required": "true"
-      },
+      }
       ],
     "outputs": [
       {
