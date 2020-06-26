@@ -9,7 +9,6 @@ import fnmatch
 import fcsparser
 import argparse
 import logging
-from pathlib import Path
 
 # Initialize the logger
 logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
@@ -59,8 +58,6 @@ def main():
     parser = argparse.ArgumentParser(prog='main', description='Convert fcs file to csv file.')
     parser.add_argument('--inpDir', dest='inpDir', type=str,
                         help='Input fcs file collection', required=True)
-    #parser.add_argument('--metaoutdir', dest='metaoutdir', type=str,
-                        #help='Output metadata collection that stores data', required=True)
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output csv collection', required=True)
 
@@ -83,11 +80,11 @@ def main():
         #Check whether .fcs files are present in the input directory
         if not fcs_filelist:
             logger.warning('No .fcs files found in the images directory.' )
-    
-    inpdir_meta = inpDir / 'metadata_files'
+
+    inpdir_meta = inpDir + '/metadata_files'
     if inpdir_meta:
         #List the files in metadata_files directory
-        fcs_metalist = list_file(inpDir)
+        fcs_metalist = list_file(inpdir_meta)
         #Check whether .fcs files are present in the input directory
         if not fcs_metalist:
             raise ValueError('No .fcs files found in the metadata_files directory.')
