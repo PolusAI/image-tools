@@ -27,6 +27,7 @@ This plugin takes eight input argument and one output argument:
 | Name                   | Description             | I/O    | Type   |
 |------------------------|-------------------------|--------|--------|
 | `--inpDir` | Fcs file collection| Input | collection |
+| `--metaoutdir` | Metadata directory that stores the data| Output | collection |
 | `--outDir` | Output collection | Output | csvCollection |
 
 
