@@ -26,7 +26,7 @@ This plugin takes eight input argument and one output argument:
 
 | Name                   | Description             | I/O    | Type   |
 |------------------------|-------------------------|--------|--------|
-| `--inpDir` | Fcs file collection| Input | csvCollection |
+| `--inpDir` | Fcs file collection| Input | collection |
 | `--outDir` | Output collection | Output | csvCollection |
 
 
