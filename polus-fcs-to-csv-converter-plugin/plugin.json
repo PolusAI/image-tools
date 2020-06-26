@@ -19,11 +19,6 @@
       ],
     "outputs": [
       {
-        "name": "metaoutdir",
-        "type": "collection",
-        "description": "Metadata directory that stores data"
-      },
-      {
         "name": "outDir",
         "type": "csvCollection",
         "description": "Output collection"
