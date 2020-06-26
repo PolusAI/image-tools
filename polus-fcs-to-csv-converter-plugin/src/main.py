@@ -9,6 +9,7 @@ import fnmatch
 import fcsparser
 import argparse
 import logging
+from pathlib import Path
 
 # Initialize the logger
 logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
@@ -55,9 +56,11 @@ def fcs_csv(inpDir,outDir):
 # Setup the argument parsing
 def main():
     logger.info("Parsing arguments...")
-    parser = argparse.ArgumentParser(prog='main', description='Everything you need to start a fcs to csv file conversion plugin.')
+    parser = argparse.ArgumentParser(prog='main', description='Convert fcs file to csv file.')
     parser.add_argument('--inpDir', dest='inpDir', type=str,
                         help='Input fcs file collection', required=True)
+    #parser.add_argument('--metaoutdir', dest='metaoutdir', type=str,
+                        #help='Output metadata collection that stores data', required=True)
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output csv collection', required=True)
 
@@ -75,12 +78,23 @@ def main():
     logger.info("Started")
     
     if inpDir:
+        #List the files in images directory
         fcs_filelist = list_file(inpDir)
         #Check whether .fcs files are present in the input directory
         if not fcs_filelist:
-            raise ValueError('No .fcs files found in the directory.')
+            logger.warning('No .fcs files found in the images directory.' )
+    
+    inpdir_meta = inpDir / 'metadata_files'
+    if inpdir_meta:
+        #List the files in metadata_files directory
+        fcs_metalist = list_file(inpDir)
+        #Check whether .fcs files are present in the input directory
+        if not fcs_metalist:
+            raise ValueError('No .fcs files found in the metadata_files directory.')
             
-    for each_file in fcs_filelist:
+    fcs_finallist = fcs_filelist + fcs_metalist    
+            
+    for each_file in fcs_finallist:
         #Get the full fcs file path
         logger.info('Started converting the fcs file ' + each_file)
         #Read the fcs file and convert to csv file
