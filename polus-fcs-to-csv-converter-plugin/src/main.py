@@ -104,8 +104,13 @@ def main():
         #Check whether .fcs files are present in the metadata directory
         if not fcs_metalist:
             raise ValueError('No .fcs files found in the metadata_files directory.')
-            
-    fcs_finallist = fcs_filelist + fcs_metalist    
+        #combine .fcs files present in metadata and images directory  
+        fcs_finallist = fcs_filelist + fcs_metalist
+    else:
+        fcs_finallist = fcs_filelist
+    #Check whether the list is empty    
+    if not fcs_finallist:
+        raise FileNotFoundError ('No .fcs files found in both images and metadata_files directory.')
             
     for each_file in fcs_finallist:
         #Get the full fcs file path
