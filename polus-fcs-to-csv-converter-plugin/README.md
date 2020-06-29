@@ -1,8 +1,8 @@
-﻿# Fcs to Csv file converter
+# Fcs to Csv file converter
 
 The fcs to csv file converter plugin converts fcs file to csv file.The input file should be in .fcs file format and output will be .csv file format.
 
-## Inputs:
+## Input:
 ### Fcs file collection:
 The input should be a file in fcs format.
 
@@ -27,6 +27,7 @@ This plugin takes eight input argument and one output argument:
 | Name                   | Description             | I/O    | Type   |
 |------------------------|-------------------------|--------|--------|
 | `--inpDir` | Fcs file collection| Input | collection |
+| `--metaDir` | Get fcs files from metadata directory | Input | boolean |
 | `--outDir` | Output collection | Output | csvCollection |
 
 
