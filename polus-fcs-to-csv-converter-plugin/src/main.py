@@ -16,18 +16,18 @@ logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(messa
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
-def list_file(inpDir):
+def list_file(directory):
     """List all the .fcs files in the directory.
     
     Args:
-        inpDir (str): Path to the directory containing the fcs files.
+        directory (str): Path to the directory containing the fcs files.
         
     Returns:
         The path to directory, list of names of the subdirectories in dirpath (if any) and the filenames of .fcs files.
         
     """
     list_of_files = [os.path.join(dirpath, file_name)
-                     for dirpath, dirnames, files in os.walk(inpDir)
+                     for dirpath, dirnames, files in os.walk(directory)
                      for file_name in fnmatch.filter(files, '*.fcs')]
     return list_of_files
 
@@ -56,17 +56,32 @@ def fcs_csv(inpDir,outDir):
 def main():
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='Convert fcs file to csv file.')
-    parser.add_argument('--inpDir', dest='inpDir', type=str,
-                        help='Input fcs file collection', required=True)
-    parser.add_argument('--outDir', dest='outDir', type=str,
-                        help='Output csv collection', required=True)
-
+    parser.add_argument('--inpDir',                       #Path to select files in images directory
+                        dest='inpDir', 
+                        type=str,
+                        help='Input fcs file collection', 
+                        required=True)
+    parser.add_argument('--metaDir',                      #Get metadata in the metadata_files directory
+                        dest='metaDir', 
+                        type=str, 
+                        help='If true, get metadata', 
+                        required=False)
+    parser.add_argument('--outDir',                       #Path to save files in output directory
+                        dest='outDir', 
+                        type=str,
+                        help='Output csv collection', 
+                        required=True)
+    
     # Parse the arguments
     args = parser.parse_args()
     
     #Path to input file directory
     inpDir = args.inpDir
     logger.info('inpDir = {}'.format(inpDir))
+    
+    #Select metadata files
+    metaDir = args.metaDir=='true'
+    logger.info('metaDir = {}'.format(metaDir))
     
     #Path to save output csv files
     outDir = args.outDir
@@ -77,15 +92,16 @@ def main():
     if inpDir:
         #List the files in images directory
         fcs_filelist = list_file(inpDir)
-        #Check whether .fcs files are present in the input directory
+        #Check whether .fcs files are present in the images directory
         if not fcs_filelist:
             logger.warning('No .fcs files found in the images directory.' )
+    head,tail = os.path.split(inpDir)
+    inpdir_meta = head + '/metadata_files'
 
-    inpdir_meta = inpDir + '/metadata_files'
-    if inpdir_meta:
+    if metaDir:
         #List the files in metadata_files directory
         fcs_metalist = list_file(inpdir_meta)
-        #Check whether .fcs files are present in the input directory
+        #Check whether .fcs files are present in the metadata directory
         if not fcs_metalist:
             raise ValueError('No .fcs files found in the metadata_files directory.')
             
