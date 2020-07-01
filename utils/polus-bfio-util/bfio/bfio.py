@@ -19,6 +19,7 @@ import os
 import javabridge as jutil
 from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
+from matplotlib import pyplot as plt
 
 import time
 
@@ -689,6 +690,7 @@ class BioReader():
         self._pixel_buffer = np.zeros((y_tile_dim*1024 + tile_size[0],2*x_tile_dim*1024 + tile_size[1]),dtype=self.pixel_type())
         self._tile_x_offset = -xypad[1][0]
         self._tile_y_offset = -xypad[0][0]
+        self._tile_crop = [tile_size[0] - tile_stride[0],tile_size[1] - tile_stride[1]]
         
         # Generate the supertile loading order
         tiles = []
