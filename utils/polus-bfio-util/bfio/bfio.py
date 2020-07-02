@@ -19,6 +19,9 @@ import os
 import javabridge as jutil
 from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
+import matplotlib.pyplot as plt
+
+import time
 
 def make_ome_tiff_writer_class():
     '''Return a class that wraps loci.formats.out.OMETiffWriter'''
@@ -731,6 +734,7 @@ class BioReader():
         batches = list(range(0,len(X),batch_size))
         
         # get the first batch
+        start = time.time()
         b = min([batch_size,len(X)])
         index = (X[0:b],Y[0:b],Z[0:b],C[0:b],T[0:b])
         images = self._get_tiles(*index)
@@ -1715,7 +1719,8 @@ class BioWriter():
         self._raw_buffer.put(self._pixel_buffer[:,0:self.num_x()-self._tile_x_offset])
         
         # Save the last supertile
-        self._put_thread.result() # wait for the previous thread to finish
+        if self._put_thread != None:
+            self._put_thread.result() # wait for the previous thread to finish
         self._put() # no need to use a thread for final save
         
         thread_pool.shutdown()
