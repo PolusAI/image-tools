@@ -1,0 +1,45 @@
+{
+    "name": "Subset Data",
+    "version": "0.1.1",
+    "title": "Subset Data",
+    "description": "Create a new image collection that is a subset of an existing image collection.",
+    "author": "Nick Schaub (nick.schaub@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-subset-data-plugin:0.1.1",
+    "inputs": [
+      {
+        "name": "filePattern",
+        "type": "string",
+        "description": "Filename pattern used to separate data",
+        "required": true
+      },
+      {
+        "name": "inpDir",
+        "type": "collection",
+        "description": "Input image collection to be processed by this plugin",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "collection",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.filePattern",
+        "title": "Filename pattern",
+        "description": "Filename pattern used to separate data"
+      },
+      {
+        "key": "inputs.inpDir",
+        "title": "Input collection",
+        "description": "Input image collection to be processed by this plugin"
+      }
+    ]
+  }
