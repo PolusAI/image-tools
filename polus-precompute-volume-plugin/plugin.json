@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "mmvihani/polus-precompute-volume-plugin:0.1.21",
+    "containerId": "mmvihani/polus-precompute-volume-plugin:0.1.22",
     "inputs": [
       {
         "name": "imagepattern",
@@ -32,6 +32,7 @@
           "values": [
             "Neuroglancer",
             "DeepZoom"
+          ]
         },
         "required": true
       },
