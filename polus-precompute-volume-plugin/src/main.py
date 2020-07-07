@@ -24,6 +24,8 @@ def main():
                         help='Build a DeepZoom or Neuroglancer pyramid', required=True)
     parser.add_argument('--imagepattern', dest='image_pattern', type=str,
                         help='Filepattern of the images in input', required=True)
+    parser.add_argument('--imageType', dest='image_type', type=str,
+                        help='The type of image, image or segmentation', required=True)
 
     # Parse the arguments
     args = parser.parse_args()
@@ -31,11 +33,7 @@ def main():
     output_dir = args.output_dir
     pyramid_type = args.pyramid_type
     imagepattern = args.image_pattern
-
-    # Getting all images in directory
-    # image_path = Path(input_dir)
-    # images = [i for i in image_path.iterdir() if "".join(i.suffixes)==".ome.tif"]
-    # images.sort()
+    imagetype = args.image_type
 
     # Get Variables of Images
     regex = filepattern.get_regex(pattern = imagepattern)
@@ -49,7 +47,6 @@ def main():
         else:
             stack_by = stack_by + item
 
-
     logger.info('input_dir = {}'.format(input_dir))
     logger.info('output_dir = {}'.format(output_dir))
     logger.info('pyramid_type = {}'.format(pyramid_type))
@@ -58,51 +55,9 @@ def main():
     
     # Get list of images that we are going to through
     logger.info('Getting the images...')
-
-    # fpobject = fp(input_dir, pattern=imagepattern)
-
-    # organizedheights = []
-    # vals_instack = []
-    # vals_stackby = []
-    # directoryfiles = []
-
     image_path = Path(input_dir)
     images = [i for i in image_path.iterdir() if "".join(i.suffixes)==".ome.tif"]
     images.sort()
-
-    # for item in fp.iterate(fpobject, group_by=vars_instack):
-    #     organizedheights.append(len(item))
-    #     vals_inonestack = [[]] * len(item)
-    #     i = 0
-    #     for filesitem in item:
-    #         vals_inonestack[i] = ""
-    #         vals_ofstackone = ""
-    #         directoryname = ""
-    #         for char in vars_instack:
-    #             if vals_inonestack[i] == "":
-    #                 vals_inonestack[i] = str(filesitem[char])
-    #             else:
-    #                 vals_inonestack[i] = vals_inonestack[i] + "-" + str(filesitem[char])
-    #         for char in stack_by:
-    #             if vals_ofstackone == "":
-    #                 vals_ofstackone = str(filesitem[char])
-    #                 directoryname = char + str(filesitem[char])
-    #             else:
-    #                 vals_ofstackone = vals_ofstackone + " " + str(filesitem[char])
-    #                 directoryname = directoryname + "_" + char + str(filesitem[char])
-    #         i = i + 1
-    #     vals_instack.append(" ".join(vals_inonestack))
-    #     vals_stackby.append(vals_ofstackone)
-    #     directoryfiles.append(directoryname)
-    #     newdirectory = Path(output_dir).joinpath(directoryname)
-    #     newdirectory.mkdir()
-            
-    # numberofstacks = len(organizedheights)
-
-    # logger.info("Directory Name: {}".format(directoryfiles))
-    # logger.info("Height of the {} Stacks: {}".format(len(organizedheights), organizedheights))
-    # # heightofstack = int(len(all_combos)/len(common_combos))
-    # logger.info("Different Stack Variables of {}: {}".format(vars_instack, vals_instack))
 
     # Set up lists for tracking processes
     processes = []
@@ -133,13 +88,14 @@ def main():
             del processes[free_process]
             del process_timer[free_process]
             
-        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --pyramidType '{}' --imageNum '{}' --stackby '{}' --imagepattern '{}' --image '{}'".format(input_dir,
+        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --pyramidType '{}' --imageNum '{}' --stackby '{}' --imagepattern '{}' --image '{}' --imagetype {}".format(input_dir,
                                                                                                                                             output_dir,
                                                                                                                                             pyramid_type,
                                                                                                                                             im_count,
                                                                                                                                             stack_by,
                                                                                                                                             imagepattern,
-                                                                                                                                            image.name),
+                                                                                                                                            image.name,
+                                                                                                                                            imagetype),
                                                                                                                                         shell=True))
         im_count += 1
         process_timer.append(time.time())

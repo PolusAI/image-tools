@@ -318,7 +318,7 @@ class DeepZoomChunkEncoder(NeuroglancerChunkEncoder):
         assert chunk.ndim == 2
         return chunk
 
-def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight):
+def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight,imagetype):
     """ Generate a Neuroglancer info file from Bioformats metadata
     
     Neuroglancer requires an info file in the root of the pyramid directory.
@@ -370,7 +370,7 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight):
         "data_type": dtype,
         "num_channels":1,
         "scales": [scales],       # Will build scales below
-        "type": "image"
+        "type": imagetype
     }
     
     for i in range(1,num_scales+1):
@@ -388,12 +388,12 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight):
     
     return info
 
-def neuroglancer_info_file(bfio_reader,outPath, stackheight):
+def neuroglancer_info_file(bfio_reader,outPath, stackheight, imagetype):
     # Create an output path object for the info file
     op = Path(outPath).joinpath("info")
     
     # Get pyramid info
-    info = bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight)
+    info = bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight,imagetype)
 
     # Write the neuroglancer info file
     with open(op,'w') as writer:

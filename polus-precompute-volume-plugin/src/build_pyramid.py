@@ -8,8 +8,6 @@ from filepattern import FilePattern as fp
 import os
 import itertools
 
-
-
 if __name__=="__main__":
     # Setup the Argument parsing
     parser = argparse.ArgumentParser(prog='build_pyramid', description='Generate a precomputed slice for Polus Viewer.')
@@ -28,6 +26,8 @@ if __name__=="__main__":
                         help='Filepattern of the images in input', required=True)
     parser.add_argument('--image', dest='image', type=str,
                         help='The image to turn into a pyramid', required=True)
+    parser.add_argument('--imagetype', dest='image_type', type=str,
+                        help='The type of image: image or segmentation', required=True)
 
     args = parser.parse_args()
     input_dir = args.input_dir
@@ -37,6 +37,7 @@ if __name__=="__main__":
     stackby = args.stack_by
     imagepattern = args.image_pattern
     image = args.image
+    imagetype = args.image_type
 
     try:
         # Initialize the logger    
@@ -70,7 +71,7 @@ if __name__=="__main__":
 
         # Create the output path and info file
         if pyramid_type == "Neuroglancer":
-            file_info = utils.neuroglancer_info_file(bf,out_dir,stackheight)
+            file_info = utils.neuroglancer_info_file(bf,out_dir,stackheight, imagetype)
         elif pyramid_type == "DeepZoom":
             file_info = utils.dzi_file(bf,out_dir,image_num)
         else:
