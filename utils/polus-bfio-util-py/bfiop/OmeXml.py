@@ -328,7 +328,7 @@ class OMEXML(object):
         if self.ns['ome'] is None:
             raise Exception("Error: String not in OME-XML format")
 
-    def __str__(self):
+    def __str__(self,encoding=uenc):
         #
         # need to register the ome namespace because BioFormats expects
         # that namespace to be the default or to be explicitly named "ome"
@@ -338,13 +338,15 @@ class OMEXML(object):
             ElementTree.register_namespace(ns_key, ns)
         ElementTree.register_namespace("om", NS_ORIGINAL_METADATA)
         result = StringIO()
+        print(encoding)
         ElementTree.ElementTree(self.root_node).write(result,
-                                                      encoding=uenc,
+                                                      encoding=encoding,
                                                       method="xml")
         return result.getvalue()
 
     def to_xml(self, indent="\t", newline="\n", encoding=uenc):
-        return str(self)
+        print(encoding)
+        return str(self,encoding=encoding)
 
     def get_ns(self, key):
         return self.ns[key]

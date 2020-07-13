@@ -19,6 +19,10 @@ import numpy as np
 import os
 from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
+import struct,io
+from pathlib import Path
+import zlib, time, copy, multiprocessing
+from multiprocessing.dummy import Pool
 
 class BioReader():
     """BioReader Read supported image formats using Bioformats
@@ -805,6 +809,13 @@ class BioWriter():
     _tile_thread= None
     _tile_x_offset = 0
     _tile_last_column = 0
+    
+    # Variables for saving multipage tiffs
+    _current_page = None
+    _ifds = None
+    _databytecounts = []
+    _tags = []  # list of (code, ifdentry, ifdvalue, writeonce)
+    _page_open = False
 
     def __init__(self, file_path, image=None,
                  X=None, Y=None, Z=None, C=None, T=None,
@@ -852,7 +863,7 @@ class BioWriter():
         self._file_path = file_path
 
         if metadata:
-            assert isinstance(metadata, bioformats.OMEXML)
+            assert metadata.__class__.__name__ == "OMEXML"
             self._metadata = bioformats.OMEXML(str(metadata))
             self._xyzct = {'X': self._metadata.image().Pixels.get_SizeX(),  # image width
                            'Y': self._metadata.image().Pixels.get_SizeY(),  # image height
@@ -869,7 +880,7 @@ class BioWriter():
             self._pix['interleaved'] = False
             self._metadata.image(0).Name = file_path
             self._metadata.image().Pixels.channel_count = self._xyzct['C']
-            self._metadata.image().Pixels.DimensionOrder = bioformats.omexml.DO_XYZCT
+            self._metadata.image().Pixels.DimensionOrder = bioformats.DO_XYZCT
         elif image != None:
             assert len(image.shape) == 5, "Image must be 5-dimensional (x,y,z,c,t)."
             x = X if X else image.shape[1]
@@ -936,6 +947,9 @@ class BioWriter():
             p.channel_count = self._xyzct['C']
         return omexml
 
+    def _pack(self,fmt, *val):
+        return struct.pack(self._byteorder + fmt, *val)
+
     def _init_writer(self):
         """_init_writer Initializes file writing.
 
@@ -943,373 +957,50 @@ class BioWriter():
         called, all other methods of setting metadata will throw an
         error.
         
-        """        
-        if os.path.exists(self._file_path):
-            os.remove(self._file_path)
-
-        w_klass = make_ome_tiff_writer_class()
-        w_klass.setId = jutil.make_method('setId', '(Ljava/lang/String;)V',
-                                          'Sets the current file name.')
-        w_klass.saveBytesXYWH = jutil.make_method('saveBytes', '(I[BIIII)V',
-                                                  'Saves the given byte array to the current file')
-        w_klass.close = jutil.make_method('close', '()V',
-                                          'Closes currently open file(s) and frees allocated memory.')
-        w_klass.setTileSizeX = jutil.make_method('setTileSizeX', '(I)I',
-                                                 'Set tile size width in pixels.')
-        w_klass.setTileSizeY = jutil.make_method('setTileSizeY', '(I)I',
-                                                 'Set tile size height in pixels.')
-        w_klass.getTileSizeX = jutil.make_method('getTileSizeX', '()I',
-                                                 'Set tile size width in pixels.')
-        w_klass.getTileSizeY = jutil.make_method('getTileSizeY', '()I',
-                                                 'Set tile size height in pixels.')
-        w_klass.setBigTiff = jutil.make_method('setBigTiff', '(Z)V',
-                                               'Set the BigTiff flag.')
-        writer = w_klass()
-
-        # Always set bigtiff flag. There have been some instances where bioformats does not
-        # properly write images that are less than 2^32 if bigtiff is not set. So, just always
-        # set it since it doesn't drastically alter file size.
-        writer.setBigTiff(True)
-
-        script = """
-        importClass(Packages.loci.formats.services.OMEXMLService,
-                    Packages.loci.common.services.ServiceFactory);
-        var service = new ServiceFactory().getInstance(OMEXMLService);
-        var metadata = service.createOMEXMLMetadata(xml);
-        var writer = writer
-        writer.setMetadataRetrieve(metadata);
         """
-        jutil.run_script(script,
-                         dict(path=self._file_path,
-                              xml=self._metadata.to_xml().replace('<ome:', '<').replace('</ome:', '</'),
-                              writer=writer))
-        writer.setId(self._file_path)
-        writer.setInterleaved(False)
-        writer.setCompression("LZW")
-        x = writer.setTileSizeX(self._TILE_SIZE)
-        y = writer.setTileSizeY(self._TILE_SIZE)
-
-        # number of pixels to load at a time
-        self._pix['chunk'] = self._MAX_BYTES / \
-            (self._pix['spp']*self._pix['bpp'])
-
-        self.__writer = writer
+        self._metadata.image().set_ID(Path(self._file_path).name)
         
-    def _write_tiles(self, data=None, shape=None, dtype=None, returnoffset=False,
-                     photometric=None, planarconfig=None, extrasamples=None, tile=None,
-                     contiguous=True, align=16, truncate=False, rowsperstrip=None,
-                     bitspersample=None, compress=None, predictor=False,
-                     subsampling=None, colormap=None, description=None, datetime=None,
-                     resolution=None, subfiletype=0, software='tifffile.py',
-                     metadata={}, ijmetadata=None, extratags=()):
-        """Write numpy array and tags to TIFF file.
-
-        The data shape's last dimensions are assumed to be image depth,
-        height (length), width, and samples.
-        If a colormap is provided, the data's dtype must be uint8 or uint16
-        and the data values are indices into the last dimension of the
-        colormap.
-        If 'shape' and 'dtype' are specified instead of 'data', an empty array
-        is saved. This option cannot be used with compression or multiple
-        tiles.
-        If 'shape', 'dtype', and 'tile' are specified, 'data' must be a
-        sequence or generator of all tiles in the image.
-        Image data are written uncompressed in one strip per plane by default.
-        Dimensions larger than 2 to 4 (depending on photometric mode, planar
-        configuration, and SGI mode) are flattened and saved as separate pages.
-        If the data size is zero, a single page with shape (0, 0) is saved.
-        The SampleFormat tag is derived from the data type.
-
-        Parameters
-        ----------
-        data : numpy.ndarray, sequence of numpy.ndarray, or None
-            Input image or tiles.
-            Tiles must match the shape specified in 'tile'.
-        shape : tuple or None
-            Shape of the empty or tiled array to save.
-            Used only if 'data' is None or a sequence of tiles.
-        dtype : numpy.dtype or None
-            Datatype of the empty or tiled array to save.
-            Used only if 'data' is None or a sequence of tiles.
-        returnoffset : bool
-            If True and the image data in the file is memory-mappable, return
-            the offset and number of bytes of the image data in the file.
-        photometric : {'MINISBLACK', 'MINISWHITE', 'RGB', 'PALETTE', 'CFA'}
-            The color space of the image data according to TIFF.PHOTOMETRIC.
-            By default, this setting is inferred from the data shape and the
-            value of colormap.
-            For CFA images, the CFARepeatPatternDim, CFAPattern, and other
-            DNG or TIFF/EP tags must be specified in 'extratags' to produce a
-            valid file.
-        planarconfig : {'CONTIG', 'SEPARATE'}
-            Specifies if samples are stored interleaved or in separate planes.
-            By default, this setting is inferred from the data shape.
-            If this parameter is set, extra samples are used to store grayscale
-            images.
-            'CONTIG': last dimension contains samples.
-            'SEPARATE': third last dimension contains samples.
-        extrasamples : tuple of {'UNSPECIFIED', 'ASSOCALPHA', 'UNASSALPHA'}
-            Defines the interpretation of extra components in pixels.
-            'UNSPECIFIED': no transparency information (default).
-            'ASSOCALPHA': single, true transparency with pre-multiplied color.
-            'UNASSALPHA': independent transparency masks.
-        tile : tuple of int
-            The shape ([depth,] length, width) of image tiles to write.
-            If None (default), image data are written in strips.
-            The tile length and width must be a multiple of 16.
-            If a tile depth is provided, the SGI ImageDepth and TileDepth
-            tags are used to save volume data.
-            Tiles cannot be used to write contiguous series, except if tile
-            matches the data shape.
-            Few software can read the SGI format, e.g. MeVisLab.
-        contiguous : bool
-            If True (default) and the data and parameters are compatible with
-            previous saved ones, the image data are stored contiguously after
-            the previous one. In that case, 'photometric',
-            'planarconfig', and 'rowsperstrip' are ignored. Metadata such as
-            'description', 'metadata', 'datetime', and 'extratags' are written
-            to the first page of a contiguous series only.
-            If False, start a new contiguous series.
-        align : int
-            Byte boundary on which to align the image data in the file.
-            Default 16. Use mmap.ALLOCATIONGRANULARITY for memory-mapped data.
-            Following contiguous writes are not aligned.
-        truncate : bool
-            If True, only write the first page of a contiguous series if
-            possible (uncompressed, contiguous, not tiled).
-            Other TIFF readers will only be able to read part of the data.
-        rowsperstrip : int
-            The number of rows per strip. By default, strips will be ~64 KB
-            if compression is enabled, else rowsperstrip is set to the image
-            length. Bilevel images are always stored in one strip per plane.
-        bitspersample : int
-            Number of bits per sample. By default this is the number of
-            bits of the data dtype. Different values for different samples
-            are not supported. Unsigned integer data are packed into bytes
-            as tightly as possible. Valid values are 1-8 for uint8, 9-16 for
-            uint16 and 17-32 for uint32. Cannot be used with compression.
-        compress : int, str, or (str, int)
-            If 0 or None (default), data are written uncompressed.
-            If 0-9, the level of ADOBE_DEFLATE compression.
-            If a str, one of TIFF.COMPESSORS, e.g. 'LZMA' or 'ZSTD'.
-            If a tuple, the first item is one of TIFF.COMPESSORS and the
-            second item is the compression level.
-            Compression cannot be used to write contiguous series.
-            Compressors may require certain data shapes, types or value ranges.
-            For example, JPEG requires grayscale or RGB(A), uint8 or 12-bit
-            uint16. JPEG compression is experimental. JPEG markers and TIFF
-            tags may not match.
-        predictor : bool
-            If True, apply horizontal differencing or floating-point predictor
-            before compression. Predictors are disabled for 64-bit integers.
-        subsampling : {(1, 1), (2, 1), (2, 2), (4, 1)}
-            The horizontal and vertical subsampling factors used for the
-            chrominance components of images. The default is (2, 2).
-            Currently applies to JPEG compression of RGB images only.
-            Images will be stored in YCbCr color space.
-            Segment widths must be a multiple of 8 times the horizontal factor.
-            Segment lengths and rowsperstrip must be a multiple of 8 times the
-            vertical factor.
-        colormap : numpy.ndarray
-            RGB color values for the corresponding data value.
-            Must be of shape (3, 2**(data.itemsize*8)) and dtype uint16.
-        description : str
-            The subject of the image. Must be 7-bit ASCII. Cannot be used with
-            the ImageJ format.
-            Saved with the first page of a contiguous series only.
-        datetime : datetime, str, or bool
-            Date and time of image creation in '%Y:%m:%d %H:%M:%S' format or
-            datetime object. Else if True, the current date and time is used.
-            Saved with the first page of a contiguous series only.
-        resolution : (float, float[, str]) or ((int, int), (int, int)[, str])
-            X and Y resolutions in pixels per resolution unit as float or
-            rational numbers. A third, optional parameter specifies the
-            resolution unit, which must be None (default for ImageJ),
-            'INCH' (default), or 'CENTIMETER'.
-        subfiletype : int
-            Bitfield to indicate the kind of data. Set bit 0 if the image
-            is a reduced-resolution version of another image. Set bit 1 if
-            the image is part of a multi-page image. Set bit 2 if the image
-            is transparency mask for another image (photometric must be
-            MASK, SamplesPerPixel and BitsPerSample must be 1).
-        software : str
-            Name of the software used to create the file. Must be 7-bit ASCII.
-            Saved with the first page of a contiguous series only.
-        metadata : dict
-            Additional metadata to be saved along with shape information
-            in JSON or ImageJ formats in ImageDescription or IJMetadata tags.
-            If None, do not write a ImageDescription tag with shape in JSON
-            format.
-            If ImageJ format, values for keys 'Info', 'Labels', 'Ranges',
-            'LUTs', 'Plot', 'ROI', and 'Overlays' are saved in IJMetadata and
-            IJMetadataByteCounts tags. Refer to the imagej_metadata_tag
-            function for valid values.
-            Strings must be 7-bit ASCII.
-            Saved with the first page of a contiguous series only.
-        extratags : sequence of tuples
-            Additional tags as [(code, dtype, count, value, writeonce)].
-
-            code : int
-                The TIFF tag Id.
-            dtype : str
-                Data type of items in 'value' in Python struct format.
-                One of B, s, H, I, 2I, b, h, i, 2i, f, d, Q, or q.
-            count : int
-                Number of data values. Not used for string or bytes values.
-            value : sequence
-                'Count' values compatible with 'dtype'.
-                Bytes must contain count values of dtype packed as binary data.
-            writeonce : bool
-                If True, the tag is written to the first page of a contiguous
-                series only.
-
-        """
-        # TODO: refactor this function
-        fh = self.__writer._fh
-        byteorder = self.__writer._byteorder
-        compress = 'LZW'
+        self.__writer = tifffile.TiffWriter(self._file_path,bigtiff=True,append=False)
         
-        # iterable tiles
-        if not hasattr(data, '__iter__'):
-            raise ValueError('data is not iterable')
-        tileiter = data
-        datashape = shape
-        datadtype = np.dtype(dtype).newbyteorder(byteorder)
-        datadtypechar = datadtype.char
-
-        datasize = tifffile.product(datashape) * datadtype.itemsize
-        input_shape = datashape
-
-        self.__writer._truncate = False
+        self._byteorder = self.__writer._byteorder
+        
+        self._datashape = (1, 1, 1) + (self.num_y(),self.num_x()) + (1,)
+        self._datadtype = np.dtype(self._pix['type']).newbyteorder(self._byteorder)
 
         tagnoformat = self.__writer._tagnoformat
         valueformat = self.__writer._valueformat
         offsetformat = self.__writer._offsetformat
         offsetsize = self.__writer._offsetsize
         tagsize = self.__writer._tagsize
-
-        photometric = self.__writer.TIFF.PHOTOMETRIC.MINISBLACK
-        planarconfig = self.__writer.TIFF.PLANARCONFIG.CONTIG
-        extrasamples = self.__writer.TIFF.EXTRASAMPLES.UNSPECIFIED
-        compress = 'LZW'
-        compresstag = self.__writer.TIFF.COMPRESSION.LZW
-        colormap = None
-        tile = (1024,1024)
-        volume = False
+        
+        # self._compresstag = tifffile.TIFF.COMPRESSION.NONE
+        self._compresstag = tifffile.TIFF.COMPRESSION.ADOBE_DEFLATE
 
         # normalize data shape to 5D or 6D, depending on volume:
         #   (pages, planar_samples, height, width, contig_samples)
-        datashape = tifffile.reshape_nd(datashape, 2)
-        shape = datashape
-        ndim = len(datashape)
-        samplesperpixel = 1
-        extrasamples = 0
+        self._samplesperpixel = 1
+        self._bitspersample = self._datadtype.itemsize * 8
 
-        packints = False
-        if bilevel:
-            if bitspersample is not None and bitspersample != 1:
-                raise ValueError('bitspersample must be 1 for bilevel')
-            bitspersample = 1
-        elif compresstag == 7 and datadtype == 'uint16':
-            if bitspersample is not None and bitspersample != 12:
-                raise ValueError(
-                    'bitspersample must be 12 for JPEG compressed uint16'
-                )
-            bitspersample = 12  # use 12-bit JPEG compression
-        elif bitspersample is None:
-            bitspersample = datadtype.itemsize * 8
-        elif (
-            (datadtype.kind != 'u' or datadtype.itemsize > 4) and
-            bitspersample != datadtype.itemsize * 8
-        ):
-            raise ValueError('bitspersample does not match dtype')
-        elif not (
-            bitspersample > {1: 0, 2: 8, 4: 16}[datadtype.itemsize] and
-            bitspersample <= datadtype.itemsize * 8
-        ):
-            raise ValueError('bitspersample out of range of dtype')
-        elif compress:
-            if bitspersample != datadtype.itemsize * 8:
-                raise ValueError(
-                    'bitspersample cannot be used with compression'
-                )
-        elif bitspersample != datadtype.itemsize * 8:
-            packints = True
-
-        # normalize shape to 6D
-        if len(datashape) not in (5, 6):
-            raise RuntimeError('len(datashape) not in (5, 6)')
-        if len(datashape) == 5:
-            datashape = datashape[:2] + (1,) + datashape[2:]
-        if datashape[0] == -1:
-            s0 = product(datashape[1:])
-            s0 = 1 if s0 == 0 else product(input_shape) // s0
-            datashape = (s0,) + datashape[1:]
-        shape = datashape
-        try:
-            data = data.reshape(shape)
-        except AttributeError:
-            pass  # data is None or iterator
-
-        if photometric == PALETTE:
-            if (
-                samplesperpixel != 1
-                or extrasamples
-                or shape[1] != 1
-                or shape[-1] != 1
-            ):
-                raise ValueError('invalid data shape for palette mode')
-
-        if photometric == RGB and samplesperpixel == 2:
-            raise ValueError('not a RGB image (samplesperpixel=2)')
-
-        if bilevel:
-            if compresstag not in (1, 32773):
-                raise ValueError('cannot compress bilevel image')
-            if tile:
-                raise ValueError('cannot save tiled bilevel image')
-            if photometric not in (0, 1, 4):
-                raise ValueError(f'cannot save bilevel image as {photometric}')
-            datashape = list(datashape)
-            if datashape[-2] % 8:
-                datashape[-2] = datashape[-2] // 8 + 1
-            else:
-                datashape[-2] = datashape[-2] // 8
-            datashape = tuple(datashape)
-            if datasize != product(datashape):
-                raise RuntimeError('datasize != product(datashape)')
-            if data is not None:
-                data = numpy.packbits(data, axis=-2)
-                if datashape[-2] != data.shape[-2]:
-                    raise RuntimeError('datashape[-2] != data.shape[-2]')
-
-        tags = []  # list of (code, ifdentry, ifdvalue, writeonce)
-
-        if tile:
-            tagbytecounts = 325  # TileByteCounts
-            tagoffsets = 324  # TileOffsets
-        else:
-            tagbytecounts = 279  # StripByteCounts
-            tagoffsets = 273  # StripOffsets
-        self._tagoffsets = tagoffsets
-
-        def pack(fmt, *val):
-            return struct.pack(byteorder + fmt, *val)
+        self._tagbytecounts = 325  # TileByteCounts
+        self._tagoffsets = 324 # TileOffsets
 
         def addtag(code, dtype, count, value, writeonce=False):
             # compute ifdentry & ifdvalue bytes from code, dtype, count, value
             # append (code, ifdentry, ifdvalue, writeonce) to tags list
             if not isinstance(code, int):
-                code = TIFF.TAGS[code]
+                code = tifffile.TIFF.TAGS[code]
             try:
-                tifftype = TIFF.DATA_DTYPES[dtype]
+                tifftype = tifffile.TIFF.DATA_DTYPES[dtype]
             except KeyError as exc:
                 raise ValueError(f'unknown dtype {dtype}') from exc
             rawcount = count
 
             if dtype == 's':
                 # strings; enforce 7-bit ASCII on unicode strings
-                value = bytestr(value, 'ascii') + b'\0'
+                if code == 270:
+                    value = tifffile.bytestr(value, 'utf-8') + b'\0'
+                else:
+                    value = tifffile.bytestr(value, 'ascii') + b'\0'
                 count = rawcount = len(value)
                 rawcount = value.find(b'\0\0')
                 if rawcount < 0:
@@ -1326,36 +1017,36 @@ class BioWriter():
             if len(dtype) > 1:
                 count *= int(dtype[:-1])
                 dtype = dtype[-1]
-            ifdentry = [pack('HH', code, tifftype),
-                        pack(offsetformat, rawcount)]
+            ifdentry = [self._pack('HH', code, tifftype),
+                        self._pack(offsetformat, rawcount)]
             ifdvalue = None
             if struct.calcsize(dtype) * count <= offsetsize:
                 # value(s) can be written directly
                 if isinstance(value, bytes):
-                    ifdentry.append(pack(valueformat, value))
+                    ifdentry.append(self._pack(valueformat, value))
                 elif count == 1:
-                    if isinstance(value, (tuple, list, numpy.ndarray)):
+                    if isinstance(value, (tuple, list, np.ndarray)):
                         value = value[0]
-                    ifdentry.append(pack(valueformat, pack(dtype, value)))
+                    ifdentry.append(self._pack(valueformat, self._pack(dtype, value)))
                 else:
-                    ifdentry.append(pack(valueformat,
-                                         pack(str(count) + dtype, *value)))
+                    ifdentry.append(self._pack(valueformat,
+                                    self._pack(str(count) + dtype, *value)))
             else:
                 # use offset to value(s)
-                ifdentry.append(pack(offsetformat, 0))
+                ifdentry.append(self._pack(offsetformat, 0))
                 if isinstance(value, bytes):
                     ifdvalue = value
-                elif isinstance(value, numpy.ndarray):
+                elif isinstance(value, np.ndarray):
                     if value.size != count:
                         raise RuntimeError('value.size != count')
                     if value.dtype.char != dtype:
                         raise RuntimeError('value.dtype.char != dtype')
                     ifdvalue = value.tobytes()
                 elif isinstance(value, (tuple, list)):
-                    ifdvalue = pack(str(count) + dtype, *value)
+                    ifdvalue = self._pack(str(count) + dtype, *value)
                 else:
-                    ifdvalue = pack(dtype, value)
-            tags.append((code, b''.join(ifdentry), ifdvalue, writeonce))
+                    ifdvalue = self._pack(dtype, value)
+            self._tags.append((code, b''.join(ifdentry), ifdvalue, writeonce))
 
         def rational(arg, max_denominator=1000000):
             # return nominator and denominator from float or two integers
@@ -1367,156 +1058,44 @@ class BioWriter():
             f = f.limit_denominator(max_denominator)
             return f.numerator, f.denominator
 
-        if description:
-            # ImageDescription: user provided description
-            addtag(270, 's', 0, description, writeonce=True)
+        # print(self._metadata)
+        description = str(self._metadata)
+        addtag(270, 's', 0, description, writeonce=True) # Description
+        addtag(305, 's', 0, 'bfio 2.4.0', writeonce=True) # Software
+        # addtag(306, 's', 0, datetime, writeonce=True)
+        addtag(259, 'H', 1, self._compresstag)  # Compression
+        addtag(256, 'I', 1, self._datashape[-2])  # ImageWidth
+        addtag(257, 'I', 1, self._datashape[-3])  # ImageLength
+        addtag(322, 'I', 1, self._TILE_SIZE)  # TileWidth
+        addtag(323, 'I', 1, self._TILE_SIZE)  # TileLength
+        
+        if not self._datadtype.kind == 'u':
+            sampleformat = {'u': 1, 'i': 2, 'f': 3, 'c': 6}[self._datadtype.kind]
+            addtag(339, 'H', self._samplesperpixel,
+                   (sampleformat,) * self._samplesperpixel)
+            
+        addtag(277, 'H', 1, self._samplesperpixel)
+        addtag(258, 'H', 1, self._bitspersample)
 
-        # write shape and metadata to ImageDescription
-        self._metadata = {} if not metadata else metadata.copy()
-        if self._imagej:
-            if ijmetadata is None:
-                ijmetadata = parse_kwargs(
-                    self._metadata,
-                    'Info', 'Labels', 'Ranges', 'LUTs', 'Plot', 'ROI',
-                    'Overlays',
-                    'info', 'labels', 'ranges', 'luts', 'plot', 'roi',
-                    'overlays'
-                )
-            # TODO: activate DeprecationWarning and update tests
-            # else:
-            #     warnings.warn(
-            #         "TiffWriter: the 'ijmetadata' argument is deprecated",
-            #         DeprecationWarning
-            #     )
-            for t in imagej_metadata_tag(ijmetadata, byteorder):
-                addtag(*t)
-            description = imagej_description(
-                input_shape,
-                shape[-1] in (3, 4),
-                self._colormap is not None,
-                **self._metadata
-            )
-        elif metadata or metadata == {}:
-            if self._truncate:
-                self._metadata.update(truncated=True)
-            description = json_description(input_shape, **self._metadata)
-        # elif metadata is None and self._truncate:
-        #     raise ValueError('cannot truncate without writing metadata')
+        subsampling = None
+        maxsampling = 1
+        # PhotometricInterpretation
+        addtag(262, 'H', 1, tifffile.TIFF.PHOTOMETRIC.MINISBLACK.value)
+
+        if self.physical_size_x() is not None:
+            addtag(282, '2I', 1, rational(self.physical_size_x()[0]/10000))  # XResolution in cm
+            addtag(283, '2I', 1, rational(self.physical_size_y()[0]/10000))  # YResolution in cm
+            addtag(296, 'H', 1, 3)  # ResolutionUnit = cm
         else:
-            description = None
-        if description:
-            # add 64 bytes buffer
-            # the image description might be updated later with the final shape
-            description = description.encode('ascii')
-            description += b'\0' * 64
-            self._descriptionlen = len(description)
-            addtag(270, 's', 0, description, writeonce=True)
-
-        if software:
-            addtag(305, 's', 0, software, writeonce=True)
-        if datetime:
-            if isinstance(datetime, str):
-                if len(datetime) != 19 or datetime[16] != ':':
-                    raise ValueError('invalid datetime string')
-            else:
-                try:
-                    datetime = datetime.strftime('%Y:%m:%d %H:%M:%S')
-                except AttributeError:
-                    datetime = self._now().strftime('%Y:%m:%d %H:%M:%S')
-            addtag(306, 's', 0, datetime, writeonce=True)
-        addtag(259, 'H', 1, compresstag)  # Compression
-        if compresstag == 34887:
-            # LERC without additional compression
-            addtag(50674, 'I', 2, (4, 0))
-        if predictor:
-            addtag(317, 'H', 1, predictortag)
-        addtag(256, 'I', 1, shape[-2])  # ImageWidth
-        addtag(257, 'I', 1, shape[-3])  # ImageLength
-        if tile:
-            addtag(322, 'I', 1, tile[-1])  # TileWidth
-            addtag(323, 'I', 1, tile[-2])  # TileLength
-            if volume:
-                addtag(32997, 'I', 1, shape[-4])  # ImageDepth
-                addtag(32998, 'I', 1, tile[0])  # TileDepth
-        if subfiletype:
-            addtag(254, 'I', 1, subfiletype)  # NewSubfileType
-        if not bilevel and not datadtype.kind == 'u':
-            sampleformat = {'u': 1, 'i': 2, 'f': 3, 'c': 6}[datadtype.kind]
-            addtag(339, 'H', samplesperpixel,
-                   (sampleformat,) * samplesperpixel)
-        if colormap is not None:
-            addtag(320, 'H', colormap.size, colormap)
-        addtag(277, 'H', 1, samplesperpixel)
-        if bilevel:
-            pass
-        elif planarconfig and samplesperpixel > 1:
-            addtag(284, 'H', 1, planarconfig.value)  # PlanarConfiguration
-            addtag(258, 'H', samplesperpixel,
-                   (bitspersample,) * samplesperpixel)  # BitsPerSample
-        else:
-            addtag(258, 'H', 1, bitspersample)
-        if extrasamples:
-            if extrasamples_ is not None:
-                if extrasamples != len(extrasamples_):
-                    raise ValueError('wrong number of extrasamples specified')
-                addtag(338, 'H', extrasamples, extrasamples_)
-            elif photometric == RGB and extrasamples == 1:
-                # Unassociated alpha channel
-                addtag(338, 'H', 1, 2)
-            else:
-                # Unspecified alpha channel
-                addtag(338, 'H', extrasamples, (0,) * extrasamples)
-
-        if compresstag == 7 and photometric == RGB and planarconfig == 1:
-            # JPEG compression with subsampling. Store as YCbCr
-            # TODO: use JPEGTables for multiple tiles or strips
-            if subsampling is None:
-                subsampling = (2, 2)
-            elif subsampling not in ((1, 1), (2, 1), (2, 2), (4, 1)):
-                raise ValueError('invalid subsampling factors')
-            maxsampling = max(subsampling) * 8
-            if tile and (tile[-1] % maxsampling or tile[-2] % maxsampling):
-                raise ValueError(f'tile shape not a multiple of {maxsampling}')
-            if extrasamples > 1:
-                raise ValueError('JPEG subsampling requires RGB(A) images')
-            addtag(530, 'H', 2, subsampling)  # YCbCrSubSampling
-            addtag(262, 'H', 1, 6)  # PhotometricInterpretation YCBCR
-            # ReferenceBlackWhite is required for YCBCR
-            addtag(532, '2I', 6,
-                   (0, 1, 255, 1, 128, 1, 255, 1, 128, 1, 255, 1))
-        else:
-            if subsampling not in (None, (1, 1)):
-                log_warning('TiffWriter: cannot apply subsampling')
-            subsampling = None
-            maxsampling = 1
-            # PhotometricInterpretation
-            addtag(262, 'H', 1, photometric.value)
-            # if compresstag == 7:
-            #     addtag(530, 'H', 2, (1, 1))  # YCbCrSubSampling
-
-        if resolution is not None:
-            addtag(282, '2I', 1, rational(resolution[0]))  # XResolution
-            addtag(283, '2I', 1, rational(resolution[1]))  # YResolution
-            if len(resolution) > 2:
-                unit = resolution[2]
-                unit = 1 if unit is None else enumarg(TIFF.RESUNIT, unit)
-            elif self._imagej:
-                unit = 1
-            else:
-                unit = 2
-            addtag(296, 'H', 1, unit)  # ResolutionUnit
-        elif not self._imagej:
             addtag(282, '2I', 1, (1, 1))  # XResolution
             addtag(283, '2I', 1, (1, 1))  # YResolution
             addtag(296, 'H', 1, 1)  # ResolutionUnit
 
-        def bytecount_format(bytecounts, compress=compress, size=offsetsize):
+        def bytecount_format(bytecounts, size=offsetsize):
             # return small bytecount format
             if len(bytecounts) == 1:
                 return {4: 'I', 8: 'Q'}[size]
-            bytecount = bytecounts[0]
-            if compress:
-                bytecount = bytecount * 10
+            bytecount = bytecounts[0] * 10
             if bytecount < 2**16:
                 return 'H'
             if bytecount < 2**32:
@@ -1526,289 +1105,192 @@ class BioWriter():
             return 'Q'
 
         # can save data array contiguous
-        contiguous = not compress and not packints
-        if tile:
-            # one chunk per tile per plane
-            if len(tile) == 2:
-                tiles = (
-                    (shape[3] + tile[0] - 1) // tile[0],
-                    (shape[4] + tile[1] - 1) // tile[1],
-                )
-                contiguous = (
-                    contiguous and
-                    shape[3] == tile[0] and
-                    shape[4] == tile[1]
-                )
-            else:
-                tiles = (
-                    (shape[2] + tile[0] - 1) // tile[0],
-                    (shape[3] + tile[1] - 1) // tile[1],
-                    (shape[4] + tile[2] - 1) // tile[2],
-                )
-                contiguous = (
-                    contiguous and
-                    shape[2] == tile[0] and
-                    shape[3] == tile[1] and
-                    shape[4] == tile[2]
-                )
-            numtiles = product(tiles) * shape[1]
-            databytecounts = [
-                product(tile) * shape[-1] * datadtype.itemsize] * numtiles
-            bytecountformat = bytecount_format(databytecounts)
-            addtag(tagbytecounts, bytecountformat, numtiles, databytecounts)
-            addtag(tagoffsets, offsetformat, numtiles, [0] * numtiles)
-            bytecountformat = bytecountformat * numtiles
-            if contiguous or tileiter is not None:
-                pass
-            else:
-                tileiter = iter_tiles(data, tile, tiles)
-
-        elif contiguous and (bilevel or rowsperstrip is None):
-            # one strip per plane
-            if bilevel:
-                databytecounts = [product(datashape[2:])] * shape[1]
-            else:
-                databytecounts = [
-                    product(datashape[2:]) * datadtype.itemsize] * shape[1]
-            bytecountformat = bytecount_format(databytecounts)
-            addtag(tagbytecounts, bytecountformat, shape[1], databytecounts)
-            addtag(tagoffsets, offsetformat, shape[1], [0] * shape[1])
-            addtag(278, 'I', 1, shape[-3])  # RowsPerStrip
-            bytecountformat = bytecountformat * shape[1]
-        else:
-            # use rowsperstrip
-            rowsize = product(shape[-2:]) * datadtype.itemsize
-            if rowsperstrip is None:
-                # compress ~64 KB chunks by default
-                rowsperstrip = 65536 // rowsize if compress else shape[-3]
-            if rowsperstrip < 1:
-                rowsperstrip = maxsampling
-            elif rowsperstrip > shape[-3]:
-                rowsperstrip = shape[-3]
-            elif subsampling and rowsperstrip % maxsampling:
-                rowsperstrip = (math.ceil(rowsperstrip / maxsampling) *
-                                maxsampling)
-            addtag(278, 'I', 1, rowsperstrip)  # RowsPerStrip
-
-            numstrips1 = (shape[-3] + rowsperstrip - 1) // rowsperstrip
-            numstrips = numstrips1 * shape[1]
-            # TODO: save bilevel data with rowsperstrip
-            stripsize = rowsperstrip * rowsize
-            databytecounts = [stripsize] * numstrips
-            stripsize -= rowsize * (numstrips1 * rowsperstrip - shape[-3])
-            for i in range(numstrips1 - 1, numstrips, numstrips1):
-                databytecounts[i] = stripsize
-            bytecountformat = bytecount_format(databytecounts)
-            addtag(tagbytecounts, bytecountformat, numstrips, databytecounts)
-            addtag(tagoffsets, offsetformat, numstrips, [0] * numstrips)
-            bytecountformat = bytecountformat * numstrips
-
-        if data is None and not contiguous:
-            raise ValueError('cannot write non-contiguous empty file')
-
-        # add extra tags from user
-        for t in extratags:
-            addtag(*t)
-
-        # define compress function
-        if compress:
-            compressor = TIFF.COMPESSORS[compresstag]
-
-            if subsampling:
-                # JPEG with subsampling. Store RGB as YCbCr
-                def compress(data, compressor=compressor, level=compresslevel,
-                             subsampling=subsampling):
-                    return compressor(data, level, subsampling=subsampling,
-                                      colorspace=2, outcolorspace=3)
-
-            elif predictor:
-                def compress(data, predictor=predictor, compressor=compressor,
-                             level=compresslevel):
-                    data = predictor(data, axis=-2)
-                    return compressor(data, level)
-
-            elif compresslevel is not None:
-                def compress(data, compressor=compressor, level=compresslevel):
-                    return compressor(data, level)
-
-            else:
-                compress = compressor
-
-        elif packints:
-
-            def compress(data, bps=bitspersample):
-                return packints_encode(data, bps, axis=-2)
-
-        # TODO: check TIFFReadDirectoryCheckOrder warning in files containing
-        #   multiple tags of same code
+        contiguous = False
+        
+        # one chunk per tile per plane
+        self._tiles = (
+            (self._datashape[3] + self._TILE_SIZE - 1) // self._TILE_SIZE,
+            (self._datashape[4] + self._TILE_SIZE - 1) // self._TILE_SIZE,
+        )
+            
+        self._numtiles = tifffile.product(self._tiles)
+        self._databytecounts = [
+            self._TILE_SIZE ** 2 * self._datadtype.itemsize] * self._numtiles
+        self._bytecountformat = bytecount_format(self._databytecounts)
+        addtag(self._tagbytecounts, self._bytecountformat, self._numtiles, self._databytecounts)
+        addtag(self._tagoffsets, offsetformat, self._numtiles, [0] * self._numtiles)
+        self._bytecountformat = self._bytecountformat * self._numtiles
+        
         # the entries in an IFD must be sorted in ascending order by tag code
-        tags = sorted(tags, key=lambda x: x[0])
+        self._tags = sorted(self._tags, key=lambda x: x[0])
+        
+    def _open_next_page(self):
+        if self._current_page == None:
+            self._current_page = 0
+        else:
+            self._current_page += 1
+            
+        fh = self.__writer._fh
+        
+        self._ifdpos = fh.tell()
+        
+        tagnoformat = self.__writer._tagnoformat
+        valueformat = self.__writer._valueformat
+        offsetformat = self.__writer._offsetformat
+        offsetsize = self.__writer._offsetsize
+        tagsize = self.__writer._tagsize
+        tagbytecounts = self._tagbytecounts
+        tagoffsets = self._tagoffsets
+        tags = self._tags
+        
+        if self._ifdpos % 2:
+            # location of IFD must begin on a word boundary
+            fh.write(b'\0')
+            self._ifdpos += 1
+
+        # update pointer at ifdoffset
+        fh.seek(self.__writer._ifdoffset)
+        fh.write(self._pack(offsetformat, self._ifdpos))
+        fh.seek(self._ifdpos)
+
+        # create IFD in memory, do not write to disk
+        if self._current_page < 2:
+            self._ifd = io.BytesIO()
+            self._ifd.write(self._pack(tagnoformat, len(tags)))
+            tagoffset = self._ifd.tell()
+            self._ifd.write(b''.join(t[1] for t in tags))
+            self.__writer._ifdoffset = self._ifd.tell()
+            self._ifd.write(self._pack(offsetformat, 0))  # offset to next IFD
+            # write tag values and patch offsets in ifdentries
+            for tagindex, tag in enumerate(tags):
+                offset = tagoffset + tagindex * tagsize + offsetsize + 4
+                code = tag[0]
+                value = tag[2]
+                if value:
+                    pos = self._ifd.tell()
+                    if pos % 2:
+                        # tag value is expected to begin on word boundary
+                        self._ifd.write(b'\0')
+                        pos += 1
+                    self._ifd.seek(offset)
+                    self._ifd.write(self._pack(offsetformat, self._ifdpos + pos))
+                    self._ifd.seek(pos)
+                    self._ifd.write(value)
+                    if code == tagoffsets:
+                        self._dataoffsetsoffset = offset, pos
+                    elif code == tagbytecounts:
+                        self._databytecountsoffset = offset, pos
+                    elif code == 270 and value.endswith(b'\0\0\0\0'):
+                        # image description buffer
+                        self._descriptionoffset = self._ifdpos + pos
+                        self._descriptionlenoffset = (
+                            self._ifdpos + tagoffset + tagindex * tagsize + 4)
+                elif code == tagoffsets:
+                    self._dataoffsetsoffset = offset, None
+                elif code == tagbytecounts:
+                    databytecountsoffset = offset, None
+            ifdsize = self._ifd.tell()
+            if ifdsize % 2:
+                self._ifd.write(b'\0')
+                ifdsize += 1
+                
+        self._databytecounts = [0 for _ in self._databytecounts]
+        self._databyteoffsets = [0 for _ in self._databytecounts]
+
+        # move to file position where data writing will begin
+        # will write the tags later when the tile offsets are known
+        fh.seek(ifdsize, 1)
+
+        # write image data
+        dataoffset = fh.tell()
+        skip = (16 - (dataoffset % 16)) % 16
+        fh.seek(skip, 1)
+        dataoffset += skip
+        
+        self._page_open = True
+    
+    def _close_page(self):
+        
+        offsetformat = self.__writer._offsetformat
+        bytecountformat = self._bytecountformat
+        
+        fh = self.__writer._fh
+        
+        # update strip/tile offsets
+        offset, pos = self._dataoffsetsoffset
+        self._ifd.seek(offset)
+        
+        self._ifd.write(self._pack(offsetformat, self._ifdpos + pos))
+        self._ifd.seek(pos)
+        for size in self._databyteoffsets:
+            self._ifd.write(self._pack(offsetformat, size))
+
+        # update strip/tile bytecounts
+        offset, pos = self._databytecountsoffset
+        self._ifd.seek(offset)
+        if pos:
+            self._ifd.write(self._pack(offsetformat, self._ifdpos + pos))
+            self._ifd.seek(pos)
+        self._ifd.write(self._pack(bytecountformat, *self._databytecounts))
 
         fhpos = fh.tell()
-        if (
-            not (self._bigtiff or self._imagej or compress)
-            and fhpos + datasize > 2**32 - 1
-        ):
-            raise ValueError('data too large for standard TIFF file')
+        fh.seek(self._ifdpos)
+        fh.write(self._ifd.getbuffer())
+        fh.flush()
+        fh.seek(fhpos)
 
-        # if not compressed or multi-tiled, write the first IFD and then
-        # all data contiguously; else, write all IFDs and data interleaved
-        for pageindex in range(1 if contiguous else shape[0]):
+        self.__writer._ifdoffset = self._ifdpos + self.__writer._ifdoffset
 
-            ifdpos = fhpos
-            if ifdpos % 2:
-                # location of IFD must begin on a word boundary
-                fh.write(b'\0')
-                ifdpos += 1
+        # remove tags that should be written only once
+        if self._current_page == 0:
+            tags = [tag for tag in self._tags if not tag[-1]]
+            
+        self._page_open = False
+        
+    def _write_tiles(self, data, X, Y):
+        
+        assert len(X)==2 and len(Y)==2
+        
+        if X[0] % self._TILE_SIZE != 0 or Y[0] % self._TILE_SIZE != 0:
+            print('X or Y positions are not on tile boundary, tile may save incorrectly')
 
-            # update pointer at ifdoffset
-            fh.seek(self._ifdoffset)
-            fh.write(pack(offsetformat, ifdpos))
-            fh.seek(ifdpos)
+        fh = self.__writer._fh
+        
+        x_tiles = list(range(X[0]//self._TILE_SIZE,1+(X[1] - 1)//self._TILE_SIZE))
+        tiles = []
+        for y in range(Y[0]//self._TILE_SIZE,1+(Y[1] - 1)//self._TILE_SIZE):
+            tiles.extend([y*self._tiles[1]+x for x in x_tiles])
+            
+        tile_shape = ((Y[1] - Y[0] - 1 + self._TILE_SIZE)//self._TILE_SIZE,
+                      (X[1] - X[0] - 1 + self._TILE_SIZE)//self._TILE_SIZE)
 
-            # create IFD in memory
-            if pageindex < 2:
-                ifd = io.BytesIO()
-                ifd.write(pack(tagnoformat, len(tags)))
-                tagoffset = ifd.tell()
-                ifd.write(b''.join(t[1] for t in tags))
-                ifdoffset = ifd.tell()
-                ifd.write(pack(offsetformat, 0))  # offset to next IFD
-                # write tag values and patch offsets in ifdentries
-                for tagindex, tag in enumerate(tags):
-                    offset = tagoffset + tagindex * tagsize + offsetsize + 4
-                    code = tag[0]
-                    value = tag[2]
-                    if value:
-                        pos = ifd.tell()
-                        if pos % 2:
-                            # tag value is expected to begin on word boundary
-                            ifd.write(b'\0')
-                            pos += 1
-                        ifd.seek(offset)
-                        ifd.write(pack(offsetformat, ifdpos + pos))
-                        ifd.seek(pos)
-                        ifd.write(value)
-                        if code == tagoffsets:
-                            dataoffsetsoffset = offset, pos
-                        elif code == tagbytecounts:
-                            databytecountsoffset = offset, pos
-                        elif code == 270 and value.endswith(b'\0\0\0\0'):
-                            # image description buffer
-                            self._descriptionoffset = ifdpos + pos
-                            self._descriptionlenoffset = (
-                                ifdpos + tagoffset + tagindex * tagsize + 4)
-                    elif code == tagoffsets:
-                        dataoffsetsoffset = offset, None
-                    elif code == tagbytecounts:
-                        databytecountsoffset = offset, None
-                ifdsize = ifd.tell()
-                if ifdsize % 2:
-                    ifd.write(b'\0')
-                    ifdsize += 1
+        data = data.reshape(1,1,1,data.shape[0],data.shape[1],1)
+        tileiter = tifffile.iter_tiles(data,
+                                       (self._TILE_SIZE,self._TILE_SIZE), tile_shape)
 
-            # write IFD later when strip/tile bytecounts and offsets are known
-            fh.seek(ifdsize, 1)
+        # define compress function
+        compressor = tifffile.TIFF.COMPESSORS[self._compresstag]
+        def compress(data, level=1):
+            data = memoryview(data)
+            cpr = zlib.compressobj(level,
+                                   memLevel=9,
+                                   wbits=15)
+            output = b''.join([cpr.compress(data),cpr.flush()])
+            return output
 
-            # write image data
-            dataoffset = fh.tell()
-            skip = (align - (dataoffset % align)) % align
-            fh.seek(skip, 1)
-            dataoffset += skip
-            if contiguous:
-                if data is None:
-                    fh.write_empty(datasize)
-                else:
-                    fh.write_array(data)
-            elif tile:
-                if data is None:
-                    fh.write_empty(numtiles * databytecounts[0])
-                else:
-                    tilesize = product(tile) * shape[-1]
-                    for tileindex in range(datashape[1] * product(tiles)):
-                        chunk = next(tileiter)
-                        if chunk is None:
-                            if compress:
-                                databytecounts[tileindex] = 0
-                            else:
-                                fh.write_empty(databytecounts[0])
-                            continue
-                        if chunk.size != tilesize:
-                            raise ValueError(
-                                f'invalid tile {chunk.shape!r} != {tile!r}')
-                        if compress:
-                            t = compress(chunk)
-                            fh.write(t)
-                            databytecounts[tileindex] = len(t)
-                        else:
-                            fh.write_array(chunk)
-                            # fh.flush()
-            elif compress:
-                # write one strip per rowsperstrip
-                if data.shape[2] != 1:
-                    # not handling depth
-                    raise RuntimeError('data.shape[2] != 1')
-                numstrips = (shape[-3] + rowsperstrip - 1) // rowsperstrip
-                stripindex = 0
-                for plane in data[pageindex]:
-                    for i in range(numstrips):
-                        strip = plane[
-                            0,
-                            i * rowsperstrip: (i + 1) * rowsperstrip
-                        ]
-                        strip = compress(strip)
-                        fh.write(strip)
-                        databytecounts[stripindex] = len(strip)
-                        stripindex += 1
-            else:
-                fh.write_array(data[pageindex])
+        offsetformat = self.__writer._offsetformat
+        tagnoformat = self.__writer._tagnoformat
+        
+        # tileiter = [tile for tile in tileiter]
+        tileiter = [copy.deepcopy(tile) for tile in tileiter]
+        with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()//2) as executor:
+            compressed_tiles = iter(executor.map(compress,tileiter))
+        for tileindex in tiles:
+            t = next(compressed_tiles)
+            self._databyteoffsets[tileindex] = fh.tell()
+            fh.write(t)
+            self._databytecounts[tileindex] = len(t)
 
-            # update strip/tile offsets
-            offset, pos = dataoffsetsoffset
-            ifd.seek(offset)
-            if pos:
-                ifd.write(pack(offsetformat, ifdpos + pos))
-                ifd.seek(pos)
-                offset = dataoffset
-                for size in databytecounts:
-                    ifd.write(pack(offsetformat, offset))
-                    offset += size
-            else:
-                ifd.write(pack(offsetformat, dataoffset))
-
-            if compress:
-                # update strip/tile bytecounts
-                offset, pos = databytecountsoffset
-                ifd.seek(offset)
-                if pos:
-                    ifd.write(pack(offsetformat, ifdpos + pos))
-                    ifd.seek(pos)
-                ifd.write(pack(bytecountformat, *databytecounts))
-
-            fhpos = fh.tell()
-            fh.seek(ifdpos)
-            fh.write(ifd.getbuffer())
-            fh.flush()
-            fh.seek(fhpos)
-
-            self._ifdoffset = ifdpos + ifdoffset
-
-            # remove tags that should be written only once
-            if pageindex == 0:
-                tags = [tag for tag in tags if not tag[-1]]
-
-        self._shape = shape
-        self._datashape = (1,) + input_shape
-        self._datadtype = datadtype
-        self._dataoffset = dataoffset
-        self._databytecounts = databytecounts
-
-        if contiguous:
-            # write remaining IFDs/tags later
-            self._tags = tags
-            # return offset and size of image data
-            if returnoffset:
-                return dataoffset, sum(databytecounts)
         return None
 
     def pixel_type(self, dtype=None):
@@ -2172,41 +1654,21 @@ class BioWriter():
         self._val_xyz(Z, 'Z')
         self._val_ct(C, 'C')
         self._val_ct(T, 'T')
-
-        # Set options for file loading based on metadata
-        # open in parts if more than max_bytes
-        save_in_parts = (X[1]-X[0])*(Y[1]-Y[0]) > self._pix['chunk']
+        
+        if self._current_page != None and Z[0] < self._current_page:
+            raise ValueError('Cannot write z layers below the current open page. (current page={},Z[0]={})'.format(self._current_page,Z[0]))
 
         # Initialize the writer if it hasn't already been initialized
         if not self.__writer:
             self._init_writer()
 
         # Do the work
-        for ti, t in zip(range(0, len(T)), T):
-            for zi, z in zip(range(0, Z[1]-Z[0]), range(Z[0], Z[1])):
-                if not save_in_parts:
-                    for ci, c in zip(range(0, len(C)), C):
-                        index = z + self._xyzct['Z'] * c + \
-                            self._xyzct['Z'] * self._xyzct['C'] * t
-                        pixel_buffer = bioformats.formatwriter.convert_pixels_to_buffer(
-                            image[:, :, zi, ci, ti], self._pix['type'])
-                        self.__writer.saveBytesXYWH(
-                            index, pixel_buffer, X[0], Y[0], X[1]-X[0], Y[1]-Y[0])
-                else:
-                    for ci, c in zip(range(0, len(C)), C):
-                        index = z + self._xyzct['Z'] * c + \
-                            self._xyzct['Z'] * self._xyzct['C'] * t
-                        for x in range(X[0], X[1], self._TILE_SIZE):
-                            x_max = np.min([x+self._TILE_SIZE, X[1]])
-                            x_range = x_max - x
-                            for y in range(Y[0], Y[1], self._TILE_SIZE):
-                                y_max = np.min([y+self._TILE_SIZE, Y[1]])
-                                y_range = y_max - y
-
-                                pixel_buffer = bioformats.formatwriter.convert_pixels_to_buffer(
-                                    image[y-Y[0]:y_max-Y[0], x-X[0]:x_max-X[0], zi, ci, ti], self._pix['type'])
-                                self.__writer.saveBytesXYWH(
-                                    index, pixel_buffer, x, y, x_range, y_range)
+        for zi, z in zip(range(0, Z[1]-Z[0]), range(Z[0], Z[1])):
+            while z != self._current_page:
+                if self._page_open:
+                    self._close_page()
+                self._open_next_page()
+            self._write_tiles(image[...,zi,0,0],X,Y)
 
     def close_image(self):
         """close_image Close the image
@@ -2214,7 +1676,9 @@ class BioWriter():
         This function should be called when an image will no longer be written
         to. This allows for proper closing and organization of metadata.
         """
-        self.__writer.close()
+        if self._page_open:
+            self._close_page()
+        self.__writer._fh.close()
 
     def _put(self):
         """_put Method for saving image supertiles
