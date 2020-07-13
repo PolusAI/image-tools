@@ -338,14 +338,12 @@ class OMEXML(object):
             ElementTree.register_namespace(ns_key, ns)
         ElementTree.register_namespace("om", NS_ORIGINAL_METADATA)
         result = StringIO()
-        print(encoding)
         ElementTree.ElementTree(self.root_node).write(result,
                                                       encoding=encoding,
                                                       method="xml")
         return result.getvalue()
 
     def to_xml(self, indent="\t", newline="\n", encoding=uenc):
-        print(encoding)
         return str(self,encoding=encoding)
 
     def get_ns(self, key):
