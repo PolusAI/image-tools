@@ -5,6 +5,7 @@ from pathlib import Path
 import imageio
 import filepattern
 import os
+import math
 
 # Conversion factors to nm, these are based off of supported Bioformats length units
 UNITS = {'m':  10**9,
@@ -17,6 +18,10 @@ UNITS = {'m':  10**9,
 # Chunk Scale
 CHUNK_SIZE = 1024
 
+def squeeze_generic(a, axes_to_keep):
+    out_s = [s for i,s in enumerate(a.shape) if i in axes_to_keep or s!=1]
+    return a.reshape(out_s)
+
 def _avg2(image):
     """ Average pixels together with optical field 2x2 and stride 2
     
@@ -25,22 +30,24 @@ def _avg2(image):
     Outputs:
         avg_img - numpy array with only two dimensions (round(m/2),round(n/2))
     """
-    image = image.astype('uint64')
-    y_max = image.shape[0] - image.shape[0] % 2
-    x_max = image.shape[1] - image.shape[1] % 2
-    avg_img = np.zeros(np.ceil([d/2 for d in image.shape]).astype('int'))
-    avg_img[0:int(y_max/2),0:int(x_max/2)]= (image[0:y_max-1:2,0:x_max-1:2] + \
-                                             image[1:y_max:2,0:x_max-1:2] + \
-                                             image[0:y_max-1:2,1:x_max:2] + \
-                                             image[1:y_max:2,1:x_max:2]) / 4
-    if y_max != image.shape[0]:
-        avg_img[-1,:int(x_max/2)] = (image[-1,0:x_max-1:2] + \
-                                     image[-1,1:x_max:2]) / 2
-    if x_max != image.shape[1]:
-        avg_img[:int(y_max/2),-1] = (image[0:y_max-1:2,-1] + \
-                                     image[1:y_max:2,-1]) / 2
-    if y_max != image.shape[0] and x_max != image.shape[1]:
-        avg_img[-1,-1] = image[-1,-1]
+
+    image = image.astype('uint16')
+    imgshape = image.shape
+    ypos = imgshape[0]
+    xpos = imgshape[1]
+    zpos = imgshape[2]
+    z_max = zpos - zpos % 2    # if even then subtracting 0. 
+    y_max = ypos - ypos % 2 # if odd then subtracting 1
+    x_max = xpos - xpos % 2
+    yxz_max = [y_max, x_max, z_max]
+
+    avg_imgshape = [d/2 for d in imgshape]
+    avg_img = np.zeros(np.ceil(avg_imgshape).astype('int'))
+    avg_img[0:int(y_max/2),0:int(x_max/2),:]= (\
+                                                image[0:y_max-1:2,0:x_max-1:2,:] + \
+                                                image[1:y_max:2  ,0:x_max-1:2,:] + \
+                                                image[0:y_max-1:2,1:x_max:2  ,:] + \
+                                                image[1:y_max:2  ,1:x_max:2  ,:])/4
 
     return avg_img
 
@@ -95,25 +102,31 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None, s
         X = [0,scale_info['size'][0]]
     if Y == None:
         Y = [0,scale_info['size'][1]]
-    
+    Z = [0,1]
+        
     # Modify upper bound to stay within resolution dimensions
     if X[1] > scale_info['size'][0]:
         X[1] = scale_info['size'][0]
     if Y[1] > scale_info['size'][1]:
         Y[1] = scale_info['size'][1]
+    # if Z[1] > scale_info['size'][2]:
+    #     Z[1] = scale_info['size'][2]
+
     
     # Initialize the output
-    image = np.zeros((Y[1]-Y[0],X[1]-X[0]),dtype=bfio_reader.read_metadata().image().Pixels.get_PixelType())
+    image = np.zeros((Y[1]-Y[0],X[1]-X[0],1),dtype=bfio_reader.read_metadata().image().Pixels.get_PixelType())
     
     # If requesting from the lowest scale, then just read the image
     if str(S)==encoder.info['scales'][0]['key']:
         if slices == None:
-            image = bfio_reader.read_image(X=X,Y=Y).squeeze()
+            image = bfio_reader.read_image(X=X,Y=Y,Z=Z)
+            image = squeeze_generic(image, axes_to_keep=(0, 1, 2))
         else:
-            image = bfio_reader.read_image(X=X,Y=Y,Z=slices).squeeze()
+            image = bfio_reader.read_image(X=X,Y=Y,Z=slices)
+            image = squeeze_generic(image, axes_to_keep=(0, 1, 2))
     else:
         # Set the subgrid dimensions
-        subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]]]
+        subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]],[0,1]]
         for dim in subgrid_dims:
             while dim[1]-dim[0] > CHUNK_SIZE:
                 dim.insert(1,dim[0] + ((dim[1] - dim[0]-1)//CHUNK_SIZE) * CHUNK_SIZE)
@@ -132,7 +145,7 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None, s
                                             slide_writer=slide_writer,
                                             encoder=encoder,
                                             slices=slices)
-                image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1]] = _avg2(sub_image)
+                image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],0:1] = _avg2(sub_image)
 
     # Encode the chunk
     image_encoded = encoder.encode(image)
@@ -295,7 +308,7 @@ class DeepZoomChunkEncoder(NeuroglancerChunkEncoder):
         assert chunk.ndim == 2
         return chunk
 
-def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight):
+def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight, imagetype):
     """ Generate a Neuroglancer info file from Bioformats metadata
     
     Neuroglancer requires an info file in the root of the pyramid directory.
@@ -313,15 +326,21 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight):
     # Get metadata info from the bfio reader
     # sizes = [bfio_reader.num_x(),bfio_reader.num_y(),bfio_reader.num_z()]
     sizes = [bfio_reader.num_x(),bfio_reader.num_y(),stackheight]
-    phys_x = bfio_reader.physical_size_x()
-    if None in phys_x:
-        phys_x = (1000,'nm')
-    phys_y = bfio_reader.physical_size_y()
-    if None in phys_y:
-        phys_y = (1000,'nm')
+    # phys_x = bfio_reader.physical_size_x()
+    # if None in phys_x:
+    phys_x = (325,'nm')
+    # phys_y = bfio_reader.physical_size_y()
+    # if None in phys_y:
+    phys_y = (325,'nm')
+    # phys_z = bfio_reader.physical_size_z()
+    # if None in phys_z:
+    phys_z = (325,'nm')
     resolution = [phys_x[0] * UNITS[phys_x[1]]]
     resolution.append(phys_y[0] * UNITS[phys_y[1]])
-    resolution.append((phys_y[0] * UNITS[phys_y[1]] + phys_x[0] * UNITS[phys_x[1]])/2) # Just used as a placeholder
+    resolution.append(phys_z[0] * UNITS[phys_z[1]]) # Just used as a placeholder
+    with open('textfile.txt', 'a+') as f:
+        f.write("This is the resolution: %s" % resolution)
+    f.close()
     dtype = bfio_reader.read_metadata().image().Pixels.get_PixelType()
     
     num_scales = int(np.log2(max(sizes))) + 1
@@ -341,7 +360,7 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight):
         "data_type": dtype,
         "num_channels":1,
         "scales": [scales],       # Will build scales below
-        "type": "image"
+        "type": imagetype
     }
     
     for i in range(1,num_scales+1):
@@ -354,12 +373,12 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight):
     
     return info
 
-def neuroglancer_info_file(bfio_reader,outPath, stackheight):
+def neuroglancer_info_file(bfio_reader,outPath, stackheight, imagetype):
     # Create an output path object for the info file
     op = Path(outPath).joinpath("info")
     
     # Get pyramid info
-    info = bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight)
+    info = bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight, imagetype)
 
     # Write the neuroglancer info file
     with open(op,'w') as writer:
