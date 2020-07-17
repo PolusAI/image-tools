@@ -23,6 +23,7 @@ import struct,io
 from pathlib import Path
 import zlib, time, copy, multiprocessing
 from multiprocessing.dummy import Pool
+import matplotlib.pyplot as plt
 
 class BioReader():
     """BioReader Read supported image formats using Bioformats
@@ -300,13 +301,13 @@ class BioReader():
         y_tile_stride = np.ceil(self.num_x()/1024)
         
         for z in range(Z[0],Z[1]):
-            for y in range(Y[0],Y[1],1024):
-                y_offset = int(y//1024 * y_tile_stride)
+            for y in range(Y[0]//1024,int(np.ceil(Y[1]/1024))):
+                y_offset = int(y * y_tile_stride)
                 ind = (x_tiles + y_offset).tolist()
                 
                 offsets.extend([self._rdr.pages[z].dataoffsets[i] for i in ind])
                 bytecounts.extend([self._rdr.pages[z].databytecounts[i] for i in ind])
-                
+        
         return offsets,bytecounts
     
     def _decode_tile(self, args):
@@ -387,8 +388,8 @@ class BioReader():
         
         x_range = X[1]-X[0]
         y_range = Y[1]-Y[0]
-        x_tile_shape = int(np.ceil((x_range)/1024))
-        y_tile_shape = int(np.ceil((y_range)/1024))
+        x_tile_shape = int(np.ceil(X[1]/1024) - X[0]//1024)
+        y_tile_shape = int(np.ceil(Y[1]/1024) - Y[0]//1024)
         z_tile_shape = Z[1]-Z[0]
         
         self._tile_shape = (x_tile_shape,y_tile_shape,z_tile_shape)
@@ -403,9 +404,9 @@ class BioReader():
         offsets,bytecounts = self._chunk_indices(X,Y,Z)
         self._tile_indices = []
         for z in range(0,Z[1]-Z[0]):
-            for y in range(0,Y[1]-Y[0],1024):
-                for x in range(0,X[1]-X[0],1024):
-                    self._tile_indices.append((x,y,z))
+            for y in range(0,y_tile_shape):
+                for x in range(0,x_tile_shape):
+                    self._tile_indices.append((x*1024,y*1024,z))
         
         with ThreadPoolExecutor(self._keyframe.maxworkers) as executor:
             executor.map(self._decode_tile,fh.read_segments(offsets,bytecounts))
