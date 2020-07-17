@@ -289,6 +289,7 @@ if __name__=="__main__":
         # extract filenames from registration_string and similar_transformation_string
         registration_set=registration_string.split()
         similar_transformation_set=similar_transformation_string.split()
+        print(similar_transformation_set)
         
         filename_len=len(template)
           
@@ -396,10 +397,10 @@ if __name__=="__main__":
         # iterate across all images which have the similar transformation as the moving image above
         for moving_image_path in similar_transformation_set:
             
-            logger.info('Applying registration to image: {}'.format(moving_image_name))
-            
             # seperate image name from the path to it
             moving_image_name=moving_image_path[-1*filename_len:]
+            
+            logger.info('Applying registration to image: {}'.format(moving_image_name))
             
             br_mov = BioReader(moving_image_path)
      
@@ -411,7 +412,7 @@ if __name__=="__main__":
             bw.num_t(1)
             
             # Apply transformation to remaining images
-            logger.info('Tranformation progress: {:5.2f}%'.format(0.0))
+            logger.info('Transformation progress: {:5.2f}%'.format(0.0))
             threads = []
             with ThreadPoolExecutor(max([cpu_count()-1,1])) as executor:
                 first_tile = True
@@ -428,9 +429,9 @@ if __name__=="__main__":
                 # Wait for threads to finish and track progress 
                 for thread_num in range(len(threads)):
                     if thread_num % 10 == 0:
-                        logger.info('Tranformation progress: {:6.2f}%'.format(100*thread_num/len(threads)))
+                        logger.info('Transformation progress: {:6.2f}%'.format(100*thread_num/len(threads)))
                     threads[thread_num].result()
-            logger.info('Tranformation progress: {:6.2f}%'.format(100.0))
+            logger.info('Transformation progress: {:6.2f}%'.format(100.0))
             
             bw.close_image()
             
