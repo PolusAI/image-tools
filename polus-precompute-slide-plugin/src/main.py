@@ -6,7 +6,7 @@ from filepattern import FilePattern as fp
 import pandas
 import numpy as np
 
-def zslicefunction(input_dir, output_dir, pyramid_type):
+def zslicefunction(input_dir, output_dir, pyramid_type, imagetype):
 
     # Get a list of all images in a directory
     logger.info('Getting the images...')
@@ -38,11 +38,12 @@ def zslicefunction(input_dir, output_dir, pyramid_type):
             del processes[free_process]
             del process_timer[free_process]
             
-        processes.append(subprocess.Popen("python3 build_pyramid_zslices.py --inpDir {} --outDir {} --pyramidType {} --image {} --imageNum {}".format(input_dir,
+        processes.append(subprocess.Popen("python3 build_pyramid_zslices.py --inpDir '{}' --outDir '{}' --pyramidType '{}' --image {} --imageNum '{}' --imageType '{}'".format(input_dir,
                                                                                                                                               output_dir,
                                                                                                                                               pyramid_type,
                                                                                                                                               '"' + image.name + '"',
-                                                                                                                                              im_count),
+                                                                                                                                              im_count,
+                                                                                                                                              imagetype),
                                                                                                                                         shell=True))
         im_count += 1
         process_timer.append(time.time())
@@ -67,7 +68,7 @@ def zslicefunction(input_dir, output_dir, pyramid_type):
     logger.info("Finished all processes!")
 
 
-def stackbyfunction(input_dir, output_dir, pyramid_type, stack_by, imagepattern):
+def stackbyfunction(input_dir, output_dir, pyramid_type, stack_by, imagepattern, imagetype):
     imagepattern = str(imagepattern)
     regex = filepattern.get_regex(pattern = imagepattern)
     regexzero = regex[0]
@@ -130,7 +131,7 @@ def stackbyfunction(input_dir, output_dir, pyramid_type, stack_by, imagepattern)
             del processes[free_process]
             del process_timer[free_process]
             
-        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --pyramidType '{}' --imageNum '{}' --stackheight '{}' --stackby '{}' --varsinstack '{}' --valinstack {} --imagepattern '{}' --stackcount '{}'".format(input_dir,
+        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --pyramidType '{}' --imageNum '{}' --stackheight '{}' --stackby '{}' --varsinstack '{}' --valinstack '{}' --imagepattern '{}' --stackcount '{}' --imageType '{}' >>textfile.txt".format(input_dir,
                                                                                                                                             output_dir,
                                                                                                                                             pyramid_type,
                                                                                                                                             im_count,
@@ -139,7 +140,8 @@ def stackbyfunction(input_dir, output_dir, pyramid_type, stack_by, imagepattern)
                                                                                                                                             vars_instack,
                                                                                                                                             val_instack,
                                                                                                                                             imagepattern,
-                                                                                                                                            stack_count - 1),
+                                                                                                                                            stack_count - 1,
+                                                                                                                                            imagetype),
                                                                                                                                         shell=True))
         im_count = (stack_count)*(heightofstack) 
         process_timer.append(time.time())
@@ -186,6 +188,8 @@ def main():
                         help='Filepattern of the images in input', required=False)
     parser.add_argument('--stackby', dest='stack_by', type=str,
                         help='Variable that the images get stacked by', required=False)
+    parser.add_argument('--imageType', dest='image_type', type=str,
+                        help='Either a image or a segmentation', required=True)
 
     # Parse the arguments
     args = parser.parse_args()
@@ -194,17 +198,19 @@ def main():
     pyramid_type = args.pyramid_type
     imagepattern = args.image_pattern
     stack_by = args.stack_by
+    image_type = args.image_type
 
     logger.info('input_dir = {}'.format(input_dir))
     logger.info('output_dir = {}'.format(output_dir))
     logger.info('pyramid_type = {}'.format(pyramid_type))
+    logger.info('image_type = {}'.format(image_type))
     logger.info('image pattern = {} ({})'.format(imagepattern, type(imagepattern)))
     logger.info('images are stacked by variable {}'.format(stack_by))
 
     if stack_by != None or imagepattern != None:
-        stackbyfunction(input_dir, output_dir, pyramid_type, stack_by, imagepattern)
+        stackbyfunction(input_dir, output_dir, pyramid_type, stack_by, imagepattern, image_type)
     else:
-        zslicefunction(input_dir, output_dir, pyramid_type)
+        zslicefunction(input_dir, output_dir, pyramid_type, image_type)
 
 if __name__ == "__main__":
     main()
