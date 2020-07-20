@@ -390,7 +390,7 @@ class BioReader():
                                         y_range = y_max - y
                                         I[y-Y[0]:y_max-Y[0], x-X[0]:x_max-X[0], zi, ci, ti] = reader.read(
                                             c=c, z=z, t=t, rescale=False, XYWH=(x, y, x_range, y_range))
-
+  
         return I
 
     @classmethod
