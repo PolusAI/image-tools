@@ -43,7 +43,7 @@ if __name__=="__main__":
 
     #memory usage    
     mem = psutil.virtual_memory()
-    logger.info('System memory stats : {}'.format(mem))  
+    logger.debug('System memory stats : {}'.format(mem))  
     
      # get template image path
     template_image_path=os.path.join(inpDir,template)  
@@ -53,7 +53,7 @@ if __name__=="__main__":
      
     # parse the input collection
     logger.info('Parsing the input collection and getting registration_dictionary')
-    registration_dictionary=parse_collection(inpDir,filePattern,registrationVariable, TransformationVariable, template_image_path)    
+    registration_dictionary=parse_collection(inpDir,filePattern,registrationVariable, TransformationVariable, template_image_path)
     
     logger.info('Iterating over registration_dictionary....')
     for registration_set,similar_transformation_set in registration_dictionary.items():
@@ -76,9 +76,3 @@ if __name__=="__main__":
         registration = subprocess.Popen("python3 image_registration.py --registrationString '{}' --similarTransformationString '{}' --outDir '{}' --template '{}'".format(registration_string,similar_transformation_string,outDir,template ), shell=True )
         registration.wait()
         
-        
-       
-
-        
-
-    
