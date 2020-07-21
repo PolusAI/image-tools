@@ -471,7 +471,7 @@ class BioReader():
             y_min = 0
         if x_max > self.num_x():
             if x_min >= self.num_x():
-                x_min = 1024 * ((self.num_x()-1)//1024)
+                x_min = self._TILE_SIZE * ((self.num_x()-1)//self._TILE_SIZE)
                 reflect_x = True
             x_max = self.num_x()
             postpad_x = x_max - self.num_x()
@@ -512,7 +512,7 @@ class BioReader():
         
         # If the column indices are outside what is available in the buffer,
         # shift the buffer so more data can be loaded.
-        if column_end - self._tile_x_offset >= 1024:
+        if column_end - self._tile_x_offset >= self._TILE_SIZE:
             x_min = column_start - self._tile_x_offset
             x_max = self._pixel_buffer.shape[1] - x_min
             self._pixel_buffer[:,0:x_max] = self._pixel_buffer[:,x_min:]
@@ -525,7 +525,7 @@ class BioReader():
             
             # If there is data in the _raw_buffer, return if there isn't room to load
             # it into the _pixel_buffer
-            if self._pixel_buffer.shape[1] - self._tile_last_column < 1024:
+            if self._pixel_buffer.shape[1] - self._tile_last_column < self._TILE_SIZE:
                 return
     
             I = self._raw_buffer.get()
@@ -559,10 +559,10 @@ class BioReader():
             
         self._buffer_supertile(X[0][0],X[0][1])
             
-        if X[-1][0] - self._tile_x_offset > 1024:
+        if X[-1][0] - self._tile_x_offset > self._TILE_SIZE:
             shift_buffer = True
             split_ind = 0
-            while X[split_ind][0] - self._tile_x_offset < 1024:
+            while X[split_ind][0] - self._tile_x_offset < self._TILE_SIZE:
                 split_ind += 1
         else:
             shift_buffer = False
@@ -608,7 +608,7 @@ class BioReader():
         xyoffset = [(tile_size[0]-tile_stride[0])/2,(tile_size[1]-tile_stride[1])/2]
         
         num_tile_rows = int(np.ceil(self.num_y()/tile_stride[0]))
-        num_tile_cols = (1024 - xyoffset[1])//tile_stride[1]
+        num_tile_cols = (self._TILE_SIZE - xyoffset[1])//tile_stride[1]
         if num_tile_cols == 0:
             num_tile_cols = 1
         
@@ -678,24 +678,24 @@ class BioReader():
                      (0,max([tile_size[1] - tile_stride[1],0])))
             
         # determine supertile sizes
-        y_tile_dim = int(np.ceil((self.num_y()-1)/1024))
+        y_tile_dim = int(np.ceil((self.num_y()-1)/self._TILE_SIZE))
         x_tile_dim = 1
             
         # Initialize the pixel buffer
-        self._pixel_buffer = np.zeros((y_tile_dim*1024 + tile_size[0],2*x_tile_dim*1024 + tile_size[1]),dtype=self.pixel_type())
+        self._pixel_buffer = np.zeros((y_tile_dim*self._TILE_SIZE + tile_size[0],2*x_tile_dim*self._TILE_SIZE + tile_size[1]),dtype=self.pixel_type())
         self._tile_x_offset = -xypad[1][0]
         self._tile_y_offset = -xypad[0][0]
         
         # Generate the supertile loading order
         tiles = []
-        y_tile_list = list(range(0,self.num_y()+xypad[0][1],1024*y_tile_dim))
-        if y_tile_list[-1] != 1024*y_tile_dim:
-            y_tile_list.append(1024*y_tile_dim)
+        y_tile_list = list(range(0,self.num_y()+xypad[0][1],self._TILE_SIZE*y_tile_dim))
+        if y_tile_list[-1] != self._TILE_SIZE*y_tile_dim:
+            y_tile_list.append(self._TILE_SIZE*y_tile_dim)
         if y_tile_list[0] != xypad[0][0]:
             y_tile_list[0] = -xypad[0][0]
-        x_tile_list = list(range(0,self.num_x()+xypad[1][1],1024*x_tile_dim))
+        x_tile_list = list(range(0,self.num_x()+xypad[1][1],self._TILE_SIZE*x_tile_dim))
         if x_tile_list[-1] < self.num_x()+xypad[1][1]:
-            x_tile_list.append(x_tile_list[-1]+1024)
+            x_tile_list.append(x_tile_list[-1]+self._TILE_SIZE)
         if x_tile_list[0] != xypad[1][0]:
             x_tile_list[0] = -xypad[1][0]
         for yi in range(len(y_tile_list)-1):
@@ -1462,11 +1462,11 @@ class BioWriter():
         
         # If the start column index is outside of the width of the supertile,
         # write the data and shift the pixels
-        if column_start - self._tile_x_offset >= 1024:
-            self._raw_buffer.put(np.copy(self._pixel_buffer[:,0:1024]))
-            self._pixel_buffer[:,0:1024] = self._pixel_buffer[:,1024:2048]
-            self._pixel_buffer[:,1024:] = 0
-            self._tile_x_offset += 1024
+        if column_start - self._tile_x_offset >= self._TILE_SIZE:
+            self._raw_buffer.put(np.copy(self._pixel_buffer[:,0:self._TILE_SIZE]))
+            self._pixel_buffer[:,0:self._TILE_SIZE] = self._pixel_buffer[:,self._TILE_SIZE:2*self._TILE_SIZE]
+            self._pixel_buffer[:,self._TILE_SIZE:] = 0
+            self._tile_x_offset += self._TILE_SIZE
             self._tile_last_column = np.argwhere((self._pixel_buffer==0).all(axis=0))[0,0]
 
     def _assemble_tiles(self,images,X,Y,Z,C,T):
@@ -1489,9 +1489,9 @@ class BioWriter():
         """
         self._buffer_supertile(X[0][0],X[0][1])
             
-        if X[-1][0] - self._tile_x_offset > 1024:
+        if X[-1][0] - self._tile_x_offset > self._TILE_SIZE:
             split_ind = 0
-            while X[split_ind][0] - self._tile_x_offset < 1024:
+            while X[split_ind][0] - self._tile_x_offset < self._TILE_SIZE:
                 split_ind += 1
         else:
             split_ind = len(X)
@@ -1546,7 +1546,7 @@ class BioWriter():
         xyoffset = [(tile_size[0]-tile_stride[0])/2,(tile_size[1]-tile_stride[1])/2]
         
         num_tile_rows = int(np.ceil(self.num_y()/tile_stride[0]))
-        num_tile_cols = (1024 - xyoffset[1])//tile_stride[1]
+        num_tile_cols = (self._TILE_SIZE - xyoffset[1])//tile_stride[1]
         if num_tile_cols == 0:
             num_tile_cols = 1
         
@@ -1640,22 +1640,22 @@ class BioWriter():
                      (0,max([tile_size[1] - tile_stride[1],0])))
             
         # determine supertile sizes
-        y_tile_dim = int(np.ceil((self.num_y()-1)/1024))
+        y_tile_dim = int(np.ceil((self.num_y()-1)/self._TILE_SIZE))
         x_tile_dim = 1
             
         # Initialize the pixel buffer
-        self._pixel_buffer = np.zeros((y_tile_dim*1024 + tile_size[0],2*x_tile_dim*1024 + tile_size[1]),dtype=self.pixel_type())
+        self._pixel_buffer = np.zeros((y_tile_dim*self._TILE_SIZE + tile_size[0],2*x_tile_dim*self._TILE_SIZE + tile_size[1]),dtype=self.pixel_type())
         self._tile_x_offset = 0
         self._tile_y_offset = 0
         
         # Generate the supertile saving order
         tiles = []
-        y_tile_list = list(range(0,self.num_y(),1024*y_tile_dim))
-        if y_tile_list[-1] != 1024*y_tile_dim:
-            y_tile_list.append(1024*y_tile_dim)
-        x_tile_list = list(range(0,self.num_x(),1024*x_tile_dim))
+        y_tile_list = list(range(0,self.num_y(),self._TILE_SIZE*y_tile_dim))
+        if y_tile_list[-1] != self._TILE_SIZE*y_tile_dim:
+            y_tile_list.append(self._TILE_SIZE*y_tile_dim)
+        x_tile_list = list(range(0,self.num_x(),self._TILE_SIZE*x_tile_dim))
         if x_tile_list[-1] < self.num_x()+xypad[1][1]:
-            x_tile_list.append(x_tile_list[-1]+1024)
+            x_tile_list.append(x_tile_list[-1]+self._TILE_SIZE)
             
         for yi in range(len(y_tile_list)-1):
             for xi in range(len(x_tile_list)-1):
