@@ -20,8 +20,6 @@ import javabridge as jutil
 from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
 
-import time
-
 def make_ome_tiff_writer_class():
     '''Return a class that wraps loci.formats.out.OMETiffWriter'''
     class_name = 'loci/formats/out/OMETiffWriter'
@@ -92,7 +90,6 @@ class BioReader():
     _pixel_buffer = None
     _fetch_thread = None
     _tile_thread= None
-    _supertiles_loaded = 0
     _tile_x_offset = 0
     _tile_last_column = 0
 
@@ -816,7 +813,6 @@ class BioWriter():
     _pixel_buffer = None
     _put_thread = None
     _tile_thread= None
-    _supertiles_loaded = 0
     _tile_x_offset = 0
     _tile_last_column = 0
 
@@ -1440,17 +1436,9 @@ class BioWriter():
         
         # Attach the jvm to the thread
         jutil.attach()
-        
-        # # Determine cropping if needed
-        # x_min = 0
-        # x_max = 1024
-        # y_min = 0
-        # y_max = self.num_y()
-        # if X[1] >= self.num_x():
-        #     x_max -= X[1] + self.num_x()
             
         # Write the image
-        self.write_image(I[:,:,np.newaxis,np.newaxis,np.newaxis],
+        self.write_image(I[:self.num_y(),:,np.newaxis,np.newaxis,np.newaxis],
                          X=[X[0]],
                          Y=[Y[0]])
         
@@ -1467,23 +1455,22 @@ class BioWriter():
         data in the buffer can be shifted into the _raw_buffer for writing.
 
         Args:
-            column_start ([type]): First column index of data to be loaded
-            column_end ([type]): Last column index of data to be loaded
+            column_start ([int]): First column index of data to be loaded
+            column_end ([int]): Last column index of data to be loaded
 
         """
         
         # If the start column index is outside of the width of the supertile,
         # write the data and shift the pixels
         if column_start - self._tile_x_offset >= 1024:
-            self._raw_buffer.put(self._pixel_buffer[:,0:1024])
-            self._pixel_buffer[:,0:1024] = self._pixel_buffer[:,1024:]
+            self._raw_buffer.put(np.copy(self._pixel_buffer[:,0:1024]))
+            self._pixel_buffer[:,0:1024] = self._pixel_buffer[:,1024:2048]
             self._pixel_buffer[:,1024:] = 0
-            self._tile_x_offset = column_start
-            self._supertiles_loaded -= 1
+            self._tile_x_offset += 1024
             self._tile_last_column = np.argwhere((self._pixel_buffer==0).all(axis=0))[0,0]
 
-    def _assemble_tiles(self,I,X,Y,Z,C,T):
-        """_put_tiles Handle data untiling
+    def _assemble_tiles(self,images,X,Y,Z,C,T):
+        """_assemble_tiles Handle data untiling
 
         This function puts tiles into the _pixel_buffer, effectively
         untiling them.
@@ -1500,7 +1487,6 @@ class BioWriter():
         Returns:
             numpy.ndarray: 2-dimensional ndarray.
         """
-            
         self._buffer_supertile(X[0][0],X[0][1])
             
         if X[-1][0] - self._tile_x_offset > 1024:
@@ -1514,7 +1500,6 @@ class BioWriter():
         num_rows = Y[0][1] - Y[0][0]
         num_cols = X[0][1] - X[0][0]
         num_tiles = len(X)
-        images = np.zeros((num_tiles,num_rows,num_cols,1),dtype=self.pixel_type())
         
         for ind in range(split_ind):
             r_min = Y[ind][0]-self._tile_y_offset
@@ -1531,6 +1516,8 @@ class BioWriter():
                 c_min = X[ind][0]-self._tile_x_offset
                 c_max = X[ind][1]-self._tile_x_offset
                 self._pixel_buffer[r_min:r_max,c_min:c_max] = images[ind,:,:,0]
+                
+        self._tile_last_column = c_max
         
         return True
     
@@ -1541,7 +1528,7 @@ class BioWriter():
         size is too large, then the tiling function will attempt to create more
         tiles than what the buffer holds. To prevent the tiling function from doing
         this, there is a limit on the number of tiles that can be retrieved in a
-        single call. This function determines what the largest number of retreivable
+        single call. This function determines what the largest number of saveable
         batches is.
 
         Args:
@@ -1566,11 +1553,16 @@ class BioWriter():
         return int(num_tile_cols*num_tile_rows)
 
     def writerate(self,tile_size,tile_stride=None,batch_size=None,channels=[0]):
-        """iterate Iterate through tiles of an image
+        """writerate Image saving iterator
 
-        This method is an iterator to load tiles of an image. This method
-        buffers the loading of pixels asynchronously to quickly deliver
-        images of the appropriate size.
+        This method is an iterator to save tiles of an image. This method
+        buffers the saving of pixels asynchronously to quickly save
+        images to disk. It is designed to work in complement to the
+        BioReader.iterate method, and expects images to be fed into it in
+        the exact same order as they would come out of that method.
+        
+        Data is sent to this iterator using the send() method once the
+        iterator has been created. See the example for more information.
 
         Args:
             tile_size ([list,tuple]): A list/tuple of length 2, indicating
@@ -1585,22 +1577,38 @@ class BioWriter():
                 is ever loaded. Defaults to [0].
 
         Yields:
-            numpy.ndarray: A 4-d array where the dimensions are
-                [tile_num,tile_size[0],tile_size[1],channels]
-            list: 
+            Nothing
                 
         Example:
-            from bfio import BioReader
-            import matplotlib.pyplot as plt
+            from bfio import BioReader, BioWriter
+            import numpy as np
             
-            br = BioReader('/path/to/file')
+            # Create the BioReader
+            br = bfio.BioReader('/path/to/file')
             
-            for tiles,ind in br.iterate(tile_size=[256,256],tile_stride=[200,200]):
-                for i in tiles.shape[0]:
-                    print('Displaying tile with X,Y coords: {},{}'.format(ind[i][0],ind[i][1]))
-                    plt.figure()
-                    plt.imshow(tiles[ind,:,:,0].squeeze())
-                    plt.show()
+            # Create the BioWriter
+            out_path = '/path/to/output'
+            bw = bfio.BioWriter(out_path,metadata=br.read_metadata())
+            
+            # Get the batch size
+            batch_size = br.maximum_batch_size(tile_size=[256,256],tile_stride=[256,256])
+            readerator = br.iterate(tile_size=[256,256],tile_stride=[256,256],batch_size=batch_size)
+            writerator = bw.writerate(tile_size=[256,256],tile_stride=[256,256],batch_size=batch_size)
+            
+            # Initialize the writerator
+            next(writerator)
+            
+            # Load tiles of the imgae and save them
+            for images,indices in readerator:
+                writerator.send(images)
+            bw.close_image()
+            
+            # Verify images are the same
+            original_image = br.read_image()
+            bw = bfio.BioReader(out_path)
+            saved_image = bw.read_image()
+            
+            print('Original and saved images are the same: {}'.format(np.array_equal(original_image,saved_image)))
                 
         """
         
@@ -1620,7 +1628,7 @@ class BioWriter():
             
         # calculate unpadding
         if not (set(tile_size) & set(tile_stride)):
-            xyoffset = [(tile_size[0]-tile_stride[0])/2,(tile_size[1]-tile_stride[1])/2]
+            xyoffset = [int((tile_size[0]-tile_stride[0])/2),int((tile_size[1]-tile_stride[1])/2)]
             xypad = [(tile_size[0]-tile_stride[0])/2,(tile_size[1]-tile_stride[1])/2]
             xypad[0] = xyoffset[0] + (tile_stride[0] - np.mod(self.num_y(),tile_stride[0]))/2
             xypad[1] = xyoffset[1] + (tile_stride[1] - np.mod(self.num_x(),tile_stride[1]))/2
@@ -1668,54 +1676,47 @@ class BioWriter():
         T = []
         x_list = np.array(np.arange(0,self.num_x(),tile_stride[1]))
         y_list = np.array(np.arange(0,self.num_y(),tile_stride[0]))
-        for t in tiles:
-            xb = np.argwhere(x_list<=t[0][0])[-1]
-            yb = np.argwhere(y_list<=t[1][0])[-1]
-            xe = np.argwhere(x_list>=t[0][1])
-            xe = len(x_list)-1 if xe.size==0 else xe[0]
-            ye = np.argwhere(y_list>=t[1][1])
-            ye = len(y_list)-1 if ye.size==0 else ye[0]
-            for x in range(int(x_list[xb]),int(x_list[xe]),tile_stride[1]):
-                for y in range(int(y_list[yb]),int(y_list[ye]),tile_stride[0]):
-                    X.append([x,x+tile_stride[1]])
-                    Y.append([y,y+tile_stride[0]])
-                    Z.append([0,1])
-                    C.append(channels)
-                    T.append([0])
+        for x in x_list:
+            for y in y_list:
+                X.append([x,x+tile_stride[1]])
+                Y.append([y,y+tile_stride[0]])
+                Z.append([0,1])
+                C.append(channels)
+                T.append([0])
+        
         
         # start looping through batches
         bn = 0
         while bn < len(X):
             # Wait for tiles to be sent
-            images,indices = yield
+            images = yield
             
-            # Adjust indices to account for overlap
-            for ind in indices[0]:
-                ind = [ind[0]+ xypad[1][0],ind[1] + xypad[1][1]]
-            for ind in indices[1]:
-                ind = [ind[0]+ xypad[0][0],ind[1] + xypad[0][1]]
-            Xi,Yi,Zi,Ci,Ti = indices
-            
-            # Save a supertile if a thread is available
-            if self._supertile_index.qsize() > 0 and not self._put_thread.running():
-                self._put_thread = thread_pool.submit(self._put)
-                
             # Wait for the last untiling thread to finish
-            self._tile_thread.result()
+            if self._tile_thread != None:
+                self._tile_thread.result()
             
             # start a thread to untile the data
             b = bn + images.shape[0]
             self._tile_thread = thread_pool.submit(self._assemble_tiles,images,X[bn:b],Y[bn:b],Z[bn:b],C[bn:b],T[bn:b])
+            bn = b
+            
+            # Save a supertile if a thread is available
+            if self._raw_buffer.qsize() > 0:
+                if self._put_thread!=None:
+                    self._put_thread.result()
+                self._put_thread = thread_pool.submit(self._put)
             
         # Wait for the final untiling thread to finish
         self._tile_thread.result()
         
         # Put the remaining pixels in the buffer into the _raw_buffer
-        self._raw_buffer.put(self._pixel_buffer[:,0:self._tile_last_column])
+        self._raw_buffer.put(self._pixel_buffer[:,0:self.num_x()-self._tile_x_offset])
         
         # Save the last supertile
-        self._put_thread.result() # wait for the previous thread to finish
-        self._put_thread = thread_pool.submit(self._put)
-        self._put_thread.result() # wait for hte last thread to finish
+        if self._put_thread != None:
+            self._put_thread.result() # wait for the previous thread to finish
+        self._put() # no need to use a thread for final save
         
         thread_pool.shutdown()
+        
+        yield
