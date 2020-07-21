@@ -213,11 +213,9 @@ def register_image(br_ref,br_mov,bw,Xt,Yt,Xm,Ym,x,y,X_crop,Y_crop,max_val,min_va
     
     # If the correlation is bad, try using the rough transform instead
     if corr < 0.4 and not is_rough:
-        rough_image = cv2.warpPerspective(mov_tile,Rough_Homography_Upscaled,(Xt[1]-Xt[0],Yt[1]-Yt[0]))
-        corr_rough = corr2(ref_tile,rough_image)
-        if corr_rough > corr:
-            projective_transform = Rough_Homography_Upscaled
-            transformed_image = rough_image
+        transformed_image = cv2.warpPerspective(mov_tile,Rough_Homography_Upscaled,(Xt[1]-Xt[0],Yt[1]-Yt[0]))               
+        projective_transform = Rough_Homography_Upscaled
+            
     
     # Write the transformed moving image
     bw.write_image(transformed_image[Y_crop[0]:Y_crop[1],X_crop[0]:X_crop[1],np.newaxis,np.newaxis,np.newaxis],X=[x],Y=[y])
