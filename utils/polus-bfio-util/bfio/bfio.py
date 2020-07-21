@@ -46,11 +46,11 @@ class BioReader():
     This class handles reading data from any of the formats supported by the 
     OME Bioformats tool. It handles some of the bugs that are commonly
     encountered when handling larger images, such as the indexing issue
-    encountered when an image plan is larger than 2GB.
+    encountered when an image plane is larger than 2GB.
     
-    Note: The javabridge is not handled by the BioReader class. It must be
-          initialized prior to using the BioReader class, and must be closed
-          before the program terminates. An example is provided in read_image().
+    WARNING: The javabridge is not handled by the BioReader class. It must be
+        initialized prior to using the BioReader class, and must be closed
+        before the program terminates. An example is provided in read_image().
     
     For for information, visit the Bioformats page:
     https://www.openmicroscopy.org/bio-formats/
@@ -67,7 +67,7 @@ class BioReader():
         physical_size_y(): tuple indicating physical size and units of y-dimension
         physical_size_z(): tuple indicating physical size and units of z-dimension
         read_metadata(update): Returns an OMEXML class containing metadata for the image
-        read_image(X,Y,Z,C,T,series): Returns a part or all of the image as numpy array
+        read_image(X,Y,Z,C,T): Returns a part or all of the image as numpy array
     """
     _file_path = None
     _metadata = None
@@ -322,7 +322,7 @@ class BioReader():
         
         return self._metadata.image(0).Pixels.PixelType
 
-    def read_image(self, X=None, Y=None, Z=None, C=None, T=None, series=None):
+    def read_image(self, X=None, Y=None, Z=None, C=None, T=None):
         """read_image Read the image
 
         Read the image. A 5-dimmensional numpy.ndarray is always returned.
@@ -343,7 +343,6 @@ class BioReader():
             T ([tuple,list], optional): tuple or list of values indicating timepoints
                 to load. If None, loads the full range.
                 Defaults to None.
-            series (tuple, optional): Placeholder. Currently does nothing.
 
         Returns:
             numpy.ndarray: A 5-dimensional numpy array.
