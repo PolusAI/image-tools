@@ -7,14 +7,14 @@ with open("VERSION",'r') as fh:
     version = fh.read()
 
 setuptools.setup(
-    name="bfio",
+    name="filepattern",
     version=version,
     author="Nick Schaub",
     author_email="nick.schaub@labshare.gov",
-    description="Simple reading and writing classes for tiled tiffs using Bioformats.",
+    description="Utilities for parsing files in a directory based on a file name pattern.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/labshare/polus-plugins/utils/bfio",
+    url="https://github.com/labshare/polus-plugins/utils/polus-filepattern-util",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
