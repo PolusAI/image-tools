@@ -19,7 +19,6 @@ import os
 import javabridge as jutil
 from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
-from matplotlib import pyplot as plt
 
 import time
 
@@ -734,7 +733,6 @@ class BioReader():
         batches = list(range(0,len(X),batch_size))
         
         # get the first batch
-        start = time.time()
         b = min([batch_size,len(X)])
         index = (X[0:b],Y[0:b],Z[0:b],C[0:b],T[0:b])
         images = self._get_tiles(*index)
