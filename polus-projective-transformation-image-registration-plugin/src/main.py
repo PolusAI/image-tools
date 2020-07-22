@@ -29,7 +29,12 @@ if __name__=="__main__":
     args = parser.parse_args()
     filePattern = args.filePattern
     logger.info('filePattern = {}'.format(filePattern))
+    
     inpDir = args.inpDir
+    # check if images folder is present in the input directory
+    if (Path.is_dir(Path(inpDir).joinpath('images'))):
+        inpDir= str(Path(inpDir).joinpath('images'))
+        
     logger.info('inpDir = {}'.format(inpDir))
     registrationVariable = args.registrationVariable
     logger.info('registrationVariable = {}'.format(registrationVariable))
@@ -40,6 +45,8 @@ if __name__=="__main__":
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))     
     
+
+        
 
     #memory usage    
     mem = psutil.virtual_memory()
