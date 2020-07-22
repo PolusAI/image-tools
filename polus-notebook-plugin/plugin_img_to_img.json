@@ -32,7 +32,7 @@
 	"ui": [
 		{
 			"key": "inputs.input-collection",
-			"title": "CSV Collection: ",
+			"title": "Image Collection: ",
 			"description": "Pick a collection..."
         },
         {
