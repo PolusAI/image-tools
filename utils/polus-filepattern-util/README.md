@@ -2,6 +2,10 @@
 
 Functions and a class to easily filename patterns for WIPP.
 
+## Install
+
+`pip install filepattern`
+
 ## FilePattern Class
 
 A number of functions are included in `filepattern.py`, but some contain complex output values that may be difficult to handle in an abstract way. To simplify things, the `FilePattern` class was created. The usage of the `FilePattern` class will be described here, but if finer control over filename parsing is needed, detailed descriptions of each function is provided in `filepatter.py`
