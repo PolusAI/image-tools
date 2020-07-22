@@ -10,7 +10,7 @@ setuptools.setup(
     name="filepattern",
     version=version,
     author="Nick Schaub",
-    author_email="nick.schaub@labshare.gov",
+    author_email="nick.schaub@nih.gov",
     description="Utilities for parsing files in a directory based on a file name pattern.",
     long_description=long_description,
     long_description_content_type="text/markdown",
