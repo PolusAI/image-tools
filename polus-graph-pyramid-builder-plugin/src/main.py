@@ -5,13 +5,13 @@ from multiprocessing import Pool
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 from pathlib import Path
-import logging
 import sys 
 import math
 import decimal
 from decimal import Decimal
 from textwrap import wrap
 import os
+import time
 
 # Chunk Scale
 CHUNK_SIZE = 1024
@@ -76,13 +76,8 @@ def load_csv(fpath):
 
     return data, cnames
 
-def binning_data(data, yaxis, typegraph, column_bin_size, bin_stats):
+def bin_data(data, yaxis, typegraph, column_bin_size, bin_stats):
     """ This function bins the data """
-
-    if typegraph == "log":
-        bin_stats = {'size': data.shape,
-                    'min': data.min(),
-                    'max': data.max()}
 
     column_names = data.columns
     nfeats = bin_stats['size'][1] 
@@ -91,7 +86,6 @@ def binning_data(data, yaxis, typegraph, column_bin_size, bin_stats):
     data_ind = pandas.notnull(data)  # Handle NaN values
     data[~data_ind] = 255          # Handle NaN values
     data = data.astype(np.uint16) # cast to save memory
-    print(data[data>=bincount])
     data[data>=bincount] = bincount - 1 # in case of numerical precision issues
 
     nrows = data.shape[0]
@@ -106,7 +100,6 @@ def binning_data(data, yaxis, typegraph, column_bin_size, bin_stats):
     
     
     totalgraphs = int((nfeats**2 - nfeats)/2)
-    # bins = np.zeros((nfeats,nfeats,bincount,bincount),dtype=dtype)
     bins = np.zeros((totalgraphs, bincount, bincount), dtype=dtype)
     graph_index = []
     graph_dict = {}
@@ -183,7 +176,7 @@ def transform_data_log(data,column_names):
         linear_index - Numeric value of column index from original csv
     """
     #Transforms the DataFrame that Range from a Negative Number to a Positive Number
-    def dfneg2pos(data, alphavals, datmin, datmax):
+    def dfneg2pos(data, alphavals, datmin, datmax, datalen):
 
         yaxis = [] 
         commonratios = []
@@ -234,46 +227,34 @@ def transform_data_log(data,column_names):
         posbinslarge = num_bins_for_largerange[ispositivebigger.iloc[:] == True]
         posbinssmall = num_bins_for_smallrange[ispositivebigger.iloc[:] == False]
         posbins = posbinslarge.append(posbinssmall)
+        
 
         negbinslarge = num_bins_for_largerange[ispositivebigger.iloc[:] == False]
         negbinssmall = num_bins_for_smallrange[ispositivebigger.iloc[:] == True]
         negbins = negbinslarge.append(negbinssmall)
+        negbinsframe = negbins.to_frame().transpose()
+        negbinsframe = negbinsframe.loc[negbinsframe.index.repeat(datalen)].reset_index(drop=True)
 
-        for col in data.columns:  
+        ispositive = data.iloc[0:datalen,:] >= alphavals # Any positive value that is large than the first value of range
+        isnegative = data.iloc[0:datalen,:] <= -1*alphavals # Any negative value that is smaller than the first value of range
+        ismin = (data.iloc[0:datalen,:] == datmin) # Smallest value in column
+        ismax = (data.iloc[0:datalen,:] == datmax) # Largest value in column
 
-            colvals = data[col]
+        binzero = np.log(np.abs(data.iloc[0:datalen,:])/alphavals)
+        binned_data =  np.round(binzero/np.log(ratios)) # Calculate the bin for all values
+        binned_data[binned_data==-0.0] = 0 # To replace -0.0 values with 0
+        binned_data[binned_data==np.inf] = 0
+        binned_data[binned_data==-np.inf] = 0 
 
-            datacol = colvals.to_numpy()
-            colname = colvals.name
-
-            # Number of bins for negative and positive sides, respectively
-            negbin = negbins[colname]
-            posbin = posbins[colname]
-            # print(negbin, posbin, colname)
-            
-            # alpha and ratio values for column
-            alpha = alphavals[colname]
-            ratio = ratios[colname]
-
-            # Different conditions of the values in the column
-            ispositive = (datacol >= alpha) # Any positive value that is large than the first value of range
-            isnegative = (datacol <= -1*alpha) # Any negative value that is smaller than the first value of range
-            ismin = (datacol ==  datmin[colname]) # Smallest value in column
-            ismax = (datacol ==  datmax[colname]) # Largest value in column
-
-            binzero = np.log(np.abs(datacol)/alpha)
-            bin_data =  np.round(binzero/np.log(ratio)) # Calculate the bin for all values
-            bin_data[bin_data==-0.0] = 0 # To replace -0.0 values with 0
-
-            # Bins are 1-Indexed, and shifting all bin values to positive range.
+        # Bins are 1-Indexed, and shifting all bin values to positive range.
                 # Bin values are 0-Bincount
-            datacol[binzero<=0] = negbin + 1# if -alpha < value < alpha, then it is negbin + 1
-            datacol[ispositive] = (bin_data[ispositive] + negbin + 1) 
-            datacol[isnegative] = (negbin - bin_data[isnegative] + 1)
-            datacol[ismin] = 1 # Smallest bin value is 1.
-            datacol[ismax] = bincount # Largest bin value is bincount
-            datacol[datacol == -np.inf] = negbin + 1
-            datacol[datacol == np.inf] = negbin + 1
+        data[binzero<=0] = negbinsframe[binzero<=0] + 1 # if -alpha < value < alpha, then it is negbin + 1
+        data[ispositive] = (binned_data[ispositive] + negbinsframe[ispositive] + 1) 
+        data[isnegative] = (negbinsframe[isnegative] - binned_data[isnegative] + 1)
+        data[ismin] = 1 # Smallest bin value is 1.
+        data[ismax] = bincount # Largest bin value is bincount
+        data[data == -np.inf] = negbinsframe[data == -np.inf] + 1
+        data[data == np.inf] = negbinsframe[data == np.inf] + 1
 
         commonratios = ratios.to_list()
         alphas = alphavals.to_list()
@@ -282,29 +263,19 @@ def transform_data_log(data,column_names):
         return yaxis, alphas, commonratios, data
 
     # Transforms the Data that has a Positive Range
-    def dfzero2pos(data, alphavals, datmax):
+    def dfzero2pos(data, alphavals, datmax, datalen):
 
         commonratios = (datmax/alphavals)**(1/(bincount - 1))
-
-        for col in data.columns: 
-
-            alpha = alphavals[col]
-            ratio = commonratios[col]
-
-            cols = data[col]
-
-            datacol = cols.to_numpy()
-            colname = cols.name
-
-            bin_data =  np.round(np.log(np.abs(datacol)/alpha)/np.log(ratio)) # Calculate the bin for all values
-            bin_data[bin_data==-0.0] = 0 # To replace -0.0 values with 0
-            ismax = (datacol == datmax[colname]) 
-
-            datacol[ismax] = bincount
-            datacol[bin_data<=0] = 1 # Negative bin value means that it was smaller than alpha
-            datacol[bin_data>0] = bin_data[bin_data>0] + 1
-            datacol[datacol == -np.inf] = 1
-            datacol[datacol == np.inf] = 1
+        
+        binned_data = np.round(np.log(np.abs(data.iloc[0:datalen,:])/alphavals)/np.log(commonratios))
+        binned_data[binned_data==-0.0] = 0 
+        ismax = (data.iloc[0:datalen,:] == datmax)
+        
+        data[ismax] = bincount
+        data[binned_data<=0] = 1
+        data[binned_data>0] = binned_data[binned_data>0] + 1
+        data[data == -np.inf] = 1
+        data[data == np.inf] = 1
 
         alphas = alphavals.to_list()
         commonratios = commonratios.to_list()
@@ -312,28 +283,19 @@ def transform_data_log(data,column_names):
         return alphas, commonratios, data
 
     # Transform the Data that has a Negative Range
-    def dfneg2zero(data, datmin, alphavals):
+    def dfneg2zero(data, datmin, alphavals, datalen):
 
         commonratios = (datmin/alphavals)**(1/(bincount - 1))
+        
+        binned_data =  np.round(np.log(data.iloc[0:datalen,:]/alphavals)/np.log(commonratios)) # Calculate the bin for all values
+        binned_data[binned_data==-0.0] = 0 # To replace -0.0 values with 0
+        ismin = (data.iloc[0:datalen,:] == datmin)
 
-        for col in data.columns:
-            alpha = alphavals[col]
-            ratio = commonratios[col]
-
-            cols = data[col]
-            ogcol = cols.to_numpy()
-            datacol = cols.to_numpy()
-            colname = cols.name
-
-            bin_data =  np.round(np.log(datacol/alpha)/np.log(ratio)) # Calculate the bin for all values
-            bin_data[bin_data==-0.0] = 0 # To replace -0.0 values with 0
-
-            ismin = (datacol == datmin[colname]) 
-            datacol[ismin] = 1
-            datacol[bin_data<=0] = bincount -1 # Negative bin value means that it was bigger than alpha
-            datacol[bin_data>0] = bincount - bin_data[bin_data>0] + 1
-            datacol[datacol == -np.inf] = bincount 
-            datacol[datacol == np.inf] = bincount
+        data[ismin] =  1
+        data[binned_data<=0] = bincount - 1
+        data[binned_data>0] = bincount - binned_data[binned_data>0] + 1
+        data[data == -np.inf] = bincount
+        data[data == np.inf] = bincount
 
         alphas = alphavals.to_list()
         commonratios = commonratios.to_list()
@@ -352,8 +314,6 @@ def transform_data_log(data,column_names):
     bin_stats = {'size': data.shape,
                  'min': data.min(),
                  'max': data.max(),
-                 'twenty5': data.quantile(0.25),
-                 'seventy5': data.quantile(0.75),
                  'alpha': (2*(data.quantile(0.75) - data.quantile(0.25)))/(data.shape[0]**(1/3))} 
                     # if alpha (from Freedman Diaconis) equals zero, then bin width is zero.
     
@@ -365,6 +325,15 @@ def transform_data_log(data,column_names):
     negativerange = np.where((bin_stats['min'] < 0) & (bin_stats['max'] <= 0))[0]
     neg2posrange =  np.where((bin_stats['min'] < 0) & (bin_stats['max'] > 0))[0]
     zeroalpha = np.where(bin_stats['alpha'] == 0)[0]
+
+    # VALUES IN ZEROALPHA ARE DROPPED, NEED TO UPDATE BIN_STATS
+    lenzeroalpha = len(zeroalpha)
+    nfeats = nfeats-lenzeroalpha
+    bin_stats['size'] = (datalen, nfeats-lenzeroalpha)
+    for val in zeroalpha:
+        bin_stats['min'].drop(column_names[val])
+        bin_stats['max'].drop(column_names[val])
+        bin_stats['alpha'].drop(column_names[val])
     
     # FIND COLUMNS THAT OVERLAP WITH ZEROALPHA(bin width is zero)
     POSoverlap = np.intersect1d(zeroalpha, positiverange, assume_unique = True, return_indices=True)
@@ -392,14 +361,16 @@ def transform_data_log(data,column_names):
     # POSITIVE RANGE
     alphaspos, commonratiospos, positivedf = dfzero2pos(positivedf, 
                                                         bin_stats['alpha'][positivenames], 
-                                                        bin_stats['max'][positivenames])
+                                                        bin_stats['max'][positivenames],
+                                                        datalen)
     yaxis = yaxis * len(positivenames)
     positivedf.reset_index(drop = True, inplace = True)
 
     # NEGATIVE RANGE
     alphasneg, commonratiosneg, negativedf = dfneg2zero(negativedf, 
                                                         -1*bin_stats['alpha'][negativenames], 
-                                                        bin_stats['min'][negativenames])
+                                                        bin_stats['min'][negativenames],
+                                                        datalen)
     yaxis = yaxis + ([bincount] * len(negativenames))
     negativedf.reset_index(drop = True, inplace = True)
     
@@ -407,7 +378,8 @@ def transform_data_log(data,column_names):
     yvalues, alphasneg2pos, commonratiosneg2pos, neg2posdf = dfneg2pos(neg2posdf, 
                                                                        bin_stats['alpha'][neg2posnames], 
                                                                        bin_stats['min'][neg2posnames], 
-                                                                       bin_stats['max'][neg2posnames])
+                                                                       bin_stats['max'][neg2posnames],
+                                                                       datalen)
     yaxis = yaxis + yvalues
     neg2posdf.reset_index(drop = True, inplace = True)
 
@@ -419,7 +391,7 @@ def transform_data_log(data,column_names):
     # NEW DATA FRAME DROPS COLUMNS THAT HAS A BIN WIDTH VALUE OF ZERO
     data = pandas.concat([positivedf, negativedf, neg2posdf], axis=1)
 
-    bins, bin_stats, log_index, log_dict, yaxis = binning_data(data, yaxis, "log", column_bin_sizes, bin_stats)
+    bins, bin_stats, log_index, log_dict, yaxis = bin_data(data, yaxis, "log", column_bin_sizes, bin_stats)
 
     return yaxis, bins, bin_stats, log_index, log_dict, column_bin_sizes, alphavals
 
@@ -452,7 +424,7 @@ def transform_data_linear(data,column_names):
     # Transform data into bin positions for fast binning
     data = ((data - bin_stats['min'])/column_bin_size).apply(np.floor)
 
-    bins, bin_stats, linear_index, linear_dict, yaxis = binning_data(data, yaxis, "linear", column_bin_size, bin_stats)
+    bins, bin_stats, linear_index, linear_dict, yaxis = bin_data(data, yaxis, "linear", column_bin_size, bin_stats)
     
     return yaxis, bins, bin_stats, linear_index, linear_dict, column_bin_size, alphavals
 
@@ -538,26 +510,17 @@ def format_ticks(out):
     return fticks
 
 # Create a custom colormap to mimick Polus Plots
-def get_cmap(type):
+def get_cmap():
     
-    if type == "linear":
-        cmap_values = [[1.0,1.0,1.0,1.0]]
-        cmap_values.extend([[r/255,g/255,b/255,1] for r,g,b in zip(np.arange(0,255,2),
-                                                            np.arange(153,255+1/128,102/126),
-                                                            np.arange(34+1/128,0,-34/126))])
-        cmap_values.extend([[r/255,g/255,b/255,1] for r,g,b in zip(np.arange(255,136-1/128,-119/127),
-                                                            np.arange(255,0,-2),
-                                                            np.arange(0,68+1/128,68/127))])
-        cmap = ListedColormap(cmap_values)
-    if type == "log":
-        cmap_values = [[1.0,1.0,1.0,1.0]]
-        cmap_values.extend([[r/255,g/255,b/255,1] for r,g,b in zip(np.arange(0,255,2),
-                                                            np.arange(153,255+1/128,102/126),
-                                                            np.arange(34+1/128,0,-34/126))])
-        cmap_values.extend([[r/255,g/255,b/255,1] for r,g,b in zip(np.arange(255,136-1/128,-119/127),
-                                                            np.arange(255,0,-2),
-                                                            np.arange(0,68+1/128,68/127))])
-        cmap = ListedColormap(cmap_values)
+    cmap_values = [[1.0,1.0,1.0,1.0]]
+    cmap_values.extend([[r/255,g/255,b/255,1] for r,g,b in zip(np.arange(0,255,2),
+                                                        np.arange(153,255+1/128,102/126),
+                                                        np.arange(34+1/128,0,-34/126))])
+    cmap_values.extend([[r/255,g/255,b/255,1] for r,g,b in zip(np.arange(255,136-1/128,-119/127),
+                                                        np.arange(255,0,-2),
+                                                        np.arange(0,68+1/128,68/127))])
+    cmap = ListedColormap(cmap_values)
+
     return cmap
 
 def gen_plot(col1,
@@ -968,7 +931,7 @@ def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,indexd
     outpath = Path(outpath).joinpath('{}_files'.format(out_file),str(S))
     outpath.mkdir(exist_ok=True)
     imageio.imwrite(outpath.joinpath('{}_{}.png'.format(int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE))),image,format='PNG-FI',compression=1)
-    logger.warning('Finished building tile (scale,X,Y): ({},{},{})'.format(S,int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE)))
+    logger.debug('Finished building tile (scale,X,Y): ({},{},{})'.format(S,int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE)))
     return image
 
 # This function performs the same operation as _get_highe_res, except it uses multiprocessing to grab higher
@@ -1058,7 +1021,7 @@ def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, 
     outpath = Path(outpath).joinpath('{}_files'.format(out_file),str(S))
     outpath.mkdir(exist_ok=True)
     imageio.imwrite(outpath.joinpath('{}_{}.png'.format(int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE))),image,format='PNG-FI',compression=1)
-    logger.warning('Finished building tile (scale,X,Y): ({},{},{})'.format(S,int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE)))
+    logger.debug('Finished building tile (scale,X,Y): ({},{},{})'.format(S,int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE)))
     return image
 
 def write_csv(cnames,linear_index,f_info,out_path,out_file):
@@ -1152,12 +1115,15 @@ if __name__=="__main__":
 
         # Bin the data
         linear_logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
+        # start_linear = time.time()
         yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = transform_data_linear(data_linear,column_names)
+        # end_linear = time.time()
+        # totaltime_linear = end_linear - start_linear
         del data_linear # get rid of the original data to save memory
 
         # Generate the default figure components
         linear_logger.info('Generating colormap and default figure...')
-        cmap_linear = get_cmap("linear")
+        cmap_linear = get_cmap()
         fig, ax, datacolor = get_default_fig(cmap_linear)
         linear_logger.info('Done!')
 
@@ -1189,12 +1155,20 @@ if __name__=="__main__":
         
         # Bin the data
         log_logger.info('Binning data for {} LOG features...'.format(column_names.size))
+        start_log = time.time()
         yaxis_log, bins, log_bin_stats, log_index, log_dict, log_binsizes, alphavals_log = transform_data_log(data_log, column_names)
+        end_log = time.time()
+        totaltime_log = end_log - start_log
         del data_log # get rid of the original data to save memory
+
+        # print("Time it took to bin the linear data: ", totaltime_linear)
+        # print("Time it took to bin the log data: ", totaltime_log )
+        # print("Binning log data is", totaltime_log/totaltime_linear, "times faster")
+        # print(" ")
 
         # Generate the default figure components
         log_logger.info('Generating colormap and default figure...')
-        cmap_log = get_cmap("log")
+        cmap_log = get_cmap()
         fig, ax, datacolor = get_default_fig(cmap_log)
         log_logger.info('Done!')
 
