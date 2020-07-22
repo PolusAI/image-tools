@@ -1,6 +1,6 @@
 # Filepattern Utility
 
-Functions and a class to easily filename patterns for WIPP.
+Functions and a class to easily filename patterns for [WIPP](https://github.com/usnistgov/WIPP).
 
 ## FilePattern Class
 
