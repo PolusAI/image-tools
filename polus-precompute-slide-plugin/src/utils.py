@@ -18,9 +18,116 @@ UNITS = {'m':  10**9,
 # Chunk Scale
 CHUNK_SIZE = 1024
 
+def modecalc(values):
+    w = values[0]
+    x = values[1]
+    y = values[2]
+    z = values[3]
+
+    output = None
+    if w == x:
+        if y == z:
+            return max(x,y)
+        else:
+            return x
+    else:
+        if y == z:
+            return y
+        else:
+            a = min(x,w)
+            b = max(x,w)
+            x = min(y,z)
+            y = max(y,z)
+            if b == y:
+                return b
+            elif b == x:
+                return x
+            elif x == a:
+                return a
+            else:
+                return max(b, y)
+
+def segmentinfo(encoder,idlabels,out_dir):
+
+    op = Path(out_dir).joinpath("infodir")
+    # op = Path(encoder.info["segment_properties"])
+    op.mkdir()
+    op = op.joinpath("info")
+
+    inlineinfo = {
+        "ids":[str(item) for item in idlabels],
+        "properties":[
+            {
+            "id":"label",
+            "type":"label",
+            "values":[str(item) for item in idlabels]
+            },
+            {
+            "id":"description",
+            "type":"label",
+            "values": [str(item) for item in idlabels]
+            }
+        ]
+    }
+
+    info = {
+        "@type": "neuroglancer_segment_properties",
+        "inline": inlineinfo
+    }
+
+    with open(op,'w') as writer:
+        writer.write(json.dumps(info))
+    writer.close()
+
+    return op
+
+
+
 def squeeze_generic(a, axes_to_keep):
+    " Reduces the number of dimensions of an array to the number specified"
     out_s = [s for i,s in enumerate(a.shape) if i in axes_to_keep or s!=1]
     return a.reshape(out_s)
+
+def _mode2(image):
+    """ Average pixels together with optical field 2x2 and stride 2
+    
+    Inputs:
+        image - numpy array with only two dimensions (m,n)
+    Outputs:
+        avg_img - numpy array with only two dimensions (round(m/2),round(n/2))
+    """
+    
+    image = image.astype('uint16')
+    imgshape = image.shape
+    ypos = imgshape[0]
+    xpos = imgshape[1]
+    zpos = imgshape[2]
+    z_max = zpos - zpos % 2    # if even then subtracting 0. 
+    y_max = ypos - ypos % 2 # if odd then subtracting 1
+    x_max = xpos - xpos % 2
+
+    mode_imgshape = [d/2 for d in imgshape]
+    mode_img = np.zeros(np.ceil(mode_imgshape).astype('int'))
+
+    one = image[0:y_max-1:2,0:x_max-1:2,:].flatten()
+    two = image[1:y_max:2  ,0:x_max-1:2,:].flatten()
+    three = image[0:y_max-1:2,1:x_max:2  ,:].flatten()
+    four = image[1:y_max:2  ,1:x_max:2  ,:].flatten()
+    
+    ogshape = image[0:y_max-1:2,0:x_max-1:2,:].shape
+
+    modes = np.full_like(one, 0)
+    zipped = zip(one,two,three,four)
+
+    i = 0
+    for item in zipped:
+        modes[i] = modecalc(item)
+        i = i + 1
+    modes = modes.reshape(ogshape)
+    
+    mode_img[0:int(y_max/2),0:int(x_max/2),:]= modes
+
+    return mode_img
 
 def _avg2(image):
     """ Average pixels together with optical field 2x2 and stride 2
@@ -30,7 +137,7 @@ def _avg2(image):
     Outputs:
         avg_img - numpy array with only two dimensions (round(m/2),round(n/2))
     """
-
+    
     image = image.astype('uint16')
     imgshape = image.shape
     ypos = imgshape[0]
@@ -39,7 +146,6 @@ def _avg2(image):
     z_max = zpos - zpos % 2    # if even then subtracting 0. 
     y_max = ypos - ypos % 2 # if odd then subtracting 1
     x_max = xpos - xpos % 2
-    yxz_max = [y_max, x_max, z_max]
 
     avg_imgshape = [d/2 for d in imgshape]
     avg_img = np.zeros(np.ceil(avg_imgshape).astype('int'))
@@ -51,7 +157,7 @@ def _avg2(image):
 
     return avg_img
 
-def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None, slices=None):
+def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,imageType, X=None,Y=None,slices=None):
     """ Recursive function for pyramid building
     
     This is a recursive function that builds an image pyramid by indicating
@@ -109,8 +215,6 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None, s
         X[1] = scale_info['size'][0]
     if Y[1] > scale_info['size'][1]:
         Y[1] = scale_info['size'][1]
-    # if Z[1] > scale_info['size'][2]:
-    #     Z[1] = scale_info['size'][2]
 
     
     # Initialize the output
@@ -141,11 +245,15 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,X=None,Y=None, s
                                             Y=subgrid_dims[1][y:y+2],
                                             S=S+1,
                                             zlevel=zlevel,
+                                            imageType=imageType,
                                             bfio_reader=bfio_reader,
                                             slide_writer=slide_writer,
                                             encoder=encoder,
                                             slices=slices)
-                image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],0:1] = _avg2(sub_image)
+                if imageType == "image":
+                    image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],0:1] = _avg2(sub_image)
+                else:
+                    image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],0:1] = _mode2(sub_image)
 
     # Encode the chunk
     image_encoded = encoder.encode(image)
@@ -356,13 +464,22 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight, imagetype):
     }
     
     # initialize the json dictionary
-    info = {
-        "data_type": dtype,
-        "num_channels":1,
-        "scales": [scales],       # Will build scales below
-        "type": imagetype
-    }
-    
+    if imagetype == "segmentation":
+        info = {
+            "data_type": dtype,
+            "num_channels":1,
+            "scales": [scales],       # Will build scales below
+            "type": imagetype,
+            "segment_properties": "infodir"
+        }
+    else:
+        info = {
+            "data_type": dtype,
+            "num_channels":1,
+            "scales": [scales],       # Will build scales below
+            "type": imagetype,
+        }
+
     for i in range(1,num_scales+1):
         previous_scale = info['scales'][-1]
         current_scale = copy.deepcopy(previous_scale)
