@@ -6,7 +6,9 @@ import imageio
 import filepattern
 import os
 import math
-
+import time
+import pandas as pd
+from collections import Counter
 # Conversion factors to nm, these are based off of supported Bioformats length units
 UNITS = {'m':  10**9,
          'cm': 10**7,
@@ -18,13 +20,33 @@ UNITS = {'m':  10**9,
 # Chunk Scale
 CHUNK_SIZE = 1024
 
-def modecalc(values):
-    w = values[0]
-    x = values[1]
-    y = values[2]
-    z = values[3]
+def findRepeating(arr, n): 
+  
+    missingElement = 0
+  
+    # indexing based 
+    for i in range(0, n): 
+  
+        element = arr[abs(arr[i])] 
+  
+        if(element < 0): 
+            missingElement = arr[i] 
+            break
+          
+        arr[abs(arr[i])] = -arr[abs(arr[i])] 
+      
+    return abs(missingElement) 
 
-    output = None
+def modecalc(w, x, y, z):
+
+    uniques = set([w, x, y, z])
+    num_uniques = len(uniques)
+
+    # if num_uniques == 1:
+    #     return x
+    # if num_uniques == 4:
+    #     return max(w, x, y, z)
+
     if w == x:
         if y == z:
             return max(x,y)
@@ -46,6 +68,36 @@ def modecalc(values):
                 return a
             else:
                 return max(b, y)
+
+    # unique = set([w, x, y, z])
+    # lenunique = len(unique)
+
+    # if lenunique == 1:
+    #     return x
+    # elif lenunique == 4:
+    #     return max(unique)
+    # elif lenunique == 2:
+
+
+    #     return findRepeating([w, x, y, z], n=4)
+    #     # if w == x:
+    #     #     return x
+    #     # else:
+    #     #     if y == z:
+    #     #         return y
+    #     #     else:
+    #     #         A = min(x,w)
+    #     #         B = max(x,w)
+    #     #         X = min(y,z)
+    #     #         Y = max(y,z)
+    #     #         if B == Y:
+    #     #             return B
+    #     #         elif B == X:
+    #     #             return X
+    #     #         elif X == A:
+    #     #             return A
+    #     #         else:
+    #     #             return max(B, Y)
 
 def segmentinfo(encoder,idlabels,out_dir):
 
@@ -106,24 +158,18 @@ def _mode2(image):
     y_max = ypos - ypos % 2 # if odd then subtracting 1
     x_max = xpos - xpos % 2
 
-    mode_imgshape = [d/2 for d in imgshape]
-    mode_img = np.zeros(np.ceil(mode_imgshape).astype('int'))
+    mode_imgshape = np.ceil([d/2 for d in imgshape]).astype('int')
+    mode_img = np.zeros(mode_imgshape)
 
-    one = image[0:y_max-1:2,0:x_max-1:2,:].flatten()
-    two = image[1:y_max:2  ,0:x_max-1:2,:].flatten()
-    three = image[0:y_max-1:2,1:x_max:2  ,:].flatten()
-    four = image[1:y_max:2  ,1:x_max:2  ,:].flatten()
-    
-    ogshape = image[0:y_max-1:2,0:x_max-1:2,:].shape
+    one = image[0:y_max-1:2,0:x_max-1:2,:]
+    two = image[1:y_max:2  ,0:x_max-1:2,:]
+    three = image[0:y_max-1:2,1:x_max:2  ,:]
+    four = image[1:y_max:2  ,1:x_max:2  ,:]
 
-    modes = np.full_like(one, 0)
-    zipped = zip(one,two,three,four)
+    ogshape = one.shape
 
-    i = 0
-    for item in zipped:
-        modes[i] = modecalc(item)
-        i = i + 1
-    modes = modes.reshape(ogshape)
+    modevector = np.vectorize(modecalc)
+    modes = modevector(one, two, three, four)
     
     mode_img[0:int(y_max/2),0:int(x_max/2),:]= modes
 
@@ -250,10 +296,15 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,imageType, X=Non
                                             slide_writer=slide_writer,
                                             encoder=encoder,
                                             slices=slices)
-                if imageType == "image":
-                    image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],0:1] = _avg2(sub_image)
-                else:
-                    image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],0:1] = _mode2(sub_image)
+                start_time = time.time()
+                image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],0:1] = _avg2(sub_image)
+                end_avgtime = time.time()
+                image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],0:1] = _mode2(sub_image)
+                end_modetime = time.time()
+                # print("THE TIME IT TAKES TO DO AVERAGING", end_avgtime-start_time)
+                # print("THE TIME IT TAKES TO DO MODE FUNCTION", end_modetime-end_avgtime)
+                print("THE MODE FUNCTION IS ", (end_modetime-end_avgtime)/(end_avgtime-start_time), "SLOWER")
+
 
     # Encode the chunk
     image_encoded = encoder.encode(image)
