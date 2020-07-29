@@ -8,7 +8,7 @@
 #include <math.h>
 #include <fstream>
 #include <cstdlib>
-#include "KNN_Serial_Code.h"
+#include "KNN_OpenMP_Code.h"
 
 using namespace std;
 
@@ -115,7 +115,7 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 		/**
 		 * Now, we are able to compute the distance
 		 */
-		if (distanceKeyword =="standardised_euclidean") {
+		if (distanceKeyword =="standardisedEuclidean") {
 			double result = 0.0, tmp;
 			for (int i = 0; i < Dim; ++i) {
 				tmp = dataPoints[it][i] - dataPoints[it2][i];
@@ -124,7 +124,7 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 			return sqrt(result);
 		}
 
-		else if (distanceKeyword =="weighted_minkowski") {
+		else if (distanceKeyword =="weightedMinkowski") {
 			double result = 0.0;
 			for (int i = 0; i < Dim; ++i) {
 				result += pow(inputArray[i][0] * abs(dataPoints[it][i] - dataPoints[it2][i]), distanceV1);  
@@ -215,7 +215,7 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 		else  return 1.0 - (dot_product / sqrt(norm_x * norm_y));    
 	}
 
-	else if (distanceKeyword =="bray_curtis") {
+	else if (distanceKeyword =="braycurtis") {
 		double numerator = 0.0, denominator = 0.0;
 
 		for (int i = 0; i < Dim; ++i) {
@@ -227,7 +227,7 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 		else return 0.0;
 	}
 
-	else if (distanceKeyword =="ll_dirichlet") {
+	else if (distanceKeyword =="lldirichlet") {
 		double n1,n2;
 		for (int i = 0; i < Dim; ++i) {
 			n1 +=dataPoints[it][i];
@@ -286,16 +286,16 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 		else return double(num_not_equal) / (2.0 * num_true_true + num_not_equal);
 	}
 
-	else if (distanceKeyword =="categorical_distance") {
+	else if (distanceKeyword =="categoricaldistance") {
 		if (dataPoints[it][0] == dataPoints[it2][0]) return 0.0;
 		else return 1.0;
 	}
 
-	else if (distanceKeyword =="ordinal_distance") {
+	else if (distanceKeyword =="ordinaldistance") {
 		return abs(dataPoints[it][0] - dataPoints[it2][0]) / distanceV1;
 	}
 
-	else if (distanceKeyword =="count_distance") {
+	else if (distanceKeyword =="countdistance") {
 		double poisson_lambda=distanceV1; //default 1.0
 		double normalisation=distanceV2; //default 1.0
 		double log_k_factorial;

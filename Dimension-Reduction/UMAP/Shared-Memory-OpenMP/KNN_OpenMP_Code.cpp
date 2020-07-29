@@ -9,8 +9,14 @@
 #include <fstream>
 #include <float.h>
 #include <boost/iostreams/stream.hpp> 
-#include "KNN_Serial_Code.h"
+#include "KNN_OpenMP_Code.h"
 #include "Metrics.h"  
+#include <omp.h>
+#include <boost/iostreams/device/mapped_file.hpp> 
+#include <boost/iostreams/stream.hpp>    
+
+using boost::iostreams::mapped_file_source;
+using boost::iostreams::stream;	
 using namespace std;
 
 /**
@@ -77,11 +83,7 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 	/**
 	 * Data Structure for new[v] U SAMPLE(new'[v],pk)
 	 */
-	list<int> *New_Final_List = new list<int>[N];
-	/**
-	 * Iterators to access data stored in the list
-	 */
-	list<int>::iterator it, it2, it_temp;
+	vector<int> *New_Final_List = new vector<int>[N];
 	/**
 	 * An approximation of zero in computing distances. Two points with the distance
 	 * smaller than epsilon are considered as one point.
@@ -89,11 +91,11 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 	double epsilon = 1e-10; 
 	short* allEntriesFilled = new short[N];
 	/**
-	 * At first, let's Read Dataset from Input File
+	 * At first, let's Read Dataset from Input File Using Memory Mapping
 	 */
-	ifstream infile;
-	infile.open(filePath);
-	if (infile.fail())
+	mapped_file_source mmap(filePath);
+    stream<mapped_file_source> is(mmap, std::ios::binary);
+	if (is.fail())
 	{
 		logFile << "error in Opening Input File" << endl;
 		cout << "error in Opening Input File" << endl;
@@ -103,20 +105,20 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 	 * Remove the header info
 	 */
 	string dummyLine;
-	getline(infile, dummyLine);
+	getline(is, dummyLine);
 	/**
 	 * Reading the Entire Dataset
 	 */
 	for (int i = 0; i < N; ++i) {
 		string temp, temp2;
-		getline(infile, temp);
+		getline(is, temp);
 		for (int j = 0; j < Dim; ++j) {
 			temp2 = temp.substr(0, temp.find(","));
 			dataPoints[i][j] = atof(temp2.c_str());
 			temp.erase(0, temp.find(",") + 1);
 		}
 	}
-	infile.close();
+	mmap.close();
 	/**
 	 * define a seed for random generator. Using a constant value produces
 	 * the same set of random numbers and is good for debugging. Alternatively,
@@ -201,6 +203,7 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 			}
 			else { return 0; }
 		}
+		return 0;
 	};
 	/**
 	 * Main Loop of the Algorithm
@@ -253,12 +256,18 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 		 * c=c+UPDATENN(B[u1],<u2,l,true>)
 		 */
 		int c_criteria = 0;
+		int abort=0;
+		
 		for (int i = 0; i < N; ++i) {
-			for (it = New_Final_List[i].begin(); it != New_Final_List[i].end(); it++) {
-				it_temp = it;
-				advance(it_temp, 1);
-				for (it2 = it_temp; it2 != New_Final_List[i].end(); it2++) {
-					if (*it != *it2) {
+			if (abort != 0) break;
+			
+            #pragma omp parallel for schedule(dynamic) 
+			for (int it = 0; it < New_Final_List[i].size(); ++it) {
+				int par1= New_Final_List[i][it];
+                
+				for (int it2 = it+1; it2 < New_Final_List[i].size(); ++it2) {
+					int par2= New_Final_List[i][it2];
+					if (par1 != par2 && abort ==0) {
 						/**
 						 * computes spatial distance between two points based on the chosen Metric
 						 * @param distanceMetric the metric to compute the distance between the points in high-D space
@@ -271,16 +280,19 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 						 * @param logFile The errors and informational messages are outputted to the log file 
 						 * @return spatial distance between points two points 
 						 */					
-						double dista = computeDistance (distanceMetric, dataPoints, *it, *it2, Dim, distanceV1, distanceV2, filePathOptionalArray, logFile);
+						double dista = computeDistance (distanceMetric, dataPoints, par1, par2, Dim, distanceV1, distanceV2, filePathOptionalArray, logFile);
 
 						if (dista < epsilon) {
-							logFile << "Found Duplicate Data for Points "<< *it << " and " << *it2; 
-							cout << "Found Duplicate Data for Points "<< *it << " and " << *it2;
-							exit(1);
+							logFile << "Found Duplicate Data for Points "<< par1 << " and " << par2 <<endl;; 
+							cout << "Found Duplicate Data for Points "<< par1 << " and " << par2 <<endl; 
+							abort=1;
+							iterate = false; 
 						}
-
-						c_criteria += UpdateNN(*it, *it2, dista, 1);
-						c_criteria += UpdateNN(*it2, *it, dista, 1);
+						#pragma omp critical
+					    {
+						    c_criteria += UpdateNN(par1, par2, dista, 1);
+						    c_criteria += UpdateNN(par2, par1, dista, 1);
+						}
 					}
 				}
 			}

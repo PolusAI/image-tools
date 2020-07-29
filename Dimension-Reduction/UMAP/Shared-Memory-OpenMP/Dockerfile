@@ -7,7 +7,7 @@ RUN apt-get -y update && \
 
 
 #Create a new directory
-RUN mkdir -p /home/UMAP
+RUN mkdir -p /home/UMAP /home/Inputs /home/Outputs
 
 # Specify the working directory
 WORKDIR /home/UMAP
@@ -31,7 +31,7 @@ RUN rm eigen-3.3.7.tar.gz
 # Copy the current folder which contains C++ source code to the Docker image
 COPY . /home/UMAP
 
-RUN g++ -I/home/UMAP/boost_1_71_0 -I/home/UMAP/eigen-3.3.7 main.cpp KNN_Serial_Code.cpp highDComputes.cpp Initialization.cpp LMOptimization.cpp Metrics.cpp SGD.cpp -o Out.exe -O2 -larmadillo -L/home/UMAP/boost_1_71_0/stage/lib -lboost_iostreams -lboost_system -lboost_filesystem -fopenmp
+RUN g++ -I/home/UMAP/boost_1_71_0 -I/home/UMAP/eigen-3.3.7 main.cpp KNN_OpenMP_Code.cpp highDComputes.cpp Initialization.cpp LMOptimization.cpp Metrics.cpp SGD.cpp -o Out.exe -O2 -larmadillo -L/home/UMAP/boost_1_71_0/stage/lib -lboost_iostreams -lboost_system -lboost_filesystem -fopenmp
 
 ENTRYPOINT ["./Out.exe"]
 

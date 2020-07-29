@@ -11,7 +11,7 @@ import os
 import glob
 
 argparser = argparse.ArgumentParser()
-argparser.add_argument('--readOption', dest='readOption', type=str)
+#argparser.add_argument('--readOption', dest='readOption', type=str)
 argparser.add_argument('--deviceName', dest='deviceName', type=str)
 argparser.add_argument('--applySignFlip', dest='applySignFlip', type=str)
 argparser.add_argument('--computeStdev', dest='computeStdev', type=str)
@@ -31,7 +31,7 @@ SettingOutputPath = os.path.join(args.outputPath, 'Setting.txt')
 logging.basicConfig(filename=SettingOutputPath , level=logging.INFO)
 
 startTime = datetime.now()
-#Reading input data directly and creating a numpy array.
+'''#Reading input data directly and creating a numpy array.
 if args.readOption=='direct':
     df = ddf.read_csv(inputPath,sep=',')   
     d = df.compute(scheduler='threads') 
@@ -55,6 +55,21 @@ elif args.readOption == 'mapping':
     m.close()
     data = np.array(lineArray,dtype='float32')
     del lineArray
+'''
+#For Now Lets Make mapping as the default way of reading input file
+fileName = open(inputPath, "r")
+m = mmap.mmap(fileName.fileno(), 0, prot=mmap.PROT_READ)
+m.readline() 
+lineCounts = 0
+for line in fileName:
+    lineCounts = lineCounts+1
+lineArray = []
+for i in range(lineCounts-1):
+    line = m.readline()
+    lineArray.append(line.strip().decode('utf-8').split(","))
+m.close()
+data = np.array(lineArray,dtype='float32')
+del lineArray
 
 duration = datetime.now() - startTime
 logging.info("Duration of Reading Data == "+str(duration))

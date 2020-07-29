@@ -4,11 +4,8 @@ FROM ubuntu:latest
 # Update apps on the base image
 RUN apt-get -y update && apt-get install -y g++ wget make
  
-#Create a new directory
-RUN mkdir -p /home/SharedKNN
- 
-# Copy the current folder which contains C++ source code to the Docker image
-COPY . /home/SharedKNN
+#Create new directories
+RUN mkdir -p /home/SharedKNN /home/Inputs /home/Outputs 
  
 # Specify the working directory
 WORKDIR /home/SharedKNN
@@ -22,9 +19,12 @@ RUN ./bootstrap.sh
 RUN ./b2
 ENV LD_LIBRARY_PATH="/home/SharedKNN/boost_1_71_0/stage/lib:${LD_LIBRARY_PATH}" 
 
+# Copy the current folder which contains C++ source code to the Docker image
+COPY . /home/SharedKNN
+
 # Use g++ to compile the source file 
 WORKDIR /home/SharedKNN
-RUN g++ -I/home/SharedKNN/boost_1_71_0 KNN_Serial_Code.cpp -O2 -o Out.exe -L/home/SharedKNN/boost_1_71_0/stage/lib -lboost_iostreams -lboost_system -lboost_filesystem 
+RUN g++ -I/home/SharedKNN/boost_1_71_0 KNN_OpenMP_Code.cpp -O2 -o Out.exe -L/home/SharedKNN/boost_1_71_0/stage/lib -lboost_iostreams -lboost_system -lboost_filesystem -fopenmp
  
 # Run the output program from the previous step
-ENTRYPOINT ["time ./Out.exe"]
+ENTRYPOINT ["./Out.exe"]

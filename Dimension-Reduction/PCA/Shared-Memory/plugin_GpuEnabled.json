@@ -1,27 +1,22 @@
 {
     "name": "PCA (Shared-Memory)",
-    "version": "0.1.0",
+    "version": "Gpuenabled-0.1.3",
     "title": "PCA (Shared-Memory)",
     "description": "PCA Shared-Memory Code",
     "author": "Mahdi Maghrebi",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-    "containerId": "labshare/polus-pca-plugin:0.1.0",
+    "containerId": "labshare/polus-pca-plugin:Gpuenabled-0.1.3",
     "inputs": [
         {
-            "name": "readOption",
-            "type": "enum",
-            "options": {
-                "values": [
-                    "direct",
-                    "mapping"
-                ]
-            },
-            "description": "Reading input data: direct or mapping",
+            "name": "inputPath",
+            "type": "csvCollection",
+            "description": "Input csv file containing the raw data",
             "required": "True"
         },
         {
             "name": "deviceName",
             "type": "enum",
+            "description": "Computing Device (CPU or GPU)",
             "options": {
                 "values": [
                     "cpu",
@@ -33,18 +28,13 @@
         {
             "name": "applySignFlip",
             "type": "boolean",
+            "description": "Apply sign flip on the projected data along certain PC axes",
             "required": "True"
         },
         {
             "name": "computeStdev",
             "type": "boolean",
-            "description": "Post-Compute Process to Compute STDEV",
-            "required": "True"
-        },
-        {
-            "name": "inputPath",
-            "type": "csvCollection",
-            "description": "Input csv File",
+            "description": "Post-Compute Process to Compute the Standard Deviation",
             "required": "True"
         }
     ],
@@ -54,33 +44,29 @@
             "type": "csvCollection",
             "description": "Full path of the output csv file"
         }
-
     ],
     "ui": [
         {
-            "key": "inputs.readOption",
-			"title": "Read Input File Directly?",
-			"description": "Pick a collection..."
+            "key": "inputs.inputPath",
+            "title": "Input CSV collection",
+            "description": "Insert the path to csv collection"
         },
         {
             "key": "inputs.deviceName",
             "title": "Computing Device",
-            "description": "Which Device is Used for Computation: cpu or cuda"
+            "description": "Which Device is Used for Computation: cpu or cuda",
+            "default": "cpu"          
         },
         {
             "key": "inputs.applySignFlip",
-            "title": "Apply Sign Flip?",
-            "description": "Apply sign flip on the projected data along certain PC axes: yes or no"
+            "title": "Apply Sign Flip to the Projected Outputs?",
+            "description": "Apply sign flip on the projected data along certain PC axes",
+            "default": true
         },
         {
             "key": "inputs.computeStdev",
-            "title": "Compute the Standard Deviation?",
+            "title": "Post-Compute the Standard Deviation?",
             "description": "Compute the Standard Deviation of the projected data along each PC axis?"
-        },
-        {
-            "key": "inputs.inputPath",
-            "title": "Read Input File Directly?",
-            "description": "Full path to the input csv file"
         }
     ]
 }

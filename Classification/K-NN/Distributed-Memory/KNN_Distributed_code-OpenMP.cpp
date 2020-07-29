@@ -535,6 +535,13 @@ int main(int argc, char * const argv[]) {
 	infile.close();
 	string cmd2= string("rm ")+localFileName;
 	int returnValue=system(cmd2.c_str());
+	/**
+	 * Query about the number of available OpenMP processors and set it for OpenMP
+	 */	
+	int nProcessors = omp_get_num_procs();
+    omp_set_num_threads(nProcessors-1);
+	cout <<"Total Number of OpenMP Processes in the Parallel Region = "<< nProcessors-1 <<endl;
+	
 	/**	
 	 * Compute dimensions with the highest variance
 	 */	
