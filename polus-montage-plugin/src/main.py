@@ -1,7 +1,9 @@
-import argparse, logging, time, imagesize, math
+import argparse, logging, time, math
 from pathlib import Path
-from filepattern import FilePattern, get_regex, VARIABLES
+from filepattern import FilePattern, get_regex
+from bfio import BioReader
 
+VARIABLES = 'rtczyxp'
 SPACING = 10
 MULTIPLIER = 4
 STITCH_VARS = ['file','correlation','posX','posY','gridX','gridY'] # image stitching values
@@ -168,7 +170,7 @@ if __name__=="__main__":
 
         # Get the height and width of each image
         for f in files:
-            f['width'], f['height'] = imagesize.get(f['file'])
+            f['width'], f['height'] = BioReader.image_size(f['file'])
 
             if grid_width < f['width']:
                 grid_width = f['width']

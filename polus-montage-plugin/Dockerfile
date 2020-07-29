@@ -1,5 +1,5 @@
 
-FROM python:3.7-alpine
+FROM labshare/polus-bfio-util:1.3.4-slim-buster
 
 COPY VERSION /
 		
