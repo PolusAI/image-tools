@@ -4,3 +4,27 @@ This tool is a simplified but powerful interface to the [Bioformats java library
 
 This tool is currently not on any public pip repositories, but can be installed by cloning this repository and installing with pip.
 
+## Universal Container Components
+
+All containers contain the follow components:
+1. Python 3.6
+2. openjdk-8
+3. numpy (version 1.18.1)
+4. javabridge (version 1.0.18)
+5. python-bioformats (version 1.5.2)
+6. bfio (version 1.3.4)
+7. [loci-tools.jar](https://downloads.openmicroscopy.org/bio-formats/6.1.0/artifacts/) (Version 6.1.0)
+
+## Containers
+
+### labshare/polus-bfio-util:1.3.4 & labshare/polus-bfio-util:1.3.4-alpine
+
+This container is built on Alpine Linux. This is the smallest bfio container, but also the most difficult to install additional requirements on.
+
+### labshare/polus-bfio-util:1.3.4-slim-buster
+
+This container is built on a stripped down version of Debian Buster. This container is larger than the `alpine` version, but easier to install new Python packages on.
+
+### labshare/polus-bfio-util:1.3.4-tensorflow
+
+This container is built on Debian Buster and includes Tensorflow 2.1.0 and all necessary GPU drivers to run Tensorflow on an NVIDIA graphics card.
