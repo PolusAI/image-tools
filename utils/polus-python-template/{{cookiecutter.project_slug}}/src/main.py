@@ -40,7 +40,7 @@ if __name__=="__main__":
     {% if val.type=="collection" and cookiecutter.use_bfio -%}
     if (Path.is_dir(Path(args.{{ inp }}).joinpath('images'))):
         # switch to images folder if present
-        fpath = Path(args.{{ inp }}).joinpath('images')
+        fpath = str(Path(args.{{ inp }}).joinpath('images').absolute())
     {% endif -%}
     logger.info('{{ inp }} = {}'.format({{ inp }}))
     {% endif -%}
