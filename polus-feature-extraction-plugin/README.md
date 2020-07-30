@@ -117,6 +117,6 @@ This plugin takes eight input argument and one output argument:
 | `--embeddedpixelsize` | Consider the unit embedded in metadata, if present| Input | boolean |
 | `--unitLength` | Enter the metric for unit conversion | Input | string |
 | `--pixelsPerunit` | Enter the number of pixels per unit of the metric | Input | number |
-| `--outDir` | Output collection | Output | collection |
+| `--outDir` | Output collection | Output | csvCollection |
 
 
