@@ -140,7 +140,7 @@ def squeeze_generic(a, axes_to_keep):
     out_s = [s for i,s in enumerate(a.shape) if i in axes_to_keep or s!=1]
     return a.reshape(out_s)
 
-def _mode2(image):
+def _mode2(image, dtype):
     """ Average pixels together with optical field 2x2 and stride 2
     
     Inputs:
@@ -148,32 +148,182 @@ def _mode2(image):
     Outputs:
         avg_img - numpy array with only two dimensions (round(m/2),round(n/2))
     """
-    
-    image = image.astype('uint16')
+
+    """ Find mode of pixels in optical field 2x2 and stride 2
+    This method works by finding the largest number that occurs at least twice
+    in a 2x2 grid of pixels, then sets that value to the output pixel.
+    Inputs:
+        image - numpy array with only two dimensions (m,n)
+    Outputs:
+        mode_img - numpy array with only two dimensions (round(m/2),round(n/2))
+    """
+    def forloop(mode_img, idxfalse, vals):
+
+        for i in range(3):
+            rvals = vals[i]
+            for j in range(i+1,4):
+                cvals = vals[j]
+                ind = np.logical_and(cvals==rvals,rvals>mode_img[idxfalse])
+                mode_img[idxfalse][ind] = rvals[ind]
+        return mode_img
+
     imgshape = image.shape
+    ypos, xpos, zpos = imgshape
+
+    y_max = ypos - ypos % 2
+    x_max = xpos - xpos % 2
+    z_max = zpos - zpos % 2
+
+    mode_imgshape = np.ceil([d/2 for d in imgshape]).astype('int')
+    mode_img = np.zeros(mode_imgshape).astype(dtype)
+
+    vals00 = image[0:y_max-1:2, 0:x_max-1:2,:]
+    vals01 = image[0:y_max-1:2, 1:x_max:2,:]
+    vals10 = image[1:y_max:2,   0:x_max-1:2,:]
+    vals11 = image[1:y_max:2,   1:x_max:2,:]
+
+    index = (vals00 == vals01) & (vals10 == vals11)
+    maxarray = np.maximum(vals00, vals10)
+    indexfalse = index==False
+    indextrue = index==True
+    valueslist = [vals00[indexfalse], vals01[indexfalse], vals10[indexfalse], vals11[indexfalse]]
+
+    if ypos != y_max and xpos == x_max:
+        shortmode_img = mode_img[:-1,:,:]
+        shortmode_img[indextrue] = maxarray[indextrue]
+        shortmode_img = forloop(shortmode_img, indexfalse, valueslist)
+        mode_img[:-1,:,:] = shortmode_img
+    elif xpos != x_max and ypos == y_max:
+        shortmode_img = mode_img[:,:-1,:]
+        shortmode_img[indextrue] = maxarray[indextrue]
+        shortmode_img = forloop(shortmode_img, indexfalse, valueslist)
+        mode_img[:,:-1,:] = shortmode_img
+    elif xpos != x_max and ypos != y_max:
+        shortmode_img = mode_img[:-1,:-1,:]
+        shortmode_img[indextrue] = maxarray[indextrue]
+        shortmode_img = forloop(shortmode_img, indexfalse, valueslist)
+        mode_img[:-1,:-1,:] = shortmode_img
+    else:
+        mode_img[indextrue] = maxarray[indextrue]
+        mode_img = forloop(mode_img, indexfalse, valueslist)
+
+    return mode_img
+
+
+def _modetwo(image, dtype):
+    """ Average pixels together with optical field 2x2 and stride 2
+    
+    Inputs:
+        image - numpy array with only two dimensions (m,n)
+    Outputs:
+        avg_img - numpy array with only two dimensions (round(m/2),round(n/2))
+    """
+
+    """ Find mode of pixels in optical field 2x2 and stride 2
+    This method works by finding the largest number that occurs at least twice
+    in a 2x2 grid of pixels, then sets that value to the output pixel.
+    Inputs:
+        image - numpy array with only two dimensions (m,n)
+    Outputs:
+        mode_img - numpy array with only two dimensions (round(m/2),round(n/2))
+    """
+    imgshape = image.shape
+
     ypos = imgshape[0]
     xpos = imgshape[1]
     zpos = imgshape[2]
-    z_max = zpos - zpos % 2    # if even then subtracting 0. 
-    y_max = ypos - ypos % 2 # if odd then subtracting 1
+    y_max = ypos - ypos % 2
     x_max = xpos - xpos % 2
+    z_max = zpos - zpos % 2
 
     mode_imgshape = np.ceil([d/2 for d in imgshape]).astype('int')
     mode_img = np.zeros(mode_imgshape)
+    for i in range(3):
+        x1 = i//2
+        y1 = i%2
+        rvals = image[0:y_max+(ypos-y_max)+y1:2,0:x_max+(xpos-x_max)+x1:2,:] # reference values
+        for j in range(i+1,4):
+            x2 = j//2
+            y2 = j%2
+            cvals = image[0:y_max+(ypos-y_max)+y2:2,0:x_max+(xpos-x_max)+x2:2,:] # compare values
+            ind = np.logical_and(cvals==rvals,rvals>mode_img)
+            mode_img[ind] = rvals[ind]
 
-    one = image[0:y_max-1:2,0:x_max-1:2,:]
-    two = image[1:y_max:2  ,0:x_max-1:2,:]
-    three = image[0:y_max-1:2,1:x_max:2  ,:]
-    four = image[1:y_max:2  ,1:x_max:2  ,:]
-
-    ogshape = one.shape
-
-    modevector = np.vectorize(modecalc)
-    modes = modevector(one, two, three, four)
-    
-    mode_img[0:int(y_max/2),0:int(x_max/2),:]= modes
 
     return mode_img
+    
+    # print(" ")
+
+
+    # yblack, xblack= np.where((image[:, :, :] > [0,0,0]).all(2))
+
+    # yblack = yblack - (yblack%2)
+    # xblack = xblack = (xblack%2)
+    # zblack = np.zeros(len(xblack)).astype('int')
+    
+    # sets = np.array([yblack, xblack, zblack])
+    # sets = sets.transpose()
+
+    # try:
+    #     unique = np.unique(sets, axis=0)
+    # except:
+    #     return mode_img
+
+    # unique = unique.transpose()
+
+    # yblack = unique[0]
+    # xblack = unique[1]
+    # zblack = unique[2]
+    
+    # halfy = (yblack/2).astype('int')
+    # halfx = (xblack/2).astype('int')
+
+    # rvals = np.zeros(np.ceil(mode_imgshape).astype('int'))
+    # cvals = np.zeros(np.ceil(mode_imgshape).astype('int'))
+    # ind = np.zeros(np.ceil(mode_imgshape).astype('int'))
+
+    # for i in range(3):
+    #     x1 = i//2
+    #     y1 = i%2
+    #     rvals[halfy, halfx, zblack]= image[yblack+y1, xblack+x1, zblack]
+    #     # rvals = image[0:y_max+(ypos-y_max)+y1:2,0:x_max+(xpos-x_max)+x1:2,:] # reference values
+    #     # rvals = image[yblack[i] - (yblack[i]%2)+y1,xblack[i] - (xblack[i]%2)+x1,:]  for i in range(num_blacks)]
+    #     for j in range(i+1,4):
+    #         x2 = j//2
+    #         y2 = j%2
+    #         cvals[halfy, halfx, zblack] = image[yblack+y2, xblack+x2, zblack]
+    #         # cvals = image[0:y_max+(ypos-y_max)+y2:2,0:x_max+(xpos-x_max)+x2:2,:] # compare values
+    #         # cvals = [image[yblack[i] - (yblack[i]%2)+y2,xblack[i] - (xblack[i]%2)+x2,:]  for i in range(num_blacks)]
+    #         # calculate local mode
+    #         ind = np.logical_and(cvals==rvals,rvals>mode_img)
+    #         mode_img[ind] = rvals[ind]
+
+    # print(" ")
+    # return mode_img
+    
+    # image = image.astype('uint16')
+    # imgshape = image.shape
+    # ypos = imgshape[0]
+    # xpos = imgshape[1]
+    # zpos = imgshape[2]
+    # z_max = zpos - zpos % 2    # if even then subtracting 0. 
+    # y_max = ypos - ypos % 2 # if odd then subtracting 1
+    # x_max = xpos - xpos % 2
+
+    # mode_imgshape = np.ceil([d/2 for d in imgshape]).astype('int')
+    # mode_img = np.zeros(mode_imgshape)
+
+    # one = image[0:y_max-1:2,0:x_max-1:2,:]
+    # two = image[1:y_max:2  ,0:x_max-1:2,:]
+    # three = image[0:y_max-1:2,1:x_max:2  ,:]
+    # four = image[1:y_max:2  ,1:x_max:2  ,:]
+
+    # ogshape = one.shape
+
+    # modevector = np.vectorize(modecalc)
+    # modes = modevector(one, two, three, four)
+    
+    # mode_img[0:int(y_max/2),0:int(x_max/2),:]= modes
 
 def _avg2(image):
     """ Average pixels together with optical field 2x2 and stride 2
@@ -194,12 +344,13 @@ def _avg2(image):
     x_max = xpos - xpos % 2
 
     avg_imgshape = [d/2 for d in imgshape]
-    avg_img = np.zeros(np.ceil(avg_imgshape).astype('int'))
+    avg_img = np.zeros(np.ceil(avg_imgshape).astype('int')).astype('uint16')
     avg_img[0:int(y_max/2),0:int(x_max/2),:]= (\
                                                 image[0:y_max-1:2,0:x_max-1:2,:] + \
                                                 image[1:y_max:2  ,0:x_max-1:2,:] + \
                                                 image[0:y_max-1:2,1:x_max:2  ,:] + \
                                                 image[1:y_max:2  ,1:x_max:2  ,:])/4
+
 
     return avg_img
 
@@ -262,9 +413,9 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,imageType, X=Non
     if Y[1] > scale_info['size'][1]:
         Y[1] = scale_info['size'][1]
 
-    
+    datatype = bfio_reader.read_metadata().image().Pixels.get_PixelType()
     # Initialize the output
-    image = np.zeros((Y[1]-Y[0],X[1]-X[0],1),dtype=bfio_reader.read_metadata().image().Pixels.get_PixelType())
+    image = np.zeros((Y[1]-Y[0],X[1]-X[0],1),dtype=datatype)
     
     # If requesting from the lowest scale, then just read the image
     if str(S)==encoder.info['scales'][0]['key']:
@@ -299,18 +450,20 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,imageType, X=Non
                 start_time = time.time()
                 image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],0:1] = _avg2(sub_image)
                 end_avgtime = time.time()
-                image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],0:1] = _mode2(sub_image)
+                image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],0:1] = _mode2(sub_image, datatype)
                 end_modetime = time.time()
                 # print("THE TIME IT TAKES TO DO AVERAGING", end_avgtime-start_time)
                 # print("THE TIME IT TAKES TO DO MODE FUNCTION", end_modetime-end_avgtime)
-                print("THE MODE FUNCTION IS ", (end_modetime-end_avgtime)/(end_avgtime-start_time), "SLOWER")
+                # print("THE MODE FUNCTION IS ", (end_modetime-end_avgtime)/(end_avgtime-start_time), "SLOWER")
+                # if ((end_modetime-end_avgtime)/(end_avgtime-start_time)) > 5:
+                #     print("too slow", ((end_modetime-end_avgtime)/(end_avgtime-start_time)))
 
 
     # Encode the chunk
     image_encoded = encoder.encode(image)
     # Write the chunk
     slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],zlevel,zlevel + 1))
-    
+    print(" ")
     return image
 
 # Modified and condensed from FileAccessor class in neuroglancer-scripts
@@ -497,9 +650,6 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight, imagetype):
     resolution = [phys_x[0] * UNITS[phys_x[1]]]
     resolution.append(phys_y[0] * UNITS[phys_y[1]])
     resolution.append(phys_z[0] * UNITS[phys_z[1]]) # Just used as a placeholder
-    with open('textfile.txt', 'a+') as f:
-        f.write("This is the resolution: %s" % resolution)
-    f.close()
     dtype = bfio_reader.read_metadata().image().Pixels.get_PixelType()
     
     num_scales = int(np.log2(max(sizes))) + 1
