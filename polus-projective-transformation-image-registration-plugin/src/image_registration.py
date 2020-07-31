@@ -42,6 +42,7 @@ def get_transform(moving_image,reference_image,max_val,min_val):
     Outputs:
         homography= transformation applied to the moving image
     """
+    logger.info("get_transform() started...")
     # height, width of the reference image
     height, width = reference_image.shape
     # max number of features to be calculated using ORB
@@ -50,6 +51,7 @@ def get_transform(moving_image,reference_image,max_val,min_val):
     orb = cv2.ORB_create(max_features)
     
     # Normalize images and convert to appropriate type
+    logger.info("get_transform() bluring and normalizing...")
     moving_image_norm = cv2.GaussianBlur(moving_image,(3,3),0)
     reference_image_norm = cv2.GaussianBlur(reference_image,(3,3),0)
     moving_image_norm = (moving_image_norm-min_val)/(max_val-min_val)
@@ -58,6 +60,7 @@ def get_transform(moving_image,reference_image,max_val,min_val):
     reference_image_norm = (reference_image_norm * 255).astype(np.uint8)
     
     # find keypoints and descriptors in moving and reference image
+    logger.info("get_transform() getting keypoints...")
     keypoints1, descriptors1 = orb.detectAndCompute(moving_image_norm, None)
     keypoints2, descriptors2 = orb.detectAndCompute(reference_image_norm, None)
     
@@ -66,11 +69,18 @@ def get_transform(moving_image,reference_image,max_val,min_val):
         return None
     
     # match and sort the descriptos using hamming distance    
-    matcher = cv2.DescriptorMatcher_create(cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING)
+    logger.info("get_transform() matching keypoints...")
+    # matcher = cv2.BFMatcher(cv2.NORM_HAMMING)
+    flann_params= dict(algorithm = 6, # FLANN_INDEX_LSH
+                       table_number = 6,
+                       key_size = 12,
+                       multi_probe_level = 1)
+    matcher = cv2.FlannBasedMatcher(flann_params, {})
     matches = matcher.match(descriptors1, descriptors2, None)
     matches.sort(key=lambda x: x.distance, reverse=False)
     
     # extract top 25% of matches
+    logger.info("get_transform() isolating top 0.25 of values...")
     good_match_percent=0.25    
     numGoodMatches = int(len(matches) * good_match_percent)
     matches = matches[:numGoodMatches]
@@ -213,11 +223,9 @@ def register_image(br_ref,br_mov,bw,Xt,Yt,Xm,Ym,x,y,X_crop,Y_crop,max_val,min_va
     
     # If the correlation is bad, try using the rough transform instead
     if corr < 0.4 and not is_rough:
-        rough_image = cv2.warpPerspective(mov_tile,Rough_Homography_Upscaled,(Xt[1]-Xt[0],Yt[1]-Yt[0]))
-        corr_rough = corr2(ref_tile,rough_image)
-        if corr_rough > corr:
-            projective_transform = Rough_Homography_Upscaled
-            transformed_image = rough_image
+        transformed_image = cv2.warpPerspective(mov_tile,Rough_Homography_Upscaled,(Xt[1]-Xt[0],Yt[1]-Yt[0]))               
+        projective_transform = Rough_Homography_Upscaled
+            
     
     # Write the transformed moving image
     bw.write_image(transformed_image[Y_crop[0]:Y_crop[1],X_crop[0]:X_crop[1],np.newaxis,np.newaxis,np.newaxis],X=[x],Y=[y])
