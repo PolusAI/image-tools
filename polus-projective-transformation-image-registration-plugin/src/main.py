@@ -23,7 +23,7 @@ if __name__=="__main__":
     parser.add_argument('--template', dest='template', type=str, help='Template image to be used for image registration', required=True)
     parser.add_argument('--TransformationVariable', dest='TransformationVariable', type=str,help='variable to help identify which images have similar transformation', required=True)
     parser.add_argument('--outDir', dest='outDir', type=str, help='Output collection', required=True)
-    
+    parser.add_argument('--method', dest='method', type=str, help='projective, affine, or partialaffine', required=True)
     
     # Parse the arguments     
     args = parser.parse_args()
@@ -44,10 +44,9 @@ if __name__=="__main__":
     logger.info('TransformationVariable = {}'.format(TransformationVariable))
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))     
-    
-
+    method = args.method
+    logger.info('method = {}'.format(method))
         
-
     #memory usage    
     mem = psutil.virtual_memory()
     logger.debug('System memory stats : {}'.format(mem))  
@@ -80,6 +79,6 @@ if __name__=="__main__":
         similar_transformation_string=' '.join(similar_transformation_set)        
 
         # open subprocess image_registration.py
-        registration = subprocess.Popen("python3 image_registration.py --registrationString '{}' --similarTransformationString '{}' --outDir '{}' --template '{}'".format(registration_string,similar_transformation_string,outDir,template ), shell=True )
+        registration = subprocess.Popen("python3 image_registration.py --registrationString '{}' --similarTransformationString '{}' --outDir '{}' --template '{}' --method '{}'".format(registration_string,similar_transformation_string,outDir,template,method), shell=True )
         registration.wait()
         

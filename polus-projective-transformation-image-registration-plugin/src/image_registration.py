@@ -31,7 +31,7 @@ def corr2(a,b):
     
     return r
 
-def get_transform(moving_image,reference_image,max_val,min_val):
+def get_transform(moving_image,reference_image,max_val,min_val,method):
     """get_transform Calculate homography matrix transform
 
     This function registers the moving image with reference image
@@ -42,16 +42,14 @@ def get_transform(moving_image,reference_image,max_val,min_val):
     Outputs:
         homography= transformation applied to the moving image
     """
-    logger.info("get_transform() started...")
     # height, width of the reference image
     height, width = reference_image.shape
     # max number of features to be calculated using ORB
     max_features=500000  
     # initialize orb feature matcher
-    orb = cv2.ORB_create(max_features)
+    orb = cv2.ORB_create(max_features,scaleFactor=2,nlevels=3)
     
     # Normalize images and convert to appropriate type
-    logger.info("get_transform() bluring and normalizing...")
     moving_image_norm = cv2.GaussianBlur(moving_image,(3,3),0)
     reference_image_norm = cv2.GaussianBlur(reference_image,(3,3),0)
     moving_image_norm = (moving_image_norm-min_val)/(max_val-min_val)
@@ -60,7 +58,6 @@ def get_transform(moving_image,reference_image,max_val,min_val):
     reference_image_norm = (reference_image_norm * 255).astype(np.uint8)
     
     # find keypoints and descriptors in moving and reference image
-    logger.info("get_transform() getting keypoints...")
     keypoints1, descriptors1 = orb.detectAndCompute(moving_image_norm, None)
     keypoints2, descriptors2 = orb.detectAndCompute(reference_image_norm, None)
     
@@ -69,7 +66,6 @@ def get_transform(moving_image,reference_image,max_val,min_val):
         return None
     
     # match and sort the descriptos using hamming distance    
-    logger.info("get_transform() matching keypoints...")
     # matcher = cv2.BFMatcher(cv2.NORM_HAMMING)
     flann_params= dict(algorithm = 6, # FLANN_INDEX_LSH
                        table_number = 6,
@@ -80,7 +76,6 @@ def get_transform(moving_image,reference_image,max_val,min_val):
     matches.sort(key=lambda x: x.distance, reverse=False)
     
     # extract top 25% of matches
-    logger.info("get_transform() isolating top 0.25 of values...")
     good_match_percent=0.25    
     numGoodMatches = int(len(matches) * good_match_percent)
     matches = matches[:numGoodMatches]
@@ -97,7 +92,12 @@ def get_transform(moving_image,reference_image,max_val,min_val):
         return None
     
     # calculate the homography matrix
-    homography, _ = cv2.findHomography(points1, points2, cv2.RANSAC)
+    if method=='Projective':
+        homography, _ = cv2.findHomography(points1, points2, cv2.RANSAC)
+    elif method=='Affine':
+        homography, _ = cv2.estimateAffine2D(points1, points2, method=cv2.RANSAC)
+    elif method=='PartialAffine':
+        homography, _ = cv2.estimateAffinePartial2D(points1, points2, method=cv2.RANSAC)
     
     return homography
 
@@ -191,7 +191,7 @@ def get_scaled_down_images(image,scale_factor,get_max=False):
     else:
         return rescaled_image
 
-def register_image(br_ref,br_mov,bw,Xt,Yt,Xm,Ym,x,y,X_crop,Y_crop,max_val,min_val):
+def register_image(br_ref,br_mov,bw,Xt,Yt,Xm,Ym,x,y,X_crop,Y_crop,max_val,min_val,method):
     """register_image Register one section of two images
 
     This method is designed to be used within a thread. It registers
@@ -207,7 +207,7 @@ def register_image(br_ref,br_mov,bw,Xt,Yt,Xm,Ym,x,y,X_crop,Y_crop,max_val,min_va
     mov_tile = br_mov.read_image(X=[Xm[0],Xm[1]],Y=[Ym[0],Ym[1]],Z=[0,1],C=[0],T=[0]).squeeze()
     
     # Get the transformation matrix
-    projective_transform = get_transform(mov_tile,ref_tile,max_val,min_val)
+    projective_transform = get_transform(mov_tile,ref_tile,max_val,min_val,method)
     
     # Use the rough transformation matrix if no matrix was returned
     is_rough = False
@@ -216,16 +216,21 @@ def register_image(br_ref,br_mov,bw,Xt,Yt,Xm,Ym,x,y,X_crop,Y_crop,max_val,min_va
         projective_transform = Rough_Homography_Upscaled
     
     # Transform the moving image
-    transformed_image = cv2.warpPerspective(mov_tile,projective_transform,(Xt[1]-Xt[0],Yt[1]-Yt[0]))
+    if method=='Projective':
+        transformed_image = cv2.warpPerspective(mov_tile,projective_transform,(Xt[1]-Xt[0],Yt[1]-Yt[0]))
+    else:
+        transformed_image = cv2.warpAffine(mov_tile,projective_transform,(Xt[1]-Xt[0],Yt[1]-Yt[0]))
     
     # Determine the correlation between the reference and transformed moving image
     corr = corr2(ref_tile,transformed_image)
     
     # If the correlation is bad, try using the rough transform instead
     if corr < 0.4 and not is_rough:
-        transformed_image = cv2.warpPerspective(mov_tile,Rough_Homography_Upscaled,(Xt[1]-Xt[0],Yt[1]-Yt[0]))               
+        if method=='Projective':
+            transformed_image = cv2.warpPerspective(mov_tile,Rough_Homography_Upscaled,(Xt[1]-Xt[0],Yt[1]-Yt[0]))  
+        else:
+            transformed_image = cv2.warpAffine(mov_tile,Rough_Homography_Upscaled,(Xt[1]-Xt[0],Yt[1]-Yt[0]))              
         projective_transform = Rough_Homography_Upscaled
-            
     
     # Write the transformed moving image
     bw.write_image(transformed_image[Y_crop[0]:Y_crop[1],X_crop[0]:X_crop[1],np.newaxis,np.newaxis,np.newaxis],X=[x],Y=[y])
@@ -235,7 +240,7 @@ def register_image(br_ref,br_mov,bw,Xt,Yt,Xm,Ym,x,y,X_crop,Y_crop,max_val,min_va
     
     return projective_transform
 
-def apply_transform(br_mov,bw,tiles,shape,transform):
+def apply_transform(br_mov,bw,tiles,shape,transform,method):
     """apply_transform Apply a transform to an image
 
     This method is designed to be used within a thread. It loads
@@ -255,8 +260,11 @@ def apply_transform(br_mov,bw,tiles,shape,transform):
     # Get the image coordinates and shape
     x,y,X_crop,Y_crop = shape
     
-    # Transform the image
-    transformed_image = cv2.warpPerspective(mov_tile,transform,(Xt[1]-Xt[0],Yt[1]-Yt[0]))
+    # Transform the moving image
+    if method=='Projective':
+        transformed_image = cv2.warpPerspective(mov_tile,transform,(Xt[1]-Xt[0],Yt[1]-Yt[0]))
+    else:
+        transformed_image = cv2.warpAffine(mov_tile,transform,(Xt[1]-Xt[0],Yt[1]-Yt[0]))
     
     # Write the transformed image to the output file
     bw.write_image(transformed_image[Y_crop[0]:Y_crop[1],X_crop[0]:X_crop[1],np.newaxis,np.newaxis,np.newaxis],[x],[y])
@@ -280,6 +288,7 @@ if __name__=="__main__":
         parser.add_argument('--similarTransformationString', dest='similar_transformation_string', type=str, required=True)
         parser.add_argument('--outDir', dest='outDir', type=str, required=True)
         parser.add_argument('--template', dest='template', type=str,  required=True)
+        parser.add_argument('--method', dest='method', type=str,  required=True)
 
         # parse the arguments 
         args = parser.parse_args()
@@ -287,6 +296,7 @@ if __name__=="__main__":
         similar_transformation_string = args.similar_transformation_string
         outDir = args.outDir   
         template = args.template
+        method = args.method
         
         logger.info('starting javabridge...')
         # Initialize log4j to keep it quiet
@@ -297,7 +307,6 @@ if __name__=="__main__":
         # extract filenames from registration_string and similar_transformation_string
         registration_set=registration_string.split()
         similar_transformation_set=similar_transformation_string.split()
-        print(similar_transformation_set)
         
         filename_len=len(template)
           
@@ -310,7 +319,10 @@ if __name__=="__main__":
         logger.info('Scale factor: {}'.format(scale_factor))
         
         # intialize the scale factor and scale matrix(to be used to upscale the transformation matrices)
-        scale_matrix = np.array([[1,1,scale_factor],[1,1,scale_factor],[1/scale_factor,1/scale_factor,1]])
+        if method == 'Projective':
+            scale_matrix = np.array([[1,1,scale_factor],[1,1,scale_factor],[1/scale_factor,1/scale_factor,1]])
+        else:
+            scale_matrix = np.array([[1/scale_factor,1/scale_factor,1],[1/scale_factor,1/scale_factor,1]])
         
         logger.info('Reading and downscaling reference image: {}'.format(Path(registration_set[0]).name))
         reference_image_downscaled,max_val,min_val = get_scaled_down_images(br_ref,scale_factor,get_max=True)
@@ -325,11 +337,18 @@ if __name__=="__main__":
         Rough_Homography_Downscaled = get_transform(moving_image_downscaled,
                                                     reference_image_downscaled,
                                                     max_val,
-                                                    min_val)
+                                                    min_val,
+                                                    method)
         
         # upscale the rough homography matrix
-        Rough_Homography_Upscaled=Rough_Homography_Downscaled*scale_matrix
-        homography_inverse=np.linalg.inv(Rough_Homography_Upscaled)
+        logger.info("Inverting homography...")
+        if method=='Projective':
+            Rough_Homography_Upscaled=Rough_Homography_Downscaled*scale_matrix
+            homography_inverse=np.linalg.inv(Rough_Homography_Upscaled)
+        else:
+            Rough_Homography_Upscaled=Rough_Homography_Downscaled
+            homography_inverse=cv2.invertAffineTransform(Rough_Homography_Downscaled)
+            # homography_inverse*=scale_matrix
         
         # Initialize the output file
         bw = BioWriter(str(Path(outDir).joinpath(Path(registration_set[1]).name)),metadata=br_mov.read_metadata())
@@ -351,6 +370,7 @@ if __name__=="__main__":
         first_tile = True
         
         # Loop through image tiles and start threads
+        logger.info("Starting threads...")
         with ThreadPoolExecutor(max([3*cpu_count()//4,1])) as executor:
             for x in range(0,br_ref.num_x(),2048):
                 for y in range(0,br_ref.num_y(),2048):
@@ -385,10 +405,11 @@ if __name__=="__main__":
                     reg_shape.append((x,y,X_crop,Y_crop))
                     
                     # Start a thread to register the tiles
-                    threads.append(executor.submit(register_image,br_ref,br_mov,bw,Xt,Yt,Xm,Ym,x,y,X_crop,Y_crop,max_val,min_val))
+                    threads.append(executor.submit(register_image,br_ref,br_mov,bw,Xt,Yt,Xm,Ym,x,y,X_crop,Y_crop,max_val,min_val,method))
                     
                     # Bioformats require the first tile be written before any other tile
                     if first_tile:
+                        logger.info('Waiting for first_tile to finish...')
                         first_tile = False
                         threads[0].result()
         
@@ -427,7 +448,7 @@ if __name__=="__main__":
                 for tile,shape,transform in zip(reg_tiles,reg_shape,reg_homography):
                 
                     # Start transformation threads
-                    threads.append(executor.submit(apply_transform,br_mov,bw,tile,shape,transform))
+                    threads.append(executor.submit(apply_transform,br_mov,bw,tile,shape,transform,method))
                     
                     # The first tile must be written before all other tiles
                     if first_tile:
