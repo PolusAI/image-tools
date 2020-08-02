@@ -1060,7 +1060,11 @@ class BioWriter():
             return f.numerator, f.denominator
 
         # print(self._metadata)
-        description = str(self._metadata)
+        description = '<?xml version="1.0" encoding="UTF-8"?>' + \
+                      '<!-- Warning: this comment is an OME-XML metadata block, which contains crucial dimensional parameters and other important metadata.' + \
+                      'Please edit cautiously (if at all), and back up the original data before doing so.' + \
+                      'For more information, see the OME-TIFF web site: https://docs.openmicroscopy.org/latest/ome-model/ome-tiff/. -->' + \
+                      str(self._metadata).replace('ome:','')
         addtag(270, 's', 0, description, writeonce=True) # Description
         addtag(305, 's', 0, 'bfio 2.4.0', writeonce=True) # Software
         # addtag(306, 's', 0, datetime, writeonce=True)
