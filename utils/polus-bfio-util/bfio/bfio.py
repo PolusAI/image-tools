@@ -15,7 +15,7 @@ Note: Prior to reading or writing using these classes, the javabridge session
 """
 import bioformats
 import numpy as np
-import os
+import os, struct
 import javabridge as jutil
 from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
@@ -43,11 +43,11 @@ class BioReader():
     This class handles reading data from any of the formats supported by the 
     OME Bioformats tool. It handles some of the bugs that are commonly
     encountered when handling larger images, such as the indexing issue
-    encountered when an image plan is larger than 2GB.
+    encountered when an image plane is larger than 2GB.
     
-    Note: The javabridge is not handled by the BioReader class. It must be
-          initialized prior to using the BioReader class, and must be closed
-          before the program terminates. An example is provided in read_image().
+    WARNING: The javabridge is not handled by the BioReader class. It must be
+        initialized prior to using the BioReader class, and must be closed
+        before the program terminates. An example is provided in read_image().
     
     For for information, visit the Bioformats page:
     https://www.openmicroscopy.org/bio-formats/
@@ -64,7 +64,7 @@ class BioReader():
         physical_size_y(): tuple indicating physical size and units of y-dimension
         physical_size_z(): tuple indicating physical size and units of z-dimension
         read_metadata(update): Returns an OMEXML class containing metadata for the image
-        read_image(X,Y,Z,C,T,series): Returns a part or all of the image as numpy array
+        read_image(X,Y,Z,C,T): Returns a part or all of the image as numpy array
     """
     _file_path = None
     _metadata = None
@@ -318,7 +318,7 @@ class BioReader():
         
         return self._metadata.image(0).Pixels.PixelType
 
-    def read_image(self, X=None, Y=None, Z=None, C=None, T=None, series=None):
+    def read_image(self, X=None, Y=None, Z=None, C=None, T=None):
         """read_image Read the image
 
         Read the image. A 5-dimmensional numpy.ndarray is always returned.
@@ -339,7 +339,6 @@ class BioReader():
             T ([tuple,list], optional): tuple or list of values indicating timepoints
                 to load. If None, loads the full range.
                 Defaults to None.
-            series (tuple, optional): Placeholder. Currently does nothing.
 
         Returns:
             numpy.ndarray: A 5-dimensional numpy array.
@@ -420,7 +419,6 @@ class BioReader():
                                         y_range = y_max - y
                                         I[y-Y[0]:y_max-Y[0], x-X[0]:x_max-X[0], zi, ci, ti] = reader.read(
                                             c=c, z=z, t=t, rescale=False, XYWH=(x, y, x_range, y_range))
-
         return I
     
     def _fetch(self):
@@ -472,7 +470,7 @@ class BioReader():
             y_min = 0
         if x_max > self.num_x():
             if x_min >= self.num_x():
-                x_min = 1024 * ((self.num_x()-1)//1024)
+                x_min = self._TILE_SIZE * ((self.num_x()-1)//self._TILE_SIZE)
                 reflect_x = True
             x_max = self.num_x()
             postpad_x = x_max - self.num_x()
@@ -513,7 +511,7 @@ class BioReader():
         
         # If the column indices are outside what is available in the buffer,
         # shift the buffer so more data can be loaded.
-        if column_end - self._tile_x_offset >= 1024:
+        if column_end - self._tile_x_offset >= self._TILE_SIZE:
             x_min = column_start - self._tile_x_offset
             x_max = self._pixel_buffer.shape[1] - x_min
             self._pixel_buffer[:,0:x_max] = self._pixel_buffer[:,x_min:]
@@ -526,7 +524,7 @@ class BioReader():
             
             # If there is data in the _raw_buffer, return if there isn't room to load
             # it into the _pixel_buffer
-            if self._pixel_buffer.shape[1] - self._tile_last_column < 1024:
+            if self._pixel_buffer.shape[1] - self._tile_last_column < self._TILE_SIZE:
                 return
     
             I = self._raw_buffer.get()
@@ -560,10 +558,10 @@ class BioReader():
             
         self._buffer_supertile(X[0][0],X[0][1])
             
-        if X[-1][0] - self._tile_x_offset > 1024:
+        if X[-1][0] - self._tile_x_offset > self._TILE_SIZE:
             shift_buffer = True
             split_ind = 0
-            while X[split_ind][0] - self._tile_x_offset < 1024:
+            while X[split_ind][0] - self._tile_x_offset < self._TILE_SIZE:
                 split_ind += 1
         else:
             shift_buffer = False
@@ -609,11 +607,105 @@ class BioReader():
         xyoffset = [(tile_size[0]-tile_stride[0])/2,(tile_size[1]-tile_stride[1])/2]
         
         num_tile_rows = int(np.ceil(self.num_y()/tile_stride[0]))
-        num_tile_cols = (1024 - xyoffset[1])//tile_stride[1]
+        num_tile_cols = (self._TILE_SIZE - xyoffset[1])//tile_stride[1]
         if num_tile_cols == 0:
             num_tile_cols = 1
         
         return int(num_tile_cols*num_tile_rows)
+    @classmethod
+    def image_size(cls,filepath):
+        """image_size Read image width and height from header
+
+        This class method only reads the header information of tiff files to
+        identify the image width and height. There are instances when the image
+        dimensions may want to be known without actually loading the image, and
+        reading only the header is considerably faster than loading bioformats
+        just to read simple metadata information.
+        
+        If the file is not a TIFF, returns width = height = -1.
+        
+        Unlike the other methods of the BioReader class, this method does not
+        require the javabridge to be started.
+        
+        This code was adapted to only operate on tiff images and includes
+        additional to read the header of little endian encoded BigTIFF files.
+        The original code can be found at:
+        https://github.com/shibukawa/imagesize_py
+
+        Args:
+            filepath (str): Path to tiff file
+
+        Returns:
+            (width, height): Tuple of ints indicating width and height.
+        
+        """
+        height = -1
+        width = -1
+
+        with open(str(filepath), 'rb') as fhandle:
+            head = fhandle.read(24)
+            size = len(head)
+
+            # handle big endian TIFF
+            if size >= 8 and head.startswith(b"\x4d\x4d\x00\x2a"):
+                offset = struct.unpack('>L', head[4:8])[0]
+                fhandle.seek(offset)
+                ifdsize = struct.unpack(">H", fhandle.read(2))[0]
+                for i in range(ifdsize):
+                    tag, datatype, count, data = struct.unpack(">HHLL", fhandle.read(12))
+                    if tag == 256:
+                        if datatype == 3:
+                            width = int(data / 65536)
+                        elif datatype == 4:
+                            width = data
+                        else:
+                            raise ValueError("Invalid TIFF file: width column data type should be SHORT/LONG.")
+                    elif tag == 257:
+                        if datatype == 3:
+                            height = int(data / 65536)
+                        elif datatype == 4:
+                            height = data
+                        else:
+                            raise ValueError("Invalid TIFF file: height column data type should be SHORT/LONG.")
+                    if width != -1 and height != -1:
+                        break
+                if width == -1 or height == -1:
+                    raise ValueError("Invalid TIFF file: width and/or height IDS entries are missing.")
+            # handle little endian Tiff
+            elif size >= 8 and head.startswith(b"\x49\x49\x2a\x00"):
+                offset = struct.unpack('<L', head[4:8])[0]
+                fhandle.seek(offset)
+                ifdsize = struct.unpack("<H", fhandle.read(2))[0]
+                for i in range(ifdsize):
+                    tag, datatype, count, data = struct.unpack("<HHLL", fhandle.read(12))
+                    if tag == 256:
+                        width = data
+                    elif tag == 257:
+                        height = data
+                    if width != -1 and height != -1:
+                        break
+                if width == -1 or height == -1:
+                    raise ValueError("Invalid TIFF file: width and/or height IDS entries are missing.")
+            # handle little endian BigTiff
+            elif size >= 8 and head.startswith(b"\x49\x49\x2b\x00"):
+                bytesize_offset = struct.unpack('<L', head[4:8])[0]
+                if bytesize_offset != 8:
+                    raise ValueError('Invalid BigTIFF file: Expected offset to be 8, found {} instead.'.format(offset))
+                offset = struct.unpack('<Q', head[8:16])[0]
+                fhandle.seek(offset)
+                ifdsize = struct.unpack("<Q", fhandle.read(8))[0]
+                for i in range(ifdsize):
+                    tag, datatype, count, data = struct.unpack("<HHQQ", fhandle.read(20))
+                    if tag == 256:
+                        width = data
+                    elif tag == 257:
+                        height = data
+                    if width != -1 and height != -1:
+                        break
+                if width == -1 or height == -1:
+                    raise ValueError("Invalid BigTIFF file: width and/or height IDS entries are missing.")
+
+        return width, height
 
     def iterate(self,tile_size,tile_stride=None,batch_size=None,channels=[0]):
         """iterate Iterate through tiles of an image
@@ -679,24 +771,24 @@ class BioReader():
                      (0,max([tile_size[1] - tile_stride[1],0])))
             
         # determine supertile sizes
-        y_tile_dim = int(np.ceil((self.num_y()-1)/1024))
+        y_tile_dim = int(np.ceil((self.num_y()-1)/self._TILE_SIZE))
         x_tile_dim = 1
             
         # Initialize the pixel buffer
-        self._pixel_buffer = np.zeros((y_tile_dim*1024 + tile_size[0],2*x_tile_dim*1024 + tile_size[1]),dtype=self.pixel_type())
+        self._pixel_buffer = np.zeros((y_tile_dim*self._TILE_SIZE + tile_size[0],2*x_tile_dim*self._TILE_SIZE + tile_size[1]),dtype=self.pixel_type())
         self._tile_x_offset = -xypad[1][0]
         self._tile_y_offset = -xypad[0][0]
         
         # Generate the supertile loading order
         tiles = []
-        y_tile_list = list(range(0,self.num_y()+xypad[0][1],1024*y_tile_dim))
-        if y_tile_list[-1] != 1024*y_tile_dim:
-            y_tile_list.append(1024*y_tile_dim)
+        y_tile_list = list(range(0,self.num_y()+xypad[0][1],self._TILE_SIZE*y_tile_dim))
+        if y_tile_list[-1] != self._TILE_SIZE*y_tile_dim:
+            y_tile_list.append(self._TILE_SIZE*y_tile_dim)
         if y_tile_list[0] != xypad[0][0]:
             y_tile_list[0] = -xypad[0][0]
-        x_tile_list = list(range(0,self.num_x()+xypad[1][1],1024*x_tile_dim))
+        x_tile_list = list(range(0,self.num_x()+xypad[1][1],self._TILE_SIZE*x_tile_dim))
         if x_tile_list[-1] < self.num_x()+xypad[1][1]:
-            x_tile_list.append(x_tile_list[-1]+1024)
+            x_tile_list.append(x_tile_list[-1]+self._TILE_SIZE)
         if x_tile_list[0] != xypad[1][0]:
             x_tile_list[0] = -xypad[1][0]
         for yi in range(len(y_tile_list)-1):
@@ -756,7 +848,7 @@ class BioReader():
         
         # return the last set of images
         yield images, index
-
+        
 class BioWriter():
     """BioWriter Write OME tiled tiffs using Bioformats
 
@@ -1464,11 +1556,11 @@ class BioWriter():
         
         # If the start column index is outside of the width of the supertile,
         # write the data and shift the pixels
-        if column_start - self._tile_x_offset >= 1024:
-            self._raw_buffer.put(np.copy(self._pixel_buffer[:,0:1024]))
-            self._pixel_buffer[:,0:1024] = self._pixel_buffer[:,1024:2048]
-            self._pixel_buffer[:,1024:] = 0
-            self._tile_x_offset += 1024
+        if column_start - self._tile_x_offset >= self._TILE_SIZE:
+            self._raw_buffer.put(np.copy(self._pixel_buffer[:,0:self._TILE_SIZE]))
+            self._pixel_buffer[:,0:self._TILE_SIZE] = self._pixel_buffer[:,self._TILE_SIZE:2*self._TILE_SIZE]
+            self._pixel_buffer[:,self._TILE_SIZE:] = 0
+            self._tile_x_offset += self._TILE_SIZE
             self._tile_last_column = np.argwhere((self._pixel_buffer==0).all(axis=0))[0,0]
 
     def _assemble_tiles(self,images,X,Y,Z,C,T):
@@ -1491,9 +1583,9 @@ class BioWriter():
         """
         self._buffer_supertile(X[0][0],X[0][1])
             
-        if X[-1][0] - self._tile_x_offset > 1024:
+        if X[-1][0] - self._tile_x_offset > self._TILE_SIZE:
             split_ind = 0
-            while X[split_ind][0] - self._tile_x_offset < 1024:
+            while X[split_ind][0] - self._tile_x_offset < self._TILE_SIZE:
                 split_ind += 1
         else:
             split_ind = len(X)
@@ -1548,7 +1640,7 @@ class BioWriter():
         xyoffset = [(tile_size[0]-tile_stride[0])/2,(tile_size[1]-tile_stride[1])/2]
         
         num_tile_rows = int(np.ceil(self.num_y()/tile_stride[0]))
-        num_tile_cols = (1024 - xyoffset[1])//tile_stride[1]
+        num_tile_cols = (self._TILE_SIZE - xyoffset[1])//tile_stride[1]
         if num_tile_cols == 0:
             num_tile_cols = 1
         
@@ -1642,22 +1734,22 @@ class BioWriter():
                      (0,max([tile_size[1] - tile_stride[1],0])))
             
         # determine supertile sizes
-        y_tile_dim = int(np.ceil((self.num_y()-1)/1024))
+        y_tile_dim = int(np.ceil((self.num_y()-1)/self._TILE_SIZE))
         x_tile_dim = 1
             
         # Initialize the pixel buffer
-        self._pixel_buffer = np.zeros((y_tile_dim*1024 + tile_size[0],2*x_tile_dim*1024 + tile_size[1]),dtype=self.pixel_type())
+        self._pixel_buffer = np.zeros((y_tile_dim*self._TILE_SIZE + tile_size[0],2*x_tile_dim*self._TILE_SIZE + tile_size[1]),dtype=self.pixel_type())
         self._tile_x_offset = 0
         self._tile_y_offset = 0
         
         # Generate the supertile saving order
         tiles = []
-        y_tile_list = list(range(0,self.num_y(),1024*y_tile_dim))
-        if y_tile_list[-1] != 1024*y_tile_dim:
-            y_tile_list.append(1024*y_tile_dim)
-        x_tile_list = list(range(0,self.num_x(),1024*x_tile_dim))
+        y_tile_list = list(range(0,self.num_y(),self._TILE_SIZE*y_tile_dim))
+        if y_tile_list[-1] != self._TILE_SIZE*y_tile_dim:
+            y_tile_list.append(self._TILE_SIZE*y_tile_dim)
+        x_tile_list = list(range(0,self.num_x(),self._TILE_SIZE*x_tile_dim))
         if x_tile_list[-1] < self.num_x()+xypad[1][1]:
-            x_tile_list.append(x_tile_list[-1]+1024)
+            x_tile_list.append(x_tile_list[-1]+self._TILE_SIZE)
             
         for yi in range(len(y_tile_list)-1):
             for xi in range(len(x_tile_list)-1):

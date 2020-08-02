@@ -1,6 +1,10 @@
 # Filepattern Utility
 
-Functions and a class to easily filename patterns for WIPP.
+Functions and a class to easily filename patterns for [WIPP](https://github.com/usnistgov/WIPP).
+
+## Install
+
+`pip install filepattern`
 
 ## FilePattern Class
 
