@@ -37,68 +37,6 @@ def findRepeating(arr, n):
       
     return abs(missingElement) 
 
-def modecalc(w, x, y, z):
-
-    uniques = set([w, x, y, z])
-    num_uniques = len(uniques)
-
-    # if num_uniques == 1:
-    #     return x
-    # if num_uniques == 4:
-    #     return max(w, x, y, z)
-
-    if w == x:
-        if y == z:
-            return max(x,y)
-        else:
-            return x
-    else:
-        if y == z:
-            return y
-        else:
-            a = min(x,w)
-            b = max(x,w)
-            x = min(y,z)
-            y = max(y,z)
-            if b == y:
-                return b
-            elif b == x:
-                return x
-            elif x == a:
-                return a
-            else:
-                return max(b, y)
-
-    # unique = set([w, x, y, z])
-    # lenunique = len(unique)
-
-    # if lenunique == 1:
-    #     return x
-    # elif lenunique == 4:
-    #     return max(unique)
-    # elif lenunique == 2:
-
-
-    #     return findRepeating([w, x, y, z], n=4)
-    #     # if w == x:
-    #     #     return x
-    #     # else:
-    #     #     if y == z:
-    #     #         return y
-    #     #     else:
-    #     #         A = min(x,w)
-    #     #         B = max(x,w)
-    #     #         X = min(y,z)
-    #     #         Y = max(y,z)
-    #     #         if B == Y:
-    #     #             return B
-    #     #         elif B == X:
-    #     #             return X
-    #     #         elif X == A:
-    #     #             return A
-    #     #         else:
-    #     #             return max(B, Y)
-
 def segmentinfo(encoder,idlabels,out_dir):
 
     op = Path(out_dir).joinpath("infodir")
