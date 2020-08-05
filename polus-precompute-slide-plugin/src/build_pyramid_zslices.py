@@ -3,6 +3,7 @@ import javabridge as jutil
 from bfio.bfio import BioReader, BioWriter
 from pathlib import Path
 import utils
+import numpy as np
 
 if __name__=="__main__":
     # Setup the Argument parsing
@@ -37,7 +38,7 @@ if __name__=="__main__":
         logger = logging.getLogger(image_num)
         logger.setLevel(logging.INFO)  
 
-        logger.info("Starting to build...")
+        logger.info("Starting to build Z Slices...")
         
         # Initialize the javabridge
         logger.info('Initializing the javabridge...')
@@ -60,10 +61,15 @@ if __name__=="__main__":
         except:
             jutil.kill_vm()
             exit
-        height = bf.read_image().shape[2]
-        logger.info('HEIGHT {}'.format(height))
+        
+        imageread = bf.read_image()
+        height = imageread.shape[2]
+        
 
+        logger.info('HEIGHT {}'.format(height))
         logger.info("Image Shape: {}".format(height))
+        
+
         # Create the output path and info file
         if pyramid_type == "Neuroglancer":
             file_info = utils.neuroglancer_info_file(bf,out_dir, height, imagetype)
@@ -81,13 +87,18 @@ if __name__=="__main__":
         if pyramid_type == "Neuroglancer":
             encoder = utils.NeuroglancerChunkEncoder(file_info)
             file_writer = utils.NeuroglancerWriter(out_dir)
+            if imagetype == "segmentation":
+                mesh = np.transpose(imageread, (0,2,1,3,4))
+                ids = [int(i) for i in np.unique(mesh[:])]
+                out_seginfo = utils.segmentinfo(encoder,ids,out_dir)
         elif pyramid_type == "DeepZoom":
             encoder = utils.DeepZoomChunkEncoder(file_info)
             file_writer = utils.DeepZoomWriter(out_dir)
 
+        # Go through all the slices in the stack
         for i in range(0, height):
-            utils._get_higher_res(0, i, bf,file_writer,encoder, slices=[i,i+1])
-            logger.info("Finished Level {} in process".format(i))
+            utils._get_higher_res(0, i, bf,file_writer,encoder, imageType = imagetype, slices=[i,i+1])
+            logger.info("Finished Level {}/{} in stack process".format(i, height))
         
         logger.info("Finished precomputing. Closing the javabridge and exiting...")
         jutil.kill_vm()
