@@ -65,13 +65,6 @@ if __name__=="__main__":
 
 
         # logger.info("Combos {}".format(com))
-
-        # Get images that are stacked together
-        # filesbuild = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=varsinstack)
-        # logger.info("Going into Recursive Function")
-        # channels, channelvals, stackheight = utils.recursivefiles(filesbuild[0], varsinstack, valsinstack, stackby, stackheight, pattern=imagepattern)
-        # image = channels[0]
-
         fpobject = fp(input_dir, imagepattern, var_order=varsinstack)
         channels = []
         channelvals = []
@@ -88,28 +81,8 @@ if __name__=="__main__":
                 i = i +1
         image = channels[0]
 
-        # allfiles = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=varsinstack+stackby)
-        # all_varlists = [allfiles[1][item] for item in allfiles[1]]
-        # all_combos = list(itertools.product(*all_varlists))
-
-        # combos = {}
-        # for x in all_combos:
-        #     combos.setdefault(x[:len(varsinstack)], []).append(x)
-        # combokeys = []
-        # i = 0
-        # potentialvalues = []
-        # for item in combos:
-        #     if i == stackcount:
-        #         potentialvalues = combos[item]
-        #         break
-        #     else:
-        #         continue
-        # missingimages = set([vals[-1] for vals in potentialvalues]) - set(channelvals)
-
         logger.info("{} values in stack: {}".format(stackby, channelvals))
-        # logger.info("CHECK: Potential {} values in stack: {}".format(stackby, [vals[-1] for vals in potentialvalues]))
-        # for i in missingimages:
-        #     logger.info("Potential Gaps in Stack: {}".format(i))
+
         for i in channels:
             logger.info("Images in stack: {}".format(i))
 
@@ -132,12 +105,9 @@ if __name__=="__main__":
         # stackedimages = np.hstack((channels[0].absolute(), channels[1].absolute()))
         logger.info('Getting the BioReader...')
         bf = BioReader(str(image.absolute()))
-        imgheight = bf.read_image().squeeze().shape
-        
-        # logger.info("PHYSICAL Z: {}".format(physicalz))
-        # bf2read = BioReader(str(channels[1].absolute())).read_image()
-        
-        # physicalz = BioReader(stackedimages)
+        imageread = bf.read_image()
+        imgheight = imageread.squeeze().shape
+
 
         # Create the output path and info file
         if pyramid_type == "Neuroglancer":
@@ -157,6 +127,10 @@ if __name__=="__main__":
         if pyramid_type == "Neuroglancer":
             encoder = utils.NeuroglancerChunkEncoder(file_info)
             file_writer = utils.NeuroglancerWriter(out_dir)
+            if imagetype == "segmentation":
+                mesh = np.transpose(imageread, (0,2,1,3,4))
+                ids = [int(i) for i in np.unique(mesh[:])]
+                out_seginfo = utils.segmentinfo(encoder,ids,out_dir)
         elif pyramid_type == "DeepZoom":
             encoder = utils.DeepZoomChunkEncoder(file_info)
             file_writer = utils.DeepZoomWriter(out_dir)
@@ -166,19 +140,17 @@ if __name__=="__main__":
             logger.info("Stack contains {} Levels (Stack's height)".format(stackheight))
             for i in range(0, stackheight):
                 if i == 0:
-                    utils._get_higher_res(0, channelvals[i]-1, bf, file_writer,encoder, slices=[0,1])
+                    utils._get_higher_res(0, channelvals[i]-1, bf, file_writer,encoder, slices=[0,1], imageType = imagetype)
                 else:
                     bf = BioReader(str(channels[i].absolute()))
                     imgheight = bf.read_image().squeeze().shape
-                    utils._get_higher_res(0, channelvals[i]-1, bf, file_writer,encoder, slices=[0,1])
+                    utils._get_higher_res(0, channelvals[i]-1, bf, file_writer,encoder, slices=[0,1], imageType = imagetype)
                 if len(imgheight) == 2:
                     logger.info("Finished Level {} in Stack ({})".format(channelvals[i], channels[i]))
                 else:
                     logger.info("Finished Level {} in Stack ({})".format(channelvals[i], channels[i]))
                     logger.info("IMAGE IN STACK HAD A Z DIMENSION OF {} UNITS".format(imgheight))
                     logger.info("Only processed Z dimension [0, 1]")
-
-
 
         logger.info("Finished precomputing. Closing the javabridge and exiting...")
         jutil.kill_vm()
