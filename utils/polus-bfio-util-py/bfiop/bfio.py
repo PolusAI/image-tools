@@ -411,8 +411,8 @@ class BioReader():
         with ThreadPoolExecutor(self._keyframe.maxworkers) as executor:
             executor.map(self._decode_tile,fh.read_segments(offsets,bytecounts))
             
-        xi = X[0] - 1024*X[0]//1024
-        yi = Y[0] - 1024*Y[0]//1024 
+        xi = X[0] - 1024*(X[0]//1024)
+        yi = Y[0] - 1024*(Y[0]//1024)
 
         return self._out[yi:yi+y_range,xi:xi+x_range,...]
     
@@ -959,6 +959,8 @@ class BioWriter():
         error.
         
         """
+        self._tags = []
+        
         self._metadata.image().set_ID(Path(self._file_path).name)
         
         self.__writer = tifffile.TiffWriter(self._file_path,bigtiff=True,append=False)
@@ -985,7 +987,7 @@ class BioWriter():
         self._tagbytecounts = 325  # TileByteCounts
         self._tagoffsets = 324 # TileOffsets
 
-        def addtag(code, dtype, count, value, writeonce=False):
+        def addtag(code, dtype, count, value, writeonce=False, tags=self._tags):
             # compute ifdentry & ifdvalue bytes from code, dtype, count, value
             # append (code, ifdentry, ifdvalue, writeonce) to tags list
             if not isinstance(code, int):
@@ -1047,7 +1049,7 @@ class BioWriter():
                     ifdvalue = self._pack(str(count) + dtype, *value)
                 else:
                     ifdvalue = self._pack(dtype, value)
-            self._tags.append((code, b''.join(ifdentry), ifdvalue, writeonce))
+            tags.append((code, b''.join(ifdentry), ifdvalue, writeonce))
 
         def rational(arg, max_denominator=1000000):
             # return nominator and denominator from float or two integers
@@ -1060,11 +1062,11 @@ class BioWriter():
             return f.numerator, f.denominator
 
         # print(self._metadata)
-        description = '<?xml version="1.0" encoding="UTF-8"?>' + \
-                      '<!-- Warning: this comment is an OME-XML metadata block, which contains crucial dimensional parameters and other important metadata.' + \
-                      'Please edit cautiously (if at all), and back up the original data before doing so.' + \
-                      'For more information, see the OME-TIFF web site: https://docs.openmicroscopy.org/latest/ome-model/ome-tiff/. -->' + \
-                      str(self._metadata).replace('ome:','')
+        description = ''.join(['<?xml version="1.0" encoding="UTF-8"?>',
+                               '<!-- Warning: this comment is an OME-XML metadata block, which contains crucial dimensional parameters and other important metadata. ',
+                               'Please edit cautiously (if at all), and back up the original data before doing so. '
+                               'For more information, see the OME-TIFF web site: https://docs.openmicroscopy.org/latest/ome-model/ome-tiff/. -->',
+                               str(self._metadata).replace('ome:','').replace(':ome','')])
         addtag(270, 's', 0, description, writeonce=True) # Description
         addtag(305, 's', 0, 'bfio 2.4.0', writeonce=True) # Software
         # addtag(306, 's', 0, datetime, writeonce=True)
@@ -1240,7 +1242,7 @@ class BioWriter():
 
         fhpos = fh.tell()
         fh.seek(self._ifdpos)
-        fh.write(self._ifd.getbuffer())
+        fh.write(self._ifd.getvalue())
         fh.flush()
         fh.seek(fhpos)
 
@@ -1683,6 +1685,10 @@ class BioWriter():
         """
         if self._page_open:
             self._close_page()
+        self._ifd.flush()
+        self._ifd.close()
+        del self._ifd
+        self._ifd = None
         self.__writer._fh.close()
 
     def _put(self):
