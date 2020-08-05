@@ -305,6 +305,10 @@ class BioReader():
                 y_offset = int(y * y_tile_stride)
                 ind = (x_tiles + y_offset).tolist()
                 
+                # print('')
+                # print(z)
+                # print(ind)
+                # print(self._rdr.pages[z].dataoffsets)
                 offsets.extend([self._rdr.pages[z].dataoffsets[i] for i in ind])
                 bytecounts.extend([self._rdr.pages[z].databytecounts[i] for i in ind])
         
@@ -408,7 +412,8 @@ class BioReader():
                 for x in range(0,x_tile_shape):
                     self._tile_indices.append((x*1024,y*1024,z))
         
-        with ThreadPoolExecutor(self._keyframe.maxworkers) as executor:
+        # with ThreadPoolExecutor(self._keyframe.maxworkers) as executor:
+        with ThreadPoolExecutor(1) as executor:
             executor.map(self._decode_tile,fh.read_segments(offsets,bytecounts))
             
         xi = X[0] - 1024*(X[0]//1024)
@@ -950,6 +955,72 @@ class BioWriter():
 
     def _pack(self,fmt, *val):
         return struct.pack(self._byteorder + fmt, *val)
+    
+    def _addtag(self,code, dtype, count, value, writeonce=False):
+        tags = self._tags
+        
+        # compute ifdentry & ifdvalue bytes from code, dtype, count, value
+        # append (code, ifdentry, ifdvalue, writeonce) to tags list
+        if not isinstance(code, int):
+            code = tifffile.TIFF.TAGS[code]
+        try:
+            tifftype = tifffile.TIFF.DATA_DTYPES[dtype]
+        except KeyError as exc:
+            raise ValueError(f'unknown dtype {dtype}') from exc
+        rawcount = count
+
+        if dtype == 's':
+            # strings; enforce 7-bit ASCII on unicode strings
+            if code == 270:
+                value = tifffile.bytestr(value, 'utf-8') + b'\0'
+            else:
+                value = tifffile.bytestr(value, 'ascii') + b'\0'
+            count = rawcount = len(value)
+            rawcount = value.find(b'\0\0')
+            if rawcount < 0:
+                rawcount = count
+            else:
+                rawcount += 1  # length of string without buffer
+            value = (value,)
+        elif isinstance(value, bytes):
+            # packed binary data
+            dtsize = struct.calcsize(dtype)
+            if len(value) % dtsize:
+                raise ValueError('invalid packed binary data')
+            count = len(value) // dtsize
+        if len(dtype) > 1:
+            count *= int(dtype[:-1])
+            dtype = dtype[-1]
+        ifdentry = [self._pack('HH', code, tifftype),
+                    self._pack(self.__writer._offsetformat, rawcount)]
+        ifdvalue = None
+        if struct.calcsize(dtype) * count <= self.__writer._offsetsize:
+            # value(s) can be written directly
+            if isinstance(value, bytes):
+                ifdentry.append(self._pack(self.__writer._valueformat, value))
+            elif count == 1:
+                if isinstance(value, (tuple, list, np.ndarray)):
+                    value = value[0]
+                ifdentry.append(self._pack(self.__writer._valueformat, self._pack(dtype, value)))
+            else:
+                ifdentry.append(self._pack(self.__writer._valueformat,
+                                self._pack(str(count) + dtype, *value)))
+        else:
+            # use offset to value(s)
+            ifdentry.append(self._pack(self.__writer._offsetformat, 0))
+            if isinstance(value, bytes):
+                ifdvalue = value
+            elif isinstance(value, np.ndarray):
+                if value.size != count:
+                    raise RuntimeError('value.size != count')
+                if value.dtype.char != dtype:
+                    raise RuntimeError('value.dtype.char != dtype')
+                ifdvalue = value.tobytes()
+            elif isinstance(value, (tuple, list)):
+                ifdvalue = self._pack(str(count) + dtype, *value)
+            else:
+                ifdvalue = self._pack(dtype, value)
+        tags.append((code, b''.join(ifdentry), ifdvalue, writeonce))
 
     def _init_writer(self):
         """_init_writer Initializes file writing.
@@ -987,70 +1058,6 @@ class BioWriter():
         self._tagbytecounts = 325  # TileByteCounts
         self._tagoffsets = 324 # TileOffsets
 
-        def addtag(code, dtype, count, value, writeonce=False, tags=self._tags):
-            # compute ifdentry & ifdvalue bytes from code, dtype, count, value
-            # append (code, ifdentry, ifdvalue, writeonce) to tags list
-            if not isinstance(code, int):
-                code = tifffile.TIFF.TAGS[code]
-            try:
-                tifftype = tifffile.TIFF.DATA_DTYPES[dtype]
-            except KeyError as exc:
-                raise ValueError(f'unknown dtype {dtype}') from exc
-            rawcount = count
-
-            if dtype == 's':
-                # strings; enforce 7-bit ASCII on unicode strings
-                if code == 270:
-                    value = tifffile.bytestr(value, 'utf-8') + b'\0'
-                else:
-                    value = tifffile.bytestr(value, 'ascii') + b'\0'
-                count = rawcount = len(value)
-                rawcount = value.find(b'\0\0')
-                if rawcount < 0:
-                    rawcount = count
-                else:
-                    rawcount += 1  # length of string without buffer
-                value = (value,)
-            elif isinstance(value, bytes):
-                # packed binary data
-                dtsize = struct.calcsize(dtype)
-                if len(value) % dtsize:
-                    raise ValueError('invalid packed binary data')
-                count = len(value) // dtsize
-            if len(dtype) > 1:
-                count *= int(dtype[:-1])
-                dtype = dtype[-1]
-            ifdentry = [self._pack('HH', code, tifftype),
-                        self._pack(offsetformat, rawcount)]
-            ifdvalue = None
-            if struct.calcsize(dtype) * count <= offsetsize:
-                # value(s) can be written directly
-                if isinstance(value, bytes):
-                    ifdentry.append(self._pack(valueformat, value))
-                elif count == 1:
-                    if isinstance(value, (tuple, list, np.ndarray)):
-                        value = value[0]
-                    ifdentry.append(self._pack(valueformat, self._pack(dtype, value)))
-                else:
-                    ifdentry.append(self._pack(valueformat,
-                                    self._pack(str(count) + dtype, *value)))
-            else:
-                # use offset to value(s)
-                ifdentry.append(self._pack(offsetformat, 0))
-                if isinstance(value, bytes):
-                    ifdvalue = value
-                elif isinstance(value, np.ndarray):
-                    if value.size != count:
-                        raise RuntimeError('value.size != count')
-                    if value.dtype.char != dtype:
-                        raise RuntimeError('value.dtype.char != dtype')
-                    ifdvalue = value.tobytes()
-                elif isinstance(value, (tuple, list)):
-                    ifdvalue = self._pack(str(count) + dtype, *value)
-                else:
-                    ifdvalue = self._pack(dtype, value)
-            tags.append((code, b''.join(ifdentry), ifdvalue, writeonce))
-
         def rational(arg, max_denominator=1000000):
             # return nominator and denominator from float or two integers
             from fractions import Fraction  # delayed import
@@ -1067,36 +1074,35 @@ class BioWriter():
                                'Please edit cautiously (if at all), and back up the original data before doing so. '
                                'For more information, see the OME-TIFF web site: https://docs.openmicroscopy.org/latest/ome-model/ome-tiff/. -->',
                                str(self._metadata).replace('ome:','').replace(':ome','')])
-        addtag(270, 's', 0, description, writeonce=True) # Description
-        addtag(305, 's', 0, 'bfio 2.4.0', writeonce=True) # Software
+        self._addtag(270, 's', 0, description,writeonce=True) # Description
+        self._addtag(305, 's', 0, 'bfio 2.4.1') # Software
         # addtag(306, 's', 0, datetime, writeonce=True)
-        addtag(259, 'H', 1, self._compresstag)  # Compression
-        addtag(256, 'I', 1, self._datashape[-2])  # ImageWidth
-        addtag(257, 'I', 1, self._datashape[-3])  # ImageLength
-        addtag(322, 'I', 1, self._TILE_SIZE)  # TileWidth
-        addtag(323, 'I', 1, self._TILE_SIZE)  # TileLength
+        self._addtag(259, 'H', 1, self._compresstag)  # Compression
+        self._addtag(256, 'I', 1, self._datashape[-2])  # ImageWidth
+        self._addtag(257, 'I', 1, self._datashape[-3])  # ImageLength
+        self._addtag(322, 'I', 1, self._TILE_SIZE)  # TileWidth
+        self._addtag(323, 'I', 1, self._TILE_SIZE)  # TileLength
         
-        if not self._datadtype.kind == 'u':
-            sampleformat = {'u': 1, 'i': 2, 'f': 3, 'c': 6}[self._datadtype.kind]
-            addtag(339, 'H', self._samplesperpixel,
-                   (sampleformat,) * self._samplesperpixel)
+        sampleformat = {'u': 1, 'i': 2, 'f': 3, 'c': 6}[self._datadtype.kind]
+        self._addtag(339, 'H', self._samplesperpixel,
+                (sampleformat,) * self._samplesperpixel)
             
-        addtag(277, 'H', 1, self._samplesperpixel)
-        addtag(258, 'H', 1, self._bitspersample)
+        self._addtag(277, 'H', 1, self._samplesperpixel)
+        self._addtag(258, 'H', 1, self._bitspersample)
 
         subsampling = None
         maxsampling = 1
         # PhotometricInterpretation
-        addtag(262, 'H', 1, tifffile.TIFF.PHOTOMETRIC.MINISBLACK.value)
+        self._addtag(262, 'H', 1, tifffile.TIFF.PHOTOMETRIC.MINISBLACK.value)
 
         if self.physical_size_x() is not None:
-            addtag(282, '2I', 1, rational(self.physical_size_x()[0]/10000))  # XResolution in cm
-            addtag(283, '2I', 1, rational(self.physical_size_y()[0]/10000))  # YResolution in cm
-            addtag(296, 'H', 1, 3)  # ResolutionUnit = cm
+            self._addtag(282, '2I', 1, rational(10000/self.physical_size_x()[0]/10000))  # XResolution in pixels/cm
+            self._addtag(283, '2I', 1, rational(10000/self.physical_size_y()[0]))  # YResolution in pixels/cm
+            self._addtag(296, 'H', 1, 3)  # ResolutionUnit = cm
         else:
-            addtag(282, '2I', 1, (1, 1))  # XResolution
-            addtag(283, '2I', 1, (1, 1))  # YResolution
-            addtag(296, 'H', 1, 1)  # ResolutionUnit
+            self._addtag(282, '2I', 1, (1, 1))  # XResolution
+            self._addtag(283, '2I', 1, (1, 1))  # YResolution
+            self._addtag(296, 'H', 1, 1)  # ResolutionUnit
 
         def bytecount_format(bytecounts, size=offsetsize):
             # return small bytecount format
@@ -1124,8 +1130,8 @@ class BioWriter():
         self._databytecounts = [
             self._TILE_SIZE ** 2 * self._datadtype.itemsize] * self._numtiles
         self._bytecountformat = bytecount_format(self._databytecounts)
-        addtag(self._tagbytecounts, self._bytecountformat, self._numtiles, self._databytecounts)
-        addtag(self._tagoffsets, offsetformat, self._numtiles, [0] * self._numtiles)
+        self._addtag(self._tagbytecounts, self._bytecountformat, self._numtiles, self._databytecounts)
+        self._addtag(self._tagoffsets, self.__writer._offsetformat, self._numtiles, [0] * self._numtiles)
         self._bytecountformat = self._bytecountformat * self._numtiles
         
         # the entries in an IFD must be sorted in ascending order by tag code
@@ -1136,6 +1142,15 @@ class BioWriter():
             self._current_page = 0
         else:
             self._current_page += 1
+            
+        if self._current_page == 1:
+            for ind,tag in enumerate(self._tags):
+                if tag[0]==270:
+                    del self._tags[ind]
+                    break
+            description = "ImageJ=\nhyperstack=true\nimages={}\nchannels={}\nslices={}\nframes={}".format(self.num_z(),self.num_c(),self.num_z(),self.num_t())
+            self._addtag(270, 's', 0, description) # Description
+            self._tags = sorted(self._tags, key=lambda x: x[0])
             
         fh = self.__writer._fh
         
@@ -1166,7 +1181,7 @@ class BioWriter():
             self._ifd.write(self._pack(tagnoformat, len(tags)))
             tagoffset = self._ifd.tell()
             self._ifd.write(b''.join(t[1] for t in tags))
-            self.__writer._ifdoffset = self._ifd.tell()
+            self._ifdoffset = self._ifd.tell()
             self._ifd.write(self._pack(offsetformat, 0))  # offset to next IFD
             # write tag values and patch offsets in ifdentries
             for tagindex, tag in enumerate(tags):
@@ -1196,17 +1211,17 @@ class BioWriter():
                     self._dataoffsetsoffset = offset, None
                 elif code == tagbytecounts:
                     databytecountsoffset = offset, None
-            ifdsize = self._ifd.tell()
-            if ifdsize % 2:
+            self._ifdsize = self._ifd.tell()
+            if self._ifdsize % 2:
                 self._ifd.write(b'\0')
-                ifdsize += 1
+                self._ifdsize += 1
                 
         self._databytecounts = [0 for _ in self._databytecounts]
         self._databyteoffsets = [0 for _ in self._databytecounts]
 
         # move to file position where data writing will begin
         # will write the tags later when the tile offsets are known
-        fh.seek(ifdsize, 1)
+        fh.seek(self._ifdsize, 1)
 
         # write image data
         dataoffset = fh.tell()
@@ -1229,28 +1244,32 @@ class BioWriter():
         
         self._ifd.write(self._pack(offsetformat, self._ifdpos + pos))
         self._ifd.seek(pos)
+        # print('offset,pos: {},{}'.format(offset,pos))
+        # print('databyteoffsets: {}'.format(self._databyteoffsets))
         for size in self._databyteoffsets:
             self._ifd.write(self._pack(offsetformat, size))
 
         # update strip/tile bytecounts
         offset, pos = self._databytecountsoffset
+        # print('offset,pos: {},{}'.format(offset,pos))
+        # print('databytecounts: {}'.format(self._databytecounts))
         self._ifd.seek(offset)
         if pos:
             self._ifd.write(self._pack(offsetformat, self._ifdpos + pos))
             self._ifd.seek(pos)
         self._ifd.write(self._pack(bytecountformat, *self._databytecounts))
 
-        fhpos = fh.tell()
+        self._fhpos = fh.tell()
         fh.seek(self._ifdpos)
         fh.write(self._ifd.getvalue())
         fh.flush()
-        fh.seek(fhpos)
+        fh.seek(self._fhpos)
 
-        self.__writer._ifdoffset = self._ifdpos + self.__writer._ifdoffset
+        self.__writer._ifdoffset = self._ifdpos + self._ifdoffset
 
         # remove tags that should be written only once
         if self._current_page == 0:
-            tags = [tag for tag in self._tags if not tag[-1]]
+            self._tags = [tag for tag in self._tags if not tag[-1]]
             
         self._page_open = False
         
@@ -1290,7 +1309,8 @@ class BioWriter():
         
         # tileiter = [tile for tile in tileiter]
         tileiter = [copy.deepcopy(tile) for tile in tileiter]
-        with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()//2) as executor:
+        # with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()//2) as executor:
+        with ThreadPoolExecutor(max_workers=1) as executor:
             compressed_tiles = iter(executor.map(compress,tileiter))
         for tileindex in tiles:
             t = next(compressed_tiles)
@@ -1685,10 +1705,7 @@ class BioWriter():
         """
         if self._page_open:
             self._close_page()
-        self._ifd.flush()
         self._ifd.close()
-        del self._ifd
-        self._ifd = None
         self.__writer._fh.close()
 
     def _put(self):
