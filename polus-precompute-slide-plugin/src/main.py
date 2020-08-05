@@ -11,8 +11,10 @@ def zslicefunction(input_dir, output_dir, pyramid_type, imagetype):
     # Get a list of all images in a directory
     logger.info('Getting the images...')
     image_path = Path(input_dir)
-    images = [i for i in image_path.iterdir() if "".join(i.suffixes)==".ome.tif"]
+    images = [i for i in image_path.iterdir()]
+    print("images", images)
     images.sort()
+    
     
     # Set up lists for tracking processes
     processes = []
@@ -102,6 +104,9 @@ def stackbyfunction(input_dir, output_dir, pyramid_type, stack_by, imagepattern,
     
     # heightofstack = int(len(all_combos)/len(common_combos))
     logger.info("Different Stack Variables of {}: {}".format(vars_instack, vals_instack))
+
+    if len(organizedheights) == 0:
+        raise ValueError("There are no images to stack (image pattern may be incorrect)")
 
         # Set up lists for tracking processes
     processes = []
@@ -207,6 +212,7 @@ def main():
     logger.info('image pattern = {} ({})'.format(imagepattern, type(imagepattern)))
     logger.info('images are stacked by variable {}'.format(stack_by))
 
+    # if imagepattern or image type specified then images get stacked by the stack_by variables
     if stack_by != None or imagepattern != None:
         stackbyfunction(input_dir, output_dir, pyramid_type, stack_by, imagepattern, image_type)
     else:
