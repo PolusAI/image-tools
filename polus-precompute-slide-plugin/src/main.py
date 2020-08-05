@@ -136,7 +136,7 @@ def stackbyfunction(input_dir, output_dir, pyramid_type, stack_by, imagepattern,
             del processes[free_process]
             del process_timer[free_process]
             
-        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --pyramidType '{}' --imageNum '{}' --stackheight '{}' --stackby '{}' --varsinstack '{}' --valinstack '{}' --imagepattern '{}' --stackcount '{}' --imageType '{}' >>textfile.txt".format(input_dir,
+        processes.append(subprocess.Popen("python3 build_pyramid_stitched.py --inpDir '{}' --outDir '{}' --pyramidType '{}' --imageNum '{}' --stackheight '{}' --stackby '{}' --varsinstack '{}' --valinstack '{}' --imagepattern '{}' --stackcount '{}' --imageType '{}' >>textfile.txt".format(input_dir,
                                                                                                                                             output_dir,
                                                                                                                                             pyramid_type,
                                                                                                                                             im_count,
