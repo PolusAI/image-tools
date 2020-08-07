@@ -47,7 +47,7 @@ def get_transform(moving_image,reference_image,max_val,min_val,method):
     # max number of features to be calculated using ORB
     max_features=500000  
     # initialize orb feature matcher
-    orb = cv2.ORB_create(max_features,scaleFactor=2,nlevels=3)
+    orb = cv2.ORB_create(max_features)
     
     # Normalize images and convert to appropriate type
     moving_image_norm = cv2.GaussianBlur(moving_image,(3,3),0)
@@ -65,8 +65,7 @@ def get_transform(moving_image,reference_image,max_val,min_val,method):
     if not (isinstance(descriptors1,np.ndarray) and isinstance(descriptors2,np.ndarray)):
         return None
     
-    # match and sort the descriptos using hamming distance    
-    # matcher = cv2.BFMatcher(cv2.NORM_HAMMING)
+    # match and sort the descriptos using hamming distance
     flann_params= dict(algorithm = 6, # FLANN_INDEX_LSH
                        table_number = 6,
                        key_size = 12,
@@ -75,8 +74,8 @@ def get_transform(moving_image,reference_image,max_val,min_val,method):
     matches = matcher.match(descriptors1, descriptors2, None)
     matches.sort(key=lambda x: x.distance, reverse=False)
     
-    # extract top 25% of matches
-    good_match_percent=0.25    
+    # extract top 10% of matches
+    good_match_percent=0.10
     numGoodMatches = int(len(matches) * good_match_percent)
     matches = matches[:numGoodMatches]
     
