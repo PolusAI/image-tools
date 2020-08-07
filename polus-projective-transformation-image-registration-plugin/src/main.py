@@ -1,9 +1,7 @@
-import argparse, logging, subprocess, time, multiprocessing
+import argparse, logging, subprocess
 import numpy as np
 from pathlib import Path
 from parser import parse_collection
-import os
-import psutil
 import shutil
 
 
@@ -45,14 +43,10 @@ if __name__=="__main__":
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))     
     method = args.method
-    logger.info('method = {}'.format(method))
-        
-    #memory usage    
-    mem = psutil.virtual_memory()
-    logger.debug('System memory stats : {}'.format(mem))  
+    logger.info('method = {}'.format(method)) 
     
      # get template image path
-    template_image_path=os.path.join(inpDir,template)  
+    template_image_path=str(Path(inpDir).joinpath(template).absolute())  
     
     # filename len
     filename_len= len(template)
@@ -71,7 +65,7 @@ if __name__=="__main__":
             for image_path in similar_transformation_set:
                 image_name=image_path[-1*filename_len:]
                 logger.info('Copying image {} to output directory'.format(image_name))
-                shutil.copy2(image_path,os.path.join(outDir,image_name))            
+                shutil.copy2(image_path,str(Path(outDir).joinpath(image_name).absolute()))            
             continue
         
         # concatenate lists into a string to pass as an argument to argparse
