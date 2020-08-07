@@ -18,12 +18,11 @@ from . import OmeXml as bioformats
 import numpy as np
 import os
 from concurrent.futures import ThreadPoolExecutor
+import threading
 from queue import Queue
 import struct,io
 from pathlib import Path
 import zlib, time, copy, multiprocessing
-from multiprocessing.dummy import Pool
-import matplotlib.pyplot as plt
 
 class BioReader():
     """BioReader Read supported image formats using Bioformats
@@ -81,7 +80,7 @@ class BioReader():
     _tile_x_offset = 0
     _tile_last_column = 0
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, max_workers=None):
         """__init__ Initialize the a file for reading
 
         Prior to initializing the class, it is important to remember that
@@ -90,7 +89,14 @@ class BioReader():
 
         Args:
             file_path (str): Path to file to read
+            max_workers (int): Number of threads used to read the image
         """
+        if max_workers == None:
+            self.max_workers = max([multiprocessing.cpu_count()//2,1])
+        else:
+            self.max_workers = max_workers
+        self._lock = threading.Lock()
+        
         self._file_path = file_path
         self._rdr = tifffile.TiffFile(file_path)
         self._metadata = self.read_metadata()
@@ -298,17 +304,13 @@ class BioReader():
         bytecounts = []
         
         x_tiles = np.arange(X[0]//1024,np.ceil(X[1]/1024),dtype=int)
-        y_tile_stride = np.ceil(self.num_x()/1024)
+        y_tile_stride = np.ceil(self.num_x()/1024).astype(int)
         
         for z in range(Z[0],Z[1]):
             for y in range(Y[0]//1024,int(np.ceil(Y[1]/1024))):
                 y_offset = int(y * y_tile_stride)
                 ind = (x_tiles + y_offset).tolist()
                 
-                # print('')
-                # print(z)
-                # print(ind)
-                # print(self._rdr.pages[z].dataoffsets)
                 offsets.extend([self._rdr.pages[z].dataoffsets[i] for i in ind])
                 bytecounts.extend([self._rdr.pages[z].databytecounts[i] for i in ind])
         
@@ -318,7 +320,6 @@ class BioReader():
         
         keyframe = self._keyframe
         out = self._out
-        tile_shape = self._tile_shape
         
         w,l,d = self._tile_indices[args[1]]
         
@@ -382,39 +383,44 @@ class BioReader():
             # again, a new interpreter will need to be spawned to start the vm.
             javabridge.kill_vm()
         """
+        
+        # Lock the thread
+        with self._lock:
+            # Validate inputs
+            X = self._val_xyz(X, 'X')
+            Y = self._val_xyz(Y, 'Y')
+            Z = self._val_xyz(Z, 'Z')
+            C = self._val_ct(C, 'C')
+            T = self._val_ct(T, 'T')
+            
+            x_range = X[1]-X[0]
+            y_range = Y[1]-Y[0]
+            X_tile_start = (X[0]//1024) * 1024
+            Y_tile_start = (Y[0]//1024) * 1024
+            X_tile_end = np.ceil(X[1]/1024).astype(int) * 1024
+            Y_tile_end = np.ceil(Y[1]/1024).astype(int) * 1024
+            X_tile_shape = X_tile_end - X_tile_start
+            Y_tile_shape = Y_tile_end - Y_tile_start
+            Z_tile_shape = Z[1]-Z[0]
+            
+            # self._tile_shape = (x_tile_shape,y_tile_shape,z_tile_shape)
 
-        # Validate inputs
-        X = self._val_xyz(X, 'X')
-        Y = self._val_xyz(Y, 'Y')
-        Z = self._val_xyz(Z, 'Z')
-        C = self._val_ct(C, 'C')
-        T = self._val_ct(T, 'T')
-        
-        x_range = X[1]-X[0]
-        y_range = Y[1]-Y[0]
-        x_tile_shape = int(np.ceil(X[1]/1024) - X[0]//1024)
-        y_tile_shape = int(np.ceil(Y[1]/1024) - Y[0]//1024)
-        z_tile_shape = Z[1]-Z[0]
-        
-        self._tile_shape = (x_tile_shape,y_tile_shape,z_tile_shape)
+            self._out = np.zeros([Y_tile_shape, X_tile_shape, Z_tile_shape,
+                                1, 1], self._pix['type'])
+            
+            self._keyframe = self._rdr.pages[0].keyframe
+            fh = self._rdr.pages[0].parent.filehandle
 
-        self._out = np.zeros([y_tile_shape*1024, x_tile_shape*1024, z_tile_shape,
-                              1, 1], self._pix['type'])
-        
-        self._keyframe = self._rdr.pages[0].keyframe
-        fh = self._rdr.pages[0].parent.filehandle
-
-        # Do the work
-        offsets,bytecounts = self._chunk_indices(X,Y,Z)
-        self._tile_indices = []
-        for z in range(0,Z[1]-Z[0]):
-            for y in range(0,y_tile_shape):
-                for x in range(0,x_tile_shape):
-                    self._tile_indices.append((x*1024,y*1024,z))
-        
-        # with ThreadPoolExecutor(self._keyframe.maxworkers) as executor:
-        with ThreadPoolExecutor(1) as executor:
-            executor.map(self._decode_tile,fh.read_segments(offsets,bytecounts))
+            # Do the work
+            offsets,bytecounts = self._chunk_indices(X,Y,Z)
+            self._tile_indices = []
+            for z in range(0,Z[1]-Z[0]):
+                for y in range(0,Y_tile_shape,self._TILE_SIZE):
+                    for x in range(0,X_tile_shape,self._TILE_SIZE):
+                        self._tile_indices.append((x,y,z))
+            
+            with ThreadPoolExecutor(self.max_workers) as executor:
+                executor.map(self._decode_tile,fh.read_segments(offsets,bytecounts))
             
         xi = X[0] - 1024*(X[0]//1024)
         yi = Y[0] - 1024*(Y[0]//1024)
@@ -470,7 +476,7 @@ class BioReader():
             y_min = 0
         if x_max > self.num_x():
             if x_min >= self.num_x():
-                x_min = 1024 * ((self.num_x()-1)//1024)
+                x_min = self._TILE_SIZE * ((self.num_x()-1)//self._TILE_SIZE)
                 reflect_x = True
             x_max = self.num_x()
             postpad_x = x_max - self.num_x()
@@ -825,7 +831,7 @@ class BioWriter():
 
     def __init__(self, file_path, image=None,
                  X=None, Y=None, Z=None, C=None, T=None,
-                 metadata=None):
+                 metadata=None,max_workers=None):
         """__init__ Initialize an output OME tiled tiff file
 
         Prior to initializing the class, it is important to remember that
@@ -865,6 +871,12 @@ class BioWriter():
                 ome tiff metadata using the OMEXML class.
                 Defaults to None.
         """
+        if max_workers == None:
+            self.max_workers = max([multiprocessing.cpu_count()//2,1])
+        else:
+            self.max_workers = max_workers
+            
+        self._lock = threading.Lock()
 
         self._file_path = file_path
 
@@ -1068,7 +1080,6 @@ class BioWriter():
             f = f.limit_denominator(max_denominator)
             return f.numerator, f.denominator
 
-        # print(self._metadata)
         description = ''.join(['<?xml version="1.0" encoding="UTF-8"?>',
                                '<!-- Warning: this comment is an OME-XML metadata block, which contains crucial dimensional parameters and other important metadata. ',
                                'Please edit cautiously (if at all), and back up the original data before doing so. '
@@ -1244,15 +1255,11 @@ class BioWriter():
         
         self._ifd.write(self._pack(offsetformat, self._ifdpos + pos))
         self._ifd.seek(pos)
-        # print('offset,pos: {},{}'.format(offset,pos))
-        # print('databyteoffsets: {}'.format(self._databyteoffsets))
         for size in self._databyteoffsets:
             self._ifd.write(self._pack(offsetformat, size))
 
         # update strip/tile bytecounts
         offset, pos = self._databytecountsoffset
-        # print('offset,pos: {},{}'.format(offset,pos))
-        # print('databytecounts: {}'.format(self._databytecounts))
         self._ifd.seek(offset)
         if pos:
             self._ifd.write(self._pack(offsetformat, self._ifdpos + pos))
@@ -1309,8 +1316,8 @@ class BioWriter():
         
         # tileiter = [tile for tile in tileiter]
         tileiter = [copy.deepcopy(tile) for tile in tileiter]
-        # with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()//2) as executor:
-        with ThreadPoolExecutor(max_workers=1) as executor:
+        with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+        # with ThreadPoolExecutor(1) as executor:
             compressed_tiles = iter(executor.map(compress,tileiter))
         for tileindex in tiles:
             t = next(compressed_tiles)
@@ -1685,17 +1692,18 @@ class BioWriter():
         if self._current_page != None and Z[0] < self._current_page:
             raise ValueError('Cannot write z layers below the current open page. (current page={},Z[0]={})'.format(self._current_page,Z[0]))
 
-        # Initialize the writer if it hasn't already been initialized
-        if not self.__writer:
-            self._init_writer()
+        with self._lock:
+            # Initialize the writer if it hasn't already been initialized
+            if not self.__writer:
+                self._init_writer()
 
-        # Do the work
-        for zi, z in zip(range(0, Z[1]-Z[0]), range(Z[0], Z[1])):
-            while z != self._current_page:
-                if self._page_open:
-                    self._close_page()
-                self._open_next_page()
-            self._write_tiles(image[...,zi,0,0],X,Y)
+            # Do the work
+            for zi, z in zip(range(0, Z[1]-Z[0]), range(Z[0], Z[1])):
+                while z != self._current_page:
+                    if self._page_open:
+                        self._close_page()
+                    self._open_next_page()
+                self._write_tiles(image[...,zi,0,0],X,Y)
 
     def close_image(self):
         """close_image Close the image
