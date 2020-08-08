@@ -1,3 +1,3 @@
-numpy==1.18.2
+numpy==1.19.1
 opencv_python_headless==4.1.2.30
 filepattern==1.2.4
