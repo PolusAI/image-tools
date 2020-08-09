@@ -7,8 +7,6 @@ import filepattern
 import os
 import math
 import time
-import pandas as pd
-from collections import Counter
 # Conversion factors to nm, these are based off of supported Bioformats length units
 UNITS = {'m':  10**9,
          'cm': 10**7,
@@ -159,7 +157,18 @@ def _avg2(image):
         avg_img - numpy array with only two dimensions (round(m/2),round(n/2))
     """
     
-    image = image.astype('uint16')
+    # The data fed into this is the same as the native file format.
+    # We need to make sure the type will not cause overflow - NJS
+    if image.dtype == np.uint8:
+        dtype = np.uint16
+    if image.dtype == np.uint16:
+        dtype = np.uint32
+    if image.dtype == np.uint32:
+        dtype = np.uint64
+    else:
+        dtype = image.dtype
+        
+    image = image.astype(dtype)
     imgshape = image.shape
     ypos = imgshape[0]
     xpos = imgshape[1]
@@ -169,7 +178,7 @@ def _avg2(image):
     x_max = xpos - xpos % 2
 
     avg_imgshape = [d/2 for d in imgshape]
-    avg_img = np.zeros(np.ceil(avg_imgshape).astype('int')).astype('uint16')
+    avg_img = np.zeros(np.ceil(avg_imgshape).astype(int),dtype=dtype)
     avg_img[0:int(y_max/2),0:int(x_max/2),:]= (\
                                                 image[0:y_max-1:2,0:x_max-1:2,:] + \
                                                 image[1:y_max:2  ,0:x_max-1:2,:] + \
@@ -288,7 +297,6 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,imageType, X=Non
     image_encoded = encoder.encode(image)
     # Write the chunk
     slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],zlevel,zlevel + 1))
-    print(" ")
     return image
 
 # Modified and condensed from FileAccessor class in neuroglancer-scripts
