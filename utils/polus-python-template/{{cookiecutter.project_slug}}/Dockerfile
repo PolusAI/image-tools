@@ -1,5 +1,5 @@
 {%- if cookiecutter.use_bfio.lower()=="true" %}
-FROM labshare/polus-bfio-util:1.3.3
+FROM labshare/polus-bfio-util:1.3.6
 {%- else %}
 FROM python:3.7-alpine
 {%- endif %}
