@@ -4,8 +4,16 @@ import time
 import pathlib
 import papermill as pm
 import json
+import logging
 
 def main():
+    
+    # intitialize logging
+    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+                        datefmt='%d-%b-%y %H:%M:%S')
+    logger = logging.getLogger("main")
+    logger.setLevel(logging.INFO)
+    
     # Setup the Argument parsing
     parser = argparse.ArgumentParser(prog='script', description='Script to execute Jupyter Notebooks')
 
@@ -23,14 +31,16 @@ def main():
     output_notebook = os.path.join(args.output_notebook, 'notebook.ipynb')
     config_file=args.config_file
 
-    print('Arguments:')    
-    print(f'Input collection: {input_collection}')
-    print(f'Input notebook: {input_notebook}')
-    print(f'Output collection: {output_collection}')
-    print(f'Output notebook: {output_notebook}')
-    print(f'Config file: {config_file}')
     
-    print('Beginning notebook execution...')
+    logger.info('Arguments:')    
+    logger.info('Input collection: {}'.format(input_collection))
+    logger.info('Input notebook: {}'.format(input_notebook))
+    logger.info('Config file: {}'.format(config_file))
+    logger.info('Output collection: {}'.format(output_collection))
+    logger.info('Output notebook: {}'.format(output_notebook))
+    
+    
+    logger.info('Beginning notebook execution...')
     process_start = time.time()
 
     with open(input_notebook) as nbfile:
@@ -46,16 +56,13 @@ def main():
     else:
         out = pm.execute_notebook(
         input_notebook,
-        output_notebook,
-        config_file,
+        output_notebook,        
         engine_name="sos" if is_sos else None,
         parameters=dict(input_path=input_collection, output_path=output_collection, config_file_path=config_file)
         )        
 
-    print(out)
     
-    print(' ')
-    print('Execution completed in {} seconds!'.format(time.time() - process_start))
+    logger.info('Execution completed in {} seconds!'.format(time.time() - process_start))
         
 if __name__ == "__main__":
     main()
