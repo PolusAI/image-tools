@@ -7,7 +7,7 @@ with open("VERSION",'r') as fh:
     version = fh.read()
 
 setuptools.setup(
-    name="bfiop",
+    name="bfio",
     version=version,
     author="Nick Schaub",
     author_email="nick.schaub@labshare.gov",

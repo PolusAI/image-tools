@@ -1,28 +1,29 @@
-### 1. Get Linux
-FROM openjdk:8-alpine
+# Get Linux
+FROM python:3.6.11-alpine3.12
 
-COPY VERSION /
-
-# Install python
-RUN apk --update --no-cache add python3 ca-certificates && \
-    pip3 install --upgrade pip --no-cache-dir
+### Things that change rarely between containers
 
 # Create temporary folder
+ARG DATA_DIR="/data"
 ARG EXEC_DIR="/opt/executables"
 RUN mkdir -p ${EXEC_DIR}
+
+# Copy the requirements file
+COPY ./requirements-alpine.txt ${EXEC_DIR}/
+
+# Install libaec from source
+RUN apk --update add --virtual build-dependencies build-base wget python3-dev \
+    && pip3 install -r  ${EXEC_DIR}/requirements-alpine.txt --no-cache-dir \
+    && apk del build-dependencies
+
+### Things that change frequently between containers
 
 # Copy bfio
 COPY . ${EXEC_DIR}/
 
-# Install bfio and requirements
-RUN apk --update add --virtual build-dependencies python3-dev build-base wget \
-    && pip3 install --upgrade cython \
-    && pip3 install -r  ${EXEC_DIR}/requirements.txt --no-cache-dir \
-    && pip3 install ${EXEC_DIR}/ --no-cache-dir \
-    && mv ${EXEC_DIR}/bfio/jars/loci_tools.jar /usr/lib/python3.6/site-packages/bioformats/jars/loci_tools.jar -f \
-    && rm -rf ${EXEC_DIR} \
-    && apk del build-dependencies
-		
-ARG DATA_DIR="/data"
+# Copy the version to the source directory
+COPY VERSION ${EXEC_DIR}/src/
 
-WORKDIR ${EXEC_DIR}
+# Install bfio, remove the source directory
+RUN pip3 install ${EXEC_DIR}/ --no-cache-dir \
+    && rm -rf ${EXEC_DIR}
