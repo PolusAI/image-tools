@@ -1,7 +1,7 @@
-from bfio import BioWriter
+from bfio import BioWriter, BioReader
 import bioformats
 import javabridge as jutil
-import argparse, logging, time, imagesize, os, re
+import argparse, logging, time, os, re, math
 from filepattern import FilePattern
 import numpy as np
 from pathlib import Path
@@ -26,8 +26,128 @@ def mean(data_list):
     Outputs:
         val - The arithmetic mean of data_list
     """
-    val = sum(data_list)/len(data_list)
+    
+    return sum(data_list)/len(data_list)
+
+def count(data_list):
+    """ Count number of objects
+
+    Inputs:
+        data_list - a list of floats
+    Outputs:
+        val - The number of objects in an image
+    """
+    
+    return len(data_list)
+
+def var(data_list):
+    """ Variance of the data
+
+    Inputs:
+        data_list - a list of floats
+    Outputs:
+        val - The variance of the data
+    """
+    mean_sqr = mean(data_list)**2
+    sqr_mean = mean([d**2 for d in data_list])
+    return sqr_mean - mean_sqr
+
+def median(data_list):
+    """ Median of the data
+
+    Inputs:
+        data_list - a list of floats
+    Outputs:
+        val - The median of the data
+    """
+    
+    num_obj = count(data_list)
+    data_list.sort()
+    val = (data_list[(num_obj-1)//2] + data_list[num_obj//2]) / 2
     return val
+    
+def std(data_list):
+    """ Standard deviation of the data
+
+    Inputs:
+        data_list - a list of floats
+    Outputs:
+        val - The standard deviation of the data
+    """
+    
+    return math.sqrt(var(data_list))
+    
+def skewness(data_list):
+    """ Skewness of the data
+
+    Inputs:
+        data_list - a list of floats
+    Outputs:
+        val - The skewness of the data
+    """
+    
+    sigma = std(data_list)
+    mu = mean(data_list)
+    n = count(data_list)
+    
+    if n == 0 or sigma == 0:
+        return 'NaN'
+    
+    skew = sum([(x-mu)**3 for x in data_list])/(n*sigma**3)
+    
+    return skew
+    
+def kurtosis(data_list):
+    """ Kurtosis of the data
+
+    Inputs:
+        data_list - a list of floats
+    Outputs:
+        val - The kurtosis of the data
+    """
+    
+    sigma = std(data_list)
+    mu = mean(data_list)
+    n = count(data_list)
+    
+    if n == 0 or sigma == 0:
+        return 'NaN'
+    
+    kurt = sum([(x-mu)**4 for x in data_list])/(n*sigma**4) - 3
+    
+    return kurt
+
+def iqr(data_list):
+    """ Interquartile range of the data
+
+    Inputs:
+        data_list - a list of floats
+    Outputs:
+        val - The interquartile range of the data
+    """
+    
+    n = count(data_list)
+    cnt = n//2
+    
+    if cnt ==0:
+        return 'NaN'
+    
+    data_list.sort()
+    l_half = data_list[:cnt]
+    u_half = data_list[-cnt:]
+    q1 = (l_half[(len(l_half)-1)//2] + l_half[len(l_half)//2]) / 2
+    q3 = (u_half[(len(u_half)-1)//2] + u_half[len(u_half)//2]) / 2
+    iqr = q3-q1
+    return iqr
+
+METHODS = {'mean': mean,
+           'count': count,
+           'var': var,
+           'median': median,
+           'std': std,
+           'skewness': skewness,
+           'kurtosis': kurtosis,
+           'iqr': iqr}
 
 def get_number(s):
     """ Check that s is number
@@ -126,7 +246,7 @@ def _parse_stitch(stitchPath,fp):
                 line_num += 1
 
                 # Get the image size
-                current_image['width'], current_image['height'] = imagesize.get(current_image['file'])
+                current_image['width'], current_image['height'] = BioReader.image_size(current_image['file'])
                 unique_height.update([current_image['height']])
                 unique_width.update([current_image['width']])
 
@@ -138,7 +258,7 @@ def _parse_stitch(stitchPath,fp):
 
     return unique_width,unique_height
 
-def _parse_features(featurePath,fp):
+def _parse_features(featurePath,fp,method):
     """ Load and parse the feature list
     
     This function adds mean feature values to the FilePattern object (fp) for every image
@@ -213,7 +333,7 @@ def _parse_features(featurePath,fp):
                 for key,val in p_line.items():
                     if isinstance(val,list):
                         try:
-                            current_image[key] = mean(val)
+                            current_image[key] = METHODS[method](val)
                             feature_list[key].append(current_image[key])
                         except ZeroDivisionError:
                             current_image[key] = 'NaN'
@@ -234,6 +354,8 @@ if __name__=="__main__":
                         help='CSV collection containing features', required=True)
     parser.add_argument('--inpDir', dest='inpDir', type=str,
                         help='Input image collection used to build a pyramid that this plugin will make an overlay for', required=True)
+    parser.add_argument('--method', dest='method', type=str,
+                        help='Method used to create the heatmap', required=True)
     parser.add_argument('--vector', dest='vector', type=str,
                         help='Stitching vector used to buld the image pyramid.', required=True)
     parser.add_argument('--outImages', dest='outImages', type=str,
@@ -249,6 +371,8 @@ if __name__=="__main__":
     logger.info('features = {}'.format(features))
     inpDir = args.inpDir
     logger.info('inpDir = {}'.format(inpDir))
+    method = args.method
+    logger.info('method = {}'.format(method))
     vector = args.vector
     logger.info('vector = {}'.format(vector))
     outImages = args.outImages
@@ -275,19 +399,20 @@ if __name__=="__main__":
 
     # Parse the features
     logger.info('Parsing features...')
-    feature_list = _parse_features(features,fp)
+    feature_list = _parse_features(features,fp,method)
 
     # Determine the min, max, and unique values for each data set
     logger.info('Setting feature scales...')
     feature_mins = {}
     feature_ranges = {}
     for key,val in feature_list.items():
-        if len(val) == 0:
+        valid_vals = [v for v in val if v is not 'NaN']
+        if len(valid_vals) == 0:
             feature_mins[key] = 0
             feature_ranges[key] = 0
         else:
-            feature_mins[key] = min(val)
-            feature_ranges[key] = max(val)-feature_mins[key]
+            feature_mins[key] = min(valid_vals)
+            feature_ranges[key] = max(valid_vals)-feature_mins[key]
     unique_levels = set()
     for fl in fp.iterate():
         if 'line' not in fl.keys():
