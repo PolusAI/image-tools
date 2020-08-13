@@ -213,7 +213,11 @@ def register_image(br_ref,br_mov,bw,Xt,Yt,Xm,Ym,x,y,X_crop,Y_crop,max_val,min_va
     
     # If the correlation is bad, try using the rough transform instead
     if corr < 0.4 and not is_rough:
-        logger.warning('Tiles do not correlate well after registration. Check outputs for accuracy.')
+        if method=='Projective':
+            transformed_image = cv2.warpPerspective(mov_tile,Rough_Homography_Upscaled,(Xt[1]-Xt[0],Yt[1]-Yt[0]))  
+        else:
+            transformed_image = cv2.warpAffine(mov_tile,Rough_Homography_Upscaled,(Xt[1]-Xt[0],Yt[1]-Yt[0]))              
+        projective_transform = Rough_Homography_Upscaled        
     
     # Write the transformed moving image
     bw.write_image(transformed_image[Y_crop[0]:Y_crop[1],X_crop[0]:X_crop[1],np.newaxis,np.newaxis,np.newaxis],X=[x],Y=[y])
