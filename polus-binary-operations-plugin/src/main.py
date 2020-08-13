@@ -16,36 +16,29 @@ def invert_binary(image, kernel=None, intk=None, n=None):
     return invertedimg
 
 def dilate_binary(image,kernel=None, intk=None, n=None):
-    dilatedimg = image
-    image = image.astype('uint16')
     image[image == 255] = 1
     dilatedimg = cv2.dilate(image, kernel, iterations=n)
     dilatedimg[dilatedimg == 1] = 255
-    dilatedimage = dilatedimg.astype('uint8')
     return dilatedimg
 
 def erode_binary(image,kernel=None, intk=None, n=None):
-    # erodedimg = img
     image[image == 255] = 1
     erodedimg = cv2.erode(image, kernel, iterations=n)
     erodedimg[erodedimg == 1] = 255
     return erodedimg
 
-def open_binary(mage,kernel=None, intk=None, n=None):
-    openimg = image
+def open_binary(image,kernel=None, intk=None, n=None):
     image[image == 255] = 1
     openimg = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
     return openimg
 
 def close_binary(image,kernel=None, intk=None, n=None):
-    closeimg = image
     image[image == 255] = 1
     closeimg = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
     closeimg[closeimg == 1] = 255
     return closeimg
 
 def morphgradient_binary(image,kernel=None, intk=None, n=None):
-    mg = image
     image[image == 255] = 1
     mg = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
     return mg
@@ -73,7 +66,6 @@ def skeleton_binary(image,kernel=None, intk=None, n=None):
 
 def holefilling_binary(image,kernel=None, intk=None, n=None):
     image[image == 255] = 1
-    # sqimage = image.squeeze()
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(intk,intk))
     hf = cv2.morphologyEx(image,cv2.MORPH_OPEN,kernel)
     hf[hf == 1] = 255
@@ -224,6 +216,21 @@ if __name__=="__main__":
         'black_hat': None
     }
     
+    dict_intk = {
+        'dilation': dilatekernel,
+        'erosion': erodekernel,
+        'hit_or_miss': None,
+        'invertion': None,
+        'opening': openkernel,
+        'closing': closekernel,
+        'morphological_gradient': morphkernel,
+        'skeleton': skeletonkernel,
+        'fill_holes': None,
+        'filter_area': areafilterkernel,
+        'top_hat': tophatkernel,
+        'black_hat': blackhatkernel
+    }
+
     # Start the javabridge with proper java logging
     logger.info('Initializing the javabridge...')
     log_config = Path(__file__).parent.joinpath("log4j.properties")
@@ -265,18 +272,33 @@ if __name__=="__main__":
             # brcheck = BioReader(newfile)
             # brcheck = brcheck.read_image()
 
+            logger.info(dict_intk)
+
             i = 1
             for op in operations:
                 function = dispatch[op]
                 if callable(function):
-                    # logger.info(np.unique(image))
-                    image = function(image, kernel=kernel, intk=intkernel, n=dict_n_args[op])
-                    newfile = Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff')
-                    logger.info("{}: {}".format(op, newfile.name))
-                    # logger.info(np.unique(image))
-                    # logger.info(" ")
-                    bw = BioWriter(str(newfile), metadata=br.read_metadata())
-                    bw.write_image(np.reshape(image, (br_y, br_x, br_z, 1, 1)))
+                    if dict_intk[op] == None:
+                        image = function(image, kernel=kernel, intk=intkernel, n=dict_n_args[op])
+                        newfile = Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff')
+                        logger.info("{}: {}, {}".format(op, newfile.name, type(image[0][0])))
+                        bw = BioWriter(str(newfile), metadata=br.read_metadata())
+                        bw.write_image(np.reshape(image, (br_y, br_x, br_z, 1, 1)))
+                    else:
+                        if op == 'filter_area' or 'fill_holes':
+                            image = function(image, kernel=kernel, intk=dict_intk[op], n=dict_n_args[op])
+                            newfile = Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff')
+                            logger.info("{}: {}, {}".format(op, newfile.name, type(image[0][0])))
+                            bw = BioWriter(str(newfile), metadata=br.read_metadata())
+                            bw.write_image(np.reshape(image, (br_y, br_x, br_z, 1, 1)))
+                        else:
+                            new_intk = dict_intk[op]
+                            kernel = np.ones((new_intk,new_intk), datatype)
+                            image = function(image, kernel=kernel, intk=new_intk, n=dict_n_args[op])
+                            newfile = Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff')
+                            logger.info("{}: {}, {}".format(op, newfile.name, type(image[0][0])))
+                            bw = BioWriter(str(newfile), metadata=br.read_metadata())
+                            bw.write_image(np.reshape(image, (br_y, br_x, br_z, 1, 1)))
                 else:
                     raise ValueError("Function is not callable")
                 i = i + 1
