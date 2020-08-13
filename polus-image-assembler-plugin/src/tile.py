@@ -1,6 +1,4 @@
 from bfio.bfio import BioReader, BioWriter
-import bioformats
-import javabridge as jutil
 import argparse, logging
 import numpy as np
 from pathlib import Path
@@ -77,10 +75,6 @@ if __name__=="__main__":
     y = int(args.y)
     Y_range = int(args.Y_range)
 
-    # Start the javabridge with proper java logging
-    log_config = Path(__file__).parent.joinpath("log4j.properties")
-    jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
-
     template = make_tile(x,X_range,y,Y_range,stitchPath,imgPath)
 
     bw = BioWriter(str(Path(outDir).joinpath('x{}_y{}.ome.tif'.format(x,y)).absolute()),image=template)
@@ -88,6 +82,4 @@ if __name__=="__main__":
     bw.num_y(template.shape[0])
     bw.write_image(template)    
     bw.close_image()
-
-    jutil.kill_vm()
     

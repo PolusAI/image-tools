@@ -1,4 +1,5 @@
-import argparse, logging, subprocess, time, multiprocessing, re, imagesize
+import argparse, logging, subprocess, time, multiprocessing, re
+from bfio import BioReader
 
 import numpy as np
 
@@ -74,7 +75,7 @@ def _parse_stitch(stitchPath,imagePath,timepointName=False):
                 continue
 
             # Get the image size
-            stitch_groups['width'], stitch_groups['height'] = imagesize.get(str(Path(imagePath).joinpath(stitch_groups['file']).absolute()))
+            stitch_groups['width'], stitch_groups['height'] = BioReader.imagesize(str(Path(imagePath).joinpath(stitch_groups['file']).absolute()))
             if out_dict['width'] < stitch_groups['width']+stitch_groups['posX']:
                 out_dict['width'] = stitch_groups['width']+stitch_groups['posX']
             if out_dict['height'] < stitch_groups['height']+stitch_groups['posY']:
@@ -138,41 +139,27 @@ if __name__=="__main__":
     # Setup the argument parsing
     parser = argparse.ArgumentParser(prog='main', description='Assemble images from a single stitching vector.')
     parser.add_argument('--stitchPath', dest='stitchPath', type=str,
-                        help='Complete path to a stitching vector', required=False)
+                        help='Complete path to a stitching vector', required=True)
     parser.add_argument('--imgPath', dest='imgPath', type=str,
                         help='Input image collection to be processed by this plugin', required=True)
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
     parser.add_argument('--timesliceNaming', dest='timesliceNaming', type=str,
                         help='Use timeslice number as image name', required=False)
-    parser.add_argument('--vectorInMetadata', dest='vectorInMetadata', type=str,
-                        help='Use stitching vectors stored in the metadata', required=False)
 
     # Parse the arguments
     args = parser.parse_args()
-    vectorInMetadata = args.vectorInMetadata == 'true'
-    logger.info('vectorInMetadata: {}'.format(vectorInMetadata))
     imgPath = args.imgPath
+    if Path(imgPath).joinpath('images').is_dir():
+        imgPath = Path(imgPath).joinpath('images').is_dir()
     outDir = args.outDir
     logger.info('outDir: {}'.format(outDir))
     timesliceNaming = args.timesliceNaming == 'true'
     logger.info('timesliceNaming: {}'.format(timesliceNaming))
-    if vectorInMetadata:
-        stitchPath = str(Path(imgPath).parent.joinpath('metadata_files').absolute())
-    else:
-        stitchPath = args.stitchPath
-        if stitchPath == None:
-            ValueError('If vectorInMetadata==False, then stitchPath must be defined')
+    stitchPath = args.stitchPath
 
     # Get a list of stitching vectors
-    try:
-        vectors = [str(p.absolute()) for p in Path(stitchPath).iterdir() if p.is_file() and "".join(p.suffixes)=='.txt']
-    except FileNotFoundError:
-        # Workaround for WIPP bug
-        if Path(stitchPath).name == 'metadata_files':
-            stitchPath = str(Path(imgPath).joinpath('metadata_files').absolute())
-            imgPath = str(Path(imgPath).joinpath('images').absolute())
-            vectors = [str(p.absolute()) for p in Path(stitchPath).iterdir() if p.is_file() and "".join(p.suffixes)=='.txt']
+    vectors = [str(p.absolute()) for p in Path(stitchPath).iterdir() if p.is_file() and "".join(p.suffixes)=='.txt']
         
     logger.info('imgPath: {}'.format(imgPath))
     logger.info('stichPath: {}'.format(stitchPath))

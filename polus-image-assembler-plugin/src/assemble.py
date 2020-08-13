@@ -1,9 +1,8 @@
 from bfio.bfio import BioReader, BioWriter
-import bioformats
-import javabridge as jutil
-import argparse, logging, imagesize, re, difflib
+import argparse, logging, re
 import numpy as np
 from pathlib import Path
+from multiprocessing import cpu_count
 
 def get_coords(imgName):
     regex = "x([0-9]+)_y([0-9]+).ome.tif"
@@ -28,7 +27,6 @@ if __name__=="__main__":
     parser.add_argument('--height', dest='height', type=str,
                         help='Height of the output image', required=True)
 
-
     # Parse the arguments
     args = parser.parse_args()
     imgPath = args.imgPath
@@ -42,11 +40,6 @@ if __name__=="__main__":
                         datefmt='%d-%b-%y %H:%M:%S')
     logger = logging.getLogger("assemble")
     logger.setLevel(logging.INFO)
-
-    # Start the javabridge with proper java logging
-    logger.info('Starting the javabridge...')
-    log_config = Path(__file__).parent.joinpath("log4j.properties")
-    jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
 
     # Get a list of all images to be merged
     images = [f for f in Path(imgPath).iterdir() if ''.join(f.suffixes)=='.ome.tif']
@@ -69,6 +62,4 @@ if __name__=="__main__":
     logger.info('100% complete...')
     
     bw.close_image()
-
-    jutil.kill_vm()
     
