@@ -236,7 +236,7 @@ if __name__=="__main__":
                 # Spawn a stack building process and record the starting time
                 processes.append(
                     subprocess.Popen(
-                        "python3 tile.py --imgPath {} --outDir {} --stitchPath {} --x {} --y {} --X_range {} --Y_range {}".format(*inputs),
+                        "python tile.py --imgPath {} --outDir {} --stitchPath {} --x {} --y {} --X_range {} --Y_range {}".format(*inputs),
                         shell=True
                     )
                 )
@@ -265,7 +265,7 @@ if __name__=="__main__":
         inputs = [tile_outdir,outFile,refImg,outvals['width'],outvals['height']]
         img_processes.append(
             subprocess.Popen(
-                "python3 assemble.py --imgPath {} --outFile {} --refImg {} --width {} --height {}".format(*inputs),
+                "python assemble.py --imgPath {} --outFile {} --refImg {} --width {} --height {}".format(*inputs),
                 shell=True
             )
         )
