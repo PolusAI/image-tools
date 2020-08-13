@@ -10,49 +10,51 @@ import ast
 from scipy import ndimage
 
 
-def invert_binary(image):
+def invert_binary(image, kernel=None, intk=None, n=None):
     invertedimg = np.zeros(image.shape,dtype=datatype)
-    invertedimg = 65535 - image
+    invertedimg = 255 - image
     return invertedimg
 
-def dilate_binary(image,kernel,n):
+def dilate_binary(image,kernel=None, intk=None, n=None):
     dilatedimg = image
-    image[image == 65535] = 1
+    image = image.astype('uint16')
+    image[image == 255] = 1
     dilatedimg = cv2.dilate(image, kernel, iterations=n)
-    dilatedimg[dilatedimg == 1] = 65535
+    dilatedimg[dilatedimg == 1] = 255
+    dilatedimage = dilatedimg.astype('uint8')
     return dilatedimg
 
-def erode_binary(image,kernel,n):
-    erodedimg = image
-    image[image == 65535] = 1
+def erode_binary(image,kernel=None, intk=None, n=None):
+    # erodedimg = img
+    image[image == 255] = 1
     erodedimg = cv2.erode(image, kernel, iterations=n)
-    erodedimg[erodedimg == 1] = 65535
+    erodedimg[erodedimg == 1] = 255
     return erodedimg
 
-def open_binary(image,kernel):
+def open_binary(mage,kernel=None, intk=None, n=None):
     openimg = image
-    image[image == 65535] = 1
+    image[image == 255] = 1
     openimg = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
     return openimg
 
-def close_binary(image,kernel):
+def close_binary(image,kernel=None, intk=None, n=None):
     closeimg = image
-    image[image == 65535] = 1
+    image[image == 255] = 1
     closeimg = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
-    closeimg[closeimg == 1] = 65535
+    closeimg[closeimg == 1] = 255
     return closeimg
 
-def morphgradient_binary(image,kernel):
+def morphgradient_binary(image,kernel=None, intk=None, n=None):
     mg = image
-    image[image == 65535] = 1
+    image[image == 255] = 1
     mg = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
     return mg
 
-def skeleton_binary(image,kernel):
-    image[image == 65535] = 1
+def skeleton_binary(image,kernel=None, intk=None, n=None):
+    image[image == 255] = 1
     done = False
     size = np.size(image)
-    skel = np.zeros(image.shape,np.uint8)
+    skel = np.zeros(image.shape,datatype)
 
     while (not done):
         erode = cv2.erode(image,kernel)
@@ -66,39 +68,39 @@ def skeleton_binary(image,kernel):
             done = True
 
     skel = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
-    skel[skel == 1] = 65535
+    skel[skel == 1] = 255
     return skel
 
-def holefilling_binary(image, intk):
-    image[image == 65535] = 1
-    sqimage = image.squeeze()
+def holefilling_binary(image,kernel=None, intk=None, n=None):
+    image[image == 255] = 1
+    # sqimage = image.squeeze()
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(intk,intk))
-    hf = cv2.morphologyEx(sqimage,cv2.MORPH_OPEN,kernel)
-    hf[hf == 1] = 65535
+    hf = cv2.morphologyEx(image,cv2.MORPH_OPEN,kernel)
+    hf[hf == 1] = 255
     return hf
 
-def hitormiss_binary(image, HOMarray):
-    image[image == 65535] = 1
-    hm = ndimage.binary_hit_or_miss(image, structure1=HOMarray)
+def hitormiss_binary(image,kernel=None, intk=None, n=None):
+    image[image == 255] = 1
+    hm = ndimage.binary_hit_or_miss(image, structure1=n)
     return hm
 
-def tophat_binary(image,kernel):
-    image[image == 65535] = 1
+def tophat_binary(image,kernel=None, intk=None, n=None):
+    image[image == 255] = 1
     tophat = cv2.morphologyEx(image,cv2.MORPH_TOPHAT, kernel)
-    tophat[tophat == 1] = 65535
+    tophat[tophat == 1] = 255
     return tophat
 
-def blackhat_binary(image,kernel):
-    image[image == 65535] = 1
+def blackhat_binary(image,kernel=None, intk=None, n=None):
+    image[image == 255] = 1
     blackhat = cv2.morphologyEx(image,cv2.MORPH_BLACKHAT, kernel)
-    blackhat[blackhat == 1] = 65535
+    blackhat[blackhat == 1] = 255
     return blackhat
 
-def areafiltering_binary(image, intkernel):
-    image[image == 65535] = 1
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(intkernel,intkernel))
+def areafiltering_binary(image,kernel=None, intk=None, n=None):
+    image[image == 255] = 1
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(intk,intk))
     af = cv2.morphologyEx(image,cv2.MORPH_OPEN,kernel)
-    af[af == 1] = 65535
+    af[af == 1] = 255
     return af
 
 if __name__=="__main__":
@@ -192,7 +194,35 @@ if __name__=="__main__":
         logger.info('Array that we are locating: {}'.format(hitormiss))
 
     
-    
+    dispatch = {
+        'invertion': invert_binary,
+        'opening': open_binary,
+        'closing': close_binary,
+        'morphological_gradient': morphgradient_binary,
+        'dilation': dilate_binary,
+        'erosion': erode_binary,
+        'skeleton': skeleton_binary,
+        'fill_holes': holefilling_binary,
+        'hit_or_miss': hitormiss_binary,
+        'filter_area': areafiltering_binary,
+        'top_hat': tophat_binary,
+        'black_hat': blackhat_binary
+    }
+
+    dict_n_args = {
+        'dilation': dilateby,
+        'erosion': erodeby,
+        'hit_or_miss': hitormiss,
+        'invertion': None,
+        'opening': None,
+        'closing': None,
+        'morphological_gradient': None,
+        'skeleton': None,
+        'fill_holes': None,
+        'filter_area': None,
+        'top_hat': None,
+        'black_hat': None
+    }
     
     # Start the javabridge with proper java logging
     logger.info('Initializing the javabridge...')
@@ -211,288 +241,319 @@ if __name__=="__main__":
             br = BioReader(str(Path(inpDir).joinpath(f)))
             br_y, br_x, br_z = br.num_y(), br.num_x(), br.num_z()
             # image = np.squeeze(br.read_image())
+            global image
             image = br.read_image()
-            datatype = br._pix['type']
+            image = image.astype('uint8')
+            
+
+            datatype = image.dtype
             logger.info("Datatype: {}".format(datatype))
             
             logger.info("Shape of Image: {}".format(image.shape))
-            kernel = np.ones((intkernel,intkernel), np.uint16) 
+            kernel = np.ones((intkernel,intkernel), datatype)
 
-            newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op1.ome.tiff'))
-            bw = BioWriter(newfile, metadata=br.read_metadata())
-            image[image == 255] = 65535
-            bw.write_image(image.astype('uint16'))
+        
+            newfile = Path(outDir).joinpath('image' + str(imagenum) + '_op1.ome.tiff')
+            bw = BioWriter(str(newfile), metadata=br.read_metadata())
+            bw = bw.write_image(image)
+            logger.info("orginal: {}".format(newfile.name))
 
-            logger.info(newfile)
+            image = image.squeeze()
+            global out_image
+            out_image = np.zeros(image.shape, datatype)
 
-            out_image = np.zeros(image.shape).astype('uint16')
-
+            # brcheck = BioReader(newfile)
+            # brcheck = brcheck.read_image()
 
             i = 1
-            for item in operations:
-                if i == 1:
-                    if item == 'invertion':
-                        out_image = invert_binary(image)
-                        # newfile = Path(outDir).joinpath('inverted_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == 'opening':
-                        if openkernel == None:
-                            out_image = open_binary(image.squeeze(),kernel)
-                        else:
-                            openkernel = np.ones((openkernel,openkernel), np.uint16) 
-                            out_image = open_binary(image.squeeze(),openkernel)
-                        # newfile = Path(outDir).joinpath('open_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == 'closing':
-                        if closekernel == None:
-                            out_image = close_binary(image.squeeze(),kernel)
-                        else:
-                            closekernel = np.ones((closekernel,closekernel), np.uint16) 
-                            out_image = close_binary(image.squeeze(),closekernel)
-                        # newfile = Path(outDir).joinpath('close_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, xmetadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == "morphological_gradient":
-                        if morphkernel == None:
-                            out_image = morphgradient_binary(image.squeeze(),kernel)
-                        else:
-                            morphkernel = np.ones((morphkernel,morphkernel), np.uint16) 
-                            out_image = morphgradient_binary(image.squeeze(),morphkernel)
-                        # newfile = Path(outDir).joinpath('morphgradient_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == 'dilation':
-                        if dilatekernel == None:
-                            out_image = dilate_binary(image.squeeze(), kernel, dilateby)
-                        else:
-                            dilatekernel = np.ones((dilatekernel,dilatekernel), np.uint16) 
-                            out_image = dilate_binary(image.squeeze(),dilatekernel, dilateby)
-                        # out_image = dilate_binary(image.squeeze(), kernel, dilateby)
-                        # newfile = Path(outDir).joinpath('dilated_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == 'erosion':
-                        if erodekernel == None:
-                            out_image = erode_binary(image.squeeze(),kernel, erodeby)
-                        else:
-                            erodekernel = np.ones((erodekernel,erodekernel), np.uint16) 
-                            out_image = erode_binary(image.squeeze(),erodekernel, erodeby)
-                        # out_image = erode_binary(image.squeeze(), kernel,erodeby)
-                        # newfile = Path(outDir).joinpath('eroded_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == 'skeleton':
-                        if skeletonkernel == None:
-                            out_image = skeleton_binary(image.squeeze(), kernel)
-                        else:
-                            skeletonkernel = np.ones((skeletonkernel,skeletonkernel), np.uint16) 
-                            out_image = skeleton_binary(image.squeeze(),skeletonkernel, erodeby)
-                        # newfile = Path(outDir).joinpath('skeleton_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == 'fill_holes':
-                        out_image = holefilling_binary(image, intkernel)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, image=out_image, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item =='hit_or_miss':
-                        out_image = hitormiss_binary(image.squeeze(),hitormiss)
-                        # newfile = Path(outDir).joinpath('hitormiss_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br.num_y(), br.num_x(), br.num_z(), 1, 1)))
-                    elif item == 'filter_area':
-                        if areafilterkernel == None:
-                            out_image = areafiltering_binary(image.squeeze(), intkernel)
-                        else:
-                            out_image = areafiltering_binary(image.squeeze(), areafilterkernel)
-                        # newfile = Path(outDir).joinpath('areafiltered_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == 'top_hat':
-                        if tophatkernel == None:
-                            out_image = tophat_binary(image.squeeze(), kernel)
-                        else:
-                            tophatkernel = np.ones((tophatkernel,tophatkernel), np.uint16) 
-                            out_image = tophat_binary(image.squeeze(),tophatkernel)
-                        # out_image = tophat_binary(image.squeeze(), kernel)
-                        # newfile = Path(outDir).joinpath('tophat_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == 'black_hat':
-                        if blackhatkernel == None:
-                            out_image = blackhat_binary(image.squeeze(), kernel)
-                        else:
-                            blackhatkernel = np.ones((blackhatkernel,blackhatkernel), np.uint16) 
-                            out_image = blackhat_binary(image.squeeze(),blackhatkernel)
-                        # out_image = blackhat_binary(image.squeeze(), kernel)
-                        # newfile = Path(outDir).joinpath('blackhat_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    else:
-                        raise ValueError("Operation value is incorrect")
+            for op in operations:
+                function = dispatch[op]
+                if callable(function):
+                    # logger.info(np.unique(image))
+                    image = function(image, kernel=kernel, intk=intkernel, n=dict_n_args[op])
+                    newfile = Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff')
+                    logger.info("{}: {}".format(op, newfile.name))
+                    # logger.info(np.unique(image))
+                    # logger.info(" ")
+                    bw = BioWriter(str(newfile), metadata=br.read_metadata())
+                    bw.write_image(np.reshape(image, (br_y, br_x, br_z, 1, 1)))
                 else:
-                    if item == 'invertion':
-                        out_image = invert_binary(out_image)
-                        # newfile = Path(outDir).joinpath('inverted_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == 'opening':
-                        if openkernel == None:
-                            out_image = open_binary(out_image.squeeze(),kernel)
-                        else:
-                            openkernel = np.ones((openkernel,openkernel), np.uint16) 
-                            out_image = open_binary(image.squeeze(),openkernel)
-                        # newfile = Path(outDir).joinpath('open_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == 'closing':
-                        if closekernel == None:
-                            out_image = close_binary(out_image.squeeze(),kernel)
-                        else:
-                            closekernel = np.ones((closekernel,closekernel), np.uint16) 
-                            out_image = close_binary(image.squeeze(),closekernel)
-                        # newfile = Path(outDir).joinpath('close_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, xmetadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == "morphological_gradient":
-                        if morphkernel == None:
-                            out_image = morphgradient_binary(out_image.squeeze(),kernel)
-                        else:
-                            morphkernel = np.ones((morphkernel,morphkernel), np.uint16) 
-                            out_image = morphgradient_binary(out_image.squeeze(),morphkernel)
-                        # newfile = Path(outDir).joinpath('morphgradient_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == 'dilation':
-                        if dilatekernel == None:
-                            out_image = dilate_binary(out_image.squeeze(), kernel, dilateby)
-                        else:
-                            dilatekernel = np.ones((dilatekernel,dilatekernel), np.uint16) 
-                            out_image = dilate_binary(out_image.squeeze(),dilatekernel, dilateby)
-                        # out_image = dilate_binary(image.squeeze(), kernel, dilateby)
-                        # newfile = Path(outDir).joinpath('dilated_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == 'erosion':
-                        if erodekernel == None:
-                            out_image = erode_binary(out_image.squeeze(),kernel, erodeby)
-                        else:
-                            erodekernel = np.ones((erodekernel,erodekernel), np.uint16) 
-                            out_image = erode_binary(out_image.squeeze(),erodekernel, erodeby)
-                        # out_image = erode_binary(image.squeeze(), kernel,erodeby)
-                        # newfile = Path(outDir).joinpath('eroded_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == 'skeleton':
-                        if skeletonkernel == None:
-                            out_image = skeleton_binary(out_image.squeeze(), kernel)
-                        else:
-                            skeletonkernel = np.ones((skeletonkernel,skeletonkernel), np.uint16) 
-                            out_image = skeleton_binary(out_image.squeeze(),skeletonkernel, erodeby)
-                        # newfile = Path(outDir).joinpath('skeleton_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == 'fill_holes':
-                        out_image = holefilling_binary(out_image, intkernel)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, image=out_image, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item =='hit_or_miss':
-                        out_image = hitormiss_binary(out_image.squeeze(),hitormiss)
-                        # newfile = Path(outDir).joinpath('hitormiss_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br.num_y(), br.num_x(), br.num_z(), 1, 1)))
-                    elif item == 'filter_area':
-                        if areafilterkernel == None:
-                            out_image = areafiltering_binary(out_image.squeeze(), intkernel)
-                        else:
-                            out_image = areafiltering_binary(out_image.squeeze(), areafilterkernel)
-                        # newfile = Path(outDir).joinpath('areafiltered_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == 'top_hat':
-                        if tophatkernel == None:
-                            out_image = tophat_binary(out_image.squeeze(), kernel)
-                        else:
-                            tophatkernel = np.ones((tophatkernel,tophatkernel), np.uint16) 
-                            out_image = tophat_binary(out_image.squeeze(),tophatkernel)
-                        # out_image = tophat_binary(image.squeeze(), kernel)
-                        # newfile = Path(outDir).joinpath('tophat_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    elif item == 'black_hat':
-                        if blackhatkernel == None:
-                            out_image = blackhat_binary(out_image.squeeze(), kernel)
-                        else:
-                            blackhatkernel = np.ones((blackhatkernel,blackhatkernel), np.uint16) 
-                            out_image = blackhat_binary(out_image.squeeze(),blackhatkernel)
-                        # out_image = blackhat_binary(image.squeeze(), kernel)
-                        # newfile = Path(outDir).joinpath('blackhat_'+f)
-                        newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
-                        logger.info(newfile)
-                        bw = BioWriter(newfile, metadata=br.read_metadata())
-                        bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
-                    else:
-                        raise ValueError("Operation value is incorrect")
+                    raise ValueError("Function is not callable")
                 i = i + 1
             imagenum = imagenum + 1
         logger.info('Closing the javabridge...')
         jutil.kill_vm()
 
-        # Write the output
-        # bw = BioWriter(Path(outDir).joinpath(f),metadata=br.read_metadata())
-        # bw.write_image(np.reshape(out_image,(br.num_y(),br.num_x(),br.num_z,1,1)))
-    
     except Exception as e:
         logger.info(e)
         logger.info('Closing the javabridge...')
         jutil.kill_vm()
+            # i = 1
+            # for item in operations:
+            #     if i == 1:
+            #         if item == 'invertion':
+            #             out_image = invert_binary(image)
+            #             # newfile = Path(outDir).joinpath('inverted_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile, out_image.dtype)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == 'opening':
+            #             if openkernel == None:
+            #                 out_image = open_binary(image.squeeze(),kernel)
+            #             else:
+            #                 openkernel = np.ones((openkernel,openkernel), datatype) 
+            #                 out_image = open_binary(image.squeeze(),openkernel)
+            #             # newfile = Path(outDir).joinpath('open_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile, out_image.dtype)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == 'closing':
+            #             if closekernel == None:
+            #                 out_image = close_binary(image.squeeze(),kernel)
+            #             else:
+            #                 closekernel = np.ones((closekernel,closekernel), datatype) 
+            #                 out_image = close_binary(image.squeeze(),closekernel)
+            #             # newfile = Path(outDir).joinpath('close_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile, out_image.dtype)
+            #             bw = BioWriter(newfile, xmetadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == "morphological_gradient":
+            #             if morphkernel == None:
+            #                 out_image = morphgradient_binary(image.squeeze(),kernel)
+            #             else:
+            #                 morphkernel = np.ones((morphkernel,morphkernel), datatype) 
+            #                 out_image = morphgradient_binary(image.squeeze(),morphkernel)
+            #             # newfile = Path(outDir).joinpath('morphgradient_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile, out_image.dtype)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == 'dilation':
+            #             if dilatekernel == None:
+            #                 out_image = dilate_binary(image.squeeze(), kernel, dilateby)
+            #             else:
+            #                 dilatekernel = np.ones((dilatekernel,dilatekernel), datatype) 
+            #                 out_image = dilate_binary(image.squeeze(),dilatekernel, dilateby)
+            #             # out_image = dilate_binary(image.squeeze(), kernel, dilateby)
+            #             # newfile = Path(outDir).joinpath('dilated_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile, out_image.dtype)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == 'erosion':
+            #             if erodekernel == None:
+            #                 out_image = erode_binary(image.squeeze(),kernel, erodeby)
+            #             else:
+            #                 erodekernel = np.ones((erodekernel,erodekernel), datatype) 
+            #                 out_image = erode_binary(image.squeeze(),erodekernel, erodeby)
+            #             # out_image = erode_binary(image.squeeze(), kernel,erodeby)
+            #             # newfile = Path(outDir).joinpath('eroded_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == 'skeleton':
+            #             if skeletonkernel == None:
+            #                 out_image = skeleton_binary(image.squeeze(), kernel)
+            #             else:
+            #                 skeletonkernel = np.ones((skeletonkernel,skeletonkernel), datatype) 
+            #                 out_image = skeleton_binary(image.squeeze(),skeletonkernel, erodeby)
+            #             # newfile = Path(outDir).joinpath('skeleton_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == 'fill_holes':
+            #             image = holefilling_binary(image, intkernel)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, image=out_image, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item =='hit_or_miss':
+            #             out_image = hitormiss_binary(image.squeeze(),hitormiss)
+            #             # newfile = Path(outDir).joinpath('hitormiss_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br.num_y(), br.num_x(), br.num_z(), 1, 1)))
+            #         elif item == 'filter_area':
+            #             if areafilterkernel == None:
+            #                 out_image = areafiltering_binary(image.squeeze(), intkernel)
+            #             else:
+            #                 out_image = areafiltering_binary(image.squeeze(), areafilterkernel)
+            #             # newfile = Path(outDir).joinpath('areafiltered_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == 'top_hat':
+            #             if tophatkernel == None:
+            #                 out_image = tophat_binary(image.squeeze(), kernel)
+            #             else:
+            #                 tophatkernel = np.ones((tophatkernel,tophatkernel), datatype) 
+            #                 out_image = tophat_binary(image.squeeze(),tophatkernel)
+            #             # out_image = tophat_binary(image.squeeze(), kernel)
+            #             # newfile = Path(outDir).joinpath('tophat_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == 'black_hat':
+            #             if blackhatkernel == None:
+            #                 out_image = blackhat_binary(image.squeeze(), kernel)
+            #             else:
+            #                 blackhatkernel = np.ones((blackhatkernel,blackhatkernel), datatype) 
+            #                 out_image = blackhat_binary(image.squeeze(),blackhatkernel)
+            #             # out_image = blackhat_binary(image.squeeze(), kernel)
+            #             # newfile = Path(outDir).joinpath('blackhat_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         else:
+            #             raise ValueError("Operation value is incorrect")
+            #     else:
+            #         if item == 'invertion':
+            #             out_image = invert_binary(out_image)
+            #             # newfile = Path(outDir).joinpath('inverted_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == 'opening':
+            #             if openkernel == None:
+            #                 out_image = open_binary(out_image.squeeze(),kernel)
+            #             else:
+            #                 openkernel = np.ones((openkernel,openkernel), datatype) 
+            #                 out_image = open_binary(image.squeeze(),openkernel)
+            #             # newfile = Path(outDir).joinpath('open_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == 'closing':
+            #             if closekernel == None:
+            #                 out_image = close_binary(out_image.squeeze(),kernel)
+            #             else:
+            #                 closekernel = np.ones((closekernel,closekernel), datatype) 
+            #                 out_image = close_binary(image.squeeze(),closekernel)
+            #             # newfile = Path(outDir).joinpath('close_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, xmetadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == "morphological_gradient":
+            #             if morphkernel == None:
+            #                 out_image = morphgradient_binary(out_image.squeeze(),kernel)
+            #             else:
+            #                 morphkernel = np.ones((morphkernel,morphkernel), datatype) 
+            #                 out_image = morphgradient_binary(out_image.squeeze(),morphkernel)
+            #             # newfile = Path(outDir).joinpath('morphgradient_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == 'dilation':
+            #             # out_image = None
+            #             # if dilatekernel == None:
+            #             out_image = dilate_binary(out_image.squeeze(), kernel, dilateby)
+            #             # logger.info(out_image.dtype)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #             # else:
+            #             #     dilatekernel = np.ones((dilatekernel,dilatekernel), datatype) 
+            #             #     out_image = dilate_binary(out_image.squeeze(),dilatekernel, dilateby)
+            #             # # out_image = dilate_binary(image.squeeze(), kernel, dilateby)
+            #             # # newfile = Path(outDir).joinpath('dilated_'+f)
+            #             #     newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             #     logger.info(newfile, out_image.dtype)
+            #             #     bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             #     bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == 'erosion':
+            #             if erodekernel == None:
+            #                 out_image = erode_binary(out_image.squeeze(),kernel, erodeby)
+            #             else:
+            #                 erodekernel = np.ones((erodekernel,erodekernel), datatype) 
+            #                 out_image = erode_binary(out_image.squeeze(),erodekernel, erodeby)
+            #             # out_image = erode_binary(image.squeeze(), kernel,erodeby)
+            #             # newfile = Path(outDir).joinpath('eroded_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == 'skeleton':
+            #             if skeletonkernel == None:
+            #                 out_image = skeleton_binary(out_image.squeeze(), kernel)
+            #             else:
+            #                 skeletonkernel = np.ones((skeletonkernel,skeletonkernel), datatype) 
+            #                 out_image = skeleton_binary(out_image.squeeze(),skeletonkernel, erodeby)
+            #             # newfile = Path(outDir).joinpath('skeleton_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == 'fill_holes':
+            #             out_image = holefilling_binary(out_image, intkernel)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, image=out_image, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item =='hit_or_miss':
+            #             out_image = hitormiss_binary(out_image.squeeze(),hitormiss)
+            #             # newfile = Path(outDir).joinpath('hitormiss_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br.num_y(), br.num_x(), br.num_z(), 1, 1)))
+            #         elif item == 'filter_area':
+            #             if areafilterkernel == None:
+            #                 out_image = areafiltering_binary(out_image.squeeze(), intkernel)
+            #             else:
+            #                 out_image = areafiltering_binary(out_image.squeeze(), areafilterkernel)
+            #             # newfile = Path(outDir).joinpath('areafiltered_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == 'top_hat':
+            #             if tophatkernel == None:
+            #                 out_image = tophat_binary(out_image.squeeze(), kernel)
+            #             else:
+            #                 tophatkernel = np.ones((tophatkernel,tophatkernel), datatype) 
+            #                 out_image = tophat_binary(out_image.squeeze(),tophatkernel)
+            #             # out_image = tophat_binary(image.squeeze(), kernel)
+            #             # newfile = Path(outDir).joinpath('tophat_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         elif item == 'black_hat':
+            #             if blackhatkernel == None:
+            #                 out_image = blackhat_binary(out_image.squeeze(), kernel)
+            #             else:
+            #                 blackhatkernel = np.ones((blackhatkernel,blackhatkernel), datatype) 
+            #                 out_image = blackhat_binary(out_image.squeeze(),blackhatkernel)
+            #             # out_image = blackhat_binary(image.squeeze(), kernel)
+            #             # newfile = Path(outDir).joinpath('blackhat_'+f)
+            #             newfile = str(Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff'))
+            #             logger.info(newfile)
+            #             bw = BioWriter(newfile, metadata=br.read_metadata())
+            #             bw.write_image(np.reshape(out_image, (br_y, br_x, br_z, 1, 1)))
+            #         else:
+            #             raise ValueError("Operation value is incorrect")
+            #     i = i + 1
+            
+
+        # Write the output
+        # bw = BioWriter(Path(outDir).joinpath(f),metadata=br.read_metadata())
+        # bw.write_image(np.reshape(out_image,(br.num_y(),br.num_x(),br.num_z,1,1)))
+    
+    
         
 
 # %%
