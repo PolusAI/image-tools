@@ -75,7 +75,7 @@ def _parse_stitch(stitchPath,imagePath,timepointName=False):
                 continue
 
             # Get the image size
-            stitch_groups['width'], stitch_groups['height'] = BioReader.imagesize(str(Path(imagePath).joinpath(stitch_groups['file']).absolute()))
+            stitch_groups['width'], stitch_groups['height'] = BioReader.image_size(str(Path(imagePath).joinpath(stitch_groups['file']).absolute()))
             if out_dict['width'] < stitch_groups['width']+stitch_groups['posX']:
                 out_dict['width'] = stitch_groups['width']+stitch_groups['posX']
             if out_dict['height'] < stitch_groups['height']+stitch_groups['posY']:
