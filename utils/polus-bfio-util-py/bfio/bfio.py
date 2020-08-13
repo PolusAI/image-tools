@@ -1201,7 +1201,7 @@ class BioWriter():
         # PhotometricInterpretation
         self._addtag(262, 'H', 1, tifffile.TIFF.PHOTOMETRIC.MINISBLACK.value)
 
-        if self.physical_size_x() is not None:
+        if self.physical_size_x()[0] is not None:
             self._addtag(282, '2I', 1, rational(10000/self.physical_size_x()[0]/10000))  # XResolution in pixels/cm
             self._addtag(283, '2I', 1, rational(10000/self.physical_size_y()[0]))  # YResolution in pixels/cm
             self._addtag(296, 'H', 1, 3)  # ResolutionUnit = cm
