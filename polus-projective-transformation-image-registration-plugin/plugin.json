@@ -1,6 +1,6 @@
 {
     "name": "Projective Transformation Image Registration",
-    "version": "0.2.8",
+    "version": "0.3.4",
     "title": "Image Registration",
     "description": "This plugin registers an image collection",
     "author": "Gauhar Bains (gauhar.bains@labshare.org)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-image-registration-plugin:0.2.8",
+    "containerId": "labshare/polus-image-registration-plugin:0.3.4",
     "inputs": [
       {
         "name": "inpDir",
