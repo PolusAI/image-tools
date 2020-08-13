@@ -1,7 +1,7 @@
 {
   "name": "Binary Operations Plugin",
-  "version": "0.1.17",
-  "containerId": "mmvihani/polus-binary-operations-plugin:0.1.10",
+  "version": "0.1.34",
+  "containerId": "mmvihani/polus-binary-operations-plugin:0.1.20",
   "title": "Binary Operations Plugin",
   "description": "Everything you need to start a WIPP plugin.",
   "author": "Data Scientist (data.scientist@labshare.org)",
@@ -16,6 +16,76 @@
       "type": "collection",
       "options": null,
       "required": true
+    },
+    {
+      "name": "kernelsize",
+      "description": "Kernel size that should be used for transformation",
+      "type": "number",
+      "options": null,
+      "required": true
+    },
+    {
+      "name": "openkernelsize",
+      "description": "Kernel size that should be used for Open Binary",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "closekernelsize",
+      "description": "Kernel size that should be used for Close Binary",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "morphkernelsize",
+      "description": "Kernel size that should be used for Morphological Gradient",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "dilatekernelsize",
+      "description": "Kernel size that should be used for Dilation",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "erodekernelsize",
+      "description": "Kernel size that should be used for Erosion",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "skeletonkernelsize",
+      "description": "Kernel size that should be used for Skeletonization",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "areafilteringkernelsize",
+      "description": "Kernel size that should be used for area filtering",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "tophatkernelsize",
+      "description": "Kernel size that should be used for Top Hat",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "blackhatkernelsize",
+      "description": "Kernel size that should be used for Black Hat",
+      "type": "number",
+      "options": null,
+      "required": false
     },
     {
       "name": "Operations",
@@ -71,6 +141,56 @@
       "key": "inputs.inpDir",
       "title": "Input collection",
       "description": "Input image collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.kernelsize",
+      "title": "Default Kernel Size",
+      "description": "Default Kernel Size to use for Operations"
+    },
+    {
+      "key": "inputs.openkernelsize",
+      "title": "Open Kernel Size",
+      "description": "Change Kernel Size to use for Opening"
+    },
+    {
+      "key": "inputs.closekernelsize",
+      "title": "Close Kernel Size",
+      "description": "Change Kernel Size to use for Closing"
+    },
+    {
+      "key": "inputs.morphkernelsize",
+      "title": "Morphological Gradient Kernel Size",
+      "description": "Change Kernel Size to use for Morphological Gradient"
+    },
+    {
+      "key": "inputs.dilatekernelsize",
+      "title": "Dilate Kernel Size",
+      "description": "Change Kernel Size to use for Dilation"
+    },
+    {
+      "key": "inputs.erodekernelsize",
+      "title": "Erode Kernel Size",
+      "description": "Change Kernel Size to use for Erosion"
+    },
+    {
+      "key": "inputs.skeletonkernelsize",
+      "title": "Skeleton Kernel Size",
+      "description": "Change Kernel Size to use for Skeletonization"
+    },
+    {
+      "key": "inputs.areafilteringkernelsize",
+      "title": "Area Filtering Kernel Size",
+      "description": "Change Kernel Size to use for Area Filtering"
+    },
+    {
+      "key": "inputs.tophatkernelsize",
+      "title": "TopHat Kernel Size",
+      "description": "Change Kernel Size to use for TopHat"
+    },
+    {
+      "key": "inputs.blackhatkernelsize",
+      "title": "BlackHat Kernel Size",
+      "description": "Change Kernel Size to use for BlackHat"
     },
     {
       "key": "inputs.dilateby",
