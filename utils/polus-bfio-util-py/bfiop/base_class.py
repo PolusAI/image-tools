@@ -5,6 +5,7 @@ from queue import Queue
 
 import  multiprocessing
 
+# NJS - Python 2.7 is deprecated. Do not add support for it
 
 # Need to  add handling  of python2.7 compiler
 # import six
@@ -14,12 +15,9 @@ import  multiprocessing
 # else:
 #     from abc import abstractmethod, abstractproperty
 
-
-
 class BioBase(metaclass=abc.ABCMeta) :
     """
     Base class for reading and writing OME tiled tiff format data. Class initialises  and parses metadata if they are present while reading and writing images.
-
 
     Methods:
     pixel_type(dtype): Gets/sets the pixel type (e.g. uint8)
@@ -45,6 +43,7 @@ class BioBase(metaclass=abc.ABCMeta) :
             'float': 4,
             'double': 8}
     _TILE_SIZE = 2 ** 10
+    
     # Buffering variables for iterating over an image
     _raw_buffer = Queue(maxsize=1)  # only preload one supertile at a time
     _data_in_buffer = Queue(maxsize=1)
@@ -55,31 +54,39 @@ class BioBase(metaclass=abc.ABCMeta) :
     _tile_x_offset = 0
     _tile_last_column = 0
     _metadata=None
+    
+    _read_only = False
+    
     @property
-    def set_read(self):
+    def read_only(self):
         return self._read_only
 
-    @set_read.setter
-    def set_read(self, bool):
-        self._read_only = bool
+    @read_only.get
+    def read_only(self, bool):
+        raise AttributeError('read_only object attribute is read-only.')
 
-    @property
-    def set_dim(self):
-        # Information about image dimensions
+    # NJS - The way this is set up, I think it will create problems.
+    # Also, this is not needed if we are checking for read-only status in the
+    # functions that access the _xyzct attribute.
+    
+    # @property
+    # def set_dim(self):
+    #     # Information about image dimensions
+    #     return self._xyzct
 
-        return self._xyzct
+    # @set_dim.setter
+    # def set_dim(self):
+    #     #print(_metadata)
+    #     self._xyzct = {'X': self._metadata.image().Pixels.get_SizeX(),  # image width
+    #                    'Y': self._metadata.image().Pixels.get_SizeY(),  # image height
+    #                    'Z': self._metadata.image().Pixels.get_SizeZ(),  # image depth
+    #                    'C': self._metadata.image().Pixels.get_SizeC(),  # number of channels
+    #                    'T': self._metadata.image().Pixels.get_SizeT()}  # n
+    #     print(self._xyzct)
 
-    @set_dim.setter
-    def set_dim(self):
-        #print(_metadata)
-        self._xyzct = {'X': self._metadata.image().Pixels.get_SizeX(),  # image width
-                       'Y': self._metadata.image().Pixels.get_SizeY(),  # image height
-                       'Z': self._metadata.image().Pixels.get_SizeZ(),  # image depth
-                       'C': self._metadata.image().Pixels.get_SizeC(),  # number of channels
-                       'T': self._metadata.image().Pixels.get_SizeT()}  # n
-        print(self._xyzct)
-
-
+    # NJS - Since all inheriting classes will have to implement their own __init__
+    # we can get rid of this. The way this is currently implemented in the BioWriter
+    # is problematic and will throw errors in multiple scenarios.
     def __init__(self, file_path,_metadata=None,max_workers=None):
         """__init__ Initialize  filepath,metadata and number of threads
 
@@ -94,28 +101,26 @@ class BioBase(metaclass=abc.ABCMeta) :
         self._xyzct = None
         self._pix = None
         self._read_only = True
-        self._max_workers = max_workers if (max_workers and max_workers!=1)   else  (0 or multiprocessing.cpu_count() // 2)
-        if self._read_only:
+        self._max_workers = max_workers if max_workers != None else max([multiprocessing.cpu_count()//2,1])
+        
         # Information about image dimensions
-        #     self._xyzct = {'X': _metadata.image().Pixels.get_SizeX(),  # image width
-        #                'Y': _metadata.image().Pixels.get_SizeY(),  # image height
-        #                'Z': _metadata.image().Pixels.get_SizeZ(),  # image depth
-        #                'C': _metadata.image().Pixels.get_SizeC(),  # number of channels
-        #                'T': _metadata.image().Pixels.get_SizeT()}  # number of timepoints
+        self._xyzct = {'X': _metadata.image().Pixels.get_SizeX(),  # image width
+                       'Y': _metadata.image().Pixels.get_SizeY(),  # image height
+                       'Z': _metadata.image().Pixels.get_SizeZ(),  # image depth
+                       'C': _metadata.image().Pixels.get_SizeC(),  # number of channels
+                       'T': _metadata.image().Pixels.get_SizeT()}  # number of timepoints
 
         # Information about data type and loading
-            self._pix = {'type': _metadata.image().Pixels.get_PixelType(),  # string indicating pixel type
+        self._pix = {'type': _metadata.image().Pixels.get_PixelType(),  # string indicating pixel type
                      'bpp': self._BPP[_metadata.image().Pixels.get_PixelType()],  # bytes per pixel
                      'spp': _metadata.image().Pixels.Channel().SamplesPerPixel}  # samples per pixel
 
         # number of pixels to load at a time
-            self._pix['chunk'] = self._MAX_BYTES / \
+        self._pix['chunk'] = self._MAX_BYTES / \
                              (self._pix['spp'] * self._pix['bpp'])
 
         # determine if channels are interleaved
-            self._pix['interleaved'] = self._pix['spp'] > 1
-
-
+        self._pix['interleaved'] = self._pix['spp'] > 1
 
     def channel_names(self,cnames=None):
         """channel_names
@@ -124,15 +129,14 @@ class BioBase(metaclass=abc.ABCMeta) :
             list: Strings indicating channel names
         """
         if cnames:
-            if not self._read_only:
-                assert not self._read_only, "The image has started to be written. To modify the xml again, reinitialize."
-                assert len(cnames) == self._xyzct['C'], "Number of names does not match number of channels."
-                for i in range(0, len(cnames)):
-                    self._metadata.image(0).Pixels.Channel(i).Name = cnames[i]
+            assert not self._read_only, "channel_names is read-only."
+            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            assert len(cnames) == self._xyzct['C'], "Number of names does not match number of channels."
+            for i in range(0, len(cnames)):
+                self._metadata.image(0).Pixels.Channel(i).Name = cnames[i]
 
         image = self._metadata.image()
         return [image.Pixels.Channel(i).Name for i in range(0, self._xyzct['C'])]
-
 
     def num_x(self,X=None):
         """num_x Width of image in pixels
@@ -141,13 +145,12 @@ class BioBase(metaclass=abc.ABCMeta) :
             int: Width of image in pixels
         """
         if X:
-            if not self._read_only:
-                assert not self._read_only, "The image has started to be written. To modify the xml again, reinitialize."
-                assert X >= 1
-                self._metadata.image(0).Pixels.SizeX = X
-                self._xyzct['X'] = X
+            assert not self._read_only, "num_x is read-only."
+            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            assert X >= 1
+            self._metadata.image(0).Pixels.SizeX = X
+            self._xyzct['X'] = X
         return self._xyzct['X']
-
 
     def num_y(self,Y=None):
         """num_y Height of image in pixels
@@ -156,13 +159,12 @@ class BioBase(metaclass=abc.ABCMeta) :
             int: Height of image in pixels
         """
         if Y:
-            if not self._read_only:
-                assert not self._read_only, "The image has started to be written. To modify the xml again, reinitialize."
-                assert Y >= 1
-                self._metadata.image(0).Pixels.SizeY = Y
-                self._xyzct['Y'] = Y
+            assert not self._read_only, "num_y is read-only."
+            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            assert Y >= 1
+            self._metadata.image(0).Pixels.SizeY = Y
+            self._xyzct['Y'] = Y
         return self._xyzct['Y']
-
 
     def num_z(self,Z=None):
         """num_z Depth of image in pixels
@@ -171,13 +173,12 @@ class BioBase(metaclass=abc.ABCMeta) :
             int: Depth of image in pixels
         """
         if Z:
-            if not self._read_only:
-                assert not self._read_only, "The image has started to be written. To modify the xml again, reinitialize."
-                assert Z >= 1
-                self._metadata.image(0).Pixels.SizeZ = Z
-                self._xyzct['Z'] = Z
+            assert not self._read_only, "num_z is read-only."
+            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            assert Z >= 1
+            self._metadata.image(0).Pixels.SizeZ = Z
+            self._xyzct['Z'] = Z
         return self._xyzct['Z']
-
 
     def num_c(self,C=None):
         """num_c Number of channels in the image
@@ -186,13 +187,12 @@ class BioBase(metaclass=abc.ABCMeta) :
             int: Number of channels
         """
         if C:
-            if not self._read_only:
-                assert not self._read_only, "The image has started to be written. To modify the xml again, reinitialize."
-                assert C >= 1
-                self._metadata.image(0).Pixels.SizeC = C
-                self._xyzct['C'] = C
+            assert not self._read_only, "num_c is read-only."
+            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            assert C >= 1
+            self._metadata.image(0).Pixels.SizeC = C
+            self._xyzct['C'] = C
         return self._xyzct['C']
-
 
     def num_t(self,T=None):
         """num_x Number of timepoints in an image
@@ -201,12 +201,11 @@ class BioBase(metaclass=abc.ABCMeta) :
             int: Number of timepoints
         """
         if T:
-            if not  self._read_only:
-                assert not self._read_only, "The image has started to be written. To modify the xml again, reinitialize."
-                assert T >= 1
-                self._metadata.image(0).Pixels.SizeT = T
-                self._xyzct['T'] = T
-
+            assert not self._read_only, "num_t is read-only."
+            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            assert T >= 1
+            self._metadata.image(0).Pixels.SizeT = T
+            self._xyzct['T'] = T
 
     def physical_size_x(self,psize=None, units=None):
         """num_x Size of pixels in x-dimension
@@ -216,16 +215,13 @@ class BioBase(metaclass=abc.ABCMeta) :
             str: Units (i.e. cm or mm)
         """
         if psize != None and units != None:
-            if  not self._read_only :
-                assert not self._read_only, "The image has started to be written. To modify the xml again, reinitialize."
-                self._metadata.image(0).Pixels.PhysicalSizeX = psize
-                self._metadata.image(0).Pixels.PhysicalSizeXUnit = units
-        elif psize == None and units == None:
-            pass
-        else:
+            assert not self._read_only, "physical_size_x is read-only."
+            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            self._metadata.image(0).Pixels.PhysicalSizeX = psize
+            self._metadata.image(0).Pixels.PhysicalSizeXUnit = units
+        elif psize != None or units != None:
             raise ValueError('Both psize and units must be defined, or neither should be defined.')
         return (self._metadata.image(0).Pixels.PhysicalSizeX, self._metadata.image(0).Pixels.PhysicalSizeXUnit)
-
 
     def physical_size_y(self,psize=None, units=None):
         """num_y Size of pixels in y-dimension
@@ -235,16 +231,13 @@ class BioBase(metaclass=abc.ABCMeta) :
             str: Units (i.e. cm or mm)
         """
         if psize != None and units != None:
-            if not self._read_only:
-                assert not self._read_only, "The image has started to be written. To modify the xml again, reinitialize."
-                self._metadata.image(0).Pixels.PhysicalSizeY = psize
-                self._metadata.image(0).Pixels.PhysicalSizeYUnit = units
-        elif psize == None and units == None:
-            pass
-        else:
+            assert not self._read_only, "physical_size_y is read-only."
+            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            self._metadata.image(0).Pixels.PhysicalSizeY = psize
+            self._metadata.image(0).Pixels.PhysicalSizeYUnit = units
+        elif psize != None or units != None:
             raise ValueError('Both psize and units must be defined, or neither should be defined.')
         return (self._metadata.image(0).Pixels.PhysicalSizeY, self._metadata.image(0).Pixels.PhysicalSizeYUnit)
-
 
     def physical_size_z(self,psize=None, units=None):
         """num_z Size of pixels in z-dimension
@@ -254,13 +247,11 @@ class BioBase(metaclass=abc.ABCMeta) :
             str: Units (i.e. cm or mm)
         """
         if psize != None and units != None:
-            if not self._read_only:
-                assert not self._read_only, "The image has started to be written. To modify the xml again, reinitialize."
-                self._metadata.image(0).Pixels.PhysicalSizeZ = psize
-                self._metadata.image(0).Pixels.PhysicalSizeZUnit = units
-        elif psize == None and units == None:
-            pass
-        else:
+            assert not self._read_only, "physical_size_z is read-only."
+            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            self._metadata.image(0).Pixels.PhysicalSizeZ = psize
+            self._metadata.image(0).Pixels.PhysicalSizeZUnit = units
+        elif psize != None or units != None:
             raise ValueError('Both psize and units must be defined, or neither should be defined.')
         return (self._metadata.image(0).Pixels.PhysicalSizeZ, self._metadata.image(0).Pixels.PhysicalSizeZUnit)
 
