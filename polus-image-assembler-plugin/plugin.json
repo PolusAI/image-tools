@@ -15,7 +15,7 @@
         "type": "stitchingVector",
         "description": "Filename pattern used to separate data",
         "required": false
-      }
+      },
       {
         "name": "imgPath",
         "type": "collection",
