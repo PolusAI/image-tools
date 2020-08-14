@@ -1,9 +1,4 @@
-import copy
-import io
-import os
-import struct
-import threading
-import zlib
+import copy, io, struct, threading, zlib
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -11,7 +6,7 @@ import numpy as np
 from tifffile import tifffile
 
 from base_class import BioBase
-
+import backends
 
 class BioReader(BioBase):
     """BioReader Read supported image formats using Bioformats
@@ -42,22 +37,15 @@ class BioReader(BioBase):
         read_metadata(update): Returns an OMEXML class containing metadata for the image
         read_image(X,Y,Z,C,T,series): Returns a part or all of the image as numpy array
     """
-    @property
-    def set_read(self):
-        return super().set_read
-
-    @set_read.setter
-    def set_read(self, new_value):
-        # super(BioWriter, self.__class__).set_read.fset(self, False)
-        super(BioWriter, type(self)).set_read.fset(self, True)
-    @property
-    def set_dim(self):
-        # Information about image dimensions
-        return super().set_dim
-
-    @set_dim.setter
-    def set_dim(self ):
-        super(BioReader, type(self)).set_dim.fset(self)
+    self._read_only = True
+    self._backend = backends.BACKEND
+    
+    @classmethod
+    def set_backend(cls,backend):
+        cls._backend = backend
+        
+    def backend_name(self):
+        return self._backend.name
 
     def __init__(self, file_path,max_workers=None):
         """__init__ Initialize the a file for reading
@@ -74,7 +62,6 @@ class BioReader(BioBase):
 
         self._test = self.read_metadata()
         super(BioReader, self).__init__(file_path, _metadata=self._test,max_workers=max_workers)
-
 
     def read_metadata(self, update=False):
         """read_metadata Get the metadata for the image
@@ -571,11 +558,8 @@ class BioReader(BioBase):
         # return the last set of images
         yield images, index
 
-
-
     def close_image(self):
         self._rdr.close()
-
 
 class BioWriter(BioBase):
         """BioWriter Write OME tiled tiffs using Bioformats
@@ -627,7 +611,6 @@ class BioWriter(BioBase):
         @set_dim.setter
         def set_dim(self,metadata):
             super(BioWriter, type(self)).set_dim.fset(self,metadata)
-
 
         @property
         def set_read(self):
@@ -691,7 +674,7 @@ class BioWriter(BioBase):
                 self._metadata.image(0).Name = file_path
                 self._metadata.image().Pixels.channel_count = self._xyzct['C']
                 self._metadata.image().Pixels.DimensionOrder = self.xml_metadata(var=1).DO_XYZCT
-            elif image != None:
+            elif isinstance(image, np.ndarray):
                 assert len(image.shape) == 5, "Image must be 5-dimensional (x,y,z,c,t)."
                 x = X if X else image.shape[1]
                 y = Y if Y else image.shape[0]
@@ -743,7 +726,7 @@ class BioWriter(BioBase):
             """
             assert not self.__writer, "The image has started to be written. To modify the xml again, reinitialize."
             omexml = self.xml_metadata()
-            omexml.image(0).Name = os.path.split(self._file_path)[1]
+            omexml.image(0).Name = Path(self._file_path).name
             p = omexml.image(0).Pixels
             # assert isinstance(p, bioformats.OMEXML.Pixels)
             assert isinstance(p, self.xml_metadata().Pixels)
@@ -899,7 +882,7 @@ class BioWriter(BioBase):
             # PhotometricInterpretation
             self._addtag(262, 'H', 1, tifffile.TIFF.PHOTOMETRIC.MINISBLACK.value)
 
-            if self.physical_size_x() is not None:
+            if self.physical_size_x()[0] is not None:
                 self._addtag(282, '2I', 1,
                              rational(10000 / self.physical_size_x()[0] / 10000))  # XResolution in pixels/cm
                 self._addtag(283, '2I', 1, rational(10000 / self.physical_size_y()[0]))  # YResolution in pixels/cm
