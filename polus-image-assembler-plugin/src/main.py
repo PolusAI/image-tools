@@ -1,11 +1,87 @@
-import argparse, logging, subprocess, time, multiprocessing, re, imagesize
-
+import argparse, logging, multiprocessing, re
+from bfio import BioReader,BioWriter
 import numpy as np
-
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 STITCH_VARS = ['file','correlation','posX','posY','gridX','gridY'] # image stitching values
 STITCH_LINE = "file: {}; corr: {}; position: ({}, {}); grid: ({}, {});\n"
+
+def buffer_image(image_path,supertile_buffer,Xi,Yi,Xt,Yt):
+    """buffer_image Load and image and store in buffer
+
+    This method loads an image and stores it in the appropriate
+    position based on the stitching vector coordinates within
+    a large tile of the output image. It is intended to be
+    used as a thread to increase the reading component to
+    assembling the image.
+    
+    Args:
+        image_path ([str]): Path to image to load
+        supertile_buffer ([np.ndarray]): A supertile storing multiple images
+        Xi ([list]): Xmin and Xmax of pixels to load from the image
+        Yi ([list]): Ymin and Ymax of pixels to load from the image
+        Xt ([list]): X position within the buffer to store the image
+        Yt ([list]): Y position within the buffer to store the image
+    """
+    
+    # Load the image
+    br = BioReader(image_path,max_workers=2)
+    image = br.read_image(X=Xi,Y=Yi) # only get the first z,c,t layer
+        
+    # Put the image in the buffer
+    supertile_buffer[Yt[0]:Yt[1],Xt[0]:Xt[1],...] = image
+
+def make_tile(x_min,x_max,y_min,y_max,stitchPath):
+    """make_tile Create a supertile
+
+    This method identifies images that have stitching vector positions
+    within the bounds of the supertile defined by the x and y input
+    arguments. It then spawns threads to load images and store in the
+    supertile buffer. Finally it returns the assembled supertile to
+    allow the main thread to generate the write thread.
+
+    Args:
+        x_min ([int]): Minimum x bound of the tile
+        x_max ([int]): Maximum x bound of the tile
+        y_min ([int]): Minimum y bound of the tile
+        y_max ([int]): Maximum y bound of the tile
+        stitchPath ([str]): Path to the stitching vector
+
+    Returns:
+        [type]: [description]
+    """
+    # Parse the stitching vector
+    outvals = _parse_stitch(stitchPath,imgPath,True)
+
+    # Get the data type
+    br = BioReader(str(Path(imgPath).joinpath(outvals['filePos'][0]['file'])))
+    dtype = br._pix['type']
+
+    # initialize the supertile
+    template = np.zeros((y_max-y_min,x_max-x_min,1,1,1),dtype=dtype)
+
+    # get images in bounds of current super tile
+    with ThreadPoolExecutor(max([multiprocessing.cpu_count(),2])) as executor:
+        for f in outvals['filePos']:
+            if (f['posX'] >= x_min and f['posX'] <= x_max) or (f['posX']+f['width'] >= x_min and f['posX']+f['width'] <= x_max):
+                if (f['posY'] >= y_min and f['posY'] <= y_max) or (f['posY']+f['height'] >= y_min and f['posY']+f['height'] <= y_max):
+            
+                    # get bounds of image within the tile
+                    Xt = [max(0,f['posX']-x_min)]
+                    Xt.append(min(x_max-x_min,f['posX']+f['width']-x_min))
+                    Yt = [max(0,f['posY']-y_min)]
+                    Yt.append(min(y_max-y_min,f['posY']+f['height']-y_min))
+
+                    # get bounds of image within the image
+                    Xi = [max(0,x_min - f['posX'])]
+                    Xi.append(min(f['width'],x_max - f['posX']))
+                    Yi = [max(0,y_min - f['posY'])]
+                    Yi.append(min(f['height'],y_max - f['posY']))
+                    
+                    executor.submit(buffer_image,str(Path(imgPath).joinpath(f['file'])),template,Xi,Yi,Xt,Yt)
+    
+    return template
 
 def get_number(s):
     """ Check that s is number
@@ -74,7 +150,7 @@ def _parse_stitch(stitchPath,imagePath,timepointName=False):
                 continue
 
             # Get the image size
-            stitch_groups['width'], stitch_groups['height'] = imagesize.get(str(Path(imagePath).joinpath(stitch_groups['file']).absolute()))
+            stitch_groups['width'], stitch_groups['height'] = BioReader.image_size(str(Path(imagePath).joinpath(stitch_groups['file']).absolute()))
             if out_dict['width'] < stitch_groups['width']+stitch_groups['posX']:
                 out_dict['width'] = stitch_groups['width']+stitch_groups['posX']
             if out_dict['height'] < stitch_groups['height']+stitch_groups['posY']:
@@ -138,44 +214,30 @@ if __name__=="__main__":
     # Setup the argument parsing
     parser = argparse.ArgumentParser(prog='main', description='Assemble images from a single stitching vector.')
     parser.add_argument('--stitchPath', dest='stitchPath', type=str,
-                        help='Complete path to a stitching vector', required=False)
+                        help='Complete path to a stitching vector', required=True)
     parser.add_argument('--imgPath', dest='imgPath', type=str,
                         help='Input image collection to be processed by this plugin', required=True)
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
     parser.add_argument('--timesliceNaming', dest='timesliceNaming', type=str,
                         help='Use timeslice number as image name', required=False)
-    parser.add_argument('--vectorInMetadata', dest='vectorInMetadata', type=str,
-                        help='Use stitching vectors stored in the metadata', required=False)
 
     # Parse the arguments
     args = parser.parse_args()
-    vectorInMetadata = args.vectorInMetadata == 'true'
-    logger.info('vectorInMetadata: {}'.format(vectorInMetadata))
     imgPath = args.imgPath
+    if Path(imgPath).joinpath('images').is_dir():
+        imgPath = str(Path(imgPath).joinpath('images').absolute())
     outDir = args.outDir
     logger.info('outDir: {}'.format(outDir))
     timesliceNaming = args.timesliceNaming == 'true'
     logger.info('timesliceNaming: {}'.format(timesliceNaming))
-    if vectorInMetadata:
-        stitchPath = str(Path(imgPath).parent.joinpath('metadata_files').absolute())
-    else:
-        stitchPath = args.stitchPath
-        if stitchPath == None:
-            ValueError('If vectorInMetadata==False, then stitchPath must be defined')
+    stitchPath = args.stitchPath
 
     # Get a list of stitching vectors
-    try:
-        vectors = [str(p.absolute()) for p in Path(stitchPath).iterdir() if p.is_file() and "".join(p.suffixes)=='.txt']
-    except FileNotFoundError:
-        # Workaround for WIPP bug
-        if Path(stitchPath).name == 'metadata_files':
-            stitchPath = str(Path(imgPath).joinpath('metadata_files').absolute())
-            imgPath = str(Path(imgPath).joinpath('images').absolute())
-            vectors = [str(p.absolute()) for p in Path(stitchPath).iterdir() if p.is_file() and "".join(p.suffixes)=='.txt']
+    vectors = [str(p.absolute()) for p in Path(stitchPath).iterdir() if p.is_file() and "".join(p.suffixes)=='.txt']
         
     logger.info('imgPath: {}'.format(imgPath))
-    logger.info('stichPath: {}'.format(stitchPath))
+    logger.info('stitchPath: {}'.format(stitchPath))
     vectors.sort()
 
     # Variables for image building processes
@@ -194,103 +256,31 @@ if __name__=="__main__":
         logger.info('Output image size (width, height): {},{}'.format(outvals['width'],outvals['height']))
 
         # Variables for tile building processes
-        processes = []
-        running_processes = []
-        completed_processes = []
         pnum = 0
         ptotal = np.ceil(outvals['width']/10240) * np.ceil(outvals['height']/10240)
         ptotal = 1/ptotal * 100
+        
+        # Initialize the output image
+        refImg = str(Path(imgPath).joinpath(outvals['filePos'][0]['file']).absolute())
+        outFile = str(Path(outDir).joinpath(outvals['name']).absolute())
+        br = BioReader(str(Path(refImg).absolute()))
+        bw = BioWriter(str(Path(outFile).absolute()),metadata=br.read_metadata(),max_workers=max([multiprocessing.cpu_count(),2]))
+        bw.num_x(outvals['width'])
+        bw.num_y(outvals['height'])
+        del br
 
         # Assemble the images
         logger.info('Generating tiles...')
-        for x in range(0, outvals['width'], 10240):
-            X_range = min(x+10240,outvals['width']) # max x-pixel index in the assembled image
-            for y in range(0, outvals['height'], 10240):
-                Y_range = min(y+10240,outvals['height']) # max y-pixel index in the assembled image
-
-                # If there are num_cores - 1 processes running, wait until one finishes
-                if len(processes) >= multiprocessing.cpu_count()-1-len(img_processes) and len(processes)+len(img_processes) > 0:
-                    free_process = -1
-                    while free_process<0:
-                        for process in range(len(processes)):
-                            if processes[process].poll() is not None:
-                                free_process = process
-                                break
-
-                        # Check the img_processes
-                        for process in range(len(img_processes)):
-                            if img_processes[process].poll() is not None:
-                                Path(img_paths[process][0]).rmdir()
-                                logger.info('Finished building image: {}'.format(Path(img_paths[process][1]).name))
-                                del img_processes[process]
-                                del img_paths[process]
-                                free_process = -2
-                                break
-                        if free_process == -2:
-                            break
-
-                        # Only check intermittently to free up processing power
-                        if free_process<0:
-                            time.sleep(3)
-                    if free_process >= 0:
-                        pnum += 1
-                        logger.info("{:.2f}% complete...".format(pnum*ptotal))
-                        del processes[free_process]
-                        completed_processes.append(running_processes[free_process])
-                        del running_processes[free_process]
-
-                # create the arg dictionary for the process that will be spawned
-                regex = ".*-global-positions-([0-9]+).txt"
-                timeframe = re.match(regex,v).groups()[0]
-                tile_outdir = str(Path(outDir).joinpath(timeframe).absolute())
-                Path(tile_outdir).mkdir(exist_ok=True)
-                inputs = [imgPath,tile_outdir,v,x,y,X_range,Y_range]
-                
-                # Spawn a stack building process and record the starting time
-                processes.append(
-                    subprocess.Popen(
-                        "python3 tile.py --imgPath {} --outDir {} --stitchPath {} --x {} --y {} --X_range {} --Y_range {}".format(*inputs),
-                        shell=True
-                    )
-                )
-                running_processes.append(inputs)
-
-        # Wait for all processes to finish
-        while len(processes)>0:
-            free_process = -1
-            while free_process<0:
-                for process in range(len(processes)):
-                    if processes[process].poll() is not None:
-                        free_process = process
-                        break
-                # Only check intermittently to free up processing power
-                if free_process<0:
-                    time.sleep(3)
-            pnum += 1
-            logger.info("{:.2f}% complete...".format(pnum*ptotal))
-            del processes[free_process]
-            completed_processes.append(running_processes[free_process])
-            del running_processes[free_process]
-    
-        # Start a process to build the output image
-        refImg = str(Path(imgPath).joinpath(outvals['filePos'][0]['file']).absolute())
-        outFile = '"' + str(Path(outDir).joinpath(outvals['name']).absolute()) + '"'
-        inputs = [tile_outdir,outFile,refImg,outvals['width'],outvals['height']]
-        img_processes.append(
-            subprocess.Popen(
-                "python3 assemble.py --imgPath {} --outFile {} --refImg {} --width {} --height {}".format(*inputs),
-                shell=True
-            )
-        )
-        img_paths.append([tile_outdir,outFile])
-
-    # Wait for all image building processes to finish
-    while len(img_processes)>0:
-        for process in range(len(img_processes)):
-            if img_processes[process].poll() is not None:
-                Path(img_paths[process][0]).rmdir()
-                logger.info('Finished building image: {}'.format(Path(img_paths[process][1]).name))
-                del img_processes[process]
-                del img_paths[process]
-                break
-    logger.info('Finished all processes successfully!')
+        with ThreadPoolExecutor(4) as executor:
+            for x in range(0, outvals['width'], 10240):
+                X_range = min(x+10240,outvals['width']) # max x-pixel index in the assembled image
+                for y in range(0, outvals['height'], 10240):
+                    Y_range = min(y+10240,outvals['height']) # max y-pixel index in the assembled image
+                    
+                    image_buffer = make_tile(x,X_range,y,Y_range,v)
+                    
+                    executor.submit(bw.write_image,image_buffer,X=x,Y=y)
+                    # bw.write_image(image_buffer,X=[x],Y=[y])
+        
+        logger.info('Closing image...')
+        bw.close_image()
