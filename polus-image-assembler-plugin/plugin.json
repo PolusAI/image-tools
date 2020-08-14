@@ -38,15 +38,14 @@
     ],
     "ui": [
       {
-        "key": "inputs.stitchPath",
-        "title": "Stitching Vector",
-        "description": "Stitching vectors to use",
-        "condition": "model.inputs.vectorInMetadata==false"
-      },
-      {
         "key": "inputs.imgPath",
         "title": "Input collection",
         "description": "Input image collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.stitchPath",
+        "title": "Stitching Vector",
+        "description": "Stitching vectors to use"
       },
       {
         "key": "inputs.timesliceNaming",
