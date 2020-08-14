@@ -15,13 +15,7 @@
         "type": "stitchingVector",
         "description": "Filename pattern used to separate data",
         "required": false
-      },
-      {
-        "name": "vectorInMetadata",
-        "type": "boolean",
-        "description": "Use stitching vectors stored in image collection metadata",
-        "required": true
-      },
+      }
       {
         "name": "imgPath",
         "type": "collection",
@@ -43,12 +37,6 @@
       }
     ],
     "ui": [
-      {
-        "key": "inputs.vectorInMetadata",
-        "title": "Vectors in image collection metadata",
-        "description": "Use stitching vectors stored in image collection metadata",
-        "default": false
-      },
       {
         "key": "inputs.stitchPath",
         "title": "Stitching Vector",
