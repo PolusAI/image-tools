@@ -3,7 +3,6 @@ from pathlib import Path
 import filepattern
 import os
 from filepattern import FilePattern as fp
-import pandas
 import numpy as np
 
 def zslicefunction(input_dir, output_dir, pyramid_type, imagetype):

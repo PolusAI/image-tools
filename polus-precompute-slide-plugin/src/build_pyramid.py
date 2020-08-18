@@ -9,9 +9,6 @@ import os
 import itertools
 import numpy as np
 
-
-
-
 if __name__=="__main__":
     # Setup the Argument parsing
     parser = argparse.ArgumentParser(prog='build_pyramid', description='Generate a precomputed slice for Polus Viewer.')

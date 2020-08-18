@@ -7,8 +7,8 @@ import filepattern
 import os
 import math
 import time
-import pandas as pd
-from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
+
 # Conversion factors to nm, these are based off of supported Bioformats length units
 UNITS = {'m':  10**9,
          'cm': 10**7,
@@ -20,22 +20,23 @@ UNITS = {'m':  10**9,
 # Chunk Scale
 CHUNK_SIZE = 1024
 
-def findRepeating(arr, n): 
+# This method doesn't appear to do anything - NJS
+# def findRepeating(arr, n): 
   
-    missingElement = 0
+#     missingElement = 0
   
-    # indexing based 
-    for i in range(0, n): 
+#     # indexing based 
+#     for i in range(0, n): 
   
-        element = arr[abs(arr[i])] 
+#         element = arr[abs(arr[i])] 
   
-        if(element < 0): 
-            missingElement = arr[i] 
-            break
+#         if(element < 0): 
+#             missingElement = arr[i] 
+#             break
           
-        arr[abs(arr[i])] = -arr[abs(arr[i])] 
+#         arr[abs(arr[i])] = -arr[abs(arr[i])] 
       
-    return abs(missingElement) 
+#     return abs(missingElement) 
 
 def segmentinfo(encoder,idlabels,out_dir):
 
@@ -70,8 +71,6 @@ def segmentinfo(encoder,idlabels,out_dir):
     writer.close()
 
     return op
-
-
 
 def squeeze_generic(a, axes_to_keep):
     " Reduces the number of dimensions of an array to the number specified"
@@ -159,25 +158,37 @@ def _avg2(image):
         avg_img - numpy array with only two dimensions (round(m/2),round(n/2))
     """
     
-    image = image.astype('uint16')
+    # The data fed into this is the same as the native file format.
+    # We need to make sure the type will not cause overflow - NJS
+    if image.dtype == np.uint8:
+        dtype = np.uint16
+    if image.dtype == np.uint16:
+        dtype = np.uint32
+    if image.dtype == np.uint32:
+        dtype = np.uint64
+    else:
+        dtype = image.dtype
+        
+    odtype = image.dtype
+    image = image.astype(dtype,casting='safe')
     imgshape = image.shape
     ypos = imgshape[0]
     xpos = imgshape[1]
-    zpos = imgshape[2]
-    z_max = zpos - zpos % 2    # if even then subtracting 0. 
+    # zpos = imgshape[2]
+    # z_max = zpos - zpos % 2    # if even then subtracting 0. 
     y_max = ypos - ypos % 2 # if odd then subtracting 1
     x_max = xpos - xpos % 2
 
-    avg_imgshape = [d/2 for d in imgshape]
-    avg_img = np.zeros(np.ceil(avg_imgshape).astype('int')).astype('uint16')
+    avg_imgshape = np.ceil([d/2 for d in imgshape]).astype(int)
+    avg_img = np.zeros(avg_imgshape,dtype=dtype)
     avg_img[0:int(y_max/2),0:int(x_max/2),:]= (\
                                                 image[0:y_max-1:2,0:x_max-1:2,:] + \
                                                 image[1:y_max:2  ,0:x_max-1:2,:] + \
                                                 image[0:y_max-1:2,1:x_max:2  ,:] + \
-                                                image[1:y_max:2  ,1:x_max:2  ,:])/4
+                                                image[1:y_max:2  ,1:x_max:2  ,:])//4
 
 
-    return avg_img
+    return avg_img.astype(odtype,casting='safe')
 
 def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,imageType, X=None,Y=None,slices=None):
     """ Recursive function for pyramid building
@@ -245,50 +256,52 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,imageType, X=Non
     # If requesting from the lowest scale, then just read the image
     if str(S)==encoder.info['scales'][0]['key']:
         if slices == None:
-            image = bfio_reader.read_image(X=X,Y=Y,Z=Z)
-            image = squeeze_generic(image, axes_to_keep=(0, 1, 2))
+            image = bfio_reader.read_image(X=X,Y=Y,Z=Z)[...,0,0] # This forces 3-dimensional squeeze - NJS
+            # image = squeeze_generic(image, axes_to_keep=(0, 1, 2))
         else:
-            image = bfio_reader.read_image(X=X,Y=Y,Z=slices)
-            image = squeeze_generic(image, axes_to_keep=(0, 1, 2))
+            image = bfio_reader.read_image(X=X,Y=Y,Z=slices)[...,0,0] # This forces 3-dimensional squeeze - NJS
+            # image = squeeze_generic(image, axes_to_keep=(0, 1, 2))
     else:
         # Set the subgrid dimensions
         subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]],[0,1]]
         for dim in subgrid_dims:
             while dim[1]-dim[0] > CHUNK_SIZE:
                 dim.insert(1,dim[0] + ((dim[1] - dim[0]-1)//CHUNK_SIZE) * CHUNK_SIZE)
+                
+        def load_and_scale(*args,**kwargs):
+            sub_image = _get_higher_res(**kwargs)
+            image = args[0]
+            x_ind = args[1]
+            y_ind = args[2]
+            imageType = args[3]
+            if imageType == "image":
+                image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],0:1] = _avg2(sub_image)
+            else:
+                image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],0:1] = _mode2(sub_image, datatype)
         
-        for y in range(0,len(subgrid_dims[1])-1):
-            y_ind = [subgrid_dims[1][y] - subgrid_dims[1][0],subgrid_dims[1][y+1] - subgrid_dims[1][0]]
-            y_ind = [np.ceil(yi/2).astype('int') for yi in y_ind]
-            for x in range(0,len(subgrid_dims[0])-1):
-                x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
-                x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
-                sub_image = _get_higher_res(X=subgrid_dims[0][x:x+2],
-                                            Y=subgrid_dims[1][y:y+2],
-                                            S=S+1,
-                                            zlevel=zlevel,
-                                            imageType=imageType,
-                                            bfio_reader=bfio_reader,
-                                            slide_writer=slide_writer,
-                                            encoder=encoder,
-                                            slices=slices)
-                # start_time = time.time()
-                if imageType == "image":
-                    image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],0:1] = _avg2(sub_image)
-                # end_avgtime = time.time()
-                else:
-                    image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],0:1] = _mode2(sub_image, datatype)
-                # end_modetime = time.time()
-                # print("THE TIME IT TAKES TO DO AVERAGING", end_avgtime-start_time)
-                # print("THE TIME IT TAKES TO DO MODE FUNCTION", end_modetime-end_avgtime)
-                # print("THE MODE FUNCTION IS ", (end_modetime-end_avgtime)/(end_avgtime-start_time), "SLOWER")
-
+        with ThreadPoolExecutor() as executor:
+            for y in range(0,len(subgrid_dims[1])-1):
+                y_ind = [subgrid_dims[1][y] - subgrid_dims[1][0],subgrid_dims[1][y+1] - subgrid_dims[1][0]]
+                y_ind = [np.ceil(yi/2).astype('int') for yi in y_ind]
+                for x in range(0,len(subgrid_dims[0])-1):
+                    x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
+                    x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
+                    executor.submit(load_and_scale,
+                                    image,x_ind,y_ind,imageType, # args
+                                    X=subgrid_dims[0][x:x+2],    # kwargs
+                                    Y=subgrid_dims[1][y:y+2],
+                                    S=S+1,
+                                    zlevel=zlevel,
+                                    imageType=imageType,
+                                    bfio_reader=bfio_reader,
+                                    slide_writer=slide_writer,
+                                    encoder=encoder,
+                                    slices=slices)
 
     # Encode the chunk
     image_encoded = encoder.encode(image)
     # Write the chunk
     slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],zlevel,zlevel + 1))
-    print(" ")
     return image
 
 # Modified and condensed from FileAccessor class in neuroglancer-scripts
