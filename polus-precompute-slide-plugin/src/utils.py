@@ -20,23 +20,10 @@ UNITS = {'m':  10**9,
 # Chunk Scale
 CHUNK_SIZE = 1024
 
-# This method doesn't appear to do anything - NJS
-# def findRepeating(arr, n): 
-  
-#     missingElement = 0
-  
-#     # indexing based 
-#     for i in range(0, n): 
-  
-#         element = arr[abs(arr[i])] 
-  
-#         if(element < 0): 
-#             missingElement = arr[i] 
-#             break
-          
-#         arr[abs(arr[i])] = -arr[abs(arr[i])] 
-      
-#     return abs(missingElement) 
+def image_generator(image):
+    mesh = image.ravel()
+    ids = [int(i) for i in np.unique(mesh[:])]
+    return ids
 
 def segmentinfo(encoder,idlabels,out_dir):
 
@@ -106,10 +93,6 @@ def _mode2(image, dtype):
 
     imgshape = image.shape
     ypos, xpos, zpos = imgshape
-
-    # y_max = ypos - (ypos % 2)
-    # x_max = xpos - (xpos % 2)
-    # z_max = zpos - (zpos % 2)
 
     y_edge = ypos % 2
     x_edge = xpos % 2
@@ -190,7 +173,7 @@ def _avg2(image):
 
     return avg_img.astype(odtype,casting='safe')
 
-def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,imageType, X=None,Y=None,slices=None):
+def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,imageType,ids, X=None,Y=None,slices=None):
     """ Recursive function for pyramid building
     
     This is a recursive function that builds an image pyramid by indicating
@@ -250,17 +233,31 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,imageType, X=Non
         Y[1] = scale_info['size'][1]
 
     datatype = bfio_reader.read_metadata().image().Pixels.get_PixelType()
+
     # Initialize the output
     image = np.zeros((Y[1]-Y[0],X[1]-X[0],1),dtype=datatype)
     
-    # If requesting from the lowest scale, then just read the image
     if str(S)==encoder.info['scales'][0]['key']:
         if slices == None:
-            image = bfio_reader.read_image(X=X,Y=Y,Z=Z)[...,0,0] # This forces 3-dimensional squeeze - NJS
-            # image = squeeze_generic(image, axes_to_keep=(0, 1, 2))
+            image = bfio_reader.read_image(X=X,Y=Y,Z=Z)[...,0,0] 
         else:
-            image = bfio_reader.read_image(X=X,Y=Y,Z=slices)[...,0,0] # This forces 3-dimensional squeeze - NJS
-            # image = squeeze_generic(image, axes_to_keep=(0, 1, 2))
+            image = bfio_reader.read_image(X=X,Y=Y,Z=slices)[...,0,0] 
+            if imageType == "segmentation":
+                compareto = image_generator(image)
+                if len(ids) == 0:
+                    ids.extend(compareto)
+                else:
+                    difference = set(compareto) - set(ids)
+                    ids.extend(difference)
+                    ids.sort()
+
+        # Encode the chunk
+        image_encoded = encoder.encode(image)
+        # Write the chunk
+        slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],zlevel,zlevel + 1))
+        # print("IN GET HIGHER RES", zlevel, ids)
+        return image
+
     else:
         # Set the subgrid dimensions
         subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]],[0,1]]
@@ -296,13 +293,15 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,imageType, X=Non
                                     bfio_reader=bfio_reader,
                                     slide_writer=slide_writer,
                                     encoder=encoder,
-                                    slices=slices)
+                                    slices=slices,
+                                    ids=ids)
 
-    # Encode the chunk
     image_encoded = encoder.encode(image)
-    # Write the chunk
+        # Write the chunk
     slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],zlevel,zlevel + 1))
+
     return image
+    
 
 # Modified and condensed from FileAccessor class in neuroglancer-scripts
 # https://github.com/HumanBrainProject/neuroglancer-scripts/blob/master/src/neuroglancer_scripts/file_accessor.py

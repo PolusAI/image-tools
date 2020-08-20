@@ -1,11 +1,10 @@
 import logging, argparse
-# import bioformats - NJS
-# import javabridge as jutil - NJS
 from bfio.bfio import BioReader, BioWriter
 from pathlib import Path
 import utils
 import numpy as np
 from multiprocessing import cpu_count
+
 
 if __name__=="__main__":
     # Setup the Argument parsing
@@ -32,9 +31,6 @@ if __name__=="__main__":
     image_num = args.image_num
     imagetype = args.image_type
 
-    # Try/Catch/Finally not needed with bfio Python backend
-    # try:
-    # Initialize the logger    
     logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(image),
                         datefmt='%d-%b-%y %H:%M:%S')
     logger = logging.getLogger(image_num)
@@ -42,12 +38,6 @@ if __name__=="__main__":
 
     logger.info("Starting to build Z Slices...")
     
-    # Initialize the javabridge
-    # Removed because new Python backend doesn't require it - NJS
-    # logger.info('Initializing the javabridge...')
-    # log_config = Path(__file__).parent.joinpath("log4j.properties")
-    # jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
-
     # Make the output directory
     image = Path(input_dir).joinpath(image)
     if pyramid_type == "Neuroglancer":
@@ -59,20 +49,8 @@ if __name__=="__main__":
     
     # Create the BioReader object
     logger.info('Getting the BioReader...')
-    
-    # Since this code block is already surround by try/catch, this is redundant - NJS
-    # try:
-    #     bf = BioReader(str(image.absolute()))
-    # except:
-    #     jutil.kill_vm()
-    #     exit
+
     bf = BioReader(str(image.absolute()),max_workers=max([cpu_count()-1,2])) # NJS
-    
-    # This is not scalable, since it requires loading an entire image - NJS
-    # imageread = bf.read_image()
-    # height = imageread.shape[2]
-    
-    # This is an efficient method to getting an image dimension
     depth = bf.num_z() # NJS
 
     # Images have height (rows), width (columns), and depth (z-slices) - NJS
@@ -90,36 +68,21 @@ if __name__=="__main__":
     logger.info("number of scales: {}".format(len(file_info['scales'])))
     logger.info("type: {}".format(file_info['type']))
     
-    # Create the classes needed to generate a precomputed slice
     logger.info("Creating encoder and file writer...")
     if pyramid_type == "Neuroglancer":
         encoder = utils.NeuroglancerChunkEncoder(file_info)
         file_writer = utils.NeuroglancerWriter(out_dir)
-        if imagetype == "segmentation":
-            # This should be replaced with something more scalable
-            imageread = bf.read_image()
-            mesh = np.transpose(imageread, (0,2,1,3,4))
-            ids = [int(i) for i in np.unique(mesh[:])]
-            out_seginfo = utils.segmentinfo(encoder,ids,out_dir)
     elif pyramid_type == "DeepZoom":
         encoder = utils.DeepZoomChunkEncoder(file_info)
         file_writer = utils.DeepZoomWriter(out_dir)
 
+    ids = []
     # Go through all the slices in the stack
     for i in range(0, depth):
-        utils._get_higher_res(0, i, bf,file_writer,encoder, imageType = imagetype, slices=[i,i+1])
-        logger.info("Finished Level {}/{} in stack process".format(i, depth))
-    
+        utils._get_higher_res(0, i, bf,file_writer,encoder, imageType = imagetype, ids=ids, slices=[i,i+1])
+        logger.info("Finished Level {}/{} in stack process".format(i+1, depth))
     logger.info("Finished precomputing.")
-        
-        # This should be removed, since the finally block will cause this to close - NJS
-        # jutil.kill_vm()
-        
-    # This block isn't necessary if the finally block exists, unless you want to catch a specific exception - NJS
-    # except Exception as e:
-    #     jutil.kill_vm()
-    #     raise
-    
-    # This will always get executed regardless of what happens above - NJS
-    # finally:
-    #     jutil.kill_vm()
+
+    if imagetype == "segmentation":
+        out_seginfo = utils.segmentinfo(encoder,ids,out_dir)
+        logger.info("Finished Segmentation Information File")
