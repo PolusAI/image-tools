@@ -1,6 +1,4 @@
-from bfio import BioReader, BioWriter,JARS
-import bioformats
-import javabridge as jutil
+from bfio.bfio import BioReader, BioWriter
 import argparse, logging, subprocess, time, multiprocessing
 import numpy as np
 from pathlib import Path
@@ -8,6 +6,9 @@ import tifffile
 import cv2
 import ast
 from scipy import ndimage
+from multiprocessing import cpu_count
+
+Tile_Size = 1024
 
 
 def invert_binary(image, kernel=None, intk=None, n=None):
@@ -94,6 +95,10 @@ def areafiltering_binary(image,kernel=None, intk=None, n=None):
     af = cv2.morphologyEx(image,cv2.MORPH_OPEN,kernel)
     af[af == 1] = 255
     return af
+
+def imagetiling(br, xval, yval):
+    image = br.read_image(X=xval, Y=yval)
+    return image
 
 if __name__=="__main__":
     # Initialize the logger
@@ -236,7 +241,7 @@ if __name__=="__main__":
     # Start the javabridge with proper java logging
     logger.info('Initializing the javabridge...')
     log_config = Path(__file__).parent.joinpath("log4j.properties")
-    jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
+    # jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
     # Get all file names in inpDir image collection
     inpDir_files = [f.name for f in Path(inpDir).iterdir()]
     logger.info("Files in input directory: {}".format(inpDir_files))
@@ -244,75 +249,147 @@ if __name__=="__main__":
       
     # Loop through files in inpDir image collection and process
     
-    try:
-        imagenum = 0
-        for f in inpDir_files:
-            # Load an image
-            br = BioReader(str(Path(inpDir).joinpath(f)))
-            br_y, br_x, br_z = br.num_y(), br.num_x(), br.num_z()
-            # image = np.squeeze(br.read_image())
-            # global image
-            image = np.squeeze(br.read_image())
-            # image = image.astype('uint8')
-            ok_image = np.reshape(image, (1024, 1024, 1, 1, 1)).astype('uint8')
+    
 
-            datatype = image.dtype
-            logger.info("Datatype: {}".format(datatype))
-            
-            logger.info("Shape of Image: {}".format(image.shape))
-            kernel = np.ones((intkernel,intkernel), datatype)
 
-            logger.info(image)
 
-            newfile = Path(outDir).joinpath('image' + str(imagenum) + '_op1.ome.tif')
-            bw = BioWriter(file_path=str(newfile), image=ok_image) # metadata=br.read_metadata())
-            bw.write_image(np.reshape(image, (br_y, br_x, br_z, 1, 1)))
-            logger.info("orginal: {}".format(newfile.name))
-            bw.close_image()
+    imagenum = 0
+    for f in inpDir_files:
+        # Load an image
+        
+        image = Path(inpDir).joinpath(f)
 
-            image = image.squeeze()
-            global out_image
-            out_image = np.zeros(image.shape, datatype)
+        br = BioReader(image.absolute(),max_workers=max([cpu_count()-1,2]))
+        br_y, br_x, br_z = br.num_y(), br.num_x(), br.num_z()
+        datatype = br.pixel_type()
+        kernel = np.ones((intkernel,intkernel), datatype)
 
-            brcheck = BioReader(str(newfile))
-            brcheck = brcheck.read_metadata()
+        newfile = Path(outDir).joinpath(f)
+        bw = BioWriter(file_path=str(newfile), image=image)
 
-            # logger.info(dict_intk)
+        x = Tile_Size
+        xsub = 0
+        
+        while (xsub + x) <= br_x:
+            writex = [xsub, xsub+x]
+            lowerx = xsub - intkernel
+            upperx = xsub+x+intkernel
+            if lowerx < 0:
+                lowerx = 0
+            if upperx > br_x:
+                upperx = br_x
+            xvals = [lowerx, upperx]
+            xsub = xsub + x
+            y = Tile_Size
+            ysub = 0
+            while (ysub + y) <= br_y:
+                writey = [ysub, ysub+y]
+                lowery = ysub - intkernel
+                uppery = ysub+y+intkernel
+                if lowery < 0:
+                    lowery = 0
+                if uppery > br_y:
+                    uppery = br_y
+                yvals = [lowery, uppery]
+                ysub = ysub + y
 
-            i = 1
-            # for op in operations:
-            function = dispatch[operations]
-            if callable(function):
-                # if dict_intk[op] == None:
-                image = function(image, kernel=kernel, intk=intkernel, n=dict_n_args[operations])
-                newfile = Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff')
-                logger.info("{}: {}, {}".format(operations, newfile.name, type(image[0][0])))
-                bw = BioWriter(str(newfile), metadata=br.read_metadata())
-                bw.write_image(np.reshape(image, (br_y, br_x, br_z, 1, 1)))
-                    # else:
-                    #     if op == 'filter_area' or 'fill_holes':
-                    #         image = function(image, kernel=kernel, intk=dict_intk[op], n=dict_n_args[op])
-                    #         newfile = Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff')
-                    #         logger.info("{}: {}, {}".format(op, newfile.name, type(image[0][0])))
-                    #         bw = BioWriter(str(newfile), metadata=br.read_metadata())
-                    #         bw.write_image(np.reshape(image, (br_y, br_x, br_z, 1, 1)))
-                    #     else:
-                    #         new_intk = dict_intk[op]
-                    #         kernel = np.ones((new_intk,new_intk), datatype)
-                    #         image = function(image, kernel=kernel, intk=new_intk, n=dict_n_args[op])
-                    #         newfile = Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff')
-                    #         logger.info("{}: {}, {}".format(op, newfile.name, type(image[0][0])))
-                    #         bw = BioWriter(str(newfile), metadata=br.read_metadata())
-                    #         bw.write_image(np.reshape(image, (br_y, br_x, br_z, 1, 1)))
-            else:
-                raise ValueError("Function is not callable")
-            i = i + 1
-            # imagenum = imagenum + 1
+                logger.info("Reading {},{} --> Writing {},{}".format(xvals, yvals, writex, writey))
+                
+                image = imagetiling(br,xvals,yvals)
+                # logger.info("Image Shape {}".format(image.shape))
+                logger.info("Recording {}, {}".format(np.subtract(writex,xvals), np.subtract(writey,yvals)))
+
+                difx = np.subtract(writex, xvals)
+                dify = np.subtract(writey, yvals)
+
+                # if dify[1] == 0:
+                #     dify[1] = -1
+                # if difx[1] == 0:
+                #     difx[1] = -1
+                
+                # if difx[0] == 3:
+                #     difx[0] = 2
+                # if dify[0] == 3:
+                #     dify[0] = 2
+
+                sqimage = np.squeeze(image)
+
+                function = dispatch[operations]
+                if callable(function):
+                    transformed_image = function(sqimage, kernel=kernel, intk=intkernel, n=dict_n_args[operations])
+                logger.info("{}:{}, {}:{}".format(dify[0], dify[1], difx[0], difx[1]))
+                logger.info("before transformed image shape {}".format(transformed_image.shape))
+
+                # Edge cases 
+                if dify[1] == 0 and difx[1] != 0:
+                    trans_image = transformed_image[dify[0]:, difx[0]:difx[1]]
+                elif difx[1] == 0 and dify[1] != 0:
+                    trans_image = transformed_image[dify[0]:dify[1], difx[0]:]
+                elif difx[1] == 0 and dify[1] == 0:
+                    trans_image = transformed_image[dify[0]:, difx[0]:]
+                else:
+                    trans_image = transformed_image[dify[0]:dify[1], difx[0]:difx[1]]
+
+                logger.info("after transformed image shape {}".format(trans_image.shape))
+                logger.info("Writing at {},{}".format(writey[0], writex[0]))
+                logger.info(" ")
+                reshaped_image = np.reshape(trans_image, (writey[1]-writey[0], writex[1]-writex[0], 1, 1, 1)).astype('uint8')
+                
+                bw.write_image(image=reshaped_image, Y=[writey[0]], X=[writex[0]])
+
+
+        
+
+
+        # logger.info("SHAPE OF Y X Z: {}, {}, {}".format(br_y, br_x, br_z))
+        # image = np.squeeze(br.read_image())
+        # global image
+
+        
+        
+        # image = np.squeeze(br.read_image(X=256, Y=256,Z=1, C=1, T=1))
+        # while xsize+intkernel <= br_x:
+        #     xsub = xsub + xsize+intkernel
+        # image = br.read_image(X=[0,259], Y=[0,259])
+        
+        # image = image.astype('uint8')
+        # ok_image = np.reshape(image, (1024, 1024, 1, 1, 1)).astype('uint8')
+
+        
+
+        # logger.info(image)
+
+        
+        
+        # logger.info("orginal: {}".format(newfile.name))
+        # # bw.close_image()
+
+        # image = image.squeeze()
+        # global out_image
+        # out_image = np.zeros(image.shape, datatype)
+
+        # brcheck = BioReader(str(newfile))
+        # brcheck = brcheck.read_metadata()
+
+        # logger.info(dict_intk)
+
+        # i = 1
+        # # for op in operations:
+        # function = dispatch[operations]
+        # if callable(function):
+        #     image = function(image, kernel=kernel, intk=intkernel, n=dict_n_args[operations])
+        #     # newfile = Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff')
+        #     logger.info("{}: {}, {}".format(operations, newfile.name, type(image[0][0])))
+        #     bw = BioWriter(str(newfile), metadata=br.read_metadata())
+        #     bw.write_image(np.reshape(image, (br_y, br_x, br_z, 1, 1)))
+        
+        # else:
+        #     raise ValueError("Function is not callable")
+        # i = i + 1
+
+    # finally:
+    #     logger.info("DONE")
+    #     # logger.info(e)
         # logger.info('Closing the javabridge...')
         # jutil.kill_vm()
-
-    finally:
-        # logger.info(e)
-        logger.info('Closing the javabridge...')
-        jutil.kill_vm()
            
