@@ -1,4 +1,6 @@
-from bfio.bfio import BioReader, BioWriter
+from bfio import BioReader, BioWriter,JARS
+import javabridge as jutil
+import bioformats
 import argparse, logging, subprocess, time, multiprocessing
 import numpy as np
 from pathlib import Path
@@ -8,8 +10,7 @@ import ast
 from scipy import ndimage
 from multiprocessing import cpu_count
 
-Tile_Size = 1024
-
+Tile_Size = 256
 
 def invert_binary(image, kernel=None, intk=None, n=None):
     invertedimg = np.zeros(image.shape,dtype=datatype)
@@ -128,35 +129,17 @@ if __name__=="__main__":
     parser.add_argument('--HOMarray', dest='hit_or_miss', type=str,
                         help='Whats the array that you are trying to find', required=False)
     
-    # parser.add_argument('--openkernelsize', dest='open_kernel', type=int,
-    #                     help='Specify kernel size for opening if different than variable, kernelsize', required=False)
-    # parser.add_argument('--closekernelsize', dest='close_kernel', type=int,
-    #                     help='Specify kernel size for closing if different than variable, kernelsize', required=False)
-    # parser.add_argument('--morphkernelsize', dest='morph_kernel', type=int,
-    #                     help='Specify kernel size for morphological gradient if different than variable, kernelsize', required=False)
-    # parser.add_argument('--dilatekernelsize', dest='dilate_kernel', type=int,
-    #                     help='Specify kernel size for dilation if different than variable, kernelsize', required=False)
-    # parser.add_argument('--erodekernelsize', dest='erode_kernel', type=int,
-    #                     help='Specify kernel size for erosion if different than variable, kernelsize', required=False)
-    # parser.add_argument('--skeletonkernelsize', dest='skeleton_kernel', type=int,
-    #                     help='Specify kernel size for skeletonization if different than variable, kernelsize', required=False)
-    # parser.add_argument('--areafilteringkernelsize', dest='areafilter_kernel', type=int,
-    #                     help='Specify kernel size for area filtering if different than variable, kernelsize', required=False)
-    # parser.add_argument('--tophatkernelsize', dest='tophat_kernel', type=int,
-    #                     help='Specify kernel size for tophat if different than variable, kernelsize', required=False)
-    # parser.add_argument('--blackhatkernelsize', dest='blackhat_kernel', type=int,
-    #                     help='Specify kernel size for blackhat if different than variable, kernelsize', required=False)
-    # Parse the arguments
     args = parser.parse_args()
     # filePattern = args.filePattern
     # logger.info('filePattern = {}'.format(filePattern))
+
     inpDir = args.inpDir
     logger.info('inpDir = {}'.format(inpDir))
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
     operations = args.operations
-    # operations = operations.split(',')
     logger.info('Operations = {}'.format(operations))
+
     dilateby = args.dilate_by
     erodeby = args.erode_by
     hitormiss = args.hit_or_miss
@@ -223,122 +206,256 @@ if __name__=="__main__":
         'black_hat': None
     }
     
-    # dict_intk = {
-    #     'dilation': dilatekernel,
-    #     'erosion': erodekernel,
-    #     'hit_or_miss': None,
-    #     'invertion': None,
-    #     'opening': openkernel,
-    #     'closing': closekernel,
-    #     'morphological_gradient': morphkernel,
-    #     'skeleton': skeletonkernel,
-    #     'fill_holes': None,
-    #     'filter_area': areafilterkernel,
-    #     'top_hat': tophatkernel,
-    #     'black_hat': blackhatkernel
-    # }
 
     # Start the javabridge with proper java logging
     logger.info('Initializing the javabridge...')
     log_config = Path(__file__).parent.joinpath("log4j.properties")
-    # jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
+    jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
     # Get all file names in inpDir image collection
     inpDir_files = [f.name for f in Path(inpDir).iterdir()]
     logger.info("Files in input directory: {}".format(inpDir_files))
 
       
     # Loop through files in inpDir image collection and process
-    
-    
+    try:
+        imagenum = 0
+        for f in inpDir_files:
+            # Load an image
+            
+            image = Path(inpDir).joinpath(f)
 
+            br = BioReader(str(image.absolute()))
+            # br = BioReader(image.absolute(),max_workers=max([cpu_count()-1,2]))
 
+            br_y, br_x, br_z = br.num_y(), br.num_x(), br.num_z()
+            datatype = br.pixel_type()
+            kernel = np.ones((intkernel,intkernel), datatype)
 
-    imagenum = 0
-    for f in inpDir_files:
-        # Load an image
-        
-        image = Path(inpDir).joinpath(f)
+            newfile = Path(outDir).joinpath(f)
+            bw = BioWriter(file_path=str(newfile), metadata=br.read_metadata())
 
-        br = BioReader(image.absolute(),max_workers=max([cpu_count()-1,2]))
-        br_y, br_x, br_z = br.num_y(), br.num_x(), br.num_z()
-        datatype = br.pixel_type()
-        kernel = np.ones((intkernel,intkernel), datatype)
+            strides = Tile_Size - (2*intkernel)
+            # batch_size = br.maximum_batch_size(tile_stride=[strides, strides],tile_size=[Tile_Size,Tile_Size])
+            # batch_size = br.maximum_batch_size(tile_size=[Tile_Size + 2*(intkernel),Tile_Size + 2*(intkernel)],tile_stride=[Tile_Size,Tile_Size])
+            readerator = br.iterate(tile_stride=[Tile_Size, Tile_Size],tile_size=[Tile_Size + (2*intkernel), Tile_Size + (2*intkernel)], batch_size=1)
+            writerator = bw.writerate(tile_size=[Tile_Size, Tile_Size], tile_stride=[Tile_Size, Tile_Size], batch_size=1)
+            next(writerator)
 
-        newfile = Path(outDir).joinpath(f)
-        bw = BioWriter(file_path=str(newfile), image=image)
-
-        x = Tile_Size
-        xsub = 0
-        
-        while (xsub + x) <= br_x:
-            writex = [xsub, xsub+x]
-            lowerx = xsub - intkernel
-            upperx = xsub+x+intkernel
-            if lowerx < 0:
-                lowerx = 0
-            if upperx > br_x:
-                upperx = br_x
-            xvals = [lowerx, upperx]
-            xsub = xsub + x
-            y = Tile_Size
-            ysub = 0
-            while (ysub + y) <= br_y:
-                writey = [ysub, ysub+y]
-                lowery = ysub - intkernel
-                uppery = ysub+y+intkernel
-                if lowery < 0:
-                    lowery = 0
-                if uppery > br_y:
-                    uppery = br_y
-                yvals = [lowery, uppery]
-                ysub = ysub + y
-
-                logger.info("Reading {},{} --> Writing {},{}".format(xvals, yvals, writex, writey))
-                
-                image = imagetiling(br,xvals,yvals)
-                # logger.info("Image Shape {}".format(image.shape))
-                logger.info("Recording {}, {}".format(np.subtract(writex,xvals), np.subtract(writey,yvals)))
-
-                difx = np.subtract(writex, xvals)
-                dify = np.subtract(writey, yvals)
-
-                # if dify[1] == 0:
-                #     dify[1] = -1
-                # if difx[1] == 0:
-                #     difx[1] = -1
-                
-                # if difx[0] == 3:
-                #     difx[0] = 2
-                # if dify[0] == 3:
-                #     dify[0] = 2
-
-                sqimage = np.squeeze(image)
+            for images,indices in readerator:
+                if indices[0][0][0] == br_x - intkernel:
+                    continue
+                if indices[1][0][0] == br_y - intkernel:
+                    continue
+                logger.info(indices)
+                # images = images[0,5:-5,5:-5,0]
+                images = images[0, :, :, 0]
 
                 function = dispatch[operations]
                 if callable(function):
-                    transformed_image = function(sqimage, kernel=kernel, intk=intkernel, n=dict_n_args[operations])
-                logger.info("{}:{}, {}:{}".format(dify[0], dify[1], difx[0], difx[1]))
-                logger.info("before transformed image shape {}".format(transformed_image.shape))
+                    trans_image = function(images, kernel=kernel, intk=intkernel, n=dict_n_args[operations])
+                reshape_img = np.reshape(trans_image[intkernel:-intkernel,intkernel:-intkernel], (1, Tile_Size, Tile_Size, 1))
+                writerator.send(reshape_img)
+            bw.close_image()
 
-                # Edge cases 
-                if dify[1] == 0 and difx[1] != 0:
-                    trans_image = transformed_image[dify[0]:, difx[0]:difx[1]]
-                elif difx[1] == 0 and dify[1] != 0:
-                    trans_image = transformed_image[dify[0]:dify[1], difx[0]:]
-                elif difx[1] == 0 and dify[1] == 0:
-                    trans_image = transformed_image[dify[0]:, difx[0]:]
-                else:
-                    trans_image = transformed_image[dify[0]:dify[1], difx[0]:difx[1]]
+            # def left_trim(im):
+            #     im = im[:-intkernel,intkernel:-intkernel]
+            #     return im
 
-                logger.info("after transformed image shape {}".format(trans_image.shape))
-                logger.info("Writing at {},{}".format(writey[0], writex[0]))
-                logger.info(" ")
-                reshaped_image = np.reshape(trans_image, (writey[1]-writey[0], writex[1]-writex[0], 1, 1, 1)).astype('uint8')
+            # def right_trim(im):
+            #     im = im[intkernel:,intkernel:-intkernel]
+            #     return im
+
+            # def up_trim(im):
+            #     im = im[intkernel:-intkernel,:-intkernel]
+            #     return im
+
+            # def down_trim(im):
+            #     im = im[intkernel:-intkernel, intkernel:]
+            #     return im
+
+            # for images,indices in readerator:
+            #     images = images[0, :, :, 0]
+            #     # logger.info("editing {}".format(indices[1][0][0]))
+            #     if indices[0][0][0] == br_x - intkernel:
+            #         continue
+            #     if indices[1][0][0] == br_y - intkernel:
+            #         continue
+
+            #     # logger.info("before: {}, {} -- {} ".format(indices[0], indices[1], images.shape))
+            #     x1, x2, y1, y2 = [0, 0, 0, 0]
+            #     edges = []
+            #     if indices[0][0][0] < 0:
+            #         start = abs(indices[0][0][0])
+            #         indices[0][0][0] = 0
+            #         images = images[start:,:]
+            #         edges.append("left")
+            #         x1 = start
+            #     if indices[1][0][0] < 0:
+            #         start = abs(indices[1][0][0])
+            #         indices[1][0][0] = 0
+            #         images = images[:,start:]
+            #         edges.append("up")
+            #         y1 = start
+
+            #     if indices[0][0][1] > 1024:
+            #         end = 1024 - indices[0][0][1]
+            #         indices[0][0][1] = 1024
+            #         images = images[:end, :]
+            #         edges.append("right")
+            #         x2 = end
+            #     if indices[1][0][1] > 1024:
+            #         end = 1024 - indices[1][0][1]
+            #         indices[1][0][1] = 1024
+            #         images = images[:, :end]
+            #         edges.append("down")
+            #         y2 = end
                 
-                bw.write_image(image=reshaped_image, Y=[writey[0]], X=[writex[0]])
+            #     logger.info("indices: {}, {} -- {}".format(indices[0], indices[1], images.shape))
+            #     logger.info("Edge? {}".format(edges))
+            #     newindex = [(indices[0][0][0], indices[0][0][1]), (indices[1][0][0], indices[1][0][1])]
+            #     logger.info(newindex)
+            #     function = dispatch[operations]
+            #     if callable(function):
+            #         trans_image = function(images, kernel=kernel, intk=intkernel, n=dict_n_args[operations])
+                
+            #     if len(edges) == 2:
+            #         # upper left
+            #         if newindex[0][0] == 0 and newindex[1][0] == 0:
+            #             trans_image = trans_image[:-intkernel, :-intkernel]
+            #         # lower left
+            #         if newindex[0][0] == 0 and newindex[1][1] == 1024:
+            #             trans_image = trans_image[:-intkernel, intkernel:]
+            #         # upper right
+            #         if newindex[0][1] == 1024 and newindex[1][0] == 0:
+            #             trans_image = trans_image[intkernel:, :-intkernel]
+            #         # lower right
+            #         if newindex[0][1] == 1024 and newindex[1][1] == 1024:
+            #             trans_image = trans_image[intkernel:, intkernel:]
+            #         # else:
+            #         #     raise ValueError("Not a corner")
+            #     elif len(edges) == 1:
+            #         if edges[0] == "left":
+            #             trans_image = left_trim(trans_image)
+            #         elif edges[0] == "right":
+            #             trans_image = right_trim(trans_image)
+            #         elif edges[0] == "up":
+            #             trans_image = up_trim(trans_image)
+            #         elif edges[0] == "down":
+            #             trans_image = down_trim(trans_image)
+            #         else:
+            #             raise ValueError("Not an edge")
+            #     else:
+            #         trans_image = trans_image[intkernel:-intkernel, intkernel:-intkernel]
+            #     logger.info(trans_image.shape)
 
+            #     # for item in edges:
+            #     #     if item == "left":
+            #     #         shrink = left_trim(trans_image)
+            #     #     elif item == "right":
+            #     #         shrink = right_trim(trans_image)
+            #     #     elif item == "up":
+            #     #         shrink = up_trim(trans_image)
+            #     #     elif item == "down":
+            #     #         shrink = down_trim(trans_image)
+            #     #     else:
+            #     #         logger.info("NOT AN EDGE")
 
-        
+            #     # trans_image = trans_image[0:256, 0:256]
+            #     # logger.info("reshaped images {} ".format(trans_image.shape))
+            #     reshaped_image = np.reshape(trans_image, (1,256, 256, 1)).astype('uint16')
+            #     writerator.send(reshaped_image)
+            #     # logger.info("difference {}, {}".format(X_afterindex - X_beforeindex, Y_afterindex-Y_beforeindex))
+            #     logger.info("")
+            # bw.close_image()
+                # writerator.send(images)
+
+            # x = Tile_Size
+            # xsub = 0
+            
+            # while (xsub + x) <= br_x:
+            #     writex = [xsub, xsub+x]
+            #     lowerx = xsub - intkernel
+            #     upperx = xsub+x+intkernel
+            #     if lowerx < 0:
+            #         lowerx = 0
+            #     if upperx > br_x:
+            #         upperx = br_x
+            #     xvals = [lowerx, upperx]
+            #     xsub = xsub + x
+            #     y = Tile_Size
+            #     ysub = 0
+            #     while (ysub + y) <= br_y:
+            #         writey = [ysub, ysub+y]
+            #         lowery = ysub - intkernel
+            #         uppery = ysub+y+intkernel
+            #         if lowery < 0:
+            #             lowery = 0
+            #         if uppery > br_y:
+            #             uppery = br_y
+            #         yvals = [lowery, uppery]
+            #         ysub = ysub + y
+
+            #         logger.info("Reading {},{} --> Writing {},{}".format(xvals, yvals, writex, writey))
+
+            #         image = br.read_image(X=xvals, Y=yvals)
+            #         # image = imagetiling(br,xvals,yvals)
+            #         # logger.info("Image Shape {}".format(image.shape))
+            #         logger.info("Recording {}, {}".format(np.subtract(writex,xvals), np.subtract(writey,yvals)))
+
+            #         difx = np.subtract(writex, xvals)
+            #         dify = np.subtract(writey, yvals)
+
+            #         sqimage = np.squeeze(image)
+
+            #         function = dispatch[operations]
+
+            #         if callable(function):
+            #             transformed_image = function(sqimage, kernel=kernel, intk=intkernel, n=dict_n_args[operations])
+            #         logger.info("{}:{}, {}:{}".format(dify[0], dify[1], difx[0], difx[1]))
+            #         logger.info("before transformed image shape {}".format(transformed_image.shape))
+
+            #         # Edge cases 
+            #         if dify[1] == 0 and difx[1] != 0:
+            #             trans_image = transformed_image[dify[0]:, difx[0]:difx[1]]
+            #         elif difx[1] == 0 and dify[1] != 0:
+            #             trans_image = transformed_image[dify[0]:dify[1], difx[0]:]
+            #         elif difx[1] == 0 and dify[1] == 0:
+            #             trans_image = transformed_image[dify[0]:, difx[0]:]
+            #         else:
+            #             trans_image = transformed_image[dify[0]:dify[1], difx[0]:difx[1]]
+
+            #         logger.info("after transformed image shape {}".format(trans_image.shape))
+            #         logger.info("Writing at {},{}".format(writey[0], writex[0]))
+            #         # for item in trans_image:
+            #         #     for item2 in item:
+            #         #         print(item2, type(item2))
+                    
+                    
+            #         writerator.send(trans_image[:][:])
+            #         # reshaped_image = np.reshape(trans_image, (writey[1]-writey[0], writex[1]-writex[0], 1, 1, 1)).astype('uint16')
+            #         logger.info("Reshaped Image Shape {}".format(trans_image.shape))
+                    
+            #         if writex[0] == 0 and writey[0]!= 0:
+            #             bw._buffer_supertile(X=write[0],writey[0])
+            #             bw.write_image(image=reshaped_image, X=[writex[0]], Y=[writey[0]])
+            #         elif writex[0] != 0 and writey[0]== 0:
+            #             bw.write_image(image=reshaped_image, X=[writex[0]], Y=[writey[0]])
+            #         elif writex[0] == 0 and writey[0]== 0:
+            #             bw.write_image(image=reshaped_image, X=[writex[0]], Y=[writey[0]])
+            #         else:
+            #             bw.write_image(image=reshaped_image, X=[writex[0]], Y=[writey[0]])
+            # bw.close_image()
+            # # logger.info("CHECK {}".format(bw._xyzct))
+
+            image3 = np.squeeze(br.read_image())
+            function = dispatch[operations]
+            if callable(function):
+                image3 = function(image3, kernel=kernel, intk=intkernel, n=dict_n_args[operations])
+                new = Path(outDir).joinpath('checkimage.ome.tif')
+                logger.info("{}: {}, {}".format(operations, new.name, type(image3[0][0])))
+                bw2 = BioWriter(str(new), metadata=br.read_metadata())
+                bw2.write_image(np.reshape(image3, (br_y, br_x, br_z, 1, 1)))
+            bw2.close_image()
 
 
         # logger.info("SHAPE OF Y X Z: {}, {}, {}".format(br_y, br_x, br_z))
@@ -347,7 +464,7 @@ if __name__=="__main__":
 
         
         
-        # image = np.squeeze(br.read_image(X=256, Y=256,Z=1, C=1, T=1))
+        
         # while xsize+intkernel <= br_x:
         #     xsub = xsub + xsize+intkernel
         # image = br.read_image(X=[0,259], Y=[0,259])
@@ -375,21 +492,19 @@ if __name__=="__main__":
 
         # i = 1
         # # for op in operations:
-        # function = dispatch[operations]
-        # if callable(function):
-        #     image = function(image, kernel=kernel, intk=intkernel, n=dict_n_args[operations])
-        #     # newfile = Path(outDir).joinpath('image' + str(imagenum) + '_op'+ str(i+1) + '.ome.tiff')
-        #     logger.info("{}: {}, {}".format(operations, newfile.name, type(image[0][0])))
-        #     bw = BioWriter(str(newfile), metadata=br.read_metadata())
-        #     bw.write_image(np.reshape(image, (br_y, br_x, br_z, 1, 1)))
         
+        
+        # if image == image3:
+        #     logger.info("iTS ALL GOOD")
         # else:
+        #     logger.info("NO")
+        # # else:
         #     raise ValueError("Function is not callable")
         # i = i + 1
 
-    # finally:
-    #     logger.info("DONE")
-    #     # logger.info(e)
+    finally:
+        logger.info("DONE")
+        # logger.info(e)
         # logger.info('Closing the javabridge...')
         # jutil.kill_vm()
            
