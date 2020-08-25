@@ -10,7 +10,7 @@ import ast
 from scipy import ndimage
 from multiprocessing import cpu_count
 
-Tile_Size = 256
+Tile_Size = 1024
 
 def invert_binary(image, kernel=None, intk=None, n=None):
     invertedimg = np.zeros(image.shape,dtype=datatype)
@@ -121,6 +121,8 @@ if __name__=="__main__":
                         help='The types of operations done on image in order', required=True)
     parser.add_argument('--kernelsize', dest='all_kernel', type=int,
                         help='Kernel size that should be used for all operations', required=True)
+    parser.add_argument('--tilesize', dest='tile_size', type=int,
+                        help='Tile size for Image Tiling, otherwise default is 1024x1024', required=False)
 
     parser.add_argument('--dilateby', dest='dilate_by', type=int,
                         help='How much do you want to dilate by?', required=False)
@@ -139,6 +141,10 @@ if __name__=="__main__":
     logger.info('outDir = {}'.format(outDir))
     operations = args.operations
     logger.info('Operations = {}'.format(operations))
+    if args.tile_size != None:
+        Tile_Size = args.tile_size
+    logger.info('Tile Size = {}'.format(Tile_Size))
+
 
     dilateby = args.dilate_by
     erodeby = args.erode_by
@@ -272,6 +278,7 @@ if __name__=="__main__":
                 
                 # Send it to the Writerator
                 writerator.send(reshape_img)
+
             # Close the image
             bw.close_image()
 
