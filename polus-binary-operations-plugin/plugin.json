@@ -25,80 +25,45 @@
       "required": true
     },
     {
-      "name": "openkernelsize",
-      "description": "Kernel size that should be used for Open Binary",
-      "type": "number",
-      "options": null,
-      "required": false
-    },
-    {
-      "name": "closekernelsize",
-      "description": "Kernel size that should be used for Close Binary",
-      "type": "number",
-      "options": null,
-      "required": false
-    },
-    {
-      "name": "morphkernelsize",
-      "description": "Kernel size that should be used for Morphological Gradient",
-      "type": "number",
-      "options": null,
-      "required": false
-    },
-    {
-      "name": "dilatekernelsize",
-      "description": "Kernel size that should be used for Dilation",
-      "type": "number",
-      "options": null,
-      "required": false
-    },
-    {
-      "name": "erodekernelsize",
-      "description": "Kernel size that should be used for Erosion",
-      "type": "number",
-      "options": null,
-      "required": false
-    },
-    {
-      "name": "skeletonkernelsize",
-      "description": "Kernel size that should be used for Skeletonization",
-      "type": "number",
-      "options": null,
-      "required": false
-    },
-    {
-      "name": "areafilteringkernelsize",
-      "description": "Kernel size that should be used for area filtering",
-      "type": "number",
-      "options": null,
-      "required": false
-    },
-    {
-      "name": "tophatkernelsize",
-      "description": "Kernel size that should be used for Top Hat",
-      "type": "number",
-      "options": null,
-      "required": false
-    },
-    {
-      "name": "blackhatkernelsize",
-      "description": "Kernel size that should be used for Black Hat",
-      "type": "number",
-      "options": null,
-      "required": false
-    },
-    {
       "name": "Operations",
       "description": "The Binary Operations that will be done on the image",
-      "type": "array",
+      "type": "enum",
       "options": {
-        "items": {
-          "type": "string", 
-          "title": "Operation",
-          "widget": "string"
-        }
+        "values": [
+          "invertion",
+          "opening",
+          "closing",
+          "morphological_gradient",
+          "dilation",
+          "erosion",
+          "skeleton",
+          "fill_holes",
+          "hit_or_miss",
+          "filter_area",
+          "top_hat",
+          "black_hat"
+        ]
       },
       "required": true
+    },
+    {
+      "name": "structuringshape",
+      "description": "Structuring Shape (Default is Elliptical)",
+      "options": {
+        "values": [
+          "Elliptical",
+          "Rectangular",
+          "Cross"
+        ]
+      },
+      "required": true
+    },
+    {
+      "name": "tilesize",
+      "description": "Default is 1024",
+      "type": "number",
+      "options": null,
+      "required": false
     },
     {
       "name": "dilateby",
