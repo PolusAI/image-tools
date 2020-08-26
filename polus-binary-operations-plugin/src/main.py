@@ -1,6 +1,6 @@
 from bfio import BioReader, BioWriter,JARS
-import javabridge as jutil
 import bioformats
+import javabridge as jutil
 import argparse, logging, subprocess, time, multiprocessing
 import numpy as np
 from pathlib import Path
@@ -8,9 +8,8 @@ import tifffile
 import cv2
 import ast
 from scipy import ndimage
-from multiprocessing import cpu_count
 
-Tile_Size = 1024
+Tile_Size = 256
 
 def invert_binary(image, kernel=None, intk=None, n=None):
     invertedimg = np.zeros(image.shape,dtype=datatype)
@@ -19,13 +18,13 @@ def invert_binary(image, kernel=None, intk=None, n=None):
 
 def dilate_binary(image,kernel=None, intk=None, n=None):
     image[image == 255] = 1
-    dilatedimg = cv2.dilate(image, kernel, iterations=n)
+    dilatedimg = cv2.dilate(image, kernel, iterations=1)
     dilatedimg[dilatedimg == 1] = 255
     return dilatedimg
 
 def erode_binary(image,kernel=None, intk=None, n=None):
     image[image == 255] = 1
-    erodedimg = cv2.erode(image, kernel, iterations=n)
+    erodedimg = cv2.erode(image, kernel, iterations=1)
     erodedimg[erodedimg == 1] = 255
     return erodedimg
 
@@ -68,7 +67,7 @@ def skeleton_binary(image,kernel=None, intk=None, n=None):
 
 def holefilling_binary(image,kernel=None, intk=None, n=None):
     image[image == 255] = 1
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(intk,intk))
+    # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(intk,intk))
     hf = cv2.morphologyEx(image,cv2.MORPH_OPEN,kernel)
     hf[hf == 1] = 255
     return hf
@@ -92,14 +91,10 @@ def blackhat_binary(image,kernel=None, intk=None, n=None):
 
 def areafiltering_binary(image,kernel=None, intk=None, n=None):
     image[image == 255] = 1
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(intk,intk))
+    # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(intk,intk))
     af = cv2.morphologyEx(image,cv2.MORPH_OPEN,kernel)
     af[af == 1] = 255
     return af
-
-def imagetiling(br, xval, yval):
-    image = br.read_image(X=xval, Y=yval)
-    return image
 
 if __name__=="__main__":
     # Initialize the logger
@@ -111,8 +106,7 @@ if __name__=="__main__":
     # Setup the argument parsing
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='Everything you need to start a WIPP plugin.')
-    # parser.add_argument('--filePattern', dest='filePattern', type=str,
-    #                     help='Filename pattern used to separate data', required=True)
+
     parser.add_argument('--inpDir', dest='inpDir', type=str,
                         help='Input image collection to be processed by this plugin', required=True)
     parser.add_argument('--outDir', dest='outDir', type=str,
@@ -121,61 +115,42 @@ if __name__=="__main__":
                         help='The types of operations done on image in order', required=True)
     parser.add_argument('--kernelsize', dest='all_kernel', type=int,
                         help='Kernel size that should be used for all operations', required=True)
-    parser.add_argument('--tilesize', dest='tile_size', type=int,
-                        help='Tile size for Image Tiling, otherwise default is 1024x1024', required=False)
+    # parser.add_argument('--tilesize', dest='tile_size', type=int,
+    #                     help='Tile size for Image Tiling, otherwise default is 1024x1024', required=False)
+    parser.add_argument('--structuringshape', dest='struct_shape', type=str,
+                        help='Shape of the structuring element can either be Elliptical, Rectangular, or Cross', required=True)
 
-    parser.add_argument('--dilateby', dest='dilate_by', type=int,
-                        help='How much do you want to dilate by?', required=False)
-    parser.add_argument('--erodeby', dest='erode_by', type=int,
-                        help='How much do you want to erode by?', required=False)
     parser.add_argument('--HOMarray', dest='hit_or_miss', type=str,
                         help='Whats the array that you are trying to find', required=False)
     
+    # Input arguments
     args = parser.parse_args()
-    # filePattern = args.filePattern
-    # logger.info('filePattern = {}'.format(filePattern))
-
     inpDir = args.inpDir
     logger.info('inpDir = {}'.format(inpDir))
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
     operations = args.operations
-    logger.info('Operations = {}'.format(operations))
-    if args.tile_size != None:
-        Tile_Size = args.tile_size
-    logger.info('Tile Size = {}'.format(Tile_Size))
-
-
-    dilateby = args.dilate_by
-    erodeby = args.erode_by
-    hitormiss = args.hit_or_miss
+    logger.info('Operation = {}'.format(operations))
     intkernel = args.all_kernel
+    logger.info('Kernel Size: {}x{}'.format(intkernel, intkernel))
 
-    # openkernel = args.open_kernel
-    # closekernel = args.close_kernel
-    # morphkernel = args.morph_kernel
-    # dilatekernel = args.dilate_kernel
-    # erodekernel = args.erode_kernel
-    # skeletonkernel = args.skeleton_kernel
-    # areafilterkernel = args.areafilter_kernel
-    # tophatkernel = args.tophat_kernel
-    # blackhatkernel = args.blackhat_kernel
+    # structshape = cv2.MORPH_ELLIPSE
+    if args.struct_shape == 'Elliptical':
+        structshape = cv2.MORPH_ELLIPSE
+    elif args.struct_shape == 'Rectangular':
+        structshape = cv2.MORPH_RECT
+    elif args.struct_shape == 'Cross':
+        structshape = cv2.MORPH_CROSS
+    else:
+        raise ValueError("Structuring Shape is not correct")
+    logger.info('Structuring Shape = {}'.format(args.struct_shape))
+
+    hitormiss = args.hit_or_miss
+    
 
     if hitormiss != None:
         hitormiss = np.array(ast.literal_eval(hitormiss))
     hitormiss = np.array(hitormiss)
-
-    if 'dilation' in operations:
-        if dilateby == None:
-            raise ValueError("Need to specify --dilateby integer value")
-        else:
-            logger.info('Dilating by {}'.format(dilateby))
-
-    if 'erosion' in operations and erodeby == None:
-        if erodeby == None:
-            raise ValueError("Need to specify --erodeby integer value")
-        else:
-            logger.info('Eroding by {}'.format(erodeby))
 
     if 'hit_or_miss' in operations:
         if hitormiss.any() == None:
@@ -201,8 +176,8 @@ if __name__=="__main__":
 
     # Additional arguments for each function
     dict_n_args = {
-        'dilation': dilateby,
-        'erosion': erodeby,
+        'dilation': None,
+        'erosion': None,
         'hit_or_miss': hitormiss,
         'invertion': None,
         'opening': None,
@@ -220,6 +195,7 @@ if __name__=="__main__":
     logger.info('Initializing the javabridge...')
     log_config = Path(__file__).parent.joinpath("log4j.properties")
     jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
+
     # Get all file names in inpDir image collection
     inpDir_files = [f.name for f in Path(inpDir).iterdir()]
     logger.info("Files in input directory: {}".format(inpDir_files))
@@ -235,14 +211,15 @@ if __name__=="__main__":
 
             # Read the image
             br = BioReader(str(image.absolute()))
-            # br = BioReader(image.absolute(),max_workers=max([cpu_count()-1,2]))
+            # br = BioReader(image.absolute(),max_workers=max([cpu_count()-1,2])) # Version bfio 2.4.4
 
             # Get the dimensions of the Image
             br_y, br_x, br_z = br.num_y(), br.num_x(), br.num_z()
-            datatype = br.pixel_type()
+            datatype = br.read_metadata().image().Pixels.get_PixelType()
+            logger.info("Datatype {}:".format(datatype))
 
             # Initialize Kernel
-            kernel = np.ones((intkernel,intkernel), datatype)
+            kernel = cv2.getStructuringElement(structshape,(intkernel,intkernel))
 
             # Initialize Output
             newfile = Path(outDir).joinpath(f)
