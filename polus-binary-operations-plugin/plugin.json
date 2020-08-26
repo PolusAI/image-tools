@@ -1,7 +1,7 @@
 {
   "name": "Binary Operations Plugin",
-  "version": "0.2.1",
-  "containerId": "mmvihani/polus-binary-operations-plugin:0.1.26",
+  "version": "0.2.2",
+  "containerId": "mmvihani/polus-binary-operations-plugin:0.1.27",
   "title": "Binary Operations Plugin",
   "description": "Everything you need to start a WIPP plugin.",
   "author": "Data Scientist (data.scientist@labshare.org)",

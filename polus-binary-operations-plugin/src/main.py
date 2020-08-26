@@ -216,7 +216,7 @@ if __name__=="__main__":
             # Get the dimensions of the Image
             br_y, br_x, br_z = br.num_y(), br.num_x(), br.num_z()
             datatype = br.read_metadata().image().Pixels.get_PixelType()
-            logger.info("Datatype {}:".format(datatype))
+            logger.info("Original Datatype {}:".format(datatype))
 
             # Initialize Kernel
             kernel = cv2.getStructuringElement(structshape,(intkernel,intkernel))
@@ -251,7 +251,7 @@ if __name__=="__main__":
                     trans_image = function(images, kernel=kernel, intk=intkernel, n=dict_n_args[operations])
 
                 # The image needs to be converted back to (1, Tile_Size_Tile_Size, 1) to write it
-                reshape_img = np.reshape(trans_image[intkernel:-intkernel,intkernel:-intkernel], (1, Tile_Size, Tile_Size, 1))
+                reshape_img = np.reshape(trans_image[intkernel:-intkernel,intkernel:-intkernel], (1, Tile_Size, Tile_Size, 1)).astype('uint8')
                 
                 # Send it to the Writerator
                 writerator.send(reshape_img)
