@@ -5,17 +5,11 @@ from queue import Queue
 
 import  multiprocessing
 
-# NJS - Python 2.7 is deprecated. Do not add support for it
 
-# Need to  add handling  of python2.7 compiler
-# import six
-#
-# if six.PY3:
-#     from abc import abstractmethod, abstractproperty, abstractclassmethod, abstractstaticmethod
-# else:
-#     from abc import abstractmethod, abstractproperty
 
 class BioBase(metaclass=abc.ABCMeta) :
+
+
     """
     Base class for reading and writing OME tiled tiff format data. Class initialises  and parses metadata if they are present while reading and writing images.
 
@@ -55,38 +49,18 @@ class BioBase(metaclass=abc.ABCMeta) :
     _tile_last_column = 0
     _metadata=None
     
-    _read_only = False
+    __read_only = False
+
     
     @property
     def read_only(self):
-        return self._read_only
+        return self.__read_only
 
     @read_only.get
     def read_only(self, bool):
         raise AttributeError('read_only object attribute is read-only.')
 
-    # NJS - The way this is set up, I think it will create problems.
-    # Also, this is not needed if we are checking for read-only status in the
-    # functions that access the _xyzct attribute.
-    
-    # @property
-    # def set_dim(self):
-    #     # Information about image dimensions
-    #     return self._xyzct
 
-    # @set_dim.setter
-    # def set_dim(self):
-    #     #print(_metadata)
-    #     self._xyzct = {'X': self._metadata.image().Pixels.get_SizeX(),  # image width
-    #                    'Y': self._metadata.image().Pixels.get_SizeY(),  # image height
-    #                    'Z': self._metadata.image().Pixels.get_SizeZ(),  # image depth
-    #                    'C': self._metadata.image().Pixels.get_SizeC(),  # number of channels
-    #                    'T': self._metadata.image().Pixels.get_SizeT()}  # n
-    #     print(self._xyzct)
-
-    # NJS - Since all inheriting classes will have to implement their own __init__
-    # we can get rid of this. The way this is currently implemented in the BioWriter
-    # is problematic and will throw errors in multiple scenarios.
     def __init__(self, file_path,_metadata=None,max_workers=None):
         """__init__ Initialize  filepath,metadata and number of threads
 
@@ -100,27 +74,22 @@ class BioBase(metaclass=abc.ABCMeta) :
 
         self._xyzct = None
         self._pix = None
-        self._read_only = True
+        self.__read_only = True
         self._max_workers = max_workers if max_workers != None else max([multiprocessing.cpu_count()//2,1])
+
+
+    #Should move  metadata handling to base class
         
-        # Information about image dimensions
-        self._xyzct = {'X': _metadata.image().Pixels.get_SizeX(),  # image width
-                       'Y': _metadata.image().Pixels.get_SizeY(),  # image height
-                       'Z': _metadata.image().Pixels.get_SizeZ(),  # image depth
-                       'C': _metadata.image().Pixels.get_SizeC(),  # number of channels
-                       'T': _metadata.image().Pixels.get_SizeT()}  # number of timepoints
+    def _init_metedata_writer(self):
+        """
+        This method is called exactly once per object. Once it is
+        called, all other methods of setting metadata will throw an
+        error.
 
-        # Information about data type and loading
-        self._pix = {'type': _metadata.image().Pixels.get_PixelType(),  # string indicating pixel type
-                     'bpp': self._BPP[_metadata.image().Pixels.get_PixelType()],  # bytes per pixel
-                     'spp': _metadata.image().Pixels.Channel().SamplesPerPixel}  # samples per pixel
 
-        # number of pixels to load at a time
-        self._pix['chunk'] = self._MAX_BYTES / \
-                             (self._pix['spp'] * self._pix['bpp'])
 
-        # determine if channels are interleaved
-        self._pix['interleaved'] = self._pix['spp'] > 1
+        """
+
 
     def channel_names(self,cnames=None):
         """channel_names
@@ -129,8 +98,8 @@ class BioBase(metaclass=abc.ABCMeta) :
             list: Strings indicating channel names
         """
         if cnames:
-            assert not self._read_only, "channel_names is read-only."
-            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            assert not self.__read_only, "channel_names is read-only."
+            #assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
             assert len(cnames) == self._xyzct['C'], "Number of names does not match number of channels."
             for i in range(0, len(cnames)):
                 self._metadata.image(0).Pixels.Channel(i).Name = cnames[i]
@@ -145,8 +114,8 @@ class BioBase(metaclass=abc.ABCMeta) :
             int: Width of image in pixels
         """
         if X:
-            assert not self._read_only, "num_x is read-only."
-            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            assert not self.__read_only, "num_x is read-only."
+           # assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
             assert X >= 1
             self._metadata.image(0).Pixels.SizeX = X
             self._xyzct['X'] = X
@@ -159,8 +128,8 @@ class BioBase(metaclass=abc.ABCMeta) :
             int: Height of image in pixels
         """
         if Y:
-            assert not self._read_only, "num_y is read-only."
-            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            assert not self.__read_only, "num_y is read-only."
+          #  assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
             assert Y >= 1
             self._metadata.image(0).Pixels.SizeY = Y
             self._xyzct['Y'] = Y
@@ -173,8 +142,8 @@ class BioBase(metaclass=abc.ABCMeta) :
             int: Depth of image in pixels
         """
         if Z:
-            assert not self._read_only, "num_z is read-only."
-            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            assert not self.__read_only, "num_z is read-only."
+         #   assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
             assert Z >= 1
             self._metadata.image(0).Pixels.SizeZ = Z
             self._xyzct['Z'] = Z
@@ -187,8 +156,8 @@ class BioBase(metaclass=abc.ABCMeta) :
             int: Number of channels
         """
         if C:
-            assert not self._read_only, "num_c is read-only."
-            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            assert not self.__read_only, "num_c is read-only."
+           # assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
             assert C >= 1
             self._metadata.image(0).Pixels.SizeC = C
             self._xyzct['C'] = C
@@ -201,8 +170,8 @@ class BioBase(metaclass=abc.ABCMeta) :
             int: Number of timepoints
         """
         if T:
-            assert not self._read_only, "num_t is read-only."
-            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            assert not self.__read_only, "num_t is read-only."
+           # assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
             assert T >= 1
             self._metadata.image(0).Pixels.SizeT = T
             self._xyzct['T'] = T
@@ -215,8 +184,8 @@ class BioBase(metaclass=abc.ABCMeta) :
             str: Units (i.e. cm or mm)
         """
         if psize != None and units != None:
-            assert not self._read_only, "physical_size_x is read-only."
-            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            assert not self.__read_only, "physical_size_x is read-only."
+          #  assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
             self._metadata.image(0).Pixels.PhysicalSizeX = psize
             self._metadata.image(0).Pixels.PhysicalSizeXUnit = units
         elif psize != None or units != None:
@@ -231,8 +200,8 @@ class BioBase(metaclass=abc.ABCMeta) :
             str: Units (i.e. cm or mm)
         """
         if psize != None and units != None:
-            assert not self._read_only, "physical_size_y is read-only."
-            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            assert not self.__read_only, "physical_size_y is read-only."
+           # assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
             self._metadata.image(0).Pixels.PhysicalSizeY = psize
             self._metadata.image(0).Pixels.PhysicalSizeYUnit = units
         elif psize != None or units != None:
@@ -247,8 +216,8 @@ class BioBase(metaclass=abc.ABCMeta) :
             str: Units (i.e. cm or mm)
         """
         if psize != None and units != None:
-            assert not self._read_only, "physical_size_z is read-only."
-            assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
+            assert not self.__read_only, "physical_size_z is read-only."
+            #assert self.__writer==None, "The image has started to be written. To modify the xml again, reinitialize."
             self._metadata.image(0).Pixels.PhysicalSizeZ = psize
             self._metadata.image(0).Pixels.PhysicalSizeZUnit = units
         elif psize != None or units != None:
@@ -267,27 +236,14 @@ class BioBase(metaclass=abc.ABCMeta) :
         Returns:
             list: list of ints indicating the first and last index in the dimension
         """
-        if self._read_only:
-            assert axis in 'XYZ'
-            if not xyz:
-                xyz = [0, self._xyzct[axis]]
-            else:
-                assert len(xyz) == 2, \
-                    '{} must be a list or tuple of length 2.'.format(axis)
-                assert xyz[0] >= 0, \
-                    '{}[0] must be greater than or equal to 0.'.format(axis)
-                assert xyz[1] <= self._xyzct[axis], \
-                    '{}[1] cannot be greater than the maximum of the dimension ({}).'.format(axis, self._xyzct[axis])
-            return xyz
-        else :
-            if len(xyz) != 2:
-                ValueError('{} must be a scalar.'.format(axis))
-            elif xyz[0] < 0:
-                ValueError(
-                    '{}[0] must be greater than or equal to 0.'.format(axis))
-            elif xyz[1] > self._xyzct[axis]:
-                ValueError('{}[1] cannot be greater than the maximum of the dimension ({}).'.format(
-                    axis, self._xyzct[axis]))
+        assert  not self.__read_only, "physical_size_z is read-only."
+        assert axis in 'XYZ'
+        assert len(xyz) == 2, \
+        '{} must be a list or tuple of length 2.'.format(axis)
+        assert xyz[0] >= 0, \
+        '{}[0] must be greater than or equal to 0.'.format(axis)
+        assert xyz[1] <= self._xyzct[axis], \
+        '{}[1] cannot be greater than the maximum of the dimension ({}).'.format(axis, self._xyzct[axis])
 
 
     def _val_ct(self, ct, axis):
@@ -301,31 +257,19 @@ class BioBase(metaclass=abc.ABCMeta) :
         Returns:
             list: list of ints indicating the first and last index in the dimension
         """
-        if self._read_only :
-            assert axis in 'CT'
-            if not ct:
-                # number of timepoints
-                ct = list(range(0, self._xyzct[axis]))
-            else:
-                assert np.any(np.greater(self._xyzct[axis], ct)), \
-                    'At least one of the {}-indices was larger than largest index ({}).'.format(axis, self._xyzct[axis] - 1)
-                assert np.any(np.less_equal(0, ct)), \
-                    'At least one of the {}-indices was less than 0.'.format(axis)
-                assert len(ct) != 0, \
-                    'At least one {}-index must be selected.'.format(axis)
-            return ct
-        else :
-            if np.any(np.greater_equal(self._xyzct[axis], ct)):
-                ValueError(
-                    'At least one of the {}-indices was larger than largest index ({}).'.format(axis,
-                                                                                                self._xyzct[axis] - 1))
-            elif np.any(np.less(0, ct)):
-                ValueError(
-                    'At least one of the {}-indices was less than 0.'.format(axis))
-            elif len(ct) == 0:
-                ValueError('At least one {}-index must be selected.'.format(axis))
-            elif isinstance(ct, list):
-                TypeError("The values for {} must be a list.".format(axis))
+
+        assert axis in 'CT'
+        if not ct:
+            # number of timepoints
+            ct = list(range(0, self._xyzct[axis]))
+        else:
+            assert np.any(np.greater(self._xyzct[axis], ct)), \
+            'At least one of the {}-indices was larger than largest index ({}).'.format(axis, self._xyzct[axis] - 1)
+            assert np.any(np.less_equal(0, ct)), \
+            'At least one of the {}-indices was less than 0.'.format(axis)
+            assert len(ct) != 0, \
+            'At least one {}-index must be selected.'.format(axis)
+        return ct
 
 
     def pixel_type(self,dtype=None):
@@ -346,8 +290,8 @@ class BioBase(metaclass=abc.ABCMeta) :
             str: One of the above data types.
         """
         if dtype:
-            if  not self._read_only:
-                assert not self._read_only, "The image has started to be written. To modify the xml again, reinitialize."
+
+                assert not self.__read_only, "The image has started to be written. To modify the xml again, reinitialize."
                 assert dtype in self._BPP.keys(), "Invalid data type."
                 self._metadata.image(0).Pixels.PixelType = dtype
                 self._pix['type'] = dtype
@@ -363,10 +307,33 @@ class BioBase(metaclass=abc.ABCMeta) :
        else:
            return bioformats
 
-    @abc.abstractmethod
-    def _buffer_supertile(self, column_start, column_end):
-        pass
-
-    @abc.abstractmethod
     def maximum_batch_size(self, tile_size, tile_stride=None):
-        pass
+        """maximum_batch_size Maximum allowable batch size for tiling
+        The pixel buffer only loads at most two supertiles at a time. If the batch
+        size is too large, then the tiling function will attempt to create more
+        tiles than what the buffer holds. To prevent the tiling function from doing
+        this, there is a limit on the number of tiles that can be retrieved in a
+        single call. This function determines what the largest number of retreivable
+        batches is.
+        Args:
+            tile_size (list): The height and width of the tiles to retrieve
+            tile_stride (list, optional): If None, defaults to tile_size.
+                Defaults to None.
+        Returns:
+            int: Maximum allowed number of batches that can be retrieved by the
+                iterate method.
+        """
+        if tile_stride == None:
+            tile_stride = tile_size
+
+        xyoffset = [(tile_size[0] - tile_stride[0]) / 2, (tile_size[1] - tile_stride[1]) / 2]
+
+        num_tile_rows = int(np.ceil(self.num_y() / tile_stride[0]))
+        num_tile_cols = (1024 - xyoffset[1]) // tile_stride[1]
+        if num_tile_cols == 0:
+            num_tile_cols = 1
+
+        return int(num_tile_cols * num_tile_rows)
+
+
+

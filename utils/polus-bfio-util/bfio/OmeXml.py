@@ -10,10 +10,8 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import xml.etree.ElementTree
-from xml.etree import cElementTree as ElementTree
-
 import sys
+from xml.etree import cElementTree as ElementTree
 
 if sys.version_info.major == 3:
     from io import StringIO
