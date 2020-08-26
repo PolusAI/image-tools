@@ -26,9 +26,9 @@ def image_generator(image):
     return ids
 
 def segmentinfo(encoder,idlabels,out_dir):
+    """ This function creates the info file needed to segment the image """
 
     op = Path(out_dir).joinpath("infodir")
-    # op = Path(encoder.info["segment_properties"])
     op.mkdir()
     op = op.joinpath("info")
 
@@ -53,6 +53,7 @@ def segmentinfo(encoder,idlabels,out_dir):
         "inline": inlineinfo
     }
 
+    # writing all the information into the file
     with open(op,'w') as writer:
         writer.write(json.dumps(info))
     writer.close()
@@ -65,10 +66,11 @@ def squeeze_generic(a, axes_to_keep):
     return a.reshape(out_s)
 
 def _mode2(image, dtype):
-    """ Average pixels together with optical field 2x2 and stride 2
+    """ Finds the mode of pixels together with optical field 2x2 and stride 2
     
     Inputs:
         image - numpy array with only two dimensions (m,n)
+        datatype - datatype of image pixels
     Outputs:
         avg_img - numpy array with only two dimensions (round(m/2),round(n/2))
     """
@@ -98,19 +100,30 @@ def _mode2(image, dtype):
     x_edge = xpos % 2
     z_edge = zpos % 2
 
+    # Initialize the mode output image (Half the size)
     mode_imgshape = np.ceil([d/2 for d in imgshape]).astype('int')
     mode_img = np.zeros(mode_imgshape).astype(dtype)
 
+    # Garnering the four different pixels that we would find the modes of
+    # Finding the mode of: 
+    # vals00[1], vals01[1], vals10[1], vals11[1] 
+    # vals00[2], vals01[2], vals10[2], vals11[2]
+    # etc 
     vals00 = image[0:-1:2, 0:-1:2,:]
     vals01 = image[0:-1:2, 1::2,:]
     vals10 = image[1::2,   0:-1:2,:]
     vals11 = image[1::2,   1::2,:]
 
+    # Finding all quadrants where at least two of the pixels are the same
     index = (vals00 == vals01) & (vals00 == vals10)
     indexfalse = index==False
     indextrue = index==True
+
+    # Going to loop through the indexes where the two pixels are not the same
     valueslist = [vals00[indexfalse], vals01[indexfalse], vals10[indexfalse], vals11[indexfalse]]
 
+    # Edge cases, if there are an odd number of pixels in a row or column, then we ignore the last row or column
+    # Those columns will be black
     if y_edge == 1 and x_edge == 0:
         shortmode_img = mode_img[:-1,:,:]
         shortmode_img[indextrue] = vals00[indextrue]
@@ -141,8 +154,8 @@ def _avg2(image):
         avg_img - numpy array with only two dimensions (round(m/2),round(n/2))
     """
     
-    # The data fed into this is the same as the native file format.
-    # We need to make sure the type will not cause overflow - NJS
+    # Since we are adding pixel values, we need to update the pixel type 
+    # This helps to avoid integer overflow
     if image.dtype == np.uint8:
         dtype = np.uint16
     if image.dtype == np.uint16:
@@ -157,8 +170,8 @@ def _avg2(image):
     imgshape = image.shape
     ypos = imgshape[0]
     xpos = imgshape[1]
-    # zpos = imgshape[2]
-    # z_max = zpos - zpos % 2    # if even then subtracting 0. 
+
+    # Figuring out whether or not the number of rows or columns are odd or even.
     y_max = ypos - ypos % 2 # if odd then subtracting 1
     x_max = xpos - xpos % 2
 
@@ -225,7 +238,7 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,imageType,ids, X
     if Y == None:
         Y = [0,scale_info['size'][1]]
     Z = [0,1]
-        
+    
     # Modify upper bound to stay within resolution dimensions
     if X[1] > scale_info['size'][0]:
         X[1] = scale_info['size'][0]

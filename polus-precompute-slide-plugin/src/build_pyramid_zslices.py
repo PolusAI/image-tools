@@ -51,7 +51,12 @@ if __name__=="__main__":
     logger.info('Getting the BioReader...')
 
     bf = BioReader(str(image.absolute()),max_workers=max([cpu_count()-1,2])) # NJS
-    depth = bf.num_z() # NJS
+    imread = bf.read_image()
+    logger.info(imread.shape)
+    depth = bf.num_z() 
+
+    if depth == 1:
+        raise ValueError("This is not a Z stack")
 
     # Images have height (rows), width (columns), and depth (z-slices) - NJS
     logger.info('Depth {}'.format(depth))
