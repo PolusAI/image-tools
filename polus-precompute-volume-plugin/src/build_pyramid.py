@@ -1,5 +1,14 @@
-import logging, argparse, bioformats
-import javabridge as jutil
+# import logging, argparse, bioformats
+# import javabridge as jutil
+# from bfio.bfio import BioReader, BioWriter
+# from pathlib import Path
+# import utils
+# import filepattern
+# from filepattern import FilePattern as fp
+# import os
+# import itertools
+from multiprocessing import cpu_count
+import logging, argparse
 from bfio.bfio import BioReader, BioWriter
 from pathlib import Path
 import utils
@@ -7,6 +16,7 @@ import filepattern
 from filepattern import FilePattern as fp
 import os
 import itertools
+import ast
 
 if __name__=="__main__":
     # Setup the Argument parsing
@@ -39,64 +49,65 @@ if __name__=="__main__":
     image = args.image
     imagetype = args.image_type
 
-    try:
+    # try:
         # Initialize the logger    
-        logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(image_num),
-                            datefmt='%d-%b-%y %H:%M:%S')
-        logger = logging.getLogger("build_pyramid")
-        logger.setLevel(logging.INFO) 
+    logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(image_num),
+                        datefmt='%d-%b-%y %H:%M:%S')
+    logger = logging.getLogger("build_pyramid")
+    logger.setLevel(logging.INFO) 
 
-        logger.info("Starting to build...")
-        # logger.info("Values of xyz in stack are {}".format(valsinstack))
+    logger.info("Starting to build...")
+    # logger.info("Values of xyz in stack are {}".format(valsinstack))
 
-        # Initialize the javabridge
-        logger.info('Initializing the javabridge...')
-        log_config = Path(__file__).parent.joinpath("log4j.properties")
-        jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
+    # Initialize the javabridge
+    logger.info('Initializing the javabridge...')
+    log_config = Path(__file__).parent.joinpath("log4j.properties")
+    # jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
 
-        # Create the BioReader object
-        logger.info('Getting the BioReader...')
-        bf = BioReader(str(Path(input_dir).joinpath(image)))
-        getimageshape = bf.read_image().shape
-        stackheight = bf.read_image().shape[2]
+    # Create the BioReader object
+    logger.info('Getting the BioReader...')
+    logger.info(image)
+    bf = BioReader(str((Path(input_dir).joinpath(image)).absolute()),max_workers=max([cpu_count()-1,2]))
+    getimageshape = (bf.num_x(), bf.num_y(), bf.num_z(), bf.num_c(), bf.num_t())
+    stackheight = bf.num_z()
 
-        # Make the output directory
-        if pyramid_type == "Neuroglancer":
-            out_dir = Path(output_dir).joinpath(image)
-            # out_dir = Path(output_dir)
-        elif pyramid_type == "DeepZoom":
-            out_dir = Path(output_dir).joinpath('{}_files'.format(image_num))
-        out_dir.mkdir()
-        out_dir = str(out_dir.absolute())
+    # Make the output directory
+    if pyramid_type == "Neuroglancer":
+        out_dir = Path(output_dir).joinpath(image)
+    elif pyramid_type == "DeepZoom":
+        out_dir = Path(output_dir).joinpath('{}_files'.format(image_num))
+    out_dir.mkdir()
+    out_dir = str(out_dir.absolute())
 
-        # Create the output path and info file
-        if pyramid_type == "Neuroglancer":
-            file_info = utils.neuroglancer_info_file(bf,out_dir,stackheight, imagetype)
-        elif pyramid_type == "DeepZoom":
-            file_info = utils.dzi_file(bf,out_dir,image_num)
-        else:
-            ValueError("pyramid_type must be Neuroglancer or DeepZoom")
-        logger.info("data_type: {}".format(file_info['data_type']))
-        logger.info("num_channels: {}".format(file_info['num_channels']))
-        logger.info("number of scales: {}".format(len(file_info['scales'])))
-        logger.info("type: {}".format(file_info['type']))
-        
-        
-        # Create the classes needed to generate a precomputed slice
-        logger.info("Creating encoder and file writer...")
-        if pyramid_type == "Neuroglancer":
-            encoder = utils.NeuroglancerChunkEncoder(file_info)
-            file_writer = utils.NeuroglancerWriter(out_dir)
-        elif pyramid_type == "DeepZoom":
-            encoder = utils.DeepZoomChunkEncoder(file_info)
-            file_writer = utils.DeepZoomWriter(out_dir)
-        
-        # Create the stacked images
-        if pyramid_type == "Neuroglancer":
-            utils._get_higher_res(0, bf,file_writer,encoder)
-        
-        logger.info("Finished precomputing. Closing the javabridge and exiting...")
-        jutil.kill_vm()
-    except Exception as e:
-        print(e)
-        jutil.kill_vm()
+    # Create the output path and info file
+    if pyramid_type == "Neuroglancer":
+        file_info = utils.neuroglancer_info_file(bf,out_dir,stackheight, imagetype)
+    elif pyramid_type == "DeepZoom":
+        file_info = utils.dzi_file(bf,out_dir,image_num)
+    else:
+        ValueError("pyramid_type must be Neuroglancer or DeepZoom")
+    logger.info("data_type: {}".format(file_info['data_type']))
+    logger.info("num_channels: {}".format(file_info['num_channels']))
+    logger.info("number of scales: {}".format(len(file_info['scales'])))
+    logger.info("type: {}".format(file_info['type']))
+    
+    
+    # Create the classes needed to generate a precomputed slice
+    logger.info("Creating encoder and file writer...")
+    if pyramid_type == "Neuroglancer":
+        encoder = utils.NeuroglancerChunkEncoder(file_info)
+        file_writer = utils.NeuroglancerWriter(out_dir)
+    elif pyramid_type == "DeepZoom":
+        encoder = utils.DeepZoomChunkEncoder(file_info)
+        file_writer = utils.DeepZoomWriter(out_dir)
+    
+    logger.info("Getting Higher Res...")
+    # Create the stacked images
+    if pyramid_type == "Neuroglancer":
+        utils._get_higher_res(0, bf,file_writer,encoder)
+    
+    logger.info("Finished precomputing. Closing the javabridge and exiting...")
+    #     jutil.kill_vm()
+    # except Exception as e:
+    #     print(e)
+    #     jutil.kill_vm()

@@ -41,6 +41,7 @@ def main():
     regexone = regex[1]
     vars_instack = ''
     stack_by = ''
+    
     for item in regexone:
         if (item == 'x' or item == 'y') or item == 'z':
             vars_instack = vars_instack + item

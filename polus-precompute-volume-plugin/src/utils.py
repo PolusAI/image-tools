@@ -7,6 +7,7 @@ import filepattern
 import os
 import logging
 import math
+from concurrent.futures import ThreadPoolExecutor
 
 # Conversion factors to nm, these are based off of supported Bioformats length units
 UNITS = {'m':  10**9,
@@ -29,8 +30,21 @@ def _avg2(image):
     Outputs:
         avg_img - numpy array with only two dimensions (round(m/2),round(n/2))
     """
-    image = image.astype('uint64')
+
+    if image.dtype == np.uint8:
+        dtype = np.uint16
+    if image.dtype == np.uint16:
+        dtype = np.uint32
+    if image.dtype == np.uint32:
+        dtype = np.uint64
+    else:
+        dtype = image.dtype
+    # image = image.astype('uint64')
+
+    odtype = image.dtype
+    image = image.astype(dtype,casting='safe')
     imgshape = image.shape
+
     ypos = imgshape[0]
     xpos = imgshape[1]
     zpos = imgshape[2]
@@ -39,8 +53,9 @@ def _avg2(image):
     x_max = xpos - xpos % 2
     yxz_max = [y_max, x_max, z_max]
 
-    avg_imgshape = [d/2 for d in imgshape]
-    avg_img = np.zeros(np.ceil(avg_imgshape).astype('int'))
+    avg_imgshape = np.ceil([d/2 for d in imgshape]).astype(int)
+    avg_img = np.zeros(avg_imgshape,dtype=dtype)
+
     avg_img[0:int(y_max/2),0:int(x_max/2),0:int(z_max/2)]= (\
                                                 image[0:y_max-1:2,0:x_max-1:2,0:z_max-1:2] + \
                                                 image[1:y_max:2  ,0:x_max-1:2,0:z_max-1:2] + \
@@ -63,7 +78,7 @@ def _avg2(image):
     if (y_max != image.shape[0] and x_max != image.shape[1]) and (z_max != image.shape[2]):
         avg_img[-1,-1,-1] = image[-1,-1,-1]
 
-    return avg_img
+    return avg_img.astype(odtype,casting='safe')
 
 def _get_higher_res(S, bfio_reader,slide_writer,encoder, X=None,Y=None,Z=None):
     """ Recursive function for pyramid building
@@ -125,40 +140,53 @@ def _get_higher_res(S, bfio_reader,slide_writer,encoder, X=None,Y=None,Z=None):
         Y[1] = scale_info['size'][1]
     if Z[1] > scale_info['size'][2]:
         Z[1] = scale_info['size'][2]
-    # print("Length of Smallest Size Array", len(smallestsize))
+   
     # Initialize the output
-    image = np.zeros((Y[1]-Y[0],X[1]-X[0], Z[1]-Z[0]),dtype=bfio_reader.read_metadata().image().Pixels.get_PixelType())
+    datatype = bfio_reader.read_metadata().image().Pixels.get_PixelType()
+    image = np.zeros((Y[1]-Y[0],X[1]-X[0], Z[1]-Z[0]),dtype=datatype)
+    # image = np.zeros((Y[1]-Y[0],X[1]-X[0], Z[1]-Z[0]),dtype=bfio_reader.read_metadata().image().Pixels.get_PixelType())
+    
     # If requesting from the lowest scale, then just read the image
     if str(S)==encoder.info['scales'][0]['key']:
-        image = bfio_reader.read_image(X=X,Y=Y)
-        image = squeeze_generic(image, axes_to_keep=(0, 1, 2))
+        image = bfio_reader.read_image(X=X,Y=Y,Z=Z)[...,0,0] 
     else:
         # Set the subgrid dimensions
         subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]],[2*Z[0],2*Z[1]]]
         for dim in subgrid_dims:
             while dim[1]-dim[0] > CHUNK_SIZE:
                 dim.insert(1,dim[0] + ((dim[1] - dim[0]-1)//CHUNK_SIZE) * CHUNK_SIZE)
-        
-        for z in range(0, len(subgrid_dims[2]) - 1):
-            z_ind = [subgrid_dims[2][z] - subgrid_dims[2][0],subgrid_dims[2][z+1] - subgrid_dims[2][0]]
-            z_ind = [np.ceil(zi/2).astype('int') for zi in z_ind]
-            for y in range(0,len(subgrid_dims[1])-1):
-                y_ind = [subgrid_dims[1][y] - subgrid_dims[1][0],subgrid_dims[1][y+1] - subgrid_dims[1][0]]
-                y_ind = [np.ceil(yi/2).astype('int') for yi in y_ind]
-                for x in range(0,len(subgrid_dims[0])-1):
-                    x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
-                    x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
-                    sub_image = _get_higher_res(X=subgrid_dims[0][x:x+2],
-                                                Y=subgrid_dims[1][y:y+2],
-                                                Z=subgrid_dims[2][z:z+2],
-                                                S=S+1,
-                                                bfio_reader=bfio_reader,
-                                                slide_writer=slide_writer,
-                                                encoder=encoder)
-                    image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],z_ind[0]:z_ind[1]] = _avg2(sub_image)
+            
+        def load_and_scale(*args,**kwargs):
+            sub_image = _get_higher_res(**kwargs)
+            image = args[0]
+            x_ind = args[1]
+            y_ind = args[2]
+            z_ind = args[3]
+            image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],z_ind[0]:z_ind[1]] = _avg2(sub_image)
+
+        with ThreadPoolExecutor() as executor:
+            for z in range(0, len(subgrid_dims[2]) - 1):
+                z_ind = [subgrid_dims[2][z] - subgrid_dims[2][0],subgrid_dims[2][z+1] - subgrid_dims[2][0]]
+                z_ind = [np.ceil(zi/2).astype('int') for zi in z_ind]
+                for y in range(0,len(subgrid_dims[1])-1):
+                    y_ind = [subgrid_dims[1][y] - subgrid_dims[1][0],subgrid_dims[1][y+1] - subgrid_dims[1][0]]
+                    y_ind = [np.ceil(yi/2).astype('int') for yi in y_ind]
+                    for x in range(0,len(subgrid_dims[0])-1):
+                        x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
+                        x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
+                        executor.submit(load_and_scale, 
+                                        image, x_ind, y_ind, z_ind, 
+                                        X=subgrid_dims[0][x:x+2],
+                                        Y=subgrid_dims[1][y:y+2],
+                                        Z=subgrid_dims[2][z:z+2],
+                                        S=S+1,
+                                        bfio_reader=bfio_reader,
+                                        slide_writer=slide_writer,
+                                        encoder=encoder)
+                        
 
     # Encode the chunk
-    image_encoded = encoder.encode(image, image.shape[2])
+    image_encoded = encoder.encode(image, bfio_reader.num_z())
     slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],Z[0],Z[1]))
     print(S, str(X[0])+ "-" + str(X[1])+ "-" + str(Y[0]) + "_" + str(Y[1])+ "_" + str(Z[0]) + "-" + str(Z[1]))
 
