@@ -246,7 +246,7 @@ if __name__=="__main__":
 
     for v in vectors:
         # Check to see if the file is a stitching vector
-        if not Path(v).name.startswith('img-global-positions'):
+        if 'img-global-positions' not in Path(v).name:
             continue
         
         # Parse the stitching vector
@@ -261,6 +261,7 @@ if __name__=="__main__":
         ptotal = 1/ptotal * 100
         
         # Initialize the output image
+        logger.info('Initializing output file: {}'.format(outvals['name']))
         refImg = str(Path(imgPath).joinpath(outvals['filePos'][0]['file']).absolute())
         outFile = str(Path(outDir).joinpath(outvals['name']).absolute())
         br = BioReader(str(Path(refImg).absolute()))
@@ -271,7 +272,8 @@ if __name__=="__main__":
 
         # Assemble the images
         logger.info('Generating tiles...')
-        with ThreadPoolExecutor(4) as executor:
+        threads = []
+        with ThreadPoolExecutor(max([multiprocessing.cpu_count()//2,2])) as executor:
             for x in range(0, outvals['width'], 10240):
                 X_range = min(x+10240,outvals['width']) # max x-pixel index in the assembled image
                 for y in range(0, outvals['height'], 10240):
@@ -279,8 +281,13 @@ if __name__=="__main__":
                     
                     image_buffer = make_tile(x,X_range,y,Y_range,v)
                     
-                    executor.submit(bw.write_image,image_buffer,X=x,Y=y)
+                    threads.append(executor.submit(bw.write_image,image_buffer,X=[x],Y=[y]))
                     # bw.write_image(image_buffer,X=[x],Y=[y])
+            
+            logger.info('{:.2f} finished...'.format(0))
+            for ind,thread in enumerate(threads):
+                thread.result()
+                logger.info('{:.2f}% finished...'.format(100*(ind+1)/len(threads)))
         
         logger.info('Closing image...')
         bw.close_image()
