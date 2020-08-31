@@ -65,6 +65,7 @@ if __name__=="__main__":
     fpobject = fp(input_dir, imagepattern, var_order=varsinstack)
     channels = []
     channelvals = []
+    
     i = 0
     for item in fp.iterate(fpobject, group_by=stackby):
         if i == stackcount:

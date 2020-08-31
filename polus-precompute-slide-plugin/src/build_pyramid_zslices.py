@@ -51,9 +51,8 @@ if __name__=="__main__":
     logger.info('Getting the BioReader...')
 
     bf = BioReader(str(image.absolute()),max_workers=max([cpu_count()-1,2])) # NJS
-    imread = bf.read_image()
-    logger.info(imread.shape)
-    depth = bf.num_z() 
+    depth = bf.num_z()
+    logger.info("XYZCT ({}, {}, {}, {}, {}), respectively".format(bf.num_x(), bf.num_y(), bf.num_z(), bf.num_c(), bf.num_t()))
 
     if depth == 1:
         raise ValueError("This is not a Z stack")
@@ -82,6 +81,7 @@ if __name__=="__main__":
         file_writer = utils.DeepZoomWriter(out_dir)
 
     ids = []
+
     # Go through all the slices in the stack
     for i in range(0, depth):
         utils._get_higher_res(0, i, bf,file_writer,encoder, imageType = imagetype, ids=ids, slices=[i,i+1])
