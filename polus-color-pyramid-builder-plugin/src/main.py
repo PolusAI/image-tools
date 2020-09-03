@@ -181,20 +181,20 @@ if __name__=="__main__":
             for i in reversed(range(len(layout))):
                 if isinstance(bounds[i][0],int):
                     logger.info('Color {}: {} (rescaling to {})'.format(COLORS[i],
-                                                                        Path(Path(bioreaders[-1]._file_path).name).name,
+                                                                        Path(Path(bioreaders[i]._file_path).name).name,
                                                                         bioreaders[i].bounds))
                     continue
                 if layout[i] == None:
                     continue
                 bioreaders[i].bounds = threads.pop().result()
                 logger.info('Color {}: {} (rescaling to {})'.format(COLORS[i],
-                                                                    Path(Path(bioreaders[-1]._file_path).name).name,
+                                                                    Path(Path(bioreaders[i]._file_path).name).name,
                                                                     bioreaders[i].bounds))
                     
         for br in bioreaders:
             if br != None:
                 br_meta = br
-        file_info = utils.dzi_file(br,outDirFrame,0)
+        file_info = utils.dzi_file(br_meta,outDirFrame,0)
         encoder = utils.DeepZoomChunkEncoder(file_info)
         file_writer = utils.DeepZoomWriter(outDirFrame)
         
