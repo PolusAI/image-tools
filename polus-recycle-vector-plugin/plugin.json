@@ -1,6 +1,6 @@
 {
   "name": "Recycle Stitching Vector Plugin",
-  "version": "1.0.2",
+  "version": "1.1.1",
   "title": "Recycle Existing Stitching Vector",
   "description": "Apply existing stitching vector to an image collection.",
   "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "labshare/polus-recycle-vector-plugin:1.0.2",
+  "containerId": "labshare/polus-recycle-vector-plugin:1.1.1",
   "inputs": [
 
     {
@@ -34,6 +34,12 @@
       "type": "string",
       "description": "Regular expression for filenames in the image collection.",
       "required": true
+    },
+    {
+      "name": "groupBy",
+      "type": "string",
+      "description": "Variables contained within a single stitching vector.",
+      "required": false
     }
   ],
   "outputs": [
@@ -63,6 +69,11 @@
       "key": "inputs.collectionRegex",
       "title": "Collection Regular Expression: ",
       "description": "The regular expression that will be used on files in the image collection."
+    },
+    {
+      "key": "inputs.groupBy",
+      "title": "Group By: ",
+      "description": "Variables contained in one stitching vector."
     }
   ]
 }

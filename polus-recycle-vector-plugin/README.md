@@ -13,7 +13,9 @@ This plugin uses [filename patterns](https://github.com/USNISTGOV/MIST/wiki/User
 
 All filename patterns must include `x` and `y` grid positions for each image or a sequential position `p`, but not both. This differs from MIST in that `r` and `c` are used to indicate grid row and column rather than `y` and `x` respectively. This change was made to remain consistent with Bioformats dimension names and to permit use of `c` as a channel variable.
 
-In addition to the position variables (both `x` and `y`, or `p`), the only other variables that can be used are `r`, `z`, `c`, and `t`. Images with the same `r`, `z`, and `t` will have the same stitching vector applied to them.
+In addition to the position variables (both `x` and `y`, or `p`), the only other variables that can be used are `r`, `z`, `c`, and `t`.
+
+**Version 1.1 Update:** If no inputs are provided in the `groupBy` variable, then all non-positional variables that vary from the stitching vector will cause a new stitching vector to be generated. For example, if replicate, x, and y are all contained within a stitching vector but the vector contains only files for channel 1 (e.g. r{rrr}_x{xxx}_y{yyy}_c001.ome.tif), then the stitching vector filepattern can be set to r{rrr}_x{xxx}_y{yyy}_c{ccc}.ome.tif and `--groupBy r` can be used to recycle the stitching vector for additional channels.
 
 ## Build the plugin
 
@@ -28,23 +30,12 @@ In WIPP, navigate to the plugins page and add a new plugin. Paste the contents o
 
 This plugin takes 5 input arguments and 1 output argument:
 
-| Name                | Description                                          | I/O    | Type            |
-|---------------------|------------------------------------------------------|--------|-----------------|
-| `--stitchDir`       | Stitching vector                                     | Input  | stitchingVector |
-| `--collectionDir`   | Image collection                                     | Input  | collection      |
-| `--stitchRegex`     | Regular expression for filenames in stitching vector | Input  | String          |
-| `--collectionRegex` | Regular expression for filenames in image collection | Input  | String          |
-| `--outDir`          | Output stitching vector                              | Output | String          |
+| Name                | Description                                            | I/O    | Type            |
+|---------------------|--------------------------------------------------------|--------|-----------------|
+| `--stitchDir`       | Stitching vector                                       | Input  | stitchingVector |
+| `--collectionDir`   | Image collection                                       | Input  | collection      |
+| `--stitchRegex`     | Regular expression for filenames in stitching vector   | Input  | String          |
+| `--collectionRegex` | Regular expression for filenames in image collection   | Input  | String          |
+| `--groupBy`         | String of variables that vary within a stiching vector | Input  | String          |
+| `--outDir`          | Output stitching vector                                | Output | String          |
 
-## Run the plugin
-
-### Run the Docker Container
-
-```bash
-docker run -v /path/to/data:/data polus-recycle-stitch-plugin \
-  --stitchDir "Path/To/StitchVectors/" \
-  --collectionDir "Path/To/Images" \
-  --stitchRegex "File_x{xxx}_y{yyy}_c{ccc}.ome.tif" \
-  --collectionRegex "File_x{xxx}_y{yyy}_c{ccc}.ome.tif" \
-  --outDir "Path/To/Output/Dir"
-```
