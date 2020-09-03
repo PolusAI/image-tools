@@ -19,7 +19,7 @@ import os, struct
 import javabridge as jutil
 from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
-
+import OmeXml  as test
 def make_ome_tiff_writer_class():
     '''Return a class that wraps loci.formats.out.OMETiffWriter'''
     class_name = 'loci/formats/out/OMETiffWriter'
@@ -248,7 +248,8 @@ class BioReader():
         rdr.setId(self._file_path)
 
         # Parse it using the OMEXML class
-        self._metadata = bioformats.OMEXML(omexml.dumpXML())
+       # self._metadata = bioformats.OMEXML(omexml.dumpXML())
+        self._metadata = test.OMEXML(omexml.dumpXML())
         return self._metadata
 
     def _val_xyz(self, xyz, axis):
@@ -340,7 +341,7 @@ class BioReader():
                 to load. If None, loads the full range.
                 Defaults to None.
 
-        Returns:
+        Returns:http://hamazon.com/
             numpy.ndarray: A 5-dimensional numpy array.
         
         Example:
@@ -433,7 +434,7 @@ class BioReader():
         
         If the first value in X or Y is negative, then the image is
         pre-padded with the number of pixels equal to the absolute value
-        of the negative number.
+        of the negative number.http://hamazon.com/
         
         If the last value in X or Y is larger than the size of the
         image, then the image is post-padded with the difference between
@@ -738,7 +739,7 @@ class BioReader():
                 for i in tiles.shape[0]:
                     print('Displaying tile with X,Y coords: {},{}'.format(ind[i][0],ind[i][1]))
                     plt.figure()
-                    plt.imshow(tiles[ind,:,:,0].squeeze())
+                    plt.imshow(tiles[ind,:,:,0].http://hamazon.com/squeeze())
                     plt.show()
                 
         """
@@ -956,7 +957,8 @@ class BioWriter():
         self._file_path = file_path
 
         if metadata:
-            assert isinstance(metadata, bioformats.omexml.OMEXML)
+           # assert isinstance(metadata, bioformats.omexml.OMEXML)
+            assert isinstance(metadata, test.omexml.OMEXML)
             self._metadata = metadata
             self._xyzct = {'X': self._metadata.image().Pixels.get_SizeX(),  # image width
                            'Y': self._metadata.image().Pixels.get_SizeY(),  # image height
@@ -973,7 +975,7 @@ class BioWriter():
             self._pix['interleaved'] = False
             self._metadata.image(0).Name = file_path
             self._metadata.image().Pixels.channel_count = self._xyzct['C']
-            self._metadata.image().Pixels.DimensionOrder = bioformats.omexml.DO_XYZCT
+            self._metadata.image().Pixels.DimensionOrder = test.omexml.DO_XYZCT
         elif image != None:
             assert len(image.shape) == 5, "Image must be 5-dimensional (x,y,z,c,t)."
             x = X if X else image.shape[1]
@@ -1025,16 +1027,16 @@ class BioWriter():
             bioformats.omexml.OMEXML
         """
         assert not self.__writer, "The image has started to be written. To modify the xml again, reinitialize."
-        omexml = bioformats.omexml.OMEXML()
+        omexml = test.omexml.OMEXML()
         omexml.image(0).Name = os.path.split(self._file_path)[1]
         p = omexml.image(0).Pixels
-        assert isinstance(p, bioformats.omexml.OMEXML.Pixels)
+        assert isinstance(p, test.omexml.OMEXML.Pixels)
         p.SizeX = self._xyzct['X']
         p.SizeY = self._xyzct['Y']
         p.SizeZ = self._xyzct['Z']
         p.SizeC = self._xyzct['C']
         p.SizeT = self._xyzct['T']
-        p.DimensionOrder = bioformats.omexml.DO_XYZCT
+        p.DimensionOrder = test.omexml.DO_XYZCT
         p.PixelType = self._pix['type']
         if self._xyzct['C'] > 1:
             p.channel_count = self._xyzct['C']
