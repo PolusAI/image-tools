@@ -95,7 +95,7 @@ def _get_higher_res(S,bfio_reader,slide_writer,encoder, X=None,Y=None):
     
     Inputs:
         S - Top level scale from which the pyramid will be built
-        bfio_reader - BioReader object used to read the tiled tiff
+        bfio_reader - List of BioReader objects used to read the tiled tiffs
         slide_writer - SlideWriter object used to write pyramid tiles
         encoder - ChunkEncoder object used to encode numpy data to byte stream
         X - Range of X values [min,max] to get at the indicated scale
@@ -111,7 +111,11 @@ def _get_higher_res(S,bfio_reader,slide_writer,encoder, X=None,Y=None):
             break
     if scale_info==None:
         ValueError("No scale information for resolution {}.".format(S))
-        
+    
+    # Channels designates color indices defining the following colors:
+    # red, green, blue, yellow, cyan, magenta, gray
+    # When creating the image, if the 3rd value in the bfio_reader list is
+    # defined, then the image is defined by channels[2], or blue.
     channels = [[0],
                 [1],
                 [2],
