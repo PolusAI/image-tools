@@ -151,7 +151,7 @@ if __name__=="__main__":
     # Parse files
     fp = filepattern.FilePattern(inpDir,filePattern)
     
-    count = 0
+    count = 1
     for files in fp.iterate(group_by='c'):
         outDirFrame = outDir.joinpath('{}_files'.format(count))
         outDirFrame.mkdir()
