@@ -1,0 +1,160 @@
+{
+    "name": "Feature Extraction",
+    "version": "0.7.8",
+    "title": "Feature Extraction",
+    "description": "Extract shape and intensity features from images.",
+    "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-feature-extraction-plugin:0.7.8",
+    "inputs": [      
+      {
+        "name": "segDir",
+        "type": "collection",
+        "description": "Labeled image collection",
+        "required": "true"
+      },
+      {
+        "name": "intDir",
+        "type": "collection",
+        "description": "Intensity image collection",
+        "required": "false"
+      },
+      {
+        "name": "pixelDistance",
+        "type": "integer",
+        "description": "Pixel distance to calculate the neighbors touching cells",
+        "required": "false"
+      },
+      {
+        "name": "features",
+        "type": "array",
+	"description": "Select features for extraction",	
+        "options": {
+	  "items": {
+	      "type": "string",
+	      "title": "Select feature",
+              "oneOf":
+	          [
+                      { "description": "Area", "enum": [ "area" ] },
+                      { "description": "Perimeter", "enum": [ "perimeter" ] },
+		      { "description": "Orientation", "enum": [ "orientation" ] },
+		      { "description": "Convex Area", "enum": [ "convex_area" ] },
+                      { "description": "Centroid Row", "enum": [ "centroid_row" ] },
+		      { "description": "Centroid Column", "enum": [ "centroid_column" ] },
+		      { "description": "Eccentricity", "enum": [ "eccentricity" ] },
+                      { "description": "Equivalent Diameter", "enum": [ "equivalent_diameter" ] },
+		      { "description": "Euler Number", "enum": [ "euler_number" ] },
+		      { "description": "Solidity", "enum": [ "solidity" ] },
+		      { "description": "Neighbors", "enum": [ "neighbors" ] },
+                      { "description": "Maximum Feret", "enum": [ "maxferet" ] },  
+                      { "description": "Minimum Feret", "enum": [ "minferet" ] },
+                      { "description": "Polygonality Score", "enum": [ "polygonality_score" ] },
+                      { "description": "Hexagonality Score", "enum": [ "hexagonality_score" ] },
+                      { "description": "Hexagonality SD", "enum": [ "hexagonality_sd" ] },
+		      { "description": "Major Axis Length", "enum": [ "major_axis_length" ] },
+                      { "description": "Minor Axis Length", "enum": [ "minor_axis_length" ] },
+		      { "description": "Mean Intensity", "enum": [ "mean_intensity" ] },
+                      { "description": "Maximum Intensity", "enum": [ "max_intensity" ] },
+		      { "description": "Minimum Intensity", "enum": [ "min_intensity" ] },
+		      { "description": "Median", "enum": [ "median" ] },
+                      { "description": "Mode", "enum": [ "mode" ] },
+		      { "description": "Standard Deviation", "enum": [ "standard_deviation" ] },
+		      { "description": "Skewness", "enum": [ "skewness" ] },
+                      { "description": "Entropy", "enum": [ "entropy" ] },
+		      { "description": "Kurtosis", "enum": [ "kurtosis" ] },
+                      { "description": "All", "enum": [ "all" ] }
+                  ], 
+              "default": "Area",
+              "widget": "select" ,    
+              "minItems": 1, 
+              "uniqueItems": "true"
+          },
+	"required": "true"
+	}
+      },
+      {
+            "name": "csvfile",
+            "type": "enum",
+            "options": {
+                "values": [
+                    "singlecsv",
+                    "separatecsv"
+                ]
+            },
+            "required": "true",
+            "description": "csvfile : singlecsv for saving values in one csv file and separate csv to save values for each image in separate csv file"
+      },
+      {
+	"name": "embeddedpixelsize",
+        "type": "boolean",
+        "description": "Use embedded pixel size",
+        "required": "false"
+      },
+      {
+        "name": "unitLength",
+        "type": "string",
+        "description": "Unit name",
+        "required": "false"
+      },
+      {
+        "name": "pixelsPerunit",
+        "type": "number",
+        "description": "Enter the number of pixels per unit of the metric",
+        "required": "false"
+      }
+      
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "csvCollection",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.segDir",
+        "title": "Label image collection",
+        "description": "Labeled image collection"
+      },
+      {
+        "key": "inputs.intDir",
+        "title": "Intensity image collection",
+        "description": "Intensity image collection"
+      },
+      {
+        "key": "inputs.pixelDistance",
+        "title": "Pixel Distance",
+        "description": "Pixel distance to calculate the neighbors touching cells"
+      },
+      {
+        "key": "inputs.features",
+        "title": "Features",
+        "description": "Select features"
+      },
+      {
+        "key": "inputs.csvfile",
+        "title": "Output csv file",
+        "description": "Save csv file separately for each image or one csv for all images"
+      },      
+      {
+        "key": "inputs.embeddedpixelsize",
+        "title": "Embedded pixel size",
+        "description": "Use embedded pixel size"
+      },
+      {
+        "key": "inputs.unitLength",
+        "title": "Length of unit",
+        "description": "Unit name"
+      },
+      {
+        "key": "inputs.pixelsPerunit",
+        "title": "Pixels per unit",
+        "description": "Enter the number of pixels per unit of the metric"
+      }      
+      
+    ]
+  }

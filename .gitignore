@@ -10,3 +10,13 @@ package-lock.json
 
 # Mac
 .DS_Store
+
+# python/editor specific files to ignore
+dist/
+build/
+*.pyc
+*.pyo
+*.swp
+*.egg-info
+*.conf
+__pycache__
