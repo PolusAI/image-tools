@@ -176,10 +176,13 @@ if __name__=="__main__":
                     elif isinstance(bounds[i][0],int):
                         bioreaders[-1].bounds = bounds[i]
                     else:
-                        bioreaders[-1].bounds = [0,np.iinfo(bioreaders[-1].read_metadata().image().Pixels.get_PixelType()).max]
+                        bioreaders[-1].bounds = [np.iinfo(bioreaders[-1].read_metadata().image().Pixels.get_PixelType()).min,
+                                                 np.iinfo(bioreaders[-1].read_metadata().image().Pixels.get_PixelType()).max]
             
             for i in reversed(range(len(layout))):
-                if isinstance(bounds[i][0],int):
+                if bioreaders[i] == None:
+                    continue
+                if isinstance(bounds[i][0],int) or bounds[i][0] == None:
                     logger.info('Color {}: {} (rescaling to {})'.format(COLORS[i],
                                                                         Path(Path(bioreaders[i]._file_path).name).name,
                                                                         bioreaders[i].bounds))
