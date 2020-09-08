@@ -21,7 +21,7 @@ This plugin takes two input parameters and one output parameter:
 ## Build the plugin
 
 ```bash
-docker build . -t labshare/polus-notebook-plugin:0.3.2
+docker build . -t labshare/polus-notebook-plugin:0.4.0
 ```
 
 

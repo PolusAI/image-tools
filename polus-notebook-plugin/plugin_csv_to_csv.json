@@ -1,9 +1,9 @@
 {
     "name": "Notebook executor (CSV->CSV)",
-	"version": "0.3.8",
+	"version": "0.4.0",
 	"title": "Jupyter Notebook executor",
 	"description": "Execute Jupyter notebook which take input of csv collection and outputs to csv collection.",
-	"containerId": "labshare/polus-notebook-plugin:0.3.8",
+	"containerId": "labshare/polus-notebook-plugin:0.4.0",
 
 	"inputs": [
 		{
