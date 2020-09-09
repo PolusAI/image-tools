@@ -1,6 +1,6 @@
 {
     "name": "Color Pyramid Builder",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "title": "Color Pyramid Builder",
     "description": "Builds a DeepZoom color pyramid.",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-color-pyramid-builder-plugin:0.2.0",
+    "containerId": "labshare/polus-color-pyramid-builder-plugin:0.2.1",
     "inputs": [
       {
         "name": "inpDir",

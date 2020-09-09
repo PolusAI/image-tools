@@ -201,7 +201,7 @@ if __name__=="__main__":
         for br in bioreaders:
             if br != None:
                 br_meta = br
-        file_info = utils.dzi_file(br_meta,outDirFrame,0)
+        file_info = utils.dzi_file(br_meta,outDirFrame,count)
         encoder = utils.DeepZoomChunkEncoder(file_info)
         file_writer = utils.DeepZoomWriter(outDirFrame)
         
