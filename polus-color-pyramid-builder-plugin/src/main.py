@@ -114,6 +114,8 @@ if __name__=="__main__":
                         help='Color ordering (e.g. 1,11,,,,5,6)', required=True)
     parser.add_argument('--bounds', dest='bounds', type=str,
                         help='Set bounds (should be float-float, int-int, or blank, e.g. 0.01-0.99,0-16000,,,,,)', required=False)
+    parser.add_argument('--alpha', dest='alpha', type=str,
+                        help='If true, transparency is equal to pixel intensity in the pyramid.', required=False)
     
     # Output arguments
     parser.add_argument('--outDir', dest='outDir', type=str,
@@ -132,6 +134,8 @@ if __name__=="__main__":
     logger.info('layout = {}'.format(layout))
     bounds = args.bounds
     logger.info('bounds = {}'.format(bounds))
+    alpha = args.alpha == 'true'
+    logger.info('alpha = {}'.format(alpha))
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
     outDir = Path(outDir)
@@ -201,4 +205,4 @@ if __name__=="__main__":
         encoder = utils.DeepZoomChunkEncoder(file_info)
         file_writer = utils.DeepZoomWriter(outDirFrame)
         
-        utils._get_higher_res(0,bioreaders,file_writer,encoder)
+        utils._get_higher_res(0,bioreaders,file_writer,encoder,alpha)

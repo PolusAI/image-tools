@@ -55,7 +55,7 @@ def _avg2(image):
     x_max = xpos - xpos % 2
 
     avg_imgshape = np.ceil([d/2 for d in imgshape]).astype(int)
-    avg_imgshape[2] = 3 # Only deal with color images in color pyramid builder plugin
+    avg_imgshape[2] = 4 # Only deal with color images in color pyramid builder plugin
     avg_img = np.zeros(avg_imgshape,dtype=dtype)
     avg_img[0:int(y_max/2),0:int(x_max/2),:]= (\
                                                 image[0:y_max-1:2,0:x_max-1:2,:] + \
@@ -65,7 +65,7 @@ def _avg2(image):
 
     return avg_img.astype(odtype)
 
-def _get_higher_res(S,bfio_reader,slide_writer,encoder, X=None,Y=None):
+def _get_higher_res(S,bfio_reader,slide_writer,encoder,alpha, X=None,Y=None):
     """ Recursive function for pyramid building
     
     This is a recursive function that builds an image pyramid by indicating
@@ -116,13 +116,13 @@ def _get_higher_res(S,bfio_reader,slide_writer,encoder, X=None,Y=None):
     # red, green, blue, yellow, cyan, magenta, gray
     # When creating the image, if the 3rd value in the bfio_reader list is
     # defined, then the image is defined by channels[2], or blue.
-    channels = [[0],
-                [1],
-                [2],
-                [0,1],
-                [0,2],
-                [1,2],
-                [0,1,2]]
+    channels = [[0,3],
+                [1,3],
+                [2,3],
+                [0,1,3],
+                [0,2,3],
+                [1,2,3],
+                [0,1,2,3]]
     
     if X == None:
         X = [0,scale_info['size'][0]]
@@ -137,7 +137,9 @@ def _get_higher_res(S,bfio_reader,slide_writer,encoder, X=None,Y=None):
         Y[1] = scale_info['size'][1]
 
     # Initialize the output
-    image = np.zeros((Y[1]-Y[0],X[1]-X[0],3),dtype=np.uint8)
+    image = np.zeros((Y[1]-Y[0],X[1]-X[0],4),dtype=np.uint8)
+    if not alpha:
+        image[:,:,3] = 255
     
     # If requesting from the lowest scale, then just read the images
     if str(S)==encoder.info['scales'][0]['key']:
@@ -146,14 +148,12 @@ def _get_higher_res(S,bfio_reader,slide_writer,encoder, X=None,Y=None):
                 continue
             image_temp = (255*(br.read_image(X=X,Y=Y,Z=Z)[...,0,0].astype(np.float32) - br.bounds[0])/(br.bounds[1] - br.bounds[0]))
             image_temp[image_temp>255] = 255
+            image_temp[image_temp<0] = 0
             image_temp = image_temp.astype(np.uint8)
-            if ind < 3:
-                image[...,ind:ind+1] = image_temp
-            else:
-                image_color_temp = copy.deepcopy(image)
-                image_color_temp[:,:,channels[ind]] = image_temp
-                image = np.maximum(image,image_color_temp)
-                del image_color_temp
+            image_color_temp = copy.deepcopy(image)
+            image_color_temp[:,:,channels[ind]] = image_temp
+            image = np.maximum(image,image_color_temp)
+            del image_color_temp
             del image_temp
     else:
         # Set the subgrid dimensions
@@ -167,23 +167,40 @@ def _get_higher_res(S,bfio_reader,slide_writer,encoder, X=None,Y=None):
             image = args[0]
             x_ind = args[1]
             y_ind = args[2]
-            image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],0:3] = _avg2(sub_image)
+            image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],0:4] = _avg2(sub_image)
         
-        with ThreadPoolExecutor() as executor:
+        if S % 2 == 0 or str(S+1)==encoder.info['scales'][0]['key']:
+            with ThreadPoolExecutor() as executor:
+                for y in range(0,len(subgrid_dims[1])-1):
+                    y_ind = [subgrid_dims[1][y] - subgrid_dims[1][0],subgrid_dims[1][y+1] - subgrid_dims[1][0]]
+                    y_ind = [np.ceil(yi/2).astype('int') for yi in y_ind]
+                    for x in range(0,len(subgrid_dims[0])-1):
+                        x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
+                        x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
+                        executor.submit(load_and_scale,
+                                        image,x_ind,y_ind, # args
+                                        alpha=alpha,       # kwargs
+                                        X=subgrid_dims[0][x:x+2],
+                                        Y=subgrid_dims[1][y:y+2],
+                                        S=S+1,
+                                        bfio_reader=bfio_reader,
+                                        slide_writer=slide_writer,
+                                        encoder=encoder)
+        else:
             for y in range(0,len(subgrid_dims[1])-1):
                 y_ind = [subgrid_dims[1][y] - subgrid_dims[1][0],subgrid_dims[1][y+1] - subgrid_dims[1][0]]
                 y_ind = [np.ceil(yi/2).astype('int') for yi in y_ind]
                 for x in range(0,len(subgrid_dims[0])-1):
                     x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
                     x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
-                    executor.submit(load_and_scale,
-                                    image,x_ind,y_ind, # args
-                                    X=subgrid_dims[0][x:x+2],    # kwargs
-                                    Y=subgrid_dims[1][y:y+2],
-                                    S=S+1,
-                                    bfio_reader=bfio_reader,
-                                    slide_writer=slide_writer,
-                                    encoder=encoder)
+                    load_and_scale(image,x_ind,y_ind, # args
+                                   alpha=alpha,       # kwargs
+                                   X=subgrid_dims[0][x:x+2],
+                                   Y=subgrid_dims[1][y:y+2],
+                                   S=S+1,
+                                   bfio_reader=bfio_reader,
+                                   slide_writer=slide_writer,
+                                   encoder=encoder)
 
     # Encode the chunk
     image_encoded = encoder.encode(image)
