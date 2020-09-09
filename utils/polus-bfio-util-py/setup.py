@@ -5,6 +5,8 @@ with open("README.md", "r") as fh:
     
 with open("VERSION",'r') as fh:
     version = fh.read()
+    with open("./bfio/VERSION",'w') as fw:
+        fw.write(version)
 
 setuptools.setup(
     name="bfio",
@@ -16,6 +18,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/labshare/polus-plugins/utils/bfio",
     packages=setuptools.find_packages(),
+    package_data = {"bfio": ['jars/*.jar','VERSION']},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
