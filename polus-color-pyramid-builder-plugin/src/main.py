@@ -155,11 +155,11 @@ if __name__=="__main__":
     # Parse files
     fp = filepattern.FilePattern(inpDir,filePattern)
     
-    count = 1
+    count = 0
     for files in fp.iterate(group_by='c'):
+        count += 1
         outDirFrame = outDir.joinpath('{}_files'.format(count))
         outDirFrame.mkdir()
-        count += 1
         bioreaders = []
         threads = []
         with ThreadPoolExecutor(max([multiprocessing.cpu_count()//2,2])) as executor:
