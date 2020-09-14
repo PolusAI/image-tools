@@ -8,7 +8,7 @@ ARG DATA_DIR="/data"
 
 #Create folders
 RUN mkdir -p ${EXEC_DIR} \
-    && mkdir -p ${DATA_DIR}/images \
+    && mkdir -p ${DATA_DIR}/inputs \
     && mkdir -p ${DATA_DIR}/outputs
 
 #Copy executable

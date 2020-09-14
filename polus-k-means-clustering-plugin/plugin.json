@@ -1,0 +1,79 @@
+{
+    "name": "K-Means Clustering",
+    "version": "0.1.0",
+    "title": "K-Means Clustering",
+    "description": "CLuster the data using K-Means.",
+    "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-k-means-clustering-plugin:0.1.0",
+    "inputs": [      
+      {
+        "name": "inpdir",
+        "type": "csvCollection",
+        "description": "Input csv file collection",
+        "required": "true"
+      },
+      {
+        "name": "determinek",
+        "type": "array",
+	"description": "Select methods for determining k-value",	
+        "options": {
+	  "items": {
+	      "type": "string",
+	      "title": "Select methods",
+              "oneOf":
+	          [
+                      { "description": "Elbow", "enum": [ "elbow" ] },
+                      { "description": "Calinski Harabasz", "enum": [ "ch" ] },
+		      { "description": "Davies Bouldin", "enum": [ "db" ] }
+                  ], 
+              "default": "Elbow",
+              "widget": "select" ,    
+              "minItems": 1, 
+              "uniqueItems": "true"
+          },
+	"required": "false"
+	}
+      },
+      {
+	"name": "numofclus",
+        "type": "integer",
+        "description": "Number of clusters required",
+        "required": "false"
+      }      
+      
+    ],
+    "outputs": [
+      {
+        "name": "outdir",
+        "type": "csvCollection",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.inpdir",
+        "title": "Input csv file",
+        "description": "Input csv file for clustering"
+      },
+      {
+        "key": "inputs.determinek",
+        "title": "Determine k-value automatically",
+        "description": "Determine k-value using one of three methods"
+      },
+      {
+        "key": "inputs.numofclus",
+        "title": "Enter k-value",
+        "description": "k-value to form number of clusters"
+      },
+      {
+        "key": "inputs.outdir",
+        "title": "Output csv file",
+        "description": "Save output csv file containing labeled data"
+      }      
+      
+    ]
+  }
