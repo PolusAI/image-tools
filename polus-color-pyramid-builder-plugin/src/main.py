@@ -5,6 +5,8 @@ from pathlib import Path
 import filepattern, multiprocessing, utils
 from concurrent.futures import ThreadPoolExecutor
 
+import matplotlib.pyplot as plt
+
 COLORS = ['red',
           'green',
           'blue',
@@ -69,28 +71,35 @@ def get_bounds(br,lower_bound,upper_bound):
     lower_bound_size = int(image_size * lower_bound)
     
     # Create the pixel buffer
-    dtype = br.read_metadata().image().Pixels.get_PixelType()
+    dtype = br.read_image(X=[0,1024],Y=[0,1024],Z=[0,1]).dtype
     upper_bound_vals = np.zeros((2*upper_bound_size,),dtype=dtype)
     lower_bound_vals = np.full((2*lower_bound_size,),np.iinfo(dtype).max,dtype=dtype)
     
     # Load image tiles and sort pixels
-    for x in range(0,br.num_x(),1024):
+    for x in range(0,br.num_x(),8192):
+        for y in range(0,br.num_y(),8192):
             
-        # Load the first tile
-        tile = br.read_image(X=[x,min([x+1024,br.num_x()])],Z=[0,1])
-        
-        # Sort the non-zero values
-        tile_sorted = np.sort(tile[tile.nonzero()],axis=None)
+            # Load the first tile
+            tile = br.read_image(X=[x,min([x+8192,br.num_x()])],
+                                 Y=[y,min([y+8192,br.num_y()])],
+                                 Z=[0,1])
+            # plt.figure()
+            # plt.imshow(tile.squeeze())
+            # print(tile.shape)
+            # plt.show()
+            
+            # Sort the non-zero values
+            tile_sorted = np.sort(tile[tile.nonzero()],axis=None)
 
-        # Store the upper and lower bound pixel values
-        temp = tile_sorted[-upper_bound_size:]
-        upper_bound_vals[:temp.size] = temp
-        temp = tile_sorted[:lower_bound_size]
-        lower_bound_vals[-temp.size:] = temp
-        
-        # Resort the pixels
-        upper_bound_vals = np.sort(upper_bound_vals,axis=None)
-        lower_bound_vals = np.sort(lower_bound_vals,axis=None)
+            # Store the upper and lower bound pixel values
+            temp = tile_sorted[-upper_bound_size:]
+            upper_bound_vals[:temp.size] = temp
+            temp = tile_sorted[:lower_bound_size]
+            lower_bound_vals[-temp.size:] = temp
+            
+            # Resort the pixels
+            upper_bound_vals = np.sort(upper_bound_vals,axis=None)
+            lower_bound_vals = np.sort(lower_bound_vals,axis=None)
     
     return [lower_bound_vals[lower_bound_size],upper_bound_vals[-upper_bound_size]]
 
@@ -116,6 +125,10 @@ if __name__=="__main__":
                         help='Set bounds (should be float-float, int-int, or blank, e.g. 0.01-0.99,0-16000,,,,,)', required=False)
     parser.add_argument('--alpha', dest='alpha', type=str,
                         help='If true, transparency is equal to pixel intensity in the pyramid.', required=False)
+    parser.add_argument('--stitchPath', dest='stitch_path', type=str,
+                        help='Path to a stitching vector.', required=False)
+    parser.add_argument('--background', dest='background', type=str,
+                        help='Background fill value.', required=False)
     
     # Output arguments
     parser.add_argument('--outDir', dest='outDir', type=str,
@@ -139,6 +152,10 @@ if __name__=="__main__":
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
     outDir = Path(outDir)
+    stitch_path = args.stitch_path
+    logger.info('stitchPath = {}'.format(stitch_path))
+    background = args.background
+    logger.info('background = {}'.format(background))
     
     # Parse the layout
     layout = [None if l=='' else int(l) for l in layout.split(',')]
@@ -156,7 +173,9 @@ if __name__=="__main__":
     fp = filepattern.FilePattern(inpDir,filePattern)
     
     count = 0
-    for files in fp.iterate(group_by='c'):
+        
+    for files in fp.iterate(group_by='xypc'):
+        
         count += 1
         outDirFrame = outDir.joinpath('{}_files'.format(count))
         outDirFrame.mkdir()
@@ -167,15 +186,41 @@ if __name__=="__main__":
                 if l == None:
                     bioreaders.append(None)
                     continue
-                f_path = [f for f in files if f['c']==l]
-                if len(f_path)==0:
-                    continue
-                f_path = f_path[0]['file']
-                bioreaders.append(BioReader(f_path,max_workers=multiprocessing.cpu_count()))
+                
+                # Create the type of BioReader based on whether a stitching vector is present
+                if stitch_path == None:
+                    # Create a standard BioReader object
+                    f_path = [f for f in files if f['c']==l]
+                    if len(f_path)==0:
+                        bioreaders.append(None)
+                        continue
+                    f_path = f_path[0]['file']
+                    bioreaders.append(BioReader(f_path,max_workers=multiprocessing.cpu_count()))
+                else:
+                    # Create a BioAssembler object, which assembles images when called
+                    f_tiles = [f for f in files if f['c']==l]
+                    if len(f_tiles)==0:
+                        continue
+                    for stitch in Path(stitch_path).iterdir():
+                        br = utils.BioAssembler(inpDir,stitch,multiprocessing.cpu_count())
+                        f_names = [f['file'] for f in br._file_dict['filePos']]
+                        found_file = False
+                        
+                        # Check to see if the first file is in the stitching vector
+                        if Path(f_tiles[0]['file']).name in f_names:
+                            bioreaders.append(br)
+                            found_file = True
+                            break
+                    if not found_file:
+                        bioreaders.append(None)
+                        continue
+                    
+                # Set the rescaling bounds
                 if layout[i] != None:
                     if isinstance(bounds[i][0],float):
                         logger.info('{}: Getting percentile bounds {}...'.format(Path(bioreaders[-1]._file_path).name,
                                                                                 bounds[i]))
+                        # get_bounds(bioreaders[-1],bounds[i][0],bounds[i][1])
                         threads.append(executor.submit(get_bounds,bioreaders[-1],bounds[i][0],bounds[i][1]))
                     elif isinstance(bounds[i][0],int):
                         bioreaders[-1].bounds = bounds[i]
@@ -205,4 +250,4 @@ if __name__=="__main__":
         encoder = utils.DeepZoomChunkEncoder(file_info)
         file_writer = utils.DeepZoomWriter(outDirFrame)
         
-        utils._get_higher_res(0,bioreaders,file_writer,encoder,alpha)
+        utils._get_higher_res(0,bioreaders,file_writer,encoder,alpha,background,isinstance(stitch_path,str))
