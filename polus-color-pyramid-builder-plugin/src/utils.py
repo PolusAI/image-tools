@@ -375,7 +375,7 @@ def _get_higher_res(S,bfio_reader,slide_writer,encoder,alpha,color=None,stitch=F
                 continue
             if isinstance(br,BioAssembler):
                 br.color = channels[ind]
-                image_color_temp = br.read_image(X,Y,Z,color)
+                image_color_temp = br.read_image(X,Y,Z,color).astype(np.uint8)
             else:
                 image_temp = (255*(br.read_image(X=X,Y=Y,Z=Z)[...,0,0].astype(np.float32) - br.bounds[0])/(br.bounds[1] - br.bounds[0]))
                 image_temp[image_temp>255] = 255
