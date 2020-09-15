@@ -5,8 +5,6 @@ from pathlib import Path
 import filepattern, multiprocessing, utils
 from concurrent.futures import ThreadPoolExecutor
 
-import matplotlib.pyplot as plt
-
 COLORS = ['red',
           'green',
           'blue',
@@ -83,10 +81,6 @@ def get_bounds(br,lower_bound,upper_bound):
             tile = br.read_image(X=[x,min([x+8192,br.num_x()])],
                                  Y=[y,min([y+8192,br.num_y()])],
                                  Z=[0,1])
-            # plt.figure()
-            # plt.imshow(tile.squeeze())
-            # print(tile.shape)
-            # plt.show()
             
             # Sort the non-zero values
             tile_sorted = np.sort(tile[tile.nonzero()],axis=None)

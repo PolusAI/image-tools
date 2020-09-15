@@ -13,8 +13,6 @@ from pathlib import Path
 import imageio, re, filepattern
 from concurrent.futures import ThreadPoolExecutor
 
-import matplotlib.pyplot as plt
-
 STITCH_VARS = ['file','correlation','posX','posY','gridX','gridY'] # image stitching values
 STITCH_LINE = "file: {}; corr: {}; position: ({}, {}); grid: ({}, {});\n"
 
