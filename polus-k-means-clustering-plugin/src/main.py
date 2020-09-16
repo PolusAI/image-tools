@@ -9,6 +9,7 @@ import logging
 import os
 import fnmatch
 import numpy as np
+import numpy.matlib
 import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.metrics import calinski_harabasz_score
@@ -35,19 +36,20 @@ def list_file(csv_directory):
                      for file_name in fnmatch.filter(files, '*.csv')]
     return list_of_files
    
-def elbow(data,krange):
+def elbow(data, minimumrange, maximumrange):
     """Determine k value using elbow method.
     
     Args:
-        data (ndarray): Input csvfile converted to array.
-        
+        data(dataframe): Input csvfile.
+        minimumrange(int): Starting number of sequence in range function to determine k-value.
+        maximumrange(int):Ending number of sequence in range function to determine k-value.
     Returns:
-        Optimal k-value
+        Optimal k-value.
     
     """
     data_array = np.array(data)
     sse = []
-    K = range(1, krange)
+    K = range(minimumrange, maximumrange)
     for k in K:
         kmeans = KMeans(n_clusters = k).fit(data_array)
         centroids = kmeans.cluster_centers_
@@ -73,18 +75,22 @@ def elbow(data,krange):
     k_cluster = np.argmax(dist)
     return k_cluster
     
-def ch(data, krange):
+def calinski_harabasz(data, minimumrange, maximumrange):
     """Determine k value using Calinski Harabasz Index method.
     
     Args:
-        data (ndarray): Input csvfile converted to array.
+        data(dataframe): Input csvfile.
+        minimumrange(int): Starting number of sequence in range function to determine k-value.
+        maximumrange(int):Ending number of sequence in range function to determine k-value.
         
     Returns:
-        Optimal k-value
+        Optimal k-value.
     
     """
     data_array = np.array(data)
-    K = range(2, krange)
+    if minimumrange <=1:
+        raise ValueError('Minimumrange should be greater than 1.')
+    K = range(minimumrange, maximumrange)
     chs = []
     for k in K:
         kmeans = KMeans(n_clusters = k).fit(data_array)
@@ -95,18 +101,22 @@ def ch(data, krange):
     k_cluster = chs.index(score) + 1
     return k_cluster
 
-def db(data, krange):
+def davies_bouldin(data, minimumrange, maximumrange):
     """Determine k value using Davies Bouldin Index method.
     
     Args:
-        data (ndarray): Input csvfile converted to array.
+        data(dataframe): Input csvfile.
+        minimumrange(int): Starting number of sequence in range function to determine k-value.
+        maximumrange(int):Ending number of sequence in range function to determine k-value.
         
     Returns:
-        Optimal k-value
+        Optimal k-value.
     
     """
     data_array = np.array(data)
-    K = range(2, krange)
+    if minimumrange <=1:
+        raise ValueError('Minimumrange should be greater than 1.')
+    K = range(minimumrange, maximumrange)
     dbs = []
     for k in K:
         kmeans = KMeans(n_clusters = k).fit(data_array)
@@ -121,7 +131,7 @@ def kmeans_cluster(data,cluster):
     """Cluster the data using K-Means clustering.
     
     Args:
-        data (ndarray): Input csvfile converted to array.
+        data(dataframe): Input csvfile.
         cluster (int): The number of clusters to be formed using K-Means.
         
     Returns:
@@ -142,10 +152,14 @@ def main():
     parser = argparse.ArgumentParser(prog='main', description='K-means clustering plugin.')
     parser.add_argument('--inpdir', dest='inpdir', type=str,
                         help='Input collection-Data need to be clustered', required=True)
+    parser.add_argument('--minimumrange', dest='minimumrange', type=int,
+                        help='Enter minimum range for k to determine k-value', required=False)
+    parser.add_argument('--maximumrange', dest='maximumrange', type=int,
+                        help='Enter maximum range for k to determine k-value', required=False)
+    parser.add_argument('--determinek', dest='determinek', type=str,
+                        help='Methods to determine k-value using elbow or Calinski Harabasz or Davies Bouldin', required=False)
     parser.add_argument('--numofclus', dest='numofclus', type=int,
                         help='Number of clusters', required=False)
-    parser.add_argument('--determinek', dest='determinek', type=str,
-                        help='Methods to determine k-value', required=False)
     parser.add_argument('--outdir', dest='outdir', type=str,
                         help='Output collection', required=True)
     
@@ -160,6 +174,14 @@ def main():
     determinek = args.determinek
     logger.info('determinek = {}'.format(determinek))
     
+    #minimum range value to consider for determining k-value
+    minimumrange = args.minimumrange
+    logger.info('minimumrange = {}'.format(minimumrange))
+    
+    #maximum range value to consider for determining k-value
+    maximumrange = args.maximumrange
+    logger.info('maximumrange = {}'.format(maximumrange))
+    
     #k-value for clustering using K-Means
     numofclus = args.numofclus
     logger.info('numofclus = {}'.format(numofclus))
@@ -168,22 +190,19 @@ def main():
     outdir = args.outdir
     logger.info('outdir = {}'.format(outdir))
     
-    
-    #Set default value for range of values to calaculate k-value using the methods
-    krange = 20
-    
+        
     #Get list of .csv files in the directory including sub folders for clustering
     inputcsv = list_file(inpdir)
     if not inputcsv:
             raise ValueError('No .csv files found.')
             
     #Dictionary of methods to determine k-value
-    FEAT = {'elbow': elbow,
-            'ch': ch,
-            'db': db}
+    FEAT = {'Elbow': elbow,
+            'CalinskiHarabasz': calinski_harabasz,
+            'DaviesBouldin': davies_bouldin}
        
     for inpfile in inputcsv:
-        #Get the full labeled image path
+        #Get the full path
         split_file = os.path.normpath(inpfile)
         
         #split to get only the filename
@@ -194,28 +213,28 @@ def main():
         #Read the csv files using pandas
         data= pd.read_csv(inpfile)
         
-        #Check whether any one of the methods is selected to determine k-value
-        if determinek and not numofclus:
-            logger.info('Determining k-value using' + determinek)
-            kvalue = FEAT[determinek](data, krange)
-            
-        
-        #Check value k-value is entered
-        if numofclus:
-            kvalue = numofclus
-        
         #Check whether any one of the method is selected for determining k-value
         if not determinek and not numofclus:
             raise ValueError('Select method to determine k-value or enter k-value.')
+                
+        #Check whether any one of the methods is selected to determine k-value
+        if determinek:# and not numofclus:
+            if determinek and not (minimumrange or maximumrange):
+                raise ValueError('Enter both minimumrange and maximumrange to determine k-value.')
+            logger.info('Determining k-value using ' + determinek)
+            kvalue = FEAT[determinek](data, minimumrange, maximumrange)
         
-        logger.info('Clustering the data')
+        #Check whether k-value is entered
+        #if numofclus:
+            #kvalue = numofclus
         
         #Cluster data using K-Means clustering
+        logger.info('Clustering the data')
         cluster_data = kmeans_cluster(data,kvalue)
-        logger.info('Saving csv file')
-        
-        os.chdir(outdir)
+                
         #Save dataframe into csv file
+        os.chdir(outdir)
+        logger.info('Saving csv file')
         export_csv = cluster_data.to_csv (r'kmeans_clustering_%s.csv'%file_name, index=None, header=True, encoding='utf-8-sig')
         logger.info("Finished all processes!")
 

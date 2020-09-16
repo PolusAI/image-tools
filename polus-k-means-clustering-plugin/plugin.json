@@ -1,14 +1,14 @@
 {
     "name": "K-Means Clustering",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "title": "K-Means Clustering",
-    "description": "CLuster the data using K-Means.",
+    "description": "Cluster the data using K-Means.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-k-means-clustering-plugin:0.1.0",
+    "containerId": "labshare/polus-k-means-clustering-plugin:0.2.0",
     "inputs": [      
       {
         "name": "inpdir",
@@ -18,25 +18,28 @@
       },
       {
         "name": "determinek",
-        "type": "array",
-	"description": "Select methods for determining k-value",	
+        "type": "enum",
+	"description": "Determine k-value using Elbow or Calinski Harabasz or Davies Bouldin methods",	
         "options": {
-	  "items": {
-	      "type": "string",
-	      "title": "Select methods",
-              "oneOf":
-	          [
-                      { "description": "Elbow", "enum": [ "elbow" ] },
-                      { "description": "Calinski Harabasz", "enum": [ "ch" ] },
-		      { "description": "Davies Bouldin", "enum": [ "db" ] }
-                  ], 
-              "default": "Elbow",
-              "widget": "select" ,    
-              "minItems": 1, 
-              "uniqueItems": "true"
+	  "values": [
+	      		"Elbow",
+                        "CalinskiHarabasz",
+		        "DaviesBouldin"
+             ]
           },
 	"required": "false"
-	}
+      },
+      {
+	"name": "minimumrange",
+        "type": "integer",
+        "description": "Enter minimum range for determing k-value",
+        "required": "false"
+      },
+      {
+	"name": "maximumrange",
+        "type": "integer",
+        "description": "Enter maximum range for determing k-value",
+        "required": "false"
       },
       {
 	"name": "numofclus",
@@ -62,7 +65,17 @@
       {
         "key": "inputs.determinek",
         "title": "Determine k-value automatically",
-        "description": "Determine k-value using one of three methods"
+        "description": "Determine k-value using Elbow or Calinski Harabasz or Davies Bouldin methods"
+      },
+      {
+        "key": "inputs.minimumrange",
+        "title": "Enter minimum range",
+        "description": "Enter minimum range for determing k-value"
+      },
+      {
+        "key": "inputs.maximumrange",
+        "title": "Enter maximum range",
+        "description": "Enter maximum range for determing k-value"
       },
       {
         "key": "inputs.numofclus",
