@@ -218,15 +218,15 @@ def main():
             raise ValueError('Select method to determine k-value or enter k-value.')
                 
         #Check whether any one of the methods is selected to determine k-value
-        if determinek:# and not numofclus:
+        if determinek and not numofclus:
             if determinek and not (minimumrange or maximumrange):
                 raise ValueError('Enter both minimumrange and maximumrange to determine k-value.')
             logger.info('Determining k-value using ' + determinek)
             kvalue = FEAT[determinek](data, minimumrange, maximumrange)
         
         #Check whether k-value is entered
-        #if numofclus:
-            #kvalue = numofclus
+        if numofclus:
+            kvalue = numofclus
         
         #Cluster data using K-Means clustering
         logger.info('Clustering the data')
