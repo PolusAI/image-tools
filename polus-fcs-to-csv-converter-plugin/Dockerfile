@@ -1,4 +1,4 @@
-FROM labshare/polus-bfio-util:1.0.7-slim-buster
+FROM python:3.6-slim-buster
 
 COPY VERSION /
 
