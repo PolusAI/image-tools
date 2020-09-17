@@ -144,6 +144,7 @@ def kmeans_cluster(data,cluster):
     classified_data = kmeans.labels_
     df_processed = data.copy()
     df_processed['Cluster'] = pd.Series(classified_data, index=df_processed.index)
+    df_processed['Cluster'] =  df_processed['Cluster'].astype(int) + 1
     return df_processed
 
 # Setup the argument parsing
@@ -207,7 +208,8 @@ def main():
         
         #split to get only the filename
         inpfilename = os.path.split(split_file)
-        file_name = inpfilename[-1]
+        file_name_csv = inpfilename[-1]
+        file_name,file_name1 = file_name_csv.split('.', 1)
         logger.info('Started reading the file ' + file_name)
         
         #Read the csv files using pandas

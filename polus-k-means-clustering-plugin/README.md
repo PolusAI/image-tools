@@ -27,7 +27,7 @@ Enter ending number of sequence in range function to determine k-value.
 ### Enter k-value:
 Enter k-value if you already know how many clusters are required.
 
-Note:
+## Note:
 1. Either 'Enter k-value' or 'Determine k-value' should be selected.
 2. If you have selected 'Determine k-value' methods and also have entered value in 'Enter k-value', then the value in 'Enter k-value' will be considered for clustering.
 3. If you have selected 'Determine k-value' methods, then you should also enter values for both 'maximumrange' and 'minimumrange'.
