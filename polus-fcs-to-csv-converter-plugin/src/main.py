@@ -6,6 +6,7 @@ Created on Wed Jun 24 16:14:58 2020
 """
 from pathlib import Path
 import fcsparser
+import os
 import argparse
 import logging
 
@@ -32,6 +33,7 @@ def fcs_csv(file,outDir):
     meta, data = fcsparser.parse(file, meta_data_only=False, reformat_meta=True)
     logger.info('Saving csv file ' + file_name)
     #Export the file as csv
+    os.chdir(outDir)
     export_csv = data.to_csv (r'%s.csv'%file_name, index = None, header=True,encoding='utf-8-sig')
     return export_csv
 
