@@ -1,6 +1,6 @@
 {
     "name": "Fcs to Csv file converter",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "title": "Fcs to Csv file converter",
     "description": "Converts fcs file to csv file",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,10 +8,10 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-fcs-to-csv-converter-plugin:0.2.0",
+    "containerId": "labshare/polus-fcs-to-csv-converter-plugin:0.2.1",
     "inputs": [      
       {
-        "name": "metaDir",
+        "name": "inpDir",
         "type": "collection",
         "description": "Fcs file collection",
         "required": "true"
@@ -26,7 +26,7 @@
     ],
     "ui": [
       {
-        "key": "inputs.metaDir",
+        "key": "inputs.inpDir",
         "title": "Fcs file collection",
         "description": "Fcs file collection"
       }        
