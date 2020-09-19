@@ -166,9 +166,13 @@ if __name__=="__main__":
     # Parse files
     fp = filepattern.FilePattern(inpDir,filePattern)
     
+    # A channel variable is expected, throw an error if it doesn't exist
+    if 'c' not in fp.variables:
+        raise ValueError('A channel variable is expected in the filepattern.')
+    
     count = 0
         
-    for files in fp.iterate(group_by='xypc'):
+    for files in fp.iterate(group_by=fp.variables):
         
         count += 1
         outDirFrame = outDir.joinpath('{}_files'.format(count))
