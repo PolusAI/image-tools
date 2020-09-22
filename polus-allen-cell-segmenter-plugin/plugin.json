@@ -1,0 +1,63 @@
+{
+    "name": "Allen Cell Structure Segmenter",
+    "version": "0.1.1",
+    "title": "Allen Cell Structure Segmenter",
+    "description": "The plugin integrates the allen cell structure segmenter into WIPP",
+    "author": "Gauhar Bains (gauhar.bains@labshare.org)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-allen-cell-structure-segmenter-plugin:0.1.1",
+    "inputs": [
+      {
+        "name": "configFile",
+        "type": "collection",
+        "description": "Configuration file for the workflow",
+        "required": true
+      },
+      {
+        "name": "inpDir",
+        "type": "collection",
+        "description": "Input image collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "workflow",
+        "type": "enum",
+        "options": {
+          "values":[
+            "Playground_dots",
+            "Playground_gja1",
+            "Playground_CurvyLinear"
+          ]
+        },
+        "description": "Workflow from the toolkit",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "collection",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.configFile",
+        "title": "Config File",
+        "description": "Configuration file for the workflow"
+      },
+      {
+        "key": "inputs.inpDir",
+        "title": "Input collection",
+        "description": "Input image collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.workflow",
+        "title": "Workflow Name",
+        "description": "Workflow from the toolkit"
+      }
+    ]
+  }
