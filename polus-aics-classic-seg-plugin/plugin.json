@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-allen-cell-structure-segmenter-plugin:0.1.1",
+    "containerId": "labshare/polus-aics-classic-seg-plugin:0.1.1",
     "inputs": [
       {
         "name": "configFile",
