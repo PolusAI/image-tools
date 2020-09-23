@@ -21,19 +21,6 @@
         "type": "collection",
         "description": "Input image collection to be processed by this plugin",
         "required": true
-      },
-      {
-        "name": "workflow",
-        "type": "enum",
-        "options": {
-          "values":[
-            "Playground_dots",
-            "Playground_gja1",
-            "Playground_CurvyLinear"
-          ]
-        },
-        "description": "Workflow from the toolkit",
-        "required": true
       }
     ],
     "outputs": [
@@ -53,11 +40,6 @@
         "key": "inputs.inpDir",
         "title": "Input collection",
         "description": "Input image collection to be processed by this plugin"
-      },
-      {
-        "key": "inputs.workflow",
-        "title": "Workflow Name",
-        "description": "Workflow from the toolkit"
       }
     ]
   }

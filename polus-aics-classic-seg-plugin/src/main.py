@@ -28,8 +28,7 @@ if __name__=="__main__":
                         help='Configuration file for the workflow', required=True)
     parser.add_argument('--inpDir', dest='inpDir', type=str,
                         help='Input image collection to be processed by this plugin', required=True)
-    parser.add_argument('--workflow', dest='workflow', type=str,
-                        help='Workflow from the toolkit', required=True)
+
     # Output arguments
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
@@ -43,12 +42,12 @@ if __name__=="__main__":
         # switch to images folder if present
         fpath = str(Path(args.inpDir).joinpath('images').absolute())
     logger.info('inpDir = {}'.format(inpDir))
-    workflow = args.workflow
-    logger.info('workflow = {}'.format(workflow))
+
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
     
     # load config file
+    """
     config_file_path = os.path.join(configFile[:-7],'metadata_files')
     metafiles=os.listdir(config_file_path)
     with open(os.path.join(config_file_path,metafiles[0])) as json_file:
@@ -56,6 +55,7 @@ if __name__=="__main__":
 
     """
     config_data = {
+        "workflow_name": "Playground4_Curvi",
         "intensity_scaling_param": [
             3.5,
             15
@@ -70,7 +70,7 @@ if __name__=="__main__":
         ],
         "minArea": 5
     }
-    """
+    
 
     # Surround with try/finally for proper error catching
     try:
@@ -95,12 +95,12 @@ if __name__=="__main__":
             #out_image = Playground_CurvyLinear.segment_image(image, config_data)
             
 
-            if workflow == 'Playground_CurvyLinear':
+            if config_data['workflow_name'] == 'Playground4_Curvi':
                 logger.info('executing {}'.format(workflow))
                 out_image = Playground_CurvyLinear.segment_image(image, config_data)
-            elif workflow == 'Playground_dots':
+            elif config_data['workflow_name'] == 'Playground_dots':
                 out_image = Playground_dots.segment_image(image, config_data)
-            elif workflow == 'Playground_gja1':
+            elif worconfig_data['workflow_name']kflow == 'Playground_gja1':
                 out_image = Playground_gja1.segment_image(image, config_data)
             
             cv2.imwrite(os.path.join(outDir,f), out_image[0,:,:])
