@@ -159,7 +159,6 @@ def main():
                                                                                                                                 val_instack,
                                                                                                                                 stack_count-1)
 
-            print(processstring_plus)
             processes.append(subprocess.Popen(processstring_plus, shell=True))
             im_count = (stack_count)*(heightofstack) 
             process_timer.append(time.time())
