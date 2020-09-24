@@ -5,50 +5,22 @@ import os
 from filepattern import FilePattern as fp
 import numpy as np
 
-def zslicefunction(input_dir, output_dir, pyramid_type, imagetype):
+def checkprocesslen(processes, process_timer, pnum):
+    if len(processes) >= multiprocessing.cpu_count()-1 and len(processes)>0:
+        free_process = -1
+        while free_process<0:
+            for process in range(len(processes)):
+                if processes[process].poll() is not None:
+                    free_process = process
+                    break
+            time.sleep(3)
+        
+        pnum += 1
+        logger.info("Finished process {} in {}s!".format(pnum, time.time() - process_timer[free_process]))
+        del processes[free_process]
+        del process_timer[free_process]
 
-    # Get a list of all images in a directory
-    logger.info('Getting the images...')
-    image_path = Path(input_dir)
-    images = [i for i in image_path.iterdir()]
-    images.sort()
-    
-    
-    # Set up lists for tracking processes
-    processes = []
-    process_timer = []
-    pnum = 0
-    
-    # Build one pyramid for each image in the input directory
-    # Each pyramid is built within its own process, with a maximum number of processes
-    # equal to number of cpus - 1.
-    im_count = 1
-    for image in images:
-        if len(processes) >= multiprocessing.cpu_count()-1 and len(processes)>0:
-            free_process = -1
-            while free_process<0:
-                for process in range(len(processes)):
-                    if processes[process].poll() is not None:
-                        free_process = process
-                        break
-                time.sleep(3)
-                
-            pnum += 1
-            logger.info("Finished process {} of {} in {}s!".format(pnum,len(images),time.time() - process_timer[free_process]))
-            del processes[free_process]
-            del process_timer[free_process]
-            
-        processes.append(subprocess.Popen("python3 build_pyramid_zslices.py --inpDir '{}' --outDir '{}' --pyramidType '{}' --image {} --imageNum '{}' --imageType '{}'".format(input_dir,
-                                                                                                                                              output_dir,
-                                                                                                                                              pyramid_type,
-                                                                                                                                              '"' + image.name + '"',
-                                                                                                                                              im_count,
-                                                                                                                                              imagetype),
-                                                                                                                                        shell=True))
-        im_count += 1
-        process_timer.append(time.time())
-    
-    # Wait for all processes to finish
+def whilewaitprocess(processes, process_timer, pnum):
     while len(processes)>1:
         free_process = -1
         while free_process<0:
@@ -58,17 +30,23 @@ def zslicefunction(input_dir, output_dir, pyramid_type, imagetype):
                     break
             time.sleep(3)
         pnum += 1
-        logger.info("Finished process {} of {} in {}s!".format(pnum,len(images),time.time() - process_timer[free_process]))
+        logger.info("Finished process {} in {}s!".format(pnum, time.time() - process_timer[free_process]))
         del processes[free_process]
         del process_timer[free_process]
-
-    processes[0].wait()
     
-    logger.info("Finished process {} of {} in {}s!".format(len(images),len(images),time.time() - process_timer[0]))
-    logger.info("Finished all processes!")
 
+def zslicefunction(input_dir, output_dir, pyramid_type, imagetype):
 
-def stackbyfunction(input_dir, output_dir, pyramid_type, stack_by, imagepattern, imagetype):
+    # Get a list of all images in a directory
+    logger.info('Getting the images...')
+    image_path = Path(input_dir)
+    images = [i for i in image_path.iterdir()]
+    images.sort()
+    
+    return images
+
+def stackbyfunction(input_dir, stack_by, imagepattern):
+
     imagepattern = str(imagepattern)
     regex = filepattern.get_regex(pattern = imagepattern)
     regexzero = regex[0]
@@ -96,7 +74,6 @@ def stackbyfunction(input_dir, output_dir, pyramid_type, stack_by, imagepattern,
                 else:
                     vals_instack[-1] = vals_instack[-1] + " " + str(filesitem[char])
             break
-    numberofstacks = len(organizedheights)
 
     logger.info("Height of the {} Stacks: {}".format(len(organizedheights), organizedheights))
     
@@ -106,68 +83,8 @@ def stackbyfunction(input_dir, output_dir, pyramid_type, stack_by, imagepattern,
     if len(organizedheights) == 0:
         raise ValueError("There are no images to stack (image pattern may be incorrect)")
 
-        # Set up lists for tracking processes
-    processes = []
-    process_timer = []
-    pnum = 0
-    
-    # Build one pyramid for each image in the input directory
-    # Each stack is built within its own process, with a maximum number of processes
-    # equal to number of cpus - 1.
-    stack_count = 1
-    im_count = 1
-    for iterate in fp.iterate(fpobject, group_by=stack_by):
-        val_instack = vals_instack[stack_count - 1]
-        heightofstack = organizedheights[stack_count -1]
-        if len(processes) >= multiprocessing.cpu_count()-1 and len(processes)>0:
-            free_process = -1
-            while free_process<0:
-                for process in range(len(processes)):
-                    if processes[process].poll() is not None:
-                        free_process = process
-                        break
-                time.sleep(3)
-                
-            pnum += 1
-            logger.info("Finished stack process {} of {} in {}s (Stacked {} images out of {} images)!".
-                        format(pnum,numberofstacks,time.time() - process_timer[free_process], im_count, sum(organizedheights)))
-            del processes[free_process]
-            del process_timer[free_process]
-            
-        processes.append(subprocess.Popen("python3 build_pyramid_stitched.py --inpDir '{}' --outDir '{}' --pyramidType '{}' --imageNum '{}' --stackheight '{}' --stackby '{}' --varsinstack '{}' --valinstack '{}' --imagepattern '{}' --stackcount '{}' --imageType '{}'".format(input_dir,
-                                                                                                                                            output_dir,
-                                                                                                                                            pyramid_type,
-                                                                                                                                            im_count,
-                                                                                                                                            heightofstack,
-                                                                                                                                            stack_by,
-                                                                                                                                            vars_instack,
-                                                                                                                                            val_instack,
-                                                                                                                                            imagepattern,
-                                                                                                                                            stack_count - 1,
-                                                                                                                                            imagetype),
-                                                                                                                                        shell=True))
-        im_count = (stack_count)*(heightofstack) 
-        process_timer.append(time.time())
-        stack_count = stack_count + 1
-    
-    # Wait for all processes to finish
-    while len(processes)>1:
-        free_process = -1
-        while free_process<0:
-            for process in range(len(processes)):
-                if processes[process].poll() is not None:
-                    free_process = process
-                    break
-            time.sleep(3)
-        pnum += 1
-        logger.info("Finished stack process {} of {} in {}s!".format(pnum,numberofstacks,time.time() - process_timer[free_process]))
-        del processes[free_process]
-        del process_timer[free_process]
+    return fpobject, vals_instack, vars_instack, organizedheights
 
-    processes[0].wait()
-    
-    logger.info("Finished stack process {} of {} in {}s!".format(numberofstacks,numberofstacks,time.time() - process_timer[0]))
-    logger.info("Finished all processes!")
 
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -210,11 +127,72 @@ def main():
     logger.info('image pattern = {} ({})'.format(imagepattern, type(imagepattern)))
     logger.info('images are stacked by variable {}'.format(stack_by))
 
+    # Set up lists for tracking processes
+    processes = []
+    process_timer = []
+    pnum = 0
+
+    # variables to keep track of processes
+    im_count = 1
+    stack_count = 1
+
+    processstring = " --inpDir '{}' --outDir '{}' --pyramidType '{}' --imageType '{}'".format(input_dir, 
+                                                                                            output_dir,
+                                                                                            pyramid_type,
+                                                                                            image_type)
+
     # if imagepattern or image type specified then images get stacked by the stack_by variables
     if stack_by != None or imagepattern != None:
-        stackbyfunction(input_dir, output_dir, pyramid_type, stack_by, imagepattern, image_type)
+        fpobject, vals_instack, vars_instack, organizedheights = stackbyfunction(input_dir, stack_by, imagepattern)
+        numberofstacks = len(organizedheights)
+        processstring = "python3 build_pyramid_stitched.py" + processstring + " --stackby " + stack_by + " --imagepattern '" + imagepattern + "' --varsinstack " + vars_instack
+
+        # Build one pyramid for each image in the input directory
+        # Each stack is built within its own process, with a maximum number of processes
+        # equal to number of cpus - 1.
+        for iterate in fp.iterate(fpobject, group_by=stack_by):
+            val_instack = vals_instack[stack_count - 1]
+            heightofstack = organizedheights[stack_count -1]
+            checkprocesslen(processes, process_timer, pnum)
+            processstring_plus = processstring + " --imageNum '{}' --stackheight '{}' --valinstack {} --stackcount '{}'".format(im_count,
+                                                                                                                                heightofstack,
+                                                                                                                                val_instack,
+                                                                                                                                stack_count-1)
+
+            print(processstring_plus)
+            processes.append(subprocess.Popen(processstring_plus, shell=True))
+            im_count = (stack_count)*(heightofstack) 
+            process_timer.append(time.time())
+            stack_count = stack_count + 1
+        
+        # Wait for all processes to finish
+        whilewaitprocess(processes, process_timer, pnum)
+        processes[0].wait()
+        
+        logger.info("Finished stack process {} of {} in {}s!".format(numberofstacks,numberofstacks,time.time() - process_timer[0]))
+        logger.info("Finished all processes!")
+
+
     else:
-        zslicefunction(input_dir, output_dir, pyramid_type, image_type)
+        images = zslicefunction(input_dir, output_dir, pyramid_type, image_type)
+        processstring = "python3 build_pyramid_zslices.py" + processstring
+
+        for image in images:
+
+            appendtoprocess = ' --image {} --imageNum {}'.format('"' + image.name + '"', im_count)
+            processstring_plus = processstring + appendtoprocess
+
+            checkprocesslen(processes, process_timer, pnum)
+                
+            processes.append(subprocess.Popen(processstring_plus, shell=True))
+            im_count += 1
+            process_timer.append(time.time())
+        
+        whilewaitprocess(processes, process_timer, pnum)
+        processes[0].wait()
+        
+        logger.info("Finished process {} of {} in {}s!".format(len(images),len(images),time.time() - process_timer[0]))
+        logger.info("Finished all processes!")
 
 if __name__ == "__main__":
     main()
