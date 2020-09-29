@@ -37,8 +37,8 @@
 	"ui": [
 		{
 			"key": "inputs.input-collection",
-			"title": "Input Collection: ",
-			"description": "Pick input collection..."
+			"title": "Image Collection: ",
+			"description": "Pick a collection..."
 		},
 		{
 			"key": "inputs.config-file",
