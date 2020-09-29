@@ -15,8 +15,8 @@ Enter column names that need to be excluded from the annlysis.
 ### Methods:
 There are 3 options:
 1. Primary factors - If only the relationship between primary factors and the column to be predicted is required, then choose this option.
-2. Interaction - To find how interaction of variables affect the response, choose interactions.
-3. Second order - To find second order effect use this option.
+2. Interaction - To find how interaction of variables affect the response, choose interactions for two-way interaction.
+3. Second order - To find second order effect use this option. Degree is 2.
 
 ### Modeltype:
 Choose any one of the modeltype - binomial or gaussian or Gamma or inverse.gaussian or poisson or quasi or quasibinomial or quasipoisson or negativebinomial based on the distribution of dataset.

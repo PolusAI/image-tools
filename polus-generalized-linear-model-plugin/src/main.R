@@ -3,7 +3,6 @@ suppressWarnings(library("MASS"))
 suppressWarnings(library("DescTools"))
 suppressWarnings(library("logging"))
 suppressWarnings(library("broom"))
-suppressWarnings(library("dplyr"))
 
 # Initialize the logger
 basicConfig()
@@ -55,11 +54,11 @@ loginfo('inpfile = %s', inpfile)
 #Column to be predicted
 predictcolumn <- args$predictcolumn
 loginfo('predictcolumn = %s', predictcolumn)
-
+  
 #Columns to be excluded
 exclude_col <- args$exclude
-exclude<-as.list(strsplit(exclude_col, ",")[[1]])
-loginfo('exclude = %s', exclude)
+excludes<-as.list(strsplit(exclude_col, ",")[[1]])
+loginfo('exclude = %s', excludes)
 
 #Select glmmethod-primary or interaction or secondorder
 glmmethod <- args$glmmethod
@@ -84,59 +83,99 @@ files_to_read = list.files(
 
 #Check whether there are csv files in the directory
 if(length(files_to_read) == 0) {
-  tryCatch(error = function(e) { message('No .csv files in the directory')})
+    tryCatch(
+      error = function(e) { 
+        message('No .csv files in the directory')
+      }
+    )
 }
 
 #Read the csv files
 datalist = lapply(files_to_read, read.csv)
 
-for (dataset in datalist){
-for (file_csv in files_to_read){
-#Check whether any column needs to be excluded
-if(length(exclude) > 0){
-datasub <-dataset[ , !(names(dataset) %in% exclude)]}
-else if(length(exclude) == 0){
-datasub<-dataset}
-predictcolumns = eval(parse(text=paste("datasub$", predictcolumn, sep = "")))
-if (!(modeltype == 'binomial')) {
-  poly_check = as.formula(paste('predictcolumns ~',paste('poly(',colnames(datasub[-1]),',2,raw=TRUE)',collapse = ' + ')))
-}else if (modeltype == 'binomial') {
-  poly_check = as.formula(paste('as.factor(predictcolumns) ~',paste('poly(',colnames(datasub[-1]),',2,raw=TRUE)',collapse = ' + ')))
-}
-#Model data based on the options selected
-if (glmmethod == 'PrimaryFactors') {
-  if(!(modeltype == 'NegativeBinomial') && !(modeltype == 'binomial') && !(modeltype == 'quasibinomial')){
-  test_glm <- glm(predictcolumns ~., data = datasub, family = modeltype)
-}else if (modeltype == 'NegativeBinomial'){
-  test_glm <- glm.nb(predictcolumns ~ ., data = datasub)
-}else if ((modeltype == 'binomial') || (modeltype == 'quasibinomial')){
-  test_glm <- glm(as.factor(predictcolumns) ~ ., data = datasub, family = modeltype)
-}}else if (glmmethod == 'Interaction') {
-  if(!(modeltype == 'NegativeBinomial') && !(modeltype == 'binomial') && !(modeltype == 'quasibinomial')){
-  test_glm <- glm(predictcolumns ~ (.)^2, data = datasub, family = modeltype)
-}else if (modeltype == 'NegativeBinomial'){
-  test_glm <- glm.nb(predictcolumns ~ (.)^2, data = datasub)
-}else if ((modeltype == 'binomial') || (modeltype == 'quasibinomial')){
-  test_glm <- glm(as.factor(predictcolumns) ~ (.)^2, data = datasub, family = modeltype)
-}}else if (glmmethod == 'SecondOrder') {
-  if(!(modeltype == 'NegativeBinomial')&& !(modeltype == 'binomial') && !(modeltype == 'quasibinomial')){
-  test_glm <- glm(poly_check, data = datasub, family = modeltype)
-}else if (modeltype == 'NegativeBinomial'){
-  test_glm <- glm.nb(poly_check, data = datasub)
-}else if ((modeltype == 'binomial') || (modeltype == 'quasibinomial')){
-  test_glm <- glm(poly_check, data = datasub, family = modeltype)
-}}
+for (dataset in datalist) {
+  for (file_csv in files_to_read) {
+    #Get filename
+    file_name <- SplitPath(file_csv)$filename
+    
+    #Check whether any column needs to be excluded
+    if(length(excludes) > 0) {
+      for (i in 1:length(excludes)) {
+        if(!excludes[i] %in% colnames(dataset)) {
+          logwarn('column to exclude from %s is not found',file_name)
+        }
+      }
+      datasub <-dataset[ , !(names(dataset) %in% excludes)]
+    }
+    else if(length(excludes) == 0) {
+      datasub<-dataset
+    }
+    
 
-#Set output directory
-setwd(csvfile)
-#Get filename
-file_name <- SplitPath(file_csv)$filename
-file_save <- paste0(file_name,".csv")
-#COnvert summary of the analysis to a dataframe
-tidy_summary <- tidy(test_glm)
-#Reorder the columns
-tidy_che <- tidy_summary[c("term", "p.value", "estimate","std.error")]
-tidy_final <- tidy_che %>% rename(Factor = term)
-#Write the dataframe to csv file
-write.csv(tidy_final, file_save)}}
+    #Check whether predict column is present in dataframe
+    if(!(predictcolumn %in% colnames(datasub))) {
+      logwarn('predict column name is not found in %s',file_name)
+      next
+    }
+    
+    #Get column names without predict variable
+    drop_dep <- datasub[ , !(names(datasub) %in% predictcolumn)]
+    resp_var <- colnames(drop_dep)
+    
+    if(!(modeltype == 'NegativeBinomial') || !(modeltype == 'Gamma')) {
+      modeltype <- tolower(modeltype)
+    }
+
+    #Model data based on the options selected
+    if (glmmethod == 'PrimaryFactors') {
+      if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi') || (modeltype == 'inverse.gaussian')) {
+        test_glm <- glm(as.formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")),data = datasub, family = modeltype)
+      }
+      else if (modeltype == 'NegativeBinomial') {
+        test_glm <- glm.nb(as.formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), data = datasub)
+      }
+      else if ((modeltype == 'binomial') || (modeltype == 'quasibinomial')) {
+        test_glm <- glm(as.formula(paste(paste("as.factor(",predictcolumn,")"),paste(resp_var,collapse= "+"),sep="~")), data = datasub, family = modeltype)
+      }
+    }
+    
+    else if (glmmethod == 'Interaction') {
+      if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi') || (modeltype == 'inverse.gaussian')) {
+        test_glm <- glm(as.formula(paste(predictcolumn,paste('(',paste(resp_var,collapse= "+"),')^2'),sep="~")), data = datasub, family = modeltype)
+      }
+      else if (modeltype == 'NegativeBinomial') {
+        test_glm <- glm.nb(as.formula(paste(predictcolumn,paste('(',paste(resp_var,collapse= "+"),')^2'),sep="~")), data = datasub)
+      }
+      else if ((modeltype == 'binomial') || (modeltype == 'quasibinomial')) {
+        test_glm <- glm(as.formula(paste(paste("as.factor(",predictcolumn,")"),paste('(',paste(resp_var,collapse= "+"),')^2'),sep="~")), data = datasub, family = modeltype)
+      }
+    }
+    
+    else if (glmmethod == 'SecondOrder') {
+      if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi') || (modeltype == 'inverse.gaussian')) {
+        test_glm <- glm(as.formula(paste(predictcolumn,paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")),data=datasub,family = modeltype)
+      }
+      else if (modeltype == 'NegativeBinomial') {
+        test_glm <- glm.nb(as.formula(paste(predictcolumn,paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")), data = datasub)
+      }
+      else if ((modeltype == 'binomial') || (modeltype == 'quasibinomial')) {
+        test_glm <- glm(as.formula(paste(paste("as.factor(",predictcolumn,")"),paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")),data=datasub,family = modeltype)
+      }
+    }
+
+    #Set output directory
+    setwd(csvfile)
+    file_save <- paste0(file_name,".csv")
+    
+    #Convert summary of the analysis to a dataframe
+    tidy_summary <- tidy(test_glm)
+    
+    #Reorder the columns
+    tidy_final <- tidy_summary[c("term", "p.value", "estimate","std.error")]
+    colnames(tidy_final) <- c("Factors","P-Value","Estimate","Std.Error")
+    
+    #Write the dataframe to csv file
+    write.csv(tidy_final, file_save)
+  }
+}
 
