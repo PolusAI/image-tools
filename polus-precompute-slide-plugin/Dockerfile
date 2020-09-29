@@ -1,5 +1,5 @@
 # Get image containing bfio
-FROM labshare/polus-bfio-util:1.0.4
+FROM labshare/polus-bfio-util:2.4.2-slim-buster
 
 COPY VERSION /
 		
@@ -15,6 +15,8 @@ RUN mkdir -p ${EXEC_DIR} \
 COPY src ${EXEC_DIR}/
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
+
+RUN python3 ${EXEC_DIR}/dl_fi.py
 
 WORKDIR ${EXEC_DIR}
 

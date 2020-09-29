@@ -1,9 +1,14 @@
 import logging, argparse, bioformats
-import javabridge as jutil
 from bfio.bfio import BioReader, BioWriter
 from pathlib import Path
 import utils
 import filepattern
+from filepattern import FilePattern as fp
+import os
+import itertools
+import numpy as np
+from multiprocessing import cpu_count
+
 
 if __name__=="__main__":
     # Setup the Argument parsing
@@ -23,15 +28,18 @@ if __name__=="__main__":
                         help='Variable that the images get stacked by', required=True)
     parser.add_argument('--varsinstack', dest='vars_instack', type=str,
                         help='Variables that the stack shares', required=True)
-    parser.add_argument('--valsinstack', dest='vals_instack', type=int, nargs='+',
+    parser.add_argument('--valinstack', dest='vals_instack', type=int, nargs='+',
                         help='Values of variables that the stack shares', required=True)
     parser.add_argument('--imagepattern', dest='image_pattern', type=str,
                         help='Filepattern of the images in input', required=True)
+    parser.add_argument('--stackcount', dest='stack_count', type=int,
+                        help='The stack number', required=True)
+    parser.add_argument('--imageType', dest='image_type', type=str,
+                        help='Image type: either image or segmentation', required=True)
 
     args = parser.parse_args()
     input_dir = args.input_dir
     output_dir = args.output_dir
-    # image = args.image
     pyramid_type = args.pyramid_type
     image_num = args.image_num
     stackheight = args.stack_height
@@ -39,30 +47,39 @@ if __name__=="__main__":
     varsinstack = args.vars_instack
     valsinstack = args.vals_instack
     imagepattern = args.image_pattern
-
-    # Get images that are stacked together
-    filesbuild = commonfiles = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=varsinstack)
-    channels = utils.recursivefiles(filesbuild[0], varsinstack, valsinstack, stackheight)
-    image = channels[0]
+    stackcount = args.stack_count
+    imagetype = args.image_type
+    # fpobject = args.fp_object
 
     # Initialize the logger    
-    logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(image),
+    logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(valsinstack),
                         datefmt='%d-%b-%y %H:%M:%S')
     logger = logging.getLogger("build_pyramid")
-    logger.setLevel(logging.INFO)  
+    logger.setLevel(logging.INFO) 
 
     logger.info("Starting to build...")
-    logger.info("Variables in Stack {}".format(varsinstack))
-    logger.info("Values of Variables in Stack {}".format(valsinstack))
-    
-    # Initialize the javabridge
-    logger.info('Initializing the javabridge...')
-    log_config = Path(__file__).parent.joinpath("log4j.properties")
-    jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
+    logger.info("{} values in stack are {}, respectively".format(varsinstack, valsinstack))
 
-    # Get images that are stacked together
-    filesbuild = commonfiles = filepattern.parse_directory(input_dir, pattern=imagepattern, var_order=varsinstack)
-    channels = utils.recursivefiles(filesbuild[0], varsinstack, valsinstack, stackheight)
+
+    # logger.info("Combos {}".format(com))
+    fpobject = fp(input_dir, imagepattern, var_order=varsinstack)
+    channels = []
+    channelvals = []
+    
+    i = 0
+    for item in fp.iterate(fpobject, group_by=stackby):
+        if i == stackcount:
+            for file in item:
+                channels.append(Path(file['file']))
+                base = os.path.basename(channels[-1])
+                parsed = filepattern.parse_filename(base, pattern=imagepattern)
+                channelvals.append(parsed[stackby])
+            break
+        else:
+            i = i +1
+    image = channels[0]
+
+    logger.info("{} values in stack: {}".format(stackby, channelvals))
 
     # Make the output directory
     if pyramid_type == "Neuroglancer":
@@ -71,14 +88,15 @@ if __name__=="__main__":
         out_dir = Path(output_dir).joinpath('{}_files'.format(image_num))
     out_dir.mkdir()
     out_dir = str(out_dir.absolute())
-    
+
     # Create the BioReader object
     logger.info('Getting the BioReader...')
-    bf = BioReader(str(image.absolute()))
-    
+    bf = BioReader(str(image.absolute()),max_workers=max([cpu_count()-1,2]))
+    depth = bf.num_z()
+
     # Create the output path and info file
     if pyramid_type == "Neuroglancer":
-        file_info = utils.neuroglancer_info_file(bf,out_dir,stackheight)
+        file_info = utils.neuroglancer_info_file(bf,out_dir,stackheight, imagetype)
     elif pyramid_type == "DeepZoom":
         file_info = utils.dzi_file(bf,out_dir,image_num)
     else:
@@ -87,27 +105,42 @@ if __name__=="__main__":
     logger.info("num_channels: {}".format(file_info['num_channels']))
     logger.info("number of scales: {}".format(len(file_info['scales'])))
     logger.info("type: {}".format(file_info['type']))
-    
+
+
     # Create the classes needed to generate a precomputed slice
     logger.info("Creating encoder and file writer...")
     if pyramid_type == "Neuroglancer":
         encoder = utils.NeuroglancerChunkEncoder(file_info)
         file_writer = utils.NeuroglancerWriter(out_dir)
+        
     elif pyramid_type == "DeepZoom":
         encoder = utils.DeepZoomChunkEncoder(file_info)
         file_writer = utils.DeepZoomWriter(out_dir)
-    
+
+    # if imageType is segmentation, then populate ids with the label value
+    ids = []
     # Create the stacked images
     if pyramid_type == "Neuroglancer":
-        logger.info("Stack contains {} Levels".format(stackheight))
+        logger.info("Stack contains {} Levels (Stack's height)".format(stackheight))
         for i in range(0, stackheight):
+            channelvalue = channelvals[i]
+            channel = channels[i]
+
             if i == 0:
-                utils._get_higher_res(0, i, bf,file_writer,encoder)
+                utils._get_higher_res(0, channelvalue-1, bf, file_writer,encoder, imageType = imagetype, ids=ids, slices=[0,1])
             else:
                 bf = BioReader(str(channels[i].absolute()))
-                utils._get_higher_res(0, i, bf,file_writer,encoder)
-            logger.info("Finished Level {} in Stack".format(i))
-    
+                depth = bf.num_z()
+                utils._get_higher_res(0, channelvalue-1, bf, file_writer,encoder, imageType = imagetype, ids=ids, slices=[0,1])
+
+            if depth == 1:
+                logger.info("Finished Level {}/{} in Stack ({})".format(i+1, stackheight, channel))
+            else:
+                logger.info("Finished Level {}/{} in Stack ({})".format(i+1, stackheight, channel))
+                logger.info("IMAGE IN STACK HAD A Z DIMENSION OF {} UNITS".format(depth))
+                logger.info("Only processed Z dimension [0, 1]")
+
+        if imagetype == "segmentation":
+            out_seginfo = utils.segmentinfo(encoder,ids,out_dir)
+
     logger.info("Finished precomputing. Closing the javabridge and exiting...")
-    jutil.kill_vm()
-    
