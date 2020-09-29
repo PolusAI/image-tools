@@ -201,7 +201,7 @@ def transform_data_log(data,column_names):
             # x + y + 1= bincount
                 # where x is the number of bins used for the smaller range
                 # where y is the number of bins used for the larger range
-                # where the +1 is for values that fall between -a1 and +a1
+                # where the +1 is for values that fall between -a1 and +a1 (-a1 is -alpha, +a1 is +alpha)
             # small = alpha*(r^(x-1)) --> log(r)[small/alpha] = x -1
             # large = alpha*(r^(y-1)) --> log(r)[large/alpha] = y - 1
             # Combining all equations we get the following: 
@@ -217,12 +217,6 @@ def transform_data_log(data,column_names):
 
         num_bins_for_smallrange[small_lessthanalpha] = 0
         num_bins_for_largerange[large_lessthanalpha] = 0
-
-        # for i in range(0, len(num_bins_for_smallrange)):
-        #     print(num_bins_for_smallrange[i], num_bins_for_largerange[i])
-
-        # check to see if total bins == bincount - 1
-        # total_bins_correct = num_bins_for_smallrange.add(num_bins_for_largerange)
 
         posbinslarge = num_bins_for_largerange[ispositivebigger.iloc[:] == True]
         posbinssmall = num_bins_for_smallrange[ispositivebigger.iloc[:] == False]
@@ -677,22 +671,6 @@ def gen_plot(col1,
             ax.axhline(y=axiszero[r])
         else:
             ax.axhline(y=axiszero[r] + 0.5)
-    
-    # UNCOMMENT TO USE, HELPS TO DEBUG.
-    # textlist = []
-    # if len(ax.texts) == 0:
-    #     for i in range(0, bincount):  
-    #         for j in range(0, bincount):
-    #             textingraph = ax.text(j + 0.5, i + 0.5, d[i,j], ha="center", va = "center", fontsize = 2.5)
-    #             textlist.append([i, j])
-    # else:
-    #     for txt in ax.texts:
-    #         print(txt, type(txt))
-    #         pos = str(txt)[5:-1]
-    #         pos = pos.split(",")
-    #         i = float(pos[1])
-    #         j = float(pos[0])
-    #         txt.set_text(d[int(i - 0.5),int(j - 0.5)])
 
     fig.canvas.draw()
     hmap = np.array(fig.canvas.renderer.buffer_rgba())
@@ -1160,11 +1138,6 @@ if __name__=="__main__":
         end_log = time.time()
         totaltime_log = end_log - start_log
         del data_log # get rid of the original data to save memory
-
-        # print("Time it took to bin the linear data: ", totaltime_linear)
-        # print("Time it took to bin the log data: ", totaltime_log )
-        # print("Binning log data is", totaltime_log/totaltime_linear, "times faster")
-        # print(" ")
 
         # Generate the default figure components
         log_logger.info('Generating colormap and default figure...')
