@@ -1,20 +1,35 @@
 {
   "name": "Graph Pyramid Building Plugin",
-  "version": "1.0.2",
+  "version": "1.1.11",
   "title": "Graph Pyramid Building",
   "description": "Generates heatmaps from the data in a csv and builds a DeepZoom pyramid for visualization.",
-  "author": "Nick Schaub (nick.schaub@nih.gov)",
+  "author": "Madhuri Vihani (Madhuri.Vihani@nih.gov), Nick Schaub (Nick.Schaub@nih.gov)",
   "institution": "National Center for the Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "labshare/polus-graph-pyramid-builder-plugin:1.0.2",
+  "containerId": "labshare/polus-graph-pyramid-builder-plugin:1.1.11",
   "inputs": [
 
     {
       "name": "inpDir",
       "type": "csvCollection",
       "description": "Input collection",
+      "required": true
+    },
+    {
+      "name": "bincount",
+      "type": "enum",
+      "options": {
+        "values": [
+          "200",
+          "150",
+          "100",
+          "50",
+          "20"
+        ]
+      },
+      "description": "The number of bins in each graph",
       "required": true
     }
   ],
@@ -30,6 +45,12 @@
       "key": "inputs.inpDir",
       "title": "Input CSV collection: ",
       "description": "Collection name..."
+    },
+    {
+      "key": "inputs.bincount",
+      "title": "Bincount",
+      "description": "The number of bins for each column of data, less than 255 and must be even."
     }
   ]
 }
+
