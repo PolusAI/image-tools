@@ -47,7 +47,7 @@ This plugin takes eight input argument and one output argument:
 | `--inpdir` | Input csv collection| Input | csvCollection |
 | `--predictcolumn` | Column need to be predicted | Input | enum|
 | `--exclude` | Enter columns to be excluded| Input | string |
-| `--glmmethod` | Analyse either primaryfactors or interaction or second order effects for modeling | enum |
+| `--glmmethod` | Analyse either primaryfactors or interaction or second order effects for modeling | Input | enum |
 | `--modeltype` | Select the distribution to be considered for modeling| Input | enum |
 | `--outdir` | Output collection | Output | csvCollection |
 
