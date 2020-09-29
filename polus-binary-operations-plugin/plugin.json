@@ -1,0 +1,106 @@
+{
+  "name": "Binary Operations Plugin",
+  "version": "0.2.2",
+  "containerId": "mmvihani/polus-binary-operations-plugin:0.1.27",
+  "title": "Binary Operations Plugin",
+  "description": "Everything you need to start a WIPP plugin.",
+  "author": "Data Scientist (data.scientist@labshare.org)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "inputs": [
+    {
+      "name": "inpDir",
+      "description": "Input image collection to be processed by this plugin",
+      "type": "collection",
+      "options": null,
+      "required": true
+    },
+    {
+      "name": "kernelsize",
+      "description": "Kernel size that should be used for transformation",
+      "type": "number",
+      "options": null,
+      "required": true
+    },
+    {
+      "name": "Operation",
+      "description": "The Binary Operations that will be done on the image",
+      "type": "enum",
+      "options": {
+        "values": [
+          "invertion",
+          "opening",
+          "closing",
+          "morphological_gradient",
+          "dilation",
+          "erosion",
+          "skeleton",
+          "fill_holes",
+          "hit_or_miss",
+          "filter_area",
+          "top_hat",
+          "black_hat"
+        ]
+      },
+      "required": true
+    },
+    {
+      "name": "structuringshape",
+      "description": "Structuring Shape (Default is Elliptical)",
+      "type": "enum",
+      "options": {
+        "values": [
+          "Elliptical",
+          "Rectangular",
+          "Cross"
+        ]
+      },
+      "required": true
+    },
+    {
+      "name": "HOMarray",
+      "description": "Array that we are searching for. Ex: [0, 0, 0], [0, 0, 0], [0, 0, 0]",
+      "type": "string",
+      "options": null,
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "description": "Output collection",
+      "type": "collection",
+      "options": null,
+      "required": true
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.Operation",
+      "title": "Operations",
+      "description": "Operations that will be used on image"
+    },
+    {
+      "key": "inputs.inpDir",
+      "title": "Input collection",
+      "description": "Input image collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.kernelsize",
+      "title": "Default Kernel Size",
+      "description": "Default Kernel Size to use for Operations"
+    },
+    {
+      "key": "inputs.structuringshape",
+      "title": "Structuring Shape (Default is Elliptical)",
+      "description": "Default Kernel Size to use for Operations"
+    },
+    {
+      "key": "inputs.HOMarray",
+      "title": "Hit or Miss Array",
+      "description": "Array that we are searching for"
+    }
+  ]
+}
