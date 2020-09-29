@@ -218,13 +218,13 @@ def transform_data_log(data,column_names):
         num_bins_for_smallrange[small_lessthanalpha] = 0
         num_bins_for_largerange[large_lessthanalpha] = 0
 
-        posbinslarge = num_bins_for_largerange[ispositivebigger.iloc[:] == True]
+        posbinslarge = num_bins_for_largerange[ispositivebigger.iloc[:]]
         posbinssmall = num_bins_for_smallrange[ispositivebigger.iloc[:] == False]
         posbins = posbinslarge.append(posbinssmall)
         
 
         negbinslarge = num_bins_for_largerange[ispositivebigger.iloc[:] == False]
-        negbinssmall = num_bins_for_smallrange[ispositivebigger.iloc[:] == True]
+        negbinssmall = num_bins_for_smallrange[ispositivebigger.iloc[:]]
         negbins = negbinslarge.append(negbinssmall)
         negbinsframe = negbins.to_frame().transpose()
         negbinsframe = negbinsframe.loc[negbinsframe.index.repeat(datalen)].reset_index(drop=True)
