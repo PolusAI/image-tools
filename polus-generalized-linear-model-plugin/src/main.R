@@ -29,7 +29,7 @@ addModelArgs <- function(parser) {
   invisible(NULL)
 }
 addOutputArgs <- function(parser) {
-  parser$add_argument("--outfile", type = "character",help="Output csv file")
+  parser$add_argument("--outdir", type = "character",help="Output csv file")
   invisible(NULL)
 }
 getAllParser <- function() {
@@ -54,7 +54,7 @@ loginfo('inpfile = %s', inpfile)
 #Column to be predicted
 predictcolumn <- args$predictcolumn
 loginfo('predictcolumn = %s', predictcolumn)
-  
+
 #Columns to be excluded
 exclude_col <- args$exclude
 excludes<-as.list(strsplit(exclude_col, ",")[[1]])
@@ -69,7 +69,7 @@ modeltype <- args$modeltype
 loginfo('modeltype = %s', modeltype)
 
 #Path to save output csvfiles
-csvfile <- args$outfile
+csvfile <- args$outdir
 loginfo('csvfile = %s', csvfile)
 
 
@@ -83,11 +83,11 @@ files_to_read = list.files(
 
 #Check whether there are csv files in the directory
 if(length(files_to_read) == 0) {
-    tryCatch(
-      error = function(e) { 
-        message('No .csv files in the directory')
-      }
-    )
+  tryCatch(
+    error = function(e) { 
+      message('No .csv files in the directory')
+    }
+  )
 }
 
 #Read the csv files
@@ -111,7 +111,7 @@ for (dataset in datalist) {
       datasub<-dataset
     }
     
-
+    
     #Check whether predict column is present in dataframe
     if(!(predictcolumn %in% colnames(datasub))) {
       logwarn('predict column name is not found in %s',file_name)
@@ -125,7 +125,7 @@ for (dataset in datalist) {
     if(!(modeltype == 'NegativeBinomial') || !(modeltype == 'Gamma')) {
       modeltype <- tolower(modeltype)
     }
-
+    
     #Model data based on the options selected
     if (glmmethod == 'PrimaryFactors') {
       if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi') || (modeltype == 'inverse.gaussian')) {
@@ -162,7 +162,7 @@ for (dataset in datalist) {
         test_glm <- glm(as.formula(paste(paste("as.factor(",predictcolumn,")"),paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")),data=datasub,family = modeltype)
       }
     }
-
+    
     #Set output directory
     setwd(csvfile)
     file_save <- paste0(file_name,".csv")
