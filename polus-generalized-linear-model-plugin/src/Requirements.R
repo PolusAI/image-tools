@@ -1,0 +1,5 @@
+install.packages('MASS')
+install.packages('argparse')
+install.packages('DescTools')
+install.packages('tidymodels')
+install.packages('logging')
