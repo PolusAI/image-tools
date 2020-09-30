@@ -21,6 +21,5 @@ This plugin takes one input argument and one output argument:
 |---------------|-------------------------|--------|--------|
 | `--configFile` | Configuration file for the workflow | Input | collection |
 | `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--workflow` | Workflow from the toolkit | Input | enum |
 | `--outDir` | Output collection | Output | collection |
 

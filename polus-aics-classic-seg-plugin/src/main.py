@@ -6,11 +6,13 @@ import numpy as np
 from pathlib import Path
 import os
 import json
-import Playground_CurvyLinear
-import Playground_dots
-import Playground_gja1
+from Workflows import Playground_CurvyLinear
+from Workflows import Playground_dots
+from Workflows import Playground_gja1
+from Workflows import Playground_lamp1
 import cv2
 from aicsimageio import AICSImage
+import traceback
 
 if __name__=="__main__":
     # Initialize the logger
@@ -60,7 +62,7 @@ if __name__=="__main__":
             3.5,
             15
         ],
-        "gaussian_smoothing_sigma": 0,
+        "gaussian_smoothing_sigma": 1,
         "preprocessing_function": "image_smoothing_gaussian_3d",
         "f2_param": [
             [
@@ -80,37 +82,22 @@ if __name__=="__main__":
         #jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
  
         
-        # Get all file names in inpDir image collection
-        inpDir_files = os.listdir(inpDir)
-        
-        # Loop through files in input image collection 
-        for i,f in enumerate(inpDir_files):
-            # Load an image
-            #br = BioReader(Path(inpDir).joinpath(f))
-            #image = np.squeeze(br.read_image())
-            
-            reader = AICSImage(os.path.join(inpDir,f)) 
-            image = reader.data.astype(np.float32)
-            logger.info('files {}'.format(len(inpDir_files)))
-            #out_image = Playground_CurvyLinear.segment_image(image, config_data)
-            
+        if config_data['workflow_name'] == 'Playground4_Curvi':
+            logger.info('executing {}'.format(config_data['workflow_name'] ))
+            Playground_CurvyLinear.segment_images(inpDir, outDir, config_data)
+        elif config_data['workflow_name'] == 'Playground_dots':
+            logger.info('executing {}'.format(config_data['workflow_name'] ))
+            Playground_dots.segment_images(inpDir, outDir, config_data)
+        elif config_data['workflow_name'] == 'Playground_gja1':
+            logger.info('executing {}'.format(config_data['workflow_name'] ))
+            Playground_gja1.segment_images(inpDir, outDir, config_data)
+        elif config_data['workflow_name'] == 'Playground_lamp1':
+            logger.info('executing {}'.format(config_data['workflow_name'] ))
+            Playground_lamp1.segment_images(inpDir, outDir, config_data)
+    
+    except Exception:
+        traceback.print_exc()
 
-            if config_data['workflow_name'] == 'Playground4_Curvi':
-                logger.info('executing {}'.format(workflow))
-                out_image = Playground_CurvyLinear.segment_image(image, config_data)
-            elif config_data['workflow_name'] == 'Playground_dots':
-                out_image = Playground_dots.segment_image(image, config_data)
-            elif worconfig_data['workflow_name']kflow == 'Playground_gja1':
-                out_image = Playground_gja1.segment_image(image, config_data)
-            
-            cv2.imwrite(os.path.join(outDir,f), out_image[0,:,:])
-            # initialize the output
-            #out_image = np.zeros(image.shape,dtype=br._pix['type'])
-
-            # Write the output
-            #bw = BioWriter(Path(outDir).joinpath(f),metadata=br.read_metadata())
-            #bw.write_image(np.reshape(out_image,(br.num_y(),br.num_x(),br.num_z(),1,1)))
-        
     finally:
         # Close the javabridge regardless of successful completion
         logger.info('Closing the javabridge')
