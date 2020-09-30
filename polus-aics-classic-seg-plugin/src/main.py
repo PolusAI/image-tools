@@ -10,8 +10,8 @@ from Workflows import Playground_CurvyLinear
 from Workflows import Playground_dots
 from Workflows import Playground_gja1
 from Workflows import Playground_lamp1
+from Workflows import Playground_npm1
 import cv2
-from aicsimageio import AICSImage
 import traceback
 
 if __name__=="__main__":
@@ -94,7 +94,9 @@ if __name__=="__main__":
         elif config_data['workflow_name'] == 'Playground_lamp1':
             logger.info('executing {}'.format(config_data['workflow_name'] ))
             Playground_lamp1.segment_images(inpDir, outDir, config_data)
-    
+        elif config_data['workflow_name'] == 'Playground_npm1':
+            logger.info('executing {}'.format(config_data['workflow_name'] ))
+            Playground_npm1.segment_images(inpDir, outDir, config_data)    
     except Exception:
         traceback.print_exc()
 
