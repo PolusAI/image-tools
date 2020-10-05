@@ -1,0 +1,94 @@
+{
+  "name": "Polus 3D Mesh Labeling Plugin",
+  "version": "0.0.18",
+  "containerId": "mmvihani/polus-precompute-mesh-plugin:0.0.18",
+  "title": "PrecomputeMesh",
+  "description": "Everything you need to start a WIPP plugin.",
+  "author": "Data Scientist (data.scientist@labshare.org)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "inputs": [
+    {
+      "name": "imagepattern",
+      "description": "Pattern of the images in Input",
+      "type": "string",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "inpDir",
+      "description": "Input collection",
+      "type": "collection",
+      "options": null,
+      "required": true
+    },
+    {
+      "name": "pyramidType",
+      "description": "Build a DeepZoom or Neuroglancer pyramid",
+      "type": "enum",
+      "options": {
+        "values": [
+          "Neuroglancer",
+          "DeepZoom"
+        ]
+      },
+      "required": true
+    },
+    {
+      "name": "imageType",
+      "description": "Image or Segmentation",
+      "type": "enum",
+      "options": {
+        "values": [
+          "image",
+          "segmentation"
+        ]
+      },
+      "required": true
+    },
+    {
+      "name": "meshes",
+      "type": "boolean",
+      "description": "Create meshes"
+    }
+
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "description": "Precomputed output",
+      "type": "pyramid",
+      "options": null,
+      "required": true
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "Input collection: ",
+      "description": "Collection name..."
+    },
+    {
+      "key": "inputs.pyramidType",
+      "title": "Pyramid Type: ",
+      "description": "Build a DeepZoom or Neuroglancer pyramid?"
+    },
+    {
+      "key": "inputs.imageType",
+      "title": "Image Type: ",
+      "description": "Image or Segmentation?"
+    },
+    {
+      "key": "inputs.meshes",
+      "title": "Create meshes: ",
+      "default": "false"
+    },
+    {
+      "key": "inputs.imagepattern",
+      "title": "Image Pattern: ",
+      "description": "Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). "
+    }
+  ]
+}
