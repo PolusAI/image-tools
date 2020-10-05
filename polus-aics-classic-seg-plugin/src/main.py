@@ -11,6 +11,8 @@ from Workflows import Playground_dots
 from Workflows import Playground_gja1
 from Workflows import Playground_lamp1
 from Workflows import Playground_npm1
+from Workflows import Playground_spotty
+from Workflows import Playground_filament3d
 import cv2
 import traceback
 
@@ -57,17 +59,16 @@ if __name__=="__main__":
 
     """
     config_data = {
-        "workflow_name": "Playground4_Curvi",
+        "workflow_name": "Playground_spotty",
         "intensity_scaling_param": [
-            3.5,
-            15
+            0.5,
+            18
         ],
         "gaussian_smoothing_sigma": 1,
-        "preprocessing_function": "image_smoothing_gaussian_3d",
-        "f2_param": [
+        "s2_param": [
             [
-                1.5,
-                0.16
+                1.0,
+                0.01
             ]
         ],
         "minArea": 5
@@ -96,7 +97,13 @@ if __name__=="__main__":
             Playground_lamp1.segment_images(inpDir, outDir, config_data)
         elif config_data['workflow_name'] == 'Playground_npm1':
             logger.info('executing {}'.format(config_data['workflow_name'] ))
-            Playground_npm1.segment_images(inpDir, outDir, config_data)    
+            Playground_npm1.segment_images(inpDir, outDir, config_data)  
+        elif config_data['workflow_name'] == 'Playground_spotty':
+            logger.info('executing {}'.format(config_data['workflow_name'] ))
+            Playground_spotty.segment_images(inpDir, outDir, config_data)  
+        elif config_data['workflow_name'] == 'Playground_filament3d':
+            logger.info('executing {}'.format(config_data['workflow_name'] ))
+            Playground_filament3d.segment_images(inpDir, outDir, config_data)                
     except Exception:
         traceback.print_exc()
 
