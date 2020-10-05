@@ -13,6 +13,7 @@ from Workflows import Playground_lamp1
 from Workflows import Playground_npm1
 from Workflows import Playground_spotty
 from Workflows import Playground_filament3d
+from Workflows import Playground_st6gal1
 import cv2
 import traceback
 
@@ -86,24 +87,35 @@ if __name__=="__main__":
         if config_data['workflow_name'] == 'Playground4_Curvi':
             logger.info('executing {}'.format(config_data['workflow_name'] ))
             Playground_CurvyLinear.segment_images(inpDir, outDir, config_data)
+
         elif config_data['workflow_name'] == 'Playground_dots':
             logger.info('executing {}'.format(config_data['workflow_name'] ))
             Playground_dots.segment_images(inpDir, outDir, config_data)
+
         elif config_data['workflow_name'] == 'Playground_gja1':
             logger.info('executing {}'.format(config_data['workflow_name'] ))
             Playground_gja1.segment_images(inpDir, outDir, config_data)
+
         elif config_data['workflow_name'] == 'Playground_lamp1':
             logger.info('executing {}'.format(config_data['workflow_name'] ))
             Playground_lamp1.segment_images(inpDir, outDir, config_data)
+
         elif config_data['workflow_name'] == 'Playground_npm1':
             logger.info('executing {}'.format(config_data['workflow_name'] ))
             Playground_npm1.segment_images(inpDir, outDir, config_data)  
+
         elif config_data['workflow_name'] == 'Playground_spotty':
             logger.info('executing {}'.format(config_data['workflow_name'] ))
             Playground_spotty.segment_images(inpDir, outDir, config_data)  
+
         elif config_data['workflow_name'] == 'Playground_filament3d':
             logger.info('executing {}'.format(config_data['workflow_name'] ))
-            Playground_filament3d.segment_images(inpDir, outDir, config_data)                
+            Playground_filament3d.segment_images(inpDir, outDir, config_data) 
+
+        elif config_data['workflow_name'] == 'Playground_st6gal1':
+            logger.info('executing {}'.format(config_data['workflow_name'] ))
+            Playground_st6gal1.segment_images(inpDir, outDir, config_data)     
+                     
     except Exception:
         traceback.print_exc()
 
