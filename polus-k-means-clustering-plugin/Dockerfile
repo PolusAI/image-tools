@@ -14,7 +14,7 @@ RUN mkdir -p ${EXEC_DIR} \
 COPY src ${EXEC_DIR}/
 
 # Install requirements
-RUN apk --update add --virtual build-dependencies python3-dev build-base wget freetype-dev libpng-dev openblas-dev \
+RUN apk --update add --virtual build-dependencies gcc gfortran python3-dev build-base wget freetype-dev libpng-dev openblas-dev \
     && pip3 install --upgrade cython \
     && pip3 install -r  ${EXEC_DIR}/requirements.txt --no-cache-dir \
     #&& pip3 install ${EXEC_DIR}/ --no-cache-dir \
