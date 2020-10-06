@@ -1,6 +1,6 @@
 {
     "name": "K-Means Clustering",
-    "version": "0.2.3",
+    "version": "0.2.4",
     "title": "K-Means Clustering",
     "description": "Cluster the data using K-Means.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-k-means-clustering-plugin:0.2.3",
+    "containerId": "labshare/polus-k-means-clustering-plugin:0.2.4",
     "inputs": [      
       {
         "name": "inpdir",
@@ -17,34 +17,35 @@
         "required": "true"
       },
       {
-        "name": "determinek",
+        "name": "methods",
         "type": "enum",
-	"description": "Determine k-value using Elbow or Calinski Harabasz or Davies Bouldin methods",	
+	"description": "Select Manual or Elbow or Calinski Harabasz or Davies Bouldin methods",	
         "options": {
 	  "values": [
-	      		"Elbow",
+	      		"Manual",
+			"Elbow",
                         "CalinskiHarabasz",
 		        "DaviesBouldin"
              ]
           },
-	"required": "false"
+	"required": "true"
       },
       {
 	"name": "minimumrange",
         "type": "integer",
-        "description": "Enter minimum range for determing k-value",
+        "description": "Enter minimum k-value:",
         "required": "false"
       },
       {
 	"name": "maximumrange",
         "type": "integer",
-        "description": "Enter maximum range for determing k-value",
+        "description": "Enter maximum k-value:",
         "required": "false"
       },
       {
 	"name": "numofclus",
         "type": "integer",
-        "description": "Number of clusters required",
+        "description": "Number of clusters:",
         "required": "false"
       }      
       
@@ -63,24 +64,27 @@
         "description": "Input csv file for clustering"
       },
       {
-        "key": "inputs.determinek",
-        "title": "Determine k-value automatically",
-        "description": "Determine k-value using Elbow or Calinski Harabasz or Davies Bouldin methods"
+        "key": "inputs.methods",
+        "title": "Cluster data based on the methods selected to determine k-value",
+        "description": "Select Manual or Elbow or Calinski Harabasz or Davies Bouldin methods"
       },
       {
         "key": "inputs.minimumrange",
         "title": "Enter minimum range",
-        "description": "Enter minimum range for determing k-value"
+        "description": "Enter minimum k-value:",
+	"condition": "model.inputs.methods!='Manual'"
       },
       {
         "key": "inputs.maximumrange",
         "title": "Enter maximum range",
-        "description": "Enter maximum range for determing k-value"
+        "description": "Enter maximum k-value:",
+	"condition": "model.inputs.methods!='Manual'"
       },
       {
         "key": "inputs.numofclus",
-        "title": "Enter k-value",
-        "description": "k-value to form number of clusters"
+        "title": "Enter number of clusters",
+        "description": "Number of clusters:",
+	"condition": "model.inputs.methods=='Manual'"
       },
       {
         "key": "inputs.outdir",
