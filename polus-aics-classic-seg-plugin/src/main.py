@@ -14,6 +14,7 @@ from Workflows import Playground_npm1
 from Workflows import Playground_spotty
 from Workflows import Playground_filament3d
 from Workflows import Playground_st6gal1
+from Workflows import Playground_shell
 import cv2
 import traceback
 
@@ -52,29 +53,11 @@ if __name__=="__main__":
     logger.info('outDir = {}'.format(outDir))
     
     # load config file
-    """
+    
     config_file_path = os.path.join(configFile[:-7],'metadata_files')
     metafiles=os.listdir(config_file_path)
     with open(os.path.join(config_file_path,metafiles[0])) as json_file:
         config_data = json.load(json_file)
-
-    """
-    config_data = {
-        "workflow_name": "Playground_spotty",
-        "intensity_scaling_param": [
-            0.5,
-            18
-        ],
-        "gaussian_smoothing_sigma": 1,
-        "s2_param": [
-            [
-                1.0,
-                0.01
-            ]
-        ],
-        "minArea": 5
-    }
-    
 
     # Surround with try/finally for proper error catching
     try:
@@ -115,6 +98,10 @@ if __name__=="__main__":
         elif config_data['workflow_name'] == 'Playground_st6gal1':
             logger.info('executing {}'.format(config_data['workflow_name'] ))
             Playground_st6gal1.segment_images(inpDir, outDir, config_data)     
+
+        elif config_data['workflow_name'] == 'Playground_shell':
+            logger.info('executing {}'.format(config_data['workflow_name'] ))
+            Playground_shell.segment_images(inpDir, outDir, config_data) 
                      
     except Exception:
         traceback.print_exc()
