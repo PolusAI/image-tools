@@ -1,14 +1,14 @@
 {
-    "name": "Allen Cell Structure Segmenter",
-    "version": "0.1.1",
-    "title": "Allen Cell Structure Segmenter",
+    "name": "Aics Classic Segmentation Plugin",
+    "version": "0.1.6",
+    "title": "Aics Classic Segmentation",
     "description": "The plugin integrates the allen cell structure segmenter into WIPP",
     "author": "Gauhar Bains (gauhar.bains@labshare.org)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-aics-classic-seg-plugin:0.1.1",
+    "containerId": "labshare/polus-aics-classic-seg-plugin:0.1.6",
     "inputs": [
       {
         "name": "configFile",

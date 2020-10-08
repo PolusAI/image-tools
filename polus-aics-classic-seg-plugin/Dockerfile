@@ -1,5 +1,5 @@
 
-FROM labshare/polus-bfio-util:2.4.2-slim-buster
+FROM labshare/polus-bfio-util:1.3.6-slim-buster
 
 #RUN apk add --no-cache git
 RUN apt-get update && apt-get install build-essential -y \
