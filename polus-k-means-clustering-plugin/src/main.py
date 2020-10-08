@@ -160,7 +160,7 @@ def main():
     #Get list of .csv files in the directory including sub folders for clustering
     inputcsv = list_file(inpdir)
     if not inputcsv:
-            raise ValueError('No .csv files found.')
+        raise ValueError('No .csv files found.')
             
     #Dictionary of methods to determine k-value
     FEAT = {'Elbow': elbow,
