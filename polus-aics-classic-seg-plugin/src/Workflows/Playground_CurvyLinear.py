@@ -1,6 +1,6 @@
-import numpy as np
-import cv2
 import os
+import cv2
+import numpy as np
 import logging, sys
 import traceback
 import javabridge as jutil
@@ -28,14 +28,14 @@ def segment_images(inpDir, outDir, config_data):
         for i,f in enumerate(inpDir_files):
             logger.info('Segmenting image : {}'.format(f))
             
-            # Load an image
+            # Load image
             br = BioReader(os.path.join(inpDir,f))
             image = br.read_image()
-            print(image.shape)
             structure_channel = 0 
             struct_img0 = image[:,:,:,structure_channel,0]
             struct_img0 = struct_img0.transpose(2,0,1).astype(np.float32)
-
+            
+            # main algorithm
             intensity_scaling_param = config_data['intensity_scaling_param']
             if intensity_scaling_param[1] == 0:
                 struct_img = intensity_normalization(struct_img0, scaling_param=intensity_scaling_param[:1])
@@ -45,7 +45,6 @@ def segment_images(inpDir, outDir, config_data):
                 structure_img_smooth = image_smoothing_gaussian_3d(struct_img, sigma=gaussian_smoothing_sigma)
             elif config_data['preprocessing_function'] == 'edge_preserving_smoothing_3d':
                 structure_img_smooth = edge_preserving_smoothing_3d(struct_img)        
-            #suggest_normalization_param(struct_img0)
             f2_param = config_data['f2_param']
             bw = filament_2d_wrapper(structure_img_smooth, f2_param)
             minArea = config_data['minArea']
@@ -53,6 +52,8 @@ def segment_images(inpDir, outDir, config_data):
             seg = seg >0
             out_img=seg.astype(np.uint8)
             out_img[out_img>0]=255  
+
+            # create output image
             out_img = out_img.transpose(1,2,0)
             out_img = out_img.reshape((out_img.shape[0], out_img.shape[1], out_img.shape[2], 1, 1))
 

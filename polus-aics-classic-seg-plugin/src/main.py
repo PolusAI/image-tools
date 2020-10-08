@@ -22,7 +22,7 @@ if __name__=="__main__":
     logger.setLevel(logging.INFO)
 
     ''' Argument parsing '''
-    
+    """
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='The plugin integrates the allen cell structure segmenter into WIPP')
     
@@ -53,7 +53,30 @@ if __name__=="__main__":
     metafiles=os.listdir(config_file_path)
     with open(os.path.join(config_file_path,metafiles[0])) as json_file:
         config_data = json.load(json_file)
-    
+    """
+
+    inpDir = '/home/ec2-user/Data/Input'
+    outDir = '/home/ec2-user/Data/Output'
+    config_data = {
+        "workflow_name": "Playground_st6gal1",
+        "intensity_scaling_param": [
+            9,
+            19
+        ],
+        "gaussian_smoothing_sigma": 1,
+        "global_thresh_method": "tri",
+        "object_minArea": 1200,
+        "thin_dist_preserve": 2,
+        "thin_dist": 1,
+        "s3_param": [
+            [
+                1.6,
+                0.02
+            ]
+        ],
+        "minArea": 10
+    }
+
     # execute the desired workflow
     if config_data['workflow_name'] == 'Playground4_Curvi':
         logger.info('executing {}'.format(config_data['workflow_name'] ))
@@ -90,4 +113,3 @@ if __name__=="__main__":
     elif config_data['workflow_name'] == 'Playground_shell':
         logger.info('executing {}'.format(config_data['workflow_name'] ))
         Playground_shell.segment_images(inpDir, outDir, config_data) 
-                     
