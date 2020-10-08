@@ -1,4 +1,4 @@
-FROM alpine:3.8
+FROM python:3.6.8-alpine3.8
 
 COPY VERSION /
 
@@ -14,9 +14,10 @@ RUN mkdir -p ${EXEC_DIR} \
 COPY src ${EXEC_DIR}/
 
 # Install requirements
-RUN apk --update add --virtual build-dependencies gcc gfortran python3 python3-dev py3-pip build-base wget freetype-dev libpng-dev openblas-dev \
+RUN apk --update add --virtual build-dependencies gcc gfortran python3-dev build-base wget freetype-dev libpng-dev openblas-dev \
     && pip3 install --upgrade cython \
     && pip3 install -r  ${EXEC_DIR}/requirements.txt --no-cache-dir \
+    && pip3 install ${EXEC_DIR}/ --no-cache-dir \
     && rm -rf /root/.cache \
     && apk del build-dependencies
 
