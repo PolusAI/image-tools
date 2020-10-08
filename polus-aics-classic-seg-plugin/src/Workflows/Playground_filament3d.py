@@ -14,6 +14,14 @@ from skimage.morphology import remove_small_objects
 
 
 def segment_images(inpDir, outDir, config_data): 
+    """ Workflow for data with filamentous structures
+    such as ZO1, Beta Actin, Titin, Troponin 1.
+
+    Args:
+        inpDir : path to the input directory
+        outDir : path to the output directory
+        config_data : path to the configuration file
+    """
 
     logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                         datefmt='%d-%b-%y %H:%M:%S')

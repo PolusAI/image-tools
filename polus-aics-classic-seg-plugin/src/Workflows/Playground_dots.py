@@ -17,6 +17,14 @@ from scipy.ndimage import distance_transform_edt
 
 
 def segment_images(inpDir, outDir, config_data):  
+    """ Workflow for dot like shapes such as
+    Centrin-2, Desmoplakin, PMP34. 
+
+    Args:
+        inpDir : path to the input directory
+        outDir : path to the output directory
+        config_data : path to the configuration file
+    """
 
     logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                         datefmt='%d-%b-%y %H:%M:%S')

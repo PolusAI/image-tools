@@ -14,6 +14,14 @@ from skimage.morphology import remove_small_objects, binary_closing, ball , dila
 
 
 def segment_images(inpDir, outDir, config_data): 
+    """ Workflow for data with a spotty appearance
+    in each 2d frame such as fibrillarin and beta catenin.
+
+    Args:
+        inpDir : path to the input directory
+        outDir : path to the output directory
+        config_data : path to the configuration file
+    """
 
     logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                         datefmt='%d-%b-%y %H:%M:%S')

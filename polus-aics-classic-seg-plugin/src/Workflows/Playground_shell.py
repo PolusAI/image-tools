@@ -15,6 +15,14 @@ from skimage.morphology import remove_small_objects, watershed, dilation, ball
 
 
 def segment_images(inpDir, outDir, config_data): 
+    """ Workflow for data with shell like shapes 
+    such as lamin B1 (interphase-specific)
+
+    Args:
+        inpDir : path to the input directory
+        outDir : path to the output directory
+        config_data : path to the configuration file
+    """
 
     logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                         datefmt='%d-%b-%y %H:%M:%S')

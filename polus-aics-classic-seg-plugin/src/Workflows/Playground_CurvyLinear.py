@@ -13,6 +13,15 @@ from aicssegmentation.core.pre_processing_utils import intensity_normalization, 
 from skimage.morphology import remove_small_objects 
 
 def segment_images(inpDir, outDir, config_data): 
+    """ Workflow for curvilinear shapes such as:
+    Sec61 beta, TOM20, lamin B1 (mitosis specific)
+
+
+    Args:
+        inpDir : path to the input directory
+        outDir : path to the output directory
+        config_data : path to the configuration file
+    """
 
     logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                         datefmt='%d-%b-%y %H:%M:%S')
