@@ -1,6 +1,6 @@
 {
     "name": "K-Means Clustering",
-    "version": "0.2.13",
+    "version": "0.2.14",
     "title": "K-Means Clustering",
     "description": "Cluster the data using K-Means.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-k-means-clustering-plugin:0.2.13",
+    "containerId": "labshare/polus-k-means-clustering-plugin:0.2.14",
     "inputs": [      
       {
         "name": "inpdir",
@@ -71,12 +71,18 @@
       {
         "key": "inputs.minimumrange",
         "title": "Enter minimum range",
-        "description": "Enter minimum k-value:"
+        "description": "Enter minimum k-value:",
+	"condition": {
+    	  "functionBody": "try { return model.inputs.methods=='Manual' } catch(e){ return false }"
+  	}
       },
       {
         "key": "inputs.maximumrange",
         "title": "Enter maximum range",
-        "description": "Enter maximum k-value:"	
+        "description": "Enter maximum k-value:",
+	"condition": {
+    	  "functionBody": "try { return model.inputs.methods!=='Manual' } catch(e){ return false }"
+  	}
       },
       {
         "key": "inputs.numofclus",
