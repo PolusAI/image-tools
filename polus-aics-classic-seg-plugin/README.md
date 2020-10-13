@@ -1,8 +1,33 @@
-# Allen Cell Structure Segmenter
+# Aics Classic Segmentation Plugin
 
-This WIPP plugin does things, some of which involve math and science. There is likely a lot of handwaving involved when describing how it works, but handwaving should be replaced with a good description. However, someone forgot to edit the README, so handwaving will have to do for now. Contact [Gauhar Bains](mailto:gauhar.bains@labshare.org) for more information.
+This plugin serves as an executor for the classic workflows present in the [Allen Cell Structure Segmenter](https://www.allencell.org/segmenter.html). It enables the user to implement a workflow with set configuration (tuned hyper-parameters) on an image collection. Refer to the `Using the plugin` section below for more information.
+
+Contact [Gauhar Bains](mailto:gauhar.bains@labshare.org) or for more information.
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
+
+## Using the plugin  
+The plugin takes two inputs:  
+1. Image collection to be segmented.
+2. Configuration file: The configuration files contains the following information i) Name of the workflow to be implemented ii) Values of the hyper parameters needed to execute the workflow. The config file can be generated using the interactive notebooks for each workflow. Contact the Polus team to get access to the notebooks. A sample configuraton file is shown below:  
+```
+{
+    "workflow_name": "Playground4_Curvi",
+    "intensity_scaling_param": [
+        3.5,
+        15
+    ],
+    "gaussian_smoothing_sigma": 0,
+    "preprocessing_function": "image_smoothing_gaussian_3d",
+    "f2_param": [
+        [
+            1.5,
+            0.16
+        ]
+    ],
+    "minArea": 5
+}
+```
 
 ## Building
 
@@ -15,7 +40,7 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-This plugin takes one input argument and one output argument:
+This plugin takes two input argument and one output argument:
 
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
