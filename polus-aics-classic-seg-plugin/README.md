@@ -9,7 +9,9 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 ## Using the plugin  
 The plugin takes two inputs:  
 1. Image collection to be segmented.
-2. Configuration file: The configuration files contains the following information i) Name of the workflow to be implemented ii) Values of the hyper parameters needed to execute the workflow. The config file can be generated using the interactive notebooks for each workflow. Contact the Polus team to get access to the notebooks. A sample configuraton file is shown below:  
+2. Configuration file: The configuration files contains the following information i) Name of the workflow to be implemented ii) Values of the hyper parameters needed to execute the workflow. The config file can be generated using the interactive notebooks for each workflow.  
+  
+`Interactive notebooks for classic workflows`: The notebooks serve as a starting point to use the this plugin. The notebooks enable the user to tune the workflow hyper parameters by testing the algorithm on multiple images. Following this the user can save the settings in a config file that can be provided as an input to this plugin. Contact the Polus team to get access to the notebooks. A sample configuraton file is shown below:    
 ```
 {
     "workflow_name": "Playground4_Curvi",
