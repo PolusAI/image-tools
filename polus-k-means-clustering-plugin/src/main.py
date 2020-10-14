@@ -206,12 +206,14 @@ def main():
         classified_data = classified_data.astype(int) + 1
         df_processed = tuple(np.hstack((data, classified_data)))
         col_name.append('Cluster')
-  
+        col_name_sep = ","
+        col_names = col_name_sep.join(col_name) 
+        
         #Save dataframe into csv file
         os.chdir(outdir)
         logger.info('Saving csv file')
-        output_csv = np.vstack ((col_name, df_processed))
-        export_csv = np.savetxt('kmeans_clustering_%s.csv'%file_name, output_csv, fmt="%s", delimiter=',')
+        #output_csv = np.vstack ((col_name, df_processed))
+        export_csv = np.savetxt('kmeans_clustering_%s.csv'%file_name, df_processed, header = col_names, fmt="%s", delimiter=',')
         logger.info("Finished all processes!")
 
 if __name__ == "__main__":
