@@ -15,10 +15,9 @@ COPY src ${EXEC_DIR}/
 
 # Install requirements
 RUN apk --update add --virtual build-dependencies g++ gcc gfortran python3 python3-dev build-base lapack libstdc++ musl-dev lapack-dev wget freetype-dev libpng-dev openblas-dev \
-    && pip3 install --upgrade cython \
     && pip3 install -r  ${EXEC_DIR}/requirements.txt --no-cache-dir \
-    && rm -rf /root/.cache \
-    && apk del build-dependencies
+    && rm -rf /root/.cache
+
 
 WORKDIR ${EXEC_DIR}
 
