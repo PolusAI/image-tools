@@ -108,7 +108,7 @@ def calinski_davies(data_array, methods, minimumrange, maximumrange):
         score = max(chdb)
     else:
         score = min(chdb)
-    k_cluster = chdb.index(score) + 1
+    k_cluster = chdb.index(score)
     label_data = label_value[k_cluster]
     return label_data
 
