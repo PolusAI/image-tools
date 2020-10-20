@@ -25,7 +25,7 @@ addMethodArgs <- function(parser) {
   invisible(NULL)
 }
 addModelArgs <- function(parser) {
-  parser$add_argument("--modeltype",type = "character",help="Select either binomial or gaussian or Gamma or inverse.gaussian or poisson or quasi or quasibinomial or quasipoisson or negativebinomial")
+  parser$add_argument("--modeltype",type = "character",help="Select either binomial or gaussian or Gamma or poisson or quasi or quasibinomial or quasipoisson or negativebinomial")
   invisible(NULL)
 }
 addOutputArgs <- function(parser) {
@@ -122,15 +122,15 @@ for (dataset in datalist) {
     drop_dep <- datasub[ , !(names(datasub) %in% predictcolumn)]
     resp_var <- colnames(drop_dep)
     
-    if(!(modeltype == 'NegativeBinomial') || !(modeltype == 'Gamma')) {
+    if((modeltype == 'Gaussian') || (modeltype == 'Poisson') || (modeltype == 'Binomial') || (modeltype == 'Quasibinomial') || (modeltype == 'Quasipoisson') || (modeltype == 'Quasi')) {
       modeltype <- tolower(modeltype)
     }
-    
+
     #Model data based on the options selected
     if (glmmethod == 'PrimaryFactors') {
-      if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi') || (modeltype == 'inverse.gaussian')) {
+      if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi')) {
         test_glm <- glm(as.formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")),data = datasub, family = modeltype)
-      }
+       }
       else if (modeltype == 'NegativeBinomial') {
         test_glm <- glm.nb(as.formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), data = datasub)
       }
@@ -140,7 +140,7 @@ for (dataset in datalist) {
     }
     
     else if (glmmethod == 'Interaction') {
-      if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi') || (modeltype == 'inverse.gaussian')) {
+      if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi')) {
         test_glm <- glm(as.formula(paste(predictcolumn,paste('(',paste(resp_var,collapse= "+"),')^2'),sep="~")), data = datasub, family = modeltype)
       }
       else if (modeltype == 'NegativeBinomial') {
@@ -152,7 +152,7 @@ for (dataset in datalist) {
     }
     
     else if (glmmethod == 'SecondOrder') {
-      if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi') || (modeltype == 'inverse.gaussian')) {
+      if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi')) {
         test_glm <- glm(as.formula(paste(predictcolumn,paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")),data=datasub,family = modeltype)
       }
       else if (modeltype == 'NegativeBinomial') {

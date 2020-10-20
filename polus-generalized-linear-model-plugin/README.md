@@ -19,7 +19,7 @@ There are 3 options:
 3. Second order - To find second order effect use this option. Degree is 2.
 
 ### Modeltype:
-Choose any one of the modeltype - binomial or gaussian or Gamma or inverse.gaussian or poisson or quasi or quasibinomial or quasipoisson or negativebinomial based on the distribution of dataset.
+Choose any one of the modeltype - binomial or gaussian or Gamma or poisson or quasi or quasibinomial or quasipoisson or negativebinomial based on the distribution of dataset.
       
 ## Note:
 If multiple csv files need to be processed, the column names should be the same for all files.
