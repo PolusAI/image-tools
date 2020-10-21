@@ -29,6 +29,7 @@ This plugin takes one input argument and one output argument:
 | Name       | Description             | I/O    | Type |
 |------------|-------------------------|--------|------|
 | `inpDir`   | Input image collection  | Input  | Path |
+| `pyramidType`   | DeepZoom/Neuroglancer  | Input  | String |
 | `outDir`   | Output image pyramid    | Output | Pyramid |
 
 ## Run the plugin
