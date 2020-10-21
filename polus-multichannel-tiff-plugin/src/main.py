@@ -27,13 +27,17 @@ def write_tile(br,bw,X,Y,C):
         C ([list]): Channel to write
     """
     
+    # Connect to the JVM
     jutil.attach()
     
+    # Read the image
     image = br.read_image(X=X,Y=Y)
     
+    # Lock the thread and write the image
     with lock:
         bw.write_image(image,X=[X[0]],Y=[Y[0]],C=C)
     
+    # Detach from the JVM
     jutil.detach()
 
 if __name__=="__main__":
@@ -84,12 +88,14 @@ if __name__=="__main__":
         fp = filepattern.FilePattern(inpDir,filePattern)
         
         # Loop through files in inpDir image collection and process
-        for files in enumerate(fp.iterate(group_by='c')):
+        for files in fp.iterate(group_by='c'):
             
             # Get the filenames in the channel order
             paths = []
+            print(files)
             for c in channelOrder:
                 for file in files:
+                    print(file)
                     if file['c'] == c:
                         paths.append(file)
                         break
@@ -104,7 +110,7 @@ if __name__=="__main__":
                                                 paths,
                                                 {c:paths[0][c] for c in fp.variables if c != 'c'})
             logger.info('Writing: {}'.format(file_name))
-            bw = BioWriter(str(Path(outDir).with_name(file_name)),
+            bw = BioWriter(str(Path(outDir).joinpath(file_name)),
                            metadata=br.read_metadata())
             del br
             
