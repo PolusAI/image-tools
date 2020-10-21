@@ -1,8 +1,17 @@
-# WIPP Widget
+# Polus Precompute Volume Plugin
 
-This WIPP plugin does things, some of which involve math and science. There is likely a lot of handwaving involved when describing how it works, but handwaving should be replaced with a good description. However, someone forgot to edit the README, so handwaving will have to do for now. Contact [Data Scientist](mailto:data.scientist@labshare.org) for more information.
+This WIPP plugin turns all tiled tiff images in an image collection into a [Neuroglancer precomputed format](https://github.com/google/neuroglancer/tree/master/src/neuroglancer/datasource/precomputed). The tiled tiff format and associated metadata is accessed using Bioformats.
+
+_**This plugin is not a major release version.**_ A breaking change may occur when Neuroglancer is implemented into a WIPP deployment or if the data type for Neuroglancer precomputed plugins is changed to something other than `pyramid`. Currently, the output from this plugin is a `pyramid`, but WIPP will attempt to open the output of this plugin in WDZT. Either a new data type will need to be created inside of WIPP, or an option to open up the pyramid using Neuroglancer will need to be implemented.
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
+
+For more information on Bioformats, vist the [official page](https://www.openmicroscopy.org/bio-formats/).
+
+## To do
+
+1. Additional parallelization: Currently the plugin splits the generation of each image pyramid off into its own process. It would be more memory efficient and faster to build individual pyramids if subpyramids were built in separate pyramids. This would require the creation of a method to read pyramid tiles and possibly a dag-like structure to check that certain tiles were created before starting a process.
+2. GPU acceleration: Since the number of disk reads is kept at a minimum and the main computational load is averaging pixels together to build lower resolution images, this plugin is a good candidate for gpu-acceleration.
 
 ## Building
 
@@ -17,9 +26,20 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes one input argument and one output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--filePattern` | Filename pattern used to separate data | Input | string |
-| `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--outDir` | Output collection | Output | collection |
+| Name       | Description             | I/O    | Type |
+|------------|-------------------------|--------|------|
+| `inpDir`   | Input image collection  | Input  | Path |
+| `pyramidType`   | DeepZoom/Neuroglancer  | Input  | String |
+| `imagepattern`   | Image pattern  | Input  | String |
+| `stackby`   | The variable that the images are stacked by to create Z stacks  | Input  | Char |
+| `outDir`   | Output image pyramid    | Output | Pyramid |
 
+## Run the plugin
+
+### Run the Docker Container
+
+```bash
+docker run -v /path/to/data:/data labshare/polus-precomputed-slide-plugin \
+  --inpDir /data/input \
+  --outDir /data/output
+```
