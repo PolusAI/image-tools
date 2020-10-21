@@ -29,6 +29,7 @@ This plugin can take two types of input argument and one output argument:
 | Name       | Description             | I/O    | Type |
 |------------|-------------------------|--------|------|
 | `inpDir`   | Input image collection (Single Image Planes/Z Stacks)  | Input  | Path |
+| `pyramidType`   | DeepZoom/Neuroglancer  | Input  | String |
 | `imagepattern`   | Image pattern  | Input  | String |
 | `stackby`   | Variable to Stack Single Image Planes to create Z Stacks  | Input  | Char |
 | `outDir`   | Output image pyramid    | Output | Pyramid |
