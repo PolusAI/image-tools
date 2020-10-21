@@ -31,11 +31,11 @@ def write_tile(br,bw,X,Y,C):
     jutil.attach()
     
     # Read the image
-    image = br.read_image(X=X,Y=Y)
+    image = br.read_image(X=X,Y=Y,Z=Z)
     
     # Lock the thread and write the image
     with lock:
-        bw.write_image(image,X=[X[0]],Y=[Y[0]],C=C)
+        bw.write_image(image,X=[X[0]],Y=[Y[0]],Z=[Z[0]],C=C)
     
     # Detach from the JVM
     jutil.detach()
@@ -121,24 +121,27 @@ if __name__=="__main__":
             
             # Process the data in tiles
             threads = []
-            with ThreadPoolExecutor(cpu_count()) as executor:
+            with ThreadPoolExecutor(2*cpu_count()) as executor:
                 for c,file in enumerate(paths):
                     br = BioReader(file['file'])
                     C = [c]
                     first_image = True
-                    for x in range(0,br.num_x(),1024):
-                        X = [x,min([x+1024,br.num_x()])]
-                        for y in range(0,br.num_y(),1024):
-                            Y = [y,min([y+1024,br.num_y()])]
-                            threads.append(executor.submit(write_tile,br,bw,X,Y,C))
-                            
-                            # Bioformats requires the first tile to be written
-                            # before any other tile is written
-                            if first_image:
-                                wait(threads)
-                                first_image = False
+                    for z in range(br.num_x()):
+                        Z = [z,z+1]
+                        for x in range(0,br.num_x(),1024):
+                            X = [x,min([x+1024,br.num_x()])]
+                            for y in range(0,br.num_y(),1024):
+                                Y = [y,min([y+1024,br.num_y()])]
+                                threads.append(executor.submit(write_tile,br,bw,X,Y,Z,C))
+                                
+                                # Bioformats requires the first tile to be written
+                                # before any other tile is written
+                                if first_image:
+                                    wait(threads)
+                                    first_image = False
 
-            wait(threads)
+                        # Threads have to complete before moving to the next z
+                        wait(threads)
             bw.close_image()
         
     finally:

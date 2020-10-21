@@ -1,6 +1,6 @@
 {
     "name": "Multichannel Tiff",
-    "version": "0.1.2",
+    "version": "0.2.0",
     "title": "Multichannel Tiff",
     "description": "Create multichannel, ome-tif from an image collection.",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-multichannel-tiff-plugin:0.1.2",
+    "containerId": "labshare/polus-multichannel-tiff-plugin:0.2.0",
     "inputs": [
       {
         "name": "inpDir",
