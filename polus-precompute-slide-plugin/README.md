@@ -24,11 +24,13 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-This plugin takes one input argument and one output argument:
+This plugin can take two types of input argument and one output argument:
 
 | Name       | Description             | I/O    | Type |
 |------------|-------------------------|--------|------|
-| `inpDir`   | Input image collection  | Input  | Path |
+| `inpDir`   | Input image collection (Single Image Planes/Z Stacks)  | Input  | Path |
+| `imagepattern`   | Image pattern  | Input  | String |
+| `stackby`   | Variable to Stack Single Image Planes to create Z Stacks  | Input  | Char |
 | `outDir`   | Output image pyramid    | Output | Pyramid |
 
 ## Run the plugin
