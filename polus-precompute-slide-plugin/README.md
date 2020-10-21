@@ -1,4 +1,4 @@
-# Polus Precompute Slide Plugin
+# Polus Precompute Volume Plugin
 
 This WIPP plugin turns all tiled tiff images in an image collection into a [Neuroglancer precomputed format](https://github.com/google/neuroglancer/tree/master/src/neuroglancer/datasource/precomputed). It assumes each image is a 2-dimensional plane, so it will not display an image in 3D. The tiled tiff format and associated metadata is accessed using Bioformats.
 
