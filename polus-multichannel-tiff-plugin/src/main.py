@@ -92,10 +92,8 @@ if __name__=="__main__":
             
             # Get the filenames in the channel order
             paths = []
-            print(files)
             for c in channelOrder:
                 for file in files:
-                    print(file)
                     if file['c'] == c:
                         paths.append(file)
                         break
@@ -115,9 +113,7 @@ if __name__=="__main__":
             del br
             
             # Modify the metadata to make sure channels are written correctly
-            bw.num_c(len(paths))
             bw._metadata.image().Pixels.channel_count = bw.num_c()
-            bw.num_c(len(paths))
             
             # Process the data in tiles
             threads = []
