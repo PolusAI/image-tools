@@ -39,7 +39,10 @@ This plugin takes one input argument and one output argument:
 ### Run the Docker Container
 
 ```bash
-docker run -v /path/to/data:/data labshare/polus-precomputed-slide-plugin \
+docker run -v /path/to/data:/data mmvihani/polus-precompute-volume-plugin \
   --inpDir /data/input \
   --outDir /data/output
+  --pyramidType Neuroglancer
+  --imagePattern 'filename'
+  --imageType image
 ```
