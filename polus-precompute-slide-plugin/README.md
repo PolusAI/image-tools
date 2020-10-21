@@ -1,6 +1,6 @@
 # Polus Precompute Volume Plugin
 
-This WIPP plugin turns all tiled tiff images in an image collection into a [Neuroglancer precomputed format](https://github.com/google/neuroglancer/tree/master/src/neuroglancer/datasource/precomputed). It assumes each image is a 2-dimensional plane, so it will not display an image in 3D. The tiled tiff format and associated metadata is accessed using Bioformats.
+This WIPP plugin turns all tiled tiff images in an image collection into a [Neuroglancer precomputed format](https://github.com/google/neuroglancer/tree/master/src/neuroglancer/datasource/precomputed). The tiled tiff format and associated metadata is accessed using Bioformats.
 
 _**This plugin is not a major release version.**_ A breaking change may occur when Neuroglancer is implemented into a WIPP deployment or if the data type for Neuroglancer precomputed plugins is changed to something other than `pyramid`. Currently, the output from this plugin is a `pyramid`, but WIPP will attempt to open the output of this plugin in WDZT. Either a new data type will need to be created inside of WIPP, or an option to open up the pyramid using Neuroglancer will need to be implemented.
 
