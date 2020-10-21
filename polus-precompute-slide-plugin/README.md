@@ -31,6 +31,7 @@ This plugin takes one input argument and one output argument:
 | `inpDir`   | Input image collection  | Input  | Path |
 | `pyramidType`   | DeepZoom/Neuroglancer  | Input  | String |
 | `imagepattern`   | Image pattern  | Input  | String |
+| `stackby`   | The variable that the images are stacked by to create Z stacks  | Input  | String |
 | `outDir`   | Output image pyramid    | Output | Pyramid |
 
 ## Run the plugin
