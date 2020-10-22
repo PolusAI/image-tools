@@ -12,7 +12,7 @@ import time
 # Thread lock for file writing
 lock = Lock()
 
-def write_tile(br,bw,X,Y,C):
+def write_tile(br,bw,X,Y,Z,C):
     """Read and write one tile of a multichannel image
     
     This function is intended to be run inside of a thread. Since data is sent
@@ -113,31 +113,43 @@ if __name__=="__main__":
             del br
             
             # Modify the metadata to make sure channels are written correctly
+            bw.num_c(len(paths))
             bw._metadata.image().Pixels.channel_count = bw.num_c()
             
             # Process the data in tiles
             threads = []
-            with ThreadPoolExecutor(2*cpu_count()) as executor:
+            count = 0
+            total = bw.num_c() * bw.num_z() * \
+                    (bw.num_x()//4096 + 1) * (bw.num_y()//4096 + 1)
+            with ThreadPoolExecutor(cpu_count()) as executor:
                 for c,file in enumerate(paths):
                     br = BioReader(file['file'])
                     C = [c]
                     first_image = True
-                    for z in range(br.num_x()):
+                    for z in range(br.num_z()):
                         Z = [z,z+1]
-                        for x in range(0,br.num_x(),1024):
-                            X = [x,min([x+1024,br.num_x()])]
-                            for y in range(0,br.num_y(),1024):
-                                Y = [y,min([y+1024,br.num_y()])]
+                        for x in range(0,br.num_x(),4096):
+                            X = [x,min([x+4096,br.num_x()])]
+                            for y in range(0,br.num_y(),4096):
+                                Y = [y,min([y+4096,br.num_y()])]
                                 threads.append(executor.submit(write_tile,br,bw,X,Y,Z,C))
                                 
                                 # Bioformats requires the first tile to be written
                                 # before any other tile is written
-                                if first_image:
-                                    wait(threads)
+                                if first_image or len(threads)==cpu_count():
+                                    threads[0].result()
+                                    del threads[0]
                                     first_image = False
+                                    count += 1
+                                    if count % 5 == 0:
+                                        logger.info('{:.2f}% finished...'.format(100*count/total))
 
                         # Threads have to complete before moving to the next z
                         wait(threads)
+                        count += len(threads)
+                        logger.info('{:.2f}% finished...'.format(100*count/total))
+                        threads = []
+                        
             bw.close_image()
         
     finally:
