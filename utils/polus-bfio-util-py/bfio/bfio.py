@@ -8,13 +8,13 @@ from bfio.base_classes import BioBase
 class BioReader(BioBase):
     """BioReader Read supported image formats using Bioformats
 
-    This class handles the reading of data from any Bioformats supported
-    file formats, but is specially optimized for handling the OME tiled
-    tiff format. There is a Java backend version of this tool that directly
-    interacts with the Bioformats codebase written in Java through the
-    Javabridge package, permitting reading of any file format supported by
-    Bioformats. There is also a Python backend, which is significantly faster
-    but is limited to reading only OME tiled tiff images.
+    This class handles the reading of data from any Bioformats supported file
+    formats, but is specially optimized for handling the OME tiled tiff format.
+    There is a Java backend version of this tool that directly interacts with
+    the Bioformats codebase written in Java through the javabridge package,
+    permitting reading of any file format supported by Bioformats. There is also
+    a Python backend, which is significantly faster but is limited to reading
+    only OME tiled tiff images.
     
     One of the features of this class is that it handles some of the potential
     issues that are not caught by the python-bioformats package. For example,
@@ -42,7 +42,8 @@ class BioReader(BioBase):
         metadata: Returns an OMEXML class containing metadata for the image
 
     Methods:
-        read(X,Y,Z,C,T,series): Returns a part or all of the image as numpy array
+        read(X,Y,Z,C,T,series): Returns a part or all of the image as numpy
+            array
     """
 
     def __init__(self,
