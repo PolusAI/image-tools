@@ -33,7 +33,7 @@ Enter k-value if you already know how many clusters are required. This parameter
 ## Note:
 1. If 'Manual' method is selected, enter number of clusters required.
 3. If 'Elbow' or 'CalinskiHarabasz' or 'DaviesBouldin' methods are selected,, then you should enter values for both 'maximumrange' and 'minimumrange'.
-4. If 'CalinskiHarabasz' or 'DaviesBouldin' methods are selected, then 'minimumrange'should be >1.
+4. The 'minimumrange'value should be >1.
 
 ## Output:
 The output is a csv file containing the cluster data to which each instance in the data belongs to.
@@ -50,7 +50,7 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 ## Options
 
-This plugin takes eight input argument and one output argument:
+This plugin takes four input argument if methods other than 'Manual' is selected else three input arguments and one output argument:
 
 | Name                   | Description             | I/O    | Type   |
 |------------------------|-------------------------|--------|--------|

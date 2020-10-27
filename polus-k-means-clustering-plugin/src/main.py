@@ -44,12 +44,19 @@ def elbow(data_array, minimumrange, maximumrange):
     """
     sse = []
     label_value = []
-    if minimumrange <=0:
-        raise ValueError('Minimumrange should be equal to or greater than 1.')
+
     K = range(minimumrange, maximumrange+1)
     for k in K:
         kmeans = KMeans(n_clusters = k, random_state=9).fit(data_array)
-        sse.append(kmeans.inertia_)
+        centroids = kmeans.cluster_centers_
+        pred_clusters = kmeans.predict(data_array)
+        curr_sse = 0
+
+        # calculate square of Euclidean distance of each point from its cluster center and add to current WSS
+        for i in range(len(data_array)):
+            curr_center = centroids[pred_clusters[i]]
+            curr_sse += np.linalg.norm(data_array[i]-np.array(curr_center)) ** 2
+        sse.append(curr_sse)
         labels = kmeans.labels_
         label_value.append(labels)
  
@@ -73,7 +80,7 @@ def elbow(data_array, minimumrange, maximumrange):
     #Distance from curve to line
     dist = np.sqrt(np.sum(vecline ** 2, axis=1))
     #Maximum distance point
-    k_cluster = np.argmax(dist)
+    k_cluster = np.argmax(dist)+minimumrange
     label_data = label_value[k_cluster]
     return label_data
     
@@ -90,8 +97,6 @@ def calinski_davies(data_array, methods, minimumrange, maximumrange):
         Labeled data.
     
     """
-    if minimumrange <=1:
-        raise ValueError('Minimumrange should be greater than 1.')
     K = range(minimumrange, maximumrange+1)
     chdb = []
     label_value = []
@@ -188,6 +193,8 @@ def main():
             #Check whether minimum range and maximum range value is entered
             if methods and not (minimumrange or maximumrange):
                 raise ValueError('Enter both minimumrange and maximumrange to determine k-value.')
+            if minimumrange <=1:
+                raise ValueError('Minimumrange should be greater than 1.')
             logger.info('Determining k-value using ' + methods + ' and clustering the data.')
             if FEAT[methods] == calinski_davies:
                 label_data = FEAT[methods](data, methods, minimumrange, maximumrange)
