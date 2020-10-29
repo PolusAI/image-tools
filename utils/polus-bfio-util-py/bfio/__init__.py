@@ -7,6 +7,8 @@ logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(messa
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("bfio.init")
 
+log_level = logging.WARNING
+
 try:
     with open(pathlib.Path(__file__).parent.joinpath("VERSION"),'r') as fh:
         __version__ = fh.read()

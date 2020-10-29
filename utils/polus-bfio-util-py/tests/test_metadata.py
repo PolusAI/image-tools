@@ -5,7 +5,7 @@ import bfio
 from pathlib import Path
 
 """ Image path to test """
-image_path = Path('/home/schaubnj/Desktop/Projects/polus-plugins/inputs/r001_c000_z000.ome.tif')
+image_path = Path('../../input_image/r001_z000_y010_x010_c000.ome.tif').resolve()
 
 """ Fixtures """ 
 @pytest.fixture
@@ -42,6 +42,7 @@ def get_pixel_info(reader):
     print('image.spp={}'.format(reader.spp))
     print('image.bytes_per_pixel={}'.format(reader.bytes_per_pixel))
     print('image.bpp={}'.format(reader.bpp))
+    print('image.dtype={}'.format(reader.dtype))
     
 def get_channel_names(reader):
     print()

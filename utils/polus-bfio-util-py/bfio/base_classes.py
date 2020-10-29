@@ -101,10 +101,10 @@ class BioBase(object,metaclass=abc.ABCMeta) :
         
         self._lock =  threading.Lock()
     
-    def __setitem__(self,keys):
+    def __setitem__(self,keys,values):
         raise NotImplementedError('Cannot set values for {} class.'.format(self.__class__.__name__))
     
-    def __getitem__(self,keys,values):
+    def __getitem__(self,keys):
         raise NotImplementedError('Cannot get values for {} class.'.format(self.__class__.__name__))
     
     @property

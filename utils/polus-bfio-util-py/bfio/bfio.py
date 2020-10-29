@@ -60,6 +60,48 @@ class BioReader(BioBase):
         # number of pixels to load at a time
         self._CHUNK_SIZE = self._MAX_BYTES / \
                            (self.bpp * self.spp)
+                           
+    def __getitem__(self,keys):
+        
+        dims = 'YXZCT'
+        ind = {d:None for d in dims}
+        
+        if not isinstance(keys,tuple):
+            if isinstance(keys,slice) and keys.start == None and keys.stop == None and keys.step==None:
+                pass
+            else:
+                raise ValueError('If only a single index is supplied, it must be an empty slice ([:]).')
+        else:
+            if len(keys) > 5:
+                raise ValueError('Found {} indices, but at most 5 indices may be supplied.'.format(len(keys)))
+            
+            if keys[0] == Ellipsis:
+                dims = [d for d in reversed(dims)]
+                keys = [k for k in reversed(keys)]
+            
+            for dim,key in zip(dims,keys):
+                if isinstance(key,slice):
+                    if dim in 'CT':
+                        ind[dim] = [v for v in range(key)]
+                    else:
+                        start = 0 if key.start == None else key.start
+                        stop = 0 if key.stop == None else key.stop
+                        ind[dim] = [start,stop]
+                elif isinstance(key,(int,tuple,list)):
+                    if dim in 'CT':
+                        if isinstance(key,int):
+                            ind[dim] = [key]
+                        else:
+                            ind[dim] = key
+                    else:
+                        raise ValueError('The index in position {} cannot be a slice type.'.format(dims.find(key)))
+                elif key==Ellipsis:
+                    if dims.find(dim)+1 < len(keys):
+                        raise ValueError('Ellipsis may only be used in the first or last index.')
+                else:
+                    raise ValueError('Did not recognize indexing value of type: {}'.format(dims.find(key)))
+        
+        return self.read(**ind)
 
     def read(self, X=None, Y=None, Z=None, C=None, T=None):
         """read Read the image
@@ -97,17 +139,30 @@ class BioReader(BioBase):
         Z = self._val_xyz(Z, 'Z')
         C = self._val_ct(C, 'C')
         T = self._val_ct(T, 'T')
+        
+        # Define tile bounds
+        X_tile_start = (X[0]//self._TILE_SIZE) * self._TILE_SIZE
+        Y_tile_start = (Y[0]//self._TILE_SIZE) * self._TILE_SIZE
+        X_tile_end = np.ceil(X[1]/self._TILE_SIZE).astype(int) * self._TILE_SIZE
+        Y_tile_end = np.ceil(Y[1]/self._TILE_SIZE).astype(int) * self._TILE_SIZE
+        X_tile_shape = X_tile_end - X_tile_start
+        Y_tile_shape = Y_tile_end - Y_tile_start
+        Z_tile_shape = Z[1]-Z[0]
 
-        output = np.zeros([Y[1]-Y[0],
-                           X[1]-X[0],
-                           Z[1]-Z[0],
+        output = np.zeros([Y_tile_shape,
+                           X_tile_shape,
+                           Z_tile_shape,
                            len(C),
-                           len(T)], self.dtype)
+                           len(T)],
+                          dtype=self.dtype)
         
         # Read the image
-        self._backend.read_image(X,Y,Z,C,T,output)
+        self._backend.read_image([X_tile_start,X_tile_end],
+                                 [Y_tile_start,Y_tile_end],
+                                 Z,
+                                 C,T,output)
 
-        return output
+        return output[Y[0]-Y_tile_start:Y[1]-Y_tile_start,X[0]-X_tile_start:X[1]-X_tile_start,...]
 
     def _fetch(self):
         """_fetch Method for fetching image supertiles
