@@ -98,15 +98,15 @@ class PythonReader(bfio.base_classes.AbstractReader):
 
 class JavaReader(bfio.base_classes.AbstractReader):
     
-    def __init__(self, file_path, tile_size, max_workers):
-        super().__init__(file_path, tile_size, max_workers)
+    def __init__(self, frontend):
+        super().__init__(frontend)
         
         # Test to see if the loci_tools.jar is present
         if bfio.JARS == None:
             raise FileNotFoundError('The loci_tools.jar could not be found.')
         
         # Get the reader
-        self._rdr = bioformats.ImageReader(file_path)
+        self._rdr = bioformats.ImageReader(str(self.frontend._file_path.absolute()))
         
     def read_metadata(self, update=False):
         # Wrap the ImageReader to get access to additional class methods
@@ -124,7 +124,7 @@ class JavaReader(bfio.base_classes.AbstractReader):
         
         # Read the metadata
         rdr.setMetadataStore(omexml)
-        rdr.setId(self._file_path)
+        rdr.setId(str(self.frontend._file_path))
         
         return OMEXML(omexml.dumpXML())
     

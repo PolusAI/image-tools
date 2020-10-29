@@ -28,22 +28,6 @@ class BioReader(BioBase):
 
     For for information, visit the Bioformats page:
     https://www.openmicroscopy.org/bio-formats/
-
-    Properties:
-        channel_names: Retrieve the names of each channel in the image
-        x: Number of pixels in the x-dimension (width)
-        y: Number of pixels in the y-dimension (height)
-        z: Number of pixels in the z-dimension (depth)
-        c: Number of channels in the image
-        t: Number of timepoints in the image
-        physical_size_x: tuple indicating physical size and units of x-dimension
-        physical_size_y: tuple indicating physical size and units of y-dimension
-        physical_size_z: tuple indicating physical size and units of z-dimension
-        metadata: Returns an OMEXML class containing metadata for the image
-
-    Methods:
-        read(X,Y,Z,C,T,series): Returns a part or all of the image as numpy
-            array
     """
 
     def __init__(self,
@@ -106,22 +90,6 @@ class BioReader(BioBase):
         Returns:
             numpy.ndarray: An 5-dimensional numpy array.
 
-        Example:
-
-            # Path to bioformats supported image
-            image_path = 'path/to/image'
-
-            # Create the BioReader object
-            bf = BioReader(image_path)
-
-            # Load the full image
-            image = bf.read_image()
-
-            # Only load the first 256x256 pixels, will still load all Z,C,T dimensions
-            image = bf.read_image(X=(0,256),Y=(0,256))
-
-            # Only load the second channel
-            image = bf.read_image(C=[1])
         """
         # Validate inputs
         X = self._val_xyz(X, 'X')
@@ -131,15 +99,13 @@ class BioReader(BioBase):
         T = self._val_ct(T, 'T')
 
         output = np.zeros([Y[1]-Y[0],
-                            X[1]-X[0],
-                            Z[1]-Z[0],
-                            len(C),
-                            len(T)], self.dtype)
+                           X[1]-X[0],
+                           Z[1]-Z[0],
+                           len(C),
+                           len(T)], self.dtype)
         
-        # Lock the thread and read the image
-        with self._lock:
-
-            self._backend.read_image(X,Y,Z,C,T,output)
+        # Read the image
+        self._backend.read_image(X,Y,Z,C,T,output)
 
         return output
 
@@ -476,20 +442,6 @@ class BioWriter(BioBase):
 
         For for information, visit the Bioformats page:
         https://www.openmicroscopy.org/bio-formats/
-
-        Methods:
-            BioReader(file_path,image,X,Y,Z,C,T,metadata): See __init__ for details
-            pixel_type(dtype): Gets/sets the pixel type (e.g. uint8)
-            channel_names(cnames): Gets/sets the names of each channel
-            num_x(X): Get/set number of pixels in the x-dimension (width)
-            num_y(Y): Get/set number of pixels in the y-dimension (height)
-            num_z(Z): Get/set number of pixels in the z-dimension (depth)
-            num_c(C): Get/set number of channels in the image
-            num_t(T): Get/set number of timepoints in the image
-            physical_size_x(psize,units): Get/set the physical size of the x-dimension
-            physical_size_y(psize,units): Get/set the physical size of the y-dimension
-            physical_size_z(psize,units): Get/set the physical size of the z-dimension
-            write_image(image,X,Y,Z,C,T): Writes the 5d image array to file
         """
 
         __writer = None

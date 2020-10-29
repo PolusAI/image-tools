@@ -8,11 +8,6 @@ class BioBase(object,metaclass=abc.ABCMeta) :
 
     """ Abstract class for reading/writing OME tiled tiff images
     
-    Args:
-        file_path: Path to the file to be read/written
-        max_workers: Number of threads to read/write data
-        backend: Backend to use, must be 'python' or 'java'
-    
     Attributes:
         dtype: Gets/sets the pixel type (e.g. uint8)
         channel_names: Gets/sets the names of each channel
@@ -42,6 +37,14 @@ class BioBase(object,metaclass=abc.ABCMeta) :
     """
     # Set constants for reading/writing images
     _MAX_BYTES = 2 ** 30
+    _DTYPE = {'uint8': np.uint8,
+              'int8': np.int8,
+              'uint16': np.uint16,
+              'int16': np.int16,
+              'uint32': np.uint32,
+              'int32': np.int32,
+              'float': np.float32,
+              'double': np.float64}
     _BPP = {'uint8': 1,
             'int8': 1,
             'uint16': 2,
@@ -97,6 +100,12 @@ class BioBase(object,metaclass=abc.ABCMeta) :
         self._backend_name = backend.lower()
         
         self._lock =  threading.Lock()
+    
+    def __setitem__(self,keys):
+        raise NotImplementedError('Cannot set values for {} class.'.format(self.__class__.__name__))
+    
+    def __getitem__(self,keys,values):
+        raise NotImplementedError('Cannot get values for {} class.'.format(self.__class__.__name__))
     
     @property
     def read_only(self):
@@ -155,13 +164,24 @@ class BioBase(object,metaclass=abc.ABCMeta) :
         assert len(cnames) == self.C, "Number of names does not match number of channels."
         for i in range(0, len(cnames)):
             self._metadata.image(0).Pixels.Channel(i).Name = cnames[i]
-            
+
+    @property
+    def shape(self):
+        """cnames Same as channel_names"""
+        return tuple(getattr(self,d) for d in 'yxzct')
+        
+    @shape.setter
+    def shape(self,new_shape: tuple):
+        assert len(new_shape) == 5
+        for s,d in zip(new_shape,'yxzct'):
+            setattr(self,d,s)
+
     @property
     def cnames(self):
         """cnames Same as channel_names"""
         return self.channel_names
         
-    @channel_names.setter
+    @cnames.setter
     def cnames(self,cnames: list):
         self.channel_names = cnames
             
@@ -234,7 +254,7 @@ class BioBase(object,metaclass=abc.ABCMeta) :
     @property
     def ps_z(self):
         """px_z Same as physical_size_z"""
-        return self.physical_size_x
+        return self.physical_size_z
 
     @ps_z.setter
     def ps_z(self,psize,units):
@@ -300,18 +320,9 @@ class BioBase(object,metaclass=abc.ABCMeta) :
     """ -Pixel information- """
     """ ------------------- """
     
-    def pixel_type(self,dtype=None):
-        """pixel_type Same as dtype"""
-        raise PendingDeprecationWarning(('pixel_type will be deprecated in bfio version 2.1.0.\n' + \
-                                         'Switch to new dtype property.'))
-        if dtype!=None:
-            self.dtype = dtype
-        
-        return self._metadata.image(0).Pixels.PixelType
-    
     @property
     def dtype(self):
-        """pixel_type Get the pixel type
+        """pixel_type Get the numpy pixel type of the data
 
         One of the following strings will be returned:
 
@@ -327,13 +338,16 @@ class BioBase(object,metaclass=abc.ABCMeta) :
         Returns:
             str: One of the above data types.
         """
-        return self._metadata.image(0).Pixels.PixelType
+        return self._DTYPE[self._metadata.image(0).Pixels.PixelType]
     
     @dtype.setter
     def dtype(self,dtype):
         assert not self.__read_only, "The dtype attribute is read only. The image is either in read only mode or writing of the image has already begun."
-        assert dtype in self._BPP.keys(), "Invalid data type."
-        self._metadata.image(0).Pixels.PixelType = dtype
+        assert dtype in self._DTYPE.values(), "Invalid data type."
+        for k,v in self._DTYPE.items():
+            if dtype==v:
+                self._metadata.image(0).Pixels.PixelType = self._BPP[k]
+                return
         
     @property
     def samples_per_pixel(self):

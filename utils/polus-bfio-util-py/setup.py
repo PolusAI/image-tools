@@ -18,7 +18,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/labshare/polus-plugins/utils/bfio",
     packages=setuptools.find_packages(),
-    package_data = {"bfio": ['jars/*.jar','VERSION']},
+    package_data = {"bfio": ['jars/*.jar','jars/*.properties','VERSION']},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

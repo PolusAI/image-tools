@@ -23,6 +23,8 @@ if pathlib.Path(__file__).parent.joinpath('jars').exists():
     JARS = javabridge.JARS + [os.path.realpath(os.path.join(_jars_dir, name + '.jar'))
                               for name in ['loci_tools']]
     
+    LOG4J = os.path.realpath(os.path.join(_jars_dir, 'log4j.properties'))
+    
     logger.info('loci_tools.jar version = {}'.format(JAR_VERSION))
     
 else:
