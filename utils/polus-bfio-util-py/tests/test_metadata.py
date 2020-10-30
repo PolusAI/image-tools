@@ -1,3 +1,7 @@
+import logging
+logger = logging.getLogger('bfio')
+logger.setLevel(logging.DEBUG)
+
 import pytest
 import javabridge as jutil
 import bioformats
@@ -5,7 +9,7 @@ import bfio
 from pathlib import Path
 
 """ Image path to test """
-image_path = Path('../../input_image/r001_z000_y010_x010_c000.ome.tif').resolve()
+image_path = Path('../../inputs/r001_c000_z000.ome.tif')
 
 """ Fixtures """ 
 @pytest.fixture
