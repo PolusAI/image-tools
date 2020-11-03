@@ -3,6 +3,18 @@ import javabridge as jutil
 from pathlib import Path
 import bfio
 
+""" Image path to test """
+image_path = Path('../../input_image/r001_z000_y010_x010_c000.ome.tif')
+
+""" Fixtures """ 
+@pytest.fixture(scope="class")
+def java_reader():
+    return bfio.BioReader(image_path,backend='java')
+
+@pytest.fixture
+def python_reader(scope="class"):
+    return bfio.BioReader(image_path,backend='python')
+
 @pytest.fixture(scope="session")
 def jvm():
     print()

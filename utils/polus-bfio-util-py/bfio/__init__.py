@@ -17,13 +17,14 @@ except:
     __version__ = "0.0.0"
 logger.info('VERSION = {}'.format(__version__))
 
-if pathlib.Path(__file__).parent.joinpath('jars').exists():
+print(pathlib.Path(__file__).parent.joinpath('jars'))
+if pathlib.Path(__file__).parent.joinpath('jars').is_dir():
     _jars_dir = os.path.join(os.path.dirname(__file__), 'jars')
     
     JAR_VERSION = '6.1.0'
 
-    JARS = javabridge.JARS + [os.path.realpath(os.path.join(_jars_dir, name + '.jar'))
-                              for name in ['loci_tools']]
+    JARS = [j for j in javabridge.JARS]
+    JARS.extend([os.path.realpath(os.path.join(_jars_dir, name + '.jar')) for name in ['loci_tools']])
     
     LOG4J = os.path.realpath(os.path.join(_jars_dir, 'log4j.properties'))
     

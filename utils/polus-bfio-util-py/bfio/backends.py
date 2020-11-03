@@ -120,6 +120,8 @@ try:
         def __init__(self, frontend):
             super().__init__(frontend)
             
+            self._rdr = bioformats.ImageReader(str(self.frontend._file_path))
+            
             # Test to see if the loci_tools.jar is present
             if bfio.JARS == None:
                 raise FileNotFoundError('The loci_tools.jar could not be found.')
@@ -146,7 +148,7 @@ try:
         
         def _read_tile(self, dims):
             
-            # self.attach()
+            self.attach()
             
             out = self._out
             
@@ -155,15 +157,10 @@ try:
             self.logger.debug('_read_tile(): dims = {}'.format(dims))
             x_range = min([self.frontend.X, X[1]+1024]) - X[1]
             y_range = min([self.frontend.Y, Y[1]+1024]) - Y[1]
-            self.logger.debug('_read_tile(): x_range, y_range = {}, {}'.format(x_range,y_range))
-            
-            print(str(self.frontend._file_path))
-            print('X,Y,Z,C,T = {},{},{},{},{}'.format(X[1],Y[1],Z[1],C[1],T[1]))
-            with bioformats.ImageReader(str(self.frontend._file_path)) as reader:
-                image = reader.read(c=C[1], z=Z[1], t=T[1],
-                                    rescale=False,
-                                    XYWH=(X[1], Y[1], x_range, y_range))
-                print('image.shape = {}'.format(image.shape))
+
+            image = self._rdr.read(c=C[1], z=Z[1], t=T[1],
+                                   rescale=False,
+                                   XYWH=(X[1], Y[1], x_range, y_range))
             
             out[Y[0]: Y[0]+image.shape[0],
                 X[0]: X[0]+image.shape[1],
@@ -171,7 +168,7 @@ try:
                 C[0],
                 T[0]] = image
 
-            # self.detach()
+            self.detach()
         
         def read_image(self,X,Y,Z,C,T,output):
             
@@ -207,6 +204,10 @@ try:
             
         def detach(self):
             javabridge.detach()
+            
+        def close(self):
+            """Image readers are generated within threads, this does nothing"""
+            self._rdr.close()
 
 except ModuleNotFoundError:
     

@@ -1,11 +1,11 @@
 import abc, threading, logging
-import numpy as np
+import numpy
 from queue import Queue
 import multiprocessing, typing
 from pathlib import Path
+import bfio
 
 class BioBase(object,metaclass=abc.ABCMeta) :
-
     """ Abstract class for reading/writing OME tiled tiff images
     
     Attributes:
@@ -37,14 +37,14 @@ class BioBase(object,metaclass=abc.ABCMeta) :
     """
     # Set constants for reading/writing images
     _MAX_BYTES = 2 ** 30
-    _DTYPE = {'uint8': np.uint8,
-              'int8': np.int8,
-              'uint16': np.uint16,
-              'int16': np.int16,
-              'uint32': np.uint32,
-              'int32': np.int32,
-              'float': np.float32,
-              'double': np.float64}
+    _DTYPE = {'uint8': numpy.uint8,
+              'int8': numpy.int8,
+              'uint16': numpy.uint16,
+              'int16': numpy.int16,
+              'uint32': numpy.uint32,
+              'int32': numpy.int32,
+              'float': numpy.float32,
+              'double': numpy.float64}
     _BPP = {'uint8': 1,
             'int8': 1,
             'uint16': 2,
@@ -55,6 +55,8 @@ class BioBase(object,metaclass=abc.ABCMeta) :
             'double': 8}
     _TILE_SIZE = 2 ** 10
     _CHUNK_SIZE = None
+    
+    _READ_ONLY_MESSAGE = '{} is read-only.'
     
     # protected backend object for interfacing with the file on disk
     _backend = None
@@ -88,37 +90,39 @@ class BioBase(object,metaclass=abc.ABCMeta) :
             backend (str,optional): Backend to use, must be 'python' or 'java'.
                 Default is 'python'.
         """
+        
+        # Internally, keep the file_path as a Path object
         if isinstance(file_path,str):
             file_path = Path(file_path)
         self._file_path = file_path
 
+        # Set the number of workers for multi-threaded loading
         self.max_workers = max_workers if max_workers != None else max([multiprocessing.cpu_count()//2,1])
         
+        # Throw an error if an invalid backend is specified
         if backend.lower() not in ['python','java']:
             raise ValueError('Keyword argument backend must be one of ["python","java"]')
         
+        # Set the backend
         self._backend_name = backend.lower()
         
+        # Create an thread lock for the object
         self._lock =  threading.Lock()
     
-    def __setitem__(self,keys,values):
+    def __setitem__(self,keys: typing.Union[list,tuple],values: numpy.ndarray):
         raise NotImplementedError('Cannot set values for {} class.'.format(self.__class__.__name__))
     
     def __getitem__(self,keys):
         raise NotImplementedError('Cannot get values for {} class.'.format(self.__class__.__name__))
     
     @property
-    def read_only(self):
-        """read_only Returns true is object is ready only
-
-        Returns:
-            bool: True if object is read only
-        """
+    def read_only(self) -> bool:
+        """Returns true if object is ready only"""
         return self.__read_only
 
     @read_only.setter
     def read_only(self):
-        raise AttributeError('read_only attribute is read-only.')
+        raise AttributeError(self._READ_ONLY_MESSAGE.format('read_only'))
     
     def __getattribute__(self,name):
         # Get image dimensions using num_x, x, or X
@@ -141,7 +145,7 @@ class BioBase(object,metaclass=abc.ABCMeta) :
             object.__setattr__(self,name,args)
     
     def __xyzct_setter(self,dimension,value):
-        assert not self.__read_only, "{} is read-only.".format(dimension.lower())
+        assert not self.__read_only, self._READ_ONLY_MESSAGE.format(dimension.lower())
         assert value >= 1, "{} must be >= 0".format(dimension.upper())
         setattr(self._metadata.image(0).Pixels,'Size{}'.format(value.upper()),value)
     
@@ -149,88 +153,88 @@ class BioBase(object,metaclass=abc.ABCMeta) :
     """ -Get/Set Dimension Properties- """
     """ ------------------------------ """
     @property
-    def channel_names(self):
-        """channel_names getter/setter
-
-        Returns:
-            list: Strings indicating channel names
-        """
+    def channel_names(self) -> typing.List[str]:
+        """Get the channel names for the image"""
         image = self._metadata.image()
         return [image.Pixels.Channel(i).Name for i in range(0, self.C)]
         
     @channel_names.setter
-    def channel_names(self,cnames: list):
-        assert not self.__read_only, "channel_names is read-only."
+    def channel_names(self,cnames: typing.List[str]):
+        assert not self.__read_only, self._READ_ONLY_MESSAGE.format("channel_names")
         assert len(cnames) == self.C, "Number of names does not match number of channels."
         for i in range(0, len(cnames)):
             self._metadata.image(0).Pixels.Channel(i).Name = cnames[i]
 
     @property
-    def shape(self):
-        """cnames Same as channel_names"""
+    def shape(self) -> typing.Tuple[int,int,int,int,int]:
+        """The 5-dimensional shape of the image
+
+        Returns:
+            (:attr:`~.Y`, :attr:`~.X`, :attr:`~.Z`, :attr:`~.C`, :attr:`~.T`)
+            shape of the image
+        """
         return tuple(getattr(self,d) for d in 'yxzct')
         
     @shape.setter
-    def shape(self,new_shape: tuple):
+    def shape(self,new_shape: typing.Tuple[int,int,int,int,int]):
         assert len(new_shape) == 5
         for s,d in zip(new_shape,'yxzct'):
             setattr(self,d,s)
 
     @property
-    def cnames(self):
-        """cnames Same as channel_names"""
+    def cnames(self) -> typing.List[str]:
+        """Same as :attr:`~.channel_names` """
         return self.channel_names
         
     @cnames.setter
-    def cnames(self,cnames: list):
+    def cnames(self,cnames: typing.List[str]):
+        assert not self.__read_only, self._READ_ONLY_MESSAGE.format("cnames")
         self.channel_names = cnames
             
     def __physical_size(self,dimension,psize,units):
         if psize != None and units != None:
-            assert not self.__read_only, "physical_size_{} is read-only.".format(dimension.lower())
+            assert not self.__read_only, self._READ_ONLY_MESSAGE.format("physical_size_{}".format(dimension.lower()))
             setattr(self._metadata.image(0).Pixels,'PhysicalSize{}'.format(dimension.upper()),psize)
             setattr(self._metadata.image(0).Pixels,'PhysicalSize{}Unit'.format(dimension.upper()),units)
 
     @property
-    def physical_size_x(self):
-        """physical_size_x Size of pixels in x-dimension
+    def physical_size_x(self) -> typing.Tuple[float,str]:
+        """Physical size of pixels in x-dimension
 
         Returns:
-            float: Number of units per pixel
-            str: Units (i.e. cm or mm)
+            Units per pixel, Units (i.e. "cm" or "mm")
         """
         return (self._metadata.image(0).Pixels.PhysicalSizeX, self._metadata.image(0).Pixels.PhysicalSizeXUnit)
 
     @physical_size_x.setter
-    def physical_size_x(self,psize,units):
+    def physical_size_x(self,psize: float,units: str):
         self.__physical_size(self,'X',psize,units)
         
     @property
-    def ps_x(self):
-        """px_x Same as physical_size_x"""
+    def ps_x(self) -> typing.Tuple[float,str]:
+        """Same as :attr:`~bfio.bfio.BioReader.physical_size_x`"""
         return self.physical_size_x
 
     @ps_x.setter
-    def ps_x(self,psize,units):
+    def ps_x(self,psize: float,units: str):
         self.__physical_size(self,'X',psize,units)
         
     @property
-    def physical_size_y(self):
-        """physical_size_y Size of pixels in y-dimension
+    def physical_size_y(self) -> typing.Tuple[float,str]:
+        """Physical size of pixels in y-dimension
 
         Returns:
-            float: Number of units per pixel
-            str: Units (i.e. cm or mm)
+            Units per pixel, Units (i.e. "cm" or "mm")
         """
         return (self._metadata.image(0).Pixels.PhysicalSizeY, self._metadata.image(0).Pixels.PhysicalSizeYUnit)
 
     @physical_size_y.setter
-    def physical_size_y(self,psize,units):
+    def physical_size_y(self,psize: float,units: str):
         self.__physical_size(self,'Y',psize,units)
         
     @property
     def ps_y(self):
-        """px_y Same as physical_size_y"""
+        """Same as :attr:`~bfio.bfio.BioReader.physical_size_y`"""
         return self.physical_size_y
 
     @ps_y.setter
@@ -238,22 +242,21 @@ class BioBase(object,metaclass=abc.ABCMeta) :
         self.__physical_size(self,'Y',psize,units)
         
     @property
-    def physical_size_z(self):
-        """physical_size_z Size of pixels in z-dimension
+    def physical_size_z(self) -> typing.Tuple[float,str]:
+        """Physical size of pixels in z-dimension
 
         Returns:
-            float: Number of units per pixel
-            str: Units (i.e. cm or mm)
+            Units per pixel, Units (i.e. "cm" or "mm")
         """
         return (self._metadata.image(0).Pixels.PhysicalSizeZ, self._metadata.image(0).Pixels.PhysicalSizeZUnit)
 
     @physical_size_z.setter
-    def physical_size_z(self,psize,units):
+    def physical_size_z(self,psize: float,units: str):
         self.__physical_size(self,'Z',psize,units)
         
     @property
     def ps_z(self):
-        """px_z Same as physical_size_z"""
+        """Same as :attr:`~.physical_size_z`"""
         return self.physical_size_z
 
     @ps_z.setter
@@ -264,16 +267,16 @@ class BioBase(object,metaclass=abc.ABCMeta) :
     """ -Validation methods- """
     """ -------------------- """
     
-    def _val_xyz(self, xyz, axis):
+    def _val_xyz(self, xyz: int, axis: str) -> typing.List[int]:
         """_val_xyz Utility function for validating image dimensions
 
         Args:
-            xyz (int): Pixel value of x, y, or z dimension.
+            xyz: Pixel value of x, y, or z dimension.
                 If None, returns the maximum range of the dimension
-            axis (str): Must be 'x', 'y', or 'z'
+            axis: Must be 'x', 'y', or 'z'
 
         Returns:
-            list: list of ints indicating the first and last index in the dimension
+            list of ints indicating the first and last index in the dimension
         """
         assert axis in 'XYZ'
         
@@ -289,16 +292,16 @@ class BioBase(object,metaclass=abc.ABCMeta) :
                 
         return xyz
 
-    def _val_ct(self, ct, axis):
+    def _val_ct(self, ct: typing.Union[int,list], axis: str) -> typing.List[int]:
         """_val_ct Utility function for validating image dimensions
 
         Args:
-            ct (int,list): List of ints indicating the channels or timepoints to load
+            ct: List of ints indicating the channels or timepoints to load
                 If None, returns a list of ints
-            axis (str): Must be 'c', 't'
+            axis: Must be 'c', 't'
 
         Returns:
-            list: list of ints indicating the first and last index in the dimension
+            list of ints indicating the first and last index in the dimension
         """
 
         assert axis in 'CT'
@@ -307,9 +310,9 @@ class BioBase(object,metaclass=abc.ABCMeta) :
             # number of timepoints
             ct = list(range(0, getattr(self,axis)))
         else:
-            assert np.any(np.greater(getattr(self,axis), ct)), \
+            assert numpy.any(numpy.greater(getattr(self,axis), ct)), \
             'At least one of the {}-indices was larger than largest index ({}).'.format(axis, getattr(self,axis) - 1)
-            assert np.any(np.less_equal(0, ct)), \
+            assert numpy.any(numpy.less_equal(0, ct)), \
             'At least one of the {}-indices was less than 0.'.format(axis)
             assert len(ct) != 0, \
             'At least one {}-index must be selected.'.format(axis)
@@ -321,28 +324,13 @@ class BioBase(object,metaclass=abc.ABCMeta) :
     """ ------------------- """
     
     @property
-    def dtype(self):
-        """pixel_type Get the numpy pixel type of the data
-
-        One of the following strings will be returned:
-
-        'uint8':  Unsigned 8-bit pixel type
-        'int8':   Signed 8-bit pixel type
-        'uint16': Unsigned 8-bit pixel type
-        'int16':  Signed 16-bit pixel type
-        'uint32': Unsigned 32-bit pixel type
-        'int32':  Signed 32-bit pixel type
-        'float':  IEEE single-precision pixel type
-        'double': IEEE double precision pixel type
-
-        Returns:
-            str: One of the above data types.
-        """
+    def dtype(self) -> numpy.dtype:
+        """The numpy pixel type of the data"""
         return self._DTYPE[self._metadata.image(0).Pixels.PixelType]
     
     @dtype.setter
     def dtype(self,dtype):
-        assert not self.__read_only, "The dtype attribute is read only. The image is either in read only mode or writing of the image has already begun."
+        assert not self.__read_only, self._READ_ONLY_MESSAGE.format("dtype")
         assert dtype in self._DTYPE.values(), "Invalid data type."
         for k,v in self._DTYPE.items():
             if dtype==v:
@@ -350,8 +338,8 @@ class BioBase(object,metaclass=abc.ABCMeta) :
                 return
         
     @property
-    def samples_per_pixel(self):
-        """samples_per_pixel Number of samples per pixel """
+    def samples_per_pixel(self) -> int:
+        """Number of samples per pixel"""
         return self._metadata.image().Pixels.Channel().SamplesPerPixel
     
     @samples_per_pixel.setter
@@ -361,7 +349,7 @@ class BioBase(object,metaclass=abc.ABCMeta) :
 
     @property
     def spp(self):
-        """spp Shorthand for samples_per_pixel """
+        """Same as :attr:`.samples_per_pixel`"""
         return self.samples_per_pixel
     
     @spp.setter
@@ -369,12 +357,8 @@ class BioBase(object,metaclass=abc.ABCMeta) :
         self.samples_per_pixel(samples_per_pixel)
         
     @property
-    def bytes_per_pixel(self):
-        """bytes_per_pixel Number of samples per pixel
-        
-        Returns:
-            int
-        """
+    def bytes_per_pixel(self) -> int:
+        """Number of bytes per pixel"""
         return self._BPP[self._metadata.image().Pixels.get_PixelType()]
     
     @bytes_per_pixel.setter
@@ -384,65 +368,68 @@ class BioBase(object,metaclass=abc.ABCMeta) :
     
     @property
     def bpp(self):
-        """bytes_per_pixel Number of samples per pixel
-        
-        Returns:
-            int
-        """
+        """Same as :attr:`.bytes_per_pixel`"""
         return self.bytes_per_pixel
     
     @bpp.setter
-    def bpp(self,
-            bytes_per_pixel: int):
+    def bpp(self,bytes_per_pixel: int):
         self.bytes_per_pixel = bytes_per_pixel
 
     """ -------------------------- """
     """ -Other Methods/Properties- """
     """ -------------------------- """
     @property
-    def metadata(self):
-        """metadata Get the metadata for the image
+    def metadata(self) -> bfio.OmeXml.OMEXML:
+        """Get the metadata for the image
 
-        This function calls the Bioformats metadata parser, which extracts metadata
-        from an image. This returns a reference to an OMEXML class, which is a
-        convenient handler for the complex xml metadata created by Bioformats.
+        This function calls the Bioformats metadata parser, which extracts
+        metadata from an image. This returns a reference to an OMEXML class,
+        which is a convenient handler for the complex xml metadata created by
+        Bioformats.
 
-        Most basic metadata information have their own BioReader methods, such as
-        image dimensions(i.e. x, y, etc). However, in some cases it may
-        be necessary to access the underlying metadata class.
+        Most basic metadata information have their own BioReader methods, such
+        as image dimensions(i.e. x, y, etc). However, in some cases it may be
+        necessary to access the underlying metadata class.
         
         Minor changes have been made to the original OMEXML class created for
-        python-bioformats, so the original OMEXML documentation should assist those
-        interested in directly accessing the metadata. In general, it is best to
-        assign data using the object properties to ensure the metadata stays in sync
-        with the file.
+        python-bioformats, so the original OMEXML documentation should assist
+        those interested in directly accessing the metadata. In general, it is
+        best to assign data using the object properties to ensure the metadata
+        stays in sync with the file.
 
         For information on the OMEXML class:
         https://github.com/CellProfiler/python-bioformats/blob/master/bioformats/omexml.py
 
         Returns:
-            OMEXML: Class that simplifies editing ome-xml data
+            OMEXML object for the image
         """        
         return self._metadata
     
     @metadata.setter
     def metadata(self,value):
-        raise AttributeError('The metadata attribute is read-only.')
+        raise AttributeError('The metadata attribute is read-only. Components' +
+                             ' of the metadata can be modified by getting' +
+                             ' the metadata object and making changes, or by' +
+                             ' changing the attriutes of the image.')
 
-    def maximum_batch_size(self, tile_size, tile_stride=None):
+    def maximum_batch_size(self,
+                           tile_size: typing.List[int],
+                           tile_stride: typing.Union[typing.List[int],None] = None) -> int:
         """maximum_batch_size Maximum allowable batch size for tiling
-        The pixel buffer only loads at most two supertiles at a time. If the batch
-        size is too large, then the tiling function will attempt to create more
-        tiles than what the buffer holds. To prevent the tiling function from doing
-        this, there is a limit on the number of tiles that can be retrieved in a
-        single call. This function determines what the largest number of retreivable
-        batches is.
+        
+        The pixel buffer only loads at most two supertiles at a time. If the
+        batch size is too large, then the tiling function will attempt to create
+        more tiles than what the buffer holds. To prevent the tiling function
+        from doing this, there is a limit on the number of tiles that can be
+        retrieved in a single call. This function determines what the largest
+        number of retreivable batches is.
+        
         Args:
-            tile_size (list): The height and width of the tiles to retrieve
-            tile_stride (list, optional): If None, defaults to tile_size.
-                Defaults to None.
+            tile_size: The height and width of the tiles to retrieve
+            tile_stride: If None, defaults to tile_size. *Defaults to None.*
+        
         Returns:
-            int: Maximum allowed number of batches that can be retrieved by the
+            Maximum allowed number of batches that can be retrieved by the
                 iterate method.
         """
         if tile_stride == None:
@@ -450,7 +437,7 @@ class BioBase(object,metaclass=abc.ABCMeta) :
 
         xyoffset = [(tile_size[0] - tile_stride[0]) / 2, (tile_size[1] - tile_stride[1]) / 2]
 
-        num_tile_rows = int(np.ceil(self.num_y() / tile_stride[0]))
+        num_tile_rows = int(numpy.ceil(self.Y / tile_stride[0]))
         num_tile_cols = (1024 - xyoffset[1]) // tile_stride[1]
         if num_tile_cols == 0:
             num_tile_cols = 1

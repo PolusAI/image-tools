@@ -1,7 +1,6 @@
-import threading, typing
+import threading, typing, numpy
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-import numpy as np
 from bfio import backends
 from bfio.base_classes import BioBase
 
@@ -22,79 +21,139 @@ class BioReader(BioBase):
     the python-bioformats class will throw an error due to the way that Java
     handles file reading.
 
-    Note: The javabridge is not handled by the BioReader class. It must be
-          initialized prior to using the BioReader class, and must be closed
-          before the program terminates. An example is provided in read_image().
-
     For for information, visit the Bioformats page:
     https://www.openmicroscopy.org/bio-formats/
+
+    Note:
+        The javabridge is not handled by the BioReader class. It must be
+        initialized prior to using the BioReader class, and must be closed
+        before the program terminates. An example is provided in read_image().
     """
 
     def __init__(self,
                  file_path: typing.Union[str,Path],
-                 max_workers: typing.Optional[int] = None,
-                 backend: typing.Optional[str] ='python'):
-        """__init__ Initialize the a file for reading
-
-        Prior to initializing the class, it is important to remember that
-        the javabridge must be initialized. See the read_image() method
-        for an example.
-
-        Args:
-            file_path ([str,pathlib.Path]): Path to file to read
-            max_workers (int, optional): Number of threads used to read
-                and image. Default is half the number of detected cores.
-            backend (str, optional): Must be 'python' or 'java'.
-                Default is 'python'.
+                 max_workers: typing.Union[int,None] = None,
+                 backend: str = 'python'):
+        """
+        Parameters:
+            file_path: Path to file to read
+            max_workers: Number of threads used to read and image. *Default is
+                half the number of detected cores.*
+            backend: Must be ``python`` or ``java``. *Default is python.*
         """
 
-        super(BioReader, self).__init__(file_path, max_workers=max_workers, backend=backend)
-                           
+        # Initialize BioBase
+        super(BioReader, self).__init__(file_path,
+                                        max_workers=max_workers,
+                                        backend=backend)
+        
+        # Ensure backend is supported
         if self._backend_name == 'python':
             self._backend = backends.PythonReader(self)
         elif self._backend_name == 'java':
             self._backend = backends.JavaReader(self)
-            
-        self._metadata = self._backend.read_metadata()
-            
-        # number of pixels to load at a time
-        self._CHUNK_SIZE = self._MAX_BYTES / \
-                           (self.bpp * self.spp)
-                           
-    def __getitem__(self,keys):
+        else:
+            raise ValueError('backend must be "python" or "java"')
         
+        # Preload the metadata
+        self._metadata = self._backend.read_metadata()
+                           
+    def __getitem__(self,keys: typing.Union[tuple,slice]) -> numpy.ndarray:
+        """Image loading using numpy-like indexing
+        
+        This is an abbreviated method of accessing the :attr:`~.read` method,
+        where a portion of the image will be loaded using numpy-like slicing
+        syntax. Up to 5 dimensions can be designated depending on the number of
+        available dimensions in the image array (Y, X, Z, C, T).
+        
+        Note:
+            Not all methods of indexing can be used, and some indexing will lead
+            to unexpected results. For example, logical indexing cannot be used,
+            and step sizes in slice objects is ignored for the first three
+            indices. This means and index such as ``[0:100:2,0:100:2,0,0,0]``
+            will return a 100x100x1x1x1 numpy array.
+        
+        Parameters:
+            keys: numpy-like slicing used to load a section of an image.
+        
+        Returns:
+            A numpy.ndarray where trailing empty dimensions are removed.
+            
+        Example:
+
+            .. code-block:: python
+
+                import bfio
+                
+                # Initialize the bioreader
+                br = bfio.BioReader('Path/To/File.ome.tif')
+                
+                # Load and copy a 100x100 array of pixels
+                a = br[:100,:100,0,0,0]
+                
+                # Slice steps sizes are ignored for the first 3 indices, so this
+                # returns the same as above
+                a = br[0:100:2,0:100:2,0,0,0]
+                
+                # The last two dimensions can receive a tuple or list as input
+                # Load the first and third channel
+                a = br[:100,100,0,(0,2),0]
+                
+                # If the file is 3d, load the first 10 z-slices
+                b = br[...,:10,0,0]
+        """
+        
+        # Dimension ordering and index initialization
         dims = 'YXZCT'
         ind = {d:None for d in dims}
         
+        # If an empty slice, load the whole image
         if not isinstance(keys,tuple):
             if isinstance(keys,slice) and keys.start == None and keys.stop == None and keys.step==None:
                 pass
             else:
                 raise ValueError('If only a single index is supplied, it must be an empty slice ([:]).')
+            
+        # If not an empty slice, parse the key tuple
         else:
+            
+            # At most, 5 indices can be indicated
             if len(keys) > 5:
                 raise ValueError('Found {} indices, but at most 5 indices may be supplied.'.format(len(keys)))
             
+            # If the first key is an ellipsis, read backwards
             if keys[0] == Ellipsis:
+                
+                # If the last key is an ellipsis, throw an error
+                if keys[-1]==Ellipsis:
+                    raise ValueError('Ellipsis (...) may be used in either the first or last index, not both.')
+                
                 dims = [d for d in reversed(dims)]
                 keys = [k for k in reversed(keys)]
             
+            # Get key values
             for dim,key in zip(dims,keys):
+                
                 if isinstance(key,slice):
+                    # For CT dimensions, generate a list from slices
                     if dim in 'CT':
                         ind[dim] = [v for v in range(key)]
+                    
+                    # For XYZ dimensions, get start and stop of slice, ignore step
                     else:
                         start = 0 if key.start == None else key.start
                         stop = 0 if key.stop == None else key.stop
                         ind[dim] = [start,stop]
+                        
                 elif isinstance(key,(int,tuple,list)):
+                    # Only the last two dimensions can use int, tuple, or list indexing
                     if dim in 'CT':
                         if isinstance(key,int):
                             ind[dim] = [key]
                         else:
                             ind[dim] = key
                     else:
-                        raise ValueError('The index in position {} cannot be a slice type.'.format(dims.find(key)))
+                        raise ValueError('The index in position {} must be a slice type.'.format(dims.find(key)))
                 elif key==Ellipsis:
                     if dims.find(dim)+1 < len(keys):
                         raise ValueError('Ellipsis may only be used in the first or last index.')
@@ -103,35 +162,34 @@ class BioReader(BioBase):
         
         return self.read(**ind)
 
-    def read(self, X=None, Y=None, Z=None, C=None, T=None):
-        """read Read the image
+    def read(self,
+             X: typing.Union[list,tuple,None] = None,
+             Y: typing.Union[list,tuple,None] = None,
+             Z: typing.Union[list,tuple,None] = None,
+             C: typing.Union[list,tuple,None] = None,
+             T: typing.Union[list,tuple,None] = None) -> numpy.ndarray:
+        """Read the image
 
-        Read the all or part of the image. A n-dimmensional numpy.ndarray is returned
-        such that all trailing empty dimensions will be removed.
+        Read the all or part of the image. A n-dimmensional numpy.ndarray is
+        returned such that all trailing empty dimensions will be removed.
         
-        For example, if an image is read and it represents an xz plane, then the shape
-        will be [1,m,n].
+        For example, if an image is read and it represents an xz plane, then the
+        shape will be [1,m,n].
 
         Args:
-            X ([tuple,list], optional): 2-tuple indicating the (min,max) range of
-                pixels to load along the x-axis (columns). If None, loads the full range.
-                Defaults to None.
-            Y ([tuple,list], optional): 2-tuple indicating the (min,max) range of
-                pixels to load along the y-axis (rows). If None, loads the full range.
-                Defaults to None.
-            Z ([tuple,list], optional): 2-tuple indicating the (min,max) range of
-                pixels to load along the z-axis (depth). If None, loads the full range.
-                Defaults to None.
-            C ([tuple,list], optional): tuple or list of values indicating channel
-                indices to load. If None, loads the full range.
-                Defaults to None.
-            T ([tuple,list], optional): tuple or list of values indicating timepoints
-                to load. If None, loads the full range.
-                Defaults to None.
+            X: The (min,max) range of pixels to load along the x-axis (columns).
+                If None, loads the full range. *Defaults to None.*
+            Y: The (min,max) range of pixels to load along the y-axis (rows). If
+                None, loads the full range. *Defaults to None.*
+            Z: The (min,max) range of pixels to load along the z-axis (depth).
+                If None, loads the full range. *Defaults to None.*
+            C: Values indicating channel indices to load. If None, loads the
+                full range. *Defaults to None.*
+            T: Values indicating timepoints to load. If None, loads the full
+                range. *Defaults to None.*
 
         Returns:
-            numpy.ndarray: An 5-dimensional numpy array.
-
+            A 5-dimensional numpy array.
         """
         # Validate inputs
         X = self._val_xyz(X, 'X')
@@ -143,18 +201,19 @@ class BioReader(BioBase):
         # Define tile bounds
         X_tile_start = (X[0]//self._TILE_SIZE) * self._TILE_SIZE
         Y_tile_start = (Y[0]//self._TILE_SIZE) * self._TILE_SIZE
-        X_tile_end = np.ceil(X[1]/self._TILE_SIZE).astype(int) * self._TILE_SIZE
-        Y_tile_end = np.ceil(Y[1]/self._TILE_SIZE).astype(int) * self._TILE_SIZE
+        X_tile_end = numpy.ceil(X[1]/self._TILE_SIZE).astype(int) * self._TILE_SIZE
+        Y_tile_end = numpy.ceil(Y[1]/self._TILE_SIZE).astype(int) * self._TILE_SIZE
         X_tile_shape = X_tile_end - X_tile_start
         Y_tile_shape = Y_tile_end - Y_tile_start
         Z_tile_shape = Z[1]-Z[0]
 
-        output = np.zeros([Y_tile_shape,
-                           X_tile_shape,
-                           Z_tile_shape,
-                           len(C),
-                           len(T)],
-                          dtype=self.dtype)
+        # Initialize the output
+        output = numpy.zeros([Y_tile_shape,
+                              X_tile_shape,
+                              Z_tile_shape,
+                              len(C),
+                              len(T)],
+                             dtype=self.dtype)
         
         # Read the image
         self._backend.read_image([X_tile_start,X_tile_end],
@@ -164,29 +223,32 @@ class BioReader(BioBase):
 
         return output[Y[0]-Y_tile_start:Y[1]-Y_tile_start,X[0]-X_tile_start:X[1]-X_tile_start,...]
 
-    def _fetch(self):
-        """_fetch Method for fetching image supertiles
-        This method is intended to be run within a thread, and grabs a
-        chunk of the image according to the coordinates in a queue.
+    def _fetch(self) -> numpy.ndarray:
+        """Method for fetching image supertiles
+        
+        This method is intended to be run within a thread, and grabs a chunk of
+        the image according to the coordinates in a queue.
 
-        Currently, this function will only grab the first Z, C, and T
-        positions regardless of what Z, C, and T coordinate are provided
-        to the function. This function will need to be changed in then
-        future to account for this.
+        Currently, this function will only grab the first Z, C, and T positions
+        regardless of what Z, C, and T coordinate are provided to the function.
+        This function will need to be changed in then future to account for
+        this.
 
-        If the first value in X or Y is negative, then the image is
-        pre-padded with the number of pixels equal to the absolute value
-        of the negative number.
+        If the first value in X or Y is negative, then the image is pre-padded
+        with the number of pixels equal to the absolute value of the negative
+        number.
 
-        If the last value in X or Y is larger than the size of the
-        image, then the image is post-padded with the difference between
-        the number and the size of the image.
-        Input coordinate are read from the _supertile_index Queue object.
-        Output data is stored in the _raw_buffer Queue object.
+        If the last value in X or Y is larger than the size of the image, then
+        the image is post-padded with the difference between the number and the
+        size of the image. Input coordinate are read from the _supertile_index
+        Queue object. Output data is stored in the _raw_buffer Queue object.
 
         As soon as the method is executed, a boolean value is put into the
-        _data_in_buffer Queue to indicate that data is either in the buffer
-        or will be put into the buffer.
+        _data_in_buffer Queue to indicate that data is either in the buffer or
+        will be put into the buffer.
+        
+        Returns:
+            An image supertile
         """
 
         self._data_in_buffer.put(True)
@@ -224,11 +286,11 @@ class BioReader(BioBase):
         # Read the image
         I = self.read([x_min, x_max], [y_min, y_max], [0, 1], [0], [0]).squeeze()
         if reflect_x:
-            I = np.fliplr(I)
+            I = numpy.fliplr(I)
 
         # Pad the image if needed
         if sum(1 for p in [prepad_x, prepad_y, postpad_x, postpad_y] if p != 0) > 0:
-            I = np.pad(I, ((prepad_y, postpad_y), (prepad_x, postpad_x)), mode='symmetric')
+            I = numpy.pad(I, ((prepad_y, postpad_y), (prepad_x, postpad_x)), mode='symmetric')
 
         # Store the data in the buffer
         self._raw_buffer.put(I)
@@ -238,20 +300,20 @@ class BioReader(BioBase):
 
         return I
 
-    def _buffer_supertile(self, column_start, column_end):
+    def _buffer_supertile(self, column_start: int, column_end: int):
         """_buffer_supertile Process the pixel buffer
         
-        Give the column indices of the data to process, and determine if
-        the buffer needs to be processed. This method performs two operations
-        on the buffer. First, it checks to see if data in the buffer can be
-        shifted out of the buffer if it's already been processed, where data
-        before column_start is assumed to have been processed. Second, this
-        function loads data into the buffer if the image reader has made some
-        available and there is room in _pixel_buffer for it.
+        Give the column indices of the data to process, and determine if the
+        buffer needs to be processed. This method performs two operations on the
+        buffer. First, it checks to see if data in the buffer can be shifted out
+        of the buffer if it's already been processed, where data before
+        column_start is assumed to have been processed. Second, this function
+        loads data into the buffer if the image reader has made some available
+        and there is room in _pixel_buffer for it.
         
         Args:
-            column_start ([int]): First column index of data to be loaded
-            column_end ([int]): Last column index of data to be loaded
+            column_start: First column index of data to be loaded
+            column_end: Last column index of data to be loaded
         """
 
         # If the column indices are outside what is available in the buffer,
@@ -262,7 +324,7 @@ class BioReader(BioBase):
             self._pixel_buffer[:, 0:x_max] = self._pixel_buffer[:, x_min:]
             self._pixel_buffer[:, x_max:] = 0
             self._tile_x_offset = column_start
-            self._tile_last_column = np.argwhere((self._pixel_buffer == 0).all(axis=0))[0, 0]
+            self._tile_last_column = numpy.argwhere((self._pixel_buffer == 0).all(axis=0))[0, 0]
 
         # Is there data in the buffer?
         if (self._supertile_index.qsize() > 0 or self._data_in_buffer.qsize() > 0):
@@ -283,22 +345,27 @@ class BioReader(BioBase):
 
             self._data_in_buffer.get()
 
-    def _get_tiles(self, X, Y, Z, C, T):
+    def _get_tiles(self,
+                   X:typing.List[typing.List[int]],
+                   Y:typing.List[typing.List[int]],
+                   Z:typing.List[typing.List[int]],
+                   C:typing.List[typing.List[int]],
+                   T:typing.List[typing.List[int]]) -> numpy.ndarray:
         """_get_tiles Handle data buffering and tiling
         
-        This function returns tiles of data according to the input
-        coordinates. The X, Y, Z, C, and T are lists of lists, where
-        each internal list indicates a set of coordinates specifying
-        the range of pixel values to grab from an image.
+        This function returns tiles of data according to the input coordinates.
+        The X, Y, Z, C, and T are lists of lists, where each internal list
+        indicates a set of coordinates specifying the range of pixel values to
+        grab from an image.
         
         Args:
-            X (list): List of 2-tuples indicating the (min,max)
-                range of pixels to load within a tile.
-            Y (list): List of 2-tuples indicating the (min,max)
-                range of pixels to load within a tile.
-            Z (None): Placeholder, to be implemented.
-            C (None): Placeholder, to be implemented.
-            T (None): Placeholder, to be implemented.
+            X: List of 2-tuples indicating the (min,max) range of pixels to load
+                within a tile.
+            Y: List of 2-tuples indicating the (min,max) range of pixels to load
+                within a tile.
+            Z: Placeholder, to be implemented.
+            C: Placeholder, to be implemented.
+            T: Placeholder, to be implemented.
             
         Returns:
             numpy.ndarray: 2-dimensional ndarray.
@@ -319,11 +386,11 @@ class BioReader(BioBase):
         num_rows = Y[0][1] - Y[0][0]
         num_cols = X[0][1] - X[0][0]
         num_tiles = len(X)
-        images = np.zeros((num_tiles, num_rows, num_cols, 1), dtype=self.pixel_type())
+        images = numpy.zeros((num_tiles, num_rows, num_cols, 1), dtype=self.pixel_type())
 
         for ind in range(split_ind):
             images[ind, :, :, 0] = self._pixel_buffer[Y[ind][0] - self._tile_y_offset:Y[ind][1] - self._tile_y_offset,
-                                   X[ind][0] - self._tile_x_offset:X[ind][1] - self._tile_x_offset]
+                                                      X[ind][0] - self._tile_x_offset:X[ind][1] - self._tile_x_offset]
 
         if split_ind != num_tiles:
             self._buffer_supertile(X[-1][0], X[-1][1])
@@ -334,43 +401,67 @@ class BioReader(BioBase):
 
         return images
 
-
-
-    def iterate(self, tile_size, tile_stride=None, batch_size=None, channels=[0]):
-        """iterate Iterate through tiles of an image
-        This method is an iterator to load tiles of an image. This method
-        buffers the loading of pixels asynchronously to quickly deliver
-        images of the appropriate size.
+    def __call__(self,
+                 tile_size: typing.Union[list,tuple],
+                 tile_stride: typing.Union[list,tuple,None] = None,
+                 batch_size: typing.Union[int,None] = None,
+                 channels: typing.Union[list] = [0]) -> typing.Iterable[typing.Tuple[numpy.ndarray,tuple]]:
+        """Iterate through tiles of an image
+        
+        The BioReader object can be called, and will act as an iterator to load
+        tiles of an image. The iterator buffers the loading of pixels
+        asynchronously to quickly deliver images of the appropriate size.
+        
         Args:
-            tile_size ([list,tuple]): A list/tuple of length 2, indicating
-                the height and width of the tiles to return.
-            tile_stride ([list,tuple], optional): A list/tuple of length 2,
-                indicating the row and column stride size. If None, then
-                tile_stride = tile_size.
-                Defaults to None.
-            batch_size (int, optional): Number of tiles to return on each
-                iteration. Defaults to 32.
-            channels (list, optional): A placeholder. Only the first channel
-                is ever loaded. Defaults to [0].
-        Yields:
-            numpy.ndarray: A 4-d array where the dimensions are
-                [tile_num,tile_size[0],tile_size[1],channels]
-            tuple: A tuple containing lists of X,Y,Z,C,T indices
+            tile_size: A list/tuple of length 2, indicating the height and width
+                of the tiles to return.
+            tile_stride: A list/tuple of length 2, indicating the row and column
+                stride size. If None, then tile_stride = tile_size. *Defaults to
+                None.*
+            batch_size: Number of tiles to return on each iteration. *Defaults
+                to None, which is the smaller of 32 or the*
+                :attr:`~.maximum_batch_size`
+            channels: A placeholder. Only the first channel
+                is ever loaded. *Defaults to [0].*
+                
+        Returns:
+            A tuple containing a 4-d numpy array and a tuple containing a list
+            of X,Y,Z,C,T indices. The numpy array has dimensions 
+            ``[tile_num,tile_size[0],tile_size[1],channels]``
 
         Example:
-            from bfio import BioReader
-            import matplotlib.pyplot as plt
+            .. code:: python
+            
+                from bfio import BioReader
+                import matplotlib.pyplot as plt
 
-            br = BioReader('/path/to/file')
+                br = BioReader('/path/to/file')
 
-            for tiles,ind in br.iterate(tile_size=[256,256],tile_stride=[200,200]):
-                for i in tiles.shape[0]:
-                    print('Displaying tile with X,Y coords: {},{}'.format(ind[i][0],ind[i][1]))
-                    plt.figure()
-                    plt.imshow(tiles[ind,:,:,0].squeeze())
-                    plt.show()
+                for tiles,ind in br(tile_size=[256,256],tile_stride=[200,200]):
+                    for i in tiles.shape[0]:
+                        print('Displaying tile with X,Y coords: {},{}'.format(ind[i][0],ind[i][1]))
+                        plt.figure()
+                        plt.imshow(tiles[ind,:,:,0].squeeze())
+                        plt.show()
 
         """
+        
+        self._iter_tile_size = tile_size
+        self._iter_tile_stride = tile_stride
+        self._iter_batch_size = batch_size
+        self._iter_channels = channels
+        
+        return self
+
+    def __iter__(self):
+        
+        tile_size = self._iter_tile_size
+        tile_stride = self._iter_tile_stride
+        batch_size = self._iter_batch_size
+        channels = self._iter_channels
+        
+        if tile_size == None:
+            raise SyntaxError('Cannot directly iterate over a BioReader object. Call it (i.e. for i in bioreader(256,256))')
 
         # Enure that the number of tiles does not exceed the width of a supertile
         if batch_size == None:
@@ -390,8 +481,8 @@ class BioReader(BioBase):
         if not (set(tile_size) & set(tile_stride)):
             xyoffset = [(tile_size[0] - tile_stride[0]) / 2, (tile_size[1] - tile_stride[1]) / 2]
             xypad = [(tile_size[0] - tile_stride[0]) / 2, (tile_size[1] - tile_stride[1]) / 2]
-            xypad[0] = xyoffset[0] + (tile_stride[0] - np.mod(self.num_y(), tile_stride[0])) / 2
-            xypad[1] = xyoffset[1] + (tile_stride[1] - np.mod(self.num_x(), tile_stride[1])) / 2
+            xypad[0] = xyoffset[0] + (tile_stride[0] - numpy.mod(self.Y, tile_stride[0])) / 2
+            xypad[1] = xyoffset[1] + (tile_stride[1] - numpy.mod(self.X, tile_stride[1])) / 2
             xypad = ((int(xyoffset[0]), int(2 * xypad[0] - xyoffset[0])),
                      (int(xyoffset[1]), int(2 * xypad[1] - xyoffset[1])))
         else:
@@ -400,24 +491,24 @@ class BioReader(BioBase):
                      (0, max([tile_size[1] - tile_stride[1], 0])))
 
         # determine supertile sizes
-        y_tile_dim = int(np.ceil((self.num_y() - 1) / 1024))
+        y_tile_dim = int(numpy.ceil((self.Y - 1) / 1024))
         x_tile_dim = 1
 
         # Initialize the pixel buffer
-        self._pixel_buffer = np.zeros((y_tile_dim * 1024 + tile_size[0], 2 * x_tile_dim * 1024 + tile_size[1]),
-                                      dtype=self.pixel_type())
+        self._pixel_buffer = numpy.zeros((y_tile_dim * 1024 + tile_size[0], 2 * x_tile_dim * 1024 + tile_size[1]),
+                                         dtype=self.dtype)
         self._tile_x_offset = -xypad[1][0]
         self._tile_y_offset = -xypad[0][0]
 
         # Generate the supertile loading order
         tiles = []
-        y_tile_list = list(range(0, self.num_y() + xypad[0][1], 1024 * y_tile_dim))
+        y_tile_list = list(range(0, self.Y + xypad[0][1], 1024 * y_tile_dim))
         if y_tile_list[-1] != 1024 * y_tile_dim:
             y_tile_list.append(1024 * y_tile_dim)
         if y_tile_list[0] != xypad[0][0]:
             y_tile_list[0] = -xypad[0][0]
-        x_tile_list = list(range(0, self.num_x() + xypad[1][1], 1024 * x_tile_dim))
-        if x_tile_list[-1] < self.num_x() + xypad[1][1]:
+        x_tile_list = list(range(0, self.X + xypad[1][1], 1024 * x_tile_dim))
+        if x_tile_list[-1] < self.X + xypad[1][1]:
             x_tile_list.append(x_tile_list[-1] + 1024)
         if x_tile_list[0] != xypad[1][0]:
             x_tile_list[0] = -xypad[1][0]
@@ -439,8 +530,8 @@ class BioReader(BioBase):
         Z = []
         C = []
         T = []
-        x_list = np.array(np.arange(-xypad[1][0], self.num_x(), tile_stride[1]))
-        y_list = np.array(np.arange(-xypad[0][0], self.num_y(), tile_stride[0]))
+        x_list = numpy.array(numpy.arange(-xypad[1][0], self.X, tile_stride[1]))
+        y_list = numpy.array(numpy.arange(-xypad[0][0], self.Y, tile_stride[0]))
         for x in x_list:
             for y in y_list:
                 X.append([x, x + tile_size[1]])
@@ -478,6 +569,28 @@ class BioReader(BioBase):
 
         # return the last set of images
         yield images, index
+        
+    def close(self):
+        """Closes the image reader"""
+        self._backend.close()
+        
+    def __enter__(self):
+        """Handle entrance to a context manager
+        
+        This code is called when a `with` statement is used. This allows the
+        BioReader object to be used like this:
+        
+        with bfio.BioReader('Path/To/File.ome.tif') as reader:
+            ...
+        """
+        return self
+    
+    def __exit__(self, type_class, value, traceback):
+        """Handle exit from the context manager
+
+        This code runs when exiting a `with` statement.
+        """
+        self.close()
 
 class BioWriter(BioBase):
         """BioWriter Write OME tiled tiffs using Bioformats
@@ -600,7 +713,7 @@ class BioWriter(BioBase):
 
                 # determine if channels are interleaved
                 self._pix['interleaved'] = self._pix['spp'] > 1
-            elif isinstance(image, np.ndarray):
+            elif isinstance(image, numpy.ndarray):
                 assert len(image.shape) == 5, "Image must be 5-dimensional (x,y,z,c,t)."
                 x = X if X else image.shape[1]
                 y = Y if Y else image.shape[0]
@@ -689,7 +802,7 @@ class BioWriter(BioBase):
             self._byteorder = self.__writer._byteorder
 
             self._datashape = (1, 1, 1) + (self.num_y(), self.num_x()) + (1,)
-            self._datadtype = np.dtype(self._pix['type']).newbyteorder(self._byteorder)
+            self._datadtype = numpy.dtype(self._pix['type']).newbyteorder(self._byteorder)
 
             tagnoformat = self.__writer._tagnoformat
             valueformat = self.__writer._valueformat
@@ -1105,7 +1218,7 @@ class BioWriter(BioBase):
             self._backend.attach()
 
             # Write the image
-            self.write_image(I[:self.num_y(), :, np.newaxis, np.newaxis, np.newaxis],
+            self.write_image(I[:self.num_y(), :, numpy.newaxis, numpy.newaxis, numpy.newaxis],
                              X=[X[0]],
                              Y=[Y[0]])
 
@@ -1130,11 +1243,11 @@ class BioWriter(BioBase):
             # If the start column index is outside of the width of the supertile,
             # write the data and shift the pixels
             if column_start - self._tile_x_offset >= 1024:
-                self._raw_buffer.put(np.copy(self._pixel_buffer[:, 0:1024]))
+                self._raw_buffer.put(numpy.copy(self._pixel_buffer[:, 0:1024]))
                 self._pixel_buffer[:, 0:1024] = self._pixel_buffer[:, 1024:2048]
                 self._pixel_buffer[:, 1024:] = 0
                 self._tile_x_offset += 1024
-                self._tile_last_column = np.argwhere((self._pixel_buffer == 0).all(axis=0))[0, 0]
+                self._tile_last_column = numpy.argwhere((self._pixel_buffer == 0).all(axis=0))[0, 0]
 
         def _assemble_tiles(self, images, X, Y, Z, C, T):
             """_assemble_tiles Handle data untiling
@@ -1246,7 +1359,7 @@ class BioWriter(BioBase):
                 bw = bfio.BioReader(out_path)
                 saved_image = bw.read_image()
 
-                print('Original and saved images are the same: {}'.format(np.array_equal(original_image,saved_image)))
+                print('Original and saved images are the same: {}'.format(numpy.array_equal(original_image,saved_image)))
 
             """
 
@@ -1269,8 +1382,8 @@ class BioWriter(BioBase):
             if not (set(tile_size) & set(tile_stride)):
                 xyoffset = [int((tile_size[0] - tile_stride[0]) / 2), int((tile_size[1] - tile_stride[1]) / 2)]
                 xypad = [(tile_size[0] - tile_stride[0]) / 2, (tile_size[1] - tile_stride[1]) / 2]
-                xypad[0] = xyoffset[0] + (tile_stride[0] - np.mod(self.num_y(), tile_stride[0])) / 2
-                xypad[1] = xyoffset[1] + (tile_stride[1] - np.mod(self.num_x(), tile_stride[1])) / 2
+                xypad[0] = xyoffset[0] + (tile_stride[0] - numpy.mod(self.num_y(), tile_stride[0])) / 2
+                xypad[1] = xyoffset[1] + (tile_stride[1] - numpy.mod(self.num_x(), tile_stride[1])) / 2
                 xypad = ((int(xyoffset[0]), int(2 * xypad[0] - xyoffset[0])),
                          (int(xyoffset[1]), int(2 * xypad[1] - xyoffset[1])))
             else:
@@ -1279,11 +1392,11 @@ class BioWriter(BioBase):
                          (0, max([tile_size[1] - tile_stride[1], 0])))
 
             # determine supertile sizes
-            y_tile_dim = int(np.ceil((self.num_y() - 1) / 1024))
+            y_tile_dim = int(numpy.ceil((self.num_y() - 1) / 1024))
             x_tile_dim = 1
 
             # Initialize the pixel buffer
-            self._pixel_buffer = np.zeros((y_tile_dim * 1024 + tile_size[0], 2 * x_tile_dim * 1024 + tile_size[1]),
+            self._pixel_buffer = numpy.zeros((y_tile_dim * 1024 + tile_size[0], 2 * x_tile_dim * 1024 + tile_size[1]),
                                           dtype=self.pixel_type())
             self._tile_x_offset = 0
             self._tile_y_offset = 0
@@ -1314,8 +1427,8 @@ class BioWriter(BioBase):
             Z = []
             C = []
             T = []
-            x_list = np.array(np.arange(0, self.num_x(), tile_stride[1]))
-            y_list = np.array(np.arange(0, self.num_y(), tile_stride[0]))
+            x_list = numpy.array(numpy.arange(0, self.num_x(), tile_stride[1]))
+            y_list = numpy.array(numpy.arange(0, self.num_y(), tile_stride[0]))
             for x in x_list:
                 for y in y_list:
                     X.append([x, x + tile_stride[1]])

@@ -8,18 +8,6 @@ import bioformats
 import bfio
 from pathlib import Path
 
-""" Image path to test """
-image_path = Path('../../inputs/r001_c000_z000.ome.tif')
-
-""" Fixtures """ 
-@pytest.fixture
-def java_reader():
-    return bfio.BioReader(image_path,backend='java')
-
-@pytest.fixture
-def python_reader():
-    return bfio.BioReader(image_path,backend='python')
-
 """ Metadata tests to run on each backend """
 def get_dims(reader):
     print()
