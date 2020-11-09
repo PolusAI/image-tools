@@ -1,0 +1,58 @@
+{
+    "name": "Cellpose ",
+    "version": "0.1.1",
+    "title": "Cellpose ",
+    "description": "Everything you need to start a WIPP plugin.",
+    "author": "Data Scientist (data.scientist@labshare.org)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-vector-label-plugin:0.1.1",
+    "inputs": [
+
+      {
+        "name": "inpDir",
+        "type": "collection",
+        "description": "Input image collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "flow_threshold",
+        "type": "number",
+        "description": "flow error threshold,",
+        "required": false
+      },
+      {
+        "name": "cellprob_threshold",
+        "type": "number",
+        "description": "cell probability threshold, centered at 0.0",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "collection",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+
+      {
+        "key": "inputs.inpDir",
+        "title": "Input collection",
+        "description": "Input image collection to be processed by this plugin"
+      },
+          {
+        "key": "inputs.flow_threshold",
+        "title": "Flow threshold ",
+        "description": "flow threshold"
+      },
+      {
+        "key": "inputs.cellprob_threshold",
+        "title": "cell probability threshold",
+        "description": "cell probability threshold"
+      }
+    ]
+  }
