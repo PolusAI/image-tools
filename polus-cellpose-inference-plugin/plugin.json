@@ -1,0 +1,79 @@
+{
+    "name": "cellpose-inference ",
+    "version": "0.1.1",
+    "title": "cellpose-inference  ",
+    "description": "Semantic segmentation of cell/nuclei",
+    "author": "Sudharsan (sudharsan.prativadi@labshare.org)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "Cellpose , https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1",
+    "containerId": "labshare/polus-cellpose-inference-plugin:0.1.1",
+    "inputs": [
+      {
+        "name": "diameter",
+        "type": "integer",
+        "description": "Diameter",
+        "required": false
+      },
+      {
+        "name": "inpDir",
+        "type": "collection",
+        "description": "Input image collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "pretrained_model",
+        "type": "string",
+        "description": "Choose cell/nuclei to segment",
+        "required": true
+      },
+      {
+        "name": "chan",
+        "type": "integer",
+        "description": "Channel to segment",
+        "required": false
+      },
+      {
+        "name": "chan2",
+        "type": "integer",
+        "description": "2nd channel to segment",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "collection",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.inpDir",
+        "title": "Input collection",
+        "description": "Input image collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.diameter",
+        "title": "Diameter ",
+        "description": "Diameter"
+      },
+
+      {
+        "key": "inputs.pretrained_model",
+        "title": "Model to use(Cyto/nuclei)",
+        "description": " Object that needs to be segmented "
+      },
+      {
+        "key": "inputs.chan",
+        "title": "Channel to segment",
+        "description": "Channel that needs to be segmented"
+      },
+      {
+        "key": "inputs.chan2",
+        "title": "2nd Channel to segment",
+        "description": "2nd channel "
+      }
+    ]
+  }
