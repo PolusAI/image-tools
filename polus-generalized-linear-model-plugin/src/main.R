@@ -1,10 +1,10 @@
 suppressWarnings(library("argparse"))
-suppressWarnings(library("MASS"))
 suppressWarnings(library("DescTools"))
 suppressWarnings(library("logging"))
 suppressWarnings(library("broom"))
+suppressWarnings(library("parallel"))
 suppressWarnings(library("biglm"))
-suppressWarnings(library("ffbase"))
+
 
 # Initialize the logger
 basicConfig()
@@ -93,12 +93,11 @@ if(length(files_to_read) == 0) {
 }
 
 #Read the csv files
-datalist = lapply(files_to_read, function(x) read.csv.ffdf(file=x,header=TRUE))
+datalist = lapply(files_to_read,read.csv)#function(x) read.csv.ffdf(file=x,header=TRUE))
 
 for (dataset in datalist) {
   for (file_csv in files_to_read) {
     #Get filename
-    
     file_name <- SplitPath(file_csv)$filename
     
     #Check whether any column needs to be excluded
@@ -127,41 +126,43 @@ for (dataset in datalist) {
     if((modeltype == 'Gaussian') || (modeltype == 'Poisson') || (modeltype == 'Binomial') || (modeltype == 'Quasibinomial') || (modeltype == 'Quasipoisson') || (modeltype == 'Quasi')) {
       modeltype <- tolower(modeltype)
     }
+    num_of_cores = detectCores()
+    chunk <- floor(nrow(datasub)/ncol(datasub)*num_of_cores)
     
     #Model data based on the options selected
     if (glmmethod == 'PrimaryFactors') {
       if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi')) {
-        test_glm <- bigglm(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), data = datasub, family = eval(parse(text=paste(modeltype,"()", sep = ""))))
+        test_glm <- bigglm(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), data = datasub, family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize=chunk)
       }
       else if (modeltype == 'NegativeBinomial') {
-        test_glm <- glm.nb(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), data = datasub)
+        test_glm <- bigglm(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), data = datasub, family = poisson(), chunksize=chunk)
       }
       else if ((modeltype == 'binomial') || (modeltype == 'quasibinomial')) {
-        test_glm <- bigglm(formula(paste(paste("as.factor(",predictcolumn,")"),paste(resp_var,collapse= "+"),sep="~")), data = datasub, family = eval(parse(text=paste(modeltype,"()", sep = ""))))
+        test_glm <- bigglm(formula(paste(paste("as.factor(",predictcolumn,")"),paste(resp_var,collapse= "+"),sep="~")), data = datasub, family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize=chunk)
       }
     }
     
     else if (glmmethod == 'Interaction') {
       if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi')) {
-        test_glm <- bigglm(formula(paste(predictcolumn,paste('(',paste(resp_var,collapse= "+"),')^2'),sep="~")), data = datasub, family = eval(parse(text=paste(modeltype,"()", sep = ""))))
+        test_glm <- bigglm(formula(paste(predictcolumn,paste('(',paste(resp_var,collapse= "+"),')^2'),sep="~")), data = datasub, family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize=chunk)
       }
       else if (modeltype == 'NegativeBinomial') {
-        test_glm <- glm.nb(as.formula(paste(predictcolumn,paste('(',paste(resp_var,collapse= "+"),')^2'),sep="~")), data = datasub)
+        test_glm <- bigglm(formula(paste(predictcolumn,paste('(',paste(resp_var,collapse= "+"),')^2'),sep="~")), data = datasub, family = poisson(), chunksize=chunk)
       }
       else if ((modeltype == 'binomial') || (modeltype == 'quasibinomial')) {
-        test_glm <- bigglm(formula(paste(paste("as.factor(",predictcolumn,")"),paste('(',paste(resp_var,collapse= "+"),')^2'),sep="~")), data = datasub, family = eval(parse(text=paste(modeltype,"()", sep = ""))))
+        test_glm <- bigglm(formula(paste(paste("as.factor(",predictcolumn,")"),paste('(',paste(resp_var,collapse= "+"),')^2'),sep="~")), data = datasub, family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize=chunk)
       }
     }
     
     else if (glmmethod == 'SecondOrder') {
       if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi')) {
-        test_glm <- bigglm(formula(paste(predictcolumn,paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")),data=datasub,family = eval(parse(text=paste(modeltype,"()", sep = ""))))
+        test_glm <- bigglm(formula(paste(predictcolumn,paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")), data=datasub,family = eval(parse(text=paste(modeltype,"()", sep = ""))),chunksize=chunk)
       }
       else if (modeltype == 'NegativeBinomial') {
-        test_glm <- glm.nb(as.formula(paste(predictcolumn,paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")), data = datasub)
+        test_glm <- bigglm(formula(paste(predictcolumn,paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")), data = datasub, family = poisson(), chunksize=chunk)
       }
       else if ((modeltype == 'binomial') || (modeltype == 'quasibinomial')) {
-        test_glm <- bigglm(formula(paste(paste("as.factor(",predictcolumn,")"),paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")),data=datasub,family = eval(parse(text=paste(modeltype,"()", sep = ""))))
+        test_glm <- bigglm(formula(paste(paste("as.factor(",predictcolumn,")"),paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")),data=datasub,family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize=chunk)
       }
     }
     
