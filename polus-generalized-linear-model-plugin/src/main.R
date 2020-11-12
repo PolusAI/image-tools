@@ -5,7 +5,6 @@ suppressWarnings(library("broom"))
 suppressWarnings(library("parallel"))
 suppressWarnings(library("biglm"))
 
-
 # Initialize the logger
 basicConfig()
 
@@ -93,11 +92,14 @@ if(length(files_to_read) == 0) {
 }
 
 #Read the csv files
-datalist = lapply(files_to_read,read.csv)#function(x) read.csv.ffdf(file=x,header=TRUE))
+datalist = lapply(files_to_read,read.csv)#function(x) read.table.ffdf(file=x,header=TRUE,sep = ","))
+
+
 
 for (dataset in datalist) {
   for (file_csv in files_to_read) {
     #Get filename
+    
     file_name <- SplitPath(file_csv)$filename
     
     #Check whether any column needs to be excluded
@@ -110,9 +112,9 @@ for (dataset in datalist) {
       datasub <-dataset[ , !(names(dataset) %in% excludes)]
     }
     else if(length(excludes) == 0) {
-      datasub<-dataset
+      datasub <-dataset
     }
-    
+
     #Check whether predict column is present in dataframe
     if(!(predictcolumn %in% colnames(datasub))) {
       logwarn('predict column name is not found in %s',file_name)
@@ -122,23 +124,35 @@ for (dataset in datalist) {
     #Get column names without predict variable
     drop_dep <- datasub[ , !(names(datasub) %in% predictcolumn)]
     resp_var <- colnames(drop_dep)
-    
+
     if((modeltype == 'Gaussian') || (modeltype == 'Poisson') || (modeltype == 'Binomial') || (modeltype == 'Quasibinomial') || (modeltype == 'Quasipoisson') || (modeltype == 'Quasi')) {
       modeltype <- tolower(modeltype)
     }
+    
+    #Number of cores
     num_of_cores = detectCores()
-    chunk <- floor(nrow(datasub)/ncol(datasub)*num_of_cores)
+    loginfo('Cores = %s', num_of_cores)
+    
+    #Chunk Size
+    chunk <- floor((2^30/ncol(datasub))*num_of_cores)
+    chunk1 <-10000
+    
+    levels_adj <- function(x){
+      if(is.factor(x)) return(factor(x, levels=c(levels(x), "No Answer")))
+      return(x)
+    }
+    datasub <- as.data.frame(lapply(datasub, levels_adj))
     
     #Model data based on the options selected
     if (glmmethod == 'PrimaryFactors') {
       if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi')) {
-        test_glm <- bigglm(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), data = datasub, family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize=chunk)
+        test_glm <- bigglm(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), data = datasub, family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize=chunk1)
       }
       else if (modeltype == 'NegativeBinomial') {
         test_glm <- bigglm(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), data = datasub, family = poisson(), chunksize=chunk)
       }
       else if ((modeltype == 'binomial') || (modeltype == 'quasibinomial')) {
-        test_glm <- bigglm(formula(paste(paste("as.factor(",predictcolumn,")"),paste(resp_var,collapse= "+"),sep="~")), data = datasub, family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize=chunk)
+        test_glm <- bigglm(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), data = datasub, family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize=chunk)
       }
     }
     
@@ -165,7 +179,7 @@ for (dataset in datalist) {
         test_glm <- bigglm(formula(paste(paste("as.factor(",predictcolumn,")"),paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")),data=datasub,family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize=chunk)
       }
     }
-    
+   
     #Set output directory
     setwd(csvfile)
     file_save <- paste0(file_name,".csv")
@@ -181,4 +195,5 @@ for (dataset in datalist) {
     write.csv(tidy_final, file_save)
   }
 }
+
 
