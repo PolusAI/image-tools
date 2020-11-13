@@ -1,10 +1,4 @@
-import logging
-
-import pytest, time, bioformats
-import bfio
-import javabridge as jutil
-from pathlib import Path
-import matplotlib.pyplot as plt
+import time
 
 def simple_read(reader):
     print()
@@ -42,44 +36,31 @@ class TestJavaReader():
     def test_time_read(self,java_reader):
         full_read(java_reader)
 
-# try:
-#     p_reader = python_reader()
+if __name__=='__main__':
+    import bfio
+    import javabridge as jutil
+    from pathlib import Path
+    import matplotlib.pyplot as plt
+    import numpy as np
+    
+    image_path = Path('../../input_image/r001_z000_y010_x010_c000.ome.tif')
+    
+    log_config = Path(__file__).parent.joinpath("log4j.properties")
+    jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(bfio.LOG4J)],class_path=bfio.JARS)
 
-#     j_reader = java_reader()
-    
-    # j_reader = bfio.BioReader(str(image_path))
+    try:
+        p_reader = bfio.BioReader(image_path,max_workers=1)
 
-    # fig,ax = plt.subplots(1,2)
-    
-    # a = p_reader[0:1024,0:1024]
-    
-    # b = j_reader.read(X=[0,1024],Y=[0,1024])
-    
-    # p_reader[:] = a
-    
-    # start = time.time()
-    # for _ in range(10):
-    #     imagep = p_reader.read(X=[1000,1100],Y=[1000,1100]).squeeze()
-    # print('Average loading time in Python: {:.2f} ms'.format((time.time() - start)*100))
-    
-    # start = time.time()
-    # for _ in range(10):
-    #     imagep = p_reader[1000:1100,1000:1100].squeeze()
-    # print('Average loading time for __getitem__ in Python: {:.2f} ms'.format((time.time() - start)*100))
-    
-    # start = time.time()
-    # for _ in range(10):
-    #     imagej = j_reader.read(X=[1000,1100],Y=[1000,1100]).squeeze()
-    # print('Average loading time in Java: {:.2f} ms'.format((time.time() - start)*100))
-    
-    # start = time.time()
-    # for _ in range(10):
-    #     imagej = j_reader[1000:1100,1000:1100].squeeze()
-    # print('Average loading time for __getitem__ in Java: {:.2f} ms'.format((time.time() - start)*100))
-    
-    # ax[0].imshow(imagep)
-    # ax[1].imshow(imagej)
-    # plt.show()
+        j_reader = bfio.BioReader(image_path,backend='java',max_workers=1)
 
-# finally:
-#     jutil.kill_vm()
+        fig,ax = plt.subplots(1,2)
+        
+        ax[0].imshow(p_reader[:].squeeze())
+        ax[1].imshow(j_reader[:].squeeze())
+        
+        print(np.array_equal(p_reader[:].squeeze(),j_reader[:].squeeze()))
+        
+        plt.show()
+
+    finally:
+        jutil.kill_vm()

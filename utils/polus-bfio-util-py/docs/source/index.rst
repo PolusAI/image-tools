@@ -29,4 +29,6 @@ qualities of each package and simplifies working with large images.
    :maxdepth: 2
    :caption: Contents:
 
+   BFIO
+   Examples
    Reference

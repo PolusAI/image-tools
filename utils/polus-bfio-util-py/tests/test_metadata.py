@@ -1,7 +1,4 @@
 import logging
-logger = logging.getLogger('bfio')
-logger.setLevel(logging.DEBUG)
-
 import pytest
 import javabridge as jutil
 import bioformats

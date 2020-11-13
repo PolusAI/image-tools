@@ -17,7 +17,6 @@ except:
     __version__ = "0.0.0"
 logger.info('VERSION = {}'.format(__version__))
 
-print(pathlib.Path(__file__).parent.joinpath('jars'))
 if pathlib.Path(__file__).parent.joinpath('jars').is_dir():
     _jars_dir = os.path.join(os.path.dirname(__file__), 'jars')
     

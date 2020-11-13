@@ -1,5 +1,6 @@
 import abc, threading, logging
 import numpy
+from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
 import multiprocessing, typing
 from pathlib import Path
@@ -74,13 +75,11 @@ class BioBase(object,metaclass=abc.ABCMeta) :
     _tile_x_offset = 0
     _tile_last_column = 0
     
-    # Whether the object is read only
-    __read_only = True
-    
     def __init__(self,
                  file_path: typing.Union[str,Path],
                  max_workers: typing.Optional[int] = None,
-                 backend: typing.Optional[str] ='python'):
+                 backend: typing.Optional[str] ='python',
+                 read_only: typing.Optional[bool] = True):
         """__init__ Initialize BioBase object
 
          Args:
@@ -90,6 +89,9 @@ class BioBase(object,metaclass=abc.ABCMeta) :
             backend (str,optional): Backend to use, must be 'python' or 'java'.
                 Default is 'python'.
         """
+        
+        # Whether the object is read only
+        self.__read_only = read_only
         
         # Internally, keep the file_path as a Path object
         if isinstance(file_path,str):
@@ -115,6 +117,67 @@ class BioBase(object,metaclass=abc.ABCMeta) :
     def __getitem__(self,keys):
         raise NotImplementedError('Cannot get values for {} class.'.format(self.__class__.__name__))
     
+    def _parse_slice(self,keys):
+        
+        # Dimension ordering and index initialization
+        dims = 'YXZCT'
+        ind = {d:None for d in dims}
+        
+        # If an empty slice, load the whole image
+        if not isinstance(keys,tuple):
+            if isinstance(keys,slice) and keys.start == None and keys.stop == None and keys.step==None:
+                pass
+            else:
+                raise ValueError('If only a single index is supplied, it must be an empty slice ([:]).')
+            
+        # If not an empty slice, parse the key tuple
+        else:
+            
+            # At most, 5 indices can be indicated
+            if len(keys) > 5:
+                raise ValueError('Found {} indices, but at most 5 indices may be supplied.'.format(len(keys)))
+            
+            # If the first key is an ellipsis, read backwards
+            if keys[0] == Ellipsis:
+                
+                # If the last key is an ellipsis, throw an error
+                if keys[-1]==Ellipsis:
+                    raise ValueError('Ellipsis (...) may be used in either the first or last index, not both.')
+                
+                dims = [d for d in reversed(dims)]
+                keys = [k for k in reversed(keys)]
+            
+            # Get key values
+            for dim,key in zip(dims,keys):
+                
+                if isinstance(key,slice):
+                    # For CT dimensions, generate a list from slices
+                    if dim in 'CT':
+                        ind[dim] = [v for v in range(key)]
+                    
+                    # For XYZ dimensions, get start and stop of slice, ignore step
+                    else:
+                        start = 0 if key.start == None else key.start
+                        stop = 0 if key.stop == None else key.stop
+                        ind[dim] = [start,stop]
+                        
+                elif isinstance(key,(int,tuple,list)):
+                    # Only the last two dimensions can use int, tuple, or list indexing
+                    if dim in 'CT':
+                        if isinstance(key,int):
+                            ind[dim] = [key]
+                        else:
+                            ind[dim] = key
+                    else:
+                        raise ValueError('The index in position {} must be a slice type.'.format(dims.find(key)))
+                elif key==Ellipsis:
+                    if dims.find(dim)+1 < len(keys):
+                        raise ValueError('Ellipsis may only be used in the first or last index.')
+                else:
+                    raise ValueError('Did not recognize indexing value of type: {}'.format(dims.find(key)))
+                
+        return ind
+                
     @property
     def read_only(self) -> bool:
         """Returns true if object is ready only"""
@@ -140,14 +203,14 @@ class BioBase(object,metaclass=abc.ABCMeta) :
     def __setattr__(self,name,args):
         # Set image dimensions, for example, using x or X
         if len(name)==1 and name.lower() in 'xyzct':
-            self.__xyzct_setter(self,name,*args)
+            self.__xyzct_setter(name,args)
         else:
             object.__setattr__(self,name,args)
     
     def __xyzct_setter(self,dimension,value):
         assert not self.__read_only, self._READ_ONLY_MESSAGE.format(dimension.lower())
         assert value >= 1, "{} must be >= 0".format(dimension.upper())
-        setattr(self._metadata.image(0).Pixels,'Size{}'.format(value.upper()),value)
+        setattr(self._metadata.image(0).Pixels,'Size{}'.format(dimension.upper()),value)
     
     """ ------------------------------ """
     """ -Get/Set Dimension Properties- """
@@ -334,7 +397,7 @@ class BioBase(object,metaclass=abc.ABCMeta) :
         assert dtype in self._DTYPE.values(), "Invalid data type."
         for k,v in self._DTYPE.items():
             if dtype==v:
-                self._metadata.image(0).Pixels.PixelType = self._BPP[k]
+                self._metadata.image(0).Pixels.PixelType = k
                 return
         
     @property
@@ -443,8 +506,78 @@ class BioBase(object,metaclass=abc.ABCMeta) :
             num_tile_cols = 1
 
         return int(num_tile_cols * num_tile_rows)
+    
+    def close(self):
+        """Close the image"""
+        if self._backend is not None:
+            self._backend.close()
+        
+    def __enter__(self):
+        """Handle entrance to a context manager
+        
+        This code is called when a `with` statement is used. This allows a
+        BioBase object to be used like this:
+        
+        with bfio.BioReader('Path/To/File.ome.tif') as reader:
+            ...
+            
+        with bfio.BioWriter('Path/To/File.ome.tif') as writer:
+            ...
+        """
+        return self
+    
+    def __del__(self):
+        """Handle file deletion
 
-class AbstractReader(object,metaclass=abc.ABCMeta):
+        This code runs when an object is deleted..
+        """
+        self.close()
+        
+    
+    def __exit__(self, type_class, value, traceback):
+        """Handle exit from the context manager
+
+        This code runs when exiting a `with` statement.
+        """
+        self.close()
+        
+class AbstractBackend(object,metaclass=abc.ABCMeta):
+    
+    @abc.abstractmethod
+    def __init__(self,frontend):
+        self.frontend = frontend
+
+    def _image_io(self,X,Y,Z,C,T,image):
+            
+        # Define tile bounds
+        ts = self.frontend._TILE_SIZE
+        X_tile_shape = X[1] - X[0]
+        Y_tile_shape = Y[1] - Y[0]
+        Z_tile_shape = Z[1] - Z[0]
+        
+        # Set the output for asynchronous reading
+        self._image = image
+
+        # Set up the tile indices
+        self._tile_indices = []
+        for t in range(len(T)):
+            for c in range(len(C)):
+                for z in range(Z_tile_shape):
+                    for y in range(0,Y_tile_shape,ts):
+                        for x in range(0,X_tile_shape,ts):
+                            self._tile_indices.append(((x,X[0]+x),
+                                                       (y,Y[0]+y),
+                                                       (z,Z[0]+z),
+                                                       (c,C[c]),
+                                                       (t,T[t])))
+        
+        self.logger.debug('_image_io(): _tile_indices = {}'.format(self._tile_indices))
+        
+    @abc.abstractmethod
+    def close(self):
+        pass
+
+class AbstractReader(AbstractBackend):
     
     @abc.abstractmethod
     def __init__(self,frontend):
@@ -454,7 +587,33 @@ class AbstractReader(object,metaclass=abc.ABCMeta):
     def read_metadata(self):
         pass
     
+    def read_image(self,*args):
+        self._image_io(*args)
+        self._read_image(*args)
+
     @abc.abstractmethod
-    def read_image(self):
+    def _read_image(self,X,Y,Z,C,T,output):
+        pass
+
+class AbstractWriter(AbstractBackend):
+    
+    @abc.abstractmethod
+    def __init__(self,frontend):
+        self.frontend = frontend
+        self.initialized = False
+    
+    def write_image(self,*args):
+        if not self.initialized:
+            self._init_writer()
+            self.frontend.__read_only = True
+        
+        self._image_io(*args)
+        self._write_image(*args)
+        
+    @abc.abstractmethod
+    def _init_writer(self):
         pass
     
+    @abc.abstractmethod
+    def _write_image(*args):
+        pass
