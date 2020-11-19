@@ -6,7 +6,7 @@ What is bfio? An explanation and roadmap.
 The Web Image Processing Pipeline (WIPP)
 ----------------------------------------
 
-WIPP is an open source cloud computing system for processing image data. It was
+WIPP is an open source, cloud computing system for processing image data. It was
 developed at the National Institute of Standards and Technology (NIST) with the
 express mission of producing traceable, reproducible, and scalable image
 analysis pipelines. The file format used for the platform is the OME tiled tiff,
@@ -63,9 +63,9 @@ subsections of an image out of the box. The other deficit of ``tifffile`` is
 that while it can provide access to OME metadata, it does so as a raw XML string
 and can be difficult to modify.
 
-~~~~~~~~~~~~~~~
+---------------
 The bfio Vision
-~~~~~~~~~~~~~~~
+---------------
 
 What ``bfio`` does is bring the best ``python-bioformats`` and ``tifffile``
 together while adding functionality that is necessary for processing large
@@ -86,9 +86,9 @@ The general workflow for ``bfio`` is intended to be:
 3. Create image processing components that use the ``bfio`` Python backend to
 load and save images.
 
-~~~~~~~~~~~~~~~~
+----------------
 What comes next?
-~~~~~~~~~~~~~~~~
+----------------
 
 For reasons explained below, ``bfio`` will be creating a zarr backend. In
 summary, zarr is a more appropriate file specification for handling large data

@@ -67,7 +67,7 @@ autodoc_typehints = 'description'
 
 autodoc_default_options = {
     'members': True,
-    'special-members': '__getitem__,__call__'
+    'special-members': '__getitem__,__call__,__setitem__'
     # 'exclude-members': '__weakref__'
 }
 

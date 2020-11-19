@@ -211,6 +211,8 @@ class BioBase(object,metaclass=abc.ABCMeta) :
         assert not self.__read_only, self._READ_ONLY_MESSAGE.format(dimension.lower())
         assert value >= 1, "{} must be >= 0".format(dimension.upper())
         setattr(self._metadata.image(0).Pixels,'Size{}'.format(dimension.upper()),value)
+        if dimension.upper() == 'C':
+            self._metadata.image(0).Pixels.channel_count = value
     
     """ ------------------------------ """
     """ -Get/Set Dimension Properties- """
@@ -546,6 +548,7 @@ class AbstractBackend(object,metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def __init__(self,frontend):
         self.frontend = frontend
+        self._lock = threading.Lock()
 
     def _image_io(self,X,Y,Z,C,T,image):
             
@@ -581,15 +584,16 @@ class AbstractReader(AbstractBackend):
     
     @abc.abstractmethod
     def __init__(self,frontend):
-        self.frontend = frontend
+        super().__init__(frontend)
     
     @abc.abstractmethod
     def read_metadata(self):
         pass
     
     def read_image(self,*args):
-        self._image_io(*args)
-        self._read_image(*args)
+        with self._lock:
+            self._image_io(*args)
+            self._read_image(*args)
 
     @abc.abstractmethod
     def _read_image(self,X,Y,Z,C,T,output):
@@ -597,18 +601,22 @@ class AbstractReader(AbstractBackend):
 
 class AbstractWriter(AbstractBackend):
     
+    _writer = None
+    
     @abc.abstractmethod
     def __init__(self,frontend):
-        self.frontend = frontend
+        super().__init__(frontend)
         self.initialized = False
     
     def write_image(self,*args):
-        if not self.initialized:
-            self._init_writer()
-            self.frontend.__read_only = True
-        
-        self._image_io(*args)
-        self._write_image(*args)
+        with self._lock:
+            if not self.initialized:
+                self._init_writer()
+                self.frontend.__read_only = True
+                self.initialized = True
+            
+            self._image_io(*args)
+            self._write_image(*args)
         
     @abc.abstractmethod
     def _init_writer(self):

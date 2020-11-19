@@ -1,4 +1,4 @@
-import typing, numpy, struct
+import typing, numpy, struct, logging
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from bfio import backends, OmeXml
@@ -30,6 +30,8 @@ class BioReader(BioBase):
         initialized prior to using the BioReader class, and must be closed
         before the program terminates. An example is provided in read().
     """
+    
+    logger = logging.getLogger("bfio.bfio.BioReader")
 
     def __init__(self,
                  file_path: typing.Union[str,Path],
@@ -536,6 +538,9 @@ class BioWriter(BioBase):
     this class can automatically write images larger than 2GB in size, whereas
     the python-bioformats class will throw an error due to the way that Java
     handles file writing.
+    
+    Unlike the BioReader class, the properties of this class are settable until
+    the first time the ``write`` method is called.
 
     For for information, visit the Bioformats page:
     https://www.openmicroscopy.org/bio-formats/
@@ -545,6 +550,8 @@ class BioWriter(BioBase):
         initialized prior to using the BioWriter class, and must be closed
         before the program terminates. An example is provided in write_image().
     """
+    
+    logger = logging.getLogger("bfio.bfio.BioWriter")
     
     def __init__(self,
                  file_path: typing.Union[str,Path],
@@ -570,21 +577,13 @@ class BioWriter(BioBase):
                 argument is used, then keyword arguments are ignored.
         """
         super(BioWriter, self).__init__(file_path, max_workers, backend, False)
-    
-        # Ensure backend is supported
-        if self._backend_name == 'python':
-            self._backend = backends.PythonWriter(self)
-        elif self._backend_name == 'java':
-            self._backend = backends.JavaWriter(self)
-        else:
-            raise ValueError('backend must be "python" or "java"')
 
         if metadata:
             assert metadata.__class__.__name__ == "OMEXML"
             self._metadata = OmeXml.OMEXML(str(metadata))
-            self._metadata.image(0).Name = file_path
-            self._metadata.image().Pixels.channel_count = self._xyzct['C']
-            self._metadata.image().Pixels.DimensionOrder = self.xml_metadata(var=1).DO_XYZCT
+            self._metadata.image(0).Name = self._file_path.name
+            self._metadata.image().Pixels.channel_count = self.C
+            self._metadata.image().Pixels.DimensionOrder = OmeXml.DO_XYZCT
         else:
             self._metadata = self._minimal_xml()
 
@@ -601,6 +600,20 @@ class BioWriter(BioBase):
 
         if not file_path.name.endswith('.ome.tif'):
             ValueError("The file extension must be .ome.tif")
+            
+        if self.metadata.image_count > 1:
+            self.logger.warning('The BioWriter only writes single image ' +
+                                'files, but the metadata has {} images. '.format(self.metadata.image_count) +
+                                'Setting the number of images to 1.')
+            self.metadata.image_count = 1
+        
+        # Ensure backend is supported
+        if self._backend_name == 'python':
+            self._backend = backends.PythonWriter(self)
+        elif self._backend_name == 'java':
+            self._backend = backends.JavaWriter(self)
+        else:
+            raise ValueError('backend must be "python" or "java"')
 
     def __setitem__(self,
                     keys: typing.Union[tuple,slice],
@@ -659,10 +672,13 @@ class BioWriter(BioBase):
                 if value.shape[i] != getattr(self,d):
                     raise IndexError('Shape of image {} does not match the '.format(value.shape) +
                                     'save dimensions {}.'.format((s[1] - s[0] for s in ind.values())))
-            elif ind[d][1] - ind[d][0] != value.shape[i]:
+            elif d in 'YXZ' and ind[d][1] - ind[d][0] != value.shape[i]:
                 raise IndexError('Shape of image {} does not match the '.format(value.shape) +
                                  'save dimensions {}.'.format((s[1] - s[0] for s in ind.values())))
-            else:
+            elif d in 'CT' and len(ind[d]) != value.shape[i]:
+                raise IndexError('Shape of image {} does not match the '.format(value.shape) +
+                                 'save dimensions {}.'.format((s[1] - s[0] for s in ind.values())))
+            elif d in 'YXZ':
                 ind[d] = ind[d][0]
         
         self.write(value,**ind)
@@ -807,9 +823,9 @@ class BioWriter(BioBase):
         self._backend.attach()
 
         # Write the image
-        self.write_image(I[:self.num_y(), :, numpy.newaxis, numpy.newaxis, numpy.newaxis],
-                            X=[X[0]],
-                            Y=[Y[0]])
+        self.write(I[:self.num_y(), :, numpy.newaxis, numpy.newaxis, numpy.newaxis],
+                   X=[X[0]],
+                   Y=[Y[0]])
 
         # Detach the jvm
         self._backend.detach()
@@ -890,7 +906,7 @@ class BioWriter(BioBase):
 
         return True
 
-    def writerate(self, tile_size, tile_stride=None, batch_size=None, channels=[0]):
+    def _writerate(self, tile_size, tile_stride=None, batch_size=None, channels=[0]):
         """writerate Image saving iterator
 
         This method is an iterator to save tiles of an image. This method

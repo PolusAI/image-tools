@@ -7,3 +7,4 @@ Reference
    :caption: Contents:
 
    Reference/BioReader
+   Reference/BioWriter

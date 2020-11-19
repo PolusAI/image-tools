@@ -42,10 +42,10 @@ class PythonReader(bfio.base_classes.AbstractReader):
                 
             if (width > frontend._TILE_SIZE or height > frontend._TILE_SIZE):
                 raise ValueError('Tile width and height should be {} when '.format(self.frontend._TILE_SIZE) +
-                                'using the python backend, but found ' +
-                                'tilewidth={} and tilelength={}. Use the java '.format(self._rdr.pages[0].tilewidth,
+                                 'using the python backend, but found ' +
+                                 'tilewidth={} and tilelength={}. Use the java '.format(self._rdr.pages[0].tilewidth,
                                                                                         self._rdr.pages[0].tilelength) +
-                                'backend to read this image.')
+                                 'backend to read this image.')
         
     def read_metadata(self):
         self.logger.debug('read_metadata(): Reading metadata...')
@@ -130,17 +130,24 @@ class PythonReader(bfio.base_classes.AbstractReader):
         self._rdr.close()
 
 class PythonWriter(bfio.base_classes.AbstractWriter):
-    
-    _writer = None
     _page_open = False
     _current_page = None
     
-    logger = logging.getLogger("bfio.backends.JavaWriter")
+    logger = logging.getLogger("bfio.backends.PythonWriter")
     
     def __init__(self, frontend):
         super().__init__(frontend)
         
-        self._lock = threading.Lock()
+        if self.frontend.C > 1:
+            self.logger.warning('The BioWriter only writes single channel ' +
+                                'images, but the metadata has {} channels. '.format(self.frontend.C) +
+                                'Setting the number of channels to 1.')
+            self.frontend.C = 1
+        if self.frontend.T > 1:
+            self.logger.warning('The BioWriter only writes single timepoint ' +
+                                'images, but the metadata has {} timepoints. '.format(self.frontend.T) +
+                                'Setting the number of timepoints to 1.')
+            self.frontend.T = 1
 
     def _pack(self, fmt, *val):
         return struct.pack(self._byteorder + fmt, *val)
@@ -401,7 +408,7 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
                 elif code == tagoffsets:
                     self._dataoffsetsoffset = offset, None
                 elif code == tagbytecounts:
-                    databytecountsoffset = offset, None
+                    self._databytecountsoffset = offset, None
             self._ifdsize = self._ifd.tell()
             if self._ifdsize % 2:
                 self._ifd.write(b'\0')
@@ -415,10 +422,10 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
         fh.seek(self._ifdsize, 1)
 
         # write image data
-        dataoffset = fh.tell()
-        skip = (16 - (dataoffset % 16)) % 16
+        self._dataoffset = fh.tell()
+        skip = (16 - (self._dataoffset % 16)) % 16
         fh.seek(skip, 1)
-        dataoffset += skip
+        self._dataoffset += skip
 
         self._page_open = True
 
@@ -432,11 +439,13 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
         # update strip/tile offsets
         offset, pos = self._dataoffsetsoffset
         self._ifd.seek(offset)
-
-        self._ifd.write(self._pack(offsetformat, self._ifdpos + pos))
-        self._ifd.seek(pos)
-        for size in self._databyteoffsets:
-            self._ifd.write(self._pack(offsetformat, size))
+        if pos != None:
+            self._ifd.write(self._pack(offsetformat, self._ifdpos + pos))
+            self._ifd.seek(pos)
+            for size in self._databyteoffsets:
+                self._ifd.write(self._pack(offsetformat, size))
+        else:
+            self._ifd.write(self._pack(offsetformat, self._dataoffset))
 
         # update strip/tile bytecounts
         offset, pos = self._databytecountsoffset
@@ -497,15 +506,25 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
 
         # tileiter = [tile for tile in tileiter]
         tileiter = [copy.deepcopy(tile) for tile in tileiter]
-        with ThreadPoolExecutor(max_workers=self.frontend.max_workers) as executor:
-            # with ThreadPoolExecutor(1) as executor:
-            compressed_tiles = iter(executor.map(compress, tileiter))
-        for tileindex in tiles:
-            t = next(compressed_tiles)
-            self._databyteoffsets[tileindex] = fh.tell()
-            fh.write(t)
-            self._databytecounts[tileindex] = len(t)
-
+        if self.frontend.max_workers > 1:
+            # print('Using threading to save...')
+            with ThreadPoolExecutor(max_workers=self.frontend.max_workers) as executor:
+                # with ThreadPoolExecutor(1) as executor:
+                compressed_tiles = iter(executor.map(compress, tileiter))
+        
+            for tileindex in tiles:
+                t = next(compressed_tiles)
+                self._databyteoffsets[tileindex] = fh.tell()
+                fh.write(t)
+                self._databytecounts[tileindex] = len(t)
+        else:
+            for tileindex, tile in zip(tiles,tileiter):
+                # print('Not using threading to save...')
+                t = compress(tile)
+                self._databyteoffsets[tileindex] = fh.tell()
+                fh.write(t)
+                self._databytecounts[tileindex] = len(t)
+                
         return None
 
     def close(self):
@@ -522,18 +541,17 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
 
     def _write_image(self,X,Y,Z,C,T,image):
 
-        with self._lock:
-            if self._current_page != None and Z[0] < self._current_page:
-                raise ValueError('Cannot write z layers below the current open page. (current page={},Z[0]={})'.format(
-                    self._current_page, Z[0]))
+        if self._current_page != None and Z[0] < self._current_page:
+            raise ValueError('Cannot write z layers below the current open page. (current page={},Z[0]={})'.format(
+                self._current_page, Z[0]))
 
-            # Do the work
-            for zi, z in zip(range(0, Z[1] - Z[0]), range(Z[0], Z[1])):
-                while z != self._current_page:
-                    if self._page_open:
-                        self._close_page()
-                    self._open_next_page()
-                self._write_tiles(image[..., zi, 0, 0], X, Y)
+        # Do the work
+        for zi, z in zip(range(0, Z[1] - Z[0]), range(Z[0], Z[1])):
+            while z != self._current_page:
+                if self._page_open:
+                    self._close_page()
+                self._open_next_page()
+            self._write_tiles(image[..., zi, 0, 0], X, Y)
 
 try:
     import bioformats
@@ -570,6 +588,9 @@ try:
             # Read the metadata
             rdr.setMetadataStore(omexml)
             rdr.setId(str(self.frontend._file_path))
+            
+            # Close the rdr
+            rdr.close()
             
             return OMEXML(omexml.dumpXML())
         
@@ -685,7 +706,7 @@ try:
             """
             javabridge.run_script(script,
                                   dict(path=str(self.frontend._file_path),
-                                       xml=str(self.frontend.metadata),
+                                       xml=str(self.frontend.metadata).replace('<ome:', '<').replace('</ome:', '</'),
                                        writer=writer))
             writer.setId(str(self.frontend._file_path))
             writer.setInterleaved(False)
