@@ -32,4 +32,5 @@ if pathlib.Path(__file__).parent.joinpath('jars').is_dir():
 else:
     JAR_VERSION = None
     JARS = None
+    LOG4J = None
     logger.info('The loci_tools.jar is not present. Can only use Python backend for reading/writing images.')

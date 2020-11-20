@@ -9,19 +9,18 @@ ARG EXEC_DIR="/opt/executables"
 RUN mkdir -p ${EXEC_DIR}
 
 # Copy the requirements file
-COPY ./requirements-slim.txt ${EXEC_DIR}/
+COPY ./requirements/requirements-slim.txt ${EXEC_DIR}/
 
 # Install bfio and requirements
-RUN apt-get update && \
-    pip3 install -r  ${EXEC_DIR}/requirements-slim.txt --no-cache-dir
+RUN pip3 install -r  ${EXEC_DIR}/requirements-slim.txt --no-cache-dir
 
-### Things that change frequently between containers
+# ### Things that change frequently between containers
 
 # Copy bfio
-COPY . ${EXEC_DIR}/
-
-# Copy the version to the source directory
-COPY VERSION ${EXEC_DIR}/src/
+COPY ./bfio/*.py ${EXEC_DIR}/bfio/
+COPY ./setup.py ${EXEC_DIR}
+COPY ./README.md ${EXEC_DIR}
+COPY VERSION ${EXEC_DIR}
 
 # Install bfio, remove the source directory
 RUN pip3 install ${EXEC_DIR}/ --no-cache-dir && \
