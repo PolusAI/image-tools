@@ -11,6 +11,7 @@ Documentation is available on [Read the Docs](https://bfio.readthedocs.io/en/lat
 ## Universal Container Components
 
 All containers contain the follow components:
+
 1. Python 3.8
 2. [numpy](https://pypi.org/project/numpy/1.19.1/) (1.19.1)
 3. [imagecodecs](https://pypi.org/project/imagecodecs/2020.5.30/) (2020.5.30, built with `--lite` option)
@@ -18,6 +19,7 @@ All containers contain the follow components:
 5. bfio (version 2.0.0)
 
 Containers ending with `-java` also contain:
+
 6. openjdk-8
 7. [python-javabridge](https://pypi.org/project/python-javabridge/4.0.0/) (version 4.0.0)
 8. [python-bioformats](https://pypi.org/project/python-bioformats/4.0.0/) (version 4.0.0)

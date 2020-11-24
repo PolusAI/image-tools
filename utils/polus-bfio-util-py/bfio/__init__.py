@@ -1,5 +1,5 @@
 from __future__ import absolute_import, unicode_literals
-import javabridge, pathlib, os.path, logging
+import pathlib, os.path, logging
 
 from .bfio import BioReader,BioWriter
 
@@ -18,16 +18,25 @@ except:
 logger.info('VERSION = {}'.format(__version__))
 
 if pathlib.Path(__file__).parent.joinpath('jars').is_dir():
-    _jars_dir = os.path.join(os.path.dirname(__file__), 'jars')
     
-    JAR_VERSION = '6.1.0'
+    try:
+        import javabridge
+    
+        _jars_dir = os.path.join(os.path.dirname(__file__), 'jars')
+        
+        JAR_VERSION = '6.1.0'
 
-    JARS = [j for j in javabridge.JARS]
-    JARS.extend([os.path.realpath(os.path.join(_jars_dir, name + '.jar')) for name in ['loci_tools']])
-    
-    LOG4J = os.path.realpath(os.path.join(_jars_dir, 'log4j.properties'))
-    
-    logger.info('loci_tools.jar version = {}'.format(JAR_VERSION))
+        JARS = [j for j in javabridge.JARS]
+        JARS.extend([os.path.realpath(os.path.join(_jars_dir, name + '.jar')) for name in ['loci_tools']])
+        
+        LOG4J = os.path.realpath(os.path.join(_jars_dir, 'log4j.properties'))
+        
+        logger.info('loci_tools.jar version = {}'.format(JAR_VERSION))
+    except:
+        JAR_VERSION = None
+        JARS = None
+        LOG4J = None
+        logger.info('javabridge has not been installed. Can only use Python backend for reading/writing images.')
     
 else:
     JAR_VERSION = None
