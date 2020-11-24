@@ -4,7 +4,7 @@ FROM maven:3-jdk-8-slim
 ### Things that change rarely between containers
 
 # Copy Python 3.6
-COPY --from=python:3.6 / /
+COPY --from=python:3.8 / /
 
 # Create temporary folder
 ARG DATA_DIR="/data"
@@ -12,11 +12,11 @@ ARG EXEC_DIR="/opt/executables"
 RUN mkdir -p ${EXEC_DIR}
 
 # Copy the requirements file
-COPY ./requirements/requirements-slim.txt ${EXEC_DIR}/
+COPY ./requirements/requirements-alpine.txt ${EXEC_DIR}/
 
 # Install requirements
 RUN apt-get update && \
-    pip3 install -r  ${EXEC_DIR}/requirements-slim.txt --no-cache-dir
+    pip3 install -r  ${EXEC_DIR}/requirements-alpine.txt --no-cache-dir
 
 # Install packages
 ENV LIBRARY_PATH=/lib:/usr/lib
