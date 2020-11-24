@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-sudo docker build . -t labshare/polus-cellpose--plugin:${version}
+sudo docker build . -t labshare/polus-vector-label-plugin:${version}
