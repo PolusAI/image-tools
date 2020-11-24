@@ -1,6 +1,0 @@
-
-numpy==1.18.1
-mxnet-mkl==1.6.0
-scipy==1.5.2
-zarr ==2.5.0
-numba==0.51.2

@@ -1,7 +1,8 @@
-from bfio.bfio import BioReader, BioWriter
+from bfio import  BioWriter , OmeXml,JARS,LOG4J
+#from bfio import  BioWriter
 import bioformats
 import javabridge as jutil
-import argparse, logging, subprocess, time, multiprocessing, sys
+import argparse, logging, sys
 import numpy as np
 from pathlib import Path
 import re
@@ -50,65 +51,56 @@ if __name__=="__main__":
     # Surround with try/finally for proper error catching
     try:
         # Start the javabridge with proper java logging
-        logger.info('Initializing the javabridge...')
+        logger.info('Initializing ...')
         log_config = Path(__file__).parent.joinpath("log4j.properties")
-        jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
-        
+   #     jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=JARS)
+        jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(LOG4J)],class_path=JARS)
         # Get all file names in inpDir image collection
-        inpDir_files = [f.name for f in Path(inpDir).iterdir() if f.is_file() and "".join(f.suffixes)=='.zarr']
-        root = zarr.open(str(Path(inpDir).joinpath('test.zarr')),mode='r')
-
-        flow_threshold = 0.4
-        print([m for m,l in root.groups()])
+      #  inpDir_files = [f.name for f in Path(inpDir).iterdir() if f.is_file() and "".join(f.suffixes)=='.zarr']
+        root = zarr.open(str(Path(inpDir).joinpath('location.zarr')),mode='r')
+        i=1
+        # Loop through files in inpDir image collection and process
         for m,l in root.groups():
             prob=l['pixel_location']
-
             loc = l['probablity']
             prob= np.asarray(prob)
             loc= np.asarray(loc)
-          #  print(prob.dtype,loc.dtype)
-         #   print('metafat',str(l.attrs['metadata']))
             metadata=l.attrs['metadata']
 
-          #  print('working',prob.shape[0],prob[0,:,:,:].shape)
             if len(prob.shape)==4:
                 mask_stack=[]
                 for i in range(int(prob.shape[0])):
-                   # print(i,'masks',prob[i,:,:,:].shape)
                     masks= mask.compute_masks(y=prob[i,:,:,:],cellprob=loc[i,:,:,:],flow_threshold=flow_threshold,cellprob_threshold=cellprob_threshold)
-
                     mask_stack.append(masks)
                 maski=np.asarray(mask_stack)
                 maski=np.transpose(maski,(1,2,0))
                 x,y,z=maski.shape
                 maski=np.reshape(maski,(x,y,z,1,1))
-               # print('test', maski.shape)
+
             elif len(prob.shape) ==3 :
 
                 maski = mask.compute_masks(y=prob[:],cellprob=loc[:])
-                #print('mask,',maski.shape)
+
                 x,y=maski.shape
                 maski = np.reshape(maski, (x,y, 1, 1,1))
 
-            print('asdaff', maski.dtype)
-        # Loop through files in inpDir image collection and process
 
-            logger.info('Processing image ({}/{}): {}'.format(1,len(inpDir_files),m))
+
+            logger.info('Processing image ({}/{}): {}'.format(i,len([m for m,l in root.groups()]),m))
 
             # Write the output
             temp = re.sub(r'(?<=Type=")([^">>]+)', str(maski.dtype), metadata)
-            test = bioformats.OMEXML(temp)
-            bw = BioWriter(str(Path(outDir).joinpath(m)),metadata=test)
-            print('working')
-            bw.write_image(maski)
-     #       print(m)
-            bw.close_image()
+            xml_metadata = OmeXml.OMEXML(temp)
+            path=Path(outDir).joinpath(str(str(m).split('.',1)[0]+'_mask.'+str(m).split('.',1)[1]))
+            bw = BioWriter(file_path=Path(path),backend='python',max_workers=1,metadata=xml_metadata)
+            bw.write(maski)
+            bw.close()
             del maski
-
+            i+=1
     finally:
         # Close the javabridge regardless of successful completion
-        logger.info('Closing the javabridge')
-        jutil.kill_vm()
+        logger.info('Closing ')
+     #   jutil.kill_vm()
         
         # Exit the program
         sys.exit()
