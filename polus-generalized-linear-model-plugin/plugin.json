@@ -1,6 +1,6 @@
 {
     "name": "Generalized Linear Model",
-    "version": "0.1.6",
+    "version": "0.2.0",
     "title": "Generalized Linear Model",
     "description": "Modeling the data using Generalized linear model.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-generalized-linear-model-plugin:0.1.6",
+    "containerId": "labshare/polus-generalized-linear-model-plugin:0.2.0",
     "inputs": [      
       {
         "name": "inpdir",
@@ -54,7 +54,8 @@
 			"NegativeBinomial",
 			"Quasi",
 			"Quasibinomial",
-			"Quasipoisson"
+			"Quasipoisson",
+			"Multinomial"
              ]
           },
 	"required": "true"
@@ -92,7 +93,7 @@
       {
         "key": "inputs.modeltype",
         "title": "Select the distribution to be considered for modeling",
-        "description": "Select either binomial or gaussian or Gamma or poisson or quasi or quasibinomial or quasipoisson or negativebinomial"
+        "description": "Select either binomial or gaussian or Gamma or poisson or quasi or quasibinomial or quasipoisson or negativebinomial or multinomial"
       },
       {
         "key": "inputs.outdir",

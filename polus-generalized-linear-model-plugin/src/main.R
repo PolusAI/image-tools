@@ -2,8 +2,12 @@ suppressWarnings(library("argparse"))
 suppressWarnings(library("DescTools"))
 suppressWarnings(library("logging"))
 suppressWarnings(library("broom"))
-suppressWarnings(library("parallel"))
 suppressWarnings(library("biglm"))
+suppressWarnings(library("corrplot"))
+suppressWarnings(library("parallel"))
+suppressWarnings(library("ff"))
+suppressWarnings(library("nnet"))
+
 
 # Initialize the logger
 basicConfig()
@@ -73,7 +77,6 @@ loginfo('modeltype = %s', modeltype)
 csvfile <- args$outdir
 loginfo('csvfile = %s', csvfile)
 
-
 #Get list of .csv files in the directory including sub folders for modeling
 files_to_read = list.files(
   path = inpfile,        
@@ -82,24 +85,12 @@ files_to_read = list.files(
   full.names = TRUE
 )
 
-#Check whether there are csv files in the directory
-if(length(files_to_read) == 0) {
-  tryCatch(
-    error = function(e) { 
-      message('No .csv files in the directory')
-    }
-  )
-}
-
 #Read the csv files
-datalist = lapply(files_to_read,read.csv)#function(x) read.table.ffdf(file=x,header=TRUE,sep = ","))
-
-
+datalist = lapply(files_to_read,read.csv)
 
 for (dataset in datalist) {
   for (file_csv in files_to_read) {
     #Get filename
-    
     file_name <- SplitPath(file_csv)$filename
     
     #Check whether any column needs to be excluded
@@ -114,7 +105,9 @@ for (dataset in datalist) {
     else if(length(excludes) == 0) {
       datasub <-dataset
     }
-
+    # Remove columns with all values as zero
+    datasub <- datasub[colSums(datasub) > 0]
+    
     #Check whether predict column is present in dataframe
     if(!(predictcolumn %in% colnames(datasub))) {
       logwarn('predict column name is not found in %s',file_name)
@@ -124,8 +117,8 @@ for (dataset in datalist) {
     #Get column names without predict variable
     drop_dep <- datasub[ , !(names(datasub) %in% predictcolumn)]
     resp_var <- colnames(drop_dep)
-
-    if((modeltype == 'Gaussian') || (modeltype == 'Poisson') || (modeltype == 'Binomial') || (modeltype == 'Quasibinomial') || (modeltype == 'Quasipoisson') || (modeltype == 'Quasi')) {
+    
+    if((modeltype == 'Gaussian') || (modeltype == 'Poisson') || (modeltype == 'Binomial') || (modeltype == 'Multinomial') || (modeltype == 'Quasibinomial') || (modeltype == 'Quasipoisson') || (modeltype == 'Quasi')) {
       modeltype <- tolower(modeltype)
     }
     
@@ -134,52 +127,86 @@ for (dataset in datalist) {
     loginfo('Cores = %s', num_of_cores)
     
     #Chunk Size
-    chunk <- floor((2^30/ncol(datasub))*num_of_cores)
-    chunk1 <-10000
+    chunk <- floor((nrow(datasub)/ncol(datasub))*num_of_cores)
     
-    levels_adj <- function(x){
-      if(is.factor(x)) return(factor(x, levels=c(levels(x), "No Answer")))
-      return(x)
+    #Function to determine chunks
+    make.data<-function(formula,data,chunksize,...){
+      n<-nrow(data)
+      cursor<-0
+      datafun<-function(reset=FALSE){
+        if (reset){
+          cursor<<-0
+          return(NULL)
+        }
+        if (cursor>=n)
+          return(NULL)
+        start<-cursor+1
+        cursor<<-cursor+min(chunksize, n-cursor)
+        data[start:cursor,]
+      }
     }
-    datasub <- as.data.frame(lapply(datasub, levels_adj))
+    
+    #Convert to ffdf object
+    datasub_ff = as.ffdf(datasub)
+    
+    #Chunk data
+    chunk_data <-make.data(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), datasub_ff, chunksize=chunk)
     
     #Model data based on the options selected
+    #Get only main effects of the variables
     if (glmmethod == 'PrimaryFactors') {
-      if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi')) {
-        test_glm <- bigglm(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), data = datasub, family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize=chunk1)
+      if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'binomial') ||  (modeltype == 'quasibinomial') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi')) {
+        test_glm <- bigglm(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), data = chunk_data, family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize = chunk)
       }
       else if (modeltype == 'NegativeBinomial') {
-        test_glm <- bigglm(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), data = datasub, family = poisson(), chunksize=chunk)
+        #Based on glm.nb from MASS package, if theta is not given then poisson GLM is calculated and hence, have considered family as poisson
+        test_glm <- bigglm(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), data = chunk_data, family = poisson(),chunksize=chunk)
       }
-      else if ((modeltype == 'binomial') || (modeltype == 'quasibinomial')) {
-        test_glm <- bigglm(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), data = datasub, family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize=chunk)
-      }
+      else if (modeltype == 'multinomial') {
+        test_glm <- multinom(formula(paste(paste("as.factor(",predictcolumn,")"),paste(resp_var,collapse= "+"),sep="~")), data = datasub)
+        }
     }
-    
+    #Get interaction values
     else if (glmmethod == 'Interaction') {
-      if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi')) {
-        test_glm <- bigglm(formula(paste(predictcolumn,paste('(',paste(resp_var,collapse= "+"),')^2'),sep="~")), data = datasub, family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize=chunk)
+      datasub_pred <- datasub[ , !(names(datasub) %in% predictcolumn)]
+      #Get correlation between variables
+      tmp <- cor(datasub_pred)
+      tmp[upper.tri(tmp)] <- 0
+      diag(tmp) <- 0
+      
+      #Remove variables with no interaction
+      data_no_int <- which(tmp >= 0.1 | tmp < -0.1, arr.ind = TRUE)
+      data_frame<-data.frame(row = rownames(data_no_int), col = colnames(tmp)[data_no_int[, "col"]],
+                      value = tmp[tmp >= 0.1 | tmp < -0.1])
+      colnames(data_frame)<- c("variable1","variable2","coef")
+      
+      #Interaction variables
+      data_frame$variableint <- paste(data_frame$variable1, data_frame$variable2, sep="*")
+      data_list <- as.character(data_frame$variableint)
+      
+      if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'binomial') ||  (modeltype == 'quasibinomial') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi')) {
+         test_glm <- bigglm(formula(paste(predictcolumn,paste(data_list,collapse= "+"),sep="~")), data = chunk_data, family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize = chunk)
       }
       else if (modeltype == 'NegativeBinomial') {
-        test_glm <- bigglm(formula(paste(predictcolumn,paste('(',paste(resp_var,collapse= "+"),')^2'),sep="~")), data = datasub, family = poisson(), chunksize=chunk)
+        test_glm <- bigglm(formula(paste(predictcolumn,paste(data_list,collapse= "+"),sep="~")), data = chunk_data, family = poisson(), chunksize = chunk)
       }
-      else if ((modeltype == 'binomial') || (modeltype == 'quasibinomial')) {
-        test_glm <- bigglm(formula(paste(paste("as.factor(",predictcolumn,")"),paste('(',paste(resp_var,collapse= "+"),')^2'),sep="~")), data = datasub, family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize=chunk)
+      else if (modeltype == 'multinomial') {
+        test_glm <- multinom(formula(paste(predictcolumn,paste(data_list,collapse= "+"),sep="~")), data = datasub, MaxNWts = 100000)
+      }
+    }
+    #Get second order polynomial values
+    else if (glmmethod == 'SecondOrder') {
+      if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'binomial') ||  (modeltype == 'quasibinomial') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi')) {
+        test_glm <- bigglm(formula(paste(predictcolumn,paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")), data = chunk_data,family = eval(parse(text=paste(modeltype,"()", sep = ""))),chunksize=chunk)
+      }
+      else if (modeltype == 'NegativeBinomial') {
+        test_glm <- bigglm(formula(paste(predictcolumn,paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")), data = chunk_data, family = poisson(), chunksize=chunk)
+      }
+      else if (modeltype == 'multinomial') {
+        test_glm <- multinom(formula(paste(predictcolumn,paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")), data = datasub)
       }
     }
     
-    else if (glmmethod == 'SecondOrder') {
-      if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi')) {
-        test_glm <- bigglm(formula(paste(predictcolumn,paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")), data=datasub,family = eval(parse(text=paste(modeltype,"()", sep = ""))),chunksize=chunk)
-      }
-      else if (modeltype == 'NegativeBinomial') {
-        test_glm <- bigglm(formula(paste(predictcolumn,paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")), data = datasub, family = poisson(), chunksize=chunk)
-      }
-      else if ((modeltype == 'binomial') || (modeltype == 'quasibinomial')) {
-        test_glm <- bigglm(formula(paste(paste("as.factor(",predictcolumn,")"),paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")),data=datasub,family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize=chunk)
-      }
-    }
-   
     #Set output directory
     setwd(csvfile)
     file_save <- paste0(file_name,".csv")
