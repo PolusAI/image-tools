@@ -1,8 +1,12 @@
-# Cellpose 
-
-This WIPP plugin does things, some of which involve math and science. There is likely a lot of handwaving involved when describing how it works, but handwaving should be replaced with a good description. However, someone forgot to edit the README, so handwaving will have to do for now. Contact [Data Scientist](mailto:data.scientist@labshare.org) for more information.
-
-For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
+# Vector-label 
+  Plugin is based of   mask recovery implemented  in [Cellpose](https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1). 
+  
+  Excerpts from paper
+ 
+  `We run a dynamical system starting at that pixel location and following the spatial derivatives specified by the horizontal and vertical gradient maps.
+   We use finite differences with a step size of 1. Note that we do not re-normalize the predicted gradients, but the gradients in the training set have unit norm, so we expect the predicted gradients to be on the same scale. 
+   We run 200 iterations for each pixel, and at every iteration we take a step in the direction of the gradient at the nearest grid location.
+   Following convergence, pixels can be easily clustered according to the pixel they end up at. For robustness, we also extend the clusters along regions of high-density of pixel convergence.`
 
 ## Building
 
@@ -15,12 +19,12 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-This plugin takes one input argument and one output argument:
+This plugin takes 3 input argument and 1 output argument:
 
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
-| `--diameter` | Diameter | Input | number |
+| `----flow_threshold` | flow threshold | Input | number |
 | `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--pretrained_model` | Filename pattern used to separate data | Input | string |
+| `--cellprob_threshold` | Cell probablity threshold | Input | number |
 | `--outDir` | Output collection | Output | collection |
 

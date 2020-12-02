@@ -34,7 +34,6 @@ def steps3D(p, dP, inds, niter):
     """
     shape = p.shape[1:]
     for t in range(niter):
-        #pi = p.astype(np.int32)
         for j in range(inds.shape[0]):
             z = inds[j,0]
             y = inds[j,1]
@@ -75,7 +74,6 @@ def steps2D(p, dP, inds, niter):
     """
     shape = p.shape[1:]
     for t in range(niter):
-        #pi = p.astype(np.int32)
         for j in range(inds.shape[0]):
             y = inds[j,0]
             x = inds[j,1]
@@ -112,14 +110,12 @@ def follow_flows(dP, niter=200):
                 np.arange(shape[2]), indexing='ij')
         p = np.array(p).astype(np.float32)
         # run dynamics on subset of pixels
-        #inds = np.array(np.nonzero(dP[0]!=0)).astype(np.int32).T
+
         inds = np.array(np.nonzero(np.abs(dP[0])>1e-3)).astype(np.int32).T
         p = steps3D(p, dP, inds, niter)
     else:
         p = np.meshgrid(np.arange(shape[0]), np.arange(shape[1]), indexing='ij')
         p = np.array(p).astype(np.float32)
-
-
         # run dynamics on subset of pixels
         inds = np.array(np.nonzero(np.abs(dP[0])>1e-3)).astype(np.int32).T
         p = steps2D(p, dP, inds, niter)
@@ -172,7 +168,7 @@ def get_masks(p, iscell=None, rpad=20, flows=None, threshold=0.4):
     shape0 = p.shape[1:]
 
     dims = len(p)
-    #print('egshs,',p)
+
     if iscell is not None:
         if dims==3:
 
@@ -184,7 +180,7 @@ def get_masks(p, iscell=None, rpad=20, flows=None, threshold=0.4):
                      indexing='ij')
 
         for i in range(dims):
-    #        print(iscell)
+
             p[i, ~iscell] = inds[i][~iscell]
 
     for i in range(dims):
@@ -491,11 +487,9 @@ def compute_masks(y,cellprob,cellprob_threshold=0.0,flow_threshold=0.4,rescale=N
     """
 
     prob = cellprob[..., -1]
-  #  print('cellprob',cellprob.shape)
+
     dP = np.stack((cellprob[..., 0], cellprob[..., 1]), axis=0)
-  #  print('insidse', dP.shape)
-  #  niter = 1 / rescale[0] * 200
-   # p = follow_flows(-1 * dP / 5., niter=niter)
+
     maski = get_masks(y, iscell=(prob > cellprob_threshold),
                                flows=dP, threshold=flow_threshold)
 
@@ -539,12 +533,12 @@ def fill_holes(masks, min_size=15):
                 small_objects = np.zeros(msk.shape, np.bool)
                 for k in range(msk.shape[0]):
                     msk[k] = scipy.ndimage.morphology.binary_fill_holes(msk[k])
-                    #small_objects[k] = ~remove_small_objects(msk[k], min_size=min_size)
+
             else:
                 msk = scipy.ndimage.morphology.binary_fill_holes(msk)
                 small_objects = ~remove_small_objects(msk, min_size=min_size)
             sm = np.logical_and(msk, small_objects)
-            #~skimage.morphology.remove_small_objects(msk, min_size=min_size, connectivity=1))
+
             masks[slc][msk] = (i+1)
             masks[slc][sm] = 0
         i+=1
