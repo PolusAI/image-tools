@@ -4,27 +4,59 @@ This tool is a simplified but powerful interface to the [Bioformats java library
 
 This tool is currently not on any public pip repositories, but can be installed by cloning this repository and installing with pip.
 
+## Documentation
+
+Documentation is available on [Read the Docs](https://bfio.readthedocs.io/en/latest/).
+
 ## Universal Container Components
 
 All containers contain the follow components:
-1. Python 3.6
-2. openjdk-8
-3. numpy (version 1.18.1)
-4. javabridge (version 1.0.18)
-5. python-bioformats (version 1.5.2)
-6. bfio (version 1.3.4)
-7. [loci-tools.jar](https://downloads.openmicroscopy.org/bio-formats/6.1.0/artifacts/) (Version 6.1.0)
+
+1. Python 3.8
+2. [numpy](https://pypi.org/project/numpy/1.19.1/) (1.19.1)
+3. [imagecodecs](https://pypi.org/project/imagecodecs/2020.5.30/) (2020.5.30, built with `--lite` option)
+4. [tifffile](https://pypi.org/project/tifffile/2020.7.4/) (2020.7.4)
+5. bfio (version 2.0.0)
+
+Containers ending with `-java` also contain:
+
+6. openjdk-8
+7. [python-javabridge](https://pypi.org/project/python-javabridge/4.0.0/) (version 4.0.0)
+8. [python-bioformats](https://pypi.org/project/python-bioformats/4.0.0/) (version 4.0.0)
+9. [loci-tools.jar](https://downloads.openmicroscopy.org/bio-formats/6.1.0/artifacts/) (Version 6.1.0)
 
 ## Containers
 
-### labshare/polus-bfio-util:1.3.4 & labshare/polus-bfio-util:1.3.4-alpine
+All containers can use the Python backend, but only the containers with Java may
+use the Java backend. 
 
-This container is built on Alpine Linux. This is the smallest bfio container, but also the most difficult to install additional requirements on.
+### labshare/polus-bfio-util:2.0.0a3
 
-### labshare/polus-bfio-util:1.3.4-slim-buster
+*Additional Python container tags:* `2.0.0a3-alpine`, `2.0.0a3-python`,
+`2.0.0a3-alpine-python`
 
-This container is built on a stripped down version of Debian Buster. This container is larger than the `alpine` version, but easier to install new Python packages on.
+*Containers with Java:* `2.0.0a3-java`, `2.0.0a3-alpine-java`
 
-### labshare/polus-bfio-util:1.3.4-tensorflow
+This container is built on Alpine Linux. This is the smallest bfio container,
+but also the most difficult to install additional requirements on. The Python
+containers (98MB) are much smaller than the Java containers (383MB).
 
-This container is built on Debian Buster and includes Tensorflow 2.1.0 and all necessary GPU drivers to run Tensorflow on an NVIDIA graphics card.
+### labshare/polus-bfio-util:2.0.0a3-slim-buster
+
+*Additional Python container tags:* `2.0.0a3-slim-buster-python`
+
+*Containers with Java:* `2.0.0a3-slim-buster-java`
+
+This container is built on a stripped down version of Debian Buster. This
+container is larger than the `alpine` version, but easier to install new Python
+packages on since `manylinux` wheels can be installed on it. However, if a
+package requires compilation, a compiler will need to be installed.
+
+### labshare/polus-bfio-util:2.0.0a3-tensorflow
+
+*Additional Python container tags:* `2.0.0a3-tensorflow-python`
+
+*Containers with Java:* No Java containers
+
+This container is built on Debian Buster and includes Tensorflow 2.1.0 and all
+necessary GPU drivers to run Tensorflow on an NVIDIA graphics card.

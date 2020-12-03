@@ -1,0 +1,4 @@
+
+numpy==1.19.1
+imagecodecs==2020.5.30 --global-option="build_ext" --global-option="--lite"
+tifffile==2020.7.4

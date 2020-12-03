@@ -1,7 +1,0 @@
-__pycache__
-docs/build
-dist
-build
-bfio.egg-info
-examples/data
-.pytest_cache
