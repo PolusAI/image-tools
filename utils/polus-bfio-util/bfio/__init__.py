@@ -1,7 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 import pathlib, os.path, logging
 
-<<<<<<< HEAD
 from .bfio import BioReader,BioWriter
 
 logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
@@ -44,14 +43,3 @@ else:
     JARS = None
     LOG4J = None
     logger.info('The loci_tools.jar is not present. Can only use Python backend for reading/writing images.')
-=======
-from .bfio import BioReader, BioWriter
-import javabridge,os
-
-_jars_dir = os.path.join(os.path.dirname(__file__), 'jars')
-
-JAR_VERSION = '6.1.0'
-
-JARS = javabridge.JARS + [os.path.realpath(os.path.join(_jars_dir, name + '.jar'))
-                          for name in ['loci_tools']]
->>>>>>> 1f350bb29e44739d4e35a52bacc2fb5218e5d3b8
