@@ -15,13 +15,13 @@ This plugin takes two input parameters and one output parameter:
 |------------|-------------------------|--------|------|
 | `input`    | Input image collection  | Input  | Path |
 | `notebook` | Notebook filename       | Input  | Path |
+| `config`   | Config file image collection | Input  | Path |
 | `output`   | Output image collection | Output | List |
-
 
 ## Build the plugin
 
 ```bash
-docker build . -t labshare/polus-notebook-plugin:0.3.2
+docker build . -t labshare/polus-notebook-plugin:0.4.0
 ```
 
 
@@ -41,7 +41,7 @@ Create a local folder to emulate WIPP data folder with the name `<LOCAL_WIPP_FOL
 
 Then, run the docker container 
 ```bash
-docker run -v <LOCAL_WIPP_FOLDER>:/data/inputs labshare/polus-notebook-plugin:0.3.2 \
+docker run -v <LOCAL_WIPP_FOLDER>:/data/inputs labshare/polus-notebook-plugin:0.4.0 \
   --input /data/inputs/input \
   --notebook <NOTEBOOK_NAME.ipynb> \
   --output /data/inputs/output

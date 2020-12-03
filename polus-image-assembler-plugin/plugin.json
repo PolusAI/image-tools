@@ -1,0 +1,56 @@
+{
+    "name": "Image Assembler",
+    "version": "0.2.2",
+    "title": "Image Assembler",
+    "description": "A scalable image assembling plugin.",
+    "author": "Nick Schaub (nick.schaub@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-image-assembler-plugin:0.2.2",
+    "inputs": [
+      {
+        "name": "stitchPath",
+        "type": "stitchingVector",
+        "description": "Filename pattern used to separate data",
+        "required": false
+      },
+      {
+        "name": "imgPath",
+        "type": "collection",
+        "description": "Input image collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "timesliceNaming",
+        "type": "boolean",
+        "description": "Label images by timeslice rather than analyzing input image names",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "collection",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.imgPath",
+        "title": "Input collection",
+        "description": "Input image collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.stitchPath",
+        "title": "Stitching Vector",
+        "description": "Stitching vectors to use"
+      },
+      {
+        "key": "inputs.timesliceNaming",
+        "title": "Timeslice numbers for image names:",
+        "description": "Use stitching vector timeslice number as the image name"
+      }
+    ]
+  }

@@ -12,6 +12,7 @@ setuptools.setup(
     name="bfio",
     version=version,
     author="Nick Schaub",
+<<<<<<< HEAD
     author_email="nick.schaub@labshare.com",
     description="Simple reading and writing classes for tiled tiffs using Bioformats.",
     long_description=long_description,
@@ -20,6 +21,13 @@ setuptools.setup(
         'Documentation': 'https://bfio.readthedocs.io/en/latest/',
         'Source': 'https://github.com/Nicholas-Schaub/polus-plugins/tree/master/utils/polus-bfio-util'
     },
+=======
+    author_email="nick.schaub@nih.gov",
+    description="Simple reading and writing classes for OME tiled tiffs using Bioformats.",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/LabShare/polus-plugins/tree/master/utils/polus-bfio-util",
+>>>>>>> 1f350bb29e44739d4e35a52bacc2fb5218e5d3b8
     packages=setuptools.find_packages(),
     package_data = {"bfio": ['jars/*.jar','jars/*.properties','VERSION']},
     classifiers=[
