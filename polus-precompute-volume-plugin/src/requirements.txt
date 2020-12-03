@@ -1,0 +1,6 @@
+imageio==2.8.0
+javabridge==1.0.18
+bfio==1.0.10
+pandas==1.0.3
+python_bioformats==1.5.2
+numpy==1.18.2
