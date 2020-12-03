@@ -1,0 +1,96 @@
+{
+    "name": "K-Means Clustering",
+    "version": "0.2.26",
+    "title": "K-Means Clustering",
+    "description": "Cluster the data using K-Means.",
+    "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-k-means-clustering-plugin:0.2.26",
+    "inputs": [      
+      {
+        "name": "inpdir",
+        "type": "csvCollection",
+        "description": "Input csv file collection",
+        "required": "true"
+      },
+      {
+        "name": "methods",
+        "type": "enum",
+	"description": "Select Manual or Elbow or Calinski Harabasz or Davies Bouldin methods",	
+        "options": {
+	  "values": [
+	      		"Manual",
+			"Elbow",
+                        "CalinskiHarabasz",
+		        "DaviesBouldin"
+             ]
+          },
+	"required": "true"
+      },
+      {
+	"name": "minimumrange",
+        "type": "integer",
+        "description": "Enter minimum k-value:",
+        "required": "false"
+      },
+      {
+	"name": "maximumrange",
+        "type": "integer",
+        "description": "Enter maximum k-value:",
+        "required": "false"
+      },
+      {
+	"name": "numofclus",
+        "type": "integer",
+        "description": "Number of clusters:",
+        "required": "false"
+      }      
+      
+    ],
+    "outputs": [
+      {
+        "name": "outdir",
+        "type": "csvCollection",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.inpdir",
+        "title": "Input csv file",
+        "description": "Input csv file for clustering"
+      },
+      {
+        "key": "inputs.methods",
+        "title": "Cluster data based on the methods selected to determine k-value",
+        "description": "Select Manual or Elbow or Calinski Harabasz or Davies Bouldin methods"
+      },
+      {
+        "key": "inputs.minimumrange",
+        "title": "Enter minimum range",
+        "description": "Enter minimum k-value:",
+	"condition": "model.inputs.methods==['Elbow', 'CalinskiHarabasz', 'DaviesBouldin']"
+      },
+      {
+        "key": "inputs.maximumrange",
+        "title": "Enter maximum range",
+        "description": "Enter maximum k-value:",
+	"condition": "model.inputs.methods==['Elbow', 'CalinskiHarabasz', 'DaviesBouldin']"
+      },
+      {
+        "key": "inputs.numofclus",
+        "title": "Enter number of clusters",
+        "description": "Number of clusters:",
+	"condition": "model.inputs.methods=='Manual'"
+      },
+      {
+        "key": "inputs.outdir",
+        "title": "Output csv file",
+        "description": "Save output csv file containing labeled data"
+      }      
+      
+    ]
+  }
