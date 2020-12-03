@@ -1,14 +1,5 @@
-from bfio import BioReader, BioWriter
-import bioformats
-import javabridge as jutil
-import argparse, logging, subprocess, time, multiprocessing, os
-import numpy as np
+import argparse, logging, subprocess, os
 from pathlib import Path
-
-# Set the environment variable to prevent odd warnings from tensorflow
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
-from tensorflow import keras
-import tensorflow as tf
 
 if __name__=="__main__":
     # Initialize the logger

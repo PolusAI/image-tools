@@ -77,7 +77,7 @@ def local_response(image,window_size):
 
     This method normalizes each pixel using the mean and standard
     deviation of all pixels within the window_size. The window_size
-    paramter should be 2*radius+1 of the desired region of pixels
+    parameter should be 2*radius+1 of the desired region of pixels
     to normalize by. The image should be padded by window_size//2
     on each side.
 
