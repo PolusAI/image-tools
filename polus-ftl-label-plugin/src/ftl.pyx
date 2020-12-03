@@ -185,20 +185,20 @@ cdef np.ndarray run_length_encode_16(unsigned char [:] image,tuple shape):
         
     '''
     
-    Loop through all points and find the start and stopping edges of
-    consecutive nonzero values. The way this works is that pixels are laid
-    out linearly in memory according to the last dimension of the matrix.
-    So, in a 2-d matrix pixels in the same row are immediately next to
-    each other in memory. In a 3-d matrix, pixels in the z-dimension are
-    next to each other in memory. Since the input is required to be 8-bit
-    data (boolean or uint8), then mapping data directly to a vector allows
-    8x more data to be processed per clock cycle. Otherwise each clock
-    cycle is used to process one 8-bit piece of data.
+    Loop through all points and find the start and stopping edges of consecutive
+    nonzero values. The way this works is that pixels are laid out linearly in
+    memory according to the last dimension of the matrix. So, in a 2-d matrix
+    pixels in the same row are immediately next to each other in memory. In a
+    3-d matrix, pixels in the z-dimension are next to each other in memory.
+    Since the input is required to be 8-bit data (boolean or uint8), then
+    mapping data directly to a vector allows 8x more data to be processed per
+    clock cycle. Otherwise each clock cycle is used to process one 8-bit piece
+    of data.
 
-    The outtermost loop is a linear index of the upper dimensions. So, if
-    the matrix is 3-d with dimensions (128x128x64), then there are 128x128
-    positions to evaluate. Each position is starting point for a new line
-    of pixels along the last dimension.
+    The outtermost loop is a linear index of the upper dimensions. So, if the
+    matrix is 3-d with dimensions (128x128x64), then there are 128x128 positions
+    to evaluate. Each position is starting point for a new line of pixels along
+    the last dimension.
     
     '''
     for p in range(positions):
@@ -220,15 +220,14 @@ cdef np.ndarray run_length_encode_16(unsigned char [:] image,tuple shape):
         
         '''
         
-        The following loop is designed for speed. It analyzes 15 pixels at
-        a time, and if all 15 pixels have the same value then it quickly
-        escapes to the next iteration of the loop. It stops loops when it
-        gets less than 15 pixels from the end of the line of pixels so that
-        it doesn't run into the next line of pixels.
+        The following loop is designed for speed. It analyzes 15 pixels at a
+        time, and if all 15 pixels have the same value then it quickly escapes
+        to the next iteration of the loop. It stops looping when it gets less
+        than 15 pixels from the end of the line of pixels so that it doesn't run
+        into the next line of pixels.
         
         '''
-        r = 0 # manualy register the pixel index, can be optimized with modulo outside the loop
-        # print('Starting fast loop position: {}'.format(position))
+        r = 0 # manually register the pixel index, can be optimized with modulo outside the loop
         for n in range(0,last_stride-15,15):
             # Load 16 pixels and compare against the neighbors (technically only checks 15 pixels)
             v      = _mm_loadu_si128(<__m128i*>&image[position])   # Load 16 pixels.
@@ -281,7 +280,6 @@ cdef np.ndarray run_length_encode_16(unsigned char [:] image,tuple shape):
         r += 1
         position += 1
         for n in range(r,last_stride):
-            # print('Starting slow loop position: {}'.format(position))
             if image[position] == image[position-1]:
                 position += 1
                 continue
@@ -746,32 +744,22 @@ cdef np.ndarray generate_output_16(unsigned int [:,:] rle_objects,
     cdef long i
 
     # Initialize the output
-    # print('Initializing the output...')
     cdef np.ndarray label_image = np.zeros(image_shape,dtype=np.uint16)
     cdef unsigned short [:] linear_image = label_image.reshape(-1)
-    # print('label_image.shape={}'.format(image_shape))
 
     # Get the indices
-    # print('Initializing the indices...')
     cdef long long ndims = len(image_shape) - 1
     cdef long long obj_start = rle_objects.shape[1] - 2
     cdef long long obj_end = rle_objects.shape[1] - 1
     cdef np.ndarray start_ind = np.zeros(rle_objects.shape[0],dtype=np.uint64)
     
-    # print('Calculating the indices...')
     for i in range(ndims):
         start_ind += rle_objects[:,i] 
         start_ind *= image_shape[i+1]
     start_ind += rle_objects[:,obj_start]
-    # print(start_ind[:10])
 
-    # print('Generating the output...')
     cdef unsigned long [:] start_ind_memview = start_ind
     for i in range(labels.shape[0]):
-        # print('i={}'.format(i))
-        # print('start_ind_memview={}'.format(start_ind_memview[i]))
-        # print('size={}'.format(rle_objects[i,obj_end] - rle_objects[i,obj_start]))
-        # print('value={}'.format(labels[i]))
         fill_n(&linear_image[start_ind_memview[i]],
                 rle_objects[i,obj_end] - rle_objects[i,obj_start],
                 labels[i])
