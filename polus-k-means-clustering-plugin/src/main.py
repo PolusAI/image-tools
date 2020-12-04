@@ -219,8 +219,7 @@ def main():
         #Save dataframe into csv file
         os.chdir(outdir)
         logger.info('Saving csv file')
-        #output_csv = np.vstack ((col_name, df_processed))
-        export_csv = np.savetxt('kmeans_clustering_%s.csv'%file_name, df_processed, header = col_names, fmt="%s", delimiter=',')
+        export_csv = np.savetxt('%s.csv'%file_name, df_processed, header = col_names, fmt="%s", delimiter=',')
         logger.info("Finished all processes!")
 
 if __name__ == "__main__":

@@ -32,7 +32,7 @@ Enter k-value if you already know how many clusters are required. This parameter
 
 ## Note:
 1. If 'Manual' method is selected, enter number of clusters required.
-3. If 'Elbow' or 'CalinskiHarabasz' or 'DaviesBouldin' methods are selected,, then you should enter values for both 'maximumrange' and 'minimumrange'.
+3. If 'Elbow' or 'CalinskiHarabasz' or 'DaviesBouldin' methods are selected, then you should enter values for both 'maximumrange' and 'minimumrange'.
 4. The 'minimumrange'value should be >1.
 
 ## Output:
