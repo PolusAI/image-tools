@@ -158,7 +158,7 @@ class BioBase(object,metaclass=abc.ABCMeta) :
                     # For XYZ dimensions, get start and stop of slice, ignore step
                     else:
                         start = 0 if key.start == None else key.start
-                        stop = 0 if key.stop == None else key.stop
+                        stop = getattr(self,dim) if key.stop == None else key.stop
                         ind[dim] = [start,stop]
                         
                 elif isinstance(key,(int,tuple,list)):
@@ -169,12 +169,12 @@ class BioBase(object,metaclass=abc.ABCMeta) :
                         else:
                             ind[dim] = key
                     else:
-                        raise ValueError('The index in position {} must be a slice type.'.format(dims.find(key)))
+                        raise ValueError('The index in position {} must be a slice type.'.format(dims.find(dim)))
                 elif key==Ellipsis:
                     if dims.find(dim)+1 < len(keys):
                         raise ValueError('Ellipsis may only be used in the first or last index.')
                 else:
-                    raise ValueError('Did not recognize indexing value of type: {}'.format(dims.find(key)))
+                    raise ValueError('Did not recognize indexing value of type: {}'.format(type(key)))
                 
         return ind
                 
