@@ -144,7 +144,7 @@ class BioBase(object,metaclass=abc.ABCMeta) :
                 if keys[-1]==Ellipsis:
                     raise ValueError('Ellipsis (...) may be used in either the first or last index, not both.')
                 
-                dims = [d for d in reversed(dims)]
+                dims = ''.join([d for d in reversed(dims)])
                 keys = [k for k in reversed(keys)]
             
             # Get key values

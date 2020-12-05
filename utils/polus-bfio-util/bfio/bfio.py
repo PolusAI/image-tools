@@ -598,7 +598,7 @@ class BioWriter(BioBase):
                 for k,v in kwargs.items():
                     setattr(self,k,v)
 
-        if not self.file_path.name.endswith('.ome.tif'):
+        if not self._file_path.name.endswith('.ome.tif'):
             ValueError("The file extension must be .ome.tif")
             
         if self.metadata.image_count > 1:
