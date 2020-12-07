@@ -29,7 +29,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    install_requires = ['tifffile>=2020.7.4',
+    install_requires = ['tifffile >=2020.7.4, <=2020.11.18',
                         'imagecodecs>=2020.5.30',
                         'numpy>=1.19.1']
 )
