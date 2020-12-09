@@ -4,11 +4,11 @@
   "containerId": "labshare/polus-precompute-slide-plugin:1.2.3",
   "title": "Precompute Slide Viewer",
   "description": "Precomputes a single image plane for DeepZoom or Z stacks for Neuroglancer",
-  "author": "N/A",
-  "institution": "N/A",
+  "author": "Madhuri Vihani (Madhuri.Vihani@nih.gov), Nick Schaub (Nick.Schaub@nih.gov)",
+  "institution": "National Center for the Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/mmvih/polus-plugins.git",
-  "website": null,
-  "citation": "N/A",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
   "inputs": [
     {
       "name": "inpDir",
