@@ -1,6 +1,7 @@
-from bfio.bfio import BioReader
+from bfio import BioReader
 import numpy as np
-import json, copy, os
+import copy, os
+import simplejson as json
 from pathlib import Path
 import imageio
 import filepattern
@@ -51,7 +52,7 @@ def segmentinfo(encoder,idlabels,out_dir):
     info = {
         "@type": "neuroglancer_segment_properties",
         "inline": inlineinfo
-    }
+        }
 
     # writing all the information into the file
     with open(op,'w') as writer:
@@ -245,7 +246,7 @@ def _get_higher_res(S, zlevel, bfio_reader,slide_writer,encoder,imageType,ids, X
     if Y[1] > scale_info['size'][1]:
         Y[1] = scale_info['size'][1]
 
-    datatype = bfio_reader.read_metadata().image().Pixels.get_PixelType()
+    datatype = np.dtype(bfio_reader)
 
     # Initialize the output
     image = np.zeros((Y[1]-Y[0],X[1]-X[0],1),dtype=datatype)
@@ -487,7 +488,7 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight, imagetype):
     
     # Get metadata info from the bfio reader
     # sizes = [bfio_reader.num_x(),bfio_reader.num_y(),bfio_reader.num_z()]
-    sizes = [bfio_reader.num_x(),bfio_reader.num_y(),stackheight]
+    sizes = [bfio_reader.X,bfio_reader.Y,stackheight]
     # phys_x = bfio_reader.physical_size_x()
     # if None in phys_x:
     phys_x = (325,'nm')
@@ -500,7 +501,8 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight, imagetype):
     resolution = [phys_x[0] * UNITS[phys_x[1]]]
     resolution.append(phys_y[0] * UNITS[phys_y[1]])
     resolution.append(phys_z[0] * UNITS[phys_z[1]]) # Just used as a placeholder
-    dtype = bfio_reader.read_metadata().image().Pixels.get_PixelType()
+    dtype = np.dtype(bfio_reader)
+    
     
     num_scales = int(np.log2(max(sizes))) + 1
     
@@ -515,21 +517,15 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight, imagetype):
     }
     
     # initialize the json dictionary
+    info = {
+        "data_type": dtype,
+        "num_channels": 1,
+        "scales": [scales],
+        "type": imagetype,
+    }   
     if imagetype == "segmentation":
-        info = {
-            "data_type": dtype,
-            "num_channels":1,
-            "scales": [scales],       # Will build scales below
-            "type": imagetype,
-            "segment_properties": "infodir"
-        }
-    else:
-        info = {
-            "data_type": dtype,
-            "num_channels":1,
-            "scales": [scales],       # Will build scales below
-            "type": imagetype,
-        }
+        info["segment_properties"] = "infodir"
+
 
     for i in range(1,num_scales+1):
         previous_scale = info['scales'][-1]
@@ -542,6 +538,8 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight, imagetype):
     return info
 
 def neuroglancer_info_file(bfio_reader,outPath, stackheight, imagetype):
+    """ This creates the info file specifying the metadata for the precomputed format """
+
     # Create an output path object for the info file
     op = Path(outPath).joinpath("info")
     
@@ -550,11 +548,11 @@ def neuroglancer_info_file(bfio_reader,outPath, stackheight, imagetype):
 
     # Write the neuroglancer info file
     with open(op,'w') as writer:
-        writer.write(json.dumps(info))
+        writer.write(str(info))
         
     return info
 
-def dzi_file(bfio_reader,outPath,imageNum):
+def dzi_file(bfio_reader,outPath,imageNum, stackheight, imageType):
     # Create an output path object for the info file
     op = Path(outPath).parent.joinpath("{}.dzi".format(imageNum))
     
@@ -562,7 +560,7 @@ def dzi_file(bfio_reader,outPath,imageNum):
     DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="{}" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
     
     # Get pyramid info
-    info = bfio_metadata_to_slide_info(bfio_reader,outPath)
+    info = bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight, imageType)
 
     # write the dzi file
     with open(op,'w') as writer:

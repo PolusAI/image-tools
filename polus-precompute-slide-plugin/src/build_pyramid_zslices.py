@@ -1,5 +1,7 @@
 import logging, argparse
-from bfio.bfio import BioReader, BioWriter
+from bfio import BioReader, BioWriter, LOG4J, JARS
+import javabridge
+import requests
 from pathlib import Path
 import utils
 import numpy as np
@@ -36,7 +38,7 @@ if __name__=="__main__":
     logger = logging.getLogger(image_num)
     logger.setLevel(logging.INFO)  
 
-    logger.info("Starting to build Z Slices...")
+    logger.info("Starting to build Z Slices or Z Stack ...")
     
     # Make the output directory
     image = Path(input_dir).joinpath(image)
@@ -50,44 +52,51 @@ if __name__=="__main__":
     # Create the BioReader object
     logger.info('Getting the BioReader...')
 
-    bf = BioReader(str(image.absolute()),max_workers=max([cpu_count()-1,2])) # NJS
-    depth = bf.num_z()
-    logger.info("XYZCT ({}, {}, {}, {}, {}), respectively".format(bf.num_x(), bf.num_y(), bf.num_z(), bf.num_c(), bf.num_t()))
+    try:
+        javabridge.start_vm(args=["-Dlog4j.configuration=file:{}".format(LOG4J)],
+                        class_path=JARS,
+                        run_headless=True)
 
-    if depth == 1:
-        raise ValueError("This is not a Z stack")
+        bf = BioReader(str(image.absolute()),backend = 'java', max_workers=max([cpu_count()-1,2]))
+        depth = bf.Z
+        logger.info("XYZCT ({}, {}, {}, {}, {}), respectively".format(bf.X, bf.Y, bf.Z, bf.C, bf.T))
 
-    # Images have height (rows), width (columns), and depth (z-slices) - NJS
-    logger.info('Depth {}'.format(depth))
+        if depth == 1:
+            raise ValueError("This is not a Z stack")
 
-    # Create the output path and info file
-    if pyramid_type == "Neuroglancer":
-        file_info = utils.neuroglancer_info_file(bf,out_dir, depth, imagetype)
-    elif pyramid_type == "DeepZoom":
-        file_info = utils.dzi_file(bf,out_dir,image_num)
-    else:
-        ValueError("pyramid_type must be Neuroglancer or DeepZoom")
-    logger.info("data_type: {}".format(file_info['data_type']))
-    logger.info("num_channels: {}".format(file_info['num_channels']))
-    logger.info("number of scales: {}".format(len(file_info['scales'])))
-    logger.info("type: {}".format(file_info['type']))
-    
-    logger.info("Creating encoder and file writer...")
-    if pyramid_type == "Neuroglancer":
-        encoder = utils.NeuroglancerChunkEncoder(file_info)
-        file_writer = utils.NeuroglancerWriter(out_dir)
-    elif pyramid_type == "DeepZoom":
-        encoder = utils.DeepZoomChunkEncoder(file_info)
-        file_writer = utils.DeepZoomWriter(out_dir)
+        # Images have height (rows), width (columns), and depth (z-slices) - NJS
+        logger.info('Depth {}'.format(depth))
 
-    ids = []
+        # Create the output path and info file
+        if pyramid_type == "Neuroglancer":
+            file_info = utils.neuroglancer_info_file(bf,out_dir, depth, imagetype)
+        elif pyramid_type == "DeepZoom":
+            file_info = utils.dzi_file(bf,out_dir,image_num, depth, imagetype)
+        else:
+            ValueError("pyramid_type must be Neuroglancer or DeepZoom")
+        logger.info("data_type: {}".format(file_info['data_type']))
+        logger.info("num_channels: {}".format(file_info['num_channels']))
+        logger.info("number of scales: {}".format(len(file_info['scales'])))
+        logger.info("type: {}".format(file_info['type']))
+        
+        logger.info("Creating encoder and file writer...")
+        if pyramid_type == "Neuroglancer":
+            encoder = utils.NeuroglancerChunkEncoder(file_info)
+            file_writer = utils.NeuroglancerWriter(out_dir)
+        elif pyramid_type == "DeepZoom":
+            encoder = utils.DeepZoomChunkEncoder(file_info)
+            file_writer = utils.DeepZoomWriter(out_dir)
 
-    # Go through all the slices in the stack
-    for i in range(0, depth):
-        utils._get_higher_res(0, i, bf,file_writer,encoder, imageType = imagetype, ids=ids, slices=[i,i+1])
-        logger.info("Finished Level {}/{} in stack process".format(i+1, depth))
-    logger.info("Finished precomputing.")
+        ids = []
 
-    if imagetype == "segmentation":
-        out_seginfo = utils.segmentinfo(encoder,ids,out_dir)
-        logger.info("Finished Segmentation Information File")
+        # Go through all the slices in the stack
+        for i in range(0, depth):
+            utils._get_higher_res(0, i, bf,file_writer,encoder, imageType = imagetype, ids=ids, slices=[i,i+1])
+            logger.info("Finished Level {}/{} in stack process".format(i+1, depth))
+        logger.info("Finished precomputing.")
+
+        if imagetype == "segmentation":
+            out_seginfo = utils.segmentinfo(encoder,ids,out_dir)
+            logger.info("Finished Segmentation Information File")
+    finally:
+        javabridge.kill_vm()
