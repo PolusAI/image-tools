@@ -1,5 +1,5 @@
+# Code sourced from https://github.com/MouseLand/cellpose/tree/master/cellpose
 import numpy as np
-
 
 def diameters(masks):
     """ get median 'diameter' of masks """

@@ -1,3 +1,5 @@
+# Code sourced from https://github.com/MouseLand/cellpose/tree/master/cellpose
+
 import numpy as np
 from scipy.ndimage.filters import maximum_filter1d
 import scipy.ndimage
@@ -7,29 +9,16 @@ from numba import njit
 @njit('(float32[:,:,:,:],float32[:,:,:,:], int32[:,:], int32)', nogil=True)
 def steps3D(p, dP, inds, niter):
     """ run dynamics of pixels to recover masks in 3D
-
     Euler integration of dynamics dP for niter steps
 
-    Parameters
-    ----------------
+    Args:
+    p(array[float32]): pixel locations [axis x Lz x Ly x Lx] (start at initial meshgrid)
+    dP(array[float32]):  4D array.flows [axis x Lz x Ly x Lx]
+    inds(array[int32]):  2D array.non-zero pixels to run dynamics on [npixels x 3]
+    niter(int32): number of iterations of dynamics to run
 
-    p: float32, 4D array
-        pixel locations [axis x Lz x Ly x Lx] (start at initial meshgrid)
-
-    dP: float32, 4D array
-        flows [axis x Lz x Ly x Lx]
-
-    inds: int32, 2D array
-        non-zero pixels to run dynamics on [npixels x 3]
-
-    niter: int32
-        number of iterations of dynamics to run
-
-    Returns
-    ---------------
-
-    p: float32, 4D array
-        final locations of each pixel after dynamics
+    Returns:
+    p(array[float32]):  4D array.final locations of each pixel after dynamics
 
     """
     shape = p.shape[1:]
@@ -47,29 +36,16 @@ def steps3D(p, dP, inds, niter):
 @njit('(float32[:,:,:], float32[:,:,:], int32[:,:], int32)', nogil=True)
 def steps2D(p, dP, inds, niter):
     """ run dynamics of pixels to recover masks in 2D
+    Euler integration of dynamics dP for niter steps.
 
-    Euler integration of dynamics dP for niter steps
+    Args:
+    p(array[float32]): 3D array.pixel locations [axis x Ly x Lx] (start at initial meshgrid)
+    dP(array[float32]):  3D array.flows [axis x Ly x Lx]
+    inds(array[intt32]): 2D array.non-zero pixels to run dynamics on [npixels x 2]
+    niter(int32): Number of iterations of dynamics to run
 
-    Parameters
-    ----------------
-
-    p: float32, 3D array
-        pixel locations [axis x Ly x Lx] (start at initial meshgrid)
-
-    dP: float32, 3D array
-        flows [axis x Ly x Lx]
-
-    inds: int32, 2D array
-        non-zero pixels to run dynamics on [npixels x 2]
-
-    niter: int32
-        number of iterations of dynamics to run
-
-    Returns
-    ---------------
-
-    p: float32, 3D array
-        final locations of each pixel after dynamics
+    Returns:
+    p(array[float32]):  3D array.final locations of each pixel after dynamics
 
     """
     shape = p.shape[1:]
@@ -83,24 +59,15 @@ def steps2D(p, dP, inds, niter):
     return p
 def follow_flows(dP, niter=200):
     """ define pixels and run dynamics to recover masks in 2D
-
     Pixels are meshgrid. Only pixels with non-zero cell-probability
     are used (as defined by inds)
 
-    Parameters
-    ----------------
+    Args:
+    dP(array[float32]): 3D or 4D array.Flows [axis x Ly x Lx] or [axis x Lz x Ly x Lx]
+    niter(optional[int]): Default 200.Number of iterations of dynamics to run
 
-    dP: float32, 3D or 4D array
-        flows [axis x Ly x Lx] or [axis x Lz x Ly x Lx]
-
-    niter: int (optional, default 200)
-        number of iterations of dynamics to run
-
-    Returns
-    ---------------
-
-    p: float32, 3D array
-        final locations of each pixel after dynamics
+    Returns:
+    p(array[float32]):3D array.Final locations of each pixel after dynamics
 
     """
     shape = np.array(dP.shape[1:]).astype(np.int32)
@@ -124,42 +91,20 @@ def follow_flows(dP, niter=200):
 
 def get_masks(p, iscell=None, rpad=20, flows=None, threshold=0.4):
     """ create masks using pixel convergence after running dynamics
-
     Makes a histogram of final pixel locations p, initializes masks
     at peaks of histogram and extends the masks from the peaks so that
     they include all pixels with more than 2 final pixels p. Discards
     masks with flow errors greater than the threshold.
 
-    Parameters
-    ----------------
+    Args:
+    p(array[float32]):3D or 4D array.Final locations of each pixel after dynamics,size [axis x Ly x Lx] or [axis x Lz x Ly x Lx].
+    iscell(array[bool]):  2D or 3D array.If iscell is not None, set pixels that are iscell False to stay in their original location.
+    rpad(optional[int]): Default 20.Histogram edge padding
+    threshold(optional[float]): Default 0.4.Masks with flow error greater than threshold are discarded(if flows is not None)
+    flows(array[float]):  3D or 4D array.Flows [axis x Ly x Lx] or [axis x Lz x Ly x Lx]. If flows is not None, then masks with inconsistent flows are removed using`remove_bad_flow_masks`.
 
-    p: float32, 3D or 4D array
-        final locations of each pixel after dynamics,
-        size [axis x Ly x Lx] or [axis x Lz x Ly x Lx].
-
-    iscell: bool, 2D or 3D array
-        if iscell is not None, set pixels that are
-        iscell False to stay in their original location.
-
-    rpad: int (optional, default 20)
-        histogram edge padding
-
-    threshold: float (optional, default 0.4)
-        masks with flow error greater than threshold are discarded
-        (if flows is not None)
-
-    flows: float, 3D or 4D array (optional, default None)
-        flows [axis x Ly x Lx] or [axis x Lz x Ly x Lx]. If flows
-        is not None, then masks with inconsistent flows are removed using
-        `remove_bad_flow_masks`.
-
-    Returns
-    ---------------
-
-    M0: int, 2D or 3D array
-        masks with inconsistent flow masks removed,
-        0=NO masks; 1,2,...=mask labels,
-        size [Ly x Lx] or [Lz x Ly x Lx]
+    Returns:
+    M0(array[int]):  2D or 3D array.Masks with inconsistent flow masks removed,0=NO masks; 1,2,...=mask labels,size [Ly x Lx] or [Lz x Ly x Lx]
 
     """
 
@@ -264,26 +209,13 @@ def remove_bad_flow_masks(masks, flows, threshold=0.4):
     and compare flows to predicted flows from network. Discards
     masks with flow errors greater than the threshold.
 
-    Parameters
-    ----------------
+    Args:
+    masks(array[int]): 2D or 3D array.Labelled masks, 0=NO masks; 1,2,...=mask labels,size [Ly x Lx] or [Lz x Ly x Lx]
+    flows(array[float]):3D or 4D array.Flows [axis x Ly x Lx] or [axis x Lz x Ly x Lx]
+    threshold(optional[float]):  default 0.4.Masks with flow error greater than threshold are discarded.
 
-    masks: int, 2D or 3D array
-        labelled masks, 0=NO masks; 1,2,...=mask labels,
-        size [Ly x Lx] or [Lz x Ly x Lx]
-
-    flows: float, 3D or 4D array
-        flows [axis x Ly x Lx] or [axis x Lz x Ly x Lx]
-
-    threshold: float (optional, default 0.4)
-        masks with flow error greater than threshold are discarded.
-
-    Returns
-    ---------------
-
-    masks: int, 2D or 3D array
-        masks with inconsistent flow masks removed,
-        0=NO masks; 1,2,...=mask labels,
-        size [Ly x Lx] or [Lz x Ly x Lx]
+    Returns:
+    masks(array[int]):  2D or 3D array.Masks with inconsistent flow masks removed,0=NO masks; 1,2,...=mask labels,size [Ly x Lx] or [Lz x Ly x Lx]
 
     """
     merrors, _ = flow_error(masks, flows)
@@ -295,35 +227,17 @@ def remove_bad_flow_masks(masks, flows, threshold=0.4):
 def _extend_centers(T,y,x,ymed,xmed,Lx, niter):
     """ run diffusion from center of mask (ymed, xmed) on mask pixels (y, x)
 
-    Parameters
-    --------------
+    Args:
+    T(array[float64]): _ x Lx array that diffusion is run in
+    y(array[int32]): pixels in y inside mask
+    x(array[float]): pixels in x inside mask
+    ymed(int32): center of mask in y
+    xmed(int32):  center of mask in x
+    Lx(int32): size of x-dimension of masks
+    niter(int32): number of iterations to run diffusion
 
-    T: float64, array
-        _ x Lx array that diffusion is run in
-
-    y: int32, array
-        pixels in y inside mask
-
-    x: int32, array
-        pixels in x inside mask
-
-    ymed: int32
-        center of mask in y
-
-    xmed: int32
-        center of mask in x
-
-    Lx: int32
-        size of x-dimension of masks
-
-    niter: int32
-        number of iterations to run diffusion
-
-    Returns
-    ---------------
-
-    T: float64, array
-        amount of diffused particles at each pixel
+    Returns:
+    T(array[float]): amount of diffused particles at each pixel
 
     """
 
@@ -337,28 +251,17 @@ def _extend_centers(T,y,x,ymed,xmed,Lx, niter):
 
 def masks_to_flows(masks):
     """ convert masks to flows using diffusion from center pixel
-
     Center of masks where diffusion starts is defined to be the
     closest pixel to the median of all pixels that is inside the
     mask. Result of diffusion is converted into flows by computing
     the gradients of the diffusion density map.
 
-    Parameters
-    -------------
+    Args:
+    masks(array[int]):  2D or 3D array.labelled masks 0=NO masks; 1,2,...=mask labels
 
-    masks: int, 2D or 3D array
-        labelled masks 0=NO masks; 1,2,...=mask labels
-
-    Returns
-    -------------
-
-    mu: float, 3D or 4D array
-        flows in Y = mu[-2], flows in X = mu[-1].
-        if masks are 3D, flows in Z = mu[0].
-
-    mu_c: float, 2D or 3D array
-        for each pixel, the distance to the center of the mask
-        in which it resides
+    Returns:
+    mu(array[float]):  3D or 4D array.flows in Y = mu[-2], flows in X = mu[-1].if masks are 3D, flows in Z = mu[0].
+    mu_c(array[float]):  2D or 3D array.for each pixel, the distance to the center of the mask in which it resides
 
     """
     if masks.ndim > 2:
@@ -423,22 +326,13 @@ def flow_error(maski, dP_net):
     Masks with flow_errors greater than 0.4 are discarded by default. Setting can be
     changed in Cellpose.eval or CellposeModel.eval.
 
-    Parameters
-    ------------
+    Args:
+    maski(array[int]): ND-array.masks produced from running dynamics on dP_net,where 0=NO masks; 1,2... are mask labels
+    dP_net(array[float]): ND-array.ND flows where dP_net.shape[1:] = maski.shape
 
-    maski: ND-array (int)
-        masks produced from running dynamics on dP_net,
-        where 0=NO masks; 1,2... are mask labels
-    dP_net: ND-array (float)
-        ND flows where dP_net.shape[1:] = maski.shape
-
-    Returns
-    ------------
-
-    flow_errors: float array with length maski.max()
-        mean squared error between predicted flows and flows from masks
-    dP_masks: ND-array (float)
-        ND flows produced from the predicted masks
+    Returns:
+    flow_errors(array[float]): array with length maski.max()mean squared error between predicted flows and flows from masks
+    dP_masks(array[float]): ND-array.ND flows produced from the predicted masks
 
     """
     if dP_net.shape[1:] != maski.shape:
@@ -463,61 +357,34 @@ def flow_error(maski, dP_net):
 def compute_masks(y,cellprob,cellprob_threshold=0.0,flow_threshold=0.4,rescale=None):
     """ Compute masks based on users input of threshold values  and X,yY flows
         This function will call the function which generates  masks based  of a histogram
-        arameters
-    ------------
+    Args:
+    y(array[int]): ND-array .Output of the nueral network
+    cellprob(array[float32]):  3D or 4D array.final locations of each pixel after dynamics,size [axis x Ly x Lx].Cell probablity of array
+    flow_threshold(optional[float]): default 0.4.flow error threshold (all cells with errors below threshold are kept) (not used for 3D)
+    cellprob_threshold(optional[float]):  default 0.0.cell probability threshold (all pixels with prob above threshold kept for masks
 
-    y: ND-array (int)
-        Output of the nueral network
-    cellprob: float32, 3D or 4D array
-        final locations of each pixel after dynamics,
-        size [axis x Ly x Lx]
-        Cell probablity of array
-    flow_threshold: float (optional, default 0.4)
-                flow error threshold (all cells with errors below threshold are kept) (not used for 3D)
-
-    cellprob_threshold: float (optional, default 0.0)
-        cell probability threshold (all pixels with prob above threshold kept for masks)
-
-    Returns
-    ------------
-
-    Masks: ND-array (float)
-         Predicted masks
+    Returns:
+    Masks(array[float]): ND-array.Predicted masks
 
     """
 
     prob = cellprob[..., -1]
-
     dP = np.stack((cellprob[..., 0], cellprob[..., 1]), axis=0)
-
     maski = get_masks(y, iscell=(prob > cellprob_threshold),
                                flows=dP, threshold=flow_threshold)
-
     maski = fill_holes(maski)
     return maski
 
 
 def fill_holes(masks, min_size=15):
     """ fill holes in masks (2D/3D) and discard masks smaller than min_size (2D)
-
     fill holes in each mask using scipy.ndimage.morphology.binary_fill_holes
+    Args:
+    masks(array[int]):  2D or 3D array.labelled masks, 0=NO masks; 1,2,...=mask labels,size [Ly x Lx] or [Lz x Ly x Lx]
+    min_size(optional[int]):  default 15.minimum number of pixels per mask
 
-    Parameters
-    ----------------
-
-    masks: int, 2D or 3D array
-        labelled masks, 0=NO masks; 1,2,...=mask labels,
-        size [Ly x Lx] or [Lz x Ly x Lx]
-
-    min_size: int (optional, default 15)
-        minimum number of pixels per mask
-
-    Returns
-    ---------------
-
-    masks: int, 2D or 3D array
-        masks with holes filled and masks smaller than min_size removed,
-        0=NO masks; 1,2,...=mask labels,
+    Returns:
+    masks(array[int]):  2D or 3D array.masks with holes filled and masks smaller than min_size removed,0=NO masks; 1,2,...=mask labels,
         size [Ly x Lx] or [Lz x Ly x Lx]
 
     """
@@ -572,7 +439,6 @@ def remove_small_objects(ar, min_size=64, connectivity=1):
     too_small = component_sizes < min_size
     too_small_mask = too_small[ccs]
     out[too_small_mask] = 0
-
     return out
 
 

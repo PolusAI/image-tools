@@ -1,7 +1,4 @@
-from bfio import  BioWriter , OmeXml,JARS,LOG4J
-#from bfio import  BioWriter
-import bioformats
-import javabridge as jutil
+from bfio import  BioWriter , OmeXml
 import argparse, logging, sys
 import numpy as np
 from pathlib import Path
@@ -15,7 +12,6 @@ if __name__=="__main__":
                         datefmt='%d-%b-%y %H:%M:%S')
     logger = logging.getLogger("main")
     logger.setLevel(logging.INFO)
-
     ''' Argument parsing '''
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='Cellpose parameters')
@@ -34,25 +30,16 @@ if __name__=="__main__":
     
     # Parse the arguments
     args = parser.parse_args()
-
     inpDir = args.inpDir
-
-
     logger.info('inpDir = {}'.format(inpDir))
-
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
-
     cellprob_threshold = args.cellprob_threshold
     flow_threshold= args.flow_threshold
 
     # Surround with try/finally for proper error catching
     try:
-        # Start the javabridge with proper java logging
         logger.info('Initializing ...')
-        log_config = Path(__file__).parent.joinpath("log4j.properties")
-   #     jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=JARS)
-        jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(LOG4J)],class_path=JARS)
         # Get all file names in inpDir image collection
         root = zarr.open(str(Path(inpDir).joinpath('location.zarr')),mode='r')
         i=1
@@ -87,15 +74,12 @@ if __name__=="__main__":
             temp = re.sub(r'(?<=Type=")([^">>]+)', str(maski.dtype), metadata)
             xml_metadata = OmeXml.OMEXML(temp)
             path=Path(outDir).joinpath(str(str(m).split('.',1)[0]+'_mask.'+str(m).split('.',1)[1]))
-            bw = BioWriter(file_path=Path(path),backend='python',max_workers=1,metadata=xml_metadata)
+            bw = BioWriter(file_path=Path(path),backend='python',metadata=xml_metadata)
             bw.write(maski)
             bw.close()
             del maski
             i+=1
     finally:
-        # Close the javabridge regardless of successful completion
         logger.info('Closing ')
-     #   jutil.kill_vm()
-        
         # Exit the program
         sys.exit()
