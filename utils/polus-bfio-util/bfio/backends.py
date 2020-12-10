@@ -32,10 +32,11 @@ class PythonReader(bfio.base_classes.AbstractReader):
         tile_size = None
         
         if not self._rdr.pages[0].is_tiled:
-            raise TypeError(frontend._file_path.name + ' is not a tiled tiff.' +
-                            ' The python backend of the BioReader only ' +
-                            'supports OME tiled tiffs. Use the java backend ' +
-                            'to load this image.')
+            if width > self.frontend._TILE_SIZE or width > self.frontend._TILE_SIZE:
+                raise TypeError(frontend._file_path.name + ' is not a tiled tiff.' +
+                                ' The python backend of the BioReader only ' +
+                                'supports OME tiled tiffs. Use the java backend ' +
+                                'to load this image.')
             
         elif self._rdr.pages[0].tilewidth != self.frontend._TILE_SIZE or \
             self._rdr.pages[0].tilelength != self.frontend._TILE_SIZE:
