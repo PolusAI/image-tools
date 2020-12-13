@@ -28,7 +28,6 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
-""" 1. Loading and binning data """
 def is_number(value):
     """ This function checks to see if the value can be converted to a number """
     try:
@@ -83,9 +82,11 @@ def bin_data(data, yaxis, typegraph, column_bin_size, bin_stats):
     nfeats = bin_stats['size'][1] 
     datalen = bin_stats['size'][0]
 
-    data_ind = pandas.notnull(data)  # Handle NaN values
-    data[~data_ind] = 255          # Handle NaN values
-    data = data.astype(np.uint16) # cast to save memory
+    # Handle NaN values
+    data_ind = pandas.notnull(data)
+    data[~data_ind] = 255               
+    
+    data = data.astype(np.uint16)       # cast to save memory
     data[data>=bincount] = bincount - 1 # in case of numerical precision issues
 
     nrows = data.shape[0]
@@ -97,8 +98,7 @@ def bin_data(data, yaxis, typegraph, column_bin_size, bin_stats):
         dtype = np.uint32
     else:
         dtype = np.uint64
-    
-    
+        
     totalgraphs = int((nfeats**2 - nfeats)/2)
     bins = np.zeros((totalgraphs, bincount, bincount), dtype=dtype)
     graph_index = []
@@ -109,6 +109,7 @@ def bin_data(data, yaxis, typegraph, column_bin_size, bin_stats):
     for feat1 in range(nfeats):
         name1 = column_names[feat1]
         feat1_tf = data[name1] * bincount
+        
         if typegraph == "linear":
             if bin_stats['min'][feat1] >= 0:
                 yaxis[feat1] = 0
@@ -117,24 +118,25 @@ def bin_data(data, yaxis, typegraph, column_bin_size, bin_stats):
 
         for feat2 in range(feat1 + 1, nfeats):
             graph_dict[(feat1, feat2)] = i
-            
             name2 = column_names[feat2]
+            
             feat2_tf = data[name2]
-            feat1_tf = feat1_tf[data_ind[name1] & data_ind[name2]]
             feat2_tf = feat2_tf[data_ind[name1] & data_ind[name2]]
                       
             if feat2_tf.size<=1:
                 continue
             
             # sort linear matrix indices
-            SortedFeats = np.sort(feat1_tf + feat2_tf)
+            SortedFeats = np.sort(feat1_tf[data_ind[name1] & data_ind[name2]] + feat2_tf)
+            
             # Do math to get the indices
             ind2 = np.diff(SortedFeats)                       
-            ind2 = np.nonzero(ind2)[0]                       # nonzeros are cumulative sum of all bin values
+            ind2 = np.nonzero(ind2)[0]                              # nonzeros are cumulative sum of all bin values
             ind2 = np.append(ind2,SortedFeats.size-1)
-            rows = (SortedFeats[ind2]/bincount).astype(np.uint8)   # calculate row from linear index
-            cols = np.mod(SortedFeats[ind2],bincount)              # calculate column from linear index
-            counts = np.diff(ind2)                           # calculate the number of values in each bin
+            rows = (SortedFeats[ind2]/bincount).astype(np.uint8)    # calculate row from linear index
+            cols = np.mod(SortedFeats[ind2],bincount)               # calculate column from linear index
+            counts = np.diff(ind2)                                  # calculate the number of values in each bin
+            
             bins[i,rows[0],cols[0]] = ind2[0] + 1 
             bins[i,rows[1:],cols[1:]] = counts 
             graph_index.append([feat1,feat2])
@@ -145,13 +147,13 @@ def bin_data(data, yaxis, typegraph, column_bin_size, bin_stats):
 def transform_data_log(data,column_names):
     """ Bin the data
     
-    Data from a pandas Dataframe is binned in two dimensions in a logarithmic scale. 
-    Binning is performed by binning data in one column along one axis and another column 
-    is binned along theother axis. All combinations of columns are binned without repeats 
-    or transposition. 
+    Data from a pandas Dataframe is binned in two dimensions in a logarithmic
+    scale. Binning is performed by binning data in one column along one axis and
+    another column is binned along theother axis. All combinations of columns
+    are binned without repeats or transposition. 
 
-    To figure out which bin the data belongs in is solved by using the geometric sequence
-    where:
+    To figure out which bin the data belongs in is solved by using the geometric
+    sequence where:
     a(n) = a1*(r^(n-1))
         n = number of bins
         a1 = first number in range (scale factor)
@@ -163,16 +165,18 @@ def transform_data_log(data,column_names):
     1) dfzero2pos: All the numbers in the column are >= 0
     2) dfneg2zero: All the numbers in the column are <= 0
     3) dfneg2pos: The numbers in the column are either >=0 or <= 0 
-                    The number of bins, alpha, and ratio, vary to the left and right of the
-                    the y axis based on the range of the negative numbers and range of 
-                    postive numbers, respectively.
+    
+    The number of bins, alpha, and ratio, vary to the left and right of the 
+    y-axis based on the range of the negative numbers and range of postive
+    numbers, respectively.
             
     Inputs:
         data - A pandas Dataframe, with nfeats number of columns
         column_names - Names of Dataframe columns
     Outputs:
         bins - A numpy matrix that has shape (nfeats,nfeats,bincount,bincount)
-        bin_feats - A list containing the minimum and maximum values of each column
+        bin_feats - A list containing the minimum and maximum values of each
+                    column
         linear_index - Numeric value of column index from original csv
     """
     #Transforms the DataFrame that Range from a Negative Number to a Positive Number
@@ -344,13 +348,11 @@ def transform_data_log(data,column_names):
     positivedf = data.iloc[:, positiverange]
     negativedf = data.iloc[:, negativerange]
     neg2posdf = data.iloc[:, neg2posrange]
-    # zerodf = data.iloc[:, zeroalpha]
 
     # COLLECTING NAMES OF COLUMNS OF THE DIFFERENT DATA FRAMES
     positivenames = positivedf.columns
     negativenames = negativedf.columns
     neg2posnames = neg2posdf.columns
-    # zeronames = zerodf.columns 
     
     # POSITIVE RANGE
     alphaspos, commonratiospos, positivedf = dfzero2pos(positivedf, 
@@ -425,36 +427,38 @@ def transform_data_linear(data,column_names):
 """ 2. Plot Generation """
 def format_ticks(out):
     """ Generate tick labels
-    Polus Plots uses D3 to generate the plots. This function tries to mimic
-    the formatting of tick labels. In place of using scientific notation a 
-    scale prefix is appended to the end of the number. See _prefix comments 
-    to see the suffixes that are used. Numbers that are larger or smaller 
-    than 10**24 or 10**-24 respectively are not handled and may throw an 
-    error. Values outside of this range do not currently have an agreed 
-    upon prefix in the measurement science community.
+    Polus Plots uses D3 to generate the plots. This function tries to mimic the
+    formatting of tick labels. In place of using scientific notation a scale
+    prefix is appended to the end of the number. See _prefix comments to see the
+    suffixes that are used. Numbers that are larger or smaller than 10**24 or
+    10**-24 respectively are not handled and may throw an error. Values outside
+    of this range do not currently have an agreed upon prefix in the measurement
+    science community.
+        
     Inputs:
         out - the values of the ticks used in graph
     Outputs:
         fticks - a list of strings containing formatted tick labels
     """
-    _prefix = {-24: 'y',  # yocto
-               -21: 'z',  # zepto
-               -18: 'a',  # atto
-               -15: 'f',  # femto
-               -12: 'p',  # pico
-                -9: 'n',  # nano
-                -6: 'u',  # micro
-                -3: 'm',  # mili
-                 0: ' ',
-                 3: 'k',  # kilo
-                 6: 'M',  # mega
-                 9: 'G',  # giga
-                12: 'T',  # tera
-                15: 'P',  # peta
-                18: 'E',  # exa
-                21: 'Z',  # zetta
-                24: 'Y',  # yotta
-                }
+    _prefix = {
+        -24: 'y',  # yocto
+        -21: 'z',  # zepto
+        -18: 'a',  # atto
+        -15: 'f',  # femto
+        -12: 'p',  # pico
+         -9: 'n',  # nano
+         -6: 'u',  # micro
+         -3: 'm',  # mili
+          0: ' ',
+          3: 'k',  # kilo
+          6: 'M',  # mega
+          9: 'G',  # giga
+         12: 'T',  # tera
+         15: 'P',  # peta
+         18: 'E',  # exa
+         21: 'Z',  # zetta
+         24: 'Y',  # yotta
+    }
 
     fticks = []
     convertprefix = []
@@ -739,8 +743,8 @@ def _avg2(image):
                                                    image[0:y_max-1:2,1:x_max:2,z] + \
                                                    image[1:y_max:2,1:x_max:2,z]) / 4
         
-    # The next if statements handle edge cases if the height or width of the image has an
-    # odd number of pixels
+    # The next if statements handle edge cases if the height or width of the
+    # image has an odd number of pixels
     if y_max != image.shape[0]:
         for z in range(3):
             avg_img[-1,:int(x_max/2),z] = (image[-1,0:x_max-1:2,z] + \
@@ -799,37 +803,35 @@ def metadata_to_graph_info(bins,outPath,outFile, indexscale):
     
     return info
 
-# The following function builds the image pyramid at scale S by building up only the necessary information
-# at high resolution layers of the pyramid. So, if 0 is the original resolution of the image, getting a tile
-# at scale 2 will generate only the necessary information at layers 0 and 1 to create the desired tile at
-# layer 2. This function is recursive and can be parallelized.
+"""
+The following function builds the image pyramid at scale S by building up only
+the necessary information at high resolution layers of the pyramid. So, if 0 is
+the original resolution of the image, getting a tile at scale 2 will generate
+only the necessary information at layers 0 and 1 to create the desired tile at
+layer 2. This function is recursive and can be parallelized.
+"""
 def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,indexdict,binstats, binsizes, axiszero, alphavals, X=None,Y=None):
     # Get the scale info
     scale_info = None
-    logger.info("S: " + str(S))
-    logger.info(info['scales'])
     for res in info['scales']: 
         if int(res['key'])==S:
             scale_info = res
             break
     if scale_info==None:
-        ValueError("No scale information for resolution {}.".format(S))
+        raise ValueError("No scale information for resolution {}.".format(S))
     if X == None:
         X = [0,scale_info['size'][0]]
     if Y == None:
         Y = [0,scale_info['size'][1]]
-    logger.info(str(X) + str(Y))
+    
     # Modify upper bound to stay within resolution dimensions
     if X[1] > scale_info['size'][0]:
         X[1] = scale_info['size'][0]
     if Y[1] > scale_info['size'][1]:
         Y[1] = scale_info['size'][1]
-    logger.info(str(X) + str(Y))
     
     # Initialize the output
     image = np.zeros((int(Y[1]-Y[0]),int(X[1]-X[0]),4),dtype=np.uint8)
-    logger.info(image.shape)
-    
     
     # If requesting from the lowest scale, then just generate the graph
     if S==int(info['scales'][0]['key']):
@@ -852,56 +854,47 @@ def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,indexd
     else:
         # Set the subgrid dimensions
         subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]]]
-        logger.info("SUBGRID DIMENSIONS: " + str(subgrid_dims))
         
         for dim in subgrid_dims:
             while dim[1]-dim[0] > CHUNK_SIZE:
                 dim.insert(1,dim[0] + ((dim[1] - dim[0]-1)//CHUNK_SIZE) * CHUNK_SIZE)
-        logger.info("SUBGRID DIMENSIONS ADDED: " + str(subgrid_dims))
-        
 
         for y in range(0,len(subgrid_dims[1])-1):
             y_ind = [subgrid_dims[1][y] - subgrid_dims[1][0],subgrid_dims[1][y+1] - subgrid_dims[1][0]]
-            logger.info("Y index: " + str(y_ind))
             y_ind = [np.ceil(yi/2).astype('int') for yi in y_ind]
-            logger.info("Y index: " + str(y_ind))
             for x in range(0,len(subgrid_dims[0])-1):
                 x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
-                logger.info("X index: " + str(x_ind))
                 x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
-                logger.info("X index: " + str(x_ind))
-                logger.info("What X would be: " + str(subgrid_dims[0][x:x+2]))
-                logger.info("What Y would be: " + str(subgrid_dims[0][y:y+2]))
                 if S==(info['scales'][0]['key'] - 5): #to use multiple processors to compute faster.
                     sub_image = _get_higher_res_par(typegraph,
                                                     S+1,
-                                                   info,
-                                                   cnames,
-                                                   outpath,
-                                                   out_file,
-                                                   indexscale,
-                                                   indexdict,
-                                                   binstats,
-                                                   binsizes,
-                                                   axiszero,
-                                                   alphavals,
-                                                   X=subgrid_dims[0][x:x+2],
-                                                   Y=subgrid_dims[1][y:y+2])
+                                                    info,
+                                                    cnames,
+                                                    outpath,
+                                                    out_file,
+                                                    indexscale,
+                                                    indexdict,
+                                                    binstats,
+                                                    binsizes,
+                                                    axiszero,
+                                                    alphavals,
+                                                    X=subgrid_dims[0][x:x+2],
+                                                    Y=subgrid_dims[1][y:y+2])
                 else:
                     sub_image = _get_higher_res(typegraph,
                                                 S+1,
-                                               info,
-                                               cnames,
-                                               outpath,
-                                               out_file,
-                                               indexscale,
-                                               indexdict,
-                                               binstats,
-                                               binsizes,
-                                               axiszero,
-                                               alphavals,
-                                               X=subgrid_dims[0][x:x+2],
-                                               Y=subgrid_dims[1][y:y+2])
+                                                info,
+                                                cnames,
+                                                outpath,
+                                                out_file,
+                                                indexscale,
+                                                indexdict,
+                                                binstats,
+                                                binsizes,
+                                                axiszero,
+                                                alphavals,
+                                                X=subgrid_dims[0][x:x+2],
+                                                Y=subgrid_dims[1][y:y+2])
                 image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],:] = _avg2(sub_image)
                 del sub_image
 
@@ -909,7 +902,7 @@ def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,indexd
     outpath = Path(outpath).joinpath('{}_files'.format(out_file),str(S))
     outpath.mkdir(exist_ok=True)
     imageio.imwrite(outpath.joinpath('{}_{}.png'.format(int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE))),image,format='PNG-FI',compression=1)
-    logger.debug('Finished building tile (scale,X,Y): ({},{},{})'.format(S,int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE)))
+    logger.info('Finished building tile (scale,X,Y): ({},{},{})'.format(S,int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE)))
     return image
 
 # This function performs the same operation as _get_highe_res, except it uses multiprocessing to grab higher
@@ -999,7 +992,7 @@ def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, 
     outpath = Path(outpath).joinpath('{}_files'.format(out_file),str(S))
     outpath.mkdir(exist_ok=True)
     imageio.imwrite(outpath.joinpath('{}_{}.png'.format(int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE))),image,format='PNG-FI',compression=1)
-    logger.debug('Finished building tile (scale,X,Y): ({},{},{})'.format(S,int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE)))
+    logger.info('Finished building tile (scale,X,Y): ({},{},{})'.format(S,int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE)))
     return image
 
 def write_csv(cnames,linear_index,f_info,out_path,out_file):
@@ -1028,26 +1021,17 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser(prog='main', description='Build an image pyramid from data in a csv file.')
 
     """ Define the arguments """
-    parser.add_argument('--inpDir',               # input image collection directory
-                        dest='inpDir',
-                        type=str,
-                        help='Path to input images.',
-                        required=True,
-                        )
+    parser.add_argument('--inpDir', dest='inpDir', type=str,
+                        help='Path to input images.', required=True)
 
-    parser.add_argument('--outDir',
-                        dest='outDir',
-                        type=str,
-                        help='Path to output images.',
-                        required=True
-                        )
+    parser.add_argument('--outDir', dest='outDir', type=str,
+                        help='Path to output images.', required=True)
     
-    parser.add_argument('--bincount',
-                        dest='bin_count',
-                        type=int,
-                        help='Number of bins',
-                        required=True
-                        )
+    parser.add_argument('--bincount', dest='bin_count', type=int,
+                        help='Number of bins', required=True)
+    
+    parser.add_argument('--scale', dest='scale', type=str,
+                        help='Linear, Log, or Both', required=False)
 
     """ Get the input arguments """
     args = parser.parse_args()
@@ -1055,106 +1039,62 @@ if __name__=="__main__":
     input_path = args.inpDir
     output_path = Path(args.outDir)
     bincount = args.bin_count
+    scales = [args.scale.lower()]
+    all_scales = ['linear','log']
+    if scales[0] not in all_scales:
+        scales = all_scales
 
     logger.info('inpDir = {}'.format(input_path))
     logger.info('outDir = {}'.format(output_path))
 
-    linear_logger = logging.getLogger("main.LINEAR")
-    linear_logger.setLevel(logging.INFO)
-
-    log_logger = logging.getLogger("main.LOG")
-    log_logger.setLevel(logging.INFO)
+    # Set up the logger for each scale
+    loggers = {}
+    for scale in scales:
+        loggers[scale] = logging.getLogger("main.{}".format(scale.upper()))
+        loggers[scale].setLevel(logging.INFO)
+        
+    # Set the binning functions
+    bin_fns = {
+        scale:eval('transform_data_{}'.format(scale)) for scale in scales
+    }
 
     # Get the path to each csv file in the collection
     input_files = [str(f.absolute()) for f in Path(input_path).iterdir() if ''.join(f.suffixes)=='.csv']
+    
+    # Generate the default figure components
+    logger.info('Generating colormap and default figure...')
+    cmap_linear = get_cmap()
+    fig, ax, datacolor = get_default_fig(cmap_linear)
+    logger.info('Done!')
 
     for f in input_files:
-
-        global bins
-        folder = Path(f)
-
-        # Set the file path folder
-        folder_linear = folder.name.replace('.csv','_linear')
-        folder_log = folder.name.replace('.csv','_log')
-
-        # Load the data
-        linear_logger.info('Loading LINEAR csv: {}'.format(f))
-        data_linear, cnames = load_csv(f)
-        column_names = data_linear.columns
-        linear_logger.info('Done loading LINEAR csv!')
-
-        # Load the data
-        log_logger.info('Loading LOG csv: {}'.format(f))
-        data_log = data_linear
-        log_logger.info('Done LOG loading csv!')
-
-        # Processes for LINEAR SCALED GRAPHS
-        linear_logger.info('Processing: {}'.format(folder_linear))
-
-        # Bin the data
-        linear_logger.info('Binning data for {} LINEAR features...'.format(column_names.size))
-        # start_linear = time.time()
-        yaxis_linear, bins, bin_stats, linear_index, linear_dict, linear_binsizes, alphavals_linear = transform_data_linear(data_linear,column_names)
-        # end_linear = time.time()
-        # totaltime_linear = end_linear - start_linear
-        del data_linear # get rid of the original data to save memory
-
-        # Generate the default figure components
-        linear_logger.info('Generating colormap and default figure...')
-        cmap_linear = get_cmap()
-        fig, ax, datacolor = get_default_fig(cmap_linear)
-        linear_logger.info('Done!')
-
-        # Generate the dzi file
-        linear_logger.info('Generating pyramid LINEAR metadata...')
-        info_linear = metadata_to_graph_info(bins, output_path,folder_linear, linear_index)
-        linear_logger.info('Done!')
-
-        linear_logger.info('Writing LINEAR layout file...!')
-        write_csv(cnames,linear_index,info_linear,output_path,folder_linear)
-        linear_logger.info('Done!')
-
-        # Create the pyramid
-        linear_logger.info('Building LINEAR pyramids...')
-        image_linear = _get_higher_res("linear", 0, info_linear,column_names, output_path,folder_linear,linear_index, linear_dict, bin_stats, linear_binsizes, yaxis_linear, alphavals_linear)
-
         
-        del image_linear
-        del info_linear
-        del yaxis_linear
-        del bin_stats
-        del linear_index
-        del linear_binsizes
-        del alphavals_linear
-        bins = 0
+        logger.info('Loading csv: {}'.format(f))
+        data, cnames = load_csv(f)
+        column_names = [c[0] for c in cnames]
 
-        # Processes for LOG SCALED GRAPHS
-        log_logger.info('Processing: {}'.format(folder_log))
-        
-        # Bin the data
-        log_logger.info('Binning data for {} LOG features...'.format(column_names.size))
-        start_log = time.time()
-        yaxis_log, bins, log_bin_stats, log_index, log_dict, log_binsizes, alphavals_log = transform_data_log(data_log, column_names)
-        end_log = time.time()
-        totaltime_log = end_log - start_log
-        del data_log # get rid of the original data to save memory
+        for scale in scales:
+            
+            # Set the file path folder
+            folder_name = Path(f).name.replace('.csv','_{}'.format(scale))
+            
+            # Process for current scale
+            loggers[scale].info('Processing: {}'.format(folder_name))
 
-        # Generate the default figure components
-        log_logger.info('Generating colormap and default figure...')
-        cmap_log = get_cmap()
-        fig, ax, datacolor = get_default_fig(cmap_log)
-        log_logger.info('Done!')
+            # Bin the data
+            loggers[scale].info('Binning data for {} {} features...'.format(len(column_names),scale.upper()))
+            yaxis_data, bins, bin_stats, data_index, data_dict, data_binsizes, alphavals_data = bin_fns[scale](data,column_names)
 
-        # Generate the dzi file
-        log_logger.info('Generating pyramid LOG metadata...')
-        info_log = metadata_to_graph_info(bins, output_path,folder_log, log_index)
-        log_logger.info('Done!')
+            # Generate the dzi file
+            loggers[scale].info('Generating pyramid {} metadata...'.format(scale.upper()))
+            info_data = metadata_to_graph_info(bins, output_path,folder_name, data_index)
+            loggers[scale].info('Done!')
 
-        log_logger.info('Writing LOG layout file...!')
-        write_csv(cnames, log_index, info_log, output_path, folder_log)
-        log_logger.info('Done!')
+            loggers[scale].info('Writing {} layout file...!'.format(scale.upper()))
+            write_csv(cnames,data_index,info_data,output_path,folder_name)
+            loggers[scale].info('Done!')
 
-        # Create the pyramid
-        log_logger.info('Building LOG pyramid...')
-        image_log = _get_higher_res("log", 0, info_log, column_names, output_path, folder_log, log_index, log_dict, log_bin_stats, log_binsizes, yaxis_log, alphavals_log)
-
+            # Create the pyramid
+            loggers[scale].info('Building {} pyramids...'.format(scale.upper()))
+            image_data = _get_higher_res(scale, 0, info_data,column_names, output_path,folder_name,data_index, data_dict, bin_stats, data_binsizes, yaxis_data, alphavals_data)
+            loggers[scale].info('Done!')
