@@ -207,7 +207,7 @@ for (dataset in datalist) {
         tidy_glm= tidy(tidy_check)
         
         for (ls in data_list) {
-          test_glm1 <- multinom(formula(paste(predictcolumn,paste(ls,1,sep="-"),sep="~")), data = data_final,maxit=1000,MaxNWts = 10000, trace= TRUE)
+          test_glm1 <- multinom(formula(paste(predictcolumn,paste(ls,1,sep="-"),sep="~")), data = data_final,maxit=1000,MaxNWts = 10000, trace= FALSE)
           tidy_df <- tidy(test_glm1)
           tidy_combine <- rbind(tidy_glm, tidy_df)
           test_glm<- tidy_combine
@@ -223,7 +223,7 @@ for (dataset in datalist) {
         test_glm <- bigglm(formula(paste(predictcolumn,paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")), data = chunk_data, family = poisson(), chunksize=chunk)
       }
       else if (modeltype == 'multinomial') {
-        test_glm <- multinom(formula(paste(predictcolumn,paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")), data = datasub)
+        test_glm <- multinom(formula(paste(predictcolumn,paste('poly(',resp_var,',2)',collapse = ' + '),sep="~")), data = data_final)
       }
     }
     
