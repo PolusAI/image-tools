@@ -1037,7 +1037,7 @@ if __name__=="__main__":
     input_path = args.inpDir
     output_path = Path(args.outDir)
     bincount = args.bin_count
-    scales = [args.scale]
+    scales = [args.scale.lower()]
     all_scales = ['linear','log']
     if scales[0] not in all_scales:
         scales = all_scales
