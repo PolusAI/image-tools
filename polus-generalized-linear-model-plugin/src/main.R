@@ -77,6 +77,7 @@ loginfo('modeltype = %s', modeltype)
 csvfile <- args$outdir
 loginfo('csvfile = %s', csvfile)
 
+
 #Get list of .csv files in the directory including sub folders for modeling
 files_to_read = list.files(
   path = inpfile,        
@@ -114,14 +115,23 @@ for (dataset in datalist) {
       next
     }
     
+    #Scaling the data
+    datasub1<- datasub[1:(length(datasub)-1)]
+    datasub_scale <- scale(datasub1, center = TRUE, scale = TRUE)
+    datasub$Cluster <- as.factor(datasub$Cluster)
+    Cluster <- datasub$Cluster
+    data_final <- cbind((as.data.frame(datasub_scale)),Cluster)
+    
     #Get column names without predict variable
-    drop_dep <- datasub[ , !(names(datasub) %in% predictcolumn)]
+    drop_dep <- data_final[ , !(names(data_final) %in% predictcolumn)]
     resp_var <- colnames(drop_dep)
+    
     
     if((modeltype == 'Gaussian') || (modeltype == 'Poisson') || (modeltype == 'Binomial') || (modeltype == 'Multinomial') || (modeltype == 'Quasibinomial') || (modeltype == 'Quasipoisson') || (modeltype == 'Quasi')) {
       modeltype <- tolower(modeltype)
     }
     
+    memory.limit(size= 40000)
     #Number of cores
     num_of_cores = detectCores()
     loginfo('Cores = %s', num_of_cores)
@@ -147,7 +157,7 @@ for (dataset in datalist) {
     }
     
     #Convert to ffdf object
-    datasub_ff = as.ffdf(datasub)
+    datasub_ff = as.ffdf(data_final)
     
     #Chunk data
     chunk_data <-make.data(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), datasub_ff, chunksize=chunk)
@@ -163,12 +173,12 @@ for (dataset in datalist) {
         test_glm <- bigglm(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), data = chunk_data, family = poisson(),chunksize=chunk)
       }
       else if (modeltype == 'multinomial') {
-        test_glm <- multinom(formula(paste(paste("as.factor(",predictcolumn,")"),paste(resp_var,collapse= "+"),sep="~")), data = datasub)
-        }
+        test_glm <- multinom(formula(paste(paste("as.factor(",predictcolumn,")"),paste(resp_var,collapse= "+"),sep="~")), data = data_final)
+      }
     }
     #Get interaction values
     else if (glmmethod == 'Interaction') {
-      datasub_pred <- datasub[ , !(names(datasub) %in% predictcolumn)]
+      datasub_pred <- data_final[ , !(names(data_final) %in% predictcolumn)]
       #Get correlation between variables
       tmp <- cor(datasub_pred)
       tmp[upper.tri(tmp)] <- 0
@@ -177,7 +187,7 @@ for (dataset in datalist) {
       #Remove variables with no interaction
       data_no_int <- which(tmp >= 0.1 | tmp < -0.1, arr.ind = TRUE)
       data_frame<-data.frame(row = rownames(data_no_int), col = colnames(tmp)[data_no_int[, "col"]],
-                      value = tmp[tmp >= 0.1 | tmp < -0.1])
+                             value = tmp[tmp >= 0.1 | tmp < -0.1])
       colnames(data_frame)<- c("variable1","variable2","coef")
       
       #Interaction variables
@@ -185,13 +195,23 @@ for (dataset in datalist) {
       data_list <- as.character(data_frame$variableint)
       
       if((modeltype == 'gaussian') || (modeltype == 'Gamma') || (modeltype == 'binomial') ||  (modeltype == 'quasibinomial') || (modeltype == 'poisson') || (modeltype == 'quasipoisson') || (modeltype == 'quasi')) {
-         test_glm <- bigglm(formula(paste(predictcolumn,paste(data_list,collapse= "+"),sep="~")), data = chunk_data, family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize = chunk)
+        test_glm <- bigglm(formula(paste(predictcolumn,paste(data_list,collapse= "+"),sep="~")), data = chunk_data, family = eval(parse(text=paste(modeltype,"()", sep = ""))), chunksize = chunk)
       }
       else if (modeltype == 'NegativeBinomial') {
-        test_glm <- bigglm(formula(paste(predictcolumn,paste(data_list,collapse= "+"),sep="~")), data = chunk_data, family = poisson(), chunksize = chunk)
+        test_glm <- bigglm(formula(paste(predictcolumn,paste(data_list,collapse= "+"),sep="~")), data = chunk_data, family = poisson(link='log'), chunksize = chunk)
       }
       else if (modeltype == 'multinomial') {
-        test_glm <- multinom(formula(paste(predictcolumn,paste(data_list,collapse= "+"),sep="~")), data = datasub, MaxNWts = 100000)
+        rm(datasub, datasub1,datasub_scale,datasub_ff,drop_dep, dataset)
+        gc()
+        tidy_check = NULL
+        tidy_glm= tidy(tidy_check)
+        
+        for (ls in data_list) {
+          test_glm1 <- multinom(formula(paste(predictcolumn,paste(ls,1,sep="-"),sep="~")), data = data_final,maxit=1000,MaxNWts = 10000, trace= TRUE)
+          tidy_df <- tidy(test_glm1)
+          tidy_combine <- rbind(tidy_glm, tidy_df)
+          test_glm<- tidy_combine
+        }
       }
     }
     #Get second order polynomial values
@@ -215,8 +235,10 @@ for (dataset in datalist) {
     tidy_summary <- tidy(test_glm)
     
     #Reorder the columns
-    tidy_final <- tidy_summary[c("term", "p.value", "estimate","std.error")]
-    colnames(tidy_final) <- c("Factors","P-Value","Estimate","Std.Error")
+    tidy_final <- tidy_summary[c("y.level","term", "p.value", "estimate","std.error")]
+    colnames(tidy_final) <- c("Level","Factors","P-Value","Estimate","Std.Error")
+    tidy_final <- tidy_final[order(tidy_final$Level),]
+    tidy_final<- tidy_final[grep(':',tidy_final$Factors), ]
     
     #Write the dataframe to csv file
     write.csv(tidy_final, file_save)
