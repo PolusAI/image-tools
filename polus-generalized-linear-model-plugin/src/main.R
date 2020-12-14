@@ -86,6 +86,16 @@ files_to_read = list.files(
   full.names = TRUE
 )
 
+#Check whether there are csv files in the directory
+if(length(files_to_read) == 0) {
+  tryCatch(
+    error = function(e) { 
+      message('No .csv files in the directory')
+    }
+  )
+}
+
+
 #Read the csv files
 datalist = lapply(files_to_read,read.csv)
 
@@ -93,7 +103,7 @@ for (dataset in datalist) {
   for (file_csv in files_to_read) {
     #Get filename
     file_name <- SplitPath(file_csv)$filename
-    
+
     #Check whether any column needs to be excluded
     if(length(excludes) > 0) {
       for (i in 1:length(excludes)) {
@@ -155,13 +165,13 @@ for (dataset in datalist) {
         data[start:cursor,]
       }
     }
-    
+
     #Convert to ffdf object
     datasub_ff = as.ffdf(data_final)
     
     #Chunk data
     chunk_data <-make.data(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), datasub_ff, chunksize=chunk)
-    
+
     #Model data based on the options selected
     #Get only main effects of the variables
     if (glmmethod == 'PrimaryFactors') {
@@ -204,13 +214,13 @@ for (dataset in datalist) {
         rm(datasub, datasub1,datasub_scale,datasub_ff,drop_dep, dataset)
         gc()
         tidy_check = NULL
-        tidy_glm= tidy(tidy_check)
-        
+        tidy_summary= tidy(tidy_check)
+
         for (ls in data_list) {
           test_glm1 <- multinom(formula(paste(predictcolumn,paste(ls,1,sep="-"),sep="~")), data = data_final,maxit=1000,MaxNWts = 10000, trace= FALSE)
           tidy_df <- tidy(test_glm1)
-          tidy_combine <- rbind(tidy_glm, tidy_df)
-          test_glm<- tidy_combine
+          tidy_combine <- rbind(tidy_summary, tidy_df)
+          tidy_summary <- tidy_combine
         }
       }
     }
@@ -230,16 +240,20 @@ for (dataset in datalist) {
     #Set output directory
     setwd(csvfile)
     file_save <- paste0(file_name,".csv")
-    
+
     #Convert summary of the analysis to a dataframe
+    if ((glmmethod != 'Interaction') && (modeltype == 'multinomial')) {
+
     tidy_summary <- tidy(test_glm)
+    }
     
     #Reorder the columns
     tidy_final <- tidy_summary[c("y.level","term", "p.value", "estimate","std.error")]
     colnames(tidy_final) <- c("Level","Factors","P-Value","Estimate","Std.Error")
     tidy_final <- tidy_final[order(tidy_final$Level),]
+    if (glmmethod == 'Interaction'){
     tidy_final<- tidy_final[grep(':',tidy_final$Factors), ]
-    
+    }
     #Write the dataframe to csv file
     write.csv(tidy_final, file_save)
   }
