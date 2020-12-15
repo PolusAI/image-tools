@@ -183,8 +183,15 @@ for (dataset in datalist) {
         test_glm <- bigglm(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), data = chunk_data, family = poisson(),chunksize=chunk)
       }
       else if (modeltype == 'multinomial') {
-        test_glm <- multinom(formula(paste(paste("as.factor(",predictcolumn,")"),paste(resp_var,collapse= "+"),sep="~")), data = data_final)
-      }
+	tidy_check = NULL
+        tidy_summary= tidy(tidy_check)
+	for (vb in resp_var) {
+          test_glm1 <- multinom(formula(paste(predictcolumn,paste(vb,1,sep="-"),sep="~")), data = data_final,maxit=10,trace= FALSE)
+          tidy_df <- tidy(test_glm1)
+          tidy_combine <- rbind(tidy_summary, tidy_df)
+          tidy_summary <- tidy_combine
+        }
+     }	
     }
     #Get interaction values
     else if (glmmethod == 'Interaction') {
@@ -242,9 +249,8 @@ for (dataset in datalist) {
     file_save <- paste0(file_name,".csv")
 
     #Convert summary of the analysis to a dataframe
-    if ((glmmethod != 'Interaction') && (modeltype == 'multinomial')) {
-
-    tidy_summary <- tidy(test_glm)
+    if (modeltype != 'multinomial') {
+    	tidy_summary <- tidy(test_glm)
     }
     
     #Reorder the columns
