@@ -1,6 +1,6 @@
 {
     "name": "Polus Precompute Volume Plugin",
-    "version": "0.1.24",
+    "version": "0.2.0",
     "title": "WIPP Widget",
     "description": "Everything you need to start a WIPP plugin.",
     "author": "Data Scientist (data.scientist@labshare.org)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "mmvihani/polus-precompute-volume-plugin:0.1.24",
+    "containerId": "labshare/polus-precompute-volume-plugin:0.2.0",
     "inputs": [
       {
         "name": "imagepattern",
@@ -22,18 +22,6 @@
         "description": "Input collection",
         "type": "collection",
         "options": null,
-        "required": true
-      },
-      {
-        "name": "pyramidType",
-        "description": "Build a DeepZoom or Neuroglancer pyramid",
-        "type": "enum",
-        "options": {
-          "values": [
-            "Neuroglancer",
-            "DeepZoom"
-          ]
-        },
         "required": true
       },
       {
@@ -63,11 +51,6 @@
         "key": "inputs.inpDir",
         "title": "Input collection: ",
         "description": "Collection name..."
-      },
-      {
-        "key": "inputs.pyramidType",
-        "title": "Pyramid Type: ",
-        "description": "Build a DeepZoom or Neuroglancer pyramid?"
       },
       {
         "key": "inputs.imageType",

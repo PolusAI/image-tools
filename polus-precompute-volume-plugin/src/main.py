@@ -20,8 +20,6 @@ def main():
                         help='Path to folder with CZI files', required=True)
     parser.add_argument('--outDir', dest='output_dir', type=str,
                         help='The output directory for ome.tif files', required=True)
-    parser.add_argument('--pyramidType', dest='pyramid_type', type=str,
-                        help='Build a DeepZoom or Neuroglancer pyramid', required=True)
     parser.add_argument('--imagepattern', dest='image_pattern', type=str,
                         help='Filepattern of the images in input', required=True)
     parser.add_argument('--imageType', dest='image_type', type=str,
@@ -31,7 +29,6 @@ def main():
     args = parser.parse_args()
     input_dir = args.input_dir
     output_dir = args.output_dir
-    pyramid_type = args.pyramid_type
     imagepattern = args.image_pattern
     imagetype = args.image_type
 
@@ -50,7 +47,6 @@ def main():
 
     logger.info('input_dir = {}'.format(input_dir))
     logger.info('output_dir = {}'.format(output_dir))
-    logger.info('pyramid_type = {}'.format(pyramid_type))
     logger.info('image pattern = {}'.format(imagepattern))
     logger.info('images are stacked by variable(s) {}'.format(stack_by))
     
@@ -71,10 +67,6 @@ def main():
     stack_count = 1
     im_count = 1
     for image in images:
-        # val_instack = vals_instack[stack_count-1]
-        # val_ofstack = vals_stackby[stack_count-1]
-        # heightofstack = organizedheights[stack_count-1]
-        # newoutput = Path(output_dir + directoryfiles[stack_count - 1])
         if len(processes) >= multiprocessing.cpu_count()-1 and len(processes)>0:
             free_process = -1
             while free_process<0:
@@ -89,9 +81,8 @@ def main():
             del processes[free_process]
             del process_timer[free_process]
             
-        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --pyramidType '{}' --imageNum '{}' --stackby '{}' --imagepattern '{}' --image '{}' --imagetype {}".format(input_dir,
+        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --imageNum '{}' --stackby '{}' --imagepattern '{}' --image '{}' --imagetype {}".format(input_dir,
                                                                                                                                             output_dir,
-                                                                                                                                            pyramid_type,
                                                                                                                                             im_count,
                                                                                                                                             stack_by,
                                                                                                                                             imagepattern,
