@@ -11,6 +11,7 @@ package-lock.json
 # Mac
 .DS_Store
 
+<<<<<<< HEAD
 # python/editor specific files to ignore
 dist/
 build/
@@ -20,3 +21,7 @@ build/
 *.egg-info
 *.conf
 __pycache__
+=======
+# Python
+__pycache__
+>>>>>>> Updated gitignore.
