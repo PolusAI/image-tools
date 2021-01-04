@@ -1,22 +1,26 @@
 {
-    "author": "Benjamin Houghton",
-    "email": "benjamin.houghton@axleinfo.com",
-    "github_username": "bthoughton",
-    "version": "0.2.0",
-    "project_name": "ImageJ deconvolve richardsonLucyCorrection",
-    "project_short_description": "RichardsonLucyCorrection",
+    "author": "Anjali Taneja",
+    "email": "Anjali.Taneja@axleinfo.com",
+    "github_username": "at1112",
+    "version": "0.1.1",
+    "bfio_version": "2.0.0a4",
+    "bfio_container": "imagej",
+    "project_name": "ImageJ filter correlate",
+    "project_short_description": "PadAndCorrelateFFT,CorrelateFFTC",
     "plugin_namespace": {
-        "RichardsonLucyCorrection": "out = ij.op().deconvolve().richardsonLucyCorrection(in1,in2,fftBuffer,fftKernel)"
+        "PadAndCorrelateFFT": "out = ij.op().filter().correlate(in1,in2)",
+        "CorrelateFFTC": "out = ij.op().filter().correlate(in1,in2)"
     },
     "_inputs": {
         "opName": {
             "title": "Operation",
             "type": "enum",
             "options": [
-                "RichardsonLucyCorrection"
+                "PadAndCorrelateFFT",
+                "CorrelateFFTC"
             ],
-            "description": "Operation to peform",
-            "required": "False"
+            "description": "Operation to perform",
+            "required": false
         },
         "in1": {
             "type": "collection",
@@ -24,10 +28,8 @@
             "description": "in1",
             "required": false,
             "call_types": {
-                "RichardsonLucyCorrection": "RandomAccessibleInterval"
-            },
-            "wipp_type": {
-                "RichardsonLucyCorrection": "collection"
+                "PadAndCorrelateFFT": "RandomAccessibleInterval",
+                "CorrelateFFTC": "RandomAccessibleInterval"
             }
         },
         "in2": {
@@ -36,34 +38,8 @@
             "description": "in2",
             "required": false,
             "call_types": {
-                "RichardsonLucyCorrection": "RandomAccessibleInterval"
-            },
-            "wipp_type": {
-                "RichardsonLucyCorrection": "collection"
-            }
-        },
-        "fftBuffer": {
-            "type": "collection",
-            "title": "fftBuffer",
-            "description": "fftBuffer",
-            "required": false,
-            "call_types": {
-                "RichardsonLucyCorrection": "RandomAccessibleInterval"
-            },
-            "wipp_type": {
-                "RichardsonLucyCorrection": "collection"
-            }
-        },
-        "fftKernel": {
-            "type": "collection",
-            "title": "fftKernel",
-            "description": "fftKernel",
-            "required": false,
-            "call_types": {
-                "RichardsonLucyCorrection": "RandomAccessibleInterval"
-            },
-            "wipp_type": {
-                "RichardsonLucyCorrection": "collection"
+                "PadAndCorrelateFFT": "RandomAccessibleInterval",
+                "CorrelateFFTC": "RandomAccessibleInterval"
             }
         }
     },
@@ -73,7 +49,8 @@
             "title": "out",
             "description": "out",
             "call_types": {
-                "RichardsonLucyCorrection": "RandomAccessibleInterval"
+                "PadAndCorrelateFFT": "RandomAccessibleInterval",
+                "CorrelateFFTC": "RandomAccessibleInterval"
             }
         }
     },

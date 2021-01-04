@@ -8,67 +8,40 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/{{ cookiecutter.docker_repo }}:{{ cookiecutter.version }}",
-  "inputs": [{% for inp,val in cookiecutter._inputs.items() if inp != 'out_input' %}
+  "containerId": "labshare/{{ cookiecutter.project_slug }}:{{ cookiecutter.version }}",
+  "inputs": [{% for inp,val in cookiecutter._inputs.items() %}
+    {% if val.type=='enum' %}
     {
-      "name": "{{ val.title }}",
+      "name": "{{ inp }}",
       "type": "{{ val.type }}",
-    {%- if val.type=='enum' %}
-      "options": {
-        "values": [{% for v in val.options %}"{{v}}"{% if not loop.last %},
-                    {% endif %}{% endfor %}]
-      },
-    {%- endif %}
+      "options": [{% for v in val.options %}"{{v}}"{% if not loop.last %},
+                  {% endif %}{% endfor %}],
       "description": "{{ val.description }}",
-      "required": {{ val.required.lower() }}{%- if val.type=='array' %},
-      "options":{
-        "items": {
-          "type": "string",
-          "title": "{{ val.description }}",
-          "widget": "string"
-        }
-      }
-      {%- endif %}
-    }{% if not loop.last %},{% endif %}{% endfor %}{%- if cookiecutter.scalability == 'fft-filter' %},
-    {
-      "name": "pattern",
-      "type": "string",
-      "description": "The input collection file pattern",
-      "required": true
-    },
-    {
-      "name": "padding",
-      "type": "number",
-      "description": "The inter-tile padding size",
-      "required": false
-    }
-    {%- endif %}
+      "required": "{{ val.required.lower() }}"
+    }{% if not loop.last %},{% endif %}{% else %}{
+      "name": "{{ inp }}",
+      "type": "{{ val.type }}",
+      "description": "{{ val.description }}",
+      "required": {{ val.required.lower() }}
+    }{% if not loop.last %},{% endif %}{% endif %}{% endfor %}
   ],
   "outputs": [{% for out,val in cookiecutter._outputs.items() %}
     {
-      "name": "{{ val.title }}",
+      "name": "{{ out }}",
       "type": "{{ val.type }}",
       "description": "{{ val.description }}"
     }{% if not loop.last %},{% endif %}{% endfor %}
   ],
-  "ui": [{% for inp,val in cookiecutter._inputs.items() if inp != 'out_input' %}
+  "ui": [{% for inp,val in cookiecutter._inputs.items() %}
     {
-      "key": "inputs.{{ val.title }}",
+      "key": "inputs.{{ inp }}",
       "title": "{{ val.title }}",
-      "description": "{{ val.description }}"{%- if inp!='opName' %},
-      "condition": "{% for v in val.call_types %}model.inputs.opName=={{v}}{% if not loop.last %} or {% endif %}{% endfor %}"
-    {%- endif %}
-    }{% if not loop.last %},{% endif %}{% endfor %}{%- if cookiecutter.scalability == 'fft-filter' %},
-    {
-      "key": "inputs.pattern",
-      "title": "pattern",
-      "description": "The input collection file pattern"
-    }
-    {
-      "key": "inputs.padding",
-      "title": "pattern",
-      "description": "The inter-tile padding size"
-    }
-    {%- endif %}
+      "description": "{{ val.description }}",
+      {% if val.type=='enum' %}
+      {
+        "condition": cookiecutter._inputs.{{ inp }}==[{% for v in val.options %}"{{v}}"{% if not loop.last %},
+          {% endif %}{% endfor %}]
+      }
+    }{% if not loop.last %},{% endif %}{% endfor %}
   ]
 }

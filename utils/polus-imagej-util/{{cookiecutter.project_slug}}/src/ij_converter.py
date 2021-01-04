@@ -1,12 +1,18 @@
 """
 A conversion utility built to convert abstract to primitive
-"""
+This works for Threshold Apply and Gaussian Filter functions
+Note change from jnius to jpype for handling conversions in ij_converter.py
+
+'''
 
 import logging
 import imglyb
 import jpype
 import scyjava
 import numpy as np
+
+##connect type map from populate.py 
+from populate.py import IMAGEJ_WIPP_TYPE
 
 # Initialize the logger
 logging.basicConfig(
@@ -16,24 +22,20 @@ logging.basicConfig(
 logger = logging.getLogger("ij_converter")
 logger.setLevel(logging.INFO)
 
-# Define the various data types to convert
-ABSTRACT_ITERABLES = [
-    "IterableInterval",
-    "Iterable",
-]
+ij = None
 
-IMG_ARRAYS = [
-    "ArrayImg"
+## fill in types to convert
+ABSTRACT_ITERABLES = [
+    'IterableInterval',
+    'Iterable'
 ]
 
 ABSTRACT_SCALARS = [
-    "RealType",
+    'RealType'
 ]
 
-FLOAT_PRIMITIVES = [
-    "double",
-    "float",
-    "long"
+SCALARS = [
+    'double'
 ]
 
 INT_PRIMITIVES = [
@@ -90,107 +92,24 @@ def _java_setup():
         "double[]": jpype.JDouble[:],
         "float[]": jpype.JFloat[:]
     }
-    PRIMITIVE_INT_ARRAYS = {
-        "int[]": jpype.JInt[:],
-        "short[]": jpype.JShort[:],
-        "long[]": jpype.JLong[:]
-    }
-    PRIMITIVE_CHAR_ARRAYS = {
-        "char[]": jpype.JChar[:],
-    }
-    PRIMITIVE_BYTE_ARRAYS = {
-        "byte[]": jpype.JByte[:],
-    }
-    PRIMITIVE_BOOL_ARRAYS = {
-        "boolean[]": jpype.JBoolean[:],
-    }
-
 scyjava.when_jvm_starts(_java_setup)
 
 # Define empty dictionary to store the data type conversion functions
 JAVA_CONVERT = {}
+JAVA_CONVERT.update({
+    t:lambda s,t,st: IMGLYB_PRIMITIVES[str(st)](st.type(s)) for t in ABSTRACT_SCALARS
+})
+JAVA_CONVERT.update({
+    t:lambda s,t,st: PRIMITIVES[t](float(s)) for t in SCALARS
+})
+JAVA_CONVERT.update({
+    t:lambda s,t,st: PRIMITIVE_ARRAYS[t]([float(si) for si in s.split(',')]) for t in ARRAYS
+})
+JAVA_CONVERT.update({
+    t:lambda s: imglyb.util.Views.iterable(ij.py.to_java(s)) for t in ABSTRACT_ITERABLES
+})
 
-# Update the dictionary with conversion functions
-JAVA_CONVERT.update(
-    {
-        t: lambda s, t, st: IMGLYB_PRIMITIVES[str(st)](st.type(s))
-        for t in ABSTRACT_SCALARS
-    }
-)
-# Older method for converting primitive scalars with imglyb as opposed to jpype
-# JAVA_CONVERT.update({
-#     t: lambda s,t,st: IMGLYB_PRIMITIVES[str(st)](s) for t in SCALARS
-# })
-JAVA_CONVERT.update(
-    {
-        t: lambda s, t, st: PRIMITIVES[t](float(s)) for t in FLOAT_PRIMITIVES
-        }
-)
-JAVA_CONVERT.update(
-    {
-        t: lambda s, t, st: PRIMITIVES[t](int(s)) for t in INT_PRIMITIVES
-        }
-)
-JAVA_CONVERT.update(
-    {
-        t: lambda s, t, st: PRIMITIVES[t](s) for t in CHAR_PRIMITIVES
-        }
-)
-JAVA_CONVERT.update(
-    {
-        t: lambda s, t, st: PRIMITIVES[t](np.int8(s)) for t in BYTE_PRIMITIVES
-        }
-)
-JAVA_CONVERT.update(
-    {
-        t: lambda s, t, st: PRIMITIVES[t](bool(s)) for t in BOOL_PRIMITIVES
-        }
-)
-JAVA_CONVERT.update(
-    {
-        t: lambda s, t, st: PRIMITIVE_FLOAT_ARRAYS[t]([float(si) for si in s.split(",")])
-        for t in FLOAT_ARRAYS
-    }
-)
-JAVA_CONVERT.update(
-    {
-        t: lambda s, t, st: PRIMITIVE_INT_ARRAYS[t]([int(si) for si in s.split(",")])
-        for t in INT_ARRAYS
-    }
-)
-JAVA_CONVERT.update(
-    {
-        t: lambda s, t, st: PRIMITIVE_CHAR_ARRAYS[t]([si for si in s.split(",")])
-        for t in CHAR_ARRAYS
-    }
-)
-# TODO: Test funciton(s) with imagej op that requires byte array
-JAVA_CONVERT.update(
-    {
-        t: lambda s, t, st: PRIMITIVE_BYTE_ARRAYS[t]([np.int8(si) for si in s.split(",")])
-        for t in BYTE_ARRAYS
-    }
-)
-JAVA_CONVERT.update(
-    {
-        t: lambda s, t, st: PRIMITIVE_BOOL_ARRAYS[t]([bool(si) for si in s.split(",")])
-        for t in BOOL_ARRAYS
-    }
-)
-JAVA_CONVERT.update(
-    {
-        t: lambda s, ij: imglyb.util.Views.iterable(ij.py.to_java(s))
-        for t in ABSTRACT_ITERABLES
-    }
-)
-JAVA_CONVERT.update(
-    {
-        t: lambda s, ij: imglyb.util._to_imglib(s) 
-        for t in IMG_ARRAYS
-        }
-)
-
-def to_java(ij, np_array, imagej_type, java_dtype=None):
+def to_java(np_array,java_type,java_dtype=None):
 
     if ij == None:
         raise ValueError("No imagej instance found.")
@@ -202,11 +121,11 @@ def to_java(ij, np_array, imagej_type, java_dtype=None):
     # if java_type == "null":
     #     return jpype.JObject(None, type)
 
-    if imagej_type in JAVA_CONVERT.keys():
-        if str(java_dtype) != "None":
-            out_array = JAVA_CONVERT[imagej_type](np_array, imagej_type, java_dtype)
+    if java_type in JAVA_CONVERT.keys():
+        if java_dtype != None:
+            out_array = JAVA_CONVERT[java_type](np_array,java_type,java_dtype)
         else:
-            out_array = JAVA_CONVERT[imagej_type](np_array, ij)
+            out_array = JAVA_CONVERT[java_type](np_array)
     else:
         logger.warning(
             "Did not recognize type, {}, will pass default.".format(imagej_type)
@@ -216,8 +135,7 @@ def to_java(ij, np_array, imagej_type, java_dtype=None):
 
     return out_array
 
-
-def from_java(ij, java_array, java_type):
+def from_java(java_array,java_type):
 
     if ij == None:
         raise ValueError("No imagej instance found.")
@@ -225,4 +143,4 @@ def from_java(ij, java_array, java_type):
     if ij.py.dtype(java_array) == bool:
         java_array = ij.op().convert().uint8(java_array)
 
-    return ij.py.from_java(java_array)
+    return ij.py.from_java(java_array) 
