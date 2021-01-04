@@ -1,14 +1,3 @@
-install.packages('argparse',repos='http://cran.us.r-project.org')
-install.packages('MASS',repos='http://cran.us.r-project.org')
-install.packages('DescTools',repos='http://cran.us.r-project.org')
-install.packages('logging',repos='http://cran.us.r-project.org')
-install.packages('tidymodels',repos='http://cran.us.r-project.org')
-install.packages('biglm',repos='http://cran.us.r-project.org')
-install.packages('ffbase',repos='http://cran.us.r-project.org')
-install.packages('corrplot',repos='http://cran.us.r-project.org')
-install.packages('nnet',repos='http://cran.us.r-project.org')
-
-
 suppressWarnings(library("argparse"))
 suppressWarnings(library("DescTools"))
 suppressWarnings(library("logging"))
@@ -212,7 +201,7 @@ for (dataset in datalist) {
         test_glm<- model_data(resp_var,chunk_data)
       }
       else if (modeltype == 'Multinomial') {
-         test_glm<- model_data(resp_var,datasub)
+         test_glm<- model_data(resp_var,datasub_ff)
       }
     }
     #Get interaction values
@@ -236,7 +225,7 @@ for (dataset in datalist) {
         test_glm<- model_data(data_list,chunk_data)
       }
       else if (modeltype == 'Multinomial') {
-        test_glm<- model_data(data_list, datasub)
+        test_glm<- model_data(data_list, datasub_ff)
       }
     }
     #Get second order polynomial values
@@ -246,7 +235,7 @@ for (dataset in datalist) {
         test_glm<- model_data(var_resp,chunk_data)
       }
       else if (modeltype == 'Multinomial') {
-        test_glm<- model_data(var_resp,datasub)
+        test_glm<- model_data(var_resp,datasub_ff)
       }
     }
     

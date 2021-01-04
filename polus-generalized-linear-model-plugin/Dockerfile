@@ -1,4 +1,4 @@
-FROM r-base:latest
+FROM r-base:4.0.3
 
 	
 ARG EXEC_DIR="/opt/executables"
