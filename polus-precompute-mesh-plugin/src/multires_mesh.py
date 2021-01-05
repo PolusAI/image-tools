@@ -6,17 +6,61 @@ from functools import cmp_to_key
 
 
 class Quantize():
+    """
+    A class used to quantize mesh vertex positions for Neuroglancer precomputed
+    meshes to a specified number of bits.
+    
+    Based on the C++ code provided here: https://github.com/google/neuroglancer/issues/266#issuecomment-739601142
+
+    Attributes
+    ----------
+    upper_bound : int 
+        The largest integer used to represent a vertex position.
+    scale : np.ndarray
+        Array containing the scaling factors for each dimension. 
+    offset : np.ndarray
+        Array containing the offset values for each dimension. 
+    """
+
     def __init__(self, fragment_origin, fragment_shape, input_origin, quantization_bits):
+        """
+        Parameters
+        ----------
+        fragment_origin : np.ndarray
+            Minimum input vertex position to represent.
+        fragment_shape : np.ndarray
+            The inclusive maximum vertex position to represent is `fragment_origin + fragment_shape`.
+        input_origin : np.ndarray
+            The offset to add to input vertices before quantizing them.
+        quantization_bits : int
+            The number of bits to use for quantization.
+        """
         self.upper_bound = np.iinfo(np.uint32).max >> (np.dtype(np.uint32).itemsize*8 - quantization_bits)
         self.scale = self.upper_bound / fragment_shape
         self.offset = input_origin - fragment_origin + 0.5/self.scale
     
-    def __call__(self, v_pos):
-        output = np.minimum(self.upper_bound, np.maximum(0, self.scale*(v_pos + self.offset))).astype(np.uint32)
+    def __call__(self, vertices):
+        """ Quantizes an Nx3 numpy array of vertex positions.
+        
+        Parameters
+        ----------
+        vertices : np.ndarray
+            Nx3 numpy array of vertex positions.
+        
+        Returns
+        -------
+        np.ndarray
+            Quantized vertex positions.
+        """
+        output = np.minimum(self.upper_bound, np.maximum(0, self.scale*(vertices + self.offset))).astype(np.uint32)
         return output
 
 
 def cmp_zorder(lhs, rhs):
+    """Compare z-ordering
+    
+    Code taken from https://en.wikipedia.org/wiki/Z-order_curve
+    """
     def less_msb(x: int, y: int):
         return x < y and x < (x ^ y)
 
@@ -34,6 +78,30 @@ def cmp_zorder(lhs, rhs):
 
 
 def generate_mesh_decomposition(mesh, nodes_per_dim, quantization_bits):
+    """Decomposes and quantizes a mesh according to the desired number of nodes and bits.
+    
+    A mesh is decomposed into a set of submeshes by partitioning the bounding box into
+    nodes_per_dim**3 equal subvolumes . The positions of the vertices within 
+    each subvolume are quantized according to the number of bits specified. The nodes 
+    and corresponding submeshes are sorted along a z-curve.
+    
+    Parameters
+    ----------
+    mesh : trimesh.base.Trimesh 
+        A Trimesh mesh object to decompose.
+    nodes_per_dim : int
+        Number of nodes along each dimension.
+    quantization_bits : int
+        Number of bits for quantization. Should be 10 or 16.
+    
+    Returns
+    -------
+    nodes : list
+        List of z-curve sorted node coordinates corresponding to each subvolume. 
+    submeshes : list
+        List of z-curve sorted meshes.
+    """
+
     # Scale our mesh coordinates.
     scale = nodes_per_dim/(mesh.vertices.max(axis=0) - mesh.vertices.min(axis=0))
     verts_scaled = scale*(mesh.vertices - mesh.vertices.min(axis=0))
@@ -58,7 +126,7 @@ def generate_mesh_decomposition(mesh, nodes_per_dim, quantization_bits):
                 mesh_z = trimesh.intersections.slice_mesh_plane(mesh_z, plane_normal=-nxy, plane_origin=nxy*(z+1))
                 
                 # Initialize Quantizer.
-                quantize = Quantize(
+                quantizer = Quantize(
                     fragment_origin=np.array([x, y, z]), 
                     fragment_shape=np.array([1, 1, 1]), 
                     input_origin=np.array([0,0,0]), 
@@ -66,7 +134,7 @@ def generate_mesh_decomposition(mesh, nodes_per_dim, quantization_bits):
                 )
     
                 if len(mesh_z.vertices) > 0:
-                    mesh_z.vertices = quantize(mesh_z.vertices)
+                    mesh_z.vertices = quantizer(mesh_z.vertices)
                     submeshes.append(mesh_z)
                     nodes.append([x,y,z])
     
@@ -84,6 +152,25 @@ def generate_multires_mesh(
     quantization_bits=16, 
     compression_level=5, 
     mesh_subdirectory='mesh'):
+    """ Generates a Neuroglancer precomputed multiresolution mesh.
+    
+    Parameters
+    ----------
+    mesh : trimesh.base.Trimesh 
+        A Trimesh mesh object to decompose.
+    directory : str
+        Neuroglancer precomputed volume directory.
+    segment_id : str
+        The ID of the segment to which the mesh belongs. 
+    num_lods : int
+        Number of levels of detail to generate. 
+    quantization_bits : int
+        Number of bits for mesh vertex quantization. Can only be 10 or 16. 
+    compression_level : int
+        Level of compression for Draco format.
+    mesh_subdirectory : str
+        Name of the mesh subdirectory within the Neuroglancer volume directory.    
+    """
 
     # Define key variables. 
     lods = np.arange(0, num_lods)
