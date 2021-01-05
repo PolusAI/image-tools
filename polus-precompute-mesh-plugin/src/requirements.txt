@@ -5,3 +5,6 @@ bfio==1.3.6
 javabridge==1.0.18
 python_bioformats==1.5.2
 scikit_image==0.16.2
+open3d==0.9
+dracopy==0.0.15
+trimesh==3.8.19
