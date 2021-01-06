@@ -179,11 +179,14 @@ def generate_multires_mesh(
     lod_scales = np.array([2**lod for lod in lods])
     vertex_offsets = np.array([[0., 0., 0.] for _ in range(num_lods)])
 
+    print(mesh.vertices.shape)
+    print(mesh.faces.shape)
+
     # Clean up mesh.
-    # mesh.remove_degenerate_faces()
-    # mesh.remove_duplicate_faces()
-    # mesh.remove_unreferenced_vertices()
-    # mesh.remove_infinite_values()
+    mesh.remove_degenerate_faces()
+    mesh.remove_duplicate_faces()
+    mesh.remove_unreferenced_vertices()
+    mesh.remove_infinite_values()
     mesh.fill_holes()
 
     # Create directory
@@ -194,24 +197,27 @@ def generate_multires_mesh(
     fragment_positions = []
     # Write fragment binaries.
     with open(os.path.join(mesh_dir, f'{segment_id}'), 'wb') as f:
-        ## We Screate scales from finest to coarsest.
+        ## We create scales from finest to coarsest.
         for scale in lod_scales[::-1]:            
             # Decimate mesh and clean. Decrease number of faces by scale sqaured.
             num_faces = int(mesh.faces.shape[0]//(lod_scales.max()/scale)**2)
+
+            print(f'num_faces = {num_faces}')
             scaled_mesh = mesh.simplify_quadratic_decimation(num_faces)
-            # scaled_mesh.remove_degenerate_faces()
-            # scaled_mesh.remove_duplicate_faces()
-            # scaled_mesh.remove_unreferenced_vertices()
-            # scaled_mesh.remove_infinite_values()
+            print(f'scaled_mesh pre-process: {scaled_mesh.vertices.shape}, {scaled_mesh.faces.shape}')
+            scaled_mesh.remove_degenerate_faces()
+            scaled_mesh.remove_duplicate_faces()
+            scaled_mesh.remove_unreferenced_vertices()
+            scaled_mesh.remove_infinite_values()
             scaled_mesh.fill_holes()
-            
-            # nodes, submeshes = generate_mesh_decomposition(scaled_mesh, scale, quantization_bits)
+            print(f'scaled_mesh post-process: {scaled_mesh.vertices.shape}, {scaled_mesh.faces.shape}')
+
             nodes, submeshes = generate_mesh_decomposition(scaled_mesh, scale, quantization_bits)
+
             lod_offsets = []
             for submesh in submeshes:
                 # Only write non-empty meshes.
                 if len(submesh.vertices) > 0:
-                    # submesh = trimesh.Trimesh(vertices=submesh.vertices, faces=submesh.faces)
                     draco = DracoPy.encode_mesh_to_buffer(
                                 points=submesh.vertices.flatten(), 
                                 faces=submesh.faces.flatten(), 
@@ -223,7 +229,7 @@ def generate_multires_mesh(
 
             fragment_positions.append(np.array(nodes))
             fragment_offsets.append(np.array(lod_offsets))
-    f.close()
+    
     num_fragments_per_lod = np.array([len(nodes) for nodes in fragment_positions])
 
     # Add mesh subdir to the main info file.
@@ -232,7 +238,6 @@ def generate_multires_mesh(
         f.seek(0)
         info['mesh'] = mesh_subdirectory
         json.dump(info, f)
-    f.close()
     
     # Write manifest file.
     with open(os.path.join(mesh_dir, f'{segment_id}.index'), 'wb') as f:
@@ -245,15 +250,14 @@ def generate_multires_mesh(
         for frag_pos, frag_offset in zip(fragment_positions, fragment_offsets):
             f.write(frag_pos.T.astype('<I').tobytes(order='C'))
             f.write(frag_offset.astype('<I').tobytes(order='C'))
-    f.close()
+    
     # Write mesh info file. We override the file here. 
     # But that's fine since it never changes.
     with open(os.path.join(mesh_dir, 'info'), 'w') as f:
         info = {
             '@type': 'neuroglancer_multilod_draco',
             'vertex_quantization_bits': quantization_bits,
-            'transform': [325,0,0,0,0,325,0,0,0,0,325,0],
+            'transform': [1,0,0,0,0,1,0,0,0,0,1,0],
             'lod_scale_multiplier': 1
         }
         json.dump(info, f)
-    f.close()

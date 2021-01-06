@@ -73,8 +73,9 @@ try:
     # Master draco file offset
     fragment_offset = 0
 
+    np.save("volume.npy", volume)
     # need to create a for loop for all the ids.
-    for iden in IDS[1:]:
+    for iden in IDS[-2:]:
         print('Processing label {}'.format(iden))
         
         fragment_offsets = []
@@ -84,8 +85,10 @@ try:
         lod_scales = []
         
         chunk_shape = None
-        vertices,faces,_,_ = measure.marching_cubes(volume==IDS[iden], step_size=1)
         
+        vertices,faces,_,_ = measure.marching_cubes((volume==IDS[iden]).astype("uint16"), level=0, step_size=1)
+        # np.save(str(iden)+".npy", [vertices,faces])
+
         
         min_bounds = vertices.min(axis=0)
         max_bounds = vertices.max(axis=0)
@@ -93,10 +96,12 @@ try:
 
         root_mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
         multires_mesh.generate_multires_mesh(mesh=root_mesh,
-                                             directory=output_path,
-                                             segment_id=1,
+                                             directory=str(output_path),
+                                             segment_id=iden,
                                              num_lods=2,
                                              quantization_bits=bit_depth)
+
+
         # scalez = multires_mesh.Quantize(fragment_origin = min_bounds, fragment_shape=dim,input_origin=min_bounds,quantization_bits=bit_depth)
         # newvertices = scalez(vertices)
         # print("OFFSET: ", scalez.offset)
