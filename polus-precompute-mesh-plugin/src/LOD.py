@@ -15,21 +15,22 @@ import math
 import pandas
 import shutil
 import DracoPy
+import multires_mesh
 
 # Needs to be specified
 input_path = Path('/home/ubuntu/3D_data')
 dataname = input_path.joinpath('dA30_5_dA30.Labels.ome.tif')
-output_path = Path('/home/ubuntu/polus-plugins/polus-precompute-mesh-plugin/src/MultipleLODs')
+output_path = Path('/home/ubuntu/mrmesh/polus-plugins/polus-precompute-mesh-plugin/src/MultipleLODs')
 
 if output_path.exists():
     shutil.rmtree(str(output_path))
 output_path.mkdir(exist_ok=True)
 
 # Bit depth of the draco coordinates, must be 10 or 16
-bit_depth = 10
+bit_depth = 16
 
 # Create two levels of detail
-num_lods = None
+num_lods = 2
 
 # Merge verticies that are closer than 1 pixel
 trimesh.constants.tol.merge = 1
@@ -73,7 +74,7 @@ try:
     fragment_offset = 0
 
     # need to create a for loop for all the ids.
-    for iden in IDS[25:]:
+    for iden in IDS[1:]:
         print('Processing label {}'.format(iden))
         
         fragment_offsets = []
@@ -83,225 +84,134 @@ try:
         lod_scales = []
         
         chunk_shape = None
-        # vertices,faces,_,_ = measure.marching_cubes_lewiner(volume==IDS[iden], step_size=1)
-        # min_bounds = vertices.min(axis=0)
-        # max_bounds = vertices.max(axis=0)
-        # dim = max_bounds - min_bounds
-        # print("DIMENSION", dim)
         vertices,faces,_,_ = measure.marching_cubes_lewiner(volume==IDS[iden], step_size=1)
+        
+        
         min_bounds = vertices.min(axis=0)
         max_bounds = vertices.max(axis=0)
         dim = max_bounds - min_bounds
 
-        maxvol = 128*128*128
-        multdim = np.prod(dim)
-        if multdim/maxvol < 1:
-            num_lods = 1
-        else:
-            num_lods = int(np.floor(multdim/maxvol))
-        print("NUMBER OF DETAILS: ", num_lods)
-        print("DIMENSION: ", dim)
+        root_mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
+        multires_mesh.generate_multires_mesh(mesh=root_mesh,
+                                             directory=output_path,
+                                             segment_id=iden,
+                                             num_lods=2,
+                                             quantization_bits=bit_depth)
+        # scalez = multires_mesh.Quantize(fragment_origin = min_bounds, fragment_shape=dim,input_origin=min_bounds,quantization_bits=bit_depth)
+        # newvertices = scalez(vertices)
+        # print("OFFSET: ", scalez.offset)
+        # print("NEW SCALE: ", scalez.scale)
+        # print("DIMNSION: ", dim)
+        # print("Minimum Bounds: ", min_bounds)
+        # print("UPPER BOUNDS", scalez.upper_bound)
         
-        for i in range(num_lods):
-            fragcount = 0
-            concatmesh = 0
-            fragment_positions.append([])
-            fragment_offsets.append([])
-            lod_scales.append(float(2 ** i))
+        # print("NEWVERTICES: ", newvertices(vertices))
+
+
+        # for i in range(num_lods):
+        #     fragcount = 0
+        #     concatmesh = 0
+        #     fragment_positions.append([])
+        #     fragment_offsets.append([])
+        #     lod_scales.append(float(2 ** i))
             
-            num_fragments_per_lod.append(0)
-            vertex_offsets.append([0*(2 ** i) for _ in range(3)])
+        #     num_fragments_per_lod.append(0)
+        #     vertex_offsets.append([0, 0, 0])
         
-            # Create the mesh
-            # vertices,faces,_,_ = measure.marching_cubes_lewiner(volume==IDS[iden], step_size=(i*2)+1)
-            # vertices,faces,_,_ = measure.marching_cubes_lewiner(volume==IDS[iden], step_size=1)
-            # print(vert0.shape, vert1.shape)
+        #     root_mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
+        #     rootmeshbounds = root_mesh.bounds
+        #     minrootbounds = rootmeshbounds[0]
+        #     maxrootbounds = rootmeshbounds[1]
 
+        #     zstep = dim[2]/(2 ** (num_lods - i - 1))
+        #     ystep = dim[1]/(2 ** (num_lods - i - 1))
+        #     xstep = dim[0]/(2 ** (num_lods - i - 1))
+        #     if isinstance(chunk_shape,type(None)):
+        #         chunk_shape = np.asarray([xstep,ystep,zstep]).astype(np.float32)
+        #     xslice = 0
+        #     yslice = 0 
+        #     zslice = 0
+        #     nyz, nxz, nxy = np.eye(3)
+        #     # print(nyz, nxz, nxy)
 
-            # getting the dimensions of the segment
-            # min_bounds = vertices.min(axis=0)
-            # max_bounds = vertices.max(axis=0)
-            # dim = max_bounds - min_bounds
-            # print("DIMENSION", dim)
-            root_mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
-            rootmeshbounds = root_mesh.bounds
-            minrootbounds = rootmeshbounds[0]
-            maxrootbounds = rootmeshbounds[1]
-            # print("ROOT MESH BOUNDS", rootmeshbounds)
-            # print("")
-            zstep = dim[2]/(2 ** (num_lods - i - 1))
-            ystep = dim[1]/(2 ** (num_lods - i - 1))
-            xstep = dim[0]/(2 ** (num_lods - i - 1))
-            # print("XYZ STEPS: ", xstep, ystep, zstep)
-            if isinstance(chunk_shape,type(None)):
-                chunk_shape = np.asarray([xstep,ystep,zstep]).astype(np.float32)
-            xslice = 0
-            yslice = 0 
-            zslice = 0
-            # poszdot = np.dot((0.0,0.0,1.0), (root_mesh.vertices - root_mesh.centroid).T)[root_mesh.faces]
-            # negzdot = np.dot((0.0,0.0,-1.0), (root_mesh.vertices - root_mesh.centroid).T)[root_mesh.faces]
-            # posydot = np.dot((0.0,1.0,0.0), (root_mesh.vertices - root_mesh.centroid).T)[root_mesh.faces]
-            # negydot = np.dot((0.0,-1.0,0.0), (root_mesh.vertices - root_mesh.centroid).T)[root_mesh.faces]
-            # posxdot = np.dot((1.0,0.0,0.0), (root_mesh.vertices - root_mesh.centroid).T)[root_mesh.faces]
-            # negxdot = np.dot((-1.0,0.0,0.0), (root_mesh.vertices - root_mesh.centroid).T)[root_mesh.faces]
-
-            # for x in np.arrange(min_bounds[0], max_bounds[0], xstep):
-            #     x_section = trimesh.split(root_mesh, only_watertight=True, ad)
-            
-                # print("X SECTION WATERTIGHT?", x_section.is_watertight)
-            for z in np.arange(min_bounds[2],max_bounds[2],zstep):
-                z_section = trimesh.intersections.slice_mesh_plane(root_mesh,
-                                                                (0.0,0.0,1.0),
-                                                                (0.0,0.0,float(z)))
-                # print("Z Section", z_section.is_watertight)
-                z_section = trimesh.intersections.slice_mesh_plane(z_section,
-                                                                (0.0,0.0,-1.0),
-                                                                (0.0,0.0,float(z + zstep)))
-                for y in np.arange(min_bounds[1],max_bounds[1],ystep):
-                    y_section = trimesh.intersections.slice_mesh_plane(z_section,
-                                                                        (0.0,1.0,0.0),
-                                                                        (0.0,float(y),0.0))
-                    y_section = trimesh.intersections.slice_mesh_plane(y_section,
-                                                                        (0.0,-1.0,0.0),
-                                                                        (0.0,float(y + ystep),0.0))
-                    for x in np.arange(min_bounds[0],max_bounds[0],xstep):
-                        x_section = trimesh.intersections.slice_mesh_plane(y_section,
-                                                                            (1.0,0.0,0.0),
-                                                                            (float(x),0.0,0.0))
-                        # print("X SECTION WATERTIGHT?", x_section.is_watertight)
-                        # print("Sectioned x_section corners", x_section.bounds)                                                    
-                        x_section = trimesh.intersections.slice_mesh_plane(x_section,
-                                                                            (-1.0,0.0,0.0),
-                                                                            (float(x+xstep),0.0,0.0))
-                        # z_section = trimesh.Trimesh(vertices=zvertices, faces=zfaces)
+        #     for z in np.arange(min_bounds[2],max_bounds[2],zstep):
+        #         z_section = trimesh.intersections.slice_mesh_plane(root_mesh,
+        #                                                         plane_normal = nxy,
+        #                                                         plane_origin = (0.0,0.0,float(z)))
+        #         z_section = trimesh.intersections.slice_mesh_plane(z_section,
+        #                                                         plane_normal = -1*nxy,
+        #                                                         plane_origin=(0.0,0.0,float(z + zstep)))
+        #         for y in np.arange(min_bounds[1],max_bounds[1],ystep):
+        #             y_section = trimesh.intersections.slice_mesh_plane(z_section,
+        #                                                             plane_normal=nxz,
+        #                                                             plane_origin=(0.0,float(y),0.0))
+        #             y_section = trimesh.intersections.slice_mesh_plane(y_section,
+        #                                                             plane_normal=nxz*-1,
+        #                                                             plane_origin=(0.0,float(y + ystep),0.0))
+        #             for x in np.arange(min_bounds[0],max_bounds[0],xstep):
+        #                 x_section = trimesh.intersections.slice_mesh_plane(y_section,
+        #                                                                 plane_normal=nyz,
+        #                                                                 plane_origin=(float(x),0.0,0.0))
+                                                   
+        #                 x_section = trimesh.intersections.slice_mesh_plane(x_section,
+        #                                                                 plane_normal=nyz*-1,
+        #                                                                 plane_origin=(float(x+xstep),0.0,0.0))
 
                         
-                        # cont = False
-                        # for vals in range(3):
-                        #     rootmin = rootmeshbounds[0][vals]
-                        #     zmin = z_bounds[0][vals]
-                        #     rootmax = rootmeshbounds[1][vals]
-                        #     zmax = z_bounds[1][vals]
-                        #     print("ROOT BOUNDS", rootmin, rootmax)
-                        #     print("Z BOUNDS", zmin, zmax)
-                        #     if zmin < rootmin:
-                        #         cont = True
-                        #         break
-                        #     if zmax > rootmax:
-                        #         cont = True
-                        #         break
-                        # if cont == True:
-                        #     print("CONTINUED")
-                        #     continue
-                            
-                        # print((x-min_bounds[1]) / xstep, (y-min_bounds[0]) / ystep, (z-min_bounds[2]) / zstep)
-                        # print(len(z_section.vertices))
-                        # if fragcount == 0 and i ==0:
-                        #     continue
-                        if len(x_section.vertices) == 0:
-                            continue
-                        fragment_positions[-1].append([       
-                            (x-min_bounds[0]) / xstep,
-                            (y-min_bounds[1]) / ystep,
-                            (z-min_bounds[2]) / zstep,
-                        ])
+        #                 if len(x_section.vertices) == 0:
+        #                     print("continue")
+        #                     continue
+        #                 fragment_positions[-1].append([       
+        #                     (x-min_bounds[0]) / xstep,
+        #                     (y-min_bounds[1]) / ystep,
+        #                     (z-min_bounds[2]) / zstep,
+        #                 ])
                         
-                        # xyz = ["x", "y", "z"]
-                        # xyzcors = [x,y,z]
-                        # steps = [xstep, ystep, zstep]
-                        # for c in range(3):
-                        #     cor = (min_bounds[c] + ((xyzcors[c] * steps[c]) * (2**i)))
-                        #     print("COR", xyz[c], cor)
-                        zmin_bounds = x_section.vertices.min(axis=0)
-                        zmax_bounds = x_section.vertices.max(axis=0)
-                        # # print("VERTICES MIN AND MAX POINTS", i, fragcount)
-                        # # # print("XYZ", x, y, z)
-                        # print("MINIMUM",zmin_bounds)
-                        # print("MAXIMUM",zmax_bounds)
-                        
-                        # fragpositions_tomatch = fragment_positions[-1][-1]
-                        # # print("FRAGMENT POSITIONS")
-                        # # print(fragpositions_tomatch)
-                        # xshift = 0
-                        # yshift = 0
-                        # zshift = 0
-                        # if fragpositions_tomatch[0] == 0:
-                        #     xshift = (minrootbounds[0] - zmin_bounds[0])
-                        # else:
-                        #     xshift = x - zmin_bounds[0]
-                        # if fragpositions_tomatch[1] == 0:
-                        #     yshift = (minrootbounds[1] - zmin_bounds[1])
-                        # else:
-                        #     yshift = y - zmin_bounds[1]
-                        # if fragpositions_tomatch[2] == 0:
-                        #     zshift = (minrootbounds[2] - zmin_bounds[2])
-                        # else:
-                        #     zshift = z - zmin_bounds[2]
-                        # shift = np.asarray([[1, 0, 0, xshift],
-                        #                     [0, 1, 0, yshift],
-                        #                     [0, 0, 1, zshift],
-                        #                     [0, 0, 0,  1]])
-                        # x_section.apply_transform(shift)
+        #                 # zmin_bounds = x_section.vertices.min(axis=0)
+        #                 # zmax_bounds = x_section.vertices.max(axis=0)
 
-                        zmin_bounds = x_section.bounds[0]
-                        zmax_bounds = x_section.bounds[1]
-                        # print("AFTER TRANSFORMING", i, fragcount)
-                        # print("XYZ", x, y, z)
-                        # print("MINIMUM",zmin_bounds)
-                        # print("MAXIMUM",zmax_bounds)
-                        # print(" ")
-                        scale =  np.asarray([xstep,ystep,zstep,1]) / ((2 ** bit_depth) - 1)
-                        # print("SCALE", scale)
-                        transform = np.asarray([[1, 0, 0, -x/xstep],
-                                                [0, 1, 0, -y/ystep],
-                                                [0, 0, 1, -z/zstep],
-                                                [0, 0, 0,  1]]) / scale
-                        x_section.apply_transform(transform)
-                        # trimesh.repair.broken_faces(z_section)
-                        # trimesh.repair.fill_holes(z_section)
-                        # trimesh.repair.fix_inversion(z_section)
-                        # trimesh.repair.fix_winding(z_section)
-                        # trimesh.repair.fix_normals(z_section)
-                        # print("Watertight?", z_section.is_watertight)
-                        # print("")
+        #                 # zmin_bounds = x_section.bounds[0]
+        #                 # zmax_bounds = x_section.bounds[1]
+        #                 # scale =  np.asarray([xstep,ystep,zstep,1]) / ((2 ** bit_depth) - 1)
+        #                 # print("OG SCALE: ", scale)
 
-                        # print("LEVEL OF DETAIL", i)
-                        drcfile = output_path.joinpath(str(iden))
-                        with open(str(drcfile), "ab+") as draco:
-                            start = draco.tell()
-                            # print('draco.tell: {}'.format(draco.tell()))
-                            writethis = DracoPy.encode_mesh_to_buffer(points=x_section.vertices.flatten(),
-                                                                      faces = x_section.faces.flatten(),
-                                                                      quantization_bits=bit_depth,
-                                                                      compression_level=0)
-                            # draco.write(trimesh.exchange.ply.export_draco(mesh=x_section, bits=bit_depth)) # bit must match vertex_quantization_bits
-                            draco.write(writethis)
-                            num_fragments_per_lod[-1] += 1
-                            fragment_offsets[-1].append(draco.tell() - start)
-                            fragcount = fragcount + 1
-                            # print("Size of file: ",draco.tell())
+        #                 # transform = np.asarray([[1, 0, 0, -x/xstep],
+        #                 #                         [0, 1, 0, -y/ystep],
+        #                 #                         [0, 0, 1, -z/zstep],
+        #                 #                         [0, 0, 0,  1]]) / scale
+        #                 # x_section.apply_transform(transform)
+        #                 print("adding to draco files")
+        #                 drcfile = output_path.joinpath(str(iden))
+        #                 with open(str(drcfile), "ab+") as draco:
+        #                     start = draco.tell()
+        #                     writethis = DracoPy.encode_mesh_to_buffer(points=x_section.vertices.flatten(),
+        #                                                               faces = x_section.faces.flatten(),
+        #                                                               quantization_bits=bit_depth,
+        #                                                               compression_level=0)
+        #                     draco.write(writethis)
+        #                     num_fragments_per_lod[-1] += 1
+        #                     fragment_offsets[-1].append(draco.tell() - start)
+        #                     fragcount = fragcount + 1
 
         
-        num_fragments_per_lod = np.asarray(num_fragments_per_lod).astype('<I')
-        gridorigin = min_bounds
-        manifest_file = output_path.joinpath((str(iden)+".index"))
-        vertex_offsets = np.asarray(vertex_offsets).astype('<f')
-        with open(str(manifest_file), 'wb') as index:
-            index.write(chunk_shape.astype('<f').tobytes(order='C'))
-            index.write(gridorigin.astype('<f').tobytes(order="C"))
-            index.write(struct.pack("<I",num_lods))
-            index.write(np.asarray(lod_scales).astype('<f').tobytes(order="C"))
-            index.write(vertex_offsets.tobytes(order="C"))
-            index.write(num_fragments_per_lod.astype('<I').tobytes(order="C"))
+        # num_fragments_per_lod = np.asarray(num_fragments_per_lod).astype('<I')
+        # gridorigin = min_bounds
+        # manifest_file = output_path.joinpath((str(iden)+".index"))
+        # vertex_offsets = np.asarray(vertex_offsets).astype('<f')
+        # with open(str(manifest_file), 'wb') as index:
+        #     index.write(chunk_shape.astype('<f').tobytes(order='C'))
+        #     index.write(gridorigin.astype('<f').tobytes(order="C"))
+        #     index.write(struct.pack("<I",num_lods))
+        #     index.write(np.asarray(lod_scales).astype('<f').tobytes(order="C"))
+        #     index.write(vertex_offsets.tobytes(order="C"))
+        #     index.write(num_fragments_per_lod.astype('<I').tobytes(order="C"))
 
-            for i in range(0, num_lods):
-                fp = np.asarray(fragment_positions[i]).astype('<I')
-                fp = fp.T
-                # print("FRAGMENT POSITION")
-                # print(fp)
-                index.write(fp.astype('<I').tobytes(order="C"))
-                fo = np.asarray(fragment_offsets[i]).astype('<I')
-                index.write(fo.tobytes(order="C"))
+        #     for i in range(0, num_lods):
+        #         fp = np.asarray(fragment_positions[i]).astype('<I')
+        #         fp = fp.T
+        #         index.write(fp.astype('<I').tobytes(order="C"))
+        #         fo = np.asarray(fragment_offsets[i]).astype('<I')
+        #         index.write(fo.tobytes(order="C"))
 
 except Exception as e:
     traceback.print_exc()
