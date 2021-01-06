@@ -194,7 +194,7 @@ def generate_multires_mesh(
     fragment_positions = []
     # Write fragment binaries.
     with open(os.path.join(mesh_dir, f'{segment_id}'), 'wb') as f:
-        ## We create scales from finest to coarsest.
+        ## We Screate scales from finest to coarsest.
         for scale in lod_scales[::-1]:            
             # Decimate mesh and clean. Decrease number of faces by scale sqaured.
             num_faces = int(mesh.faces.shape[0]//(lod_scales.max()/scale)**2)

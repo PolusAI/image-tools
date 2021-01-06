@@ -84,7 +84,7 @@ try:
         lod_scales = []
         
         chunk_shape = None
-        vertices,faces,_,_ = measure.marching_cubes_lewiner(volume==IDS[iden], step_size=1)
+        vertices,faces,_,_ = measure.marching_cubes(volume==IDS[iden], step_size=1)
         
         
         min_bounds = vertices.min(axis=0)
@@ -94,7 +94,7 @@ try:
         root_mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
         multires_mesh.generate_multires_mesh(mesh=root_mesh,
                                              directory=output_path,
-                                             segment_id=iden,
+                                             segment_id=1,
                                              num_lods=2,
                                              quantization_bits=bit_depth)
         # scalez = multires_mesh.Quantize(fragment_origin = min_bounds, fragment_shape=dim,input_origin=min_bounds,quantization_bits=bit_depth)
