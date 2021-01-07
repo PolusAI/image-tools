@@ -148,7 +148,8 @@ def generate_multires_mesh(
     mesh, 
     directory, 
     segment_id, 
-    num_lods, 
+    num_lods,
+    transformation_matrix=None,
     quantization_bits=16, 
     compression_level=5, 
     mesh_subdirectory='mesh'):
@@ -163,7 +164,10 @@ def generate_multires_mesh(
     segment_id : str
         The ID of the segment to which the mesh belongs. 
     num_lods : int
-        Number of levels of detail to generate. 
+        Number of levels of detail to generate.
+    transformation_matrix: np.ndarray
+        A 3x4 numpy array representing a coordinate transform matrix. 
+        If None, identity is used.
     quantization_bits : int
         Number of bits for mesh vertex quantization. Can only be 10 or 16. 
     compression_level : int
@@ -171,6 +175,9 @@ def generate_multires_mesh(
     mesh_subdirectory : str
         Name of the mesh subdirectory within the Neuroglancer volume directory.    
     """
+
+    if transformation_matrix is None:
+        transformation_matrix = np.array([1,0,0,0,0,1,0,0,0,0,1,0]).reshape(3,4)
 
     # Define key variables. 
     lods = np.arange(0, num_lods)
@@ -198,7 +205,8 @@ def generate_multires_mesh(
     # Write fragment binaries.
     with open(os.path.join(mesh_dir, f'{segment_id}'), 'wb') as f:
         ## We create scales from finest to coarsest.
-        for scale in lod_scales[::-1]:            
+        for scale in lod_scales[::-1]:
+
             # Decimate mesh and clean. Decrease number of faces by scale sqaured.
             num_faces = int(mesh.faces.shape[0]//(lod_scales.max()/scale)**2)
 
@@ -222,10 +230,12 @@ def generate_multires_mesh(
                                 points=submesh.vertices.flatten(), 
                                 faces=submesh.faces.flatten(), 
                                 quantization_bits=quantization_bits,
-                                compression_level=5)
+                                compression_level=compression_level)
 
                     f.write(draco)
                     lod_offsets.append(len(draco))
+                else:
+                    lod_offsets.append(0)
 
             fragment_positions.append(np.array(nodes))
             fragment_offsets.append(np.array(lod_offsets))
@@ -257,7 +267,7 @@ def generate_multires_mesh(
         info = {
             '@type': 'neuroglancer_multilod_draco',
             'vertex_quantization_bits': quantization_bits,
-            'transform': [1,0,0,0,0,1,0,0,0,0,1,0],
+            'transform': transformation_matrix.flatten().tolist(),
             'lod_scale_multiplier': 1
         }
         json.dump(info, f)
