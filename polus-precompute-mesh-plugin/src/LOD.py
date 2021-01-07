@@ -29,8 +29,8 @@ output_path.mkdir(exist_ok=True)
 # Bit depth of the draco coordinates, must be 10 or 16
 bit_depth = 16
 
-# Create two levels of detail
-num_lods = 2
+# # Create two levels of detail
+# num_lods = 2
 
 # Create the info file
 with open(str(output_path.joinpath("info")), 'w') as info:
@@ -47,7 +47,6 @@ with open(str(output_path.joinpath("info")), 'w') as info:
 # Start the JVM
 log_config = Path(__file__).parent.joinpath("log4j.properties")
 jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(LOG4J))],class_path=JARS)
-fragoffsum = 0
 
 #checking to see if I login
 try:
@@ -77,17 +76,13 @@ try:
         vertices,faces,_,_ = measure.marching_cubes((volume==IDS[iden]).astype("uint8"), level=0, step_size=1)
         # np.save(str(iden)+".npy", [vertices,faces])
 
-        
-        min_bounds = vertices.min(axis=0)
-        max_bounds = vertices.max(axis=0)
-        dim = max_bounds - min_bounds
-
         root_mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
         multires_mesh.generate_multires_mesh(mesh=root_mesh,
                                              directory=str(output_path),
                                              segment_id=iden,
                                              num_lods=2,
-                                             quantization_bits=bit_depth)
+                                             quantization_bits=bit_depth,
+                                             transformation_matrix=np.asarray([0, 325, 0, 0, 325, 0, 0, 0,0, 0, 0, 325]))
 
 
         # scalez = multires_mesh.Quantize(fragment_origin = min_bounds, fragment_shape=dim,input_origin=min_bounds,quantization_bits=bit_depth)
