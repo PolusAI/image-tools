@@ -32,9 +32,6 @@ bit_depth = 16
 # Create two levels of detail
 num_lods = 2
 
-# Merge verticies that are closer than 1 pixel
-trimesh.constants.tol.merge = 1
-
 # Create the info file
 with open(str(output_path.joinpath("info")), 'w') as info:
     jsoninfo = {
@@ -51,16 +48,7 @@ with open(str(output_path.joinpath("info")), 'w') as info:
 log_config = Path(__file__).parent.joinpath("log4j.properties")
 jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(LOG4J))],class_path=JARS)
 fragoffsum = 0
-Zorder = [
-    [0, 0, 0],
-    [0, 0, 1],
-    [0, 1, 0],
-    [1, 0, 1],
-    [1, 0, 0],
-    [0, 1, 1], 
-    [1, 1, 0], 
-    [1, 1, 1]
-]
+
 #checking to see if I login
 try:
     # Load the image
@@ -75,7 +63,7 @@ try:
 
     np.save("volume.npy", volume)
     # need to create a for loop for all the ids.
-    for iden in IDS[-2:]:
+    for iden in IDS[1:]:
         print('Processing label {}'.format(iden))
         
         fragment_offsets = []
@@ -86,7 +74,7 @@ try:
         
         chunk_shape = None
         
-        vertices,faces,_,_ = measure.marching_cubes((volume==IDS[iden]).astype("uint16"), level=0, step_size=1)
+        vertices,faces,_,_ = measure.marching_cubes((volume==IDS[iden]).astype("uint8"), level=0, step_size=1)
         # np.save(str(iden)+".npy", [vertices,faces])
 
         
@@ -222,3 +210,33 @@ except Exception as e:
     traceback.print_exc()
 finally:
     jutil.kill_vm()
+# from bfio import BioReader, BioWriter, JARS
+# import bioformats
+# import javabridge as jutil
+# import numpy as np
+# import pickle
+# import trimesh
+# from skimage import measure
+# from multires_mesh import generate_multires_mesh 
+
+# jutil.start_vm(class_path=bioformats.JARS)
+# dataname = '/home/ubuntu/3D_data/dA30_5_dA30.Labels.ome.tif'
+# # br = BioReader('/home/ubuntu/3D_data/dA30_5_dA30.Labels.ome.tif')
+# # volume = br.read_image()[...,0,0]
+# br = BioReader(dataname,backend='java')
+# volume = br[:].squeeze()
+# iden = 24
+# # volume_bin = (volume == iden).astype('uint16')
+# verts, faces, _, _ = measure.marching_cubes((volume == iden).astype('uint16'), level=0, step_size=1)
+# mesh = trimesh.Trimesh(verts, faces)
+# generate_multires_mesh(
+#     mesh=mesh, 
+#     directory=str(output_path), 
+#     segment_id=iden,
+#     num_lods=2,
+#     quantization_bits=16,
+#     compression_level=5,
+#     mesh_subdirectory='mesh'
+# )
+
+# jutil.kill_vm()

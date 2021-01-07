@@ -179,8 +179,8 @@ def generate_multires_mesh(
     lod_scales = np.array([2**lod for lod in lods])
     vertex_offsets = np.array([[0., 0., 0.] for _ in range(num_lods)])
 
-    print(mesh.vertices.shape)
-    print(mesh.faces.shape)
+    print(f'mesh vertices pre-cleanup: {mesh.vertices.shape}')
+    print(f'mesh faces pre-cleanup: {mesh.faces.shape}')
 
     # Clean up mesh.
     mesh.remove_degenerate_faces()
@@ -188,6 +188,9 @@ def generate_multires_mesh(
     mesh.remove_unreferenced_vertices()
     mesh.remove_infinite_values()
     mesh.fill_holes()
+
+    print(f'mesh vertices post-cleanup: {mesh.vertices.shape}')
+    print(f'mesh faces post-cleanup: {mesh.faces.shape}')
 
     # Create directory
     mesh_dir = os.path.join(directory, mesh_subdirectory)
@@ -198,19 +201,25 @@ def generate_multires_mesh(
     # Write fragment binaries.
     with open(os.path.join(mesh_dir, f'{segment_id}'), 'wb') as f:
         ## We create scales from finest to coarsest.
-        for scale in lod_scales[::-1]:            
-            # Decimate mesh and clean. Decrease number of faces by scale sqaured.
-            num_faces = int(mesh.faces.shape[0]//(lod_scales.max()/scale)**2)
+        for scale in lod_scales[::-1]:
+            
+            print(f'mesh vertices pre-decimation: {mesh.vertices.shape}')
+            print(f'mesh faces pre-decimation: {mesh.faces.shape}')
+            print(f'lod_scales max: {lod_scales.max()}, scale: {scale}')
 
+            # Decimate mesh and clean. Decrease number of faces by scale sqaured.
+            num_faces = int(mesh.faces.shape[0]//(lod_scales.max()/scale)**2)           
             print(f'num_faces = {num_faces}')
+
             scaled_mesh = mesh.simplify_quadratic_decimation(num_faces)
-            print(f'scaled_mesh pre-process: {scaled_mesh.vertices.shape}, {scaled_mesh.faces.shape}')
             scaled_mesh.remove_degenerate_faces()
             scaled_mesh.remove_duplicate_faces()
             scaled_mesh.remove_unreferenced_vertices()
             scaled_mesh.remove_infinite_values()
             scaled_mesh.fill_holes()
-            print(f'scaled_mesh post-process: {scaled_mesh.vertices.shape}, {scaled_mesh.faces.shape}')
+            
+            print(f'mesh vertices post-decimation: {scaled_mesh.vertices.shape}')
+            print(f'mesh faces post-decimation: {scaled_mesh.faces.shape}')
 
             nodes, submeshes = generate_mesh_decomposition(scaled_mesh, scale, quantization_bits)
 
@@ -257,7 +266,9 @@ def generate_multires_mesh(
         info = {
             '@type': 'neuroglancer_multilod_draco',
             'vertex_quantization_bits': quantization_bits,
-            'transform': [1,0,0,0,0,1,0,0,0,0,1,0],
+            'transform': [0,325,0,0,
+                          325,0,0,0,
+                          0,0,325,0],
             'lod_scale_multiplier': 1
         }
         json.dump(info, f)
