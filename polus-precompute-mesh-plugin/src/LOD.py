@@ -29,17 +29,15 @@ output_path.mkdir(exist_ok=True)
 # Bit depth of the draco coordinates, must be 10 or 16
 bit_depth = 16
 
-# # Create two levels of detail
-# num_lods = 2
+#transformation matrix 
+transformation_matrix=[0, 325, 0, 0, 325, 0, 0, 0,0, 0, 0, 325]
 
 # Create the info file
 with open(str(output_path.joinpath("info")), 'w') as info:
     jsoninfo = {
    "@type" : "neuroglancer_multilod_draco",
    "lod_scale_multiplier" : 1,
-   "transform" : [0,   325,   0,   325,
-                    325, 0,   0,   325,
-                    0,   0, 325,   325],
+   "transform" : transformation_matrix,
    "vertex_quantization_bits" : bit_depth 
     }
     info.write((json.dumps(jsoninfo)))
@@ -54,184 +52,33 @@ try:
     br = BioReader(dataname,backend='java')
     volume = br[:].squeeze()
     print(volume.shape)
+
     # Get the ids for each segment
     IDS = np.unique(volume)
     
     # Master draco file offset
-    fragment_offset = 0
 
     np.save("volume.npy", volume)
     # need to create a for loop for all the ids.
-    for iden in IDS[1:]:
+    for iden in IDS[1:2]:
         print('Processing label {}'.format(iden))
-        
-        fragment_offsets = []
-        fragment_positions = []
-        num_fragments_per_lod = []
-        vertex_offsets = []
-        lod_scales = []
-        
-        chunk_shape = None
-        
         vertices,faces,_,_ = measure.marching_cubes((volume==IDS[iden]).astype("uint8"), level=0, step_size=1)
-        # np.save(str(iden)+".npy", [vertices,faces])
 
+        # range goal is (32-64)
         root_mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
+        dimensions = root_mesh.bounds
+        shape = dimensions[1] - dimensions[0]
+        LOD = np.floor(np.log2(shape))
+
+
         multires_mesh.generate_multires_mesh(mesh=root_mesh,
                                              directory=str(output_path),
                                              segment_id=iden,
                                              num_lods=2,
-                                             quantization_bits=bit_depth,
-                                             transformation_matrix=np.asarray([0, 325, 0, 0, 325, 0, 0, 0,0, 0, 0, 325]))
+                                             quantization_bits=bit_depth)
 
-
-        # scalez = multires_mesh.Quantize(fragment_origin = min_bounds, fragment_shape=dim,input_origin=min_bounds,quantization_bits=bit_depth)
-        # newvertices = scalez(vertices)
-        # print("OFFSET: ", scalez.offset)
-        # print("NEW SCALE: ", scalez.scale)
-        # print("DIMNSION: ", dim)
-        # print("Minimum Bounds: ", min_bounds)
-        # print("UPPER BOUNDS", scalez.upper_bound)
-        
-        # print("NEWVERTICES: ", newvertices(vertices))
-
-
-        # for i in range(num_lods):
-        #     fragcount = 0
-        #     concatmesh = 0
-        #     fragment_positions.append([])
-        #     fragment_offsets.append([])
-        #     lod_scales.append(float(2 ** i))
-            
-        #     num_fragments_per_lod.append(0)
-        #     vertex_offsets.append([0, 0, 0])
-        
-        #     root_mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
-        #     rootmeshbounds = root_mesh.bounds
-        #     minrootbounds = rootmeshbounds[0]
-        #     maxrootbounds = rootmeshbounds[1]
-
-        #     zstep = dim[2]/(2 ** (num_lods - i - 1))
-        #     ystep = dim[1]/(2 ** (num_lods - i - 1))
-        #     xstep = dim[0]/(2 ** (num_lods - i - 1))
-        #     if isinstance(chunk_shape,type(None)):
-        #         chunk_shape = np.asarray([xstep,ystep,zstep]).astype(np.float32)
-        #     xslice = 0
-        #     yslice = 0 
-        #     zslice = 0
-        #     nyz, nxz, nxy = np.eye(3)
-        #     # print(nyz, nxz, nxy)
-
-        #     for z in np.arange(min_bounds[2],max_bounds[2],zstep):
-        #         z_section = trimesh.intersections.slice_mesh_plane(root_mesh,
-        #                                                         plane_normal = nxy,
-        #                                                         plane_origin = (0.0,0.0,float(z)))
-        #         z_section = trimesh.intersections.slice_mesh_plane(z_section,
-        #                                                         plane_normal = -1*nxy,
-        #                                                         plane_origin=(0.0,0.0,float(z + zstep)))
-        #         for y in np.arange(min_bounds[1],max_bounds[1],ystep):
-        #             y_section = trimesh.intersections.slice_mesh_plane(z_section,
-        #                                                             plane_normal=nxz,
-        #                                                             plane_origin=(0.0,float(y),0.0))
-        #             y_section = trimesh.intersections.slice_mesh_plane(y_section,
-        #                                                             plane_normal=nxz*-1,
-        #                                                             plane_origin=(0.0,float(y + ystep),0.0))
-        #             for x in np.arange(min_bounds[0],max_bounds[0],xstep):
-        #                 x_section = trimesh.intersections.slice_mesh_plane(y_section,
-        #                                                                 plane_normal=nyz,
-        #                                                                 plane_origin=(float(x),0.0,0.0))
-                                                   
-        #                 x_section = trimesh.intersections.slice_mesh_plane(x_section,
-        #                                                                 plane_normal=nyz*-1,
-        #                                                                 plane_origin=(float(x+xstep),0.0,0.0))
-
-                        
-        #                 if len(x_section.vertices) == 0:
-        #                     print("continue")
-        #                     continue
-        #                 fragment_positions[-1].append([       
-        #                     (x-min_bounds[0]) / xstep,
-        #                     (y-min_bounds[1]) / ystep,
-        #                     (z-min_bounds[2]) / zstep,
-        #                 ])
-                        
-        #                 # zmin_bounds = x_section.vertices.min(axis=0)
-        #                 # zmax_bounds = x_section.vertices.max(axis=0)
-
-        #                 # zmin_bounds = x_section.bounds[0]
-        #                 # zmax_bounds = x_section.bounds[1]
-        #                 # scale =  np.asarray([xstep,ystep,zstep,1]) / ((2 ** bit_depth) - 1)
-        #                 # print("OG SCALE: ", scale)
-
-        #                 # transform = np.asarray([[1, 0, 0, -x/xstep],
-        #                 #                         [0, 1, 0, -y/ystep],
-        #                 #                         [0, 0, 1, -z/zstep],
-        #                 #                         [0, 0, 0,  1]]) / scale
-        #                 # x_section.apply_transform(transform)
-        #                 print("adding to draco files")
-        #                 drcfile = output_path.joinpath(str(iden))
-        #                 with open(str(drcfile), "ab+") as draco:
-        #                     start = draco.tell()
-        #                     writethis = DracoPy.encode_mesh_to_buffer(points=x_section.vertices.flatten(),
-        #                                                               faces = x_section.faces.flatten(),
-        #                                                               quantization_bits=bit_depth,
-        #                                                               compression_level=0)
-        #                     draco.write(writethis)
-        #                     num_fragments_per_lod[-1] += 1
-        #                     fragment_offsets[-1].append(draco.tell() - start)
-        #                     fragcount = fragcount + 1
-
-        
-        # num_fragments_per_lod = np.asarray(num_fragments_per_lod).astype('<I')
-        # gridorigin = min_bounds
-        # manifest_file = output_path.joinpath((str(iden)+".index"))
-        # vertex_offsets = np.asarray(vertex_offsets).astype('<f')
-        # with open(str(manifest_file), 'wb') as index:
-        #     index.write(chunk_shape.astype('<f').tobytes(order='C'))
-        #     index.write(gridorigin.astype('<f').tobytes(order="C"))
-        #     index.write(struct.pack("<I",num_lods))
-        #     index.write(np.asarray(lod_scales).astype('<f').tobytes(order="C"))
-        #     index.write(vertex_offsets.tobytes(order="C"))
-        #     index.write(num_fragments_per_lod.astype('<I').tobytes(order="C"))
-
-        #     for i in range(0, num_lods):
-        #         fp = np.asarray(fragment_positions[i]).astype('<I')
-        #         fp = fp.T
-        #         index.write(fp.astype('<I').tobytes(order="C"))
-        #         fo = np.asarray(fragment_offsets[i]).astype('<I')
-        #         index.write(fo.tobytes(order="C"))
 
 except Exception as e:
     traceback.print_exc()
 finally:
     jutil.kill_vm()
-# from bfio import BioReader, BioWriter, JARS
-# import bioformats
-# import javabridge as jutil
-# import numpy as np
-# import pickle
-# import trimesh
-# from skimage import measure
-# from multires_mesh import generate_multires_mesh 
-
-# jutil.start_vm(class_path=bioformats.JARS)
-# dataname = '/home/ubuntu/3D_data/dA30_5_dA30.Labels.ome.tif'
-# # br = BioReader('/home/ubuntu/3D_data/dA30_5_dA30.Labels.ome.tif')
-# # volume = br.read_image()[...,0,0]
-# br = BioReader(dataname,backend='java')
-# volume = br[:].squeeze()
-# iden = 24
-# # volume_bin = (volume == iden).astype('uint16')
-# verts, faces, _, _ = measure.marching_cubes((volume == iden).astype('uint16'), level=0, step_size=1)
-# mesh = trimesh.Trimesh(verts, faces)
-# generate_multires_mesh(
-#     mesh=mesh, 
-#     directory=str(output_path), 
-#     segment_id=iden,
-#     num_lods=2,
-#     quantization_bits=16,
-#     compression_level=5,
-#     mesh_subdirectory='mesh'
-# )
-
-# jutil.kill_vm()
