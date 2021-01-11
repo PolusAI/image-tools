@@ -36,9 +36,10 @@ class Quantize():
         quantization_bits : int
             The number of bits to use for quantization.
         """
+        # print("FRAGMENT SHAPE: ", fragment_shape, fragment_shape/2)
         self.upper_bound = np.iinfo(np.uint32).max >> (np.dtype(np.uint32).itemsize*8 - quantization_bits) # if 10 then 1023, if 16
         self.scale = self.upper_bound / fragment_shape
-        self.offset = input_origin - fragment_origin + 0.5/self.scale
+        self.offset = input_origin - fragment_origin + (fragment_shape/2)/self.scale
     
     def __call__(self, vertices):
         """ Quantizes an Nx3 numpy array of vertex positions.
@@ -78,7 +79,7 @@ def cmp_zorder(lhs, rhs):
     return lhs[msd] - rhs[msd]
 
 
-def generate_mesh_decomposition(mesh, nodes_per_dim, quantization_bits):
+def generate_mesh_decomposition(mesh, nodes_per_dim, quantization_bits, nodearray, frag):
     """Decomposes and quantizes a mesh according to the desired number of nodes and bits.
     
     A mesh is decomposed into a set of submeshes by partitioning the bounding box into
@@ -106,34 +107,35 @@ def generate_mesh_decomposition(mesh, nodes_per_dim, quantization_bits):
     # Scale our mesh coordinates.
     maxvertex = mesh.vertices.max(axis=0)
     minvertex = mesh.vertices.min(axis=0)
+    nodearray = nodearray
     print("MAX AND MIN VERTICES: ", maxvertex, minvertex)
-    scale = nodes_per_dim/(maxvertex- minvertex)
+    scale = nodearray/(maxvertex- minvertex)
     print("SCALE: ", scale)
     verts_scaled = scale*(mesh.vertices - minvertex) #the scaled vertices ranges from 0 to chunk_shape
-
+    print("verts_scaled", verts_scaled.max(axis=0))
     scaled_mesh = mesh.copy()
     scaled_mesh.vertices = verts_scaled
 
     # Define plane normals and scale mesh.
     nyz, nxz, nxy = np.eye(3)
-    
+    res = [i*j for i,j in zip([1,1,1], nodearray)]
     # create submeshes. 
     submeshes = []
     nodes = []
-    for x in range(0, nodes_per_dim):
+    for x in range(0, nodearray[0]):
         mesh_x = trimesh.intersections.slice_mesh_plane(scaled_mesh, plane_normal=nyz, plane_origin=nyz*x)
         mesh_x = trimesh.intersections.slice_mesh_plane(mesh_x, plane_normal=-nyz, plane_origin=nyz*(x+1))
-        for y in range(0, nodes_per_dim):
+        for y in range(0, nodearray[1]):
             mesh_y = trimesh.intersections.slice_mesh_plane(mesh_x, plane_normal=nxz, plane_origin=nxz*y)
             mesh_y = trimesh.intersections.slice_mesh_plane(mesh_y, plane_normal=-nxz, plane_origin=nxz*(y+1))
-            for z in range(0, nodes_per_dim):
+            for z in range(0, nodearray[2]):
                 mesh_z = trimesh.intersections.slice_mesh_plane(mesh_y, plane_normal=nxy, plane_origin=nxy*z)
                 mesh_z = trimesh.intersections.slice_mesh_plane(mesh_z, plane_normal=-nxy, plane_origin=nxy*(z+1))
                 
                 # Initialize Quantizer.
                 quantizer = Quantize(
                     fragment_origin=np.array([x, y, z]), 
-                    fragment_shape=np.array([1, 1, 1]), 
+                    fragment_shape=np.array(frag), 
                     input_origin=np.array([0,0,0]), 
                     quantization_bits=quantization_bits
                 )
@@ -189,17 +191,49 @@ def generate_multires_mesh(
     bounds = mesh.bounds
     maxvertex = bounds[1]
     minvertex = bounds[0]
+    grid_origin = minvertex
     shape = bounds[1] - bounds[0]
 
     nodes = np.floor(np.log2(shape))
-    print(nodes)
+    print("SHAPE", shape)
+    dividediff = nodes - dim_goal
+    num_lods = int(np.max(dividediff)) + 1
+    print("NUM LODS", num_lods)
+    # nodes_per_dim = dividediff*2
+    nodes_per_dim = []
 
-    
-    
-    # Define key variables. 
+    fragment_shapes = []
+    if num_lods > 0:
+        for i in range(0, num_lods):
+            if i == 0:
+                nodes_per_dim.append([1, 1, 1])
+            else:
+                maxval = np.max(nodes)
+                newnodes = []
+                for node in range(3):
+                    if nodes[node] == maxval:
+                        nodes[node] = nodes[node] - 1
+                        newnodes.append(int(nodes_per_dim[-1][node]*2))
+                    else:
+                        newnodes.append(int(nodes_per_dim[-1][node]))
+                nodes_per_dim.append(newnodes)
+        lastnode = nodes_per_dim[-1]
+        for i in range(num_lods):
+            append = [item*(2**(num_lods-i-1))for item in nodes_per_dim[i]] 
+            append = [int(i/j) for i, j in zip(append, lastnode)]
+            print(append)
+            fragment_shapes.append(append)
+    else:
+        num_lods = 1
+        fragment_shapes = [[1,1,1]]
+        nodes_per_dim = [[1,1,1]]
+
+    # print("NUMBER OF NODES FOR EACH LEVEL OF DETAILS", nodes_per_dim)
+        # Define key variables. 
     lods = np.arange(0, num_lods)
-    chunk_shape = shape/2**num_lods
-    grid_origin = minvertex
+    # chunk_shape = shape/2**num_lods
+    chunk_shape = shape/(nodes_per_dim[-1])
+    # print("CHUNK_SHAPE", chunk_shape)
     lod_scales = np.array([2**lod for lod in lods])
     vertex_offsets = np.array([[0., 0., 0.] for _ in range(num_lods)])
 
@@ -220,17 +254,42 @@ def generate_multires_mesh(
     mesh_dir = os.path.join(directory, mesh_subdirectory)
     os.makedirs(mesh_dir, exist_ok=True)
 
+    
+
+        
+        # fragment_shapes.append((nodes_per_dim[i]*(2**(num_levels-i))/lastnode))
+    # multeach = 2**(len(nodes_per_dim) - 1)
+    # fragment_shapes = []
+    # for node in range(len(nodes_per_dim) - 1):
+    #     evalnode = nodes_per_dim[node]
+    #     comparetonode = nodes_per_dim[-1]
+    #     newnodes = []
+    #     print("LAST NODE IS: ", multeach)
+    #     print(evalnode, comparetonode)
+
+    #     # mult = 2**len(node - 1)
+    #     # for item in range(3):
+    #     #     if evalnode[item]*multeach == comparetonode[item]:
+    #     #         newnodes.append(1)
+    #     #     else:
+    #     #         newnodes.append(int(multeach/evalnode[item]))
+    #     fragment_shapes.append(newnodes)
+    # fragment_shapes.append([1,1,1])
+
+    print("NODES PER DIMENSION: ", nodes_per_dim)
+    print("FRAGMENTS: ", fragment_shapes)
     fragment_offsets = []
     fragment_positions = []
     # Write fragment binaries.
     with open(os.path.join(mesh_dir, f'{segment_id}'), 'wb') as f:
         ## We create scales from finest to coarsest.
+        i = num_lods
         for scale in lod_scales[::-1]: #go in scale backwards 
-            print(scale, "NUM FACES BEFORE: ", mesh.faces.shape[0], "|", lod_scales.max(), scale)
+            # print(scale, "NUM FACES BEFORE: ", mesh.faces.shape[0], "|", lod_scales.max(), scale)
             # Decimate mesh and clean. Decrease number of faces by scale sqaured.
             num_faces = int(mesh.faces.shape[0]//(lod_scales.max()/scale)**2)
-            print(scale, " NUM FACES AFTER: ", num_faces)
-            print(f'num_faces = {num_faces}')
+            # print(scale, " NUM FACES AFTER: ", num_faces)
+            # print(f'num_faces = {num_faces}')
 
             scaled_mesh = mesh.simplify_quadratic_decimation(num_faces)
             scaled_mesh.remove_degenerate_faces()
@@ -238,12 +297,15 @@ def generate_multires_mesh(
             scaled_mesh.remove_unreferenced_vertices()
             scaled_mesh.remove_infinite_values()
             scaled_mesh.fill_holes()
-            
+            nodearray = nodes_per_dim[i-1]
+            frag = [int(x) for x in fragment_shapes[i-1]]
+            # frag = fragment_shapes[i-1]
             # print(f'mesh vertices post-decimation: {scaled_mesh.vertices.shape}')
             # print(f'mesh faces post-decimation: {scaled_mesh.faces.shape}')
-
-            nodes, submeshes = generate_mesh_decomposition(scaled_mesh, scale, quantization_bits)
-
+            
+            # print("nodes_per_dim: ", nodes_per_dim)
+            # print("fragment_positions: ", frag)
+            nodes, submeshes = generate_mesh_decomposition(scaled_mesh, scale, quantization_bits, nodearray, frag)
             lod_offsets = []
             for submesh in submeshes:
                 # Only write non-empty meshes.
@@ -259,8 +321,18 @@ def generate_multires_mesh(
                 else:
                     lod_offsets.append(0)
 
+            # if i == 2:
+            #     newnode = []
+            #     for node in nodes:
+            #         node = [n*2 for n in node]
+            #         newnode.append(node)
+            #         print("NODE", node, type(node))
+            #     print(i, nodes)
+            #     fragment_positions.append(np.array(newnode))
+            # else:
             fragment_positions.append(np.array(nodes))
             fragment_offsets.append(np.array(lod_offsets))
+            i = i - 1
     
     num_fragments_per_lod = np.array([len(nodes) for nodes in fragment_positions])
 
