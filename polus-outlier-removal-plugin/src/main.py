@@ -46,11 +46,11 @@ def isolationforest(data_set):
 # Setup the argument parsing
 def main():
     logger.info("Parsing arguments...")
-    parser = argparse.ArgumentParser(prog='main', description='K-means clustering plugin.')
+    parser = argparse.ArgumentParser(prog='main', description='Outlier removal plugin.')
     parser.add_argument('--inpdir', dest='inpdir', type=str,
-                        help='Input collection-Data need to be clustered', required=True)
+                        help='Input collection-Data that need outliers to be removed', required=True)
     parser.add_argument('--methods', dest='methods', type=str,
-                        help='Select Manual or Elbow or Calinski Harabasz or Davies Bouldin method', required=False)
+                        help='Select methods for outlier detection', required=True)
     parser.add_argument('--outdir', dest='outdir', type=str,
                         help='Output collection', required=True)
     
@@ -61,7 +61,7 @@ def main():
     inpdir = args.inpdir
     logger.info('inpdir = {}'.format(inpdir))
     
-    #Determine k-value using different methods
+    #Detect outliers using different methods
     methods = args.methods
     logger.info('methods = {}'.format(methods))
     
@@ -69,12 +69,12 @@ def main():
     outdir = args.outdir
     logger.info('outdir = {}'.format(outdir))
     
-    #Get list of .csv files in the directory including sub folders for clustering
+    #Get list of .csv files in the directory including sub folders for outlier removal
     inputcsv = list_file(inpdir)
     if not inputcsv:
         raise ValueError('No .csv files found.')
             
-    #Dictionary of methods to determine k-value
+    #Dictionary of methods to detect outliers
     FEAT = {'IsolationForest': isolationforest}
        
     for inpfile in inputcsv:

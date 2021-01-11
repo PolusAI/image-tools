@@ -1,6 +1,6 @@
 {
     "name": "Outlier removal",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "title": "Outlier removal",
     "description": "Remove outliers from the data.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-outlier-removal-plugin:0.1.0",
+    "containerId": "labshare/polus-outlier-removal-plugin:0.1.1",
     "inputs": [      
       {
         "name": "inpdir",
@@ -39,17 +39,17 @@
       {
         "key": "inputs.inpdir",
         "title": "Input csv file",
-        "description": "Input csv file for clustering"
+        "description": "Input csv file for outlier removal"
       },
       {
         "key": "inputs.methods",
-        "title": "Remove outliers based on the methods selected",
+        "title": "Remove outliers based on the method selected",
         "description": "Select methods"
       },
       {
         "key": "inputs.outdir",
         "title": "Output csv file",
-        "description": "Save output csv file containing labeled data"
+        "description": "Save output csv file separately for inliers and outliers"
       }      
     ]
   }
