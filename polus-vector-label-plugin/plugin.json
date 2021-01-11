@@ -1,6 +1,6 @@
 {
     "name": "Vector-label-plugin ",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "title": "Vector-label  ",
     "description": "Plugin to label masks ",
     "author": "Sudharsan (sudharsan.prativadi@labshare.org)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "Plugin is based on labelling done by Cellpose , https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1",
-    "containerId": "labshare/polus-vector-label-plugin:0.1.2",
+    "containerId": "labshare/polus-vector-label-plugin:0.1.3",
     "inputs": [
 
       {
@@ -27,6 +27,18 @@
         "name": "cellprob_threshold",
         "type": "number",
         "description": "cell probability threshold, centered at 0.0",
+        "required": false
+      },
+       {
+        "name": "cellprob_threshold",
+        "type": "number",
+        "description": "cell probability threshold, centered at 0.0",
+        "required": false
+      },
+       {
+        "name": "stitch_threshold",
+        "type": "number",
+        "description": "Stitch threshold default at 0 for stitch 2D masks into 3D volume",
         "required": false
       }
     ],
@@ -53,6 +65,11 @@
         "key": "inputs.cellprob_threshold",
         "title": "cell probability threshold",
         "description": "cell probability threshold"
+      },
+          {
+        "key": "inputs.stitch_threshold",
+        "title": "Stitching threshold ",
+        "description": "Stitching threshold"
       }
     ]
   }

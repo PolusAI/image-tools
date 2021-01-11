@@ -15,6 +15,9 @@
 To build the Docker image for the conversion plugin, run
 `./build-docker.sh`.
 
+## Running container locally
+  `docker run   -v {zarr file location}:/opt/executables/input -v {output Dir}:/opt/executables/output labshare/polus-vector-label-plugin:{version}  --inpDir /opt/executables/input --outDir /opt/executables/output` 
+
 ## Install WIPP Plugin
 
 If WIPP is running, navigate to the plugins page and add a new plugin. Paste the contents of `plugin.json` into the pop-up window and submit.
@@ -26,7 +29,8 @@ This plugin takes 3 input argument and 1 output argument:
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
 | `--flow_threshold` | flow threshold | Input | number |
-| `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
+| `--stitch_threshold` | stitch threshold | Input | number |
+| `--inpDir` | Input image collection to be processed by this plugin | Input | GenericData |
 | `--cellprob_threshold` | Cell probablity threshold | Input | number |
 | `--outDir` | Output collection | Output | collection |
 
