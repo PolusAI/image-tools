@@ -64,7 +64,10 @@ def get_regex(pattern):
     
     # Generate the regular expression pattern
     for e in expr:
-        regex = regex.replace(e,"([0-9]{"+str(len(e)-2)+"})")
+        if len(e) > 3 and e[2] == '+':
+            regex = regex.replace(e,"([0-9]+)")
+        else:
+            regex = regex.replace(e,"([0-9]{"+str(len(e)-2)+"})")
         
     return regex, variables
 
