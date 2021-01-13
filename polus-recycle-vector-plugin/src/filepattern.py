@@ -457,7 +457,7 @@ class FilePattern():
     iteration over filenames with specific values and grouped by any desired variable.
 
     """
-    var_order = 'rtczyx'
+    var_order = 'rtczyxp'
     files = {}
     uniques = {}
 
@@ -468,6 +468,9 @@ class FilePattern():
         if var_order:
             val_variables(var_order)
             self.var_order = var_order
+        
+        # Remove unnecessary variables from the variable ordering
+        self.var_order = ''.join([v for v in self.var_order if v in self.variables])
 
         self.files, self.uniques = parse_directory(file_path,pattern,var_order=self.var_order)
 
