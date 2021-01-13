@@ -55,7 +55,7 @@ def get_regex(pattern):
     # Parse variables
     expr = []
     variables = []
-    for g in re.finditer("{{[{}]+}}".format(VARIABLES),pattern):
+    for g in re.finditer("{{[{}]+\+?}}".format(VARIABLES),pattern):
         expr.append(g.group(0))
         variables.append(expr[-1][1])
         
