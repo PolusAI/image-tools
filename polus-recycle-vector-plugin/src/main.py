@@ -83,6 +83,7 @@ def main():
             variables = {key.upper():value for key,value in v[0].items() if key in group_by}
             file_matches = fp.get_matching(**variables)
             
+            
             for f in file_matches:
                 
                 # Get the file writer, create it if it doesn't exist

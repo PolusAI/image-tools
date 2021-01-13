@@ -419,6 +419,7 @@ def get_matching(files,var_order,out_var=None,**kwargs):
     Outputs:
         out_var - A list of all files matching the input values
     """
+    
     # Initialize the output variable if needed
     if out_var == None:
         out_var = []
@@ -426,7 +427,7 @@ def get_matching(files,var_order,out_var=None,**kwargs):
     # If there is no var_order, then files should be a list of files.
     if len(var_order)==0:
         if not isinstance(files,list):
-            TypeError('Expected files to be a list since var_order is empty.')
+            raise TypeError('Expected files to be a list since var_order is empty.')
         out_var.extend(files)
         return
 
@@ -446,6 +447,8 @@ def get_matching(files,var_order,out_var=None,**kwargs):
         if v_i not in files.keys():
             continue
         get_matching(files[v_i],var_order[1:],out_var,**kwargs)
+        
+    
     return out_var
 
 class FilePattern():
@@ -570,7 +573,7 @@ class VectorPattern(FilePattern):
 
     """
     
-    var_order = 'rtczyx'
+    var_order = 'rtczyxp'
     files = {}
     uniques = {}
     
@@ -581,5 +584,8 @@ class VectorPattern(FilePattern):
         if var_order:
             val_variables(var_order)
             self.var_order = var_order
+        
+        # Remove unnecessary variables from the variable ordering
+        self.var_order = ''.join([v for v in self.var_order if v in self.variables])
 
         self.files, self.uniques = parse_vector(file_path,pattern,var_order=self.var_order)
