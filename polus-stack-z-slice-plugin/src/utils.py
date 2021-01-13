@@ -30,7 +30,7 @@ def _parse_fpattern(fpattern):
     # Parse variables
     expr = []
     variables = []
-    for g in re.finditer(r"\{[pxyzctr]+\}",fpattern):
+    for g in re.finditer(r"\{[pxyzctr]+\+?\}",fpattern):
         expr.append(g.group(0))
         variables.append(expr[-1][1])
         
@@ -48,7 +48,10 @@ def _parse_fpattern(fpattern):
         
     # Generate the regular expression pattern
     for e in expr:
-        regex = regex.replace(e,"([0-9]{"+str(len(e)-2)+"})")
+        if len(e) > 3 and e[2] == '+':
+            regex = regex.replace(e,"([0-9]+)")
+        else:
+            regex = regex.replace(e,"([0-9]{"+str(len(e)-2)+"})")
         
     return regex, variables
 
@@ -82,7 +85,7 @@ def _get_output_name(fpattern,file_ind,ind):
     # Parse variables
     expr = []
     variables = []
-    for g in re.finditer(r"\{[pxyzctr]+\}",fpattern):
+    for g in re.finditer(r"\{[pxyzctr]+\+?\}",fpattern):
         expr.append(g.group(0))
         variables.append(expr[-1][1])
         
