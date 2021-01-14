@@ -20,12 +20,12 @@ sys.setrecursionlimit(1500)
 # -- Project information -----------------------------------------------------
 
 project = 'bfio'
-copyright = '2020, Nicholas J Schaub'
+copyright = '2020-2021, Nicholas J Schaub'
 author = 'Nicholas J Schaub'
 
 # The full version, including alpha/beta/rc tags
-release = '2.0.0a1'
-
+with open(str(Path(__file__).parent.parent.parent.joinpath('VERSION')),'r') as fr:
+    release = fr.readline()
 
 # -- General configuration ---------------------------------------------------
 
