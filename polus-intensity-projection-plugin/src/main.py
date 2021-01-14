@@ -1,5 +1,6 @@
 import argparse, logging, time, sys, os, traceback
 import intensity_projection
+from pathlib import Path
 
 
 if __name__=="__main__":
@@ -42,8 +43,6 @@ if __name__=="__main__":
             intensity_projection.min_projection(inpDir, outDir)
         elif projectionType == 'mean':
             intensity_projection.mean_projection(inpDir, outDir)
-        elif projectionType == 'mode':
-            intensity_projection.mode_projection(inpDir, outDir)
 
     except Exception:
         traceback.print_exc()

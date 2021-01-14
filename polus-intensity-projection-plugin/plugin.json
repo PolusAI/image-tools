@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-intensity-projection-plugin-plugin:0.1.1",
+    "containerId": "labshare/polus-intensity-projection-plugin:0.1.1",
     "inputs": [
       {
         "name": "inpDir",
@@ -24,8 +24,7 @@
             "values": [
                         "max",
                         "min",
-                        "mean",
-                        "mode"
+                        "mean"
                ]
         },
         "required": true
