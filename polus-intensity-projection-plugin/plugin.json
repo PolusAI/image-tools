@@ -18,8 +18,16 @@
       },
       {
         "name": "projectionType",
-        "type": "string",
+        "type": "enum",
         "description": "Type of volumetric intensity projection",
+        "options": {
+            "values": [
+                        "max",
+                        "min",
+                        "mean",
+                        "mode"
+               ]
+        },
         "required": true
       }
     ],
