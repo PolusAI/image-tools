@@ -157,7 +157,7 @@ def output_name(pattern: str,
     # Parse variables
     expr = []
     variables = []
-    for g in re.finditer("{{[{}]+}}".format(VARIABLES),pattern):
+    for g in re.finditer("{{[{}]+\+?}}".format(VARIABLES),pattern):
         expr.append(g.group(0))
         variables.append(expr[-1][1])
         
@@ -167,8 +167,9 @@ def output_name(pattern: str,
         if v not in STATICS:
             minval = min([int(b) for i in files for a,b in i.items() if a==v])
             maxval = max([int(b) for i in files for a,b in i.items() if a==v])
-            fname = fname.replace(e,'<' + str(minval).zfill(len(e)-2) +
-                                    '-' + str(maxval).zfill(len(e)-2) + '>')
+            maxlength = max([len(str(b)) for i in files for a,b in i.items() if a==v])
+            fname = fname.replace(e,'<' + str(minval).zfill(maxlength) +
+                                    '-' + str(maxval).zfill(maxlength) + '>')
         elif v not in ind.keys():
             fname = fname.replace(e,str(0).zfill(len(e)-2))
         else:
@@ -264,8 +265,7 @@ def parse_vector_line(vector_line: str,
 
     return r
 
-def _parse(file_path: str,
-           parse_function: typing.Callable,
+def _parse(parse_function: typing.Callable,
            files: typing.List[str],
            pattern: typing.Optional[str] = None,
            regex: typing.Optional[str] = None,
@@ -273,7 +273,6 @@ def _parse(file_path: str,
            var_order: typing.Optional[str] = 'rtczyx') -> typing.Tuple[dict,dict]:
     
     ''' Validate Inputs '''
-    logger.debug(f'_parse: file_path = {file_path}')
     logger.debug(f'_parse: parse_function = {parse_function.__name__}()')
     
     regex, variables = _validate_pat_reg_var(pattern,regex,variables)
@@ -296,7 +295,10 @@ def _parse(file_path: str,
     for f in files:
         
         # Parse filename values
-        fv = parse_function(f,regex,variables)
+        if isinstance(f,pathlib.Path):
+            fv = parse_function(f.name,regex,variables)
+        else:
+            fv = parse_function(f,regex,variables)
 
         # If the filename doesn't match the pattern, don't include it
         if fv == None:
@@ -330,7 +332,7 @@ def _parse(file_path: str,
         
         # Add the file information at the deepest layer
         new_entry = {}
-        new_entry['file'] = str(pathlib.Path(file_path).joinpath(f).absolute())
+        new_entry['file'] = f
         if file_variables != None:
             for key, value in file_variables.items():
                 new_entry[key] = value
@@ -400,11 +402,15 @@ def parse_directory(file_path: typing.Union[str,pathlib.Path],
         A file index dictionary, a dictionary of unique values for each variable
     """
     
-    files = [f.name for f in pathlib.Path(file_path).iterdir() if f.is_file()]
+    if isinstance(file_path,str):
+        file_path = pathlib.Path(file_path)
+    
+    file_path = file_path.resolve(strict=True)
+    
+    files = [f for f in file_path.iterdir() if f.is_file()]
     files.sort()
     
-    return _parse(file_path,
-                  parse_filename,
+    return _parse(parse_filename,
                   files,
                   pattern,
                   regex,
@@ -450,8 +456,7 @@ def parse_vector(file_path: str,
     with open(file_path,'r') as fr:
         files = [f for f in fr]
         
-    return _parse(file_path,
-                  parse_vector_line,
+    return _parse(parse_vector_line,
                   files,
                   pattern,
                   regex,

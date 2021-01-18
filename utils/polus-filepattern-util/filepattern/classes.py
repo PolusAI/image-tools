@@ -13,7 +13,7 @@ class PatternObject():
     """
 
     def __init__(self,
-                 file_path: pathlib.Path,
+                 file_path: typing.Union[pathlib.Path,str],
                  pattern: str,
                  var_order: str = 'rtczyxp'):
         """Initialize a Pattern object
