@@ -1,38 +1,114 @@
-import argparse, logging, math, filepattern, queue
+import argparse, logging, math, filepattern, queue, time
 from bfio import BioReader, BioWriter
 from pathlib import Path
 from multiprocessing import cpu_count
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, wait
 
-import pprint
+logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+                    datefmt='%d-%b-%y %H:%M:%S')
+
+# Set logger delay times
+main_delay = 10      # Delay between updates for main process
+process_delay = 2   # Delay between updates within _merge_layers
+
+# length/width of the chunk each _merge_layers thread processes at once
+# Number of useful threads is limited 
+chunk_size = 8192
+useful_threads = (chunk_size // BioReader._TILE_SIZE) ** 2
 
 # Global variable to scale number of processing threads dynamically
-free_threads = 0
+max_threads = max([cpu_count()//2,1])
+available_threads = queue.Queue(max([cpu_count()//2,1]))
+for _ in range(max_threads):
+    available_threads.put(2)
 
 def _merge_layers(input_files,output_path):
+    logger = logging.getLogger("merge")
+    logger.setLevel(logging.INFO)
     
-    global free_threads
+    # Grab some available threads
+    active_threads = available_threads.get()
+    logger.info(f'{output_path.name}: Starting with {active_threads} threads')
     
-    # Initialize the output file
-    br = BioReader(input_files[0]['file'],max_workers)
-    bw = BioWriter(str(Path(output_dir).joinpath(output_file).absolute()),metadata=br.read_metadata())
-    bw.num_z(Z = len(zs))
-    del br
+    # Get some basic info about the files to stack
+    with BioReader(input_files[0]['file']) as br:
+        
+        # Get the physical z-distance if avaiable, set to physical x if not
+        ps_z = br.ps_z
+        if None in ps_z:
+            ps_z = br.ps_x
+            
+        # Get the metadata
+        metadata = br.metadata
+        
+        # Set the maximum number of available threads (don't hog if not needed)
+        max_active_threads = math.ceil(br.x / br._TILE_SIZE) * math.ceil(br.y / br._TILE_SIZE)
+        if max_active_threads > useful_threads:
+            max_active_threads = useful_threads
     
-    # Load each image and save to the volume file
-    for z,i in zip(zs,range(len(zs))):
-        br = BioReader(str(Path(input_dir).joinpath(input_files[z][0]).absolute()))
-        bw.write_image(br.read_image(),Z=[i,i+1])
-        del br
+    # Get the number of layers to stack
+    z_size = 0
+    for f in files:
+        with BioReader(f['file']) as br:
+            z_size += br.z
+        
+    # Create the output file within a context manager
+    with BioWriter(output_path,metadata=metadata,max_workers=active_threads) as bw:
+        
+        # Update timer
+        start = time.time()
+        
+        # Adjust the dimensions before writing
+        bw.z = z_size
+        bw.ps_z = ps_z
+        
+        # ZIndex tracking for the output file
+        zi = 0
+        
+        # Threadpool to check for scaling opportunities during file IO
+        write_thread = []
+        with ThreadPoolExecutor(1) as executor:
+            
+            # Start stacking
+            for file in input_files:
+                
+                with BioReader(file['file'],max_workers=active_threads) as br:
+                    
+                    for z in range(br.z):
+                    
+                        for xs in range(0,br.x,chunk_size):
+                            xe = min([br.x,xs + chunk_size])
+                            
+                            for ys in range(0,br.y,chunk_size):
+                                ye = min([br.y,ys + chunk_size])
+                                
+                                wait(write_thread)
+                                write_thread = [executor.submit(bw.write,br[ys:ye,xs:xe,z:z+1],X=[xs],Y=[ys],Z=[zi])]
+                                
+                        zi += 1
+                
+                now = time.time()
+                if now - start > process_delay:
+                    start = now
+                    logger.info('{}: Progress {:6.2f}'.format(output_path.name,100*zi/bw.z))
+                
+                if active_threads < max_active_threads and active_threads < 2*max_threads:
+                    try:
+                        new_threads = available_threads.get(block=False)
+                        logger.info(f'{output_path.name}: Increasing number of threads from {active_threads} to {active_threads+new_threads}')
+                        active_threads += new_threads
+                        bw.max_workers = active_threads
+                    except queue.Empty:
+                        pass
+                    
+    # Free the threads for other processes
+    for _ in range(active_threads//2):
+        available_threads.put(2)
     
-    # Close the output image and delete
-    bw.close_image()
-    del bw
+    logger.info('{}: Progress {:6.2f}'.format(output_path.name,100))
 
 if __name__ == "__main__":
-    # Initialize the logger
-    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
-                        datefmt='%d-%b-%y %H:%M:%S')
+    # Initialize the main thread logger
     logger = logging.getLogger("main")
     logger.setLevel(logging.INFO)
     
@@ -48,28 +124,35 @@ if __name__ == "__main__":
                         help='A filename pattern specifying variables in filenames.', required=True)
 
     args = parser.parse_args()
-    input_dir = args.input_dir
-    output_dir = args.output_dir
+    input_dir = Path(args.input_dir)
+    output_dir = Path(args.output_dir)
     file_pattern = args.file_pattern
     logger.info(f'input_dir = {input_dir}')
     logger.info(f'output_dir = {output_dir}')
     logger.info(f'file_pattern = {file_pattern}')
     
-    max_threads = cpu_count()
     logger.info(f'max_threads: {max_threads}')
     
     # create the filepattern object
     fp = filepattern.FilePattern(input_dir,file_pattern)
     
-    # Create thread handling variables
+    threads = []
+    start = time.time()
+    with ThreadPoolExecutor(max_threads) as executor:
+        for files in fp.iterate(group_by='z'):
+            
+            output_name = filepattern.output_name(file_pattern,files,{}).replace('<','{').replace('>','}')
+            output_file = output_dir.joinpath(output_name)
+            
+            threads.append(executor.submit(_merge_layers,files,output_file))
+        
+        done, not_done = wait(threads,timeout=0)
+        
+        while len(not_done):
+            
+            logger.info('Progress: {:7.3f}%'.format(100*len(done)/len(threads)))
+            
+            done, not_done = wait(threads,timeout=main_delay)
     
-    for files in fp.iterate(group_by='z'):
-        
-        print(list(math.ceil(d/1024) for d in BioReader.image_size(files[0]['file'])))
-        
-        print(filepattern.output_name(file_pattern,files,{'p': files[0]['p']}))
-        
-        pprint.pprint(files)
-        
-        quit()
+    logger.info('Progress: {:6.3f}%'.format(100))
     
