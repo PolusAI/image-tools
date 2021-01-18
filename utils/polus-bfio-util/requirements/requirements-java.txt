@@ -1,3 +1,2 @@
-numpy==1.19.1
 python-javabridge==4.0.0
 python-bioformats==4.0.0

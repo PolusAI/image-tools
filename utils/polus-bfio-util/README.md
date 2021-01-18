@@ -1,12 +1,24 @@
 # **B**io**F**ormats **I**nput/**O**utput utility (bfio)
 
-This tool is a simplified but powerful interface to the [Bioformats java library](https://www.openmicroscopy.org/bio-formats/). It makes use of Cell Profilers [python-bioformats](https://github.com/CellProfiler/python-bioformats) package to access the Bioformats library. One of the issues with using the `python-bioformats` package is reading and writing large image planes (>2GB). The challenge lies in the way Bioformats reads and writes large image planes, using an `int` value to index the file. To do get around this, files can be read or written in chunks and the classes provided in `bfio` handle this automatically. The `BioWriter` class in this package only writes files in the `.ome.tif` format, and automatically sets the tile sizes to 1024.
+This tool is a simplified but powerful interface to the
+[Bioformats java library](https://www.openmicroscopy.org/bio-formats/).
+It makes use of Cell Profilers
+[python-bioformats](https://github.com/CellProfiler/python-bioformats)
+package to access the Bioformats library. One of the issues with using the
+`python-bioformats` package is reading and writing large image planes (>2GB).
+The challenge lies in the way Bioformats reads and writes large image planes,
+using an `int` value to index the file. To do get around this, files can be read
+or written in chunks and the classes provided in `bfio` handle this
+automatically. The `BioWriter` class in this package only writes files in the
+`.ome.tif` format, and automatically sets the tile sizes to 1024.
 
-Docker containers with all necessary components are available (see **Docker Containers** section).
+Docker containers with all necessary components are available (see
+**Docker Containers** section).
 
 ## Documentation
 
-Documentation is available on [Read the Docs](https://bfio.readthedocs.io/en/latest/).
+Documentation is available on
+[Read the Docs](https://bfio.readthedocs.io/en/latest/).
 
 ## Universal Container Components
 
@@ -16,7 +28,7 @@ All containers contain the follow components:
 2. [numpy](https://pypi.org/project/numpy/1.19.1/) (1.19.1)
 3. [imagecodecs](https://pypi.org/project/imagecodecs/2020.5.30/) (2020.5.30, built with `--lite` option)
 4. [tifffile](https://pypi.org/project/tifffile/2020.7.4/) (2020.7.4)
-5. bfio (version 2.0.0)
+5. bfio (version 2.0.3)
 
 Containers ending with `-java` also contain:
 
@@ -30,31 +42,31 @@ Containers ending with `-java` also contain:
 All containers can use the Python backend, but only the containers with Java may
 use the Java backend. 
 
-### labshare/polus-bfio-util:2.0.0
+### labshare/polus-bfio-util:2.0.3
 
-*Additional Python container tags:* `2.0.0-alpine`, `2.0.0-python`,
-`2.0.0-alpine-python`
+*Additional Python container tags:* `2.0.3-alpine`, `2.0.3-python`,
+`2.0.3-alpine-python`
 
-*Containers with Java:* `2.0.0-java`, `2.0.0-alpine-java`
+*Containers with Java:* `2.0.3-java`, `2.0.3-alpine-java`
 
 This container is built on Alpine Linux. This is the smallest bfio container,
 but also the most difficult to install additional requirements on. The Python
 containers (98MB) are much smaller than the Java containers (383MB).
 
-### labshare/polus-bfio-util:2.0.0-slim-buster
+### labshare/polus-bfio-util:2.0.3-slim-buster
 
-*Additional Python container tags:* `2.0.0-slim-buster-python`
+*Additional Python container tags:* `2.0.3-slim-buster-python`
 
-*Containers with Java:* `2.0.0-slim-buster-java`
+*Containers with Java:* `2.0.3-slim-buster-java`
 
 This container is built on a stripped down version of Debian Buster. This
 container is larger than the `alpine` version, but easier to install new Python
 packages on since `manylinux` wheels can be installed on it. However, if a
 package requires compilation, a compiler will need to be installed.
 
-### labshare/polus-bfio-util:2.0.0-tensorflow
+### labshare/polus-bfio-util:2.0.3-tensorflow
 
-*Additional Python container tags:* `2.0.0-tensorflow-python`
+*Additional Python container tags:* `2.0.3-tensorflow-python`
 
 *Containers with Java:* No Java containers
 

@@ -227,6 +227,7 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
         error.
 
         """
+        
         self._tags = []
 
         self.frontend._metadata.image().set_ID(Path(self.frontend._file_path).name)
@@ -271,8 +272,9 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
                                 'Please edit cautiously (if at all), and back up the original data before doing so. '
                                 'For more information, see the OME-TIFF web site: https://docs.openmicroscopy.org/latest/ome-model/ome-tiff/. -->',
                                 str(self.frontend._metadata).replace('ome:', '').replace(':ome', '')])
+        
         self._addtag(270, 's', 0, description, writeonce=True)  # Description
-        self._addtag(305, 's', 0, 'bfio 2.4.1')  # Software
+        self._addtag(305, 's', 0, bfio.__version__)  # Software
         # addtag(306, 's', 0, datetime, writeonce=True)
         self._addtag(259, 'H', 1, self._compresstag)  # Compression
         self._addtag(256, 'I', 1, self._datashape[-2])  # ImageWidth
@@ -475,7 +477,7 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
         assert len(X) == 2 and len(Y) == 2
 
         if X[0] % self.frontend._TILE_SIZE != 0 or Y[0] % self.frontend._TILE_SIZE != 0:
-            print('X or Y positions are not on tile boundary, tile may save incorrectly')
+            logger.warning('X or Y positions are not on tile boundary, tile may save incorrectly')
 
         fh = self._writer._fh
 
@@ -505,12 +507,12 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
         offsetformat = self._writer._offsetformat
         tagnoformat = self._writer._tagnoformat
 
-        # tileiter = [tile for tile in tileiter]
+
         tileiter = [copy.deepcopy(tile) for tile in tileiter]
         if self.frontend.max_workers > 1:
-            # print('Using threading to save...')
+            
             with ThreadPoolExecutor(max_workers=self.frontend.max_workers) as executor:
-                # with ThreadPoolExecutor(1) as executor:
+                
                 compressed_tiles = iter(executor.map(compress, tileiter))
         
             for tileindex in tiles:
@@ -520,7 +522,7 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
                 self._databytecounts[tileindex] = len(t)
         else:
             for tileindex, tile in zip(tiles,tileiter):
-                # print('Not using threading to save...')
+                
                 t = compress(tile)
                 self._databyteoffsets[tileindex] = fh.tell()
                 fh.write(t)

@@ -213,6 +213,18 @@ class BioBase(object,metaclass=abc.ABCMeta) :
         setattr(self._metadata.image(0).Pixels,'Size{}'.format(dimension.upper()),value)
         if dimension.upper() == 'C':
             self._metadata.image(0).Pixels.channel_count = value
+        self._metadata.image().Pixels.tiffdata_count = self.Z * self.C * self.T
+        
+        count = 0
+        for z in range(self.Z):
+            for c in range(self.C):
+                for t in range(self.T):
+                    self._metadata.image().Pixels.tiffdata(count).FirstZ = z
+                    self._metadata.image().Pixels.tiffdata(count).FirstC = c
+                    self._metadata.image().Pixels.tiffdata(count).FirstT = t
+                    self._metadata.image().Pixels.tiffdata(count).IFD = count
+                    self._metadata.image().Pixels.tiffdata(count).plane_count = 1
+                    count += 1
     
     """ ------------------------------ """
     """ -Get/Set Dimension Properties- """
@@ -272,8 +284,8 @@ class BioBase(object,metaclass=abc.ABCMeta) :
         return (self._metadata.image(0).Pixels.PhysicalSizeX, self._metadata.image(0).Pixels.PhysicalSizeXUnit)
 
     @physical_size_x.setter
-    def physical_size_x(self,psize: float,units: str):
-        self.__physical_size(self,'X',psize,units)
+    def physical_size_x(self,size_units: tuple):
+        self.__physical_size(self,'X',*size_units)
         
     @property
     def ps_x(self) -> typing.Tuple[float,str]:
@@ -281,8 +293,8 @@ class BioBase(object,metaclass=abc.ABCMeta) :
         return self.physical_size_x
 
     @ps_x.setter
-    def ps_x(self,psize: float,units: str):
-        self.__physical_size(self,'X',psize,units)
+    def ps_x(self,size_units: tuple):
+        self.__physical_size(self,'X',*size_units)
         
     @property
     def physical_size_y(self) -> typing.Tuple[float,str]:
@@ -294,8 +306,8 @@ class BioBase(object,metaclass=abc.ABCMeta) :
         return (self._metadata.image(0).Pixels.PhysicalSizeY, self._metadata.image(0).Pixels.PhysicalSizeYUnit)
 
     @physical_size_y.setter
-    def physical_size_y(self,psize: float,units: str):
-        self.__physical_size(self,'Y',psize,units)
+    def physical_size_y(self,size_units: tuple):
+        self.__physical_size(self,'Y',*size_units)
         
     @property
     def ps_y(self):
@@ -303,8 +315,8 @@ class BioBase(object,metaclass=abc.ABCMeta) :
         return self.physical_size_y
 
     @ps_y.setter
-    def ps_y(self,psize,units):
-        self.__physical_size(self,'Y',psize,units)
+    def ps_y(self,size_units: tuple):
+        self.__physical_size(self,'Y',*size_units)
         
     @property
     def physical_size_z(self) -> typing.Tuple[float,str]:
@@ -316,8 +328,8 @@ class BioBase(object,metaclass=abc.ABCMeta) :
         return (self._metadata.image(0).Pixels.PhysicalSizeZ, self._metadata.image(0).Pixels.PhysicalSizeZUnit)
 
     @physical_size_z.setter
-    def physical_size_z(self,psize: float,units: str):
-        self.__physical_size(self,'Z',psize,units)
+    def physical_size_z(self,size_units: tuple):
+        self.__physical_size(self,'Z',*size_units)
         
     @property
     def ps_z(self):
@@ -325,8 +337,8 @@ class BioBase(object,metaclass=abc.ABCMeta) :
         return self.physical_size_z
 
     @ps_z.setter
-    def ps_z(self,psize,units):
-        self.__physical_size(self,'Z',psize,units)
+    def ps_z(self,size_units: tuple):
+        self.__physical_size(self,'Z',*size_units)
 
     """ -------------------- """
     """ -Validation methods- """
