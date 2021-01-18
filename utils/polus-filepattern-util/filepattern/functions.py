@@ -120,7 +120,7 @@ def output_name(pattern: str,
     This function returns a file output name for the image volume based on the
     name of multiple files used to generate it. All variables are kept the same
     as in the original filename, but variables in the file name pattern that are
-    not present in ind are transformed into a range surrounded by <>. For
+    not present in ind are transformed into a range surrounded by {}. For
     example, if the following files are processed:
     
     image_c000_z000.ome.tif
@@ -132,7 +132,7 @@ def output_name(pattern: str,
     
     then if ind = {'c': 0}, the output filename will be:
     
-    image_c000_z<000-002>.ome.tif
+    image_c000_z{000-002}.ome.tif
 
     Args:
         fpattern: A filename pattern indicating variables in filenames
@@ -168,8 +168,8 @@ def output_name(pattern: str,
             minval = min([int(b) for i in files for a,b in i.items() if a==v])
             maxval = max([int(b) for i in files for a,b in i.items() if a==v])
             maxlength = max([len(str(b)) for i in files for a,b in i.items() if a==v])
-            fname = fname.replace(e,'<' + str(minval).zfill(maxlength) +
-                                    '-' + str(maxval).zfill(maxlength) + '>')
+            fname = fname.replace(e,'{' + str(minval).zfill(maxlength) +
+                                    '-' + str(maxval).zfill(maxlength) + '}')
         elif v not in ind.keys():
             fname = fname.replace(e,str(0).zfill(len(e)-2))
         else:
