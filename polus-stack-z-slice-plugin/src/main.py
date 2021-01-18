@@ -1,6 +1,33 @@
-import argparse, time, logging, subprocess, multiprocessing
+import argparse, logging, math, filepattern, queue
+from bfio import BioReader, BioWriter
 from pathlib import Path
-from utils import _parse_files_p,_parse_files_xy,_parse_fpattern
+from multiprocessing import cpu_count
+from concurrent.futures import ThreadPoolExecutor
+
+import pprint
+
+# Global variable to scale number of processing threads dynamically
+free_threads = 0
+
+def _merge_layers(input_files,output_path):
+    
+    global free_threads
+    
+    # Initialize the output file
+    br = BioReader(input_files[0]['file'],max_workers)
+    bw = BioWriter(str(Path(output_dir).joinpath(output_file).absolute()),metadata=br.read_metadata())
+    bw.num_z(Z = len(zs))
+    del br
+    
+    # Load each image and save to the volume file
+    for z,i in zip(zs,range(len(zs))):
+        br = BioReader(str(Path(input_dir).joinpath(input_files[z][0]).absolute()))
+        bw.write_image(br.read_image(),Z=[i,i+1])
+        del br
+    
+    # Close the output image and delete
+    bw.close_image()
+    del bw
 
 if __name__ == "__main__":
     # Initialize the logger
@@ -24,124 +51,25 @@ if __name__ == "__main__":
     input_dir = args.input_dir
     output_dir = args.output_dir
     file_pattern = args.file_pattern
-    logger.info('input_dir = {}'.format(input_dir))
-    logger.info('output_dir = {}'.format(output_dir))
-    logger.info('file_pattern = {}'.format(file_pattern))
+    logger.info(f'input_dir = {input_dir}')
+    logger.info(f'output_dir = {output_dir}')
+    logger.info(f'file_pattern = {file_pattern}')
     
-    # Parse the filename pattern
-    regex,variables = _parse_fpattern(file_pattern)
+    max_threads = cpu_count()
+    logger.info(f'max_threads: {max_threads}')
     
-    # Parse files based on regex
-    if 'p' not in variables:
-        logger.info('Using x and y as the position variable if present...')
-        files = _parse_files_xy(input_dir,regex,variables)
-    else:
-        logger.info('Using p as the position variable...')
-        files = _parse_files_p(input_dir,regex,variables)
+    # create the filepattern object
+    fp = filepattern.FilePattern(input_dir,file_pattern)
     
-    # Initialize variables for process management
-    processes = []
-    process_timer = []
-    pnum = 0
+    # Create thread handling variables
     
-    # Cycle through image replicate variables
-    rs = [r for r in files.keys()]
-    rs.sort() # sorted list of replicate values
-    for r in rs:
-        # Cycle through image timepoint variables
-        ts = [t for t in files[r].keys()] 
-        ts.sort() # sorted list of timepoint values
-        for t in ts:
-            # Cycle through image channel variables
-            cs = [c for c in files[r][t].keys()] 
-            cs.sort() # sorted list of channel values
-            for c in cs:
-                if 'p' not in variables:
-                    # Cycle through image x positions
-                    xs = [x for x in files[r][t][c].keys()] 
-                    xs.sort() # sorted list of x-positions
-                    for x in xs:
-                        # Cycle through image y positions
-                        ys = [y for y in files[r][t][c][x].keys()] 
-                        ys.sort() # sorted list of y-positions
-                        for y in ys:
-                            # If there are num_cores - 1 processes running, wait until one finishes
-                            if len(processes) >= multiprocessing.cpu_count()-1 and len(processes) > 0:
-                                free_process = -1
-                                while free_process<0:
-                                    for process in range(len(processes)):
-                                        if processes[process].poll() is not None:
-                                            free_process = process
-                                            break
-                                    # Only check intermittently to free up processing power
-                                    if free_process<0:
-                                        time.sleep(3)
-                                pnum += 1
-                                logger.info("Finished process {} of {} in {}s!".format(pnum,len(ts)*len(cs)*len(xs)*len(ys),time.time() - process_timer[free_process]))
-                                del processes[free_process]
-                                del process_timer[free_process]
-                            
-                            # Spawn a stack building process and record the starting time
-                            processes.append(subprocess.Popen("python3 merge_layers.py --inpDir {} --outDir {} --regex {} --X {} --Y {} --C {} --T {} --R {}".format(input_dir,
-                                                                                                                                                                     output_dir,
-                                                                                                                                                                     file_pattern,
-                                                                                                                                                                     x,
-                                                                                                                                                                     y,
-                                                                                                                                                                     c,
-                                                                                                                                                                     t,
-                                                                                                                                                                     r),
-                                                                                                                                                                     shell=True))
-                            process_timer.append(time.time())
-                else:
-                    # Cycle through image sequence positions
-                    ps = [p for p in files[r][t][c].keys()]
-                    ps.sort()
-                    for p in ps:
-                        # If there are num_cores - 1 processes running, wait until one finishes
-                        if len(processes) >= multiprocessing.cpu_count()-1 and len(processes) > 0:
-                            free_process = -1
-                            while free_process<0:
-                                for process in range(len(processes)):
-                                    if processes[process].poll() is not None:
-                                        free_process = process
-                                        break
-                                # Only check intermittently to free up processing power
-                                if free_process<0:
-                                    time.sleep(3)
-                            pnum += 1
-                            logger.info("Finished process {} of {} in {}s!".format(pnum,len(ts)*len(cs)*len(ps),time.time() - process_timer[free_process]))
-                            del processes[free_process]
-                            del process_timer[free_process]
-                        
-                        # Spawn a stack building process and record the starting time
-                        processes.append(subprocess.Popen("python3 merge_layers.py --inpDir {} --outDir {} --regex {} --P {} --C {} --T {} --R {}".format(input_dir,
-                                                                                                                                                          output_dir,
-                                                                                                                                                          file_pattern,
-                                                                                                                                                          p,
-                                                                                                                                                          c,
-                                                                                                                                                          t,
-                                                                                                                                                          r),
-                                                                                                                                                          shell=True))
-                        process_timer.append(time.time())
-    
-    # Wait for all processes to finish
-    while len(processes)>0:
-        free_process = -1
-        while free_process<0:
-            for process in range(len(processes)):
-                if processes[process].poll() is not None:
-                    free_process = process
-                    break
-            # Only check intermittently to free up processing power
-            if free_process<0:
-                time.sleep(3)
-        pnum += 1
-        if 'p' not in variables:
-            logger.info("Finished process {} of {} in {}s!".format(pnum,len(ts)*len(cs)*len(xs)*len(ys),time.time() - process_timer[free_process]))
-        else:
-            logger.info("Finished process {} of {} in {}s!".format(pnum,len(ts)*len(cs)*len(ps),time.time() - process_timer[free_process]))
-        del processes[free_process]
-        del process_timer[free_process]
-
-    logger.info("Finished all processes, closing...")
+    for files in fp.iterate(group_by='z'):
+        
+        print(list(math.ceil(d/1024) for d in BioReader.image_size(files[0]['file'])))
+        
+        print(filepattern.output_name(file_pattern,files,{'p': files[0]['p']}))
+        
+        pprint.pprint(files)
+        
+        quit()
     

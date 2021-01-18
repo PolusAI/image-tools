@@ -1,8 +1,6 @@
-from bfio.bfio import BioReader, BioWriter
-import bioformats
-import javabridge as jutil
+from bfio import BioReader, BioWriter
 from pathlib import Path
-from utils import _parse_files_xy,_parse_files_p,_parse_fpattern,_get_output_name
+import filepattern
 import argparse
 
 def _merge_layers(input_dir,input_files,output_dir,output_file):
