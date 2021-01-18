@@ -274,7 +274,7 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
                                 str(self.frontend._metadata).replace('ome:', '').replace(':ome', '')])
         
         self._addtag(270, 's', 0, description, writeonce=True)  # Description
-        self._addtag(305, 's', 0, bfio.__version__)  # Software
+        self._addtag(305, 's', 0, f'bfio v{bfio.__version__}')  # Software
         # addtag(306, 's', 0, datetime, writeonce=True)
         self._addtag(259, 'H', 1, self._compresstag)  # Compression
         self._addtag(256, 'I', 1, self._datashape[-2])  # ImageWidth
@@ -296,7 +296,7 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
 
         if self.frontend.physical_size_x[0] is not None:
             self._addtag(282, '2I', 1,
-                            rational(10000 / self.frontend.physical_size_x[0] / 10000))  # XResolution in pixels/cm
+                            rational(10000 / self.frontend.physical_size_x[0] ))  # XResolution in pixels/cm
             self._addtag(283, '2I', 1, rational(10000 / self.frontend.physical_size_y[0]))  # YResolution in pixels/cm
             self._addtag(296, 'H', 1, 3)  # ResolutionUnit = cm
         else:

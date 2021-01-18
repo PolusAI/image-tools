@@ -285,7 +285,7 @@ class BioBase(object,metaclass=abc.ABCMeta) :
 
     @physical_size_x.setter
     def physical_size_x(self,size_units: tuple):
-        self.__physical_size(self,'X',*size_units)
+        self.__physical_size('X',*size_units)
         
     @property
     def ps_x(self) -> typing.Tuple[float,str]:
@@ -294,7 +294,7 @@ class BioBase(object,metaclass=abc.ABCMeta) :
 
     @ps_x.setter
     def ps_x(self,size_units: tuple):
-        self.__physical_size(self,'X',*size_units)
+        self.__physical_size('X',*size_units)
         
     @property
     def physical_size_y(self) -> typing.Tuple[float,str]:
@@ -307,7 +307,7 @@ class BioBase(object,metaclass=abc.ABCMeta) :
 
     @physical_size_y.setter
     def physical_size_y(self,size_units: tuple):
-        self.__physical_size(self,'Y',*size_units)
+        self.__physical_size('Y',*size_units)
         
     @property
     def ps_y(self):
@@ -316,7 +316,7 @@ class BioBase(object,metaclass=abc.ABCMeta) :
 
     @ps_y.setter
     def ps_y(self,size_units: tuple):
-        self.__physical_size(self,'Y',*size_units)
+        self.__physical_size('Y',*size_units)
         
     @property
     def physical_size_z(self) -> typing.Tuple[float,str]:
@@ -329,7 +329,7 @@ class BioBase(object,metaclass=abc.ABCMeta) :
 
     @physical_size_z.setter
     def physical_size_z(self,size_units: tuple):
-        self.__physical_size(self,'Z',*size_units)
+        self.__physical_size('Z',*size_units)
         
     @property
     def ps_z(self):
@@ -338,7 +338,7 @@ class BioBase(object,metaclass=abc.ABCMeta) :
 
     @ps_z.setter
     def ps_z(self,size_units: tuple):
-        self.__physical_size(self,'Z',*size_units)
+        self.__physical_size('Z',*size_units)
 
     """ -------------------- """
     """ -Validation methods- """
