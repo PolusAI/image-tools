@@ -37,6 +37,7 @@ if __name__=="__main__":
     
     # Surround with try/finally for proper error catching
     try:
+        # if else for different projection types
         if projectionType == 'max':
             intensity_projection.max_projection(inpDir, outDir)
         elif projectionType == 'min':
@@ -49,5 +50,6 @@ if __name__=="__main__":
 
     finally:
         # Exit the program
+        logger.info('Exiting the workflow..')
         sys.exit()
 
