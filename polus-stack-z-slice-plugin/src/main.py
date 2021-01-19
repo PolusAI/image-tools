@@ -14,8 +14,8 @@ for _ in range(max_threads):
     available_threads.put(2)
 
 # Set logger delay times
-main_delay = 2*max_threads      # Delay between updates for main process
-process_delay = max_threads     # Delay between updates within _merge_layers
+main_delay = 30        # Delay between updates for main process
+process_delay = 10     # Delay between updates within _merge_layers
 
 # length/width of the chunk each _merge_layers thread processes at once
 # Number of useful threads is limited
