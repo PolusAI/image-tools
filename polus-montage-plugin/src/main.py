@@ -1,9 +1,8 @@
 import argparse, logging, time, math
 from pathlib import Path
-from filepattern import FilePattern, get_regex
+from filepattern import FilePattern, get_regex, VARIABLES
 from bfio import BioReader
 
-VARIABLES = 'rtczyxp'
 SPACING = 10
 MULTIPLIER = 4
 STITCH_VARS = ['file','correlation','posX','posY','gridX','gridY'] # image stitching values
@@ -23,11 +22,11 @@ def _get_xy_index(files,dims,layout):
     of the dims position in layout. The layout variable indicates all variables
     at every grid layer, starting from the smallest and ending with the largest
     grid. Using the notation from DeepZooms folder structure, the highest
-    resolution values are stored with the largest index. So, if dims is the first
-    element in the layout list and layout has 3 items in the list, then the 
-    grid positions will be stored in the file dictionary as '2_gridX' and
+    resolution values are stored with the largest index. So, if dims is the
+    first element in the layout list and layout has 3 items in the list, then
+    the grid positions will be stored in the file dictionary as '2_gridX' and
     '2_gridY'.
-    
+
     Inputs:
         files - a list of dictionaries containing file information
         dims - the dimensions by which the grid will be organized
@@ -79,7 +78,7 @@ def _get_xy_index(files,dims,layout):
         for f in files:
             f[str(index) + '_gridX'] = int((f[dims[0]]-pos_min) % col_max)
             f[str(index) + '_gridY'] = int((f[dims[0]]-pos_min)//col_max)
-        
+
     return grid_dims
 
 if __name__=="__main__":
@@ -104,7 +103,7 @@ if __name__=="__main__":
                         help='Spacing between images in the smallest subgrid', required=False)
     parser.add_argument('--gridSpacing', dest='gridSpacing', type=str,
                         help='Multiplier', required=False)
-    
+
     # Parse the arguments
     args = parser.parse_args()
     pattern = args.filePattern
@@ -119,7 +118,7 @@ if __name__=="__main__":
     logger.info('image_spacing = {}'.format(image_spacing))
     grid_spacing = args.gridSpacing
     logger.info('grid_spacing = {}'.format(grid_spacing))
-    
+
     # Set new image spacing and grid spacing arguments if present
     if image_spacing != None:
         SPACING = int(image_spacing)
@@ -129,7 +128,7 @@ if __name__=="__main__":
     # Set up the file pattern parser
     logger.info('Parsing the file pattern...')
     fp = FilePattern(inpDir,pattern)
-    
+
     # Parse the layout
     logger.info('Parsing the layout...')
     regex, variables = get_regex(pattern)
@@ -140,11 +139,11 @@ if __name__=="__main__":
         for v in l:
             if v not in VARIABLES:
                 logger.error("Variables must be one of {}".format(VARIABLES))
-                ValueError("Variables must be one of {}".format(VARIABLES))
+                raise ValueError("Variables must be one of {}".format(VARIABLES))
         if len(layout)>2 or len(layout)<1:
             logger.error("Each layout subgrid must have one or two variables assigned to it.")
-            ValueError("Each layout subgrid must have one or two variables assigned to it.")
-    
+            raise ValueError("Each layout subgrid must have one or two variables assigned to it.")
+
     for v in reversed(variables): # Add supergrids if a variable is undefined in layout
         is_defined = False
         for l in layout:
@@ -206,7 +205,7 @@ if __name__=="__main__":
         # Get the largest size subgrid image in pixels
         index = len(layout) - 1 - i
         layout_dimensions['tile_size'][index] = layout_dimensions['size'][index+1]
-        
+
         for files in fp.iterate(group_by=''.join(layout[:i+1])):
             # determine number of rows and columns in the current subgrid
             grid_size = _get_xy_index(files,layout[i],layout)
@@ -234,7 +233,7 @@ if __name__=="__main__":
         for file in fp.iterate():
             f = file[0]
             file_name = Path(f['file']).name
-            
+
             # Calculate the image position
             gridX = 0
             gridY = 0
@@ -249,7 +248,7 @@ if __name__=="__main__":
                 else:
                     gridX += f[str(i) + '_gridX'] * layout_dimensions['grid_size'][i+1][0]
                     gridY += f[str(i) + '_gridY'] * layout_dimensions['grid_size'][i+1][1]
-            
+
             fw.write("file: {}; corr: {}; position: ({}, {}); grid: ({}, {});\n".format(file_name,
                                                                                         correlation,
                                                                                         posX,
