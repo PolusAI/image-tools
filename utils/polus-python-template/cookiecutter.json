@@ -1,9 +1,9 @@
 {
-    "author": "Gauhar Bains",
-    "email": "gauhar.bains@labshare.org",
-    "github_username": "gauharbains",
-    "project_name": "Intensity Projection Plugin",
-    "project_short_description": "Calculate volumetric intensity projections",
+    "author": "Data Scientist",
+    "email": "data.scientist@labshare.org",
+    "github_username": "datascientist",
+    "project_name": "WIPP Widget",
+    "project_short_description": "Everything you need to start a WIPP plugin.",
     "version": "0.1.1",
     "use_bfio": "True",
     "_inputs": {
@@ -13,10 +13,10 @@
             "description": "Input image collection to be processed by this plugin",
             "required": "True"
         },
-        "projectionType": {
+        "filePattern": {
             "type": "string",
-            "title": "Projection Type",
-            "description": "Type of volumetric intensity projection",
+            "title": "Filename pattern",
+            "description": "Filename pattern used to separate data",
             "required": "True"
         }
     },

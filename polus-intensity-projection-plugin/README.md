@@ -1,6 +1,6 @@
 # Intensity Projection Plugin
 
-This WIPP plugin calculates the volumeteric intensity projection of a 3d image along the z-direction(depth).  The following types of intensity projections have been implemented: 
+This WIPP plugin calculates the volumetric intensity projection of a 3d image along the z-direction(depth).  The following types of intensity projections have been implemented: 
 
 1. Maximum: 
 2. Minimum 
