@@ -87,20 +87,22 @@ class PatternObject():
             A nested dictionary of file dictionaries
         """
 
-    def output_name(self,files:list = []) -> str:
-        """[summary]
+    def output_name(self,files:typing.List[dict] = []) -> str:
+        """Determine an output name for a list of files
+        
+        See the :any:`output_name` method for more details.
+        
+        This method uses the ``filepattern`` used to initialize the object to
+        determine an output file name that summarizes the range of variables
+        included in the ``file_path`` list of dictionaries. If ``file_path`` is
+        empty, this method returns an output file name that summarizes the range
+        of all variables parsed by the object.
 
         Args:
-            files (list, optional): [description]. Defaults to [].
-
-        Raises:
-            SyntaxError: [description]
+            files: A list of file dictionaries
 
         Returns:
-            str: [description]
-
-        Yields:
-            Iterator[str]: [description]
+            An output file name
         """
         
         if len(files) == 0:
@@ -231,17 +233,16 @@ class FilePattern(PatternObject):
 class VectorPattern(PatternObject):
     """ Main class for handling stitching vectors
     
-    This class works nearly identically to FilePattern, except it works with
-    lines inside of a stitching vector. As with FilePattern, the iterate method
-    will iterate through values, which in the case of VectorPattern are parsed
-    lines of a stitching vector.
+    This class works nearly identically to :any:`FilePattern`, except it works
+    with lines inside of a stitching vector. As with FilePattern, the iterate
+    method will iterate through values, which in the case of VectorPattern are
+    parsed lines of a stitching vector.
     
     Note:
-        One major difference between this class and FilePattern is that the
-        ``file`` values in the file dictionaries contain strings rather than
-        pathlib.Path objects.
+        One major difference between this class and :any:`FilePattern` is that
+        the ``file`` values in the file dictionaries contain strings rather than
+        ``pathlib.Path`` objects.
         
-
     """
     
     def parse_data(self,file_path: typing.Union[pathlib.Path,str]):

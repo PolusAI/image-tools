@@ -27,9 +27,9 @@ def get_regex(pattern: str) -> typing.Tuple[str,str]:
     The filename pattern used here mimics that used by MIST, where variables and
     positions are encoded into the string. For example, file_c000.ome.tif that
     indicates channel using the _c, the filename pattern would be
-    file_c{ccc}.ome.tif. The only possible variables that can be passed into the
-    filename pattern are p, x, y, z, c, t, and r. In the case of p, x, and y,
-    both x&y must be specified or p must be specified, but if all three are
+    ``file_c{ccc}.ome.tif``. The only possible variables that can be passed into
+    the filename pattern are p, x, y, z, c, t, and r. In the case of p, x, and
+    y, both x&y must be specified or p must be specified, but if all three are
     specified then an error is thrown.
 
     If no filepattern is provided, then a universal expression is returned.
@@ -78,25 +78,29 @@ def output_name(pattern: str,
     This function returns a file output name for the image volume based on the
     name of multiple files used to generate it. All variables are kept the same
     as in the original filename, but variables in the file name pattern that are
-    not present in ind are transformed into a range surrounded by {}. For
+    not present in ind are transformed into a range surrounded by ``{}``. For
     example, if the following files are processed:
 
-    image_c000_z000.ome.tif
-    image_c000_z001.ome.tif
-    image_c000_z002.ome.tif
-    image_c001_z000.ome.tif
-    image_c001_z001.ome.tif
-    image_c001_z002.ome.tif
+    .. code-block:: bash
+    
+        image_c000_z000.ome.tif
+        image_c000_z001.ome.tif
+        image_c000_z002.ome.tif
+        image_c001_z000.ome.tif
+        image_c001_z001.ome.tif
+        image_c001_z002.ome.tif
 
-    then if ind = {'c': 0}, the output filename will be:
+    then if ``ind = {'c': 0}``, the output filename will be:
 
-    image_c000_z{000-002}.ome.tif
+    .. code-block:: bash
+        
+        image_c000_z{000-002}.ome.tif
 
     Args:
         fpattern: A filename pattern indicating variables in filenames
         files: A list  of file names
         ind: A dictionary containing the indices for the file name (e.g.
-            {'r':1,'t':1})
+            ``{'r':1,'t':1}``)
 
     Returns:
         An output file name
@@ -236,13 +240,18 @@ def parse_directory(file_path: typing.Union[str,pathlib.Path],
     This function extracts the variables value  from each filename in a
     directory and places them in a dictionary that allows retrieval using
     variable values. For example, if there is a folder with filenames using the
-    pattern file_x{xxx}_y{yyy}_c{ccc}.ome.tif, then the output will be a
+    pattern ``file_x{xxx}_y{yyy}_c{ccc}.ome.tif``, then the output will be a
     dictionary with the following structure:
 
-    output_dictionary[r][t][c][z][y][x]
+    .. code-block:: bash
+        
+        output_dictionary[r][t][c][z][y][x]
 
-    To access the filename with values x=2, y=3, and c=1:
-    output_dictionary[-1][-1][1][-1][3][2]
+    To access the filename with values ``x=2``, ``y=3``, and ``c=1``:
+    
+    .. code-block:: bash
+    
+        output_dictionary[-1][-1][1][-1][3][2]
 
     The -1 values are placeholders for variables that were undefined by the
     pattern. The value stored in the deepest layer of the dictionary is a list
@@ -254,17 +263,19 @@ def parse_directory(file_path: typing.Union[str,pathlib.Path],
     A custom variable order can be returned using the var_order keyword
     argument. When set, this changes the structure of the output dictionary.
     Using the previous example, if the var_order value was set to ``xyc``, then
-    to access the filename matching x=2, y=3, and c=1:
+    to access the filename matching ``x=2``, ``y=3``, and ``c=1``:
 
-    output_dictionary[2][3][1]
+    .. code-block:: bash
+    
+        output_dictionary[2][3][1]
 
     The variables in var_order do not need to match the variables in the
     pattern, but this will cause overloaded lists to be returned. Again using
-    the same example as before, if the var_order was set to 'xy', then accessing
-    the file associated with x=2 and y=3 will return a list of all filenames
-    that match x=2 and y=3, but each filename will have a different c value.
-    This may be useful in applications where filenames want to be grouped by a
-    particular attribute (channel, replicate, etc).
+    the same example as before, if the var_order was set to ``xy``, then
+    accessing the file associated with ``x=2`` and ``y=3`` will return a list of
+    all filenames that match ``x=2`` and ``y=3``, but each filename will have a
+    different ``c`` value. This may be useful in applications where filenames
+    want to be grouped by a particular attribute (channel, replicate, etc).
 
     Note:
         The uvals return value is a list of unique values for each variable
@@ -316,8 +327,9 @@ def parse_vector(file_path: str,
     posX and posY are the pixel positions of an image within a larger stitched
     image, and gridX and gridY are the grid positions for each image.
 
-    Note: A key difference between this function and parse_directory is the
-        value stored under the 'file' key. This function returns only the name
+    Note:
+        A key difference between this function and parse_directory is the
+        value stored under the ``file`` key. This function returns only the name
         of an image parsed from the stitching vector, while the value returned
         by parse_dictionary is a full path to an image.
 
@@ -409,6 +421,42 @@ def get_matching(files: dict,
     return out_var
 
 def infer_pattern(files: typing.Union[typing.List[pathlib.Path],typing.List[str]]) -> str:
+    """Guess a filepattern given a list of files
+
+    This method attempts to guess a ``filepattern`` that would apply to a list
+    of files. There is no gauruntee of a match.
+    
+    This method will only work if the non-numeric characters in a list of file
+    names are identical. For example, this function will work on the following
+    list of files:
+    
+    .. code-block:: bash
+    
+        Experiment 1 x01 y01 c01.ome.tif
+        Experiment 1 x01 y01 c02.ome.tif
+        Experiment 1 x01 y01 c03.ome.tif
+        Experiment 1 x01 y02 c01.ome.tif
+        Experiment 1 x01 y02 c02.ome.tif
+        Experiment 1 x01 y02 c03.ome.tif
+        
+    The following list of files would not work, because the non-numeric
+    characters are different
+    
+    .. code-block:: bash
+    
+        Experiment 1 x01 y01 DAPI.ome.tif
+        Experiment 1 x01 y01 FITC.ome.tif
+        Experiment 1 x01 y01 TXRD.ome.tif
+        Experiment 1 x01 y02 DAPI.ome.tif
+        Experiment 1 x01 y02 FITC.ome.tif
+        Experiment 1 x01 y02 TXRD.ome.tif
+
+    Args:
+        files: a list of files or pathlib.Path objects
+
+    Returns:
+        str: A ``filepattern`` that matches the list of files
+    """
     
     files_str = [file if isinstance(file,str) else file.name for file in files]
     
@@ -445,7 +493,7 @@ def sw_search(pattern: str,
     filename should be identical.
     
     In general, this function should not be directly called. Instead, consider
-    using the :func:`infer_pattern` function.
+    using the :any:`infer_pattern` function.
     
     Note:
         There is no gauruntee that the variable definitions in the input pattern
