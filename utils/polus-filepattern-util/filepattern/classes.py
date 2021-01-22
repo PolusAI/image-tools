@@ -1,6 +1,7 @@
 import copy, pathlib, typing, abc
 from filepattern.functions import get_regex, get_matching, parse_directory, \
-                                  parse_vector, logger, VARIABLES, output_name
+                                  parse_vector, logger, VARIABLES, output_name, \
+                                  _parse, parse_filename
 
 class PatternObject():
     """ Abstract base class for handling filepatterns
@@ -107,7 +108,14 @@ class PatternObject():
         
         if len(files) == 0:
             files = self.files
-            
+        else:
+            files = _parse(parse_filename,
+                           [file['file'] for file in files],
+                           self.pattern,
+                           self.regex,
+                           self.variables,
+                           self.var_order)
+        
         files = get_matching(files,self.var_order,**{k.upper():v for k,v in self.uniques.items()})
         
         vals = {v:set() for v in self.var_order}
