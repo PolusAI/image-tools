@@ -1,15 +1,16 @@
-import argparse, logging, math, filepattern, queue, time
+import argparse, logging, math, filepattern, time, queue
 from bfio import BioReader, BioWriter
 from pathlib import Path
 from multiprocessing import cpu_count
-from concurrent.futures import ThreadPoolExecutor, wait
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, wait
+from multiprocessing import Queue
 
 logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 
 # Global variable to scale number of processing threads dynamically
-max_threads = max([2*cpu_count()//3,2])
-available_threads = queue.Queue(max_threads)
+max_threads = cpu_count()//2 + 1
+available_threads = Queue(max_threads)
 for _ in range(max_threads):
     available_threads.put(2)
 
@@ -22,7 +23,13 @@ process_delay = 10     # Delay between updates within _merge_layers
 chunk_size = 8192
 useful_threads = (chunk_size // BioReader._TILE_SIZE) ** 2
 
+def initialize_queue(processes):
+    global available_threads
+    available_threads = processes
+
 def _merge_layers(input_files,output_path):
+    global available_threads
+    
     logger = logging.getLogger("merge")
     logger.setLevel(logging.INFO)
 
@@ -98,7 +105,7 @@ def _merge_layers(input_files,output_path):
                         logger.info(f'{output_path.name}: Increasing number of threads from {active_threads} to {active_threads+new_threads}')
                         active_threads += new_threads
                         bw.max_workers = active_threads
-                    except queue.Empty:
+                    except:
                         pass
 
     # Free the threads for other processes
@@ -136,22 +143,22 @@ if __name__ == "__main__":
     # create the filepattern object
     fp = filepattern.FilePattern(input_dir,file_pattern)
 
-    threads = []
-    start = time.time()
-    with ThreadPoolExecutor(max_threads) as executor:
-        for files in fp.iterate(group_by='z'):
+    processes = []
+    with ProcessPoolExecutor(max_threads,initializer=initialize_queue,initargs=(available_threads,)) as executor:
+        count = 0
+        for files in fp(group_by='z'):
 
-            output_name = filepattern.output_name(file_pattern,files,{key:val for key,val in files[0].items() if key in filepattern.VARIABLES.replace('z','')})
+            output_name = fp.output_name(files)
             output_file = output_dir.joinpath(output_name)
 
-            threads.append(executor.submit(_merge_layers,files,output_file))
+            processes.append(executor.submit(_merge_layers,files,output_file))
 
-        done, not_done = wait(threads,timeout=0)
+        done, not_done = wait(processes,timeout=0)
 
         while len(not_done):
 
-            logger.info('Progress: {:7.3f}%'.format(100*len(done)/len(threads)))
+            logger.info('Progress: {:7.3f}%'.format(100*len(done)/len(processes)))
 
-            done, not_done = wait(threads,timeout=main_delay)
+            done, not_done = wait(processes,timeout=main_delay)
 
     logger.info('Progress: {:6.3f}%'.format(100))
