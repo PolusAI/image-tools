@@ -4,4 +4,5 @@ from .classes import FilePattern, VectorPattern
 
 from .functions import get_matching, get_regex,\
                        parse_directory, parse_filename,\
-                       output_name, logger, VARIABLES
+                       output_name, logger, VARIABLES, \
+                       infer_pattern

@@ -1,6 +1,6 @@
 import copy, pathlib, typing, abc
 from filepattern.functions import get_regex, get_matching, parse_directory, \
-                                  parse_vector, logger, VARIABLES
+                                  parse_vector, logger, VARIABLES, output_name
 
 class PatternObject():
     """ Abstract base class for handling filepatterns
@@ -28,6 +28,11 @@ class PatternObject():
         self.files = {}
         self.uniques = {}
         
+        # Define iteration variables
+        self._kwargs = None
+        self._group_by = None
+        
+        self.pattern = pattern
         self.regex, self.variables = get_regex(pattern)
         self.path = file_path
 
@@ -36,43 +41,10 @@ class PatternObject():
         self.var_order = ''.join([v for v in self.var_order if v in self.variables])
 
         self.files, self.uniques = self.parse_data(file_path)
-    
-    @abc.abstractmethod
-    def parse_data(self,file_path: str) -> dict:
-        """Parse data in a directory
         
-        This is where all the logic for the parsing the data should live. It
-        must return a nested dictionary in the same format as
-        :any:`parse_directory`.
-            
-        Args:
-            file_path: Path to target file directory to parse
-            
-        Returns:
-            A nested dictionary of file dictionaries
-        """
-
-    # Get filenames matching values for specified variables
-    def get_matching(self,**kwargs):
-        """ Get all filenames matching specific values
-    
-        This function runs the get_matching function using the objects file
-        dictionary. For more information, see :any:`get_matching`.
-
-        Args:
-            **kwargs: One of :any:`VARIABLES`, must be uppercase, can be single
-                values or a list of values
-                
-        Returns:
-            A list of all files matching the input values
-        """
-        # get matching files
-        files = get_matching(self.files,self.var_order,out_var=None,**kwargs)
-        return files
-
-    def iterate(self,group_by: list = [],**kwargs) -> typing.Iterator:
-        """ Iterate through filenames
-    
+    def __call__(self,group_by: list = [],**kwargs) -> typing.Iterable[typing.List[dict]]:
+        """Iterate through files parsed using a filepattern
+        
         This function is an iterable. On each call, it returns a list of
         filenames that matches a set of variable values. It iterates through
         every combination of variable values.
@@ -92,12 +64,96 @@ class PatternObject():
                 integers.
                 
         Returns:
+            Iterable that returns a list of files with matching variables
+        """
+        
+        self._group_by = group_by
+        self._kwargs = kwargs
+        
+        return self
+    
+    @abc.abstractmethod
+    def parse_data(self,file_path: str) -> dict:
+        """Parse data in a directory
+        
+        This is where all the logic for the parsing the data should live. It
+        must return a nested dictionary in the same format as
+        :any:`parse_directory`.
+            
+        Args:
+            file_path: Path to target file directory to parse
+            
+        Returns:
+            A nested dictionary of file dictionaries
+        """
+
+    def output_name(self,files:list = []) -> str:
+        """[summary]
+
+        Args:
+            files (list, optional): [description]. Defaults to [].
+
+        Raises:
+            SyntaxError: [description]
+
+        Returns:
+            str: [description]
+
+        Yields:
+            Iterator[str]: [description]
+        """
+        
+        if len(files) == 0:
+            files = self.files
+            
+        files = get_matching(files,self.var_order,**{k.upper():v for k,v in self.uniques.items()})
+        
+        vals = {v:set() for v in self.var_order}
+        for file in files:
+            for k,v in file.items():
+                if k not in self.var_order:
+                    continue
+                vals[k].add(v)
+        
+        kwargs = {}
+        for k,v in vals.items():
+            if len(v) == 1 and v[0] != -1:
+                kwargs[k] = v
+                
+        return output_name(self.pattern,files,kwargs)
+
+    # Get filenames matching values for specified variables
+    def get_matching(self,**kwargs):
+        """ Get all filenames matching specific values
+    
+        This function runs the get_matching function using the objects file
+        dictionary. For more information, see :any:`get_matching`.
+
+        Args:
+            **kwargs: One of :any:`VARIABLES`, must be uppercase, can be single
+                values or a list of values
+                
+        Returns:
             A list of all files matching the input values
         """
+        # get matching files
+        files = get_matching(self.files,self.var_order,out_var=None,**kwargs)
+        return files
+
+    def __iter__(self):
+        
+        group_by = self._group_by
+        kwargs = self._kwargs
+        self._group_by = None
+        self._kwargs = None
+        
+        if kwargs == None:
+            raise SyntaxError('Cannot directly iterate over a FilePattern object. Call it (i.e. for i in fp())')
+
         # If self.files is a list, no parsing took place so just loop through the files
         if isinstance(self.files,list):
             for f in self.files:
-                yield f
+                yield [f]
             return
 
         # Generate the values to iterate through
@@ -157,7 +213,7 @@ class FilePattern(PatternObject):
 
     """
     
-    def parse_data(self,file_path: str) -> dict:
+    def parse_data(self,file_path: typing.Union[pathlib.Path,str]) -> dict:
         """Parse data in a directory
         
         In the future, this function will parse data from a directory, and add
@@ -179,10 +235,16 @@ class VectorPattern(PatternObject):
     lines inside of a stitching vector. As with FilePattern, the iterate method
     will iterate through values, which in the case of VectorPattern are parsed
     lines of a stitching vector.
+    
+    Note:
+        One major difference between this class and FilePattern is that the
+        ``file`` values in the file dictionaries contain strings rather than
+        pathlib.Path objects.
+        
 
     """
     
-    def parse_data(self,file_path):
+    def parse_data(self,file_path: typing.Union[pathlib.Path,str]):
         """Parse data in a directory
         
         In the future, this function will parse data from a directory, and add

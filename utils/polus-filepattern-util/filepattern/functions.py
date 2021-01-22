@@ -21,48 +21,6 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger('filepattern')
 
-def _validate_pat_reg_var(pattern,regex,variables):
-    """ Validates pattern, regex, variable inputs """
-
-    # If regex and variables, just validate the variables
-    if regex != None and variables != None:
-        _val_variables(variables)
-
-    # If pattern is defined, get the corersponding regex and variables
-    elif pattern != None:
-        regex, variables = get_regex(pattern)
-
-    # Either pattern or regex&variables must be defined
-    else:
-        raise ValueError(f"""Either pattern must be provided as a keyword argument, or both regex and variables must be provided as input keyword arguments. Received the following keyword arguments:
-    {{
-        'regex': {regex},
-        'variables': {variables},
-        'pattern': {pattern}
-    }}""")
-
-    return regex,variables
-
-def _val_variables(variables: str) -> None:
-    """ Validate file pattern variables
-
-    Variables for a file pattern should only contain the values in
-    :attr:`VARIABLES`. In addition to this, only a linear positioning variable
-    (p) or an x,y positioning variable should be present, but not both.
-
-    There is no return value for this function. It throws an error if an invalid
-    variable is present.
-
-    Args:
-        variables: a string of variables, e.g. 'rtxy'
-    """
-
-    for v in variables:
-        assert v in VARIABLES, f"File pattern variables must be one of {VARIABLES}"
-
-    if 'p' in variables:
-        assert 'x' not in variables and 'y' not in variables, "Either x and/or y may be defined or p may be defined, but not both."
-
 def get_regex(pattern: str) -> typing.Tuple[str,str]:
     """ Parse a filename pattern into a regular expression
 
@@ -185,15 +143,18 @@ def parse_filename(file_name: str,
     Extract the variable values from a file name. Return as a dictionary.
 
     For example, if a file name and file pattern are:
-    file_x000_y000_c000.ome.tif
-    file_x{xxx}_y{yyy}_c{ccc}.ome.tif
+
+    .. code-block: bash
+    
+        file_x000_y000_c000.ome.tif
+        file_x{xxx}_y{yyy}_c{ccc}.ome.tif
 
     This function will return:
-    {
-        'x': 0,
-        'y': 0,
-        'c': 0
-    }
+    .. code-block: bash
+    
+        {'x': 0,
+         'y': 0,
+         'c': 0}
 
     Args:
         file_name: List of values parsed from a filename using a filepattern
@@ -264,88 +225,6 @@ def parse_vector_line(vector_line: str,
     logger.debug(f'parse_vector_line: output = {r}')
 
     return r
-
-def _parse(parse_function: typing.Callable,
-           files: typing.List[str],
-           pattern: typing.Optional[str] = None,
-           regex: typing.Optional[str] = None,
-           variables: typing.Optional[str] = None,
-           var_order: typing.Optional[str] = 'rtczyx') -> typing.Tuple[dict,dict]:
-
-    ''' Validate Inputs '''
-    logger.debug(f'_parse: parse_function = {parse_function.__name__}()')
-
-    regex, variables = _validate_pat_reg_var(pattern,regex,variables)
-    logger.debug(f'_parse: regex = {regex}')
-    logger.debug(f'_parse: variables = {variables}')
-
-    # validate variables in var_order
-    _val_variables(var_order)
-    logger.debug(f'_parse: var_order = {var_order}')
-
-    '''Initialize loop and output variables'''
-    # initialize the output
-    if variables != '':
-        file_ind = {}                         # file dictionary
-    else:
-        file_ind = []
-    uvals = {key:[] for key in var_order} # unique values
-
-    '''Build the file index dictionary'''
-    FILE_VARIABLES = {key:-1 for key in var_order}
-
-    # Build the output dictionary
-    for f in files:
-
-        # Parse filename values
-        if isinstance(f,pathlib.Path):
-            fv = parse_function(f.name,regex,variables)
-        else:
-            fv = parse_function(f,regex,variables)
-
-        # If the filename doesn't match the pattern, don't include it
-        if fv == None:
-            continue
-
-        # Fill in missing values
-        file_variables = copy.deepcopy(FILE_VARIABLES)
-        file_variables.update(fv)
-
-        # Generate the layered dictionary using the specified ordering
-        temp_dict = file_ind
-        for key in var_order:
-
-            # Create a new key,value pair if it's missing
-            if file_variables[key] not in temp_dict.keys():
-
-                # Create a new key for the layer if it doesn't exist
-                if file_variables[key] not in uvals[key]:
-                    uvals[key].append(file_variables[key])
-
-                # If not the last variable, create a new dictionary
-                if var_order[-1] != key:
-                    temp_dict[file_variables[key]] = {}
-
-                # If the last variable, create a list to hold data
-                else:
-                    temp_dict[file_variables[key]] = []
-
-            # Grab the reference for the next layer in the dictionary
-            temp_dict = temp_dict[file_variables[key]]
-
-        # Add the file information at the deepest layer
-        new_entry = {}
-        new_entry['file'] = f
-        if file_variables != None:
-            for key, value in file_variables.items():
-                new_entry[key] = value
-
-        temp_dict.append(new_entry)
-
-    for key in uvals.keys():
-        uvals[key].sort()
-
-    return file_ind, uvals
 
 def parse_directory(file_path: typing.Union[str,pathlib.Path],
                     pattern: typing.Optional[str] = None,
@@ -463,7 +342,8 @@ def parse_vector(file_path: str,
                   pattern,
                   regex,
                   variables,
-                  var_order)
+                  var_order,
+                  False)
 
 def get_matching(files: dict,
                  var_order: str,
@@ -527,3 +407,333 @@ def get_matching(files: dict,
             continue
         get_matching(files[v_i],var_order[1:],out_var,**kwargs)
     return out_var
+
+def infer_pattern(files: typing.Union[typing.List[pathlib.Path],typing.List[str]]) -> str:
+    
+    files_str = [file if isinstance(file,str) else file.name for file in files]
+    
+    if len(files_str) == 0:
+        return ''
+    
+    pattern = files_str[0]
+    regex, _ = get_regex(pattern)
+    
+    logger.debug('starting pattern: {}'.format(pattern))
+    
+    for file in files_str:
+        
+        if re.match(regex,file) == None:
+            
+            pattern = sw_search(pattern,file)
+            regex, _ = get_regex(pattern)
+            
+            logger.debug('file: {}'.format(file))
+            logger.debug('new pattern: {}'.format(pattern))
+            
+    logger.debug('final pattern: {}'.format(pattern))
+            
+    return pattern
+
+def sw_search(pattern: str,
+              filename: str) -> str:
+    """ Use a Smith-Waterman algorithm variant to modify a filepattern
+    
+    This function uses a modified
+    `Smith-Waterman <https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm>`_
+    to update the input pattern so that it will operate on the filename. This
+    algorithm assumes that only numeric values might change and all text in the
+    filename should be identical.
+    
+    In general, this function should not be directly called. Instead, consider
+    using the :func:`infer_pattern` function.
+    
+    Note:
+        There is no gauruntee that the variable definitions in the input pattern
+        will be in the same order or position of the pattern returned by this
+        function.
+
+    Args:
+        pattern: A filepattern
+        filename: A filename to compare against the pattern
+
+    Returns:
+        A new filepattern that matches the filename
+    """
+    
+    '''Decompose the pattern'''
+    numbers = '0123456789<>'
+
+    # Split the old pattern apart, where splits occur at variable definitions
+    vlist = [(0,0,'','')]
+    for v in VARIABLES:
+        
+        matches = re.search('{{[{}]+\+?}}'.format(v),pattern)
+        
+        if matches != None:
+            if '+' in matches.group(0):
+                pattern = pattern.replace(matches.group(0),'>',1)
+            else:
+                pattern = pattern.replace(matches.group(0),'<' * (len(matches.group(0))-2),1)
+        else:
+            break
+        
+    logger.debug(f'sw_search: pattern = {pattern}')
+    logger.debug(f'sw_search: filename = {filename}')
+    
+    '''Create the scoring function'''
+    sab = {
+        'numeric': {
+            'match': 2,
+            'penalty': 1
+        },
+        # Larger bonus and penalty for matching/mismatching non-numerics
+        'alpha': {
+            'match': 5,
+            'penalty': 3
+        }
+    }
+    
+    '''Creat the scoring matrix'''
+    m = len(pattern)
+    n = len(filename)
+    matrix = [[0]*(n+1) for _ in range(m+1)]
+    
+    '''Populate the scoring matrix'''
+    for pi, p in enumerate(pattern):
+        
+        p_is_numeric = p in numbers
+        
+        for fi, f in enumerate(filename):
+            
+            f_is_numeric = f in numbers
+            
+            scores = [0]
+            
+            # generate the similarity score
+            if f_is_numeric:
+                if p==f or p in '<>':
+                    s = matrix[pi][fi] + sab['numeric']['match']
+                else:
+                    s = matrix[pi][fi] - sab['numeric']['match']
+            else:
+                if p==f:
+                    s = matrix[pi][fi] + sab['alpha']['match']
+                else:
+                    s = matrix[pi][fi] - sab['alpha']['match']
+            scores.append(s)
+            
+            # calculate the gap scores
+            if f_is_numeric:
+                if p_is_numeric:
+                    wi = matrix[pi+1][fi] - sab['numeric']['penalty']
+                    wj = matrix[pi][fi+1] - sab['numeric']['penalty']
+                else:
+                    wi = matrix[pi+1][fi] - sab['alpha']['penalty']
+                    wj = matrix[pi][fi+1] - sab['alpha']['penalty']
+            else:
+                wi = matrix[pi+1][fi] - sab['alpha']['penalty']
+                wj = matrix[pi][fi+1] - sab['alpha']['penalty']
+            
+            scores.extend([wi,wj])
+            
+            # Assign the score
+            matrix[pi+1][fi+1] = max(scores)
+    
+    '''Traceback'''
+    # Find the best score
+    best_score = matrix[m][n]
+    row = m
+    col = n
+    for r in range(1,m+1):
+        for c in range(1,n+1):
+            if matrix[r][c] > best_score:
+                best_score = matrix[r][c]
+                row = r
+                col = c
+                
+    # Traceback, building a new pattern template
+    pattern_template = filename[col-1]
+    last_row = row
+    last_col = col
+    for _ in range(1,max([row,col])):
+        
+        # Default to the next set of characters
+        r = row - 1
+        c = col - 1
+        best_score = matrix[r][c]
+        
+        if matrix[row][col-1] > best_score:
+            best_score = matrix[row][col-1]
+            r = row
+            c = col - 1
+            
+        if matrix[row-1][col] > best_score:
+            best_score = matrix[row-1][col]
+            r = row - 1
+            c = col
+        
+        row = r
+        col = c
+        
+        # Default to the matching value if available
+        if filename[col-1] == pattern[row-1] and last_col != col and last_row != row:
+            pattern_template = filename[col-1] + pattern_template
+        else:
+            
+            # If the values don't match, throw and error if they are nonnumeric
+            if filename[col-1] not in numbers or pattern[row-1] not in numbers:
+                raise ValueError('There are nonnumeric characters that do not match.')
+            
+            # If we have progressed a row and column, add a static placeholder
+            if last_col != col and last_row != row:
+                if pattern[row-1] == '>':
+                    pattern_template = '>' + pattern_template
+                else:
+                    pattern_template = '<' + pattern_template
+                
+            # We didn't progress on either a row or column.
+            # This means the lengths don't match, so add a variable placeholder
+            else:
+                pattern_template = '>' + pattern_template
+            
+        last_row = row
+        last_col = col
+    
+    '''Construct a new filepattern'''
+    pattern = pattern_template
+    vi = 0
+    for match in re.finditer('[<>]+',pattern_template):
+        if '>' in match.group(0):
+            vdef = '{{{}+}}'.format(VARIABLES[vi])
+        else:
+            vdef = '{{{}}}'.format(VARIABLES[vi]*len(match.group(0)))
+        pattern = pattern.replace(match.group(0),vdef,1)
+        vi += 1
+    
+    return pattern
+
+def _parse(parse_function: typing.Callable,
+           files: typing.List[str],
+           pattern: typing.Optional[str] = None,
+           regex: typing.Optional[str] = None,
+           variables: typing.Optional[str] = None,
+           var_order: typing.Optional[str] = 'rtczyx',
+           sort: bool = True) -> typing.Tuple[dict,dict]:
+
+    ''' Validate Inputs '''
+    logger.debug(f'_parse: parse_function = {parse_function.__name__}()')
+
+    regex, variables = _validate_pat_reg_var(pattern,regex,variables)
+    logger.debug(f'_parse: regex = {regex}')
+    logger.debug(f'_parse: variables = {variables}')
+
+    # validate variables in var_order
+    _val_variables(var_order)
+    logger.debug(f'_parse: var_order = {var_order}')
+
+    '''Initialize loop and output variables'''
+    # initialize the output
+    if variables != '':
+        file_ind = {}                     # file dictionary
+    else:
+        file_ind = []
+    uvals = {key:[] for key in var_order} # unique values
+
+    '''Build the file index dictionary'''
+    FILE_VARIABLES = {key:-1 for key in var_order}
+
+    # Build the output dictionary
+    for f in files:
+
+        # Parse filename values
+        if isinstance(f,pathlib.Path):
+            fv = parse_function(f.name,regex,variables)
+        else:
+            fv = parse_function(f,regex,variables)
+
+        # If the filename doesn't match the pattern, don't include it
+        if fv == None:
+            continue
+
+        # Fill in missing values
+        file_variables = copy.deepcopy(FILE_VARIABLES)
+        file_variables.update(fv)
+
+        # Generate the layered dictionary using the specified ordering
+        temp_dict = file_ind
+        for key in var_order:
+
+            # Create a new key,value pair if it's missing
+            if file_variables[key] not in temp_dict.keys():
+
+                # Create a new key for the layer if it doesn't exist
+                if file_variables[key] not in uvals[key]:
+                    uvals[key].append(file_variables[key])
+
+                # If not the last variable, create a new dictionary
+                if var_order[-1] != key:
+                    temp_dict[file_variables[key]] = {}
+
+                # If the last variable, create a list to hold data
+                else:
+                    temp_dict[file_variables[key]] = []
+
+            # Grab the reference for the next layer in the dictionary
+            temp_dict = temp_dict[file_variables[key]]
+
+        # Add the file information at the deepest layer
+        new_entry = {}
+        new_entry['file'] = f
+        if file_variables != None:
+            for key, value in file_variables.items():
+                new_entry[key] = value
+
+        temp_dict.append(new_entry)
+
+    if sort:
+        for key in uvals.keys():
+            uvals[key].sort()
+
+    return file_ind, uvals
+
+def _validate_pat_reg_var(pattern,regex,variables):
+    """ Validates pattern, regex, variable inputs """
+
+    # If regex and variables, just validate the variables
+    if regex != None and variables != None:
+        _val_variables(variables)
+
+    # If pattern is defined, get the corersponding regex and variables
+    elif pattern != None:
+        regex, variables = get_regex(pattern)
+
+    # Either pattern or regex&variables must be defined
+    else:
+        raise ValueError(f"""Either pattern must be provided as a keyword argument, or both regex and variables must be provided as input keyword arguments. Received the following keyword arguments:
+    {{
+        'regex': {regex},
+        'variables': {variables},
+        'pattern': {pattern}
+    }}""")
+
+    return regex,variables
+
+def _val_variables(variables: str) -> None:
+    """ Validate file pattern variables
+
+    Variables for a file pattern should only contain the values in
+    :attr:`VARIABLES`. In addition to this, only a linear positioning variable
+    (p) or an x,y positioning variable should be present, but not both.
+
+    There is no return value for this function. It throws an error if an invalid
+    variable is present.
+
+    Args:
+        variables: a string of variables, e.g. 'rtxy'
+    """
+
+    for v in variables:
+        assert v in VARIABLES, f"File pattern variables must be one of {VARIABLES}"
+
+    if 'p' in variables:
+        assert 'x' not in variables and 'y' not in variables, "Either x and/or y may be defined or p may be defined, but not both."
