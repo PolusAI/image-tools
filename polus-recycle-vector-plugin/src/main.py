@@ -79,7 +79,7 @@ def main():
         vector_dict = {}
         
         # Loop through lines in the stitching vector, generate new vectors
-        for v in sp.iterate():
+        for v in sp():
             variables = {key.upper():value for key,value in v[0].items() if key in group_by}
             file_matches = fp.get_matching(**variables)
             
