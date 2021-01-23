@@ -9,7 +9,7 @@ logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(messa
                     datefmt='%d-%b-%y %H:%M:%S')
 
 # Global variable to scale number of processing threads dynamically
-max_threads = cpu_count()//2 + 1
+max_threads = max([cpu_count()//2,1])
 available_threads = Queue(max_threads)
 for _ in range(max_threads):
     available_threads.put(2)
@@ -97,22 +97,25 @@ def _merge_layers(input_files,output_path):
                 now = time.time()
                 if now - start > process_delay:
                     start = now
-                    logger.info('{}: Progress {:6.2f}'.format(output_path.name,100*zi/bw.z))
+                    logger.info('{}: Progress {:6.2f}%'.format(output_path.name,100*zi/bw.z))
 
-                if active_threads < max_active_threads and active_threads < 2*max_threads:
+                if active_threads < max_active_threads and active_threads < useful_threads:
+                    # See if more threads are available
+                    new_threads = 0
                     try:
-                        new_threads = available_threads.get(block=False)
-                        logger.info(f'{output_path.name}: Increasing number of threads from {active_threads} to {active_threads+new_threads}')
-                        active_threads += new_threads
-                        bw.max_workers = active_threads
+                        while active_threads + new_threads < useful_threads:
+                            new_threads += available_threads.get(block=False)
                     except:
                         pass
+                    
+                    if new_threads > 0:
+                        logger.info(f'{output_path.name}: Increasing threads from {active_threads} to {active_threads+new_threads}')
+                        active_threads += new_threads
+                        bw.max_workers = active_threads
 
     # Free the threads for other processes
     for _ in range(active_threads//2):
         available_threads.put(2)
-
-    logger.info('{}: Progress {:6.2f}'.format(output_path.name,100))
 
 if __name__ == "__main__":
     # Initialize the main thread logger
