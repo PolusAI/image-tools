@@ -1,70 +1,108 @@
-import argparse, logging, multiprocessing, re
+import argparse, logging, re, typing, pathlib, numpy
+import filepattern
 from bfio import BioReader,BioWriter
-import numpy as np
-from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, wait
+from multiprocessing import Queue, cpu_count
 
-STITCH_VARS = ['file','correlation','posX','posY','gridX','gridY'] # image stitching values
-STITCH_LINE = "file: {}; corr: {}; position: ({}, {}); grid: ({}, {});\n"
+# Global variable to scale number of processing threads dynamically
+max_threads = max([cpu_count()//2,1])
+available_threads = Queue(max_threads)
 
-def buffer_image(image_path,supertile_buffer,Xi,Yi,Xt,Yt):
+# Set logger delay times
+main_delay = 30        # Delay between updates for main process
+process_delay = 10     # Delay between updates within _merge_layers
+
+for _ in range(max_threads):
+    available_threads.put(2)
+    
+# length/width of the chunk each _merge_layers thread processes at once
+# Number of useful threads is limited
+chunk_size = 8192
+useful_threads = (chunk_size // BioReader._TILE_SIZE) ** 2
+
+def initialize_queue(processes, file_pattern=None):
+    global available_threads
+    global fp
+    available_threads = processes
+    fp = file_pattern
+
+def buffer_image(image_path: pathlib.Path,
+                 supertile_buffer: numpy.ndarray,
+                 Xi: typing.Tuple[int,int],
+                 Yi: typing.Tuple[int,int],
+                 Xt: typing.Tuple[int,int],
+                 Yt: typing.Tuple[int,int],
+                 local_threads: Queue) -> None:
     """buffer_image Load and image and store in buffer
 
-    This method loads an image and stores it in the appropriate
-    position based on the stitching vector coordinates within
-    a large tile of the output image. It is intended to be
-    used as a thread to increase the reading component to
+    This method loads an image and stores it in the appropriate position based
+    on the stitching vector coordinates within a large tile of the output image.
+    It is intended to be used as a thread to increase the reading component to
     assembling the image.
     
     Args:
-        image_path ([str]): Path to image to load
-        supertile_buffer ([np.ndarray]): A supertile storing multiple images
-        Xi ([list]): Xmin and Xmax of pixels to load from the image
-        Yi ([list]): Ymin and Ymax of pixels to load from the image
-        Xt ([list]): X position within the buffer to store the image
-        Yt ([list]): Y position within the buffer to store the image
+        image_path: Path of image to load
+        supertile_buffer: A supertile storing multiple images
+        Xi: Xmin and Xmax of pixels to load from the image
+        Yi: Ymin and Ymax of pixels to load from the image
+        Xt: X position within the buffer to store the image
+        Yt: Y position within the buffer to store the image
     """
     
+    # Get available threads
+    active_threads = local_threads.get()
+    
     # Load the image
-    br = BioReader(image_path,max_workers=2)
-    image = br.read_image(X=Xi,Y=Yi) # only get the first z,c,t layer
+    with BioReader(image_path,max_workers=active_threads) as br:
+        image = br[Yi[0]:Yi[1],Xi[0]:Xi[1],0:1,0,0] # only get the first z,c,t layer
+        
+    # Free threads
+    local_threads.put(active_threads)
         
     # Put the image in the buffer
     supertile_buffer[Yt[0]:Yt[1],Xt[0]:Xt[1],...] = image
 
-def make_tile(x_min,x_max,y_min,y_max,stitchPath):
+def make_tile(x_min: int,
+              x_max: int,
+              y_min: int,
+              y_max: int,
+              parsed_vector: dict,
+              local_threads: Queue,
+              bw: BioWriter) -> numpy.ndarray:
     """make_tile Create a supertile
 
-    This method identifies images that have stitching vector positions
-    within the bounds of the supertile defined by the x and y input
-    arguments. It then spawns threads to load images and store in the
-    supertile buffer. Finally it returns the assembled supertile to
-    allow the main thread to generate the write thread.
+    This method identifies images that have stitching vector positions within
+    the bounds of the supertile defined by the x and y input arguments. It then
+    spawns threads to load images and store in the supertile buffer. Finally it
+    returns the assembled supertile to allow the main thread to generate the
+    write thread.
 
     Args:
-        x_min ([int]): Minimum x bound of the tile
-        x_max ([int]): Maximum x bound of the tile
-        y_min ([int]): Minimum y bound of the tile
-        y_max ([int]): Maximum y bound of the tile
-        stitchPath ([str]): Path to the stitching vector
+        x_min: Minimum x bound of the tile
+        x_max: Maximum x bound of the tile
+        y_min: Minimum y bound of the tile
+        y_max: Maximum y bound of the tile
+        vp: The result of _parse_vector
 
     Returns:
-        [type]: [description]
+        A supertile of assembled images
     """
-    # Parse the stitching vector
-    outvals = _parse_stitch(stitchPath,imgPath,True)
 
     # Get the data type
-    br = BioReader(str(Path(imgPath).joinpath(outvals['filePos'][0]['file'])))
-    dtype = br._pix['type']
+    with BioReader(parsed_vector['filePos'][0]['file']) as br:
+        dtype = br.dtype
 
     # initialize the supertile
-    template = np.zeros((y_max-y_min,x_max-x_min,1,1,1),dtype=dtype)
+    template = numpy.zeros((y_max-y_min,x_max-x_min,1,1,1),dtype=dtype)
 
     # get images in bounds of current super tile
-    with ThreadPoolExecutor(max([multiprocessing.cpu_count(),2])) as executor:
-        for f in outvals['filePos']:
+    with ThreadPoolExecutor(useful_threads//2) as executor:
+        for f in parsed_vector['filePos']:
+            
+            # check that image is within the x-tile bounds
             if (f['posX'] >= x_min and f['posX'] <= x_max) or (f['posX']+f['width'] >= x_min and f['posX']+f['width'] <= x_max):
+                
+                # check that image is within the y-tile bounds
                 if (f['posY'] >= y_min and f['posY'] <= y_max) or (f['posY']+f['height'] >= y_min and f['posY']+f['height'] <= y_max):
             
                     # get bounds of image within the tile
@@ -79,26 +117,28 @@ def make_tile(x_min,x_max,y_min,y_max,stitchPath):
                     Yi = [max(0,y_min - f['posY'])]
                     Yi.append(min(f['height'],y_max - f['posY']))
                     
-                    executor.submit(buffer_image,str(Path(imgPath).joinpath(f['file'])),template,Xi,Yi,Xt,Yt)
-    
-    return template
+                    executor.submit(buffer_image,f['file'],template,Xi,Yi,Xt,Yt,local_threads)
+                    
+    bw[y_min:y_max,x_min:x_max,:1,0,0] = template
 
-def get_number(s):
+def get_number(s: typing.Any) -> typing.Any:
     """ Check that s is number
     
-    In this plugin, heatmaps are created only for columns that contain numbers. This
-    function checks to make sure an input value is able to be converted into a number.
-    Inputs:
+    In this plugin, heatmaps are created only for columns that contain numbers.
+    This function checks to make sure an input value is able to be converted
+    into a number.
+    
+    Args:
         s - An input string or number
-    Outputs:
-        value - Either float(s) or False if s cannot be cast to float
+    Returns:
+        value - Either int(s) or return the value is s cannot be cast
     """
     try:
         return int(s)
     except ValueError:
         return s
 
-def _parse_stitch(stitchPath,imagePath,timepointName=False):
+def _parse_stitch(stitchPath,timepointName=False):
     """ Load and parse image stitching vectors
     
     This function creates a list of file dictionaries that include the filename and
@@ -119,90 +159,120 @@ def _parse_stitch(stitchPath,imagePath,timepointName=False):
                  'height': int(0),
                  'name': '',
                  'filePos': []}
+    
+    # Try to parse the stitching vector using the infered file pattern
+    if fp.pattern != '.*':
+        vp = filepattern.VectorPattern(stitchPath,fp.pattern)
+        uniques = {k.upper():v for k,v in vp.uniques.items() if len(v)==1}
+        files = fp.get_matching(**uniques)
+        
+    # Will have to parse the data 
+    else:
+        vp = filepattern.VectorPattern(stitchPath,'.*')
+        files = fp.files
+    
+    file_names = [f['file'].name for f in files]
+    
+    for file in vp():
+        
+        if file[0]['file'] not in file_names:
+            continue
+        
+        stitch_groups = {k:get_number(v) for k,v in file[0].items()}
+        stitch_groups['file'] = files[0]['file'].with_name(stitch_groups['file'])
+        
+        # Get the image size
+        stitch_groups['width'], stitch_groups['height'] = BioReader.image_size(stitch_groups['file'])
 
-    # Set the regular expression used to parse each line of the stitching vector
-    line_regex = r"file: (.*); corr: (.*); position: \((.*), (.*)\); grid: \((.*), (.*)\);"
-
-    # Get a list of all images in imagePath
-    images = [p.name for p in Path(imagePath).iterdir()]
-
-    # Open each stitching vector
-    fpath = str(Path(stitchPath).absolute())
-    name_pos = {}
-    with open(fpath,'r') as fr:
-
-        # Read the first line to get the filename for comparison to all other filenames
-        line = fr.readline()
-        stitch_groups = re.match(line_regex,line)
-        stitch_groups = {key:val for key,val in zip(STITCH_VARS,stitch_groups.groups())}
-        name = stitch_groups['file']
-        name_ind = [i for i in range(len(name))]
-        fr.seek(0) # reset to the first line
-
-        # Read each line in the stitching vector
-        for line in fr:
-            # Read and parse values from the current line
-            stitch_groups = re.match(line_regex,line)
-            stitch_groups = {key:get_number(val) for key,val in zip(STITCH_VARS,stitch_groups.groups())}
-            
-            # If an image in the vector doesn't match an image in the collection, then skip it
-            if stitch_groups['file'] not in images:
-                continue
-
-            # Get the image size
-            stitch_groups['width'], stitch_groups['height'] = BioReader.image_size(str(Path(imagePath).joinpath(stitch_groups['file']).absolute()))
-            if out_dict['width'] < stitch_groups['width']+stitch_groups['posX']:
-                out_dict['width'] = stitch_groups['width']+stitch_groups['posX']
-            if out_dict['height'] < stitch_groups['height']+stitch_groups['posY']:
-                out_dict['height'] = stitch_groups['height']+stitch_groups['posY']
-
-            # Set the stitching vector values in the file dictionary
-            out_dict['filePos'].append(stitch_groups)
-
-            # Determine the difference between first name and current name
-            if not timepointName:
-                for i in name_ind:
-                    if name[i] != stitch_groups['file'][i]:
-                        if i not in name_pos.keys():
-                            name_pos[i] = set()
-                            name_pos[i].update([get_number(stitch_groups['file'][i])])
-                            name_pos[i].update([get_number(name[i])])
-                        else:
-                            name_pos[i].update([get_number(stitch_groups['file'][i])])
+        # Set the stitching vector values in the file dictionary
+        out_dict['filePos'].append(stitch_groups)
+    
+    out_dict['width'] = max([f['width'] + f['posX'] for f in out_dict['filePos']])
+    out_dict['height'] = max([f['height'] + f['posY'] for f in out_dict['filePos']])
     
     # Generate the output file name
-    # NOTE: This should be rewritten later to determine numeric values rather than position values.
-    #       Output file names should be 
-    indices = sorted(name_pos.keys())
     if timepointName:
         global_regex = ".*global-positions-([0-9]+).txt"
-        name = re.match(global_regex,Path(stitchPath).name).groups()[0]
+        name = re.match(global_regex,pathlib.Path(stitchPath).name).groups()[0]
         name += '.ome.tif'
         out_dict['name'] = name
-    elif len(indices) > 0:
-        out_dict['name'] = name[0:indices[0]]
-        minvals = []
-        maxvals = []
-        for v,i in enumerate(indices):
-            if len(minvals)==0:
-                out_dict['name'] += '<'
-            minvals.append(min(name_pos[i]))
-            maxvals.append(max(name_pos[i]))
-            if i == indices[-1] or indices[v+1] - i > 1:
-                out_dict['name'] += ''.join([str(ind) for ind in minvals])
-                out_dict['name'] += '-'
-                out_dict['name'] += ''.join([str(ind) for ind in maxvals])
-                out_dict['name'] += '>'
-                if i ==  indices[-1]:
-                    out_dict['name'] += name[indices[-1]+1:]
-                else:
-                    out_dict['name'] += name[indices[v]+1:indices[v+1]]
-                minvals = []
-                maxvals = []
     else:
-        out_dict['name'] = name
+        # Try to infer a good filename
+        try:
+            out_dict['name'] = vp.output_name()
+            
+        # A file name couldn't be inferred, default to the first image name
+        except:
+            out_dict['name'] = vp.get_matching()[0]
 
     return out_dict
+
+def assemble_image(vector_path: pathlib.Path,
+                   out_path: pathlib.Path) -> None:
+    
+    logger = logging.getLogger('asmbl')
+    logger.setLevel(logging.INFO)
+    
+    # Get globally available threads
+    active_threads = available_threads.get()
+    
+    # Set up a local thread queue
+    local_threads = Queue()
+    for _ in range(active_threads//2):
+        local_threads.put(2)
+    
+    # Parse the stitching vector
+    parsed_vector = _parse_stitch(vector_path,timesliceNaming)
+    
+    # Initialize the output image
+    with BioReader(parsed_vector['filePos'][0]['file']) as br:
+        bw = BioWriter(out_path.joinpath(parsed_vector['name']),
+                       metadata=br.metadata,
+                       max_workers=active_threads)
+        bw.x = parsed_vector['width']
+        bw.y = parsed_vector['height']
+
+    # Assemble the images
+    logger.info(f'{parsed_vector["name"]}: Begin assembly with {active_threads} threads')
+    threads = []
+    with ThreadPoolExecutor(1) as executor:
+        for x in range(0, parsed_vector['width'], chunk_size):
+            X_range = min(x+chunk_size,parsed_vector['width']) # max x-pixel index in the assembled image
+            for y in range(0, parsed_vector['height'], chunk_size):
+                Y_range = min(y+chunk_size,parsed_vector['height']) # max y-pixel index in the assembled image
+                
+                threads.append(executor.submit(make_tile,x,X_range,y,Y_range,parsed_vector,local_threads,bw))
+        
+        done, not_done = wait(threads,timeout=0)
+        
+        while len(not_done) > 0:
+            
+            # See if more threads are available
+            new_threads = 0
+            try:
+                while active_threads + new_threads < useful_threads:
+                    new_threads += available_threads.get(block=False)
+            except:
+                pass
+            
+            if new_threads > 0:
+                logger.info(f'{parsed_vector["name"]}: Increasing threads from {active_threads} to {active_threads+new_threads}')
+                active_threads += new_threads
+                bw.max_workers = active_threads
+                for _ in range(new_threads//2):
+                    local_threads.put(2)
+            
+            done, not_done = wait(threads,timeout=process_delay)
+            
+            logger.info('{}: Progress: {:7.3f}%'.format(parsed_vector['name'],100*len(done)/len(threads)))
+    
+    # Free the threads for other processes
+    local_threads.close()
+    for _ in range(active_threads//2):
+        available_threads.put(2)
+    
+    logger.info(f'{parsed_vector["name"]}: Closing image...')
+    bw.close()
 
 if __name__=="__main__":
     # Initialize the logger
@@ -224,70 +294,49 @@ if __name__=="__main__":
 
     # Parse the arguments
     args = parser.parse_args()
-    imgPath = args.imgPath
-    if Path(imgPath).joinpath('images').is_dir():
-        imgPath = str(Path(imgPath).joinpath('images').absolute())
-    outDir = args.outDir
+    imgPath = pathlib.Path(args.imgPath).resolve()
+    if imgPath.joinpath('images').is_dir():
+        imgPath = imgPath.joinpath('images')
+    logger.info('imgPath: {}'.format(imgPath))
+    outDir = pathlib.Path(args.outDir).resolve()
     logger.info('outDir: {}'.format(outDir))
     timesliceNaming = args.timesliceNaming == 'true'
     logger.info('timesliceNaming: {}'.format(timesliceNaming))
     stitchPath = args.stitchPath
+    logger.info('stitchPath: {}'.format(stitchPath))
 
     # Get a list of stitching vectors
-    vectors = [str(p.absolute()) for p in Path(stitchPath).iterdir() if p.is_file() and "".join(p.suffixes)=='.txt']
-        
-    logger.info('imgPath: {}'.format(imgPath))
-    logger.info('stitchPath: {}'.format(stitchPath))
+    vectors = [p for p in pathlib.Path(stitchPath).iterdir()]
     vectors.sort()
-
-    # Variables for image building processes
-    img_processes = []
-    img_paths = []
-
-    for v in vectors:
-        # Check to see if the file is a stitching vector
-        if 'img-global-positions' not in Path(v).name:
-            continue
+    
+    # Try to infer a filepattern from the files on disk for faster matching later
+    logger.info('Getting the list of available images...')
+    try:
+        pattern = filepattern.infer_pattern([f.name for f in imgPath.iterdir()])
+        logger.info(f'Inferred file pattern: {pattern}')
+        fp = filepattern.FilePattern(imgPath,pattern)
         
-        # Parse the stitching vector
-        logger.info('Analyzing vector: {}'.format(Path(v).name))
-        outvals = _parse_stitch(v,imgPath,timesliceNaming)
-        logger.info('Building image: {}'.format(outvals['name']))
-        logger.info('Output image size (width, height): {},{}'.format(outvals['width'],outvals['height']))
+    # Pattern inference didn't work, so just get a list of files
+    except:
+        logger.info(f'Unable to infer pattern, defaulting to: .*')
+        fp = filepattern.FilePattern(imgPath,'.*')
 
-        # Variables for tile building processes
-        pnum = 0
-        ptotal = np.ceil(outvals['width']/10240) * np.ceil(outvals['height']/10240)
-        ptotal = 1/ptotal * 100
-        
-        # Initialize the output image
-        logger.info('Initializing output file: {}'.format(outvals['name']))
-        refImg = str(Path(imgPath).joinpath(outvals['filePos'][0]['file']).absolute())
-        outFile = str(Path(outDir).joinpath(outvals['name']).absolute())
-        br = BioReader(str(Path(refImg).absolute()))
-        bw = BioWriter(str(Path(outFile).absolute()),metadata=br.read_metadata(),max_workers=max([multiprocessing.cpu_count(),2]))
-        bw.num_x(outvals['width'])
-        bw.num_y(outvals['height'])
-        del br
+    processes = []
+    with ProcessPoolExecutor(max_threads,initializer=initialize_queue,initargs=(available_threads,fp)) as executor:
 
-        # Assemble the images
-        logger.info('Generating tiles...')
-        threads = []
-        with ThreadPoolExecutor(max([multiprocessing.cpu_count()//2,2])) as executor:
-            for x in range(0, outvals['width'], 10240):
-                X_range = min(x+10240,outvals['width']) # max x-pixel index in the assembled image
-                for y in range(0, outvals['height'], 10240):
-                    Y_range = min(y+10240,outvals['height']) # max y-pixel index in the assembled image
-                    
-                    image_buffer = make_tile(x,X_range,y,Y_range,v)
-                    
-                    threads.append(executor.submit(bw.write_image,image_buffer,X=[x],Y=[y]))
-                    # bw.write_image(image_buffer,X=[x],Y=[y])
+        for v in vectors:
+            # Check to see if the file is a valid stitching vector
+            if 'img-global-positions' not in v.name:
+                continue
             
-            logger.info('{:.2f} finished...'.format(0))
-            for ind,thread in enumerate(threads):
-                thread.result()
-                logger.info('{:.2f}% finished...'.format(100*(ind+1)/len(threads)))
+            processes.append(executor.submit(assemble_image,v,outDir))
         
-        logger.info('Closing image...')
-        bw.close_image()
+        done, not_done = wait(processes,timeout=0)
+        
+        while len(not_done) > 0:
+            
+            logger.info('Total Progress: {:6.2f}%'.format(100*len(done)/len(processes)))
+            
+            done, not_done = wait(processes,timeout=10)
+            
+    logger.info('Progress: {:6.3f}%'.format(100))
