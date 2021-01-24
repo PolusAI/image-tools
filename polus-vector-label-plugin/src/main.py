@@ -127,7 +127,7 @@ if __name__=="__main__":
                 x,y = maski.shape
                 maski = np.reshape(maski, (x,y, 1, 1,1))
 
-            logger.info('Processing image ({}/{}): {}'.format(count+1,len([m for m,l in root.groups()])+1,m))
+            logger.info('Processing image ({}/{}): {}'.format(count+1,len([m for m,l in root.groups()]),m))
 
             # Write the output
             temp = re.sub(r'(?<=Type=")([^">>]+)', str(maski.dtype), metadata)
