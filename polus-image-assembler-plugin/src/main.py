@@ -1,5 +1,8 @@
-import argparse, logging, re, typing, pathlib, numpy
-import filepattern
+# Base packages
+import argparse, logging, re, typing, pathlib, queue
+# 3rd party packages
+import filepattern, numpy
+# Class/function imports
 from bfio import BioReader,BioWriter
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, wait
 from multiprocessing import Queue, cpu_count
@@ -20,7 +23,24 @@ for _ in range(max_threads):
 chunk_size = 8192
 useful_threads = (chunk_size // BioReader._TILE_SIZE) ** 2
 
-def initialize_queue(processes, file_pattern=None):
+def initialize_queue(processes: Queue,
+                     file_pattern: filepattern.FilePattern) -> None:
+    """Initialize global variables for each process
+
+    This function is called when each worker process is started in the
+    ProcessPoolExecutor. Within each worker process, two global variables are
+    defined: ``available_threads`` (multiprocessing.Queue) and ``fp``
+    (filepattern.FilePattern). The ``available_threads`` variable defines
+    globally available threads across processes. The ``fp`` object contains the
+    parsed files in the input directory, which is useful to provide globally so
+    that the input file directory does not need to parsed in every process. This
+    is especially beneficial in instances where there are large numbers of files
+    in the input directory.
+
+    Args:
+        processes: The globally available threads.
+        file_pattern: The parsed input file directory.
+    """
     global available_threads
     global fp
     available_threads = processes
@@ -32,13 +52,12 @@ def buffer_image(image_path: pathlib.Path,
                  Yi: typing.Tuple[int,int],
                  Xt: typing.Tuple[int,int],
                  Yt: typing.Tuple[int,int],
-                 local_threads: Queue) -> None:
+                 local_threads: queue.Queue) -> None:
     """buffer_image Load and image and store in buffer
 
-    This method loads an image and stores it in the appropriate position based
-    on the stitching vector coordinates within a large tile of the output image.
-    It is intended to be used as a thread to increase the reading component to
-    assembling the image.
+    This method loads an image and stores it in the appropriate position in the
+    buffer based on the stitching vector coordinates. It is intended to be used
+    as a thread.
     
     Args:
         image_path: Path of image to load
@@ -47,6 +66,7 @@ def buffer_image(image_path: pathlib.Path,
         Yi: Ymin and Ymax of pixels to load from the image
         Xt: X position within the buffer to store the image
         Yt: Y position within the buffer to store the image
+        local_threads: Used to determine if threads are available
     """
     
     # Get available threads
@@ -67,7 +87,7 @@ def make_tile(x_min: int,
               y_min: int,
               y_max: int,
               parsed_vector: dict,
-              local_threads: Queue,
+              local_threads: queue.Queue,
               bw: BioWriter) -> numpy.ndarray:
     """make_tile Create a supertile
 
@@ -82,7 +102,9 @@ def make_tile(x_min: int,
         x_max: Maximum x bound of the tile
         y_min: Minimum y bound of the tile
         y_max: Maximum y bound of the tile
-        vp: The result of _parse_vector
+        parsed_vector: The result of _parse_vector
+        local_threads: Used to determine the number of concurrent threads to run
+        bw: The output file object
 
     Returns:
         A supertile of assembled images
@@ -121,37 +143,35 @@ def make_tile(x_min: int,
                     
     bw[y_min:y_max,x_min:x_max,:1,0,0] = template
 
-def get_number(s: typing.Any) -> typing.Any:
+def get_number(s: typing.Any) -> typing.Union[int,typing.Any]:
     """ Check that s is number
     
-    In this plugin, heatmaps are created only for columns that contain numbers.
     This function checks to make sure an input value is able to be converted
-    into a number.
+    into an integer. If it cannot be converted to an integer, the original
+    value is returned.
     
     Args:
-        s - An input string or number
+        s: An input string or number
     Returns:
-        value - Either int(s) or return the value is s cannot be cast
+        Either int(s) or return the value is s cannot be cast
     """
     try:
         return int(s)
     except ValueError:
         return s
 
-def _parse_stitch(stitchPath,timepointName=False):
+def _parse_stitch(stitchPath: pathlib.Path,
+                  timepointName: bool = False) -> dict:
     """ Load and parse image stitching vectors
     
-    This function creates a list of file dictionaries that include the filename and
-    pixel position and dimensions within a stitched image. It also determines the
-    size of the final stitched image and the suggested name of the output image based
-    on differences in file names in the stitching vector.
+    This function parses the data from a stitching vector, and determines the
+    size and name of the output image.
 
-    Inputs:
-        stitchPath - A path to stitching vectors
-        imagePath - A path to tiled tiff images
-        timepointName - Use the vector timeslice as the image name
-    Outputs:
-        out_dict - Dictionary with keys (width, height, name, filePos)
+    Args:
+        stitchPath: A path to stitching vectors
+        timepointName: Use the vector timeslice as the image name
+    Returns:
+        Dictionary with keys (width, height, name, filePos)
     """
 
     # Initialize the output
@@ -163,8 +183,8 @@ def _parse_stitch(stitchPath,timepointName=False):
     # Try to parse the stitching vector using the infered file pattern
     if fp.pattern != '.*':
         vp = filepattern.VectorPattern(stitchPath,fp.pattern)
-        uniques = {k.upper():v for k,v in vp.uniques.items() if len(v)==1}
-        files = fp.get_matching(**uniques)
+        unique_vals = {k.upper():v for k,v in vp.uniques.items() if len(v)==1}
+        files = fp.get_matching(**unique_vals)
         
     # Will have to parse the data 
     else:
@@ -209,15 +229,21 @@ def _parse_stitch(stitchPath,timepointName=False):
 
 def assemble_image(vector_path: pathlib.Path,
                    out_path: pathlib.Path) -> None:
+    """Assemble a 2-dimensional image
+
+    Args:
+        vector_path: Path to the stitching vector
+        out_path: Path to the output directory
+    """
     
     logger = logging.getLogger('asmbl')
     logger.setLevel(logging.INFO)
     
-    # Get globally available threads
+    # Get globally available threads, defined in initialize_queue
     active_threads = available_threads.get()
     
     # Set up a local thread queue
-    local_threads = Queue()
+    local_threads = queue.Queue()
     for _ in range(active_threads//2):
         local_threads.put(2)
     
