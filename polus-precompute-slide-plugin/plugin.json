@@ -1,39 +1,58 @@
 {
   "name": "Polus Precompute Slide Plugin",
-  "version": "0.3.3",
+  "version": "1.3.0",
+  "containerId": "labshare/polus-precompute-slide-plugin:1.3.0",
   "title": "Precompute Slide Viewer",
-  "description": "Precomputes a single image plane for viewing in Neuroglancer or DeepZoom.",
-  "author": "Nick Schaub (nick.schaub@nih.gov)",
-  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-  "repository": "https://github.com/labshare/polus-plugins",
+  "description": "Precomputes a single image plane for DeepZoom or Z stacks for Neuroglancer",
+  "author": "Madhuri Vihani (Madhuri.Vihani@nih.gov), Nick Schaub (Nick.Schaub@nih.gov)",
+  "institution": "National Center for the Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/mmvih/polus-plugins.git",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "labshare/polus-precompute-slide-plugin:0.3.3",
   "inputs": [
     {
       "name": "inpDir",
-      "type": "collection",
       "description": "Input collection",
+      "type": "collection",
       "required": true
     },
     {
-			"name": "pyramidType",
-			"type": "enum",
-			"options": {
-				"values": [
-					         "DeepZoom",
-                   "Neuroglancer"
-				]
-      },
+      "name": "pyramidType",
       "description": "Build a DeepZoom or Neuroglancer pyramid",
+      "type": "enum",
+      "options": {
+        "values": [
+          "DeepZoom",
+          "Neuroglancer"
+        ]
+      },
       "required": true
+    },
+    {
+      "name": "imageType",
+      "description": "Image is either Segmentation or Image",
+      "type": "enum",
+      "options": {
+        "values": [
+          "image",
+          "segmentation"
+        ]
+      },
+      "required": true
+    },
+    {
+      "name": "filePattern",
+      "description": "Pattern of the images in Input",
+      "type": "string",
+      "required": false
     }
   ],
   "outputs": [
     {
       "name": "outDir",
+      "description": "Precomputed output",
       "type": "pyramid",
-      "description": "Precomputed output"
+      "required": true
     }
   ],
   "ui": [
@@ -46,6 +65,18 @@
       "key": "inputs.pyramidType",
       "title": "Pyramid Type: ",
       "description": "Build a DeepZoom or Neuroglancer pyramid?"
+    },
+    {
+      "key": "inputs.imageType",
+      "title": "Image Type: ",
+      "description": "Image or Segmentation?",
+      "condition": "model.inputs.pyramidType=='Neuroglancer'"
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "Image Pattern: ",
+      "description": "Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). "
     }
   ]
 }
+
