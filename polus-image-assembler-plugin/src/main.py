@@ -12,7 +12,6 @@ max_threads = max([cpu_count()//2,1])
 available_threads = Queue(max_threads)
 
 # Set logger delay times
-main_delay = 30        # Delay between updates for main process
 process_delay = 10     # Delay between updates within _merge_layers
 
 for _ in range(max_threads):
@@ -293,7 +292,6 @@ def assemble_image(vector_path: pathlib.Path,
             logger.info('{}: Progress: {:7.3f}%'.format(parsed_vector['name'],100*len(done)/len(threads)))
     
     # Free the threads for other processes
-    local_threads.close()
     for _ in range(active_threads//2):
         available_threads.put(2)
     
