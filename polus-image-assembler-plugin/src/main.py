@@ -140,6 +140,8 @@ def make_tile(x_min: int,
                     Yi = [max(0,y_min - f['posY'])]
                     Yi.append(min(f['height'],y_max - f['posY']))
 
+                    # print(Xi,Yi,Xt,Yt)
+                    # buffer_image(f['file'],template,Xi,Yi,Xt,Yt,local_threads)
                     executor.submit(buffer_image,f['file'],template,Xi,Yi,Xt,Yt,local_threads)
 
     bw[y_min:y_max,x_min:x_max,:1,0,0] = template
@@ -174,6 +176,8 @@ def _parse_stitch(stitchPath: pathlib.Path,
     Returns:
         Dictionary with keys (width, height, name, filePos)
     """
+    
+    logger = logging.getLogger('asmbl')
 
     # Initialize the output
     out_dict = { 'width': int(0),
@@ -187,9 +191,18 @@ def _parse_stitch(stitchPath: pathlib.Path,
         unique_vals = {k.upper():v for k,v in vp.uniques.items() if len(v)==1}
         files = fp.get_matching(**unique_vals)
 
-    # Will have to parse the data
     else:
-        vp = filepattern.VectorPattern(stitchPath,'.*')
+        
+        # Try to infer a pattern from the stitching vector        
+        try:
+            vector_files = filepattern.VectorPattern(stitchPath,'.*')
+            pattern = filepattern.infer_pattern([v[0]['file'] for v in vector_files()])
+            vp = filepattern.VectorPattern(stitchPath,pattern)
+            
+        # Fall back to universal filepattern
+        except:
+            vp = filepattern.VectorPattern(stitchPath,'.*')
+            
         files = fp.files
 
     file_names = [f['file'].name for f in files]
@@ -221,12 +234,16 @@ def _parse_stitch(stitchPath: pathlib.Path,
         # Try to infer a good filename
         try:
             out_dict['name'] = vp.output_name()
+            logger.info(f'{out_dict["name"]}: Inferred output file name from vector.')
 
         # A file name couldn't be inferred, default to the first image name
         except:
+            logger.info(f'{out_dict["name"]}: Could not infer output file name from vector, using first file name in the stitching vector as an output file name.')
             for file in vp():
                 out_dict['name'] = file[0]['file']
                 break
+
+    # print(out_dict)
 
     return out_dict
 
@@ -270,6 +287,7 @@ def assemble_image(vector_path: pathlib.Path,
             for y in range(0, parsed_vector['height'], chunk_size):
                 Y_range = min(y+chunk_size,parsed_vector['height']) # max y-pixel index in the assembled image
 
+                # make_tile(x,X_range,y,Y_range,parsed_vector,local_threads,bw)
                 threads.append(executor.submit(make_tile,x,X_range,y,Y_range,parsed_vector,local_threads,bw))
 
         done, not_done = wait(threads,timeout=0)
@@ -339,15 +357,15 @@ if __name__=="__main__":
 
     # Try to infer a filepattern from the files on disk for faster matching later
     logger.info('Getting the list of available images...')
-    # try:
-    #     pattern = filepattern.infer_pattern([f.name for f in imgPath.iterdir()])
-    #     logger.info(f'Inferred file pattern: {pattern}')
-    #     fp = filepattern.FilePattern(imgPath,pattern)
+    try:
+        pattern = filepattern.infer_pattern([f.name for f in imgPath.iterdir()])
+        logger.info(f'Inferred file pattern: {pattern}')
+        fp = filepattern.FilePattern(imgPath,pattern)
 
     # Pattern inference didn't work, so just get a list of files
-    # except:
-    logger.info(f'Unable to infer pattern, defaulting to: .*')
-    fp = filepattern.FilePattern(imgPath,'.*')
+    except:
+        logger.info(f'Unable to infer pattern, defaulting to: .*')
+        fp = filepattern.FilePattern(imgPath,'.*')
 
     processes = []
     with ProcessPoolExecutor(max_threads,initializer=initialize_queue,initargs=(available_threads,fp)) as executor:
@@ -357,8 +375,8 @@ if __name__=="__main__":
             if 'img-global-positions' not in v.name:
                 continue
             
-            assemble_image(v,outDir)
-            # processes.append(executor.submit(assemble_image,v,outDir))
+            # assemble_image(v,outDir)
+            processes.append(executor.submit(assemble_image,v,outDir))
 
         done, not_done = wait(processes,timeout=0)
 
