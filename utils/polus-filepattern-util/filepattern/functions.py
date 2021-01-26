@@ -603,22 +603,25 @@ def sw_search(pattern: str,
     pattern_template = filename[col-1]
     last_row = row
     last_col = col
-    for _ in range(1,max([row,col])):
+    while True:     # Loop until we reach best_score == 0
         
         # Default to the next set of characters
         r = row - 1
         c = col - 1
         best_score = matrix[r][c]
         
-        if matrix[row][col-1] > best_score:
+        if matrix[row][col - 1] > best_score:
             best_score = matrix[row][col-1]
             r = row
             c = col - 1
             
-        if matrix[row-1][col] > best_score:
+        if matrix[row - 1][col] > best_score:
             best_score = matrix[row-1][col]
             r = row - 1
             c = col
+            
+        if best_score == 0:
+            break
         
         row = r
         col = c
