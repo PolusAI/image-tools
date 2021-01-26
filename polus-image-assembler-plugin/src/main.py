@@ -7,6 +7,8 @@ from bfio import BioReader,BioWriter
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, wait
 from multiprocessing import Queue, cpu_count
 
+# logging.getLogger('filepattern').setLevel(logging.DEBUG)
+
 # Global variable to scale number of processing threads dynamically
 max_threads = max([cpu_count()//2,1])
 available_threads = Queue(max_threads)
@@ -222,7 +224,9 @@ def _parse_stitch(stitchPath: pathlib.Path,
 
         # A file name couldn't be inferred, default to the first image name
         except:
-            out_dict['name'] = vp.get_matching()[0]
+            for file in vp():
+                out_dict['name'] = file[0]['file']
+                break
 
     return out_dict
 
@@ -335,15 +339,15 @@ if __name__=="__main__":
 
     # Try to infer a filepattern from the files on disk for faster matching later
     logger.info('Getting the list of available images...')
-    try:
-        pattern = filepattern.infer_pattern([f.name for f in imgPath.iterdir()])
-        logger.info(f'Inferred file pattern: {pattern}')
-        fp = filepattern.FilePattern(imgPath,pattern)
+    # try:
+    #     pattern = filepattern.infer_pattern([f.name for f in imgPath.iterdir()])
+    #     logger.info(f'Inferred file pattern: {pattern}')
+    #     fp = filepattern.FilePattern(imgPath,pattern)
 
     # Pattern inference didn't work, so just get a list of files
-    except:
-        logger.info(f'Unable to infer pattern, defaulting to: .*')
-        fp = filepattern.FilePattern(imgPath,'.*')
+    # except:
+    logger.info(f'Unable to infer pattern, defaulting to: .*')
+    fp = filepattern.FilePattern(imgPath,'.*')
 
     processes = []
     with ProcessPoolExecutor(max_threads,initializer=initialize_queue,initargs=(available_threads,fp)) as executor:
@@ -352,8 +356,9 @@ if __name__=="__main__":
             # Check to see if the file is a valid stitching vector
             if 'img-global-positions' not in v.name:
                 continue
-
-            processes.append(executor.submit(assemble_image,v,outDir))
+            
+            assemble_image(v,outDir)
+            # processes.append(executor.submit(assemble_image,v,outDir))
 
         done, not_done = wait(processes,timeout=0)
 

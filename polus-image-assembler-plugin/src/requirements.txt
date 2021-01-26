@@ -1,2 +1,2 @@
-filepattern==1.4.2
+filepattern==1.4.3
 bfio==2.0.3
