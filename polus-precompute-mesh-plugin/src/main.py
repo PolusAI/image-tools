@@ -31,10 +31,6 @@ def main():
                         help='Path to folder with CZI files', required=True)
     parser.add_argument('--outDir', dest='output_dir', type=str,
                         help='The output directory for ome.tif files', required=True)
-    parser.add_argument('--pyramidType', dest='pyramid_type', type=str,
-                        help='Build a DeepZoom or Neuroglancer pyramid', required=True)
-    parser.add_argument('--imagepattern', dest='image_pattern', type=str,
-                        help='Filepattern of the images in input', required=False)
     parser.add_argument('--imageType', dest='image_type', type=str,
                         help='The type of image, image or segmentation', required=True)
     parser.add_argument('--meshes', dest='meshes', type=str2bool, nargs='?',const=True,
@@ -44,16 +40,13 @@ def main():
     args = parser.parse_args()
     input_dir = args.input_dir
     output_dir = args.output_dir
-    pyramid_type = args.pyramid_type
-    imagepattern = args.image_pattern
     imagetype = args.image_type
     boolmesh = args.meshes
 
-    logger.info('input_dir = {}'.format(input_dir))
-    logger.info('output_dir = {}'.format(output_dir))
-    logger.info('pyramid_type = {}'.format(pyramid_type))
-    logger.info('image pattern = {}'.format(imagepattern))
-    logger.info('meshes = {}'.format(boolmesh))
+    logger.info('Input Directory = {}'.format(input_dir))
+    logger.info('Output Directory = {}'.format(output_dir))
+    logger.info('Image Type = {}'.format(imagetype))
+    logger.info('Meshes (T/F) = {}'.format(boolmesh))
     # logger.info('images are stacked by variable(s) {}'.format(stack_by))
     
     # Get list of images that we are going to through
@@ -91,11 +84,9 @@ def main():
             del processes[free_process]
             del process_timer[free_process]
         try:
-            processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --pyramidType '{}' --imageNum '{}' --imagepattern '{}' --image '{}' --imagetype {} --meshes {}".format(input_dir,
+            processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --imageNum '{}' --image '{}' --imagetype {} --meshes {}".format(input_dir,
                                                                                                                                                 output_dir,
-                                                                                                                                                pyramid_type,
                                                                                                                                                 im_count,
-                                                                                                                                                imagepattern,
                                                                                                                                                 image.name,
                                                                                                                                                 imagetype,
                                                                                                                                                 boolmesh),
