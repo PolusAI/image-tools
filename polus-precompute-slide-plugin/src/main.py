@@ -3,11 +3,11 @@ from multiprocessing import Queue, cpu_count
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, wait
 
 # Global variable to scale number of processing threads dynamically
-max_threads = max([cpu_count()//2,1])
+max_threads = max([cpu_count()//2+1,1])
 available_threads = Queue(max_threads)
 
 # Set logger delay times
-process_delay = 5     # Delay between updates within _merge_layers
+process_delay = 30     # Delay between updates within _merge_layers
 
 for _ in range(max_threads):
     available_threads.put(2)
@@ -47,8 +47,10 @@ def pyramid_process(pyramid_type: str,
                                                  image_type=image_type,
                                                  num_threads=active_threads)
     
+    logger.info(f'{pyramid_writer.image_path.name}: Starting process with {active_threads} threads')
+    
     with ThreadPoolExecutor(1) as executor:
-        threads = [executor.submit(pyramid_writer.write_slide())]
+        threads = [executor.submit(pyramid_writer.write_slide)]
     
         done, not_done = wait(threads,timeout=0)
         
@@ -71,6 +73,8 @@ def pyramid_process(pyramid_type: str,
             
     for _ in range(active_threads//2):
         available_threads.put(2)
+        
+    logger.info(f'{pyramid_writer.image_path.name}: Finished!')
         
     return threads[0].result()
 
@@ -118,6 +122,7 @@ def main():
     logger.info('pyramid_type = %s',pyramid_type)
     logger.info('image_type = %s', image_type)
     logger.info('file_pattern = %s', file_pattern)
+    logger.info('max concurrent processes = %s', max_threads)
 
     # Parse the input file directory
     fp = filepattern.FilePattern(input_dir,file_pattern)

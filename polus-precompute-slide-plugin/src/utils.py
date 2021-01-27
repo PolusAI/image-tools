@@ -293,7 +293,7 @@ def _get_higher_res(S: int,
         Y[1] = scale_info['size'][1]
     
     if str(S)==slide_writer.scale_info(-1)['key']:
-        slide_writer.threads.get()
+        threads = slide_writer.threads.get()
         
         with bfio.BioReader(slide_writer.image_path,max_workers=1) as br:
         
@@ -302,7 +302,7 @@ def _get_higher_res(S: int,
         # Write the chunk
         slide_writer.store_chunk(image,str(S),(X[0],X[1],Y[0],Y[1]))
         
-        slide_writer.threads.put(1)
+        slide_writer.threads.put(threads)
         
         return image
 
@@ -318,14 +318,14 @@ def _get_higher_res(S: int,
                 
         def load_and_scale(*args,**kwargs):
             sub_image = _get_higher_res(**kwargs)
-            slide_writer.threads.get()
+            threads = slide_writer.threads.get()
             image = args[0]
             x_ind = args[1]
             y_ind = args[2]
             image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1]] = kwargs['slide_writer'].scale(sub_image)
-            slide_writer.threads.put(1)
+            slide_writer.threads.put(threads)
         
-        with ThreadPoolExecutor(4) as executor:
+        with ThreadPoolExecutor(1) as executor:
             for y in range(0,len(subgrid_dims[1])-1):
                 y_ind = [subgrid_dims[1][y] - subgrid_dims[1][0],subgrid_dims[1][y+1] - subgrid_dims[1][0]]
                 y_ind = [np.ceil(yi/2).astype('int') for yi in y_ind]
@@ -380,6 +380,9 @@ class NeuroglancerWriter(PyramidWriter):
 
         # Create an output path object for the info file
         op = pathlib.Path(self.base_path).joinpath("info")
+        
+        if not op.parent.exists():
+            op.mkdir(exist_ok=True)
 
         # Write the neuroglancer info file
         with open(op,'w') as writer:
