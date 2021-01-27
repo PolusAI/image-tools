@@ -22,10 +22,13 @@ import traceback
 from json import JSONEncoder
 import trimesh
 import scalable_multires
+import ast
 
-class MyEncoder(JSONEncoder):
-        def default(self, o):
-            return o.__dict__
+# Initialize the logger    
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    datefmt='%d-%b-%y %H:%M:%S')
+logger = logging.getLogger("utilities")
+logger.setLevel(logging.INFO)
 
 # Conversion factors to nm, these are based off of supported Bioformats length units
 UNITS = {'m':  10**9,
@@ -40,17 +43,63 @@ CHUNK_SIZE = 256
 
 def image_generator(image):
     mesh = image.ravel()
-    # mesh = np.dstack(mesh)
-    # mesh = np.transpose(mesh, (2, 0, 1))
-    # mesh = [image]
     ids = [int(i) for i in np.unique(mesh[:])]
     return ids
+
+def progressive_meshes(ide, chunkfiles, temp_dir, out_dir, bit_depth):
+    Tile_Size = (CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE)
+    starts = []
+    logger.info('Starting Progressive Meshes for ID {}'.format(ide))
+    idenfiles = [f for f in chunkfiles if f.split('_')[0] == str(ide)]
+    len_files = len(idenfiles)
+    logger.info('ID {} is scattered amoung {} chunk(s)'.format(str(ide), len_files))
+    stripped_files = [i.strip('.ply').split('_')[1:] for i in idenfiles]
+    for fil in range(len_files):
+        start = [ast.literal_eval(trans)[0] for trans in stripped_files[fil]]
+        starts.append(start)
+    start_mesh = min(starts)
+    mesh_index = starts.index(start_mesh)
+    mesh_fileobj = idenfiles.pop(mesh_index)
+
+    mesh1_path = str(Path(temp_dir).joinpath(mesh_fileobj))
+    mesh1 = trimesh.load_mesh(file_obj=mesh1_path, file_type='ply')
+    translate_start = ([1, 0, 0, start_mesh[1]],
+                    [0, 1, 0, start_mesh[0]],
+                    [0, 0, 1, start_mesh[2]],
+                    [0, 0, 0, 1])
+    mesh1.apply_transform(translate_start)
+    logger.info('(ID: {}) Loaded chunk 1/{}: {} ---- {} bytes'.format(ide, len_files, mesh_fileobj, os.path.getsize(mesh1_path)))
+    if len_files == 1:
+        scalable_multires.generate_multires_mesh(mesh=mesh1,
+                                                directory=str(out_dir),
+                                                segment_id=ide,
+                                                quantization_bits=bit_depth)
+    else:
+        stripped_files_middle = [idy.strip('.ply').split('_')[1:] for idy in idenfiles]
+        for i in range(len_files-1):
+            mesh2_path = str(Path(temp_dir).joinpath(idenfiles[i]))
+            mesh2 = trimesh.load_mesh(file_obj=mesh2_path, file_type='ply')
+            logger.info('(ID: {}) Loaded chunk {}/{}: {} ---- {} bytes'.format(ide, i+2, len_files, idenfiles[i], os.path.getsize(mesh2_path)))
+            transformationmatrix = [ast.literal_eval(trans) for trans in stripped_files_middle[i]]
+            offset = [transformationmatrix[i][0]/Tile_Size[i] for i in range(3)]
+            middle_mesh = [trans[0] for trans in transformationmatrix]
+            translate_middle = ([1, 0, 0, middle_mesh[1] - offset[1]],
+                                [0, 1, 0, middle_mesh[0] - offset[0]],
+                                [0, 0, 1, middle_mesh[2] - offset[2]],
+                                [0, 0, 0, 1])
+            mesh2.apply_transform(translate_middle)
+            mesh1 = trimesh.util.concatenate(mesh1, mesh2)
+        scalable_multires.generate_multires_mesh(mesh=mesh1,
+                                                directory=str(out_dir),
+                                                segment_id=ide,
+                                                quantization_bits=bit_depth)
+
 
 def meshdata(volume,ids, voxel_size, outDir, X, Y, Z):
     for iden in ids:
         if iden == 0:
             continue
-        print('** Processing label ID {} in section ({}, {}, {})'.format(iden, X, Y, Z))
+        logger.info('Processing label ID {} in section ({}, {}, {})'.format(iden, X, Y, Z))
         dtype = volume.dtype
         vertices,faces,_,_ = measure.marching_cubes((volume==iden).astype(str(np.iinfo(dtype).dtype)), level=0, step_size=1)
 
@@ -63,56 +112,20 @@ def meshdata(volume,ids, voxel_size, outDir, X, Y, Z):
                                             directory=str(outDir),
                                             segment_id=iden,
                                             chunks=(X, Y, Z))
-        # if iden == 0:
-        #     continue
-        # try:
-        #     vertices,faces,_,_ = measure.marching_cubes_lewiner(image==iden,step_size=1)
-        # except RuntimeError:
-        #     continue
-        # vertices = vertices[:,[1,0,2]].astype(np.float32)
-        # vertices[:,0] = vertices[:,0]*voxel_size[0] + voxel_size[0]*np.float32(X[0])
-        # vertices[:,1] = vertices[:,1]*voxel_size[1] + voxel_size[1]*np.float32(Y[0])
-        # vertices[:,2] = vertices[:,2]*voxel_size[2] + voxel_size[2]*np.float32(Z[0])
-        
-        # fragment_file = outDir.joinpath('mesh.{}.{}-{}_{}-{}_{}-{}'.format(iden,X[0],X[1],Y[0],Y[1],Z[0],Z[1]))
-        # with open(str(fragment_file), 'wb') as meshfile:
-        #             meshfile.write(struct.pack("<I",vertices.shape[0]))
-        #             meshfile.write(vertices.astype('<f').tobytes(order="C"))
-        #             meshfile.write(faces.astype("<I").tobytes(order="C"))
-        # if iden not in fragments:
-        #     fragments[iden] = {'fragments': [fragment_file.name]}
-        # else:
-        #     fragments[iden]['fragments'].append(fragment_file.name)
-
 def meshdir_files(opmeshdir):
-    # opmeshdir = Path(out_dir).joinpath("meshdir")
     opmesh_mesh = opmeshdir.joinpath("info")
-    print(opmesh_mesh)
     infomesh = {
         "@type": "neuroglancer_multilod_draco",
         "vertex_quantization_bits": 16,
         "transform": [0, 325, 0, 0, 325, 0, 0, 0, 0, 0, 325, 0],
         "lod_scale_multiplier": "1"
     }
-    # idindex = {
-    #     "chunk_shape": "[64, 64, 64]",
-    #     "grid_origin": "[0, 0, 0]",
-    #     "num_lods": "",
-    #     "lod_scales": "1",
-    #     "vertex_offsets": "[0, 0, 0, 3]",
-    #     "num_fragments_per_lod": "1",
-    # }
-    # for id in idlabels:
-    #     opmesh_index = opmeshdir.joinpath(str(id) + ".index")
-    #     with open(opmesh_index, 'w') as writeid:
-    #         writeid.write("check")
-    #     writeid.close()
+
     with open(opmesh_mesh, 'w') as writemesh:
         json.dump(infomesh, writemesh)
     writemesh.close()
 
 def infodir_files(encoder,idlabels,out_dir):
-# def segmentinfo(encoder,out_dir):
 
     opinfodir = Path(out_dir).joinpath("infodir")
     opinfo_info = opinfodir.joinpath("info")
@@ -325,7 +338,7 @@ def _get_higher_res(S, bfio_reader,slide_writer,encoder,ids, meshes, imagetype, 
         image_encoded = encoder.encode(image, bfio_reader.z)
         # Write the chunk
         slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],Z[0],Z[1]))
-        print(S, str(X[0])+ "-" + str(X[1])+ "-" + str(Y[0]) + "_" + str(Y[1])+ "_" + str(Z[0]) + "-" + str(Z[1]))
+        logger.info('Scale ({}): {}-{}_{}-{}_{}-{}'.format(S, str(X[0]), str(X[1]), str(Y[0]),str(Y[1]), str(Z[0]), str(Z[1])))
         return image
 
     else:
@@ -336,10 +349,8 @@ def _get_higher_res(S, bfio_reader,slide_writer,encoder,ids, meshes, imagetype, 
                 dim.insert(1,dim[0] + ((dim[1] - dim[0]-1)//CHUNK_SIZE) * CHUNK_SIZE)
         
         def load_and_scale(*args,**kwargs):
-            # futures.shutdown(wait=True)
             jutil.attach()
             sub_image = _get_higher_res(**kwargs)
-            # shutdown(wait=True)
             jutil.detach()
             image = args[0]
             x_ind = args[1]
@@ -348,21 +359,15 @@ def _get_higher_res(S, bfio_reader,slide_writer,encoder,ids, meshes, imagetype, 
             image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],z_ind[0]:z_ind[1]] = _mode2(sub_image, datatype)
             
         
-        with ThreadPoolExecutor(max_workers=1) as executor:
+        with ThreadPoolExecutor(max_workers=8) as executor:
             for x in range(0,len(subgrid_dims[1])-1):
                 x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
-                # print("X index", x_ind)
                 x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
-                # print(subgrid_dims[0][x:x+2],subgrid_dims[1][y:y+2],subgrid_dims[2][z:z+2])
-                # print(" ")
                 for y in range(0,len(subgrid_dims[0])-1):
                     y_ind = [subgrid_dims[1][y] - subgrid_dims[1][0],subgrid_dims[1][y+1] - subgrid_dims[1][0]]
-                    # print("Y index", y_ind)
                     y_ind = [np.ceil(yi/2).astype('int') for yi in y_ind]
-                    
                     for z in range(0, len(subgrid_dims[2])-1):
                         z_ind = [subgrid_dims[2][z] - subgrid_dims[2][0],subgrid_dims[2][z+1] - subgrid_dims[2][0]]
-                        # print("Z index", z_ind)
                         z_ind = [np.ceil(zi/2).astype('int') for zi in z_ind]
                         
                         executor.submit(load_and_scale, 
@@ -385,8 +390,7 @@ def _get_higher_res(S, bfio_reader,slide_writer,encoder,ids, meshes, imagetype, 
         # Encode the chunk
         image_encoded = encoder.encode(image, image.shape[2])
         slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],Z[0],Z[1]))
-        print(S, str(X[0])+ "-" + str(X[1])+ "-" + str(Y[0]) + "_" + str(Y[1])+ "_" + str(Z[0]) + "-" + str(Z[1]))
-        executor.shutdown(wait=True)
+        logger.info('Scale ({}): {}-{}_{}-{}_{}-{}'.format(S, str(X[0]), str(X[1]), str(Y[0]),str(Y[1]), str(Z[0]), str(Z[1])))
         return image
 
 # Modified and condensed from FileAccessor class in neuroglancer-scripts
