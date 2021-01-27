@@ -110,7 +110,7 @@ try:
     for ide in all_idens:
         starts = []
         print('Starting Progressive Meshes for ID {}'.format(ide))
-        idenfiles = [f for f in chunkfiles if f.split('_')[0] == str(ide)]
+        idenfiles = [str(f) for f in chunkfiles if f.split('_')[0] == str(ide)]
         len_files = len(idenfiles)
         print('ID {} is scattered amoung {} chunk(s)'.format(str(ide), len_files))
         stripped_files = [i.strip('.ply').split('_')[1:] for i in idenfiles]
@@ -121,13 +121,14 @@ try:
         mesh_index = starts.index(start_mesh)
         mesh_fileobj = idenfiles.pop(mesh_index)
 
-        mesh1 = trimesh.load_mesh(file_obj=mesh_fileobj, file_type='ply')
+        mesh1_path = str(Path(temp_dir).joinpath(mesh_fileobj))
+        mesh1 = trimesh.load_mesh(file_obj=mesh1_path, file_type='ply')
         translate_start = ([1, 0, 0, start_mesh[1]],
                            [0, 1, 0, start_mesh[0]],
                            [0, 0, 1, start_mesh[2]],
                            [0, 0, 0, 1])
         mesh1.apply_transform(translate_start)
-        print('** Loaded chunk #1: {} ---- {} bytes'.format(mesh_fileobj, os.path.getsize(mesh_fileobj)))
+        print('** Loaded chunk #1: {} ---- {} bytes'.format(mesh_fileobj, os.path.getsize(mesh1_path)))
         if len_files == 1:
             scalable_multires.generate_multires_mesh(mesh=mesh1,
                                                     directory=str(output_path),
@@ -136,8 +137,9 @@ try:
         else:
             stripped_files_middle = [idy.strip('.ply').split('_')[1:] for idy in idenfiles]
             for i in range(len_files-1):
-                mesh2 = trimesh.load_mesh(file_obj=idenfiles[i], file_type='ply')
-                print('** Loaded chunk #{}: {} ---- {} bytes'.format(i+2, idenfiles[i], os.path.getsize(idenfiles[i])))
+                mesh2_path = str(Path(temp_dir).joinpath(idenfiles[i]))
+                mesh2 = trimesh.load_mesh(file_obj=mesh2_path, file_type='ply')
+                print('** Loaded chunk #{}: {} ---- {} bytes'.format(i+2, idenfiles[i], mesh2_path))
                 transformationmatrix = [ast.literal_eval(trans) for trans in stripped_files_middle[i]]
                 offset = [transformationmatrix[i][0]/Tile_Size[i] for i in range(3)]
                 middle_mesh = [trans[0] for trans in transformationmatrix]

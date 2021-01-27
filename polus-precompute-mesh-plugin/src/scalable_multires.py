@@ -156,14 +156,23 @@ def generate_trimesh_chunks(
     directory,
     segment_id,
     chunks):
-    """Generates temporary chunks of the meshes"""
+    """Generates temporary chunks of the meshes by saving them in ply files
 
+    Parameters
+    ----------
+    mesh : trimesh.base.Trimesh 
+        A Trimesh mesh object to decompose.
+    directory : str
+        Temporary directory to save the ply files
+    segment_id : str
+        The ID of the segment to which the mesh belongs. 
+    chunks: tuple
+        The X, Y, Z chunk that is analyzed
+    """
     chunk_filename = '{}_{}_{}_{}.ply'.format(segment_id, chunks[0], chunks[1], chunks[2])
-    # print(chunk_filename)
     temp_dir = os.path.join(directory, "temp_drc")
     os.makedirs(temp_dir, exist_ok=True)
-    with open(os.path.join(temp_dir, chunk_filename), 'wb') as f:
-        mesh.export(chunk_filename)
+    mesh.export(os.path.join(temp_dir, chunk_filename))
 
 def generate_multires_mesh(
     mesh, 
@@ -171,7 +180,7 @@ def generate_multires_mesh(
     segment_id, 
     quantization_bits=16,
     compression_level=4,
-    mesh_subdirectory='mesh'):
+    mesh_subdirectory='meshdir'):
     
     """ Generates a Neuroglancer precomputed multiresolution mesh.
     
@@ -192,50 +201,57 @@ def generate_multires_mesh(
     mesh_subdirectory : str
         Name of the mesh subdirectory within the Neuroglancer volume directory.    
     """
-    # chunk_filename = '{}_{}_{}_{}.ply'.format(segment_id, chunks[0], chunks[1], chunks[2])
-    # print(chunk_filename)
-    # temp_dir = os.path.join(directory, "temp_drc")
-    # os.makedirs(temp_dir, exist_ok=True)
-    # with open(os.path.join(temp_dir, chunk_filename), 'wb') as f:
-    #     mesh.export(chunk_filename)
 
-    dim_goal = (7, 7, 7)
+    def solve_for_nodes_per_dim(num_lods):
+        """This function solves for which dimension to slice with each progressive mesh
+            The number of nodes each dimension is either one (no slicing) or two (slicing).
+            If the number of nodes for all dimensions is two, then you have a full octree.
+
+        Parameters
+        ----------
+        num_lods : int 
+            The number of progressive meshes
+        """
+        nodes_per_dim = []
+        fragment_shapes = []
+        if num_lods > 0: 
+            for i in range(0, num_lods):
+                if i == 0:
+                    nodes_per_dim.append([1, 1, 1]) 
+                else:
+                    maxval = np.max(nodes)
+                    newnodes = []
+                    for node in range(3):
+                        if nodes[node] == maxval:
+                            nodes[node] = nodes[node] - 1
+                            newnodes.append(int(nodes_per_dim[-1][node]*2))
+                        else:
+                            newnodes.append(int(nodes_per_dim[-1][node]))
+                    nodes_per_dim.append(newnodes)
+            lastnode = nodes_per_dim[-1]
+            for i in range(num_lods):
+                append = [item*(2**(num_lods-i-1))for item in nodes_per_dim[i]] 
+                append = [int(i/j) for i, j in zip(append, lastnode)]
+                fragment_shapes.append(append)
+        else: # if there are no progressive meshes to create
+            num_lods = 1
+            fragment_shapes = [[1,1,1]]
+            nodes_per_dim = [[1,1,1]]
+
+        return num_lods, nodes_per_dim, fragment_shapes
+
+    dim_goal = (7, 7, 7) # (The smallest possible chunk size is (2^7, 2^7, 2^7))
     bounds = mesh.bounds
     maxvertex = bounds[1]
     minvertex = bounds[0]
     grid_origin = minvertex
     shape = bounds[1] - bounds[0]
 
-    nodes = np.floor(np.log2(shape))
-    dividediff = nodes - dim_goal
-    num_lods = int(np.max(dividediff)) + 1
-    nodes_per_dim = []
+    # Need to solve for the number of progressive meshes to meet dimension goal. 
+    nodes = np.floor(np.log2(shape)) # convert shape to log base 2
+    num_lods = int(np.max(nodes - dim_goal)) + 1
 
-    fragment_shapes = []
-    if num_lods > 0:
-        for i in range(0, num_lods):
-            if i == 0:
-                nodes_per_dim.append([1, 1, 1])
-            else:
-                maxval = np.max(nodes)
-                newnodes = []
-                for node in range(3):
-                    if nodes[node] == maxval:
-                        nodes[node] = nodes[node] - 1
-                        newnodes.append(int(nodes_per_dim[-1][node]*2))
-                    else:
-                        newnodes.append(int(nodes_per_dim[-1][node]))
-                nodes_per_dim.append(newnodes)
-        lastnode = nodes_per_dim[-1]
-        for i in range(num_lods):
-            append = [item*(2**(num_lods-i-1))for item in nodes_per_dim[i]] 
-            append = [int(i/j) for i, j in zip(append, lastnode)]
-            # print(append)
-            fragment_shapes.append(append)
-    else:
-        num_lods = 1
-        fragment_shapes = [[1,1,1]]
-        nodes_per_dim = [[1,1,1]]
+    num_lods, nodes_per_dim, fragment_shapes = solve_for_nodes_per_dim(num_lods)
 
     # Define key variables. 
     lods = np.arange(0, num_lods)
@@ -256,20 +272,14 @@ def generate_multires_mesh(
     mesh_dir = os.path.join(directory, mesh_subdirectory)
     os.makedirs(mesh_dir, exist_ok=True)
 
-    # print("NODES PER DIMENSION: ", nodes_per_dim)
-    # print("FRAGMENTS: ", fragment_shapes)
     fragment_offsets = []
     fragment_positions = []
     # Write fragment binaries.
-    # # print("LOD SCALES BACKWARDS", lod_scales)
-    # print("LOD SCALES: ", lod_scales)
     with open(os.path.join(mesh_dir, f'{segment_id}'), 'wb') as f:
         ## We create scales from finest to coarsest.
         i = num_lods
         for scale in lod_scales[::-1]: #go in scale backwards 
-            # print("scale", scale)
             num_faces = int(mesh.faces.shape[0]//(lod_scales.max()/scale)**2)
-            # print("NUM OF FACES", num_faces)
             scaled_mesh = mesh.simplify_quadratic_decimation(num_faces)
             scaled_mesh.remove_degenerate_faces()
             scaled_mesh.remove_duplicate_faces()
@@ -298,11 +308,11 @@ def generate_multires_mesh(
     num_fragments_per_lod = np.array([len(nodes) for nodes in fragment_positions])
 
     # Add mesh subdir to the main info file.
-    with open(os.path.join(directory, 'info'), 'r+') as f:
-        info = json.loads(f.read())
-        f.seek(0)
-        info['mesh'] = mesh_subdirectory
-        json.dump(info, f)
+    # with open(os.path.join(directory, 'info'), 'r+') as f:
+    #     info = json.loads(f.read())
+    #     f.seek(0)
+    #     info['mesh'] = mesh_subdirectory
+    #     json.dump(info, f)
     
     # Write manifest file.
     with open(os.path.join(mesh_dir, f'{segment_id}.index'), 'wb') as f:
