@@ -1,24 +1,22 @@
-import argparse, logging, copy, cv2, bioformats
+import argparse, logging, copy, cv2, typing
 
 import numpy as np
-import javabridge as jutil
-from filepattern import get_regex,output_name,FilePattern
-from bfio.bfio import BioReader,BioWriter
+from filepattern import get_regex,output_name,FilePattern,infer_pattern
+from bfio import BioReader,BioWriter
 from pathlib import Path
 
-# Disable java logging
-def init_logger(self):
-    pass
-bioformats.init_logger = init_logger
+from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import cpu_count
 
-OPTIONS = {'max_iterations': 500,
-           'max_reweight_iterations': 10,
-           'optimization_tol': 10**-6,
-           'reweight_tol': 10**-4,
-           'darkfield': False,
-           'size': 128,
-           'epsilon': 0.1
-          }
+OPTIONS = {
+    'max_iterations': 500,
+    'max_reweight_iterations': 10,
+    'optimization_tol': 10**-6,
+    'reweight_tol': 10**-4,
+    'darkfield': False,
+    'size': 128,
+    'epsilon': 0.1
+}
 
 """ Load files and create an image stack """
 def _get_resized_image_stack(flist):
@@ -37,17 +35,22 @@ def _get_resized_image_stack(flist):
     """
 
     #Initialize the output
-    br = BioReader(str(flist[0]))
-    X = br.num_x()
-    Y = br.num_y()
-    C = len(flist)
-    img_stack = np.zeros((OPTIONS['size'],OPTIONS['size'],C),dtype=np.float32)
+    with BioReader(flist[0]['file']) as br:
+        X = br.x
+        Y = br.y
+        N = len(flist)
+    img_stack = np.zeros((OPTIONS['size'],OPTIONS['size'],N),dtype=np.float32)
+    
+    def load_and_store(fname,ind):
+        with BioReader(fname['file'],max_workers=1) as br:
+            I = np.squeeze(br[:,:,:1,0,0])
+        img_stack[:,:,ind] = cv2.resize(I,(OPTIONS['size'],OPTIONS['size']),interpolation=cv2.INTER_LINEAR).astype(np.float32)
 
     # Load every image as a z-slice
-    for ind,fname in zip(range(len(flist)),flist):
-       br = BioReader(str(fname))
-       I = np.squeeze(br.read_image())
-       img_stack[:,:,ind] = cv2.resize(I,(OPTIONS['size'],OPTIONS['size']),interpolation=cv2.INTER_LINEAR).astype(np.float32)
+    with ThreadPoolExecutor(2) as executor:
+        for ind,fname in enumerate(flist):
+            executor.submit(load_and_store,fname,ind)
+
     return img_stack,X,Y
 
 def _dct2(imgflt_stack):
@@ -258,7 +261,6 @@ def _inexact_alm_l1(imgflt_stack,options):
 
     return A,E1,A_offset
 
-
 def _get_flatfield_and_reweight(flt_pxl,pxl_err,df_pxl,options):
     """ Format flatfield/darkfield and change weights
 
@@ -384,106 +386,30 @@ def _get_photobleach(imgflt_stack,flatfield,darkfield=None):
 
     return A_coeff
 
-if __name__ == "__main__":
-    """ Initialize argument parser """
-    parser = argparse.ArgumentParser(prog='basic', description='Calculate flatfield information for a single set of images.')
+def basic(files: typing.List[Path],
+          out_dir: Path,
+          darkfield: bool = False,
+          photobleach: bool = False):
 
-    """ Define the arguments """
-    parser.add_argument('--inpDir',            # Name of the bucket
-                        dest='inpDir',
-                        type=str,
-                        help='Path to input images.',
-                        required=True)
-    parser.add_argument('--darkfield',         # Path to the data within the bucket
-                        dest='darkfield',
-                        type=str,
-                        help='If true, calculate darkfield contribution.',
-                        required=False)
-    parser.add_argument('--photobleach',       # Path to the data within the bucket
-                        dest='photobleach',
-                        type=str,
-                        help='If true, calculates a photobleaching scalar.',
-                        required=False)
-    parser.add_argument('--inpRegex',          # Output directory
-                        dest='inp_regex',
-                        type=str,
-                        help='Input file name pattern.',
-                        required=False)
-    parser.add_argument('--outDir',            # Output directory
-                        dest='output_dir',
-                        type=str,
-                        help='The output directory for the flatfield images.',
-                        required=True)
-    parser.add_argument('--R',                 # Replicate
-                        dest='R',
-                        type=int,
-                        help='The output directory for the flatfield images.',
-                        required=False)
-    parser.add_argument('--T',                 # Timepoint
-                        dest='T',
-                        type=int,
-                        help='The output directory for the flatfield images.',
-                        required=False)
-    parser.add_argument('--C',                 # Channel
-                        dest='C',
-                        type=int,
-                        help='The output directory for the flatfield images.',
-                        required=False)
-
-    """ Get the input arguments """
-    args = parser.parse_args()
-
-    fpath = args.inpDir
-    get_darkfield = str(args.darkfield).lower() == 'true'
-    output_dir = Path(args.output_dir).joinpath('images')
-    metadata_dir = Path(args.output_dir).joinpath('metadata_files')
-    inp_regex = args.inp_regex
-    get_photobleach = str(args.photobleach).lower() == 'true'
-
-    if args.R==None:
-        R = -1
-    else:
-        R = args.R
-    if args.T==None:
-        T = -1
-    else:
-        T = args.T
-    if args.C==None:
-        C = -1
-    else:
-        C = args.C
-
-
-    # Initialize the logger
-    logging.basicConfig(format='%(asctime)s - %(name)s - Process [{0},{1},{2}] - %(levelname)s - %(message)s'.format(R,T,C),
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                         datefmt='%d-%b-%y %H:%M:%S')
     logger = logging.getLogger("BaSiC")
     logger.setLevel(logging.INFO)
-
-    # Start the javabridge
-    log_config = Path(__file__).parent.joinpath("log4j.properties")
-    jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
-
-    # Parse files into list to access by variable
-    regex, variables = get_regex(inp_regex)
-    test = FilePattern(fpath, inp_regex)
-    files = [i['file'] for i in test.get_matching(R=R,T=T,C=C)]
 
     # Load files and sort
     logger.info('Loading and sorting images...')
     img_stk,X,Y = _get_resized_image_stack(files)
     img_stk_sort = np.sort(img_stk)
-
-
+    
     # Initialize options
-    new_options = _initialize_options(img_stk_sort,get_darkfield,OPTIONS)
+    new_options = _initialize_options(img_stk_sort,darkfield,OPTIONS)
 
     # Initialize flatfield/darkfield matrices
     logger.info('Beginning flatfield estimation')
     flatfield_old = np.ones((new_options['size'],new_options['size']),dtype=np.float64)
     darkfield_old = np.random.normal(size=(new_options['size'],new_options['size'])).astype(np.float64)
-
-    # Optimize and re-optimize until the change in values is below tolerance or a maximum number of iterations is reached
+    
+    # Optimize until the change in values is below tolerance or a maximum number of iterations is reached
     for w in range(new_options['max_reweight_iterations']):
         # Optimize using inexact augmented Legrangian multiplier method using L1 loss
         A, E1, A_offset = _inexact_alm_l1(copy.deepcopy(img_stk_sort),new_options)
@@ -507,7 +433,7 @@ if __name__ == "__main__":
             break
 
     # Calculate photobleaching effects if specified
-    if get_photobleach:
+    if photobleach:
         pb = _get_photobleach(copy.deepcopy(img_stk),flatfield,darkfield)
 
     # Resize images back to original image size
@@ -516,41 +442,41 @@ if __name__ == "__main__":
     if new_options['darkfield']:
         darkfield = cv2.resize(darkfield,(Y,X),interpolation=cv2.INTER_CUBIC).astype(np.float32)
 
-    # Generate output image name based on filename pattern variables
-    out_dict = {}
-    if 'r' in variables:
-        out_dict['r'] = R
-    if 't' in variables:
-        out_dict['t'] = T
-    if 'c' in variables:
-        out_dict['c'] = C
-    base_output = output_name(inp_regex,[i for i in test.get_matching(R=R ,T=T,C=C)],out_dict)
+    # Try to infer a filename
+    try:
+        pattern = infer_pattern([f['file'].name for f in files])
+        fp = FilePattern(files[0]['file'].parent,pattern)
+        base_output = fp.output_name()
+        
+    # Fallback to the first filename
+    except:
+        base_output = files[0]['file'].name
     
     # Export the flatfield image as a tiled tiff
     flatfield_out = base_output.replace('.ome.tif','_flatfield.ome.tif')
-    bw = BioWriter(str(output_dir.joinpath(flatfield_out)))
-    bw.pixel_type('float')
-    bw.num_x(X)
-    bw.num_y(Y)
-    bw.write_image(np.reshape(flatfield,(Y,X,1,1,1)))
-    bw.close_image()
+    
+    with BioReader(files[0]['file'],max_workers=2) as br:
+        metadata = br.metadata
+    
+    with BioWriter(out_dir.joinpath(flatfield_out),metadata=metadata,max_workers=2) as bw:
+        bw.dtype = np.float32
+        bw.x = X
+        bw.y = Y
+        bw[:] = np.reshape(flatfield,(Y,X,1,1,1))
     
     # Export the darkfield image as a tiled tiff
     if new_options['darkfield']:
         darkfield_out = base_output.replace('.ome.tif','_darkfield.ome.tif')
-        bw = BioWriter(str(output_dir.joinpath(darkfield_out)))
-        bw.pixel_type('float')
-        bw.num_x(X)
-        bw.num_y(Y)
-        bw.write_image(np.reshape(darkfield,(Y,X,1,1,1)))
-        bw.close_image()
+        with BioWriter(out_dir.joinpath(darkfield_out),metadata=metadata,max_workers=2) as bw:
+            bw.dtype = np.float32
+            bw.x = X
+            bw.y = Y
+            bw[:] = np.reshape(darkfield,(Y,X,1,1,1))
         
-    # Export the photobleaching components as csv
-    if get_photobleach:
-        offsets_out = base_output.replace('.ome.tif','_offsets.csv')
-        with open(str(metadata_dir.joinpath(offsets_out)),'w') as fw:
-            fw.write('file,offset\n')
-            for f,o in zip(files,pb[0,:].tolist()):
-                fw.write("{},{}\n".format(f,o))
-
-    jutil.kill_vm()
+    # # Export the photobleaching components as csv
+    # if photobleach:
+    #     offsets_out = base_output.replace('.ome.tif','_offsets.csv')
+    #     with open(metadata_dir.joinpath(offsets_out)),'w') as fw:
+    #         fw.write('file,offset\n')
+    #         for f,o in zip(files,pb[0,:].tolist()):
+    #             fw.write("{},{}\n".format(f,o))

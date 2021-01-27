@@ -1,0 +1,4 @@
+filepattern==1.4.3
+bfio==2.0.3
+opencv-python-headless
+imagecodecs

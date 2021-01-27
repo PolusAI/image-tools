@@ -1,6 +1,16 @@
 import argparse, logging, multiprocessing, subprocess, time
 from pathlib import Path
 from filepattern import FilePattern
+import basic
+from concurrent.futures import ProcessPoolExecutor, wait
+from multiprocessing import cpu_count, Queue
+
+# Global variable to scale number of processing threads dynamically
+max_threads = max([cpu_count()//2,1])
+
+# Set logger delay times
+process_delay = 30     # Delay between updates within _merge_layers
+
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
@@ -13,27 +23,27 @@ def main():
     parser = argparse.ArgumentParser(prog='main', description='Calculate flatfield information from an image collection.')
 
     """ Define the arguments """
-    parser.add_argument('--inpDir',               # Name of the bucket
+    parser.add_argument('--inpDir',
                         dest='inpDir',
                         type=str,
                         help='Path to input images.',
                         required=True)
-    parser.add_argument('--darkfield',                  # Path to the data within the bucket
+    parser.add_argument('--darkfield',
                         dest='darkfield',
                         type=str,
                         help='If true, calculate darkfield contribution.',
                         required=False)
-    parser.add_argument('--photobleach',                  # Path to the data within the bucket
+    parser.add_argument('--photobleach',
                         dest='photobleach',
                         type=str,
                         help='If true, calculates a photobleaching scalar.',
                         required=False)
-    parser.add_argument('--inpRegex',                 # Output directory
-                        dest='inp_regex',
+    parser.add_argument('--filePattern',
+                        dest='file_pattern',
                         type=str,
                         help='Input file name pattern.',
                         required=False)
-    parser.add_argument('--outDir',                 # Output directory
+    parser.add_argument('--outDir',
                         dest='output_dir',
                         type=str,
                         help='The output directory for the flatfield images.',
@@ -50,69 +60,35 @@ def main():
     output_dir.mkdir(exist_ok=True)
     metadata_dir = Path(args.output_dir).joinpath('metadata_files')
     metadata_dir.mkdir(exist_ok=True)
-    inp_regex = args.inp_regex
+    file_pattern = args.file_pattern
     get_photobleach = str(args.photobleach).lower() == 'true'
 
     logger.info('input_dir = {}'.format(fpath))
     logger.info('get_darkfield = {}'.format(get_darkfield))
     logger.info('get_photobleach = {}'.format(get_photobleach))
-    logger.info('inp_regex = {}'.format(inp_regex))
+    logger.info('inp_regex = {}'.format(file_pattern))
     logger.info('output_dir = {}'.format(output_dir))
-    # Set up lists for tracking processes
+
+    fp = FilePattern(fpath,file_pattern)
+    
     processes = []
-    process_timer = []
-    pnum = 0
-    # Iterator to group files with  constant r,t and c values
-    file = FilePattern(fpath, inp_regex)
-    total_no = len(list(file.iterate(group_by='xyz')))
-    for i in file.iterate(group_by='xyz'):
-        if len(processes) >= multiprocessing.cpu_count() - 1:
-            free_process = -1
-            while free_process < 0:
-                for process in range(len(processes)):
-                    if processes[process].poll() is not None:
-                        free_process = process
-                        break
-                # Wait between checks to free up some processing power
-                time.sleep(3)
-            pnum += 1
-            logger.info("Finished process {} of {} in {}s!".format(pnum, total_no,
-                                                                           time.time() - process_timer[free_process]))
-            del processes[free_process]
-            del process_timer[free_process]
+    with ProcessPoolExecutor(max_threads) as executor:
+    
+        for files in fp(group_by='xyp'):
+            
+            processes.append(executor.submit(basic.basic,files,output_dir,get_darkfield,get_photobleach))
+        
+        logger.info(f'max_threads = {max_threads}')
+        logger.info(f'len(processes) = {len(processes)}')
+        done, not_done = wait(processes,timeout=0)
 
-        logger.info("Starting process [r,t,c]: [{},{},{}]".format(i[0]['r'], i[0]['t'], i[0]['c']))
-        processes.append(subprocess.Popen(
-                    "python3 basic.py --inpDir {} --outDir {} --darkfield {} --photobleach {} --inpRegex {} --R {} --T {} --C {}".format(
-                        fpath,
-                        args.output_dir,
-                        get_darkfield,
-                        get_photobleach,
-                        inp_regex,
-                        i[0]['r'],
-                        i[0]['t'],
-                        i[0]['c']),
-                    shell=True))
-        process_timer.append(time.time())
-    while len(processes) > 1:
-        free_process = -1
-        while free_process < 0:
-            for process in range(len(processes)):
-                if processes[process].poll() is not None:
-                    free_process = process
-                    break
-            # Wait between checks to free up some processing power
-            time.sleep(3)
-        pnum += 1
-        logger.info("Finished process {} of {} in {}s!".format(pnum,total_no, time.time() - process_timer[free_process]))
-        del processes[free_process]
-        del process_timer[free_process]
+        while len(not_done) > 0:
 
-    processes[0].wait()
+            logger.info('Total Progress: {:6.2f}%'.format(100*len(done)/len(processes)))
 
-    logger.info("Finished process {} of {} in {}s!".format(total_no,total_no, time.time() - process_timer[0]))
-    logger.info("Finished all processes!")
+            done, not_done = wait(processes,timeout=process_delay)
 
+    logger.info('Progress: {:6.3f}%'.format(100))
 
 if __name__ == "__main__":
     main()
