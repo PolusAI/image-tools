@@ -52,7 +52,8 @@ def main():
     # Get list of images that we are going to through
     logger.info('Getting the images...')
     image_path = Path(input_dir)
-    images = [i for i in image_path.iterdir() if "".join(i.suffixes)==".Labels.ome.tif"]
+
+    images = [i for i in image_path.iterdir() if str(i).endswith(".ome.tif")]
     images.sort()
 
     # Set up lists for tracking processes

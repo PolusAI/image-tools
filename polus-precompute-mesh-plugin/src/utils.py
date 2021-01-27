@@ -51,8 +51,8 @@ def meshdata(volume,ids, voxel_size, outDir, X, Y, Z):
         if iden == 0:
             continue
         print('** Processing label ID {} in section ({}, {}, {})'.format(iden, X, Y, Z))
-        # volume = volume.squeeze()
-        vertices,faces,_,_ = measure.marching_cubes((volume==iden).astype("uint8"), level=0, step_size=1)
+        dtype = volume.dtype
+        vertices,faces,_,_ = measure.marching_cubes((volume==iden).astype(str(np.iinfo(dtype).dtype)), level=0, step_size=1)
 
         # range goal is (32-64)
         root_mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
@@ -596,7 +596,7 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight,imagetype):
         # initialize the json dictionary
         info = {
             "@type": "neuroglancer_multiscale_volume",
-            "data_type": "uint8",
+            "data_type": str(np.iinfo(dtype).dtype),
             "num_channels":1,
             "scales": [scales],       # Will build scales below
             "type": imagetype,
@@ -606,7 +606,7 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight,imagetype):
     else:
         info = {
             "@type": "neuroglancer_multiscale_volume",
-            "data_type": dtype,
+            "data_type": str(np.iinfo(dtype).dtype),
             "num_channels":1,
             "scales": [scales],       # Will build scales below
             "type": imagetype
