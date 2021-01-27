@@ -197,9 +197,9 @@ def main():
         
         while len(not_done) > 0:
             
-            done, not_done = wait(processes,timeout=process_delay)
-            
             logger.info('Total Progress: {:6.2f}%'.format(100*len(done)/len(processes)))
+            
+            done, not_done = wait(processes,timeout=process_delay)
 
 if __name__ == "__main__":
     main()

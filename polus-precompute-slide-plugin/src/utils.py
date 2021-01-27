@@ -379,10 +379,9 @@ class NeuroglancerWriter(PyramidWriter):
         """ This creates the info file specifying the metadata for the precomputed format """
 
         # Create an output path object for the info file
-        op = pathlib.Path(self.base_path).joinpath("info")
-        
-        if not op.parent.exists():
-            op.mkdir(exist_ok=True)
+        op = pathlib.Path(self.base_path)
+        op.mkdir(exist_ok=True,parents=True)
+        op = op.joinpath("info")
 
         # Write the neuroglancer info file
         with open(op,'w') as writer:
