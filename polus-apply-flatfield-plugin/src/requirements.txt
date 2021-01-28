@@ -1,0 +1,2 @@
+bfio==2.0.3
+filepattern==1.4.3
