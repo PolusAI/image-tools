@@ -9,11 +9,10 @@ ARG EXEC_DIR="/opt/executables"
 RUN mkdir -p ${EXEC_DIR}
 
 # Copy the requirements file
-COPY ./requirements/requirements-alpine.txt ${EXEC_DIR}/
+COPY ./requirements/requirements-base.txt ${EXEC_DIR}/
 
 # Install bfio and requirements
-RUN apt-get update && \
-    pip3 install -r  ${EXEC_DIR}/requirements-alpine.txt --no-cache-dir
+RUN pip3 install -r  ${EXEC_DIR}/requirements-base.txt --no-cache-dir
 
 ### Things that change frequently between containers
 

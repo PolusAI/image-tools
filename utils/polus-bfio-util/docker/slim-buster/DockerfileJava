@@ -8,12 +8,12 @@ RUN apt-get update && \
     pip3 install --upgrade pip --no-cache-dir
 
 # Copy the requirements file
-COPY ./requirements/requirements-alpine.txt ${EXEC_DIR}/
+COPY ./requirements/requirements-base.txt ${EXEC_DIR}/
 COPY ./requirements/requirements-java.txt ${EXEC_DIR}/
 
 # Install requirements
 RUN pip3 install --upgrade cython --no-cache-dir && \
-    pip3 install -r  ${EXEC_DIR}/requirements-alpine.txt --no-cache-dir && \
+    pip3 install -r  ${EXEC_DIR}/requirements-base.txt --no-cache-dir && \
     pip3 install -r  ${EXEC_DIR}/requirements-java.txt --no-cache-dir
 
 RUN pip3 uninstall cython -y
