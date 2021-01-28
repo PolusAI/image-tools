@@ -4,7 +4,12 @@ from neurogen import encoder
 import numpy as np
 from functools import cmp_to_key
 from pathlib import Path
+import logging
 
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    datefmt='%d-%b-%y %H:%M:%S')
+logger = logging.getLogger("mesh-generation")
+logger.setLevel(logging.INFO)
 
 class Quantize():
     """
@@ -108,11 +113,8 @@ def generate_mesh_decomposition(mesh, nodes_per_dim, quantization_bits, nodearra
     maxvertex = mesh.vertices.max(axis=0)
     minvertex = mesh.vertices.min(axis=0)
     nodearray = nodearray
-    # print("MAX AND MIN VERTICES: ", maxvertex, minvertex)
     scale = nodearray/(maxvertex- minvertex)
-    # print("SCALE: ", scale)
     verts_scaled = scale*(mesh.vertices - minvertex) #the scaled vertices ranges from 0 to chunk_shape
-    # print("verts_scaled", verts_scaled.max(axis=0))
     scaled_mesh = mesh.copy()
     scaled_mesh.vertices = verts_scaled
 
@@ -122,7 +124,6 @@ def generate_mesh_decomposition(mesh, nodes_per_dim, quantization_bits, nodearra
     # create submeshes. 
     submeshes = []
     nodes = []
-    # print("NODE ARRAY: ", nodearray)
     for x in range(0, nodearray[0]):
         mesh_x = trimesh.intersections.slice_mesh_plane(scaled_mesh, plane_normal=nyz, plane_origin=nyz*x)
         mesh_x = trimesh.intersections.slice_mesh_plane(mesh_x, plane_normal=-nyz, plane_origin=nyz*(x+1))
@@ -286,7 +287,6 @@ def generate_multires_mesh(
             scaled_mesh.remove_unreferenced_vertices()
             scaled_mesh.remove_infinite_values()
             scaled_mesh.fill_holes()
-            # trimesh.smoothing.filter_humphrey(mesh=scaled_mesh, iterations=10, beta=1.0)
 
             nodearray = nodes_per_dim[i-1]
             frag = [int(x) for x in fragment_shapes[i-1]]
@@ -307,13 +307,6 @@ def generate_multires_mesh(
     
     num_fragments_per_lod = np.array([len(nodes) for nodes in fragment_positions])
 
-    # Add mesh subdir to the main info file.
-    # with open(os.path.join(directory, 'info'), 'r+') as f:
-    #     info = json.loads(f.read())
-    #     f.seek(0)
-    #     info['mesh'] = mesh_subdirectory
-    #     json.dump(info, f)
-    
     # Write manifest file.
     with open(os.path.join(mesh_dir, f'{segment_id}.index'), 'wb') as f:
         f.write(chunk_shape.astype('<f').tobytes())
