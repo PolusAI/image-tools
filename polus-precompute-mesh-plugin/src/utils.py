@@ -24,7 +24,7 @@ import trimesh
 import scalable_multires
 import ast
 
-# Initialize the logger    
+# Initialize the logger
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("utilities")
@@ -41,19 +41,25 @@ UNITS = {'m':  10**9,
 # Chunk Scale
 CHUNK_SIZE = 256
 
-def image_generator(image):
+def find_ids(image):
+    """ This function unravels the image into a 1D numpy array and looks for any unique labels """
     mesh = image.ravel()
     ids = [int(i) for i in np.unique(mesh[:])]
     return ids
 
 def progressive_meshes(ide, chunkfiles, temp_dir, out_dir, bit_depth):
-    Tile_Size = (CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE)
-    starts = []
     logger.info('Starting Progressive Meshes for ID {}'.format(ide))
+
+    # Identify all the files belonging to the same segment 
     idenfiles = [f for f in chunkfiles if f.split('_')[0] == str(ide)]
     len_files = len(idenfiles)
     logger.info('ID {} is scattered amoung {} chunk(s)'.format(str(ide), len_files))
+    
+    # Identify which tile each chunk belongs to
     stripped_files = [i.strip('.ply').split('_')[1:] for i in idenfiles]
+
+    # Identify the tile closest to the origin
+    starts = []
     for fil in range(len_files):
         start = [ast.literal_eval(trans)[0] for trans in stripped_files[fil]]
         starts.append(start)
@@ -61,63 +67,80 @@ def progressive_meshes(ide, chunkfiles, temp_dir, out_dir, bit_depth):
     mesh_index = starts.index(start_mesh)
     mesh_fileobj = idenfiles.pop(mesh_index)
 
+    # Load the mesh that is closest to the origin
     mesh1_path = str(Path(temp_dir).joinpath(mesh_fileobj))
     mesh1 = trimesh.load_mesh(file_obj=mesh1_path, file_type='ply')
+
+    # Translate the mesh to its respective spot.  If starting_mesh = [0,0,0], then there is no translation
     translate_start = ([1, 0, 0, start_mesh[1]],
                     [0, 1, 0, start_mesh[0]],
                     [0, 0, 1, start_mesh[2]],
                     [0, 0, 0, 1])
     mesh1.apply_transform(translate_start)
     logger.info('(ID: {}) Loaded chunk 1/{}: {} ---- {} bytes'.format(ide, len_files, mesh_fileobj, os.path.getsize(mesh1_path)))
-    if len_files == 1:
+
+    
+    if len_files == 1: # If segment belongs to only one tile, then create progressive mesh of that segment
         scalable_multires.generate_multires_mesh(mesh=mesh1,
                                                 directory=str(out_dir),
                                                 segment_id=ide,
                                                 quantization_bits=bit_depth)
-    else:
+    else: # Else concatenate other pieces of the segment
+
+        # Need to recalculate because the first mesh has been removed from list and is already loaded
         stripped_files_middle = [idy.strip('.ply').split('_')[1:] for idy in idenfiles]
-        for i in range(len_files-1):
+
+        for i in range(len_files-1): # For each of the remaining chunks of the segment:
             mesh2_path = str(Path(temp_dir).joinpath(idenfiles[i]))
-            mesh2 = trimesh.load_mesh(file_obj=mesh2_path, file_type='ply')
+            mesh2 = trimesh.load_mesh(file_obj=mesh2_path, file_type='ply') # Load the chunk
             logger.info('(ID: {}) Loaded chunk {}/{}: {} ---- {} bytes'.format(ide, i+2, len_files, idenfiles[i], os.path.getsize(mesh2_path)))
+
+            # Translate the chunk to its respective spot.  
             transformationmatrix = [ast.literal_eval(trans) for trans in stripped_files_middle[i]]
-            offset = [transformationmatrix[i][0]/Tile_Size[i] for i in range(3)]
-            middle_mesh = [trans[0] for trans in transformationmatrix]
+            offset = [transformationmatrix[i][0]/CHUNK_SIZE for i in range(3)] # With every chunk away from the origin, there is an offset of 1z
+            middle_mesh = [trans[0] for trans in transformationmatrix] 
             translate_middle = ([1, 0, 0, middle_mesh[1] - offset[1]],
                                 [0, 1, 0, middle_mesh[0] - offset[0]],
                                 [0, 0, 1, middle_mesh[2] - offset[2]],
                                 [0, 0, 0, 1])
-            mesh2.apply_transform(translate_middle)
-            mesh1 = trimesh.util.concatenate(mesh1, mesh2)
+            mesh2.apply_transform(translate_middle) # Concatenate mesh2 to mesh1
+            mesh1 = trimesh.util.concatenate(mesh1, mesh2) # mesh1 is now bigger, since its been concatenated to another chunk of the segmented mesh.
+        
+        # Once we concatenate all the pieces of the segmented mesh, then we can continue to create progressive meshes and convert to Draco file format. 
         scalable_multires.generate_multires_mesh(mesh=mesh1,
                                                 directory=str(out_dir),
                                                 segment_id=ide,
                                                 quantization_bits=bit_depth)
 
-
-def meshdata(volume,ids, voxel_size, outDir, X, Y, Z):
+def meshdata(volume, ids, outDir_mesh, X, Y, Z):
+    """ This function generates a temporary directory of polygon meshes that are chunked.
+        The polygon meshes are chunked for scalability """
     for iden in ids:
         if iden == 0:
             continue
         logger.info('Processing label ID {} in section ({}, {}, {})'.format(iden, X, Y, Z))
         dtype = volume.dtype
+
+        # use the marching cube algorithm to create most detailed mesh
         vertices,faces,_,_ = measure.marching_cubes((volume==iden).astype(str(np.iinfo(dtype).dtype)), level=0, step_size=1)
 
-        # range goal is (32-64)
         root_mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
         dimensions = root_mesh.bounds
-        shape = dimensions[1] - dimensions[0]
-        LOD = np.floor(np.log2(shape))
         scalable_multires.generate_trimesh_chunks(mesh=root_mesh,
-                                            directory=str(outDir),
+                                            directory=str(outDir_mesh),
                                             segment_id=iden,
                                             chunks=(X, Y, Z))
-def meshdir_files(opmeshdir):
+def meshdir_files(opmeshdir, encoder):
+    """ This function creates an additional info file that is required by Neuroglancer to view meshes. """
+    transform_vars = encoder.info['scales'][0]['resolution']
+    
     opmesh_mesh = opmeshdir.joinpath("info")
     infomesh = {
         "@type": "neuroglancer_multilod_draco",
-        "vertex_quantization_bits": 16,
-        "transform": [0, 325, 0, 0, 325, 0, 0, 0, 0, 0, 325, 0],
+        "vertex_quantization_bits": 16, #should be 10 or 16
+        "transform": [0, transform_vars[0], 0, 0, 
+                      transform_vars[1], 0, 0, 0, 
+                      0, 0, transform_vars[2], 0], 
         "lod_scale_multiplier": "1"
     }
 
@@ -126,11 +149,13 @@ def meshdir_files(opmeshdir):
     writemesh.close()
 
 def infodir_files(encoder,idlabels,out_dir):
+    """ This function creates an additional info file that is required by Neuroglancer to view segmentations. """
 
     opinfodir = Path(out_dir).joinpath("infodir")
+    opinfodir.mkdir()
     opinfo_info = opinfodir.joinpath("info")
     
-
+    # subsection of the info file
     inlineinfo = {
         "ids":[str(item) for item in idlabels],
         "properties":[
@@ -156,20 +181,8 @@ def infodir_files(encoder,idlabels,out_dir):
         writer.write(json.dumps(info))
     writer.close()
 
-def squeeze_generic(a, axes_to_keep):
-    out_s = [s for i,s in enumerate(a.shape) if i in axes_to_keep or s!=1]
-    return a.reshape(out_s)
 
 def _mode2(image, dtype):
-    """ Finds the mode of pixels together with optical field 2x2x2 and stride 2
-    
-    Inputs:
-        image - numpy array with only three dimensions (m,n,p)
-        datatype - datatype of image pixels
-    Outputs:
-        _mode_img - numpy array with eight dimensions (round(m/2),round(n/2),round(p/2))
-    """
-
     """ Find mode of pixels in optical field 2x2 and stride 2
     This method works by finding the largest number that occurs at least twice
     in a 2x2x2 grid of pixels, then sets that value to the output pixel.
@@ -247,22 +260,22 @@ def _mode2(image, dtype):
         return mode_edges[edges]
 
 
-def _get_higher_res(S, bfio_reader,slide_writer,encoder,ids, meshes, imagetype, outDir, X=None,Y=None,Z=None):
+def _get_higher_res(S, bfio_reader,slide_writer,encoder,ids, meshes, imagetype, outDir_mesh, X=None,Y=None,Z=None):
     """ Recursive function for pyramid building
-    
+
     This is a recursive function that builds an image pyramid by indicating
     an original region of an image at a given scale. This function then
     builds a pyramid up from the highest resolution components of the pyramid
     (the original images) to the given position resolution.
-    
+
     As an example, imagine the following possible pyramid:
-    
+
     Scale S=0                     1234
                                  /    \
     Scale S=1                  12      34
                               /  \    /  \
     Scale S=2                1    2  3    4
-    
+
     At scale 2 (the highest resolution) there are 4 original images. At scale 1,
     images are averaged and concatenated into one image (i.e. image 12). Calling
     this function using S=0 will attempt to generate 1234 by calling this
@@ -313,29 +326,30 @@ def _get_higher_res(S, bfio_reader,slide_writer,encoder,ids, meshes, imagetype, 
     # Initialize the output
     datatype = bfio_reader.dtype
     image = np.zeros((Y[1]-Y[0],X[1]-X[0],Z[1]-Z[0]),dtype=datatype)
+
     # If requesting from the lowest scale, then just read the image
     if str(S)==encoder.info['scales'][0]['key']:
         image = bfio_reader[Y[0]:Y[1],X[0]:X[1],Z[0]:Z[1],0,0]
         if imagetype == "segmentation":
-            compareto = image_generator(image)
-            # This if-else is to find the label ids of the images. 
+            id_in_chunk = find_ids(image)
+
             if meshes:
                 try:
-                    meshdata(image.squeeze(), compareto, voxel_size, outDir, X, Y, Z)
+                    #creates polygon meshes
+                    meshdata(image.squeeze(), id_in_chunk, outDir_mesh, X, Y, Z)
                 except Exception as e:
                     traceback.print_exc()
-            
-            
-            if len(ids) == 0:
-                ids.extend(compareto)
-            else:
-                difference = set(compareto) - set(ids)
-                ids.extend(difference)
+
+            # Want only unique ids
+            if len(ids) == 0: 
+                ids.extend(id_in_chunk)
+            else: 
+                ids.extend(set(id_in_chunk) - set(ids))
                 ids.sort() 
-                
-        
+
         # Encode the chunk
         image_encoded = encoder.encode(image, bfio_reader.z)
+
         # Write the chunk
         slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],Z[0],Z[1]))
         logger.info('Scale ({}): {}-{}_{}-{}_{}-{}'.format(S, str(X[0]), str(X[1]), str(Y[0]),str(Y[1]), str(Z[0]), str(Z[1])))
@@ -347,7 +361,7 @@ def _get_higher_res(S, bfio_reader,slide_writer,encoder,ids, meshes, imagetype, 
         for dim in subgrid_dims:
             while dim[1]-dim[0] > CHUNK_SIZE:
                 dim.insert(1,dim[0] + ((dim[1] - dim[0]-1)//CHUNK_SIZE) * CHUNK_SIZE)
-        
+
         def load_and_scale(*args,**kwargs):
             jutil.attach()
             sub_image = _get_higher_res(**kwargs)
@@ -357,8 +371,7 @@ def _get_higher_res(S, bfio_reader,slide_writer,encoder,ids, meshes, imagetype, 
             y_ind = args[2]
             z_ind = args[3]
             image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],z_ind[0]:z_ind[1]] = _mode2(sub_image, datatype)
-            
-        
+
         with ThreadPoolExecutor(max_workers=8) as executor:
             for x in range(0,len(subgrid_dims[1])-1):
                 x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
@@ -382,10 +395,7 @@ def _get_higher_res(S, bfio_reader,slide_writer,encoder,ids, meshes, imagetype, 
                                             ids=ids,
                                             meshes=meshes,
                                             imagetype=imagetype,
-                                            outDir=outDir)
-
-                        
-                    
+                                            outDir_mesh=outDir_mesh)
 
         # Encode the chunk
         image_encoded = encoder.encode(image, image.shape[2])
@@ -567,17 +577,17 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight,imagetype):
     # sizes = [bfio_reader.num_x(),bfio_reader.num_y(),bfio_reader.num_z()]
     sizes = [bfio_reader.x,bfio_reader.y,stackheight]
     phys_x = bfio_reader.physical_size_x
-    # if None in phys_x:
-    #     phys_x = (325,'nm')
-    # phys_y = bfio_reader.physical_size_y()
-    # if None in phys_y:
-    #     phys_y = (325,'nm')
-    # phys_z = bfio_reader.physical_size_z()
-    # if None in phys_z:
-    #     phys_z = ((phys_y[0] * UNITS[phys_y[1]] + phys_x[0] * UNITS[phys_x[1]])/2, 'nm')
-    phys_x = (325,'nm')
-    phys_y = (325,'nm')
-    phys_z = (325,'nm')
+    if None in phys_x:
+        phys_x = (325,'nm')
+    phys_y = bfio_reader.physical_size_y
+    if None in phys_y:
+        phys_y = (325,'nm')
+    phys_z = bfio_reader.physical_size_z
+    if None in phys_z:
+        phys_z = ((phys_y[0] * UNITS[phys_y[1]] + phys_x[0] * UNITS[phys_x[1]])/2, 'nm')
+    # phys_x = (325,'nm')
+    # phys_y = (325,'nm')
+    # phys_z = (325,'nm')
     resolution = [phys_x[0] * UNITS[phys_x[1]]]
     resolution.append(phys_y[0] * UNITS[phys_y[1]])
     resolution.append(phys_z[0] * UNITS[phys_z[1]])
@@ -620,7 +630,6 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight,imagetype):
         previous_scale = info['scales'][-1]
         current_scale = copy.deepcopy(previous_scale)
         current_scale['key'] = str(num_scales - i)
-        # smallestsizeindex = (previous_scale['size']).index(smallestsize)
         current_scale['size'] = [int(np.ceil(previous_scale['size'][0]/2)),int(np.ceil(previous_scale['size'][1]/2)),int(np.ceil(previous_scale['size'][2]/2))]
         for i in range(0,3):
             if current_scale['size'][i] == previous_scale['size'][i]:
@@ -632,22 +641,15 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight,imagetype):
     return info
 
 def neuroglancer_info_file(bfio_reader,outPath, stackheight, imagetype, meshes):
+    """ This function generates the necessary info files for the data to be viewed in Neuroglancer"""
+
     # Create an output path object for the info file
     op = Path(outPath).joinpath("info")
     # Get pyramid info
     info = bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight,imagetype)
     
-    if imagetype == "segmentation":
-        opinfo = Path(outPath).joinpath("infodir")
-        opinfo.mkdir()
-        if meshes:
-            opmesh = Path(outPath).joinpath("meshdir")
-            opmesh.mkdir()
-
-
     # Write the neuroglancer info file
     with open(op,'w') as writer:
-        # writer.write(str(info))
         json.dump(info, writer)
     writer.close()
     return info

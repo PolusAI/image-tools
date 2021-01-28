@@ -76,14 +76,12 @@ if __name__=="__main__":
         # Create the BioReader object
         logger.info('Getting the BioReader...')
         logger.info(image)
-        
-        # bf = BioReader(str((Path(input_dir).joinpath(image)).absolute()),max_workers=max([cpu_count()-1,2]))
         pathbf = str((Path(input_dir).joinpath(image)))
         bf = BioReader(pathbf)
         getimageshape = (bf.x, bf.y, bf.z, bf.c, bf.t)
         stackheight = bf.z
         logger.info("Image Shape {}".format(getimageshape))
-        
+
         # Make the output directory
         out_dir = Path(output_dir).joinpath(image)
         out_dir.mkdir()
@@ -97,32 +95,33 @@ if __name__=="__main__":
         logger.info("num_channels: {}".format(file_info['num_channels']))
         logger.info("number of scales: {}".format(numscales))
         logger.info("type: {}".format(file_info['type']))
-        
-        
+
         # Create the classes needed to generate a precomputed slice
         logger.info("Creating encoder and file writer...")
         encoder = utils.NeuroglancerChunkEncoder(file_info)
         file_writer = utils.NeuroglancerWriter(out_dir)
-            # out_seginfo = utils.segmentinfo(encoder,ids,out_dir)
-        # mkinfodir = utils.infofiles(encoder, out_dir)
-        
+
         ids = []
-        outDir_mesh = Path(out_dir).joinpath("meshdir")
-        # Create the stacked images
-        utils._get_higher_res(S=0, bfio_reader=bf,slide_writer=file_writer,encoder=encoder,ids=ids,meshes=boolmesh, imagetype = imagetype, outDir=outDir_mesh)
+        
+        # Create the stacked/pyramid images, will also create meshes if True
+        outDir_mesh = Path(out_dir).joinpath("meshdir") # Initialize directory with all the mesh information
+        utils._get_higher_res(S=0, bfio_reader=bf,slide_writer=file_writer,encoder=encoder,ids=ids,meshes=boolmesh, imagetype = imagetype, outDir_mesh=outDir_mesh)
         logger.info("Finished precomputing ")
+
+        # Neuroglancer requires additional documentation to the segmentation and meshes
         if imagetype == "segmentation":
             utils.infodir_files(encoder,ids,out_dir)
             logger.info(ids)
             logger.info("Finished Segmentation Information File")
 
+        # Polygon meshes must be converted to Draco meshes
         if boolmesh == True:
-            utils.meshdir_files(outDir_mesh)
+            utils.meshdir_files(outDir_mesh, encoder)
             temp_dir = str(outDir_mesh.joinpath('temp_drc'))
             chunkfiles = [f for f in listdir(temp_dir) if isfile(join(temp_dir, f))]
 
+            # Each mesh segment is concatenated with its own thread
             ids.remove(0)
-
             with ThreadPoolExecutor(max_workers=8) as executor:
                 futuresvariable = [executor.submit(utils.progressive_meshes, ide, chunkfiles, temp_dir, out_dir, bit_depth) for ide in ids]
                 

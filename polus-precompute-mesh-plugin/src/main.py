@@ -67,10 +67,6 @@ def main():
     stack_count = 1
     im_count = 1
     for image in images:
-        # val_instack = vals_instack[stack_count-1]
-        # val_ofstack = vals_stackby[stack_count-1]
-        # heightofstack = organizedheights[stack_count-1]
-        # newoutput = Path(output_dir + directoryfiles[stack_count - 1])
         if len(processes) >= multiprocessing.cpu_count()-1 and len(processes)>0:
             free_process = -1
             while free_process<0:
