@@ -116,7 +116,7 @@ def mean_projection(inpDir, outDir):
     """
     logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                         datefmt='%d-%b-%y %H:%M:%S')
-    logger = logging.getLogger("min_projection")
+    logger = logging.getLogger("mean_projection")
     logger.setLevel(logging.INFO)
 
     # iterate over the images in the input directory
