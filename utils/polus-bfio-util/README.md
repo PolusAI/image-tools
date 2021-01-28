@@ -28,7 +28,7 @@ All containers contain the follow components:
 2. [numpy](https://pypi.org/project/numpy/1.19.1/) (1.19.1)
 3. [imagecodecs](https://pypi.org/project/imagecodecs/2020.5.30/) (2020.5.30, built with `--lite` option)
 4. [tifffile](https://pypi.org/project/tifffile/2020.7.4/) (2020.7.4)
-5. bfio (version 2.0.3)
+5. bfio (version 2.0.4)
 
 Containers ending with `-java` also contain:
 
@@ -42,31 +42,33 @@ Containers ending with `-java` also contain:
 All containers can use the Python backend, but only the containers with Java may
 use the Java backend. 
 
-### labshare/polus-bfio-util:2.0.3
+### ~labshare/polus-bfio-util:2.0.4~
 
-*Additional Python container tags:* `2.0.3-alpine`, `2.0.3-python`,
-`2.0.3-alpine-python`
+The alpine container for `bfio` is currently unavailable.
 
-*Containers with Java:* `2.0.3-java`, `2.0.3-alpine-java`
+~*Additional Python container tags:* `2.0.4-alpine`, `2.0.4-python`,~
+~`2.0.4-alpine-python`~
 
-This container is built on Alpine Linux. This is the smallest bfio container,
-but also the most difficult to install additional requirements on. The Python
-containers (98MB) are much smaller than the Java containers (383MB).
+~*Containers with Java:* `2.0.4-java`, `2.0.4-alpine-java`~
 
-### labshare/polus-bfio-util:2.0.3-slim-buster
+~This container is built on Alpine Linux. This is the smallest bfio container,~
+~but also the most difficult to install additional requirements on. The Python~
+~containers (98MB) are much smaller than the Java containers (383MB).~
 
-*Additional Python container tags:* `2.0.3-slim-buster-python`
+### labshare/polus-bfio-util:2.0.4-slim-buster
 
-*Containers with Java:* `2.0.3-slim-buster-java`
+*Additional Python container tags:* `2.0.4-slim-buster-python`
+
+*Containers with Java:* `2.0.4-slim-buster-java`
 
 This container is built on a stripped down version of Debian Buster. This
 container is larger than the `alpine` version, but easier to install new Python
 packages on since `manylinux` wheels can be installed on it. However, if a
 package requires compilation, a compiler will need to be installed.
 
-### labshare/polus-bfio-util:2.0.3-tensorflow
+### labshare/polus-bfio-util:2.0.4-tensorflow
 
-*Additional Python container tags:* `2.0.3-tensorflow-python`
+*Additional Python container tags:* `2.0.4-tensorflow-python`
 
 *Containers with Java:* No Java containers
 
