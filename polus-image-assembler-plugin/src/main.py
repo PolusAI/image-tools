@@ -1,95 +1,23 @@
 # Base packages
-import argparse, logging, re, typing, pathlib, queue
+import argparse, logging, re, typing, pathlib
 
 # 3rd party packages
 import filepattern, numpy
 
 # Class/function imports
 from bfio import BioReader,BioWriter
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, wait
-from multiprocessing import Queue, cpu_count
-
-# Global variable to scale number of processing threads dynamically
-max_threads = max([cpu_count()//2,1])
-available_threads = Queue(max_threads)
-
-# Set logger delay times
-process_delay = 30    # process status update period in seconds
-thread_delay = 10     # thread status update period in seconds
-
-for _ in range(max_threads):
-    available_threads.put(2)
+from preadator import ProcessManager
 
 # length/width of the chunk each _merge_layers thread processes at once
 # Number of useful threads is limited
 chunk_size = 8192
 useful_threads = (chunk_size // BioReader._TILE_SIZE) ** 2
 
-def initialize_queue(processes: Queue,
-                     file_pattern: filepattern.FilePattern) -> None:
-    """Initialize global variables for each process
-
-    This function is called when each worker process is started in the
-    ProcessPoolExecutor. Within each worker process, two global variables are
-    defined: ``available_threads`` (multiprocessing.Queue) and ``fp``
-    (filepattern.FilePattern). The ``available_threads`` variable defines
-    globally available threads across processes. The ``fp`` object contains the
-    parsed files in the input directory, which is useful to provide globally so
-    that the input file directory does not need to parsed in every process. This
-    is especially beneficial in instances where there are large numbers of files
-    in the input directory.
-
-    Args:
-        processes: The globally available threads.
-        file_pattern: The parsed input file directory.
-    """
-    global available_threads
-    global fp
-    available_threads = processes
-    fp = file_pattern
-
-def buffer_image(image_path: pathlib.Path,
-                 supertile_buffer: numpy.ndarray,
-                 Xi: typing.Tuple[int,int],
-                 Yi: typing.Tuple[int,int],
-                 Xt: typing.Tuple[int,int],
-                 Yt: typing.Tuple[int,int],
-                 local_threads: queue.Queue) -> None:
-    """buffer_image Load and image and store in buffer
-
-    This method loads an image and stores it in the appropriate position in the
-    buffer based on the stitching vector coordinates. It is intended to be used
-    as a thread.
-
-    Args:
-        image_path: Path of image to load
-        supertile_buffer: A supertile storing multiple images
-        Xi: Xmin and Xmax of pixels to load from the image
-        Yi: Ymin and Ymax of pixels to load from the image
-        Xt: X position within the buffer to store the image
-        Yt: Y position within the buffer to store the image
-        local_threads: Used to determine if threads are available
-    """
-
-    # Get available threads
-    active_threads = local_threads.get()
-
-    # Load the image
-    with BioReader(image_path,max_workers=active_threads) as br:
-        image = br[Yi[0]:Yi[1],Xi[0]:Xi[1],0:1,0,0] # only get the first z,c,t layer
-
-    # Free threads
-    local_threads.put(active_threads)
-
-    # Put the image in the buffer
-    supertile_buffer[Yt[0]:Yt[1],Xt[0]:Xt[1],...] = image
-
 def make_tile(x_min: int,
               x_max: int,
               y_min: int,
               y_max: int,
               parsed_vector: dict,
-              local_threads: queue.Queue,
               bw: BioWriter) -> None:
     """Create a supertile from images and save to file
 
@@ -112,15 +40,16 @@ def make_tile(x_min: int,
 
     """
 
-    # Get the data type
-    with BioReader(parsed_vector['filePos'][0]['file']) as br:
-        dtype = br.dtype
+    with ProcessManager.thread() as active_threads:
 
-    # initialize the supertile
-    template = numpy.zeros((y_max-y_min,x_max-x_min,1,1,1),dtype=dtype)
+        # Get the data type
+        with BioReader(parsed_vector['filePos'][0]['file']) as br:
+            dtype = br.dtype
 
-    # get images in bounds of current super tile
-    with ThreadPoolExecutor(useful_threads//2) as executor:
+        # initialize the supertile
+        template = numpy.zeros((y_max-y_min,x_max-x_min,1,1,1),dtype=dtype)
+
+        # get images in bounds of current super tile
         for f in parsed_vector['filePos']:
 
             # check that image is within the x-tile bounds
@@ -143,11 +72,16 @@ def make_tile(x_min: int,
                     Yi = [max(0,y_min - f['posY'])]
                     Yi.append(min(f['height'],y_max - f['posY']))
 
-                    # Start a thread to load and store the image
-                    executor.submit(buffer_image,f['file'],template,Xi,Yi,Xt,Yt,local_threads)
+                    # Load the image
+                    with BioReader(f['file'],max_workers=active_threads.count) as br:
+                        image = br[Yi[0]:Yi[1],Xi[0]:Xi[1],0:1,0,0] # only get the first z,c,t layer
 
-    # Save the image
-    bw[y_min:y_max,x_min:x_max,:1,0,0] = template
+                    # Put the image in the buffer
+                    template[Yt[0]:Yt[1],Xt[0]:Xt[1],...] = image
+
+        # Save the image
+        bw.max_workers = ProcessManager._active_threads
+        bw[y_min:y_max,x_min:x_max,:1,0,0] = template
 
 def get_number(s: typing.Any) -> typing.Union[int,typing.Any]:
     """ Check that s is number
@@ -180,8 +114,6 @@ def _parse_stitch(stitchPath: pathlib.Path,
     Returns:
         Dictionary with keys (width, height, name, filePos)
     """
-    
-    logger = logging.getLogger('asmbl')
 
     # Initialize the output
     out_dict = { 'width': int(0),
@@ -235,15 +167,19 @@ def _parse_stitch(stitchPath: pathlib.Path,
         name = re.match(global_regex,pathlib.Path(stitchPath).name).groups()[0]
         name += '.ome.tif'
         out_dict['name'] = name
+        ProcessManager.job_name(out_dict['name'])
+        ProcessManager.log(f'Setting output name to timepoint slice number.')
     else:
         # Try to infer a good filename
         try:
             out_dict['name'] = vp.output_name()
-            logger.info(f'{out_dict["name"]}: Inferred output file name from vector.')
+            ProcessManager.job_name(out_dict['name'])
+            ProcessManager.log(f'Inferred output file name from vector.')
 
         # A file name couldn't be inferred, default to the first image name
         except:
-            logger.info(f'{out_dict["name"]}: Could not infer output file name from vector, using first file name in the stitching vector as an output file name.')
+            ProcessManager.job_name(out_dict['name'])
+            ProcessManager.log(f'Could not infer output file name from vector, using first file name in the stitching vector as an output file name.')
             for file in vp():
                 out_dict['name'] = file[0]['file']
                 break
@@ -266,67 +202,33 @@ def assemble_image(vector_path: pathlib.Path,
         out_path: Path to the output directory
     """
 
-    logger = logging.getLogger('asmbl')
-    logger.setLevel(logging.INFO)
+    # Grab a free process
+    with ProcessManager.process():
 
-    # Get globally available threads, defined in initialize_queue
-    active_threads = available_threads.get()
+        # Parse the stitching vector
+        parsed_vector = _parse_stitch(vector_path,timesliceNaming)
 
-    # Set up a local thread queue
-    local_threads = queue.Queue()
-    for _ in range(active_threads//2):
-        local_threads.put(2)
+        # Initialize the output image
+        with BioReader(parsed_vector['filePos'][0]['file']) as br:
+            bw = BioWriter(out_path.joinpath(parsed_vector['name']),
+                            metadata=br.metadata,
+                            max_workers=ProcessManager._active_threads)
+            bw.x = parsed_vector['width']
+            bw.y = parsed_vector['height']
 
-    # Parse the stitching vector
-    parsed_vector = _parse_stitch(vector_path,timesliceNaming)
-
-    # Initialize the output image
-    with BioReader(parsed_vector['filePos'][0]['file']) as br:
-        bw = BioWriter(out_path.joinpath(parsed_vector['name']),
-                       metadata=br.metadata,
-                       max_workers=active_threads)
-        bw.x = parsed_vector['width']
-        bw.y = parsed_vector['height']
-
-    # Assemble the images
-    logger.info(f'{parsed_vector["name"]}: Begin assembly with {active_threads} threads')
-    threads = []
-    with ThreadPoolExecutor(1) as executor:
+        # Assemble the images
+        ProcessManager.log(f'Begin assembly')
+        threads = []
+        
         for x in range(0, parsed_vector['width'], chunk_size):
             X_range = min(x+chunk_size,parsed_vector['width']) # max x-pixel index in the assembled image
             for y in range(0, parsed_vector['height'], chunk_size):
                 Y_range = min(y+chunk_size,parsed_vector['height']) # max y-pixel index in the assembled image
 
-                threads.append(executor.submit(make_tile,x,X_range,y,Y_range,parsed_vector,local_threads,bw))
+                ProcessManager.submit_thread(make_tile,x,X_range,y,Y_range,parsed_vector,bw)
 
-        done, not_done = wait(threads,timeout=0)
+        ProcessManager.join_threads()
 
-        while len(not_done) > 0:
-
-            # See if more threads are available
-            new_threads = 0
-            try:
-                while active_threads + new_threads < useful_threads:
-                    new_threads += available_threads.get(block=False)
-            except:
-                pass
-
-            if new_threads > 0:
-                logger.info(f'{parsed_vector["name"]}: Increasing threads from {active_threads} to {active_threads+new_threads}')
-                active_threads += new_threads
-                bw.max_workers = active_threads
-                for _ in range(new_threads//2):
-                    local_threads.put(2)
-
-            done, not_done = wait(threads,timeout=thread_delay)
-
-            logger.info('{}: Progress: {:7.3f}%'.format(parsed_vector['name'],100*len(done)/len(threads)))
-
-    # Free the threads for other processes
-    for _ in range(active_threads//2):
-        available_threads.put(2)
-
-    logger.info(f'{parsed_vector["name"]}: Closing image...')
     bw.close()
 
 if __name__=="__main__":
@@ -377,20 +279,14 @@ if __name__=="__main__":
         fp = filepattern.FilePattern(imgPath,'.*')
 
     '''Run stitching jobs in separate processes'''
+    ProcessManager.init_processes('main','asmbl')
     processes = []
-    with ProcessPoolExecutor(max_threads,initializer=initialize_queue,initargs=(available_threads,fp)) as executor:
 
-        for v in vectors:
-            # Check to see if the file is a valid stitching vector
-            if 'img-global-positions' not in v.name:
-                continue
-            
-            processes.append(executor.submit(assemble_image,v,outDir))
-
-        # Wait for processes to finish, providing periodic updates
-        not_done = []
-        while len(not_done) > 0:
-
-            done, not_done = wait(processes,timeout=process_delay)
-
-            logger.info('Total Progress: {:6.2f}%'.format(100*len(done)/len(processes)))
+    for v in vectors:
+        # Check to see if the file is a valid stitching vector
+        if 'img-global-positions' not in v.name:
+            continue
+        
+        ProcessManager.submit_process(assemble_image,v,outDir)
+    
+    ProcessManager.join_processes()
