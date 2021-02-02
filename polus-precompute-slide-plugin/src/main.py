@@ -1,22 +1,5 @@
-import logging, argparse, filepattern, bfio, utils, pathlib
-from multiprocessing import Queue, cpu_count
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, wait
-
-# Global variable to scale number of processing threads dynamically
-max_threads = max([cpu_count()//2+1,1])
-available_threads = Queue(max_threads)
-
-# Set logger delay times
-process_delay = 30     # Delay between updates within _merge_layers
-
-for _ in range(max_threads):
-    available_threads.put(2)
-
-def initialize_queue(processes,pyramid_writer):
-    global available_threads
-    global PyramidWriter
-    available_threads = processes
-    PyramidWriter = pyramid_writer
+import logging, argparse, filepattern, bfio, utils, pathlib, multiprocessing
+from preadator import ProcessManager
 
 # Initialize the logger
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -28,55 +11,6 @@ PyramidWriter = {
     'Neuroglancer': utils.NeuroglancerWriter,
     'DeepZoom': utils.DeepZoomWriter
 }
-
-def pyramid_process(pyramid_type: str,
-                    image_type: str,
-                    base_dir: pathlib.Path,
-                    image_path: pathlib.Path,
-                    image_depth: int,
-                    output_depth: int,
-                    max_output_depth: int):
-    
-    active_threads = available_threads.get()
-    
-    pyramid_writer = PyramidWriter[pyramid_type](base_dir,
-                                                 image_path,
-                                                 image_depth=image_depth,
-                                                 output_depth=output_depth,
-                                                 max_output_depth=max_output_depth,
-                                                 image_type=image_type,
-                                                 num_threads=active_threads)
-    
-    logger.info(f'{pyramid_writer.image_path.name}: Starting process with {active_threads} threads')
-    
-    with ThreadPoolExecutor(1) as executor:
-        threads = [executor.submit(pyramid_writer.write_slide)]
-    
-        done, not_done = wait(threads,timeout=0)
-        
-        while len(not_done) > 0:
-            
-            # See if more threads are available
-            new_threads = 0
-            try:
-                while True:
-                    new_threads += available_threads.get(block=False)
-            except:
-                pass
-            
-            if new_threads > 0:
-                logger.info(f'{pyramid_writer.image_path.name}: Increasing threads from {active_threads} to {active_threads+new_threads}')
-                active_threads += new_threads
-                pyramid_writer.add_threads(new_threads)
-            
-            done, not_done = wait(threads,timeout=process_delay)
-            
-    for _ in range(active_threads//2):
-        available_threads.put(2)
-        
-    logger.info(f'{pyramid_writer.image_path.name}: Finished!')
-        
-    return threads[0].result()
 
 def main():
     # Setup the Argument parsing
@@ -122,7 +56,12 @@ def main():
     logger.info('pyramid_type = %s',pyramid_type)
     logger.info('image_type = %s', image_type)
     logger.info('file_pattern = %s', file_pattern)
-    logger.info('max concurrent processes = %s', max_threads)
+    
+    # Set ProcessManager config and initialize
+    ProcessManager.num_processes(multiprocessing.cpu_count())
+    ProcessManager.threads_per_request(1)
+    ProcessManager.init_processes('pyr')
+    logger.info('max concurrent processes = %s', ProcessManager.num_processes())
 
     # Parse the input file directory
     fp = filepattern.FilePattern(input_dir,file_pattern)
@@ -142,64 +81,54 @@ def main():
     image_dir = ''
     
     processes = []
-    with ProcessPoolExecutor(max_threads,
-                             initializer=initialize_queue,
-                             initargs=(available_threads,PyramidWriter)) as executor:
     
-        for files in fp(group_by=group_by):
-            
-            # Create the output name for Neuroglancer format
-            if pyramid_type == 'Neuroglancer':
-                try:
-                    image_dir = fp.output_name([file for file in files])
-                except:
-                    image_dir = files[0]['file'].name
-                
-                # Reset the depth for every iteration of Neuroglancer files
-                depth = 0
-                d_depth = 1
-            
-            pyramid_writer = None
-            
-            for file in files:
-                
-                with bfio.BioReader(file['file'],max_workers=1) as br:
-                    
-                    d_z = br.z
-                    
-                depth_max += d_z
-                    
-                for z in range(d_z):
-                    
-                    pyramid_args = {
-                        'base_dir': output_dir.joinpath(image_dir),
-                        'image_path': file['file'],
-                        'image_depth': z,
-                        'output_depth': depth,
-                        'max_output_depth': depth_max
-                    }
-                    
-                    processes.append(executor.submit(pyramid_process,
-                                                     pyramid_type,
-                                                     image_type,
-                                                     **pyramid_args))
-                    
-                    depth += 1
-                    
-                    if pyramid_type == 'DeepZoom':
-                        utils.DeepZoomWriter(**pyramid_args).write_info()
-                        
-            
-            if pyramid_type == 'Neuroglancer':
-                utils.NeuroglancerWriter(**pyramid_args).write_info()
-
-        done, not_done = wait(processes,timeout=0)
+    for files in fp(group_by=group_by):
         
-        while len(not_done) > 0:
+        # Create the output name for Neuroglancer format
+        if pyramid_type == 'Neuroglancer':
+            try:
+                image_dir = fp.output_name([file for file in files])
+            except:
+                image_dir = files[0]['file'].name
             
-            logger.info('Total Progress: {:6.2f}%'.format(100*len(done)/len(processes)))
+            # Reset the depth for every iteration of Neuroglancer files
+            depth = 0
+            d_depth = 1
+        
+        pyramid_writer = None
+        
+        for file in files:
             
-            done, not_done = wait(processes,timeout=process_delay)
+            with bfio.BioReader(file['file'],max_workers=1) as br:
+                
+                d_z = br.z
+                
+            depth_max += d_z
+                
+            for z in range(d_z):
+                
+                pyramid_args = {
+                    'base_dir': output_dir.joinpath(image_dir),
+                    'image_path': file['file'],
+                    'image_depth': z,
+                    'output_depth': depth,
+                    'max_output_depth': depth_max
+                }
+                
+                pw = PyramidWriter[pyramid_type](**pyramid_args)
+                
+                ProcessManager.submit_process(pw.write_slide)
+                
+                depth += 1
+                
+                if pyramid_type == 'DeepZoom':
+                    utils.DeepZoomWriter(**pyramid_args).write_info()
+        
+        # TODO: Aggregate labels for segmentation type
+        if pyramid_type == 'Neuroglancer':
+            utils.NeuroglancerWriter(**pyramid_args).write_info()
+    
+    ProcessManager.join_processes()
 
 if __name__ == "__main__":
     main()

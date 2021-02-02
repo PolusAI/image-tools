@@ -1,7 +1,8 @@
-import copy, os, json, filepattern, imageio, pathlib, typing, abc, multiprocessing
-import bfio, queue
+import copy, os, json, filepattern, imageio, pathlib, typing, abc
+import bfio
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
+from preadator import ProcessManager
 
 # Conversion factors to nm, these are based off of supported Bioformats length units
 UNITS = {'m':  10**9,
@@ -128,7 +129,6 @@ class PyramidWriter():
         base_dir - Where pyramid folders and info file will be stored
     """
 
-    can_write = True
     chunk_pattern = None
 
     def __init__(self,
@@ -137,8 +137,7 @@ class PyramidWriter():
                  image_depth: int = 0,
                  output_depth: int = 0,
                  max_output_depth: int = None,
-                 image_type: str = "image",
-                 num_threads: int = 1):
+                 image_type: str = "image"):
         
         if isinstance(image_path,str):
             image_path = pathlib.Path(image_path)
@@ -150,9 +149,6 @@ class PyramidWriter():
         self.output_depth = output_depth
         self.max_output_depth = max_output_depth
         self.image_type = image_type
-        self.threads = queue.Queue()
-        for thread in range(num_threads):
-            self.threads.put(1)
         
         if image_type == 'image':
             self.scale = _avg2
@@ -183,14 +179,13 @@ class PyramidWriter():
     def write_segment_info(self):
         pass
     
-    @abc.abstractmethod
     def write_slide(self):
-        pass
-    
-    def add_threads(self,num_threads: int):
-        
-        for thread in range(num_threads):
-            self.threads.put(1)
+        with ProcessManager.process(f'{self.base_path} - {self.output_depth}'):
+            
+            self._write_slide()
+            # ProcessManager.submit_thread(self._write_slide)
+            
+            ProcessManager.join_threads()
     
     def scale_info(self,S):
         
@@ -293,16 +288,14 @@ def _get_higher_res(S: int,
         Y[1] = scale_info['size'][1]
     
     if str(S)==slide_writer.scale_info(-1)['key']:
-        threads = slide_writer.threads.get()
+        with ProcessManager.thread():
         
-        with bfio.BioReader(slide_writer.image_path,max_workers=1) as br:
-        
-            image = br[Y[0]:Y[1],X[0]:X[1],Z[0]:Z[1],...].squeeze()
+            with bfio.BioReader(slide_writer.image_path,max_workers=1) as br:
             
-        # Write the chunk
-        slide_writer.store_chunk(image,str(S),(X[0],X[1],Y[0],Y[1]))
-        
-        slide_writer.threads.put(threads)
+                image = br[Y[0]:Y[1],X[0]:X[1],Z[0]:Z[1],...].squeeze()
+                
+            # Write the chunk
+            slide_writer.store_chunk(image,str(S),(X[0],X[1],Y[0],Y[1]))
         
         return image
 
@@ -318,12 +311,18 @@ def _get_higher_res(S: int,
                 
         def load_and_scale(*args,**kwargs):
             sub_image = _get_higher_res(**kwargs)
-            threads = slide_writer.threads.get()
-            image = args[0]
-            x_ind = args[1]
-            y_ind = args[2]
-            image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1]] = kwargs['slide_writer'].scale(sub_image)
-            slide_writer.threads.put(threads)
+            with ProcessManager.thread():
+                image = args[0]
+                x_ind = args[1]
+                y_ind = args[2]
+                image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1]] = kwargs['slide_writer'].scale(sub_image)
+        
+        # To limit memory consumption, only run concurrent threads at lower
+        # levels of the pyramid
+        if S==int(slide_writer.scale_info(-1)['key']) - 4:
+            num_threads = 4
+        else:
+            num_threads = 1
         
         with ThreadPoolExecutor(1) as executor:
             for y in range(0,len(subgrid_dims[1])-1):
@@ -369,10 +368,10 @@ class NeuroglancerWriter(PyramidWriter):
         
         return NeuroglancerChunkEncoder(self.info)
     
-    def write_slide(self):
+    def _write_slide(self):
         
         pathlib.Path(self.base_path).mkdir(exist_ok=True)
-        
+    
         _get_higher_res(0,self,Z=(self.image_depth,self.image_depth+1))
             
     def write_info(self):
@@ -456,7 +455,7 @@ class DeepZoomWriter(PyramidWriter):
         with open(op,'w') as writer:
             writer.write(DZI.format(CHUNK_SIZE,self.info['scales'][0]['size'][0],self.info['scales'][0]['size'][1]))
     
-    def write_slide(self):
+    def _write_slide(self):
         
         pathlib.Path(self.base_path).mkdir(exist_ok=False)
         

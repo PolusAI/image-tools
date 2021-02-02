@@ -1,5 +1,5 @@
 # Get image containing bfio
-FROM labshare/polus-bfio-util:2.0.3-slim-buster
+FROM python:3.9-slim
 
 COPY VERSION /
 		
@@ -14,8 +14,7 @@ RUN mkdir -p ${EXEC_DIR} \
 #Copy executable
 COPY src ${EXEC_DIR}/
 
-RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir \
-    && pip3 install imagecodecs==2021.1.11
+RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
 RUN python3 ${EXEC_DIR}/dl_fi.py
 
