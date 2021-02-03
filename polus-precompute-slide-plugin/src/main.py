@@ -77,7 +77,6 @@ def main():
     
     depth = 0
     depth_max = 0
-    depth_delta = 0
     image_dir = ''
     
     processes = []
@@ -91,9 +90,12 @@ def main():
             except:
                 image_dir = files[0]['file'].name
             
-            # Reset the depth for every iteration of Neuroglancer files
+            # Reset the depth for neuroglancer files
+            # This isn't done for DeepZoom since all pyramids in DeepZoom format
+            # must be saved numerically, and the idea of multiple "images" in
+            # does not exist for WDZT, only different 2D timepoints
             depth = 0
-            d_depth = 1
+            depth_max = 0
         
         pyramid_writer = None
         
