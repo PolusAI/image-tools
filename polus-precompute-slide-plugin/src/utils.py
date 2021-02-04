@@ -84,10 +84,16 @@ def _avg2(image: np.ndarray) -> np.ndarray:
     # This helps to avoid integer overflow
     if image.dtype == np.uint8:
         dtype = np.uint16
-    if image.dtype == np.uint16:
+    elif image.dtype == np.uint16:
         dtype = np.uint32
-    if image.dtype == np.uint32:
+    elif image.dtype == np.uint32:
         dtype = np.uint64
+    elif image.dtype == np.int8:
+        dtype = np.int16
+    elif image.dtype == np.int16:
+        dtype = np.int32
+    elif image.dtype == np.int32:
+        dtype = np.int64
     else:
         dtype = image.dtype
         
@@ -563,7 +569,7 @@ def bfio_metadata_to_slide_info(image_path,outPath,stackheight,imagetype):
             
         phys_z = bfio_reader.ps_z
         if None in phys_z:
-            phys_z = ((phys_x[0] + phys_y[0]) // 2,phys_x[1])
+            phys_z = ((phys_x[0] + phys_y[0]) / 2,phys_x[1])
             
         resolution = [phys_x[0] * UNITS[phys_x[1]]]
         resolution.append(phys_y[0] * UNITS[phys_y[1]])
