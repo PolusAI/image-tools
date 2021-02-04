@@ -189,8 +189,6 @@ def generate_manifest_file(
     mesh_subdirectory = 'meshdir'
 ):
 
-    # maxvertex = meshbounds[1]
-    # minvertex = meshbounds[0]
     grid_origin = meshbounds[0]
     shape = meshbounds[1] - meshbounds[0]
 
@@ -200,10 +198,10 @@ def generate_manifest_file(
     print(vertex_offsets)
     lod_scales = np.asarray([2**i for i in range(num_lods)])
     num_fragments_per_lod = np.asarray([len(fragment_offsets[i]) for i in reversed(range(num_lods))])
-    for i in reversed(range(num_lods)):
-        print(i)
-        print("LEVEL OF DETAIL {}: FRAGMENT OFFSETS: {}".format(i, fragment_offsets[i]))
-        print("LEVEL OF DETAIL {}: FRAGMENT POSITIONS: {}".format(i, fragment_positions[i]))
+    # for i in reversed(range(num_lods)):
+    #     # print(i)
+    #     # print("LEVEL OF DETAIL {}: FRAGMENT OFFSETS: {}".format(i, fragment_offsets[i]))
+    #     # print("LEVEL OF DETAIL {}: FRAGMENT POSITIONS: {}".format(i, fragment_positions[i]))
 
     mesh_dir = os.path.join(directory, mesh_subdirectory)
     with open(os.path.join(mesh_dir, f'{segment_id}.index'), 'wb') as f:
@@ -254,24 +252,13 @@ def generate_multires_mesh(
         Name of the mesh subdirectory within the Neuroglancer volume directory.    
     """
 
-    
-    # print("ORIGINAL", num_of_vertices)
-    # Scale our mesh coordinates.
-    
-
-    minvertices = 10000
+    minvertices = 4000
     num_of_vertices = len(mesh.vertices)
 
     print("\t"*recur, "Recursion {}: {} -- {}".format(recur, num_of_vertices,nodearray))
     if num_of_vertices > 0:
         maxvertex = mesh.vertices.max(axis=0)
         minvertex = mesh.vertices.min(axis=0)
-        # if recur != 0:
-        #     scale = 2**(recur+1)/(maxvertex-minvertex)
-        #     verts_scaled = scale*(mesh.vertices - minvertex) #the scaled vertices ranges from 0 to chunk_shape
-        #     scaled_mesh = mesh.copy()
-        #     scaled_mesh.vertices = verts_scaled
-        # else:
         scale = 2/(maxvertex-minvertex)
         verts_scaled = scale*(mesh.vertices - minvertex) #the scaled vertices ranges from 0 to chunk_shape
         scaled_mesh = mesh.copy()
@@ -288,14 +275,11 @@ def generate_multires_mesh(
                 for z in range(0,2):
                     mesh_z = trimesh.intersections.slice_mesh_plane(mesh_y, plane_normal=nxy, plane_origin=nxy*z)
                     mesh_z = trimesh.intersections.slice_mesh_plane(mesh_z, plane_normal=-nxy, plane_origin=nxy*(z+1))
-                    print(len(mesh_z.vertices))
                     if num_lods < recur:
                         num_lods = recur + 1
                     new_nodearray = [x+(nodearray[0]*2),y+(nodearray[1]*2),z+(nodearray[2]*2)]
-                    print("FRAGMENT SHAPE VALUE: {}, scalevalue {}".format(2**(recur+1), scalevalue))
                     quantizer = Quantize(
                         fragment_origin=np.array([0,0,0]), 
-                        # fragment_shape=np.array([2**(recur+1), 2**(recur+1), 2**(recur+1)]), 
                         fragment_shape=np.array([1,1,1]),
                         input_origin=np.array(nodearray), 
                         quantization_bits=quantization_bits,
@@ -319,6 +303,8 @@ def generate_multires_mesh(
                             quantization_bits=quantization_bits,
                             lod = recur
                         )
+            
+
     if len(mesh.vertices) > 0:
         mesh.vertices = quantizer(scaled_mesh.vertices)
         mesh_dir = os.path.join(directory, mesh_subdirectory)
