@@ -3,6 +3,10 @@ package axle.polus.wipp.plugins;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -132,35 +136,28 @@ public class TiledOmeTiffConverterMain {
 		
 		LOG.log(Level.INFO, "Starting tile tiff converter!!");
 		
+		// Create a converter queue
+		final BlockingQueue<File> queue = new ArrayBlockingQueue<File>(images.length);
+		
 		for (File image : images) {
-			
-			Thread thread = new Thread() {
-				public void run() {
-					String outFile = outputFileDir.concat(File.separator).concat(FilenameUtils.getBaseName(image.getName())).concat(".ome.tif");
-					
-					TiledOmeTiffConverter tiledReadWriter = new TiledOmeTiffConverter(image.getAbsolutePath(), outFile, tileSizeXPix, tileSizeYPix);
-					
-					// initialize the files
-					try {
-						tiledReadWriter.run();
-					} catch (FormatException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (DependencyException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (ServiceException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			};
-			
-			thread.start();
+			queue.add(image);
 		}
+		
+        ExecutorService pool = Executors.newFixedThreadPool(5);
+
+        for(int t = 1; t <= 5; t++){
+            Runnable r = new Runnable(){
+                public void run() {
+                    File convertFile = null;
+                    while((convertFile = queue.poll()) != null){
+    					String outFile = outputFileDir.concat(File.separator).concat(FilenameUtils.getBaseName(convertFile.getName())).concat(".ome.tif");
+    					
+    					TiledOmeTiffConverter tiledReadWriter = new TiledOmeTiffConverter(convertFile.getAbsolutePath(), outFile, tileSizeXPix, tileSizeYPix);
+                    }
+                }
+            };
+            pool.execute(r);
+        }
 
 		int exitVal = 0;
 		String err = "";
