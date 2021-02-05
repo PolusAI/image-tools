@@ -7,6 +7,7 @@ import zarr
 import mask
 from numba import jit
 
+
 @jit(nopython=True)
 def _label_overlap(x, y):
     """ fast function to get pixel overlaps between masks in x and y
@@ -94,27 +95,34 @@ if __name__=="__main__":
     cellprob_threshold = args.cellprob_threshold
     flow_threshold= args.flow_threshold
     stitch_threshold=args.stitch_threshold
-
+    rescale = np.ones(1)
+    niter = 1 / rescale[0] * 200
     # Surround with try/finally for proper error catching
     try:
         logger.info('Initializing ...')
         # Get all file names in inpDir image collection
-        root = zarr.open(str(Path(inpDir).joinpath('location.zarr')),mode='r')
+        root = zarr.open(str(Path(inpDir).joinpath('flow.zarr')),mode='r')
         count=0
         # Loop through files in inpDir image collection and process
         for m,l in root.groups():
-            prob=l['pixel_location']
-            loc = l['probablity']
-            prob= np.asarray(prob)
-            loc= np.asarray(loc)
+            logger.info('Processing image ({}/{}): {}'.format(count + 1, len([m for m, l in root.groups()]), m))
+            y=l['vector']
+            y= np.asarray(y)
+      #      loc= np.asarray(loc)
             metadata=l.attrs['metadata']
 
-            if len(prob.shape)==4:
+            if len(y.shape)==4:
                 mask_stack=[]
-                for i in range(int(prob.shape[0])):
-                    masks = mask.compute_masks(y=prob[i,:,:,:],cellprob=loc[i,:,:,:],flow_threshold=flow_threshold,cellprob_threshold=cellprob_threshold)
+                for i in range(int(y.shape[0])):
+                    prob=y[i,:,:,:].astype(np.float32)
+                    print(prob.dtype)
+                    cellprob = prob[:, :, -1]
+                    dP = np.stack((prob[..., 0], prob[..., 1]), axis=0)
+                    niter = 1 / rescale[0] * 200
+                    p = mask.follow_flows(-1 * dP * (cellprob > cellprob_threshold) / 5.)
+                    masks = mask.compute_masks(p, cellprob, dP, cellprob_threshold, flow_threshold)
                     mask_stack.append(masks)
-           #     maski = np.asarray(mask_stack)
+
                 if stitch_threshold > 0.0:
                     #      print('stitching %d masks using stitch_threshold=%0.3f to make 3D masks' % (nimg, stitch_threshold))
                     mask_stack = stitch3D(np.array(mask_stack), stitch_threshold=stitch_threshold)
@@ -122,12 +130,18 @@ if __name__=="__main__":
                 x,y,z = maski.shape
                 maski = np.reshape(maski,(x,y,z,1,1))
 
-            elif len(prob.shape) == 3 :
-                maski = mask.compute_masks(y=prob[:],cellprob=loc[:])
-                x,y = maski.shape
-                maski = np.reshape(maski, (x,y, 1, 1,1))
+            elif len(y.shape) == 3 :
+                prob=y
+                cellprob = prob[:, :, -1]
+                dP = np.stack((prob[..., 0], prob[..., 1]), axis=0)
 
-            logger.info('Processing image ({}/{}): {}'.format(count+1,len([m for m,l in root.groups()]),m))
+                p=mask.follow_flows(-1 * dP * (cellprob > cellprob_threshold) / 5.,
+                                                                 niter=niter, interp=True)
+
+                maski = mask.compute_masks(p,cellprob,dP,cellprob_threshold,flow_threshold)
+
+                x_shape,y_shape = maski.shape
+                maski = np.reshape(maski, (x_shape,y_shape, 1, 1,1))
 
             # Write the output
             temp = re.sub(r'(?<=Type=")([^">>]+)', str(maski.dtype), metadata)

@@ -6,6 +6,77 @@ import scipy.ndimage
 import utils
 from numba import njit
 
+@njit(['(int16[:,:,:],float32[:], float32[:], float32[:,:])',
+         '(float32[:,:,:],float32[:], float32[:], float32[:,:])'], cache=True)
+def map_coordinates(I, yc, xc, Y):
+    """
+    bilinear interpolation of image 'I' in-place with ycoordinates yc and xcoordinates xc to Y
+    Args:
+    I : C x Ly x Lx
+    yc : ni new y coordinates
+    xc : ni new x coordinates
+    Y : C x ni I sampled at (yc,xc)
+    """
+
+    C,Ly,Lx = I.shape
+    yc_floor = yc.astype(np.int32)
+    xc_floor = xc.astype(np.int32)
+
+    yc = yc - yc_floor
+    xc = xc - xc_floor
+
+    for i in range(yc_floor.shape[0]):
+
+        yf = min(Ly-1, max(0, yc_floor[i]))
+        xf = min(Lx-1, max(0, xc_floor[i]))
+        yf1= min(Ly-1, yf+1)
+        xf1= min(Lx-1, xf+1)
+        y = yc[i]
+        x = xc[i]
+
+        for c in range(C):
+            Y[c,i] = (np.float32(I[c, yf, xf]) * (1 - y) * (1 - x) +
+                      np.float32(I[c, yf, xf1]) * (1 - y) * x +
+                      np.float32(I[c, yf1, xf]) * y * (1 - x) +
+                      np.float32(I[c, yf1, xf1]) * y * x )
+
+
+def steps2D_interp(p, dP, niter):
+    shape = dP.shape[1:]
+    dPt = np.zeros(p.shape, np.float32)
+    for t in range(niter):
+        map_coordinates(dP, p[0], p[1], dPt)
+        p[0] = np.minimum(shape[0]-1, np.maximum(0, p[0] - dPt[0]))
+        p[1] = np.minimum(shape[1]-1, np.maximum(0, p[1] - dPt[1]))
+
+    return p
+
+@njit('(float32[:,:,:], float32[:,:,:], int32[:,:], int32)', nogil=True)
+def steps2D(p, dP, inds, niter):
+    """ run dynamics of pixels to recover masks in 2D.Euler integration of dynamics dP for niter steps
+    Args:
+    p(array[float32]):  3D array.pixel locations [axis x Ly x Lx] (start at initial meshgrid)
+    dP(array[float32]):3D array.flows [axis x Ly x Lx]
+    inds(array[int32]): 2D array.non-zero pixels to run dynamics on [npixels x 2]
+    niter(int32): number of iterations of dynamics to run
+
+    Returns:
+    p(array[float32]): 3D array.final locations of each pixel after dynamics
+
+    """
+
+    shape = p.shape[1:]
+    for t in range(niter):
+        for j in range(inds.shape[0]):
+            y = inds[j,0]
+            x = inds[j,1]
+            p0, p1 = int(p[0,y,x]), int(p[1,y,x])
+            p[0,y,x] = min(shape[0]-1, max(0, p[0,y,x] - dP[0,p0,p1]))
+            p[1,y,x] = min(shape[1]-1, max(0, p[1,y,x] - dP[1,p0,p1]))
+    return p
+
+
+
 @njit('(float32[:,:,:,:],float32[:,:,:,:], int32[:,:], int32)', nogil=True)
 def steps3D(p, dP, inds, niter):
     """ run dynamics of pixels to recover masks in 3D
@@ -33,59 +104,38 @@ def steps3D(p, dP, inds, niter):
             p[2,z,y,x] = min(shape[2]-1, max(0, p[2,z,y,x] - dP[2,p0,p1,p2]))
     return p
 
-@njit('(float32[:,:,:], float32[:,:,:], int32[:,:], int32)', nogil=True)
-def steps2D(p, dP, inds, niter):
-    """ run dynamics of pixels to recover masks in 2D
-    Euler integration of dynamics dP for niter steps.
 
-    Args:
-    p(array[float32]): 3D array.pixel locations [axis x Ly x Lx] (start at initial meshgrid)
-    dP(array[float32]):  3D array.flows [axis x Ly x Lx]
-    inds(array[intt32]): 2D array.non-zero pixels to run dynamics on [npixels x 2]
-    niter(int32): Number of iterations of dynamics to run
 
-    Returns:
-    p(array[float32]):  3D array.final locations of each pixel after dynamics
-
-    """
-    shape = p.shape[1:]
-    for t in range(niter):
-        for j in range(inds.shape[0]):
-            y = inds[j,0]
-            x = inds[j,1]
-            p0, p1 = int(p[0,y,x]), int(p[1,y,x])
-            p[0,y,x] = min(shape[0]-1, max(0, p[0,y,x] - dP[0,p0,p1]))
-            p[1,y,x] = min(shape[1]-1, max(0, p[1,y,x] - dP[1,p0,p1]))
-    return p
-def follow_flows(dP, niter=200):
+def follow_flows(dP, niter=200, interp=True):
     """ define pixels and run dynamics to recover masks in 2D
     Pixels are meshgrid. Only pixels with non-zero cell-probability
     are used (as defined by inds)
-
     Args:
-    dP(array[float32]): 3D or 4D array.Flows [axis x Ly x Lx] or [axis x Lz x Ly x Lx]
-    niter(optional[int]): Default 200.Number of iterations of dynamics to run
+    dP(float32):  3D or 4D array.flows [axis x Ly x Lx] or [axis x Lz x Ly x Lx]
+    niter(int): default 200.number of iterations of dynamics to run
+    interp(bool): default True.interpolate during 2D dynamics  (in previous versions + paper it was False)
+    use_gpu(bool): default False.use GPU to run interpolated dynamics (faster than CPU)
 
     Returns:
-    p(array[float32]):3D array.Final locations of each pixel after dynamics
+    p(array[float32]): 3D array.final locations of each pixel after dynamics
 
     """
     shape = np.array(dP.shape[1:]).astype(np.int32)
     niter = np.int32(niter)
-    if len(shape)>2:
-        p = np.meshgrid(np.arange(shape[0]), np.arange(shape[1]),
-                np.arange(shape[2]), indexing='ij')
-        p = np.array(p).astype(np.float32)
-        # run dynamics on subset of pixels
 
-        inds = np.array(np.nonzero(np.abs(dP[0])>1e-3)).astype(np.int32).T
-        p = steps3D(p, dP, inds, niter)
-    else:
-        p = np.meshgrid(np.arange(shape[0]), np.arange(shape[1]), indexing='ij')
-        p = np.array(p).astype(np.float32)
-        # run dynamics on subset of pixels
-        inds = np.array(np.nonzero(np.abs(dP[0])>1e-3)).astype(np.int32).T
+    p = np.meshgrid(np.arange(shape[0]), np.arange(shape[1]), indexing='ij')
+    p = np.array(p).astype(np.float32)
+    dP = np.array(dP).astype(np.float32)
+    # run dynamics on subset of pixels
+    inds = np.array(np.nonzero(np.abs(dP[0])>1e-3)).astype(np.int32).T
+    # fixes code breaks when the shape is 1
+    if inds.shape[0] ==1 :
+        interp=False
+    if not interp:
         p = steps2D(p, dP, inds, niter)
+    else:
+         p[:,inds[:,0],inds[:,1]] = steps2D_interp(p[:,inds[:,0], inds[:,1]],
+                                                      dP, niter)
     return p
 
 
@@ -354,7 +404,7 @@ def flow_error(maski, dP_net):
                                + (dP_masks[2][ii] - dP_net[2][ii] / 5.) ** 2).mean()
     return flow_errors, dP_masks
 
-def compute_masks(y,cellprob,cellprob_threshold=0.0,flow_threshold=0.4,rescale=None):
+def compute_masks(p,cellprob,dP,cellprob_threshold=0.0,flow_threshold=0.4,rescale=None):
     """ Compute masks based on users input of threshold values  and X,yY flows
         This function will call the function which generates  masks based  of a histogram
     Args:
@@ -368,9 +418,7 @@ def compute_masks(y,cellprob,cellprob_threshold=0.0,flow_threshold=0.4,rescale=N
 
     """
 
-    prob = cellprob[..., -1]
-    dP = np.stack((cellprob[..., 0], cellprob[..., 1]), axis=0)
-    maski = get_masks(y, iscell=(prob > cellprob_threshold),
+    maski = get_masks(p, iscell=(cellprob > cellprob_threshold),
                                flows=dP, threshold=flow_threshold)
     maski = fill_holes(maski)
     return maski
