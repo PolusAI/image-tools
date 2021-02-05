@@ -1,6 +1,6 @@
 {
     "name": "Outlier removal",
-    "version": "0.1.1",
+    "version": "0.2.0",
     "title": "Outlier removal",
     "description": "Remove outliers from the data.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-outlier-removal-plugin:0.1.1",
+    "containerId": "labshare/polus-outlier-removal-plugin:0.2.0",
     "inputs": [      
       {
         "name": "inpdir",
@@ -26,6 +26,19 @@
              ]
           },
 	"required": "true"
+      },
+      {
+        "name": "types",
+        "type": "enum",
+	"description": "Select type of outliers to be removed",	
+        "options": {
+	  "values": [
+	      		"Global",
+			"Local"
+             ],
+	"default": "Global"
+          },
+	"required": "false"
       }
     ],
     "outputs": [
@@ -45,6 +58,12 @@
         "key": "inputs.methods",
         "title": "Remove outliers based on the method selected",
         "description": "Select methods"
+      },
+      {
+        "key": "inputs.types",
+        "title": "Find outliers based on the type selected",
+        "description": "Select types",
+	"condition": "model.inputs.methods==['IsolationForest']"
       },
       {
         "key": "inputs.outdir",

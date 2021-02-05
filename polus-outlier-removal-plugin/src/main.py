@@ -4,8 +4,8 @@ import os
 import fnmatch
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from pyod.models.iforest import IForest
 from sklearn.ensemble import IsolationForest
-from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score, accuracy_score, confusion_matrix,classification_report
 
 # Initialize the logger
 logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
@@ -28,17 +28,21 @@ def list_file(csv_directory):
                      for file_name in fnmatch.filter(files, '*.csv')]
     return list_of_files
 
-def isolationforest(data_set):
+def isolationforest(data_set, types):
     """Detects outliers using Isolation Forest algorithm.
     
     Args:
         data_set (array): Input data.
+        types (str): Type of outliers to be removed.
         
     Returns:
-        ndarray with (+1 or -1) whether or not it should be considered as an inlier according to the fitted model.
+        ndarray whether or not the data point should be considered as an inlier according to the fitted model.
     
     """
-    clf = IsolationForest(random_state=9,n_estimators=100)
+    if types == 'Global':
+        clf = IsolationForest(random_state=19,n_estimators=200)
+    else:
+        clf = IForest(random_state=10,n_estimators=200)
     clf.fit(data_set)
     pred = clf.predict(data_set)
     return pred
@@ -51,6 +55,8 @@ def main():
                         help='Input collection-Data that need outliers to be removed', required=True)
     parser.add_argument('--methods', dest='methods', type=str,
                         help='Select methods for outlier detection', required=True)
+    parser.add_argument('--types', dest='types', type=str,
+                        help='Select type of outliers to detect', required=False)
     parser.add_argument('--outdir', dest='outdir', type=str,
                         help='Output collection', required=True)
     
@@ -65,6 +71,10 @@ def main():
     methods = args.methods
     logger.info('methods = {}'.format(methods))
     
+    #Detect outliers based on type selected
+    types = args.types
+    logger.info('types = {}'.format(types))
+    
     #Path to save output csvfiles
     outdir = args.outdir
     logger.info('outdir = {}'.format(outdir))
@@ -73,6 +83,9 @@ def main():
     inputcsv = list_file(inpdir)
     if not inputcsv:
         raise ValueError('No .csv files found.')
+        
+    if not methods:
+       raise ValueError('Select methods for outlier detection.')
             
     #Dictionary of methods to detect outliers
     FEAT = {'IsolationForest': isolationforest}
@@ -94,10 +107,17 @@ def main():
         data = StandardScaler().fit_transform(df)
         
         #Detect outliers
-        rem_out = FEAT[methods](data)
+        logger.info('Detecting outliers using ' + methods)
+        rem_out = FEAT[methods](data,types)
         df['anomaly']= rem_out
-        inliers = df.loc[df['anomaly']==1]
-        outliers = df.loc[df['anomaly']==-1]
+        if types == 'Global':
+            inliers = df.loc[df['anomaly']==1]
+            outliers = df.loc[df['anomaly']==-1]
+        else:
+            inliers = df.loc[df['anomaly']==0]
+            outliers = df.loc[df['anomaly']==1]
+        
+        #Drop 'anomaly' column    
         inliers = inliers.drop('anomaly',axis=1)
         outliers = outliers.drop('anomaly',axis=1)
 
