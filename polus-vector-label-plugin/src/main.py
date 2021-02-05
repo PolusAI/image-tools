@@ -108,14 +108,12 @@ if __name__=="__main__":
             logger.info('Processing image ({}/{}): {}'.format(count + 1, len([m for m, l in root.groups()]), m))
             y=l['vector']
             y= np.asarray(y)
-      #      loc= np.asarray(loc)
             metadata=l.attrs['metadata']
 
             if len(y.shape)==4:
                 mask_stack=[]
                 for i in range(int(y.shape[0])):
                     prob=y[i,:,:,:].astype(np.float32)
-                    print(prob.dtype)
                     cellprob = prob[:, :, -1]
                     dP = np.stack((prob[..., 0], prob[..., 1]), axis=0)
                     niter = 1 / rescale[0] * 200
@@ -124,29 +122,26 @@ if __name__=="__main__":
                     mask_stack.append(masks)
 
                 if stitch_threshold > 0.0:
-                    #      print('stitching %d masks using stitch_threshold=%0.3f to make 3D masks' % (nimg, stitch_threshold))
                     mask_stack = stitch3D(np.array(mask_stack), stitch_threshold=stitch_threshold)
                 maski = np.transpose(np.array(mask_stack) ,(1,2,0))
                 x,y,z = maski.shape
                 maski = np.reshape(maski,(x,y,z,1,1))
 
             elif len(y.shape) == 3 :
-                prob=y
+                prob=y.astype(np.float32)
                 cellprob = prob[:, :, -1]
                 dP = np.stack((prob[..., 0], prob[..., 1]), axis=0)
-
                 p=mask.follow_flows(-1 * dP * (cellprob > cellprob_threshold) / 5.,
                                                                  niter=niter, interp=True)
-
                 maski = mask.compute_masks(p,cellprob,dP,cellprob_threshold,flow_threshold)
-
                 x_shape,y_shape = maski.shape
                 maski = np.reshape(maski, (x_shape,y_shape, 1, 1,1))
 
             # Write the output
             temp = re.sub(r'(?<=Type=")([^">>]+)', str(maski.dtype), metadata)
             xml_metadata = OmeXml.OMEXML(temp)
-            path=Path(outDir).joinpath(str(str(m).split('.',1)[0]+'_mask.'+str(m).split('.',1)[1]))
+            path=Path(outDir).joinpath(str(m))
+           #path=Path(outDir).joinpath(str(str(m).split('.',1)[0]+'_mask.'+str(m).split('.',1)[1]) )
             bw = BioWriter(file_path=Path(path),backend='python',metadata=xml_metadata)
             bw.write(maski)
             bw.close()
