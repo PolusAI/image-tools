@@ -114,7 +114,8 @@ def follow_flows(dP, niter=200, interp=True):
     dP(float32):  3D or 4D array.flows [axis x Ly x Lx] or [axis x Lz x Ly x Lx]
     niter(int): default 200.number of iterations of dynamics to run
     interp(bool): default True.interpolate during 2D dynamics  (in previous versions + paper it was False)
-    use_gpu(bool): default False.use GPU to run interpolated dynamics (faster than CPU)
+    use_gpu(bool
+): default False.use GPU to run interpolated dynamics (faster than CPU)
 
     Returns:
     p(array[float32]): 3D array.final locations of each pixel after dynamics
