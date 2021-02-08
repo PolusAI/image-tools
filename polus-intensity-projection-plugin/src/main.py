@@ -1,7 +1,79 @@
 import argparse, logging, time, sys, os, traceback
-import intensity_projection
+from bfio.bfio import BioReader, BioWriter
 from pathlib import Path
+import numpy as np
 
+# x,y size of the 3d image chunk to be loaded into memory
+tile_size = 1024 
+
+# depth of the 3d image chunk
+tile_size_z = 60
+
+def max_min_projection(br, x_range, y_range, **kwargs):
+    """ This function calculates the max or min intensity 
+    projection of a section (specified by x_range and 
+    y_range) of the input image. 
+
+    Args:
+        br (BioReader object): 
+        x_range (tuple): x-range of the img to be processed
+        y_range (tuple): y-range of the img to be processed
+
+    Returns:
+        image array : Max IP of the input volume
+    """
+
+    # set projection method
+    if not 'method' in kwargs:
+        method = np.max
+    else:
+        method = kwargs['method'] 
+
+    # x,y range of the volume
+    x, x_max = x_range
+    y, y_max = y_range
+
+    # iterate over depth
+    for ind, z in enumerate(range(0,br.Z,tile_size_z)):
+        z_max = min([br.Z,z+tile_size_z])
+        if ind == 0:
+            out_image = method(br[y:y_max,x:x_max,z:z_max,0,0], axis=2)
+        else:
+            out_image = np.dstack((out_image, method(br[y:y_max,x:x_max,z:z_max,0,0], axis=2)))
+
+    # output image
+    out_image = method(out_image, axis=2)
+    return out_image
+
+def mean_projection(br, x_range, y_range, **kwargs):
+    """ This function calculates the mean intensity 
+    projection of a section (specified by x_range 
+    and y_range) of the input image. 
+
+    Args:
+        br (BioReader object): 
+        x_range (tuple): x-range of the img to be processed
+        y_range (tuple): y-range of the img to be processed
+
+    Returns:
+        image array : Mean IP of the input volume
+    """
+    # x,y range of the volume
+    x, x_max = x_range
+    y, y_max = y_range
+
+    # iterate over depth
+    for ind, z in enumerate(range(0,br.Z,tile_size_z)):
+        z_max = min([br.Z,z+tile_size_z])
+        if ind == 0:
+            out_image = np.sum(br[y:y_max,x:x_max,z:z_max,0,0] / 1024, axis=2, dtype = np.float32)
+        else:
+            out_image = np.dstack((out_image, np.sum(br[y:y_max,x:x_max,z:z_max,0,0] / 1024, axis=2, dtype=np.float32)))
+
+    # output image
+    out_image = np.sum(out_image, axis=2)/ br.Z 
+    out_image = np.array(out_image * 1024, br.dtype)
+    return out_image
 
 if __name__=="__main__":
     # Initialize the logger
@@ -35,15 +107,43 @@ if __name__=="__main__":
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
     
+    # initialize projection function
+    if projectionType == 'max':
+        projection = max_min_projection
+        method = np.max
+    elif projectionType == 'min':
+        projection = max_min_projection
+        method = np.min
+    elif projectionType == 'mean':
+        projection = mean_projection
+        method = None
+
+    # images in the input directory
+    inpDir_files = os.listdir(inpDir)
+    inpDir_files = [filename for filename in inpDir_files if filename.endswith('.ome.tif')]
+
     # Surround with try/finally for proper error catching
     try:
-        # if else for different projection types
-        if projectionType == 'max':
-            intensity_projection.max_projection(inpDir, outDir)
-        elif projectionType == 'min':
-            intensity_projection.min_projection(inpDir, outDir)
-        elif projectionType == 'mean':
-            intensity_projection.mean_projection(inpDir, outDir)
+        for image_name in inpDir_files:
+            logger.info('---- Processing image: {} ----'.format(image_name))
+            
+            # initalize biowriter and bioreader
+            with BioReader(os.path.join(inpDir, image_name)) as br, \
+                BioWriter(os.path.join(outDir, image_name),metadata=br.metadata) as bw:
+                
+                # output image is 2d
+                bw.Z = 1
+
+                # iterate along the x,y direction
+                for x in range(0,br.X,tile_size):
+                    x_max = min([br.X,x+tile_size])
+
+                    for y in range(0,br.Y,tile_size):
+                        y_max = min([br.Y,y+tile_size])
+                        logger.info('Processing volume x: {}-{}, y: {}-{}'.format(x,x_max,y,y_max))
+
+                        # write output
+                        bw[y:y_max,x:x_max,0:1,0,0] = projection(br, (x, x_max), (y, y_max), method=method)
 
     except Exception:
         traceback.print_exc()
