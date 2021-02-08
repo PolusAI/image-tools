@@ -7,7 +7,7 @@ import numpy as np
 tile_size = 1024 
 
 # depth of the 3d image chunk
-tile_size_z = 60
+tile_size_z = 1024
 
 def max_min_projection(br, x_range, y_range, **kwargs):
     """ This function calculates the max or min intensity 
