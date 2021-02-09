@@ -16,11 +16,13 @@ import math
 import pandas
 import shutil
 import DracoPy
-import scalable_multires
+import iterative_density_decomposition as scalable_multires
+# import scalable_multires
 from os import listdir
 from os.path import isfile, join
 import ast
 import psutil
+from collections import defaultdict
 
 # import bpy, bmesh
 
@@ -83,7 +85,7 @@ try:
                 if all(v==0 for v in IDS):
                     continue
                 else:
-                    for iden in IDS:
+                    for iden in IDS[1:2]:
                         if iden == 0:
                             continue
                         if iden not in all_idens:
@@ -128,12 +130,17 @@ try:
                            [0, 0, 1, start_mesh[2]],
                            [0, 0, 0, 1])
         mesh1.apply_transform(translate_start)
+        mesh1bounds = mesh1.bounds
         print('** Loaded chunk #1: {} ---- {} bytes'.format(mesh_fileobj, os.path.getsize(mesh1_path)))
         if len_files == 1:
-            scalable_multires.generate_multires_mesh(mesh=mesh1,
+            num_lods, df_num_lods = scalable_multires.calculate_numlods(meshvertices=mesh1.vertices, lod=0)
+            fragment_info = scalable_multires.generate_multires_mesh(mesh=mesh1,
                                                     directory=str(output_path),
                                                     segment_id=ide,
+                                                    dataframe = df_num_lods,
+                                                    num_lods = num_lods,
                                                     quantization_bits=bit_depth)
+            scalable_multires.generate_manifest_file(meshbounds=mesh1bounds, segment_id = ide, directory=str(output_path), num_lods = len(fragment_info), fragment_info=fragment_info)
         else:
             stripped_files_middle = [idy.strip('.ply').split('_')[1:] for idy in idenfiles]
             for i in range(len_files-1):
@@ -152,6 +159,9 @@ try:
             scalable_multires.generate_multires_mesh(mesh=mesh1,
                                                     directory=str(output_path),
                                                     segment_id=ide,
+                                                    nodearray = [0,0,0],
+                                                    recur = 0,
+                                                    num_lods = 0,
                                                     quantization_bits=bit_depth)
         print(" ")
 except Exception as e:
