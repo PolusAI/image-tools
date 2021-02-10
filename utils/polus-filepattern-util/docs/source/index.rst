@@ -2,10 +2,10 @@
 Filepattern: A Utility for Programmatic File Manipulation
 =========================================================
 
-The `filepattern` Python utility is designed to information stored in file
-names. A `filepattern` is essentially a simplified regular expression with named
-groups, and regular expressions are valid `filepattern` expressions provided
-they do not use groups.
+The `filepattern` Python utility is designed to extract information stored in
+file names. A `filepattern` is essentially a simplified regular expression with
+named groups, and regular expressions are valid `filepattern` expressions
+provided they do not use groups.
 
 The utility was born from the need to manipulate and organize image data from a
 variety of microscopes, all of which have a systematic but different filenaming

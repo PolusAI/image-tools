@@ -16,7 +16,7 @@ class PatternObject():
     def __init__(self,
                  file_path: typing.Union[pathlib.Path,str],
                  pattern: str,
-                 var_order: str = 'rtczyxp'):
+                 var_order: str = "rtczyxp"):
         """Initialize a Pattern object
         
         Args:
@@ -24,7 +24,7 @@ class PatternObject():
             pattern: A filepattern string
             var_order: Defines the dictionary nesting order. The list of
                 characters is limited to :any:`VARIABLES`. *Defaults to
-                'rtczyxp'.*
+                "rtczyxp".*
         """
         self.files = {}
         self.uniques = {}
@@ -39,7 +39,7 @@ class PatternObject():
 
         self.var_order =  var_order
         
-        self.var_order = ''.join([v for v in self.var_order if v in self.variables])
+        self.var_order = "".join([v for v in self.var_order if v in self.variables])
 
         self.files, self.uniques = self.parse_data(file_path)
         
@@ -51,7 +51,7 @@ class PatternObject():
         every combination of variable values.
 
         Variables designated in the group_by input argument are grouped
-        together. So, if ``group_by='zc'``, then each iteration will return all
+        together. So, if ``group_by="zc"``, then each iteration will return all
         filenames that have constant values for each variable except z and c.
 
         In addition to the group_by variable, specific variable arguments can
@@ -109,13 +109,6 @@ class PatternObject():
         if len(files) == 0:
             files = self.files
             files = get_matching(files,self.var_order,**{k.upper():v for k,v in self.uniques.items()})
-        # else:
-        #     files,uniques = _parse(parse_filename,
-        #                            [file['file'] for file in files],
-        #                            self.pattern,
-        #                            self.regex,
-        #                            self.variables,
-        #                            self.var_order)
         
         vals = {v:set() for v in self.var_order}
         for file in files:
@@ -158,7 +151,10 @@ class PatternObject():
         self._kwargs = None
         
         if kwargs == None:
-            raise SyntaxError('Cannot directly iterate over a FilePattern object. Call it (i.e. for i in fp())')
+            kwargs = {}
+            
+        if group_by == None:
+            group_by = ''
 
         # If self.files is a list, no parsing took place so just loop through the files
         if isinstance(self.files,list):
@@ -169,26 +165,43 @@ class PatternObject():
         # Generate the values to iterate through
         iter_vars = {}
         for v in self.var_order:
+            
+            # Proceed to the next variable if v is not a grouping variable
             if v in group_by:
                 continue
+            
+            # Check to see if the current variable has a matching value
             elif v.upper() in kwargs.keys():
+                # If the value is a list, then we copy the list since we modify
+                # it later
                 if isinstance(kwargs[v.upper()],list):
                     iter_vars[v] = copy.deepcopy(kwargs[v.upper()])
+                    
+                # If the value is not a list, turn it into a list for consistent
+                # access when looping over values
                 else:
                     iter_vars[v] = [kwargs[v.upper()]]
+            
+            # If the variable is neither in group_by or kwargs, just copy the
+            # dictionary or list since it gets modified later
             else:
                 iter_vars[v] = copy.deepcopy(self.uniques[v])
         
         # Find the shallowest variable in the dictionary structure
+        # Shallowest means the variable containing the list of file dictionaries
         shallowest = None
         for v in iter_vars.keys():
+            
+            # -1 indicates the variable doesn't exist in the file names
             if -1 in iter_vars[v] and len(iter_vars[v]):
                 continue
+            
             else:
                 shallowest = v
                 break
 
-        # If shallowest is undefined, return all file names
+        # If shallowest is undefined, return all file names since no variables
+        # were found in any of the file names
         if shallowest == None:
             yield get_matching(self.files,self.var_order,**{key.upper():iter_vars[key][0] for key in iter_vars.keys()})
             return

@@ -110,7 +110,7 @@ def output_name(pattern: str,
     STATICS = [key for key in ind.keys()]
 
     # If no pattern was supplied, return None
-    if pattern==None or pattern=='':
+    if pattern==None or pattern=="":
         return None
 
     for key in ind.keys():
@@ -234,7 +234,7 @@ def parse_directory(file_path: typing.Union[str,pathlib.Path],
                     pattern: typing.Optional[str] = None,
                     regex: typing.Optional[str] = None,
                     variables: typing.Optional[str] = None,
-                    var_order: typing.Optional[str] = 'rtczyx') -> typing.Tuple[dict,dict]:
+                    var_order: typing.Optional[str] = "rtczyx") -> typing.Tuple[dict,dict]:
     """ Parse files in a directory
 
     This function extracts the variables value  from each filename in a
@@ -313,7 +313,7 @@ def parse_vector(file_path: str,
                  pattern: typing.Optional[str] = None,
                  regex: typing.Optional[str] = None,
                  variables: typing.Optional[str] = None,
-                 var_order: typing.Optional[str] = 'rtczyx') -> typing.Tuple[dict,dict]:
+                 var_order: typing.Optional[str] = "rtczyx") -> typing.Tuple[dict,dict]:
     """ Parse files in a stitching vector
 
     This function works exactly as parse_directory, except it parses files in a
@@ -371,8 +371,8 @@ def get_matching(files: dict,
 
         pattern = "file_x{xxx}_y{yyy}_c{ccc}.ome.tif"
         file_path = "./path/to/files"
-        files = parse_directory(file_path,pattern,var_order='cyx')
-        channel_zero = get_matching(files,'cyx',C=0)
+        files = parse_directory(file_path,pattern,var_order="cyx")
+        channel_zero = get_matching(files,"cyx",C=0)
 
     Multiple coordinates can be used simultaneously, so in addition to C=0 in
     the above example, it is also possible to include Y=0. Further, each
@@ -509,19 +509,19 @@ def sw_search(pattern: str,
     """
     
     '''Decompose the pattern'''
-    numbers = '0123456789<>'
+    numbers = "0123456789<>"
 
     # Split the old pattern apart, where splits occur at variable definitions
-    vlist = [(0,0,'','')]
+    vlist = [(0,0,"","")]
     for v in VARIABLES:
         
-        matches = re.search('{{[{}]+\+?}}'.format(v),pattern)
+        matches = re.search("{{[{}]+\+?}}".format(v),pattern)
         
         if matches != None:
-            if '+' in matches.group(0):
-                pattern = pattern.replace(matches.group(0),'>',1)
+            if "+" in matches.group(0):
+                pattern = pattern.replace(matches.group(0),">",1)
             else:
-                pattern = pattern.replace(matches.group(0),'<' * (len(matches.group(0))-2),1)
+                pattern = pattern.replace(matches.group(0),"<" * (len(matches.group(0))-2),1)
         else:
             break
         
@@ -559,7 +559,7 @@ def sw_search(pattern: str,
             
             # generate the similarity score
             if f_is_numeric:
-                if p==f or p in '<>':
+                if p==f or p in "<>":
                     s = matrix[pi][fi] + sab['numeric']['match']
                 else:
                     s = matrix[pi][fi] - sab['numeric']['match']
@@ -654,7 +654,7 @@ def sw_search(pattern: str,
     pattern = pattern_template
     vi = 0
     for match in re.finditer('[<>]+',pattern_template):
-        if '>' in match.group(0):
+        if ">" in match.group(0):
             vdef = '{{{}+}}'.format(VARIABLES[vi])
         else:
             vdef = '{{{}}}'.format(VARIABLES[vi]*len(match.group(0)))
@@ -684,7 +684,7 @@ def _parse(parse_function: typing.Callable,
 
     '''Initialize loop and output variables'''
     # initialize the output
-    if variables != '':
+    if variables != "":
         file_ind = {}                     # file dictionary
     else:
         file_ind = []
@@ -785,6 +785,3 @@ def _val_variables(variables: str) -> None:
 
     for v in variables:
         assert v in VARIABLES, f"File pattern variables must be one of {VARIABLES}"
-
-    if 'p' in variables:
-        assert 'x' not in variables and 'y' not in variables, "Either x and/or y may be defined or p may be defined, but not both."

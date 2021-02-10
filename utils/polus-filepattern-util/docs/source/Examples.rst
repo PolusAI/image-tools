@@ -227,14 +227,14 @@ the data
     ...
 
 The above output only shows the first three ``file``s returned by ``fp()`` for
-demosntration. Every iteration returns a list of dictionaries, where each
+demonstration. Every iteration returns a list of dictionaries, where each
 dictionary contains a ``file`` key whos value is an ``imglib.Path`` object to a
 file location, and then the remaining key/value pairs are the variables in the
 ``pattern`` and the extracted value.
 
 The reason why a list is returned is because all dictionaries in the list will
 have identical values, or a range of values supplied when constructing the
-iterator. As an example, let's say we each iteration to return all files
+iterator. As an example, let's say on each iteration we want to return all files
 associated with the same column. We could modify the iterator constructor to
 group the list of files returned by column as follows:
 
@@ -246,19 +246,19 @@ group the list of files returned by column as follows:
 
 .. code-block:: bash
 
-    [{'file': PosixPath('/home/schaubnj/Desktop/Projects/polus-plugins/utils/polus-filepattern-util/examples/data/Small_Fluorescent_Test_Dataset/image-tiles/img_r001_c001.tif'),
+    [{'file': PosixPath('../Small_Fluorescent_Test_Dataset/image-tiles/img_r001_c001.tif'),
     'x': 1,
     'y': 1},
-    {'file': PosixPath('/home/schaubnj/Desktop/Projects/polus-plugins/utils/polus-filepattern-util/examples/data/Small_Fluorescent_Test_Dataset/image-tiles/img_r002_c001.tif'),
+    {'file': PosixPath('../Small_Fluorescent_Test_Dataset/image-tiles/img_r002_c001.tif'),
     'x': 1,
     'y': 2},
-    {'file': PosixPath('/home/schaubnj/Desktop/Projects/polus-plugins/utils/polus-filepattern-util/examples/data/Small_Fluorescent_Test_Dataset/image-tiles/img_r003_c001.tif'),
+    {'file': PosixPath('../Small_Fluorescent_Test_Dataset/image-tiles/img_r003_c001.tif'),
     'x': 1,
     'y': 3},
-    {'file': PosixPath('/home/schaubnj/Desktop/Projects/polus-plugins/utils/polus-filepattern-util/examples/data/Small_Fluorescent_Test_Dataset/image-tiles/img_r004_c001.tif'),
+    {'file': PosixPath('../Small_Fluorescent_Test_Dataset/image-tiles/img_r004_c001.tif'),
     'x': 1,
     'y': 4},
-    {'file': PosixPath('/home/schaubnj/Desktop/Projects/polus-plugins/utils/polus-filepattern-util/examples/data/Small_Fluorescent_Test_Dataset/image-tiles/img_r005_c001.tif'),
+    {'file': PosixPath('../Small_Fluorescent_Test_Dataset/image-tiles/img_r005_c001.tif'),
     'x': 1,
     'y': 5}]
 
@@ -278,19 +278,19 @@ values without looping over all of the data, it you can retrieve them using the
 
 .. code-block:: bash
 
-    [{'file': PosixPath('/home/schaubnj/Desktop/Projects/polus-plugins/utils/polus-filepattern-util/examples/data/Small_Fluorescent_Test_Dataset/image-tiles/img_r001_c001.tif'),
+    [{'file': PosixPath('../Small_Fluorescent_Test_Dataset/image-tiles/img_r001_c001.tif'),
     'x': 1,
     'y': 1},
-    {'file': PosixPath('/home/schaubnj/Desktop/Projects/polus-plugins/utils/polus-filepattern-util/examples/data/Small_Fluorescent_Test_Dataset/image-tiles/img_r002_c001.tif'),
+    {'file': PosixPath('../Small_Fluorescent_Test_Dataset/image-tiles/img_r002_c001.tif'),
     'x': 1,
     'y': 2},
-    {'file': PosixPath('/home/schaubnj/Desktop/Projects/polus-plugins/utils/polus-filepattern-util/examples/data/Small_Fluorescent_Test_Dataset/image-tiles/img_r003_c001.tif'),
+    {'file': PosixPath('../Small_Fluorescent_Test_Dataset/image-tiles/img_r003_c001.tif'),
     'x': 1,
     'y': 3},
-    {'file': PosixPath('/home/schaubnj/Desktop/Projects/polus-plugins/utils/polus-filepattern-util/examples/data/Small_Fluorescent_Test_Dataset/image-tiles/img_r004_c001.tif'),
+    {'file': PosixPath('../Small_Fluorescent_Test_Dataset/image-tiles/img_r004_c001.tif'),
     'x': 1,
     'y': 4},
-    {'file': PosixPath('/home/schaubnj/Desktop/Projects/polus-plugins/utils/polus-filepattern-util/examples/data/Small_Fluorescent_Test_Dataset/image-tiles/img_r005_c001.tif'),
+    {'file': PosixPath('../Small_Fluorescent_Test_Dataset/image-tiles/img_r005_c001.tif'),
     'x': 1,
     'y': 5}]
 
@@ -300,8 +300,17 @@ Limitations
 
 ``filepattern`` only addresses numeric variables in a name. Some image naming
 conventions will frequently use a channel descriptor, such as
-``img_x01_y01_DAPI.tif``, and that cannot be handled by ``filepattern`` in its
-current form.
+
+.. code-block:: bash
+
+    img_x01_y01_DAPI.tif
+    img_x01_y01_TXRED.tif
+    img_x01_y01_GFP.tif
+
+In the above example, the x and y values can be extracted, but the channel names
+cannot. So it is possible to loop over all DAPI images in x and y, but in order
+to associate all channels with each other would require three separate
+filepatterns.
 
 Another limitation is that only the characters `rtczyxp` are permitted as
 variable names at the moment.
