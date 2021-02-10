@@ -1,6 +1,14 @@
 # WIPP Widget
 
-This WIPP plugin does things, some of which involve math and science. There is likely a lot of handwaving involved when describing how it works, but handwaving should be replaced with a good description. However, someone forgot to edit the README, so handwaving will have to do for now. Contact [Data Scientist](mailto:data.scientist@labshare.org) for more information.
+This WIPP plugin handles 3D images and creates the necessary files to be compatible with Neuroglancer. 
+
+Two types of inputs can be handled:
+
+1) Intensity Based Images
+2) Segmentation
+    This type of data can also generate meshes with Levels of Details.  
+
+Contact [Madhuri Vihani](Madhuri.Vihani@axleinfo.com) for more information.
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
@@ -15,11 +23,12 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-This plugin takes one input argument and one output argument:
+This plugin takes two input arguments and one output argument:
 
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
-| `--filePattern` | Filename pattern used to separate data | Input | string |
 | `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
+| `--imageType` | Input is either an image or labeled data set (segmentation) | Input | String |
+| `--meshes` | Generate Meshes | Input | Boolean |
 | `--outDir` | Output collection | Output | collection |
 

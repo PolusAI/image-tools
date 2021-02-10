@@ -13,6 +13,12 @@ COPY src ${EXEC_DIR}/
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
+RUN pip3 install cmake
+
+RUN git clone https://github.com/hsidky/neurogen.git --recurse-submodules
+
+RUN pip3 install neurogen/
+
 RUN python3 ${EXEC_DIR}/dl_fi.py
 
 WORKDIR ${EXEC_DIR}

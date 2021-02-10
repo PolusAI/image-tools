@@ -2,26 +2,19 @@ from bfio import BioReader, BioWriter
 import bioformats
 import javabridge as jutil
 import numpy as np
-import json, copy, os
-import simplejson as json
+import struct, json, copy, os
 from pathlib import Path
 import imageio
 import filepattern
-# import os
 import logging
-# import math
 from concurrent.futures import ThreadPoolExecutor
 import shutil
-import threading
 from concurrent import futures
-import struct,json
-from numpy.linalg import matrix_rank
-import collections
 from skimage import measure
 import traceback
-from json import JSONEncoder
 import trimesh
-import scalable_multires
+import fulloctree_multires as decomposition
+import math
 import ast
 
 # Initialize the logger
@@ -48,6 +41,20 @@ def find_ids(image):
     return ids
 
 def progressive_meshes(ide, chunkfiles, temp_dir, out_dir, bit_depth):
+
+    """ This function concatenates the appripriote chunks of each segment and then
+    creates progressive meshes out of whole segment.
+
+    Inputs:
+        ide - The ID of the segment 
+        chunkfiles - the appropriate files in the temporary directory that corresponds to segment
+        temp_dir - the temporary directory containing the ply files
+        out_dir - the output directory
+        bit_depth - the vertex quantization
+    Outputs:
+        Generates the progressive meshes of the concatenated meshes.
+
+    """
     logger.info('Starting Progressive Meshes for ID {}'.format(ide))
 
     # Identify all the files belonging to the same segment 
@@ -81,10 +88,13 @@ def progressive_meshes(ide, chunkfiles, temp_dir, out_dir, bit_depth):
 
     
     if len_files == 1: # If segment belongs to only one tile, then create progressive mesh of that segment
-        scalable_multires.generate_multires_mesh(mesh=mesh1,
-                                                directory=str(out_dir),
-                                                segment_id=ide,
-                                                quantization_bits=bit_depth)
+        # How many times do you have to divide the number of vertices by eight till you get less than 1024 vertices
+        num_lods = math.ceil(math.log(len(mesh1.vertices)/1024,8)) 
+        decomposition.generate_multires_mesh(mesh=mesh1,
+                                            directory=str(out_dir),
+                                            segment_id=ide,
+                                            num_lods = num_lods,
+                                            quantization_bits=bit_depth)
     else: # Else concatenate other pieces of the segment
 
         # Need to recalculate because the first mesh has been removed from list and is already loaded
@@ -107,10 +117,13 @@ def progressive_meshes(ide, chunkfiles, temp_dir, out_dir, bit_depth):
             mesh1 = trimesh.util.concatenate(mesh1, mesh2) # mesh1 is now bigger, since its been concatenated to another chunk of the segmented mesh.
         
         # Once we concatenate all the pieces of the segmented mesh, then we can continue to create progressive meshes and convert to Draco file format. 
-        scalable_multires.generate_multires_mesh(mesh=mesh1,
-                                                directory=str(out_dir),
-                                                segment_id=ide,
-                                                quantization_bits=bit_depth)
+        # How many times do you have to divide the number of vertices by eight till you get less than 1024 vertices
+        num_lods = math.ceil(math.log(len(mesh1.vertices)/1024,8)) 
+        decomposition.generate_multires_mesh(mesh=mesh1,
+                                            directory=str(out_dir),
+                                            segment_id=ide,
+                                            num_lods = num_lods,
+                                            quantization_bits=bit_depth)
 
 def meshdata(volume, ids, outDir_mesh, X, Y, Z):
     """ This function generates a temporary directory of polygon meshes that are chunked.
@@ -122,18 +135,19 @@ def meshdata(volume, ids, outDir_mesh, X, Y, Z):
         dtype = volume.dtype
 
         # use the marching cube algorithm to create most detailed mesh
-        vertices,faces,_,_ = measure.marching_cubes((volume==iden).astype(str(np.iinfo(dtype).dtype)), level=0, step_size=1)
+        vertices,faces,_,_ = measure.marching_cubes((volume==iden).astype(str(np.iinfo(dtype).dtype)), 
+                                level=0, step_size=1)
 
         root_mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
         dimensions = root_mesh.bounds
-        scalable_multires.generate_trimesh_chunks(mesh=root_mesh,
+        decomposition.generate_trimesh_chunks(mesh=root_mesh,
                                             directory=str(outDir_mesh),
                                             segment_id=iden,
                                             chunks=(X, Y, Z))
 def meshdir_files(opmeshdir, encoder):
     """ This function creates an additional info file that is required by Neuroglancer to view meshes. """
     transform_vars = encoder.info['scales'][0]['resolution']
-    
+
     opmesh_mesh = opmeshdir.joinpath("info")
     infomesh = {
         "@type": "neuroglancer_multilod_draco",
@@ -144,7 +158,7 @@ def meshdir_files(opmeshdir, encoder):
         "lod_scale_multiplier": "1"
     }
 
-    with open(opmesh_mesh, 'w') as writemesh:
+    with open(opmesh_mesh, 'a') as writemesh:
         json.dump(infomesh, writemesh)
     writemesh.close()
 
@@ -232,7 +246,10 @@ def _mode2(image, dtype):
     indextrue = index==True
 
     # Going to loop through the indexes where the two pixels are not the same
-    valueslist = [vals000[indexfalse], vals010[indexfalse], vals100[indexfalse], vals110[indexfalse], vals001[indexfalse], vals011[indexfalse], vals101[indexfalse], vals111[indexfalse]]
+    valueslist = [vals000[indexfalse], vals010[indexfalse],
+                  vals100[indexfalse], vals110[indexfalse],
+                  vals001[indexfalse], vals011[indexfalse],
+                  vals101[indexfalse], vals111[indexfalse]]
     edges = (y_edge,x_edge,z_edge)
 
     mode_edges = {
@@ -245,9 +262,9 @@ def _mode2(image, dtype):
         (1,0,1): mode_img[:-1,:,:-1],
         (1,1,1): mode_img[:-1, :-1, :-1]
     }
-    # Edge cases, if there are an odd number of pixels in a row or column, then we ignore the last row or column
+    # Edge cases, if there are an odd number of pixels in a row or column, 
+        # then we ignore the last row or column
     # Those columns will be black
-
     if edges == (0,0,0):
         mode_img[indextrue] = vals000[indextrue]
         mode_img = forloop(mode_img, indexfalse, valueslist)
@@ -352,7 +369,10 @@ def _get_higher_res(S, bfio_reader,slide_writer,encoder,ids, meshes, imagetype, 
 
         # Write the chunk
         slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],Z[0],Z[1]))
-        logger.info('Scale ({}): {}-{}_{}-{}_{}-{}'.format(S, str(X[0]), str(X[1]), str(Y[0]),str(Y[1]), str(Z[0]), str(Z[1])))
+        logger.info('Scale ({}): {}-{}_{}-{}_{}-{}'.format(S, 
+                                                           str(X[0]), str(X[1]), 
+                                                           str(Y[0]),str(Y[1]), 
+                                                           str(Z[0]), str(Z[1])))
         return image
 
     else:
@@ -400,7 +420,10 @@ def _get_higher_res(S, bfio_reader,slide_writer,encoder,ids, meshes, imagetype, 
         # Encode the chunk
         image_encoded = encoder.encode(image, image.shape[2])
         slide_writer.store_chunk(image_encoded,str(S),(X[0],X[1],Y[0],Y[1],Z[0],Z[1]))
-        logger.info('Scale ({}): {}-{}_{}-{}_{}-{}'.format(S, str(X[0]), str(X[1]), str(Y[0]),str(Y[1]), str(Z[0]), str(Z[1])))
+        logger.info('Scale ({}): {}-{}_{}-{}_{}-{}'.format(S, 
+                                                           str(X[0]), str(X[1]), 
+                                                           str(Y[0]),str(Y[1]), 
+                                                           str(Z[0]), str(Z[1])))
         return image
 
 # Modified and condensed from FileAccessor class in neuroglancer-scripts
@@ -575,6 +598,7 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight,imagetype):
     
     # Get metadata info from the bfio reader
     # sizes = [bfio_reader.num_x(),bfio_reader.num_y(),bfio_reader.num_z()]
+    
     sizes = [bfio_reader.x,bfio_reader.y,stackheight]
     phys_x = bfio_reader.physical_size_x
     if None in phys_x:
@@ -585,9 +609,7 @@ def bfio_metadata_to_slide_info(bfio_reader,outPath,stackheight,imagetype):
     phys_z = bfio_reader.physical_size_z
     if None in phys_z:
         phys_z = ((phys_y[0] * UNITS[phys_y[1]] + phys_x[0] * UNITS[phys_x[1]])/2, 'nm')
-    # phys_x = (325,'nm')
-    # phys_y = (325,'nm')
-    # phys_z = (325,'nm')
+
     resolution = [phys_x[0] * UNITS[phys_x[1]]]
     resolution.append(phys_y[0] * UNITS[phys_y[1]])
     resolution.append(phys_z[0] * UNITS[phys_z[1]])

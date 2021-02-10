@@ -1,8 +1,8 @@
 {
-  "name": "Polus 3D Mesh Labeling Plugin",
-  "version": "0.0.18",
-  "containerId": "mmvihani/polus-precompute-mesh-plugin:0.0.18",
-  "title": "PrecomputeMesh",
+  "name": "3D Mesh Labeling Plugin",
+  "version": "0.1.6",
+  "containerId": "labshare/polus-precompute-mesh-plugin:0.1.6",
+  "title": "Precompute Mesh with LODS",
   "description": "Everything you need to start a WIPP plugin.",
   "author": "Data Scientist (data.scientist@labshare.org)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
@@ -10,13 +10,7 @@
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
   "inputs": [
-    {
-      "name": "imagepattern",
-      "description": "Pattern of the images in Input",
-      "type": "string",
-      "options": null,
-      "required": false
-    },
+
     {
       "name": "inpDir",
       "description": "Input collection",
@@ -24,18 +18,7 @@
       "options": null,
       "required": true
     },
-    {
-      "name": "pyramidType",
-      "description": "Build a DeepZoom or Neuroglancer pyramid",
-      "type": "enum",
-      "options": {
-        "values": [
-          "Neuroglancer",
-          "DeepZoom"
-        ]
-      },
-      "required": true
-    },
+
     {
       "name": "imageType",
       "description": "Image or Segmentation",
@@ -71,11 +54,6 @@
       "description": "Collection name..."
     },
     {
-      "key": "inputs.pyramidType",
-      "title": "Pyramid Type: ",
-      "description": "Build a DeepZoom or Neuroglancer pyramid?"
-    },
-    {
       "key": "inputs.imageType",
       "title": "Image Type: ",
       "description": "Image or Segmentation?"
@@ -83,7 +61,8 @@
     {
       "key": "inputs.meshes",
       "title": "Create meshes: ",
-      "default": "false"
+      "default": "false",
+      "condition": "inputs.imageType==['segmentation']"
     },
     {
       "key": "inputs.imagepattern",

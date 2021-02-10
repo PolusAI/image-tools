@@ -15,7 +15,7 @@ import json
 from os import listdir
 from os.path import isfile, join
 import trimesh
-import scalable_multires
+import fulloctree_multires as decomposition
 import ast
 from concurrent.futures import ThreadPoolExecutor
 
