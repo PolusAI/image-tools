@@ -89,12 +89,15 @@ def progressive_meshes(ide, chunkfiles, temp_dir, out_dir, bit_depth):
     
     if len_files == 1: # If segment belongs to only one tile, then create progressive mesh of that segment
         # How many times do you have to divide the number of vertices by eight till you get less than 1024 vertices
-        num_lods = math.ceil(math.log(len(mesh1.vertices)/1024,8)) 
-        decomposition.generate_multires_mesh(mesh=mesh1,
-                                            directory=str(out_dir),
-                                            segment_id=ide,
-                                            num_lods = num_lods,
-                                            quantization_bits=bit_depth)
+        num_lods = math.ceil(math.log(len(mesh1.vertices)/1024,8))
+        try:
+            decomposition.generate_multires_mesh(mesh=mesh1,
+                                                directory=str(out_dir),
+                                                segment_id=ide,
+                                                num_lods = num_lods,
+                                                quantization_bits=bit_depth)
+        except Exception as e:
+            traceback.print_exc()
     else: # Else concatenate other pieces of the segment
 
         # Need to recalculate because the first mesh has been removed from list and is already loaded
@@ -119,11 +122,14 @@ def progressive_meshes(ide, chunkfiles, temp_dir, out_dir, bit_depth):
         # Once we concatenate all the pieces of the segmented mesh, then we can continue to create progressive meshes and convert to Draco file format. 
         # How many times do you have to divide the number of vertices by eight till you get less than 1024 vertices
         num_lods = math.ceil(math.log(len(mesh1.vertices)/1024,8)) 
-        decomposition.generate_multires_mesh(mesh=mesh1,
-                                            directory=str(out_dir),
-                                            segment_id=ide,
-                                            num_lods = num_lods,
-                                            quantization_bits=bit_depth)
+        try:
+            decomposition.generate_multires_mesh(mesh=mesh1,
+                                                directory=str(out_dir),
+                                                segment_id=ide,
+                                                num_lods = num_lods,
+                                                quantization_bits=bit_depth)
+        except Exception as e:
+            traceback.print_exc()
 
 def meshdata(volume, ids, outDir_mesh, X, Y, Z):
     """ This function generates a temporary directory of polygon meshes that are chunked.

@@ -262,19 +262,18 @@ def generate_multires_mesh(
 
     num_fragments_per_lod = np.array([len(nodes) for nodes in fragment_positions])
 
-    try:
-        # Write manifest file.
-        indexfile = Path(mesh_dir).joinpath(f'{segment_id}.index')
-        with open(indexfile, 'ab') as f:
-            f.write(chunk_shape.astype('<f').tobytes())
-            f.write(grid_origin.astype('<f').tobytes())
-            f.write(struct.pack('<I', num_lods))
-            f.write(lod_scales.astype('<f').tobytes())
-            f.write(vertex_offsets.astype('<f').tobytes(order='C'))
-            f.write(num_fragments_per_lod.astype('<I').tobytes())
-            for frag_pos, frag_offset in zip(fragment_positions, fragment_offsets):
-                f.write(frag_pos.T.astype('<I').tobytes(order='C'))
-                f.write(frag_offset.astype('<I').tobytes(order='C'))
-        f.close()
-    except Exception as e:
-        traceback.print_exc()
+
+    # Write manifest file.
+    indexfile = Path(mesh_dir).joinpath(f'{segment_id}.index')
+    with open(indexfile, 'ab') as f:
+        f.write(chunk_shape.astype('<f').tobytes())
+        f.write(grid_origin.astype('<f').tobytes())
+        f.write(struct.pack('<I', num_lods))
+        f.write(lod_scales.astype('<f').tobytes())
+        f.write(vertex_offsets.astype('<f').tobytes(order='C'))
+        f.write(num_fragments_per_lod.astype('<I').tobytes())
+        for frag_pos, frag_offset in zip(fragment_positions, fragment_offsets):
+            f.write(frag_pos.T.astype('<I').tobytes(order='C'))
+            f.write(frag_offset.astype('<I').tobytes(order='C'))
+    f.close()
+    logger.info("Index file for ID {} is saved at {}".format(segment_id, indexfile))

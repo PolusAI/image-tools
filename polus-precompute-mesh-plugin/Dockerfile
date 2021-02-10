@@ -11,16 +11,18 @@ RUN mkdir -p ${EXEC_DIR} \
 
 COPY src ${EXEC_DIR}/
 
-RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
+RUN pip3.6 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
-RUN pip3 install cmake
+RUN pip3.6 install cmake
+
+RUN apt-get update && apt-get install -y libgl1-mesa-dev
 
 RUN git clone https://github.com/hsidky/neurogen.git --recurse-submodules
 
-RUN pip3 install neurogen/
+RUN pip3.6 install neurogen/
 
-RUN python3 ${EXEC_DIR}/dl_fi.py
+RUN python3.6 ${EXEC_DIR}/dl_fi.py
 
 WORKDIR ${EXEC_DIR}
 
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3.6", "main.py"]
