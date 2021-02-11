@@ -1,1 +1,0 @@
-{"@type": "neuroglancer_multilod_draco", "vertex_quantization_bits": 16, "transform": [0, 100000000000.0, 0, 0, 100000000000.0, 0, 0, 0, 0, 0, 100000000000.0, 0], "lod_scale_multiplier": "1"}
