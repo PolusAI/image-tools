@@ -9,26 +9,49 @@ logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(messa
 # length/width of the chunk each _merge_layers thread processes at once
 chunk_size = 8192
 
+# Units for conversion
+UNITS = {'m':  10**9,
+         'cm': 10**7,
+         'mm': 10**6,
+         'µm': 10**3,
+         'nm': 1,
+         'Å':  10**-1}
+
 def _merge_layers(input_files,output_path):
     
     with ProcessManager.process(output_path.name):
 
-        # Get some basic info about the files to stack
-        with BioReader(input_files[0]['file']) as br:
-
-            # Get the physical z-distance if avaiable, set to physical x if not
-            ps_z = br.ps_z
-            if None in ps_z:
-                ps_z = br.ps_x
-
-            # Get the metadata
-            metadata = br.metadata
-        
         # Get the number of layers to stack
         z_size = 0
         for f in files:
             with BioReader(f['file']) as br:
                 z_size += br.z
+                
+        # Get some basic info about the files to stack
+        with BioReader(input_files[0]['file']) as br:
+
+            # Get the physical z-distance if avaiable, set to physical x if not
+            ps_z = br.ps_z
+            
+            # If the z-distances are undefined, average the x and y together
+            if None in ps_z:
+                # Get the size and units for x and y
+                x_size,x_units = br.ps_x
+                y_size,y_units = br.ps_y
+                
+                # Convert x and y values to the same units and average
+                z_size = (x_size*UNITS[x_units] + y_size*UNITS[y_units])/2
+                
+                # Set z units to the smaller of the units between x and y
+                z_units = x_units if UNITS[x_units] < UNITS[y_units] else y_units
+                
+                # Convert z to the proper unit scale
+                z_size /= UNITS[z_units]
+                ps_z = (z_size,z_units)
+                ProcessManager.log('Could not find physical z-size. Using the average of x & y {}.'.format(ps_z))
+
+            # Hold a reference to the metadata once the file gets closed
+            metadata = br.metadata
 
         # Create the output file within a context manager
         with BioWriter(output_path,metadata=metadata,max_workers=ProcessManager._active_threads) as bw:
@@ -62,11 +85,11 @@ def _merge_layers(input_files,output_path):
 
 if __name__ == "__main__":
     # Initialize the main thread logger
-    logger = logging.getLogger("main")
+    logger = logging.getLogger('main')
     logger.setLevel(logging.INFO)
 
     # Setup the Argument parsing
-    logger.info("Parsing arguments...")
+    logger.info('Parsing arguments...')
     parser = argparse.ArgumentParser(prog='main', description='Compile individual tiled tiff images into a single volumetric tiled tiff.')
 
     parser.add_argument('--inpDir', dest='input_dir', type=str,

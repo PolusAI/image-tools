@@ -24,14 +24,14 @@ utility to indicate which files to stack. In particular, defining a filename
 variable is surrounded by `{}`, and the variable name and number of spaces
 dedicated to the variable are denoted by repeated characters for the variable.
 For example, if all filenames follow the structure `filename_ZZZ.ome.tif`, where
-TTT indicates the timepoint the image was captured at, then the filename pattern
+ZZZ indicates the timepoint the image was captured at, then the filename pattern
 would be `filename_{zzz}.ome.tif` or `filename_{z+}.ome.tif`, where former
 indicates the z-position is always of uniform length (e.g.
 `filename_001.ome.tif`) while the latter permits variable z-position length.
 
 The only required variable for this plugin is `z`. Filename patterns may include
 any of the other filepattern variables, mixed with any other valid regular
-expression argumetns (except groups).
+expression arguments (except groups).
 
 ## To do
 
