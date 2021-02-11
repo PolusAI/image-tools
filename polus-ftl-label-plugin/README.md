@@ -39,7 +39,7 @@ This plugin takes one input argument and one output argument:
 
 | Name             | Description                                           | I/O    | Type       |
 |------------------|-------------------------------------------------------|--------|------------|
-| `--connectivity` | City block connectivity                               | Input  | enum       |
+| `--connectivity` | City block connectivity                               | Input  | number     |
 | `--inpDir`       | Input image collection to be processed by this plugin | Input  | collection |
 | `--outDir`       | Output collection                                     | Output | collection |
 

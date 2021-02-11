@@ -44,7 +44,6 @@ if __name__=="__main__":
     outDir = Path(args.outDir)
     logger.info('outDir = {}'.format(outDir))
     
-    # Start the ProcessManager
     # We only need a thread manager since labeling and image reading/writing
     # release the gil
     ProcessManager.init_threads()
