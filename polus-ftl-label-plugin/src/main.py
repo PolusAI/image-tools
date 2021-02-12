@@ -6,10 +6,15 @@ import numpy as np
 def label_thread(input_path,output_path,connectivity):
 
     with ProcessManager.thread() as active_threads:
-        with bfio.BioReader(input_path,max_workers=2) as br:
-            with bfio.BioWriter(output_path,max_workers=2,metadata=br.metadata) as bw:
+        with bfio.BioReader(input_path,max_workers=active_threads.count) as br:
+            with bfio.BioWriter(output_path,max_workers=active_threads.count,metadata=br.metadata) as bw:
+                
                 # Load an image and convert to binary
-                image = br[...,0,0]>0
+                image = (br[...,0,0]>0).squeeze()
+                
+                if connectivity > image.ndim:
+                    ProcessManager.log("{}: Connectivity is not less than or equal to the number of image dimensions, skipping this image. connectivity={}, ndim={}".format(input_path.name,connectivity,image.ndim))
+                    return
 
                 # Run the labeling algorithm
                 labels = ftl.label_nd(image.squeeze(),connectivity)
@@ -57,4 +62,3 @@ if __name__=="__main__":
                                      file,outDir.joinpath(file.name),connectivity)
 
     ProcessManager.join_threads()
-
