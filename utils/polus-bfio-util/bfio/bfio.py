@@ -974,7 +974,7 @@ class BioWriter():
             self._metadata.image(0).Name = file_path
             self._metadata.image().Pixels.channel_count = self._xyzct['C']
             self._metadata.image().Pixels.DimensionOrder = bioformats.omexml.DO_XYZCT
-        elif image != None:
+        elif image is not None:
             assert len(image.shape) == 5, "Image must be 5-dimensional (x,y,z,c,t)."
             x = X if X else image.shape[1]
             y = Y if Y else image.shape[0]
