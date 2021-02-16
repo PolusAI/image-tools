@@ -23,7 +23,7 @@ contents of `plugin.json` into the pop-up window and submit.
 
 ## Options
 
-This plugin takes one input argument and one output argument:
+This plugin takes three input argument and one output argument:
 
 | Name             | Description                            | I/O    | Type        |
 |------------------|----------------------------------------|--------|-------------|
@@ -32,3 +32,16 @@ This plugin takes one input argument and one output argument:
 | `--channelOrder` | What channel to assign each image to   | Input  | array       |
 | `--outDir`       | Output collection                      | Output | genericData |
 
+**Note:** The `channelOrder` input should be a comma separated list without
+spaces.
+
+## Run the docker container
+
+```bash
+docker run -v /path/to/data/:/data/ \
+           labshare/polus-multichannel-tiff-plugin:0.2.2 \
+           --filePattern example_image_x{xxx}_y{yyy}_c{c}.ome.tif \
+           --inpDir /data/input \
+           --channelOrder 3,2,1 \
+           --outDir /data/output
+```

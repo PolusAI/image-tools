@@ -57,7 +57,7 @@ if __name__=="__main__":
     parser.add_argument('--inpDir', dest='inpDir', type=str,
                         help='Input image collection to be processed by this plugin', required=True)
     parser.add_argument('--channelOrder', dest='channelOrder', type=str,
-                        help='Input image collection to be processed by this plugin', required=True)
+                        help='Order in which to place the channels (e.g. 1,3,2)', required=True)
     
     # Output arguments
     parser.add_argument('--outDir', dest='outDir', type=str,
