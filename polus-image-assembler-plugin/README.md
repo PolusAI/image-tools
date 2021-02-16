@@ -35,9 +35,9 @@ contents of `plugin.json` into the pop-up window and submit.
 
 This plugin takes two input arguments and one output argument:
 
-| Name                | Description                     | I/O    | Type            |
-|---------------------|---------------------------------|--------|-----------------|
-| `--stitchPath`      | Path to stitching vector        | Input  | stitchingVector |
-| `--imgPath`         | Path to input image collection  | Input  | collection      |
-| `--outDir`          | Path to output image collection | Output | collection      |
-| `--timesliceNaming` | Path to output image collection | Output | boolean         |
+| Name                | Description                              | I/O    | Type            |
+|---------------------|------------------------------------------|--------|-----------------|
+| `--stitchPath`      | Path to stitching vector                 | Input  | stitchingVector |
+| `--imgPath`         | Path to input image collection           | Input  | collection      |
+| `--outDir`          | Path to output image collection          | Output | collection      |
+| `--timesliceNaming` | Output image names are timeslice numbers | Output | boolean         |
