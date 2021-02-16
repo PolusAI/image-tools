@@ -8,8 +8,8 @@ and the
 do not have a way to apply a stitching vector to new sets of images. For
 example, it is currently possible to stitch the first channel of a multi-channel
 image and apply the same stitching vector to the other channels. This plugin
-creates a new stitching vectors that will an existing single stitching vector to
-a different set of images.
+creates a new stitching vector that will apply an existing single stitching
+vector to a different set of images.
 
 This plugin uses 
 [filepatterns](https://filepattern.readthedocs.io/en/latest/),
@@ -22,8 +22,8 @@ located. A `filepattern` defines a filename variable using `{}`, and the
 variable name and number of spaces dedicated to the variable are denoted by
 repeated characters for the variable. For example, if all filenames follow the
 structure `filename_TTT.ome.tif`, where TTT indicates the timepoint the image
-was captured at, then the filename pattern would be `filename_{ttt}.ome.tif`.
-For more information on `filepattern`, see the 
+was captured at, then the filename pattern would be `filename_{ttt}.ome.tif` or
+`filename_{t+}.ome.tif`. For more information on `filepattern`, see the 
 [documentation](https://filepattern.readthedocs.io/en/latest/).
 
 ## Build the plugin
@@ -47,14 +47,14 @@ This plugin takes 5 input arguments and 1 output argument:
 | `--stitchRegex`     | `filepattern` for filenames in stitching vector        | Input  | String          |
 | `--collectionRegex` | `filepattern` for filenames in image collection        | Input  | String          |
 | `--groupBy`         | String of variables that vary within a stiching vector | Input  | String          |
-| `--outDir`          | Output stitching vector                                | Output | String          |
+| `--outDir`          | Output stitching vector                                | Output | stitchingVector |
 
 ### stitchRegex and collectionRegex
 
 The `stitchRegex` and `collectionRegex` must contain either `x` and `y`
 variables, or a `p` variable. These variables are what the plugin use to match
 the location of corresponding files. If any other variables are provided, then
-a new stithing vector is created for each unique value extracted for that
+a new stitching vector is created for each unique value extracted for that
 variable.
 
 ### groupBy
