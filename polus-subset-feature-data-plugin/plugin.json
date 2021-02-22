@@ -1,0 +1,89 @@
+{
+    "name": "Subset feature data",
+    "version": "0.1.1",
+    "title": "Subset feature data",
+    "description": "Subset data using a given feature",
+    "author": "Gauhar Bains (gauhar.bains@labshare.org)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-subset-feature-data-plugin:0.1.1",
+    "inputs": [
+      {
+        "name": "background",
+        "type": "enum",
+        "description": "The background of images in the collection",
+        "required": true
+      },
+      {
+        "name": "csvDir",
+        "type": "collection",
+        "description": "CSV collection containing features",
+        "required": true
+      },
+      {
+        "name": "feature",
+        "type": "enum",
+        "description": "Feature to subset data",
+        "required": true
+      },
+      {
+        "name": "filePattern",
+        "type": "string",
+        "description": "Filename pattern used to separate data",
+        "required": true
+      },
+      {
+        "name": "inpDir",
+        "type": "collection",
+        "description": "Input image collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "timeseries",
+        "type": "string",
+        "description": "Variables",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "collection",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.background",
+        "title": "Image background",
+        "description": "The background of images in the collection"
+      },
+      {
+        "key": "inputs.csvDir",
+        "title": "CSV Collection",
+        "description": "CSV collection containing features"
+      },
+      {
+        "key": "inputs.feature",
+        "title": "Image feature",
+        "description": "Feature to subset data"
+      },
+      {
+        "key": "inputs.filePattern",
+        "title": "Filename pattern",
+        "description": "Filename pattern used to separate data"
+      },
+      {
+        "key": "inputs.inpDir",
+        "title": "Input collection",
+        "description": "Input image collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.timeseries",
+        "title": "Time series variable",
+        "description": "Variables"
+      }
+    ]
+  }
