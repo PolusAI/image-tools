@@ -1,0 +1,35 @@
+{
+    "name": "label-to-vector Plugin",
+    "version": "0.1.7",
+    "title": "Label Vector Plugin",
+    "description": "Plugin to convert labels to vector field",
+    "author": "Sudharsan (sudharsan.prativadi@labshare.org)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "Cellpose,https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1",
+    "containerId": "labshare/polus-label-to-vector-plugin:0.1.7",
+    "inputs": [
+      {
+        "name": "inpDir",
+        "type": "collection",
+        "description": "Input image collection to be processed by this plugin",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "genericData",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.inpDir",
+        "title": "Input collection",
+        "description": "Input image collection to be processed by this plugin"
+      }
+
+    ]
+  }
