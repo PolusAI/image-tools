@@ -1,0 +1,70 @@
+{
+    "name": "Vector-label-plugin ",
+    "version": "0.1.7",
+    "title": "Vector-label  ",
+    "description": "Plugin to label masks ",
+    "author": "Sudharsan (sudharsan.prativadi@labshare.org)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "Plugin is based on labelling done by Cellpose, https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1",
+    "containerId": "labshare/polus-vector-label-plugin:0.1.7",
+    "inputs": [
+
+      {
+        "name": "inpDir",
+        "type": "genericData",
+        "description": "Input image collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "flow_threshold",
+        "type": "number",
+        "description": "flow error threshold,",
+        "required": false
+      },
+      {
+        "name": "cellprob_threshold",
+        "type": "number",
+        "description": "cell probability threshold, centered at 0.0",
+        "required": false
+      },
+
+       {
+        "name": "stitch_threshold",
+        "type": "number",
+        "description": "Stitch threshold default at 0 for stitch 2D masks into 3D volume",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "collection",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+
+      {
+        "key": "inputs.inpDir",
+        "title": "Input collection",
+        "description": "Input image collection to be processed by this plugin"
+      },
+          {
+        "key": "inputs.flow_threshold",
+        "title": "Flow threshold ",
+        "description": "flow threshold"
+      },
+      {
+        "key": "inputs.cellprob_threshold",
+        "title": "cell probability threshold",
+        "description": "cell probability threshold"
+      },
+          {
+        "key": "inputs.stitch_threshold",
+        "title": "Stitching threshold ",
+        "description": "Stitching threshold"
+      }
+    ]
+  }
