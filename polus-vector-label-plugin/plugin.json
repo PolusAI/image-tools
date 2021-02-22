@@ -29,8 +29,7 @@
         "description": "Cell probability threshold, centered at 0.0",
         "required": false
       },
-
-       {
+      {
         "name": "stitch_threshold",
         "type": "number",
         "description": "Stitch threshold default at 0 for stitch 2D masks into 3D volume",
@@ -38,6 +37,7 @@
       }
     ],
     "outputs": [
+
       {
         "name": "outDir",
         "type": "collection",
@@ -51,17 +51,17 @@
         "title": "Input collection",
         "description": "Input image collection to be processed by this plugin"
       },
-          {
+      {
         "key": "inputs.flow_threshold",
         "title": "Flow threshold ",
-        "description": "flow threshold"
+        "description": "Flow threshold"
       },
       {
         "key": "inputs.cellprob_threshold",
         "title": "Cell probability threshold",
         "description": "Cell probability threshold"
       },
-          {
+      {
         "key": "inputs.stitch_threshold",
         "title": "Stitching threshold ",
         "description": "Stitching threshold"
