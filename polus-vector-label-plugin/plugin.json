@@ -20,13 +20,13 @@
       {
         "name": "flow_threshold",
         "type": "number",
-        "description": "flow error threshold,",
+        "description": "Flow error threshold default at 0.8",
         "required": false
       },
       {
         "name": "cellprob_threshold",
         "type": "number",
-        "description": "cell probability threshold, centered at 0.0",
+        "description": "Cell probability threshold, centered at 0.0",
         "required": false
       },
 
@@ -58,8 +58,8 @@
       },
       {
         "key": "inputs.cellprob_threshold",
-        "title": "cell probability threshold",
-        "description": "cell probability threshold"
+        "title": "Cell probability threshold",
+        "description": "Cell probability threshold"
       },
           {
         "key": "inputs.stitch_threshold",
