@@ -62,6 +62,7 @@ def stitch3D(masks, stitch_threshold=0.25):
 
         return masks
 
+
 if __name__=="__main__":
     # Initialize the logger
     logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
@@ -77,7 +78,7 @@ if __name__=="__main__":
     parser.add_argument('--inpDir', dest='inpDir', type=str,
                         help='Input image collection to be processed by this plugin', required=True)
     parser.add_argument('--flow_threshold', required=False,
-                        default=0.4, type=float, help='flow error threshold, 0 turns off this optional QC step')
+                        default=0.8, type=float, help='flow error threshold, 0 turns off this optional QC step')
     parser.add_argument('--cellprob_threshold', required=False,
                         default=0.0, type=float, help='cell probability threshold, centered at 0.0')
     parser.add_argument('--stitch_threshold',required=False, type=float,
@@ -105,47 +106,30 @@ if __name__=="__main__":
         count=0
         # Loop through files in inpDir image collection and process
         for m,l in root.groups():
-            logger.info('Processing image ({}/{}): {}'.format(count + 1, len([m for m, l in root.groups()]), m))
+            logger.info('Processing image ({}/{}): {}'.format(count + 1, len([m for m, _ in root.groups()]), m))
             y=l['vector']
             y= np.asarray(y)
             metadata=l.attrs['metadata']
+            mask_final = np.zeros((y.shape[0],y.shape[1],y.shape[2],1,1)).astype(y.dtype)
+            y=y.transpose((2,0,1,3,4)).squeeze(axis=4)
 
-            if len(y.shape)==4:
-                mask_stack=[]
-                for i in range(int(y.shape[0])):
-                    prob=y[i,:,:,:].astype(np.float32)
-                    cellprob = prob[:, :, -1]
-                    dP = np.stack((prob[..., 0], prob[..., 1]), axis=0)
-                    niter = 1 / rescale[0] * 200
-                    p = mask.follow_flows(-1 * dP * (cellprob > cellprob_threshold) / 5.)
-                    masks = mask.compute_masks(p, cellprob, dP, cellprob_threshold, flow_threshold)
-                    mask_stack.append(masks)
-
-                if stitch_threshold > 0.0:
-                    mask_stack = stitch3D(np.array(mask_stack), stitch_threshold=stitch_threshold)
-                maski = np.transpose(np.array(mask_stack) ,(1,2,0))
-                x,y,z = maski.shape
-                maski = np.reshape(maski,(x,y,z,1,1))
-
-            elif len(y.shape) == 3 :
-                prob=y.astype(np.float32)
-                cellprob = prob[:, :, -1]
+            for z in range(y.shape[0]):
+                prob = y[z, :, :, :].astype(np.float32)
+                cellprob = prob[..., -1]
                 dP = np.stack((prob[..., 0], prob[..., 1]), axis=0)
-                p=mask.follow_flows(-1 * dP * (cellprob > cellprob_threshold) / 5.,
-                                                                 niter=niter, interp=True)
+                p = mask.follow_flows(-1 * dP * (cellprob > cellprob_threshold) / 5.,
+                                                                    niter=niter, interp=True)
                 maski = mask.compute_masks(p,cellprob,dP,cellprob_threshold,flow_threshold)
-                x_shape,y_shape = maski.shape
-                maski = np.reshape(maski, (x_shape,y_shape, 1, 1,1))
+                mask_final[:,:,z:z+1,:,:]=maski[:,:,np.newaxis,np.newaxis,np.newaxis].astype(maski.dtype)
 
             # Write the output
-            temp = re.sub(r'(?<=Type=")([^">>]+)', str(maski.dtype), metadata)
-            xml_metadata = OmeXml.OMEXML(temp)
+            temp = re.sub(r'(?<=Type=")([^">>]+)', str(mask_final.dtype), metadata)
+            xml_metadata = OmeXml.OMEXML(metadata)
             path=Path(outDir).joinpath(str(m))
-           #path=Path(outDir).joinpath(str(str(m).split('.',1)[0]+'_mask.'+str(m).split('.',1)[1]) )
             bw = BioWriter(file_path=Path(path),backend='python',metadata=xml_metadata)
-            bw.write(maski)
+            bw.write(mask_final)
             bw.close()
-            del maski
+            del mask_final
             count+=1
     finally:
         logger.info('Closing ')

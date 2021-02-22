@@ -122,7 +122,6 @@ def follow_flows(dP, niter=200, interp=True):
     """
     shape = np.array(dP.shape[1:]).astype(np.int32)
     niter = np.int32(niter)
-
     p = np.meshgrid(np.arange(shape[0]), np.arange(shape[1]), indexing='ij')
     p = np.array(p).astype(np.float32)
     dP = np.array(dP).astype(np.float32)
@@ -236,18 +235,16 @@ def get_masks(p, iscell=None, rpad=20, flows=None, threshold=0.4):
 
     # remove big masks
     _,counts = np.unique(M0, return_counts=True)
-
     big = np.prod(shape0) * 0.4
     for i in np.nonzero(counts > big)[0]:
         M0[M0==i] = 0
     _,M0 = np.unique(M0, return_inverse=True)
 
     M0 = np.reshape(M0, shape0)
+
     if threshold is not None and threshold > 0 and flows is not None:
         M0 = remove_bad_flow_masks(M0, flows, threshold=threshold)
-
         _,M0 = np.unique(M0, return_inverse=True)
-
         M0 = np.reshape(M0, shape0).astype(np.int32)
 
     return M0
@@ -404,7 +401,7 @@ def flow_error(maski, dP_net):
                                + (dP_masks[2][ii] - dP_net[2][ii] / 5.) ** 2).mean()
     return flow_errors, dP_masks
 
-def compute_masks(p,cellprob,dP,cellprob_threshold=0.0,flow_threshold=0.4,rescale=None):
+def compute_masks(p,cellprob,dP,cellprob_threshold=0.0,flow_threshold=0.4):
     """ Compute masks based on users input of threshold values  and X,yY flows
         This function will call the function which generates  masks based  of a histogram
     Args:
@@ -420,6 +417,7 @@ def compute_masks(p,cellprob,dP,cellprob_threshold=0.0,flow_threshold=0.4,rescal
 
     maski = get_masks(p, iscell=(cellprob > cellprob_threshold),
                                flows=dP, threshold=flow_threshold)
+
     maski = fill_holes(maski)
     return maski
 
