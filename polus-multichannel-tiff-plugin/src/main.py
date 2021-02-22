@@ -9,6 +9,9 @@ from threading import Lock
 from multiprocessing import cpu_count
 import time
 
+# size of chunks to process (chunk_size x chunk_size)
+chunk_size = 4096
+
 # Thread lock for file writing
 lock = Lock()
 
@@ -120,7 +123,7 @@ if __name__=="__main__":
             threads = []
             count = 0
             total = bw.num_c() * bw.num_z() * \
-                    (bw.num_x()//4096 + 1) * (bw.num_y()//4096 + 1)
+                    (bw.num_x()//chunk_size + 1) * (bw.num_y()//chunk_size + 1)
             with ThreadPoolExecutor(cpu_count()) as executor:
                 for c,file in enumerate(paths):
                     br = BioReader(file['file'])
@@ -128,10 +131,10 @@ if __name__=="__main__":
                     first_image = True
                     for z in range(br.num_z()):
                         Z = [z,z+1]
-                        for x in range(0,br.num_x(),4096):
-                            X = [x,min([x+4096,br.num_x()])]
-                            for y in range(0,br.num_y(),4096):
-                                Y = [y,min([y+4096,br.num_y()])]
+                        for x in range(0,br.num_x(),chunk_size):
+                            X = [x,min([x+chunk_size,br.num_x()])]
+                            for y in range(0,br.num_y(),chunk_size):
+                                Y = [y,min([y+chunk_size,br.num_y()])]
                                 threads.append(executor.submit(write_tile,br,bw,X,Y,Z,C))
                                 
                                 # Bioformats requires the first tile to be written
