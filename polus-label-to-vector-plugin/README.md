@@ -10,9 +10,12 @@ required for cellpose training plugin.
 This plugin has been tested on bfio version 2.0.4-slim-buster.
 
 
-
+## Building
 To build the Docker image for the conversion plugin, run
 `./build-docker.sh`.
+
+## Using Container Locally
+  `docker run   -v {label image collection}:/opt/executables/input -v {output zarr Dir}:/opt/executables/output labshare/polus-label-to-vector-plugin:{version}  --inpDir /opt/executables/input --outDir /opt/executables/output` 
 
 ## Install WIPP Plugin
 
