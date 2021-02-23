@@ -2,7 +2,8 @@
 Plugin is based of mask recovery implemented in [Cellpose](https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1). 
 The plugin takes pixel probability,vertical and horizontal gradients as array input and predicts masks based on the 
 flow error and cell probability threshold entered by user.A meshgrid is generated based on gradients and probability 
-threshold and pixels are grouped based on where they converge.
+threshold and pixels are grouped based on where they converge. Based on this location pixels are grouped and binary holes 
+are filled.
   
 The author's recommended values for cell probability threshold ,flow error and stitching threshold are 0,0.4 and 0. 
 
@@ -31,7 +32,7 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-This plugin takes 3 input argument and 1 output argument:
+This plugin takes 4 input arguments and 1 output argument:
 
 | Name          | Description             | I/O    | Type   | Default values    |   
 |---------------|-------------------------|--------|--------|--------|

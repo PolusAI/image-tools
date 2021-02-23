@@ -1,8 +1,8 @@
 {
-    "name": "Vector-label-plugin ",
+    "name": "Vector-label-plugin",
     "version": "0.1.8",
-    "title": "Vector-label  ",
-    "description": "Plugin to label masks ",
+    "title": "Vector-label",
+    "description": "Plugin to label masks",
     "author": "Sudharsan Prativadi (sudharsan.prativadi@labshare.org)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/labshare/polus-plugins",
@@ -63,7 +63,7 @@
       },
       {
         "key": "inputs.stitch_threshold",
-        "title": "Stitching threshold ",
+        "title": "Stitching threshold",
         "description": "Stitching threshold"
       }
     ]
