@@ -64,7 +64,6 @@ if __name__=="__main__":
     except FileExistsError:
         logger.info('Zarr file exists. Delete the existing file %r' % str((Path(outDir).joinpath('flow.zarr'))))
     finally:
-        # Close the javabridge regardless of successful completion
         logger.info('Closing ')
         # Exit the program
         sys.exit()
