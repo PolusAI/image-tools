@@ -1,34 +1,15 @@
-FROM python:3.8
+FROM python:3.9
 
-RUN apt-get update && \    
-    pip3 install --upgrade pip --no-cache-dir
+RUN pip3 install --upgrade pip --no-cache-dir
 
 # Copy the requirements file
 COPY ./requirements/requirements-base.txt ${EXEC_DIR}/
 
 # Install requirements
-RUN pip3 install -r  ${EXEC_DIR}/requirements-base.txt --no-cache-dir
+RUN pip3 install -r  ${EXEC_DIR}/requirements-base.txt --no-cache-dir && \
+    rm -rf /usr/local/lib/python3.9/site-packages/bfio/jars
 
 # Get Linux
-FROM python:3.8-slim
+FROM python:3.9-slim
 
-COPY --from=0 /usr/local/lib/python3.8/site-packages /usr/local/lib/python3.8/site-packages
-
-### Things that change rarely between containers
-
-# Create temporary folder
-ARG DATA_DIR="/data"
-ARG EXEC_DIR="/opt/executables"
-RUN mkdir -p ${EXEC_DIR}
-
-# ### Things that change frequently between containers
-
-# Copy bfio
-COPY ./bfio/*.py ${EXEC_DIR}/bfio/
-COPY ./setup.py ${EXEC_DIR}
-COPY ./README.md ${EXEC_DIR}
-COPY VERSION ${EXEC_DIR}
-
-# Install bfio, remove the source directory
-RUN pip3 install ${EXEC_DIR}/ --no-cache-dir && \
-    rm -rf ${EXEC_DIR}
+COPY --from=0 /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
