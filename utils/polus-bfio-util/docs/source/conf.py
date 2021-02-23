@@ -20,7 +20,6 @@ sys.setrecursionlimit(1500)
 # -- Project information -----------------------------------------------------
 
 project = 'bfio'
-copyright = '2020-2021, Nicholas J Schaub'
 author = 'Nicholas J Schaub'
 
 # The full version, including alpha/beta/rc tags

@@ -7,10 +7,10 @@ It makes use of Cell Profilers
 package to access the Bioformats library. One of the issues with using the
 `python-bioformats` package is reading and writing large image planes (>2GB).
 The challenge lies in the way Bioformats reads and writes large image planes,
-using an `int` value to index the file. To do get around this, files can be read
-or written in chunks and the classes provided in `bfio` handle this
-automatically. The `BioWriter` class in this package only writes files in the
-`.ome.tif` format, and automatically sets the tile sizes to 1024.
+using an `int` value to index the file. To get around this, files can be read or
+written in chunks and the classes provided in `bfio` handle this automatically.
+The `BioWriter` class in this package only writes files in the `.ome.tif`
+format, and automatically sets the tile sizes to 1024.
 
 Docker containers with all necessary components are available (see
 **Docker Containers** section).
