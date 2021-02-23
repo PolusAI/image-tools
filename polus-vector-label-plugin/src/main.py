@@ -108,8 +108,6 @@ if __name__=="__main__":
     stitch_threshold=args.stitch_threshold
     rescale = np.ones(1)
     niter = 1 / rescale[0] * 200
-    pixel_types = ["int8", "int16", "int32", "uint8", "uint16", "uint32", "float", "bit", "double", "complex",
-                   "double-complex"]
     # Surround with try/finally for proper error catching
     try:
         logger.info('Initializing ...')
@@ -138,17 +136,11 @@ if __name__=="__main__":
                 masks_final = stitch3D(np.asarray(mask_final.squeeze().astype(np.int32)), stitch_threshold=stitch_threshold)
                 masks_final=masks_final[...,np.newaxis,np.newaxis]
 
-            #Checking mask dtype with OME-XML pixel types
-            if str(mask_final.dtype) in pixel_types:
-                mask_dtype=str(mask_final.dtype)
-            else :
-                mask_dtype = ''.join(c if c not in map(str,range(0,10)) else "" for c in str(mask_final.dtype))
-
-            metadata_upd = re.sub(r'(?<=Type=")([^">>]+)', mask_dtype, metadata)
-            xml_metadata = OmeXml.OMEXML(metadata_upd)
+            xml_metadata = OmeXml.OMEXML(metadata)
             # Write the output
             path=Path(outDir).joinpath(str(file_name))
             bw = BioWriter(file_path=Path(path),backend='python',metadata=xml_metadata)
+            bw.dtype=mask_final.dtype
             bw.write(mask_final)
             bw.close()
             del mask_final,bw
