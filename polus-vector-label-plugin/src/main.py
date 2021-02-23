@@ -131,13 +131,16 @@ if __name__=="__main__":
                                                                     niter=niter, interp=True)
                 maski = mask.compute_masks(p,cellprob,dP,cellprob_threshold,flow_threshold)
                 mask_final[:,:,z:z+1,:,:] = maski[:,:,np.newaxis,np.newaxis,np.newaxis].astype(maski.dtype)
+            logger.info('Computed  masks for  image {}'.format(file_name))
 
             if mask_final.shape[2]>1 and stitch_threshold>0:
+                logger.info('stitching   masks into 3D volume for image {}'.format(file_name))
                 masks_final = stitch3D(np.asarray(mask_final.squeeze().astype(np.int32)), stitch_threshold=stitch_threshold)
                 masks_final=masks_final[...,np.newaxis,np.newaxis]
 
             xml_metadata = OmeXml.OMEXML(metadata)
             # Write the output
+            logger.info('Saving label for image {}'.format(file_name))
             path=Path(outDir).joinpath(str(file_name))
             bw = BioWriter(file_path=Path(path),backend='python',metadata=xml_metadata)
             bw.dtype=mask_final.dtype
