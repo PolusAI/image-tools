@@ -125,7 +125,7 @@ def follow_flows(dP, niter=200, interp=True):
     # run dynamics on subset of pixels
     inds = np.array(np.nonzero(np.abs(dP[0])>1e-3)).astype(np.int32).T
     # fixes code breaks when the shape is 1
-    if inds.shape[0] ==1 :
+    if inds.shape[0] == 1:
         interp=False
     if not interp:
         p = steps2D(p, dP, inds, niter)
@@ -152,7 +152,6 @@ def get_masks(p, iscell=None, rpad=20, flows=None, threshold=0.4):
     M0(array[int]):  2D or 3D array.Masks with inconsistent flow masks removed,0=NO masks; 1,2,...=mask labels,size [Ly x Lx] or [Lz x Ly x Lx]
 
     """
-
     pflows = []
     edges = []
     shape0 = p.shape[1:]
@@ -270,7 +269,6 @@ def _extend_centers(T,y,x,ymed,xmed,Lx, niter):
     T(array[float]): amount of diffused particles at each pixel
 
     """
-
     for t in range(niter):
         T[ymed*Lx + xmed] += 1
         T[y*Lx + x] = 1/9. * (T[y*Lx + x] + T[(y-1)*Lx + x]   + T[(y+1)*Lx + x] +
@@ -385,17 +383,15 @@ def compute_masks(p,cellprob,dP,cellprob_threshold=0.0,flow_threshold=0.4):
     Args:
     y(array[int]): ND-array .Output of the nueral network
     cellprob(array[float32]):  3D or 4D array.final locations of each pixel after dynamics,size [axis x Ly x Lx].Cell probablity of array
-    flow_threshold(optional[float]): default 0.4.flow error threshold (all cells with errors below threshold are kept) (not used for 3D)
-    cellprob_threshold(optional[float]):  default 0.0.cell probability threshold (all pixels with prob above threshold kept for masks
+    flow_threshold(optional[float]): default 0.4.flow error threshold (all cells with errors below threshold are kept)
+    cellprob_threshold(optional[float]):  default 0.0.cell probability threshold (all pixels with prob above threshold kept for masks)
 
     Returns:
     Masks(array[float]): ND-array.Predicted masks
 
     """
-
     maski = get_masks(p, iscell=(cellprob > cellprob_threshold),
                                flows=dP, threshold=flow_threshold)
-
     maski = fill_holes(maski)
     return maski
 
@@ -447,7 +443,6 @@ def remove_small_objects(ar, min_size=64, connectivity=1):
 
     """
     out = ar.copy()
-
     if min_size == 0:  # shortcut for efficiency
         return out
 

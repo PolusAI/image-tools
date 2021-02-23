@@ -7,8 +7,7 @@ import zarr
 import mask
 from numba import jit
 
-
-pixel_types=["int8","int16","int32","uint8","uint16","uint32","float","bit","double","complex","double-complex"]
+np.seterr(divide='ignore', invalid='ignore')
 
 @jit(nopython=True)
 def _label_overlap(x, y):
@@ -16,10 +15,12 @@ def _label_overlap(x, y):
     Args:
     x(array[int]): ND-array where 0=NO masks; 1,2... are mask labels
     y(array[int]): ND-array where 0=NO masks; 1,2... are mask labels
+
     Returns:
     overlap(array[int]): ND-array.matrix of pixel overlaps of size [x.max()+1, y.max()+1]
 
     """
+
     x = x.ravel()
     y = y.ravel()
     overlap = np.zeros((1 + x.max(), 1 + y.max()), dtype=np.uint)
@@ -37,6 +38,7 @@ def _intersection_over_union(masks_true, masks_pred):
     iou(array[float]): ND-array.matrix of IOU pairs of size [x.max()+1, y.max()+1]
 
     """
+
     overlap = _label_overlap(masks_true, masks_pred)
     n_pixels_pred = np.sum(overlap, axis=0, keepdims=True)
     n_pixels_true = np.sum(overlap, axis=1, keepdims=True)
@@ -52,8 +54,10 @@ def stitch3D(masks, stitch_threshold=0.25):
 
     Returns:
     masks(array): Stitched masks based on IOU
+
     """
     mmax = masks[0].max()
+
     for i in range(len(masks)-1):
         iou = _intersection_over_union(masks[i+1], masks[i])[1:,1:]
         iou[iou < stitch_threshold] = 0.0
@@ -66,7 +70,6 @@ def stitch3D(masks, stitch_threshold=0.25):
             mmax += len(ino)
             istitch = np.append(np.array(0), istitch)
             masks[i+1] = istitch[masks[i+1]]
-
     return masks
 
 
@@ -105,6 +108,8 @@ if __name__=="__main__":
     stitch_threshold=args.stitch_threshold
     rescale = np.ones(1)
     niter = 1 / rescale[0] * 200
+    pixel_types = ["int8", "int16", "int32", "uint8", "uint16", "uint32", "float", "bit", "double", "complex",
+                   "double-complex"]
     # Surround with try/finally for proper error catching
     try:
         logger.info('Initializing ...')
@@ -129,11 +134,16 @@ if __name__=="__main__":
                 maski = mask.compute_masks(p,cellprob,dP,cellprob_threshold,flow_threshold)
                 mask_final[:,:,z:z+1,:,:] = maski[:,:,np.newaxis,np.newaxis,np.newaxis].astype(maski.dtype)
 
+            if mask_final.shape[2]>1 and stitch_threshold>0:
+                masks_final = stitch3D(np.asarray(mask_final.squeeze().astype(np.int32)), stitch_threshold=stitch_threshold)
+                masks_final=masks_final[...,np.newaxis,np.newaxis]
+
             #Checking mask dtype with OME-XML pixel types
             if str(mask_final.dtype) in pixel_types:
                 mask_dtype=str(mask_final.dtype)
             else :
                 mask_dtype = ''.join(c if c not in map(str,range(0,10)) else "" for c in str(mask_final.dtype))
+
             metadata_upd = re.sub(r'(?<=Type=")([^">>]+)', mask_dtype, metadata)
             xml_metadata = OmeXml.OMEXML(metadata_upd)
             # Write the output
