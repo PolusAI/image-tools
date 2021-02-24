@@ -1,0 +1,2 @@
+cookiecutter==1.7.2
+jinja2_ospath==0.3.0

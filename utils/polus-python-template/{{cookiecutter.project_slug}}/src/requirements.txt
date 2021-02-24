@@ -1,3 +1,6 @@
-{% if cookiecutter.use_bfio %}
-numpy==1.18.1
-{% endif %}
+{%- if cookiecutter.use_bfio == "True" %}
+bfio==2.0.5
+{% endif -%}
+{% if cookiecutter.use_bfio == "True" -%}
+filepattern==1.4.4
+{%- endif -%}

@@ -1,7 +1,7 @@
 {%- if cookiecutter.use_bfio.lower()=="true" %}
-FROM labshare/polus-bfio-util:1.3.6
+FROM labshare/polus-bfio-util:2.0.5
 {%- else %}
-FROM python:3.7-alpine
+FROM python:3.9-slim
 {%- endif %}
 
 COPY VERSION /
