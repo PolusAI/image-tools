@@ -1,5 +1,5 @@
 
-FROM python:3.9-slim
+FROM labshare/polus-bfio-util:2.0.5-slim-buster
 
 ARG EXEC_DIR="/opt/executables"
 ARG DATA_DIR="/data"
