@@ -1,15 +1,19 @@
 #!/bin/bash
 
 version=$(<VERSION)
-datapath="{{ '../../../data'|abspath }}"
+datapath=$(readlink --canonicalize ./data)
 
 # Inputs
 {% for inp,val in cookiecutter._inputs.items() -%}
-{{ inp }}="/data/path_to_files"
+{% if val.type == 'collection' -%}
+{{ inp }}=/data/path_to_files
+{% else -%}
+{{ inp }}=""
+{% endif -%}
 {% endfor %}
 # Output paths
 {% for inp,val in cookiecutter._outputs.items() -%}
-{{ inp }}="{{ val.type }}"
+{{ inp }}=/data/path_to_output
 {% endfor %}
 docker run --mount type=bind,source=${datapath},target=/data/ \
             labshare/{{ cookiecutter.project_slug }}:${version} \
