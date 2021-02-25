@@ -1,6 +1,6 @@
 import argparse, logging, math, filepattern, time, queue
 from bfio import BioReader, BioWriter
-from pathlib import Path
+import pathlib
 from preadator import ProcessManager
 
 logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
@@ -23,7 +23,7 @@ def _merge_layers(input_files,output_path):
 
         # Get the number of layers to stack
         z_size = 0
-        for f in files:
+        for f in input_files:
             with BioReader(f['file']) as br:
                 z_size += br.z
                 
@@ -36,18 +36,18 @@ def _merge_layers(input_files,output_path):
             # If the z-distances are undefined, average the x and y together
             if None in ps_z:
                 # Get the size and units for x and y
-                x_size,x_units = br.ps_x
-                y_size,y_units = br.ps_y
+                x_val,x_units = br.ps_x
+                y_val,y_units = br.ps_y
                 
                 # Convert x and y values to the same units and average
-                z_size = (x_size*UNITS[x_units] + y_size*UNITS[y_units])/2
+                z_val = (x_val*UNITS[x_units] + y_val*UNITS[y_units])/2
                 
                 # Set z units to the smaller of the units between x and y
                 z_units = x_units if UNITS[x_units] < UNITS[y_units] else y_units
                 
                 # Convert z to the proper unit scale
-                z_size /= UNITS[z_units]
-                ps_z = (z_size,z_units)
+                z_val /= UNITS[z_units]
+                ps_z = (z_val,z_units)
                 ProcessManager.log('Could not find physical z-size. Using the average of x & y {}.'.format(ps_z))
 
             # Hold a reference to the metadata once the file gets closed
@@ -82,6 +82,23 @@ def _merge_layers(input_files,output_path):
 
                 # update the BioWriter in case the ProcessManager found more threads
                 bw.max_workers = ProcessManager._active_threads
+                
+def main(input_dir: pathlib.Path,
+         file_pattern: str,
+         output_dir: pathlib.Path
+         ) -> None:
+    
+    # create the filepattern object
+    fp = filepattern.FilePattern(input_dir,file_pattern)
+    
+    for files in fp(group_by='z'):
+
+        output_name = fp.output_name(files)
+        output_file = output_dir.joinpath(output_name)
+
+        ProcessManager.submit_process(_merge_layers,files,output_file)
+    
+    ProcessManager.join_processes()
 
 if __name__ == "__main__":
     # Initialize the main thread logger
@@ -100,8 +117,10 @@ if __name__ == "__main__":
                         help='A filename pattern specifying variables in filenames.', required=True)
 
     args = parser.parse_args()
-    input_dir = Path(args.input_dir)
-    output_dir = Path(args.output_dir)
+    input_dir = pathlib.Path(args.input_dir)
+    if input_dir.joinpath("images").is_dir():
+        input_dir = input_dir.joinpath("images")
+    output_dir = pathlib.Path(args.output_dir)
     file_pattern = args.file_pattern
     logger.info(f'input_dir = {input_dir}')
     logger.info(f'output_dir = {output_dir}')
@@ -110,14 +129,6 @@ if __name__ == "__main__":
     
     ProcessManager.init_processes('main','stack')
 
-    # create the filepattern object
-    fp = filepattern.FilePattern(input_dir,file_pattern)
-    
-    for files in fp(group_by='z'):
-
-        output_name = fp.output_name(files)
-        output_file = output_dir.joinpath(output_name)
-
-        ProcessManager.submit_process(_merge_layers,files,output_file)
-    
-    ProcessManager.join_processes()
+    main(input_dir,
+         file_pattern,
+         output_dir)
