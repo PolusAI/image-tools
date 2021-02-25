@@ -230,6 +230,41 @@ def assemble_image(vector_path: pathlib.Path,
         ProcessManager.join_threads()
 
     bw.close()
+    
+def main(imgPath: pathlib.Path,
+         stitchPath: pathlib.Path,
+         outDir: pathlib.Path,
+         timesliceNaming: typing.Optional[bool]
+         ) -> None:
+    
+    '''Setup stitching variables/objects'''
+    # Get a list of stitching vectors
+    vectors = list(stitchPath.iterdir())
+    vectors.sort()
+
+    # Try to infer a filepattern from the files on disk for faster matching later
+    global fp # make the filepattern global to share between processes
+    try:
+        pattern = filepattern.infer_pattern([f.name for f in imgPath.iterdir()])
+        logger.info(f'Inferred file pattern: {pattern}')
+        fp = filepattern.FilePattern(imgPath,pattern)
+
+    # Pattern inference didn't work, so just get a list of files
+    except:
+        logger.info(f'Unable to infer pattern, defaulting to: .*')
+        fp = filepattern.FilePattern(imgPath,'.*')
+
+    '''Run stitching jobs in separate processes'''
+    ProcessManager.init_processes('main','asmbl')
+
+    for v in vectors:
+        # Check to see if the file is a valid stitching vector
+        if 'img-global-positions' not in v.name:
+            continue
+        
+        ProcessManager.submit_process(assemble_image,v,outDir)
+    
+    ProcessManager.join_processes()
 
 if __name__=="__main__":
     logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
@@ -259,34 +294,10 @@ if __name__=="__main__":
     logger.info('outDir: {}'.format(outDir))
     timesliceNaming = args.timesliceNaming == 'true'
     logger.info('timesliceNaming: {}'.format(timesliceNaming))
-    stitchPath = args.stitchPath
+    stitchPath = pathlib.Path(args.stitchPath)
     logger.info('stitchPath: {}'.format(stitchPath))
 
-    '''Setup stitching variables/objects'''
-    # Get a list of stitching vectors
-    vectors = [p for p in pathlib.Path(stitchPath).iterdir()]
-    vectors.sort()
-
-    # Try to infer a filepattern from the files on disk for faster matching later
-    try:
-        pattern = filepattern.infer_pattern([f.name for f in imgPath.iterdir()])
-        logger.info(f'Inferred file pattern: {pattern}')
-        fp = filepattern.FilePattern(imgPath,pattern)
-
-    # Pattern inference didn't work, so just get a list of files
-    except:
-        logger.info(f'Unable to infer pattern, defaulting to: .*')
-        fp = filepattern.FilePattern(imgPath,'.*')
-
-    '''Run stitching jobs in separate processes'''
-    ProcessManager.init_processes('main','asmbl')
-    processes = []
-
-    for v in vectors:
-        # Check to see if the file is a valid stitching vector
-        if 'img-global-positions' not in v.name:
-            continue
-        
-        ProcessManager.submit_process(assemble_image,v,outDir)
-    
-    ProcessManager.join_processes()
+    main(imgPath,
+         stitchPath,
+         outDir,
+         timesliceNaming)
