@@ -1,8 +1,8 @@
 # Stack Z-Slices
 
-This WIPP plugin will uses a file name pattern to identify z-slices in a 3D
-volume in an image collection and then create a new image collection with the
-z-slices combined into a single volume (using Bioformats tiled tiff format).
+This WIPP plugin uses a file name pattern to identify z-slices in a 3D volume in
+an image collection and then create a new image collection with the z-slices
+combined into a single volume (using Bioformats tiled tiff format).
 
 This plugin uses regular expressions similar to what MIST uses for filenames,
 but there are important exceptions that are described below in the section

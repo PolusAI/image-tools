@@ -30,7 +30,7 @@ def _merge_layers(input_files,output_path):
         # Get some basic info about the files to stack
         with BioReader(input_files[0]['file']) as br:
 
-            # Get the physical z-distance if avaiable, set to physical x if not
+            # Get the physical z-distance if available, set to physical x if not
             ps_z = br.ps_z
             
             # If the z-distances are undefined, average the x and y together
@@ -66,10 +66,14 @@ def _merge_layers(input_files,output_path):
             # Start stacking
             for file in input_files:
 
+                # Open an image
                 with BioReader(file['file'],max_workers=ProcessManager._active_threads) as br:
 
+                    # Open z-layers one at a time
                     for z in range(br.z):
 
+                        # Use tiled reading in x&y to conserve memory
+                        # At most, [chunk_size, chunk_size] pixels are loaded
                         for xs in range(0,br.x,chunk_size):
                             xe = min([br.x,xs + chunk_size])
 
