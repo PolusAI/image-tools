@@ -14,7 +14,6 @@ filePattern=""
 outDir=/data/output
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
-            --cpuset-cpus 0 \
             labshare/polus-image-assembler-plugin:${version} \
             --stitchPath ${stitchPath} \
             --imgPath ${imgPath} \
