@@ -42,6 +42,6 @@
         "condition": cookiecutter._inputs.{{ inp }}==[{% for v in val.options %}"{{v}}"{% if not loop.last %},
           {% endif %}{% endfor %}]
       }
-    }{% if not loop.last %},{% endif %}{% endfor %}
+    }{% endif %}{% if not loop.last %},{% endif %}{% endfor %}
   ]
 }
