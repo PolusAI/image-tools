@@ -13,47 +13,58 @@ This script must be run prior to generate.py
 Logging functions can be commented out or can initialize system to print to a file using stdout
 
 '''
-import re, json, pprint, logging, copy
+import re, json, logging, copy
 from pathlib import Path
-import imagej, scyjava
+import imagej, scyjava, jpype
 import logging
-import os
 import sys
 
+""" Setup the logger and output files """
+Path("excluded.log").unlink()
+Path("other.log").unlink()
 
-log_file = open("excluded_log.log","w")
+logger = logging.getLogger("populate")
+handler = logging.FileHandler("excluded.log")
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
-sys.stdout = log_file
+logger.info("""
+These are the plugins and associated ImageJ AND WIPP types excluded from
+analysis. These will be written to excluded.log
+""")
 
-print("These are the plugins and associated ImageJ AND WIPP types excluded from analysis. These will be written to excluded_log.log")
+""" Start ImageJ """
+# Bioformats throws a debug message, elevate the loci debug level to mute it
+print("Starting ImageJ")
+def disable_loci_logs():
+    DebugTools = scyjava.jimport("loci.common.DebugTools")
+    DebugTools.setRootLevel("WARN")
+scyjava.when_jvm_starts(disable_loci_logs)
 
-
-
-""" Parse ImageJ Op Metadata """
-# Start PyImageJ
+# Load ImageJ
 ij = imagej.init("sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4",headless=True)
 
 # Get a list of plugins related to ops: [group].[subgroup], e.g. morphology.fillHoles
 plugin_list = list(ij.op().ops().iterator())
 
-
 # List of plugins to skip
 skip_classes = [
     'copy',
     'create.img',
-    'create.imgPlus'
+    'create.imgPlus',
+    'create.imgFactory',
+    'create.imgLabeling'
 ]
 
 # Get op subclass metadata: text contains output of ij.op().help() function
 text = scyjava.to_python(ij.op().help())
 
+"""
+Type Conversions
 
-""" Type Conversions """
-'''
 Manually fill in input/output types from text object above
 Map types to WIPP types
-'''
-
+"""
 
 # Values that map to collection
 COLLECTION_TYPES = [
@@ -138,9 +149,7 @@ plugin_template = {
     "author": "Anjali Taneja",
     "email": "Anjali.Taneja@axleinfo.com",
     "github_username": "at1112",
-    "version": "0.1.1",
-    "bfio_version": "2.0.0a4",
-    "bfio_container": "imagej",
+    "version": "0.1.0",
     
     "project_name": {},
     "project_short_description": {},
@@ -159,7 +168,6 @@ text = text.replace('\n','')
 text = text.replace('\t','')
 text = text.replace('=','= ')
 
-
 # Loop variables
 nested_dict = {}
 keys=[]
@@ -172,6 +180,7 @@ count = 0
 split_text = re.compile("([(][a-zA-Z0-9\][a-zA-Z]+[ ]+[a-z?]+[)]+[ ]+[=])+[ ]").split(text) 
 
 # Loop through ImageJ Ops
+print("Parsing ImageJ Ops")
 for index,element in enumerate(split_text):
     z = re.match("(?:^|\W)net.imagej.ops.([a-z]+).([a-z0-9A-Z$]+).([a-z0-9A-Z$]+).([a-z0-9A-Z$]+).([a-zA-Z0-9]+)\(([\sa-zA-Z0-9,\[\]\?]*)\)", element)
     if z:
@@ -197,11 +206,9 @@ for index,element in enumerate(split_text):
         Inputs.append(inputs)
         Outputs.append([outputs])
 
-
 ##unique inputs
 flat_list = [item for sublist in Inputs for item in sublist]
 s = set(flat_list)
-
 
 """
 Create a Java class dictionary with defined input/output type conversions
@@ -251,26 +258,27 @@ for index, path in enumerate(keys):
                 if 'collection' not in o['wipp_type']:
                     output_type = o['wipp_type']
                     if index < len(Inputs):
-                        print("index", index)
+                        logger.info(f"index: {index}")
                         inputs_temp = {i.split(' ')[1]:
                             {'wipp_type': IMAGEJ_WIPP_TYPE.get(i.split(' ')[0]),'imagej_type': i.split(' ')[0]} for i in Inputs[index] if not i.endswith('?') and len(i.split(' ')[0])>0}
 
                         for i in inputs_temp.values():
 
                             ##I printed to stdout --> you can change this to print to a specific file or just system
-                            print("INPUT TYPE", i['wipp_type'], "INPUT", i, "OUTPUT TYPE", o['wipp_type'], "OUTPUT", o, "PLUGIN", plugin_full_name)
+                            logger.info(f"INPUT TYPE={i['wipp_type']} INPUT={i} OUTPUT TYPE={o['wipp_type']} OUTPUT={o} PLUGIN={plugin_full_name}")
 
 
-print('functions that cannot be handled have been printed')
-
+logger.info('functions that cannot be handled have been printed')
 
 ##Second Log File
+logger.removeHandler(handler)
+handler = logging.FileHandler("other.log")
+logger.addHandler(handler)
 
-log_file2 = open("other.log","w")
-
-sys.stdout = log_file2
-
-print('This file reports plugins that this framework cannot handle, but not their INPUTS and OUTPUTS (only WIPP TYPES) - those plugins which DO NOT satisfy the criteria of taking a collection as both input and output')
+logger.info("""This file reports plugins that this framework cannot handle, but
+               not their INPUTS and OUTPUTS (only WIPP TYPES) - those plugins
+               which DO NOT satisfy the criteria of taking a collection as both
+               input and output""")
 
 for index, path in enumerate(keys):
     
@@ -279,7 +287,6 @@ for index, path in enumerate(keys):
     
     #plugin_name combined with class_name
     plugin_name = '.'.join(path[:-1])
-    
     
     ##skip over the plugin names we put in the list skip_classes
     if plugin_name in skip_classes:
@@ -305,10 +312,10 @@ for index, path in enumerate(keys):
 
                 ##can change log file name
                 #excluded_log.write(s)
-                print("plugin: ",plugin_full_name," input: ",input_type," output: ","NONE")
+                logger.info(f"plugin: {plugin_full_name} input: {input_type} output: NONE")
                
             else:
-                print("logging to file... plugin:",plugin_full_name,"input:", input_type,"output:", output_type)
+                logger.info(f"logging to file... plugin: {plugin_full_name} input: {input_type} output: {output_type}")
 
                 continue
            
@@ -329,9 +336,7 @@ for index, path in enumerate(keys):
                 input_type = i['wipp_type']
         if(input_type is None):
             s = "plugin: "+plugin_full_name +" input: "+"NONE"+" output: "+output_type + "\n"
-            #excluded_log.write(s)
-            
-            print("plugin: ",plugin_full_name," input: ","NONE"," output: ",output_type)
+            logger.info(f"plugin: {plugin_full_name} input: NONE output: {output_type}")
 
     
     output_type = "Collection"
@@ -353,9 +358,9 @@ for index, path in enumerate(keys):
             s = "plugin: "+plugin_full_name +" input: "+"NONE"+" output: "+output_type + "\n"
             #excluded_log.write(s)
             
-            print("plugin: ",plugin_full_name," input: ","NONE"," output: ",output_type)
+            logger.info(f"plugin: {plugin_full_name} input: NONE output: {output_type}")
         else:
-            print("logging to file... plugin:",plugin_full_name,"input:", input_type,"output:", output_type)
+            logger.info(f"logging to file... plugin: {plugin_full_name} input: {input_type} output: {output_type}")
         continue
 
     ## at this point, input IS A COLLECTION
@@ -385,6 +390,7 @@ grouped by the plugin
 plugins = {}
 skipped = []
 count = 0
+print("Generating Cookiecutter Templates, saving in the cookietin")
 for plugin_name,plugin_info in java_classes.items():
     
     # Initialize the plugin json from the template
@@ -421,7 +427,6 @@ for plugin_name,plugin_info in java_classes.items():
         plugin_namespace[op_name] += ','.join(list(op_info['_inputs'].keys())) + ')'
         
     plugin_dict['plugin_namespace'] = plugin_namespace
-    
     
     # Create an enum to select an op for the plugin
     inp = {
@@ -471,6 +476,7 @@ for plugin_name,plugin_info in java_classes.items():
     with open(file_path.joinpath('cookiecutter.json'),'w') as fw:
         json.dump(plugin_dict,fw,indent=4)
 
-#excluded_log.close()
-
-
+print("Sending shutdown signal to JVM")
+del ij
+jpype.shutdownJVM()
+print("Waiting for JVM to shutdown")

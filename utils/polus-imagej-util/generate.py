@@ -12,7 +12,7 @@ so populate.py must be run prior to running this script
 from pathlib import Path
 import os, shutil
 
-##specify base path so that generate.py can access all 40 json files within cookietin
+##specify base path so that generate.py can access json files within cookietin
 base_path = Path(__file__).parent
 plugin_path = base_path.joinpath('cookietin')
 
@@ -33,4 +33,6 @@ for i,plugin in enumerate(reversed(plugins)):
     shutil.copy(str(plugin.joinpath('cookiecutter.json')),cookiecutter_path)
     
     os.system('cookiecutter ./utils/polus-imagej-util/ --no-input')
+    
+    break
  

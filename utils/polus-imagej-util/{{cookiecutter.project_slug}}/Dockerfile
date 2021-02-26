@@ -1,8 +1,4 @@
-{%- if cookiecutter.bfio_version.lower()=="none" %}
-FROM labshare/polus-bfio-util:{{ cookiecutter.bfio_version }}{% if cookiecutter.bfio_container != '' %}-{{ cookiecutter.bfio_container }}{% endif %}
-{%- else %}
-FROM python:3.8-alpine
-{%- endif %}
+FROM labshare/polus-bfio-util:2.0.5-imagej
 
 COPY VERSION /
 		
@@ -15,7 +11,5 @@ RUN mkdir -p ${EXEC_DIR} \
 
 COPY src ${EXEC_DIR}/
 WORKDIR ${EXEC_DIR}
-
-RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
 ENTRYPOINT ["python3", "main.py"]

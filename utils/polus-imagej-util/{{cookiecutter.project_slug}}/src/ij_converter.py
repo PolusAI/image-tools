@@ -11,9 +11,6 @@ import jpype
 import scyjava
 import numpy as np
 
-##connect type map from populate.py 
-from populate.py import IMAGEJ_WIPP_TYPE
-
 # Initialize the logger
 logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
