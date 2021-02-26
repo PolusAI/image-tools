@@ -44,6 +44,8 @@ class BioBase(object,metaclass=abc.ABCMeta) :
               'int16': numpy.int16,
               'uint32': numpy.uint32,
               'int32': numpy.int32,
+              'uint64': numpy.uint64,
+              'int64': numpy.int64,
               'float': numpy.float32,
               'double': numpy.float64}
     _BPP = {'uint8': 1,
@@ -52,6 +54,8 @@ class BioBase(object,metaclass=abc.ABCMeta) :
             'int16': 2,
             'uint32': 4,
             'int32': 4,
+            'uint64': 8,
+            'int64': 8,
             'float': 4,
             'double': 8}
     _TILE_SIZE = 2 ** 10

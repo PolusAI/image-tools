@@ -28,7 +28,7 @@ All containers contain the follow components:
 2. [numpy](https://pypi.org/project/numpy/1.19.1/) (1.19.1)
 3. [imagecodecs](https://pypi.org/project/imagecodecs/2020.5.30/) (2020.5.30, built with `--lite` option)
 4. [tifffile](https://pypi.org/project/tifffile/2020.7.4/) (2020.7.4)
-5. bfio (version 2.0.5)
+5. bfio (version 2.0.6)
 
 Containers ending with `-java` also contain:
 
@@ -42,33 +42,33 @@ Containers ending with `-java` also contain:
 All containers can use the Python backend, but only the containers with Java may
 use the Java backend. 
 
-### ~labshare/polus-bfio-util:2.0.5~
+### ~labshare/polus-bfio-util:2.0.6~
 
 The alpine container for `bfio` is currently unavailable.
 
-~*Additional Python container tags:* `2.0.5-alpine`, `2.0.5-python`,~
-~`2.0.5-alpine-python`~
+~*Additional Python container tags:* `2.0.6-alpine`, `2.0.6-python`,~
+~`2.0.6-alpine-python`~
 
-~*Containers with Java:* `2.0.5-java`, `2.0.5-alpine-java`~
+~*Containers with Java:* `2.0.6-java`, `2.0.6-alpine-java`~
 
 ~This container is built on Alpine Linux. This is the smallest bfio container,~
 ~but also the most difficult to install additional requirements on. The Python~
 ~containers (98MB) are much smaller than the Java containers (383MB).~
 
-### labshare/polus-bfio-util:2.0.5-slim-buster
+### labshare/polus-bfio-util:2.0.6-slim-buster
 
-*Additional Python container tags:* `2.0.5-slim-buster-python`
+*Additional Python container tags:* `2.0.6-slim-buster-python`
 
-*Containers with Java:* `2.0.5-slim-buster-java`
+*Containers with Java:* `2.0.6-slim-buster-java`
 
 This container is built on a stripped down version of Debian Buster. This
 container is larger than the `alpine` version, but easier to install new Python
 packages on since `manylinux` wheels can be installed on it. However, if a
 package requires compilation, a compiler will need to be installed.
 
-### labshare/polus-bfio-util:2.0.5-tensorflow
+### labshare/polus-bfio-util:2.0.6-tensorflow
 
-*Additional Python container tags:* `2.0.5-tensorflow-python`
+*Additional Python container tags:* `2.0.6-tensorflow-python`
 
 *Containers with Java:* No Java containers
 
