@@ -25,11 +25,11 @@ These are the features that can be extracted from this plugin:
          The longest distance between any two points in the region (maximum caliber diameter) is calculated. The feret diameter for  
          number of angles (0-180 degrees) are calculated and their maximum is selected.
    11. Minimum feret - 
-         The minimum caliber diameter is calculated. The feret diameter for number of angles (0-180 degrees) are calculated and their            minimum is selected.
+         The minimum caliber diameter is calculated. The feret diameter for number of angles (0-180 degrees) are calculated and their minimum is selected.
    12. Polygonality score - 
-         The score ranges from -infinity to 10. Score 10 indicates the object shape is polygon and score -infinity indicates the object          shape is not polygon.
+         The score ranges from -infinity to 10. Score 10 indicates the object shape is polygon and score -infinity indicates the object shape is not polygon.
    13. Hexagonality score - 
-         The score ranges from -infinity to 10. Score 10 indicates the object shape is hexagon and score -infinity indicates the object          shape is not hexagon.
+         The score ranges from -infinity to 10. Score 10 indicates the object shape is hexagon and score -infinity indicates the object shape is not hexagon.
    14. Hexagonality standard deviation - 
          Dispersion of hexagonality_score relative to its mean.
    15. Euler number - 
@@ -63,6 +63,9 @@ The input should be a labeled image in OME tiled tiff format. Extracting shape-b
 
 ### Intensity image collection:
 Extracting intensity-based features requires intensity image and labeled image in OME tiled tiff (.ome.tif)  format. Intensity image with same size as labeled image should be used as input. This is an optional parameter. The input for this parameter is required only when intensity-based features needs to be extracted.
+
+### File pattern:
+Enter file pattern to match the intensity and labeled/segmented images to extract features (https://pypi.org/project/filepattern/)
 
 ### Pixel distance:
 Enter value for this parameter if neighbors touching cells needs to be calculated. The default value is 5. This is an optional parameter. 
@@ -105,12 +108,13 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-This plugin takes eight input argument and one output argument:
+This plugin takes nine input arguments and one output argument:
 
 | Name                   | Description             | I/O    | Type   |
 |------------------------|-------------------------|--------|--------|
 | `--intDir` | Intensity image collection| Input | collection |
 | `--pixelDistance` | Pixel distance to calculate the neighbors touching cells | Input | integer |
+| `--filePattern` | To match intensity and labeled/segmented images | Input | string |
 | `--segDir` | Labeled image collection | Input | collection |
 | `--features` | Select intensity and shape features required | Input | array |
 | `--csvfile` | Save csv file as one csv file for all images or separate csv file for each image | Input | enum |
