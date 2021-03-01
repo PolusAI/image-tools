@@ -5,10 +5,10 @@ datapath=$(readlink --canonicalize ../data)
 echo ${datapath}
 
 # Inputs
-stitchPath=/data/input_vector
-imgPath=/data/input
-timesliceNaming=false
-filePattern=""
+inpDir=/data/input
+pyramidType=Neuroglancer
+imageType=image
+filePattern=
 
 # Output paths
 outDir=/data/output
