@@ -1,0 +1,52 @@
+{
+    "name": "Intensity Projection Plugin",
+    "version": "0.1.6",
+    "title": "Intensity Projection Plugin",
+    "description": "Calculate volumetric intensity projections",
+    "author": "Gauhar Bains (gauhar.bains@labshare.org)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-intensity-projection-plugin:0.1.6",
+    "inputs": [
+      {
+        "name": "inpDir",
+        "type": "collection",
+        "description": "Input image collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "projectionType",
+        "type": "enum",
+        "description": "Type of volumetric intensity projection",
+        "options": {
+            "values": [
+                        "max",
+                        "min",
+                        "mean"
+               ]
+        },
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "collection",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.inpDir",
+        "title": "Input collection",
+        "description": "Input image collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.projectionType",
+        "title": "Projection Type",
+        "description": "Type of volumetric intensity projection"
+      }
+    ]
+  }
