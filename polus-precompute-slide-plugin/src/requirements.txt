@@ -1,4 +1,4 @@
 imageio==2.8.0
 filepattern==1.4.4
-bfio==2.0.4
-preadator==0.1.2
+bfio==2.0.5
+preadator==0.2.0
