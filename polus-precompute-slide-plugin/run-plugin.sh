@@ -14,8 +14,9 @@ filePattern=
 outDir=/data/output
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
-            labshare/polus-image-assembler-plugin:${version} \
-            --stitchPath ${stitchPath} \
-            --imgPath ${imgPath} \
-            --outDir ${outDir} \
-            --timesliceNaming ${timesliceNaming}
+            labshare/polus-precompute-slide-plugin:${version} \
+            --inpDir ${inpDir} \
+            --pyramidType ${pyramidType} \
+            --imageType ${imageType} \
+            --filePattern ${filePattern} \
+            --outDir ${outDir}
