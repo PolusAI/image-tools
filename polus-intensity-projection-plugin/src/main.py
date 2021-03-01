@@ -65,11 +65,11 @@ def mean_projection(br, x_range, y_range, **kwargs):
     for ind, z in enumerate(range(0,br.Z,tile_size_z)):
         z_max = min([br.Z,z+tile_size_z])
 
-        out_image += np.sum(br[y:y_max,x:x_max,z:z_max,0,0].astype(np.float64),axis=2)
+        out_image += np.sum(br[y:y_max,x:x_max,z:z_max,...].astype(np.float64),axis=2).squeeze()
 
     # output image
     out_image /= br.Z
-    return out_image
+    return out_image.astype(br.dtype)
 
 if __name__=="__main__":
     # Initialize the logger
