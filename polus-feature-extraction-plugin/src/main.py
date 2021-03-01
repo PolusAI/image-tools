@@ -12,6 +12,7 @@ import logging
 import os
 import math
 import numpy as np
+from numpy import inf
 import pandas as pd
 import filepattern
 
@@ -123,7 +124,6 @@ def neighbors_find(lbl_img, boxsize, pixeldistance):
     """
     #Get perimeter pixels    
     obj_edges = box_border_search(lbl_img, boxsize=3)
-
     #Get the height and width of the labeled image
     height,width = obj_edges.shape
 
@@ -167,7 +167,6 @@ def neighbors_find(lbl_img, boxsize, pixeldistance):
     mask = image_flatten[linear_index_int]>0
     linear_index_mask = linear_index_int[mask]
     linear_index_reshape = linear_index_mask.reshape(-1, 1)
-
     #Get indices of neighbor pixels
     neighbor_index = (neighboroffsets + linear_index_reshape.T)
 
@@ -199,7 +198,7 @@ def neighbors_find(lbl_img, boxsize, pixeldistance):
     del objbounds_split, objnum_reshape, difference_objnum, stack_objnum, objbounds, objbounds_array
 
     objneighbors = []
-    #Get border objects  
+    #Get border objects 
     for obj in range(len(objbounds_reshape) - 1):
         allvals = neighborvals[:, index_reshape[np.arange(objbounds_reshape[obj], objbounds_reshape[obj + 1])]]
         sortedvals = np.sort(allvals.ravel())
@@ -492,13 +491,13 @@ def polygonality_hexagonality(area, perimeter, neighbors, solidity, maxferet, mi
         hex_ave = 10 * (hex_area_ratio + hex_size_ratio) / 2
 
     if neighbors < 3:
-        poly_size_ratio = float("NAN")
-        poly_area_ratio = float("NAN")
-        poly_ave = float("NAN")
-        hex_size_ratio = float("NAN")
-        hex_area_ratio = float("NAN")
-        hex_ave = float("NAN")
-        hex_sd = float("NAN")
+        poly_size_ratio = "NAN"
+        poly_area_ratio = "NAN"
+        poly_ave = "NAN"
+        hex_size_ratio = "NAN"
+        hex_area_ratio = "NAN"
+        hex_ave = "NAN"
+        hex_sd = "NAN"
     return(poly_ave, hex_ave, hex_sd)
 
 def feature_extraction(features,
@@ -780,8 +779,15 @@ def feature_extraction(features,
         """Get polygonality score for all the regions of interest in the image."""
         poly_hex = poly_hex_score(seg_img, units)
         polygonality_score = [poly[0] for poly in poly_hex]
+        score=[]
+        for x in polygonality_score:
+            if x == float(-inf):
+                x= ""
+                score.append(x)
+            else:
+                score.append(x)
         logger.info('Completed extracting polygonality score for' + seg_file_names1.name)
-        return polygonality_score
+        return score
 
     def hexagonality_score(seg_img, units, *args):
         """Get hexagonality score for all the regions of interest in the image."""
@@ -796,7 +802,6 @@ def feature_extraction(features,
         hexagonality_sd = [poly[2] for poly in poly_hex]
         logger.info('Completed extracting hexagonality standard deviation for' + seg_file_names1.name)
         return hexagonality_sd
-
     def all(seg_img, units, int_img):
         """Calculate all features for all the regions of interest in the image."""
         #calculate area
@@ -831,13 +836,12 @@ def feature_extraction(features,
         all_minor_axis_length = minor_axis_length(seg_img, units)
         #calculate solidity
         all_solidity = solidity(seg_img)
-        poly_hex=  poly_hex_score(seg_img, units)
         #calculate polygonality_score
-        all_polygonality_score = [poly[0] for poly in poly_hex]
+        all_polygonality_score = polygonality_score(seg_img, units)
         #calculate hexagonality_score
-        all_hexagonality_score = [poly[1] for poly in poly_hex]
+        all_hexagonality_score = hexagonality_score(seg_img, units)
         #calculate hexagonality standarddeviation
-        all_hexagonality_sd = [poly[2] for poly in poly_hex]
+        all_hexagonality_sd = hexagonality_sd(seg_img, units)
         #calculate mean intensity
         all_mean_intensity =  mean_intensity(seg_img, int_img)
         #calculate maximum intensity value
@@ -1018,8 +1022,6 @@ def feature_extraction(features,
                 df.columns = [c+f'_channel{channel}' for c in df.columns]
         df_insert = pd.concat([df_insert, df], axis=1)
 
-    #Insert filename as 1st column      
-    df_insert.insert(0, 'Image', title)
  
     if label_image is not None:
         int_ravel = np.ravel(label_image)
@@ -1029,18 +1031,27 @@ def feature_extraction(features,
         #check whether the array contains only zero
         countzero = not np.any(int_ravel) 
         if int_ravel_bool == True or countzero == True:
+            df_insert.insert(0, 'Image', title)
             #Capitalize the first letter of header
             df_insert.columns = map (lambda x: x.capitalize(), df_insert.columns)
         else:
-            #Insert label as 2nd column
-            df_insert.insert(1, 'Label', label)
-        
-            #Insert touching border as 3rd column
-            df_insert.insert(2, 'Touching border', border_cells)
-        
-            #Capitalize the first letter of header
+            data = { 'Image':title,
+                    'Label': label, 
+                      'Touching border': border_cells} 
+            df1 = pd.DataFrame(data,columns=['Image','Label','Touching border'])
+            df_insert1 = pd.concat([df1,df_insert],ignore_index=True, axis=1)
+            dfch = df_insert.columns.tolist()
+            df_values= ['Image','Label','Touching border']
+            joinedlist= df_values + dfch
+            df_insert = df_insert1
+            df_insert.columns =joinedlist
             df_insert.columns = map (lambda x: x.capitalize(), df_insert.columns)
-
+    if label_image is None:
+        #Insert filename as 1st column     
+        df_insert.insert(0, 'Image', title)
+          
+        #Capitalize the first letter of header
+        df_insert.columns = map (lambda x: x.capitalize(), df_insert.columns)
     return df_insert, title
 
 # Setup the argument parsing
@@ -1137,18 +1148,33 @@ def main():
         elif (any(fe in intensity_features for fe in features)):
             logger.warning('No intensity image specified.')
             features = [i for i in features if i not in intensity_features]
+            
     #Get list of .ome.tif files in the directory including sub folders for labeled images
     # Try to infer a filepattern from the files on disk for faster matching later
     if segDir:
         configfiles_seg = filepattern.FilePattern(segDir,pattern)
+        files_seg = list(configfiles_seg())
     else:
         label_image = None
 
     #Get list of .ome.tif files in the directory including sub folders for intensity images
     if intDir:      
         configfiles_int = filepattern.FilePattern(intDir,pattern)
+        files_int = list(configfiles_int())
     else:
         intensity_image = None
+        
+    #Check for matching filepattern
+    if segDir and intDir:
+        if len(files_seg) == 0 and len(files_int)==0 :
+            raise ValueError("Could not find files matching filepattern")
+    elif segDir and not intDir:
+        if len(files_seg) == 0:
+            raise ValueError("Could not find labeled/segmented image files matching filepattern")
+    elif intDir and not segDir:
+        if len(files_int) == 0:
+            raise ValueError("Could not find intensity image files matching filepattern")
+
         
     if not segDir:
         for intfile in configfiles_int():
@@ -1184,18 +1210,35 @@ def main():
                 label_image = br[:,:,0:1,0,0].squeeze()
                 img_emb_uint = br.ps_y[1]
             logger.info('Done reading the file: {}'.format(segfile[0]['file'].name))
-    
+
+            df = None
             if intDir:
                 # Find matching files
                 files = configfiles_int.get_matching(**{k.upper():v for k,v in segfile[0].items() if k not in ['file','c']})
-    
-                if len(files) == 0:
+                
+                if len(files) == 0 and(all(fe not in intensity_features for fe in features)):
+                    #logger.warning(f"Could not find intensity files matching label image, {segfile[0]['file'].name}. Skipping...")
+                    intensity_image=None
+                    df,title = feature_extraction(features,
+                                                  segfile[0]['file'],
+                                                  embeddedpixelsize,
+                                                  unitLength,
+                                                  pixelsPerunit,
+                                                  pixelDistance,
+                                                  0,
+                                                  intensity_image,
+                                                  label_image,
+                                                  img_emb_uint)
+     
+                if len(files) == 0 and(any(fe in intensity_features for fe in features)):
                     logger.warning(f"Could not find intensity files matching label image, {segfile[0]['file'].name}. Skipping...")
-                    continue
+                    if df==None:
+                        continue
+                
+                
     
                 # Initialize the output
-                df = None
-    
+                #df = None
                 for file in files:
                     #Read the image using bioreader from bfio
                     with BioReader(file['file']) as br:
@@ -1228,16 +1271,22 @@ def main():
             #Save each csv file separately
             os.chdir(outDir)
             if csvfile == 'separatecsv':
-                logger.info('Saving dataframe to csv for' + segfile[0]['file'].name)
-                export_csv = df.to_csv(r'%s.csv'%title, index=None, header=True, encoding='utf-8-sig')
+                if df.empty:
+                    raise ValueError('No output to save as csv files')
+                else:
+                    logger.info('Saving dataframe to csv for' + segfile[0]['file'].name)
+                    export_csv = df.to_csv(r'%s.csv'%title, index=None, header=True, encoding='utf-8-sig')
             else:
                 df_csv = df_csv.append(df)
 
     #Save values for all images in single csv
     if csvfile == 'singlecsv':
-        logger.info('Saving dataframe to csv file for all images')
-        df_csv.dropna(inplace=True, axis=1, how='all')
-        export_csv = df_csv.to_csv(r'Feature_Extraction.csv', index=None, header=True, encoding='utf-8-sig')
+         if df_csv.empty:
+             raise ValueError('No output to save as csv files')
+         else:
+            logger.info('Saving dataframe to csv file for all images')
+            df_csv.dropna(inplace=True, axis=1, how='all')
+            export_csv = df_csv.to_csv(r'Feature_Extraction.csv', index=None, header=True, encoding='utf-8-sig')
 
 if __name__ == "__main__":
     main()
