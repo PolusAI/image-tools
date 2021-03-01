@@ -1,6 +1,6 @@
 {
     "name": "Intensity Projection Plugin",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "title": "Intensity Projection Plugin",
     "description": "Calculate volumetric intensity projections",
     "author": "Gauhar Bains (gauhar.bains@labshare.org)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-intensity-projection-plugin:0.1.5",
+    "containerId": "labshare/polus-intensity-projection-plugin:0.1.6",
     "inputs": [
       {
         "name": "inpDir",

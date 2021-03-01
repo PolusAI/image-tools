@@ -4,18 +4,18 @@ from pathlib import Path
 import numpy as np
 
 # x,y size of the 3d image chunk to be loaded into memory
-tile_size = 1024 
+tile_size = 1024
 
 # depth of the 3d image chunk
-tile_size_z = 1024
+tile_size_z = 128
 
 def max_min_projection(br, x_range, y_range, **kwargs):
-    """ This function calculates the max or min intensity 
-    projection of a section (specified by x_range and 
-    y_range) of the input image. 
+    """ This function calculates the max or min intensity
+    projection of a section (specified by x_range and
+    y_range) of the input image.
 
     Args:
-        br (BioReader object): 
+        br (BioReader object):
         x_range (tuple): x-range of the img to be processed
         y_range (tuple): y-range of the img to be processed
 
@@ -27,7 +27,7 @@ def max_min_projection(br, x_range, y_range, **kwargs):
     if not 'method' in kwargs:
         method = np.max
     else:
-        method = kwargs['method'] 
+        method = kwargs['method']
 
     # x,y range of the volume
     x, x_max = x_range
@@ -46,12 +46,10 @@ def max_min_projection(br, x_range, y_range, **kwargs):
     return out_image
 
 def mean_projection(br, x_range, y_range, **kwargs):
-    """ This function calculates the mean intensity 
-    projection of a section (specified by x_range 
-    and y_range) of the input image. 
+    """ Calculate the mean intensity projection
 
     Args:
-        br (BioReader object): 
+        br (BioReader object):
         x_range (tuple): x-range of the img to be processed
         y_range (tuple): y-range of the img to be processed
 
@@ -63,16 +61,14 @@ def mean_projection(br, x_range, y_range, **kwargs):
     y, y_max = y_range
 
     # iterate over depth
+    out_image = np.zeros((y_max-y,x_max-x),dtype=np.float64)
     for ind, z in enumerate(range(0,br.Z,tile_size_z)):
         z_max = min([br.Z,z+tile_size_z])
-        if ind == 0:
-            out_image = np.sum(br[y:y_max,x:x_max,z:z_max,0,0] / 1024, axis=2, dtype = np.float32)
-        else:
-            out_image = np.dstack((out_image, np.sum(br[y:y_max,x:x_max,z:z_max,0,0] / 1024, axis=2, dtype=np.float32)))
+
+        out_image += np.sum(br[y:y_max,x:x_max,z:z_max,0,0].astype(np.float64),axis=2)
 
     # output image
-    out_image = np.sum(out_image, axis=2)/ br.Z 
-    out_image = np.array(out_image * 1024, br.dtype)
+    out_image /= br.Z
     return out_image
 
 if __name__=="__main__":
@@ -85,7 +81,7 @@ if __name__=="__main__":
     ''' Argument parsing '''
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='Calculate volumetric intensity projections')
-    
+
     # Input arguments
     parser.add_argument('--inpDir', dest='inpDir', type=str,
                         help='Input image collection to be processed by this plugin', required=True)
@@ -94,7 +90,7 @@ if __name__=="__main__":
     # Output arguments
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
-    
+
     # Parse the arguments
     args = parser.parse_args()
     inpDir = args.inpDir
@@ -106,7 +102,7 @@ if __name__=="__main__":
     logger.info('projectionType = {}'.format(projectionType))
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
-    
+
     # initialize projection function
     if projectionType == 'max':
         projection = max_min_projection
@@ -126,11 +122,11 @@ if __name__=="__main__":
     try:
         for image_name in inpDir_files:
             logger.info('---- Processing image: {} ----'.format(image_name))
-            
+
             # initalize biowriter and bioreader
             with BioReader(os.path.join(inpDir, image_name)) as br, \
                 BioWriter(os.path.join(outDir, image_name),metadata=br.metadata) as bw:
-                
+
                 # output image is 2d
                 bw.Z = 1
 
