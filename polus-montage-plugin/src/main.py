@@ -162,7 +162,7 @@ if __name__=="__main__":
     logger.info('Get the size of every image...')
     grid_width = 0
     grid_height = 0
-    for files in fp.iterate(group_by=layout[0]):
+    for files in fp(group_by=layout[0]):
         # Determine number of rows and columns in the smallest subgrid
         grid_size = _get_xy_index(files,layout[0],layout)
         layout_dimensions['grid_size'][len(layout)-1].append(grid_size)
@@ -206,7 +206,7 @@ if __name__=="__main__":
         index = len(layout) - 1 - i
         layout_dimensions['tile_size'][index] = layout_dimensions['size'][index+1]
 
-        for files in fp.iterate(group_by=''.join(layout[:i+1])):
+        for files in fp(group_by=''.join(layout[:i+1])):
             # determine number of rows and columns in the current subgrid
             grid_size = _get_xy_index(files,layout[i],layout)
             layout_dimensions['grid_size'][index].append(grid_size)
@@ -230,7 +230,7 @@ if __name__=="__main__":
     max_dim = len(layout_dimensions['grid_size'])-1
     with open(fpath,'w') as fw:
         correlation = 0
-        for file in fp.iterate():
+        for file in fp():
             f = file[0]
             file_name = Path(f['file']).name
 

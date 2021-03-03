@@ -1,5 +1,5 @@
 
-FROM labshare/polus-bfio-util:2.0.3
+FROM labshare/polus-bfio-util:2.0.5-slim-buster
 
 COPY VERSION /
 
