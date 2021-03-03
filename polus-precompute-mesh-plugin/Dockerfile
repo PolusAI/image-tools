@@ -17,7 +17,7 @@ RUN pip3.6 install cmake
 
 RUN apt-get update && apt-get install -y libgl1-mesa-dev
 
-RUN git clone https://github.com/hsidky/neurogen.git --recurse-submodules
+RUN git clone --branch decomposition https://github.com/mmvih/neurogen.git --recurse-submodules
 
 RUN pip3.6 install neurogen/
 
