@@ -225,7 +225,7 @@ if __name__=="__main__":
 
         with ThreadPoolExecutor(max_workers=4) as executor:
             futuresvariable = [executor.submit(concatenate_and_generate_meshes, ide, temp_dir, output_dir, bit_depth) for ide in all_identities]
-        
+        executor.shutdown(wait=True)
 
     except Exception as e:
         traceback.print_exc()
