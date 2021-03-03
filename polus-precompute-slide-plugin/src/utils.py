@@ -188,8 +188,7 @@ class PyramidWriter():
     def write_slide(self):
         with ProcessManager.process(f'{self.base_path} - {self.output_depth}'):
             
-            self._write_slide()
-            # ProcessManager.submit_thread(self._write_slide)
+            ProcessManager.submit_thread(self._write_slide)
             
             ProcessManager.join_threads()
     

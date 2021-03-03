@@ -5,18 +5,18 @@ datapath=$(readlink --canonicalize ../data)
 echo ${datapath}
 
 # Inputs
-inpDir=/data/input
+inpDir=/data/input_stack
 pyramidType=Neuroglancer
 imageType=image
-filePattern=
+# filePattern=
 
 # Output paths
-outDir=/data/output
+outDir=/data/neuroglancer/dist/dev
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
             labshare/polus-precompute-slide-plugin:${version} \
             --inpDir ${inpDir} \
             --pyramidType ${pyramidType} \
             --imageType ${imageType} \
-            --filePattern ${filePattern} \
             --outDir ${outDir}
+            # --filePattern ${filePattern} \

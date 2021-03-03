@@ -59,6 +59,7 @@ def main():
     
     # Set ProcessManager config and initialize
     ProcessManager.num_processes(multiprocessing.cpu_count())
+    ProcessManager.num_threads(2*ProcessManager.num_processes())
     ProcessManager.threads_per_request(1)
     ProcessManager.init_processes('pyr')
     logger.info('max concurrent processes = %s', ProcessManager.num_processes())
@@ -88,6 +89,9 @@ def main():
             try:
                 image_dir = fp.output_name([file for file in files])
             except:
+                pass
+            
+            if image_dir in ['','.*']:
                 image_dir = files[0]['file'].name
             
             # Reset the depth for neuroglancer files
