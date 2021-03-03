@@ -1,8 +1,6 @@
 import logging, argparse, time, multiprocessing, subprocess
 from pathlib import Path
-import filepattern
 import os
-from filepattern import FilePattern as fp
 import numpy as np
 
 
