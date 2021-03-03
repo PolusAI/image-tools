@@ -1,7 +1,7 @@
 {
   "name": "3D Mesh Labeling Plugin",
-  "version": "0.1.12",
-  "containerId": "labshare/polus-precompute-mesh-plugin:0.1.12",
+  "version": "0.2.3",
+  "containerId": "labshare/polus-precompute-mesh-plugin:0.2.2",
   "title": "Precompute Mesh with LODS",
   "description": "Everything you need to start a WIPP plugin.",
   "author": "Data Scientist (data.scientist@labshare.org)",
@@ -17,24 +17,6 @@
       "type": "collection",
       "options": null,
       "required": true
-    },
-
-    {
-      "name": "imageType",
-      "description": "Image or Segmentation",
-      "type": "enum",
-      "options": {
-        "values": [
-          "image",
-          "segmentation"
-        ]
-      },
-      "required": true
-    },
-    {
-      "name": "meshes",
-      "type": "boolean",
-      "description": "Create meshes"
     }
 
   ],
@@ -52,22 +34,6 @@
       "key": "inputs.inpDir",
       "title": "Input collection: ",
       "description": "Collection name..."
-    },
-    {
-      "key": "inputs.imageType",
-      "title": "Image Type: ",
-      "description": "Image or Segmentation?"
-    },
-    {
-      "key": "inputs.meshes",
-      "title": "Create meshes: ",
-      "default": "false",
-      "condition": "inputs.imageType==['segmentation']"
-    },
-    {
-      "key": "inputs.imagepattern",
-      "title": "Image Pattern: ",
-      "description": "Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). "
     }
   ]
 }

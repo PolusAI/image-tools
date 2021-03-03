@@ -45,9 +45,9 @@ def create_plyfiles(subvolume,
 
     for iden in ids:
         vertices,faces,_,_ = measure.marching_cubes((volume==iden).astype("uint8"), step_size=1)
-        root_mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
+        root_mesh = trimesh.Trimesh(vertices=vertices, faces=faces) # creates mesh
         chunk_filename = '{}_{}_{}_{}.ply'.format(iden, start_y, start_x, start_z)
-        export_to = os.path.join(temp_dir, chunk_filename)
+        export_to = os.path.join(temp_dir, chunk_filename) # saves mesh in temp directory
         root_mesh.export(export_to)
 
 def concatenate_and_generate_meshes(iden,
@@ -69,11 +69,12 @@ def concatenate_and_generate_meshes(iden,
         Number of bits for mesh vertex quantization. Can only be 10 or 16. 
     """
 
+    # Get the files that are relevent to the segment iden
     chunkfiles = [f for f in os.listdir(temp_dir) if os.path.isfile(os.path.join(temp_dir, f))]
-    print('Starting Progressive Meshes for ID {}'.format(iden))
+    logger.info('Starting Progressive Meshes for ID {}'.format(iden))
     idenfiles = [str(f) for f in chunkfiles if f.split('_')[0] == str(iden)]
     len_files = len(idenfiles)
-    print('ID {} is scattered amoung {} chunk(s)'.format(str(iden), len_files))
+    logger.info('ID {} is scattered amoung {} chunk(s)'.format(str(iden), len_files))
 
     starts = []
     stripped_files = [i.strip('.ply').split('_')[1:] for i in idenfiles]
@@ -84,6 +85,7 @@ def concatenate_and_generate_meshes(iden,
     mesh_index = starts.index(start_mesh)
     mesh_fileobj = idenfiles.pop(mesh_index)
 
+    # Get the first mesh (upper left)
     mesh1_path = os.path.join(temp_dir, mesh_fileobj)
     mesh1 = trimesh.load_mesh(file_obj=mesh1_path, file_type='ply')
     translate_start = ([0, 1, 0, start_mesh[1]],
@@ -92,19 +94,20 @@ def concatenate_and_generate_meshes(iden,
                         [0, 0, 0, 1])
     mesh1.apply_transform(translate_start)
     mesh1bounds = mesh1.bounds
-    print('** Loaded chunk #1: {} ---- {} bytes'.format(mesh_fileobj, os.path.getsize(mesh1_path)))
+    logger.info('** Loaded chunk #1: {} ---- {} bytes'.format(mesh_fileobj, os.path.getsize(mesh1_path)))
 
+    # if there is only one mesh, then decompose
     if len_files == 1:
         num_lods = math.ceil(math.log(len(mesh1.vertices),1024))
         ngmesh.fulloctree_decomposition_mesh(mesh1, num_lods=num_lods, 
                 segment_id=iden, directory=output_dir, quantization_bits=bit_depth)
-
+    # else concatenate the meshes
     else:
         stripped_files_middle = [idy.strip('.ply').split('_')[1:] for idy in idenfiles]
         for i in range(len_files-1):
             mesh2_path = str(Path(temp_dir).joinpath(idenfiles[i]))
             mesh2 = trimesh.load_mesh(file_obj=mesh2_path, file_type='ply')
-            print('** Loaded chunk #{}: {} ---- {} bytes'.format(i+2, idenfiles[i], os.path.getsize(mesh2_path)))
+            logger.info('** Loaded chunk #{}: {} ---- {} bytes'.format(i+2, idenfiles[i], os.path.getsize(mesh2_path)))
             transformationmatrix = [int(trans) for trans in stripped_files_middle[i]]
             offset = [transformationmatrix[i]/chunk_size[i] for i in range(3)]
             middle_mesh = transformationmatrix

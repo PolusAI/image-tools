@@ -21,8 +21,6 @@ RUN git clone --branch decomposition https://github.com/mmvih/neurogen.git --rec
 
 RUN pip3.6 install neurogen/
 
-RUN python3.6 ${EXEC_DIR}/dl_fi.py
-
 WORKDIR ${EXEC_DIR}
 
 ENTRYPOINT ["python3.6", "main.py"]
