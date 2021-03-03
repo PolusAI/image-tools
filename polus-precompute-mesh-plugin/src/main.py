@@ -63,7 +63,7 @@ def main():
             del processes[free_process]
             del process_timer[free_process]
         try:
-            processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --image '{}'".format(input_dir,
+            processes.append(subprocess.Popen("python3 generate_mesh.py --inpDir '{}' --outDir '{}' --image '{}'".format(input_dir,
                                                                                                                          output_dir,
                                                                                                                          image.name),
                                                                                                                          shell=True))
