@@ -1,12 +1,7 @@
 # WIPP Widget
 
-This WIPP plugin handles 3D images and creates the necessary files to be compatible with Neuroglancer. 
+This WIPP plugin handles 3D images and creates the necessary files to view Progressive Meshes in Neuroglancer. 
 
-Two types of inputs can be handled:
-
-1) Intensity Based Images
-2) Segmentation
-    This type of data can also generate meshes with Levels of Details.  
 
 Contact [Madhuri Vihani](Madhuri.Vihani@axleinfo.com) for more information.
 
@@ -28,7 +23,5 @@ This plugin takes two input arguments and one output argument:
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
 | `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--imageType` | Input is either an image or labeled data set (segmentation) | Input | String |
-| `--meshes` | Generate Meshes | Input | Boolean |
 | `--outDir` | Output collection | Output | collection |
 
