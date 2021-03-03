@@ -12,16 +12,6 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
-def str2bool(v):
-    if isinstance(v, bool):
-       return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
-
 def main():
     # Setup the Argument parsing
     logger.info("Parsing arguments...")
@@ -31,22 +21,14 @@ def main():
                         help='Path to folder with CZI files', required=True)
     parser.add_argument('--outDir', dest='output_dir', type=str,
                         help='The output directory for ome.tif files', required=True)
-    parser.add_argument('--imageType', dest='image_type', type=str,
-                        help='The type of image, image or segmentation', required=True)
-    parser.add_argument('--meshes', dest='meshes', type=str2bool, nargs='?',const=True,
-                        default=False,help='True or False')
 
     # Parse the arguments
     args = parser.parse_args()
     input_dir = args.input_dir
     output_dir = args.output_dir
-    imagetype = args.image_type
-    boolmesh = args.meshes
 
     logger.info('Input Directory = {}'.format(input_dir))
     logger.info('Output Directory = {}'.format(output_dir))
-    logger.info('Image Type = {}'.format(imagetype))
-    logger.info('Meshes (T/F) = {}'.format(boolmesh))
     # logger.info('images are stacked by variable(s) {}'.format(stack_by))
     
     # Get list of images that we are going to through
@@ -81,13 +63,10 @@ def main():
             del processes[free_process]
             del process_timer[free_process]
         try:
-            processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --imageNum '{}' --image '{}' --imagetype {} --meshes {}".format(input_dir,
-                                                                                                                                                output_dir,
-                                                                                                                                                im_count,
-                                                                                                                                                image.name,
-                                                                                                                                                imagetype,
-                                                                                                                                                boolmesh),
-                                                                                                                                            shell=True))
+            processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --image '{}'".format(input_dir,
+                                                                                                                         output_dir,
+                                                                                                                         image.name),
+                                                                                                                         shell=True))
         except:
             raise Exception("Previous process in build-pyramid.py input is wrong")
             exit()
