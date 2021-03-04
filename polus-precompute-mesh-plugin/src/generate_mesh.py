@@ -52,7 +52,7 @@ def create_plyfiles(subvolume,
 
 def concatenate_and_generate_meshes(iden,
                                     temp_dir,
-                                    out_dir,
+                                    output_image,
                                     bit_depth):
     """ This function concatenates the appropriate polygons in the temporary directory
     and generates progressive meshes as defined.
@@ -63,7 +63,7 @@ def concatenate_and_generate_meshes(iden,
         The labeled segment that we are concatenating  
     temp_dir  : str
         The directory where all the polygon files are located
-    out_dir : str
+    output_image : str
         The output directory where all of Neuroglancer's files are stored
     bit_depth : int
         Number of bits for mesh vertex quantization. Can only be 10 or 16. 
@@ -100,7 +100,7 @@ def concatenate_and_generate_meshes(iden,
     if len_files == 1:
         num_lods = math.ceil(math.log(len(mesh1.vertices),1024))
         ngmesh.fulloctree_decomposition_mesh(mesh1, num_lods=num_lods, 
-                segment_id=iden, directory=output_dir, quantization_bits=bit_depth)
+                segment_id=iden, directory=output_image, quantization_bits=bit_depth)
     # else concatenate the meshes
     else:
         stripped_files_middle = [idy.strip('.ply').split('_')[1:] for idy in idenfiles]
@@ -119,7 +119,7 @@ def concatenate_and_generate_meshes(iden,
             mesh1 = trimesh.util.concatenate(mesh1, mesh2)
         num_lods = math.ceil(math.log(len(mesh1.vertices),1024))
         ngmesh.fulloctree_decomposition_mesh(mesh1, num_lods=num_lods, 
-                segment_id=iden, directory=output_dir, quantization_bits=bit_depth)
+                segment_id=iden, directory=output_image, quantization_bits=bit_depth)
 
 
 
@@ -131,14 +131,12 @@ if __name__=="__main__":
                         help='Path to folder with CZI files', required=True)
     parser.add_argument('--outDir', dest='output_dir', type=str,
                         help='The output directory for ome.tif files', required=True)
-    parser.add_argument('--image', dest='image', type=str,
-                        help='The image to turn into a pyramid', required=True)
 
     args = parser.parse_args()
     input_dir = args.input_dir
-    output_dir = args.output_dir
-    image = args.image
-
+    output_image = args.output_dir
+    image = os.path.basename(output_image)
+    
     try:
         # Initialize the logger    
         logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(image),
@@ -173,7 +171,7 @@ if __name__=="__main__":
 
         all_identities = np.array([])
         totalbytes = {}
-        temp_dir = os.path.join(output_dir, "tempdir")
+        temp_dir = os.path.join(output_image, "tempdir")
         if not os.path.exists(temp_dir):
             os.makedirs(temp_dir, exist_ok=True)
         for y in range(len(ysplits)-1):
@@ -205,7 +203,7 @@ if __name__=="__main__":
         executor.shutdown(wait=True)
 
         all_identities = np.unique(all_identities).astype('int')
-        file_info = nginfo.info_mesh(directory=output_dir,
+        file_info = nginfo.info_mesh(directory=output_image,
                                      chunk_size=chunk_size,
                                      size=bf.shape[:3],
                                      dtype=np.dtype(bf.dtype).name,
@@ -224,7 +222,7 @@ if __name__=="__main__":
         logger.info("Labelled Segments in Input Data: {}".format(all_identities))
 
         with ThreadPoolExecutor(max_workers=4) as executor:
-            futuresvariable = [executor.submit(concatenate_and_generate_meshes, ide, temp_dir, output_dir, bit_depth) for ide in all_identities]
+            futuresvariable = [executor.submit(concatenate_and_generate_meshes, ide, temp_dir, output_image, bit_depth) for ide in all_identities]
         executor.shutdown(wait=True)
 
     except Exception as e:

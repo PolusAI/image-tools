@@ -27,13 +27,11 @@ def main():
 
     logger.info('Input Directory = {}'.format(input_dir))
     logger.info('Output Directory = {}'.format(output_dir))
-    # logger.info('images are stacked by variable(s) {}'.format(stack_by))
     
+
     # Get list of images that we are going to through
     logger.info('Getting the images...')
-    image_path = Path(input_dir)
-
-    images = [i for i in image_path.iterdir() if str(i).endswith(".ome.tif")]
+    images = [os.path.basename(i) for i in os.listdir(input_dir) if str(i).endswith(".ome.tif")]
     images.sort()
 
     # Set up lists for tracking processes
@@ -47,6 +45,9 @@ def main():
     stack_count = 1
     im_count = 1
     for image in images:
+        output_image = os.path.join(output_dir, image)
+        if not os.path.exists(output_image):
+            os.makedirs(output_image, exist_ok=True)
         if len(processes) >= multiprocessing.cpu_count()-1 and len(processes)>0:
             free_process = -1
             while free_process<0:
@@ -61,10 +62,10 @@ def main():
             del processes[free_process]
             del process_timer[free_process]
         try:
-            processes.append(subprocess.Popen("python3 generate_mesh.py --inpDir '{}' --outDir '{}' --image '{}'".format(input_dir,
-                                                                                                                         output_dir,
-                                                                                                                         image.name),
-                                                                                                                         shell=True))
+            
+            processes.append(subprocess.Popen("python3 generate_mesh.py --inpDir '{}' --outDir '{}'".format(input_dir,
+                                                                                                            output_image),
+                                                                                                            shell=True))
         except:
             raise Exception("Previous process in build-pyramid.py input is wrong")
             exit()
