@@ -88,6 +88,7 @@ def create_plyfiles(subvolume,
         chunk_filename = '{}_{}_{}_{}.ply'.format(iden, start_y, start_x, start_z)
         export_to = os.path.join(temp_dir, chunk_filename) # saves mesh in temp directory
         root_mesh.export(export_to)
+        logger.debug("Saved Segment {} as {}".format(iden, chunk_filename))
 
 def concatenate_and_generate_meshes(iden,
                                     temp_dir,
@@ -136,7 +137,7 @@ def concatenate_and_generate_meshes(iden,
                             [0, 0, 0, 1])
         mesh1.apply_transform(translate_start)
         mesh1bounds = mesh1.bounds
-        logger.info('** Loaded chunk #1: {} ---- {} bytes'.format(mesh_fileobj, os.path.getsize(mesh1_path)))
+        logger.debug('** Loaded chunk #1: {} ---- {} bytes'.format(mesh_fileobj, os.path.getsize(mesh1_path)))
 
         # if there is only one mesh, then decompose
         if len_files == 1:
@@ -149,7 +150,7 @@ def concatenate_and_generate_meshes(iden,
             for i in range(len_files-1):
                 mesh2_path = os.path.join(temp_dir, idenfiles[i])
                 mesh2 = trimesh.load_mesh(file_obj=mesh2_path, file_type='ply')
-                logger.info('** Loaded chunk #{}: {} ---- {} bytes'.format(i+2, idenfiles[i], os.path.getsize(mesh2_path)))
+                logger.debug('** Loaded chunk #{}: {} ---- {} bytes'.format(i+2, idenfiles[i], os.path.getsize(mesh2_path)))
                 transformationmatrix = [int(trans) for trans in stripped_files_middle[i]]
                 offset = [transformationmatrix[i]/chunk_size[i] for i in range(3)]
                 middle_mesh = transformationmatrix
