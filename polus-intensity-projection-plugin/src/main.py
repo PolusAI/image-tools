@@ -101,7 +101,6 @@ def process_image(input_img_path, output_img_path, projection, method):
                 for y in range(0,br.Y,tile_size):
                     y_max = min([br.Y,y+tile_size])
 
-                    ProcessManager.log('Processing volume x: {}-{}, y: {}-{}'.format(x,x_max,y,y_max))
                     ProcessManager.submit_thread(projection,br,bw,(x, x_max),(y, y_max),method=method)
 
             ProcessManager.join_threads()
@@ -116,7 +115,6 @@ def main(inpDir, outDir, projection, method):
     # Surround with try/finally for proper error catching
     try:
         for image_name in inpDir_files:
-            logger.info('---- Processing image: {} ----'.format(image_name))
 
             input_img_path = os.path.join(inpDir, image_name)
             output_img_path = os.path.join(outDir, image_name)
