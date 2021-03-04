@@ -78,7 +78,9 @@ if __name__=="__main__":
                         start_x, end_x = (xsplits[x], xsplits[x+1])
                         start_z, end_z = (zsplits[z], zsplits[z+1])
                         
-                        volume = bf[start_y:end_y,start_x:end_x,start_z:end_z].squeeze()
+
+                        volume = bf[start_y:end_y,start_x:end_x,start_z:end_z]
+                        volume = volume.reshape(volume.shape[:3])
                         logger.info("Loaded subvolume (YXZ) {}-{}__{}-{}__{}-{}".format(start_y, end_y,
                                                                                         start_x, end_x,
                                                                                         start_z, end_z))
