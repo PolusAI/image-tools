@@ -4,8 +4,9 @@ import bioformats
 import javabridge as jutil
 
 import numpy as np
-import os
+import os, shutil
 from pathlib import Path
+import tempfile
 
 from concurrent.futures import ThreadPoolExecutor
 import traceback
@@ -66,62 +67,65 @@ if __name__=="__main__":
         all_identities = np.array([])
         totalbytes = {}
         temp_dir = os.path.join(output_image, "tempdir")
-        if not os.path.exists(temp_dir):
-            os.makedirs(temp_dir, exist_ok=True)
-        for y in range(len(ysplits)-1):
-            for x in range(len(xsplits)-1):
-                for z in range(len(zsplits)-1):
-                    start_y, end_y = (ysplits[y], ysplits[y+1])
-                    start_x, end_x = (xsplits[x], xsplits[x+1])
-                    start_z, end_z = (zsplits[z], zsplits[z+1])
-                    
-                    volume = bf[start_y:end_y,start_x:end_x,start_z:end_z].squeeze()
-                    logger.info("Loaded subvolume (YXZ) {}-{}__{}-{}__{}-{}".format(start_y, end_y,
-                                                                                    start_x, end_x,
-                                                                                    start_z, end_z))
-                    ids = np.unique(volume)
-                    if (ids == [0]).all():
-                        continue
-                    else:
-                        ids = np.delete(ids, np.where(ids==0))
-                        with ThreadPoolExecutor(max_workers=8) as executor:
-                            executor.submit(utils.create_plyfiles(subvolume = volume,
-                                                            ids=ids,
-                                                            temp_dir=temp_dir,
-                                                            start_y=start_y,
-                                                            start_x=start_x,
-                                                            start_z=start_z,
-                                                            totalbytes=totalbytes))
-                            all_identities = np.append(all_identities, ids)
 
-        executor.shutdown(wait=True)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            if not os.path.exists(temp_dir):
+                os.makedirs(temp_dir, exist_ok=True)
+            for y in range(len(ysplits)-1):
+                for x in range(len(xsplits)-1):
+                    for z in range(len(zsplits)-1):
+                        start_y, end_y = (ysplits[y], ysplits[y+1])
+                        start_x, end_x = (xsplits[x], xsplits[x+1])
+                        start_z, end_z = (zsplits[z], zsplits[z+1])
+                        
+                        volume = bf[start_y:end_y,start_x:end_x,start_z:end_z].squeeze()
+                        logger.info("Loaded subvolume (YXZ) {}-{}__{}-{}__{}-{}".format(start_y, end_y,
+                                                                                        start_x, end_x,
+                                                                                        start_z, end_z))
+                        ids = np.unique(volume)
+                        if (ids == [0]).all():
+                            continue
+                        else:
+                            ids = np.delete(ids, np.where(ids==0))
+                            with ThreadPoolExecutor(max_workers=8) as executor:
+                                executor.submit(utils.create_plyfiles(subvolume = volume,
+                                                                ids=ids,
+                                                                temp_dir=temp_dir,
+                                                                start_y=start_y,
+                                                                start_x=start_x,
+                                                                start_z=start_z,
+                                                                totalbytes=totalbytes))
+                                all_identities = np.append(all_identities, ids)
 
-        all_identities = np.unique(all_identities).astype('int')
-        file_info = nginfo.info_mesh(directory=output_image,
-                                     chunk_size=chunk_size,
-                                     size=bf.shape[:3],
-                                     dtype=np.dtype(bf.dtype).name,
-                                     ids=all_identities,
-                                     resolution=resolution,
-                                     segmentation_subdirectory="segment_properties",
-                                     bit_depth=bit_depth)
+            executor.shutdown(wait=True)
 
-        logger.info("Image Shape {}".format(bf.shape))
-        numscales = len(file_info['scales'])
-        logger.info("Number of scales: {}".format(numscales))
-        logger.info("Data type: {}".format(file_info['data_type']))
-        logger.info("Number of channels: {}".format(file_info['num_channels']))
-        logger.info("Number of scales: {}".format(numscales))
-        logger.info("Resolution {}".format(resolution))
-        logger.info("Image type: {}".format(file_info['type']))
+            all_identities = np.unique(all_identities).astype('int')
+            file_info = nginfo.info_mesh(directory=output_image,
+                                        chunk_size=chunk_size,
+                                        size=bf.shape[:3],
+                                        dtype=np.dtype(bf.dtype).name,
+                                        ids=all_identities,
+                                        resolution=resolution,
+                                        segmentation_subdirectory="segment_properties",
+                                        bit_depth=bit_depth)
 
-        logger.info("Labelled Image Values: {}".format(all_identities))
+            logger.info("Image Shape {}".format(bf.shape))
+            numscales = len(file_info['scales'])
+            logger.info("Number of scales: {}".format(numscales))
+            logger.info("Data type: {}".format(file_info['data_type']))
+            logger.info("Number of channels: {}".format(file_info['num_channels']))
+            logger.info("Number of scales: {}".format(numscales))
+            logger.info("Resolution {}".format(resolution))
+            logger.info("Image type: {}".format(file_info['type']))
 
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            futuresvariable = [executor.submit(utils.concatenate_and_generate_meshes, 
-                                               ide, temp_dir, output_image, bit_depth, chunk_size) 
-                                               for ide in all_identities]
-        executor.shutdown(wait=True)
+            logger.info("Labelled Image Values: {}".format(all_identities))
+
+            with ThreadPoolExecutor(max_workers=4) as executor:
+                futuresvariable = [executor.submit(utils.concatenate_and_generate_meshes, 
+                                                ide, temp_dir, output_image, bit_depth, chunk_size) 
+                                                for ide in all_identities]
+            executor.shutdown(wait=True)
+        
 
     except Exception as e:
         traceback.print_exc()
