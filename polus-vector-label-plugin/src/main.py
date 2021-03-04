@@ -2,7 +2,6 @@ from bfio import  BioWriter , OmeXml
 import argparse, logging, sys
 import numpy as np
 from pathlib import Path
-import re
 import zarr
 import mask
 from numba import jit
@@ -11,13 +10,13 @@ np.seterr(divide='ignore', invalid='ignore')
 
 @jit(nopython=True)
 def _label_overlap(x, y):
-    """ fast function to get pixel overlaps between masks in x and y
+    """ Fast function to get pixel overlaps between masks in x and y
     Args:
-    x(array[int]): ND-array where 0=NO masks; 1,2... are mask labels
-    y(array[int]): ND-array where 0=NO masks; 1,2... are mask labels
+        x(array[int]): ND-array where 0=NO masks; 1,2... are mask labels
+        y(array[int]): ND-array where 0=NO masks; 1,2... are mask labels
 
     Returns:
-    overlap(array[int]): ND-array.matrix of pixel overlaps of size [x.max()+1, y.max()+1]
+        overlap(array[int]): ND-array.matrix of pixel overlaps of size [x.max()+1, y.max()+1]
 
     """
 
@@ -29,13 +28,13 @@ def _label_overlap(x, y):
     return overlap
 
 def _intersection_over_union(masks_true, masks_pred):
-    """ intersection over union of all mask pairs
+    """Intersection over union of all mask pairs
     Args:
-    masks_true(array[int]): ND-array.ground truth masks, where 0=NO masks; 1,2... are mask labels
-    masks_pred(array[int]): ND-array.predicted masks, where 0=NO masks; 1,2... are mask labels
+        masks_true(array[int]): ND-array.ground truth masks, where 0=NO masks; 1,2... are mask labels
+        masks_pred(array[int]): ND-array.predicted masks, where 0=NO masks; 1,2... are mask labels
 
     Returns:
-    iou(array[float]): ND-array.matrix of IOU pairs of size [x.max()+1, y.max()+1]
+        iou(array[float]): ND-array.matrix of IOU pairs of size [x.max()+1, y.max()+1]
 
     """
 
@@ -46,34 +45,40 @@ def _intersection_over_union(masks_true, masks_pred):
     iou[np.isnan(iou)] = 0.0
     return iou
 
-def stitch3D(masks, stitch_threshold=0.25):
-    """ stitch 2D masks into 3D volume with stitch_threshold on IOU
+def stitch3D(masks,tile_size, stitch_threshold=0.25):
+    """ Stitch 2D masks into 3D volume with stitch_threshold on IOU
     Args:
-    masks(array):ND-array.Mask labels
-    stitch_threshold(int): Stitching threshold.Default value of 0.25
+        masks(array):ND-array.Mask labels
+        stitch_threshold(int): Stitching threshold.Default value of 0.25
 
     Returns:
-    masks(array): Stitched masks based on IOU
+        masks(array): Stitched masks based on IOU
 
     """
     mmax = masks[0].max()
 
-    for i in range(len(masks)-1):
-        iou = _intersection_over_union(masks[i+1], masks[i])[1:,1:]
-        iou[iou < stitch_threshold] = 0.0
+    for z in range(masks.shape[2]-1):
+        for x in range(0, masks.shape[1], tile_size):
+            x_max = min([masks.shape[1], x + tile_size])
+            for y in range(0, masks.shape[0], tile_size):
+                y_max = min([masks.shape[0], y + tile_size])
+                iou = _intersection_over_union(np.array(masks[y:y_max, x:x_max ,z+1].squeeze()),np.array(masks[y:y_max, x:x_max ,z].squeeze()))[1:,1:]
+                iou[iou < stitch_threshold] = 0.0
 
-        if not (iou.shape[0] ==0 or iou.shape[1]==0):
-            iou[iou < iou.max(axis=0)] = 0.0
-            istitch = iou.argmax(axis=1) + 1
-            ino = np.nonzero(iou.max(axis=1)==0.0)[0]
-            istitch[ino] = np.arange(mmax+1, mmax+len(ino)+1, 1, int)
-            mmax += len(ino)
-            istitch = np.append(np.array(0), istitch)
-            masks[i+1] = istitch[masks[i+1]]
+                if not (iou.shape[0] == 0 or iou.shape[1] == 0):
+                    iou[iou < iou.max(axis=0)] = 0.0
+                    istitch = iou.argmax(axis=1) + 1
+                    ino = np.nonzero(iou.max(axis=1)==0.0)[0]
+                    istitch[ino] = np.arange(mmax+1, mmax+len(ino)+1, 1, int)
+                    mmax += len(ino)
+                    istitch = np.append(np.array(0), istitch)
+                    stitched = istitch[masks[y:y_max, x:x_max ,z+1].squeeze()]
+                    masks[y:y_max, x:x_max ,z+1] = stitched[:,:]
+
     return masks
 
 
-if __name__=="__main__":
+def main():
     # Initialize the logger
     logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                         datefmt='%d-%b-%y %H:%M:%S')
@@ -114,29 +119,39 @@ if __name__=="__main__":
         # Get all file names in inpDir image collection
         root = zarr.open(str(Path(inpDir).joinpath('flow.zarr')),mode='r')
         count=0
+
         # Loop through files in inpDir image collection and process
         for file_name,vec in root.groups():
             logger.info('Processing image ({}/{}): {}'.format(count + 1, len([file_name for file_name, _ in root.groups()]), file_name))
-            y = vec['vector']
-            y = np.asarray(y)
+            vec_arr = vec['vector']
+            vec_arr = np.asarray(vec_arr)
             metadata = vec.attrs['metadata']
-            mask_final = np.zeros((y.shape[0],y.shape[1],y.shape[2],1,1)).astype(y.dtype)
-            y = y.transpose((2,0,1,3,4)).squeeze(axis=4)
+            mask_final = np.zeros((vec_arr.shape[0],vec_arr.shape[1],vec_arr.shape[2],1,1))
+            vec_arr = vec_arr.transpose((2,0,1,3,4)).squeeze(axis=4)
+            tile_size = min(1024,vec_arr.shape[1])
+            tile_iterator=tile_size //2 if tile_size !=vec_arr.shape[1] else tile_size
             # Iterating over Z dimension
-            for z in range(y.shape[0]):
-                prob = y[z, :, :, :].astype(np.float32)
-                cellprob = prob[..., -1]
-                dP = np.stack((prob[..., 0], prob[..., 1]), axis=0)
-                p = mask.follow_flows(-1 * dP * (cellprob > cellprob_threshold) / 5.,
+            for z in range(vec_arr.shape[0]):
+                    logger.info('Calculating flows for slice {} of image {}'.format(z+1, file_name))
+                    for x in range(0, vec_arr.shape[2], tile_size):
+
+                        x_max = min([vec_arr.shape[2], x + tile_size])
+                        for y in range(0, vec_arr.shape[1], tile_size):
+                            y_max = min([vec_arr.shape[1], y + tile_size])
+                            prob = vec_arr[z,y:y_max, x:x_max , :].astype(np.float32)
+                            cellprob = prob[..., -1]
+                            dP = np.stack((prob[..., 0], prob[..., 1]), axis=0)
+                            p = mask.follow_flows(-1 * dP * (cellprob > cellprob_threshold) / 5.,
                                                                     niter=niter, interp=True)
-                maski = mask.compute_masks(p,cellprob,dP,cellprob_threshold,flow_threshold)
-                mask_final[:,:,z:z+1,:,:] = maski[:,:,np.newaxis,np.newaxis,np.newaxis].astype(maski.dtype)
+                            maski = mask.compute_masks(p,cellprob,dP,cellprob_threshold,flow_threshold)
+                            mask_final=mask_final.astype(maski.dtype)
+                            mask_final[y:y_max, x:x_max,z:z+1,:,:] = maski[:,:,np.newaxis,np.newaxis,np.newaxis].astype(maski.dtype)
             logger.info('Computed  masks for  image {}'.format(file_name))
 
-            if mask_final.shape[2]>1 and stitch_threshold>0:
+            if mask_final.shape[2] > 1 and stitch_threshold > 0:
                 logger.info('stitching   masks into 3D volume for image {}'.format(file_name))
-                masks_final = stitch3D(np.asarray(mask_final.squeeze().astype(np.int32)), stitch_threshold=stitch_threshold)
-                masks_final=masks_final[...,np.newaxis,np.newaxis]
+                mask_final = stitch3D(mask_final.squeeze(),tile_size, stitch_threshold=stitch_threshold)
+                mask_final = mask_final[...,np.newaxis,np.newaxis]
 
             xml_metadata = OmeXml.OMEXML(metadata)
             # Write the output
@@ -152,3 +167,6 @@ if __name__=="__main__":
         logger.info('Closing ')
         # Exit the program
         sys.exit()
+
+if __name__ == '__main__':
+    main()

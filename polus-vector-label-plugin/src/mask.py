@@ -11,10 +11,10 @@ from numba import njit
 def map_coordinates(I, yc, xc, Y):
     """ Bilinear interpolation of image 'I' in-place with y coordinates yc and x coordinates xc to Y
     Args:
-    I : C x Ly x Lx
-    yc : ni new y coordinates
-    xc : ni new x coordinates
-    Y : C x ni I sampled at (yc,xc)
+        I : C x Ly x Lx
+        yc : ni new y coordinates
+        xc : ni new x coordinates
+        Y : C x ni I sampled at (yc,xc)
     """
 
     C,Ly,Lx = I.shape
@@ -146,11 +146,10 @@ def get_masks(p, iscell=None, rpad=20, flows=None, threshold=0.4):
     iscell(array[bool]):  2D or 3D array.If iscell is not None, set pixels that are iscell False to stay in their original location.
     rpad(optional[int]): Default 20.Histogram edge padding
     threshold(optional[float]): Default 0.4.Masks with flow error greater than threshold are discarded(if flows is not None)
-    flows(array[float]):  3D or 4D array.Flows [axis x Ly x Lx] or [axis x Lz x Ly x Lx]. If flows is not None, then masks with inconsistent flows are removed using`remove_bad_flow_masks`.
+    flows(array[float]): 3D array.Flows [axis x Ly x Lx] . If flows is not None, then masks with inconsistent flows are removed using`remove_bad_flow_masks`.
 
     Returns:
-    M0(array[int]):  2D or 3D array.Masks with inconsistent flow masks removed,0=NO masks; 1,2,...=mask labels,size [Ly x Lx] or [Lz x Ly x Lx]
-
+        M0(array[int]):  2D or 3D array.Masks with inconsistent flow masks removed,0=NO masks; 1,2,...=mask labels,size [Ly x Lx]
     """
     pflows = []
     edges = []
@@ -181,16 +180,12 @@ def get_masks(p, iscell=None, rpad=20, flows=None, threshold=0.4):
     isort = np.argsort(Nmax)[::-1]
     for s in seeds:
         s = s[isort]
-
     pix = list(np.array(seeds).T)
     shape = h.shape
     if dims==3:
         expand = np.nonzero(np.ones((3,3,3)))
     else:
         expand = np.nonzero(np.ones((3,3)))
-
-    for e in expand:
-        e = np.expand_dims(e,1)
 
     for iter in range(5):
         for k in range(len(pix)):
@@ -229,24 +224,24 @@ def get_masks(p, iscell=None, rpad=20, flows=None, threshold=0.4):
 
     _,M0 = np.unique(M0, return_inverse=True)
     M0 = np.reshape(M0, shape0)
+
     if threshold is not None and threshold > 0 and flows is not None:
         M0 = remove_bad_flow_masks(M0, flows, threshold=threshold)
         _,M0 = np.unique(M0, return_inverse=True)
-        M0 = np.reshape(M0, shape0).astype(np.int32)
+
+    M0 = np.reshape(M0, shape0).astype(np.int32)
     return M0
 
 def remove_bad_flow_masks(masks, flows, threshold=0.4):
-    """ Remove masks which have inconsistent flows
-    Uses metrics.flow_error to compute flows from predicted masks
-    and compare flows to predicted flows from network. Discards
-    masks with flow errors greater than the threshold.
+    """ Remove masks which have inconsistent flows.Uses metrics.flow_error to compute flows from predicted masks
+    and compare flows to predicted flows from network. Discards masks with flow errors greater than the threshold.
     Args:
-    masks(array[int]): 2D or 3D array.Labelled masks, 0=NO masks; 1,2,...=mask labels,size [Ly x Lx] or [Lz x Ly x Lx]
-    flows(array[float]):3D or 4D array.Flows [axis x Ly x Lx] or [axis x Lz x Ly x Lx]
-    threshold(optional[float]):  default 0.4.Masks with flow error greater than threshold are discarded.
+        masks(array[int]): 2D or 3D array.Labelled masks, 0=NO masks; 1,2,...=mask labels,size [Ly x Lx] or [Lz x Ly x Lx]
+        flows(array[float]):3D or 4D array.Flows [axis x Ly x Lx] or [axis x Lz x Ly x Lx]
+        threshold(optional[float]):  default 0.4.Masks with flow error greater than threshold are discarded.
 
     Returns:
-    masks(array[int]):  2D or 3D array.Masks with inconsistent flow masks removed,0=NO masks; 1,2,...=mask labels,size [Ly x Lx] or [Lz x Ly x Lx]
+        masks(array[int]):  2D or 3D array.Masks with inconsistent flow masks removed,0=NO masks; 1,2,...=mask labels,size [Ly x Lx]
 
     """
     merrors, _ = flow_error(masks, flows)
@@ -257,16 +252,16 @@ def remove_bad_flow_masks(masks, flows, threshold=0.4):
 def _extend_centers(T,y,x,ymed,xmed,Lx, niter):
     """ Run diffusion from center of mask (ymed, xmed) on mask pixels (y, x)
     Args:
-    T(array[float64]): _ x Lx array that diffusion is run in
-    y(array[int32]): pixels in y inside mask
-    x(array[float]): pixels in x inside mask
-    ymed(int32): center of mask in y
-    xmed(int32):  center of mask in x
-    Lx(int32): size of x-dimension of masks
-    niter(int32): number of iterations to run diffusion
+        T(array[float64]): _ x Lx array that diffusion is run in
+        y(array[int32]): pixels in y inside mask
+        x(array[float]): pixels in x inside mask
+        ymed(int32): center of mask in y
+        xmed(int32):  center of mask in x
+        Lx(int32): size of x-dimension of masks
+        niter(int32): number of iterations to run diffusion
 
     Returns:
-    T(array[float]): amount of diffused particles at each pixel
+        T(array[float]): amount of diffused particles at each pixel
 
     """
     for t in range(niter):
@@ -278,17 +273,15 @@ def _extend_centers(T,y,x,ymed,xmed,Lx, niter):
     return T
 
 def masks_to_flows(masks):
-    """ Convert masks to flows using diffusion from center pixel
-    Center of masks where diffusion starts is defined to be the
-    closest pixel to the median of all pixels that is inside the
-    mask. Result of diffusion is converted into flows by computing
+    """ Convert masks to flows using diffusion from center pixel.Center of masks where diffusion starts is defined to be the
+    closest pixel to the median of all pixels that is inside the mask. Result of diffusion is converted into flows by computing
     the gradients of the diffusion density map.
     Args:
-    masks(array[int]):  2D or 3D array.labelled masks 0=NO masks; 1,2,...=mask labels
+        masks(array[int]):  2D or 3D array.labelled masks 0=NO masks; 1,2,...=mask labels
 
     Returns:
-    mu(array[float]):  3D or 4D array.flows in Y = mu[-2], flows in X = mu[-1].if masks are 3D, flows in Z = mu[0].
-    mu_c(array[float]):  2D or 3D array.for each pixel, the distance to the center of the mask in which it resides
+        mu(array[float]):  3D or 4D array.flows in Y = mu[-2], flows in X = mu[-1].if masks are 3D, flows in Z = mu[0].
+        mu_c(array[float]):  2D or 3D array.for each pixel, the distance to the center of the mask in which it resides
 
     """
     if masks.ndim > 2:
@@ -347,15 +340,13 @@ def flow_error(maski, dP_net):
     1. The predicted masks are used to create a flow diagram
     2. The mask-flows are compared to the flows that the network predicted
     If there is a discrepancy between the flows, it suggests that the mask is incorrect.
-    Masks with flow_errors greater than 0.4 are discarded by default. Setting can be
-    changed in Cellpose.eval or CellposeModel.eval.
     Args:
-    maski(array[int]): ND-array.masks produced from running dynamics on dP_net,where 0=NO masks; 1,2... are mask labels
-    dP_net(array[float]): ND-array.ND flows where dP_net.shape[1:] = maski.shape
+        maski(array[int]): ND-array.masks produced from running dynamics on dP_net,where 0=NO masks; 1,2... are mask labels
+        dP_net(array[float]): ND-array.ND flows where dP_net.shape[1:] = maski.shape
 
     Returns:
-    flow_errors(array[float]): array with length maski.max()mean squared error between predicted flows and flows from masks
-    dP_masks(array[float]): ND-array.ND flows produced from the predicted masks
+        flow_errors(array[float]): array with length maski.max()mean squared error between predicted flows and flows from masks
+        dP_masks(array[float]): ND-array.ND flows produced from the predicted masks
 
     """
     if dP_net.shape[1:] != maski.shape:
@@ -367,6 +358,7 @@ def flow_error(maski, dP_net):
     iun = np.unique(maski)[1:]
     flow_errors = np.zeros((len(iun),))
     for i, iu in enumerate(iun):
+
         ii = maski == iu
         if dP_masks.shape[0] == 2:
             flow_errors[i] += ((dP_masks[0][ii] - dP_net[0][ii] / 5.) ** 2
@@ -375,19 +367,20 @@ def flow_error(maski, dP_net):
             flow_errors[i] += ((dP_masks[0][ii] - dP_net[0][ii] / 5.) ** 2 * 0.5
                                + (dP_masks[1][ii] - dP_net[1][ii] / 5.) ** 2
                                + (dP_masks[2][ii] - dP_net[2][ii] / 5.) ** 2).mean()
+
     return flow_errors, dP_masks
 
 def compute_masks(p,cellprob,dP,cellprob_threshold=0.0,flow_threshold=0.4):
     """ Compute masks based on users input of threshold values  and X,yY flows
         This function will call the function which generates  masks based  of a histogram
     Args:
-    y(array[int]): ND-array .Output of the nueral network
-    cellprob(array[float32]):  3D or 4D array.final locations of each pixel after dynamics,size [axis x Ly x Lx].Cell probablity of array
-    flow_threshold(optional[float]): default 0.4.flow error threshold (all cells with errors below threshold are kept)
-    cellprob_threshold(optional[float]):  default 0.0.cell probability threshold (all pixels with prob above threshold kept for masks)
+        y(array[int]): ND-array .Output of the nueral network
+        cellprob(array[float32]):  3D or 4D array.final locations of each pixel after dynamics,size [axis x Ly x Lx].Cell probablity of array
+        flow_threshold(optional[float]): default 0.4.flow error threshold (all cells with errors below threshold are kept)
+        cellprob_threshold(optional[float]):  default 0.0.cell probability threshold (all pixels with prob above threshold kept for masks)
 
     Returns:
-    Masks(array[float]): ND-array.Predicted masks
+        Masks(array[float]): ND-array.Predicted masks
 
     """
     maski = get_masks(p, iscell=(cellprob > cellprob_threshold),
@@ -434,12 +427,12 @@ def fill_holes(masks, min_size=15):
 def remove_small_objects(ar, min_size=64, connectivity=1):
     """ Remove objects smaller than the specified size.
      Args:
-    ar(array):The array containing the objects of interest
-    min_size(int):The smallest allowable object size.Default is 64
-    connectivity(int): The connectivity defining the neighborhood of a pixel. Default 1.
+        ar(array):The array containing the objects of interest
+        min_size(int):The smallest allowable object size.Default is 64
+        connectivity(int): The connectivity defining the neighborhood of a pixel. Default 1.
 
     Returns:
-    out(array):The input array with small connected components removed.
+        out(array):The input array with small connected components removed.
 
     """
     out = ar.copy()

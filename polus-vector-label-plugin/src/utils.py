@@ -2,13 +2,13 @@
 import numpy as np
 
 def diameters(masks):
-    """ get median 'diameter' of masks
+    """ Get median 'diameter' of masks
     Args:
-    masks(array): Labelled Image
+        masks(array): Labelled Image
 
     Returns:
-    md(array): Median of the label
-    counts(array[bool]): Boolean array containing occurrence of unique pixels.
+        md(array): Median of the label
+        counts(array[bool]): Boolean array containing occurrence of unique pixels.
     """
     _, counts = np.unique(np.int32(masks), return_counts=True)
     counts = counts[1:]
