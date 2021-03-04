@@ -1,7 +1,7 @@
 {
   "name": "3D Mesh Labeling Plugin",
-  "version": "0.2.5",
-  "containerId": "labshare/polus-precompute-mesh-plugin:0.2.4",
+  "version": "0.2.6",
+  "containerId": "labshare/polus-precompute-mesh-plugin:0.2.6",
   "title": "Precompute Mesh with LODS",
   "description": "Everything you need to start a WIPP plugin.",
   "author": "Data Scientist (data.scientist@labshare.org)",
