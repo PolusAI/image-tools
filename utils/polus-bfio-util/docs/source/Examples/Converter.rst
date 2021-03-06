@@ -257,7 +257,7 @@ properly. To help prevent this scenario, use a ``with`` block.
 
 .. code-block:: python
 
-    with BioWriter(PATH / 'out.ome.tif',metadata=br.metadata):
+    with BioWriter(PATH / 'out.ome.tif',metadata=br.metadata) as bw:
 
         original_image = br[:]
         bw.write(original_image)
@@ -269,7 +269,7 @@ to the above code block would be:
 
 .. code-block:: python
 
-    with BioWriter(PATH / 'out.ome.tif',metadata=br.metadata):
+    with BioWriter(PATH / 'out.ome.tif',metadata=br.metadata) as bw:
 
         bw[:] = br[:]
 

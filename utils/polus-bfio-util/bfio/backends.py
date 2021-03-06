@@ -9,11 +9,11 @@ import struct, copy, zlib, io, typing, logging, threading
 
 logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
-logger = logging.getLogger("bfio.backends")
+logger = logging.getLogger('bfio.backends')
 
 class PythonReader(bfio.base_classes.AbstractReader):
     
-    logger = logging.getLogger("bfio.backends.PythonReader")
+    logger = logging.getLogger('bfio.backends.PythonReader')
     
     _rdr = None
 
@@ -134,7 +134,7 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
     _page_open = False
     _current_page = None
     
-    logger = logging.getLogger("bfio.backends.PythonWriter")
+    logger = logging.getLogger('bfio.backends.PythonWriter')
     
     def __init__(self, frontend):
         super().__init__(frontend)
@@ -348,7 +348,7 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
                 if tag[0] == 270:
                     del self._tags[ind]
                     break
-            description = "ImageJ=\nhyperstack=true\nimages={}\nchannels={}\nslices={}\nframes={}".format(
+            description = 'ImageJ=\nhyperstack=true\nimages={}\nchannels={}\nslices={}\nframes={}'.format(
                 1, self.frontend.C, self.frontend.Z, self.frontend.T)
             self._addtag(270, 's', 0, description)  # Description
             self._tags = sorted(self._tags, key=lambda x: x[0])
@@ -562,7 +562,7 @@ try:
     
     class JavaReader(bfio.base_classes.AbstractReader):
         
-        logger = logging.getLogger("bfio.backends.JavaReader")
+        logger = logging.getLogger('bfio.backends.JavaReader')
         _rdr = None
         
         def __init__(self, frontend):
@@ -643,7 +643,7 @@ try:
         
     class JavaWriter(bfio.base_classes.AbstractWriter):
         
-        logger = logging.getLogger("bfio.backends.JavaWriter")
+        logger = logging.getLogger('bfio.backends.JavaWriter')
         
         # For Bioformats, the first tile has to be written before any other tile
         first_tile = False
@@ -713,7 +713,7 @@ try:
                                        writer=writer))
             writer.setId(str(self.frontend._file_path))
             writer.setInterleaved(False)
-            writer.setCompression("LZW")
+            writer.setCompression('LZW')
             x = writer.setTileSizeX(self.frontend._TILE_SIZE)
             y = writer.setTileSizeY(self.frontend._TILE_SIZE)
 

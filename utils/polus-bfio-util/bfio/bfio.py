@@ -92,15 +92,15 @@ class BioReader(BioBase):
                 br = bfio.BioReader('Path/To/File.ome.tif')
                 
                 # Load and copy a 100x100 array of pixels
-                a = br[:100,:100,0,0,0]
+                a = br[:100,:100,:1,0,0]
                 
                 # Slice steps sizes are ignored for the first 3 indices, so this
                 # returns the same as above
-                a = br[0:100:2,0:100:2,0,0,0]
+                a = br[0:100:2,0:100:2,0:1,0,0]
                 
                 # The last two dimensions can receive a tuple or list as input
                 # Load the first and third channel
-                a = br[:100,100,0,(0,2),0]
+                a = br[:100,100,0:1,(0,2),0]
                 
                 # If the file is 3d, load the first 10 z-slices
                 b = br[...,:10,0,0]
@@ -416,7 +416,7 @@ class BioReader(BioBase):
         self._iter_batch_size = None
         self._iter_channels = None
 
-        # Enure that the number of tiles does not exceed the width of a supertile
+        # Ensure that the number of tiles does not exceed the supertile width
         if batch_size == None:
             batch_size = min([32, self.maximum_batch_size(tile_size, tile_stride)])
         else:
