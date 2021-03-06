@@ -156,7 +156,7 @@ def main({#- Required inputs -#}
             bw = BioWriter(_{{ out }}.joinpath(fname),metadata=metadata)
             bw.Z = 1
             bw.dtype = {{ out }}_array.dtype
-            bw[:] = {{ out }}_array
+            bw[:] = {{ out }}_array.astype(bw.dtype)
             bw.close()
             {%- endfor %}
             
