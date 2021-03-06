@@ -2,4 +2,4 @@
 numpy==1.19.1
 imagecodecs==2020.5.30
 tifffile==2020.7.4
-bfio==2.0.6a2
+bfio==2.0.6

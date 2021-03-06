@@ -151,14 +151,16 @@ class BioBase(object,metaclass=abc.ABCMeta) :
             for dim,key in zip(dims,keys):
                 
                 if isinstance(key,slice):
+                    start = 0 if key.start == None else key.start
+                    stop = getattr(self,dim) if key.stop == None else key.stop
+                    
                     # For CT dimensions, generate a list from slices
                     if dim in 'CT':
-                        ind[dim] = [v for v in range(key)]
+                        step = 1 if key.step == None else key.step
+                        ind[dim] = list(range(start,stop,step))
                     
                     # For XYZ dimensions, get start and stop of slice, ignore step
                     else:
-                        start = 0 if key.start == None else key.start
-                        stop = getattr(self,dim) if key.stop == None else key.stop
                         ind[dim] = [start,stop]
                         
                 elif isinstance(key,(int,tuple,list)):
