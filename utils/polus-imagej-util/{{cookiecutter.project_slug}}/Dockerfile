@@ -1,4 +1,4 @@
-FROM labshare/polus-bfio-util:2.0.5-imagej
+FROM labshare/polus-bfio-util:2.0.6-imagej
 
 COPY VERSION /
 		

@@ -10,20 +10,18 @@
   "citation": "",
   "containerId": "labshare/{{ cookiecutter.project_slug }}:{{ cookiecutter.version }}",
   "inputs": [{% for inp,val in cookiecutter._inputs.items() %}
-    {% if val.type=='enum' %}
     {
       "name": "{{ inp }}",
       "type": "{{ val.type }}",
-      "options": [{% for v in val.options %}"{{v}}"{% if not loop.last %},
-                  {% endif %}{% endfor %}],
-      "description": "{{ val.description }}",
-      "required": "{{ val.required.lower() }}"
-    }{% if not loop.last %},{% endif %}{% else %}{
-      "name": "{{ inp }}",
-      "type": "{{ val.type }}",
+    {%- if val.type=='enum' %}
+      "options": {
+        "values": [{% for v in val.options %}"{{v}}"{% if not loop.last %},
+                    {% endif %}{% endfor %}]
+      },
+    {%- endif %}
       "description": "{{ val.description }}",
       "required": {{ val.required.lower() }}
-    }{% if not loop.last %},{% endif %}{% endif %}{% endfor %}
+    }{% if not loop.last %},{% endif %}{% endfor %}
   ],
   "outputs": [{% for out,val in cookiecutter._outputs.items() %}
     {
@@ -36,12 +34,9 @@
     {
       "key": "inputs.{{ inp }}",
       "title": "{{ val.title }}",
-      "description": "{{ val.description }}",
-      {% if val.type=='enum' %}
-      {
-        "condition": cookiecutter._inputs.{{ inp }}==[{% for v in val.options %}"{{v}}"{% if not loop.last %},
-          {% endif %}{% endfor %}]
-      }
-    }{% endif %}{% if not loop.last %},{% endif %}{% endfor %}
+      "description": "{{ val.description }}"{%- if inp!='opName' %},
+      "condition": "model.inputs.opName==[{% for v in val.call_types %}'{{v}}'{% if not loop.last %},{% endif %}{% endfor %}]"
+    {%- endif %}
+    }{% if not loop.last %},{% endif %}{% endfor %}
   ]
 }

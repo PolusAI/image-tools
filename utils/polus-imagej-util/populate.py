@@ -20,8 +20,10 @@ import logging
 import sys
 
 """ Setup the logger and output files """
-Path("excluded.log").unlink()
-Path("other.log").unlink()
+if Path("excluded.log").exists():
+    Path("excluded.log").unlink()
+if Path("other.log").exists():
+    Path("other.log").unlink()
 
 logger = logging.getLogger("populate")
 handler = logging.FileHandler("excluded.log")

@@ -2,22 +2,22 @@
     "author": "Anjali Taneja",
     "email": "Anjali.Taneja@axleinfo.com",
     "github_username": "at1112",
-    "version": "0.1.1",
-    "bfio_version": "2.0.0a4",
-    "bfio_container": "imagej",
-    "project_name": "ImageJ filter correlate",
-    "project_short_description": "PadAndCorrelateFFT,CorrelateFFTC",
+    "version": "0.1.0",
+    "project_name": "ImageJ image integral",
+    "project_short_description": "DefaultIntegralImg,SquareIntegralImg,WrappedIntegralImg",
     "plugin_namespace": {
-        "PadAndCorrelateFFT": "out = ij.op().filter().correlate(in1,in2)",
-        "CorrelateFFTC": "out = ij.op().filter().correlate(in1,in2)"
+        "DefaultIntegralImg": "out = ij.op().image().integral(in1)",
+        "SquareIntegralImg": "out = ij.op().image().integral(in1)",
+        "WrappedIntegralImg": "out = ij.op().image().integral(in1)"
     },
     "_inputs": {
         "opName": {
             "title": "Operation",
             "type": "enum",
             "options": [
-                "PadAndCorrelateFFT",
-                "CorrelateFFTC"
+                "DefaultIntegralImg",
+                "SquareIntegralImg",
+                "WrappedIntegralImg"
             ],
             "description": "Operation to perform",
             "required": false
@@ -28,18 +28,9 @@
             "description": "in1",
             "required": false,
             "call_types": {
-                "PadAndCorrelateFFT": "RandomAccessibleInterval",
-                "CorrelateFFTC": "RandomAccessibleInterval"
-            }
-        },
-        "in2": {
-            "type": "collection",
-            "title": "in2",
-            "description": "in2",
-            "required": false,
-            "call_types": {
-                "PadAndCorrelateFFT": "RandomAccessibleInterval",
-                "CorrelateFFTC": "RandomAccessibleInterval"
+                "DefaultIntegralImg": "RandomAccessibleInterval",
+                "SquareIntegralImg": "RandomAccessibleInterval",
+                "WrappedIntegralImg": "RandomAccessibleInterval"
             }
         }
     },
@@ -49,8 +40,9 @@
             "title": "out",
             "description": "out",
             "call_types": {
-                "PadAndCorrelateFFT": "RandomAccessibleInterval",
-                "CorrelateFFTC": "RandomAccessibleInterval"
+                "DefaultIntegralImg": "RandomAccessibleInterval",
+                "SquareIntegralImg": "RandomAccessibleInterval",
+                "WrappedIntegralImg": "RandomAccessibleInterval"
             }
         }
     },
