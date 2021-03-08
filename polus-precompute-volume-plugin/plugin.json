@@ -18,13 +18,6 @@
         "required": true
       },
       {
-        "name": "imagePattern",
-        "description": "Pattern of the images in Input",
-        "type": "string",
-        "options": null,
-        "required": false
-      },
-      {
         "name": "imageType",
         "description": "Image or Segmentation",
         "type": "enum",
@@ -35,6 +28,13 @@
           ]
         },
         "required": true
+      },
+      {
+        "name": "imagePattern",
+        "description": "Pattern of the images in Input",
+        "type": "string",
+        "options": null,
+        "required": false
       }
     ],
     "outputs": [
