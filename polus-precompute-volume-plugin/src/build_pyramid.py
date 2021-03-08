@@ -1,71 +1,75 @@
 from multiprocessing import cpu_count
-import logging, argparse
+import logging, argparse, traceback
 from bfio.bfio import BioReader, BioWriter
-from pathlib import Path
+
 import utils
-from filepattern import FilePattern as fp
+import os
+
+import numpy as np
+
+from neurogen import info as nginfo
+from neurogen import volume as ngvol
 
 if __name__=="__main__":
-    # Setup the Argument parsing
-    parser = argparse.ArgumentParser(prog='build_pyramid', description='Generate a precomputed slice for Polus Viewer.')
+    try:
+        # Setup the Argument parsing
+        parser = argparse.ArgumentParser(prog='build_pyramid', description='Generate a precomputed slice for Polus Viewer.')
 
-    parser.add_argument('--inpDir', dest='input_dir', type=str,
-                        help='Path to folder with CZI files', required=True)
-    parser.add_argument('--outDir', dest='output_dir', type=str,
-                        help='The output directory for ome.tif files', required=True)
-    parser.add_argument('--imageNum', dest='image_num', type=str,
-                        help='Image number, will be stored as a timeframe', required=True)
-    parser.add_argument('--stackby', dest='stack_by', type=str,
-                        help='Variable that the images get stacked by', required=True)
-    parser.add_argument('--imagepattern', dest='image_pattern', type=str,
-                        help='Filepattern of the images in input', required=True)
-    parser.add_argument('--image', dest='image', type=str,
-                        help='The image to turn into a pyramid', required=True)
-    parser.add_argument('--imagetype', dest='image_type', type=str,
-                        help='The type of image: image or segmentation', required=True)
+        parser.add_argument('--inpDir', dest='input_dir', type=str,
+                            help='Path to folder with CZI files', required=True)
+        parser.add_argument('--outDir', dest='output_dir', type=str,
+                            help='The output directory for ome.tif files', required=True)
+        parser.add_argument('--imagetype', dest='image_type', type=str,
+                            help='The type of image: image or segmentation', required=True)
 
-    args = parser.parse_args()
-    input_dir = args.input_dir
-    output_dir = args.output_dir
-    image_num = args.image_num 
-    stackby = args.stack_by
-    imagepattern = args.image_pattern
-    image = args.image
-    imagetype = args.image_type
+        args = parser.parse_args()
+        input_image = args.input_dir
+        output_dir = args.output_dir
+        imagetype = args.image_type
+        image = os.path.basename(input_image)
 
-    logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(image_num),
-                        datefmt='%d-%b-%y %H:%M:%S')
-    logger = logging.getLogger("build_pyramid")
-    logger.setLevel(logging.INFO) 
+        logging.basicConfig(format='%(asctime)s - %(name)s - {} - %(levelname)s - %(message)s'.format(image),
+                            datefmt='%d-%b-%y %H:%M:%S')
+        logger = logging.getLogger("build_pyramid")
+        logger.setLevel(logging.INFO) 
 
-    logger.info("Starting to build...")
+        logger.info("Starting to build...")
 
-    # Create the BioReader object
-    logger.info('Getting the BioReader...')
-    logger.info(image)
-    bf = BioReader(Path(input_dir).joinpath(image),max_workers=max([cpu_count()-1,2]))
-    getimageshape = bf.shape
-    stackheight = bf.z
+        # Create the BioReader object
+        logger.info('Getting the BioReader...')
+        
+        bf = BioReader(input_image, max_workers=max([cpu_count()-1,2]))
+        getimageshape = bf.shape
+        logger.info("Image Shape {}".format(getimageshape))
+        datatype = np.dtype(bf.dtype)
+        chunk_size = [256,256,256]
+        resolution = utils.get_resolution(phys_y=bf.physical_size_y, 
+                                          phys_x=bf.physical_size_x, 
+                                          phys_z=bf.physical_size_z)
 
-    # Make the output directory
-    out_dir = Path(output_dir).joinpath(image)
-    out_dir.mkdir()
-    out_dir = str(out_dir.absolute())
+        if imagetype == "segmentation":
+            file_info = nginfo.info_segmentation(directory=output_dir,
+                                                dtype=datatype,
+                                                chunk_size = [256,256,256],
+                                                size=getimageshape[:3],
+                                                resolution=resolution)
+            encodedvolume = ngvol.generate_recursive_chunked_representation(volume=bf,info=file_info, dtype=datatype, directory=output_dir)
+        elif imagetype == "image":
+            file_info = nginfo.info_image(directory=output_dir,
+                                                dtype=datatype,
+                                                chunk_size = [256,256,256],
+                                                size=getimageshape[:3],
+                                                resolution=resolution)
+            encodedvolume = ngvol.generate_recursive_chunked_representation(volume=bf, info=file_info, dtype=datatype, directory=output_dir, blurring_method='average')
+        else:
+            raise ValueError("Image Type was not properly specified")
+        
+        logger.info("Data Type: {}".format(file_info['data_type']))
+        logger.info("Number of Channels: {}".format(file_info['num_channels']))
+        logger.info("Number of Scales: {}".format(len(file_info['scales'])))
+        logger.info("Image Type: {}".format(file_info['type']))
 
-    # Create the output path and info file
-    file_info = utils.neuroglancer_info_file(bf,out_dir,stackheight, imagetype)
+    except Exception as e:
+        traceback.print_exc()
 
-    logger.info("data_type: {}".format(file_info['data_type']))
-    logger.info("num_channels: {}".format(file_info['num_channels']))
-    logger.info("number of scales: {}".format(len(file_info['scales'])))
-    logger.info("type: {}".format(file_info['type']))
-    
-    # Create the classes needed to generate a precomputed slice
-    logger.info("Creating encoder and file writer...")
-    encoder = utils.NeuroglancerChunkEncoder(file_info)
-    file_writer = utils.NeuroglancerWriter(out_dir)
-    
-    logger.info("Getting Higher Res...")
-    
-    # Create the stacked images
-    utils._get_higher_res(0, bf,file_writer,encoder)
+

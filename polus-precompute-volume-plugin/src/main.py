@@ -1,7 +1,7 @@
 import logging, argparse, time, multiprocessing, subprocess
-from pathlib import Path
 import filepattern
 import os
+from pathlib import Path
 from filepattern import FilePattern as fp
 
 
@@ -20,41 +20,31 @@ def main():
                         help='Path to folder with CZI files', required=True)
     parser.add_argument('--outDir', dest='output_dir', type=str,
                         help='The output directory for ome.tif files', required=True)
-    parser.add_argument('--imagepattern', dest='image_pattern', type=str,
-                        help='Filepattern of the images in input', required=True)
     parser.add_argument('--imageType', dest='image_type', type=str,
                         help='The type of image, image or segmentation', required=True)
+    parser.add_argument('--imagePattern', dest='image_pattern', type=str,
+                        help='Filepattern of the images in input', required=False)
 
     # Parse the arguments
     args = parser.parse_args()
     input_dir = args.input_dir
     output_dir = args.output_dir
-    imagepattern = args.image_pattern
     imagetype = args.image_type
+    imagepattern = args.image_pattern
 
-    # Get Variables of Images
-    regex = filepattern.get_regex(pattern = imagepattern)
-    regexzero = regex[0]
-    regexone = regex[1]
-    vars_instack = ''
-    stack_by = ''
-    
-    for item in regexone:
-        if (item == 'x' or item == 'y') or item == 'z':
-            vars_instack = vars_instack + item
-        else:
-            stack_by = stack_by + item
+    logger.info('Input Directory = {}'.format(input_dir))
+    logger.info('Image Type = {}'.format(imagetype))
 
-    logger.info('input_dir = {}'.format(input_dir))
-    logger.info('output_dir = {}'.format(output_dir))
-    logger.info('image pattern = {}'.format(imagepattern))
-    logger.info('images are stacked by variable(s) {}'.format(stack_by))
-    
+    if imagepattern == None:
+        imagepattern = ".*"
+
     # Get list of images that we are going to through
     logger.info('Getting the images...')
-    image_path = Path(input_dir)
-    images = [i for i in image_path.iterdir() if "".join(i.suffixes)==".ome.tif"]
+    fp_images = fp(Path(input_dir),imagepattern)
+    images = [os.path.basename(i[0]['file']) for i in fp_images()]
     images.sort()
+    num_images = len(images)
+
 
     # Set up lists for tracking processes
     processes = []
@@ -64,9 +54,10 @@ def main():
     # Build one pyramid for each image in the input directory
     # Each stack is built within its own process, with a maximum number of processes
     # equal to number of cpus - 1.
-    stack_count = 1
-    im_count = 1
     for image in images:
+        output_image = os.path.join(output_dir, image)
+        input_image = os.path.join(input_dir, image)
+        logger.info("Output Directory : {}".format(output_image))
         if len(processes) >= multiprocessing.cpu_count()-1 and len(processes)>0:
             free_process = -1
             while free_process<0:
@@ -77,21 +68,15 @@ def main():
                 time.sleep(3)
                 
             pnum += 1
-            logger.info("Finished Z stack process {} of {} in {}s!".format(pnum,len(images),time.time() - process_timer[free_process]))
+            logger.info("Finished Z stack process {} of {} in {}s!".format(pnum,num_images,time.time() - process_timer[free_process]))
             del processes[free_process]
             del process_timer[free_process]
             
-        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --imageNum '{}' --stackby '{}' --imagepattern '{}' --image '{}' --imagetype {}".format(input_dir,
-                                                                                                                                            output_dir,
-                                                                                                                                            im_count,
-                                                                                                                                            stack_by,
-                                                                                                                                            imagepattern,
-                                                                                                                                            image.name,
-                                                                                                                                            imagetype),
-                                                                                                                                        shell=True))
-        im_count += 1
+        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --imagetype {}".format(input_image,
+                                                                                                                       output_image,
+                                                                                                                       imagetype),
+                                                                                                                       shell=True))
         process_timer.append(time.time())
-        stack_count = stack_count + 1
     
     # Wait for all processes to finish
     while len(processes)>1:
