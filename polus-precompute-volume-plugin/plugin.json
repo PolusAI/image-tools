@@ -1,6 +1,6 @@
 {
     "name": "Polus Precompute Volume Plugin",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "title": "WIPP Widget",
     "description": "Everything you need to start a WIPP plugin.",
     "author": "Data Scientist (data.scientist@labshare.org)",
@@ -8,21 +8,21 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-precompute-volume-plugin:0.2.0",
+    "containerId": "labshare/polus-precompute-volume-plugin:0.2.1",
     "inputs": [
-      {
-        "name": "imagepattern",
-        "description": "Pattern of the images in Input",
-        "type": "string",
-        "options": null,
-        "required": false
-      },
       {
         "name": "inpDir",
         "description": "Input collection",
         "type": "collection",
         "options": null,
         "required": true
+      },
+      {
+        "name": "imagePattern",
+        "description": "Pattern of the images in Input",
+        "type": "string",
+        "options": null,
+        "required": false
       },
       {
         "name": "imageType",
