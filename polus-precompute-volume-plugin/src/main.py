@@ -24,6 +24,8 @@ def main():
                         help='The type of image, image or segmentation', required=True)
     parser.add_argument('--imagePattern', dest='image_pattern', type=str,
                         help='Filepattern of the images in input', required=False)
+    parser.add_argument('--mesh', dest='mesh', type=bool, nargs='?',const=True,
+                        default=False,help='True or False', required=True)
 
     # Parse the arguments
     args = parser.parse_args()
@@ -31,6 +33,10 @@ def main():
     output_dir = args.output_dir
     imagetype = args.image_type
     imagepattern = args.image_pattern
+    mesh = args.mesh
+
+    if imagetype != 'segmentation' and mesh == True:
+        raise ValueError("Can only generate meshes if imageType is segmentation")
 
     logger.info('Input Directory = {}'.format(input_dir))
     logger.info('Image Type = {}'.format(imagetype))
@@ -72,9 +78,10 @@ def main():
             del processes[free_process]
             del process_timer[free_process]
             
-        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --imagetype {}".format(input_image,
+        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --imagetype {} --mesh {}".format(input_image,
                                                                                                                        output_image,
-                                                                                                                       imagetype),
+                                                                                                                       imagetype,
+                                                                                                                       mesh),
                                                                                                                        shell=True))
         process_timer.append(time.time())
     
