@@ -1,6 +1,6 @@
 {
     "name": "Polus Precompute Volume Plugin",
-    "version": "0.2.1test00",
+    "version": "0.2.4test00",
     "title": "WIPP Widget",
     "description": "Everything you need to start a WIPP plugin.",
     "author": "Data Scientist (data.scientist@labshare.org)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-precompute-volume-plugin:0.2.1",
+    "containerId": "labshare/polus-precompute-volume-plugin:0.2.4",
     "inputs": [
       {
         "name": "inpDir",
