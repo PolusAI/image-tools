@@ -1,6 +1,6 @@
 {
     "name": "Polus Precompute Volume Plugin",
-    "version": "0.2.1",
+    "version": "0.2.1test00",
     "title": "WIPP Widget",
     "description": "Everything you need to start a WIPP plugin.",
     "author": "Data Scientist (data.scientist@labshare.org)",
@@ -60,6 +60,11 @@
         "description": "Collection name..."
       },
       {
+        "key": "inputs.imagePattern",
+        "title": "Image Pattern: ",
+        "description": "Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). "
+      },
+      {
         "key": "inputs.imageType",
         "title": "Image Type: ",
         "description": "Image or Segmentation?"
@@ -68,12 +73,7 @@
         "key": "inputs.mesh",
         "title": "Create meshes: ",
         "default": "false",
-        "condition": "inputs.imageType==['segmentation']"
-      },
-      {
-        "key": "inputs.imagePattern",
-        "title": "Image Pattern: ",
-        "description": "Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). "
+        "condition": "inputs.imageType==segmentation"
       }
     ]
   }
