@@ -35,6 +35,13 @@
         "type": "string",
         "options": null,
         "required": false
+      },
+      {
+        "name": "meshes",
+        "description": "Create meshes",
+        "type": "boolean",
+        "options": null,
+        "required": true
       }
     ],
     "outputs": [
@@ -56,6 +63,12 @@
         "key": "inputs.imageType",
         "title": "Image Type: ",
         "description": "Image or Segmentation?"
+      },
+      {
+        "key": "inputs.meshes",
+        "title": "Create meshes: ",
+        "default": "false",
+        "condition": "inputs.imageType==['segmentation']"
       },
       {
         "key": "inputs.imagepattern",
