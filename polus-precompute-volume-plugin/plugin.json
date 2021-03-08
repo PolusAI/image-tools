@@ -37,7 +37,7 @@
         "required": false
       },
       {
-        "name": "meshes",
+        "name": "mesh",
         "description": "Create meshes",
         "type": "boolean",
         "options": null,
@@ -65,7 +65,7 @@
         "description": "Image or Segmentation?"
       },
       {
-        "key": "inputs.meshes",
+        "key": "inputs.mesh",
         "title": "Create meshes: ",
         "default": "false",
         "condition": "inputs.imageType==['segmentation']"
