@@ -10,6 +10,7 @@ COPY src ${EXEC_DIR}/
 
 RUN apt update
 RUN apt-get install -y git
+RUN apt-get install -y libgl1-mesa-dev
 RUN apt-get install -y build-essential
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
