@@ -2,7 +2,6 @@ import logging, argparse, time, multiprocessing, traceback
 
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Process
-from multiprocessing import Pool
 
 import utils
 import os
@@ -11,11 +10,7 @@ from pathlib import Path
 import filepattern
 from filepattern import FilePattern as fp
 
-
-
 import numpy as np
-
-
 
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',

@@ -177,6 +177,27 @@ def build_pyramid(input_image,
                   imagetype, 
                   mesh):
 
+    """
+    This function builds the pyramids for Volume Generation and Meshes (if specified)
+
+    Parameters
+    ----------
+    input_image : str
+        Where the input directory is located
+    output_image : str
+        Where the output directory is located
+    imagetype : str
+        Specifying whether we are averaging or taking the mode of the images 
+        when blurring the images for the pyramids
+    mesh : boolean
+        Whether or not meshes are generated with segmented volumes
+
+    Returns
+    -------
+    Pyramids or volumes of input data
+    """
+
+    # Getting the intial information for the info file specification required by Neuroglancer 
     bf = BioReader(input_image, max_workers=max([cpu_count()-1,2]))
     bfshape = bf.shape
     logger.info("Image Shape {}".format(bfshape))
@@ -187,6 +208,7 @@ def build_pyramid(input_image,
                                 phys_x=bf.physical_size_x, 
                                 phys_z=bf.physical_size_z)
 
+
     if imagetype == "segmentation":
         if mesh == False:
             file_info = nginfo.info_segmentation(directory=output_image,
@@ -196,7 +218,8 @@ def build_pyramid(input_image,
                                                 resolution=resolution)
             encodedvolume = ngvol.generate_recursive_chunked_representation(volume=bf,info=file_info, dtype=datatype, directory=output_image)
 
-        else:
+        else: # if generating meshes
+            # Need to iterate through chunks of the input for scalabiltiy
             ysplits = list(np.arange(0, bfshape[0], chunk_size[0]))
             ysplits.append(bfshape[0])
             xsplits = list(np.arange(0, bfshape[1], chunk_size[1]))
@@ -204,10 +227,12 @@ def build_pyramid(input_image,
             zsplits = list(np.arange(0, bfshape[2], chunk_size[2]))
             zsplits.append(bfshape[2])
 
+            # Keep track of the labelled segments
             all_identities = np.array([])
             totalbytes = {}
             temp_dir = os.path.join(output_image, "tempdir")
 
+            # Creating a temporary files for the polygon meshes -- will later be converted to Draco
             with tempfile.TemporaryDirectory() as temp_dir:
                 if not os.path.exists(temp_dir):
                     os.makedirs(temp_dir, exist_ok=True)
@@ -241,6 +266,7 @@ def build_pyramid(input_image,
 
                 executor.shutdown(wait=True)
 
+                # Once you have all the labelled segments, then create segment_properties file
                 all_identities = np.unique(all_identities).astype('int')
                 file_info = nginfo.info_mesh(directory=output_image,
                                             chunk_size=chunk_size,
@@ -252,7 +278,7 @@ def build_pyramid(input_image,
                                             bit_depth=bit_depth,
                                             order="YXZ")
                 
-
+                # concatenate and decompose the meshes in the temporary file for all segments
                 with ThreadPoolExecutor(max_workers=4) as executor:
                     futuresvariable = [executor.submit(concatenate_and_generate_meshes, 
                                                     ide, temp_dir, output_image, bit_depth, chunk_size) 
