@@ -1,26 +1,22 @@
-FROM labshare/polus-bfio-util:1.0.10-slim-buster
+FROM python:3.6-slim
 
 COPY VERSION /
-		
 ARG EXEC_DIR="/opt/executables"
 ARG DATA_DIR="/data"
-
 RUN mkdir -p ${EXEC_DIR} \
     && mkdir -p ${DATA_DIR}/inputs \
     && mkdir ${DATA_DIR}/outputs
-
 COPY src ${EXEC_DIR}/
 
-RUN apt-get update && apt-get install -y libgl1-mesa-dev
-
-RUN pip install cmake
+RUN apt update
+RUN apt-get install -y git
+RUN apt-get install -y build-essential
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
 RUN git clone --branch decomposition https://github.com/mmvih/neurogen.git --recurse-submodules
-
-RUN pip install neurogen/
+RUN pip3 install cmake
+RUN pip3 install neurogen/
 
 WORKDIR ${EXEC_DIR}
-
 ENTRYPOINT ["python3", "main.py"]
