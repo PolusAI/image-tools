@@ -1,8 +1,20 @@
-import logging, argparse, time, multiprocessing, subprocess
-import filepattern
+import logging, argparse, time, multiprocessing, traceback
+
+from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Process
+from multiprocessing import Pool
+
+import utils
 import os
 from pathlib import Path
+
+import filepattern
 from filepattern import FilePattern as fp
+
+
+
+import numpy as np
+
 
 
 # Initialize the logger    
@@ -51,57 +63,14 @@ def main():
     images.sort()
     num_images = len(images)
 
-
-    # Set up lists for tracking processes
-    processes = []
-    process_timer = []
-    pnum = 0
     
     # Build one pyramid for each image in the input directory
     # Each stack is built within its own process, with a maximum number of processes
     # equal to number of cpus - 1.
     for image in images:
-        output_image = os.path.join(output_dir, image)
-        input_image = os.path.join(input_dir, image)
-        logger.info("Output Directory : {}".format(output_image))
-        if len(processes) >= multiprocessing.cpu_count()-1 and len(processes)>0:
-            free_process = -1
-            while free_process<0:
-                for process in range(len(processes)):
-                    if processes[process].poll() is not None:
-                        free_process = process
-                        break
-                time.sleep(3)
-                
-            pnum += 1
-            logger.info("Finished Z stack process {} of {} in {}s!".format(pnum,num_images,time.time() - process_timer[free_process]))
-            del processes[free_process]
-            del process_timer[free_process]
-            
-        processes.append(subprocess.Popen("python3 build_pyramid.py --inpDir '{}' --outDir '{}' --imagetype {} --mesh {}".format(input_image,
-                                                                                                                       output_image,
-                                                                                                                       imagetype,
-                                                                                                                       mesh),
-                                                                                                                       shell=True))
-        process_timer.append(time.time())
-    
-    # Wait for all processes to finish
-    while len(processes)>1:
-        free_process = -1
-        while free_process<0:
-            for process in range(len(processes)):
-                if processes[process].poll() is not None:
-                    free_process = process
-                    break
-            time.sleep(3)
-        pnum += 1
-        logger.info("Finished stack process {} of {} in {}s!".format(pnum,len(images),time.time() - process_timer[free_process]))
-        del processes[free_process]
-        del process_timer[free_process]
-
-    processes[0].wait()
-    
-    logger.info("Finished all processes!")
+        p = Process(target=utils.build_pyramid, args=(os.path.join(input_dir, image), os.path.join(output_dir, image), imagetype, mesh))
+        p.start()
+        p.join()
 
 if __name__ == "__main__":
     main()

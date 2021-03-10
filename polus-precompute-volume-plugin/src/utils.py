@@ -4,10 +4,17 @@ import math
 
 import logging, traceback
 from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import cpu_count
+import tempfile
 
 import trimesh
 from skimage import measure
+
 from neurogen import mesh as ngmesh
+from neurogen import info as nginfo
+from neurogen import volume as ngvol
+
+from bfio.bfio import BioReader, BioWriter
 
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -164,3 +171,108 @@ def concatenate_and_generate_meshes(iden,
                     segment_id=iden, directory=output_image, quantization_bits=bit_depth)
     except Exception as e:
         traceback.print_exc()
+
+def build_pyramid(input_image, 
+                  output_image, 
+                  imagetype, 
+                  mesh):
+
+    bf = BioReader(input_image, max_workers=max([cpu_count()-1,2]))
+    bfshape = bf.shape
+    logger.info("Image Shape {}".format(bfshape))
+    datatype = np.dtype(bf.dtype)
+    chunk_size = [256,256,256]
+    bit_depth = 16
+    resolution = get_resolution(phys_y=bf.physical_size_y, 
+                                phys_x=bf.physical_size_x, 
+                                phys_z=bf.physical_size_z)
+
+    if imagetype == "segmentation":
+        if mesh == False:
+            file_info = nginfo.info_segmentation(directory=output_image,
+                                                dtype=datatype,
+                                                chunk_size = chunk_size,
+                                                size=bfshape[:3],
+                                                resolution=resolution)
+            encodedvolume = ngvol.generate_recursive_chunked_representation(volume=bf,info=file_info, dtype=datatype, directory=output_image)
+
+        else:
+            ysplits = list(np.arange(0, bfshape[0], chunk_size[0]))
+            ysplits.append(bfshape[0])
+            xsplits = list(np.arange(0, bfshape[1], chunk_size[1]))
+            xsplits.append(bfshape[1])
+            zsplits = list(np.arange(0, bfshape[2], chunk_size[2]))
+            zsplits.append(bfshape[2])
+
+            all_identities = np.array([])
+            totalbytes = {}
+            temp_dir = os.path.join(output_image, "tempdir")
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                if not os.path.exists(temp_dir):
+                    os.makedirs(temp_dir, exist_ok=True)
+                for y in range(len(ysplits)-1):
+                    for x in range(len(xsplits)-1):
+                        for z in range(len(zsplits)-1):
+                            start_y, end_y = (ysplits[y], ysplits[y+1])
+                            start_x, end_x = (xsplits[x], xsplits[x+1])
+                            start_z, end_z = (zsplits[z], zsplits[z+1])
+                            
+
+                            volume = bf[start_y:end_y,start_x:end_x,start_z:end_z]
+                            volume = volume.reshape(volume.shape[:3])
+                            logger.info("Loaded subvolume (YXZ) {}-{}__{}-{}__{}-{}".format(start_y, end_y,
+                                                                                            start_x, end_x,
+                                                                                            start_z, end_z))
+                            ids = np.unique(volume)
+                            if (ids == [0]).all():
+                                continue
+                            else:
+                                ids = np.delete(ids, np.where(ids==0))
+                                with ThreadPoolExecutor(max_workers=8) as executor:
+                                    executor.submit(create_plyfiles(subvolume = volume,
+                                                                    ids=ids,
+                                                                    temp_dir=temp_dir,
+                                                                    start_y=start_y,
+                                                                    start_x=start_x,
+                                                                    start_z=start_z,
+                                                                    totalbytes=totalbytes))
+                                    all_identities = np.append(all_identities, ids)
+
+                executor.shutdown(wait=True)
+
+                all_identities = np.unique(all_identities).astype('int')
+                file_info = nginfo.info_mesh(directory=output_image,
+                                            chunk_size=chunk_size,
+                                            size=bf.shape[:3],
+                                            dtype=np.dtype(bf.dtype).name,
+                                            ids=all_identities,
+                                            resolution=resolution,
+                                            segmentation_subdirectory="segment_properties",
+                                            bit_depth=bit_depth,
+                                            order="YXZ")
+                
+
+                with ThreadPoolExecutor(max_workers=4) as executor:
+                    futuresvariable = [executor.submit(concatenate_and_generate_meshes, 
+                                                    ide, temp_dir, output_image, bit_depth, chunk_size) 
+                                                    for ide in all_identities]
+                executor.shutdown(wait=True)
+
+                encodedvolume = ngvol.generate_recursive_chunked_representation(volume=bf,info=file_info, dtype=datatype, directory=output_image)
+
+    elif imagetype == "image":
+        file_info = nginfo.info_image(directory=output_image,
+                                            dtype=datatype,
+                                            chunk_size = [256,256,256],
+                                            size=bfshape[:3],
+                                            resolution=resolution)
+        encodedvolume = ngvol.generate_recursive_chunked_representation(volume=bf, info=file_info, dtype=datatype, directory=output_image, blurring_method='average')
+    else:
+        raise ValueError("Image Type was not properly specified")
+    
+    logger.info("Data Type: {}".format(file_info['data_type']))
+    logger.info("Number of Channels: {}".format(file_info['num_channels']))
+    logger.info("Number of Scales: {}".format(len(file_info['scales'])))
+    logger.info("Image Type: {}".format(file_info['type']))
+
