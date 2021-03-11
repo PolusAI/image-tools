@@ -6,7 +6,7 @@ echo ${datapath}
 
 # Inputs
 stitchPath=/data/input_vector
-imgPath=/data/input
+imgPath=/data/input_stitched
 timesliceNaming=false
 filePattern=""
 
