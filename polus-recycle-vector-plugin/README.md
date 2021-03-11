@@ -6,14 +6,16 @@ The
 and the
 [WIPP pyramid building plugin](https://github.com/usnistgov/WIPP-pyramid-plugin)
 do not have a way to apply a stitching vector to new sets of images. For
-example, it is currently possible to stitch the first channel of a multi-channel
-image and apply the same stitching vector to the other channels. This plugin
-creates a new stitching vector that will apply an existing single stitching
-vector to a different set of images.
+example, it is currently impossible to stitch the first channel of a
+multi-channel image and apply the same stitching vector to the other channels.
+This plugin creates a new stitching vector that will apply an existing single
+stitching vector to a different set of images.
 
 This plugin uses 
 [filepatterns](https://filepattern.readthedocs.io/en/latest/),
-which is a variant of regular expressions similar to what MIST uses. See
+which is a variant of regular expressions similar to what
+[MIST](https://github.com/usnistgov/MIST)
+uses. See
 **Input Regular Expressions** for more information.
 
 ## Input Regular Expressions
