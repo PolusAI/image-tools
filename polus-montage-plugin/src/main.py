@@ -1,11 +1,10 @@
-import argparse, logging, time, math
-from pathlib import Path
+import argparse, logging, time, math, typing
+import pathlib
 from filepattern import FilePattern, get_regex, VARIABLES
 from bfio import BioReader
 
 SPACING = 10
 MULTIPLIER = 4
-STITCH_VARS = ['file','correlation','posX','posY','gridX','gridY'] # image stitching values
 
 def _get_xy_index(files,dims,layout):
     """ Get the x and y indices from a list of filename dictionaries
@@ -81,44 +80,17 @@ def _get_xy_index(files,dims,layout):
 
     return grid_dims
 
-if __name__=="__main__":
-    # Initialize the logger
-    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
-                        datefmt='%d-%b-%y %H:%M:%S')
-    logger = logging.getLogger("main")
-    logger.setLevel(logging.INFO)
-
-    # Setup the argument parsing
-    logger.info("Parsing arguments...")
-    parser = argparse.ArgumentParser(prog='main', description='Advanced montaging plugin.')
-    parser.add_argument('--filePattern', dest='filePattern', type=str,
-                        help='Filename pattern used to parse data', required=True)
-    parser.add_argument('--inpDir', dest='inpDir', type=str,
-                        help='Input image collection to be processed by this plugin', required=True)
-    parser.add_argument('--layout', dest='layout', type=str,
-                        help='Specify montage organization', required=False)
-    parser.add_argument('--outDir', dest='outDir', type=str,
-                        help='Output collection', required=True)
-    parser.add_argument('--imageSpacing', dest='imageSpacing', type=str,
-                        help='Spacing between images in the smallest subgrid', required=False)
-    parser.add_argument('--gridSpacing', dest='gridSpacing', type=str,
-                        help='Multiplier', required=False)
-
-    # Parse the arguments
-    args = parser.parse_args()
-    pattern = args.filePattern
-    logger.info('filePattern = {}'.format(pattern))
-    inpDir = args.inpDir
-    logger.info('inpDir = {}'.format(inpDir))
-    layout = args.layout
-    logger.info('layout = {}'.format(layout))
-    outDir = args.outDir
-    logger.info('outDir = {}'.format(outDir))
-    image_spacing = args.imageSpacing
-    logger.info('image_spacing = {}'.format(image_spacing))
-    grid_spacing = args.gridSpacing
-    logger.info('grid_spacing = {}'.format(grid_spacing))
-
+def main(pattern: str,
+         inpDir: pathlib.Path,
+         layout: typing.List[str],
+         outDir: pathlib.Path,
+         imageSpacing: typing.Optional[int] = None,
+         gridSpacing: typing.Optional[int] = None
+         ) -> None:
+    
+    global SPACING
+    global MULTIPLIER
+    
     # Set new image spacing and grid spacing arguments if present
     if image_spacing != None:
         SPACING = int(image_spacing)
@@ -226,13 +198,13 @@ if __name__=="__main__":
 
     # Build stitching vector
     logger.info('Building the stitching vector....')
-    fpath = str(Path(outDir).joinpath("img-global-positions-1.txt").absolute())
+    fpath = str(pathlib.Path(outDir).joinpath("img-global-positions-1.txt").absolute())
     max_dim = len(layout_dimensions['grid_size'])-1
     with open(fpath,'w') as fw:
         correlation = 0
         for file in fp():
             f = file[0]
-            file_name = Path(f['file']).name
+            file_name = pathlib.Path(f['file']).name
 
             # Calculate the image position
             gridX = 0
@@ -248,7 +220,8 @@ if __name__=="__main__":
                 else:
                     gridX += f[str(i) + '_gridX'] * layout_dimensions['grid_size'][i+1][0]
                     gridY += f[str(i) + '_gridY'] * layout_dimensions['grid_size'][i+1][1]
-
+            
+            # Write the position to the stitching vector
             fw.write("file: {}; corr: {}; position: ({}, {}); grid: ({}, {});\n".format(file_name,
                                                                                         correlation,
                                                                                         posX,
@@ -257,3 +230,61 @@ if __name__=="__main__":
                                                                                         gridY))
 
     logger.info('Done!')
+
+
+if __name__=="__main__":
+    # Initialize the logger
+    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+                        datefmt='%d-%b-%y %H:%M:%S')
+    logger = logging.getLogger("main")
+    logger.setLevel(logging.INFO)
+
+    # Setup the argument parsing
+    logger.info("Parsing arguments...")
+    parser = argparse.ArgumentParser(prog='main', description='Advanced montaging plugin.')
+    parser.add_argument('--filePattern', dest='filePattern', type=str,
+                        help='Filename pattern used to parse data', required=True)
+    parser.add_argument('--inpDir', dest='inpDir', type=str,
+                        help='Input image collection to be processed by this plugin', required=True)
+    parser.add_argument('--layout', dest='layout', type=str,
+                        help='Specify montage organization', required=True)
+    parser.add_argument('--outDir', dest='outDir', type=str,
+                        help='Output collection', required=True)
+    parser.add_argument('--imageSpacing', dest='imageSpacing', type=str,
+                        help='Spacing between images in the smallest subgrid', required=False)
+    parser.add_argument('--gridSpacing', dest='gridSpacing', type=str,
+                        help='Multiplier', required=False)
+
+    # Parse the arguments
+    args = parser.parse_args()
+    
+    pattern = args.filePattern
+    logger.info('filePattern = {}'.format(pattern))
+    
+    inpDir = pathlib.Path(args.inpDir)
+    logger.info('inpDir = {}'.format(inpDir))
+    
+    layout = args.layout
+    logger.info('layout = {}'.format(layout))
+    
+    outDir = args.outDir
+    logger.info('outDir = {}'.format(outDir))
+    
+    image_spacing = args.imageSpacing
+    logger.info('image_spacing = {}'.format(image_spacing))
+    
+    grid_spacing = args.gridSpacing
+    logger.info('grid_spacing = {}'.format(grid_spacing))
+    
+    # Set new image spacing and grid spacing arguments if present
+    if image_spacing != None:
+        image_spacing = int(image_spacing)
+    if grid_spacing != None:
+        grid_spacing = int(grid_spacing)
+    
+    main(pattern,
+         inpDir,
+         layout,
+         outDir,
+         image_spacing,
+         grid_spacing)
