@@ -1,6 +1,6 @@
 {
     "name": "FTL Label",
-    "version": "0.1.1",
+    "version": "0.2.2",
     "title": "FTL Label",
     "description": "Label objects in a 2d or 3d binary image.",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-ftl-label-plugin:0.1.1",
+    "containerId": "labshare/polus-ftl-label-plugin:0.2.2",
     "inputs": [
       {
         "name": "inpDir",

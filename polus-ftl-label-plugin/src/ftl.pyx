@@ -557,7 +557,7 @@ cdef rle_index(tuple image_shape,
     
     ld_change = np.vstack((np.array(0,dtype=np),
                            ld_change,
-                           np.array(rle_objects.shape[0]))).astype(np.int)
+                           np.array(rle_objects.shape[0]))).astype(int)
     
     # Initialize the index matrix
     shape = 2
