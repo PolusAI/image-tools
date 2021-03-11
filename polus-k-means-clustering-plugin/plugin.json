@@ -1,6 +1,6 @@
 {
     "name": "K-Means Clustering",
-    "version": "0.2.27",
+    "version": "0.2.28",
     "title": "K-Means Clustering",
     "description": "Cluster the data using K-Means.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-k-means-clustering-plugin:0.2.27",
+    "containerId": "labshare/polus-k-means-clustering-plugin:0.2.28",
     "inputs": [      
       {
         "name": "inpdir",
@@ -85,12 +85,6 @@
         "title": "Enter number of clusters",
         "description": "Number of clusters:",
 	"condition": "model.inputs.methods=='Manual'"
-      },
-      {
-        "key": "inputs.outdir",
-        "title": "Output csv file",
-        "description": "Save output csv file containing labeled data"
-      }      
-      
+      }
     ]
   }
