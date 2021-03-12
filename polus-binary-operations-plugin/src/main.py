@@ -35,13 +35,13 @@ def open_binary(image,kernel=None, intk=None, n=None):
 
 def close_binary(image,kernel=None, intk=None, n=None):
     image[image == 255] = 1
-    closeimg = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
+    closeimg = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
     closeimg[closeimg == 1] = 255
     return closeimg
 
 def morphgradient_binary(image,kernel=None, intk=None, n=None):
     image[image == 255] = 1
-    mg = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
+    mg = cv2.morphologyEx(image, cv2.MORPH_GRADIENT, kernel)
     return mg
 
 def skeleton_binary(image,kernel=None, intk=None, n=None):
@@ -67,7 +67,6 @@ def skeleton_binary(image,kernel=None, intk=None, n=None):
 
 def holefilling_binary(image,kernel=None, intk=None, n=None):
     image[image == 255] = 1
-    # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(intk,intk))
     hf = cv2.morphologyEx(image,cv2.MORPH_OPEN,kernel)
     hf[hf == 1] = 255
     return hf
@@ -91,7 +90,6 @@ def blackhat_binary(image,kernel=None, intk=None, n=None):
 
 def areafiltering_binary(image,kernel=None, intk=None, n=None):
     image[image == 255] = 1
-    # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(intk,intk))
     af = cv2.morphologyEx(image,cv2.MORPH_OPEN,kernel)
     af[af == 1] = 255
     return af
@@ -258,14 +256,6 @@ if __name__=="__main__":
 
             # Close the image
             bw.close_image()
-
-            """Use this part to help check if the Tiling was done correctly"""
-            # imagecheck = np.squeeze(br.read_image())
-            # imagecheck = function(imagecheck, kernel=kernel, intk=intkernel, n=dict_n_args[operations])
-            # new = Path(outDir).joinpath('checkimage.ome.tif')
-            # bwcheck = BioWriter(str(new), metadata=br.read_metadata())
-            # bwcheck.write_image(np.reshape(imagecheck, (br_y, br_x, br_z, 1, 1)))
-            # bwcheck.close_image()
 
     # Always close the JavaBridge
     finally:
