@@ -9,18 +9,6 @@ Bioformats.
 For more information on WIPP, visit the
 [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
-## To do
-
-1. Additional parallelization: Currently the plugin splits the generation of
-each image pyramid off into its own process. It would be more memory efficient
-and faster to build individual pyramids if subpyramids were built in separate
-pyramids. This would require the creation of a method to read pyramid tiles and
-possibly a dag-like structure to check that certain tiles were created before
-starting a process.
-2. GPU acceleration: Since the number of disk reads is kept at a minimum and the
-main computational load is averaging pixels together to build lower resolution
-images, this plugin is a good candidate for gpu-acceleration.
-
 ## Building
 
 To build the Docker image for the conversion plugin, run

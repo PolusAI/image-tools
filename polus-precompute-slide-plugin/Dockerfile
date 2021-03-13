@@ -1,5 +1,5 @@
 # Get image containing bfio
-FROM labshare/polus-bfio-util:2.0.5-slim-buster
+FROM labshare/polus-bfio-util:2.0.6-slim-buster
 
 COPY VERSION /
 		

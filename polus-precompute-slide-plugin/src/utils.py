@@ -1,8 +1,10 @@
-import copy, os, json, filepattern, imageio, pathlib, typing, abc
+import copy, os, json, filepattern, imageio, pathlib, typing, abc, zarr
 import bfio
 import numpy as np
+from numcodecs import Blosc
 from concurrent.futures import ThreadPoolExecutor
 from preadator import ProcessManager
+from bfio.OmeXml import OMEXML
 
 # Conversion factors to nm, these are based off of supported Bioformats length units
 UNITS = {'m':  10**9,
@@ -186,11 +188,14 @@ class PyramidWriter():
         pass
     
     def write_slide(self):
-        with ProcessManager.process(f'{self.base_path} - {self.output_depth}'):
+        
+        self._write_slide()
+        
+        # with ProcessManager.process(f'{self.base_path} - {self.output_depth}'):
             
-            ProcessManager.submit_thread(self._write_slide)
+        #     ProcessManager.submit_thread(self._write_slide)
             
-            ProcessManager.join_threads()
+        #     ProcessManager.join_threads()
     
     def scale_info(self,S):
         
@@ -293,14 +298,14 @@ def _get_higher_res(S: int,
         Y[1] = scale_info['size'][1]
     
     if str(S)==slide_writer.scale_info(-1)['key']:
-        with ProcessManager.thread():
+        # with ProcessManager.thread():
         
-            with bfio.BioReader(slide_writer.image_path,max_workers=1) as br:
+        with bfio.BioReader(slide_writer.image_path,max_workers=1) as br:
+        
+            image = br[Y[0]:Y[1],X[0]:X[1],Z[0]:Z[1],...].squeeze()
             
-                image = br[Y[0]:Y[1],X[0]:X[1],Z[0]:Z[1],...].squeeze()
-                
-            # Write the chunk
-            slide_writer.store_chunk(image,str(S),(X[0],X[1],Y[0],Y[1]))
+        # Write the chunk
+        slide_writer.store_chunk(image,str(S),(X[0],X[1],Y[0],Y[1]))
         
         return image
 
@@ -316,11 +321,11 @@ def _get_higher_res(S: int,
                 
         def load_and_scale(*args,**kwargs):
             sub_image = _get_higher_res(**kwargs)
-            with ProcessManager.thread():
-                image = args[0]
-                x_ind = args[1]
-                y_ind = args[2]
-                image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1]] = kwargs['slide_writer'].scale(sub_image)
+            # with ProcessManager.thread():
+            image = args[0]
+            x_ind = args[1]
+            y_ind = args[2]
+            image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1]] = kwargs['slide_writer'].scale(sub_image)
         
         # To limit memory consumption, only run concurrent threads at lower
         # levels of the pyramid
@@ -427,6 +432,88 @@ class NeuroglancerWriter(PyramidWriter):
         # writing all the information into the file
         with open(op,'w') as writer:
             json.dump(info,writer)
+            
+class ZarrWriter(PyramidWriter):
+    """ Method to write a Zarr pyramid
+    
+    Inputs:
+        base_dir - Where pyramid folders and info file will be stored
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        out_name = self.base_path.name.replace(''.join(self.base_path.suffixes),'')
+        self.base_path = self.base_path.with_name(out_name)
+        self.base_path.mkdir(exist_ok=True)
+        self.root = zarr.open(str(self.base_path.joinpath("data.zarr").resolve()),
+                              mode='a')
+        if "0" in self.root.group_keys():
+            self.root = self.root["0"]
+        else:
+            self.root = self.root.create_group("0")
+        
+        
+        self.writers = {}
+        max_scale = int(self.scale_info(-1)['key'])
+        compressor = Blosc(cname='zstd', clevel=3, shuffle=Blosc.BITSHUFFLE)
+        for S in range(10,len(self.info['scales'])):
+            scale_info = self.scale_info(S)
+            key = str(max_scale - int(scale_info['key']))
+            if key not in self.root.array_keys():
+                self.writers[key] = self.root.zeros(key,
+                                                    shape=(1,1,self.max_output_depth) + tuple(scale_info['size'][0:2]),
+                                                    chunks=(1,1,1,CHUNK_SIZE,CHUNK_SIZE),
+                                                    dtype=self.dtype,
+                                                    compressor=compressor)
+            else:
+                self.root[key].resize((1,1,self.max_output_depth) + tuple(scale_info['size'][0:2]))
+                self.writers[key] = self.root[key]
+
+    def _write_chunk(self,key,chunk_coords,buf):
+        key = str(int(self.scale_info(-1)['key']) - int(key))
+        chunk_coords = self._chunk_coords(chunk_coords)
+        self.writers[key][0:1,0:1,
+                          chunk_coords[4]:chunk_coords[5],
+                          chunk_coords[2]:chunk_coords[3],
+                          chunk_coords[0]:chunk_coords[1]] = buf
+            
+    def _encoder(self):
+        
+        return ZarrChunkEncoder(self.info)
+    
+    def _write_slide(self):
+    
+        _get_higher_res(10,self,Z=(self.image_depth,self.image_depth+1))
+            
+    def write_info(self):
+        """ This creates the multiscales metadata for zarr pyramids """
+        # https://forum.image.sc/t/multiscale-arrays-v0-1/37930
+        multiscales = [{
+            "version": "0.1",
+            "name": self.base_path.name,
+            "datasets": [],
+            "metadata": {
+                "method": "mean"
+            }
+        }]
+        
+        pad = len(self.scale_info(-1)['key'])
+        max_scale = int(self.scale_info(-1)['key'])
+        for S in reversed(range(10,len(self.info['scales']))):
+            scale_info = self.scale_info(S)
+            key = str(max_scale - int(scale_info['key']))
+            multiscales[0]["datasets"].append({"path": key})
+        self.root.attrs["multiscales"] = multiscales
+        
+        with bfio.BioReader(self.image_path,max_workers=1) as bfio_reader:
+            
+            metadata = OMEXML(str(bfio_reader.metadata))
+            metadata.image(0).Pixels.SizeZ = self.max_output_depth
+            
+            with open(self.base_path.joinpath("METADATA.ome.xml"),'x') as fw:
+                
+                fw.write(str(metadata).replace("<ome:","<").replace("</ome:","</"))
 
 class DeepZoomWriter(PyramidWriter):
     """ Method to write a DeepZoom pyramid
@@ -510,7 +597,7 @@ class NeuroglancerChunkEncoder(ChunkEncoder):
     def encode(self, chunk):
         """ Encode a chunk from a Numpy array into bytes.
         Inputs:
-            chunk - array with four dimensions (C, Z, Y, X)
+            chunk - array with 2 dimensions
         Outputs:
             buf - encoded chunk (byte stream)
         """
@@ -523,6 +610,21 @@ class NeuroglancerChunkEncoder(ChunkEncoder):
         assert chunk.shape[0] == self.num_channels
         buf = chunk.tobytes()
         return buf
+    
+class ZarrChunkEncoder(ChunkEncoder):
+
+    def encode(self, chunk):
+        """ Encode a chunk from a Numpy array into bytes.
+        Inputs:
+            chunk - array with 2 dimensions
+        Outputs:
+            buf - encoded chunk (byte stream)
+        """
+        
+        # Rearrange the image for Neuroglancer
+        chunk = chunk.reshape(chunk.shape[0],chunk.shape[1],1,1,1).transpose(4,3,2,0,1)
+        chunk = np.asarray(chunk).astype(self.dtype)
+        return chunk
 
 class DeepZoomChunkEncoder(ChunkEncoder):
 
@@ -533,7 +635,7 @@ class DeepZoomChunkEncoder(ChunkEncoder):
         dimentions.
         
         Inputs:
-            chunk - array with four dimensions (C, Z, Y, X)
+            chunk - array with 2 dimensions
         Outputs:
             buf - encoded chunk (byte stream)
         """
