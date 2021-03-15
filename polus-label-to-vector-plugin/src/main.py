@@ -46,14 +46,19 @@ if __name__=="__main__":
             logger.info('Processing image %s ',f)
         # Loop through files in inpDir image collection and process
             br = BioReader(str(Path(inpDir).joinpath(f).absolute()))
+            tile_size = min(1080, br.X)
             # Initializing a array to store the vector field
             flow_final = np.zeros((br.Y, br.X, br.Z, 3, 1)).astype(np.float32)
             # Iterating over Z dimension
             for z in range(br.Z):
-                flow = dynamics.labels_to_flows(br[0:br.Y,0:br.X,z:z+1, 0,0].squeeze())
-                flow=flow[:,:,:,np.newaxis,np.newaxis]
-                flow=flow.transpose((1,2,3,0,4))
-                flow_final[:,:,z:z+1,:,:] = flow
+                for x in range(0, br.X, tile_size):
+                    x_max = min([br.X, x + tile_size])
+                    for y in range(0, br.Y, tile_size):
+                        y_max = min([br.Y, y + tile_size])
+                        flow = dynamics.labels_to_flows(br[y:y_max, x:x_max,z:z+1, 0,0].squeeze())
+                        flow=flow[:,:,:,np.newaxis,np.newaxis]
+                        flow=flow.transpose((1,2,3,0,4))
+                        flow_final[y:y_max, x:x_max,z:z+1,:,:] = flow
 
             # Saving  Vector in chunks
             cluster = root.create_group(f)
