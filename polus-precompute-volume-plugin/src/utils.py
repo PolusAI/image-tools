@@ -12,7 +12,7 @@ from skimage import measure
 
 from neurogen import mesh as ngmesh
 from neurogen import info as nginfo
-from neurogen import vol as ngvol
+from neurogen import volume as ngvol
 
 from bfio.bfio import BioReader, BioWriter
 
