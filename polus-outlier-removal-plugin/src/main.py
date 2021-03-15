@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import fnmatch
+import typing
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from pyod.models.iforest import IForest
@@ -47,37 +48,12 @@ def isolationforest(data_set, types):
     pred = clf.predict(data_set)
     return pred
  
-# Setup the argument parsing
-def main():
-    logger.info("Parsing arguments...")
-    parser = argparse.ArgumentParser(prog='main', description='Outlier removal plugin.')
-    parser.add_argument('--inpdir', dest='inpdir', type=str,
-                        help='Input collection-Data that need outliers to be removed', required=True)
-    parser.add_argument('--methods', dest='methods', type=str,
-                        help='Select methods for outlier detection', required=True)
-    parser.add_argument('--types', dest='types', type=str,
-                        help='Select type of outliers to detect', required=False)
-    parser.add_argument('--outdir', dest='outdir', type=str,
-                        help='Output collection', required=True)
+def main(inpdir: os.path,
+         methods: typing.List[str],
+         outdir: os.chdir,
+         types: typing.Optional[str]=None
+         ) -> None:
     
-    # Parse the arguments
-    args = parser.parse_args()  
-    
-    #Path to csvfile directory
-    inpdir = args.inpdir
-    logger.info('inpdir = {}'.format(inpdir))
-    
-    #Detect outliers using different methods
-    methods = args.methods
-    logger.info('methods = {}'.format(methods))
-    
-    #Detect outliers based on type selected
-    types = args.types
-    logger.info('types = {}'.format(types))
-    
-    #Path to save output csvfiles
-    outdir = args.outdir
-    logger.info('outdir = {}'.format(outdir))
     
     #Get list of .csv files in the directory including sub folders for outlier removal
     inputcsv = list_file(inpdir)
@@ -120,13 +96,54 @@ def main():
         #Drop 'anomaly' column    
         inliers = inliers.drop('anomaly',axis=1)
         outliers = outliers.drop('anomaly',axis=1)
+        print(outdir)
 
     	#Save dataframe into csv file
         os.chdir(outdir)
         logger.info('Saving csv file')
-        export_inlier = inliers.to_csv (r'%s_inliers.csv'%file_name, index=None, header=True, encoding='utf-8-sig')
+        export_inlier = inliers.to_csv (r'%s.csv'%file_name, index=None, header=True, encoding='utf-8-sig')
         export_outlier = outliers.to_csv (r'%s_outliers.csv'%file_name, index=None, header=True, encoding='utf-8-sig')
         logger.info("Finished all processes!")
 
 if __name__ == "__main__":
-    main()
+    # Initialize the logger
+    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+                        datefmt='%d-%b-%y %H:%M:%S')
+    logger = logging.getLogger("main")
+    logger.setLevel(logging.INFO)
+    
+    # Setup the argument parsing
+    logger.info("Parsing arguments...")
+    parser = argparse.ArgumentParser(prog='main', description='Outlier removal plugin.')
+    parser.add_argument('--inpdir', dest='inpdir', type=str,
+                        help='Input collection-Data that need outliers to be removed', required=True)
+    parser.add_argument('--methods', dest='methods', type=str,
+                        help='Select methods for outlier detection', required=True)
+    parser.add_argument('--types', dest='types', type=str,
+                        help='Select type of outliers to detect', required=False)
+    parser.add_argument('--outdir', dest='outdir', type=str,
+                        help='Output collection', required=True)
+    
+    # Parse the arguments
+    args = parser.parse_args()  
+    
+    #Path to csvfile directory
+    inpdir = args.inpdir
+    logger.info('inpdir = {}'.format(inpdir))
+    
+    #Detect outliers using different methods
+    methods = args.methods
+    logger.info('methods = {}'.format(methods))
+    
+    #Detect outliers based on type selected
+    types = args.types
+    logger.info('types = {}'.format(types))
+    
+    #Path to save output csvfiles
+    outdir = args.outdir
+    logger.info('outdir = {}'.format(outdir))
+    
+    main(inpdir,
+         methods,
+         outdir,
+         types)

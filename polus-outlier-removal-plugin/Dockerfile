@@ -1,4 +1,4 @@
-FROM labshare/polus-bfio-util:2.0.0a4-slim-buster
+FROM python:3.9-slim
 
 COPY VERSION /
 
@@ -8,7 +8,7 @@ ARG DATA_DIR="/data"
 
 #Create folders
 RUN mkdir -p ${EXEC_DIR} \
-    && mkdir -p ${DATA_DIR}/images \
+    && mkdir -p ${DATA_DIR}/inputs \
     && mkdir -p ${DATA_DIR}/outputs
 
 #Copy executable

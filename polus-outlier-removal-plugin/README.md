@@ -14,6 +14,12 @@ Ensemble-based unsupervised method for outlier detection. The algorithm isolates
 ## Types:
 Choose any one of the types(global/local) mentioned to remove outliers from the data. This is an optional parameter. Based on the method selected for detection of outliers, this option is displayed.
 
+### Global
+Select global to remove outliers that deviates significantly from the rest of the datapoints.
+
+### Local
+Select local to remove outliers that are distinct when compared to those of its neighbors.
+
 ## Output:
 Separate csv files for inliers and outliers.
 
