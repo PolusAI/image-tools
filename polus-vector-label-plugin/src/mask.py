@@ -108,7 +108,7 @@ def follow_flows(dP, niter=200, interp=True):
     Pixels are meshgrid. Only pixels with non-zero cell-probability
     are used (as defined by inds)
     Args:
-    dP(float32):  3D or 4D array.flows [axis x Ly x Lx] or [axis x Lz x Ly x Lx]
+    dP(float32):  3D or 4D array.flows [axis x Ly x Lx]
     niter(int): default 200.number of iterations of dynamics to run
     interp(bool): default True.interpolate during 2D dynamics  (in previous versions + paper it was False)
     use_gpu(bool): default False.use GPU to run interpolated dynamics (faster than CPU)
@@ -134,8 +134,20 @@ def follow_flows(dP, niter=200, interp=True):
                                                       dP, niter)
     return p
 
+total_pix=0
 
-def get_masks(p, iscell=None, rpad=20, flows=None, threshold=0.4):
+def set_totalpix(a):
+    """Counter for  number of masks predicted
+    Args:
+        a(int):  NUmber of maks in a tile
+    """
+    global total_pix
+    if a!=0:
+        total_pix=a
+    else:
+        total_pix=0
+
+def get_masks(p,update_lbl, iscell=None, rpad=20, flows=None, threshold=0.4):
     """ Create masks using pixel convergence after running dynamics
     Makes a histogram of final pixel locations p, initializes masks
     at peaks of histogram and extends the masks from the peaks so that
@@ -181,6 +193,7 @@ def get_masks(p, iscell=None, rpad=20, flows=None, threshold=0.4):
     for s in seeds:
         s = s[isort]
     pix = list(np.array(seeds).T)
+
     shape = h.shape
     if dims==3:
         expand = np.nonzero(np.ones((3,3,3)))
@@ -209,15 +222,19 @@ def get_masks(p, iscell=None, rpad=20, flows=None, threshold=0.4):
                 pix[k] = tuple(pix[k])
 
     M = np.zeros(h.shape, np.int32)
+
     for k in range(len(pix)):
         M[pix[k]] = 1+k
 
+
     for i in range(dims):
         pflows[i] = pflows[i] + rpad
+
     M0 = M[tuple(pflows)]
 
     # remove big masks
     _,counts = np.unique(M0, return_counts=True)
+
     big = np.prod(shape0) * 0.4
     for i in np.nonzero(counts > big)[0]:
         M0[M0==i] = 0
@@ -230,6 +247,9 @@ def get_masks(p, iscell=None, rpad=20, flows=None, threshold=0.4):
         _,M0 = np.unique(M0, return_inverse=True)
 
     M0 = np.reshape(M0, shape0).astype(np.int32)
+
+    M0[M0 > 0] += update_lbl
+
     return M0
 
 def remove_bad_flow_masks(masks, flows, threshold=0.4):
@@ -370,12 +390,14 @@ def flow_error(maski, dP_net):
 
     return flow_errors, dP_masks
 
-def compute_masks(p,cellprob,dP,cellprob_threshold=0.0,flow_threshold=0.4):
+def compute_masks(p,cellprob,dP,new_img,cellprob_threshold=0.0,flow_threshold=0.4):
     """ Compute masks based on users input of threshold values  and X,yY flows
         This function will call the function which generates  masks based  of a histogram
     Args:
         y(array[int]): ND-array .Output of the nueral network
         cellprob(array[float32]):  3D or 4D array.final locations of each pixel after dynamics,size [axis x Ly x Lx].Cell probablity of array
+        dP(float32):  3D  array.flows [axis x Ly x Lx]
+        new_img (int) : check for new image
         flow_threshold(optional[float]): default 0.4.flow error threshold (all cells with errors below threshold are kept)
         cellprob_threshold(optional[float]):  default 0.0.cell probability threshold (all pixels with prob above threshold kept for masks)
 
@@ -383,9 +405,15 @@ def compute_masks(p,cellprob,dP,cellprob_threshold=0.0,flow_threshold=0.4):
         Masks(array[float]): ND-array.Predicted masks
 
     """
-    maski = get_masks(p, iscell=(cellprob > cellprob_threshold),
+    global total_pix
+    if new_img<0:
+        set_totalpix(0)
+    maski = get_masks(p,total_pix, iscell=(cellprob > cellprob_threshold),
                                flows=dP, threshold=flow_threshold)
+    cnt = np.amax(maski) if np.amax(maski) !=0 else total_pix
     maski = fill_holes(maski)
+    set_totalpix(cnt)
+
     return maski
 
 
@@ -406,9 +434,13 @@ def fill_holes(masks, min_size=15):
 
     slices = scipy.ndimage.find_objects(masks)
     i = 0
+
     for slc in slices:
+
         if slc is not None:
+
             msk = masks[slc] == (i+1)
+
             if msk.ndim==3:
                 small_objects = np.zeros(msk.shape, np.bool)
                 for k in range(msk.shape[0]):
@@ -418,10 +450,11 @@ def fill_holes(masks, min_size=15):
                 msk = scipy.ndimage.morphology.binary_fill_holes(msk)
                 small_objects = ~remove_small_objects(msk, min_size=min_size)
             sm = np.logical_and(msk, small_objects)
-
             masks[slc][msk] = (i+1)
             masks[slc][sm] = 0
         i+=1
+
+
     return masks
 
 def remove_small_objects(ar, min_size=64, connectivity=1):

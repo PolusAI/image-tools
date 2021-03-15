@@ -1,6 +1,6 @@
 {
     "name": "Vector-label-plugin",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "title": "Vector-label",
     "description": "Plugin to label masks",
     "author": "Sudharsan Prativadi (sudharsan.prativadi@labshare.org)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "Plugin is based on labelling done by Cellpose, https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1",
-    "containerId": "labshare/polus-vector-label-plugin:0.2.1",
+    "containerId": "labshare/polus-vector-label-plugin:0.2.2",
     "inputs": [
 
       {
@@ -18,19 +18,19 @@
         "required": true
       },
       {
-        "name": "flow_threshold",
+        "name": "flowThreshold",
         "type": "number",
         "description": "Flow error threshold default at 0.8",
         "required": false
       },
       {
-        "name": "cellprob_threshold",
+        "name": "cellprobThreshold",
         "type": "number",
         "description": "Cell probability threshold, centered at 0.0",
         "required": false
       },
       {
-        "name": "stitch_threshold",
+        "name": "stitchThreshold",
         "type": "number",
         "description": "Stitch threshold default at 0 for stitch 2D masks into 3D volume",
         "required": false
@@ -52,17 +52,17 @@
         "description": "Input image collection to be processed by this plugin"
       },
       {
-        "key": "inputs.flow_threshold",
+        "key": "inputs.flowThreshold",
         "title": "Flow threshold ",
         "description": "Flow threshold"
       },
       {
-        "key": "inputs.cellprob_threshold",
+        "key": "inputs.cellprobThreshold",
         "title": "Cell probability threshold",
         "description": "Cell probability threshold"
       },
       {
-        "key": "inputs.stitch_threshold",
+        "key": "inputs.stitchThreshold",
         "title": "Stitching threshold",
         "description": "Stitching threshold"
       }

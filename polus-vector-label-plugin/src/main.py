@@ -6,6 +6,7 @@ import zarr
 import mask
 from numba import jit
 
+
 np.seterr(divide='ignore', invalid='ignore')
 
 @jit(nopython=True)
@@ -88,15 +89,15 @@ def main():
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='Cellpose parameters')
     
-    # Input arguments
+    # Input arguments counter=0
 
     parser.add_argument('--inpDir', dest='inpDir', type=str,
                         help='Input image collection to be processed by this plugin', required=True)
-    parser.add_argument('--flow_threshold', required=False,
+    parser.add_argument('--flowThreshold', required=False,
                         default=0.8, type=float, help='flow error threshold, 0 turns off this optional QC step')
-    parser.add_argument('--cellprob_threshold', required=False,
+    parser.add_argument('--cellprobThreshold', required=False,
                         default=0.0, type=float, help='cell probability threshold, centered at 0.0')
-    parser.add_argument('--stitch_threshold',required=False, type=float,
+    parser.add_argument('--stitchThreshold',required=False, type=float,
                         help='Stitch threshold for 3D', default=0.0)
     # Output arguments
     parser.add_argument('--outDir', dest='outDir', type=str,
@@ -108,9 +109,9 @@ def main():
     logger.info('inpDir = {}'.format(inpDir))
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
-    cellprob_threshold = args.cellprob_threshold
-    flow_threshold= args.flow_threshold
-    stitch_threshold=args.stitch_threshold
+    cellprob_threshold = args.cellprobThreshold
+    flow_threshold= args.flowThreshold
+    stitch_threshold=args.stitchThreshold
     rescale = np.ones(1)
     niter = 1 / rescale[0] * 200
     # Surround with try/finally for proper error catching
@@ -128,13 +129,14 @@ def main():
             metadata = vec.attrs['metadata']
             mask_final = np.zeros((vec_arr.shape[0],vec_arr.shape[1],vec_arr.shape[2],1,1))
             vec_arr = vec_arr.transpose((2,0,1,3,4)).squeeze(axis=4)
-            tile_size = min(1024,vec_arr.shape[1])
-            tile_iterator=tile_size //2 if tile_size !=vec_arr.shape[1] else tile_size
+            tile_size = min(1080,vec_arr.shape[1])
+  #          tile_iterator=tile_size //2 if tile_size !=vec_arr.shape[1] else tile_size
             # Iterating over Z dimension
+            new_img = -1
             for z in range(vec_arr.shape[0]):
                     logger.info('Calculating flows for slice {} of image {}'.format(z+1, file_name))
-                    for x in range(0, vec_arr.shape[2], tile_size):
 
+                    for x in range(0, vec_arr.shape[2], tile_size):
                         x_max = min([vec_arr.shape[2], x + tile_size])
                         for y in range(0, vec_arr.shape[1], tile_size):
                             y_max = min([vec_arr.shape[1], y + tile_size])
@@ -143,9 +145,11 @@ def main():
                             dP = np.stack((prob[..., 0], prob[..., 1]), axis=0)
                             p = mask.follow_flows(-1 * dP * (cellprob > cellprob_threshold) / 5.,
                                                                     niter=niter, interp=True)
-                            maski = mask.compute_masks(p,cellprob,dP,cellprob_threshold,flow_threshold)
+                            maski = mask.compute_masks(p,cellprob,dP,new_img,cellprob_threshold,flow_threshold)
                             mask_final=mask_final.astype(maski.dtype)
                             mask_final[y:y_max, x:x_max,z:z+1,:,:] = maski[:,:,np.newaxis,np.newaxis,np.newaxis].astype(maski.dtype)
+                            new_img = 1
+
             logger.info('Computed  masks for  image {}'.format(file_name))
 
             if mask_final.shape[2] > 1 and stitch_threshold > 0:
