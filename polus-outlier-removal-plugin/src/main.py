@@ -96,7 +96,6 @@ def main(inpdir: os.path,
         #Drop 'anomaly' column    
         inliers = inliers.drop('anomaly',axis=1)
         outliers = outliers.drop('anomaly',axis=1)
-        print(outdir)
 
     	#Save dataframe into csv file
         os.chdir(outdir)
