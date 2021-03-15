@@ -16,11 +16,11 @@ Choose any one of the types(global/local) mentioned to remove outliers from the 
 
 ### Global
 Select global to remove outliers that deviates significantly from the rest of the datapoints.
-![](images/Global.PNG)
+<img src="images/Global.PNG" width="100" height="100">
 
 ### Local
 Select local to remove outliers that are distinct when compared to those of its neighbors.
-![](images/Local.PNG)
+<img src="images/Local.PNG" width="100" height="100">
 
 ## Output:
 Separate csv files for inliers and outliers.
