@@ -20,7 +20,7 @@ logger.setLevel(logging.INFO)
 
 def main():
     # Setup the Argument parsing
-    logger.info("Parsing arguments...")
+    logger.info("\n Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='Generate a precomputed slice for Polus Volume Viewer.')
 
     parser.add_argument('--inpDir', dest='input_dir', type=str,
@@ -46,13 +46,16 @@ def main():
         raise ValueError("Can only generate meshes if imageType is segmentation")
 
     logger.info('Input Directory = {}'.format(input_dir))
+    logger.info('Output Directory = {}'.format(output_dir))
     logger.info('Image Type = {}'.format(imagetype))
+    logger.info('Image Pattern = {}'.format(imagepattern))
+    logger.info('Mesh = {}'.format(mesh))
 
     if imagepattern == None:
         imagepattern = ".*"
 
     # Get list of images that we are going to through
-    logger.info('Getting the images...')
+    logger.info("\n Getting the images...")
     fp_images = fp(Path(input_dir),imagepattern)
     images = [os.path.basename(i[0]['file']) for i in fp_images()]
     images.sort()

@@ -12,7 +12,7 @@ from skimage import measure
 
 from neurogen import mesh as ngmesh
 from neurogen import info as nginfo
-from neurogen import volume as ngvol
+from neurogen import vol
 
 from bfio.bfio import BioReader, BioWriter
 
@@ -137,10 +137,10 @@ def concatenate_and_generate_meshes(iden,
         # Get the first mesh (upper left)
         mesh1_path = os.path.join(temp_dir, mesh_fileobj)
         mesh1 = trimesh.load_mesh(file_obj=mesh1_path, file_type='ply')
-        translate_start = ([0, 1, 0, start_mesh[1]],
-                            [1, 0, 0, start_mesh[0]],
-                            [0, 0, 1, start_mesh[2]],
-                            [0, 0, 0, 1])
+        translate_start = ([0, 1, 0, start_mesh[0]],
+                           [1, 0, 0, start_mesh[1]],
+                           [0, 0, 1, start_mesh[2]],
+                           [0, 0, 0, 1])
         mesh1.apply_transform(translate_start)
         mesh1bounds = mesh1.bounds
         logger.debug('** Loaded chunk #1: {} ---- {} bytes'.format(mesh_fileobj, os.path.getsize(mesh1_path)))
@@ -160,8 +160,8 @@ def concatenate_and_generate_meshes(iden,
                 transformationmatrix = [int(trans) for trans in stripped_files_middle[i]]
                 offset = [transformationmatrix[i]/chunk_size[i] for i in range(3)]
                 middle_mesh = transformationmatrix
-                translate_middle = ([0, 1, 0, middle_mesh[1] - offset[1]],
-                                    [1, 0, 0, middle_mesh[0] - offset[0]],
+                translate_middle = ([0, 1, 0, middle_mesh[0] - offset[0]],
+                                    [1, 0, 0, middle_mesh[1] - offset[1]],
                                     [0, 0, 1, middle_mesh[2] - offset[2]],
                                     [0, 0, 0, 1])
                 mesh2.apply_transform(translate_middle)
@@ -200,8 +200,11 @@ def build_pyramid(input_image,
     # Getting the intial information for the info file specification required by Neuroglancer 
     bf = BioReader(input_image, max_workers=max([cpu_count()-1,2]))
     bfshape = bf.shape
-    logger.info("Image Shape {}".format(bfshape))
     datatype = np.dtype(bf.dtype)
+    logger.info("Image Shape {}".format(bfshape))
+    logger.info("Image Datatype {}".format(datatype))
+
+    # info file specifications
     chunk_size = [256,256,256]
     bit_depth = 16
     resolution = get_resolution(phys_y=bf.physical_size_y, 
@@ -219,11 +222,12 @@ def build_pyramid(input_image,
             encodedvolume = ngvol.generate_recursive_chunked_representation(volume=bf,info=file_info, dtype=datatype, directory=output_image)
 
         else: # if generating meshes
+            
             # Need to iterate through chunks of the input for scalabiltiy
-            ysplits = list(np.arange(0, bfshape[0], chunk_size[0]))
-            ysplits.append(bfshape[0])
-            xsplits = list(np.arange(0, bfshape[1], chunk_size[1]))
-            xsplits.append(bfshape[1])
+            xsplits = list(np.arange(0, bfshape[0], chunk_size[0]))
+            xsplits.append(bfshape[0])
+            ysplits = list(np.arange(0, bfshape[1], chunk_size[1]))
+            ysplits.append(bfshape[1])
             zsplits = list(np.arange(0, bfshape[2], chunk_size[2]))
             zsplits.append(bfshape[2])
 
@@ -232,6 +236,9 @@ def build_pyramid(input_image,
             totalbytes = {}
             temp_dir = os.path.join(output_image, "tempdir")
 
+            num_scales = np.floor(np.log2(max(bfshape[:3]))).astype('int')+1
+            
+            logger.info("\n Iterate through input ...")
             # Creating a temporary files for the polygon meshes -- will later be converted to Draco
             with tempfile.TemporaryDirectory() as temp_dir:
                 if not os.path.exists(temp_dir):
@@ -244,11 +251,21 @@ def build_pyramid(input_image,
                             start_z, end_z = (zsplits[z], zsplits[z+1])
                             
 
-                            volume = bf[start_y:end_y,start_x:end_x,start_z:end_z]
+                            volume = bf[start_x:end_x,start_y:end_y,start_z:end_z]
                             volume = volume.reshape(volume.shape[:3])
+
+                            # Save volume in precomputed format for volumes
+                                # Will build the rest of the pyramid after iterating through input
+                            volume_encoded = ngvol.encode_volume(volume)
+                            highest_res_directory = os.path.join(output_image, str(num_scales))
+                            ngvol.write_image(image=volume_encoded, volume_directory=highest_res_directory, 
+                                            y=(ysplits[y], ysplits[y+1]),
+                                            x=(xsplits[x], xsplits[x+1]),  
+                                            z=(zsplits[z], zsplits[z+1]))
                             logger.info("Loaded subvolume (YXZ) {}-{}__{}-{}__{}-{}".format(start_y, end_y,
                                                                                             start_x, end_x,
                                                                                             start_z, end_z))
+
                             ids = np.unique(volume)
                             if (ids == [0]).all():
                                 continue
@@ -266,26 +283,43 @@ def build_pyramid(input_image,
 
                 executor.shutdown(wait=True)
 
-                # Once you have all the labelled segments, then create segment_properties file
-                all_identities = np.unique(all_identities).astype('int')
-                file_info = nginfo.info_mesh(directory=output_image,
-                                            chunk_size=chunk_size,
-                                            size=bf.shape[:3],
-                                            dtype=np.dtype(bf.dtype).name,
-                                            ids=all_identities,
-                                            resolution=resolution,
-                                            segmentation_subdirectory="segment_properties",
-                                            bit_depth=bit_depth,
-                                            order="YXZ")
-                
+                logger.info("\n Generating Volumes ...")
+                logger.info("Saved Encoded Volumes for Scale {}".format(num_scales))
+
+                # Build rest of the pyramid from encoded volumes in highest resolution
+                for higher_scale in reversed(range(0, num_scales)):
+
+                    inputshape = np.ceil(bfshape/(2**(num_scales-higher_scale-1))).astype('int')
+                    scale_directory = os.path.join(output_image, str(higher_scale+1))
+
+                    logger.info("Saved Encoded Volumes for Scale {}".format(higher_scale))
+
+                    if not os.path.exists(highest_res_directory):
+                        os.makedirs(scale_directory, exist_ok=True)
+                    ngvol.get_rest_of_the_pyramid(directory=scale_directory, input_shape = inputshape, chunk_size=chunk_size,
+                                                 datatype=datatype)
+
+                logger.info("\n Generate Progressive Meshes for segments ...")
                 # concatenate and decompose the meshes in the temporary file for all segments
+                all_identities = np.unique(all_identities).astype('int')
                 with ThreadPoolExecutor(max_workers=4) as executor:
                     futuresvariable = [executor.submit(concatenate_and_generate_meshes, 
                                                     ide, temp_dir, output_image, bit_depth, chunk_size) 
                                                     for ide in all_identities]
                 executor.shutdown(wait=True)
-
-                encodedvolume = ngvol.generate_recursive_chunked_representation(volume=bf,info=file_info, dtype=datatype, directory=output_image)
+            
+            # Once you have all the labelled segments, then create segment_properties file
+            file_info = nginfo.info_mesh(directory=output_image,
+                                        chunk_size=chunk_size,
+                                        size=bf.shape[:3],
+                                        dtype=np.dtype(bf.dtype).name,
+                                        ids=all_identities,
+                                        resolution=resolution,
+                                        segmentation_subdirectory="segment_properties",
+                                        bit_depth=bit_depth,
+                                        order="YXZ")
+                
+            
 
     elif imagetype == "image":
         file_info = nginfo.info_image(directory=output_image,
