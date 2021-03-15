@@ -1,16 +1,16 @@
 ﻿# Generalized Linear Model
 
-The generalized linear model plugin models the data using glm() function in R and outputs csv file containing the summary of the analysis.The input file should be in csv format.
+The generalized linear model plugin models the data using bigglm() function in R and outputs csv file containing the summary of the analysis.The input file should be in csv format.
 
 ## Inputs:
 ### Input csv collection:
-The input file that need to be modeled. The file should be in csv format. This is a required parameter for the plugin.
+The input file that needs to be modeled. The file should be in csv format. This is a required parameter for the plugin.
 
 ### Predict column:
 Enter the column name that needs to be predicted.
 
 ### Exclude:
-Enter column names that need to be excluded from the annlysis.
+Enter column names that needs to be excluded from the analysis.
 
 ### Methods:
 There are 3 options:
@@ -22,7 +22,7 @@ There are 3 options:
 Choose any one of the modeltype based on list of options- Binomial, Gaussian, Gamma, Poisson, Quasi, Quasibinomial, Quasipoisson, NegativeBinomial, Multinomial based on the distribution of dataset.
       
 ## Note:
-If multiple csv files need to be processed, the column names should be the same for all files.
+If multiple csv files needs to be processed, the column names should be the same for all files.
 
 ## Output:
 The output is a csv file containing the summary of the analysis with p-value and regression value for the factors..
@@ -45,7 +45,7 @@ This plugin takes eight input argument and one output argument:
 | Name                   | Description             | I/O    | Type   |
 |------------------------|-------------------------|--------|--------|
 | `--inpdir` | Input csv collection| Input | csvCollection |
-| `--predictcolumn` | Column need to be predicted | Input | string |
+| `--predictcolumn` | Column needs to be predicted | Input | string |
 | `--exclude` | Enter columns to be excluded| Input | string |
 | `--glmmethod` | Analyse either primaryfactors or interaction or second order effects for modeling | Input | enum |
 | `--modeltype` | Select the distribution to be considered for modeling| Input | enum |

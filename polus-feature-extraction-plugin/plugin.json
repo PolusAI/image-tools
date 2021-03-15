@@ -1,6 +1,6 @@
 {
     "name": "Feature Extraction",
-    "version": "0.7.8",
+    "version": "0.8.4",
     "title": "Feature Extraction",
     "description": "Extract shape and intensity features from images.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,19 +8,25 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-extraction-plugin:0.7.8",
+    "containerId": "labshare/polus-feature-extraction-plugin:0.8.4",
     "inputs": [      
       {
         "name": "segDir",
         "type": "collection",
         "description": "Labeled image collection",
-        "required": "true"
+        "required": "false"
       },
       {
         "name": "intDir",
         "type": "collection",
         "description": "Intensity image collection",
         "required": "false"
+      },
+      {
+        "name": "filePattern",
+        "type": "string",
+        "description": "To match intensity and labeled/segmented image",
+        "required": "true"
       },
       {
         "name": "pixelDistance",
@@ -124,6 +130,11 @@
         "key": "inputs.intDir",
         "title": "Intensity image collection",
         "description": "Intensity image collection"
+      },
+      {
+        "key": "inputs.filePattern",
+        "title": "File pattern",
+        "description": "To match intensity and labeled/segmented images"
       },
       {
         "key": "inputs.pixelDistance",

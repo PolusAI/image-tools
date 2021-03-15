@@ -1,0 +1,5 @@
+Cython==3.0a1
+javabridge==1.0.18
+python_bioformats==1.5.2
+setuptools==40.8.0
+numpy==1.18.1

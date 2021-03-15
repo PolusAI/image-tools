@@ -1,6 +1,6 @@
 {
     "name": "Generalized Linear Model",
-    "version": "0.2.4",
+    "version": "0.2.5",
     "title": "Generalized Linear Model",
     "description": "Modeling the data using Generalized linear model.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-generalized-linear-model-plugin:0.2.4",
+    "containerId": "labshare/polus-generalized-linear-model-plugin:0.2.5",
     "inputs": [      
       {
         "name": "inpdir",

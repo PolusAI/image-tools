@@ -1,0 +1,67 @@
+{
+    "name": "Color Pyramid Builder",
+    "version": "0.1.1",
+    "title": "Color Pyramid Builder",
+    "description": "Builds a DeepZoom color pyramid.",
+    "author": "Nick Schaub (nick.schaub@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-color-pyramid-builder-plugin:0.1.1",
+    "inputs": [
+      {
+        "name": "inpDir",
+        "type": "collection",
+        "description": "Input image collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "filePattern",
+        "type": "string",
+        "description": "Filename pattern used to separate data",
+        "required": true
+      },
+      {
+        "name": "layout",
+        "type": "string",
+        "description": "Color ordering up to 7 colors (e.g. 1,11,,,,5,6)",
+        "required": false
+      },
+      {
+        "name": "bounds",
+        "type": "string",
+        "description": "Set bounds (should be float-float, int-int, or blank, e.g. 0.01-0.99,0-16000,,,,,)",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "pyramid",
+        "description": "Output pyramid path."
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.filePattern",
+        "title": "Filename pattern",
+        "description": "Filename pattern used to separate data"
+      },
+      {
+        "key": "inputs.inpDir",
+        "title": "Input collection",
+        "description": "Input image collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.layout",
+        "title": "Color layout",
+        "description": "Color ordering (e.g. 1,11,,,,5,6)"
+      },
+      {
+        "key": "inputs.bounds",
+        "title": "Set rescaling bounds",
+        "description": "Set bounds (should be float-float, int-int, or blank, e.g. 0.01-0.99,0-16000,,,,,)"
+      }
+    ]
+  }

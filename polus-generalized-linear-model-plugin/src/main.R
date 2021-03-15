@@ -78,13 +78,6 @@ loginfo('modeltype = %s', modeltype)
 csvfile <- args$outdir
 loginfo('csvfile = %s', csvfile)
 
-# inpfile <- 'C:/Users/nagarajanj2/Desktop/Projects/Flow_cytometry/kmeans/plugin/test/test1/test2/kmeans123.csv'
-# excludes <-c('FSC...Width','SSC...Width','Time.Stamp')
-# predictcolumn <- 'Cluster'
-# glmmethod <- 'PrimaryFactors'
-# modeltype<- 'NegativeBinomial'
-# outdir <- 'C:/Users/nagarajanj2/Desktop/Projects/Flow_cytometry/kmeans/plugin/test/test1'
-
 #Get list of .csv files in the directory including sub folders for modeling
 files_to_read = list.files(
   path = inpfile,        
@@ -100,7 +93,7 @@ for (dataset in datalist) {
   for (file_csv in files_to_read) {
     #Get filename
     file_name <- SplitPath(file_csv)$filename
-
+    
     #Check whether any column needs to be excluded
     if(length(excludes) > 0) {
       for (i in 1:length(excludes)) {
@@ -121,21 +114,11 @@ for (dataset in datalist) {
       logwarn('predict column name is not found in %s',file_name)
       next
     }
-
-    #Scaling the data
-    # datasub1<- datasub[1:(length(datasub)-1)]
-    # datasub_scale <- scale(datasub1, center = TRUE, scale = TRUE)
-    # datasub$Cluster <- as.factor(datasub$Cluster)
-    # Cluster <- datasub$Cluster
-    # data_final <- cbind((as.data.frame(datasub_scale)),Cluster)
     
     #Get column names without predict variable
     drop_dep <- datasub[ , !(names(datasub) %in% predictcolumn)]
     resp_var <- colnames(drop_dep)
-
-    
-    
-    
+  
     #Number of cores
     num_of_cores = detectCores()
     loginfo('Cores = %s', num_of_cores)
@@ -165,9 +148,7 @@ for (dataset in datalist) {
     
     #Chunk data
     chunk_data <-make.data(formula(paste(predictcolumn,paste(resp_var,collapse= "+"),sep="~")), datasub_ff, chunksize=chunk)
-    
-    
-    
+
     if((modeltype == 'Gaussian') || (modeltype == 'Poisson') || (modeltype == 'Binomial') || (modeltype == 'Quasibinomial') || (modeltype == 'Quasipoisson') || (modeltype == 'Quasi')) {
       modeltype <- tolower(modeltype)
     }
@@ -175,9 +156,9 @@ for (dataset in datalist) {
     if (modeltype == 'NegativeBinomial') {
       fit <- glm.nb(as.formula(paste(predictcolumn,1,sep="~")), data = datasub)
       mu <- exp(coef(fit))
-      aa<-eval(parse(text=paste('datasub',predictcolumn, sep = "$")))
-      theta_val = theta.ml(aa, mu,nrow(datasub), limit = 22, eps = .Machine$double.eps^0.25, trace = FALSE)
-      }
+      val_pred<-eval(parse(text=paste('datasub',predictcolumn, sep = "$")))
+      theta_val = theta.ml(val_pred, mu,nrow(datasub), limit = 22, eps = .Machine$double.eps^0.25, trace = FALSE)
+    }
     
     model_list <- c('gaussian','Gamma', 'binomial', 'poisson', 'quasi', 'quasibinomial', 'quasipoisson' )
     
@@ -201,7 +182,7 @@ for (dataset in datalist) {
         test_glm<- model_data(resp_var,chunk_data)
       }
       else if (modeltype == 'Multinomial') {
-         test_glm<- model_data(resp_var,datasub_ff)
+        test_glm<- model_data(resp_var,datasub_ff)
       }
     }
     #Get interaction values
@@ -245,11 +226,11 @@ for (dataset in datalist) {
     
     #Convert summary of the analysis to a dataframe
     tidy_summary <- tidy(test_glm)
-
-    #Reorder the columns
     
+    #Reorder the columns
     tidy_final <- tidy_summary[c("term", "p.value", "estimate","std.error")]
     colnames(tidy_final) <- c("Factors","P-Value","Estimate","Std.Error")
+    
     #Write the dataframe to csv file
     write.csv(tidy_final, file_save)
   }
