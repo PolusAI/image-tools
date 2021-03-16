@@ -129,7 +129,7 @@ def main():
             metadata = vec.attrs['metadata']
             mask_final = np.zeros((vec_arr.shape[0],vec_arr.shape[1],vec_arr.shape[2],1,1))
             vec_arr = vec_arr.transpose((2,0,1,3,4)).squeeze(axis=4)
-            tile_size = min(1080,vec_arr.shape[1])
+            tile_size = min(1024,vec_arr.shape[1])
   #          tile_iterator=tile_size //2 if tile_size !=vec_arr.shape[1] else tile_size
             # Iterating over Z dimension
             new_img = -1
@@ -157,6 +157,7 @@ def main():
                 mask_final = stitch3D(mask_final.squeeze(),tile_size, stitch_threshold=stitch_threshold)
                 mask_final = mask_final[...,np.newaxis,np.newaxis]
 
+            mask_final=mask_final.astype(np.uint16)
             xml_metadata = OmeXml.OMEXML(metadata)
             # Write the output
             logger.info('Saving label for image {}'.format(file_name))

@@ -35,9 +35,9 @@ This plugin takes 4 input arguments and 1 output argument:
 
 | Name          | Description             | I/O    | Type   | Default values    |   
 |---------------|-------------------------|--------|--------|--------|
-| `--flow_threshold` | flow threshold(all cells with errors below threshold are kept)| Input | number | 0.8   | 
-| `--stitch_threshold` | stitch threshold(threshold for pixel overlap between pixels) | Input | number |   0 | 
+| `--flowThreshold` | flow threshold(all cells with errors below threshold are kept)| Input | number | 0.8   | 
+| `--stitchThreshold` | stitch threshold(threshold for pixel overlap between pixels) | Input | number |   0 | 
 | `--inpDir` | Input image collection to be processed by this plugin | Input | GenericData | n/a  | 
-| `--cellprob_threshold` | Cell probability threshold(all pixels with prob above threshold kept for masks) | Input | number |   0 | 
+| `--cellprobThreshold` | Cell probability threshold(all pixels with prob above threshold kept for masks) | Input | number |   0 | 
 | `--outDir` | Output collection | Output | collection | n/a  | 
 
