@@ -1,6 +1,6 @@
 {
   "name": "Binary Operations Plugin",
-  "version": "0.2.4",
+  "version": "test0.2.4",
   "containerId": "mmvihani/polus-binary-operations-plugin:0.2.4",
   "title": "Binary Operations Plugin",
   "description": "Everything you need to start a WIPP plugin.",
@@ -121,25 +121,25 @@
       "key": "inputs.ThresholdAreaRemoveLarge",
       "title": "Threshold of Area for objects in images",
       "description": "Default Kernel Size to use for Operations",
-      "conditions": "inputs.Operation==filter_area_remove_large_objects"
+      "condition": "inputs.Operation==filter_area_remove_large_objects"
     },
     {
       "key": "inputs.ThresholdAreaRemoveSmall",
       "title": "Threshold of Area for objects in images",
       "description": "Default Kernel Size to use for Operations",
-      "conditions": "inputs.Operation==filter_area_remove_large_objects"
+      "condition": "inputs.Operation==filter_area_remove_small_objects"
     },
     {
       "key": "inputs.IterationsDilation",
       "title": "Iterate",
       "description": "Default Kernel Size to use for Operations",
-      "conditions": "inputs.Operation==dilation"
+      "condition": "inputs.Operation==dilation"
     },
     {
       "key": "inputs.IterationsErosion",
       "title": "Iterate",
       "description": "Default Kernel Size to use for Operations",
-      "conditions": "inputs.Operation==erosion"
+      "condition": "inputs.Operation==erosion"
     }
   ]
 }
