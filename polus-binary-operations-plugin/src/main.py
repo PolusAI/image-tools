@@ -185,9 +185,13 @@ if __name__=="__main__":
                         help='Shape of the structuring element can either be Elliptical, Rectangular, or Cross', required=True)
 
     # Extra arguments based on operation
-    parser.add_argument('--ThresholdArea', dest='threshold_area', type=int,
+    parser.add_argument('--ThresholdAreaRemoveLarge', dest='threshold_area_rm_large', type=int,
                         help='Area threshold of objects in image', required=False)
-    parser.add_argument('--iterations', dest='num_iterations', type=int,
+    parser.add_argument('--ThresholdAreaRemoveSmall', dest='threshold_area_rm_small', type=int,
+                        help='Area threshold of objects in image', required=False)
+    parser.add_argument('--IterationsDilation', dest='num_iterations_dilation', type=int,
+                        help='Number of Iterations to apply operation', required=False)
+    parser.add_argument('--IterationsErosion', dest='num_iterations_erosion', type=int,
                         help='Number of Iterations to apply operation', required=False)
     
     # Input arguments
@@ -212,23 +216,25 @@ if __name__=="__main__":
         raise ValueError("Structuring Shape is not correct")
     logger.info('Structuring Shape = {}'.format(args.struct_shape))
 
-    threshold_area = args.threshold_area
-    iterations = args.num_iterations
+    threshold_area_rm_large = args.threshold_area_rm_large
+    threshold_area_rm_small = args.threshold_area_rm_small
+    iterations_dilation = args.num_iterations_dilation
+    iterations_erosion = args.num_iterations_erosion
 
     if 'filter_area_remove_large_objects' in operations:
-        if threshold_area == None:
+        if threshold_area_rm_large == None:
             raise ValueError('Need to specify the maximum area of the segments to keep')
 
     if 'filter_area_remove_small_objects' in operations:
-        if threshold_area == None:
+        if threshold_area_rm_small == None:
             raise ValueError('Need to specify the minimum area of the segments to keep')
 
     if 'dilation' in operations:
-        if iterations == None:
+        if iterations_dilation == None:
             raise ValueError("Need to specify the number of iterations to apply the operation")
 
     if 'erosion' in operations:
-        if iterations == None:
+        if iterations_erosion == None:
             raise ValueError("Need to specify the number of iterations to apply the operation")
 
     # A dictionary specifying the function that will be run based on user input. 
@@ -252,13 +258,13 @@ if __name__=="__main__":
         'opening': None,
         'closing': None,
         'morphological_gradient': None,
-        'dilation': iterations,
-        'erosion': iterations,
+        'dilation': iterations_dilation,
+        'erosion': iterations_erosion,
         'skeleton': None,
         'top_hat': None,
         'black_hat': None,
-        'filter_area_remove_large_objects' : threshold_area,
-        'filter_area_remove_small_objects' : threshold_area
+        'filter_area_remove_large_objects' : threshold_area_rm_large,
+        'filter_area_remove_small_objects' : threshold_area_rm_small
     }
     
 
@@ -334,7 +340,7 @@ if __name__=="__main__":
 
             # Close the image
             bw.close_image()
-            
+
     # Always close the JavaBridge
     finally:
         logger.info('Closing the javabridge...')

@@ -1,7 +1,7 @@
 {
   "name": "Binary Operations Plugin",
-  "version": "0.2.2",
-  "containerId": "mmvihani/polus-binary-operations-plugin:0.1.27",
+  "version": "0.2.4",
+  "containerId": "mmvihani/polus-binary-operations-plugin:0.2.4",
   "title": "Binary Operations Plugin",
   "description": "Everything you need to start a WIPP plugin.",
   "author": "Data Scientist (data.scientist@labshare.org)",
@@ -37,9 +37,8 @@
           "dilation",
           "erosion",
           "skeleton",
-          "fill_holes",
-          "hit_or_miss",
-          "filter_area",
+          "filter_area_remove_large_objects",
+          "filter_area_remove_small_objects",
           "top_hat",
           "black_hat"
         ]
@@ -60,9 +59,30 @@
       "required": true
     },
     {
-      "name": "HOMarray",
-      "description": "Array that we are searching for. Ex: [0, 0, 0], [0, 0, 0], [0, 0, 0]",
-      "type": "string",
+      "name": "ThresholdAreaRemoveLarge",
+      "description": "Minimum Area of objects to keep.",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "ThresholdAreaRemoveSmall",
+      "description": "Maximum Area of objects to keep.",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "IterationsDilation",
+      "description": "Number of times to dilate an object",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "IterationsErosion",
+      "description": "Number of times to erode an object",
+      "type": "number",
       "options": null,
       "required": false
     }
@@ -98,9 +118,28 @@
       "description": "Default Kernel Size to use for Operations"
     },
     {
-      "key": "inputs.HOMarray",
-      "title": "Hit or Miss Array",
-      "description": "Array that we are searching for"
+      "key": "inputs.ThresholdAreaRemoveLarge",
+      "title": "Threshold of Area for objects in images",
+      "description": "Default Kernel Size to use for Operations",
+      "conditions": "inputs.Operation==filter_area_remove_large_objects"
+    },
+    {
+      "key": "inputs.ThresholdAreaRemoveSmall",
+      "title": "Threshold of Area for objects in images",
+      "description": "Default Kernel Size to use for Operations",
+      "conditions": "inputs.Operation==filter_area_remove_large_objects"
+    },
+    {
+      "key": "inputs.IterationsDilation",
+      "title": "Iterate",
+      "description": "Default Kernel Size to use for Operations",
+      "conditions": "inputs.Operation==dilation"
+    },
+    {
+      "key": "inputs.IterationsErosion",
+      "title": "Iterate",
+      "description": "Default Kernel Size to use for Operations",
+      "conditions": "inputs.Operation==erosion"
     }
   ]
 }
