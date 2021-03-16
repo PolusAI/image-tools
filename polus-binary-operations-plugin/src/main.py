@@ -1,15 +1,16 @@
-from bfio import BioReader, BioWriter,JARS
+from bfio import BioReader, BioWriter
 import bioformats
 import javabridge as jutil
 import argparse, logging, subprocess, time, multiprocessing
-import numpy as np
-from pathlib import Path
-import tifffile
-import cv2
-import ast
-from scipy import ndimage
 
-Tile_Size = 256
+import numpy as np
+
+from pathlib import Path
+import os
+
+import cv2
+
+Tile_Size = 64
 
 def invert_binary(image, kernel=None, n=None):
     invertedimg = np.zeros(image.shape,dtype=datatype)
@@ -160,11 +161,13 @@ if __name__=="__main__":
         if max_size == None:
             raise ValueError('Need to specify the maximum of the pixel area to keep')
 
-    
-    if 'dilation' or 'erosion' in operations:
+    if 'dilation' in operations:
         if iterations == None:
             raise ValueError("Need to specify the number of iterations to apply the operation")
 
+    if 'erosion' in operations:
+        if iterations == None:
+            raise ValueError("Need to specify the number of iterations to apply the operation")
     # A dictionary specifying the function that will be run based on user input. 
     dispatch = {
         'invertion': invert_binary,
@@ -214,23 +217,26 @@ if __name__=="__main__":
         for f in inpDir_files:
 
             # Load an image
-            image = Path(inpDir).joinpath(f)
+            image = os.path.join(inpDir, f)
 
             # Read the image
-            br = BioReader(str(image.absolute()))
-            # br = BioReader(image.absolute(),max_workers=max([cpu_count()-1,2])) # Version bfio 2.4.4
+            br = BioReader(image)
 
             # Get the dimensions of the Image
-            br_y, br_x, br_z = br.num_y(), br.num_x(), br.num_z()
-            datatype = br.read_metadata().image().Pixels.get_PixelType()
-            logger.info("Original Datatype {}:".format(datatype))
+            br_x, br_y, br_z, br_c, br_t = br.num_x(), br.num_y(), br.num_z(), br.num_c(), br.num_t()
+            br_shape = (br_x, br_y, br_z, br_c, br_t)
+            datatype = br.pixel_type()
+            max_datatype_val = np.iinfo(datatype).max
+
+            logger.info("Original Datatype {}: ({})".format(datatype, max_datatype_val))
+            logger.info("Shape of Input (XYZCT): {}".format(br_shape))
 
             # Initialize Kernel
             kernel = cv2.getStructuringElement(structshape,(intkernel,intkernel))
 
             # Initialize Output
-            newfile = Path(outDir).joinpath(f)
-            bw = BioWriter(file_path=str(newfile), metadata=br.read_metadata())
+            newfile = os.path.join(outDir, f)
+            bw = BioWriter(file_path=newfile, metadata=br.read_metadata())
 
             # Initialize the Python Generators to go through each "tile" of the image
             tsize = Tile_Size + (2*intkernel)
@@ -251,16 +257,16 @@ if __name__=="__main__":
                 # Images are (1, Tile_Size, Tile_Size, 1)
                 # Need to convert to (Tile_Size, Tile_Size) to be able to do operation
                 images = np.squeeze(images)
-                images[images == 255] = 1
+                images[images == max_datatype_val] = 1
 
                 # Initialize which function we are dispatching
                 function = dispatch[operations]
                 if callable(function):
                     trans_image = function(images, kernel=kernel, n=dict_n_args[operations])
-                    trans_image[trans_image==1] = 255
+                    trans_image[trans_image==1] = max_datatype_val
 
                 # The image needs to be converted back to (1, Tile_Size_Tile_Size, 1) to write it
-                reshape_img = np.reshape(trans_image[intkernel:-intkernel,intkernel:-intkernel], (1, Tile_Size, Tile_Size, 1)).astype('uint8')
+                reshape_img = np.reshape(trans_image[intkernel:-intkernel,intkernel:-intkernel], (1, Tile_Size, Tile_Size, 1)).astype(datatype)
                 
                 # Send it to the Writerator
                 writerator.send(reshape_img)
