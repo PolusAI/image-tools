@@ -215,13 +215,13 @@ if __name__=="__main__":
     threshold_area = args.threshold_area
     iterations = args.num_iterations
 
-    if 'filter_area_with_min' in operations:
+    if 'filter_area_remove_large_objects' in operations:
         if threshold_area == None:
-            raise ValueError('Need to specify the minimum of the pixel area to keep')
+            raise ValueError('Need to specify the maximum area of the segments to keep')
 
-    if 'filter_area_with_max' in operations:
+    if 'filter_area_remove_small_objects' in operations:
         if threshold_area == None:
-            raise ValueError('Need to specify the maximum of the pixel area to keep')
+            raise ValueError('Need to specify the minimum area of the segments to keep')
 
     if 'dilation' in operations:
         if iterations == None:
@@ -242,24 +242,23 @@ if __name__=="__main__":
         'skeleton': skeleton_binary,
         'top_hat': tophat_binary,
         'black_hat': blackhat_binary,
-        'filter_area_with_min': areafiltering_remove_larger_objects_binary,
-        'filter_area_with_max': areafiltering_remove_smaller_objects_binary
+        'filter_area_remove_large_objects': areafiltering_remove_larger_objects_binary,
+        'filter_area_remove_small_objects': areafiltering_remove_smaller_objects_binary
     }
 
     # Additional arguments for each function
     dict_n_args = {
-        'dilation': iterations,
-        'erosion': iterations,
         'invertion': None,
         'opening': None,
         'closing': None,
         'morphological_gradient': None,
+        'dilation': iterations,
+        'erosion': iterations,
         'skeleton': None,
-        'fill_holes': None,
         'top_hat': None,
         'black_hat': None,
-        'filter_area_with_min' : threshold_area,
-        'filter_area_with_max' : threshold_area
+        'filter_area_remove_large_objects' : threshold_area,
+        'filter_area_remove_small_objects' : threshold_area
     }
     
 
@@ -335,8 +334,7 @@ if __name__=="__main__":
 
             # Close the image
             bw.close_image()
-            exit()
-
+            
     # Always close the JavaBridge
     finally:
         logger.info('Closing the javabridge...')
