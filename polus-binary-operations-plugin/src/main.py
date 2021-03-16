@@ -10,34 +10,80 @@ import os
 
 import cv2
 
-Tile_Size = 64
+Tile_Size = 256
 
 def invert_binary(image, kernel=None, n=None):
-    invertedimg = np.zeros(image.shape,dtype=datatype)
+    """
+    This function inverts the binary image. 
+    The 0s get mapped to 1.
+    The 1s get mapped to 0.
+    """
+    invertedimg = np.zeros(image.shape).astype('uint8')
     invertedimg = 1 - image
     return invertedimg
 
 def dilate_binary(image, kernel=None, n=None): 
+    """
+    Increases the white region in the image, or the 
+    foreground object increases.
+    
+    Additional Arguments:
+    ---------------------
+    n : int
+        (iterations) The number of times to apply the dilation.
+    """
     dilatedimg = cv2.dilate(image, kernel, iterations=n)
     return dilatedimg
 
-def erode_binary(image,kernel=None, n=None):
+def erode_binary(image, kernel=None, n=None):
+    """
+    Decreases the white region in the image, or the 
+    foreground object decreases.
+    
+    Additional Arguments:
+    ---------------------
+    n : int
+        (iterations) The number of times to apply the erosion.
+    """
     erodedimg = cv2.erode(image, kernel, iterations=n)
     return erodedimg
 
-def open_binary(image,kernel=None, n=None):
+def open_binary(image, kernel=None, n=None):
+    """ 
+    An opening operation is similar to applying an erosion 
+    followed by a dilation.  It removes small objects/noise in the 
+    background of the images.
+    """
     openimg = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
     return openimg
 
-def close_binary(image,kernel=None, n=None):
+def close_binary(image, kernel=None, n=None):
+    """
+    A closing operation is similar to applying a dilation
+    followed by an erosion. It is useful in closing small holes
+    inside the foreground objects, or small black points inside
+    the image. 
+    """
     closeimg = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
     return closeimg
 
-def morphgradient_binary(image,kernel=None, n=None):
+def morphgradient_binary(image, kernel=None, n=None):
+    """
+    This operation is the difference between dilation and 
+    erosion of an image.  It creates an outline of the 
+    foreground object.
+    """
     mg = cv2.morphologyEx(image, cv2.MORPH_GRADIENT, kernel)
     return mg
 
-def skeleton_binary(image,kernel=None, n=None):
+def skeleton_binary(image, kernel=None, n=None):
+    """ 
+    This operation reduces the  foreground regions in a binary image 
+    to a skeletal remnant that largely preserves the extent and 
+    connectivity of the original region while throwing away most of 
+    the original foreground pixels.
+    https://homepages.inf.ed.ac.uk/rbf/HIPR2/skeleton.htm
+    """
     done = False
     size = np.size(image)
     skel = np.zeros(image.shape,datatype)
@@ -56,42 +102,61 @@ def skeleton_binary(image,kernel=None, n=None):
     skel = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
     return skel
 
-def holefilling_binary(image,kernel=None, n=None):
-    hf = cv2.morphologyEx(image,cv2.MORPH_OPEN,kernel)
-    return hf
 
-def hitormiss_binary(image,kernel=None, n=None):
-    hm = ndimage.binary_hit_or_miss(image, structure1=n)
-    return hm
-
-def tophat_binary(image,kernel=None, n=None):
+def tophat_binary(image, kernel=None, n=None):
+    """
+    It is the difference between input image and
+    opening of the image
+    """
     tophat = cv2.morphologyEx(image,cv2.MORPH_TOPHAT, kernel)
     return tophat
 
-def blackhat_binary(image,kernel=None, n=None):
+def blackhat_binary(image, kernel=None, n=None):
+    """
+    It is the difference between the closing of 
+    the input image and input image.
+    """
     blackhat = cv2.morphologyEx(image,cv2.MORPH_BLACKHAT, kernel)
     return blackhat
 
-def areafiltering_min_binary(image, kernel=None, n=None):
-    min_size = n
+def areafiltering_remove_larger_objects_binary(image, kernel=None, n=None):
+    """ 
+    Removes all objects in the image that have an area larger than 
+    the threshold specified.
+    
+    Additional Arguments
+    --------------------
+    n : int
+        (threshold_size) Specifies the threshold.
+    """
+    threshold_size = n
     nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(image, connectivity=8)
     sizes = stats[1:, -1]; nb_components = nb_components - 1
 
     af_min = np.zeros((image.shape))
     for i in range(0, nb_components):
-        if sizes[i] >= min_size:
+        if sizes[i] >= threshold_size:
             af_min[output == i + 1] = 1
 
     return af_min
 
-def areafiltering_max_binary(image, kernel=None, n=None):
-    max_size = n
+def areafiltering_remove_smaller_objects_binary(image, kernel=None, n=None):
+    """ 
+    Removes all objects in the image that have an area smaller than 
+    the threshold specified.
+    
+    Additional Arguments
+    --------------------
+    n : int
+        (threshold_size) Specifies the threshold.
+    """
+    threshold_size = n
     nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(image, connectivity=8)
     sizes = stats[1:, -1]; nb_components = nb_components - 1
 
     af_max = np.zeros((image.shape))
     for i in range(0, nb_components):
-        if sizes[i] <= max_size:
+        if sizes[i] <= threshold_size:
             af_max[output == i + 1] = 1
 
     return af_max
@@ -120,10 +185,8 @@ if __name__=="__main__":
                         help='Shape of the structuring element can either be Elliptical, Rectangular, or Cross', required=True)
 
     # Extra arguments based on operation
-    parser.add_argument('--MinSize', dest='min_size', type=int,
-                        help='Minimum size of pixel that remains', required=False)
-    parser.add_argument('--MaxSize', dest='max_size', type=int,
-                        help='Maximum size of pixel that remains', required=False)
+    parser.add_argument('--ThresholdArea', dest='threshold_area', type=int,
+                        help='Area threshold of objects in image', required=False)
     parser.add_argument('--iterations', dest='num_iterations', type=int,
                         help='Number of Iterations to apply operation', required=False)
     
@@ -149,16 +212,15 @@ if __name__=="__main__":
         raise ValueError("Structuring Shape is not correct")
     logger.info('Structuring Shape = {}'.format(args.struct_shape))
 
-    min_size = args.min_size
-    max_size = args.max_size
+    threshold_area = args.threshold_area
     iterations = args.num_iterations
 
     if 'filter_area_with_min' in operations:
-        if min_size == None:
+        if threshold_area == None:
             raise ValueError('Need to specify the minimum of the pixel area to keep')
 
     if 'filter_area_with_max' in operations:
-        if max_size == None:
+        if threshold_area == None:
             raise ValueError('Need to specify the maximum of the pixel area to keep')
 
     if 'dilation' in operations:
@@ -168,6 +230,7 @@ if __name__=="__main__":
     if 'erosion' in operations:
         if iterations == None:
             raise ValueError("Need to specify the number of iterations to apply the operation")
+
     # A dictionary specifying the function that will be run based on user input. 
     dispatch = {
         'invertion': invert_binary,
@@ -177,11 +240,10 @@ if __name__=="__main__":
         'dilation': dilate_binary,
         'erosion': erode_binary,
         'skeleton': skeleton_binary,
-        'fill_holes': holefilling_binary,
         'top_hat': tophat_binary,
         'black_hat': blackhat_binary,
-        'filter_area_with_min': areafiltering_min_binary,
-        'filter_area_with_max': areafiltering_max_binary
+        'filter_area_with_min': areafiltering_remove_larger_objects_binary,
+        'filter_area_with_max': areafiltering_remove_smaller_objects_binary
     }
 
     # Additional arguments for each function
@@ -196,8 +258,8 @@ if __name__=="__main__":
         'fill_holes': None,
         'top_hat': None,
         'black_hat': None,
-        'filter_area_with_min' : min_size,
-        'filter_area_with_max' : max_size
+        'filter_area_with_min' : threshold_area,
+        'filter_area_with_max' : threshold_area
     }
     
 
@@ -213,7 +275,6 @@ if __name__=="__main__":
       
     # Loop through files in inpDir image collection and process
     try:
-        imagenum = 0
         for f in inpDir_files:
 
             # Load an image
@@ -263,16 +324,18 @@ if __name__=="__main__":
                 function = dispatch[operations]
                 if callable(function):
                     trans_image = function(images, kernel=kernel, n=dict_n_args[operations])
+                    trans_image = trans_image.astype(datatype)
                     trans_image[trans_image==1] = max_datatype_val
 
                 # The image needs to be converted back to (1, Tile_Size_Tile_Size, 1) to write it
-                reshape_img = np.reshape(trans_image[intkernel:-intkernel,intkernel:-intkernel], (1, Tile_Size, Tile_Size, 1)).astype(datatype)
-                
+                reshape_img = np.reshape(trans_image[intkernel:-intkernel,intkernel:-intkernel], (1, Tile_Size, Tile_Size, 1))
+
                 # Send it to the Writerator
                 writerator.send(reshape_img)
 
             # Close the image
             bw.close_image()
+            exit()
 
     # Always close the JavaBridge
     finally:
