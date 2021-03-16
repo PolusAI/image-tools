@@ -1,0 +1,51 @@
+{
+  "name": "ImageJ image integral",
+  "version": "0.1.0",
+  "title": "ImageJ image integral",
+  "description": "DefaultIntegralImg,SquareIntegralImg,WrappedIntegralImg",
+  "author": "Anjali Taneja (Anjali.Taneja@axleinfo.com), Nick Schaub (nick.schaub@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "labshare/polus-imagej-image-integral-plugin:0.1.0",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": ["DefaultIntegralImg",
+                   "SquareIntegralImg",
+                   "WrappedIntegralImg"]
+      },
+      "description": "Operation to perform",
+      "required": true
+    },
+    {
+      "name": "in1",
+      "type": "collection",
+      "description": "in1",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "out",
+      "type": "collection",
+      "description": "out"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "Operation",
+      "description": "Operation to perform"
+    },
+    {
+      "key": "inputs.in1",
+      "title": "in1",
+      "description": "in1",
+      "condition": "model.inputs.opName==['DefaultIntegralImg','SquareIntegralImg','WrappedIntegralImg']"
+    }
+  ]
+}
