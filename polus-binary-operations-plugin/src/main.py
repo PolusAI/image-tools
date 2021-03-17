@@ -10,7 +10,7 @@ import os
 
 import cv2
 
-Tile_Size = 1024
+Tile_Size = 256
 
 def invert_binary(image, kernel=None, n=None):
     """
