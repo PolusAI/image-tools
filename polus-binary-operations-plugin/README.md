@@ -1,7 +1,51 @@
 # WIPP Widget
 
-This WIPP plugin does things, some of which involve math and science. There is likely a lot of handwaving involved when describing how it works, but handwaving should be replaced with a good description. However, someone forgot to edit the README, so handwaving will have to do for now. Contact [Data Scientist](mailto:data.scientist@labshare.org) for more information.
+This WIPP plugin does Morphological Image Processing on binary images.  
+The operations available are: 
 
+  * #### Invertion
+  
+      This operation inverts the binary images.  The 0s get mapped to 1 and the 1s get mapped to 0.
+      
+  * #### Dilation
+  
+      This operation increases the white region in the image, or the foreground object increases.
+      
+  * #### Erosion
+  
+      This operation decreases the white region in the image, or the foreground object decreases.
+      
+  * #### Opening
+  
+      An opening operation is similar to applying an erosion followed by a dilation.  It removes small objects/noise in the background of the images.
+      
+  * #### Closing
+  
+      A closing operation is similar to applying a dilation following by an erosion.  It is useful in closing small holes inside the foreground object, or small
+      black points inside the image
+      
+  * #### Morphological Gradient
+  
+      This operation is the difference between dilation and erosion of an image.  It creates an outline of the foreground object
+      
+  * #### Filling Holes
+  
+      This function fills in the foreground object.  It finds countours in the object and fills it with black and inverts it back.
+      
+  * #### Skeletonization
+  
+      This operation reduces the foreground regions in a binary image to a skeletal remnant that largely preserves the extent and connectivity of the original region while throwing away most of the original foreground pixels.
+      
+  * #### Top Hat
+  
+      This operation is the difference between the input image and opening of the image. 
+      
+  * #### Black Hat
+  
+      This operation is the difference between the input image and closing of the image.
+      
+
+Contact [Data Scientist](mailto:Madhuri.Vihani@axleinfo.com) for more information.
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
 ## Building
@@ -15,11 +59,14 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-This plugin takes one input argument and one output argument:
+This plugin takes five input arguments and has output argument:
 
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
-| `--filePattern` | Filename pattern used to separate data | Input | string |
 | `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
 | `--outDir` | Output collection | Output | collection |
+| `--Operation`| The Morphological Operation to be done on input images | Input | String |
+| `--structuringshape`| Shape of the structuring element can either be Elliptical, Rectangular, or Cross | Input | String |
+| `--kernelsize`| Size of the kernel for most operations | Input | String |
+
 
