@@ -9,8 +9,9 @@ from pathlib import Path
 import os
 
 import cv2
+from PIL import Image
 
-Tile_Size = 256
+Tile_Size = 1024
 
 def invert_binary(image, kernel=None, n=None):
     """
@@ -86,7 +87,7 @@ def skeleton_binary(image, kernel=None, n=None):
     """
     done = False
     size = np.size(image)
-    skel = np.zeros(image.shape,datatype)
+    skel = np.zeros(image.shape,np.uint8)
 
     while (not done):
         erode = cv2.erode(image,kernel)
@@ -94,14 +95,11 @@ def skeleton_binary(image, kernel=None, n=None):
         temp = cv2.subtract(image,temp)
         skel = cv2.bitwise_or(skel,temp)
         image = erode.copy()
-
         zeros = size - cv2.countNonZero(image)
         if zeros==size:
             done = True
-
-    skel = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
+    
     return skel
-
 
 def tophat_binary(image, kernel=None, n=None):
     """
@@ -340,7 +338,6 @@ if __name__=="__main__":
                 # Images are (1, Tile_Size, Tile_Size, 1)
                 # Need to convert to (Tile_Size, Tile_Size) to be able to do operation
                 images = np.squeeze(images)
-
                 images[images == max_datatype_val] = 1
                 
                 # Initialize which function we are dispatching
