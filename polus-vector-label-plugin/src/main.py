@@ -9,6 +9,10 @@ from numba import jit
 
 np.seterr(divide='ignore', invalid='ignore')
 
+lbl_dtype={'uint8':255,'uint16':65535,'uint32':4294967295,'float':3.402823E+38}
+
+
+
 @jit(nopython=True)
 def _label_overlap(x, y):
     """ Fast function to get pixel overlaps between masks in x and y
@@ -130,12 +134,13 @@ def main():
             mask_final = np.zeros((vec_arr.shape[0],vec_arr.shape[1],vec_arr.shape[2],1,1))
             vec_arr = vec_arr.transpose((2,0,1,3,4)).squeeze(axis=4)
             tile_size = min(1024,vec_arr.shape[1])
+            lblcnt_max=0
   #          tile_iterator=tile_size //2 if tile_size !=vec_arr.shape[1] else tile_size
             # Iterating over Z dimension
-            new_img = -1
+
             for z in range(vec_arr.shape[0]):
                     logger.info('Calculating flows for slice {} of image {}'.format(z+1, file_name))
-
+                    new_img = -1
                     for x in range(0, vec_arr.shape[2], tile_size):
                         x_max = min([vec_arr.shape[2], x + tile_size])
                         for y in range(0, vec_arr.shape[1], tile_size):
@@ -145,10 +150,11 @@ def main():
                             dP = np.stack((prob[..., 0], prob[..., 1]), axis=0)
                             p = mask.follow_flows(-1 * dP * (cellprob > cellprob_threshold) / 5.,
                                                                     niter=niter, interp=True)
-                            maski = mask.compute_masks(p,cellprob,dP,new_img,cellprob_threshold,flow_threshold)
+                            maski,lbl_cnt = mask.compute_masks(p,cellprob,dP,new_img,cellprob_threshold,flow_threshold)
                             mask_final=mask_final.astype(maski.dtype)
                             mask_final[y:y_max, x:x_max,z:z+1,:,:] = maski[:,:,np.newaxis,np.newaxis,np.newaxis].astype(maski.dtype)
                             new_img = 1
+                            lblcnt_max= max(lbl_cnt,lblcnt_max)
 
             logger.info('Computed  masks for  image {}'.format(file_name))
 
@@ -157,7 +163,13 @@ def main():
                 mask_final = stitch3D(mask_final.squeeze(),tile_size, stitch_threshold=stitch_threshold)
                 mask_final = mask_final[...,np.newaxis,np.newaxis]
 
-            mask_final=mask_final.astype(np.uint16)
+            # Setting final array dtype based on number of labels.
+            for i, (key, value) in enumerate(lbl_dtype.items()):
+                if lblcnt_max < value:
+                    break
+
+            mask_final=np.array(mask_final, dtype=key)
+         #   mask_final=mask_final.astype(dtype=lbl_dtype[key])
             xml_metadata = OmeXml.OMEXML(metadata)
             # Write the output
             logger.info('Saving label for image {}'.format(file_name))

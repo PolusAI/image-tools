@@ -1,8 +1,8 @@
 # Vector-label plugin
 Plugin is based off of mask recovery implemented in [Cellpose](https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1). 
-The plugin takes a vector field as  input and predicts masks based on the flow error and cell probability threshold entered by user.
-A meshgrid is generated based on gradients and probability threshold and pixels are grouped based on where they converge. Based on this location pixels are grouped to 
-generate masks.
+The plugirn takes a vector field as  input and predicts masks based on the flow error and cell probability threshold entered by user.
+A meshgrid is generated based on pixel location and pixels are grouped based on where they converge. These grouped pixels form a mask 
+. From the masks flows are recomputed and masks above the flow error threshold are removed.
   
 The author's recommended values for cell probability threshold ,flow error and stitching threshold are 0,0.4 and 0. 
 

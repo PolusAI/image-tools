@@ -148,16 +148,14 @@ def set_totalpix(a):
         total_pix=0
 
 def get_masks(p,update_lbl, iscell=None, rpad=20, flows=None, threshold=0.4):
-    """ Create masks using pixel convergence after running dynamics
-    Makes a histogram of final pixel locations p, initializes masks
-    at peaks of histogram and extends the masks from the peaks so that
-    they include all pixels with more than 2 final pixels p. Discards
-    masks with flow errors greater than the threshold.
+    """ Create masks using pixel convergence after running dynamics.Makes a histogram of final pixel locations p,
+    initializes masks at peaks of histogram and extends the masks from the peaks so that they include all pixels with
+    more than 2 final pixels p. Discards masks with flow errors greater than the threshold.
     Args:
     p(array[float32]):3D or 4D array.Final locations of each pixel after dynamics,size [axis x Ly x Lx] or [axis x Lz x Ly x Lx].
     iscell(array[bool]):  2D or 3D array.If iscell is not None, set pixels that are iscell False to stay in their original location.
     rpad(optional[int]): Default 20.Histogram edge padding
-    threshold(optional[float]): Default 0.4.Masks with flow error greater than threshold are discarded(if flows is not None)
+    threshold(optional[float]): Default 0.8.Masks with flow error greater than threshold are discarded(if flows is not None)
     flows(array[float]): 3D array.Flows [axis x Ly x Lx] . If flows is not None, then masks with inconsistent flows are removed using`remove_bad_flow_masks`.
 
     Returns:
@@ -414,7 +412,7 @@ def compute_masks(p,cellprob,dP,new_img,cellprob_threshold=0.0,flow_threshold=0.
     maski = fill_holes(maski)
     set_totalpix(cnt)
 
-    return maski
+    return maski,cnt
 
 
 def fill_holes(masks, min_size=15):
