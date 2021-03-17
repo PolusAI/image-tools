@@ -62,8 +62,8 @@ if __name__=="__main__":
 
             # Saving  Vector in chunks
             cluster = root.create_group(f)
-            init_cluster_1 = cluster.create_dataset('vector', shape=flow_final.shape, data=flow_final,chunks=(br.Y, br.X, br.Z, 3, 1))
-            init_cluster_2 = cluster.create_dataset('lbl', shape=br.shape, data=br[:],chunks=(br.Y, br.X, br.Z, 1, 1))
+            init_cluster_1 = cluster.create_dataset('vector', shape=flow_final.shape, data=flow_final,chunks=(tile_size, tile_size, 1, 3, 1))
+            init_cluster_2 = cluster.create_dataset('lbl', shape=br.shape, data=br[:],chunks=(tile_size, tile_size, 1, 3, 1))
             cluster.attrs['metadata'] = str(br.metadata)
 
     except FileExistsError:
