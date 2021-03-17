@@ -150,6 +150,7 @@ def areafiltering_remove_larger_objects_binary(image, kernel=None, n=None):
     n : int
         Specifies the threshold.
     """
+
     nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(image, connectivity=8)
     sizes = stats[1:, -1]
     nb_components = nb_components - 1
@@ -158,7 +159,6 @@ def areafiltering_remove_larger_objects_binary(image, kernel=None, n=None):
     for i in range(0, nb_components):
         if sizes[i] <= n:
             af[output == i+1] = 1
-
     return af
 
 
@@ -305,7 +305,11 @@ if __name__=="__main__":
             bw = BioWriter(file_path=newfile, metadata=br.read_metadata())
 
             # Initialize the Python Generators to go through each "tile" of the image
-            tsize = Tile_Size + (2*intkernel)
+            if (threshold_area_rm_large != None) or (threshold_area_rm_small != None):
+                tsize = (Tile_Size * 2)
+            else:
+                tsize = Tile_Size + (2*intkernel)
+            logger.info("Tile Size {}x{}".format(tsize, tsize))
             readerator = br.iterate(tile_stride=[Tile_Size, Tile_Size],tile_size=[tsize, tsize], batch_size=1)
             writerator = bw.writerate(tile_size=[Tile_Size, Tile_Size], tile_stride=[Tile_Size, Tile_Size], batch_size=1)
             next(writerator)
@@ -313,10 +317,16 @@ if __name__=="__main__":
             for images,indices in readerator:
                 # Extra tiles do not need to be calculated.
                     # Indices should range from -intkernel < index value < Image_Dimension + intkernel
-                if indices[0][0][0] == br_x - intkernel:
-                    continue
-                if indices[1][0][0] == br_y - intkernel:
-                    continue
+                if (threshold_area_rm_large != None) or (threshold_area_rm_small != None):
+                    if indices[0][0][0] == br_x - (Tile_Size//2):
+                        continue
+                    if indices[1][0][0] == br_y - (Tile_Size//2):
+                        continue
+                else:
+                    if indices[0][0][0] == br_x - intkernel:
+                        continue
+                    if indices[1][0][0] == br_y - intkernel:
+                        continue
 
                 logger.info(indices)
 
@@ -335,9 +345,13 @@ if __name__=="__main__":
                     trans_image[trans_image==1] = max_datatype_val
 
                 # The image needs to be converted back to (1, Tile_Size_Tile_Size, 1) to write it
-                reshape_img = np.reshape(trans_image[intkernel:-intkernel,intkernel:-intkernel], (1, Tile_Size, Tile_Size, 1))
-                
+                reshape_img = None
                 # Send it to the Writerator
+                if (threshold_area_rm_large != None) or (threshold_area_rm_small != None):
+                    reshape_img = np.reshape(trans_image[Tile_Size//2:-Tile_Size//2,Tile_Size//2:-Tile_Size//2], (1, Tile_Size, Tile_Size, 1))
+                else:
+                    reshape_img = np.reshape(trans_image[intkernel:-intkernel,intkernel:-intkernel], (1, Tile_Size, Tile_Size, 1))
+                
                 writerator.send(reshape_img)
 
             # Close the image
@@ -345,7 +359,6 @@ if __name__=="__main__":
 
     except:
         traceback.print_exc()
-
     # Always close the JavaBridge
     finally:
         logger.info('Closing the javabridge...')
