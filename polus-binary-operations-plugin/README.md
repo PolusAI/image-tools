@@ -4,23 +4,14 @@ This WIPP plugin does Morphological Image Processing on binary images.
 The operations available are: 
 
   * Invertion
-
   * Dilation
-
   * Erosion
-
   * Opening
-
   * Closing
-
   * Morphological Gradient
-
   * Filling Holes
-
   * Skeletonization
-
   * Top Hat
-
   * Black Hat
 
 
