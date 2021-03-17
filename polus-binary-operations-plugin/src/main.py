@@ -9,9 +9,8 @@ from pathlib import Path
 import os
 
 import cv2
-from PIL import Image
 
-Tile_Size = 1024
+Tile_Size = 256
 
 def invert_binary(image, kernel=None, n=None):
     """
@@ -98,7 +97,7 @@ def skeleton_binary(image, kernel=None, n=None):
         zeros = size - cv2.countNonZero(image)
         if zeros==size:
             done = True
-    
+
     return skel
 
 def tophat_binary(image, kernel=None, n=None):
@@ -271,7 +270,6 @@ if __name__=="__main__":
             'filter_area_remove_large_objects' : threshold_area_rm_large,
             'filter_area_remove_small_objects' : threshold_area_rm_small
         }
-        
 
         # Start the javabridge with proper java logging
         logger.info('Initializing the javabridge...')
@@ -314,6 +312,7 @@ if __name__=="__main__":
                 tsize = (Tile_Size * 2)
             else:
                 tsize = Tile_Size + (2*intkernel)
+
             logger.info("Tile Size {}x{}".format(tsize, tsize))
             readerator = br.iterate(tile_stride=[Tile_Size, Tile_Size],tile_size=[tsize, tsize], batch_size=1)
             writerator = bw.writerate(tile_size=[Tile_Size, Tile_Size], tile_stride=[Tile_Size, Tile_Size], batch_size=1)
@@ -350,12 +349,12 @@ if __name__=="__main__":
 
                 # The image needs to be converted back to (1, Tile_Size_Tile_Size, 1) to write it
                 reshape_img = None
-                # Send it to the Writerator
                 if (threshold_area_rm_large != None) or (threshold_area_rm_small != None):
                     reshape_img = np.reshape(trans_image[Tile_Size//2:-Tile_Size//2,Tile_Size//2:-Tile_Size//2], (1, Tile_Size, Tile_Size, 1))
                 else:
                     reshape_img = np.reshape(trans_image[intkernel:-intkernel,intkernel:-intkernel], (1, Tile_Size, Tile_Size, 1))
                 
+                # Send it to the Writerator
                 writerator.send(reshape_img)
 
             # Close the image
@@ -363,6 +362,7 @@ if __name__=="__main__":
 
     except:
         traceback.print_exc()
+
     # Always close the JavaBridge
     finally:
         logger.info('Closing the javabridge...')
