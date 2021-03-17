@@ -1,7 +1,7 @@
 from bfio import BioReader, BioWriter
 import bioformats
 import javabridge as jutil
-import argparse, logging, subprocess, time, traceback, multiprocessing
+import argparse, logging, traceback
 
 import numpy as np
 
@@ -257,7 +257,7 @@ if __name__=="__main__":
 
         # A dictionary specifying the function that will be run based on user input. 
         dispatch = {
-            'invertion': invert_binary,
+            'inversion': invert_binary,
             'opening': open_binary,
             'closing': close_binary,
             'morphological_gradient': morphgradient_binary,
@@ -273,7 +273,7 @@ if __name__=="__main__":
 
         # Additional arguments for each function
         dict_n_args = {
-            'invertion': None,
+            'inversion': None,
             'opening': None,
             'closing': None,
             'morphological_gradient': None,
