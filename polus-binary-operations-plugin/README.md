@@ -36,11 +36,11 @@ The operations available are:
   
       This operation reduces the foreground regions in a binary image to a skeletal remnant that largely preserves the extent and connectivity of the original region while throwing away most of the original foreground pixels.
       
-  * Top Hat
+  * #### Top Hat
   
       This operation is the difference between the input image and opening of the image. 
       
-  * Black Hat
+  * #### Black Hat
   
       This operation is the difference between the input image and closing of the image.
       
