@@ -132,13 +132,16 @@ def areafiltering_remove_smaller_objects_binary(image, kernel=None, n=None):
 
     nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(image, connectivity=8)
     sizes = stats[1:, -1]; nb_components = nb_components - 1
-    print(sizes)
 
-    af_min = np.ones((image.shape))
+    af = np.ones((image.shape))
+    count_removed = 0
+    logger.info("{} ROI in tile".format(nb_components))
     for i in range(0, nb_components):
         if sizes[i] >= n:
-            af_min[output == i+1] = 1
-    return af_min
+            af[output == i+1] = 1
+            count_removed = count_removed + 1
+    logger.info("{} ROI removed in tile".format(count_removed))
+    return af
 
 def areafiltering_remove_larger_objects_binary(image, kernel=None, n=None):
     """ 
@@ -156,9 +159,13 @@ def areafiltering_remove_larger_objects_binary(image, kernel=None, n=None):
     nb_components = nb_components - 1
 
     af = np.zeros((image.shape))
+    count_removed = 0
+    logger.info("{} ROI in tile".format(nb_components))
     for i in range(0, nb_components):
         if sizes[i] <= n:
             af[output == i+1] = 1
+            count_removed = count_removed + 1
+    logger.info("{} ROI removed in tile".format(count_removed))
     return af
 
 
