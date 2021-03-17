@@ -179,12 +179,12 @@ if __name__=="__main__":
                         help='Output collection', required=True)
     parser.add_argument('--Operation', dest='operations', type=str,
                         help='The types of operations done on image in order', required=True)
-    parser.add_argument('--kernelsize', dest='all_kernel', type=int,
-                        help='Kernel size that should be used for all operations', required=True)
     parser.add_argument('--structuringshape', dest='struct_shape', type=str,
                         help='Shape of the structuring element can either be Elliptical, Rectangular, or Cross', required=True)
 
     # Extra arguments based on operation
+    parser.add_argument('--kernelsize', dest='all_kernel', type=int, # not used for the area filtering
+                        help='Kernel size that should be used for all operations', required=False)
     parser.add_argument('--ThresholdAreaRemoveLarge', dest='threshold_area_rm_large', type=int,
                         help='Area threshold of objects in image', required=False)
     parser.add_argument('--ThresholdAreaRemoveSmall', dest='threshold_area_rm_small', type=int,
@@ -345,7 +345,7 @@ if __name__=="__main__":
 
     except:
         traceback.print_exc()
-        
+
     # Always close the JavaBridge
     finally:
         logger.info('Closing the javabridge...')
