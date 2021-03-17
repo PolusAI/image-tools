@@ -1,7 +1,7 @@
 from bfio import BioReader, BioWriter
 import bioformats
 import javabridge as jutil
-import argparse, logging, subprocess, time, multiprocessing
+import argparse, logging, subprocess, time, traceback, multiprocessing
 
 import numpy as np
 
@@ -119,7 +119,7 @@ def blackhat_binary(image, kernel=None, n=None):
     blackhat = cv2.morphologyEx(image,cv2.MORPH_BLACKHAT, kernel)
     return blackhat
 
-def areafiltering_remove_larger_objects_binary(image, kernel=None, n=None):
+def areafiltering_remove_smaller_objects_binary(image, kernel=None, n=None):
     """ 
     Removes all objects in the image that have an area larger than 
     the threshold specified.
@@ -127,20 +127,20 @@ def areafiltering_remove_larger_objects_binary(image, kernel=None, n=None):
     Additional Arguments
     --------------------
     n : int
-        (threshold_size) Specifies the threshold.
+        Specifies the threshold.
     """
-    threshold_size = n
+
     nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(image, connectivity=8)
     sizes = stats[1:, -1]; nb_components = nb_components - 1
+    print(sizes)
 
-    af_min = np.zeros((image.shape))
+    af_min = np.ones((image.shape))
     for i in range(0, nb_components):
-        if sizes[i] >= threshold_size:
-            af_min[output == i + 1] = 1
-
+        if sizes[i] >= n:
+            af_min[output == i+1] = 1
     return af_min
 
-def areafiltering_remove_smaller_objects_binary(image, kernel=None, n=None):
+def areafiltering_remove_larger_objects_binary(image, kernel=None, n=None):
     """ 
     Removes all objects in the image that have an area smaller than 
     the threshold specified.
@@ -148,18 +148,18 @@ def areafiltering_remove_smaller_objects_binary(image, kernel=None, n=None):
     Additional Arguments
     --------------------
     n : int
-        (threshold_size) Specifies the threshold.
+        Specifies the threshold.
     """
-    threshold_size = n
     nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(image, connectivity=8)
-    sizes = stats[1:, -1]; nb_components = nb_components - 1
+    sizes = stats[1:, -1]
+    nb_components = nb_components - 1
 
-    af_max = np.zeros((image.shape))
+    af = np.zeros((image.shape))
     for i in range(0, nb_components):
-        if sizes[i] <= threshold_size:
-            af_max[output == i + 1] = 1
+        if sizes[i] <= n:
+            af[output == i+1] = 1
 
-    return af_max
+    return af
 
 
 if __name__=="__main__":
@@ -193,93 +193,93 @@ if __name__=="__main__":
                         help='Number of Iterations to apply operation', required=False)
     parser.add_argument('--IterationsErosion', dest='num_iterations_erosion', type=int,
                         help='Number of Iterations to apply operation', required=False)
-    
-    # Input arguments
-    args = parser.parse_args()
-    inpDir = args.inpDir
-    logger.info('inpDir = {}'.format(inpDir))
-    outDir = args.outDir
-    logger.info('outDir = {}'.format(outDir))
-    operations = args.operations
-    logger.info('Operation = {}'.format(operations))
-    intkernel = args.all_kernel
-    logger.info('Kernel Size: {}x{}'.format(intkernel, intkernel))
-
-    # structshape = cv2.MORPH_ELLIPSE
-    if args.struct_shape == 'Elliptical':
-        structshape = cv2.MORPH_ELLIPSE
-    elif args.struct_shape == 'Rectangular':
-        structshape = cv2.MORPH_RECT
-    elif args.struct_shape == 'Cross':
-        structshape = cv2.MORPH_CROSS
-    else:
-        raise ValueError("Structuring Shape is not correct")
-    logger.info('Structuring Shape = {}'.format(args.struct_shape))
-
-    threshold_area_rm_large = args.threshold_area_rm_large
-    threshold_area_rm_small = args.threshold_area_rm_small
-    iterations_dilation = args.num_iterations_dilation
-    iterations_erosion = args.num_iterations_erosion
-
-    if 'filter_area_remove_large_objects' in operations:
-        if threshold_area_rm_large == None:
-            raise ValueError('Need to specify the maximum area of the segments to keep')
-
-    if 'filter_area_remove_small_objects' in operations:
-        if threshold_area_rm_small == None:
-            raise ValueError('Need to specify the minimum area of the segments to keep')
-
-    if 'dilation' in operations:
-        if iterations_dilation == None:
-            raise ValueError("Need to specify the number of iterations to apply the operation")
-
-    if 'erosion' in operations:
-        if iterations_erosion == None:
-            raise ValueError("Need to specify the number of iterations to apply the operation")
-
-    # A dictionary specifying the function that will be run based on user input. 
-    dispatch = {
-        'invertion': invert_binary,
-        'opening': open_binary,
-        'closing': close_binary,
-        'morphological_gradient': morphgradient_binary,
-        'dilation': dilate_binary,
-        'erosion': erode_binary,
-        'skeleton': skeleton_binary,
-        'top_hat': tophat_binary,
-        'black_hat': blackhat_binary,
-        'filter_area_remove_large_objects': areafiltering_remove_larger_objects_binary,
-        'filter_area_remove_small_objects': areafiltering_remove_smaller_objects_binary
-    }
-
-    # Additional arguments for each function
-    dict_n_args = {
-        'invertion': None,
-        'opening': None,
-        'closing': None,
-        'morphological_gradient': None,
-        'dilation': iterations_dilation,
-        'erosion': iterations_erosion,
-        'skeleton': None,
-        'top_hat': None,
-        'black_hat': None,
-        'filter_area_remove_large_objects' : threshold_area_rm_large,
-        'filter_area_remove_small_objects' : threshold_area_rm_small
-    }
-    
-
-    # Start the javabridge with proper java logging
-    logger.info('Initializing the javabridge...')
-    log_config = Path(__file__).parent.joinpath("log4j.properties")
-    jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
-
-    # Get all file names in inpDir image collection
-    inpDir_files = [f.name for f in Path(inpDir).iterdir()]
-    logger.info("Files in input directory: {}".format(inpDir_files))
-
-      
-    # Loop through files in inpDir image collection and process
     try:
+        # Input arguments
+        args = parser.parse_args()
+        inpDir = args.inpDir
+        logger.info('inpDir = {}'.format(inpDir))
+        outDir = args.outDir
+        logger.info('outDir = {}'.format(outDir))
+        operations = args.operations
+        logger.info('Operation = {}'.format(operations))
+        intkernel = args.all_kernel
+        logger.info('Kernel Size: {}x{}'.format(intkernel, intkernel))
+
+        # structshape = cv2.MORPH_ELLIPSE
+        if args.struct_shape == 'Elliptical':
+            structshape = cv2.MORPH_ELLIPSE
+        elif args.struct_shape == 'Rectangular':
+            structshape = cv2.MORPH_RECT
+        elif args.struct_shape == 'Cross':
+            structshape = cv2.MORPH_CROSS
+        else:
+            raise ValueError("Structuring Shape is not correct")
+        logger.info('Structuring Shape = {}'.format(args.struct_shape))
+
+        threshold_area_rm_large = args.threshold_area_rm_large
+        threshold_area_rm_small = args.threshold_area_rm_small
+        iterations_dilation = args.num_iterations_dilation
+        iterations_erosion = args.num_iterations_erosion
+
+        if 'filter_area_remove_large_objects' in operations:
+            if threshold_area_rm_large == None:
+                raise ValueError('Need to specify the maximum area of the segments to keep')
+
+        if 'filter_area_remove_small_objects' in operations:
+            if threshold_area_rm_small == None:
+                raise ValueError('Need to specify the minimum area of the segments to keep')
+
+        if 'dilation' in operations:
+            if iterations_dilation == None:
+                raise ValueError("Need to specify the number of iterations to apply the operation")
+
+        if 'erosion' in operations:
+            if iterations_erosion == None:
+                raise ValueError("Need to specify the number of iterations to apply the operation")
+
+        # A dictionary specifying the function that will be run based on user input. 
+        dispatch = {
+            'invertion': invert_binary,
+            'opening': open_binary,
+            'closing': close_binary,
+            'morphological_gradient': morphgradient_binary,
+            'dilation': dilate_binary,
+            'erosion': erode_binary,
+            'skeleton': skeleton_binary,
+            'top_hat': tophat_binary,
+            'black_hat': blackhat_binary,
+            'filter_area_remove_large_objects': areafiltering_remove_larger_objects_binary,
+            'filter_area_remove_small_objects': areafiltering_remove_smaller_objects_binary
+        }
+
+        # Additional arguments for each function
+        dict_n_args = {
+            'invertion': None,
+            'opening': None,
+            'closing': None,
+            'morphological_gradient': None,
+            'dilation': iterations_dilation,
+            'erosion': iterations_erosion,
+            'skeleton': None,
+            'top_hat': None,
+            'black_hat': None,
+            'filter_area_remove_large_objects' : threshold_area_rm_large,
+            'filter_area_remove_small_objects' : threshold_area_rm_small
+        }
+        
+
+        # Start the javabridge with proper java logging
+        logger.info('Initializing the javabridge...')
+        log_config = Path(__file__).parent.joinpath("log4j.properties")
+        jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
+
+        # Get all file names in inpDir image collection
+        inpDir_files = [f.name for f in Path(inpDir).iterdir()]
+        logger.info("Files in input directory: {}".format(inpDir_files))
+
+        
+        # Loop through files in inpDir image collection and process
+
         for f in inpDir_files:
 
             # Load an image
@@ -323,9 +323,11 @@ if __name__=="__main__":
                 # Images are (1, Tile_Size, Tile_Size, 1)
                 # Need to convert to (Tile_Size, Tile_Size) to be able to do operation
                 images = np.squeeze(images)
-                images[images == max_datatype_val] = 1
 
+                images[images == max_datatype_val] = 1
+                
                 # Initialize which function we are dispatching
+                trans_image = None
                 function = dispatch[operations]
                 if callable(function):
                     trans_image = function(images, kernel=kernel, n=dict_n_args[operations])
@@ -334,15 +336,17 @@ if __name__=="__main__":
 
                 # The image needs to be converted back to (1, Tile_Size_Tile_Size, 1) to write it
                 reshape_img = np.reshape(trans_image[intkernel:-intkernel,intkernel:-intkernel], (1, Tile_Size, Tile_Size, 1))
-
+                
                 # Send it to the Writerator
                 writerator.send(reshape_img)
 
             # Close the image
             bw.close_image()
 
+    except:
+        traceback.print_exc()
+        
     # Always close the JavaBridge
     finally:
         logger.info('Closing the javabridge...')
         jutil.kill_vm()
-           
