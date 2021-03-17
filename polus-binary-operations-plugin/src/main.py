@@ -10,7 +10,7 @@ import os
 
 import cv2
 
-Tile_Size = 256
+Tile_Size = 1024
 
 def invert_binary(image, kernel=None, n=None):
     """
@@ -75,6 +75,20 @@ def morphgradient_binary(image, kernel=None, n=None):
     """
     mg = cv2.morphologyEx(image, cv2.MORPH_GRADIENT, kernel)
     return mg
+
+def fill_holes_binary(image, kernel=None, n=None):
+    """
+    This function fills segments.  It finds countours in 
+    the image, and then fills it with black, and inverts
+    it back
+    https://stackoverflow.com/questions/10316057/filling-holes-inside-a-binary-object
+    """
+    contour,hier = cv2.findContours(image,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_SIMPLE)
+
+    for cnt in contour:
+        cv2.drawContours(image,[cnt],0,1,-1)
+
+    return image
 
 def skeleton_binary(image, kernel=None, n=None):
     """ 
@@ -249,6 +263,7 @@ if __name__=="__main__":
             'morphological_gradient': morphgradient_binary,
             'dilation': dilate_binary,
             'erosion': erode_binary,
+            'fill_holes': fill_holes_binary,
             'skeleton': skeleton_binary,
             'top_hat': tophat_binary,
             'black_hat': blackhat_binary,
@@ -264,6 +279,7 @@ if __name__=="__main__":
             'morphological_gradient': None,
             'dilation': iterations_dilation,
             'erosion': iterations_erosion,
+            'fill_holes': None,
             'skeleton': None,
             'top_hat': None,
             'black_hat': None,
