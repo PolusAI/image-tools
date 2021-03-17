@@ -1,7 +1,7 @@
 {
   "name": "Binary Operations Plugin",
-  "version": "0.3.2",
-  "containerId": "labshare/polus-binary-operations-plugin:0.3.2",
+  "version": "0.3.4",
+  "containerId": "labshare/polus-binary-operations-plugin:0.3.4",
   "title": "Binary Operations Plugin",
   "description": "Everything you need to start a WIPP plugin.",
   "author": "Data Scientist (data.scientist@labshare.org)",
@@ -36,6 +36,7 @@
           "morphological_gradient",
           "dilation",
           "erosion",
+          "fill_holes",
           "skeleton",
           "filter_area_remove_large_objects",
           "filter_area_remove_small_objects",
