@@ -1,7 +1,7 @@
 {
-    "name": "Vector-label-plugin",
+    "name": "Vector-to-label-plugin",
     "version": "0.2.5",
-    "title": "Vector-label",
+    "title": "Vector-to-label",
     "description": "Plugin to label masks",
     "author": "Sudharsan Prativadi (sudharsan.prativadi@labshare.org)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
