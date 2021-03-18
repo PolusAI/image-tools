@@ -3,7 +3,7 @@ from skimage.measure import shannon_entropy
 from skimage.segmentation import clear_border
 from scipy.stats import skew
 from scipy.stats import kurtosis as kurto
-from scipy.stats import mode as mod
+from scipy.stats import mode as modevalue
 from scipy import stats
 from operator import itemgetter
 from bfio import BioReader
@@ -21,6 +21,25 @@ logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(messa
 					datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
+
+
+def read(img_file):
+    """Read the .ome.tif image using BioReader.
+    
+    Args:
+        img_directory (str): Path to the directory containing the input images.
+        
+    Returns:
+        Array of the image and the embedded unit in the metadata if present else it will be none.
+        
+    """
+    br = BioReader(img_file)
+    #Load only the first channel
+    image_bfio = br[:,:,0:1,0,0].squeeze()
+    #Get embedded units from metadata (physical size)
+    img_unit = br.ps_y[1]
+    logger.info('Done reading the file: {}'.format(img_file.name))
+    return image_bfio, img_unit
 
 def box_border_search(label_image, boxsize=3):
     """Get perimeter pixels of object for calculating neighbors and feret diameter memory efficiently.
@@ -148,12 +167,8 @@ def neighbors_find(lbl_img, boxsize, pixeldistance):
     neighboroffsets = neighboroffsets[neighboroffsets != 0]
     neighboroffsets = neighboroffsets.reshape(-1, 1)
 
-    #Get inscribed image linear indices:     
-    width_sequence = width - (2 * pixeldistance)
-    height_sequence = height - (2 * pixeldistance)
-    columns_range = np.linspace(pixeldistance, width - pixeldistance - 1, width_sequence)
-    rows_range = np.linspace(pixeldistance, height - pixeldistance - 1, height_sequence)
-    columns, rows = np.meshgrid(columns_range, rows_range)
+    #Get image indices:     
+    columns,rows = np.mgrid[-pixeldistance-1:width-pixeldistance-1,-pixeldistance-1:height-pixeldistance-1]
     columns_flat = columns.flatten(order = 'F')
     columns_reshape = columns_flat.reshape(-1, 1)
     rows_flat = rows.flatten(order = 'F')
@@ -508,8 +523,9 @@ def feature_extraction(features,
                         pixelDistance=5,
                         channel=0,
                         intensity_image=None,
-                        label_image=None,
-                        img_emb_uint=None):
+                        img_emb_unit=None,
+                        label_image=None
+                        ):
     """Calculate shape and intensity based features.
 
     Args:
@@ -539,24 +555,23 @@ def feature_extraction(features,
             data_dict = [dt_pixel / pixelsPerunit**2 for dt_pixel in data_dict1]
         else:
             data_dict = data_dict1
-        logger.info('Completed extracting area for' + seg_file_names1.name)
+        logger.debug('Completed extracting area for ' + seg_file_names1.name)
         return data_dict
 
     def perimeter(seg_img, units, *args):
         """Calculate perimeter for all the regions of interest in the image."""
-
         data_dict1 = [region.perimeter for region in regions]
         if unitLength and not embeddedpixelsize:
             data_dict = [dt_pixel / pixelsPerunit for dt_pixel in data_dict1]
         else:
             data_dict = data_dict1
-        logger.info('Completed extracting perimeter for' + seg_file_names1.name)
+        logger.debug('Completed extracting perimeter for ' + seg_file_names1.name)
         return data_dict
 
     def orientation(*args):
         """Calculate orientation for all the regions of interest in the image."""
         data_dict = [region.orientation for region in regions]
-        logger.info('Completed extracting orientation for' + seg_file_names1.name)
+        logger.debug('Completed extracting orientation for ' + seg_file_names1.name)
         return data_dict
 
     def convex_area(seg_img, units, *args):
@@ -566,7 +581,7 @@ def feature_extraction(features,
             data_dict = [dt_pixel / pixelsPerunit**2 for dt_pixel in data_dict1]
         else:
             data_dict = data_dict1
-        logger.info('Completed extracting convex area for' + seg_file_names1.name)
+        logger.debug('Completed extracting convex area for ' + seg_file_names1.name)
         return data_dict
 
     def centroid_row(*args):
@@ -574,7 +589,7 @@ def feature_extraction(features,
         centroid_value = [str(region.centroid) for region in regions]
         cent_x= [cent.split(',') for cent in centroid_value]
         data_dict = [centroid_x[0].replace('(','') for centroid_x in cent_x]
-        logger.info('Completed extracting centroid_row for' + seg_file_names1.name)
+        logger.debug('Completed extracting centroid_row for ' + seg_file_names1.name)
         return data_dict
 
     def centroid_column(*args):
@@ -582,13 +597,13 @@ def feature_extraction(features,
         centroid_value = [str(region.centroid) for region in regions]
         cent_y = [cent.split(',') for cent in centroid_value]
         data_dict = [centroid_y[1].replace(')','') for centroid_y in cent_y]
-        logger.info('Completed extracting centroid_column for' + seg_file_names1.name)
+        logger.debug('Completed extracting centroid_column for ' + seg_file_names1.name)
         return data_dict
 
     def eccentricity(*args):
         """Calculate eccentricity for all the regions of interest in the image."""
         data_dict = [region.eccentricity for region in regions]
-        logger.info('Completed extracting eccentricity for' + seg_file_names1.name)
+        logger.debug('Completed extracting eccentricity for ' + seg_file_names1.name)
         return data_dict
 
     def equivalent_diameter(seg_img, units, *args):
@@ -598,13 +613,13 @@ def feature_extraction(features,
             data_dict = [dt_pixel / pixelsPerunit for dt_pixel in data_dict1]
         else:
             data_dict = data_dict1
-        logger.info('Completed extracting equivalent diameter for' + seg_file_names1.name)
+        logger.debug('Completed extracting equivalent diameter for ' + seg_file_names1.name)
         return data_dict
 
     def euler_number(*args):
         """Calculate euler_number for all the regions of interest in the image."""
         data_dict = [region.euler_number for region in regions]
-        logger.info('Completed extracting euler number for' + seg_file_names1.name)
+        logger.debug('Completed extracting euler number for ' + seg_file_names1.name)
         return data_dict
 
     def major_axis_length(seg_img, units, *args):
@@ -614,7 +629,7 @@ def feature_extraction(features,
             data_dict = [dt_pixel / pixelsPerunit for dt_pixel in data_dict1]
         else:
             data_dict = data_dict1
-        logger.info('Completed extracting major axis length for' + seg_file_names1.name)
+        logger.debug('Completed extracting major axis length for ' + seg_file_names1.name)
         return data_dict
 
     def minor_axis_length(seg_img, units, *args):
@@ -624,41 +639,47 @@ def feature_extraction(features,
             data_dict = [dt_pixel / pixelsPerunit for dt_pixel in data_dict1]
         else:
             data_dict = data_dict1
-        logger.info('Completed extracting minor axis length for' + seg_file_names1.name)
+        logger.debug('Completed extracting minor axis length for ' + seg_file_names1.name)
         return data_dict
 
     def solidity(*args):
         """Calculate solidity for all the regions of interest in the image."""
         data_dict = [region.solidity for region in regions]
-        logger.info('Completed extracting solidity for' + seg_file_names1.name)
+        logger.debug('Completed extracting solidity for ' + seg_file_names1.name)
         return data_dict
 
     def mean_intensity(*args):
         """Calculate mean_intensity for all the regions of interest in the image."""
         if label_image is not None:
-            data_dict = [int((region.mean_intensity)) for region in regions]
+            intensity_images = [region.intensity_image for region in regions]
+            imgs = [region.image for region in regions]
+            data_dict = [int((np.mean(intensity[seg]))) for intensity, seg in zip(intensity_images, imgs)]
         else:
-            data_dict = np.mean(intensity_image.reshape(-1))
-        logger.info('Completed extracting mean intensity for' + seg_file_names1.name)
+            data_dict =np.mean(intensity_image.reshape(-1))
+        logger.debug('Completed extracting mean intensity for ' + seg_file_names1.name)
         return data_dict
 
     def max_intensity(*args):
         """Calculate maximum intensity for all the regions of interest in the image."""
         if label_image is not None:
-            data_dict = [int((region.max_intensity))for region in regions]
+            intensity_images = [region.intensity_image for region in regions]
+            imgs = [region.image for region in regions]
+            data_dict = [int((np.max(intensity[seg]))) for intensity, seg in zip(intensity_images, imgs)]
         else:
             data_dict = np.max(intensity_image.reshape(-1))
         
-        logger.info('Completed extracting maximum intensity for' + seg_file_names1.name)
+        logger.debug('Completed extracting maximum intensity for ' + seg_file_names1.name)
         return data_dict
 
     def min_intensity(*args):
         """Calculate minimum intensity for all the regions of interest in the image."""
         if label_image is not None:
-            data_dict = [int((region.min_intensity))for region in regions]
+            intensity_images = [region.intensity_image for region in regions]
+            imgs = [region.image for region in regions]
+            data_dict = [int((np.min(intensity[seg]))) for intensity, seg in zip(intensity_images, imgs)]
         else:
             data_dict = np.min(intensity_image.reshape(-1))
-        logger.info('Completed extracting minimum intensity for' + seg_file_names1.name)
+        logger.debug('Completed extracting minimum intensity for ' + seg_file_names1.name)
         return data_dict
 
     def median(*args):
@@ -669,7 +690,7 @@ def feature_extraction(features,
             data_dict = [int((np.median(intensity[seg]))) for intensity, seg in zip(intensity_images, imgs)]
         else:
             data_dict = np.median(intensity_image.reshape(-1))
-        logger.info('Completed extracting median for' + seg_file_names1.name)
+        logger.debug('Completed extracting median for ' + seg_file_names1.name)
         return data_dict
 
     def mode(*args):
@@ -677,11 +698,11 @@ def feature_extraction(features,
         if label_image is not None:
             intensity_images = [region.intensity_image for region in regions]
             imgs = [region.image for region in regions]
-            mode_list = [mod(intensity[seg])[0] for intensity, seg in zip(intensity_images, imgs)]
+            mode_list = [modevalue(intensity[seg])[0] for intensity, seg in zip(intensity_images, imgs)]
             data_dict = [str(mode_ls)[1:-1] for mode_ls in mode_list]
         else:
-            data_dict = mod(intensity_image.reshape(-1))[0]
-        logger.info('Completed extracting mode for' + seg_file_names1.name)
+            data_dict = modevalue(intensity_image.reshape(-1))[0]
+        logger.debug('Completed extracting mode for ' + seg_file_names1.name)
         return data_dict
 
     def standard_deviation(*args):
@@ -692,7 +713,7 @@ def feature_extraction(features,
             data_dict = [(np.std(intensity[seg])) for intensity, seg in zip(intensity_images, imgs)]
         else:
             data_dict= np.std(intensity_image.reshape(-1))
-        logger.info('Completed extracting standard deviation for' + seg_file_names1.name)
+        logger.debug('Completed extracting standard deviation for ' + seg_file_names1.name)
         return data_dict
 
     def skewness(*args):
@@ -703,7 +724,7 @@ def feature_extraction(features,
             data_dict = [skew(intensity[seg], axis=0, bias=True) for intensity, seg in zip(intensity_images, imgs)]
         else:
             data_dict= skew(intensity_image.reshape(-1))
-        logger.info('Completed extracting skewness for' + seg_file_names1.name)
+        logger.debug('Completed extracting skewness for ' + seg_file_names1.name)
         return data_dict
 
     def entropy(*args):
@@ -711,12 +732,10 @@ def feature_extraction(features,
         if label_image is not None:
             intensity_images = [region.intensity_image for region in regions]
             imgs = [region.image for region in regions]
-            hist_dd = [np.histogramdd(np.ravel(intensity[seg]), bins = 256)[0] / intensity[seg].size for intensity, seg in zip(intensity_images, imgs)]
-            hist_greater_zero = [list(filter(lambda p: p > 0, np.ravel(h_dd))) for h_dd in hist_dd]
-            data_dict = [-np.sum(np.multiply(hist_great, np.log2(hist_great))) for hist_great in hist_greater_zero]
+            data_dict = [shannon_entropy(intensity[seg]) for intensity, seg in zip(intensity_images, imgs)]
         else:
             data_dict = shannon_entropy(intensity_image.reshape(-1))
-        logger.info('Completed extracting entropy for' + seg_file_names1.name)
+        logger.debug('Completed extracting entropy for ' + seg_file_names1.name)
         return data_dict
 
     def kurtosis(*args):
@@ -727,7 +746,7 @@ def feature_extraction(features,
             data_dict = [kurto(intensity[seg], axis=0, fisher=False, bias=True) for intensity, seg in zip(intensity_images, imgs)]
         else:
             data_dict= kurto(intensity_image.reshape(-1))
-        logger.info('Completed extracting kurtosis for' + seg_file_names1.name)
+        logger.debug('Completed extracting kurtosis for ' + seg_file_names1.name)
         return data_dict
 
     def neighbors(seg_img, *args):
@@ -736,7 +755,7 @@ def feature_extraction(features,
         neighbor_array = neighbors_find(edges, boxsize, pixeldistance=5)
         neighbor_list = neighbor_array.tolist()
         neighbor = [str(neigh)[1: -1] for neigh in neighbor_list]
-        logger.info('Completed extracting neighbors for' + seg_file_names1.name)
+        logger.debug('Completed extracting neighbors for ' + seg_file_names1.name)
         return neighbor
 
     def maxferet(seg_img, *args):
@@ -748,7 +767,7 @@ def feature_extraction(features,
             maxferet = [dt_pixel / pixelsPerunit for dt_pixel in maxferet1]
         else:
             maxferet = maxferet1
-        logger.info('Completed extracting maxferet for' + seg_file_names1.name)
+        logger.debug('Completed extracting maxferet for ' + seg_file_names1.name)
         return maxferet
 
     def minferet(seg_img, *args):
@@ -760,7 +779,7 @@ def feature_extraction(features,
             minferet = [dt_pixel / pixelsPerunit for dt_pixel in minferet1]
         else:
             minferet = minferet1
-        logger.info('Completed extracting minferet for' + seg_file_names1.name)
+        logger.debug('Completed extracting minferet for ' + seg_file_names1.name)
         return minferet
 
     def poly_hex_score(seg_img, units):
@@ -786,21 +805,21 @@ def feature_extraction(features,
                 score.append(x)
             else:
                 score.append(x)
-        logger.info('Completed extracting polygonality score for' + seg_file_names1.name)
+        logger.debug('Completed extracting polygonality score for ' + seg_file_names1.name)
         return score
 
     def hexagonality_score(seg_img, units, *args):
         """Get hexagonality score for all the regions of interest in the image."""
         poly_hex = poly_hex_score(seg_img, units)
         hexagonality_score = [poly[1] for poly in poly_hex]
-        logger.info('Completed extracting hexagonality score for' + seg_file_names1.name)
+        logger.debug('Completed extracting hexagonality score for ' + seg_file_names1.name)
         return hexagonality_score
 
     def hexagonality_sd(seg_img, units, *args):
         """Get hexagonality standard deviation for all the regions of interest in the image."""
         poly_hex = poly_hex_score(seg_img, units)
         hexagonality_sd = [poly[2] for poly in poly_hex]
-        logger.info('Completed extracting hexagonality standard deviation for' + seg_file_names1.name)
+        logger.debug('Completed extracting hexagonality standard deviation for ' + seg_file_names1.name)
         return hexagonality_sd
     def all(seg_img, units, int_img):
         """Calculate all features for all the regions of interest in the image."""
@@ -858,7 +877,7 @@ def feature_extraction(features,
         all_skewness= skewness(seg_img, int_img)
         #calculate kurtosis
         all_kurtosis = kurtosis(seg_img, int_img)
-        logger.info('Completed extracting all features for' + seg_file_names1.name)
+        logger.debug('Completed extracting all features for ' + seg_file_names1.name)
         return (all_area, all_centroidx, all_centroidy, all_convex, all_eccentricity, all_equivalent_diameter, all_euler_number, all_hexagonality_score, all_hexagonality_sd, all_kurtosis, all_major_axis_length, all_maxferet, all_max_intensity, all_mean_intensity, all_median, all_min_intensity, all_minferet, all_minor_axis_length, all_mode, all_neighbor, all_orientation, all_peri, all_polygonality_score, all_sd, all_skewness, all_solidity)
 
     #Dictionary of input features
@@ -896,12 +915,6 @@ def feature_extraction(features,
         regions = measure.regionprops(label_image, intensity_image)
         #Remove the cells touching the border
         cleared = clear_border(label_image)
-    else:
-        regions = measure.regionprops(intensity_image)
-        cleared = clear_border(intensity_image)
- 
-    #Measure region props for only the object not touching the border
-    regions1 = np.unique(cleared)
 
     #pass the filename in csv
     title = seg_file_names1.name
@@ -910,31 +923,15 @@ def feature_extraction(features,
     #If features parameter left empty then raise value error 
     if not features:
         raise ValueError('Select features for extraction.')
-
+    
+        
+    #Check whether the pixels per unit contain values when embeddedpixelsize is not required and metric for unitlength is entered
+    if unitLength and not embeddedpixelsize:
+        if not pixelsPerunit:
+            raise ValueError('Enter pixels per unit value.')
+            
+    logger.info('Extracting features for ' + seg_file_names1.name)
     for each_feature in features:
-        #Lists all the labels in the image
-        label = [r.label for r in regions]
-
-        #List of labels for only objects that are not touching the border
-        label_nt_touching = regions1.tolist()
-
-        #Find whether the object is touching border or not 
-        label_yes = 'Yes'
-        label_no = 'No'
-        border_cells = []
-        for element in label:
-            if element in label_nt_touching:
-                border_cells.append(label_no)
-            else:
-                border_cells.append(label_yes)
-
-        #Check whether the pixels per unit contain values when embeddedpixelsize is not required and metric for unitlength is entered
-        if unitLength and not embeddedpixelsize:
-            if not pixelsPerunit:
-                raise ValueError('Enter pixels per unit value.')
-
-        logger.info('Started extracting features for' + seg_file_names1.name)
-
 
         #Dynamically call the function based on the features required
         if label_image is not None:
@@ -949,7 +946,7 @@ def feature_extraction(features,
 
             # Change the units depending on selection
             if embeddedpixelsize:
-                units = img_emb_uint
+                units = img_emb_unit
             elif unitLength and not embeddedpixelsize:
                 units = unitLength
             else:
@@ -957,29 +954,29 @@ def feature_extraction(features,
 
             columns = [
                 f'Area_{units}',
-                'Centroid row',
-                'Centroid column',
-                f'Convex Area_{units}',
+                'Centroid_row',
+                'Centroid_column',
+                f'Convex_Area_{units}',
                 'Eccentricity',
-                f'Equivalent diameter_{units}',
-                'Euler number',
-                'Hexagonality score',
-                'Hexagonality sd',
+                f'Equivalent_diameter_{units}',
+                'Euler_number',
+                'Hexagonality_score',
+                'Hexagonality_sd',
                 'Kurtosis',
-                f'Major axis length_{units}',
+                f'Major_axis_length_{units}',
                 f'Maxferet_{units}',
-                'Maximum intensity',
-                'Mean intensity',
+                'Maximum_intensity',
+                'Mean_intensity',
                 'Median',
-                'Minimum intensity',
+                'Minimum_intensity',
                 f'Minferet_{units}',
-                f'Minor axis length_{units}',
+                f'Minor_axis_length_{units}',
                 'Mode',
                 'Neighbors',
                 'Orientation',
                 f'Perimeter_{units}',
-                'Polygonality score',
-                'Standard deviation',
+                'Polygonality_score',
+                'Standard_deviation',
                 'Skewness',
                 'Solidity'
             ]
@@ -994,11 +991,11 @@ def feature_extraction(features,
                 df = pd.DataFrame({each_feature: feature_value},index=[0])
             else:
                 df = pd.DataFrame({each_feature: feature_value})
-            if 'Area' or 'Convex area' or 'Equivalent diameter' or 'Major axis length' or 'Maxferet' or 'Minor axis length' or 'Minferet' or 'Perimeter' in df.columns:
-
+            if 'Area' or 'Convex_area' or 'Equivalent_diameter' or 'Major_axis_length' or 'Maxferet' or 'Minor_axis_length' or 'Minferet' or 'Perimeter' in df.columns:
+               
                 # Change the units depending on selection
                 if embeddedpixelsize:
-                    units = img_emb_uint
+                    units = img_emb_unit
                 elif unitLength and not embeddedpixelsize:
                     units = unitLength
                 else:
@@ -1006,10 +1003,10 @@ def feature_extraction(features,
 
                 df.rename({
                     "area": f"Area_{units}",
-                    "convex_area": f"Convex Area_{units}",
-                    "equivalent_diameter": f"Equivalent diameter_{units}", 
-                    "major_axis_length": f"Major axis length_{units}", 
-                    "minor_axis_length": f"Minor axis length_{units}",
+                    "convex_area": f"Convex_Area_{units}",
+                    "equivalent_diameter": f"Equivalent_diameter_{units}", 
+                    "major_axis_length": f"Major_axis_length_{units}", 
+                    "minor_axis_length": f"Minor_axis_length_{units}",
                     "maxferet": f"Maxferet_{units}", 
                     "minferet": f"Minferet_{units}",
                     "perimeter": f"Perimeter_{units}"
@@ -1022,26 +1019,30 @@ def feature_extraction(features,
                 df.columns = [c+f'_channel{channel}' for c in df.columns]
         df_insert = pd.concat([df_insert, df], axis=1)
 
- 
     if label_image is not None:
-        int_ravel = np.ravel(label_image)
-        int_ravel1 = int_ravel / np.max(int_ravel)
-        int_ravel_bool = np.array_equal(int_ravel1, int_ravel1.astype(bool))
-   
-        #check whether the array contains only zero
-        countzero = not np.any(int_ravel) 
-        if int_ravel_bool == True or countzero == True:
+        #Lists all the labels in the image
+        label = [r.label for r in regions]
+        
+        if len(label)==1:
             df_insert.insert(0, 'Image', title)
             #Capitalize the first letter of header
             df_insert.columns = map (lambda x: x.capitalize(), df_insert.columns)
         else:
+            #Measure region props for only the object not touching the border
+            regions1 = np.unique(cleared)[1:]
+
+            #List of labels for only objects that are not touching the border
+            label_nt_touching = regions1-1
+            #Find whether the object is touching border or not 
+            border_cells = np.full((len(regions)),True,dtype=bool)       
+            border_cells[label_nt_touching]=False
             data = { 'Image':title,
                     'Label': label, 
-                      'Touching border': border_cells} 
-            df1 = pd.DataFrame(data,columns=['Image','Label','Touching border'])
+                      'Touching_border': border_cells} 
+            df1 = pd.DataFrame(data,columns=['Image','Label','Touching_border'])
             df_insert1 = pd.concat([df1,df_insert],ignore_index=True, axis=1)
             dfch = df_insert.columns.tolist()
-            df_values= ['Image','Label','Touching border']
+            df_values= ['Image','Label','Touching_border']
             joinedlist= df_values + dfch
             df_insert = df_insert1
             df_insert.columns =joinedlist
@@ -1123,6 +1124,16 @@ def main():
     logger.info('outDir = {}'.format(outDir))
 
     logger.info("Started")
+    # intDir= 'C:/Users/nagarajanj2/Desktop/Projects/3D_feature_extraction/i'
+    # segDir = 'C:/Users/nagarajanj2/Desktop/Projects/3D_feature_extraction/l '
+    # pixelDistance= 5
+    # outDir ='C:/Users/nagarajanj2/Desktop/Projects/Feature_Extraction_formatted'
+    # features= 'all'
+    # csvfile= 'singlecsv'
+    # unitLength = 'mm'
+    # pixelsPerunit= 6
+    # pattern= 'image_c000_z00{z}-ch{c}'
+    # embeddedpixelsize=True
 
     df_csv = pd.DataFrame([])
     
@@ -1132,8 +1143,8 @@ def main():
     intensity_features = ['mean_intensity','max_intensity','min_intensity','median','mode','skewness','kurtosis','standard_deviation','entropy']
     if intDir and not segDir:
         if 'all' in features:
-            logger.warning('No labeled/segmented image specified.')
-            features = intensity_features
+            raise ValueError('No labeled/segmented image specified.')
+            #features = intensity_features
         elif (all(fe not in intensity_features for fe in features)):
             raise ValueError('No labeled/segmented image specified.')
         elif (any(fe not in intensity_features for fe in features)):
@@ -1179,24 +1190,21 @@ def main():
     if not segDir:
         for intfile in configfiles_int():
             df=None
-            logger.info('Started reading the file: {}'.format(intfile[0]['file'].name))
-            with BioReader(intfile[0]['file']) as br:
-                intensity_image = br[:,:,0:1,0,0].squeeze()
-            logger.info('Done reading the file: {}'.format(intfile[0]['file'].name))
+            intensity_image,img_emb_unit = read(intfile[0]['file'])
             df,title = feature_extraction(features,
-                                                intfile[0]['file'],
-                                                embeddedpixelsize,
-                                                unitLength,
-                                                pixelsPerunit,
-                                                pixelDistance,
-                                                1,
-                                                intensity_image,
-                                                label_image=None,
-                                                img_emb_uint=None,
-                                                )
+                                          intfile[0]['file'],
+                                          embeddedpixelsize,
+                                          unitLength,
+                                          pixelsPerunit,
+                                          pixelDistance,
+                                          0,
+                                          intensity_image,
+                                          img_emb_unit,
+                                          label_image=None
+                                          )
             os.chdir(outDir)
             if csvfile == 'separatecsv':
-                logger.info('Saving dataframe to csv for' + intfile[0]['file'].name)
+                logger.info('Saving dataframe to csv for ' + intfile[0]['file'].name)
                 export_csv = df.to_csv(r'%s.csv'%title, index=None, header=True, encoding='utf-8-sig')
             else:
                 df_csv = df_csv.append(df)
@@ -1204,45 +1212,29 @@ def main():
     elif segDir:   
         #Run analysis for each labeled image in the list
         for segfile in configfiles_seg():
-            logger.info('Started reading the file: {}'.format(segfile[0]['file'].name))
-            #Read the image using bioreader from bfio
-            with BioReader(segfile[0]['file']) as br:
-                label_image = br[:,:,0:1,0,0].squeeze()
-                img_emb_uint = br.ps_y[1]
-            logger.info('Done reading the file: {}'.format(segfile[0]['file'].name))
+            label_image,img_emb_unit = read(segfile[0]['file'])
+            
 
             df = None
+            files=''
+
             if intDir:
                 # Find matching files
                 files = configfiles_int.get_matching(**{k.upper():v for k,v in segfile[0].items() if k not in ['file','c']})
                 
                 if len(files) == 0 and(all(fe not in intensity_features for fe in features)):
-                    #logger.warning(f"Could not find intensity files matching label image, {segfile[0]['file'].name}. Skipping...")
                     intensity_image=None
-                    df,title = feature_extraction(features,
-                                                  segfile[0]['file'],
-                                                  embeddedpixelsize,
-                                                  unitLength,
-                                                  pixelsPerunit,
-                                                  pixelDistance,
-                                                  0,
-                                                  intensity_image,
-                                                  label_image,
-                                                  img_emb_uint)
      
                 if len(files) == 0 and(any(fe in intensity_features for fe in features)):
                     logger.warning(f"Could not find intensity files matching label image, {segfile[0]['file'].name}. Skipping...")
                     if df==None:
                         continue
                 
-                
     
                 # Initialize the output
-                #df = None
                 for file in files:
                     #Read the image using bioreader from bfio
-                    with BioReader(file['file']) as br:
-                        intensity_image = br[:,:,0:1,0,0].squeeze()   
+                    intensity_image,img_emb_unit = read(file['file'])  
                     #Dataframe contains the features extracted from images  
                     df,title = feature_extraction(features,
                                                   segfile[0]['file'],
@@ -1252,29 +1244,30 @@ def main():
                                                   pixelDistance,
                                                   file['c'],
                                                   intensity_image,
-                                                  label_image,
-                                                  img_emb_uint)
+                                                  img_emb_unit,
+                                                  label_image
+                                                  )
  
-            else:
-                #Dataframe contains the features extracted from images    
+            if not intDir  or len(files)==0:
+                channel=0
                 df,title = feature_extraction(features,
-                                                segfile[0]['file'],
-                                                embeddedpixelsize,
-                                                unitLength,
-                                                pixelsPerunit,
-                                                pixelDistance,
-                                                1,
-                                                intensity_image,
-                                                label_image,
-                                                img_emb_uint)
-    
+                                              segfile[0]['file'],
+                                              embeddedpixelsize,
+                                              unitLength,
+                                              pixelsPerunit,
+                                              pixelDistance,
+                                              channel,
+                                              intensity_image,
+                                              img_emb_unit,
+                                              label_image
+                                              )
             #Save each csv file separately
             os.chdir(outDir)
             if csvfile == 'separatecsv':
                 if df.empty:
                     raise ValueError('No output to save as csv files')
                 else:
-                    logger.info('Saving dataframe to csv for' + segfile[0]['file'].name)
+                    logger.info('Saving dataframe to csv for ' + segfile[0]['file'].name)
                     export_csv = df.to_csv(r'%s.csv'%title, index=None, header=True, encoding='utf-8-sig')
             else:
                 df_csv = df_csv.append(df)

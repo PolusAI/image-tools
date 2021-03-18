@@ -1,6 +1,6 @@
 {
     "name": "Feature Extraction",
-    "version": "0.8.4",
+    "version": "0.9.0",
     "title": "Feature Extraction",
     "description": "Extract shape and intensity features from images.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-extraction-plugin:0.8.4",
+    "containerId": "labshare/polus-feature-extraction-plugin:0.9.0",
     "inputs": [      
       {
         "name": "segDir",
@@ -97,6 +97,7 @@
 	"name": "embeddedpixelsize",
         "type": "boolean",
         "description": "Use embedded pixel size",
+	"default": "true",
         "required": "false"
       },
       {
@@ -159,12 +160,14 @@
       {
         "key": "inputs.unitLength",
         "title": "Length of unit",
-        "description": "Unit name"
+        "description": "Unit name",
+	"condition": "model.inputs.embeddedpixelsize=='false'"
       },
       {
         "key": "inputs.pixelsPerunit",
         "title": "Pixels per unit",
-        "description": "Enter the number of pixels per unit of the metric"
+        "description": "Enter the number of pixels per unit of the metric",
+	"condition": "model.inputs.embeddedpixelsize=='false'"
       }      
       
     ]
