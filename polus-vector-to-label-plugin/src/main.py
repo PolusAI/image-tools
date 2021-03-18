@@ -135,7 +135,6 @@ def main():
             vec_arr = vec_arr.transpose((2,0,1,3,4)).squeeze(axis=4)
             tile_size = min(1024,vec_arr.shape[1])
             lblcnt_max=0
-  #          tile_iterator=tile_size //2 if tile_size !=vec_arr.shape[1] else tile_size
             # Iterating over Z dimension
 
             for z in range(vec_arr.shape[0]):
@@ -148,8 +147,10 @@ def main():
                             prob = vec_arr[z,y:y_max, x:x_max , :].astype(np.float32)
                             cellprob = prob[..., -1]
                             dP = np.stack((prob[..., 0], prob[..., 1]), axis=0)
+                            # Computing flows for the tile
                             p = mask.follow_flows(-1 * dP * (cellprob > cellprob_threshold) / 5.,
                                                                     niter=niter, interp=True)
+                            # Generating masks for the tile
                             maski,lbl_cnt = mask.compute_masks(p,cellprob,dP,new_img,cellprob_threshold,flow_threshold)
                             mask_final=mask_final.astype(maski.dtype)
                             mask_final[y:y_max, x:x_max,z:z+1,:,:] = maski[:,:,np.newaxis,np.newaxis,np.newaxis].astype(maski.dtype)
@@ -169,7 +170,6 @@ def main():
                     break
 
             mask_final=np.array(mask_final, dtype=key)
-         #   mask_final=mask_final.astype(dtype=lbl_dtype[key])
             xml_metadata = OmeXml.OMEXML(metadata)
             # Write the output
             logger.info('Saving label for image {}'.format(file_name))
