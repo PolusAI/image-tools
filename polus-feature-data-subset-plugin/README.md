@@ -1,4 +1,4 @@
-# Subset feature data
+# Feature Data Subset
 
 This WIPP plugin does things, some of which involve math and science. There is likely a lot of handwaving involved when describing how it works, but handwaving should be replaced with a good description. However, someone forgot to edit the README, so handwaving will have to do for now. Contact [Gauhar Bains](mailto:gauhar.bains@labshare.org) for more information.
 
@@ -19,11 +19,15 @@ This plugin takes one input argument and one output argument:
 
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
-| `--background` | The background of images in the collection | Input | enum |
 | `--csvDir` | CSV collection containing features | Input | collection |
-| `--feature` | Feature to subset data | Input | enum |
+| `--delay` | Number of images to capture outside the cutoff | Input | int |
+| `--feature` | Feature to use to subset data | Input | string |
 | `--filePattern` | Filename pattern used to separate data | Input | string |
+| `--groupVar` | variables to group by in a section | Input | string |
 | `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--timeseries` | Variables | Input | string |
+| `--percentile` | Percentile to remove | Input | int |
+| `--removeDirection` | remove direction above or below percentile | Input | string |
+| `--sectionVar` | variables to divide larger sections | Input | string |
+| `--writeOutput` | write output image collection or not | Input | boolean |
 | `--outDir` | Output collection | Output | collection |
 

@@ -1,5 +1,5 @@
 
-FROM labshare/polus-bfio-util:1.3.6
+FROM python:3.7-alpine
 
 COPY VERSION /
 		
