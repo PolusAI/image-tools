@@ -1,7 +1,7 @@
 {
   "name": "Polus Precompute Slide Plugin",
-  "version": "1.3.7",
-  "containerId": "labshare/polus-precompute-slide-plugin:1.3.7",
+  "version": "1.3.9",
+  "containerId": "labshare/polus-precompute-slide-plugin:1.3.9",
   "title": "Precompute Slide Viewer",
   "description": "Precomputes a single image plane for DeepZoom or Z stacks for Neuroglancer",
   "author": "Madhuri Vihani (Madhuri.Vihani@nih.gov), Nick Schaub (Nick.Schaub@nih.gov)",
@@ -18,12 +18,13 @@
     },
     {
       "name": "pyramidType",
-      "description": "Build a DeepZoom or Neuroglancer pyramid",
+      "description": "Build a DeepZoom, Neuroglancer, Zarr pyramid",
       "type": "enum",
       "options": {
         "values": [
           "DeepZoom",
-          "Neuroglancer"
+          "Neuroglancer",
+          "Zarr"
         ]
       },
       "required": true
@@ -38,7 +39,7 @@
           "segmentation"
         ]
       },
-      "required": true
+      "required": false
     },
     {
       "name": "filePattern",
@@ -64,13 +65,13 @@
     {
       "key": "inputs.pyramidType",
       "title": "Pyramid Type: ",
-      "description": "Build a DeepZoom or Neuroglancer pyramid?"
+      "description": "Build a DeepZoom, Neuroglancer, or Zarr pyramid?"
     },
     {
       "key": "inputs.imageType",
       "title": "Image Type: ",
       "description": "Image or Segmentation?",
-      "condition": "model.inputs.pyramidType=='Neuroglancer'"
+      "condition": "inputs.pyramidType==Neuroglancer"
     },
     {
       "key": "inputs.filePattern",

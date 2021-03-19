@@ -5,11 +5,7 @@ from numcodecs import Blosc
 from concurrent.futures import ThreadPoolExecutor
 from preadator import ProcessManager
 from bfio.OmeXml import OMEXML
-import traceback
-import pickle
 import ast
-import tempfile
-
 import logging
 
 # Initialize the logger
