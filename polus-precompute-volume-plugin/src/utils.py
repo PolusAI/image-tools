@@ -16,6 +16,9 @@ from neurogen import volume as ngvol
 
 from bfio.bfio import BioReader, BioWriter
 
+chunk_size = [256,256,256]
+bit_depth = 10
+
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
@@ -205,8 +208,6 @@ def build_pyramid(input_image,
     logger.info("Image Datatype {}".format(datatype))
 
     # info file specifications
-    chunk_size = [256,256,256]
-    bit_depth = 16
     resolution = get_resolution(phys_y=bf.physical_size_y, 
                                 phys_x=bf.physical_size_x, 
                                 phys_z=bf.physical_size_z)
