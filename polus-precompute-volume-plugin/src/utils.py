@@ -282,8 +282,6 @@ def build_pyramid(input_image,
                                                                     totalbytes=totalbytes))
                                     all_identities = np.append(all_identities, ids)
 
-                executor.shutdown(wait=True)
-
                 logger.info("\n Generating Volumes ...")
                 logger.info("Saved Encoded Volumes for Scale {}".format(num_scales))
 
