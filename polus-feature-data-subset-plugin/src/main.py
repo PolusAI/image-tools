@@ -5,6 +5,7 @@ import filepattern
 import pandas as pd
 import shutil
 from pathlib import Path
+import traceback
 
 def filter_planes(feature_dict, removeDirection, percentile):
     """filter planes by the criteria specified by removeDirection
@@ -77,7 +78,7 @@ if __name__=="__main__":
     parser.add_argument('--csvDir', dest='csvDir', type=str,
                         help='CSV collection containing features', required=True)
     parser.add_argument('--delay', dest='delay', type=str,
-                        help='Number of images to capture outside the cutoff', required=True)
+                        help='Number of images to capture outside the cutoff', required=False)
     parser.add_argument('--feature', dest='feature', type=str,
                         help='Feature to use to subset data', required=True)
     parser.add_argument('--filePattern', dest='filePattern', type=str,
@@ -91,9 +92,9 @@ if __name__=="__main__":
     parser.add_argument('--removeDirection', dest='removeDirection', type=str,
                         help='remove direction above or below percentile', required=True)
     parser.add_argument('--sectionVar', dest='sectionVar', type=str,
-                        help='variables to divide larger sections', required=True)
+                        help='variables to divide larger sections', required=False)
     parser.add_argument('--writeOutput', dest='writeOutput', type=str,
-                        help='write output image collection or not', required=True)
+                        help='write output image collection or not', required=False)
     # Output arguments
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
@@ -106,6 +107,7 @@ if __name__=="__main__":
         fpath = str(Path(args.csvDir).joinpath('images').absolute())
     logger.info('csvDir = {}'.format(csvDir))
     delay = args.delay
+    delay = 0 if delay==None else int(delay)
     logger.info('delay = {}'.format(delay))
     feature = args.feature
     logger.info('feature = {}'.format(feature))
@@ -118,13 +120,14 @@ if __name__=="__main__":
         # switch to images folder if present
         fpath = str(Path(args.inpDir).joinpath('images').absolute())
     logger.info('inpDir = {}'.format(inpDir))
-    percentile = args.percentile
+    percentile = float(args.percentile)
     logger.info('percentile = {}'.format(percentile))
     removeDirection = args.removeDirection
     logger.info('removeDirection = {}'.format(removeDirection))
     sectionVar = args.sectionVar
+    sectionVar = '' if sectionVar is None else sectionVar
     logger.info('sectionVar = {}'.format(sectionVar))
-    writeOutput = args.writeOutput == 'true'
+    writeOutput = True if args.writeOutput==None else args.writeOutput == 'true'
     logger.info('writeOutput = {}'.format(writeOutput))
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
@@ -141,9 +144,9 @@ if __name__=="__main__":
         # read and concat all csv files
         for ind, file in enumerate(csvDir_files):
             if ind == 0:
-                feature_df = pd.read_csv(os.path.join(csvDir, file), header=None)
+                feature_df = pd.read_csv(os.path.join(csvDir, file), header=0)
             else:
-                feature_df = pd.concat([feature_df, pd.read_csv(os.path.join(csvDir, file), header=None)])
+                feature_df = pd.concat([feature_df, pd.read_csv(os.path.join(csvDir, file), header=0)])
         
         # store image name and its feature value
         feature_dict = {k:v for k,v in zip(feature_df['Image'], feature_df[feature])}
@@ -161,7 +164,7 @@ if __name__=="__main__":
         [maj_grouping_var, min_grouping_var] = grouping_variables if len(grouping_variables)>1 else grouping_variables+[None]
         keep_planes = {}
 
-
+        logger.info('Iterating over sections...')
         # single iteration of this loop gives all images in one section
         for file in fp(group_by=sub_section_variables+grouping_variables):
             
@@ -202,12 +205,23 @@ if __name__=="__main__":
         # start writing summary.txt
         summary = open(os.path.join(outDir, 'summary.txt'), 'w')
 
+        logger.info('renaming subsetted data')
         # rename subsetted data
         for file in fp(group_by=sub_section_variables+grouping_variables):
             section_id = tuple([file[0][i] for i in section_variables]) if section_variables[0] else 1
             section_keep_planes = keep_planes[section_id]
-            summary.write('------------------------------------------------ \n')
             rename_map = {k:v for k,v in zip(keep_planes[section_id], uniques[maj_grouping_var])}
+
+            # update summary.txt with section renaming info
+            summary.write('------------------------------------------------ \n')
+            if sectionVar != '':
+                summary.write('Section : {} \n'.format({k:file[0][k] for k in sectionVar}))
+            summary.write('\nThe following values of "{}" variable have been renamed: \n'.format(maj_grouping_var))
+            for k,v in rename_map.items():
+                summary.write('{} ---> {} \n'.format(k,v))
+            summary.write('\n Files : \n \n')
+
+            # rename and write output
             for f in file:
                 if f[maj_grouping_var] not in keep_planes[section_id]:
                     continue
@@ -220,12 +234,15 @@ if __name__=="__main__":
 
                 # if write output collection
                 if writeOutput:
-                    shutil.move(os.path.join(inpDir, old_file_name),os.path.join(outDir, new_file_name))
+                    shutil.copy2(os.path.join(inpDir, old_file_name),os.path.join(outDir, new_file_name))
                 
                 summary.write('{} -----> {} \n'.format(old_file_name, new_file_name))  
-        summary.close()   
+        summary.close() 
+
+    except Exception:
+        traceback.print_exc()  
 
     finally:
-
+        logger.info('exiting workflow..')
         # Exit the program
         sys.exit()

@@ -20,7 +20,7 @@
         "name": "delay",
         "type": "int",
         "description": "Number of images to capture outside the cutoff",
-        "required": true
+        "required": false
       },
       {
         "name": "feature",
@@ -62,13 +62,13 @@
         "name": "sectionVar",
         "type": "string",
         "description": "variables to divide larger sections",
-        "required": true
+        "required": false
       },
       {
         "name": "writeOutput",
         "type": "boolean",
         "description": "write output image collection or not",
-        "required": true
+        "required": false
       }
     ],
     "outputs": [
