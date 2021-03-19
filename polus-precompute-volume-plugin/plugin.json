@@ -40,7 +40,6 @@
         "name": "mesh",
         "description": "Create meshes",
         "type": "boolean",
-        "options": null,
         "required": true
       }
     ],
