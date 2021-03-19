@@ -29,16 +29,3 @@ This plugin takes one input argument and one output argument:
 | `mesh` | Generate Mesh for Labelled Data | Input | Boolean |
 | `imagepattern`   | Image pattern  | Input  | String |
 
-
-## Run the plugin
-
-### Run the Docker Container
-
-```bash
-docker run -v /path/to/data:/data mmvihani/polus-precompute-volume-plugin \
-  --inpDir /data/input \
-  --outDir /data/output
-  --imagePattern 'filename'
-  --imageType image
-  --mesh false
-```
