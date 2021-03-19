@@ -145,6 +145,7 @@ if __name__=="__main__":
             else:
                 feature_df = pd.concat([feature_df, pd.read_csv(os.path.join(csvDir, file), header=None)])
         
+        # store image name and its feature value
         feature_dict = {k:v for k,v in zip(feature_df['Image'], feature_df[feature])}
 
         # seperate filepattern variables into different categories

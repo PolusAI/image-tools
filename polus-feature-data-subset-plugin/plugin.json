@@ -1,14 +1,14 @@
 {
-    "name": "Feature Data Subset",
+    "name": "Feature Subsetting",
     "version": "0.1.1",
-    "title": "Feature Data Subset",
+    "title": "Feature Subsetting",
     "description": "Subset data using a given feature",
     "author": "Gauhar Bains (gauhar.bains@labshare.org)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-data-subset-plugin:0.1.1",
+    "containerId": "labshare/polus-feature-subsetting-plugin:0.1.1",
     "inputs": [
       {
         "name": "csvDir",
@@ -80,34 +80,19 @@
     ],
     "ui": [
       {
+        "key": "inputs.inpDir",
+        "title": "Input collection",
+        "description": "Input image collection to be processed by this plugin"
+      },
+      {
         "key": "inputs.csvDir",
         "title": "CSV collection",
         "description": "CSV collection containing features"
       },
       {
-        "key": "inputs.delay",
-        "title": "Delay",
-        "description": "Number of images to capture outside the cutoff"
-      },
-      {
         "key": "inputs.feature",
         "title": "Feature",
         "description": "Feature to use to subset data"
-      },
-      {
-        "key": "inputs.filePattern",
-        "title": "Filename pattern",
-        "description": "Filename pattern used to separate data"
-      },
-      {
-        "key": "inputs.groupVar",
-        "title": "Grouping Variables",
-        "description": "variables to group by in a section"
-      },
-      {
-        "key": "inputs.inpDir",
-        "title": "Input collection",
-        "description": "Input image collection to be processed by this plugin"
       },
       {
         "key": "inputs.percentile",
@@ -120,9 +105,24 @@
         "description": "remove direction above or below percentile"
       },
       {
+        "key": "inputs.filePattern",
+        "title": "Filename pattern",
+        "description": "Filename pattern used to separate data"
+      },
+      {
+        "key": "inputs.groupVar",
+        "title": "Grouping Variables",
+        "description": "variables to group by in a section"
+      },
+      {
         "key": "inputs.sectionVar",
         "title": "Section Variables",
         "description": "variables to divide larger sections"
+      },
+      {
+        "key": "inputs.delay",
+        "title": "Delay",
+        "description": "Number of images to capture outside the cutoff"
       },
       {
         "key": "inputs.writeOutput",
