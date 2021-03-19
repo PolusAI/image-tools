@@ -1,5 +1,4 @@
 import argparse, logging, subprocess, time, multiprocessing, sys
-import numpy as np
 import os
 import filepattern
 import pandas as pd
