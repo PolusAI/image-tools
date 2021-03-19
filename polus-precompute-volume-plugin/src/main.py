@@ -43,7 +43,7 @@ def main():
     mesh = args.mesh
 
     if imagetype != 'segmentation' and mesh == True:
-        raise ValueError("Can only generate meshes if imageType is segmentation")
+        logger.warning("Can only generate meshes if imageType is segmentation")
 
     logger.info('Input Directory = {}'.format(input_dir))
     logger.info('Output Directory = {}'.format(output_dir))
