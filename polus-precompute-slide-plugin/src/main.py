@@ -25,9 +25,12 @@ def main():
     # Parse the input file directory
     fp = filepattern.FilePattern(input_dir,file_pattern)
     group_by = ''
-    if 'z' in fp.variables and pyramid_type in ['Neuroglancer','Zarr']:
+    if 'z' in fp.variables and pyramid_type == 'Neuroglancer':
         group_by += 'z'
-        logger.info('Stacking images by z-dimension for Neuroglancer/Zarr precomputed format.')
+        logger.info('Stacking images by z-dimension for Neuroglancer precomputed format.')
+    elif 'c' in fp.variables and pyramid_type == 'Zarr':
+        group_by += 'c'
+        logger.info('Stacking channels by c-dimension for Zarr format')
     elif 't' in fp.variables and pyramid_type == 'DeepZoom':
         group_by += 't'
         logger.info('Creating time slices by t-dimension for DeepZoom format.')
@@ -73,7 +76,8 @@ def main():
                     'image_path': file['file'],
                     'image_depth': z,
                     'output_depth': depth,
-                    'max_output_depth': depth_max
+                    'max_output_depth': depth_max,
+                    'image_type': image_type
                 }
                 
                 pw = PyramidWriter[pyramid_type](**pyramid_args)

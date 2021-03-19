@@ -5,6 +5,18 @@ from numcodecs import Blosc
 from concurrent.futures import ThreadPoolExecutor
 from preadator import ProcessManager
 from bfio.OmeXml import OMEXML
+import traceback
+import pickle
+import ast
+import tempfile
+
+import logging
+
+# Initialize the logger
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    datefmt='%d-%b-%y %H:%M:%S')
+logger = logging.getLogger("utils")
+logger.setLevel(logging.INFO)
 
 # Conversion factors to nm, these are based off of supported Bioformats length units
 UNITS = {'m':  10**9,
@@ -243,6 +255,7 @@ class PyramidWriter():
 
 def _get_higher_res(S: int,
                     slide_writer: PyramidWriter,
+                    picklefile,
                     X: typing.Tuple[int,int] = None,
                     Y: typing.Tuple[int,int] = None,
                     Z: typing.Tuple[int,int] = (0,1)):
@@ -303,7 +316,24 @@ def _get_higher_res(S: int,
         with bfio.BioReader(slide_writer.image_path,max_workers=1) as br:
         
             image = br[Y[0]:Y[1],X[0]:X[1],Z[0]:Z[1],...].squeeze()
-            
+
+            if slide_writer.image_type == 'segmentation':
+                unique = list(np.unique(image).astype(int))
+                logger.info("Labels in chunk {}".format(unique))
+                if not os.path.exists(picklefile):
+                    with open(picklefile, 'w') as write_pickle:
+                        logger.info(str(unique))
+                        write_pickle.write(str(unique))
+                else:
+                    with open(picklefile, 'r+') as write_pickle:
+                        data = write_pickle.read()
+                        data = ast.literal_eval(data)
+                        write_pickle.seek(0)
+                        unique = data.extend(unique)
+                        unique = list(np.sort(np.unique(data)))
+                        write_pickle.write(str(unique))
+
+
         # Write the chunk
         slide_writer.store_chunk(image,str(S),(X[0],X[1],Y[0],Y[1]))
         
@@ -318,9 +348,10 @@ def _get_higher_res(S: int,
         for dim in subgrid_dims:
             while dim[1]-dim[0] > CHUNK_SIZE:
                 dim.insert(1,dim[0] + ((dim[1] - dim[0]-1)//CHUNK_SIZE) * CHUNK_SIZE)
-                
+
         def load_and_scale(*args,**kwargs):
             sub_image = _get_higher_res(**kwargs)
+
             # with ProcessManager.thread():
             image = args[0]
             x_ind = args[1]
@@ -347,11 +378,11 @@ def _get_higher_res(S: int,
                                     Y=subgrid_dims[1][y:y+2],
                                     Z=Z,
                                     S=S+1,
-                                    slide_writer=slide_writer)
+                                    slide_writer=slide_writer,
+                                    picklefile=picklefile)
     
     # Write the chunk
     slide_writer.store_chunk(image,str(S),(X[0],X[1],Y[0],Y[1]))
-
     return image
 
 class NeuroglancerWriter(PyramidWriter):
@@ -366,7 +397,7 @@ class NeuroglancerWriter(PyramidWriter):
         self.chunk_pattern = "{key}/{0}-{1}_{2}-{3}_{4}-{5}"
         
         if self.image_type == 'segmentation':
-            self.labels = set()
+            self.labels = []
 
     def _write_chunk(self,key,chunk_coords,buf):
         chunk_path = self._chunk_path(key,chunk_coords)
@@ -382,8 +413,14 @@ class NeuroglancerWriter(PyramidWriter):
         
         pathlib.Path(self.base_path).mkdir(exist_ok=True)
     
-        _get_higher_res(0,self,Z=(self.image_depth,self.image_depth+1))
-            
+        picklefile = os.path.join(self.base_path, 'pickle')
+        image = _get_higher_res(0,self,picklefile=picklefile,
+                        Z=(self.image_depth,self.image_depth+1))
+        if self.image_type == 'segmentation':
+            with open(picklefile, 'r') as read_pickle:
+                self.labels = ast.literal_eval(read_pickle.read())
+            os.remove(picklefile)
+
     def write_info(self):
         """ This creates the info file specifying the metadata for the precomputed format """
 
