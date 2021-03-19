@@ -7,26 +7,52 @@ import shutil
 from pathlib import Path
 
 def filter_planes(feature_dict, removeDirection, percentile):
-    
+    """filter planes by the criteria specified by removeDirection
+    and percentile 
+
+    Args:
+        feature_dict (dictionary): planes and respective feature value
+        removeDirection (string): remove above or below percentile
+        percentile (int): cutoff percentile
+
+    Returns:
+        set: planes that fit the criteria
+    """
     planes = list(feature_dict.keys())
     feat_value = [feature_dict[i] for i in planes]
     thresh = min(feat_value) + percentile * (max(feat_value) - min(feat_value))
     
+    # filter planes
     if removeDirection == 'Below':
-        keep_planes = sorted([z for z in planes if feature_dict[z] >= thresh])
+        keep_planes = [z for z in planes if feature_dict[z] >= thresh]
     else:
-        keep_planes = sorted([z for z in planes if feature_dict[z] <= thresh])
+        keep_planes = [z for z in planes if feature_dict[z] <= thresh]
     
     return set(keep_planes)
 
 def make_uniform(planes_dict, uniques, delay):
+    """keep same number of planes across different sections
+    and capture additional planes based on specified delay
+
+    Args:
+        planes_dict (dict): planes to keep in different sections
+        uniques (list): unique values for the major grouping variable
+        delay (int): additional images to capture outside cutoff
+
+    Returns:
+        dictionary: dictionary containing planes to keep
+    """
+
+    # max no. of planes 
     max_len = max([len(i) for i in planes_dict.values()])
+
+    # max planes that can be added on each side
     min_ind = min([min(planes_dict[k]) for k in planes_dict])
     max_ind = max([max(planes_dict[k]) for k in planes_dict])
-    
     max_add_left = uniques.index(min_ind)
     max_add_right = len(uniques) - (uniques.index(max_ind)+1)
     
+    # add planes in each section based on delay and max number of planes
     for section_id, planes in planes_dict.items():
         len_to_add = max_len - len(planes)
         len_add_left = min(int(len_to_add)/2+delay, max_add_left)
@@ -119,14 +145,16 @@ if __name__=="__main__":
             else:
                 feature_df = pd.concat([feature_df, pd.read_csv(os.path.join(csvDir, file), header=None)])
         
+        feature_dict = {k:v for k,v in zip(feature_df['Image'], feature_df[feature])}
+
         # seperate filepattern variables into different categories
         _,var = filepattern.get_regex(filePattern)
         grouping_variables = groupVar.split(',')
         section_variables = sectionVar.split(',')
-        sub_section_variables = [v for v in var if v not in grouping_variables+sectioning_variables]
+        sub_section_variables = [v for v in var if v not in grouping_variables+section_variables]
 
         # initialize filepattern object
-        fp = filepattern.FilePattern(inpDir, pattern=pattern)
+        fp = filepattern.FilePattern(inpDir, pattern=filePattern)
         uniques = fp.uniques
 
         [maj_grouping_var, min_grouping_var] = grouping_variables if len(grouping_variables)>1 else grouping_variables+[None]
@@ -138,7 +166,7 @@ if __name__=="__main__":
             
             section_feat_dict = {}
             section_keep_planes = []
-            section_id = tuple([file[0][i] for i in sectioning_variables]) if sectioning_variables[0] else 1
+            section_id = tuple([file[0][i] for i in section_variables]) if section_variables[0] else 1
             
             # iterate over files in one section
             for f in file:
@@ -175,7 +203,7 @@ if __name__=="__main__":
 
         # rename subsetted data
         for file in fp(group_by=sub_section_variables+grouping_variables):
-            section_id = tuple([file[0][i] for i in sectioning_variables]) if sectioning_variables[0] else 1
+            section_id = tuple([file[0][i] for i in section_variables]) if section_variables[0] else 1
             section_keep_planes = keep_planes[section_id]
             summary.write('------------------------------------------------ \n')
             rename_map = {k:v for k,v in zip(keep_planes[section_id], uniques[maj_grouping_var])}
@@ -183,7 +211,7 @@ if __name__=="__main__":
                 if f[maj_grouping_var] not in keep_planes[section_id]:
                     continue
 
-                # olf and new file name
+                # old and new file name
                 old_file_name = f['file'].name
                 file_name_dict = {k.upper():v for k,v in f.items() if k!='file'}
                 file_name_dict[maj_grouping_var.upper()] = rename_map[f[maj_grouping_var]]
