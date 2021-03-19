@@ -1,6 +1,6 @@
 {
     "name": "Feature Subsetting",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "title": "Feature Subsetting",
     "description": "Subset data using a given feature",
     "author": "Gauhar Bains (gauhar.bains@labshare.org)",
@@ -8,11 +8,11 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-subsetting-plugin:0.1.2",
+    "containerId": "labshare/polus-feature-subsetting-plugin:0.1.3",
     "inputs": [
       {
         "name": "csvDir",
-        "type": "collection",
+        "type": "csvCollection",
         "description": "CSV collection containing features",
         "required": true
       },
