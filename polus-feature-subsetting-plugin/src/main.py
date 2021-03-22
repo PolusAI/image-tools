@@ -174,7 +174,7 @@ if __name__=="__main__":
             # iterate over files in one section
             for f in file:
                 if min_grouping_var == None:
-                    f[min_grouping_var] == None
+                    f[min_grouping_var] = None
                 
                 # stote feature values for images 
                 if f[min_grouping_var] not in section_feat_dict:
@@ -205,6 +205,10 @@ if __name__=="__main__":
         summary = open(os.path.join(outDir, 'summary.txt'), 'w')
 
         logger.info('renaming subsetted data')
+
+        # reinitialize filepattern object
+        fp = filepattern.FilePattern(inpDir, pattern=filePattern)
+
         # rename subsetted data
         for file in fp(group_by=sub_section_variables+grouping_variables):
             section_id = tuple([file[0][i] for i in section_variables]) if section_variables[0] else 1

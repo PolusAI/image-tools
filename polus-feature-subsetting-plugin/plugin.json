@@ -1,6 +1,6 @@
 {
     "name": "Feature Subsetting",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "title": "Feature Subsetting",
     "description": "Subset data using a given feature",
     "author": "Gauhar Bains (gauhar.bains@labshare.org)",
@@ -8,24 +8,12 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-subsetting-plugin:0.1.3",
+    "containerId": "labshare/polus-feature-subsetting-plugin:0.1.4",
     "inputs": [
       {
-        "name": "csvDir",
-        "type": "csvCollection",
-        "description": "CSV collection containing features",
-        "required": true
-      },
-      {
-        "name": "delay",
-        "type": "string",
-        "description": "Number of images to capture outside the cutoff",
-        "required": false
-      },
-      {
-        "name": "feature",
-        "type": "string",
-        "description": "Feature to use to subset data",
+        "name": "inpDir",
+        "type": "collection",
+        "description": "Input image collection to be processed by this plugin",
         "required": true
       },
       {
@@ -41,9 +29,21 @@
         "required": true
       },
       {
-        "name": "inpDir",
-        "type": "collection",
-        "description": "Input image collection to be processed by this plugin",
+        "name": "sectionVar",
+        "type": "string",
+        "description": "variables to divide larger sections",
+        "required": false
+      },
+      {
+        "name": "csvDir",
+        "type": "csvCollection",
+        "description": "CSV collection containing features",
+        "required": true
+      },
+      {
+        "name": "feature",
+        "type": "string",
+        "description": "Feature to use to subset data",
         "required": true
       },
       {
@@ -54,14 +54,20 @@
       },
       {
         "name": "removeDirection",
-        "type": "string",
+        "type": "enum",
+        "options": {
+          "values": [
+              "Below",
+              "Above"
+          ]
+      },
         "description": "remove direction above or below percentile",
         "required": true
       },
       {
-        "name": "sectionVar",
+        "name": "delay",
         "type": "string",
-        "description": "variables to divide larger sections",
+        "description": "Number of images to capture outside the cutoff",
         "required": false
       },
       {
