@@ -75,7 +75,7 @@ def load_csv(fpath):
 
     return data, cnames
 
-def bin_data(data, yaxis, typegraph, column_bin_size, bin_stats):
+def bin_data(data, yaxis, column_bin_size, bin_stats):
     """ This function bins the data """
 
     column_names = data.columns
@@ -84,7 +84,7 @@ def bin_data(data, yaxis, typegraph, column_bin_size, bin_stats):
 
     # Handle NaN values
     data_ind = pandas.notnull(data)
-    data[~data_ind] = 255               
+    data[~data_ind] = 255
     
     data = data.astype(np.uint16)       # cast to save memory
     data[data>=bincount] = bincount - 1 # in case of numerical precision issues
@@ -110,11 +110,10 @@ def bin_data(data, yaxis, typegraph, column_bin_size, bin_stats):
         name1 = column_names[feat1]
         feat1_tf = data[name1] * bincount
         
-        if typegraph == "linear":
-            if bin_stats['min'][feat1] >= 0:
-                yaxis[feat1] = 0
-            else:
-                yaxis[feat1] = abs(bin_stats['min'][feat1])/column_bin_size[feat1] + 1
+        if bin_stats['min'][feat1] >= 0:
+            yaxis[feat1] = 0
+        else:
+            yaxis[feat1] = abs(bin_stats['min'][feat1])/column_bin_size[feat1] + 1
 
         for feat2 in range(feat1 + 1, nfeats):
             graph_dict[(feat1, feat2)] = i
@@ -144,252 +143,7 @@ def bin_data(data, yaxis, typegraph, column_bin_size, bin_stats):
 
     return bins, bin_stats, graph_index, graph_dict, yaxis
 
-def transform_data_log(data,column_names):
-    """ Bin the data
-    
-    Data from a pandas Dataframe is binned in two dimensions in a logarithmic
-    scale. Binning is performed by binning data in one column along one axis and
-    another column is binned along theother axis. All combinations of columns
-    are binned without repeats or transposition. 
-    To figure out which bin the data belongs in is solved by using the geometric
-    sequence where:
-    a(n) = a1*(r^(n-1))
-        n = number of bins
-        a1 = first number in range (scale factor)
-        r = common ratio
-        where r (bin width) is calculated by the Freedman Diaconis Rule: 
-            https://en.wikipedia.org/wiki/Freedman–Diaconis_rule
-    Every column of data falls into three different categories:
-    1) dfzero2pos: All the numbers in the column are >= 0
-    2) dfneg2zero: All the numbers in the column are <= 0
-    3) dfneg2pos: The numbers in the column are either >=0 or <= 0 
-    
-    The number of bins, alpha, and ratio, vary to the left and right of the 
-    y-axis based on the range of the negative numbers and range of postive
-    numbers, respectively.
-            
-    Inputs:
-        data - A pandas Dataframe, with nfeats number of columns
-        column_names - Names of Dataframe columns
-    Outputs:
-        bins - A numpy matrix that has shape (nfeats,nfeats,bincount,bincount)
-        bin_feats - A list containing the minimum and maximum values of each
-                    column
-        linear_index - Numeric value of column index from original csv
-    """
-    #Transforms the DataFrame that Range from a Negative Number to a Positive Number
-    def dfneg2pos(data, alphavals, datmin, datmax, datalen):
-
-        yaxis = [] 
-        commonratios = []
-        alphas = []
-
-        # DETERMINING NUMBER OF BINS ON EACH SIDE OF Y AXIS
-
-            # Need to figure out whether the negative range or 
-            #   positive range is bigger
-        minmax = pandas.concat([datmin, datmax], axis=1).abs()
-        ispositivebigger = minmax.iloc[:,0] < minmax.iloc[:,1]
-        smallside_an_values = minmax.min(axis=1) 
-        largeside_an_values = minmax.max(axis=1)
-
-        # NEED TO SOLVE FOR HOW MANY BINS THE SMALL RANGE AND LARGE RANGE REQUIRES
-            # THREE VARIABLES ARE UNKNOWN
-            # 1) the ratio 
-            # 2) number of bins needed for smaller range
-            # 3) number of bins needed for larger range
-
-        # Solving for ratio (r), use equations:
-            # x + y + 1= bincount
-                # where x is the number of bins used for the smaller range
-                # where y is the number of bins used for the larger range
-                # where the +1 is for values that fall between -a1 and +a1 (-a1 is -alpha, +a1 is +alpha)
-            # small = alpha*(r^(x-1)) --> log(r)[small/alpha] = x -1
-            # large = alpha*(r^(y-1)) --> log(r)[large/alpha] = y - 1
-            # Combining all equations we get the following: 
-        ratios = ((smallside_an_values*largeside_an_values)/(alphavals*alphavals))**(1/(bincount-3))
-        
-        # use ratio to solve for number bins for both the large and small ranges
-        num_bins_for_smallrange = np.round(abs(1 + np.log(smallside_an_values/alphavals)/np.log(ratios)))
-        num_bins_for_largerange = np.round(abs(1 + np.log(largeside_an_values/alphavals)/np.log(ratios)))
-            # sum of num_bins_for_smallrange + num_bins_for_largerange = bincount - 1
-
-        small_lessthanalpha = smallside_an_values < alphavals
-        large_lessthanalpha = largeside_an_values < alphavals
-
-        num_bins_for_smallrange[small_lessthanalpha] = 0
-        num_bins_for_largerange[large_lessthanalpha] = 0
-
-        posbinslarge = num_bins_for_largerange[ispositivebigger.iloc[:]]
-        posbinssmall = num_bins_for_smallrange[ispositivebigger.iloc[:] == False]
-        posbins = posbinslarge.append(posbinssmall)
-        
-
-        negbinslarge = num_bins_for_largerange[ispositivebigger.iloc[:] == False]
-        negbinssmall = num_bins_for_smallrange[ispositivebigger.iloc[:]]
-        negbins = negbinslarge.append(negbinssmall)
-        negbinsframe = negbins.to_frame().transpose()
-        negbinsframe = negbinsframe.loc[negbinsframe.index.repeat(datalen)].reset_index(drop=True)
-
-        ispositive = data.iloc[0:datalen,:] >= alphavals # Any positive value that is large than the first value of range
-        isnegative = data.iloc[0:datalen,:] <= -1*alphavals # Any negative value that is smaller than the first value of range
-        ismin = (data.iloc[0:datalen,:] == datmin) # Smallest value in column
-        ismax = (data.iloc[0:datalen,:] == datmax) # Largest value in column
-
-        binzero = np.log(np.abs(data.iloc[0:datalen,:])/alphavals)
-        binned_data =  np.round(binzero/np.log(ratios)) # Calculate the bin for all values
-        binned_data[binned_data==-0.0] = 0 # To replace -0.0 values with 0
-        binned_data[binned_data==np.inf] = 0
-        binned_data[binned_data==-np.inf] = 0 
-
-        # Bins are 1-Indexed, and shifting all bin values to positive range.
-                # Bin values are 0-Bincount
-        data[binzero<=0] = negbinsframe[binzero<=0] + 1 # if -alpha < value < alpha, then it is negbin + 1
-        data[ispositive] = (binned_data[ispositive] + negbinsframe[ispositive] + 1) 
-        data[isnegative] = (negbinsframe[isnegative] - binned_data[isnegative] + 1)
-        data[ismin] = 1 # Smallest bin value is 1.
-        data[ismax] = bincount # Largest bin value is bincount
-        data[data == -np.inf] = negbinsframe[data == -np.inf] + 1
-        data[data == np.inf] = negbinsframe[data == np.inf] + 1
-
-        commonratios = ratios.to_list()
-        alphas = alphavals.to_list()
-        yaxis = (negbins + 1).to_list()
-
-        return yaxis, alphas, commonratios, data
-
-    # Transforms the Data that has a Positive Range
-    def dfzero2pos(data, alphavals, datmax, datalen):
-
-        commonratios = (datmax/alphavals)**(1/(bincount - 1))
-        
-        binned_data = np.round(np.log(np.abs(data.iloc[0:datalen,:])/alphavals)/np.log(commonratios))
-        binned_data[binned_data==-0.0] = 0 
-        ismax = (data.iloc[0:datalen,:] == datmax)
-        
-        data[ismax] = bincount
-        data[binned_data<=0] = 1
-        data[binned_data>0] = binned_data[binned_data>0] + 1
-        data[data == -np.inf] = 1
-        data[data == np.inf] = 1
-
-        alphas = alphavals.to_list()
-        commonratios = commonratios.to_list()
-
-        return alphas, commonratios, data
-
-    # Transform the Data that has a Negative Range
-    def dfneg2zero(data, datmin, alphavals, datalen):
-
-        commonratios = (datmin/alphavals)**(1/(bincount - 1))
-        
-        binned_data =  np.round(np.log(data.iloc[0:datalen,:]/alphavals)/np.log(commonratios)) # Calculate the bin for all values
-        binned_data[binned_data==-0.0] = 0 # To replace -0.0 values with 0
-        ismin = (data.iloc[0:datalen,:] == datmin)
-
-        data[ismin] =  1
-        data[binned_data<=0] = bincount - 1
-        data[binned_data>0] = bincount - binned_data[binned_data>0] + 1
-        data[data == -np.inf] = bincount
-        data[data == np.inf] = bincount
-
-        alphas = alphavals.to_list()
-        commonratios = commonratios.to_list()
-
-        return alphas, commonratios, data
-
-    yaxis = [0]
-    column_bin_sizes = []
-    quartile25to75 = []
-    Datapoints = []
-    Ind2 = []
-    Ind2zero = []
-    Position = []
-    alphavals = []
-    
-    bin_stats = {'size': data.shape,
-                 'min': data.min(),
-                 'max': data.max(),
-                 'alpha': (2*(data.quantile(0.75) - data.quantile(0.25)))/(data.shape[0]**(1/3))} 
-                    # if alpha (from Freedman Diaconis) equals zero, then bin width is zero.
-    
-    nfeats = bin_stats['size'][1] 
-    datalen = bin_stats['size'][0]
-   
-    # COLUMNS OF DATA FALL UNDER THESE FOUR RANGE DESCRIPTIONS
-    positiverange = np.where((bin_stats['min'] >= 0) &(bin_stats['max'] > 0))[0]
-    negativerange = np.where((bin_stats['min'] < 0) & (bin_stats['max'] <= 0))[0]
-    neg2posrange =  np.where((bin_stats['min'] < 0) & (bin_stats['max'] > 0))[0]
-    zeroalpha = np.where(bin_stats['alpha'] == 0)[0]
-
-    # VALUES IN ZEROALPHA ARE DROPPED, NEED TO UPDATE BIN_STATS
-    lenzeroalpha = len(zeroalpha)
-    nfeats = nfeats-lenzeroalpha
-    bin_stats['size'] = (datalen, nfeats-lenzeroalpha)
-    for val in zeroalpha:
-        bin_stats['min'].drop(column_names[val])
-        bin_stats['max'].drop(column_names[val])
-        bin_stats['alpha'].drop(column_names[val])
-    
-    # FIND COLUMNS THAT OVERLAP WITH ZEROALPHA(bin width is zero)
-    POSoverlap = np.intersect1d(zeroalpha, positiverange, assume_unique = True, return_indices=True)
-    NEGoverlap = np.intersect1d(zeroalpha, negativerange, assume_unique = True, return_indices=True)
-    NEG2POSoverlap = np.intersect1d(zeroalpha, neg2posrange, assume_unique=True, return_indices=True)
-    
-    # REMOVE COLUMNS THAT OVERLAP WITH ZEROALPHA
-    positiverange = np.delete(positiverange, POSoverlap[2])
-    negativerange = np.delete(negativerange, NEGoverlap[2])
-    NEG2POSoverlap = np.delete(neg2posrange, NEG2POSoverlap[2])
-
-    # CREATING NEW DATA FRAMES OF THE DIFFERENT RANGE DESCRIPTIONS
-        # Columns of data with a bin width value of zero is dropped in new dataframe. 
-    positivedf = data.iloc[:, positiverange]
-    negativedf = data.iloc[:, negativerange]
-    neg2posdf = data.iloc[:, neg2posrange]
-
-    # COLLECTING NAMES OF COLUMNS OF THE DIFFERENT DATA FRAMES
-    positivenames = positivedf.columns
-    negativenames = negativedf.columns
-    neg2posnames = neg2posdf.columns
-    
-    # POSITIVE RANGE
-    alphaspos, commonratiospos, positivedf = dfzero2pos(positivedf, 
-                                                        bin_stats['alpha'][positivenames], 
-                                                        bin_stats['max'][positivenames],
-                                                        datalen)
-    yaxis = yaxis * len(positivenames)
-    positivedf.reset_index(drop = True, inplace = True)
-
-    # NEGATIVE RANGE
-    alphasneg, commonratiosneg, negativedf = dfneg2zero(negativedf, 
-                                                        -1*bin_stats['alpha'][negativenames], 
-                                                        bin_stats['min'][negativenames],
-                                                        datalen)
-    yaxis = yaxis + ([bincount] * len(negativenames))
-    negativedf.reset_index(drop = True, inplace = True)
-    
-    # NEGATIVE TO POSITIVE RANGE
-    yvalues, alphasneg2pos, commonratiosneg2pos, neg2posdf = dfneg2pos(neg2posdf, 
-                                                                       bin_stats['alpha'][neg2posnames], 
-                                                                       bin_stats['min'][neg2posnames], 
-                                                                       bin_stats['max'][neg2posnames],
-                                                                       datalen)
-    yaxis = yaxis + yvalues
-    neg2posdf.reset_index(drop = True, inplace = True)
-
-    # Concatenating alpha values and column bin sizes for the three dataframe transforms. 
-    alphavals = alphaspos + alphasneg + alphasneg2pos
-    column_bin_sizes = commonratiospos + commonratiosneg + commonratiosneg2pos
-    
-
-    # NEW DATA FRAME DROPS COLUMNS THAT HAS A BIN WIDTH VALUE OF ZERO
-    data = pandas.concat([positivedf, negativedf, neg2posdf], axis=1)
-
-    bins, bin_stats, log_index, log_dict, yaxis = bin_data(data, yaxis, "log", column_bin_sizes, bin_stats)
-
-    return yaxis, bins, bin_stats, log_index, log_dict, column_bin_sizes, alphavals
-
-def transform_data_linear(data,column_names):
+def transform_data(data,column_names, typegraph):
     """ Bin the data
     
     Data from a pandas Dataframe is binned in two dimensions. Binning is performed by
@@ -400,27 +154,33 @@ def transform_data_linear(data,column_names):
     Inputs:
         data - A pandas Dataframe, with nfeats number of columns
         column_names - Names of Dataframe columns
+        typegraph - Defines whether logarithmic scale or linear scale
     Outputs:
         bins - A numpy matrix that has shape (nfeats,nfeats,200,200)
         bin_feats - A list containing the minimum and maximum values of each column
-        linear_index - Numeric value of column index from original csv
+        index - Numeric value of column index from original csv
     """
 
-    # Get basic column statistics and bin sizes
     nfeats = len(column_names)
     yaxis = np.zeros(nfeats, dtype=int)
     alphavals = yaxis
+
+    # If logarithmic, need to transform the data
+    # https://iopscience.iop.org/article/10.1088/0957-0233/24/2/027001
+    if typegraph == "log":
+        C = 1/np.log(10)
+        data = np.sign(data) * np.log10(1 + (abs(data/C)))
     bin_stats = {'size': data.shape,
                  'min': data.min(),
                  'max': data.max()}
     column_bin_size = (bin_stats['max'] * (1 + 10**-6) - bin_stats['min'])/bincount
 
+
     # Transform data into bin positions for fast binning
     data = ((data - bin_stats['min'])/column_bin_size).apply(np.floor)
 
-    bins, bin_stats, linear_index, linear_dict, yaxis = bin_data(data, yaxis, "linear", column_bin_size, bin_stats)
-    
-    return yaxis, bins, bin_stats, linear_index, linear_dict, column_bin_size, alphavals
+    bins, bin_stats, index, diction, yaxis = bin_data(data, yaxis, column_bin_size, bin_stats)
+    return yaxis, bins, bin_stats, index, diction, column_bin_size, alphavals
 
 """ 2. Plot Generation """
 def format_ticks(out):
@@ -529,8 +289,7 @@ def gen_plot(col1,
              fig,
              ax,
              data,
-             axiszero,
-             typegraph):
+             axiszero):
     """ Generate a heatmap
     Generate a heatmap of data for column 1 against column 2.
     Inputs:
@@ -607,50 +366,20 @@ def gen_plot(col1,
             bbytext = (aylabel.texts[0]).get_window_extent(renderer = fig.canvas.renderer)
             decreasefont = decreasefont - 1 
     
-    # Ticks are formatted differently for both log and linearly scaled graphs. 
-    if typegraph == "linear":
-        # Calculating the value of each tick in the graph (fixed width)
-        fmin = bin_stats['min'][column_names[c]]
-        fmax = bin_stats['max'][column_names[c]]
-        tick_vals = [t for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks-1))]
-        tick_vals.append(fmax)
-        ax.set_xticklabels(format_ticks(tick_vals), rotation=45, fontsize = 5, ha='right')
 
-        # Calculating the value of each tick in the graph (fixed width)
-        fmin = bin_stats['min'][column_names[r]]
-        fmax = bin_stats['max'][column_names[r]]
-        tick_vals = [t for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks-1))]
-        tick_vals.append(fmax)
-        ax.set_yticklabels(format_ticks(tick_vals), fontsize=5, ha='right')
+    # Calculating the value of each tick in the graph (fixed width)
+    fmin = bin_stats['min'][column_names[c]]
+    fmax = bin_stats['max'][column_names[c]]
+    tick_vals = [t for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks-1))]
+    tick_vals.append(fmax)
+    ax.set_xticklabels(format_ticks(tick_vals), rotation=45, fontsize = 5, ha='right')
 
-    if typegraph == "log":
-        # Calculating the value of each tick in the graph 
-        yaxis = axiszero[c]
-        commonratio = binsizes[c]
-        alphavalue = alphavals[c]
-        tick_vals = [(alphavalue*(commonratio**(t-yaxis))) if yaxis<t else (-1*(alphavalue*(commonratio**(yaxis-t))) if yaxis>t else 0) 
-            for t in np.arange(0,bincount,bincount/(numticks-1))]
-        if yaxis < bincount:
-            tick_vals.append(alphavalue*(commonratio**(bincount-yaxis)))
-        elif yaxis > bincount:
-            tick_vals.append(-1*(alphavalue*(commonratio**(yaxis-bincount))))
-        else:
-            tick_vals.append(0)
-        ax.set_xticklabels(format_ticks(tick_vals),rotation=45, fontsize = 5, ha='right')
-
-        # Calculating the value of each tick in the graph 
-        yaxis = axiszero[r]
-        commonratio = binsizes[r]
-        alphavalue = alphavals[r]
-        tick_vals = [(alphavalue*(commonratio**(t-yaxis))) if yaxis<t else (-1*(alphavalue*(commonratio**(yaxis-t))) if yaxis>t else 0) 
-            for t in np.arange(0,bincount,bincount/(numticks-1))]
-        if yaxis < bincount:
-            tick_vals.append(alphavalue*(commonratio**(bincount-yaxis)))
-        elif yaxis > bincount:
-            tick_vals.append(-1*(alphavalue*(commonratio**(yaxis-bincount))))
-        else:
-            tick_vals.append(0)
-        ax.set_yticklabels(format_ticks(tick_vals), fontsize = 5, ha='right')
+    # Calculating the value of each tick in the graph (fixed width)
+    fmin = bin_stats['min'][column_names[r]]
+    fmax = bin_stats['max'][column_names[r]]
+    tick_vals = [t for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks-1))]
+    tick_vals.append(fmax)
+    ax.set_yticklabels(format_ticks(tick_vals), fontsize=5, ha='right')
 
     # drawing the x axis and y axis lines on the graphs
     if len(ax.lines) == 0:
@@ -808,7 +537,7 @@ the original resolution of the image, getting a tile at scale 2 will generate
 only the necessary information at layers 0 and 1 to create the desired tile at
 layer 2. This function is recursive and can be parallelized.
 """
-def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,indexdict,binstats, binsizes, axiszero, alphavals, X=None,Y=None):
+def _get_higher_res(S,info,cnames, outpath,out_file,indexscale,indexdict,binstats, binsizes, axiszero, alphavals, X=None,Y=None):
     # Get the scale info
     scale_info = None
     for res in info['scales']: 
@@ -847,8 +576,7 @@ def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,indexd
                              fig,
                              ax,
                              datacolor,
-                             axiszero,
-                             typegraph)
+                             axiszero)
     else:
         # Set the subgrid dimensions
         subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]]]
@@ -864,8 +592,7 @@ def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,indexd
                 x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
                 x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
                 if S==(info['scales'][0]['key'] - 5): #to use multiple processors to compute faster.
-                    sub_image = _get_higher_res_par(typegraph,
-                                                    S+1,
+                    sub_image = _get_higher_res_par(S+1,
                                                     info,
                                                     cnames,
                                                     outpath,
@@ -879,8 +606,7 @@ def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,indexd
                                                     X=subgrid_dims[0][x:x+2],
                                                     Y=subgrid_dims[1][y:y+2])
                 else:
-                    sub_image = _get_higher_res(typegraph,
-                                                S+1,
+                    sub_image = _get_higher_res(S+1,
                                                 info,
                                                 cnames,
                                                 outpath,
@@ -905,7 +631,7 @@ def _get_higher_res(typegraph, S,info,cnames, outpath,out_file,indexscale,indexd
 
 # This function performs the same operation as _get_highe_res, except it uses multiprocessing to grab higher
 # resolution layers at a specific layer.
-def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, indexdict, binstats, binsizes, axiszero, alphavals, X=None,Y=None):
+def _get_higher_res_par(S,info, cnames, outpath,out_file,indexscale, indexdict, binstats, binsizes, axiszero, alphavals, X=None,Y=None):
     # Get the scale info
     processID = os.getpid()
     scale_info = None
@@ -945,8 +671,7 @@ def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, 
                              fig,
                              ax,
                              datacolor,
-                             axiszero,
-                             typegraph)
+                             axiszero)
     else:
         # Set the subgrid dimensions
         subgrid_dims = [[2*X[0],2*X[1]],[2*Y[0],2*Y[1]]]
@@ -963,8 +688,7 @@ def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, 
                 for x in range(0,len(subgrid_dims[0])-1):
                     x_ind = [subgrid_dims[0][x] - subgrid_dims[0][0],subgrid_dims[0][x+1] - subgrid_dims[0][0]]
                     x_ind = [np.ceil(xi/2).astype('int') for xi in x_ind]
-                    subgrid_images.append(pool.apply_async(_get_higher_res,(typegraph, 
-                                                                            S+1,
+                    subgrid_images.append(pool.apply_async(_get_higher_res,(S+1,
                                                                            info,
                                                                            cnames,
                                                                            outpath,
@@ -993,13 +717,13 @@ def _get_higher_res_par(typegraph, S,info, cnames, outpath,out_file,indexscale, 
     logger.info('Finished building tile (scale,X,Y): ({},{},{})'.format(S,int(X[0]/CHUNK_SIZE),int(Y[0]/CHUNK_SIZE)))
     return image
 
-def write_csv(cnames,linear_index,f_info,out_path,out_file):
+def write_csv(cnames,index,f_info,out_path,out_file):
     header = 'dataset_id, x_axis_id, y_axis_id, x_axis_name, y_axis_name, title, length, width, global_row, global_col\n'
     line = '{:d}, {:d}, {:d}, {:s}, {:s}, default title, {:d}, {:d}, {:d}, {:d}\n'
     l_ind = 0
     with open(str(Path(out_path).joinpath(out_file+'.csv').absolute()),'w') as writer:
         writer.write(header)
-        for ind in linear_index:
+        for ind in index:
             writer.write(line.format(1,
                                      cnames[ind[1]][1],
                                      cnames[ind[0]][1],
@@ -1050,11 +774,6 @@ if __name__=="__main__":
     for scale in scales:
         loggers[scale] = logging.getLogger("main.{}".format(scale.upper()))
         loggers[scale].setLevel(logging.INFO)
-        
-    # Set the binning functions
-    bin_fns = {
-        scale:eval('transform_data_{}'.format(scale)) for scale in scales
-    }
 
     # Get the path to each csv file in the collection
     input_files = [str(f.absolute()) for f in Path(input_path).iterdir() if ''.join(f.suffixes)=='.csv']
@@ -1081,7 +800,7 @@ if __name__=="__main__":
 
             # Bin the data
             loggers[scale].info('Binning data for {} {} features...'.format(len(column_names),scale.upper()))
-            yaxis_data, bins, bin_stats, data_index, data_dict, data_binsizes, alphavals_data = bin_fns[scale](data,column_names)
+            yaxis_data, bins, bin_stats, data_index, data_dict, data_binsizes, alphavals_data = transform_data(data,column_names, scale)
 
             # Generate the dzi file
             loggers[scale].info('Generating pyramid {} metadata...'.format(scale.upper()))
@@ -1094,5 +813,5 @@ if __name__=="__main__":
 
             # Create the pyramid
             loggers[scale].info('Building {} pyramids...'.format(scale.upper()))
-            image_data = _get_higher_res(scale, 0, info_data,column_names, output_path,folder_name,data_index, data_dict, bin_stats, data_binsizes, yaxis_data, alphavals_data)
+            image_data = _get_higher_res(0, info_data,column_names, output_path,folder_name,data_index, data_dict, bin_stats, data_binsizes, yaxis_data, alphavals_data)
             loggers[scale].info('Done!')
