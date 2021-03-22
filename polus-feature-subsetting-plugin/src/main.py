@@ -217,8 +217,8 @@ if __name__=="__main__":
 
             # update summary.txt with section renaming info
             summary.write('------------------------------------------------ \n')
-            if sectionVar != '':
-                summary.write('Section : {} \n'.format({k:file[0][k] for k in sectionVar}))
+            if sectionVar.strip():
+                summary.write('Section : {} \n'.format({k:file[0][k] for k in section_variables}))
             summary.write('\nThe following values of "{}" variable have been renamed: \n'.format(maj_grouping_var))
             for k,v in rename_map.items():
                 summary.write('{} ---> {} \n'.format(k,v))
