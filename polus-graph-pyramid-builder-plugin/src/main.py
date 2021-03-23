@@ -163,7 +163,6 @@ def transform_data(data,column_names, typegraph):
 
     nfeats = len(column_names)
     yaxis = np.zeros(nfeats, dtype=int)
-    alphavals = yaxis
 
     # If logarithmic, need to transform the data
     # https://iopscience.iop.org/article/10.1088/0957-0233/24/2/027001
@@ -180,7 +179,7 @@ def transform_data(data,column_names, typegraph):
     data = ((data - bin_stats['min'])/column_bin_size).apply(np.floor)
 
     bins, bin_stats, index, diction, yaxis = bin_data(data, yaxis, column_bin_size, bin_stats)
-    return yaxis, bins, bin_stats, index, diction, column_bin_size, alphavals
+    return yaxis, bins, bin_stats, index, diction, column_bin_size
 
 """ 2. Plot Generation """
 def format_ticks(out):
@@ -282,7 +281,6 @@ def get_cmap():
 def gen_plot(col1,
              col2,
              indexdict,
-             alphavals,
              binsizes,
              column_names,
              bin_stats,
@@ -537,7 +535,7 @@ the original resolution of the image, getting a tile at scale 2 will generate
 only the necessary information at layers 0 and 1 to create the desired tile at
 layer 2. This function is recursive and can be parallelized.
 """
-def _get_higher_res(S,info,cnames, outpath,out_file,indexscale,indexdict,binstats, binsizes, axiszero, alphavals, X=None,Y=None):
+def _get_higher_res(S,info,cnames, outpath,out_file,indexscale,indexdict,binstats, binsizes, axiszero, X=None,Y=None):
     # Get the scale info
     scale_info = None
     for res in info['scales']: 
@@ -569,7 +567,6 @@ def _get_higher_res(S,info,cnames, outpath,out_file,indexscale,indexdict,binstat
             image = gen_plot(indexscale[index][0],
                              indexscale[index][1],
                              indexdict,
-                             alphavals,
                              binsizes,
                              cnames,
                              binstats,
@@ -602,7 +599,6 @@ def _get_higher_res(S,info,cnames, outpath,out_file,indexscale,indexdict,binstat
                                                     binstats,
                                                     binsizes,
                                                     axiszero,
-                                                    alphavals,
                                                     X=subgrid_dims[0][x:x+2],
                                                     Y=subgrid_dims[1][y:y+2])
                 else:
@@ -616,7 +612,6 @@ def _get_higher_res(S,info,cnames, outpath,out_file,indexscale,indexdict,binstat
                                                 binstats,
                                                 binsizes,
                                                 axiszero,
-                                                alphavals,
                                                 X=subgrid_dims[0][x:x+2],
                                                 Y=subgrid_dims[1][y:y+2])
                 image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1],:] = _avg2(sub_image)
@@ -631,7 +626,7 @@ def _get_higher_res(S,info,cnames, outpath,out_file,indexscale,indexdict,binstat
 
 # This function performs the same operation as _get_highe_res, except it uses multiprocessing to grab higher
 # resolution layers at a specific layer.
-def _get_higher_res_par(S,info, cnames, outpath,out_file,indexscale, indexdict, binstats, binsizes, axiszero, alphavals, X=None,Y=None):
+def _get_higher_res_par(S,info, cnames, outpath,out_file,indexscale, indexdict, binstats, binsizes, axiszero, X=None,Y=None):
     # Get the scale info
     processID = os.getpid()
     scale_info = None
@@ -664,7 +659,6 @@ def _get_higher_res_par(S,info, cnames, outpath,out_file,indexscale, indexdict, 
             image = gen_plot(indexscale[index][0],
                              indexscale[index][1],
                              indexdict,
-                             alphavals,
                              binsizes,
                              cnames,
                              binstats,
@@ -698,7 +692,6 @@ def _get_higher_res_par(S,info, cnames, outpath,out_file,indexscale, indexdict, 
                                                                            binstats,
                                                                            binsizes,
                                                                            axiszero,
-                                                                           alphavals,
                                                                            subgrid_dims[0][x:x+2],
                                                                            subgrid_dims[1][y:y+2])))
             for y in range(0,len(subgrid_dims[1])-1):
@@ -800,7 +793,7 @@ if __name__=="__main__":
 
             # Bin the data
             loggers[scale].info('Binning data for {} {} features...'.format(len(column_names),scale.upper()))
-            yaxis_data, bins, bin_stats, data_index, data_dict, data_binsizes, alphavals_data = transform_data(data,column_names, scale)
+            yaxis_data, bins, bin_stats, data_index, data_dict, data_binsizes = transform_data(data,column_names, scale)
 
             # Generate the dzi file
             loggers[scale].info('Generating pyramid {} metadata...'.format(scale.upper()))
@@ -813,5 +806,5 @@ if __name__=="__main__":
 
             # Create the pyramid
             loggers[scale].info('Building {} pyramids...'.format(scale.upper()))
-            image_data = _get_higher_res(0, info_data,column_names, output_path,folder_name,data_index, data_dict, bin_stats, data_binsizes, yaxis_data, alphavals_data)
+            image_data = _get_higher_res(0, info_data,column_names, output_path,folder_name,data_index, data_dict, bin_stats, data_binsizes, yaxis_data)
             loggers[scale].info('Done!')
