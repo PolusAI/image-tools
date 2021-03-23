@@ -5,14 +5,6 @@ from numcodecs import Blosc
 from concurrent.futures import ThreadPoolExecutor
 from preadator import ProcessManager
 from bfio.OmeXml import OMEXML
-import ast
-import logging
-
-# Initialize the logger
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    datefmt='%d-%b-%y %H:%M:%S')
-logger = logging.getLogger("utils")
-logger.setLevel(logging.INFO)
 
 # Conversion factors to nm, these are based off of supported Bioformats length units
 UNITS = {'m':  10**9,
@@ -71,13 +63,16 @@ def _mode2(image: np.ndarray) -> np.ndarray:
     # Initialize indexes where the two pixels are not the same
     valueslist = [vals00[index], vals01[index], vals10[index], vals11[index]]
     
-    # Do a deeper mode search for non-matching pixels 
+    # Do a deeper mode search for non-matching pixels
+    temp_mode = mode_img[:y_max//2,:x_max//2]
     for i in range(3):
         rvals = valueslist[i]
         for j in range(i+1,4):
             cvals = valueslist[j]
-            ind = np.logical_and(cvals==rvals,rvals>mode_img[index])
-            mode_img[idxfalse][ind] = rvals[ind]
+            ind = np.logical_and(cvals==rvals,rvals>temp_mode[index])
+            temp_mode[index][ind] = rvals[ind]
+        
+    mode_img[:y_max//2,:x_max//2] = temp_mode
 
     return mode_img
 
@@ -173,7 +168,10 @@ class PyramidWriter():
         else:
             raise ValueError('image_type must be one of ["image","segmentation"]')
             
-        self.info = bfio_metadata_to_slide_info(self.image_path,self.base_path,self.max_output_depth,self.image_type)
+        self.info = bfio_metadata_to_slide_info(self.image_path,
+                                                self.base_path,
+                                                self.max_output_depth,
+                                                self.image_type)
         
         self.dtype = self.info['data_type']
         
@@ -197,13 +195,11 @@ class PyramidWriter():
     
     def write_slide(self):
         
-        self._write_slide()
-        
-        # with ProcessManager.process(f'{self.base_path} - {self.output_depth}'):
+        with ProcessManager.process(f'{self.base_path} - {self.output_depth}'):
             
-        #     ProcessManager.submit_thread(self._write_slide)
+            ProcessManager.submit_thread(self._write_slide)
             
-        #     ProcessManager.join_threads()
+            ProcessManager.join_threads()
     
     def scale_info(self,S):
         
@@ -251,7 +247,6 @@ class PyramidWriter():
 
 def _get_higher_res(S: int,
                     slide_writer: PyramidWriter,
-                    picklefile,
                     X: typing.Tuple[int,int] = None,
                     Y: typing.Tuple[int,int] = None,
                     Z: typing.Tuple[int,int] = (0,1)):
@@ -307,31 +302,14 @@ def _get_higher_res(S: int,
         Y[1] = scale_info['size'][1]
     
     if str(S)==slide_writer.scale_info(-1)['key']:
-        # with ProcessManager.thread():
+        with ProcessManager.thread():
         
-        with bfio.BioReader(slide_writer.image_path,max_workers=1) as br:
-        
-            image = br[Y[0]:Y[1],X[0]:X[1],Z[0]:Z[1],...].squeeze()
+            with bfio.BioReader(slide_writer.image_path,max_workers=1) as br:
+            
+                image = br[Y[0]:Y[1],X[0]:X[1],Z[0]:Z[1],...].squeeze()
 
-            if slide_writer.image_type == 'segmentation':
-                unique = list(np.unique(image).astype(int))
-                logger.info("Labels in chunk {}".format(unique))
-                if not os.path.exists(picklefile):
-                    with open(picklefile, 'w') as write_pickle:
-                        logger.info(str(unique))
-                        write_pickle.write(str(unique))
-                else:
-                    with open(picklefile, 'r+') as write_pickle:
-                        data = write_pickle.read()
-                        data = ast.literal_eval(data)
-                        write_pickle.seek(0)
-                        unique = data.extend(unique)
-                        unique = list(np.sort(np.unique(data)))
-                        write_pickle.write(str(unique))
-
-
-        # Write the chunk
-        slide_writer.store_chunk(image,str(S),(X[0],X[1],Y[0],Y[1]))
+            # Write the chunk
+            slide_writer.store_chunk(image,str(S),(X[0],X[1],Y[0],Y[1]))
         
         return image
 
@@ -348,18 +326,11 @@ def _get_higher_res(S: int,
         def load_and_scale(*args,**kwargs):
             sub_image = _get_higher_res(**kwargs)
 
-            # with ProcessManager.thread():
-            image = args[0]
-            x_ind = args[1]
-            y_ind = args[2]
-            image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1]] = kwargs['slide_writer'].scale(sub_image)
-        
-        # To limit memory consumption, only run concurrent threads at lower
-        # levels of the pyramid
-        if S==int(slide_writer.scale_info(-1)['key']) - 4:
-            num_threads = 4
-        else:
-            num_threads = 1
+            with ProcessManager.thread():
+                image = args[0]
+                x_ind = args[1]
+                y_ind = args[2]
+                image[y_ind[0]:y_ind[1],x_ind[0]:x_ind[1]] = kwargs['slide_writer'].scale(sub_image)
         
         with ThreadPoolExecutor(1) as executor:
             for y in range(0,len(subgrid_dims[1])-1):
@@ -374,8 +345,7 @@ def _get_higher_res(S: int,
                                     Y=subgrid_dims[1][y:y+2],
                                     Z=Z,
                                     S=S+1,
-                                    slide_writer=slide_writer,
-                                    picklefile=picklefile)
+                                    slide_writer=slide_writer)
     
     # Write the chunk
     slide_writer.store_chunk(image,str(S),(X[0],X[1],Y[0],Y[1]))
@@ -392,8 +362,34 @@ class NeuroglancerWriter(PyramidWriter):
         super().__init__(*args, **kwargs)
         self.chunk_pattern = "{key}/{0}-{1}_{2}-{3}_{4}-{5}"
         
+        min_level = min([int(self.scale_info(-1)['key']),10])
+        self.info = bfio_metadata_to_slide_info(self.image_path,
+                                                self.base_path,
+                                                self.max_output_depth,
+                                                self.image_type,
+                                                min_level)
+        
         if self.image_type == 'segmentation':
-            self.labels = []
+            self.labels = set()
+            
+    def store_chunk(self, image, key, chunk_coords):
+        
+        # Add in a label aggregator to the store_chunk operation
+        # Only aggregate labels at the highest resolution
+        if self.image_type == 'segmentation':
+            if key == self.scale_info(-1)['key']:
+                self.labels = self.labels.union(set(np.unique(image)))
+            elif key == self.info['scales'][-1]['key']:
+                root = zarr.open(str(self.base_path.joinpath("labels.zarr")))
+                if str(self.output_depth) not in root.array_keys():
+                    labels = root.empty(str(self.output_depth),
+                                        shape=(len(self.labels),),
+                                        dtype=np.uint64)
+                else:
+                    labels = root[str(self.output_depth)]
+                labels[:] = np.asarray(list(self.labels),np.uint64).squeeze()
+            
+        super().store_chunk(image, key, chunk_coords)
 
     def _write_chunk(self,key,chunk_coords,buf):
         chunk_path = self._chunk_path(key,chunk_coords)
@@ -409,13 +405,10 @@ class NeuroglancerWriter(PyramidWriter):
         
         pathlib.Path(self.base_path).mkdir(exist_ok=True)
     
-        picklefile = os.path.join(self.base_path, 'pickle')
-        image = _get_higher_res(0,self,picklefile=picklefile,
-                        Z=(self.image_depth,self.image_depth+1))
-        if self.image_type == 'segmentation':
-            with open(picklefile, 'r') as read_pickle:
-                self.labels = ast.literal_eval(read_pickle.read())
-            os.remove(picklefile)
+        # Don't create a full pyramid to help reduce bounding box size
+        start_level = int(self.info['scales'][-1]['key'])
+        image = _get_higher_res(start_level,self,
+                                Z=(self.image_depth,self.image_depth+1))
 
     def write_info(self):
         """ This creates the info file specifying the metadata for the precomputed format """
@@ -427,7 +420,7 @@ class NeuroglancerWriter(PyramidWriter):
 
         # Write the neuroglancer info file
         with open(op,'w') as writer:
-            json.dump(self.info,writer)
+            json.dump(self.info,writer,indent=2)
             
         if self.image_type == 'segmentation':
             self._write_segment_info()
@@ -438,21 +431,27 @@ class NeuroglancerWriter(PyramidWriter):
             raise TypeError('The NeuroglancerWriter object must have image_type = "segmentation" to use write_segment_info.')
         
         op = pathlib.Path(self.base_path).joinpath("infodir")
-        op.mkdir()
+        op.mkdir(exist_ok=True)
         op = op.joinpath("info")
+        
+        # Get the labels
+        root = zarr.open(str(self.base_path.joinpath("labels.zarr")))
+        labels = set()
+        for d in root.array_keys():
+            labels = labels.union(set(root[d][:].squeeze().tolist()))
 
         inlineinfo = {
-            "ids":[item for item in self.labels],
+            "ids":[str(item) for item in labels],
             "properties":[
                 {
                 "id":"label",
                 "type":"label",
-                "values":[item for item in self.labels]
+                "values":[str(item) for item in labels]
                 },
                 {
                 "id":"description",
                 "type":"label",
-                "values": [item for item in self.labels]
+                "values": [str(item) for item in labels]
                 }
             ]
         }
@@ -464,7 +463,7 @@ class NeuroglancerWriter(PyramidWriter):
 
         # writing all the information into the file
         with open(op,'w') as writer:
-            json.dump(info,writer)
+            json.dump(info,writer,indent=2)
             
 class ZarrWriter(PyramidWriter):
     """ Method to write a Zarr pyramid
@@ -495,19 +494,20 @@ class ZarrWriter(PyramidWriter):
             key = str(max_scale - int(scale_info['key']))
             if key not in self.root.array_keys():
                 self.writers[key] = self.root.zeros(key,
-                                                    shape=(1,1,self.max_output_depth) + tuple(scale_info['size'][0:2]),
+                                                    shape=(1,self.max_output_depth,1) + tuple(scale_info['size'][0:2]),
                                                     chunks=(1,1,1,CHUNK_SIZE,CHUNK_SIZE),
                                                     dtype=self.dtype,
                                                     compressor=compressor)
             else:
-                self.root[key].resize((1,1,self.max_output_depth) + tuple(scale_info['size'][0:2]))
+                self.root[key].resize((1,self.max_output_depth,1) + tuple(scale_info['size'][0:2]))
                 self.writers[key] = self.root[key]
 
     def _write_chunk(self,key,chunk_coords,buf):
         key = str(int(self.scale_info(-1)['key']) - int(key))
         chunk_coords = self._chunk_coords(chunk_coords)
-        self.writers[key][0:1,0:1,
+        self.writers[key][0:1,
                           chunk_coords[4]:chunk_coords[5],
+                          0:1,
                           chunk_coords[2]:chunk_coords[3],
                           chunk_coords[0]:chunk_coords[1]] = buf
             
@@ -542,7 +542,11 @@ class ZarrWriter(PyramidWriter):
         with bfio.BioReader(self.image_path,max_workers=1) as bfio_reader:
             
             metadata = OMEXML(str(bfio_reader.metadata))
-            metadata.image(0).Pixels.SizeZ = self.max_output_depth
+            metadata.image(0).Pixels.SizeC = self.max_output_depth
+            metadata.image(0).Pixels.channel_count = self.max_output_depth
+            
+            for c in range(self.max_output_depth):
+                metadata.image().Pixels.Channel(c).Name = f'Channel {c}'
             
             with open(self.base_path.joinpath("METADATA.ome.xml"),'x') as fw:
                 
@@ -655,7 +659,7 @@ class ZarrChunkEncoder(ChunkEncoder):
         """
         
         # Rearrange the image for Neuroglancer
-        chunk = chunk.reshape(chunk.shape[0],chunk.shape[1],1,1,1).transpose(4,3,2,0,1)
+        chunk = chunk.reshape(chunk.shape[0],chunk.shape[1],1,1,1).transpose(4,2,3,0,1)
         chunk = np.asarray(chunk).astype(self.dtype)
         return chunk
 
@@ -676,7 +680,7 @@ class DeepZoomChunkEncoder(ChunkEncoder):
         assert chunk.ndim == 2
         return chunk
 
-def bfio_metadata_to_slide_info(image_path,outPath,stackheight,imagetype):
+def bfio_metadata_to_slide_info(image_path,outPath,stackheight,imagetype,min_scale=0):
     """ Generate a Neuroglancer info file from Bioformats metadata
     
     Neuroglancer requires an info file in the root of the pyramid directory.
@@ -710,7 +714,7 @@ def bfio_metadata_to_slide_info(image_path,outPath,stackheight,imagetype):
         resolution.append(phys_z[0] * UNITS[phys_z[1]]) # Just used as a placeholder
         dtype = str(np.dtype(bfio_reader.dtype))
     
-    num_scales = int(np.log2(max(sizes))) + 1
+    num_scales = int(np.ceil(np.log2(max(sizes))))
     
     # create a scales template, use the full resolution8
     scales = {
@@ -733,10 +737,10 @@ def bfio_metadata_to_slide_info(image_path,outPath,stackheight,imagetype):
     if imagetype == "segmentation":
         info["segment_properties"] = "infodir"
 
-    for i in range(1,num_scales+1):
+    for i in reversed(range(min_scale,num_scales)):
         previous_scale = info['scales'][-1]
         current_scale = copy.deepcopy(previous_scale)
-        current_scale['key'] = str(num_scales - i)
+        current_scale['key'] = str(i)
         current_scale['size'] = [int(np.ceil(previous_scale['size'][0]/2)),int(np.ceil(previous_scale['size'][1]/2)),stackheight]
         current_scale['resolution'] = [2*previous_scale['resolution'][0],2*previous_scale['resolution'][1],previous_scale['resolution'][2]]
         info['scales'].append(current_scale)
