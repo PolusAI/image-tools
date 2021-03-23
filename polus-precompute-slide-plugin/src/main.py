@@ -1,4 +1,4 @@
-import logging, argparse, filepattern, bfio, utils, pathlib, multiprocessing
+import logging, argparse, filepattern, bfio, utils, pathlib, multiprocessing, typing
 from preadator import ProcessManager
 
 # Initialize the logger
@@ -13,7 +13,11 @@ PyramidWriter = {
     'Zarr': utils.ZarrWriter
 }
 
-def main():
+def main(input_dir: pathlib.Path,
+         pyramid_type: str,
+         image_type: str,
+         file_patter: str,
+         output_dir: pathlib.Path):
     
     # Set ProcessManager config and initialize
     ProcessManager.num_processes(multiprocessing.cpu_count())
@@ -65,7 +69,10 @@ def main():
             
             with bfio.BioReader(file['file'],max_workers=1) as br:
                 
-                d_z = br.z
+                if pyramid_type == 'Zarr':
+                    d_z = br.c
+                else:
+                    d_z = br.z
                 
             depth_max += d_z
                 
@@ -82,19 +89,19 @@ def main():
                 
                 pw = PyramidWriter[pyramid_type](**pyramid_args)
                 
-                pw.write_slide()
-                # ProcessManager.submit_process(pw.write_slide)
+                ProcessManager.submit_process(pw.write_slide)
                 
                 depth += 1
                 
                 if pyramid_type == 'DeepZoom':
                     pw.write_info()
         
-        # TODO: Aggregate labels for segmentation type
         if pyramid_type in ['Neuroglancer','Zarr']:
+            if image_type == 'segmentation':
+                ProcessManager.join_processes()
             pw.write_info()
     
-    # ProcessManager.join_processes()
+    ProcessManager.join_processes()
 
 if __name__ == "__main__":
     
@@ -119,11 +126,16 @@ if __name__ == "__main__":
     '''Parse arguments'''
     args = parser.parse_args()
     input_dir = pathlib.Path(args.input_dir)
+    if input_dir.joinpath("images").exists():
+        input_dir = input_dir.joinpath("images")
+    logger.info('input_dir = %s', input_dir)
     output_dir = pathlib.Path(args.output_dir)
+    logger.info('output_dir = %s',output_dir)
     
     # Validate the pyramid type
     pyramid_type = args.pyramid_type
-    assert pyramid_type in ['Neuroglancer','DeepZoom','Zarr'], "pyramidType must be one of ['Neuroglancer','DeepZoom']"
+    logger.info('pyramid_type = %s',pyramid_type)
+    assert pyramid_type in ['Neuroglancer','DeepZoom','Zarr'], "pyramidType must be one of ['Neuroglancer','DeepZoom', 'Zarr']"
     
     # Use a universal filepattern if none is provided
     file_pattern = args.file_pattern
@@ -132,14 +144,19 @@ if __name__ == "__main__":
         
     # Default image_type to 'image'
     image_type = args.image_type
+    logger.info('image_type = %s', image_type)
     if image_type == None:
         image_type = 'image'
-    assert image_type in ['image','segmentation'], 'imageType must be one of ["image","segmentation"]'
+    elif image_type == 'segmentation':
+        if pyramid_type != 'Neuroglancer':
+            raise ValueError("Segmentation type can only be used for Neuroglancer pyramids.")
+    else:
+        assert image_type == 'image', 'imageType must be one of ["image","segmentation"]'
 
-    logger.info('input_dir = %s', input_dir)
-    logger.info('output_dir = %s',output_dir)
-    logger.info('pyramid_type = %s',pyramid_type)
-    logger.info('image_type = %s', image_type)
     logger.info('file_pattern = %s', file_pattern)
     
-    main()
+    main(input_dir,
+         pyramid_type,
+         image_type,
+         file_pattern,
+         output_dir)
