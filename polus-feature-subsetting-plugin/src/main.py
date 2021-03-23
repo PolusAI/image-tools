@@ -131,6 +131,12 @@ if __name__=="__main__":
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
     
+    # create metadata and images folder in outDir
+    if not os.path.isdir(os.path.join(outDir, 'images')):
+        os.mkdir(os.path.join(outDir, 'images'))
+    if not os.path.isdir(os.path.join(outDir, 'metadata')):
+        os.mkdir(os.path.join(outDir, 'metadata'))
+
     # Surround with try/finally for proper error catching
     try:
 
@@ -202,7 +208,7 @@ if __name__=="__main__":
         keep_planes = make_uniform(keep_planes, uniques[maj_grouping_var], delay)
         
         # start writing summary.txt
-        summary = open(os.path.join(outDir, 'summary.txt'), 'w')
+        summary = open(os.path.join(outDir, 'metadata', 'summary.txt'), 'w')
 
         logger.info('renaming subsetted data')
 
@@ -238,7 +244,7 @@ if __name__=="__main__":
 
                 # if write output collection
                 if writeOutput:
-                    shutil.copy2(os.path.join(inpDir, old_file_name),os.path.join(outDir, new_file_name))
+                    shutil.copy2(os.path.join(inpDir, old_file_name),os.path.join(outDir, 'images', new_file_name))
                 
                 summary.write('{} -----> {} \n'.format(old_file_name, new_file_name))  
         summary.close() 
