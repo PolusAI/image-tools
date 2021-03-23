@@ -1,10 +1,13 @@
 # Polus Precompute Slide Plugin
 
-This WIPP plugin turns all tiled tiff images in an image collection into a
-[Neuroglancer precomputed format](https://github.com/google/neuroglancer/tree/master/src/neuroglancer/datasource/precomputed).
+This WIPP can generate pyramids for three different types of data:
+
+1) DeepZoom
+2) Neuroglancer 
+3) Zarr
+
 It assumes each image is a 2-dimensional plane, so it will not display an image
-in 3D. The tiled tiff format and associated metadata is accessed using
-Bioformats.
+in 3D. 
 
 For more information on WIPP, visit the
 [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
@@ -26,7 +29,7 @@ This plugin can take two types of input argument and one output argument:
 | Name          | Description                                           | I/O    | Type    |
 |---------------|-------------------------------------------------------|--------|---------|
 | `inpDir`      | Input image collection (Single Image Planes/Z Stacks) | Input  | Path    |
-| `pyramidType` | DeepZoom/Neuroglancer                                 | Input  | String  |
+| `pyramidType` | DeepZoom/Neuroglancer/Zarr                                 | Input  | String  |
 | `filePattern` | Image pattern                                         | Input  | String  |
 | `imageType`   | Neuroglancer type (image/segmentation)                | Input  | String  |
 | `outDir`      | Output image pyramid                                  | Output | Pyramid |
