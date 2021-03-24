@@ -505,7 +505,7 @@ def polygonality_hexagonality(area, perimeter, neighbors, solidity, maxferet, mi
         # Calculate Hexagonality score
         hex_ave = 10 * (hex_area_ratio + hex_size_ratio) / 2
 
-    if neighbors < 3:
+    if neighbors < 3 or perimeter == 0:
         poly_size_ratio = "NAN"
         poly_area_ratio = "NAN"
         poly_ave = "NAN"
@@ -513,6 +513,7 @@ def polygonality_hexagonality(area, perimeter, neighbors, solidity, maxferet, mi
         hex_area_ratio = "NAN"
         hex_ave = "NAN"
         hex_sd = "NAN"
+    
     return(poly_ave, hex_ave, hex_sd)
 
 def feature_extraction(features,
@@ -538,7 +539,8 @@ def feature_extraction(features,
         pixelsPerunit (int): Pixels per unit for the metric mentioned in unitLength.
         intensity_image (ndarray): Intensity image array.
         pixelDistance (int): Distance between pixels to calculate the neighbors touching the object and default valus is 5.
-
+        channel (int): Channel of the image.
+        
     Returns:
         Dataframe containing the features extracted and the filename of the labeled image.
 
@@ -667,7 +669,6 @@ def feature_extraction(features,
             data_dict = [int((np.max(intensity[seg]))) for intensity, seg in zip(intensity_images, imgs)]
         else:
             data_dict = np.max(intensity_image.reshape(-1))
-        
         logger.debug('Completed extracting maximum intensity for ' + seg_file_names1.name)
         return data_dict
 
@@ -798,15 +799,8 @@ def feature_extraction(features,
         """Get polygonality score for all the regions of interest in the image."""
         poly_hex = poly_hex_score(seg_img, units)
         polygonality_score = [poly[0] for poly in poly_hex]
-        score=[]
-        for x in polygonality_score:
-            if x == float(-inf):
-                x= ""
-                score.append(x)
-            else:
-                score.append(x)
         logger.debug('Completed extracting polygonality score for ' + seg_file_names1.name)
-        return score
+        return polygonality_score
 
     def hexagonality_score(seg_img, units, *args):
         """Get hexagonality score for all the regions of interest in the image."""
@@ -1124,16 +1118,6 @@ def main():
     logger.info('outDir = {}'.format(outDir))
 
     logger.info("Started")
-    # intDir= 'C:/Users/nagarajanj2/Desktop/Projects/3D_feature_extraction/i'
-    # segDir = 'C:/Users/nagarajanj2/Desktop/Projects/3D_feature_extraction/l '
-    # pixelDistance= 5
-    # outDir ='C:/Users/nagarajanj2/Desktop/Projects/Feature_Extraction_formatted'
-    # features= 'all'
-    # csvfile= 'singlecsv'
-    # unitLength = 'mm'
-    # pixelsPerunit= 6
-    # pattern= 'image_c000_z00{z}-ch{c}'
-    # embeddedpixelsize=True
 
     df_csv = pd.DataFrame([])
     
@@ -1144,7 +1128,6 @@ def main():
     if intDir and not segDir:
         if 'all' in features:
             raise ValueError('No labeled/segmented image specified.')
-            #features = intensity_features
         elif (all(fe not in intensity_features for fe in features)):
             raise ValueError('No labeled/segmented image specified.')
         elif (any(fe not in intensity_features for fe in features)):
@@ -1230,8 +1213,6 @@ def main():
                     if df==None:
                         continue
                 
-    
-                # Initialize the output
                 for file in files:
                     #Read the image using bioreader from bfio
                     intensity_image,img_emb_unit = read(file['file'])  
