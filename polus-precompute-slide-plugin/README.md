@@ -7,7 +7,7 @@ This WIPP can generate pyramids for three different types of data:
 2) Neuroglancer 
 *    This file format creates a 3D volume of the data. (Stacks by the 'z' dimension)
 3) Zarr
-*    This file format stacks the images by its channel.(Stacks by the 'c' dimension)
+*    This file format stacks the images by its channel. (Stacks by the 'c' dimension)
 
 
 The file format can be specified in the filePattern input.
