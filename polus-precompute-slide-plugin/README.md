@@ -3,15 +3,15 @@
 This WIPP can generate pyramids for three different types of data:
 
 1) DeepZoom
-*  This file format creates time-slices of the data.
+*      This file format creates time-slices of the data.
 2) Neuroglancer 
-*  This file format creates a 3D volume of the data.
+*      This file format creates a 3D volume of the data.
 3) Zarr
-*  This file format stacks the images by its channel. 
+*      This file format stacks the images by its channel. 
+
 
 The file format can be specified in the filePattern input.
-More details on the format: 
-https://pypi.org/project/filepattern/
+More details on the format: https://pypi.org/project/filepattern/
 
 
 It assumes each image is a 2-dimensional plane, so it will not display an image
