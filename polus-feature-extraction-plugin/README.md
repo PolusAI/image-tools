@@ -22,8 +22,7 @@ These are the features that can be extracted from this plugin:
    9. Neighbors - 
          The number of neighbors touching the object.
    10. Maximum feret - 
-         The longest distance between any two points in the region (maximum caliber diameter) is calculated. The feret diameter for  
-         number of angles (0-180 degrees) are calculated and their maximum is selected.
+         The longest distance between any two points in the region (maximum caliber diameter) is calculated. The feret diameter for number of angles (0-180 degrees) are calculated and their maximum is selected.
    11. Minimum feret - 
          The minimum caliber diameter is calculated. The feret diameter for number of angles (0-180 degrees) are calculated and their minimum is selected.
    12. Polygonality score - 
@@ -82,10 +81,10 @@ Singlecsv - Allows to save all the features extracted from all the images in the
 This is an optional parameter. Use this parameter only if units are present in the metadata and want to use those embedded units for the features extraction. If this option is selected, need not enter any value for the length of unit and pixels per unit parameter.
 
 ### Length of unit:
-Mention the unit name for conversion. This is also an optional parameter. 
+Mention the unit name for conversion. This is also an optional parameter. This parameter will be shown only when embedded pixel size parameter is not selected.
 
 ### Pixels per unit:
-If there is a metric mentioned in Length of unit, then Pixels per unit cannot be left blank and hence the scale per unit value must be mentioned in this parameter. 
+If there is a metric mentioned in Length of unit, then Pixels per unit cannot be left blank and hence the scale per unit value must be mentioned in this parameter. This parameter will be shown only when embedded pixel size parameter is not selected.
 
 Note:
 1.	If Embedded pixel size is not selected and values are entered in Length of unit and Pixels per unit, then the metric mentioned in length of unit will be considered.
