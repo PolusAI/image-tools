@@ -174,7 +174,7 @@ def transform_data(data,column_names, typegraph):
     # If logarithmic, need to transform the data
     # https://iopscience.iop.org/article/10.1088/0957-0233/24/2/027001
     # Adjusts for behavior near zero
-    
+
     if typegraph == "log":
         C = 1/np.log(10)# Derivative of Natural Log e, d(ln(x))/dx = 1/x
         data = data.astype(np.float64)
@@ -184,7 +184,7 @@ def transform_data(data,column_names, typegraph):
                  'min': data.min(),
                  'max': data.max()}    
  
-    column_bin_size = (bin_stats['max'] * (1 + 10**-6) - bin_stats['min'])/bincount
+    column_bin_size = (bin_stats['max'] - bin_stats['min'])/bincount
     
     # Transform data into bin positions for fast binning
     data = ((data - bin_stats['min'])/column_bin_size).apply(np.floor)
