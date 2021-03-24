@@ -44,6 +44,13 @@ The operations available are:
   
       This operation is the difference between the input image and closing of the image.
       
+   * #### Area Filtering
+  
+      There are two types of area filtering available.  
+      1) Remove segments that are larger than an area specified. 
+      2) Remove segments that are smaller than an area specified.
+      A threshold needs to be defined to run this operation.
+      
 
 Contact [Data Scientist](mailto:Madhuri.Vihani@axleinfo.com) for more information.
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
