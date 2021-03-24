@@ -175,8 +175,8 @@ def transform_data(data,column_names, typegraph):
     # https://iopscience.iop.org/article/10.1088/0957-0233/24/2/027001
     # Adjusts for behavior near zero
     if typegraph == "log":
-        C = 1/np.log(10) # Derivative of Natural Log e, d(ln(x))/dx = 1/x
-        data = np.sign(data) * np.log10(1 + (abs(data/C)))
+        C = np.log(10) # Derivative of Natural Log e, d(ln(x))/dx = 1/x
+        data = np.sign(data) * np.log10(1 + (abs(data*C)))
     bin_stats = {'size': data.shape,
                  'min': data.min(),
                  'max': data.max()}
@@ -318,13 +318,16 @@ def gen_plot(col1,
         return bbxtext, decreasefont
 
     def calculateticks(fmin, fmax, typegraph):
-        """ This function calculates the tick values for the graphs
+        """ This functio n calculates the tick values for the graphs
             and where to draw the line """
+        
+        tick_vals = [t for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks))]
         drawline = ((abs(fmin)*bincount)/(fmax*(1+10**-6)-fmin)) + 0.5
-        if typegraph == "linear": 
+        if typegraph == "linear":
             tick_vals = [t for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks))]
-        else:
-            tick_vals = [np.power(10, t) for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks))]
+        if typegraph == "log": 
+            C = 1/np.log(10)
+            tick_vals = [np.sign(t) * C * (-1+(10**abs(t))) for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks))]
         return tick_vals, drawline
 
     if col2>col1:
@@ -383,6 +386,7 @@ def gen_plot(col1,
     # Calculating the value of each tick in the graph (fixed width)
     fmin_c = bin_stats['min'][cname_c]
     fmax_c = bin_stats['max'][cname_c]
+    
     tick_vals_c, drawline_c = calculateticks(fmin_c, fmax_c, typegraph)
     if fmin_c < 0:
         ax.axvline(x=drawline_c)
@@ -439,8 +443,10 @@ def get_default_fig(cmap):
     aylabel.set_yticks([])
     aylabel.set_clip_on(True)
 
-    fig.add_axes(axlabel, aylabel)
-    
+    # fig.add_axes(axlabel, aylabel)
+    # for i in range(bincount):
+    #     axlabel.axvline(x=i)
+    #     axlabel.axhline(y=i)
     return fig, ax, datacolor
 
 """ 3. Pyramid generation functions """
@@ -707,7 +713,7 @@ def _get_higher_res_par(S,info, cnames, outpath,out_file,indexscale, indexdict, 
 
 def write_csv(cnames,index,f_info,out_path,out_file):
     """ This function writes the csv file necessary for the Deep Zoom format """
-    
+
     header = 'dataset_id, x_axis_id, y_axis_id, x_axis_name, y_axis_name, title, length, width, global_row, global_col\n'
     line = '{:d}, {:d}, {:d}, {:s}, {:s}, default title, {:d}, {:d}, {:d}, {:d}\n'
     l_ind = 0
