@@ -174,15 +174,18 @@ def transform_data(data,column_names, typegraph):
     # If logarithmic, need to transform the data
     # https://iopscience.iop.org/article/10.1088/0957-0233/24/2/027001
     # Adjusts for behavior near zero
+    
     if typegraph == "log":
-        C = np.log(10) # Derivative of Natural Log e, d(ln(x))/dx = 1/x
-        data = np.sign(data) * np.log10(1 + (abs(data*C)))
+        C = 1/np.log(10)# Derivative of Natural Log e, d(ln(x))/dx = 1/x
+        data = data.astype(np.float64)
+        data = np.sign(data) * np.log10(1 + (abs(data/C)))
+
     bin_stats = {'size': data.shape,
                  'min': data.min(),
-                 'max': data.max()}
+                 'max': data.max()}    
+ 
     column_bin_size = (bin_stats['max'] * (1 + 10**-6) - bin_stats['min'])/bincount
-
-
+    
     # Transform data into bin positions for fast binning
     data = ((data - bin_stats['min'])/column_bin_size).apply(np.floor)
 
@@ -321,13 +324,13 @@ def gen_plot(col1,
         """ This functio n calculates the tick values for the graphs
             and where to draw the line """
         
-        tick_vals = [t for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks))]
-        drawline = ((abs(fmin)*bincount)/(fmax*(1+10**-6)-fmin)) + 0.5
+
+        drawline = ((abs(fmin)*bincount)/(fmax*(1+10**-20)-fmin)) + 0.5
         if typegraph == "linear":
             tick_vals = [t for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks))]
         if typegraph == "log": 
             C = 1/np.log(10)
-            tick_vals = [np.sign(t) * C * (-1+(10**abs(t))) for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks))]
+            tick_vals = [np.sign(t)*C*(-1+(10**abs(t))) for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks)).astype(np.float64)]
         return tick_vals, drawline
 
     if col2>col1:
