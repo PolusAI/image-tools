@@ -31,8 +31,8 @@ def main():
                         help='The type of image, image or segmentation', required=True)
     parser.add_argument('--imagePattern', dest='image_pattern', type=str,
                         help='Filepattern of the images in input', required=False)
-    parser.add_argument('--mesh', dest='mesh', type=bool, nargs='?',const=True,
-                        default=False,help='True or False', required=False)
+    parser.add_argument('--mesh', dest='mesh', type=bool,
+                        default=False, help='True or False for creating meshes', required=False)
 
     # Parse the arguments
     args = parser.parse_args()
