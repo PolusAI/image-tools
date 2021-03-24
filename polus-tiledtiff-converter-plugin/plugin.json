@@ -26,9 +26,6 @@
 		{
 			"name": "output",
 			"type": "collection",
-			"options": {
-				"format": "tiledtiff"
-			},
 			"description": "Output data for the plugin"
 		}
 	],
