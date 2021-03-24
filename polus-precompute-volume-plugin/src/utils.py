@@ -16,7 +16,7 @@ from neurogen import volume as ngvol
 
 from bfio.bfio import BioReader, BioWriter
 
-chunk_size = [256,256,256]
+chunk_size = [64,64,64]
 bit_depth = 10
 
 # Initialize the logger    
@@ -215,21 +215,21 @@ def build_pyramid(input_image,
 
     if imagetype == "segmentation":
         if mesh == False:
+            logger.info("\n Creating info file for segmentations ...")
             file_info = nginfo.info_segmentation(directory=output_image,
                                                 dtype=datatype,
                                                 chunk_size = chunk_size,
                                                 size=bfshape[:3],
                                                 resolution=resolution)
-            encodedvolume = ngvol.generate_recursive_chunked_representation(volume=bf,info=file_info, dtype=datatype, directory=output_image)
-
+            
         else: # if generating meshes
             
             # Need to iterate through chunks of the input for scalabiltiy
-            xsplits = list(np.arange(0, bfshape[0], chunk_size[0]))
+            xsplits = list(np.arange(0, bfshape[0], 256))
             xsplits.append(bfshape[0])
-            ysplits = list(np.arange(0, bfshape[1], chunk_size[1]))
+            ysplits = list(np.arange(0, bfshape[1], 256))
             ysplits.append(bfshape[1])
-            zsplits = list(np.arange(0, bfshape[2], chunk_size[2]))
+            zsplits = list(np.arange(0, bfshape[2], 256))
             zsplits.append(bfshape[2])
 
             # Keep track of the labelled segments
@@ -251,22 +251,12 @@ def build_pyramid(input_image,
                             start_x, end_x = (xsplits[x], xsplits[x+1])
                             start_z, end_z = (zsplits[z], zsplits[z+1])
                             
-
                             volume = bf[start_x:end_x,start_y:end_y,start_z:end_z]
                             volume = volume.reshape(volume.shape[:3])
 
-                            # Save volume in precomputed format for volumes
-                                # Will build the rest of the pyramid after iterating through input
-                            volume_encoded = ngvol.encode_volume(volume)
-                            highest_res_directory = os.path.join(output_image, str(num_scales))
-                            ngvol.write_image(image=volume_encoded, volume_directory=highest_res_directory, 
-                                            y=(ysplits[y], ysplits[y+1]),
-                                            x=(xsplits[x], xsplits[x+1]),  
-                                            z=(zsplits[z], zsplits[z+1]))
                             logger.info("Loaded subvolume (YXZ) {}-{}__{}-{}__{}-{}".format(start_y, end_y,
                                                                                             start_x, end_x,
                                                                                             start_z, end_z))
-
                             ids = np.unique(volume)
                             if (ids == [0]).all():
                                 continue
@@ -282,32 +272,16 @@ def build_pyramid(input_image,
                                                                     totalbytes=totalbytes))
                                     all_identities = np.append(all_identities, ids)
 
-                logger.info("\n Generating Volumes ...")
-                logger.info("Saved Encoded Volumes for Scale {}".format(num_scales))
-
-                # Build rest of the pyramid from encoded volumes in highest resolution
-                for higher_scale in reversed(range(0, num_scales)):
-
-                    inputshape = np.ceil(bfshape/(2**(num_scales-higher_scale-1))).astype('int')
-                    scale_directory = os.path.join(output_image, str(higher_scale+1))
-
-                    logger.info("Saved Encoded Volumes for Scale {}".format(higher_scale))
-
-                    if not os.path.exists(highest_res_directory):
-                        os.makedirs(scale_directory, exist_ok=True)
-                    ngvol.get_rest_of_the_pyramid(directory=scale_directory, input_shape = inputshape, chunk_size=chunk_size,
-                                                 datatype=datatype)
-
                 logger.info("\n Generate Progressive Meshes for segments ...")
                 # concatenate and decompose the meshes in the temporary file for all segments
                 all_identities = np.unique(all_identities).astype('int')
                 with ThreadPoolExecutor(max_workers=4) as executor:
-                    futuresvariable = [executor.submit(concatenate_and_generate_meshes, 
+                    variable = [executor.submit(concatenate_and_generate_meshes, 
                                                     ide, temp_dir, output_image, bit_depth, chunk_size) 
                                                     for ide in all_identities]
-                executor.shutdown(wait=True)
             
             # Once you have all the labelled segments, then create segment_properties file
+            logger.info("\n Creating info file for segmentations and meshes ...")
             file_info = nginfo.info_mesh(directory=output_image,
                                         chunk_size=chunk_size,
                                         size=bf.shape[:3],
@@ -317,16 +291,20 @@ def build_pyramid(input_image,
                                         segmentation_subdirectory="segment_properties",
                                         bit_depth=bit_depth,
                                         order="YXZ")
-                
-            
+
+        logger.info("\n Creating volumes based on the info file ...")
+        # this is written outside the if/else statement regarding meshes
+        ngvol.generate_recursive_chunked_representation(volume=bf, info=file_info, dtype=datatype, directory=output_image, blurring_method='mode')
+
 
     elif imagetype == "image":
         file_info = nginfo.info_image(directory=output_image,
                                             dtype=datatype,
-                                            chunk_size = [256,256,256],
+                                            chunk_size = chunk_size,
                                             size=bfshape[:3],
                                             resolution=resolution)
-        encodedvolume = ngvol.generate_recursive_chunked_representation(volume=bf, info=file_info, dtype=datatype, directory=output_image, blurring_method='average')
+        logger.info("\n Creating volumes based on the info file ...")
+        ngvol.generate_recursive_chunked_representation(volume=bf, info=file_info, dtype=datatype, directory=output_image, blurring_method='average')
     else:
         raise ValueError("Image Type was not properly specified")
     
