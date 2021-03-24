@@ -78,7 +78,16 @@ def load_csv(fpath):
     return data, cnames
 
 def bin_data(data, column_bin_size, bin_stats):
-    """ This function bins the data """
+    """ This function bins the data 
+    Inputs:
+        data - pandas dataframe of data
+        column_bin_size - size of the widths
+        bin_stats - stats of the data 
+    Outputs:
+        bins - binned data ranging from (0, bincount)
+        graph_index - Numeric value of column index from original csv
+        graph_dict - a dictionary containing the indexes of graphs
+    """
 
     column_names = data.columns
     nfeats = bin_stats['size'][1] 
@@ -137,7 +146,7 @@ def bin_data(data, column_bin_size, bin_stats):
             graph_index.append([feat1,feat2])
             i = i + 1
 
-    return bins, bin_stats, graph_index, graph_dict
+    return bins, graph_index, graph_dict
 
 def transform_data(data,column_names, typegraph):
     """ Bin the data
@@ -146,13 +155,15 @@ def transform_data(data,column_names, typegraph):
     binning data in one column along one axis and another column is binned along the
     other axis. All combinations of columns are binned without repeats or transposition.
     There are only bincount number of bins in each dimension, and each bin is 1/bincount the size of the
-    difference between the maximum and minimum of each column.
+    difference between the maximum and minimum of each column. 
+    If the data needs to be logarithmically scaled, then the data is transformed by the algorithm presented
+    in this paper: https://iopscience.iop.org/article/10.1088/0957-0233/24/2/027001
     Inputs:
         data - A pandas Dataframe, with nfeats number of columns
         column_names - Names of Dataframe columns
-        typegraph - Defines whether logarithmic scale or linear scale
+        typegraph - Defines whether logarithmic scale or linear scalef
     Outputs:
-        bins - A numpy matrix that has shape (nfeats,nfeats,200,200)
+        bins - A numpy matrix that has shape (int((nfeats**2 - nfeats)/2),bincount,bincount)
         bin_feats - A list containing the minimum and maximum values of each column
         index - Numeric value of column index from original csv
         diction - a dictionary containing the indexes of graphs
@@ -162,8 +173,9 @@ def transform_data(data,column_names, typegraph):
 
     # If logarithmic, need to transform the data
     # https://iopscience.iop.org/article/10.1088/0957-0233/24/2/027001
+    # Adjusts for behavior near zero
     if typegraph == "log":
-        C = 1/np.log(10)
+        C = 1/np.log(10) # Derivative of Natural Log e, d(ln(x))/dx = 1/x
         data = np.sign(data) * np.log10(1 + (abs(data/C)))
     bin_stats = {'size': data.shape,
                  'min': data.min(),
@@ -174,7 +186,7 @@ def transform_data(data,column_names, typegraph):
     # Transform data into bin positions for fast binning
     data = ((data - bin_stats['min'])/column_bin_size).apply(np.floor)
 
-    bins, bin_stats, index, diction = bin_data(data, column_bin_size, bin_stats)
+    bins, index, diction = bin_data(data, column_bin_size, bin_stats)
     return bins, bin_stats, index, diction
 
 """ 2. Plot Generation """
@@ -281,7 +293,8 @@ def gen_plot(col1,
              bin_stats,
              fig,
              ax,
-             data):
+             data,
+             typegraph):
     """ Generate a heatmap
     Generate a heatmap of data for column 1 against column 2.
     Inputs:
@@ -293,9 +306,27 @@ def gen_plot(col1,
         fig - pregenerated figure
         ax - pregenerated axis
         data - p  regenerated heatmap bbox artist
+        typegraph - specifies whether the data is log scaled or linearly scaled
     Outputs:
         hmap - A numpy array containing pixels of the heatmap
     """
+    def keepdecreasing(labeltexts0, decreasefont, bbxtext):
+        """ This function decreases the size of the labels if its too big """
+        labeltexts0.set_fontsize(decreasefont)
+        bbxtext = labeltexts0.get_window_extent(renderer = fig.canvas.renderer)
+        decreasefont = decreasefont - 1 
+        return bbxtext, decreasefont
+
+    def calculateticks(fmin, fmax, typegraph):
+        """ This function calculates the tick values for the graphs
+            and where to draw the line """
+        drawline = ((abs(fmin)*bincount)/(fmax*(1+10**-6)-fmin)) + 0.5
+        if typegraph == "linear": 
+            tick_vals = [t for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks))]
+        else:
+            tick_vals = [np.power(10, t) for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks))]
+        return tick_vals, drawline
+
     if col2>col1:
         d = np.squeeze(bins[indexdict[col1, col2],:,:])
         r = col1
@@ -318,14 +349,8 @@ def gen_plot(col1,
 
     cname_c = column_names[c]
     cname_r = column_names[r]
-    
-    def keepdecreasing(labeltexts0, decreasefont, bbxtext):
-        """ This function decreases the size of the labels if its too big """
-        labeltexts0.set_fontsize(decreasefont)
-        bbxtext = labeltexts0.get_window_extent(renderer = fig.canvas.renderer)
-        decreasefont = decreasefont - 1 
-        return bbxtext, decreasefont
 
+    
     # This is to decrease the size of the title labels if the name is too large (X AXIS LABEL)
     if len(axlabel.texts) == 0:
         axlabel.text(0.5, 0.5, "\n".join(wrap(cname_c, 60)), va = 'center', ha = 'center', fontsize = sizefont, wrap = True)
@@ -352,31 +377,24 @@ def gen_plot(col1,
     while (bbytext.y0 < 0 or bbytext.y1 > CHUNK_SIZE) or (bbytext.x0 < 0 or bbytext.x1 > (CHUNK_SIZE*.075)):
         bbytext, decreasefont = keepdecreasing(aylabel.texts[0], decreasefont, bbytext)
     
-    
     while len(ax.lines) > 0:
         ax.lines[-1].remove()
 
     # Calculating the value of each tick in the graph (fixed width)
-    fmin = bin_stats['min'][cname_c]
-    fmax = bin_stats['max'][cname_c]
-    bin_width_c = (fmax * (1+10**-6) - fmin)/bincount
-    axiszero_bin_size_c = abs(fmin)/bin_width_c + 0.5
-    if fmin < 0:
-        ax.axvline(x=axiszero_bin_size_c)
-    tick_vals = [t for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks-1))]
-    tick_vals.append(fmax)
-    ax.set_xticklabels(format_ticks(tick_vals), rotation=45, fontsize = 5, ha='right')
+    fmin_c = bin_stats['min'][cname_c]
+    fmax_c = bin_stats['max'][cname_c]
+    tick_vals_c, drawline_c = calculateticks(fmin_c, fmax_c, typegraph)
+    if fmin_c < 0:
+        ax.axvline(x=drawline_c)
+    ax.set_xticklabels(format_ticks(tick_vals_c), rotation=45, fontsize = 5, ha='right')
 
     # Calculating the value of each tick in the graph (fixed width)
-    fmin = bin_stats['min'][cname_r]
-    fmax = bin_stats['max'][cname_r]
-    bin_width_r = (fmax * (1+10**-6) - fmin)/bincount
-    axiszero_bin_size_r = abs(fmin)/bin_width_r + 0.5
-    if fmin < 0:
-        ax.axhline(y=axiszero_bin_size_r)
-    tick_vals = [t for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks-1))]
-    tick_vals.append(fmax)
-    ax.set_yticklabels(format_ticks(tick_vals), fontsize=5, ha='right')
+    fmin_r = bin_stats['min'][cname_r]
+    fmax_r = bin_stats['max'][cname_r]
+    tick_vals_r, drawline_r = calculateticks(fmin_r, fmax_r, typegraph)
+    if fmin_r < 0:
+        ax.axhline(y=drawline_r)
+    ax.set_yticklabels(format_ticks(tick_vals_r), fontsize=5, ha='right')
 
     fig.canvas.draw()
     hmap = np.array(fig.canvas.renderer.buffer_rgba())
@@ -507,13 +525,23 @@ def metadata_to_graph_info(outPath,outFile, indexscale):
     return info
 
 
-def _get_higher_res(S,info,cnames, outpath,out_file,indexscale,indexdict,binstats, X=None,Y=None):
+def _get_higher_res(S,info,cnames, outpath,out_file,indexscale,indexdict,binstats, typegraph, X=None,Y=None):
     """
     The following function builds the image pyramid at scale S by building up only
     the necessary information at high resolution layers of the pyramid. So, if 0 is
     the original resolution of the image, getting a tile at scale 2 will generate
     only the necessary information at layers 0 and 1 to create the desired tile at
     layer 2. This function is recursive and can be parallelized.
+    Inputs:
+        S - current scale
+        info - dictionary of scale information
+        outpath - directory for all outputs
+        out_file - directory for current dataset
+        indexscale - index of the graph 
+        binstats - stats for the binned data
+        typegraph - specifies whether the data is linear or logarithmically scaled
+    Outputs:
+        DeepZoom format of images.
     """
 
     # Get the scale info
@@ -549,7 +577,8 @@ def _get_higher_res(S,info,cnames, outpath,out_file,indexscale,indexdict,binstat
                                 bin_stats=binstats,
                                 fig=fig,
                                 ax=ax,
-                                data=datacolor)
+                                data=datacolor,
+                                typegraph=typegraph)
                             
     else:
         # Set the subgrid dimensions
@@ -574,6 +603,7 @@ def _get_higher_res(S,info,cnames, outpath,out_file,indexscale,indexdict,binstat
                                                     indexscale=indexscale,
                                                     indexdict=indexdict,
                                                     binstats=binstats,
+                                                    typegraph=typegraph, 
                                                     X=subgrid_dimX[x:x+2],
                                                     Y=subgrid_dimY[y:y+2])
                 else:
@@ -585,6 +615,7 @@ def _get_higher_res(S,info,cnames, outpath,out_file,indexscale,indexdict,binstat
                                                 indexscale=indexscale,
                                                 indexdict=indexdict,
                                                 binstats=binstats,
+                                                typegraph=typegraph, 
                                                 X=subgrid_dimX[x:x+2],
                                                 Y=subgrid_dimY[y:y+2])
                 image[subgrid_Y_ind0:subgrid_Y_ind1, subgrid_X_ind0:subgrid_X_ind1,:] = _avg2(sub_image)
@@ -599,7 +630,7 @@ def _get_higher_res(S,info,cnames, outpath,out_file,indexscale,indexdict,binstat
 
 # This function performs the same operation as _get_highe_res, except it uses multiprocessing to grab higher
 # resolution layers at a specific layer.
-def _get_higher_res_par(S,info, cnames, outpath,out_file,indexscale, indexdict, binstats, X=None,Y=None):
+def _get_higher_res_par(S,info, cnames, outpath,out_file,indexscale, indexdict, binstats, typegraph, X=None,Y=None):
     # Get the scale info
     num_scales = len(info['scales'])
     scale_info = info['scales'][num_scales-S-1]
@@ -633,7 +664,8 @@ def _get_higher_res_par(S,info, cnames, outpath,out_file,indexscale, indexdict, 
                              bin_stats=binstats,
                              fig=fig,
                              ax=ax,
-                             data=datacolor)
+                             data=datacolor,
+                             typegraph=typegraph)
 
     else:
         # Set the subgrid dimensions
@@ -659,6 +691,7 @@ def _get_higher_res_par(S,info, cnames, outpath,out_file,indexscale, indexdict, 
                                                                            indexscale,
                                                                            indexdict,
                                                                            binstats,
+                                                                           typegraph,
                                                                            subgrid_dimX[x:x+2],
                                                                            subgrid_dimY[y:y+2])))
                     image[subgrid_Y_ind0:subgrid_Y_ind1,subgrid_X_ind0:subgrid_X_ind1,:] = _avg2((subgrid_images[y*(len(subgrid_dimX)-1) + x]).get())
@@ -673,6 +706,8 @@ def _get_higher_res_par(S,info, cnames, outpath,out_file,indexscale, indexdict, 
     return image
 
 def write_csv(cnames,index,f_info,out_path,out_file):
+    """ This function writes the csv file necessary for the Deep Zoom format """
+    
     header = 'dataset_id, x_axis_id, y_axis_id, x_axis_name, y_axis_name, title, length, width, global_row, global_col\n'
     line = '{:d}, {:d}, {:d}, {:s}, {:s}, default title, {:d}, {:d}, {:d}, {:d}\n'
     l_ind = 0
@@ -770,5 +805,5 @@ if __name__=="__main__":
 
             # Create the pyramid
             loggers[scale].info('Building {} pyramids...'.format(scale.upper()))
-            image_data = _get_higher_res(0, info_data,column_names, output_path,folder_name,data_index, data_dict, bin_stats)
+            image_data = _get_higher_res(0, info_data,column_names, output_path,folder_name,data_index, data_dict, bin_stats, scale)
             loggers[scale].info('Done!')
