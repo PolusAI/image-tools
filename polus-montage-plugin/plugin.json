@@ -1,6 +1,6 @@
 {
     "name": "Montage",
-    "version": "0.1.3",
+    "version": "0.1.6",
     "title": "Montage",
     "description": "Advanced montaging plugin.",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-montage-plugin:0.1.3",
+    "containerId": "labshare/polus-montage-plugin:0.1.6",
     "inputs": [
       {
         "name": "filePattern",
@@ -28,8 +28,8 @@
         "description": "Specify montage organization",
         "required": false,
         "options": {
-            "items": { 
-              "type": "string", 
+            "items": {
+              "type": "string",
               "title": "Subgrid dimensions",
               "widget": "string"
           }

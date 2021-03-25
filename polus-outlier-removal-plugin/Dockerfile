@@ -1,18 +1,21 @@
-
-FROM labshare/polus-bfio-util:2.0.6-slim-buster
+FROM python:3.9-slim
 
 COPY VERSION /
 
+		
 ARG EXEC_DIR="/opt/executables"
 ARG DATA_DIR="/data"
 
+#Create folders
 RUN mkdir -p ${EXEC_DIR} \
     && mkdir -p ${DATA_DIR}/inputs \
-    && mkdir ${DATA_DIR}/outputs
+    && mkdir -p ${DATA_DIR}/outputs
 
+#Copy executable
 COPY src ${EXEC_DIR}/
-WORKDIR ${EXEC_DIR}
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
+
+WORKDIR ${EXEC_DIR}
 
 ENTRYPOINT ["python3", "main.py"]
