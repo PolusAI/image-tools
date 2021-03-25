@@ -206,7 +206,7 @@ def build_pyramid(input_image,
     datatype = np.dtype(bf.dtype)
     logger.info("Image Shape {}".format(bfshape))
     logger.info("Image Datatype {}".format(datatype))
-
+    
     # info file specifications
     resolution = get_resolution(phys_y=bf.physical_size_y, 
                                 phys_x=bf.physical_size_x, 
@@ -225,11 +225,11 @@ def build_pyramid(input_image,
         else: # if generating meshes
             
             # Need to iterate through chunks of the input for scalabiltiy
-            xsplits = list(np.arange(0, bfshape[0], 1024))
+            xsplits = list(np.arange(0, bfshape[0], 256))
             xsplits.append(bfshape[0])
-            ysplits = list(np.arange(0, bfshape[1], 1024))
+            ysplits = list(np.arange(0, bfshape[1], 256))
             ysplits.append(bfshape[1])
-            zsplits = list(np.arange(0, bfshape[2], 1024))
+            zsplits = list(np.arange(0, bfshape[2], 256))
             zsplits.append(bfshape[2])
 
             # Keep track of the labelled segments
@@ -274,12 +274,12 @@ def build_pyramid(input_image,
 
                 logger.info("\n Generate Progressive Meshes for segments ...")
                 # concatenate and decompose the meshes in the temporary file for all segments
-                all_identities = np.unique(all_identities).astype('int')
+                all_identities = list(np.unique(all_identities).astype('int'))
                 with ThreadPoolExecutor(max_workers=4) as executor:
                     for ide in all_identities:
-                        executor.map(concatenate_and_generate_meshes, 
-                            zip(ide, temp_dir, output_image, bit_depth, chunk_size)) 
-            
+                        executor.submit(concatenate_and_generate_meshes, 
+                                        ide, temp_dir, output_image, bit_depth, chunk_size) 
+
             # Once you have all the labelled segments, then create segment_properties file
             logger.info("\n Creating info file for segmentations and meshes ...")
             file_info = nginfo.info_mesh(directory=output_image,
