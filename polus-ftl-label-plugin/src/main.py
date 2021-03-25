@@ -1,5 +1,27 @@
-import argparse, logging, subprocess, time, multiprocessing
+import argparse, logging, ftl, bfio
 from pathlib import Path
+from preadator import ProcessManager
+import numpy as np
+
+def label_thread(input_path,output_path,connectivity):
+
+    with ProcessManager.thread() as active_threads:
+        with bfio.BioReader(input_path,max_workers=active_threads.count) as br:
+            with bfio.BioWriter(output_path,max_workers=active_threads.count,metadata=br.metadata) as bw:
+                
+                # Load an image and convert to binary
+                image = (br[...,0,0]>0).squeeze()
+                
+                if connectivity > image.ndim:
+                    ProcessManager.log("{}: Connectivity is not less than or equal to the number of image dimensions, skipping this image. connectivity={}, ndim={}".format(input_path.name,connectivity,image.ndim))
+                    return
+
+                # Run the labeling algorithm
+                labels = ftl.label_nd(image.squeeze(),connectivity)
+
+                # Save the image
+                bw.dtype = labels.dtype
+                bw[:] = labels
 
 if __name__=="__main__":
     # Initialize the logger
@@ -17,57 +39,26 @@ if __name__=="__main__":
                         help='Input image collection to be processed by this plugin', required=True)
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
-    
+
     # Parse the arguments
     args = parser.parse_args()
     connectivity = int(args.connectivity)
     logger.info('connectivity = {}'.format(connectivity))
-    inpDir = args.inpDir
+    inpDir = Path(args.inpDir)
     logger.info('inpDir = {}'.format(inpDir))
-    outDir = args.outDir
+    outDir = Path(args.outDir)
     logger.info('outDir = {}'.format(outDir))
-    
+
+    # We only need a thread manager since labeling and image reading/writing
+    # release the gil
+    ProcessManager.init_threads()
+
     # Get all file names in inpDir image collection
-    inpDir_files = [f for f in Path(inpDir).iterdir() if f.is_file() and "".join(f.suffixes)=='.ome.tif']
-    
-    # Set up multiprocessing
-    max_processes = max([multiprocessing.cpu_count()//3,1])
-    processes = []
-    
-    # Loop through files in inpDir image collection and process
-    for ind in range(0,len(inpDir_files),20):
-        images = ','.join([str(f.absolute()) for f in inpDir_files[ind:max([ind+20,len(inpDir_files)])]])
-        
-        # Wait for a process to finish if we have too many running
-        if len(processes) >= max_processes:
-            free_process = -1
-            while free_process<0:
-                for process in range(len(processes)):
-                    if processes[process].poll() is not None:
-                        free_process = process
-                        break
-                # Only check intermittently to free up processing power
-                if free_process<0:
-                    time.sleep(3)
-            del processes[free_process]
-        
-        # Create the inputs for the process
-        inputs = [connectivity,
-                  images,
-                  ind//20+1,
-                  outDir]
-         
-        # Start the process       
-        processes.append(
-            subprocess.Popen(
-                "python3 label_images.py --connectivity {} --images {} --process {} --outDir {}".format(*inputs),
-                shell=True
-            )
-        )
-        
-    while len(processes)>0:
-        for process in range(len(processes)):
-            if processes[process].poll() is not None:
-                del processes[process]
-                break
-    
+    files = [f for f in inpDir.iterdir() if f.is_file() and f.name.endswith('.ome.tif')]
+
+    for file in files:
+
+        ProcessManager.submit_thread(label_thread,
+                                     file,outDir.joinpath(file.name),connectivity)
+
+    ProcessManager.join_threads()
