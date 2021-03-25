@@ -72,11 +72,10 @@ def load_csv(fpath):
 
     return data, cnames
 
-def bin_data(data, column_bin_size, bin_stats):
+def bin_data(data, bin_stats):
     """ This function bins the data 
     Inputs:
         data - pandas dataframe of data
-        column_bin_size - size of the widths
         bin_stats - stats of the data 
     Outputs:
         bins - binned data ranging from (0, bincount)
@@ -184,7 +183,7 @@ def transform_data(data,column_names, typegraph):
     # Transform data into bin positions for fast binning
     data = ((data - bin_stats['min'])/column_bin_size).apply(np.floor)
 
-    bins, index, diction = bin_data(data, column_bin_size, bin_stats)
+    bins, index, diction = bin_data(data, bin_stats)
     return bins, bin_stats, index, diction
 
 """ 2. Plot Generation """
@@ -477,7 +476,7 @@ def _avg2(image):
             avg_img[-1,-1,z] = image[-1,-1,z]
     return avg_img
 
-def metadata_to_graph_info(outPath,outFile, indexscale):
+def metadata_to_graph_info(outPath,outFile, ngraphs):
     
     # Create an output path object for the info file
     op = Path(outPath).joinpath("{}.dzi".format(outFile))
@@ -487,7 +486,6 @@ def metadata_to_graph_info(outPath,outFile, indexscale):
     of.mkdir(exist_ok=True)
     
     # Get metadata info from the bfio reader
-    ngraphs = len(indexscale) #(= NumberofColumns Choose 2)
     rows = np.ceil(np.sqrt(ngraphs))
     cols = np.round(np.sqrt(ngraphs))
     sizes = [cols*CHUNK_SIZE,rows*CHUNK_SIZE]
@@ -795,7 +793,8 @@ if __name__=="__main__":
 
             # Generate the dzi file
             loggers[scale].info('Generating pyramid {} metadata...'.format(scale.upper()))
-            info_data = metadata_to_graph_info(output_path,folder_name, data_index)
+            ngraphs = len(data_index)
+            info_data = metadata_to_graph_info(output_path,folder_name, ngraphs)
             loggers[scale].info('Done!')
 
             loggers[scale].info('Writing {} layout file...!'.format(scale.upper()))
