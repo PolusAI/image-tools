@@ -3,6 +3,7 @@
 	"version": "0.1.1",
 	"title": "CSV collections merger",
 	"description": "Merge two csv collections. You have an option to prepend collection name to avoid name conflicts.",
+	"author": "Konstantin taletskiy (konstantin.taletskiy@labshare.org)",
 	"containerId": "labshare/polus-csv-collection-merger:0.1.1",
 
 	"inputs": [

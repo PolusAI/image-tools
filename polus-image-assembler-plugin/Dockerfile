@@ -1,5 +1,5 @@
 
-FROM labshare/polus-bfio-util:2.4.4
+FROM labshare/polus-bfio-util:2.0.5-slim-buster
 
 ARG EXEC_DIR="/opt/executables"
 ARG DATA_DIR="/data"
