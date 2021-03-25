@@ -1,6 +1,3 @@
-
-
-
 FROM python:3.6-slim as python
 
 COPY VERSION /
