@@ -272,9 +272,9 @@ def build_pyramid(input_image,
                                                                     totalbytes=totalbytes))
                                     all_identities = np.append(all_identities, ids)
 
-                logger.info("\n Generate Progressive Meshes for segments ...")
                 # concatenate and decompose the meshes in the temporary file for all segments
-                all_identities = list(np.unique(all_identities).astype('int'))
+                logger.info("\n Generate Progressive Meshes for segments ...")
+                all_identities = np.unique(all_identities).astype('int')
                 with ThreadPoolExecutor(max_workers=4) as executor:
                     for ide in all_identities:
                         executor.submit(concatenate_and_generate_meshes, 
