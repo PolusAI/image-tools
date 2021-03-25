@@ -31,6 +31,17 @@
       },
       "description": "The number of bins in each graph",
       "required": true
+    },
+    {
+      "name":"scale",
+      "type": "enum",
+      "options": {
+        "values": [
+          "linear",
+          "log",
+          "both"
+        ]
+      } 
     }
   ],
   "outputs": [
@@ -50,6 +61,11 @@
       "key": "inputs.bincount",
       "title": "Bincount",
       "description": "The number of bins for each column of data, less than 255 and must be even."
+    },
+    {
+      "key": "inputs.scale",
+      "title": "Scale",
+      "description": "Create logarithmically scaled, linearly scaled, or both graphs"
     }
   ]
 }
