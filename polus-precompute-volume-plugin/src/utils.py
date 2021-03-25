@@ -225,11 +225,11 @@ def build_pyramid(input_image,
         else: # if generating meshes
             
             # Need to iterate through chunks of the input for scalabiltiy
-            xsplits = list(np.arange(0, bfshape[0], 256))
+            xsplits = list(np.arange(0, bfshape[0], 1024))
             xsplits.append(bfshape[0])
-            ysplits = list(np.arange(0, bfshape[1], 256))
+            ysplits = list(np.arange(0, bfshape[1], 1024))
             ysplits.append(bfshape[1])
-            zsplits = list(np.arange(0, bfshape[2], 256))
+            zsplits = list(np.arange(0, bfshape[2], 1024))
             zsplits.append(bfshape[2])
 
             # Keep track of the labelled segments
@@ -276,9 +276,9 @@ def build_pyramid(input_image,
                 # concatenate and decompose the meshes in the temporary file for all segments
                 all_identities = np.unique(all_identities).astype('int')
                 with ThreadPoolExecutor(max_workers=4) as executor:
-                    variable = [executor.submit(concatenate_and_generate_meshes, 
-                                                    ide, temp_dir, output_image, bit_depth, chunk_size) 
-                                                    for ide in all_identities]
+                    for ide in all_identities:
+                        executor.map(concatenate_and_generate_meshes, 
+                            zip(ide, temp_dir, output_image, bit_depth, chunk_size)) 
             
             # Once you have all the labelled segments, then create segment_properties file
             logger.info("\n Creating info file for segmentations and meshes ...")
@@ -303,6 +303,7 @@ def build_pyramid(input_image,
                                             chunk_size = chunk_size,
                                             size=bfshape[:3],
                                             resolution=resolution)
+                                            
         logger.info("\n Creating volumes based on the info file ...")
         ngvol.generate_recursive_chunked_representation(volume=bf, info=file_info, dtype=datatype, directory=output_image, blurring_method='average')
     else:
