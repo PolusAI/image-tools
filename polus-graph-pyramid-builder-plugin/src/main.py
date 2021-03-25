@@ -1,25 +1,20 @@
 import pandas, multiprocessing, argparse, logging, matplotlib, copy, imageio
-matplotlib.use('agg')
-import numpy as np
+from pathlib import Path
 from multiprocessing import Pool
+
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
-from pathlib import Path
-import sys 
+matplotlib.use('agg')
+
 import math
+import numpy as np
 import decimal
 from decimal import Decimal
-from textwrap import wrap
-import os
-import time
 
-import traceback
+from textwrap import wrap
 
 # Chunk Scale
 CHUNK_SIZE = 1024
-
-# Number of Ticks on the Axis Graph 
-numticks = 11
 
 # DZI file template
 DZI = '<?xml version="1.0" encoding="utf-8"?><Image TileSize="' + str(CHUNK_SIZE) + '" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="{}" Height="{}"/></Image>'
@@ -320,18 +315,15 @@ def gen_plot(col1,
         decreasefont = decreasefont - 1 
         return bbxtext, decreasefont
 
-    def calculateticks(fmin, fmax, typegraph):
-        """ This functio n calculates the tick values for the graphs
-            and where to draw the line """
-        
+    def calculateticks(ticks, bin_width, fmin, typegraph):
+        """ This functio n calculates the tick values for the graphs """
 
-        drawline = ((abs(fmin)*bincount)/(fmax*(1+10**-20)-fmin)) + 0.5
         if typegraph == "linear":
-            tick_vals = [t for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks))]
+            tick_vals = [t for t in ticks*bin_width+fmin]
         if typegraph == "log": 
             C = 1/np.log(10)
-            tick_vals = [np.sign(t)*C*(-1+(10**abs(t))) for t in np.arange(fmin, fmax,(fmax-fmin)/(numticks)).astype(np.float64)]
-        return tick_vals, drawline
+            tick_vals = [np.sign(t)*C*(-1+(10**abs(t))) for t in ticks*bin_width+fmin]
+        return tick_vals
 
     if col2>col1:
         d = np.squeeze(bins[indexdict[col1, col2],:,:])
@@ -389,18 +381,19 @@ def gen_plot(col1,
     # Calculating the value of each tick in the graph (fixed width)
     fmin_c = bin_stats['min'][cname_c]
     fmax_c = bin_stats['max'][cname_c]
-    
-    tick_vals_c, drawline_c = calculateticks(fmin_c, fmax_c, typegraph)
-    if fmin_c < 0:
-        ax.axvline(x=drawline_c)
+    binwidth_c = (fmax_c-fmin_c)/bincount
+    tick_vals_c= calculateticks(ax.get_xticks(), binwidth_c, fmin_c, typegraph)
+    if fmin_c < 0: # draw x=0
+        ax.axvline(x=abs(fmin_c)/binwidth_c)
     ax.set_xticklabels(format_ticks(tick_vals_c), rotation=45, fontsize = 5, ha='right')
 
     # Calculating the value of each tick in the graph (fixed width)
     fmin_r = bin_stats['min'][cname_r]
     fmax_r = bin_stats['max'][cname_r]
-    tick_vals_r, drawline_r = calculateticks(fmin_r, fmax_r, typegraph)
-    if fmin_r < 0:
-        ax.axhline(y=drawline_r)
+    binwidth_r = (fmax_r-fmin_r)/bincount
+    tick_vals_r = calculateticks(ax.get_yticks(), binwidth_r, fmin_r, typegraph)
+    if fmin_r < 0: # draw y=0
+        ax.axhline(y=abs(fmin_r)/binwidth_r)
     ax.set_yticklabels(format_ticks(tick_vals_r), fontsize=5, ha='right')
 
     fig.canvas.draw()
@@ -423,7 +416,7 @@ def get_default_fig(cmap):
     """
     fig, ax = plt.subplots(dpi=int(CHUNK_SIZE/4),figsize=(4,4),tight_layout={'h_pad':1,'w_pad':1})
     datacolor = ax.pcolorfast(np.zeros((bincount, bincount),np.uint64),cmap=cmap)
-    ticks = [(t+0.5) for t in range(0, bincount+1, int(bincount/(numticks - 1)))]
+    ticks = [t for t in range(0, bincount+1, int(bincount/(10)))]
 
     ax.set_xlim(0,bincount)
     ax.set_ylim(0,bincount)
@@ -446,10 +439,6 @@ def get_default_fig(cmap):
     aylabel.set_yticks([])
     aylabel.set_clip_on(True)
 
-    # fig.add_axes(axlabel, aylabel)
-    # for i in range(bincount):
-    #     axlabel.axvline(x=i)
-    #     axlabel.axhline(y=i)
     return fig, ax, datacolor
 
 """ 3. Pyramid generation functions """
@@ -627,6 +616,7 @@ def _get_higher_res(S,info,cnames, outpath,out_file,indexscale,indexdict,binstat
                                                 typegraph=typegraph, 
                                                 X=subgrid_dimX[x:x+2],
                                                 Y=subgrid_dimY[y:y+2])
+                                                
                 image[subgrid_Y_ind0:subgrid_Y_ind1, subgrid_X_ind0:subgrid_X_ind1,:] = _avg2(sub_image)
                 del sub_image
 
