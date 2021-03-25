@@ -176,7 +176,7 @@ def transform_data(data,column_names, typegraph):
 
     bin_stats = {'min': data.min(),
                  'max': data.max(),
-                 'binwidth': (data.max()-data.min())/bincount}    
+                 'binwidth': (data.max()-data.min()+10**-6)/bincount}    
  
     
     # Transform data into bin positions for fast binning
