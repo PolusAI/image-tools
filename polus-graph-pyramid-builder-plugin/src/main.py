@@ -84,8 +84,8 @@ def bin_data(data, bin_stats):
     """
 
     column_names = data.columns
-    nfeats = bin_stats['size'][1] 
-    datalen = bin_stats['size'][0]
+    nfeats = data.shape[1] 
+    nrows = data.shape[0]
 
     # Handle NaN values
     data_ind = pandas.notnull(data)
@@ -94,7 +94,7 @@ def bin_data(data, bin_stats):
     data = data.astype(np.uint16)       # cast to save memory
     data[data>=bincount] = bincount - 1 # in case of numerical precision issues
 
-    nrows = data.shape[0]
+    
     if nrows < 2**8:
         dtype = np.uint8
     elif nrows < 2**16:
@@ -174,14 +174,13 @@ def transform_data(data,column_names, typegraph):
         data = data.astype(np.float64)
         data = np.sign(data) * np.log10(1 + (abs(data/C)))
 
-    bin_stats = {'size': data.shape,
-                 'min': data.min(),
-                 'max': data.max()}    
+    bin_stats = {'min': data.min(),
+                 'max': data.max(),
+                 'binwidth': (data.max()-data.min())/bincount}    
  
-    column_bin_size = (bin_stats['max'] - bin_stats['min'])/bincount
     
     # Transform data into bin positions for fast binning
-    data = ((data - bin_stats['min'])/column_bin_size).apply(np.floor)
+    data = ((data - bin_stats['min'])/bin_stats['binwidth']).apply(np.floor)
 
     bins, index, diction = bin_data(data, bin_stats)
     return bins, bin_stats, index, diction
@@ -380,7 +379,7 @@ def gen_plot(col1,
     # Calculating the value of each tick in the graph (fixed width)
     fmin_c = bin_stats['min'][cname_c]
     fmax_c = bin_stats['max'][cname_c]
-    binwidth_c = (fmax_c-fmin_c)/bincount
+    binwidth_c = bin_stats['binwidth'][cname_c]
     tick_vals_c= calculateticks(ax.get_xticks(), binwidth_c, fmin_c, typegraph)
     if fmin_c < 0: # draw x=0
         ax.axvline(x=abs(fmin_c)/binwidth_c)
@@ -389,7 +388,7 @@ def gen_plot(col1,
     # Calculating the value of each tick in the graph (fixed width)
     fmin_r = bin_stats['min'][cname_r]
     fmax_r = bin_stats['max'][cname_r]
-    binwidth_r = (fmax_r-fmin_r)/bincount
+    binwidth_r = bin_stats['binwidth'][cname_r]
     tick_vals_r = calculateticks(ax.get_yticks(), binwidth_r, fmin_r, typegraph)
     if fmin_r < 0: # draw y=0
         ax.axhline(y=abs(fmin_r)/binwidth_r)
