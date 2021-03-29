@@ -148,7 +148,7 @@ def areafiltering_remove_smaller_objects_binary(image, kernel=None, n=None):
     nb_components, output, stats, centroids = cv2.connectedComponentsWithStats(image, connectivity=8)
     sizes = stats[1:, -1]; nb_components = nb_components - 1
 
-    af = np.ones((image.shape))
+    af = np.zeros((image.shape))
     count_removed = 0
     logger.info("{} ROI in tile".format(nb_components))
     for i in range(0, nb_components):
