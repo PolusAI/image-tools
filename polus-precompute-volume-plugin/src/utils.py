@@ -14,6 +14,8 @@ from neurogen import mesh as ngmesh
 from neurogen import info as nginfo
 from neurogen import volume as ngvol
 
+from itertools import repeat
+
 from bfio.bfio import BioReader, BioWriter
 
 chunk_size = [64,64,64]
@@ -276,9 +278,8 @@ def build_pyramid(input_image,
                 logger.info("\n Generate Progressive Meshes for segments ...")
                 all_identities = np.unique(all_identities).astype('int')
                 with ThreadPoolExecutor(max_workers=4) as executor:
-                    for ide in all_identities:
-                        executor.submit(concatenate_and_generate_meshes, 
-                                        ide, temp_dir, output_image, bit_depth, chunk_size) 
+                    executor.map(concatenate_and_generate_meshes, 
+                                all_identities, repeat(temp_dir), repeat(output_image), repeat(bit_depth), repeat(chunk_size)) 
 
             # Once you have all the labelled segments, then create segment_properties file
             logger.info("\n Creating info file for segmentations and meshes ...")
