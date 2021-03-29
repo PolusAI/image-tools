@@ -1,0 +1,5 @@
+
+bfio==2.1.0a5
+preadator==0.2.0
+jpype1==1.2.1
+zarr==2.6.1
