@@ -402,52 +402,6 @@ def basic(files: typing.List[Path],
           darkfield: bool = False,
           photobleach: bool = False):
 
-    # Load files and sort
-    ProcessManager.log('Loading and sorting images...')
-    img_stk,X,Y = _get_resized_image_stack(files)
-    img_stk_sort = np.sort(img_stk)
-    
-    # Initialize options
-    new_options = _initialize_options(img_stk_sort,darkfield,OPTIONS)
-
-    # Initialize flatfield/darkfield matrices
-    ProcessManager.log('Beginning flatfield estimation')
-    flatfield_old = np.ones((new_options['size'],new_options['size']),dtype=np.float64)
-    darkfield_old = np.random.normal(size=(new_options['size'],new_options['size'])).astype(np.float64)
-    
-    # Optimize until the change in values is below tolerance or a maximum number of iterations is reached
-    for w in range(new_options['max_reweight_iterations']):
-        # Optimize using inexact augmented Legrangian multiplier method using L1 loss
-        A, E1, A_offset = _inexact_alm_l1(copy.deepcopy(img_stk_sort),new_options)
-
-        # Calculate the flatfield/darkfield images and update training weights
-        flatfield, darkfield, new_options = _get_flatfield_and_reweight(A,E1,A_offset,new_options)
-
-        # Calculate the change in flatfield and darkfield images between iterations
-        mad_flat = np.sum(np.abs(flatfield-flatfield_old))/np.sum(np.abs(flatfield_old))
-        temp_diff = np.sum(np.abs(darkfield - darkfield_old))
-        if temp_diff < 10**-7:
-            mad_dark =0
-        else:
-            mad_dark = temp_diff/np.max(np.sum(np.abs(darkfield_old)),initial=10**-6)
-        flatfield_old = flatfield
-        darkfield_old = darkfield
-
-        # Stop optimizing if the change in flatfield/darkfield is below threshold
-        ProcessManager.log('Iteration {} loss: {}'.format(w+1,mad_flat))
-        if np.max(mad_flat,initial=mad_dark) < new_options['reweight_tol']:
-            break
-
-    # Calculate photobleaching effects if specified
-    if photobleach:
-        pb = _get_photobleach(copy.deepcopy(img_stk),flatfield,darkfield)
-
-    # Resize images back to original image size
-    ProcessManager.log('Saving outputs...')
-    flatfield = cv2.resize(flatfield,(Y,X),interpolation=cv2.INTER_CUBIC).astype(np.float32)
-    if new_options['darkfield']:
-        darkfield = cv2.resize(darkfield,(Y,X),interpolation=cv2.INTER_CUBIC).astype(np.float32)
-
     # Try to infer a filename
     try:
         pattern = infer_pattern([f['file'].name for f in files])
@@ -459,32 +413,80 @@ def basic(files: typing.List[Path],
         base_output = files[0]['file'].name
         
     extension = ''.join(files[0]['file'].suffixes)
-    
-    # Export the flatfield image as a tiled tiff
-    flatfield_out = base_output.replace(extension,'_flatfield' + extension)
-    
-    with BioReader(files[0]['file'],max_workers=2) as br:
-        metadata = br.metadata
-    
-    with BioWriter(out_dir.joinpath(flatfield_out),metadata=metadata,max_workers=2) as bw:
-        bw.dtype = np.float32
-        bw.x = X
-        bw.y = Y
-        bw[:] = np.reshape(flatfield,(Y,X,1,1,1))
-    
-    # Export the darkfield image as a tiled tiff
-    if new_options['darkfield']:
-        darkfield_out = base_output.replace(extension,'_darkfield' + extension)
-        with BioWriter(out_dir.joinpath(darkfield_out),metadata=metadata,max_workers=2) as bw:
+
+    with ProcessManager.process(base_output):
+
+        # Load files and sort
+        ProcessManager.log('Loading and sorting images...')
+        img_stk,X,Y = _get_resized_image_stack(files)
+        img_stk_sort = np.sort(img_stk)
+        
+        # Initialize options
+        new_options = _initialize_options(img_stk_sort,darkfield,OPTIONS)
+
+        # Initialize flatfield/darkfield matrices
+        ProcessManager.log('Beginning flatfield estimation')
+        flatfield_old = np.ones((new_options['size'],new_options['size']),dtype=np.float64)
+        darkfield_old = np.random.normal(size=(new_options['size'],new_options['size'])).astype(np.float64)
+        
+        # Optimize until the change in values is below tolerance or a maximum number of iterations is reached
+        for w in range(new_options['max_reweight_iterations']):
+            # Optimize using inexact augmented Legrangian multiplier method using L1 loss
+            A, E1, A_offset = _inexact_alm_l1(copy.deepcopy(img_stk_sort),new_options)
+
+            # Calculate the flatfield/darkfield images and update training weights
+            flatfield, darkfield, new_options = _get_flatfield_and_reweight(A,E1,A_offset,new_options)
+
+            # Calculate the change in flatfield and darkfield images between iterations
+            mad_flat = np.sum(np.abs(flatfield-flatfield_old))/np.sum(np.abs(flatfield_old))
+            temp_diff = np.sum(np.abs(darkfield - darkfield_old))
+            if temp_diff < 10**-7:
+                mad_dark =0
+            else:
+                mad_dark = temp_diff/np.max(np.sum(np.abs(darkfield_old)),initial=10**-6)
+            flatfield_old = flatfield
+            darkfield_old = darkfield
+
+            # Stop optimizing if the change in flatfield/darkfield is below threshold
+            ProcessManager.log('Iteration {} loss: {}'.format(w+1,mad_flat))
+            if np.max(mad_flat,initial=mad_dark) < new_options['reweight_tol']:
+                break
+
+        # Calculate photobleaching effects if specified
+        if photobleach:
+            pb = _get_photobleach(copy.deepcopy(img_stk),flatfield,darkfield)
+
+        # Resize images back to original image size
+        ProcessManager.log('Saving outputs...')
+        flatfield = cv2.resize(flatfield,(Y,X),interpolation=cv2.INTER_CUBIC).astype(np.float32)
+        if new_options['darkfield']:
+            darkfield = cv2.resize(darkfield,(Y,X),interpolation=cv2.INTER_CUBIC).astype(np.float32)
+        
+        # Export the flatfield image as a tiled tiff
+        flatfield_out = base_output.replace(extension,'_flatfield' + extension)
+        
+        with BioReader(files[0]['file'],max_workers=2) as br:
+            metadata = br.metadata
+        
+        with BioWriter(out_dir.joinpath(flatfield_out),metadata=metadata,max_workers=2) as bw:
             bw.dtype = np.float32
             bw.x = X
             bw.y = Y
-            bw[:] = np.reshape(darkfield,(Y,X,1,1,1))
+            bw[:] = np.reshape(flatfield,(Y,X,1,1,1))
         
-    # Export the photobleaching components as csv
-    if photobleach:
-        offsets_out = base_output.replace(extension,'_offsets.csv')
-        with open(metadata_dir.joinpath(offsets_out),'w') as fw:
-            fw.write('file,offset\n')
-            for f,o in zip(files,pb[0,:].tolist()):
-                fw.write("{},{}\n".format(f,o))
+        # Export the darkfield image as a tiled tiff
+        if new_options['darkfield']:
+            darkfield_out = base_output.replace(extension,'_darkfield' + extension)
+            with BioWriter(out_dir.joinpath(darkfield_out),metadata=metadata,max_workers=2) as bw:
+                bw.dtype = np.float32
+                bw.x = X
+                bw.y = Y
+                bw[:] = np.reshape(darkfield,(Y,X,1,1,1))
+            
+        # Export the photobleaching components as csv
+        if photobleach:
+            offsets_out = base_output.replace(extension,'_offsets.csv')
+            with open(metadata_dir.joinpath(offsets_out),'w') as fw:
+                fw.write('file,offset\n')
+                for f,o in zip(files,pb[0,:].tolist()):
+                    fw.write("{},{}\n".format(f,o))
