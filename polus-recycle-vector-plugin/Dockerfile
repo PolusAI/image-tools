@@ -1,4 +1,4 @@
-FROM python:3.7-alpine
+FROM python:3.9-alpine
 LABEL maintainer="Axle Informatics"
 
 COPY VERSION /
@@ -14,6 +14,8 @@ RUN mkdir -p ${EXEC_DIR} \
 
 #Copy executable
 COPY src ${EXEC_DIR}/
+    
+RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
 WORKDIR ${EXEC_DIR}
 

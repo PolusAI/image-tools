@@ -1,5 +1,5 @@
-Cython==3.0a1
-javabridge==1.0.18
-python_bioformats==1.5.2
-setuptools==40.8.0
-numpy==1.18.1
+Cython==3.0a6
+preadator==0.1.2
+numpy==1.19.5
+bfio==2.0.4
+filepattern==1.4.4
