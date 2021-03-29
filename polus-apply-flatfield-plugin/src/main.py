@@ -1,17 +1,21 @@
 from bfio.bfio import BioReader, BioWriter
-import argparse, logging, typing
+import argparse, logging, typing, csv
 import numpy as np
 from pathlib import Path
 from filepattern import get_regex,FilePattern,VARIABLES
 from preadator import ProcessManager
 
-def unshade_image(img,out_dir,brightfield,darkfield,photobleach=None,offset=None):
+def unshade_image(img,out_dir,
+                  brightfield,
+                  darkfield,
+                  photobleach=None,
+                  offset=None):
     
-    with ProcessManager.thread():
+    with ProcessManager.thread() as active_threads:
     
-        with BioReader(img,max_workers=1) as br:
+        with BioReader(img,max_workers=active_threads.count) as br:
             
-            with BioWriter(out_dir.joinpath(img.name),metadata=br.metadata,max_workers=2) as bw:
+            with BioWriter(out_dir.joinpath(img.name),metadata=br.metadata,max_workers=active_threads.count) as bw:
         
                 new_img = br[:,:,:1,0,0].squeeze().astype(np.float32)
                 
@@ -33,8 +37,15 @@ def unshade_batch(files: typing.List[Path],
                   out_dir: Path,
                   brightfield: Path,
                   darkfield: Path,
-                  photobleach: int = None,
-                  offset: int = None):
+                  photobleach: typing.Optional[Path] = None):
+    
+    if photobleach != None:
+        with open(photobleach,'r') as f:
+            reader = csv.reader(f)
+            photo_offset = {line[0]:float(line[1]) for line in reader if line[0] != 'file'}
+        offset = np.mean([o for o in photo_offset.values()])
+    else:
+        offset = None
     
     with ProcessManager.process():
     
@@ -48,16 +59,67 @@ def unshade_batch(files: typing.List[Path],
 
         for file in files:
             
+            if photobleach != None:
+                pb = photo_offset[file['file']]
+            else:
+                pb = None
+            
             ProcessManager.submit_thread(unshade_image,file['file'],
                                                        out_dir,
                                                        brightfield_image,
-                                                       darkfield_image)
+                                                       darkfield_image,
+                                                       pb,
+                                                       offset)
         
         ProcessManager.join_threads()
+        
+def main(imgDir: Path,
+         imgPattern: str,
+         ffDir: Path,
+         brightPattern: str,
+         outDir: Path,
+         darkPattern: typing.Optional[str] = None,
+         photoPattern: typing.Optional[str] = None
+         ) -> None:
+    
+    ''' Start a process for each set of brightfield/darkfield/photobleach patterns '''
+    # Create the FilePattern objects to handle file access
+    ff_files = FilePattern(ffDir,brightPattern)
+    fp = FilePattern(imgDir,imgPattern)
+    if darkPattern != None and darkPattern!='':
+        dark_files = FilePattern(ffDir,darkPattern)
+    if photoPattern != None and photoPattern!='':
+        photo_files = FilePattern(str(Path(ffDir).parents[0].joinpath('metadata').absolute()),photoPattern)
+        
+    group_by = [v for v in fp.variables if v not in ff_files.variables]
+    GROUPED = group_by + ['file']
 
-# Variables that will be grouped for the purposes of applying a flatfield
-GROUPED = [v for v in 'xyp']
-GROUPED.append('file')
+    ProcessManager.init_processes('main','unshade')
+        
+    for files in fp(group_by=group_by):
+        
+        flat_path = ff_files.get_matching(**{k.upper():v for k,v in files[0].items() if k not in GROUPED})[0]['file']
+        if flat_path is None:
+            logger.warning("Could not find a flatfield image, skipping...")
+            continue
+        
+        if darkPattern is not None and darkPattern != '':
+            dark_path = dark_files.get_matching(**{k.upper():v for k,v in files[0].items() if k not in GROUPED})[0]['file']
+            
+            if dark_path is None:
+                logger.warning("Could not find a darkfield image, skipping...")
+                continue
+        
+        if photoPattern is not None and photoPattern != '':
+            photo_path = photo_files.get_matching(**{k.upper():v for k,v in files[0].items() if k not in GROUPED})[0]['file']
+            
+            if photo_path is None:
+                logger.warning("Could not find a photobleach file, skipping...")
+                continue
+            
+        ProcessManager.submit_process(unshade_batch,files,outDir,flat_path,dark_path)
+    
+    ProcessManager.join_processes()
 
 if __name__=="__main__":
     ''' Initialize the logger '''
@@ -105,29 +167,10 @@ if __name__=="__main__":
     outDir = Path(args.outDir)
     logger.info('outDir = {}'.format(outDir))
 
-    ''' Start a process for each set of brightfield/darkfield/photobleach patterns '''
-    # Create the FilePattern objects to handle file access
-    ff_files = FilePattern(ffDir,brightPattern)
-    fp = FilePattern(imgDir,imgPattern)
-    if darkPattern != None and darkPattern!='':
-        dark_files = FilePattern(ffDir,darkPattern)
-    if photoPattern != None and photoPattern!='':
-        photo_files = FilePattern(str(Path(ffDir).parents[0].joinpath('metadata').absolute()),photoPattern)
-
-    ProcessManager.init_processes('main','unshade')
-        
-    for files in fp(group_by='xyp'):
-        
-        flat_path = ff_files.get_matching(**{k.upper():v for k,v in files[0].items() if k not in GROUPED})[0]['file']
-        if flat_path == None:
-            continue
-        
-        if darkPattern != None and darkPattern!='':
-            dark_path = dark_files.get_matching(**{k.upper():v for k,v in files[0].items() if k not in GROUPED})[0]['file']
-            
-            if dark_path == None:
-                continue
-            
-        ProcessManager.submit_process(unshade_batch,files,outDir,flat_path,dark_path)
-    
-    ProcessManager.join_processes()
+    main(imgDir = imgDir,
+         imgPattern = imgPattern,
+         ffDir = ffDir,
+         brightPattern = brightPattern,
+         outDir = outDir,
+         darkPattern = darkPattern,
+         photoPattern = photoPattern)
