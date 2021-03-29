@@ -1,12 +1,11 @@
-import argparse, logging, copy, cv2, typing
+import argparse, copy, cv2, typing
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 from filepattern import get_regex,output_name,FilePattern,infer_pattern
 from bfio import BioReader,BioWriter
 from pathlib import Path
-
-from concurrent.futures import ThreadPoolExecutor
-from multiprocessing import cpu_count
+from preadator import ProcessManager
 
 OPTIONS = {
     'max_iterations': 500,
@@ -15,7 +14,8 @@ OPTIONS = {
     'reweight_tol': 10**-4,
     'darkfield': False,
     'size': 128,
-    'epsilon': 0.1
+    'epsilon': 0.1,
+    'n_sample': 1000
 }
 
 """ Load files and create an image stack """
@@ -38,16 +38,26 @@ def _get_resized_image_stack(flist):
     with BioReader(flist[0]['file']) as br:
         X = br.x
         Y = br.y
+    
+    if len(flist) > OPTIONS['n_sample']:
+        N = OPTIONS['n_sample']
+        samples = np.random.randint(len(flist),
+                                    size=(N,),
+                                    replace=False).tolist()
+        flist = [flist[s] for s in samples]
+    else:
         N = len(flist)
-    img_stack = np.zeros((OPTIONS['size'],OPTIONS['size'],N),dtype=np.float32)
+    
+    img_stack = np.zeros((OPTIONS['size'],OPTIONS['size'],N),dtype=np.float64)
     
     def load_and_store(fname,ind):
-        with BioReader(fname['file'],max_workers=1) as br:
-            I = np.squeeze(br[:,:,:1,0,0])
-        img_stack[:,:,ind] = cv2.resize(I,(OPTIONS['size'],OPTIONS['size']),interpolation=cv2.INTER_LINEAR).astype(np.float32)
+        with ProcessManager.thread() as active_threads:
+            with BioReader(fname['file'],max_workers=active_threads.count) as br:
+                I = np.squeeze(br[:,:,:1,0,0])
+            img_stack[:,:,ind] = cv2.resize(I,(OPTIONS['size'],OPTIONS['size']),interpolation=cv2.INTER_LINEAR).astype(np.float64)
 
     # Load every image as a z-slice
-    with ThreadPoolExecutor(2) as executor:
+    with ThreadPoolExecutor() as executor:
         for ind,fname in enumerate(flist):
             executor.submit(load_and_store,fname,ind)
 
@@ -105,7 +115,7 @@ def _initialize_options(img_stack,get_darkfield,options):
     new_options = copy.deepcopy(options)
     new_options['lambda'] = np.sum(np.abs(weights))/800
     new_options['lambda_darkfield'] = np.sum(np.abs(weights))/2000
-    new_options['weight'] = np.ones(img_stack.shape,dtype=np.float32)
+    new_options['weight'] = np.ones(img_stack.shape,dtype=np.float64)
     new_options['darkfield_limit'] = 10**7
     new_options['darkfield'] = get_darkfield
     return new_options
@@ -143,12 +153,12 @@ def _inexact_alm_l1(imgflt_stack,options):
     del temp
 
     # A is a low rank matrix that is being solved for
-    A = np.zeros(imgflt_stack.shape,dtype=np.float32)
+    A = np.zeros(imgflt_stack.shape,dtype=np.float64)
     A_coeff = np.ones((1, img_3d),dtype=np.float64)   # per image scaling coefficient, accounts for things like photobleaching
     A_offset = np.zeros((img_size,1),dtype=np.float64) # offset per pixel across all images
 
     # E1 is the additive error. Since the goal is determining the background signal, this is the real signal at each pixel
-    E1 = np.zeros(imgflt_stack.shape,dtype=np.float32)
+    E1 = np.zeros(imgflt_stack.shape,dtype=np.float64)
 
     # Normalization factors
     ent1 = np.float64(1)    # flatfield normalization
@@ -388,16 +398,12 @@ def _get_photobleach(imgflt_stack,flatfield,darkfield=None):
 
 def basic(files: typing.List[Path],
           out_dir: Path,
+          metadata_dir: typing.Optional[Path] = None,
           darkfield: bool = False,
           photobleach: bool = False):
 
-    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                        datefmt='%d-%b-%y %H:%M:%S')
-    logger = logging.getLogger("BaSiC")
-    logger.setLevel(logging.INFO)
-
     # Load files and sort
-    logger.info('Loading and sorting images...')
+    ProcessManager.log('Loading and sorting images...')
     img_stk,X,Y = _get_resized_image_stack(files)
     img_stk_sort = np.sort(img_stk)
     
@@ -405,7 +411,7 @@ def basic(files: typing.List[Path],
     new_options = _initialize_options(img_stk_sort,darkfield,OPTIONS)
 
     # Initialize flatfield/darkfield matrices
-    logger.info('Beginning flatfield estimation')
+    ProcessManager.log('Beginning flatfield estimation')
     flatfield_old = np.ones((new_options['size'],new_options['size']),dtype=np.float64)
     darkfield_old = np.random.normal(size=(new_options['size'],new_options['size'])).astype(np.float64)
     
@@ -428,7 +434,7 @@ def basic(files: typing.List[Path],
         darkfield_old = darkfield
 
         # Stop optimizing if the change in flatfield/darkfield is below threshold
-        logger.info('Iteration {} loss: {}'.format(w+1,mad_flat))
+        ProcessManager.log('Iteration {} loss: {}'.format(w+1,mad_flat))
         if np.max(mad_flat,initial=mad_dark) < new_options['reweight_tol']:
             break
 
@@ -437,7 +443,7 @@ def basic(files: typing.List[Path],
         pb = _get_photobleach(copy.deepcopy(img_stk),flatfield,darkfield)
 
     # Resize images back to original image size
-    logger.info('Saving outputs...')
+    ProcessManager.log('Saving outputs...')
     flatfield = cv2.resize(flatfield,(Y,X),interpolation=cv2.INTER_CUBIC).astype(np.float32)
     if new_options['darkfield']:
         darkfield = cv2.resize(darkfield,(Y,X),interpolation=cv2.INTER_CUBIC).astype(np.float32)
@@ -451,9 +457,11 @@ def basic(files: typing.List[Path],
     # Fallback to the first filename
     except:
         base_output = files[0]['file'].name
+        
+    extension = ''.join(files[0]['file'].suffixes)
     
     # Export the flatfield image as a tiled tiff
-    flatfield_out = base_output.replace('.ome.tif','_flatfield.ome.tif')
+    flatfield_out = base_output.replace(extension,'_flatfield' + extension)
     
     with BioReader(files[0]['file'],max_workers=2) as br:
         metadata = br.metadata
@@ -466,17 +474,17 @@ def basic(files: typing.List[Path],
     
     # Export the darkfield image as a tiled tiff
     if new_options['darkfield']:
-        darkfield_out = base_output.replace('.ome.tif','_darkfield.ome.tif')
+        darkfield_out = base_output.replace(extension,'_darkfield' + extension)
         with BioWriter(out_dir.joinpath(darkfield_out),metadata=metadata,max_workers=2) as bw:
             bw.dtype = np.float32
             bw.x = X
             bw.y = Y
             bw[:] = np.reshape(darkfield,(Y,X,1,1,1))
         
-    # # Export the photobleaching components as csv
-    # if photobleach:
-    #     offsets_out = base_output.replace('.ome.tif','_offsets.csv')
-    #     with open(metadata_dir.joinpath(offsets_out)),'w') as fw:
-    #         fw.write('file,offset\n')
-    #         for f,o in zip(files,pb[0,:].tolist()):
-    #             fw.write("{},{}\n".format(f,o))
+    # Export the photobleaching components as csv
+    if photobleach:
+        offsets_out = base_output.replace(extension,'_offsets.csv')
+        with open(metadata_dir.joinpath(offsets_out),'w') as fw:
+            fw.write('file,offset\n')
+            for f,o in zip(files,pb[0,:].tolist()):
+                fw.write("{},{}\n".format(f,o))
