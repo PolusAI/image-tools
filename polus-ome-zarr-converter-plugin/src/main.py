@@ -20,7 +20,6 @@ def image_to_zarr(inp_image: Path,
     with ProcessManager.process():
     
         with BioReader(inp_image,backend='java') as br:
-        # with BioReader(inp_image,backend="java") as br:
             
             # Loop through timepoints
             for t in range(br.T):
@@ -37,7 +36,6 @@ def image_to_zarr(inp_image: Path,
                         out_path = out_dir.joinpath(inp_image.name.replace(extension,f'_t{c}.ome.zarr'))
                     
                     with BioWriter(out_path,max_workers=ProcessManager._active_threads,metadata=br.metadata) as bw:
-                    # with BioWriter(out_path,metadata=br.metadata) as bw:
                         
                         bw.C = 1
                         bw.T = 1
@@ -55,9 +53,6 @@ def image_to_zarr(inp_image: Path,
                                     x_max = min([br.X,x+TILE_SIZE])
                                     
                                     bw[y:y_max,x:x_max,z:z+1,0,0] = br[y:y_max,x:x_max,z:z+1,c,t]
-                                    # update the BioWriter in case the ProcessManager found more threads
-                    
-                    # br.max_workers = ProcessManager._active_threads
 
 def main(inpDir: Path,
          outDir: Path,
