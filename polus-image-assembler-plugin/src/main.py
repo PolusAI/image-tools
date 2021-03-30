@@ -17,6 +17,7 @@ def make_tile(x_min: int,
               x_max: int,
               y_min: int,
               y_max: int,
+              depth: int,
               parsed_vector: dict,
               bw: BioWriter) -> None:
     """Create a supertile from images and save to file
@@ -34,6 +35,7 @@ def make_tile(x_min: int,
         x_max: Maximum x bound of the tile
         y_min: Minimum y bound of the tile
         y_max: Maximum y bound of the tile
+        depth: Z depth of the tile
         parsed_vector: The result of _parse_vector
         local_threads: Used to determine the number of concurrent threads to run
         bw: The output file object
@@ -76,10 +78,10 @@ def make_tile(x_min: int,
 
                     # Load the image
                     with BioReader(f['file'],max_workers=active_threads.count) as br:
-                        image = br[Yi[0]:Yi[1],Xi[0]:Xi[1],0:1,0,0] # only get the first z,c,t layer
+                        image = br[Yi[0]:Yi[1],Xi[0]:Xi[1],0:depth,0,0] # only get the first c,t layer
 
                     # Put the image in the buffer
-                    template[Yt[0]:Yt[1],Xt[0]:Xt[1],...] = image
+                    template[Yt[0]:Yt[1],Xt[0]:Xt[1],0:depth,...] = image
 
         # Save the image
         bw.max_workers = ProcessManager._active_threads
@@ -189,7 +191,8 @@ def _parse_stitch(stitchPath: pathlib.Path,
     return out_dict
 
 def assemble_image(vector_path: pathlib.Path,
-                   out_path: pathlib.Path) -> None:
+                   out_path: pathlib.Path,
+                   depth: int) -> None:
     """Assemble a 2-dimensional image
 
     This method assembles one image from one stitching vector. It is intended
@@ -217,17 +220,17 @@ def assemble_image(vector_path: pathlib.Path,
                             max_workers=ProcessManager._active_threads)
             bw.x = parsed_vector['width']
             bw.y = parsed_vector['height']
+            bw.z = depth
 
         # Assemble the images
         ProcessManager.log(f'Begin assembly')
-        threads = []
 
         for x in range(0, parsed_vector['width'], chunk_size):
             X_range = min(x+chunk_size,parsed_vector['width']) # max x-pixel index in the assembled image
             for y in range(0, parsed_vector['height'], chunk_size):
                 Y_range = min(y+chunk_size,parsed_vector['height']) # max y-pixel index in the assembled image
 
-                ProcessManager.submit_thread(make_tile,x,X_range,y,Y_range,parsed_vector,bw)
+                ProcessManager.submit_thread(make_tile,x,X_range,y,Y_range,depth,parsed_vector,bw)
 
         ProcessManager.join_threads()
 
@@ -256,6 +259,9 @@ def main(imgPath: pathlib.Path,
         logger.info(f'Unable to infer pattern, defaulting to: .*')
         fp = filepattern.FilePattern(imgPath,'.*')
 
+    # get z depth
+    depth = BioReader(next(imgPath.iterdir())).z
+
     '''Run stitching jobs in separate processes'''
     ProcessManager.init_processes('main','asmbl')
 
@@ -264,7 +270,7 @@ def main(imgPath: pathlib.Path,
         if 'img-global-positions' not in v.name:
             continue
 
-        ProcessManager.submit_process(assemble_image,v,outDir)
+        ProcessManager.submit_process(assemble_image,v,outDir, depth)
 
     ProcessManager.join_processes()
 
@@ -285,6 +291,7 @@ if __name__=="__main__":
                         help='Output collection', required=True)
     parser.add_argument('--timesliceNaming', dest='timesliceNaming', type=str,
                         help='Use timeslice number as image name', required=False)
+
 
     # Parse the arguments
     args = parser.parse_args()
