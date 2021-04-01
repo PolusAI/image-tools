@@ -65,7 +65,7 @@ def segment_images(inpDir, outDir, config_data):
         out_img = out_img.reshape((out_img.shape[0], out_img.shape[1], out_img.shape[2], 1, 1))
 
         # write image using BFIO
-        bw = BioWriter(os.path.join(outDir,f))
+        bw = BioWriter(os.path.join(outDir,f), metadata=br.read_metadata())
         bw.num_x(out_img.shape[1])
         bw.num_y(out_img.shape[0])
         bw.num_z(out_img.shape[2])
