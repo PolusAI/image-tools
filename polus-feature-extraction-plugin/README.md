@@ -39,23 +39,23 @@ These are the features that can be extracted from this plugin:
          The length of minor axis of the ellipse that has the same normalized second central moments as the region.
    18. Bounding Box - 
 	 Position and size of the smallest box containing the region. Bounding box xmin and ymin indicates the (x,y) coordinates. Bounding box width and height indicates the width and height of the box respectively. 
-   18. Mean intensity - 
+   19. Mean intensity - 
          Mean intensity value of the region.
-   19. Median - 
+   20. Median - 
          The median value of pixels in the region.
-   20. Mode - 
+   21. Mode - 
          The mode value of pixels in the region.
-   21. Maximum intensity - 
+   22. Maximum intensity - 
          Maximum intensity value in the region.
-   22. Minimum intensity - 
+   23. Minimum intensity - 
          Minimum intensity value in the region.
-   23. Skewness - 
+   24. Skewness - 
          The third order moment about the mean.
-   24. Kurtosis - 
+   25. Kurtosis - 
          The fourth order moment about the mean.
-   25. Entropy - 
+   26. Entropy - 
          Entropy is a measure of randomness. It is the amount of information in the region.
-   26. Standard deviation - 
+   27. Standard deviation - 
          Dispersion of image gray level intensities
 
 ## Inputs:
@@ -72,7 +72,7 @@ Enter file pattern to match the intensity and labeled/segmented images to extrac
 Enter value for this parameter if neighbors touching cells needs to be calculated. The default value is 5. This is an optional parameter. 
 
 ### Features:
-Choose the features that need to be extracted. Multiple features can be selected. If all the 26 features are required, then choose ‘all’ option.
+Choose the features that need to be extracted. Multiple features can be selected. If all the 30 features are required, then choose ‘all’ option.
 
 ### Csvfile:
 There are 2 options available under this category.
