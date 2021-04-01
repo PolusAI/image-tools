@@ -38,8 +38,7 @@ These are the features that can be extracted from this plugin:
    17. Minor axis length - 
          The length of minor axis of the ellipse that has the same normalized second central moments as the region.
    18. Bounding Box - 
-	 Position and size of the smallest box containing the region.
-	 #### Bounding box xmin and ymin indicates the (x,y) coordinates.Bounding box width and height indicates the width and height of the box respectively. 
+	 Position and size of the smallest box containing the region. Bounding box xmin and ymin indicates the (x,y) coordinates.Bounding box width and height indicates the width and height of the box respectively. 
    18. Mean intensity - 
          Mean intensity value of the region.
    19. Median - 
