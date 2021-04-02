@@ -1,0 +1,78 @@
+{
+    "name": "ImageNet Model Featurization",
+    "version": "0.1.1",
+    "title": "ImageNet Model Featurization",
+    "description": "Image featurization using models pre-trained on ImageNet",
+    "author": "Hythem Sidky (hythem.sidky@axleinfo.com)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-imagenet-model-featurization-plugin:0.1.1",
+    "inputs": [
+      {
+        "name": "inpDir",
+        "type": "collection",
+        "description": "Input image collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "model",
+        "type": "enum",
+        "description": "Pre-trained ImageNet model to use for featurization",
+        "values" : [
+          "Xception",
+          "VGG16",
+          "VGG19",
+          "ResNet50",
+          "ResNet101",
+          "ResNet152",
+          "ResNet50V2",
+          "ResNet101V2",
+          "ResNet152V2",
+          "InceptionV3",
+          "InceptionResNetV2",
+          "DenseNet121",
+          "DenseNet169",
+          "DenseNet201"
+        ],
+        "required": true,
+      },
+      {
+        "name": "resolution",
+        "type": "string",
+        "description": "Resolution to which the input images are scaled",
+        "required": true,
+        "default" : "500x500"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "csvCollection",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.batchSize",
+        "title": "Batch Size",
+        "description": "Batch size for image processing"
+      },
+      {
+        "key": "inputs.inpDir",
+        "title": "Input collection",
+        "description": "Input image collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.model",
+        "title": "Model",
+        "description": "Pre-trained ImageNet model to use for featurization"
+      },
+      {
+        "key": "inputs.resolution",
+        "title": "Image Resolution",
+        "description": "Resolution to which the input images are scaled"
+      }
+    ]
+  }
