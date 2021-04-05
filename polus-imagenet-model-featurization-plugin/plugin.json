@@ -20,23 +20,25 @@
         "name": "model",
         "type": "enum",
         "description": "Pre-trained ImageNet model to use for featurization",
-        "values" : [
-          "Xception",
-          "VGG16",
-          "VGG19",
-          "ResNet50",
-          "ResNet101",
-          "ResNet152",
-          "ResNet50V2",
-          "ResNet101V2",
-          "ResNet152V2",
-          "InceptionV3",
-          "InceptionResNetV2",
-          "DenseNet121",
-          "DenseNet169",
-          "DenseNet201"
-        ],
-        "required": true,
+        "options" : {
+          "values" : [
+            "Xception",
+            "VGG16",
+            "VGG19",
+            "ResNet50",
+            "ResNet101",
+            "ResNet152",
+            "ResNet50V2",
+            "ResNet101V2",
+            "ResNet152V2",
+            "InceptionV3",
+            "InceptionResNetV2",
+            "DenseNet121",
+            "DenseNet169",
+            "DenseNet201"
+          ]
+        },
+        "required": true
       },
       {
         "name": "resolution",
@@ -54,11 +56,6 @@
       }
     ],
     "ui": [
-      {
-        "key": "inputs.batchSize",
-        "title": "Batch Size",
-        "description": "Batch size for image processing"
-      },
       {
         "key": "inputs.inpDir",
         "title": "Input collection",

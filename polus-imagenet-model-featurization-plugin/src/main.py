@@ -4,6 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 import tensorflow as tf
 import argparse, logging
+from skimage import io, transform
 
 valid_models =  [
     'Xception',
@@ -26,6 +27,28 @@ valid_models =  [
 def get_imagenet_model(model):
     model_method = getattr(tf.keras.applications, model)
     return model_method(weights='imagenet', include_top=False, pooling='avg')
+
+
+def load_img(image_path, target_size=None):
+    img = io.imread(image_path)
+    dim = len(img.shape)
+    
+    # Only grayscale or RGB
+    if dim not in [2, 3]:
+        return None 
+    
+    # Only three channels. 
+    if (dim == 3) and (img.shape[-1] != 3):
+        return None
+    
+    # If the image is grayscale, expand to three dims.
+    if dim == 2:
+        img = np.stack((img,)*3, axis=-1)
+
+    if target_size is not None:
+        img = transform.resize(img, output_shape=target_size, anti_aliasing=True)
+    
+    return img
 
 
 if __name__=='__main__':
@@ -88,11 +111,12 @@ if __name__=='__main__':
     if not isinstance(imagenet_model, tf.keras.Model):
         logger.error(f'Unable to load requested model!')
         sys.exit()
-
+    
     # Get all images. 
-    image_files = [file 
-                   for file in os.listdir(input_dir)
-                   if os.path.isfile(os.path.join(input_dir, file)) and file.endswith('.ome.tif')]
+    image_files = [os.path.join(dirpath, file)
+                   for dirpath, _, files in os.walk(input_dir)
+                   for file in files 
+                   if os.path.isfile(os.path.join(dirpath, file)) and file.endswith('.ome.tif')]
 
     # Pre-allocate numpy array. 
     feat_dim = imagenet_model.layers[-1].output_shape[-1]
@@ -100,8 +124,11 @@ if __name__=='__main__':
 
     # Loop through images and process.
     for i, image in enumerate(tqdm(image_files)):
-        image_pil = tf.keras.preprocessing.image.load_img(os.path.join(input_dir, image), target_size=target_size)
-        image_data = tf.keras.preprocessing.image.img_to_array(image_pil)
+        image_data = load_img(os.path.join(input_dir, image), target_size=target_size)
+        if image_data is None:
+            logger.error(f'Unable to load image: {image}!')
+            sys.exit()
+
         image_data = np.expand_dims(image_data, axis=0)
         
         # Featurize.
@@ -110,6 +137,6 @@ if __name__=='__main__':
 
     # Create dataframe.
     df = pd.DataFrame(data=feat_arr, columns=np.arange(feat_dim))
-    df.insert(0, 'file', image_files)
+    df.insert(0, 'file', [os.path.basename(image) for image in image_files])
 
     df.to_csv(os.path.join(output_dir, 'features.csv'), index=False)
