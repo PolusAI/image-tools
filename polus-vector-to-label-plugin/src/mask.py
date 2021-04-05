@@ -134,18 +134,19 @@ def follow_flows(dP, niter=200, interp=True):
                                                       dP, niter)
     return p
 
-total_pix=0
+total_pix={}
 
-def set_totalpix(a):
+def set_totalpix(a,z):
     """Counter for  number of masks predicted
     Args:
-        a(int):  NUmber of maks in a tile
+        a(int):  Number of masks in a tile
     """
     global total_pix
     if a!=0:
-        total_pix=a
+        total_pix[z]=a
     else:
-        total_pix=0
+        total_pix[z]=0
+
 
 def get_masks(p,update_lbl, iscell=None, rpad=20, flows=None, threshold=0.4):
     """ Create masks using pixel convergence after running dynamics.Makes a histogram of final pixel locations p,
@@ -388,7 +389,7 @@ def flow_error(maski, dP_net):
 
     return flow_errors, dP_masks
 
-def compute_masks(p,cellprob,dP,new_img,cellprob_threshold=0.0,flow_threshold=0.4):
+def compute_masks(p,cellprob,dP,new_img,z,cellprob_threshold=0.0,flow_threshold=0.4):
     """ Compute masks based on users input of threshold values  and X,yY flows
         This function will call the function which generates  masks based  of a histogram
     Args:
@@ -404,15 +405,23 @@ def compute_masks(p,cellprob,dP,new_img,cellprob_threshold=0.0,flow_threshold=0.
 
     """
     global total_pix
-    if new_img<0:
-        set_totalpix(0)
-    maski = get_masks(p,total_pix, iscell=(cellprob > cellprob_threshold),
-                               flows=dP, threshold=flow_threshold)
-    cnt = np.amax(maski) if np.amax(maski) !=0 else total_pix
-    maski = fill_holes(maski)
-    set_totalpix(cnt)
 
-    return maski,cnt
+    if new_img<0:
+        if z==0:
+           total_pix.clear()
+        set_totalpix(0,z)
+
+    maski = get_masks(p,int(total_pix[z]), iscell=(cellprob > cellprob_threshold),
+                               flows=dP, threshold=flow_threshold)
+
+    cnt = np.amax(maski) if np.amax(maski) !=0 else 0
+    maski = fill_holes(maski)
+    # import matplotlib.pyplot as plt
+    # imgplot = plt.imshow(maski)
+    # plt.show()
+    set_totalpix(cnt,z)
+
+    return maski,max(total_pix.values())
 
 
 def fill_holes(masks, min_size=15):
