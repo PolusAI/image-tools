@@ -51,7 +51,7 @@ def _intersection_over_union(masks_true, masks_pred):
     iou[np.isnan(iou)] = 0.0
     return iou
 
-def stitch3D(masks,tile_size, stitch_threshold=0.25):
+def stitch3D(masks, stitch_threshold=0.25):
     """ Stitch 2D masks into 3D volume with stitch_threshold on IOU
     Args:
         masks(array):ND-array.Mask labels
@@ -128,9 +128,9 @@ def main():
                                                       file_name))
 
             metadata = vec.attrs['metadata']
-     #       mask_final = np.zeros((root[file_name]['vector'].shape[0], root[file_name]['vector'].shape[1], root[file_name]['vector'].shape[2], 1, 1))
 
-            tile_size = min(1080, root[file_name]['vector'].shape[1])
+
+            tile_size = min(1024, root[file_name]['vector'].shape[1])
             lblcnt_max = 0
 
             path = Path(outDir).joinpath(str(file_name))
@@ -138,6 +138,7 @@ def main():
 
             new_img = -1
             with  BioWriter(file_path=Path(path), backend='python', metadata=xml_metadata) as bw:
+                bw.dtype=np.dtype(np.uint32)
                 for x in range(0, root[file_name]['vector'].shape[1], tile_size):
                     x_max = min([root[file_name]['vector'].shape[1], x + tile_size])
                     for y in range(0, root[file_name]['vector'].shape[1], tile_size):
@@ -145,6 +146,7 @@ def main():
                         # Iterating over Z dimension
                         for z in range(0,root[file_name]['vector'].shape[2],1):
                             tile = root[file_name]['vector'][y:y_max, x:x_max, z:z + 1, :, :]
+
                             tile=tile.transpose((2, 0, 1, 3, 4)).squeeze()
                             logger.info(
                                 'Calculating flows and masks  for tile [{}:{},{}:{},{}:{}]'.format(y, y_max, x,
@@ -155,40 +157,24 @@ def main():
                             p = mask.follow_flows(-1 * dP * (cellprob > cellprob_threshold) / 5.,
                                               niter=niter, interp=True)
                         # Generating masks for the tile
-                            maski, lbl_cnt = mask.compute_masks(p, cellprob, dP, new_img,z, cellprob_threshold,
+                            maski = mask.compute_masks(p, cellprob, dP, new_img,z, cellprob_threshold,
                                                             flow_threshold)
 
-                            # mask_final[y:y_max, x:x_max, z:z + 1, :, :] = maski[:, :, np.newaxis, np.newaxis,
-                            #                                           np.newaxis].astype(maski.dtype)
-
-                            # Write the output
-                            lblcnt_max = max(lbl_cnt, lblcnt_max)
                             new_tile=maski
                             if z > 0 and stitch_threshold > 0 :
-                                logger.info('stitching   masks into 3D volume for tile [{}:{},{}:{},{}:{}]'.format(y,y_max, x,x_max, z,z + 1))
+                                logger.info('stitching   masks into 3D volume for tile [Y({}:{}),X({}:{}),Z({}:{})]'.format(y,y_max, x,x_max, z,z + 1))
                                 tilez_stack=np.stack((old_tile[:, :, np.newaxis],new_tile[:, :, np.newaxis]),axis=2)
-                                mask_3d=stitch3D(tilez_stack.squeeze(), tile_size,
-                                                       stitch_threshold=stitch_threshold)
-
+                                mask_3d=stitch3D(tilez_stack.squeeze(),stitch_threshold=stitch_threshold)
                                 bw[y:y_max, x:x_max, z-1:z+1, 0, 0] = mask_3d[:, :, :, np.newaxis,
-                                                                      np.newaxis]
+                                                                      np.newaxis].astype(np.uint32)
 
                             else:
                                 if not stitch_threshold >0 or root[file_name]['vector'].shape[2] ==1:
                                     bw[y:y_max, x:x_max, z:z + 1, 0, 0] = maski[:, :, np.newaxis, np.newaxis,
-                                                                          np.newaxis].astype(np.float32)
+                                                                          np.newaxis].astype(np.uint32)
 
                             old_tile=maski
-
                         new_img = 1
-                 # Setting final array dtype based on number of labels.
-                for i, (key, value) in enumerate(lbl_dtype.items()):
-                        if lblcnt_max < value:
-                            break
-
-                old_tile = np.array(old_tile, dtype=key)
-                bw.dtype = old_tile.dtype
-
             del maski,bw,old_tile
             count += 1
     finally:

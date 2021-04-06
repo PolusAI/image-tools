@@ -139,7 +139,8 @@ total_pix={}
 def set_totalpix(a,z):
     """Counter for  number of masks predicted
     Args:
-        a(int):  Number of masks in a tile
+        a(int): Number of masks in a tile.
+        z(int): Slice of the image.
     """
     global total_pix
     if a!=0:
@@ -421,7 +422,7 @@ def compute_masks(p,cellprob,dP,new_img,z,cellprob_threshold=0.0,flow_threshold=
     # plt.show()
     set_totalpix(cnt,z)
 
-    return maski,max(total_pix.values())
+    return maski
 
 
 def fill_holes(masks, min_size=15):
