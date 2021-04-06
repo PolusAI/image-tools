@@ -17,5 +17,10 @@ ENTRYPOINT ["python3", "main.py"]
 
 FROM python as splinedist
 
-RUN git clone --branch training https://github.com/mmvih/splinedist.git
+RUN apt update \
+    && apt-get install -y git \
+    && apt-get install -y libgl1-mesa-dev
 
+RUN git clone --branch training https://github.com/mmvih/splinedist.git
+RUN pip3 install cmake
+RUN pip3 install splinedist/
