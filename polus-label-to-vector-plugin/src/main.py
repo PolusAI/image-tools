@@ -46,9 +46,17 @@ if __name__=="__main__":
             logger.info('Processing image %s ',f)
         # Loop through files in inpDir image collection and process
             br = BioReader(str(Path(inpDir).joinpath(f).absolute()))
-            tile_size = min(1080, br.X)
+            tile_size = min(1024, br.X)
+            # Saving  Vector in chunks
+            cluster = root.create_group(f)
+            init_cluster_1 = cluster.create_dataset('vector', shape=(br.Y,br.X,br.Z,3,1),
+                                                    chunks=(tile_size, tile_size, 1, 3, 1))
+            init_cluster_2 = cluster.create_dataset('lbl', shape=br.shape,
+                                                    chunks=(tile_size, tile_size, 1, 3, 1))
+            cluster.attrs['metadata'] = str(br.metadata)
+
             # Initializing a array to store the vector field
-            flow_final = np.zeros((br.Y, br.X, br.Z, 3, 1)).astype(np.float32)
+         #   flow_final = np.zeros((br.Y, br.X, br.Z, 3, 1)).astype(np.float32)
             # Iterating over Z dimension
             for z in range(br.Z):
                 for x in range(0, br.X, tile_size):
@@ -56,16 +64,14 @@ if __name__=="__main__":
                     for y in range(0, br.Y, tile_size):
                         y_max = min([br.Y, y + tile_size])
                         flow = dynamics.labels_to_flows(br[y:y_max, x:x_max,z:z+1, 0,0].squeeze())
-                        flow=flow[:,:,:,np.newaxis,np.newaxis]
-                        flow=flow.transpose((1,2,3,0,4))
-                        flow_final[y:y_max, x:x_max,z:z+1,:,:] = flow
+                        flow_final = np.zeros((flow.shape[1], flow.shape[2], 1, 3, 1)).astype(np.float32)
+  #                      print('tsets',flow_final.shape,flow[:,:,:,np.newaxis,np.newaxis].shape)
+                        flow_final=flow[:,:,:,np.newaxis,np.newaxis].astype(np.float32)
+                        flow_final=flow_final.transpose((1,2,3,0,4))
+                    #    flow_final[y:y_max, x:x_max,z:z+1,:,:] = flow
+                        root[f]['vector'][y:y_max, x:x_max,z:z+1,0:3,0:1] = flow_final
 
-            # Saving  Vector in chunks
-            cluster = root.create_group(f)
-            init_cluster_1 = cluster.create_dataset('vector', shape=flow_final.shape, data=flow_final,chunks=(tile_size, tile_size, 1, 3, 1))
-            init_cluster_2 = cluster.create_dataset('lbl', shape=br.shape, data=br[:],chunks=(tile_size, tile_size, 1, 3, 1))
-            cluster.attrs['metadata'] = str(br.metadata)
-
+                        root[f]['lbl'][y:y_max, x:x_max,z:z+1, 0:1,0:1] = br[y:y_max, x:x_max,z:z+1, 0,0]
     except FileExistsError:
         logger.info('Zarr file exists. Delete the existing file %r' % str((Path(outDir).joinpath('flow.zarr'))))
     finally:
