@@ -1,0 +1,61 @@
+{
+    "name": "Polus SplineDist Plugin",
+    "version": "0.0.1",
+    "title": "Training SplineDist",
+    "description": "This plugin trains a neural network to identify segments using SplineDist's algorithm",
+    "author": "Madhuri Vihani (Madhuri.Vihani@axleinfo.com),  Hythem Sidky (Hythem.Sidky@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "https://www.biorxiv.org/content/10.1101/2020.10.27.357640v1",
+    "containerId": "mmvihani/polus-training-splinedist-plugin:0.0.1",
+    "inputs": [
+      {
+        "name": "inpDir_images",
+        "description": "Input collection",
+        "type": "collection",
+        "options": null,
+        "required": true
+      },
+      {
+        "name": "inpDir_labels",
+        "description": "Input collection",
+        "type": "collection",
+        "options": null,
+        "required": true
+      },
+      {
+        "name": "imagePattern",
+        "description": "Pattern of the images in Input",
+        "type": "string",
+        "options": null,
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "description": "Precomputed output",
+        "type": "pyramid",
+        "options": null,
+        "required": true
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.inpDir_images",
+        "title": "Input collection: ",
+        "description": "Collection name that contains intensity based images"
+      },
+      {
+        "key": "inputs.inpDir_labels",
+        "title": "Input collection: ",
+        "description": "Collection name that contains labelled segments"
+      },
+      {
+        "key": "inputs.imagePattern",
+        "title": "Image Pattern: ",
+        "description": "Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). "
+      }
+    ]
+  }
