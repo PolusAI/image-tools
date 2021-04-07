@@ -55,6 +55,7 @@ def train(image_dir,
          label_dir,
          output_dir,
          split_percentile,
+         gpu,
          imagepattern):
     
     images = sorted(os.listdir(image_dir))
@@ -78,7 +79,7 @@ def train(image_dir,
 
     logger.info("{}/{} ({}%) for training".format(num_trained, num_images, 100-split_percentile))
     logger.info("{}/{} ({}%) for testing".format(num_tested, num_images, split_percentile))
-    exit()
+
     assert collections.Counter(X_val) == collections.Counter(Y_val), "Image Test Data does not match Label Test Data for neural network"
     assert collections.Counter(X_trn) == collections.Counter(Y_trn), "Image Train Data does not match Label Train Data for neural network"
 
@@ -155,13 +156,14 @@ def train(image_dir,
     n_channel_in    = n_channel,
     contoursize_max = contoursize_max,
     )
-
+    conf.use_gpu = gpu
+    
     logger.info("\n Generating phi and grids ... ")
     phi_generator(M, conf.contoursize_max, '.')
     grid_generator(M, conf.train_patch_size, conf.grid, '.')
 
     model = SplineDist2D(conf, name='models', basedir=output_dir)
-    model.train(array_images_trained,array_labels_trained, validation_data=(array_images_tested, array_labels_tested), augmenter=augmenter, epochs = 1)
+    model.train(array_images_trained,array_labels_trained, validation_data=(array_images_tested, array_labels_tested), augmenter=augmenter, epochs = 300)
 
     logger.info("\n Done Training.")
 
@@ -176,6 +178,8 @@ if __name__ == "__main__":
                         help='Path to folder with labelled segments, ground truth', required=True)
     parser.add_argument('--splitPercentile', dest='split_percentile', type=int,
                         help='Percentage of data that is allocated for testing', required=True)
+    parser.add_argument('--gpuAvailability', dest='GPU', type=bool,
+                        help='Is there a GPU to use?', required=False, default=False)
     parser.add_argument('--outDir', dest='output_directory', type=str,
                         help='Path to output directory containing the neural network weights', required=True)
     parser.add_argument('--imagePattern', dest='image_pattern', type=str,
@@ -186,6 +190,7 @@ if __name__ == "__main__":
     image_dir = args.input_directory_images
     label_dir = args.input_directory_labels
     split_percentile = args.split_percentile
+    gpu = args.GPU
     output_directory = args.output_directory
     imagepattern = args.image_pattern
     
@@ -193,9 +198,11 @@ if __name__ == "__main__":
     logger.info("Input Directory for Labelled Images: {}".format(label_dir))
     logger.info("Output Directory: {}".format(output_directory))
     logger.info("Image Pattern: {}".format(imagepattern))
+    logger.info("GPU: {}".format(gpu))
     
     train(image_dir,
          label_dir,
          output_directory,
          split_percentile,
+         gpu,
          imagepattern)
