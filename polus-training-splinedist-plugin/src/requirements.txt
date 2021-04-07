@@ -3,3 +3,4 @@ numpy==1.19.4
 stardist==0.6.0
 csbdeep==0.6.1
 bfio==2.0.6
+opencv-python==4.3.0.36
