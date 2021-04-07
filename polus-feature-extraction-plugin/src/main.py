@@ -1332,7 +1332,7 @@ def main():
 
             #Save each csv file separately
             os.chdir(outDir)
-            if csvfile == 'singlecsv' and files =='':
+            if csvfile == 'singlecsv' and (files ==''or files==None):
                  df_csv = df_csv.append(df)
             elif csvfile == 'separatecsv':
                 if df.empty:
