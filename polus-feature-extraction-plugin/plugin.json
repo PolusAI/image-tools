@@ -1,6 +1,6 @@
 {
     "name": "Feature Extraction",
-    "version": "0.10.0",
+    "version": "0.11.0",
     "title": "Feature Extraction",
     "description": "Extract shape and intensity features from images.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-extraction-plugin:0.10.0",
+    "containerId": "labshare/polus-feature-extraction-plugin:0.11.0",
     "inputs": [      
       {
         "name": "segDir",
@@ -48,12 +48,9 @@
                       { "description": "Perimeter", "enum": [ "perimeter" ] },
 		      { "description": "Orientation", "enum": [ "orientation" ] },
 		      { "description": "Convex Area", "enum": [ "convex_area" ] },
-                      { "description": "Centroid X", "enum": [ "centroid_x" ] },
-		      { "description": "Centroid Y", "enum": [ "centroid_y" ] },
-		      { "description": "BB Xmin", "enum": [ "bbox_xmin" ] },
-		      { "description": "BB Ymin", "enum": [ "bbox_ymin" ] },
-		      { "description": "BB Width", "enum": [ "bbox_width" ] },
-		      { "description": "BB Height", "enum": [ "bbox_height" ] },
+                      { "description": "Centroid", "enum": [ "centroid" ] },
+		      { "description": "Boundingbox location", "enum": [ "boundingbox_location" ] },
+		      { "description": "Boundingbox dimension", "enum": [ "boundingbox_dimension" ] },
 		      { "description": "Eccentricity", "enum": [ "eccentricity" ] },
                       { "description": "Equivalent Diameter", "enum": [ "equivalent_diameter" ] },
 		      { "description": "Euler Number", "enum": [ "euler_number" ] },
