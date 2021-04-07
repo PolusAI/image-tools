@@ -56,7 +56,7 @@ if __name__=="__main__":
             cluster.attrs['metadata'] = str(br.metadata)
 
             # Initializing a array to store the vector field
-         #   flow_final = np.zeros((br.Y, br.X, br.Z, 3, 1)).astype(np.float32)
+
             # Iterating over Z dimension
             for z in range(br.Z):
                 for x in range(0, br.X, tile_size):
@@ -65,12 +65,9 @@ if __name__=="__main__":
                         y_max = min([br.Y, y + tile_size])
                         flow = dynamics.labels_to_flows(br[y:y_max, x:x_max,z:z+1, 0,0].squeeze())
                         flow_final = np.zeros((flow.shape[1], flow.shape[2], 1, 3, 1)).astype(np.float32)
-  #                      print('tsets',flow_final.shape,flow[:,:,:,np.newaxis,np.newaxis].shape)
                         flow_final=flow[:,:,:,np.newaxis,np.newaxis].astype(np.float32)
                         flow_final=flow_final.transpose((1,2,3,0,4))
-                    #    flow_final[y:y_max, x:x_max,z:z+1,:,:] = flow
                         root[f]['vector'][y:y_max, x:x_max,z:z+1,0:3,0:1] = flow_final
-
                         root[f]['lbl'][y:y_max, x:x_max,z:z+1, 0:1,0:1] = br[y:y_max, x:x_max,z:z+1, 0,0]
     except FileExistsError:
         logger.info('Zarr file exists. Delete the existing file %r' % str((Path(outDir).joinpath('flow.zarr'))))
