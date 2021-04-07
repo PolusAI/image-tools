@@ -5,13 +5,7 @@ from pathlib import Path
 import zarr
 import mask
 from numba import jit
-
-
 np.seterr(divide='ignore', invalid='ignore')
-
-lbl_dtype={'uint8':255,'uint16':65535,'uint32':4294967295,'float':3.402823E+38}
-
-
 
 @jit(nopython=True)
 def _label_overlap(x, y):
@@ -126,16 +120,10 @@ def main():
             logger.info(
                 'Processing image ({}/{}): {}'.format(count + 1, len([file_name for file_name, _ in root.groups()]),
                                                       file_name))
-
             metadata = vec.attrs['metadata']
-
-
             tile_size = min(1024, root[file_name]['vector'].shape[1])
-            lblcnt_max = 0
-
             path = Path(outDir).joinpath(str(file_name))
             xml_metadata = OmeXml.OMEXML(metadata)
-
             new_img = -1
             with  BioWriter(file_path=Path(path), backend='python', metadata=xml_metadata) as bw:
                 bw.dtype=np.dtype(np.uint32)
@@ -159,7 +147,6 @@ def main():
                         # Generating masks for the tile
                             maski = mask.compute_masks(p, cellprob, dP, new_img,z, cellprob_threshold,
                                                             flow_threshold)
-
                             new_tile=maski
                             if z > 0 and stitch_threshold > 0 :
                                 logger.info('stitching   masks into 3D volume for tile [Y({}:{}),X({}:{}),Z({}:{})]'.format(y,y_max, x,x_max, z,z + 1))
@@ -167,7 +154,6 @@ def main():
                                 mask_3d=stitch3D(tilez_stack.squeeze(),stitch_threshold=stitch_threshold)
                                 bw[y:y_max, x:x_max, z-1:z+1, 0, 0] = mask_3d[:, :, :, np.newaxis,
                                                                       np.newaxis].astype(np.uint32)
-
                             else:
                                 if not stitch_threshold >0 or root[file_name]['vector'].shape[2] ==1:
                                     bw[y:y_max, x:x_max, z:z + 1, 0, 0] = maski[:, :, np.newaxis, np.newaxis,

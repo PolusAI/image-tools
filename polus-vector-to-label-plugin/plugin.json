@@ -1,6 +1,6 @@
 {
     "name": "Vector-to-label-plugin",
-    "version": "0.2.6",
+    "version": "0.2.7",
     "title": "Vector-to-label",
     "description": "Plugin to label masks",
     "author": "Sudharsan Prativadi (sudharsan.prativadi@labshare.org)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "Plugin is based on labelling done by Cellpose, https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1",
-    "containerId": "labshare/polus-vector-label-plugin:0.2.6",
+    "containerId": "labshare/polus-vector-label-plugin:0.2.7",
     "inputs": [
 
       {
