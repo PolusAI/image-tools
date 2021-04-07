@@ -11,16 +11,23 @@
     "containerId": "mmvihani/polus-training-splinedist-plugin:0.0.1",
     "inputs": [
       {
-        "name": "inpDir_images",
+        "name": "inpImageDir",
         "description": "Input collection",
         "type": "collection",
         "options": null,
         "required": true
       },
       {
-        "name": "inpDir_labels",
+        "name": "inpLabelDir",
         "description": "Input collection",
         "type": "collection",
+        "options": null,
+        "required": true
+      },
+      {
+        "name": "splitPercentile",
+        "description": "What percent of the data is going to be allocated for testing?",
+        "type": "int",
         "options": null,
         "required": true
       },
@@ -31,6 +38,7 @@
         "options": null,
         "required": false
       }
+
     ],
     "outputs": [
       {
@@ -43,14 +51,19 @@
     ],
     "ui": [
       {
-        "key": "inputs.inpDir_images",
+        "key": "inputs.inpImageDir",
         "title": "Input collection: ",
         "description": "Collection name that contains intensity based images"
       },
       {
-        "key": "inputs.inpDir_labels",
+        "key": "inputs.inpLabelDir",
         "title": "Input collection: ",
         "description": "Collection name that contains labelled segments"
+      },
+      {
+        "key": "inputs.splitPercentile",
+        "title": "Percentage: ",
+        "description": "Percent of data that is allocated for testing"
       },
       {
         "key": "inputs.imagePattern",

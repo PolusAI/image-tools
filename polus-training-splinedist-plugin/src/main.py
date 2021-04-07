@@ -51,9 +51,10 @@ def augmenter(x, y):
     x = x + sig*np.random.normal(0,1,x.shape)
     return x, y
 
-def main(image_dir,
+def train(image_dir,
          label_dir,
          output_dir,
+         split_percentile,
          imagepattern):
     
     images = sorted(os.listdir(image_dir))
@@ -68,16 +69,16 @@ def main(image_dir,
     logger.info("\n Spliting Data for Training and Testing  ...")
     rng = np.random.RandomState(42)
     index = rng.permutation(num_images)
-    n_val = np.ceil(0.15 * num_images).astype('int')
+    n_val = np.ceil((split_percentile/100) * num_images).astype('int')
     ind_train, ind_val = index[:-n_val], index[-n_val:]
     X_val, Y_val = [images[i] for i in ind_val]  , [labels[i] for i in ind_val] # splitting data into train and testing
     X_trn, Y_trn = [images[i] for i in ind_train], [labels[i] for i in ind_train] 
     num_trained = len(ind_train)
     num_tested = len(ind_val)
 
-    logger.info("{}/{} for training".format(num_trained, num_images))
-    logger.info("{}/{} for testing".format(num_tested, num_images))
-
+    logger.info("{}/{} ({}%) for training".format(num_trained, num_images, 100-split_percentile))
+    logger.info("{}/{} ({}%) for testing".format(num_tested, num_images, split_percentile))
+    exit()
     assert collections.Counter(X_val) == collections.Counter(Y_val), "Image Test Data does not match Label Test Data for neural network"
     assert collections.Counter(X_trn) == collections.Counter(Y_trn), "Image Train Data does not match Label Train Data for neural network"
 
@@ -156,8 +157,8 @@ def main(image_dir,
     )
 
     logger.info("\n Generating phi and grids ... ")
-    phi_generator(M, conf.contoursize_max, output_dir)
-    grid_generator(M, conf.train_patch_size, conf.grid, output_dir)
+    phi_generator(M, conf.contoursize_max, '.')
+    grid_generator(M, conf.train_patch_size, conf.grid, '.')
 
     model = SplineDist2D(conf, name='models', basedir=output_dir)
     model.train(array_images_trained,array_labels_trained, validation_data=(array_images_tested, array_labels_tested), augmenter=augmenter, epochs = 1)
@@ -169,10 +170,12 @@ if __name__ == "__main__":
     logger.info("\n Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='Training SplineDist')
 
-    parser.add_argument('--inpDir_images', dest='input_directory_images', type=str,
+    parser.add_argument('--inpImageDir', dest='input_directory_images', type=str,
                         help='Path to folder with intesity based images', required=True)
-    parser.add_argument('--inpDir_labels', dest='input_directory_labels', type=str,
+    parser.add_argument('--inpLabelDir', dest='input_directory_labels', type=str,
                         help='Path to folder with labelled segments, ground truth', required=True)
+    parser.add_argument('--splitPercentile', dest='split_percentile', type=int,
+                        help='Percentage of data that is allocated for testing', required=True)
     parser.add_argument('--outDir', dest='output_directory', type=str,
                         help='Path to output directory containing the neural network weights', required=True)
     parser.add_argument('--imagePattern', dest='image_pattern', type=str,
@@ -182,6 +185,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     image_dir = args.input_directory_images
     label_dir = args.input_directory_labels
+    split_percentile = args.split_percentile
     output_directory = args.output_directory
     imagepattern = args.image_pattern
     
@@ -190,7 +194,8 @@ if __name__ == "__main__":
     logger.info("Output Directory: {}".format(output_directory))
     logger.info("Image Pattern: {}".format(imagepattern))
     
-    main(image_dir,
+    train(image_dir,
          label_dir,
          output_directory,
+         split_percentile,
          imagepattern)
