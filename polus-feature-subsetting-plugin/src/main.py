@@ -31,8 +31,10 @@ def filter_planes(feature_dict, removeDirection, percentile):
     return set(keep_planes)
 
 def make_uniform(planes_dict, uniques, delay):
-    """keep same number of planes across different sections
-    and capture additional planes based on specified delay
+    """ this function makes the output collection uniform in
+    the sense that it preserves same number of planes across 
+    sections. It also captures additional planes based
+    on the value of the delay variable
 
     Args:
         planes_dict (dict): planes to keep in different sections
@@ -101,9 +103,6 @@ if __name__=="__main__":
     # Parse the arguments
     args = parser.parse_args()
     csvDir = args.csvDir
-    if (Path.is_dir(Path(args.csvDir).joinpath('images'))):
-        # switch to images folder if present
-        fpath = str(Path(args.csvDir).joinpath('images').absolute())
     logger.info('csvDir = {}'.format(csvDir))
     delay = args.delay
     delay = 0 if delay==None else int(delay)

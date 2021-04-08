@@ -1,6 +1,6 @@
 {
     "name": "Feature Subsetting",
-    "version": "0.1.8",
+    "version": "0.1.9",
     "title": "Feature Subsetting",
     "description": "Subset data using a given feature",
     "author": "Gauhar Bains (gauhar.bains@labshare.org)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-subsetting-plugin:0.1.8",
+    "containerId": "labshare/polus-feature-subsetting-plugin:0.1.9",
     "inputs": [
       {
         "name": "inpDir",
@@ -48,7 +48,7 @@
       },
       {
         "name": "percentile",
-        "type": "string",
+        "type": "number",
         "description": "Percentile to remove",
         "required": true
       },
