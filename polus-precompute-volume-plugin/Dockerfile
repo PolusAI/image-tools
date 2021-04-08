@@ -1,31 +1,29 @@
-FROM python:3.6-slim as python
-
-COPY VERSION /
+FROM python:3.6
 ARG EXEC_DIR="/opt/executables"
-ARG DATA_DIR="/data"
-RUN mkdir -p ${EXEC_DIR} \
-    && mkdir -p ${DATA_DIR}/inputs \
-    && mkdir ${DATA_DIR}/outputs
-COPY src ${EXEC_DIR}/
 RUN mkdir -p ${EXEC_DIR}
-COPY src ${EXEC_DIR}/
+
+COPY src ${EXEC_DIR}/.
 WORKDIR ${EXEC_DIR}
 
-RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
-WORKDIR ${EXEC_DIR}
-ENTRYPOINT ["python3", "main.py"]
-
-
-FROM python as neurogen
-
-RUN apt update \
-    && apt-get install -y git \
-    && apt-get install -y libgl1-mesa-dev \
-    && apt-get install -y build-essential
-
-RUN git clone --branch decomposition https://github.com/mmvih/neurogen.git --recurse-submodules
+RUN git clone https://github.com/hsidky/neurogen.git --recurse-submodules
 RUN pip3 install cmake
 RUN pip3 install neurogen/
 
+FROM python:3.6-slim
+COPY VERSION /
+ARG EXEC_DIR="/opt/executables"
 
+RUN mkdir -p ${EXEC_DIR} \
+    && mkdir -p ${DATA_DIR}/inputs \
+    && mkdir ${DATA_DIR}/outputs
 
+RUN apt-get update \
+    && apt-get install -y libgl1-mesa-dev \
+    && apt-get install -y libgomp1
+
+COPY --from=0 /usr/local/lib/python3.6/site-packages /usr/local/lib/python3.6/site-packages
+COPY --from=0 /opt/executables ${EXEC_DIR}/
+WORKDIR ${EXEC_DIR}
+RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
+
+ENTRYPOINT ["python3", "main.py"]

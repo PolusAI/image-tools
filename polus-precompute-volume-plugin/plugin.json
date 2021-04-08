@@ -1,6 +1,7 @@
 {
     "name": "Polus Precompute Volume Plugin",
-    "version": "0.2.19",
+    "version": "0.3.0",
+    "containerId": "labshare/polus-precompute-volume-plugin:0.3.0",
     "title": "WIPP Widget",
     "description": "This plugin generates precomputed volumes and meshes for labelled data to view in Neuroglancer",
     "author": "Madhuri Vihani (Madhuri.Vihani@axleinfo.com), Nicholas Schaub (Nick.Schaub@nih.gov), Hythem Sidky (Hythem.Sidky@nih.gov)",
@@ -8,7 +9,6 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "https://github.com/hsidky/neurogen",
-    "containerId": "labshare/polus-precompute-volume-plugin:0.2.19",
     "inputs": [
       {
         "name": "inpDir",
