@@ -18,7 +18,31 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
-def main():
+def main(input_dir: str,
+         output_dir: str,
+         imagetype: str,
+         imagepattern: str,
+         mesh: bool):
+    
+    # Get list of images that we are going to through
+    logger.info("\n Getting the images...")
+    fp_images = fp(Path(input_dir),imagepattern)
+    images = [os.path.basename(i[0]['file']) for i in fp_images() 
+             if os.path.exists(os.path.join(input_dir, os.path.basename(i[0]['file'])))]
+    images.sort()
+    num_images = len(images)
+
+
+    # Build one pyramid for each image in the input directory
+    # Each stack is built within its own process, with a maximum number of processes
+    # equal to number of cpus - 1.
+    for image in images:
+        p = Process(target=utils.build_pyramid, args=(os.path.join(input_dir, image), os.path.join(output_dir, image), imagetype, mesh))
+        p.start()
+        p.join()
+
+if __name__ == "__main__":
+
     # Setup the Argument parsing
     logger.info("\n Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='Generate a precomputed slice for Polus Volume Viewer.')
@@ -54,22 +78,8 @@ def main():
     if imagepattern == None:
         imagepattern = ".*"
 
-    # Get list of images that we are going to through
-    logger.info("\n Getting the images...")
-    fp_images = fp(Path(input_dir),imagepattern)
-    images = [os.path.basename(i[0]['file']) for i in fp_images() 
-             if os.path.exists(os.path.join(input_dir, os.path.basename(i[0]['file'])))]
-    images.sort()
-    num_images = len(images)
-
-
-    # Build one pyramid for each image in the input directory
-    # Each stack is built within its own process, with a maximum number of processes
-    # equal to number of cpus - 1.
-    for image in images:
-        p = Process(target=utils.build_pyramid, args=(os.path.join(input_dir, image), os.path.join(output_dir, image), imagetype, mesh))
-        p.start()
-        p.join()
-
-if __name__ == "__main__":
-    main()
+    main(input_dir,
+         output_dir,
+         imagetype,
+         imagepattern,
+         mesh)
