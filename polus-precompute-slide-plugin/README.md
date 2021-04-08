@@ -32,7 +32,7 @@ contents of `plugin.json` into the pop-up window and submit.
 
 ## Options
 
-This plugin can take two types of input argument and one output argument:
+This plugin can take four types of input argument and one output argument:
 
 | Name          | Description                                           | I/O    | Type    |
 |---------------|-------------------------------------------------------|--------|---------|
