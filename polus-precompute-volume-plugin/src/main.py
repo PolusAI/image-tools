@@ -57,11 +57,12 @@ def main():
     # Get list of images that we are going to through
     logger.info("\n Getting the images...")
     fp_images = fp(Path(input_dir),imagepattern)
-    images = [os.path.basename(i[0]['file']) for i in fp_images()]
+    images = [os.path.basename(i[0]['file']) for i in fp_images() 
+             if os.path.exists(os.path.join(input_dir, os.path.basename(i[0]['file'])))]
     images.sort()
     num_images = len(images)
 
-    
+
     # Build one pyramid for each image in the input directory
     # Each stack is built within its own process, with a maximum number of processes
     # equal to number of cpus - 1.
