@@ -6,7 +6,7 @@ echo ${datapath}
 
 # Inputs
 inpDir=/data/input
-filePattern=r01c01f{p+}p0{z}-ch1sk1fk1fl1.ome.tif
+filePattern=x{xxx}-y{yyy}-z{zzz}.ome.tif
 darkfield=true
 photobleach=false
 groupBy='p'
