@@ -1,0 +1,6 @@
+scipy==1.4.1
+numpy==1.18.1
+bfio==1.3.6
+opencv_python==4.3.0.36
+javabridge==1.0.18
+python_bioformats==1.5.2
