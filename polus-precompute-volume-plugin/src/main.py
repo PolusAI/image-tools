@@ -1,7 +1,7 @@
 import logging, argparse, time, multiprocessing, traceback
 
-from concurrent.futures import ThreadPoolExecutor
-from multiprocessing import Process
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from itertools import repeat
 
 import utils
 import os
@@ -25,21 +25,22 @@ def main(input_dir: str,
          mesh: bool):
     
     # Get list of images that we are going to through
+    # Get list of output paths for every image
     logger.info("\n Getting the images...")
     fp_images = fp(Path(input_dir),imagepattern)
-    images = [os.path.basename(i[0]['file']) for i in fp_images() 
-             if os.path.exists(os.path.join(input_dir, os.path.basename(i[0]['file'])))]
-    images.sort()
-    num_images = len(images)
-
+    input_images = []
+    output_images = []
+    for i in fp_images():
+        image = i[0]['file']
+        if os.path.exists(image):
+            input_images.append(image)
+            output_images.append(os.path.join(output_dir, os.path.basename(image)))
+    assert len(input_images) == len(output_images)
 
     # Build one pyramid for each image in the input directory
-    # Each stack is built within its own process, with a maximum number of processes
-    # equal to number of cpus - 1.
-    for image in images:
-        p = Process(target=utils.build_pyramid, args=(os.path.join(input_dir, image), os.path.join(output_dir, image), imagetype, mesh))
-        p.start()
-        p.join()
+    with ProcessPoolExecutor() as executor:
+        executor.map(utils.build_pyramid, input_images, output_images, repeat(imagetype), repeat(mesh))
+
 
 if __name__ == "__main__":
 

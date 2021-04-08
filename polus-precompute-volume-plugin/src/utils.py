@@ -27,25 +27,21 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger("utils")
 logger.setLevel(logging.INFO)
 
-def get_resolution(phys_y, phys_x, phys_z):
-    """ 
-    This function generates a resolution in nm 
+def get_resolution(phys_y : tuple,
+                   phys_x : tuple,
+                   phys_z : tuple):
     
-    Parameters
-    ----------
-    phys_y : tuple
-        Actual y dimension of input
-    phys_x : tuple
-        Actual x dimension of input
-    phys_z : tuple
-        Actual z dimension of input
+    """ This function generates a resolution in nanometers (nm)
     
-    Returns
-    -------
-    resolution : list
-        The integer values of resolution in nanometers in [Y, X, Z] order
-        If Y and X resolutions are none, then default to 325 nm
-        If Z resolution is none, then defaults to the average of Y and X
+    Args:
+        phys_y : Actual y dimension of input
+        phys_x : Actual x dimension of input
+        phys_z : Actual z dimension of input
+    
+    Returns: 
+        resolution : A list of integer values of resolution in nanometers in [Y, X, Z] order
+                     If Y and X resolutions are none, then default to 325 nm
+                     If Z resolution is none, then defaults to the average of Y and X
     """
     # Conversion factors to nm, these are based off of supported Bioformats length units
     UNITS = {'m':  10**9,
@@ -70,28 +66,26 @@ def get_resolution(phys_y, phys_x, phys_z):
     
     return [phys_y, phys_x, phys_z]
     
-def create_plyfiles(subvolume, 
-                    ids,
-                    temp_dir,
-                    start_y,
-                    start_x,
-                    start_z,
-                    totalbytes=None):
+def create_plyfiles(subvolume : np.ndarray, 
+                    ids : list,
+                    temp_dir : str,
+                    start_y : int,
+                    start_x : int,
+                    start_z : int):
     """
     This function generates temporary ply files of labelled segments found 
     in the subvolume. 
-    Parameters
-    ----------
-    subvolume : numpy array
-        A chunk of the total volume
-    ids : list
-        A list of labeled segments found in the subvolume
-    start_y : int
-        The start y index of the subvolume 
-    start_x : int
-        The start x index of the subvolume
-    start_z : int
-        The start z index of the subvolume
+    
+    Args:
+        subvolume : A chunk of the total volume
+        ids : A list of labeled segments found in the subvolume
+        temp_dir : temporary directory where outputs get saved to
+        start_y : The start y index of the subvolume 
+        start_x : The start x index of the subvolume
+        start_z : The start z index of the subvolume
+
+    Returns:
+        None, saves subvolumes into temporary directory
     """
 
     for iden in ids:
@@ -102,25 +96,22 @@ def create_plyfiles(subvolume,
         root_mesh.export(export_to)
         logger.debug("Saved Segment {} as {}".format(iden, chunk_filename))
 
-def concatenate_and_generate_meshes(iden,
-                                    temp_dir,
-                                    output_image,
-                                    bit_depth,
-                                    chunk_size):
+def concatenate_and_generate_meshes(iden : int,
+                                    temp_dir : str,
+                                    output_image : str,
+                                    bit_depth : int,
+                                    chunk_size : list):
     """ This function concatenates the appropriate polygons in the temporary directory
-    and generates progressive meshes as defined.
-    Parameters
-    ----------
-    iden : int
-        The labeled segment that we are concatenating  
-    temp_dir  : str
-        The directory where all the polygon files are located
-    output_image : str
-        The output directory where all of Neuroglancer's files are stored
-    bit_depth : int
-        Number of bits for mesh vertex quantization. Can only be 10 or 16. 
-    resolution : list
-        Resolution of input data 
+    and generates progressive meshes as defined in neurogen.
+    
+    Args: 
+        iden : The labeled segment that we are concatenating  
+        temp_dir  : The directory where all the polygon files are located
+        output_image : The output directory where all of Neuroglancer's files are stored
+        bit_depth : Number of bits for mesh vertex quantization. Can only be 10 or 16. 
+        chunk_size : Size of chunks in temporary file
+    Returns:
+        None, concatenates and saves the progressive meshes into the appropriate directory
     """
     try:
         # Get the files that are relevent to the segment iden
@@ -177,29 +168,26 @@ def concatenate_and_generate_meshes(iden,
     except Exception as e:
         traceback.print_exc()
 
-def build_pyramid(input_image, 
-                  output_image, 
-                  imagetype, 
-                  mesh):
+def build_pyramid(input_image : str, 
+                  output_image : str, 
+                  imagetype : str, 
+                  mesh : bool):
 
     """
     This function builds the pyramids for Volume Generation and Meshes (if specified)
 
-    Parameters
-    ----------
-    input_image : str
-        Where the input directory is located
-    output_image : str
-        Where the output directory is located
-    imagetype : str
-        Specifying whether we are averaging or taking the mode of the images 
-        when blurring the images for the pyramids
-    mesh : boolean
-        Whether or not meshes are generated with segmented volumes
+    Args:
+        input_image : Where the input directory is located
+        output_image : Where the output directory is located
+        imagetype : Specifying whether we are averaging or taking the mode of the images 
+                    when blurring the images for the pyramids
+        mesh : Whether or not meshes are generated with segmented volumes
 
-    Returns
-    -------
-    Pyramids or volumes of input data
+    Returns:
+        None, generates pyramids or volumes of input data
+    
+    Raises:
+        ValueError: If imagetype is not properly specified
     """
 
     # Getting the intial information for the info file specification required by Neuroglancer 
@@ -236,7 +224,6 @@ def build_pyramid(input_image,
 
             # Keep track of the labelled segments
             all_identities = np.array([])
-            totalbytes = {}
             temp_dir = os.path.join(output_image, "tempdir")
 
             num_scales = np.floor(np.log2(max(bfshape[:3]))).astype('int')+1
@@ -264,20 +251,19 @@ def build_pyramid(input_image,
                                 continue
                             else:
                                 ids = np.delete(ids, np.where(ids==0))
-                                with ThreadPoolExecutor(max_workers=8) as executor:
+                                with ThreadPoolExecutor(max_workers=max([cpu_count()-1,2])) as executor:
                                     executor.submit(create_plyfiles(subvolume = volume,
                                                                     ids=ids,
                                                                     temp_dir=temp_dir,
                                                                     start_y=start_y,
                                                                     start_x=start_x,
-                                                                    start_z=start_z,
-                                                                    totalbytes=totalbytes))
+                                                                    start_z=start_z))
                                     all_identities = np.append(all_identities, ids)
 
                 # concatenate and decompose the meshes in the temporary file for all segments
                 logger.info("\n Generate Progressive Meshes for segments ...")
                 all_identities = np.unique(all_identities).astype('int')
-                with ThreadPoolExecutor(max_workers=4) as executor:
+                with ThreadPoolExecutor(max_workers=max([cpu_count()-1,2])) as executor:
                     executor.map(concatenate_and_generate_meshes, 
                                 all_identities, repeat(temp_dir), repeat(output_image), repeat(bit_depth), repeat(chunk_size)) 
 
