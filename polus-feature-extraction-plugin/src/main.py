@@ -617,7 +617,7 @@ def feature_extraction(features,
         return data_dict
 
     def centroid_y(*args):
-        """Calculate centroidx for all the regions of interest in the image."""
+        """Calculate centroidy for all the regions of interest in the image."""
         centroid_value = [str(region.centroid) for region in regions]
         cent_y= [cent.split(',') for cent in centroid_value]
         data_dict = [centroid_y[0].replace('(','') for centroid_y in cent_y]
@@ -625,7 +625,7 @@ def feature_extraction(features,
         return data_dict
 
     def centroid_x(*args):
-        """Calculate centroidy for all the regions of interest in the image."""
+        """Calculate centroidx for all the regions of interest in the image."""
         centroid_value = [str(region.centroid) for region in regions]
         cent_x = [cent.split(',') for cent in centroid_value]
         data_dict = [centroid_x[1].replace(')','') for centroid_x in cent_x]
@@ -1297,15 +1297,15 @@ def main():
                         if channel != None:
                             channel=file['c']
                         dfc,title = feature_extraction(features,
-											img_file[0][0]['file'],
-											embeddedpixelsize,
-											unitLength,
-											pixelsPerunit,
-											pixelDistance,
-                                            channel,
-											intensity_image,
-											img_emb_unit,
-                                            label_image)
+						        img_file[0][0]['file'],
+						        embeddedpixelsize,
+							unitLength,
+							pixelsPerunit,
+							pixelDistance,
+                                                        channel,
+							intensity_image,
+							img_emb_unit,
+                                                        label_image)
                         if df is None:
                             df = dfc
                         else:
