@@ -1,5 +1,4 @@
 # Code sourced from https://github.com/MouseLand/cellpose/tree/master/cellpose
-
 import numpy as np
 from scipy.ndimage.filters import maximum_filter1d
 import scipy.ndimage
@@ -20,12 +19,10 @@ def map_coordinates(I, yc, xc, Y):
     C,Ly,Lx = I.shape
     yc_floor = yc.astype(np.int32)
     xc_floor = xc.astype(np.int32)
-
     yc = yc - yc_floor
     xc = xc - xc_floor
 
     for i in range(yc_floor.shape[0]):
-
         yf = min(Ly-1, max(0, yc_floor[i]))
         xf = min(Lx-1, max(0, xc_floor[i]))
         yf1= min(Ly-1, yf+1)
@@ -60,7 +57,6 @@ def steps2D(p, dP, inds, niter):
 
     Returns:
     p(array[float32]): 3D array.final locations of each pixel after dynamics
-
     """
 
     shape = p.shape[1:]
@@ -87,7 +83,6 @@ def steps3D(p, dP, inds, niter):
 
     Returns:
     p(array[float32]):  4D array.final locations of each pixel after dynamics
-
     """
     shape = p.shape[1:]
     for t in range(niter):
@@ -101,8 +96,6 @@ def steps3D(p, dP, inds, niter):
             p[2,z,y,x] = min(shape[2]-1, max(0, p[2,z,y,x] - dP[2,p0,p1,p2]))
     return p
 
-
-
 def follow_flows(dP, niter=200, interp=True):
     """ Define pixels and run dynamics to recover masks in 2D
     Pixels are meshgrid. Only pixels with non-zero cell-probability
@@ -115,7 +108,6 @@ def follow_flows(dP, niter=200, interp=True):
 
     Returns:
     p(array[float32]): 3D array.final locations of each pixel after dynamics
-
     """
     shape = np.array(dP.shape[1:]).astype(np.int32)
     niter = np.int32(niter)
@@ -134,20 +126,18 @@ def follow_flows(dP, niter=200, interp=True):
                                                       dP, niter)
     return p
 
-total_pix={}
+total_pix=0
 
-def set_totalpix(a,z):
+def set_totalpix(a):
     """Counter for  number of masks predicted
     Args:
-        a(int): Number of masks in a tile.
-        z(int): Slice of the image.
+        a(int):  Number of maks in a tile
     """
     global total_pix
     if a!=0:
-        total_pix[z]=a
+        total_pix=a
     else:
-        total_pix[z]=0
-
+        total_pix=0
 
 def get_masks(p,update_lbl, iscell=None, rpad=20, flows=None, threshold=0.4):
     """ Create masks using pixel convergence after running dynamics.Makes a histogram of final pixel locations p,
@@ -193,7 +183,6 @@ def get_masks(p,update_lbl, iscell=None, rpad=20, flows=None, threshold=0.4):
     for s in seeds:
         s = s[isort]
     pix = list(np.array(seeds).T)
-
     shape = h.shape
     if dims==3:
         expand = np.nonzero(np.ones((3,3,3)))
@@ -222,34 +211,27 @@ def get_masks(p,update_lbl, iscell=None, rpad=20, flows=None, threshold=0.4):
                 pix[k] = tuple(pix[k])
 
     M = np.zeros(h.shape, np.int32)
-
     for k in range(len(pix)):
         M[pix[k]] = 1+k
-
 
     for i in range(dims):
         pflows[i] = pflows[i] + rpad
 
     M0 = M[tuple(pflows)]
-
     # remove big masks
     _,counts = np.unique(M0, return_counts=True)
-
     big = np.prod(shape0) * 0.4
     for i in np.nonzero(counts > big)[0]:
         M0[M0==i] = 0
 
     _,M0 = np.unique(M0, return_inverse=True)
     M0 = np.reshape(M0, shape0)
-
     if threshold is not None and threshold > 0 and flows is not None:
         M0 = remove_bad_flow_masks(M0, flows, threshold=threshold)
         _,M0 = np.unique(M0, return_inverse=True)
 
     M0 = np.reshape(M0, shape0).astype(np.int32)
-
     M0[M0 > 0] += update_lbl
-
     return M0
 
 def remove_bad_flow_masks(masks, flows, threshold=0.4):
@@ -262,7 +244,6 @@ def remove_bad_flow_masks(masks, flows, threshold=0.4):
 
     Returns:
         masks(array[int]):  2D or 3D array.Masks with inconsistent flow masks removed,0=NO masks; 1,2,...=mask labels,size [Ly x Lx]
-
     """
     merrors, _ = flow_error(masks, flows)
     badi = 1+(merrors>threshold).nonzero()[0]
@@ -282,12 +263,11 @@ def _extend_centers(T,y,x,ymed,xmed,Lx, niter):
 
     Returns:
         T(array[float]): amount of diffused particles at each pixel
-
     """
     for t in range(niter):
         T[ymed*Lx + xmed] += 1
-        T[y*Lx + x] = 1/9. * (T[y*Lx + x] + T[(y-1)*Lx + x]   + T[(y+1)*Lx + x] +
-                                            T[y*Lx + x-1]     + T[y*Lx + x+1] +
+        T[y*Lx + x] = 1/9. * (T[y*Lx + x] + T[(y-1)*Lx + x] + T[(y+1)*Lx + x] +
+                                            T[y*Lx + x-1] + T[y*Lx + x+1] +
                                             T[(y-1)*Lx + x-1] + T[(y-1)*Lx + x+1] +
                                             T[(y+1)*Lx + x-1] + T[(y+1)*Lx + x+1])
     return T
@@ -302,7 +282,6 @@ def masks_to_flows(masks):
     Returns:
         mu(array[float]):  3D or 4D array.flows in Y = mu[-2], flows in X = mu[-1].if masks are 3D, flows in Z = mu[0].
         mu_c(array[float]):  2D or 3D array.for each pixel, the distance to the center of the mask in which it resides
-
     """
     if masks.ndim > 2:
         Lz, Ly, Lx = masks.shape
@@ -321,7 +300,6 @@ def masks_to_flows(masks):
     Ly, Lx = masks.shape
     mu = np.zeros((2, Ly, Lx), np.float64)
     mu_c = np.zeros((Ly, Lx), np.float64)
-
     nmask = masks.max()
     slices = scipy.ndimage.find_objects(masks)
     dia = utils.diameters(masks)[0]
@@ -367,7 +345,6 @@ def flow_error(maski, dP_net):
     Returns:
         flow_errors(array[float]): array with length maski.max()mean squared error between predicted flows and flows from masks
         dP_masks(array[float]): ND-array.ND flows produced from the predicted masks
-
     """
     if dP_net.shape[1:] != maski.shape:
         print('ERROR: net flow is not same size as predicted masks')
@@ -378,7 +355,6 @@ def flow_error(maski, dP_net):
     iun = np.unique(maski)[1:]
     flow_errors = np.zeros((len(iun),))
     for i, iu in enumerate(iun):
-
         ii = maski == iu
         if dP_masks.shape[0] == 2:
             flow_errors[i] += ((dP_masks[0][ii] - dP_net[0][ii] / 5.) ** 2
@@ -403,24 +379,16 @@ def compute_masks(p,cellprob,dP,new_img,z,cellprob_threshold=0.0,flow_threshold=
 
     Returns:
         Masks(array[float]): ND-array.Predicted masks
-
     """
     global total_pix
-
     if new_img<0:
-        if z==0:
-           total_pix.clear()
-        set_totalpix(0,z)
+        set_totalpix(0)
 
-    maski = get_masks(p,int(total_pix[z]), iscell=(cellprob > cellprob_threshold),
+    maski = get_masks(p,total_pix, iscell=(cellprob > cellprob_threshold),
                                flows=dP, threshold=flow_threshold)
-
-    cnt = np.amax(maski) if np.amax(maski) !=0 else 0
+    cnt = np.amax(maski) if np.amax(maski) !=0 else total_pix
     maski = fill_holes(maski)
-    # import matplotlib.pyplot as plt
-    # imgplot = plt.imshow(maski)
-    # plt.show()
-    set_totalpix(cnt,z)
+    set_totalpix(cnt)
 
     return maski
 
@@ -435,7 +403,6 @@ def fill_holes(masks, min_size=15):
     Returns:
     masks(array[int]):  2D or 3D array.masks with holes filled and masks smaller than min_size removed,0=NO masks; 1,2,...=mask labels,
         size [Ly x Lx] or [Lz x Ly x Lx]
-
     """
     if masks.ndim > 3 or masks.ndim < 2:
         raise ValueError('masks_to_outlines takes 2D or 3D array, not %dD array'%masks.ndim)
@@ -474,7 +441,6 @@ def remove_small_objects(ar, min_size=64, connectivity=1):
 
     Returns:
         out(array):The input array with small connected components removed.
-
     """
     out = ar.copy()
     if min_size == 0:  # shortcut for efficiency

@@ -1,13 +1,13 @@
 {
-    "name": "Vector-to-label-plugin",
+    "name": "Vector to label",
     "version": "0.2.7",
-    "title": "Vector-to-label",
+    "title": "Vector to label",
     "description": "Plugin to label masks",
     "author": "Sudharsan Prativadi (sudharsan.prativadi@labshare.org)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
-    "citation": "Plugin is based on labelling done by Cellpose, https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1",
+    "citation": "Cellpose a generalist, deep learning-based segmentation algorithm which can very precisely segment a wide range of image types out-of-the-box and does not require model retraining or parameter adjustments, https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1",
     "containerId": "labshare/polus-vector-label-plugin:0.2.7",
     "inputs": [
 
