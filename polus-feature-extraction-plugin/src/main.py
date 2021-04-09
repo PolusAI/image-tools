@@ -5,7 +5,6 @@ from scipy.stats import skew
 from scipy.stats import kurtosis as kurto
 from scipy.stats import mode as modevalue
 from scipy import stats
-from scipy import ndimage
 from operator import itemgetter
 from bfio import BioReader
 import argparse
@@ -617,19 +616,19 @@ def feature_extraction(features,
         logger.debug('Completed extracting boundingbox_height for ' + seg_file_names1.name)
         return data_dict
 
-    def centroid_x(*args):
+    def centroid_y(*args):
         """Calculate centroidx for all the regions of interest in the image."""
         centroid_value = [str(region.centroid) for region in regions]
-        cent_x= [cent.split(',') for cent in centroid_value]
-        data_dict = [centroid_x[0].replace('(','') for centroid_x in cent_x]
+        cent_y= [cent.split(',') for cent in centroid_value]
+        data_dict = [centroid_y[0].replace('(','') for centroid_y in cent_y]
         logger.debug('Completed extracting centroid_row for ' + seg_file_names1.name)
         return data_dict
 
-    def centroid_y(*args):
+    def centroid_x(*args):
         """Calculate centroidy for all the regions of interest in the image."""
         centroid_value = [str(region.centroid) for region in regions]
-        cent_y = [cent.split(',') for cent in centroid_value]
-        data_dict = [centroid_y[1].replace(')','') for centroid_y in cent_y]
+        cent_x = [cent.split(',') for cent in centroid_value]
+        data_dict = [centroid_x[1].replace(')','') for centroid_x in cent_x]
         logger.debug('Completed extracting centroid_column for ' + seg_file_names1.name)
         return data_dict
 
@@ -968,28 +967,27 @@ def feature_extraction(features,
             raise ValueError('Enter pixels per unit value.')
             
     logger.info('Extracting features for ' + seg_file_names1.name)
-
+    
+    #Centroid values shown separately in output as centroid_x and centroid_y
     if 'centroid' in features:
         features.remove('centroid')
         features.append('centroid_x')
         features.append('centroid_y')
-    
+    #Bounding box location values shown separately in output as bbox_xmin and bbox_ymin
     if 'boundingbox_location' in features:
         features.remove('boundingbox_location')
         features.append('bbox_xmin')
         features.append('bbox_ymin')
-    
+    #Bounding box dimension values shown separately in output as bbox_width and bbox_height
     if 'boundingbox_dimension' in features:
         features.remove('boundingbox_dimension')
         features.append('bbox_width')
         features.append('bbox_height')
+    
     for each_feature in features:
-
-
         #Dynamically call the function based on the features required
         if label_image is not None:
             feature_value = FEAT[each_feature](label_image,unitLength,intensity_image)
-
         else:
             feature_value = FEAT[each_feature](intensity_image)
         #get all features
@@ -1043,6 +1041,7 @@ def feature_extraction(features,
             if unitLength and not embeddedpixelsize:
                 check_cols = [col for col in df.columns if 'area' in col]
                 df.columns = [x + '^2' if x in check_cols else x for x in df]
+            #Show channel values only when there is more than 1 channel
             if channel is None:
                 df.columns = [c+f'' for c in df.columns]
             else:
@@ -1101,15 +1100,16 @@ def feature_extraction(features,
             #Find whether the object is touching border or not 
             border_cells = np.full((len(regions)),True,dtype=bool)       
             border_cells[label_nt_touching]=False
+            #Create column label and image
             data = { 'label': label,
                      'image':title}                     
-                      #'touching_border': border_cells} 
             data1 = {'touching_border': border_cells}
-            df1 = pd.DataFrame(data,columns=['label','image'])#,'touching_border'])
+            df1 = pd.DataFrame(data,columns=['label','image'])
+            #Create column touching border
             df2 = pd.DataFrame(data1,columns=['touching_border'])
             df_insert1 = pd.concat([df1,df_insert,df2],ignore_index=True, axis=1)
             dfch = df_insert.columns.tolist()
-            df_values= ['label','image']#,'touching_border']
+            df_values= ['label','image']
             df_values1 = ['touching_border']
             joinedlist= df_values + dfch + df_values1
             df_insert = df_insert1
@@ -1234,13 +1234,16 @@ def main():
     if segDir and intDir:
         if len(files_seg) == 0 and len(files_int)==0 :
             raise ValueError("Could not find files matching filepattern")
+        if len(files_seg) != len(files_int) :
+            raise ValueError("Number of labeled/segmented images is not equal to number of intensity images")
     elif segDir and not intDir:
         if len(files_seg) == 0:
             raise ValueError("Could not find labeled/segmented image files matching filepattern")
     elif intDir and not segDir:
         if len(files_int) == 0:
             raise ValueError("Could not find intensity image files matching filepattern")
-        
+    
+    #Only intensity image as input    
     if not segDir:
         for intfile in files_int:
             df=None
@@ -1270,7 +1273,8 @@ def main():
             label_image,img_emb_unit = read(img_file[0][0]['file'])
             df = None
             files=''
-
+            channel=''
+            #Both intensity and labeled image passed as input
             if intDir:
                 #Get matching files
                 files = configfiles_int.get_matching(**{k.upper():v for k,v in img_file[0][0].items() if k not in ['file','c']})
@@ -1284,14 +1288,14 @@ def main():
                            continue
                     else:
                         intensity_image,img_emb_unit = read(files[0]['file'])
-                        channel=files[0]['c']
+                        
+                    #Check length of files to mention channels in output only when there is more than one channel
                     if len(files)==1:
                         channel = None
-                    else:
-                        channel=files[0]['c']
-                        
-                    
+
                     for file in files:
+                        if channel != None:
+                            channel=file['c']
                         dfc,title = feature_extraction(features,
 											img_file[0][0]['file'],
 											embeddedpixelsize,
@@ -1306,19 +1310,19 @@ def main():
                             df = dfc
                         else:
                             df = pd.concat([df, dfc.iloc[:,2:]], axis=1,sort=False)
+
                     if csvfile == 'singlecsv':
                         df_csv = df_csv.append(df)
-                    
                     
                 else:
                     #Read intensity image
                     intensity_image,img_emb_unit = read(img_file[1][0]['file'])
                     channel=None
-                    
-            if not intDir:
+                
+            #Dataframe contains the features extracted from images 
+            if not intDir or files==[] or files==None:
                 channel=None
-            #Dataframe contains the features extracted from images  
-            df,title = feature_extraction(features,
+                df,title = feature_extraction(features,
                                           img_file[0][0]['file'],
                                           embeddedpixelsize,
                                           unitLength,
@@ -1329,16 +1333,20 @@ def main():
                                           img_emb_unit,
                                           label_image
                                           )
-
             #Save each csv file separately
             os.chdir(outDir)
-            if csvfile == 'singlecsv' and (files ==''or files==None):
+            
+            if csvfile == 'singlecsv' and (files ==''or files==None or files==[]):
                  df_csv = df_csv.append(df)
             elif csvfile == 'separatecsv':
                 if df.empty:
                     raise ValueError('No output to save as csv files')
                 else:
                     logger.info('Saving dataframe to csv for ' + img_file[0][0]['file'].name)
+                    df = df.loc[:,~df.columns.duplicated()]
+                    if 'touching_border' in df.columns:
+                        last_column = df.pop('touching_border')
+                        df.insert(len(df.columns), 'touching_border', last_column)
                     export_csv = df.to_csv(r'%s.csv'%title, index=None, header=True, encoding='utf-8-sig')
 
     #Save values for all images in single csv
@@ -1348,6 +1356,10 @@ def main():
          else:
             logger.info('Saving dataframe to csv file for all images')
             df_csv.dropna(inplace=True, axis=1, how='all')
+            df_csv = df_csv.loc[:,~df_csv.columns.duplicated()]
+            if 'touching_border' in df_csv.columns:
+                last_column = df_csv.pop('touching_border')
+                df_csv.insert(len(df_csv.columns), 'touching_border', last_column)
             export_csv = df_csv.to_csv(r'Feature_Extraction.csv', index=None, header=True, encoding='utf-8-sig')
 
 if __name__ == "__main__":

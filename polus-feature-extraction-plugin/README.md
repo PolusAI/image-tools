@@ -69,6 +69,8 @@ Extracting intensity-based features requires intensity image and labeled image i
 
 ### File pattern:
 Enter file pattern to match the intensity and labeled/segmented images to extract features (https://pypi.org/project/filepattern/)
+Filepattern will sort alphabetically the files in the labeled image folder and intensity image folder and read images in alphabetical order when universal selector(.*.ome.tif) is given as input.
+If specific pattern is mentioned as input, then filepattern will get matches from labeled image folder and intensity image folder based on that pattern.
 
 ### Pixel distance:
 Enter value for this parameter if neighbors touching cells needs to be calculated. The default value is 5. This is an optional parameter. 
