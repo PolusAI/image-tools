@@ -4,6 +4,7 @@ import numpy as np
 from pathlib import Path
 import dynamics
 import zarr
+import shutil
 
 if __name__=="__main__":
     # Initialize the logger
@@ -40,11 +41,11 @@ if __name__=="__main__":
         # Get all file names in inpDir image collection
         inpDir_files = [f.name for f in Path(inpDir).iterdir() if f.is_file() and "".join(f.suffixes) == '.ome.tif' ]
         if Path(outDir).joinpath('flow.zarr').exists():
-           raise FileExistsError('Zarr file exists. Delete the existing file')
+           shutil.rmtree(str(Path(outDir).joinpath('flow.zarr')), ignore_errors=True)
         root = zarr.group(store=str(Path(outDir).joinpath('flow.zarr')))
+        # Loop through files in inpDir image collection and process
         for f in inpDir_files:
             logger.info('Processing image %s ',f)
-        # Loop through files in inpDir image collection and process
             br = BioReader(str(Path(inpDir).joinpath(f).absolute()))
             tile_size = min(1024, br.X)
             # Saving  Vector in chunks
@@ -54,9 +55,6 @@ if __name__=="__main__":
             init_cluster_2 = cluster.create_dataset('lbl', shape=br.shape,
                                                     chunks=(tile_size, tile_size, 1, 3, 1))
             cluster.attrs['metadata'] = str(br.metadata)
-
-            # Initializing a array to store the vector field
-
             # Iterating over Z dimension
             for z in range(br.Z):
                 for x in range(0, br.X, tile_size):
@@ -69,8 +67,7 @@ if __name__=="__main__":
                         flow_final=flow_final.transpose((1,2,3,0,4))
                         root[f]['vector'][y:y_max, x:x_max,z:z+1,0:3,0:1] = flow_final
                         root[f]['lbl'][y:y_max, x:x_max,z:z+1, 0:1,0:1] = br[y:y_max, x:x_max,z:z+1, 0,0]
-    except FileExistsError:
-        logger.info('Zarr file exists. Delete the existing file %r' % str((Path(outDir).joinpath('flow.zarr'))))
+
     finally:
         logger.info('Closing ')
         # Exit the program

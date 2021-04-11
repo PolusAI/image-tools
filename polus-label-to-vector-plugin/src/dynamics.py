@@ -5,7 +5,6 @@ import scipy.ndimage
 import numpy as np
 from numba import njit
 
-
 def diameters(masks):
     """ Get median 'diameter' of masks
     Args:
@@ -62,9 +61,9 @@ def labels_to_flows(labels):
     if labels[0].ndim < 3:
         labels = [labels[0][np.newaxis, :, :]]
     # compute flows
-    veci = [masks_to_flows(labels[0][0])[0] ]
+    veci = [masks_to_flows(labels[0][0])[0]]
     # concatenate flows with cell probability
-    flows = np.concatenate((  veci[0],labels[0][[0]] > 0.5), axis=0).astype(np.float32)
+    flows = np.concatenate((veci[0],labels[0][[0]] > 0.5), axis=0).astype(np.float32)
     return flows
 
 
