@@ -13,14 +13,35 @@ from splinedist import fill_label_holes
 from splinedist.utils import phi_generator, grid_generator, get_contoursize_max
 from splinedist.models import Config2D, SplineDist2D, SplineDistData2D
 from splinedist.utils import phi_generator, grid_generator, get_contoursize_max
+from splinedist import random_label_cmap
 
 import cv2
+
+import matplotlib
+matplotlib.rcParams["image.interpolation"] = None
+import matplotlib.pyplot as plt
+lbl_cmap = random_label_cmap()
+# matplotlib inline
+# config InlineBackend.figure_format = 'retina'
+
 
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
+
+def get_jaccard_index(prediction, ground_truth):
+    imageshape = prediction.shape
+    prediction[prediction > 0] = 1
+    ground_truth[ground_truth > 0] = 1
+
+    totalsum = np.sum(prediction == ground_truth)
+    jaccard = totalsum/(imageshape[0]*imageshape[1])
+
+    return jaccard
+
+
 
 def random_fliprot(img, mask): 
     img = np.array(img)
@@ -92,15 +113,6 @@ def train(image_dir,
     axis_norm = (0,1)
     n_channel = None
 
-    for im in range(num_trained):
-        image = os.path.join(image_dir, X_trn[im])
-        br_image = BioReader(image, max_workers=1)
-        if im == 0:
-            n_channel = br_image.shape[2]
-        im_array = br_image[:,:,0:1,0:1,0:1]
-        im_array = im_array.reshape(br_image.shape[:2])
-        array_images_trained.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
-
     for im in range(num_tested):
         image = os.path.join(image_dir, X_val[im])
         br_image = BioReader(image, max_workers=1)
@@ -108,33 +120,6 @@ def train(image_dir,
         im_array = im_array.reshape(br_image.shape[:2])
         array_images_tested.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
 
-    contoursize_max = 0
-    logger.info("\n Getting Max Contoursize  ...")
-
-    for lab in range(num_trained):
-        label = os.path.join(label_dir, Y_trn[lab])
-        br_label = BioReader(label, max_workers=1)
-        lab_array = br_label[:,:,0:1,0:1,0:1]
-        lab_array = lab_array.reshape(br_label.shape[:2])
-        array_labels_trained.append(fill_label_holes(lab_array))
-
-        obj_list = np.unique(lab_array)
-        obj_list = obj_list[1:]
-
-        for j in range(len(obj_list)):
-            mask_temp = lab_array.copy()     
-            mask_temp[mask_temp != obj_list[j]] = 0
-            mask_temp[mask_temp > 0] = 1
-
-            mask_temp = mask_temp.astype(np.uint8)    
-            contours,_ = cv2.findContours(mask_temp, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-            areas = [cv2.contourArea(cnt) for cnt in contours]    
-            max_ind = np.argmax(areas)
-            contour = np.squeeze(contours[max_ind])
-            contour = np.reshape(contour,(-1,2))
-            contour = np.append(contour,contour[0].reshape((-1,2)),axis=0)
-            contoursize_max = max(int(contour.shape[0]), contoursize_max)
-    
     for lab in range(num_tested):
         label = os.path.join(label_dir, Y_val[lab])
         br_label = BioReader(label, max_workers=1)
@@ -142,30 +127,121 @@ def train(image_dir,
         lab_array = lab_array.reshape(br_label.shape[:2])
         array_labels_tested.append(fill_label_holes(lab_array))
 
-
-    logger.info("Max Contoursize: {}".format(contoursize_max))
-
-    M = 8 # control points
-    n_params = 2 * M
-
-    grid = (2,2)
+    model_dir = 'models'
+    if os.path.exists(os.path.join(output_dir, model_dir)):
+        model = SplineDist2D(None, name=model_dir, basedir=output_dir)
+        
+        logger.info("\n Done Loading Model ...")
     
-    conf = Config2D (
-    n_params        = n_params,
-    grid            = grid,
-    n_channel_in    = n_channel,
-    contoursize_max = contoursize_max,
-    )
-    conf.use_gpu = gpu
-    
-    logger.info("\n Generating phi and grids ... ")
-    phi_generator(M, conf.contoursize_max, '.')
-    grid_generator(M, conf.train_patch_size, conf.grid, '.')
+    else:
+        for im in range(num_trained):
+            image = os.path.join(image_dir, X_trn[im])
+            br_image = BioReader(image, max_workers=1)
+            if im == 0:
+                n_channel = br_image.shape[2]
+            im_array = br_image[:,:,0:1,0:1,0:1]
+            im_array = im_array.reshape(br_image.shape[:2])
+            array_images_trained.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
 
-    model = SplineDist2D(conf, name='models', basedir=output_dir)
-    model.train(array_images_trained,array_labels_trained, validation_data=(array_images_tested, array_labels_tested), augmenter=augmenter, epochs = 300)
 
-    logger.info("\n Done Training.")
+        contoursize_max = 0
+        logger.info("\n Getting Max Contoursize  ...")
+
+        for lab in range(num_trained):
+            label = os.path.join(label_dir, Y_trn[lab])
+            br_label = BioReader(label, max_workers=1)
+            lab_array = br_label[:,:,0:1,0:1,0:1]
+            lab_array = lab_array.reshape(br_label.shape[:2])
+            array_labels_trained.append(fill_label_holes(lab_array))
+
+            obj_list = np.unique(lab_array)
+            obj_list = obj_list[1:]
+
+            for j in range(len(obj_list)):
+                mask_temp = lab_array.copy()     
+                mask_temp[mask_temp != obj_list[j]] = 0
+                mask_temp[mask_temp > 0] = 1
+
+                mask_temp = mask_temp.astype(np.uint8)    
+                contours,_ = cv2.findContours(mask_temp, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+                areas = [cv2.contourArea(cnt) for cnt in contours]    
+                max_ind = np.argmax(areas)
+                contour = np.squeeze(contours[max_ind])
+                contour = np.reshape(contour,(-1,2))
+                contour = np.append(contour,contour[0].reshape((-1,2)),axis=0)
+                contoursize_max = max(int(contour.shape[0]), contoursize_max)
+
+        logger.info("Max Contoursize: {}".format(contoursize_max))
+
+        M = 8 # control points
+        n_params = 2 * M
+
+        grid = (2,2)
+        
+        conf = Config2D (
+        n_params        = n_params,
+        grid            = grid,
+        n_channel_in    = n_channel,
+        contoursize_max = contoursize_max,
+        )
+        conf.use_gpu = gpu
+
+        logger.info("\n Generating phi and grids ... ")
+        phi_generator(M, conf.contoursize_max, '.')
+        grid_generator(M, conf.train_patch_size, conf.grid, '.')
+
+        model = SplineDist2D(conf, name=model_dir, basedir=output_dir)
+        model.train(array_images_trained,array_labels_trained, validation_data=(array_images_tested, array_labels_tested), augmenter=augmenter, epochs = 300)
+
+        logger.info("\n Done Training Model ...")
+
+    logger.info("\n Getting {} Jaccard Indexes ...".format(num_tested))
+
+    for i in range(num_tested):
+        image = array_images_tested[i]
+        ground_truth = array_labels_tested[i]
+        prediction, details = model.predict_instances(ground_truth)
+
+        fig, (a_image,a_groundtruth,a_prediction) = plt.subplots(1, 3, 
+                                                                 figsize=(12,5), 
+                                                                 gridspec_kw=dict(width_ratios=(1,1,1)))
+        plt_image = a_image.imshow(image)
+        a_image.set_title("Image")
+
+        plt_groundtruth = a_groundtruth.imshow(ground_truth)
+        a_groundtruth.set_title("Ground Truth")
+
+        plt_prediction = a_prediction.imshow(prediction)
+        a_prediction.set_title("Prediction")
+
+        jaccard = get_jaccard_index(prediction, ground_truth)
+
+        plot_file = str(i) + ".jpg"
+        fig.text(0.50, 0.02, 'Jaccard Index = {}'.format(jaccard), 
+            horizontalalignment='center', wrap=True)
+        plt.savefig(os.path.join(output_dir, plot_file))
+
+        logger.info("{} has a jaccard index of {}".format(plot_file, jaccard))
+
+    def plot_img_label(img, lbl, img_title="image", lbl_title="label", **kwargs):
+        
+        im = ai.imshow(img, cmap='gray', clim=(0,1))
+        ai.set_title(img_title)    
+        fig.colorbar(im, ax=ai)
+
+        al.imshow(lbl, cmap=lbl_cmap)
+        al.set_title(lbl_title)
+        plt.tight_layout()
+        plt.savefig(lbl_title+'.jpg')
+
+    # plot_img_label(testing,array_labels_tested[0], lbl_title="label_GT")
+    # plot_img_label(testing,labels, lbl_title="label_Pred")
+    # for i in range(imageshape[0]):
+    #     for j in range(imageshape[1]):
+    #         if labels[i][j] > 0 or ground_truth[i][j] > 0:
+    #             print("({}, {}) PREDICTED {}, GROUND TRUTH {}".format(i, j, labels[i][j], ground_truth[i][j]))
+
+
 
 if __name__ == "__main__":
     
