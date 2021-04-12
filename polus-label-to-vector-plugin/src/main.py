@@ -29,7 +29,7 @@ if __name__=="__main__":
     inpDir = args.inpDir
     if (Path.is_dir(Path(args.inpDir).joinpath('images'))):
         # switch to images folder if present
-        fpath = str(Path(args.inpDir).joinpath('images').absolute())
+        inpDir = str(Path(args.inpDir).joinpath('images').absolute())
     logger.info('inpDir = {}'.format(inpDir))
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))

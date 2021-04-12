@@ -22,20 +22,19 @@ def diameters(masks):
     md /= (np.pi**0.5)/2
     return md, counts**0.5
 
-
 @njit('(float64[:], int32[:], int32[:], int32, int32, int32, int32)', nogil=True)
 def _extend_centers(T, y, x, ymed, xmed, Lx, niter):
     """ Run diffusion from center of mask (ymed, xmed) on mask pixels (y, x)
     Args:
         T(array[float64]): _ x Lx array that diffusion is run in
         y(array[int32]): pixels in y inside mask
-        x(array[int32]): , pixels in x inside mask
+        x(array[int32]): pixels in x inside mask
         ymed(int32): center of mask in y
         xmed(int32): center of mask in x
         Lx(int32): size of x-dimension of masks
         niter(int32): number of iterations to run diffusion
     Returns:
-        T(array[float64]):  amount of diffused particles at each pixel
+        T(array[float64]): amount of diffused particles at each pixel
 
     """
 
@@ -47,11 +46,10 @@ def _extend_centers(T, y, x, ymed, xmed, Lx, niter):
                                   T[(y + 1) * Lx + x - 1] + T[(y + 1) * Lx + x + 1])
     return T
 
-
 def labels_to_flows(labels):
     """ Convert labels ( masks or flows) to flows for training model
     Args:
-        labels(array):  is used to create flows and cell probabilities.
+        labels(array):  Is used to create flows and cell probabilities.
     Returns:
         flows(array): l[3 x Ly x Lx] arrays flows[1] is cell probability, flows[2] is Y flow, and flows[3] is X flow
 
@@ -65,7 +63,6 @@ def labels_to_flows(labels):
     # concatenate flows with cell probability
     flows = np.concatenate((veci[0],labels[0][[0]] > 0.5), axis=0).astype(np.float32)
     return flows
-
 
 def masks_to_flows(masks):
     """ Convert masks to flows using diffusion from center pixel.Center of masks where diffusion starts is defined to be
