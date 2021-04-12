@@ -1,6 +1,6 @@
-# Vector-to-label plugin
-* Plugin is based off of mask recovery implemented in [Cellpose](https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1). 
-The plugin takes a vector field as input and predicts masks based on the flow error and cell probability threshold entered by user.
+# Vector to label plugin
+Plugin is based off of mask recovery implemented in [Cellpose](https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1). 
+The plugin takes a vector field as input and generates masks based on the flow error and cell probability threshold entered by user.
 
 * A meshgrid is generated based on pixel location and pixels are grouped based on where they converge. 
 These grouped pixels form a mask . 
