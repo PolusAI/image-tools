@@ -38,7 +38,7 @@ def main(input_dir: str,
     assert len(input_images) == len(output_images)
 
     # Build one pyramid for each image in the input directory
-    with ProcessPoolExecutor() as executor:
+    with ProcessPoolExecutor(max_workers=2) as executor:
         executor.map(utils.build_pyramid, input_images, output_images, repeat(imagetype), repeat(mesh))
 
 
