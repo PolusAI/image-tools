@@ -23,7 +23,8 @@ import matplotlib.pyplot as plt
 lbl_cmap = random_label_cmap()
 # matplotlib inline
 # config InlineBackend.figure_format = 'retina'
-
+import tensorflow as tf
+tf.get_logger().setLevel('INFO')
 
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -71,6 +72,53 @@ def augmenter(x, y):
     sig = 0.02*np.random.uniform(0,1)
     x = x + sig*np.random.normal(0,1,x.shape)
     return x, y
+
+def predict(image_dir,
+            output_dir,
+            gpu,
+            imagepattern):
+
+    images = sorted(os.listdir(image_dir))
+    num_images = len(images)
+
+    assert num_images > 0, "Directory is Empty"
+
+    axis_norm = (0,1)
+
+    model_dir = 'models'
+    if os.path.exists(os.path.join(output_dir, model_dir)):
+        model = SplineDist2D(None, name=model_dir, basedir=output_dir)
+        
+        logger.info("\n Done Loading Model ...")
+    else:
+        raise ValueError("No Neural Network Found")
+
+
+    array_image_predicted = []
+    for im in range(num_images):
+        image = os.path.join(image_dir, images[im])
+        br_image = BioReader(image, max_workers=1)
+        im_array = br_image[:,:,0:1,0:1,0:1]
+        im_array = im_array.reshape(im_array.shape[:2])
+        norm_image = normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm)
+        prediction, details = model.predict_instances(norm_image)
+
+        fig, (a_image,a_prediction) = plt.subplots(1, 2, 
+                                                    figsize=(12,5), 
+                                                    gridspec_kw=dict(width_ratios=(1,1)))
+        plt_image = a_image.imshow(im_array)
+        a_image.set_title("Image")
+
+        plt_prediction = a_prediction.imshow(prediction)
+        a_prediction.set_title("Prediction")
+
+        plot_file = "{}_{}.jpg".format(images[im], im)
+        plt.savefig(plot_file)
+
+        logger.info("Save Figure {}".format(plot_file))
+
+
+    
 
 def train(image_dir,
          label_dir,
@@ -216,30 +264,13 @@ def train(image_dir,
 
         jaccard = get_jaccard_index(prediction, ground_truth)
 
-        plot_file = str(i) + ".jpg"
+        plot_file = "{}.jpg".format(i)
         fig.text(0.50, 0.02, 'Jaccard Index = {}'.format(jaccard), 
             horizontalalignment='center', wrap=True)
         plt.savefig(os.path.join(output_dir, plot_file))
 
         logger.info("{} has a jaccard index of {}".format(plot_file, jaccard))
 
-    def plot_img_label(img, lbl, img_title="image", lbl_title="label", **kwargs):
-        
-        im = ai.imshow(img, cmap='gray', clim=(0,1))
-        ai.set_title(img_title)    
-        fig.colorbar(im, ax=ai)
-
-        al.imshow(lbl, cmap=lbl_cmap)
-        al.set_title(lbl_title)
-        plt.tight_layout()
-        plt.savefig(lbl_title+'.jpg')
-
-    # plot_img_label(testing,array_labels_tested[0], lbl_title="label_GT")
-    # plot_img_label(testing,labels, lbl_title="label_Pred")
-    # for i in range(imageshape[0]):
-    #     for j in range(imageshape[1]):
-    #         if labels[i][j] > 0 or ground_truth[i][j] > 0:
-    #             print("({}, {}) PREDICTED {}, GROUND TRUTH {}".format(i, j, labels[i][j], ground_truth[i][j]))
 
 
 
@@ -251,9 +282,9 @@ if __name__ == "__main__":
     parser.add_argument('--inpImageDir', dest='input_directory_images', type=str,
                         help='Path to folder with intesity based images', required=True)
     parser.add_argument('--inpLabelDir', dest='input_directory_labels', type=str,
-                        help='Path to folder with labelled segments, ground truth', required=True)
+                        help='Path to folder with labelled segments, ground truth', required=False)
     parser.add_argument('--splitPercentile', dest='split_percentile', type=int,
-                        help='Percentage of data that is allocated for testing', required=True)
+                        help='Percentage of data that is allocated for testing', required=False)
     parser.add_argument('--gpuAvailability', dest='GPU', type=bool,
                         help='Is there a GPU to use?', required=False, default=False)
     parser.add_argument('--outDir', dest='output_directory', type=str,
@@ -276,9 +307,16 @@ if __name__ == "__main__":
     logger.info("Image Pattern: {}".format(imagepattern))
     logger.info("GPU: {}".format(gpu))
     
-    train(image_dir,
-         label_dir,
-         output_directory,
-         split_percentile,
-         gpu,
-         imagepattern)
+    if split_percentile != None:
+        train(image_dir,
+            label_dir,
+            output_directory,
+            split_percentile,
+            gpu,
+            imagepattern)
+
+    else:
+        predict(image_dir,
+                output_directory,
+                gpu,
+                imagepattern)
