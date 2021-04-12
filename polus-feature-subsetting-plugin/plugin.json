@@ -65,7 +65,7 @@
         "required": true
       },
       {
-        "name": "delay",
+        "name": "padding",
         "type": "string",
         "description": "Number of images to capture outside the cutoff",
         "required": false
@@ -126,8 +126,8 @@
         "description": "variables to divide larger sections"
       },
       {
-        "key": "inputs.delay",
-        "title": "Delay",
+        "key": "inputs.padding",
+        "title": "Padding",
         "description": "Number of images to capture outside the cutoff"
       },
       {
