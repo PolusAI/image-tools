@@ -48,20 +48,14 @@ This plugin takes one input argument and one output argument:
 | Name          | Description                   | I/O    | Type    | Required |
 | ------------- | ----------------------------- | ------ | ------- | -------- |
 | `input`       | Input image collection        | Input  | Path    | true     |
-| `useMetadata` | Process files in the metadata | Input  | boolean | false    |
 | `output`      | Output image collection       | Output | Path    | true     |
-
-The `useMetadata` input will only process files found under the `Metadata`
-section of an image collection. This option is useful since WIPP only converts
-a small subset of image formats that Bioformats supports upon upload, and all
-other file types are placed in the metadata section.
 
 ## Run the plugin
 
 ### Run the Docker Container
 
 ```bash
-docker run -v /path/to/data:/data labshare/polus-tiledtiff-converter-plugin:1.0.6 \
+docker run -v /path/to/data:/data labshare/polus-tiledtiff-converter-plugin:1.1.0 \
   --input /data/input \
   --output /data/output
 ```
