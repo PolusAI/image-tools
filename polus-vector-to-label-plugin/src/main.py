@@ -143,9 +143,8 @@ def main():
                             x_max = min([root[file_name]['vector'].shape[1], x + tile_size])
                             tile = root[file_name]['vector'][y:y_max, x:x_max, z:z + 1, :, :]
                             tile=tile.transpose((2, 0, 1, 3, 4)).squeeze()
-                            logger.info(
-                                'Calculating flows and masks  for tile [{}:{},{}:{},{}:{}]'.format(y, y_max, x,
-                                                                                                    x_max, z, z + 1))
+                            logger.info('Calculating flows and masks  for tile [{}:{},{}:{},{}:{}]'.format(y, y_max, x,
+                                        x_max, z, z + 1))
                             cellprob = tile[..., -1]
                             dP = np.stack((tile[..., 0], tile[..., 1]), axis=0)
                             # Computing flows for the tile
@@ -154,11 +153,10 @@ def main():
                             # Generating masks for the tile
                             maski = mask.compute_masks(p, cellprob, dP, new_img,z, cellprob_threshold,
                                                             flow_threshold)
-
                             mask_final[y:y_max, x:x_max,0:1]=maski[:,:, np.newaxis].astype(np.uint32)
                             new_img = 1
-                    new_tile=mask_final
 
+                    new_tile=mask_final
                     if z > 0 and stitch_threshold > 0 :
                         logger.info('stitching   masks into 3D volume for slice {}:{}'.format( z,z + 1))
                         tilez_stack=np.stack((old_tile[:, :, :],new_tile[:, :, :]),axis=2)
