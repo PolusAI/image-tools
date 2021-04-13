@@ -193,10 +193,11 @@ def _parse_stitch(stitchPath: pathlib.Path,
 def assemble_image(vector_path: pathlib.Path,
                    out_path: pathlib.Path,
                    depth: int) -> None:
-    """Assemble a 2-dimensional image
+    """Assemble a 2d or 3d image
 
-    This method assembles one image from one stitching vector. It is intended
-    to run as a process to parallelize stitching of multiple images.
+    This method assembles one image from one stitching vector. It can 
+    assemble both 2d and z-stacked 3d images It is intended to run as 
+    a process to parallelize stitching of multiple images.
 
     The basic approach to stitching is:
     1. Parse the stitching vector and abstract the image dimensions
@@ -205,6 +206,7 @@ def assemble_image(vector_path: pathlib.Path,
     Args:
         vector_path: Path to the stitching vector
         out_path: Path to the output directory
+        depth: depth of the input images
     """
 
     # Grab a free process
@@ -262,7 +264,8 @@ def main(imgPath: pathlib.Path,
         fp = filepattern.FilePattern(imgPath,'.*')
 
     # get z depth
-    depth = BioReader(next(imgPath.iterdir())).z
+    with BioReader(next(imgPath.iterdir())) as br:
+        depth = br.z
 
     '''Run stitching jobs in separate processes'''
     ProcessManager.init_processes('main','asmbl')
