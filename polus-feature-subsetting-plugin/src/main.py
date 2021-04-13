@@ -68,7 +68,7 @@ def make_uniform(planes_dict, uniques, padding):
 
 def main(inpDir,csvDir,outDir,filePattern,groupVar,percentile,
          removeDirection,sectionVar,feature,padding,writeOutput):
-    """Function containg the main login to subset data
+    """Function containing the main login to subset data
 
     Args:
         inpDir (string): path to input image collection
