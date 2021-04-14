@@ -46,8 +46,6 @@ def get_jaccard_index(prediction, ground_truth):
 
     return jaccard
 
-
-
 def random_fliprot(img, mask): 
     img = np.array(img)
     mask = np.array(mask)
@@ -447,7 +445,6 @@ def train_split(image_dir,
 
     create_plots(array_images_tested, array_labels_tested, num_tested, output_dir, model)
     
-
 
 
 if __name__ == "__main__":
