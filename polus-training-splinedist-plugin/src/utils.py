@@ -348,8 +348,8 @@ def train_nn(image_dir_input : str,
         logger.info("\n Done Saving Trained Keras Model ...")
 
     # Check the neural networks performance
-    logger.info("\n Getting {} Jaccard Indexes ...".format(num_images_tested))
-    create_plots(array_images_tested, array_labels_tested, num_images_tested, output_directory, model)
+    # logger.info("\n Getting {} Jaccard Indexes ...".format(num_images_tested))
+    # create_plots(array_images_tested, array_labels_tested, num_images_tested, output_directory, model)
 
 def test_nn(image_dir_test : str,
             label_dir_test : str,
