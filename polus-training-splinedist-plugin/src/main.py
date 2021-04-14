@@ -15,6 +15,10 @@ from splinedist.models import Config2D, SplineDist2D, SplineDistData2D
 from splinedist.utils import phi_generator, grid_generator, get_contoursize_max
 from splinedist import random_label_cmap
 
+import keras.backend as K
+import tensorflow as tf
+from tensorflow import keras
+
 import cv2
 
 import matplotlib
@@ -129,7 +133,7 @@ def create_plots(array_images, array_labels, input_len, output_dir, model):
         image = array_images[i]
         ground_truth = array_labels[i]
         prediction, details = model.predict_instances(ground_truth)
-
+        print(np.unique(prediction))
         
         plt_image = a_image.imshow(image)
         a_image.set_title("Image")
@@ -211,11 +215,11 @@ def train_test(training_image_dir,
         array_labels_tested.append(fill_label_holes(lab_array))
 
     model_dir = 'models'
-    if os.path.exists(os.path.join(output_dir, model_dir)):
+    if action == 'load':
         model = SplineDist2D(None, name=model_dir, basedir=output_dir)
         logger.info("\n Done Loading Model ...")
     
-    else:
+    elif action == 'train':
         for im in range(num_images_training):
             image = os.path.join(training_image_dir, X_trn[im])
             br_image = BioReader(image, max_workers=1)
@@ -255,8 +259,8 @@ def train_test(training_image_dir,
 
         logger.info("Max Contoursize: {}".format(contoursize_max))
 
-        M = 8 # control points
-        n_params = 2 * M
+        M = 6 # control points
+        n_params = M*2
 
         grid = (2,2)
         
@@ -273,7 +277,41 @@ def train_test(training_image_dir,
         grid_generator(M, conf.train_patch_size, conf.grid, '.')
 
         model = SplineDist2D(conf, name=model_dir, basedir=output_dir)
-        model.train(array_images_trained,array_labels_trained, validation_data=(array_images_tested, array_labels_tested), augmenter=augmenter, epochs = 20)
+        model.train(array_images_trained,array_labels_trained, 
+                    validation_data=(array_images_tested, array_labels_tested), 
+                    augmenter=augmenter, epochs = 400)
+        # model.keras_model.fit(array_images_trained,array_labels_trained, validation_data=(array_images_tested, array_labels_tested), epochs=1)
+
+        logger.info("\n Done Training Model ...")
+        model.keras_model.save(os.path.join(output_dir, model_dir, 'saved_model'), save_format='tf')
+        logger.info("\n Done Saving Trained Keras Model ...")
+
+    else:
+        model = SplineDist2D(None, name=model_dir, basedir=output_dir)
+        logger.info("\n Done Loading Model ...")
+        for im in range(num_images_training):
+            image = os.path.join(training_image_dir, X_trn[im])
+            br_image = BioReader(image, max_workers=1)
+            if im == 0:
+                n_channel = br_image.shape[2]
+            im_array = br_image[:,:,0:1,0:1,0:1]
+            im_array = im_array.reshape(br_image.shape[:2])
+            array_images_trained.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
+
+        for lab in range(num_labels_training):
+            label = os.path.join(training_label_dir, Y_trn[lab])
+            br_label = BioReader(label, max_workers=1)
+            lab_array = br_label[:,:,0:1,0:1,0:1]
+            lab_array = lab_array.reshape(br_label.shape[:2])
+            array_labels_trained.append(fill_label_holes(lab_array))
+
+        modelconfig = model.config.__dict__
+        print(modelconfig)
+        kerasmodel = tf.keras.models.load_model(os.path.join(output_dir, model_dir, 'saved_model'), custom_objects=modelconfig)
+        np.testing.assert_allclose(
+            kerasmodel.predict(array_images_trained), reconstructed_model.predict(array_images_trained))
+
+        kerasmodel.fit_generator(array_images_trained,array_labels_trained, validation_data=(array_images_tested, array_labels_tested), epochs = 1, verbose=1)
 
         logger.info("\n Done Training Model ...")
 
@@ -286,7 +324,8 @@ def train_split(image_dir,
                 output_dir,
                 split_percentile,
                 gpu,
-                imagepattern):
+                imagepattern,
+                action):
     
     images = sorted(os.listdir(image_dir))
     labels = sorted(os.listdir(label_dir))
@@ -432,6 +471,8 @@ if __name__ == "__main__":
                         help='Path to output directory containing the neural network weights', required=True)
     parser.add_argument('--imagePattern', dest='image_pattern', type=str,
                         help='Filepattern of the images in input_images and input_labels', required=False)
+    parser.add_argument('--action', dest='action', type=str,
+                        help='Either loading, creating, or continuing to train a neural network', required=True)
 
     # Parse the arguments
     args = parser.parse_args()
@@ -443,22 +484,24 @@ if __name__ == "__main__":
     gpu = args.GPU
     output_directory = args.output_directory
     imagepattern = args.image_pattern
+    action = args.action
     
     if split_percentile == None:
         logger.info("Input Training Directory for Intensity Based Images: {}".format(image_dir_train))
         logger.info("Input Training Directory for Labelled Images: {}".format(label_dir_train))
         logger.info("Input Testing Directory for Intensity Based Images: {}".format(image_dir_test))
         logger.info("Input Testing Directory for Labelled Images: {}".format(label_dir_test))
-        logger.info("Output Directory: {}".format(output_directory))
-        logger.info("Image Pattern: {}".format(imagepattern))
-        logger.info("GPU: {}".format(gpu))
+        
     else:
         logger.info("Input Directory for Intensity Based Images: {}".format(image_dir_train))
         logger.info("Input Directory for Labelled Images: {}".format(label_dir_train))
-        logger.info("Output Directory: {}".format(output_directory))
-        logger.info("Image Pattern: {}".format(imagepattern))
-        logger.info("GPU: {}".format(gpu))
+        logger.info("Splitting Input Directory into {}:{} Ratio".format(split_percentile, 100-split_percentile))
     
+    logger.info("Output Directory: {}".format(output_directory))
+    logger.info("Image Pattern: {}".format(imagepattern))
+    logger.info("GPU: {}".format(gpu))
+    logger.info("{} a neural network".format(action))
+
     if split_percentile == None:
         train_test(image_dir_train,
                    label_dir_train,
