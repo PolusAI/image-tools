@@ -102,6 +102,7 @@ if __name__ == "__main__":
          label_dir_train,
          image_dir_test,
          label_dir_test,
+         split_percentile,
          action,
          output_directory,
          gpu,
