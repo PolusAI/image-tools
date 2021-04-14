@@ -119,7 +119,6 @@ def create_plots(array_images : list,
         image = array_images[i]
         ground_truth = array_labels[i]
         prediction, details = model.predict_instances(ground_truth)
-        print(np.unique(prediction))
         
         plt_image = a_image.imshow(image)
         a_image.set_title("Image")
