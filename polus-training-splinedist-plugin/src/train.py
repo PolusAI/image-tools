@@ -32,7 +32,20 @@ logger = logging.getLogger("train")
 logger.setLevel(logging.INFO)
 
 
-def get_jaccard_index(prediction, ground_truth):
+def get_jaccard_index(prediction : np.ndarray,
+                      ground_truth : np.ndarray):
+    """ This function gets the jaccard index between the 
+    predicted image and its ground truth.
+
+    Args:
+        prediction - the predicted output from trained neural network
+        ground_truth - ground truth given by inputs
+    Returns:
+        jaccard - The jaccard index between the two inputs
+                  https://en.wikipedia.org/wiki/Jaccard_index
+    Raises:
+        None
+    """
     imageshape = prediction.shape
     prediction[prediction > 0] = 1
     ground_truth[ground_truth > 0] = 1
@@ -60,10 +73,14 @@ def random_intensity_change(img):
     img = img*np.random.uniform(0.6,2) + np.random.uniform(-0.2,0.2)
     return img
 
-def augmenter(x, y):
+def augmenter(x : np.ndarray, 
+              y : np.ndarray):
     """Augmentation of a single input/label image pair.
-    x is an input image
-    y is the corresponding ground-truth label image
+        Taken from SplineDist's training notebook.
+
+    Args:
+        x - is an input image
+        y - is the corresponding ground-truth label image
     """
     x, y = random_fliprot(x, y)
     x = random_intensity_change(x)
@@ -72,7 +89,26 @@ def augmenter(x, y):
     return x, y
 
 
-def create_plots(array_images, array_labels, input_len, output_dir, model):
+def create_plots(array_images : list, 
+                 array_labels : list, 
+                 input_len : int, 
+                 output_dir : list, 
+                 model):
+    
+    """ This function generates subplots of the 
+    original image, the ground truth and prediction with 
+    the jaccard index specified at the bottom of the image.
+
+    Args:
+        array_images - a list of numpy arrays of the intensity based images
+        array_labels - a list of numpy arrays of the images's corresponding 
+                       ground truth
+        input_len - the number of images in array_images and array_label
+        output_dir - the location where the jpeg files are saved
+        model - the neural network used to make the prediction
+    Returns:
+        None, saves images in output directory
+    """
     jaccard_indexes = []
     
     for i in range(input_len):
@@ -109,21 +145,47 @@ def create_plots(array_images, array_labels, input_len, output_dir, model):
     average_jaccard = sum(jaccard_indexes)/input_len
     logger.info("Average Jaccard Index for Testing Data: {}".format(average_jaccard))
 
-def train_nn(image_dir_input,
-             label_dir_input,
-             image_dir_test,
-             label_dir_test,
-             split_percentile,
-             output_directory,
-             gpu,
-             imagepattern):
+def train_nn(image_dir_input : str,
+             label_dir_input : str,
+             image_dir_test : str,
+             label_dir_test : str,
+             split_percentile : int,
+             output_directory : str,
+             gpu : bool,
+             imagepattern : str):
 
+    """ This function either trains or continues to train a neural network 
+    for SplineDist.
+    Either testing directories are specified or the the input directory gets 
+    split into training and testing data. 
+
+    Args:
+        image_dir_input: location for Intensity Based Images
+        label_dir_input: location for Ground Truths of the images
+        image_dir_test: Specifies the location for Intensity Based Images for testing
+        label_dir_test: Specifies the location for Ground truth images for testing
+        split_percentile: Specifies what percentages of the input should be allocated for tested
+        output_directory: Specifies the location for the output generated
+        gpu: Specifies whether or not to use a GPU
+        imagepattern: The imagepattern of files to iterate through within a directory
+    
+    Returns:
+        None, a trained neural network whose performance is calculated by the jaccard index
+    
+    Raises:
+        AssertionError: If there is less than one training image
+        AssertionError: If the number of images to do not match the number of ground truths 
+                        available.
+    """
+
+    # get the inputs
     input_images = sorted(os.listdir(image_dir_input))
     input_labels = sorted(os.listdir(label_dir_input))
     num_inputs = len(input_images)
     
     logger.info("\n Getting Data for Training and Testing  ...")
     if split_percentile == None:
+        # if images are already allocated for testing then use those
         logger.info("Getting From Testing Directories")
         X_trn = input_images
         Y_trn = input_labels
@@ -131,6 +193,8 @@ def train_nn(image_dir_input,
         Y_val = sorted(os.listdir(label_dir_test))
     else:
         logger.info("Splitting Input Directories")
+        # Used when no directory has been specified for testing
+        # Splits the input directories into testing and training
         rng = np.random.RandomState(42)
         index = rng.permutation(num_inputs)
         n_val = np.ceil((split_percentile/100) * num_inputs).astype('int')
@@ -140,35 +204,42 @@ def train_nn(image_dir_input,
         image_dir_test = image_dir_input
         label_dir_test = label_dir_input
     
+    # Lengths
     num_images_trained = len(X_trn)
     num_labels_trained = len(Y_trn)
     num_images_tested = len(X_val)
     num_labels_tested = len(Y_trn)
 
+    # Renamed inputs
     del input_images
     del input_labels
     del num_inputs
 
+    # assertions
     assert num_images_trained > 1, "Not Enough Training Data"
     assert num_images_trained == num_labels_trained, "The number of images does not match the number of ground truths for training"
     assert num_images_tested == num_images_tested, "The number of images does not match the number of ground for testing"
 
+    # Make sure every image has a corresponding ground truth thats used for training and testing
     assert collections.Counter(X_val) == collections.Counter(Y_val), "Image Test Data does not match Label Test Data for neural network"
     assert collections.Counter(X_trn) == collections.Counter(Y_trn), "Image Train Data does not match Label Train Data for neural network"
 
+    # Get logs for end user
     totalimages = num_images_trained+num_images_tested
     logger.info("{}/{} inputs used for training".format(num_images_trained/totalimages))
     logger.info("{}/{} inputs used for testing".format(num_images_trained/totalimages))
 
+    # Need a list of numpy arrays to feed to SplineDist
     array_images_trained = []
     array_labels_trained = []
-
     array_images_tested = []
     array_labels_tested = []
 
+    # Neural network parameters
     axis_norm = (0,1)
-    n_channel = 1
+    n_channel = 1 # this is based on the input data
 
+    # Read the input images used for testing
     for im in range(num_images_tested):
         image = os.path.join(image_dir_test, X_val[im])
         br_image = BioReader(image, max_workers=1)
@@ -176,6 +247,7 @@ def train_nn(image_dir_input,
         im_array = im_array.reshape(br_image.shape[:2])
         array_images_tested.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
 
+    # Read the input labels used for testing 
     for lab in range(num_labels_tested):
         label = os.path.join(label_dir_test, Y_val[lab])
         br_label = BioReader(label, max_workers=1)
@@ -183,6 +255,7 @@ def train_nn(image_dir_input,
         lab_array = lab_array.reshape(br_label.shape[:2])
         array_labels_tested.append(fill_label_holes(lab_array))
     
+    # Read the input images used for training
     for im in range(num_images_trained):
         image = os.path.join(image_dir_input, X_trn[im])
         br_image = BioReader(image, max_workers=1)
@@ -195,7 +268,7 @@ def train_nn(image_dir_input,
 
     model_dir = 'models'
     if os.path.exists(os.path.join(output_directory, model_dir)):
-
+        # if model exists, then we need to continue training on it
         model = SplineDist2D(None, name=model_dir, basedir=output_directory)
         logger.info("\n Done Loading Model ...")
 
@@ -216,7 +289,8 @@ def train_nn(image_dir_input,
         logger.info("\n Done Training Model ...")
     
     else:
-
+        # otherwise we need to build a new model and get the appropriate
+            # parameters for it
         contoursize_max = 0
         logger.info("\n Getting Max Contoursize  ...")
 
@@ -273,6 +347,7 @@ def train_nn(image_dir_input,
         model.keras_model.save(os.path.join(output_directory, model_dir, 'saved_model'), save_format='tf')
         logger.info("\n Done Saving Trained Keras Model ...")
 
+    # Check the neural networks performance
     logger.info("\n Getting {} Jaccard Indexes ...".format(num_images_tested))
     create_plots(array_images_tested, array_labels_tested, num_images_tested, output_directory, model)
 
