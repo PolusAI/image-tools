@@ -351,3 +351,54 @@ def train_nn(image_dir_input : str,
     logger.info("\n Getting {} Jaccard Indexes ...".format(num_images_tested))
     create_plots(array_images_tested, array_labels_tested, num_images_tested, output_directory, model)
 
+def test_nn(image_dir_test : str,
+            label_dir_test : str,
+            output_directory : str,
+            gpu : bool,
+            imagepattern : str):
+
+    model_dir = 'models'
+    assert os.path.exists(os.path.join(output_directory, model_dir)), \
+        "{} does not exist".format(os.path.join(output_directory, model_dir))
+
+    model = SplineDist2D(None, name=model_dir, basedir=output_directory)
+    logger.info("\n Done Loading Model ...")
+
+    X_val = sorted(os.listdir(image_dir_test))
+    Y_val = sorted(os.listdir(label_dir_test))
+    num_images = len(X_val)
+    num_labels = len(Y_val)
+
+    assert num_images > 0, "Input Directory is empty"
+    assert num_images == num_labels, "The number of images do not match the number of ground truths"
+
+    array_images_tested = []
+    array_labels_tested = []
+
+    # Neural network parameters
+    axis_norm = (0,1)
+    n_channel = 1 # this is based on the input data
+
+    # Read the input images used for testing
+    for im in range(num_images):
+        image = os.path.join(image_dir_test, X_val[im])
+        br_image = BioReader(image, max_workers=1)
+        im_array = br_image[:,:,0:1,0:1,0:1]
+        im_array = im_array.reshape(br_image.shape[:2])
+        array_images_tested.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
+
+    # Read the input labels used for testing 
+    for lab in range(num_labels):
+        label = os.path.join(label_dir_test, Y_val[lab])
+        br_label = BioReader(label, max_workers=1)
+        lab_array = br_label[:,:,0:1,0:1,0:1]
+        lab_array = lab_array.reshape(br_label.shape[:2])
+        array_labels_tested.append(fill_label_holes(lab_array))
+
+    create_plots(array_images_tested, array_labels_tested, num_images, output_directory, model)
+
+def predict_nn(image_dir_test : str,
+               output_directory : str,
+               gpu : bool,
+               imagepattern : str):
+    return None

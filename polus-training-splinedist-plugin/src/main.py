@@ -1,7 +1,7 @@
 import logging, argparse
 import os 
 
-import train
+import utils
 
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -20,7 +20,7 @@ def main(image_dir_train : str,
          imagepattern: str):
 
     if action == 'train':
-        train.train_nn(image_dir_train,
+        utils.train_nn(image_dir_train,
                         label_dir_train,
                         image_dir_test,
                         label_dir_test,
@@ -29,6 +29,22 @@ def main(image_dir_train : str,
                         gpu,
                         imagepattern)
 
+    elif action == 'test':
+        utils.test_nn(image_dir_test,
+                      label_dir_test,
+                      output_directory,
+                      gpu,
+                      imagepattern)
+    
+    elif action == 'predict':
+        utils.predict_nn(image_dir_test,
+                        output_directory,
+                        gpu,
+                        imagepattern)
+
+    else:
+        raise ValueError("")
+
 
 if __name__ == "__main__":
     
@@ -36,9 +52,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='main', description='Training SplineDist')
 
     parser.add_argument('--inpImageDirTrain', dest='input_directory_images_train', type=str,
-                        help='Path to folder with intesity based images for training', required=True)
+                        help='Path to folder with intesity based images for training', required=False)
     parser.add_argument('--inpLabelDirTrain', dest='input_directory_labels_train', type=str,
-                        help='Path to folder with labelled segments, ground truth for training', required=True)
+                        help='Path to folder with labelled segments, ground truth for training', required=False)
     parser.add_argument('--splitPercentile', dest='split_percentile', type=int,
                         help='Percentage of data that is allocated for testing', required=False)
     parser.add_argument('--inpImageDirTest', dest='input_directory_images_test', type=str,
