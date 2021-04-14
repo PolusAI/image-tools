@@ -183,6 +183,7 @@ def train_nn(image_dir_input : str,
     input_labels = sorted(os.listdir(label_dir_input))
     num_inputs = len(input_images)
     
+    print(split_percentile)
     logger.info("\n Getting Data for Training and Testing  ...")
     if split_percentile == None:
         # if images are already allocated for testing then use those
@@ -208,7 +209,7 @@ def train_nn(image_dir_input : str,
     num_images_trained = len(X_trn)
     num_labels_trained = len(Y_trn)
     num_images_tested = len(X_val)
-    num_labels_tested = len(Y_trn)
+    num_labels_tested = len(Y_val)
 
     # Renamed inputs
     del input_images
@@ -226,8 +227,8 @@ def train_nn(image_dir_input : str,
 
     # Get logs for end user
     totalimages = num_images_trained+num_images_tested
-    logger.info("{}/{} inputs used for training".format(num_images_trained/totalimages))
-    logger.info("{}/{} inputs used for testing".format(num_images_trained/totalimages))
+    logger.info("{}/{} inputs used for training".format(num_images_trained, totalimages))
+    logger.info("{}/{} inputs used for testing".format(num_images_trained, totalimages))
 
     # Need a list of numpy arrays to feed to SplineDist
     array_images_trained = []

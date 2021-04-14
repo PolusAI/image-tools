@@ -24,7 +24,7 @@ def main(image_dir_train : str,
                         label_dir_train,
                         image_dir_test,
                         label_dir_test,
-                        action,
+                        split_percentile,
                         output_directory,
                         gpu,
                         imagepattern)
@@ -98,14 +98,14 @@ if __name__ == "__main__":
     logger.info("GPU: {}".format(gpu))
     logger.info("{} a neural network".format(action))
 
-    main(image_dir_train,
-         label_dir_train,
-         image_dir_test,
-         label_dir_test,
-         split_percentile,
-         action,
-         output_directory,
-         gpu,
-         imagepattern)
+    main(image_dir_train=image_dir_train,
+         label_dir_train=label_dir_train,
+         image_dir_test=image_dir_test,
+         label_dir_test=label_dir_test,
+         split_percentile=split_percentile,
+         action=action,
+         output_directory=output_directory,
+         gpu=gpu,
+         imagepattern=imagepattern)
 
 
