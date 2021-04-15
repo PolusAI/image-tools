@@ -43,7 +43,7 @@ def main(image_dir_train : str,
                         imagepattern)
 
     else:
-        raise ValueError("")
+        raise ValueError("Action Variable is Incorrect")
 
 
 if __name__ == "__main__":

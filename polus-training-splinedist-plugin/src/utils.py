@@ -182,7 +182,6 @@ def train_nn(image_dir_input : str,
     input_labels = sorted(os.listdir(label_dir_input))
     num_inputs = len(input_images)
     
-    print(split_percentile)
     logger.info("\n Getting Data for Training and Testing  ...")
     if split_percentile == None:
         # if images are already allocated for testing then use those
@@ -271,6 +270,9 @@ def train_nn(image_dir_input : str,
         # if model exists, then we need to continue training on it
         model = SplineDist2D(None, name=model_dir, basedir=output_directory)
         logger.info("\n Done Loading Model ...")
+        model.optimize_thresholds
+        logger.info("\n Optimized thresholds ...")
+        
 
         for lab in range(num_labels_trained):
             label = os.path.join(label_dir_input, Y_trn[lab])
@@ -279,13 +281,15 @@ def train_nn(image_dir_input : str,
             lab_array = lab_array.reshape(br_label.shape[:2])
             array_labels_trained.append(fill_label_holes(lab_array))
 
-        modelconfig = model.config.__dict__
-        kerasmodel = tf.keras.models.load_model(os.path.join(output_directory, model_dir, 'saved_model'), custom_objects=modelconfig)
-        np.testing.assert_allclose(
-            kerasmodel.predict(array_images_trained), kerasmodel.predict(array_images_trained))
-
-        kerasmodel.fit_generator(array_images_trained,array_labels_trained, validation_data=(array_images_tested, array_labels_tested), epochs = 1, verbose=1)
-
+        try:
+            model.keras_model.load_weights("./output/models/weights_now.h5")
+            logger.info("\n Done Loading Most Recent Weights ...")
+        except:
+            logger.info("Most recent training did not crash.")
+            logger.info("Using the best weights from previous training. ")
+        model.train(array_images_trained,array_labels_trained, 
+                    validation_data=(array_images_tested, array_labels_tested), 
+                    augmenter=augmenter, epochs = 90)
         logger.info("\n Done Training Model ...")
     
     else:
