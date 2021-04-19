@@ -77,6 +77,10 @@ if __name__=='__main__':
     args = parser.parse_args()
 
     input_dir = args.inpDir
+    if os.path.isdir(os.path.join(input_dir, 'images')):
+        # switch to images folder if present
+        input_dir = os.path.join(input_dir, 'images')
+
     logger.info('inpDir = {}'.format(input_dir))
     
     model = args.model
@@ -93,13 +97,15 @@ if __name__=='__main__':
         os.makedirs(output_dir)
 
     # Validate resolution.
-    match = re.match('(\d+)x(\d+)', resolution, flags=re.IGNORECASE)
-    if match is None:
-        logger.error(f'Resolution should be in the following format: 500x500. You entered: {resolution}.')
-        sys.exit()
+    target_size = None
+    if resolution is not None:
+        match = re.match('(\d+)x(\d+)', resolution, flags=re.IGNORECASE)
+        if match is None:
+            logger.error(f'Resolution should be in the following format: 500x500. You entered: {resolution}.')
+            sys.exit()
     
-    target_size = (int(match.group(1)), int(match.group(2)))
-    logger.info(f'Parsed resolution: {target_size[0]}x{target_size[1]}.')
+        target_size = (int(match.group(1)), int(match.group(2)))
+        logger.info(f'Parsed resolution: {target_size[0]}x{target_size[1]}.')
 
     # Validate model. 
     if model not in valid_models:
@@ -124,7 +130,7 @@ if __name__=='__main__':
 
     # Loop through images and process.
     for i, image in enumerate(tqdm(image_files)):
-        image_data = load_img(os.path.join(input_dir, image), target_size=target_size)
+        image_data = load_img(image, target_size=target_size)
         if image_data is None:
             logger.error(f'Unable to load image: {image}!')
             sys.exit()
