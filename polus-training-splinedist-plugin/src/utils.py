@@ -291,12 +291,12 @@ def train_nn(image_dir_input : str,
             contoursize_max = model.config.contoursize_max
             logger.info("Contoursize Max for phi_{}.npy: {}".format(M, contoursize_max))
             phi_generator(M, contoursize_max, '.')
-            logger.info("Generated phi")
+        logger.info("Generated phi")
         if not os.path.exists("./grid_{}.npy".format(M)):
             training_patch_size = model.config.train_patch_size
             logger.info("Training Patch Size {} for grid_{}.npy: {}".format(M, training_patch_size))
             grid_generator(M, training_patch_size, conf.grid, '.')
-            logger.info("Generated grid")
+        logger.info("Generated grid")
 
         for lab in range(num_labels_trained):
             label = os.path.join(label_dir_input, Y_trn[lab])
@@ -359,10 +359,10 @@ def train_nn(image_dir_input : str,
         logger.info("\n Generating phi and grids ... ")
         if not os.path.exists("./phi_{}.npy".format(M)):
             phi_generator(M, conf.contoursize_max, '.')
-            logger.info("Generated phi")
+        logger.info("Generated phi")
         if not os.path.exists("./grid_{}.npy".format(M)):
             grid_generator(M, conf.train_patch_size, conf.grid, '.')
-            logger.info("Generated grid")
+        logger.info("Generated grid")
 
         model = SplineDist2D(conf, name=model_dir_name, basedir=output_directory)
 
