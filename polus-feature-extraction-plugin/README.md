@@ -17,7 +17,7 @@ These are the features that can be extracted from this plugin:
    7. Solidity - 
          Ratio of pixels in the region to pixels of convex hull image.
    8. Centroid - 
-         The center point of the region. Centroid_row is the x centroid coordinate and Centroid_column is the y centroid coordinate.
+         The center point of the region. Centroid x and y indicates the (x,y) coordinates.
    9. Neighbors - 
          The number of neighbors touching the object.
    10. Maximum feret - 
