@@ -452,8 +452,8 @@ def feature_extraction(features,
                         embeddedpixelsize,
                         unitLength,
                         pixelsPerunit,
-                        pixelDistance=5,
-                        channel=0,
+                        pixelDistance,
+                        channel,
                         intensity_image=None,
                         img_emb_unit=None,
                         label_image=None,
@@ -481,7 +481,9 @@ def feature_extraction(features,
     boxsize = 3
     thetastart = 1
     thetastop = 180
-
+    if pixelDistance is None:
+        pixelDistance = 5
+        
     def area(seg_img, units, *args):
         """Calculate area for all the regions of interest in the image."""          
         data_dict1 = [region.area for region in regions]
@@ -1282,6 +1284,8 @@ def main():
                         df_csv = df_csv.append(df)
                     
                 else:
+                    if len(files_seg) != len(files_int) :
+                        raise ValueError("Number of labeled/segmented images is not equal to number of intensity images")
                     #Read intensity image
                     intensity_image,img_emb_unit = read(img_file[1][0]['file'])
                     int_file = img_file[1][0]['file'].name
@@ -1290,9 +1294,8 @@ def main():
             #Dataframe contains the features extracted from images 
             if not intDir or files==[] or files==None:
                 channel=None
-                if not intDir:
-                    int_filename = None
-                if intDir:
+                int_filename = None
+                if intDir and files==None:
                     int_filename = int_file
                 df,title = feature_extraction(features,
                                           embeddedpixelsize,
