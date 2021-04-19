@@ -720,7 +720,7 @@ def feature_extraction(features,
             data_dict = [shannon_entropy(intensity[seg]) for intensity, seg in zip(intensity_images, imgs)]
         else:
             data_dict = shannon_entropy(intensity_image.reshape(-1))
-        logger.debug('Completed extracting entropy for ' + int_file_name.name)
+        logger.debug('Completed extracting entropy for ' + int_file_name)
         return data_dict
 
     def kurtosis(*args):
@@ -904,8 +904,10 @@ def feature_extraction(features,
         #Remove the cells touching the border
         cleared = clear_border(label_image)
 
-    #pass the filename in csv
-    title = seg_file_names1.name
+        #pass the filename in csv
+        title = seg_file_names1.name
+    if label_image is None:
+        title = int_file_name
 
     
     #If features parameter left empty then raise value error 
@@ -917,8 +919,10 @@ def feature_extraction(features,
     if unitLength and not embeddedpixelsize:
         if not pixelsPerunit:
             raise ValueError('Enter pixels per unit value.')
-            
-    logger.info('Extracting features for ' + seg_file_names1.name)
+    if label_image is not None:        
+        logger.info('Extracting features for ' + seg_file_names1.name)
+    else:
+        logger.info('Extracting features for ' + int_file_name)
     
     #Centroid values shown separately in output as centroid_x and centroid_y
     if 'centroid' in features:
@@ -1084,16 +1088,6 @@ def feature_extraction(features,
 
 # Setup the argument parsing
 def main():
-    # segDir ='C:/Users/nagarajanj2/Downloads/mahdilab'
-    # intDir = 'C:/Users/nagarajanj2/Downloads/mahdiint'
-    # pixelDistance= 5
-    # outDir = 'C:/Users/nagarajanj2/Desktop/Projects/Feature_Extraction_formatted'
-    # features = ['boundingbox_location']
-    # csvfile ='singlecsv'
-    # pattern = 'image_c000_z00{z}_ch{c}'
-    # embeddedpixelsize= True
-    # unitLength ='mm'
-    # pixelsPerunit=6
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='Everything you need to start a Feature Extraction plugin.')
     parser.add_argument('--features', dest='features', type=str,
@@ -1219,6 +1213,7 @@ def main():
             df=None
             channel=None
             intensity_image,img_emb_unit = read(intfile[0]['file'])
+            int_name = intfile[0]['file'].name
             df,title = feature_extraction(features,
                                           embeddedpixelsize,
                                           unitLength,
@@ -1229,7 +1224,7 @@ def main():
                                           img_emb_unit,
                                           label_image=None,
                                           seg_file_names1=None,
-                                          int_file_name=intfile[0][0]['file'])
+                                          int_file_name=int_name)
             os.chdir(outDir)
             if csvfile == 'separatecsv':
                 logger.info('Saving dataframe to csv for ' + intfile[0]['file'].name)
@@ -1248,7 +1243,6 @@ def main():
             if intDir:
                 #Get matching files
                 files = configfiles_int.get_matching(**{k.upper():v for k,v in img_file[0][0].items() if k not in ['file','c']})
-                int_filename = files[0]['file'].name
                 if files is not None:  
                     if len(files) == 0 and(all(fe not in intensity_features for fe in features)):
                        intensity_image=None 
@@ -1259,6 +1253,7 @@ def main():
                            continue
                     else:
                         intensity_image,img_emb_unit = read(files[0]['file'])
+                        int_filename = files[0]['file'].name
                         
                     #Check length of files to mention channels in output only when there is more than one channel
                     if len(files)==1:
@@ -1289,11 +1284,16 @@ def main():
                 else:
                     #Read intensity image
                     intensity_image,img_emb_unit = read(img_file[1][0]['file'])
+                    int_file = img_file[1][0]['file'].name
                     channel=None
                 
             #Dataframe contains the features extracted from images 
             if not intDir or files==[] or files==None:
                 channel=None
+                if not intDir:
+                    int_filename = None
+                if intDir:
+                    int_filename = int_file
                 df,title = feature_extraction(features,
                                           embeddedpixelsize,
                                           unitLength,
@@ -1304,7 +1304,7 @@ def main():
                                           img_emb_unit,
                                           label_image,
                                           seg_file_names1=img_file[0][0]['file'],
-                                          int_file_name=None
+                                          int_file_name=int_filename
                                           )
             #Save each csv file separately
             os.chdir(outDir)
