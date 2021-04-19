@@ -6,3 +6,4 @@ bfio==2.0.6
 opencv-python==4.3.0.36
 tensorflow==2.4.1
 gputools==0.2.9
+scikit-learn==0.24.1
