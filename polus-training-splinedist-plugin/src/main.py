@@ -17,6 +17,8 @@ def main(image_dir_train : str,
          action : str,
          output_directory : str,
          gpu : bool,
+         M : int,
+         epochs : int,
          imagepattern: str):
 
     if action == 'train':
@@ -27,7 +29,9 @@ def main(image_dir_train : str,
                         split_percentile,
                         output_directory,
                         gpu,
-                        imagepattern)
+                        imagepattern,
+                        M,
+                        epochs)
 
     elif action == 'test':
         utils.test_nn(image_dir_test,
@@ -69,6 +73,10 @@ if __name__ == "__main__":
                         help='Filepattern of the images in input_images and input_labels', required=False)
     parser.add_argument('--action', dest='action', type=str,
                         help='Either loading, creating, or continuing to train a neural network', required=True)
+    parser.add_argument('--controlPoints', dest='controlPoints', type=int,
+                        help='Define the number of control points', required=False)
+    parser.add_argument('--epochs', dest='epochs', type=int,
+                        help='The number of epochs to run', required=False)
 
     # Parse the arguments
     args = parser.parse_args()
@@ -78,6 +86,8 @@ if __name__ == "__main__":
     label_dir_test = args.input_directory_labels_test
     split_percentile = args.split_percentile
     gpu = args.GPU
+    M = args.controlPoints
+    epochs = args.epochs
     output_directory = args.output_directory
     imagepattern = args.image_pattern
     action = args.action
@@ -95,6 +105,8 @@ if __name__ == "__main__":
     
     logger.info("Output Directory: {}".format(output_directory))
     logger.info("Image Pattern: {}".format(imagepattern))
+    logger.info("Number of Control Points {}".format(M))
+    logger.info("Number of Epochs {}".format(epochs))
     logger.info("GPU: {}".format(gpu))
     logger.info("{} a neural network".format(action))
 
@@ -106,6 +118,8 @@ if __name__ == "__main__":
          action=action,
          output_directory=output_directory,
          gpu=gpu,
+         M=M,
+         epochs=epochs,
          imagepattern=imagepattern)
 
 

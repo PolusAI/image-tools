@@ -19,6 +19,9 @@ import keras.backend as K
 import tensorflow as tf
 from tensorflow import keras
 
+import sklearn.metrics
+from sklearn.metrics import jaccard_score
+
 import cv2
 
 import matplotlib
@@ -47,11 +50,12 @@ def get_jaccard_index(prediction : np.ndarray,
         None
     """
     imageshape = prediction.shape
-    prediction[prediction > 0] = 1
-    ground_truth[ground_truth > 0] = 1
+    prediction = prediction.ravel()
+    ground_truth = ground_truth.ravel()
+    prediction[prediction > 0] = 1.0
+    ground_truth[ground_truth > 0] = 1.0
 
-    totalsum = np.sum(prediction == ground_truth)
-    jaccard = totalsum/(imageshape[0]*imageshape[1])
+    jaccard = jaccard_score(prediction, ground_truth)
 
     return jaccard
 
@@ -151,7 +155,9 @@ def train_nn(image_dir_input : str,
              split_percentile : int,
              output_directory : str,
              gpu : bool,
-             imagepattern : str):
+             imagepattern : str,
+             M : int,
+             epochs : int):
 
     """ This function either trains or continues to train a neural network 
     for SplineDist.
@@ -167,7 +173,9 @@ def train_nn(image_dir_input : str,
         output_directory: Specifies the location for the output generated
         gpu: Specifies whether or not to use a GPU
         imagepattern: The imagepattern of files to iterate through within a directory
-    
+        M: Specifies the number of control points
+        epochs : Specifies the number of epochs to be run
+
     Returns:
         None, a trained neural network whose performance is calculated by the jaccard index
     
@@ -176,6 +184,10 @@ def train_nn(image_dir_input : str,
         AssertionError: If the number of images to do not match the number of ground truths 
                         available.
     """
+
+
+    assert isinstance(M, int), "Neeed to specify the number of control points"
+    assert isinstance(epochs, int), "Need to specify the number of epochs to run"
 
     # get the inputs
     input_images = sorted(os.listdir(image_dir_input))
@@ -265,14 +277,26 @@ def train_nn(image_dir_input : str,
         array_images_trained.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
         
 
-    model_dir = 'models'
-    if os.path.exists(os.path.join(output_directory, model_dir)):
+    model_dir_name = 'models'
+    model_dir_path = os.path.join(output_directory, model_dir_name)
+    if os.path.exists(os.path.join(output_directory, model_dir_name)):
         # if model exists, then we need to continue training on it
-        model = SplineDist2D(None, name=model_dir, basedir=output_directory)
+        model = SplineDist2D(None, name=model_dir_name, basedir=output_directory)
         logger.info("\n Done Loading Model ...")
         model.optimize_thresholds
-        logger.info("\n Optimized thresholds ...")
-        
+        logger.info("Optimized thresholds")
+
+        logger.info("\n Getting extra files ...")
+        if not os.path.exists("./phi_{}.npy".format(M)):
+            contoursize_max = model.config.contoursize_max
+            logger.info("Contoursize Max for phi_{}.npy: {}".format(M, contoursize_max))
+            phi_generator(M, contoursize_max, '.')
+            logger.info("Generated phi")
+        if not os.path.exists("./grid_{}.npy".format(M)):
+            training_patch_size = model.config.train_patch_size
+            logger.info("Training Patch Size {} for grid_{}.npy: {}".format(M, training_patch_size))
+            grid_generator(M, training_patch_size, conf.grid, '.')
+            logger.info("Generated grid")
 
         for lab in range(num_labels_trained):
             label = os.path.join(label_dir_input, Y_trn[lab])
@@ -282,16 +306,14 @@ def train_nn(image_dir_input : str,
             array_labels_trained.append(fill_label_holes(lab_array))
 
         try:
-            model.keras_model.load_weights("./output/models/weights_now.h5")
-            logger.info("\n Done Loading Most Recent Weights ...")
+            model.keras_model.load_weights(os.path.join(model_dir_path,"weights_now.h5"))
+            logger.info("\n Done Loading (now) Weights ...")
         except:
-            logger.info("Most recent training did not crash.")
-            logger.info("Using the best weights from previous training. ")
-        model.train(array_images_trained,array_labels_trained, 
-                    validation_data=(array_images_tested, array_labels_tested), 
-                    augmenter=augmenter, epochs = 90)
-        logger.info("\n Done Training Model ...")
-    
+            try:
+                model.keras_model.load_weights(os.path.join(model_dir_path,"weights_last.h5"))
+                logger.info("\n Done Loading (last) Weights ...")
+            except:
+                logger.info("Using the best weights from previous training. ")
     else:
         # otherwise we need to build a new model and get the appropriate
             # parameters for it
@@ -324,7 +346,7 @@ def train_nn(image_dir_input : str,
 
         logger.info("Max Contoursize: {}".format(contoursize_max))
 
-        M = 6 # control points
+        
         n_params = M*2
 
         grid = (2,2)
@@ -338,22 +360,21 @@ def train_nn(image_dir_input : str,
         conf.use_gpu = gpu
 
         logger.info("\n Generating phi and grids ... ")
-        phi_generator(M, conf.contoursize_max, '.')
-        grid_generator(M, conf.train_patch_size, conf.grid, '.')
+        if not os.path.exists("./phi_{}.npy".format(M)):
+            phi_generator(M, conf.contoursize_max, '.')
+            logger.info("Generated phi")
+        if not os.path.exists("./grid_{}.npy".format(M)):
+            grid_generator(M, conf.train_patch_size, conf.grid, '.')
+            logger.info("Generated grid")
 
-        model = SplineDist2D(conf, name=model_dir, basedir=output_directory)
-        model.train(array_images_trained,array_labels_trained, 
-                    validation_data=(array_images_tested, array_labels_tested), 
-                    augmenter=augmenter, epochs = 400)
-        # model.keras_model.fit(array_images_trained,array_labels_trained, validation_data=(array_images_tested, array_labels_tested), epochs=1)
+        model = SplineDist2D(conf, name=model_dir_name, basedir=output_directory)
 
-        logger.info("\n Done Training Model ...")
-        model.keras_model.save(os.path.join(output_directory, model_dir, 'saved_model'), save_format='tf')
-        logger.info("\n Done Saving Trained Keras Model ...")
+    # After creating or loading model, train it
+    model.train(array_images_trained,array_labels_trained, 
+                validation_data=(array_images_tested, array_labels_tested), 
+                augmenter=augmenter, epochs = epochs)
+    logger.info("\n Done Training Model ...")
 
-    # Check the neural networks performance
-    # logger.info("\n Getting {} Jaccard Indexes ...".format(num_images_tested))
-    # create_plots(array_images_tested, array_labels_tested, num_images_tested, output_directory, model)
 
 def test_nn(image_dir_test : str,
             label_dir_test : str,
@@ -361,12 +382,18 @@ def test_nn(image_dir_test : str,
             gpu : bool,
             imagepattern : str):
 
-    model_dir = 'models'
-    assert os.path.exists(os.path.join(output_directory, model_dir)), \
-        "{} does not exist".format(os.path.join(output_directory, model_dir))
+    model_dir_name = 'models'
+    model_dir_path = os.path.join(output_directory, model_dir_name)
+    assert os.path.exists(model_dir_path), \
+        "{} does not exist".format(model_dir_path)
 
-    model = SplineDist2D(None, name=model_dir, basedir=output_directory)
+    model = SplineDist2D(None, name=model_dir_name, basedir=output_directory)
     logger.info("\n Done Loading Model ...")
+
+    weights_best = os.path.join(model_dir_path, "weights_best.h5")
+    model.keras_model.load_weights(weights_best)
+    logger.info("\n Done Loading Best Weights ...")
+
 
     X_val = sorted(os.listdir(image_dir_test))
     Y_val = sorted(os.listdir(label_dir_test))
