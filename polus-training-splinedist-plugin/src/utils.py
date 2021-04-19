@@ -346,11 +346,8 @@ def train_nn(image_dir_input : str,
 
         logger.info("Max Contoursize: {}".format(contoursize_max))
 
-        
         n_params = M*2
-
         grid = (2,2)
-        
         conf = Config2D (
         n_params        = n_params,
         grid            = grid,
