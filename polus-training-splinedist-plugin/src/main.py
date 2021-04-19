@@ -108,7 +108,7 @@ if __name__ == "__main__":
     logger.info("Number of Control Points {}".format(M))
     logger.info("Number of Epochs {}".format(epochs))
     logger.info("GPU: {}".format(gpu))
-    logger.info("{} a neural network".format(action))
+    logger.info("Action: {} a neural network".format(action))
 
     main(image_dir_train=image_dir_train,
          label_dir_train=label_dir_train,
