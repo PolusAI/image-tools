@@ -93,7 +93,7 @@ def augmenter(x : np.ndarray,
     return x, y
 
 
-def create_plots(array_images : list, 
+def create_test_plots(array_images : list, 
                  array_labels : list, 
                  input_len : int, 
                  output_dir : list, 
@@ -157,7 +157,8 @@ def train_nn(image_dir_input : str,
              gpu : bool,
              imagepattern : str,
              M : int,
-             epochs : int):
+             epochs : int,
+             learning_rate : float):
 
     """ This function either trains or continues to train a neural network 
     for SplineDist.
@@ -184,7 +185,6 @@ def train_nn(image_dir_input : str,
         AssertionError: If the number of images to do not match the number of ground truths 
                         available.
     """
-
 
     assert isinstance(M, int), "Neeed to specify the number of control points"
     assert isinstance(epochs, int), "Need to specify the number of epochs to run"
@@ -355,6 +355,7 @@ def train_nn(image_dir_input : str,
         contoursize_max = contoursize_max,
         )
         conf.use_gpu = gpu
+        conf.train_tensorboard = False
 
         logger.info("\n Generating phi and grids ... ")
         if not os.path.exists("./phi_{}.npy".format(M)):
@@ -369,7 +370,7 @@ def train_nn(image_dir_input : str,
     # After creating or loading model, train it
     model.train(array_images_trained,array_labels_trained, 
                 validation_data=(array_images_tested, array_labels_tested), 
-                augmenter=augmenter, epochs = epochs)
+                augmenter=augmenter, epochs = epochs, learning_rate=learning_rate)
     logger.info("\n Done Training Model ...")
 
 
@@ -423,7 +424,7 @@ def test_nn(image_dir_test : str,
         lab_array = lab_array.reshape(br_label.shape[:2])
         array_labels_tested.append(fill_label_holes(lab_array))
 
-    create_plots(array_images_tested, array_labels_tested, num_images, output_directory, model)
+    create_test_plots(array_images_tested, array_labels_tested, num_images, output_directory, model)
 
 def predict_nn(image_dir_test : str,
                output_directory : str,

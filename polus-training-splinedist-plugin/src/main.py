@@ -19,6 +19,7 @@ def main(image_dir_train : str,
          gpu : bool,
          M : int,
          epochs : int,
+         learning_rate : float,
          imagepattern: str):
 
     if action == 'train':
@@ -31,7 +32,8 @@ def main(image_dir_train : str,
                         gpu,
                         imagepattern,
                         M,
-                        epochs)
+                        epochs,
+                        learning_rate)
 
     elif action == 'test':
         utils.test_nn(image_dir_test,
@@ -77,6 +79,8 @@ if __name__ == "__main__":
                         help='Define the number of control points', required=False)
     parser.add_argument('--epochs', dest='epochs', type=int,
                         help='The number of epochs to run', required=False)
+    parser.add_argument('--learningRate', dest='learning_rate', type=float,
+                       help='New Learning Rate if continuing training.', required=False)
 
     # Parse the arguments
     args = parser.parse_args()
@@ -91,6 +95,7 @@ if __name__ == "__main__":
     output_directory = args.output_directory
     imagepattern = args.image_pattern
     action = args.action
+    learning_rate = args.learning_rate
     
     if split_percentile == None:
         logger.info("Input Training Directory for Intensity Based Images: {}".format(image_dir_train))
@@ -107,6 +112,8 @@ if __name__ == "__main__":
     logger.info("Image Pattern: {}".format(imagepattern))
     logger.info("Number of Control Points {}".format(M))
     logger.info("Number of Epochs {}".format(epochs))
+    if learning_rate != None:
+        logger.info("Update Learning Rate to {}".format(learning_rate))
     logger.info("GPU: {}".format(gpu))
     logger.info("Action: {} a neural network".format(action))
 
@@ -120,6 +127,7 @@ if __name__ == "__main__":
          gpu=gpu,
          M=M,
          epochs=epochs,
+         learning_rate=learning_rate,
          imagepattern=imagepattern)
 
 
