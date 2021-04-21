@@ -305,15 +305,6 @@ def train_nn(image_dir_input : str,
             lab_array = lab_array.reshape(br_label.shape[:2])
             array_labels_trained.append(fill_label_holes(lab_array))
 
-        try:
-            model.keras_model.load_weights(os.path.join(model_dir_path,"weights_now.h5"))
-            logger.info("\n Done Loading (now) Weights ...")
-        except:
-            try:
-                model.keras_model.load_weights(os.path.join(model_dir_path,"weights_last.h5"))
-                logger.info("\n Done Loading (last) Weights ...")
-            except:
-                logger.info("Using the best weights from previous training. ")
     else:
         # otherwise we need to build a new model and get the appropriate
             # parameters for it
@@ -352,10 +343,9 @@ def train_nn(image_dir_input : str,
         n_params        = n_params,
         grid            = grid,
         n_channel_in    = n_channel,
-        contoursize_max = contoursize_max,
+        contoursize_max = contoursize_max
         )
-        conf.use_gpu = gpu
-        conf.train_tensorboard = False
+        
 
         logger.info("\n Generating phi and grids ... ")
         if not os.path.exists("./phi_{}.npy".format(M)):
@@ -365,9 +355,22 @@ def train_nn(image_dir_input : str,
             grid_generator(M, conf.train_patch_size, conf.grid, '.')
         logger.info("Generated grid")
 
+        conf.use_gpu = gpu
+        conf.train_tensorboard = False
+        
+        if epochs != None:
+            conf.train_epochs = epochs
+        if learning_rate != None:
+            conf.learning_rate = learning_rate
         model = SplineDist2D(conf, name=model_dir_name, basedir=output_directory)
 
     # After creating or loading model, train it
+    # model.config.train_tensorboard = False
+    # model.config.use_gpu = gpu
+    logger.info("\n Parameters in Config File ...")
+    config_dict = model.config.__dict__
+    for ky,val in config_dict.items():
+        logger.info("{}: {}".format(ky, val))
     model.train(array_images_trained,array_labels_trained, 
                 validation_data=(array_images_tested, array_labels_tested), 
                 augmenter=augmenter, epochs = epochs, learning_rate=learning_rate)
@@ -392,6 +395,10 @@ def test_nn(image_dir_test : str,
     model.keras_model.load_weights(weights_best)
     logger.info("\n Done Loading Best Weights ...")
 
+    logger.info("\n Parameters in Config File ...")
+    config_dict = model.config.__dict__
+    for ky,val in config_dict.items():
+        logger.info("{}: {}".format(ky, val))
 
     X_val = sorted(os.listdir(image_dir_test))
     Y_val = sorted(os.listdir(label_dir_test))
