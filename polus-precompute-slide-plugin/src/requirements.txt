@@ -1,3 +1,5 @@
-imageio==2.6.0
-
-pillow>=6.2.3 # not directly required, pinned by Snyk to avoid a vulnerability
+imageio==2.8.0
+filepattern==1.4.4
+bfio==2.0.6
+preadator==0.2.0
+zarr==2.6.1

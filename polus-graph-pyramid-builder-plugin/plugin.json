@@ -1,6 +1,6 @@
 {
   "name": "Graph Pyramid Building Plugin",
-  "version": "1.1.11",
+  "version": "1.3.8",
   "title": "Graph Pyramid Building",
   "description": "Generates heatmaps from the data in a csv and builds a DeepZoom pyramid for visualization.",
   "author": "Madhuri Vihani (Madhuri.Vihani@nih.gov), Nick Schaub (Nick.Schaub@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "labshare/polus-graph-pyramid-builder-plugin:1.1.11",
+  "containerId": "labshare/polus-graph-pyramid-builder-plugin:1.3.8",
   "inputs": [
 
     {
@@ -31,6 +31,17 @@
       },
       "description": "The number of bins in each graph",
       "required": true
+    },
+    {
+      "name":"scale",
+      "type": "enum",
+      "options": {
+        "values": [
+          "linear",
+          "log",
+          "both"
+        ]
+      } 
     }
   ],
   "outputs": [
@@ -50,7 +61,11 @@
       "key": "inputs.bincount",
       "title": "Bincount",
       "description": "The number of bins for each column of data, less than 255 and must be even."
+    },
+    {
+      "key": "inputs.scale",
+      "title": "Scale",
+      "description": "Create logarithmically scaled, linearly scaled, or both graphs"
     }
   ]
 }
-

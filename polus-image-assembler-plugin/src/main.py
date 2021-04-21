@@ -54,11 +54,13 @@ def make_tile(x_min: int,
 
             # check that image is within the x-tile bounds
             if (f['posX'] >= x_min and f['posX'] <= x_max) \
-                or (f['posX']+f['width'] >= x_min and f['posX']+f['width'] <= x_max):
+                or (f['posX']+f['width'] >= x_min and f['posX']+f['width'] <= x_max) \
+                or (f['posX'] <= x_min and f['posX']+f['width'] >= x_max):
 
                 # check that image is within the y-tile bounds
                 if (f['posY'] >= y_min and f['posY'] <= y_max) \
-                    or (f['posY']+f['height'] >= y_min and f['posY']+f['height'] <= y_max):
+                    or (f['posY']+f['height'] >= y_min and f['posY']+f['height'] <= y_max) \
+                    or (f['posY'] <= y_min and f['posY']+f['height'] >= y_max):
 
                     # get bounds of image within the tile
                     Xt = [max(0,f['posX']-x_min)]
@@ -128,17 +130,17 @@ def _parse_stitch(stitchPath: pathlib.Path,
         files = fp.get_matching(**unique_vals)
 
     else:
-        
-        # Try to infer a pattern from the stitching vector        
+
+        # Try to infer a pattern from the stitching vector
         try:
             vector_files = filepattern.VectorPattern(stitchPath,'.*')
             pattern = filepattern.infer_pattern([v[0]['file'] for v in vector_files()])
             vp = filepattern.VectorPattern(stitchPath,pattern)
-            
+
         # Fall back to universal filepattern
         except ValueError:
             vp = filepattern.VectorPattern(stitchPath,'.*')
-            
+
         files = fp.files
 
     file_names = [f['file'].name for f in files]
@@ -189,10 +191,10 @@ def _parse_stitch(stitchPath: pathlib.Path,
 def assemble_image(vector_path: pathlib.Path,
                    out_path: pathlib.Path) -> None:
     """Assemble a 2-dimensional image
-    
+
     This method assembles one image from one stitching vector. It is intended
     to run as a process to parallelize stitching of multiple images.
-    
+
     The basic approach to stitching is:
     1. Parse the stitching vector and abstract the image dimensions
     2. Generate a thread for each subsection (supertile) of an image.
@@ -219,7 +221,7 @@ def assemble_image(vector_path: pathlib.Path,
         # Assemble the images
         ProcessManager.log(f'Begin assembly')
         threads = []
-        
+
         for x in range(0, parsed_vector['width'], chunk_size):
             X_range = min(x+chunk_size,parsed_vector['width']) # max x-pixel index in the assembled image
             for y in range(0, parsed_vector['height'], chunk_size):
@@ -230,13 +232,13 @@ def assemble_image(vector_path: pathlib.Path,
         ProcessManager.join_threads()
 
     bw.close()
-    
+
 def main(imgPath: pathlib.Path,
          stitchPath: pathlib.Path,
          outDir: pathlib.Path,
          timesliceNaming: typing.Optional[bool]
          ) -> None:
-    
+
     '''Setup stitching variables/objects'''
     # Get a list of stitching vectors
     vectors = list(stitchPath.iterdir())
@@ -261,9 +263,9 @@ def main(imgPath: pathlib.Path,
         # Check to see if the file is a valid stitching vector
         if 'img-global-positions' not in v.name:
             continue
-        
+
         ProcessManager.submit_process(assemble_image,v,outDir)
-    
+
     ProcessManager.join_processes()
 
 if __name__=="__main__":

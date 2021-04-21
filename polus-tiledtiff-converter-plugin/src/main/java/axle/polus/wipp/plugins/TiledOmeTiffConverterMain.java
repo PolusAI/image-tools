@@ -91,10 +91,6 @@ public class TiledOmeTiffConverterMain {
 		Option output = new Option("o", "output", true, "output folder");
 		output.setRequired(true);
 		options.addOption(output);
-		
-		Option useMetadata = new Option("useMeta", "useMetadata", true, "Convert metadata to tiled tiff.");
-		useMetadata.setRequired(false);
-		options.addOption(useMetadata);
 
 		// parse the options
 		CommandLineParser parser = new DefaultParser();
@@ -110,18 +106,8 @@ public class TiledOmeTiffConverterMain {
 			System.exit(1);
 			return;
 		}
-		
-		boolean useMeta;
-		if (cmd.getOptionValue("useMetadata")==null) {
-			useMeta = false;
-		} else {
-			useMeta = Boolean.valueOf(cmd.getOptionValue("useMetadata"));
-		}
 
 		String inputFileDir = cmd.getOptionValue("input");
-		if (useMeta) {
-			inputFileDir = inputFileDir.replace("/images", "/metadata_files");
-		}
 		String outputFileDir = cmd.getOptionValue("output");
 
 		LOG.info("inputFileDir=" + inputFileDir);
