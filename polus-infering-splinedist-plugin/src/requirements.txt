@@ -1,0 +1,7 @@
+filepattern==1.4.4
+numpy==1.20.2
+stardist==0.6.0
+csbdeep==0.6.1
+bfio==2.0.6
+tensorflow==2.4.1
+gputools==0.2.9
