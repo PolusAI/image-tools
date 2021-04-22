@@ -149,7 +149,10 @@ def create_test_plots(array_images : list,
         logger.info("{} has a jaccard index of {}".format(plot_file, jaccard))
 
     average_jaccard = sum(jaccard_indexes)/input_len
-    logger.info("Average Jaccard Index for Testing Data: {}".format(average_jaccard))
+    average_jaccard = format(average_jaccard, ".3f")
+    standard_deviation_jaccard = np.std(jaccard_indexes)
+    standard_deviation_jaccard = format(standard_deviation_jaccard, ".3f")
+    logger.info("Average Jaccard Index for Testing Data: {} ± {}".format(average_jaccard, standard_deviation_jaccard))
 
 def train_nn(image_dir_input : str,
              label_dir_input : str,
