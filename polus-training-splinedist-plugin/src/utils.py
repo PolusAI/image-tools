@@ -96,7 +96,8 @@ def augmenter(x : np.ndarray,
 def create_test_plots(array_images : list, 
                  array_labels : list, 
                  input_len : int, 
-                 output_dir : list, 
+                 output_dir : list,
+                 M : int,
                  model):
     
     """ This function generates subplots of the 
@@ -136,8 +137,10 @@ def create_test_plots(array_images : list,
         jaccard = get_jaccard_index(prediction, ground_truth)
         jaccard_indexes.append(jaccard)
         plot_file = "{}.jpg".format(i)
-        fig.text(0.50, 0.02, 'Jaccard Index = {}'.format(jaccard), 
-            horizontalalignment='center', wrap=True)
+        fig.text(0.5, 0.90, "Control Points {}".format(M), 
+            horizontalalignment='center', wrap=True, fontsize=14)
+        fig.text(0.50, 0.05, 'Jaccard Index = {}'.format(jaccard), 
+            horizontalalignment='center', wrap=True, fontsize=14)
         plt.savefig(os.path.join(output_dir, plot_file))
         plt.clf()
         plt.cla()
@@ -397,6 +400,7 @@ def test_nn(image_dir_test : str,
     for ky,val in config_dict.items():
         logger.info("{}: {}".format(ky, val))
 
+    M = int(config_dict['n_params']/2)
     X_val = sorted(os.listdir(image_dir_test))
     Y_val = sorted(os.listdir(label_dir_test))
     num_images = len(X_val)
@@ -428,7 +432,7 @@ def test_nn(image_dir_test : str,
         lab_array = lab_array.reshape(br_label.shape[:2])
         array_labels_tested.append(fill_label_holes(lab_array))
 
-    create_test_plots(array_images_tested, array_labels_tested, num_images, output_directory, model)
+    create_test_plots(array_images_tested, array_labels_tested, num_images, output_directory, M, model)
 
 def predict_nn(image_dir_test : str,
                output_directory : str,
