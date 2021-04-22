@@ -340,10 +340,13 @@ def train_nn(image_dir_input : str,
         n_params = M*2
         grid = (2,2)
         conf = Config2D (
-        n_params        = n_params,
-        grid            = grid,
-        n_channel_in    = n_channel,
-        contoursize_max = contoursize_max
+        n_params            = n_params,
+        grid                = grid,
+        n_channel_in        = n_channel,
+        contoursize_max     = contoursize_max,
+        train_learning_rate = learning_rate,
+        train_epochs        = epochs,
+        use_gpu             = gpu
         )
         
 
@@ -354,14 +357,7 @@ def train_nn(image_dir_input : str,
         if not os.path.exists("./grid_{}.npy".format(M)):
             grid_generator(M, conf.train_patch_size, conf.grid, '.')
         logger.info("Generated grid")
-
-        conf.use_gpu = gpu
-        conf.train_tensorboard = False
-        
-        if epochs != None:
-            conf.train_epochs = epochs
-        if learning_rate != None:
-            conf.learning_rate = learning_rate
+ 
         model = SplineDist2D(conf, name=model_dir_name, basedir=output_directory)
 
     # After creating or loading model, train it
@@ -371,9 +367,10 @@ def train_nn(image_dir_input : str,
     config_dict = model.config.__dict__
     for ky,val in config_dict.items():
         logger.info("{}: {}".format(ky, val))
+
     model.train(array_images_trained,array_labels_trained, 
                 validation_data=(array_images_tested, array_labels_tested), 
-                augmenter=augmenter, epochs = epochs, learning_rate=learning_rate)
+                augmenter=augmenter, epochs=epochs)
     logger.info("\n Done Training Model ...")
 
 
