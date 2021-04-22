@@ -58,19 +58,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='main', description='Training SplineDist')
 
     parser.add_argument('--inpImageDirTrain', dest='input_directory_images_train', type=str,
-                        help='Path to folder with intesity based images for training', required=False)
+                        help='Path to folder with intesity based images for training', required=True)
     parser.add_argument('--inpLabelDirTrain', dest='input_directory_labels_train', type=str,
-                        help='Path to folder with labelled segments, ground truth for training', required=False)
-    parser.add_argument('--splitPercentile', dest='split_percentile', type=int,
-                        help='Percentage of data that is allocated for testing', required=False)
+                        help='Path to folder with labelled segments, ground truth for training', required=True)
     parser.add_argument('--inpImageDirTest', dest='input_directory_images_test', type=str,
                         help='Path to folder with intesity based images for testing', required=False)
     parser.add_argument('--inpLabelDirTest', dest='input_directory_labels_test', type=str,
                         help='Path to folder with labelled segments, ground truth for testing', required=False)
-    parser.add_argument('--gpuAvailability', dest='GPU', type=bool,
-                        help='Is there a GPU to use?', required=False, default=False)
+    parser.add_argument('--splitPercentile', dest='split_percentile', type=int,
+                        help='Percentage of data that is allocated for testing', required=False)
     parser.add_argument('--outDir', dest='output_directory', type=str,
                         help='Path to output directory containing the neural network weights', required=True)
+    parser.add_argument('--gpuAvailability', dest='GPU', type=bool,
+                        help='Is there a GPU to use?', required=False, default=False)
     parser.add_argument('--imagePattern', dest='image_pattern', type=str,
                         help='Filepattern of the images in input_images and input_labels', required=False)
     parser.add_argument('--action', dest='action', type=str,
