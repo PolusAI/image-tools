@@ -122,7 +122,7 @@ def create_test_plots(array_images : list,
 
         image = array_images[i]
         ground_truth = array_labels[i]
-        prediction, details = model.predict_instances(ground_truth)
+        prediction, details = model.predict_instances(image)
         
         plt_image = a_image.imshow(image)
         a_image.set_title("Image")
