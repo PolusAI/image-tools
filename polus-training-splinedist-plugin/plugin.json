@@ -1,5 +1,5 @@
 {
-    "name": "Polus SplineDist Plugin",
+    "name": "SplineDist Plugin",
     "version": "0.0.1",
     "title": "Training SplineDist",
     "description": "This plugin trains a neural network to identify segments using SplineDist's algorithm",
@@ -11,25 +11,39 @@
     "containerId": "mmvihani/polus-training-splinedist-plugin:0.0.1",
     "inputs": [
       {
-        "name": "inpImageDir",
-        "description": "Input collection",
+        "name": "inpImageDirTrain",
+        "description": "Input Image collection for training",
         "type": "collection",
         "options": null,
         "required": true
       },
       {
-        "name": "inpLabelDir",
-        "description": "Input collection",
+        "name": "inpLabelDirTrain",
+        "description": "Input Label collection for training",
         "type": "collection",
         "options": null,
         "required": true
+      },
+      {
+        "name": "inpImageDirTest",
+        "description": "Input Image collection for testing",
+        "type": "collection",
+        "options": null,
+        "required": false
+      },
+      {
+        "name": "inpLabelDirTest",
+        "description": "Input Image collection for testing",
+        "type": "collection",
+        "options": null,
+        "required": false
       },
       {
         "name": "splitPercentile",
         "description": "What percent of the data is going to be allocated for testing?",
         "type": "int",
         "options": null,
-        "required": true
+        "required": false
       },
       {
         "name": "imagePattern",
@@ -37,8 +51,47 @@
         "type": "string",
         "options": null,
         "required": false
+      },
+      {
+        "name": "gpuAvailability",
+        "description": "Is there a GPU to use?",
+        "type": "boolean",
+        "options": null,
+        "required": false
+      },
+      {
+        "name": "action",
+        "description": "testing or training neural network",
+        "type": "enum",
+        "options": {
+          "values": [
+            "testing",
+            "training"
+          ]
+        },
+        "required": true
+      },
+      {
+        "name": "controlPoints",
+        "description": "Number of control points for segmentation",
+        "type": "int",
+        "options": null,
+        "required": false
+      },
+      {
+        "name": "epochs",
+        "description": "Number of epochs to train",
+        "type": "int",
+        "options": null,
+        "required": false
+      },
+      {
+        "name": "learningRate",
+        "description": "Rate at which model learns",
+        "type": "int",
+        "options": null,
+        "required": false
       }
-
     ],
     "outputs": [
       {
@@ -51,12 +104,22 @@
     ],
     "ui": [
       {
-        "key": "inputs.inpImageDir",
+        "key": "inputs.inpImageDirTrain",
         "title": "Input collection: ",
         "description": "Collection name that contains intensity based images"
       },
       {
-        "key": "inputs.inpLabelDir",
+        "key": "inputs.inpLabelDirTrain",
+        "title": "Input collection: ",
+        "description": "Collection name that contains labelled segments"
+      },
+      {
+        "key": "inputs.inpImageDirTest",
+        "title": "Input collection: ",
+        "description": "Collection name that contains labelled segments"
+      },
+      {
+        "key": "inputs.inpLabelDirTest",
         "title": "Input collection: ",
         "description": "Collection name that contains labelled segments"
       },
@@ -69,6 +132,34 @@
         "key": "inputs.imagePattern",
         "title": "Image Pattern: ",
         "description": "Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). "
+      },
+      {
+        "key": "inputs.gpuAvailability",
+        "title": "GPU: ",
+        "default": "false"
+      },
+      {
+        "key": "inputs.action",
+        "title": "Action: ",
+        "description": "test or train "
+      },
+      {
+        "key": "inputs.controlPoints",
+        "title": "ControlPoints: ",
+        "description": "Number of control points ",
+        "condition": "inputs.action == training"
+      },
+      {
+        "key": "inputs.epochs",
+        "title": "Epochs: ",
+        "description": "Number of Epochs to Run",
+        "condition": "inputs.action == training"
+      },
+      {
+        "key": "inputs.learningRate",
+        "title": "Learning Rate: ",
+        "description": "Learning rate for training",
+        "condition": "inputs.action == training"
       }
     ]
   }
