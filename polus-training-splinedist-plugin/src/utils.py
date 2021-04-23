@@ -146,7 +146,7 @@ def create_test_plots(array_images : list,
         plt.cla()
         plt.close(fig)
  
-        logger.info("{} has a jaccard index of {}".format(plot_file, jaccard))
+        logger.info("{} has a jaccard index of {}".format(plot_file, format(jaccard, ".3f")))
 
     average_jaccard = sum(jaccard_indexes)/input_len
     average_jaccard = format(average_jaccard, ".3f")
