@@ -7,20 +7,20 @@ from bfio.OmeXml import OMEXML
 import bfio.base_classes
 import struct, copy, zlib, io, typing, logging, threading
 
-logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
-                    datefmt='%d-%b-%y %H:%M:%S')
-logger = logging.getLogger('bfio.backends')
+logging.basicConfig(format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
+                    datefmt="%d-%b-%y %H:%M:%S")
+logger = logging.getLogger("bfio.backends")
 
 class PythonReader(bfio.base_classes.AbstractReader):
     
-    logger = logging.getLogger('bfio.backends.PythonReader')
+    logger = logging.getLogger("bfio.backends.PythonReader")
     
     _rdr = None
 
     def __init__(self, frontend):
         super().__init__(frontend)
 
-        self.logger.debug('__init__(): Initializing _rdr (tifffile.TiffFile)...')
+        self.logger.debug("__init__(): Initializing _rdr (tifffile.TiffFile)...")
         self._rdr = tifffile.TiffFile(self.frontend._file_path)
         metadata = self.read_metadata()
         width = metadata.image().Pixels.get_SizeX()
@@ -33,28 +33,33 @@ class PythonReader(bfio.base_classes.AbstractReader):
         
         if not self._rdr.pages[0].is_tiled:
             if width > self.frontend._TILE_SIZE or width > self.frontend._TILE_SIZE:
-                raise TypeError(frontend._file_path.name + ' is not a tiled tiff.' +
-                                ' The python backend of the BioReader only ' +
-                                'supports OME tiled tiffs. Use the java backend ' +
-                                'to load this image.')
+                raise TypeError(frontend._file_path.name + " is not a tiled tiff." +
+                                " The python backend of the BioReader only " +
+                                "supports OME tiled tiffs. Use the java backend " +
+                                "to load this image.")
             
         elif self._rdr.pages[0].tilewidth != self.frontend._TILE_SIZE or \
             self._rdr.pages[0].tilelength != self.frontend._TILE_SIZE:
                 
             if (width > frontend._TILE_SIZE or height > frontend._TILE_SIZE):
-                raise ValueError('Tile width and height should be {} when '.format(self.frontend._TILE_SIZE) +
-                                 'using the python backend, but found ' +
-                                 'tilewidth={} and tilelength={}. Use the java '.format(self._rdr.pages[0].tilewidth,
+                raise ValueError("Tile width and height should be {} when ".format(self.frontend._TILE_SIZE) +
+                                 "using the python backend, but found " +
+                                 "tilewidth={} and tilelength={}. Use the java ".format(self._rdr.pages[0].tilewidth,
                                                                                         self._rdr.pages[0].tilelength) +
-                                 'backend to read this image.')
+                                 "backend to read this image.")
+                
+        # Private member variables used for reading tiles
+        self._keyframe = None       # tifffile object with decompression and chunking methods
+        self._image = None          # output image buffer used for threaded tile reading
+        self._tile_indices = None   # list that maps file chunks to XYZ coordinates
         
     def read_metadata(self):
-        self.logger.debug('read_metadata(): Reading metadata...')
+        self.logger.debug("read_metadata(): Reading metadata...")
         return OMEXML(self._rdr.ome_metadata)
     
     def _chunk_indices(self,X,Y,Z):
         
-        self.logger.debug('_chunk_indices(): (X,Y,Z) -> ({},{},{})'.format(X,Y,Z))
+        self.logger.debug("_chunk_indices(): (X,Y,Z) -> ({},{},{})".format(X,Y,Z))
         assert len(X) == 2
         assert len(Y) == 2
         assert len(Z) == 2
@@ -67,8 +72,8 @@ class PythonReader(bfio.base_classes.AbstractReader):
         x_tiles = numpy.arange(X[0]//ts,numpy.ceil(X[1]/ts),dtype=int)
         y_tile_stride = numpy.ceil(self.frontend.x/ts).astype(int)
         
-        self.logger.debug('_chunk_indices(): x_tiles = {}'.format(x_tiles))
-        self.logger.debug('_chunk_indices(): y_tile_stride = {}'.format(y_tile_stride))
+        self.logger.debug("_chunk_indices(): x_tiles = {}".format(x_tiles))
+        self.logger.debug("_chunk_indices(): y_tile_stride = {}".format(y_tile_stride))
         
         for z in range(Z[0],Z[1]):
             for y in range(Y[0]//ts,int(numpy.ceil(Y[1]/ts))):
@@ -78,8 +83,8 @@ class PythonReader(bfio.base_classes.AbstractReader):
                 o = [self._rdr.pages[z].dataoffsets[i] for i in ind]
                 b = [self._rdr.pages[z].databytecounts[i] for i in ind]
                 
-                self.logger.debug('_chunk_indices(): offsets = {}'.format(o))
-                self.logger.debug('_chunk_indices(): bytecounts = {}'.format(b))
+                self.logger.debug("_chunk_indices(): offsets = {}".format(o))
+                self.logger.debug("_chunk_indices(): bytecounts = {}".format(b))
                 
                 offsets.extend(o)
                 bytecounts.extend(b)
@@ -99,8 +104,8 @@ class PythonReader(bfio.base_classes.AbstractReader):
         if segment is None:
             segment = keyframe.nodata
             
-        self.logger.debug('_process_chunk(): shape = {}'.format(shape))
-        self.logger.debug('_process_chunk(): (w,l,d) = {},{},{}'.format(w[0],l[0],d[0]))
+        self.logger.debug("_process_chunk(): shape = {}".format(shape))
+        self.logger.debug("_process_chunk(): (w,l,d) = {},{},{}".format(w[0],l[0],d[0]))
         
         out[l[0]: l[0] + shape[1],
             w[0]: w[0] + shape[2],
@@ -108,8 +113,8 @@ class PythonReader(bfio.base_classes.AbstractReader):
         
     def _read_image(self,X,Y,Z,C,T,output):
         if (len(C)>1 and C[0]!=0) or (len(T)>0 and T[0]!=0):
-            raise Warning('More than channel 0 was specified for either channel or timepoint data.' + \
-                          'For the Python backend, only the first channel/timepoint will be loaded.')
+            raise Warning("More than channel 0 was specified for either channel or timepoint data." + \
+                          "For the Python backend, only the first channel/timepoint will be loaded.")
         
         # Get keyframe and filehandle objects
         self._keyframe = self._rdr.pages[0].keyframe
@@ -118,7 +123,7 @@ class PythonReader(bfio.base_classes.AbstractReader):
         # Get binary data info
         offsets,bytecounts = self._chunk_indices(X,Y,Z)
         
-        self.logger.debug('read_image(): _tile_indices = {}'.format(self._tile_indices))
+        self.logger.debug("read_image(): _tile_indices = {}".format(self._tile_indices))
         
         if self.frontend.max_workers > 1:
             with ThreadPoolExecutor(self.frontend.max_workers) as executor:
@@ -134,20 +139,22 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
     _page_open = False
     _current_page = None
     
-    logger = logging.getLogger('bfio.backends.PythonWriter')
+    logger = logging.getLogger("bfio.backends.PythonWriter")
     
     def __init__(self, frontend):
         super().__init__(frontend)
         
         if self.frontend.C > 1:
-            self.logger.warning('The BioWriter only writes single channel ' +
-                                'images, but the metadata has {} channels. '.format(self.frontend.C) +
-                                'Setting the number of channels to 1.')
+            self.logger.warning("The BioWriter only writes single channel " +
+                                "images, but the metadata has {} channels. ".format(self.frontend.C) +
+                                "Setting the number of channels to 1 " +
+                                "and discarding extra channels.")
             self.frontend.C = 1
         if self.frontend.T > 1:
-            self.logger.warning('The BioWriter only writes single timepoint ' +
-                                'images, but the metadata has {} timepoints. '.format(self.frontend.T) +
-                                'Setting the number of timepoints to 1.')
+            self.logger.warning("The BioWriter only writes single timepoint " +
+                                "images, but the metadata has {} timepoints. ".format(self.frontend.T) +
+                                "Setting the number of timepoints to 1." +
+                                "and discarding extra timepoints.")
             self.frontend.T = 1
 
     def _pack(self, fmt, *val):
@@ -163,17 +170,17 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
         try:
             tifftype = tifffile.TIFF.DATA_DTYPES[dtype]
         except KeyError as exc:
-            raise ValueError(f'unknown dtype {dtype}') from exc
+            raise ValueError(f"unknown dtype {dtype}") from exc
         rawcount = count
 
-        if dtype == 's':
+        if dtype == "s":
             # strings; enforce 7-bit ASCII on unicode strings
             if code == 270:
-                value = tifffile.bytestr(value, 'utf-8') + b'\0'
+                value = tifffile.bytestr(value, "utf-8") + b"\0"
             else:
-                value = tifffile.bytestr(value, 'ascii') + b'\0'
+                value = tifffile.bytestr(value, "ascii") + b"\0"
             count = rawcount = len(value)
-            rawcount = value.find(b'\0\0')
+            rawcount = value.find(b"\0\0")
             if rawcount < 0:
                 rawcount = count
             else:
@@ -183,12 +190,12 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
             # packed binary data
             dtsize = struct.calcsize(dtype)
             if len(value) % dtsize:
-                raise ValueError('invalid packed binary data')
+                raise ValueError("invalid packed binary data")
             count = len(value) // dtsize
         if len(dtype) > 1:
             count *= int(dtype[:-1])
             dtype = dtype[-1]
-        ifdentry = [self._pack('HH', code, tifftype),
+        ifdentry = [self._pack("HH", code, tifftype),
                     self._pack(self._writer._offsetformat, rawcount)]
         ifdvalue = None
         if struct.calcsize(dtype) * count <= self._writer._offsetsize:
@@ -209,15 +216,15 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
                 ifdvalue = value
             elif isinstance(value, numpy.ndarray):
                 if value.size != count:
-                    raise RuntimeError('value.size != count')
+                    raise RuntimeError("value.size != count")
                 if value.dtype.char != dtype:
-                    raise RuntimeError('value.dtype.char != dtype')
+                    raise RuntimeError("value.dtype.char != dtype")
                 ifdvalue = value.tobytes()
             elif isinstance(value, (tuple, list)):
                 ifdvalue = self._pack(str(count) + dtype, *value)
             else:
                 ifdvalue = self._pack(dtype, value)
-        tags.append((code, b''.join(ifdentry), ifdvalue, writeonce))
+        tags.append((code, b"".join(ifdentry), ifdvalue, writeonce))
     
     def _init_writer(self):
         """_init_writer Initializes file writing.
@@ -267,55 +274,55 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
             f = f.limit_denominator(max_denominator)
             return f.numerator, f.denominator
 
-        description = ''.join(['<?xml version="1.0" encoding="UTF-8"?>',
-                                '<!-- Warning: this comment is an OME-XML metadata block, which contains crucial dimensional parameters and other important metadata. ',
-                                'Please edit cautiously (if at all), and back up the original data before doing so. '
-                                'For more information, see the OME-TIFF web site: https://docs.openmicroscopy.org/latest/ome-model/ome-tiff/. -->',
-                                str(self.frontend._metadata).replace('ome:', '').replace(':ome', '')])
+        description = "".join(["<?xml version='1.0' encoding='UTF-8'?>",
+                                "<!-- Warning: this comment is an OME-XML metadata block, which contains crucial dimensional parameters and other important metadata. ",
+                                "Please edit cautiously (if at all), and back up the original data before doing so. "
+                                "For more information, see the OME-TIFF web site: https://docs.openmicroscopy.org/latest/ome-model/ome-tiff/. -->",
+                                str(self.frontend._metadata).replace("ome:", "").replace(":ome", "")])
         
-        self._addtag(270, 's', 0, description, writeonce=True)  # Description
-        self._addtag(305, 's', 0, f'bfio v{bfio.__version__}')  # Software
-        # addtag(306, 's', 0, datetime, writeonce=True)
-        self._addtag(259, 'H', 1, self._compresstag)  # Compression
-        self._addtag(256, 'I', 1, self._datashape[-2])  # ImageWidth
-        self._addtag(257, 'I', 1, self._datashape[-3])  # ImageLength
-        self._addtag(322, 'I', 1, self.frontend._TILE_SIZE)  # TileWidth
-        self._addtag(323, 'I', 1, self.frontend._TILE_SIZE)  # TileLength
+        self._addtag(270, "s", 0, description, writeonce=True)  # Description
+        self._addtag(305, "s", 0, f"bfio v{bfio.__version__}")  # Software
+        # addtag(306, "s", 0, datetime, writeonce=True)
+        self._addtag(259, "H", 1, self._compresstag)  # Compression
+        self._addtag(256, "I", 1, self._datashape[-2])  # ImageWidth
+        self._addtag(257, "I", 1, self._datashape[-3])  # ImageLength
+        self._addtag(322, "I", 1, self.frontend._TILE_SIZE)  # TileWidth
+        self._addtag(323, "I", 1, self.frontend._TILE_SIZE)  # TileLength
 
-        sampleformat = {'u': 1, 'i': 2, 'f': 3, 'c': 6}[self._datadtype.kind]
-        self._addtag(339, 'H', self._samplesperpixel,
+        sampleformat = {"u": 1, "i": 2, "f": 3, "c": 6}[self._datadtype.kind]
+        self._addtag(339, "H", self._samplesperpixel,
                         (sampleformat,) * self._samplesperpixel)
 
-        self._addtag(277, 'H', 1, self._samplesperpixel)
-        self._addtag(258, 'H', 1, self._bitspersample)
+        self._addtag(277, "H", 1, self._samplesperpixel)
+        self._addtag(258, "H", 1, self._bitspersample)
 
         subsampling = None
         maxsampling = 1
         # PhotometricInterpretation
-        self._addtag(262, 'H', 1, tifffile.TIFF.PHOTOMETRIC.MINISBLACK.value)
+        self._addtag(262, "H", 1, tifffile.TIFF.PHOTOMETRIC.MINISBLACK.value)
 
         if self.frontend.physical_size_x[0] is not None:
-            self._addtag(282, '2I', 1,
+            self._addtag(282, "2I", 1,
                             rational(10000 / self.frontend.physical_size_x[0] ))  # XResolution in pixels/cm
-            self._addtag(283, '2I', 1, rational(10000 / self.frontend.physical_size_y[0]))  # YResolution in pixels/cm
-            self._addtag(296, 'H', 1, 3)  # ResolutionUnit = cm
+            self._addtag(283, "2I", 1, rational(10000 / self.frontend.physical_size_y[0]))  # YResolution in pixels/cm
+            self._addtag(296, "H", 1, 3)  # ResolutionUnit = cm
         else:
-            self._addtag(282, '2I', 1, (1, 1))  # XResolution
-            self._addtag(283, '2I', 1, (1, 1))  # YResolution
-            self._addtag(296, 'H', 1, 1)  # ResolutionUnit
+            self._addtag(282, "2I", 1, (1, 1))  # XResolution
+            self._addtag(283, "2I", 1, (1, 1))  # YResolution
+            self._addtag(296, "H", 1, 1)  # ResolutionUnit
 
         def bytecount_format(bytecounts, size=offsetsize):
             # return small bytecount format
             if len(bytecounts) == 1:
-                return {4: 'I', 8: 'Q'}[size]
+                return {4: "I", 8: "Q"}[size]
             bytecount = bytecounts[0] * 10
             if bytecount < 2 ** 16:
-                return 'H'
+                return "H"
             if bytecount < 2 ** 32:
-                return 'I'
+                return "I"
             if size == 4:
-                return 'I'
-            return 'Q'
+                return "I"
+            return "Q"
 
         # can save data array contiguous
         contiguous = False
@@ -348,9 +355,9 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
                 if tag[0] == 270:
                     del self._tags[ind]
                     break
-            description = 'ImageJ=\nhyperstack=true\nimages={}\nchannels={}\nslices={}\nframes={}'.format(
+            description = "ImageJ=\nhyperstack=true\nimages={}\nchannels={}\nslices={}\nframes={}".format(
                 1, self.frontend.C, self.frontend.Z, self.frontend.T)
-            self._addtag(270, 's', 0, description)  # Description
+            self._addtag(270, "s", 0, description)  # Description
             self._tags = sorted(self._tags, key=lambda x: x[0])
 
         fh = self._writer._fh
@@ -368,7 +375,7 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
 
         if self._ifdpos % 2:
             # location of IFD must begin on a word boundary
-            fh.write(b'\0')
+            fh.write(b"\0")
             self._ifdpos += 1
 
         # update pointer at ifdoffset
@@ -381,7 +388,7 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
             self._ifd = io.BytesIO()
             self._ifd.write(self._pack(tagnoformat, len(tags)))
             tagoffset = self._ifd.tell()
-            self._ifd.write(b''.join(t[1] for t in tags))
+            self._ifd.write(b"".join(t[1] for t in tags))
             self._ifdoffset = self._ifd.tell()
             self._ifd.write(self._pack(offsetformat, 0))  # offset to next IFD
             # write tag values and patch offsets in ifdentries
@@ -393,7 +400,7 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
                     pos = self._ifd.tell()
                     if pos % 2:
                         # tag value is expected to begin on word boundary
-                        self._ifd.write(b'\0')
+                        self._ifd.write(b"\0")
                         pos += 1
                     self._ifd.seek(offset)
                     self._ifd.write(self._pack(offsetformat, self._ifdpos + pos))
@@ -403,7 +410,7 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
                         self._dataoffsetsoffset = offset, pos
                     elif code == tagbytecounts:
                         self._databytecountsoffset = offset, pos
-                    elif code == 270 and value.endswith(b'\0\0\0\0'):
+                    elif code == 270 and value.endswith(b"\0\0\0\0"):
                         # image description buffer
                         self._descriptionoffset = self._ifdpos + pos
                         self._descriptionlenoffset = (
@@ -414,7 +421,7 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
                     self._databytecountsoffset = offset, None
             self._ifdsize = self._ifd.tell()
             if self._ifdsize % 2:
-                self._ifd.write(b'\0')
+                self._ifd.write(b"\0")
                 self._ifdsize += 1
 
         self._databytecounts = [0 for _ in self._databytecounts]
@@ -477,7 +484,7 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
         assert len(X) == 2 and len(Y) == 2
 
         if X[0] % self.frontend._TILE_SIZE != 0 or Y[0] % self.frontend._TILE_SIZE != 0:
-            logger.warning('X or Y positions are not on tile boundary, tile may save incorrectly')
+            logger.warning("X or Y positions are not on tile boundary, tile may save incorrectly")
 
         fh = self._writer._fh
 
@@ -501,7 +508,7 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
             cpr = zlib.compressobj(level,
                                     memLevel=9,
                                     wbits=15)
-            output = b''.join([cpr.compress(data), cpr.flush()])
+            output = b"".join([cpr.compress(data), cpr.flush()])
             return output
 
         offsetformat = self._writer._offsetformat
@@ -545,7 +552,7 @@ class PythonWriter(bfio.base_classes.AbstractWriter):
     def _write_image(self,X,Y,Z,C,T,image):
 
         if self._current_page != None and Z[0] < self._current_page:
-            raise ValueError('Cannot write z layers below the current open page. (current page={},Z[0]={})'.format(
+            raise ValueError("Cannot write z layers below the current open page. (current page={},Z[0]={})".format(
                 self._current_page, Z[0]))
 
         # Do the work
@@ -562,7 +569,7 @@ try:
     
     class JavaReader(bfio.base_classes.AbstractReader):
         
-        logger = logging.getLogger('bfio.backends.JavaReader')
+        logger = logging.getLogger("bfio.backends.JavaReader")
         _rdr = None
         
         def __init__(self, frontend):
@@ -572,19 +579,19 @@ try:
             
             # Test to see if the loci_tools.jar is present
             if bfio.JARS == None:
-                raise FileNotFoundError('The loci_tools.jar could not be found.')
+                raise FileNotFoundError("The loci_tools.jar could not be found.")
             
         def read_metadata(self, update=False):
             # Wrap the ImageReader to get access to additional class methods
-            rdr = javabridge.JClassWrapper('loci.formats.ImageReader')()
+            rdr = javabridge.JClassWrapper("loci.formats.ImageReader")()
             
             rdr.setOriginalMetadataPopulated(True)
             
             # Access the OMEXML Service
             clsOMEXMLService = javabridge.JClassWrapper(
-                'loci.formats.services.OMEXMLService')
+                "loci.formats.services.OMEXMLService")
             serviceFactory = javabridge.JClassWrapper(
-                'loci.common.services.ServiceFactory')()
+                "loci.common.services.ServiceFactory")()
             service = serviceFactory.getInstance(clsOMEXMLService.klass)
             omexml = service.createOMEXMLMetadata()
             
@@ -605,7 +612,7 @@ try:
             
             X,Y,Z,C,T = dims
             
-            self.logger.debug('_process_chunk(): dims = {}'.format(dims))
+            self.logger.debug("_process_chunk(): dims = {}".format(dims))
             x_range = min([self.frontend.X, X[1]+1024]) - X[1]
             y_range = min([self.frontend.Y, Y[1]+1024]) - Y[1]
 
@@ -643,7 +650,7 @@ try:
         
     class JavaWriter(bfio.base_classes.AbstractWriter):
         
-        logger = logging.getLogger('bfio.backends.JavaWriter')
+        logger = logging.getLogger("bfio.backends.JavaWriter")
         
         # For Bioformats, the first tile has to be written before any other tile
         first_tile = False
@@ -653,7 +660,7 @@ try:
             
             # Test to see if the loci_tools.jar is present
             if bfio.JARS == None:
-                raise FileNotFoundError('The loci_tools.jar could not be found.')
+                raise FileNotFoundError("The loci_tools.jar could not be found.")
             
         def _init_writer(self):
             """_init_writer Initializes file writing.
@@ -666,33 +673,33 @@ try:
             if self.frontend._file_path.exists():
                 self.frontend._file_path.unlink()
                 
-            class_name = 'loci/formats/out/OMETiffWriter'
+            class_name = "loci/formats/out/OMETiffWriter"
             IFormatWriter = bioformats.formatwriter.make_iformat_writer_class(class_name)
 
             class OMETiffWriter(IFormatWriter):
 
-                new_fn = javabridge.make_new('loci/formats/out/OMETiffWriter', '()V')
+                new_fn = javabridge.make_new("loci/formats/out/OMETiffWriter", "()V")
 
                 def __init__(self):
                     
                     self.new_fn()
                     
-                setId = javabridge.make_method('setId', '(Ljava/lang/String;)V',
-                                               'Sets the current file name.')
-                saveBytesXYWH = javabridge.make_method('saveBytes', '(I[BIIII)V',
-                                                       'Saves the given byte array to the current file')
-                close = javabridge.make_method('close', '()V',
-                                               'Closes currently open file(s) and frees allocated memory.')
-                setTileSizeX = javabridge.make_method('setTileSizeX', '(I)I',
-                                                      'Set tile size width in pixels.')
-                setTileSizeY = javabridge.make_method('setTileSizeY', '(I)I',
-                                                      'Set tile size height in pixels.')
-                getTileSizeX = javabridge.make_method('getTileSizeX', '()I',
-                                                      'Set tile size width in pixels.')
-                getTileSizeY = javabridge.make_method('getTileSizeY', '()I',
-                                                      'Set tile size height in pixels.')
-                setBigTiff = javabridge.make_method('setBigTiff', '(Z)V',
-                                                    'Set the BigTiff flag.')
+                setId = javabridge.make_method("setId", "(Ljava/lang/String;)V",
+                                               "Sets the current file name.")
+                saveBytesXYWH = javabridge.make_method("saveBytes", "(I[BIIII)V",
+                                                       "Saves the given byte array to the current file")
+                close = javabridge.make_method("close", "()V",
+                                               "Closes currently open file(s) and frees allocated memory.")
+                setTileSizeX = javabridge.make_method("setTileSizeX", "(I)I",
+                                                      "Set tile size width in pixels.")
+                setTileSizeY = javabridge.make_method("setTileSizeY", "(I)I",
+                                                      "Set tile size height in pixels.")
+                getTileSizeX = javabridge.make_method("getTileSizeX", "()I",
+                                                      "Set tile size width in pixels.")
+                getTileSizeY = javabridge.make_method("getTileSizeY", "()I",
+                                                      "Set tile size height in pixels.")
+                setBigTiff = javabridge.make_method("setBigTiff", "(Z)V",
+                                                    "Set the BigTiff flag.")
             
             writer = OMETiffWriter()
 
@@ -709,11 +716,11 @@ try:
             """
             javabridge.run_script(script,
                                   dict(path=str(self.frontend._file_path),
-                                       xml=str(self.frontend.metadata).replace('<ome:', '<').replace('</ome:', '</'),
+                                       xml=str(self.frontend.metadata).replace("<ome:", "<").replace("</ome:", "</"),
                                        writer=writer))
             writer.setId(str(self.frontend._file_path))
             writer.setInterleaved(False)
-            writer.setCompression('LZW')
+            writer.setCompression("LZW")
             x = writer.setTileSizeX(self.frontend._TILE_SIZE)
             y = writer.setTileSizeY(self.frontend._TILE_SIZE)
 
@@ -730,7 +737,7 @@ try:
             x_range = min([self.frontend.X, X[1]+1024]) - X[1]
             y_range = min([self.frontend.Y, Y[1]+1024]) - Y[1]
             
-            self.logger.debug('_process_chunk(): dims = {}'.format(dims))
+            self.logger.debug("_process_chunk(): dims = {}".format(dims))
             index = Z[1] + self.frontend.Z * C[1] + \
                     self.frontend.Z * self.frontend.C * T[1]
             pixel_buffer = bioformats.formatwriter.convert_pixels_to_buffer(
@@ -744,8 +751,8 @@ try:
             if not self.first_tile:
                 args = self._tile_indices.pop(0)
                 if args[0][1] > self.frontend._TILE_SIZE or args[0][1] > self.frontend._TILE_SIZE:
-                    raise ValueError('The first write using the java backend ' +
-                                     'must include the first tile.')
+                    raise ValueError("The first write using the java backend " +
+                                     "must include the first tile.")
                 self._process_chunk(args)
                 self.first_tile = True
             
@@ -768,20 +775,20 @@ try:
 
 except ModuleNotFoundError:
     
-    logger.warning('Java backend is not available. This could be due to a ' +
-                   'missing dependency (javabridge or bioformats), or ' + 
-                   'javabridge could not find the java runtime.')
+    logger.warning("Java backend is not available. This could be due to a " +
+                   "missing dependency (javabridge or bioformats), or " + 
+                   "javabridge could not find the java runtime.")
     
     class JavaReader(bfio.base_classes.AbstractReader):
         
         def __init__(self, frontend):
             
-            raise ImportError('JavaReader class unavailable. Could not import' +
-                              ' javabridge and/or bioformats.')
+            raise ImportError("JavaReader class unavailable. Could not import" +
+                              " javabridge and/or bioformats.")
             
     class JavaWriter(bfio.base_classes.AbstractWriter):
         
         def __init__(self, frontend):
             
-            raise ImportError('JavaWriter class unavailable. Could not import' +
-                              ' javabridge and/or bioformats.')
+            raise ImportError("JavaWriter class unavailable. Could not import" +
+                              " javabridge and/or bioformats.")

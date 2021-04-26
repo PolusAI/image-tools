@@ -1,11 +1,19 @@
 from bfio import BioReader, BioWriter, LOG4J, JARS
-import javabridge, math
+import javabridge, math, requests
 from pathlib import Path
 from multiprocessing import cpu_count
 
-""" Define the path to the file to convert """
+""" Get an example image """
 # Set up the directories
-PATH = Path("path/to/file").joinpath('file.tif')
+PATH = Path("data")
+PATH.mkdir(parents=True, exist_ok=True)
+
+# Download the data if it doesn't exist
+URL = "https://github.com/usnistgov/WIPP/raw/master/data/PyramidBuilding/inputCollection/"
+FILENAME = "img_r001_c001.ome.tif"
+if not (PATH / FILENAME).exists():
+    content = requests.get(URL + FILENAME).content
+    (PATH / FILENAME).open("wb").write(content)
 
 
 """ Convert the tif to tiled tiff """

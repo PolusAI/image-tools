@@ -36,7 +36,7 @@ class BioReader(BioBase):
     def __init__(self,
                  file_path: typing.Union[str,Path],
                  max_workers: typing.Union[int,None] = None,
-                 backend: str = 'python') ->  None:
+                 backend: str = "python") ->  None:
         """
         Args:
             file_path: Path to file to read
@@ -51,12 +51,12 @@ class BioReader(BioBase):
                                         backend=backend)
         
         # Ensure backend is supported
-        if self._backend_name == 'python':
+        if self._backend_name == "python":
             self._backend = backends.PythonReader(self)
-        elif self._backend_name == 'java':
+        elif self._backend_name == "java":
             self._backend = backends.JavaReader(self)
         else:
-            raise ValueError('backend must be "python" or "java"')
+            raise ValueError("backend must be 'python' or 'java'")
         
         # Preload the metadata
         self._metadata = self._backend.read_metadata()
@@ -72,7 +72,7 @@ class BioReader(BioBase):
         Note:
             Not all methods of indexing can be used, and some indexing will lead
             to unexpected results. For example, logical indexing cannot be used,
-            and step sizes in slice objects is ignored for the first three
+            and step sizes in slice objects are ignored for the first three
             indices. This means and index such as ``[0:100:2,0:100:2,0,0,0]``
             will return a 100x100x1x1x1 numpy array.
         
@@ -89,7 +89,7 @@ class BioReader(BioBase):
                 import bfio
                 
                 # Initialize the bioreader
-                br = bfio.BioReader('Path/To/File.ome.tif')
+                br = bfio.BioReader("Path/To/File.ome.tif")
                 
                 # Load and copy a 100x100 array of pixels
                 a = br[:100,:100,:1,0,0]
@@ -140,11 +140,11 @@ class BioReader(BioBase):
             A 5-dimensional numpy array.
         """
         # Validate inputs
-        X = self._val_xyz(X, 'X')
-        Y = self._val_xyz(Y, 'Y')
-        Z = self._val_xyz(Z, 'Z')
-        C = self._val_ct(C, 'C')
-        T = self._val_ct(T, 'T')
+        X = self._val_xyz(X, "X")
+        Y = self._val_xyz(Y, "Y")
+        Z = self._val_xyz(Z, "Z")
+        C = self._val_ct(C, "C")
+        T = self._val_ct(T, "T")
         
         # Define tile bounds
         X_tile_start = (X[0]//self._TILE_SIZE) * self._TILE_SIZE
@@ -238,7 +238,7 @@ class BioReader(BioBase):
 
         # Pad the image if needed
         if sum(1 for p in [prepad_x, prepad_y, postpad_x, postpad_y] if p != 0) > 0:
-            I = numpy.pad(I, ((prepad_y, postpad_y), (prepad_x, postpad_x)), mode='symmetric')
+            I = numpy.pad(I, ((prepad_y, postpad_y), (prepad_x, postpad_x)), mode="symmetric")
 
         # Store the data in the buffer
         self._raw_buffer.put(I)
@@ -321,10 +321,10 @@ class BioReader(BioBase):
 
         self._buffer_supertile(X[0][0], X[0][1])
 
-        if X[-1][0] - self._tile_x_offset > 1024:
+        if X[-1][0] - self._tile_x_offset > self._TILE_SIZE:
             shift_buffer = True
             split_ind = 0
-            while X[split_ind][0] - self._tile_x_offset < 1024:
+            while X[split_ind][0] - self._tile_x_offset < self._TILE_SIZE:
                 split_ind += 1
         else:
             shift_buffer = False
@@ -373,9 +373,9 @@ class BioReader(BioBase):
                 is ever loaded. *Defaults to [0].*
                 
         Returns:
-            A tuple containing a 4-d numpy array and a tuple containing a list
-            of X,Y,Z,C,T indices. The numpy array has dimensions 
-            ``[tile_num,tile_size[0],tile_size[1],channels]``
+            A tuple containing a list of X,Y,Z,C,T indices and a 4-d numpy array 
+                containing the images. The numpy array has dimensions 
+                ``[tile_num,tile_size[0],tile_size[1],channels]``
 
         Example:
             .. code:: python
@@ -383,11 +383,11 @@ class BioReader(BioBase):
                 from bfio import BioReader
                 import matplotlib.pyplot as plt
 
-                br = BioReader('/path/to/file')
+                br = BioReader("/path/to/file")
 
                 for tiles,ind in br(tile_size=[256,256],tile_stride=[200,200]):
                     for i in tiles.shape[0]:
-                        print('Displaying tile with X,Y coords: {},{}'.format(ind[i][0],ind[i][1]))
+                        print("Displaying tile with X,Y coords: {},{}".format(ind[i][0],ind[i][1]))
                         plt.figure()
                         plt.imshow(tiles[ind,:,:,0].squeeze())
                         plt.show()
@@ -409,7 +409,7 @@ class BioReader(BioBase):
         channels = self._iter_channels
         
         if tile_size == None:
-            raise SyntaxError('Cannot directly iterate over a BioReader object. Call it (i.e. for i in bioreader(256,256))')
+            raise SyntaxError("Cannot directly iterate over a BioReader object. Call it (i.e. for i in bioreader(256,256))")
         
         self._iter_tile_size = None
         self._iter_tile_stride = None
@@ -421,7 +421,7 @@ class BioReader(BioBase):
             batch_size = min([32, self.maximum_batch_size(tile_size, tile_stride)])
         else:
             assert batch_size <= self.maximum_batch_size(tile_size, tile_stride), \
-                'batch_size must be less than or equal to {}.'.format(self.maximum_batch_size(tile_size, tile_stride))
+                "batch_size must be less than or equal to {}.".format(self.maximum_batch_size(tile_size, tile_stride))
 
         # input error checking
         assert len(tile_size) == 2, "tile_size must be a list with 2 elements"
@@ -444,25 +444,25 @@ class BioReader(BioBase):
                      (0, max([tile_size[1] - tile_stride[1], 0])))
 
         # determine supertile sizes
-        y_tile_dim = int(numpy.ceil((self.Y - 1) / 1024))
+        y_tile_dim = int(numpy.ceil((self.Y - 1) / self._TILE_SIZE))
         x_tile_dim = 1
 
         # Initialize the pixel buffer
-        self._pixel_buffer = numpy.zeros((y_tile_dim * 1024 + tile_size[0], 2 * x_tile_dim * 1024 + tile_size[1]),
+        self._pixel_buffer = numpy.zeros((y_tile_dim * self._TILE_SIZE + tile_size[0], 2 * x_tile_dim * self._TILE_SIZE + tile_size[1]),
                                          dtype=self.dtype)
         self._tile_x_offset = -xypad[1][0]
         self._tile_y_offset = -xypad[0][0]
 
         # Generate the supertile loading order
         tiles = []
-        y_tile_list = list(range(0, self.Y + xypad[0][1], 1024 * y_tile_dim))
-        if y_tile_list[-1] != 1024 * y_tile_dim:
-            y_tile_list.append(1024 * y_tile_dim)
+        y_tile_list = list(range(0, self.Y + xypad[0][1], self._TILE_SIZE * y_tile_dim))
+        if y_tile_list[-1] != self._TILE_SIZE * y_tile_dim:
+            y_tile_list.append(self._TILE_SIZE * y_tile_dim)
         if y_tile_list[0] != xypad[0][0]:
             y_tile_list[0] = -xypad[0][0]
-        x_tile_list = list(range(0, self.X + xypad[1][1], 1024 * x_tile_dim))
+        x_tile_list = list(range(0, self.X + xypad[1][1], self._TILE_SIZE * x_tile_dim))
         if x_tile_list[-1] < self.X + xypad[1][1]:
-            x_tile_list.append(x_tile_list[-1] + 1024)
+            x_tile_list.append(x_tile_list[-1] + self._TILE_SIZE)
         if x_tile_list[0] != xypad[1][0]:
             x_tile_list[0] = -xypad[1][0]
         for yi in range(len(y_tile_list) - 1):
@@ -512,7 +512,7 @@ class BioReader(BioBase):
                 self._fetch_thread = thread_pool.submit(self._fetch)
 
             # return the curent set of images
-            yield images, index
+            yield index, images
 
             # get the images from the thread
             index = (X[bn:b], Y[bn:b], Z[bn:b], C[bn:b], T[bn:b])
@@ -521,7 +521,7 @@ class BioReader(BioBase):
         thread_pool.shutdown()
 
         # return the last set of images
-        yield images, index
+        yield index, images
         
     @classmethod
     def image_size(cls,filepath):
@@ -550,13 +550,13 @@ class BioReader(BioBase):
         height = -1
         width = -1
 
-        with open(str(filepath), 'rb') as fhandle:
+        with open(str(filepath), "rb") as fhandle:
             head = fhandle.read(24)
             size = len(head)
 
             # handle big endian TIFF
             if size >= 8 and head.startswith(b"\x4d\x4d\x00\x2a"):
-                offset = struct.unpack('>L', head[4:8])[0]
+                offset = struct.unpack(">L", head[4:8])[0]
                 fhandle.seek(offset)
                 ifdsize = struct.unpack(">H", fhandle.read(2))[0]
                 for i in range(ifdsize):
@@ -581,7 +581,7 @@ class BioReader(BioBase):
                     raise ValueError("Invalid TIFF file: width and/or height IDS entries are missing.")
             # handle little endian Tiff
             elif size >= 8 and head.startswith(b"\x49\x49\x2a\x00"):
-                offset = struct.unpack('<L', head[4:8])[0]
+                offset = struct.unpack("<L", head[4:8])[0]
                 fhandle.seek(offset)
                 ifdsize = struct.unpack("<H", fhandle.read(2))[0]
                 for i in range(ifdsize):
@@ -596,10 +596,10 @@ class BioReader(BioBase):
                     raise ValueError("Invalid TIFF file: width and/or height IDS entries are missing.")
             # handle little endian BigTiff
             elif size >= 8 and head.startswith(b"\x49\x49\x2b\x00"):
-                bytesize_offset = struct.unpack('<L', head[4:8])[0]
+                bytesize_offset = struct.unpack("<L", head[4:8])[0]
                 if bytesize_offset != 8:
-                    raise ValueError('Invalid BigTIFF file: Expected offset to be 8, found {} instead.'.format(offset))
-                offset = struct.unpack('<Q', head[8:16])[0]
+                    raise ValueError("Invalid BigTIFF file: Expected offset to be 8, found {} instead.".format(offset))
+                offset = struct.unpack("<Q", head[8:16])[0]
                 fhandle.seek(offset)
                 ifdsize = struct.unpack("<Q", fhandle.read(8))[0]
                 for i in range(ifdsize):
@@ -648,7 +648,7 @@ class BioWriter(BioBase):
     def __init__(self,
                  file_path: typing.Union[str,Path],
                  max_workers: typing.Union[int,None] = None,
-                 backend: str = 'python',
+                 backend: str = "python",
                  metadata: typing.Union[OmeXml.OMEXML,None] = None,
                  image: typing.Union[numpy.ndarray,None] = None,
                  **kwargs) -> None:
@@ -683,29 +683,29 @@ class BioWriter(BioBase):
                 assert len(image.shape) <= 5, "Image can be at most 5-dimensional (x,y,z,c,t)."
                 self.spp = 1
                 self.dtype = image.dtype
-                for k,v in zip(image.shape,'YXZCT'):
+                for k,v in zip(image.shape,"YXZCT"):
                     setattr(self,k,v)
                     
             elif kwargs:
                 for k,v in kwargs.items():
                     setattr(self,k,v)
 
-        if not self._file_path.name.endswith('.ome.tif'):
+        if not self._file_path.name.endswith(".ome.tif"):
             ValueError("The file extension must be .ome.tif")
             
         if self.metadata.image_count > 1:
-            self.logger.warning('The BioWriter only writes single image ' +
-                                'files, but the metadata has {} images. '.format(self.metadata.image_count) +
-                                'Setting the number of images to 1.')
+            self.logger.warning("The BioWriter only writes single image " +
+                                "files, but the metadata has {} images. ".format(self.metadata.image_count) +
+                                "Setting the number of images to 1.")
             self.metadata.image_count = 1
         
         # Ensure backend is supported
-        if self._backend_name == 'python':
+        if self._backend_name == "python":
             self._backend = backends.PythonWriter(self)
-        elif self._backend_name == 'java':
+        elif self._backend_name == "java":
             self._backend = backends.JavaWriter(self)
         else:
-            raise ValueError('backend must be "python" or "java"')
+            raise ValueError('backend must be 'python' or 'java'")
 
     def __setitem__(self,
                     keys: typing.Union[tuple,slice],
@@ -734,7 +734,7 @@ class BioWriter(BioBase):
                 import bfio
                 
                 # Initialize the biowriter
-                bw = bfio.BioWriter('Path/To/File.ome.tif',
+                bw = bfio.BioWriter("Path/To/File.ome.tif",
                                     X=100,
                                     Y=100,
                                     dtype=numpy.uint8)
@@ -759,18 +759,18 @@ class BioWriter(BioBase):
         while len(value.shape) < 5:
             value = value[...,np.newaxis]
             
-        for i,d in enumerate('YXZCT'):
+        for i,d in enumerate("YXZCT"):
             if ind[d] == None:
                 if value.shape[i] != getattr(self,d):
-                    raise IndexError('Shape of image {} does not match the '.format(value.shape) +
-                                    'save dimensions {}.'.format((s[1] - s[0] for s in ind.values())))
-            elif d in 'YXZ' and ind[d][1] - ind[d][0] != value.shape[i]:
-                raise IndexError('Shape of image {} does not match the '.format(value.shape) +
-                                 'save dimensions {}.'.format((s[1] - s[0] for s in ind.values())))
-            elif d in 'CT' and len(ind[d]) != value.shape[i]:
-                raise IndexError('Shape of image {} does not match the '.format(value.shape) +
-                                 'save dimensions {}.'.format((s[1] - s[0] for s in ind.values())))
-            elif d in 'YXZ':
+                    raise IndexError("Shape of image {} does not match the ".format(value.shape) +
+                                    "save dimensions {}.".format((s[1] - s[0] for s in ind.values())))
+            elif d in "YXZ" and ind[d][1] - ind[d][0] != value.shape[i]:
+                raise IndexError("Shape of image {} does not match the ".format(value.shape) +
+                                 "save dimensions {}.".format((s[1] - s[0] for s in ind.values())))
+            elif d in "CT" and len(ind[d]) != value.shape[i]:
+                raise IndexError("Shape of image {} does not match the ".format(value.shape) +
+                                 "save dimensions {}.".format((s[1] - s[0] for s in ind.values())))
+            elif d in "YXZ":
                 ind[d] = ind[d][0]
         
         self.write(value,**ind)
@@ -788,11 +788,11 @@ class BioWriter(BioBase):
         
         assert isinstance(p, omexml.Pixels)
         
-        for d in 'XYZCT':
-            setattr(p,'Size{}'.format(d),1)
+        for d in "XYZCT":
+            setattr(p,"Size{}".format(d),1)
             
         p.DimensionOrder = OmeXml.DO_XYZCT
-        p.PixelType = 'uint8'
+        p.PixelType = "uint8"
         p.channel_count = 1
             
         return omexml
@@ -842,18 +842,18 @@ class BioWriter(BioBase):
         Z.append(image.shape[2]+Z[0])
 
         # Validate inputs
-        X = self._val_xyz(X, 'X')
-        Y = self._val_xyz(Y, 'Y')
-        Z = self._val_xyz(Z, 'Z')
-        C = self._val_ct(C, 'C')
-        T = self._val_ct(T, 'T')
+        X = self._val_xyz(X, "X")
+        Y = self._val_xyz(Y, "Y")
+        Z = self._val_xyz(Z, "Z")
+        C = self._val_ct(C, "C")
+        T = self._val_ct(T, "T")
         
         assert len(image.shape) == 5, "Image must be 5-dimensional (x,y,z,c,t)."
         
         saving_shape = (Y[1]-Y[0],X[1]-X[0],Z[1]-Z[0],len(C),len(T))
         for d,v in zip(image.shape,saving_shape):
             if d != v:
-                raise ValueError('Image shape {} does not match saving shape {}.'.format(image.shape,
+                raise ValueError("Image shape {} does not match saving shape {}.".format(image.shape,
                                                                                          saving_shape))
         
         # Define tile bounds
@@ -872,7 +872,7 @@ class BioWriter(BioBase):
             #               ' tile size. This may result in the image being' + 
             #               ' saved incorrectly.')
         
-        # Read the image
+        # Write the image
         self._backend.write_image([X_tile_start,X_tile_end],
                                   [Y_tile_start,Y_tile_end],
                                   Z,
@@ -939,11 +939,11 @@ class BioWriter(BioBase):
 
         # If the start column index is outside of the width of the supertile,
         # write the data and shift the pixels
-        if column_start - self._tile_x_offset >= 1024:
-            self._raw_buffer.put(numpy.copy(self._pixel_buffer[:, 0:1024]))
-            self._pixel_buffer[:, 0:1024] = self._pixel_buffer[:, 1024:2048]
-            self._pixel_buffer[:, 1024:] = 0
-            self._tile_x_offset += 1024
+        if column_start - self._tile_x_offset >= self._TILE_SIZE:
+            self._raw_buffer.put(numpy.copy(self._pixel_buffer[:, 0:self._TILE_SIZE]))
+            self._pixel_buffer[:, 0:self._TILE_SIZE] = self._pixel_buffer[:, self._TILE_SIZE:2048]
+            self._pixel_buffer[:, self._TILE_SIZE:] = 0
+            self._tile_x_offset += self._TILE_SIZE
             self._tile_last_column = numpy.argwhere((self._pixel_buffer == 0).all(axis=0))[0, 0]
 
     def _assemble_tiles(self, images, X, Y, Z, C, T):
@@ -966,9 +966,9 @@ class BioWriter(BioBase):
         """
         self._buffer_supertile(X[0][0], X[0][1])
 
-        if X[-1][0] - self._tile_x_offset > 1024:
+        if X[-1][0] - self._tile_x_offset > self._TILE_SIZE:
             split_ind = 0
-            while X[split_ind][0] - self._tile_x_offset < 1024:
+            while X[split_ind][0] - self._tile_x_offset < self._TILE_SIZE:
                 split_ind += 1
         else:
             split_ind = len(X)
@@ -1030,10 +1030,10 @@ class BioWriter(BioBase):
             import numpy as np
 
             # Create the BioReader
-            br = bfio.BioReader('/path/to/file')
+            br = bfio.BioReader("/path/to/file")
 
             # Create the BioWriter
-            out_path = '/path/to/output'
+            out_path = "/path/to/output"
             bw = bfio.BioWriter(out_path,metadata=br.read_metadata())
 
             # Get the batch size
@@ -1054,7 +1054,7 @@ class BioWriter(BioBase):
             bw = bfio.BioReader(out_path)
             saved_image = bw.read_image()
 
-            print('Original and saved images are the same: {}'.format(numpy.array_equal(original_image,saved_image)))
+            print("Original and saved images are the same: {}".format(numpy.array_equal(original_image,saved_image)))
 
         """
 
@@ -1063,7 +1063,7 @@ class BioWriter(BioBase):
             batch_size = min([32, self.maximum_batch_size(tile_size, tile_stride)])
         else:
             assert batch_size <= self.maximum_batch_size(tile_size, tile_stride), \
-                'batch_size must be less than or equal to {}.'.format(
+                "batch_size must be less than or equal to {}.".format(
                     self.maximum_batch_size(tile_size, tile_stride))
 
         # input error checking
@@ -1087,23 +1087,23 @@ class BioWriter(BioBase):
                         (0, max([tile_size[1] - tile_stride[1], 0])))
 
         # determine supertile sizes
-        y_tile_dim = int(numpy.ceil((self.num_y() - 1) / 1024))
+        y_tile_dim = int(numpy.ceil((self.num_y() - 1) / self._TILE_SIZE))
         x_tile_dim = 1
 
         # Initialize the pixel buffer
-        self._pixel_buffer = numpy.zeros((y_tile_dim * 1024 + tile_size[0], 2 * x_tile_dim * 1024 + tile_size[1]),
+        self._pixel_buffer = numpy.zeros((y_tile_dim * self._TILE_SIZE + tile_size[0], 2 * x_tile_dim * self._TILE_SIZE + tile_size[1]),
                                         dtype=self.pixel_type())
         self._tile_x_offset = 0
         self._tile_y_offset = 0
 
         # Generate the supertile saving order
         tiles = []
-        y_tile_list = list(range(0, self.num_y(), 1024 * y_tile_dim))
-        if y_tile_list[-1] != 1024 * y_tile_dim:
-            y_tile_list.append(1024 * y_tile_dim)
-        x_tile_list = list(range(0, self.num_x(), 1024 * x_tile_dim))
+        y_tile_list = list(range(0, self.num_y(), self._TILE_SIZE * y_tile_dim))
+        if y_tile_list[-1] != self._TILE_SIZE * y_tile_dim:
+            y_tile_list.append(self._TILE_SIZE * y_tile_dim)
+        x_tile_list = list(range(0, self.num_x(), self._TILE_SIZE * x_tile_dim))
         if x_tile_list[-1] < self.num_x() + xypad[1][1]:
-            x_tile_list.append(x_tile_list[-1] + 1024)
+            x_tile_list.append(x_tile_list[-1] + self._TILE_SIZE)
 
         for yi in range(len(y_tile_list) - 1):
             for xi in range(len(x_tile_list) - 1):
