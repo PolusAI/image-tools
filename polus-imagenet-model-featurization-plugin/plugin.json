@@ -1,6 +1,6 @@
 {
     "name": "ImageNet Model Featurization",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "title": "ImageNet Model Featurization",
     "description": "Image featurization using models pre-trained on ImageNet",
     "author": "Hythem Sidky (hythem.sidky@axleinfo.com)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-imagenet-model-featurization-plugin:0.1.1",
+    "containerId": "labshare/polus-imagenet-model-featurization-plugin:0.1.2",
     "inputs": [
       {
         "name": "inpDir",

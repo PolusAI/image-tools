@@ -4,7 +4,8 @@ import pandas as pd
 from tqdm import tqdm
 import tensorflow as tf
 import argparse, logging
-from skimage import io, transform
+from skimage import transform
+from bfio import BioReader
 
 valid_models =  [
     'Xception',
@@ -30,7 +31,7 @@ def get_imagenet_model(model):
 
 
 def load_img(image_path, target_size=None):
-    img = io.imread(image_path)
+    img = BioReader(image_path, backend='python').read().squeeze()
     dim = len(img.shape)
     
     # Only grayscale or RGB
