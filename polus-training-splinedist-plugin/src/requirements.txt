@@ -2,6 +2,7 @@ filepattern==1.4.4
 numpy==1.20.2
 stardist==0.6.0
 csbdeep==0.6.1
+python-bioformats==4.0.4
 bfio==2.0.6
 opencv-python==4.3.0.36
 tensorflow==2.4.1
