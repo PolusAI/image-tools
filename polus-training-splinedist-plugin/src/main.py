@@ -2,6 +2,7 @@ import logging, argparse
 import os 
 
 import utils
+from tensorflow.python.client import device_lib
 
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -19,8 +20,8 @@ def main(image_dir_train : str,
          gpu : bool,
          M : int,
          epochs : int,
-         learning_rate : float,
          imagepattern: str):
+
 
     if action == 'train':
         utils.train_nn(image_dir_train,
@@ -32,8 +33,7 @@ def main(image_dir_train : str,
                         gpu,
                         imagepattern,
                         M,
-                        epochs,
-                        learning_rate)
+                        epochs)
 
     elif action == 'test':
         utils.test_nn(image_dir_test,
@@ -41,12 +41,6 @@ def main(image_dir_train : str,
                       output_directory,
                       gpu,
                       imagepattern)
-    
-    elif action == 'predict':
-        utils.predict_nn(image_dir_test,
-                        output_directory,
-                        gpu,
-                        imagepattern)
 
     else:
         raise ValueError("Action Variable is Incorrect")
@@ -69,8 +63,6 @@ if __name__ == "__main__":
                         help='Percentage of data that is allocated for testing', required=False)
     parser.add_argument('--outDir', dest='output_directory', type=str,
                         help='Path to output directory containing the neural network weights', required=True)
-    parser.add_argument('--gpuAvailability', dest='GPU', type=bool,
-                        help='Is there a GPU to use?', required=False, default=False)
     parser.add_argument('--imagePattern', dest='image_pattern', type=str,
                         help='Filepattern of the images in input_images and input_labels', required=False)
     parser.add_argument('--action', dest='action', type=str,
@@ -79,8 +71,7 @@ if __name__ == "__main__":
                         help='Define the number of control points', required=False)
     parser.add_argument('--epochs', dest='epochs', type=int,
                         help='The number of epochs to run', required=False)
-    parser.add_argument('--learningRate', dest='learning_rate', type=float,
-                       help='New Learning Rate if continuing training.', required=False)
+
 
     # Parse the arguments
     args = parser.parse_args()
@@ -89,14 +80,19 @@ if __name__ == "__main__":
     image_dir_test = args.input_directory_images_test
     label_dir_test = args.input_directory_labels_test
     split_percentile = args.split_percentile
-    gpu = args.GPU
     M = args.controlPoints
     epochs = args.epochs
     output_directory = args.output_directory
     imagepattern = args.image_pattern
     action = args.action
-    learning_rate = args.learning_rate
     
+    gpu = False
+    local_device_protos = device_lib.list_local_devices()
+    gpulist = [x.name for x in local_device_protos if x.device_type == 'GPU']
+    if len(gpulist) > 0:
+        gpu = True
+
+
     if split_percentile == None:
         logger.info("Input Training Directory for Intensity Based Images: {}".format(image_dir_train))
         logger.info("Input Training Directory for Labelled Images: {}".format(label_dir_train))
@@ -112,10 +108,11 @@ if __name__ == "__main__":
     logger.info("Image Pattern: {}".format(imagepattern))
     logger.info("Number of Control Points {}".format(M))
     logger.info("Number of Epochs {}".format(epochs))
-    if learning_rate != None:
-        logger.info("Update Learning Rate to {}".format(learning_rate))
-    logger.info("GPU: {}".format(gpu))
     logger.info("Action: {} a neural network".format(action))
+    logger.info("Is there a GPU? {}".format(gpu))
+
+    if imagepattern == None:
+        imagepattern = '.*'
 
     main(image_dir_train=image_dir_train,
          label_dir_train=label_dir_train,
@@ -127,7 +124,6 @@ if __name__ == "__main__":
          gpu=gpu,
          M=M,
          epochs=epochs,
-         learning_rate=learning_rate,
          imagepattern=imagepattern)
 
 
