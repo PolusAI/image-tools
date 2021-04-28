@@ -335,8 +335,8 @@ def train_nn(image_dir_input : str,
             
             image = X_val[i]
             label = Y_val[i]
-            assert os.path.basename(str(image)) == os.path.basename(str(label)),
-                "{} and {} are not the correct pair".format(os.path.basename(image), 
+            assert os.path.basename(str(image)) == os.path.basename(str(label)), \
+                "{} and {} are not the correct pair".format(os.path.basename(image), \ 
                                                             os.path.basename(label))
 
             # The original image
