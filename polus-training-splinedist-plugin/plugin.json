@@ -1,6 +1,6 @@
 {
   "name": "SplineDist Training and Testing  Plugin",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "title": "Training SplineDist",
   "description": "This plugin trains or tests a neural network to identify segments using SplineDist's algorithm",
   "author": "Madhuri Vihani (Madhuri.Vihani@axleinfo.com),  Hythem Sidky (Hythem.Sidky@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "https://www.biorxiv.org/content/10.1101/2020.10.27.357640v1",
-  "containerId": "mmvihani/polus-training-splinedist-plugin:0.0.1",
+  "containerId": "mmvihani/polus-training-splinedist-plugin:0.0.2",
   "inputs": [
     {
       "name": "action",
