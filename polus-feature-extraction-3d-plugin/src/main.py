@@ -34,39 +34,13 @@ def read(img_file):
         Array of the image and the embedded unit in the metadata if present else it will be none.
         
     """
-    image_bfio = BioReader(img_file)
+    br = BioReader(img_file)
+    #Load only the first channel
+    image_bfio = br[:].squeeze()
     #Get embedded units from metadata (physical size)
-    img_unit = image_bfio.ps_y[1]
-    #Image shape
-    bfshape = image_bfio.shape
-    datatype = np.dtype(image_bfio.dtype)
-    #Define chunksize
-    chunk_size = [256,256,256]
-    xsplits = list(np.arange(0, bfshape[0], chunk_size[0]))
-    xsplits.append(bfshape[0])
-    ysplits = list(np.arange(0, bfshape[1], chunk_size[1]))
-    ysplits.append(bfshape[1])
-    zsplits = list(np.arange(0, bfshape[2], chunk_size[2]))
-    zsplits.append(bfshape[2])
-    all_identities = []
-    xb = np.array([])
-    with tempfile.TemporaryDirectory() as temp_dir:
-        if not os.path.exists(temp_dir):
-            os.makedirs(temp_dir, exist_ok=True)
-        for y in range(len(ysplits)-1):
-            for x in range(len(xsplits)-1):
-                for z in range(len(zsplits)-1):
-                    start_y, end_y = (ysplits[y], ysplits[y+1])
-                    start_x, end_x = (xsplits[x], xsplits[x+1])
-                    start_z, end_z = (zsplits[z], zsplits[z+1])
-                    volume = image_bfio[start_x:end_x,start_y:end_y,start_z:end_z]
-                    volume = volume.flatten()
-                    xb=np.append(xb,volume)
-    #Reshape array based on image shape
-    img_data = np.reshape(xb,[bfshape[0],bfshape[1],bfshape[2]])
-    label_image = img_data.astype(int)
+    img_unit = br.ps_y[1]
     logger.info('Done reading the file: {}'.format(img_file.name))
-    return label_image, img_unit
+    return image_bfio, img_unit
 
 def strel_disk(radius):
     """Create a disk structuring element for morphological operations.
@@ -494,7 +468,7 @@ def feature_extraction(features,
         centroid_value = [str(region.centroid) for region in regions]
         cent_x= [cent.split(',') for cent in centroid_value]
         data_dict = [centroid_x[1].replace(')','') for centroid_x in cent_x]
-        logger.debug('Completed extracting centroid_column for ' + seg_file_names1.name)
+        logger.debug('Completed extracting centroid_x for ' + seg_file_names1.name)
         return data_dict
 
     def centroid_y(*args):
@@ -502,7 +476,15 @@ def feature_extraction(features,
         centroid_value = [str(region.centroid) for region in regions]
         cent_y = [cent.split(',') for cent in centroid_value]
         data_dict = [centroid_y[0].replace('(','') for centroid_y in cent_y]
-        logger.debug('Completed extracting centroid_column for ' + seg_file_names1.name)
+        logger.debug('Completed extracting centroid_y for ' + seg_file_names1.name)
+        return data_dict
+    
+    def centroid_z(*args):
+        """Calculate centroidz for all the regions of interest in the image."""
+        centroid_value = [str(region.centroid) for region in regions]
+        cent_z = [cent.split(',') for cent in centroid_value]
+        data_dict = [centroid_z[2].replace(')','') for centroid_z in cent_z]
+        logger.debug('Completed extracting centroid_z for ' + seg_file_names1.name)
         return data_dict
 
     def equivalent_diameter(seg_img, units, *args):
@@ -741,10 +723,12 @@ def feature_extraction(features,
         all_convex = convex_volume(seg_img, units)
         #calculate orientation
         all_orientation = orientation(seg_img)
-        #calculate centroid row value
+        #calculate centroid x value
         all_centroidx = centroid_x(seg_img)
-        #calculate centroid column value
+        #calculate centroid y value
         all_centroidy = centroid_y(seg_img)
+        #calculate centroid z value
+        all_centroidz = centroid_z(seg_img)
         #calculate asphericity
         all_asphericity = asphericity(seg_img)
         #calculate acylindricity
@@ -782,7 +766,7 @@ def feature_extraction(features,
         #calculate kurtosis
         all_kurtosis = kurtosis(seg_img, int_img)
         logger.debug('Completed extracting all features for ' + seg_file_names1.name)
-        return (all_volume, all_acylindricity, all_anisotrophy, all_asphericity, all_centroidx, all_centroidy, all_convex, all_entropy, all_equivalent_diameter, all_euler_number, all_kurtosis, all_major_axis_length, all_maxferet, all_max_intensity, all_mean_intensity, all_median, all_min_intensity,all_minimum_principal_moment, all_minor_axis_length, all_mode, all_neighbor, all_orientation, all_sd, all_skewness, all_solidity)
+        return (all_volume, all_acylindricity, all_anisotrophy, all_asphericity, all_centroidx, all_centroidy, all_centroidz, all_convex, all_entropy, all_equivalent_diameter, all_euler_number, all_kurtosis, all_major_axis_length, all_maxferet, all_max_intensity, all_mean_intensity, all_median, all_min_intensity,all_minimum_principal_moment, all_minor_axis_length, all_mode, all_neighbor, all_orientation, all_sd, all_skewness, all_solidity)
 
     #Dictionary of input features
     FEAT = {'volume': volume,
@@ -790,6 +774,7 @@ def feature_extraction(features,
             'convex_volume': convex_volume,
             'centroid_x': centroid_x,
             'centroid_y': centroid_y,
+            'centroid_z': centroid_z,
             'equivalent_diameter': equivalent_diameter,
             'euler_number': euler_number,
             'major_axis_length': major_axis_length,
@@ -840,7 +825,7 @@ def feature_extraction(features,
         features.remove('centroid')
         features.append('centroid_x')
         features.append('centroid_y')
-
+        features.append('centroid_z')
     for each_feature in features:
         #Dynamically call the function based on the features required
         if label_image is not None:
@@ -868,6 +853,7 @@ def feature_extraction(features,
                 'asphericity',
                 'centroid_x',
                 'centroid_y',
+                'centroid_z',
                 f'convex_volume_{units}',
                 'entropy',
                 f'equivalent_diameter_{units}',

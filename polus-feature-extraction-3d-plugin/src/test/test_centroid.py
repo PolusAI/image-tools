@@ -19,14 +19,16 @@ class Testcentroid(unittest.TestCase):
                                     channel=None,
                                     label_image=Testcentroid.label_image.astype(int)
                                     )
+        print(centroidvalue)
         self.assertEqual( len(centroidvalue[centroidvalue.columns[1]]),len(centroidvalue[centroidvalue.columns[-1]]))
         self.assertEqual( len(centroidvalue[centroidvalue.columns[1]]),len(centroidvalue[centroidvalue.columns[-2]]))
-        self.assertEqual( centroidvalue.shape[1], 3)
-        self.assertEqual( centroidvalue.columns[-2], 'centroid_x')
-        self.assertEqual( centroidvalue.columns[-1], 'centroid_y')
+        self.assertEqual( centroidvalue.shape[1], 4)
+        self.assertEqual( centroidvalue.columns[-3], 'centroid_x')
+        self.assertEqual( centroidvalue.columns[-2], 'centroid_y')
+        self.assertEqual( centroidvalue.columns[-1], 'centroid_z')
         self.assertEqual( centroidvalue.isnull().values.any(), False )
-        self.assertTrue(centroidvalue[centroidvalue.columns[-1]].iloc[0] == '11.0')
-        self.assertTrue(centroidvalue[centroidvalue.columns[-2]].iloc[0] == ' 11.0')
+        self.assertTrue(centroidvalue[centroidvalue.columns[-1]].iloc[0] == ' 11.0')
+        self.assertTrue(centroidvalue[centroidvalue.columns[-2]].iloc[0] == '11.0')
         
                 
 if __name__ == '__main__':
