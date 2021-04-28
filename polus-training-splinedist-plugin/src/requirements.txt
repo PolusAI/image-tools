@@ -1,11 +1,12 @@
 filepattern==1.4.4
-numpy==1.20.2
-stardist==0.6.0
 csbdeep==0.6.1
-python-bioformats==4.0.4
 bfio==2.0.6
-opencv-python==4.3.0.36
-tensorflow==2.4.1
+opencv-python==4.5.1.48
 gputools==0.2.9
 tqdm==4.59.0
 scikit-learn==0.24.1
+stardist==0.6.0
+tensorflow==2.4.1
+python-bioformats==4.0.4
+numpy==1.20.2
+tifffile==2020.11.18
