@@ -1,165 +1,154 @@
 {
-    "name": "SplineDist Plugin",
-    "version": "0.0.1",
-    "title": "Training SplineDist",
-    "description": "This plugin trains a neural network to identify segments using SplineDist's algorithm",
-    "author": "Madhuri Vihani (Madhuri.Vihani@axleinfo.com),  Hythem Sidky (Hythem.Sidky@nih.gov)",
-    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-    "repository": "https://github.com/labshare/polus-plugins",
-    "website": "https://ncats.nih.gov/preclinical/core/informatics",
-    "citation": "https://www.biorxiv.org/content/10.1101/2020.10.27.357640v1",
-    "containerId": "mmvihani/polus-training-splinedist-plugin:0.0.1",
-    "inputs": [
-      {
-        "name": "inpImageDirTrain",
-        "description": "Input Image collection for training",
-        "type": "collection",
-        "options": null,
-        "required": true
+  "name": "SplineDist Training and Testing  Plugin",
+  "version": "0.0.1",
+  "title": "Training SplineDist",
+  "description": "This plugin trains or tests a neural network to identify segments using SplineDist's algorithm",
+  "author": "Madhuri Vihani (Madhuri.Vihani@axleinfo.com),  Hythem Sidky (Hythem.Sidky@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "https://www.biorxiv.org/content/10.1101/2020.10.27.357640v1",
+  "containerId": "mmvihani/polus-training-splinedist-plugin:0.0.1",
+  "inputs": [
+    {
+      "name": "action",
+      "description": "testing or training neural network",
+      "type": "enum",
+      "options": {
+        "values": [
+          "testing",
+          "training"
+        ]
       },
-      {
-        "name": "inpLabelDirTrain",
-        "description": "Input Label collection for training",
-        "type": "collection",
-        "options": null,
-        "required": true
-      },
-      {
-        "name": "inpImageDirTest",
-        "description": "Input Image collection for testing",
-        "type": "collection",
-        "options": null,
-        "required": false
-      },
-      {
-        "name": "inpLabelDirTest",
-        "description": "Input Image collection for testing",
-        "type": "collection",
-        "options": null,
-        "required": false
-      },
-      {
-        "name": "splitPercentile",
-        "description": "What percent of the data is going to be allocated for testing?",
-        "type": "int",
-        "options": null,
-        "required": false
-      },
-      {
-        "name": "imagePattern",
-        "description": "Pattern of the images in Input",
-        "type": "string",
-        "options": null,
-        "required": false
-      },
-      {
-        "name": "gpuAvailability",
-        "description": "Is there a GPU to use?",
-        "type": "boolean",
-        "options": null,
-        "required": false
-      },
-      {
-        "name": "action",
-        "description": "testing or training neural network",
-        "type": "enum",
-        "options": {
-          "values": [
-            "testing",
-            "training"
-          ]
-        },
-        "required": true
-      },
-      {
-        "name": "controlPoints",
-        "description": "Number of control points for segmentation",
-        "type": "int",
-        "options": null,
-        "required": false
-      },
-      {
-        "name": "epochs",
-        "description": "Number of epochs to train",
-        "type": "int",
-        "options": null,
-        "required": false
-      },
-      {
-        "name": "learningRate",
-        "description": "Rate at which model learns",
-        "type": "int",
-        "options": null,
-        "required": false
+      "required": true
+    },
+    {
+      "name": "imagePattern",
+      "description": "Pattern of the images in Input",
+      "type": "string",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "inpImageDirTrain",
+      "description": "Input Image collection for training",
+      "type": "collection",
+      "options": null,
+      "required": true
+    },
+    {
+      "name": "inpLabelDirTrain",
+      "description": "Input Label collection for training",
+      "type": "collection",
+      "options": null,
+      "required": true
+    },
+    {
+      "name": "splitPercentile",
+      "description": "What percent of the data is going to be allocated for testing?",
+      "type": "enum",
+      "required": false,
+      "options": {
+        "values": [
+          "0",
+          "10",
+          "20",
+          "30",
+          "40",
+          "50"
+        ]
       }
-    ],
-    "outputs": [
-      {
-        "name": "outDir",
-        "description": "Precomputed output",
-        "type": "pyramid",
-        "options": null,
-        "required": true
-      }
-    ],
-    "ui": [
-      {
-        "key": "inputs.inpImageDirTrain",
-        "title": "Input collection: ",
-        "description": "Collection name that contains intensity based images"
-      },
-      {
-        "key": "inputs.inpLabelDirTrain",
-        "title": "Input collection: ",
-        "description": "Collection name that contains labelled segments"
-      },
-      {
-        "key": "inputs.inpImageDirTest",
-        "title": "Input collection: ",
-        "description": "Collection name that contains labelled segments"
-      },
-      {
-        "key": "inputs.inpLabelDirTest",
-        "title": "Input collection: ",
-        "description": "Collection name that contains labelled segments"
-      },
-      {
-        "key": "inputs.splitPercentile",
-        "title": "Percentage: ",
-        "description": "Percent of data that is allocated for testing"
-      },
-      {
-        "key": "inputs.imagePattern",
-        "title": "Image Pattern: ",
-        "description": "Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). "
-      },
-      {
-        "key": "inputs.gpuAvailability",
-        "title": "GPU: ",
-        "default": "false"
-      },
-      {
-        "key": "inputs.action",
-        "title": "Action: ",
-        "description": "test or train "
-      },
-      {
-        "key": "inputs.controlPoints",
-        "title": "ControlPoints: ",
-        "description": "Number of control points ",
-        "condition": "inputs.action == training"
-      },
-      {
-        "key": "inputs.epochs",
-        "title": "Epochs: ",
-        "description": "Number of Epochs to Run",
-        "condition": "inputs.action == training"
-      },
-      {
-        "key": "inputs.learningRate",
-        "title": "Learning Rate: ",
-        "description": "Learning rate for training",
-        "condition": "inputs.action == training"
-      }
-    ]
-  }
+    },
+    {
+      "name": "inpImageDirTest",
+      "description": "Input Image collection for testing",
+      "type": "collection",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "inpLabelDirTest",
+      "description": "Input Image collection for testing",
+      "type": "collection",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "controlPoints",
+      "description": "Number of control points for segmentation",
+      "type": "integer",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "epochs",
+      "description": "Number of epochs to train",
+      "type": "integer",
+      "options": null,
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "description": "Precomputed output",
+      "type": "pyramid",
+      "options": null,
+      "required": true
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.imagePattern",
+      "title": "Image Pattern: ",
+      "description": "Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). "
+    },
+    {
+      "key": "inputs.action",
+      "title": "Action: ",
+      "description": "test or train "
+    },
+    {
+      "key": "inputs.inpImageDirTrain",
+      "title": "Input Image collection for Training: ",
+      "description": "Collection name that contains intensity based images",
+      "condition": "inputs.action==training"
+    },
+    {
+      "key": "inputs.inpLabelDirTrain",
+      "title": "Input Label collection for Training: ",
+      "description": "Collection name that contains labelled segments",
+      "condition": "inputs.action==training"
+    },
+    {
+      "key": "inputs.splitPercentile",
+      "title": "Percentage of Training Data to be used for Testing: ",
+      "description": "Percent of data that is allocated for testing",
+      "condition": "inputs.action==training"
+    },
+    {
+      "key": "inputs.inpImageDirTest",
+      "title": "Input Image collection for Testing: ",
+      "description": "Collection name that contains labelled segments",
+      "condition": "inputs.splitPercentile==0"
+    },
+    {
+      "key": "inputs.inpLabelDirTest",
+      "title": "Input Label collection for Testing: ",
+      "description": "Collection name that contains labelled segments",
+      "condition": "inputs.splitPercentile==0"
+    },
+    {
+      "key": "inputs.controlPoints",
+      "title": "ControlPoints: ",
+      "description": "Number of control points ",
+      "condition": "inputs.action==training"
+    },
+    {
+      "key": "inputs.epochs",
+      "title": "Epochs: ",
+      "description": "Number of Epochs to Run",
+      "condition": "inputs.action==training"
+    }
+  ]
+}
