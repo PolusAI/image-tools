@@ -1,4 +1,4 @@
-FROM python:3.7 as python
+FROM python:3.7 as require
 
 COPY VERSION /
 ARG EXEC_DIR="/opt/executables"
@@ -11,11 +11,12 @@ RUN mkdir -p ${EXEC_DIR}
 COPY src ${EXEC_DIR}/
 WORKDIR ${EXEC_DIR}
 
-RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir --no-deps
+RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install -r requirements.txt --no-cache-dir --ignore-installed
 WORKDIR ${EXEC_DIR}
 ENTRYPOINT ["python3", "main.py"]
 
-FROM python as splinedist
+FROM require as splinedist
 
 RUN apt update \
     && apt-get install -y git \

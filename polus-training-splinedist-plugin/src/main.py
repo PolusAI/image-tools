@@ -23,7 +23,7 @@ def main(image_dir_train : str,
          imagepattern: str):
 
 
-    if action == 'train':
+    if action == 'training':
         utils.train_nn(image_dir_train,
                         label_dir_train,
                         image_dir_test,
@@ -35,7 +35,7 @@ def main(image_dir_train : str,
                         M,
                         epochs)
 
-    elif action == 'test':
+    elif action == 'testing':
         utils.test_nn(image_dir_test,
                       label_dir_test,
                       output_directory,
