@@ -676,6 +676,7 @@ class BioWriter(BioBase):
             self._metadata.image(0).Name = self._file_path.name
             self._metadata.image().Pixels.channel_count = self.C
             self._metadata.image().Pixels.DimensionOrder = OmeXml.DO_XYZCT
+
         else:
             self._metadata = self._minimal_xml()
 
