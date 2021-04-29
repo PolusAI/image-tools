@@ -464,6 +464,20 @@ def test_nn(image_dir_test : str,
     model = SplineDist2D(None, name=model_dir_name, basedir=output_directory)
     logger.info("\n Done Loading Model ...")
 
+    logger.info("\n Getting extra files ...")
+    conf = model.config
+    M = int(conf.n_params/2)
+    if not os.path.exists("./phi_{}.npy".format(M)):
+        contoursize_max = conf.contoursize_max
+        logger.info("Contoursize Max for phi_{}.npy: {}".format(M, contoursize_max))
+        phi_generator(M, contoursize_max, '.')
+    logger.info("Generated phi")
+    if not os.path.exists("./grid_{}.npy".format(M)):
+        training_patch_size = conf.train_patch_size
+        logger.info("Training Patch Size {} for grid_{}.npy: {}".format(M, training_patch_size))
+        grid_generator(M, conf.train_patch_size, conf.grid, '.')
+    logger.info("Generated grid")
+
     weights_best = os.path.join(model_dir_path, "weights_best.h5")
     model.keras_model.load_weights(weights_best)
     logger.info("\n Done Loading Best Weights ...")
