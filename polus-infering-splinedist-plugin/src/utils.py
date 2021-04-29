@@ -59,6 +59,26 @@ def predict_nn(image_dir : str,
                 output_directory : str,
                 gpu : bool,
                 imagepattern : str,):
+    """ The function uses the model saved in base_dir to predict the 
+    segmentations of the images in the image_dir.
+
+    Args:
+    image_dir: Directory with all the images 
+    base_dir: Directory of the model's weights
+    output_directory: Directory where the outputs gets saved
+    gpu: Specifies whether or not there is a GPU to use
+    imagepattern: Pattern of the files the user wants to use
+
+    Returns:
+    None, an output_directory filled with jpeg images of segmentations
+        and the performance of the neural network on every image
+
+    Raises:
+    Assertion Error: 
+        If the base_dir does not exist
+        If the phi_file does not exist
+        If the grid_file does not exist
+    """
 
     assert os.path.exists(base_dir), \
         "{} does not exist".format(base_dir)
