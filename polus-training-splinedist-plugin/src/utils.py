@@ -464,6 +464,7 @@ def test_nn(image_dir_test : str,
     model = SplineDist2D(None, name=model_dir_name, basedir=output_directory)
     logger.info("\n Done Loading Model ...")
 
+    # make sure phi and grid exist in current directory, otherwise create.
     logger.info("\n Getting extra files ...")
     conf = model.config
     M = int(conf.n_params/2)
@@ -519,5 +520,3 @@ def test_nn(image_dir_test : str,
         array_labels_tested.append(fill_label_holes(lab_array))
 
     create_test_plots(array_images_tested, array_labels_tested, num_images, output_directory, M, model)
-
-
