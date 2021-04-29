@@ -326,115 +326,112 @@ def train_nn(image_dir_input : str,
     axis_norm = (0,1)
     n_channel = 1 # this is based on the input data
     
-    try:
-        # javabridge.start_vm(args=["-Dlog4j.configuration=file:{}".format(LOG4J)],
-        #             class_path=JARS,
-        #             run_headless=True)
-        
-        model_dir_name = 'models'
-        model_dir_path = os.path.join(output_directory, model_dir_name)
-
-        # Get the testing data for neural network
-        logger.info("\n Starting to Load Test Data ...")
-        tenpercent_tested = num_tested/10
-        for i in range(num_tested):
-            
-            image = X_val[i]
-            label = Y_val[i]
-            base_image = os.path.basename(str(image))
-            base_label = os.path.basename(str(label))
-            assert base_image == base_label, "{} and {} do not match".format(base_image, base_label)
-
-            # The original image
-            br_image = BioReader(image, max_workers=1)
-            im_array = br_image[:,:,0:1,0:1,0:1]
-            im_array = im_array.reshape(br_image.shape[:2])
-            array_images_tested.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
-
-            # The corresponding label for the image
-            br_label = BioReader(label, max_workers=1)
-            lab_array = br_label[:,:,0:1,0:1,0:1]
-            lab_array = lab_array.reshape(br_label.shape[:2])
-            array_labels_tested.append(fill_label_holes(lab_array))
-            
-            if (i%tenpercent_tested == 0) and (i!=0):
-                logger.info("Loaded {}% of Test Data".format((i/num_tested)*100, num_tested))
-        logger.info("Done Loading Testing Data")
-
-        # Read the input images used for training
-        logger.info("\n Starting to Load Train Data ...")
-        tenpercent_trained = num_trained/10
-        contoursize_max = 0 # gets updated if models have not been created for config file
-        for i in range(num_images_trained):
-
-            br_image = BioReader(X_trn[i], max_workers=1)
-            im_array = br_image[:,:,0:1,0:1,0:1]
-            im_array = im_array.reshape(br_image.shape[:2])
-            array_images_trained.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
-
-            if i == 0:
-                n_channel = br_image.shape[2]
-
-            br_label = BioReader(Y_trn[i], max_workers=1)
-            lab_array = br_label[:,:,0:1,0:1,0:1]
-            lab_array = lab_array.reshape(br_label.shape[:2])
-            array_labels_trained.append(fill_label_holes(lab_array))
-            
-            if not os.path.exists(os.path.join(output_directory, model_dir_name)):
-                contoursize_max = update_countoursize_max(contoursize_max, lab_array)
-            
-            if (i%tenpercent_trained == 0) and (i!=0):
-                logger.info("Loaded {}% of Test Data -- contoursize_max: {}".format((i/num_trained)*100, contoursize_max))
-        logger.info("Done Loading Training Data")
-            
-
-        # Get the model and other necessary files to train the data.
-        if os.path.exists(os.path.join(output_directory, model_dir_name)):
-            # if model exists, then we need to continue training on it
-            model = SplineDist2D(None, name=model_dir_name, basedir=output_directory)
-            logger.info("\n Done Loading Model ...")
-            model.optimize_thresholds
-            logger.info("Optimized thresholds")
-
-            logger.info("\n Getting extra files ...")
-            if not os.path.exists("./phi_{}.npy".format(M)):
-                contoursize_max = model.config.contoursize_max
-                logger.info("Contoursize Max for phi_{}.npy: {}".format(M, contoursize_max))
-                phi_generator(M, contoursize_max, '.')
-            logger.info("Generated phi")
-            if not os.path.exists("./grid_{}.npy".format(M)):
-                training_patch_size = model.config.train_patch_size
-                logger.info("Training Patch Size {} for grid_{}.npy: {}".format(M, training_patch_size))
-                grid_generator(M, training_patch_size, model.config.grid, '.')
-            logger.info("Generated grid")
-
-        else:
-            logger.info("Max Contoursize: {}".format(contoursize_max))
-
-            n_params = M*2
-            grid = (2,2)
-            conf = Config2D (
-            n_params            = n_params,
-            grid                = grid,
-            n_channel_in        = n_channel,
-            contoursize_max     = contoursize_max,
-            train_epochs        = epochs,
-            use_gpu             = gpu
-            )
-            
-
-            logger.info("\n Generating phi and grids ... ")
-            if not os.path.exists("./phi_{}.npy".format(M)):
-                phi_generator(M, conf.contoursize_max, '.')
-            logger.info("Generated phi")
-            if not os.path.exists("./grid_{}.npy".format(M)):
-                grid_generator(M, conf.train_patch_size, conf.grid, '.')
-            logger.info("Generated grid")
+    # javabridge.start_vm(args=["-Dlog4j.configuration=file:{}".format(LOG4J)],
+    #             class_path=JARS,
+    #             run_headless=True)
     
-            model = SplineDist2D(conf, name=model_dir_name, basedir=output_directory)
+    model_dir_name = 'models'
+    model_dir_path = os.path.join(output_directory, model_dir_name)
 
-    finally:
-        javabridge.kill_vm()
+    # Get the testing data for neural network
+    logger.info("\n Starting to Load Test Data ...")
+    tenpercent_tested = num_tested/10
+    for i in range(num_tested):
+        
+        image = X_val[i]
+        label = Y_val[i]
+        base_image = os.path.basename(str(image))
+        base_label = os.path.basename(str(label))
+        assert base_image == base_label, "{} and {} do not match".format(base_image, base_label)
+
+        # The original image
+        br_image = BioReader(image, max_workers=1)
+        im_array = br_image[:,:,0:1,0:1,0:1]
+        im_array = im_array.reshape(br_image.shape[:2])
+        array_images_tested.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
+
+        # The corresponding label for the image
+        br_label = BioReader(label, max_workers=1)
+        lab_array = br_label[:,:,0:1,0:1,0:1]
+        lab_array = lab_array.reshape(br_label.shape[:2])
+        array_labels_tested.append(fill_label_holes(lab_array))
+        
+        if (i%tenpercent_tested == 0) and (i!=0):
+            logger.info("Loaded {}% of Test Data".format((i/num_tested)*100, num_tested))
+    logger.info("Done Loading Testing Data")
+
+    # Read the input images used for training
+    logger.info("\n Starting to Load Train Data ...")
+    tenpercent_trained = num_trained/10
+    contoursize_max = 0 # gets updated if models have not been created for config file
+    for i in range(num_images_trained):
+
+        br_image = BioReader(X_trn[i], max_workers=1)
+        im_array = br_image[:,:,0:1,0:1,0:1]
+        im_array = im_array.reshape(br_image.shape[:2])
+        array_images_trained.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
+
+        if i == 0:
+            n_channel = br_image.shape[2]
+
+        br_label = BioReader(Y_trn[i], max_workers=1)
+        lab_array = br_label[:,:,0:1,0:1,0:1]
+        lab_array = lab_array.reshape(br_label.shape[:2])
+        array_labels_trained.append(fill_label_holes(lab_array))
+        
+        if not os.path.exists(os.path.join(output_directory, model_dir_name)):
+            contoursize_max = update_countoursize_max(contoursize_max, lab_array)
+        
+        if (i%tenpercent_trained == 0) and (i!=0):
+            logger.info("Loaded {}% of Test Data -- contoursize_max: {}".format((i/num_trained)*100, contoursize_max))
+    logger.info("Done Loading Training Data")
+        
+
+    # Get the model and other necessary files to train the data.
+    if os.path.exists(os.path.join(output_directory, model_dir_name)):
+        # if model exists, then we need to continue training on it
+        model = SplineDist2D(None, name=model_dir_name, basedir=output_directory)
+        logger.info("\n Done Loading Model ...")
+        model.optimize_thresholds
+        logger.info("Optimized thresholds")
+
+        logger.info("\n Getting extra files ...")
+        if not os.path.exists("./phi_{}.npy".format(M)):
+            contoursize_max = model.config.contoursize_max
+            logger.info("Contoursize Max for phi_{}.npy: {}".format(M, contoursize_max))
+            phi_generator(M, contoursize_max, '.')
+        logger.info("Generated phi")
+        if not os.path.exists("./grid_{}.npy".format(M)):
+            training_patch_size = model.config.train_patch_size
+            logger.info("Training Patch Size {} for grid_{}.npy: {}".format(M, training_patch_size))
+            grid_generator(M, training_patch_size, model.config.grid, '.')
+        logger.info("Generated grid")
+
+    else:
+        logger.info("Max Contoursize: {}".format(contoursize_max))
+
+        n_params = M*2
+        grid = (2,2)
+        conf = Config2D (
+        n_params            = n_params,
+        grid                = grid,
+        n_channel_in        = n_channel,
+        contoursize_max     = contoursize_max,
+        train_epochs        = epochs,
+        use_gpu             = gpu
+        )
+        
+
+        logger.info("\n Generating phi and grids ... ")
+        if not os.path.exists("./phi_{}.npy".format(M)):
+            phi_generator(M, conf.contoursize_max, '.')
+        logger.info("Generated phi")
+        if not os.path.exists("./grid_{}.npy".format(M)):
+            grid_generator(M, conf.train_patch_size, conf.grid, '.')
+        logger.info("Generated grid")
+
+        model = SplineDist2D(conf, name=model_dir_name, basedir=output_directory)
+
 
     # After creating or loading model, train it
     # model.config.train_tensorboard = False

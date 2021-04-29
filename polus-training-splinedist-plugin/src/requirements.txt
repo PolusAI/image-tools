@@ -7,7 +7,6 @@ tqdm==4.59.0
 scikit-learn==0.24.1
 stardist==0.6.0
 tensorflow==2.4.1
-python-bioformats==4.0.4
 numpy==1.20.2
 tifffile==2020.11.18
 jpype1==1.2.1
