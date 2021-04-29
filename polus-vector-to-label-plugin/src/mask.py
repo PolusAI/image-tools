@@ -126,6 +126,7 @@ def follow_flows(dP, niter=200, interp=True):
                                                       dP, niter)
     return p
 
+#Counter for masks across tiles
 total_pix=0
 
 def set_totalpix(a):
@@ -213,6 +214,7 @@ def get_masks(p,update_lbl, iscell=None, rpad=20, flows=None, threshold=0.4):
     M = np.zeros(h.shape, np.int32)
     for k in range(len(pix)):
         M[pix[k]] = 1+k
+
 
     for i in range(dims):
         pflows[i] = pflows[i] + rpad

@@ -78,6 +78,13 @@ def stitch3D(masks,tile_size, stitch_threshold=0.25):
 
     return masks
 
+def crop_center(img,cropx=1024,cropy=1024):
+    y,x = img.shape
+    startx = x//2-(cropx//2)
+    starty = y//2-(cropy//2)
+    return img[starty:starty+cropy,startx:startx+cropx]
+
+
 def main():
     # Initialize the logger
     logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
@@ -131,6 +138,7 @@ def main():
 
             with  BioWriter(file_path=Path(path), backend='python', metadata=xml_metadata) as bw:
                 bw.dtype=np.dtype(np.uint32)
+
                 # Iterating over Z dimension
                 for z in range(0, root[file_name]['vector'].shape[2], 1):
                     new_img = -1
@@ -140,21 +148,51 @@ def main():
                         y_max = min([root[file_name]['vector'].shape[1], y + tile_size])
 
                         for x in range(0, root[file_name]['vector'].shape[1], tile_size):
+
                             x_max = min([root[file_name]['vector'].shape[1], x + tile_size])
                             tile = root[file_name]['vector'][y:y_max, x:x_max, z:z + 1, :, :]
                             tile=tile.transpose((2, 0, 1, 3, 4)).squeeze()
+                            tile_final= tile
+                            # adding last column of previous tile along row
+                            if x!=0:
+
+                                 tile_final=np.concatenate((x_cache,tile_final),axis=1)
+                            #  adding row of the  previous tile along column
+                            if y!=0:
+                                if x!=0:
+                                    y_tile = root[file_name]['vector'][y-1:y, x-1:x_max, z:z + 1, :, :].squeeze()
+
+                                else:
+                                    y_tile = root[file_name]['vector'][y - 1:y, x:x_max, z:z + 1, :, :].squeeze()
+
+                                y_tile = y_tile[np.newaxis,:,:]
+                                tile_final=np.concatenate((y_tile,tile_final),axis=0)
+
                             logger.info('Calculating flows and masks  for tile [{}:{},{}:{},{}:{}]'.format(y, y_max, x,
                                         x_max, z, z + 1))
-                            cellprob = tile[..., -1]
-                            dP = np.stack((tile[..., 0], tile[..., 1]), axis=0)
+
+                            cellprob = tile_final[..., -1]
+                            dP = np.stack((tile_final[..., 0], tile_final[..., 1]), axis=0)
+
                             # Computing flows for the tile
+
                             p = mask.follow_flows(-1 * dP * (cellprob > cellprob_threshold) / 5.,
                                               niter=niter, interp=True)
+
                             # Generating masks for the tile
                             maski = mask.compute_masks(p, cellprob, dP, new_img,z, cellprob_threshold,
                                                             flow_threshold)
+                            # reshaping mask  based on tile
+                            if x != 0:
+                                maski=maski[:,:-1]
+
+                            if y!= 0:
+                                maski=maski[:-1,:]
+
                             mask_final[y:y_max, x:x_max,0:1]=maski[:,:, np.newaxis].astype(np.uint32)
                             new_img = 1
+                            x_cache = tile[:, -1, :3]
+                            x_cache = x_cache[:,np.newaxis,:]
 
                     new_tile=mask_final
                     if z > 0 and stitch_threshold > 0 :
