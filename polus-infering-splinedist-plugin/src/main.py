@@ -3,6 +3,8 @@ import os
 
 import utils
 
+from tensorflow.python.client import device_lib
+
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
@@ -32,8 +34,6 @@ if __name__ == "__main__":
                         help='Path to folder with weights for neural network', required=True)
     parser.add_argument('--outDir', dest='output_directory', type=str,
                         help='Path to output directory where plots are saved', required=True)
-    parser.add_argument('--gpuAvailability', dest='GPU', type=bool,
-                        help='Is there a GPU to use?', required=False, default=False)
     parser.add_argument('--imagePattern', dest='image_pattern', type=str,
                         help='Filepattern of the images in input_images and input_labels', required=False)
 
@@ -43,7 +43,12 @@ if __name__ == "__main__":
     base_dir = args.input_base_dir
     output_directory = args.output_directory
     imagepattern = args.image_pattern
-    gpu = args.GPU
+    
+    gpu = False
+    local_device_protos = device_lib.list_local_devices()
+    gpulist = [x.name for x in local_device_protos if x.device_type == 'GPU']
+    if len(gpulist) > 0:
+        gpu = True
     
     logger.info("Input Directory containing Images: {}".format(image_dir))
     logger.info("Input Directory containing Parameters: {}".format(base_dir))
