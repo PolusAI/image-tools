@@ -13,3 +13,4 @@ jpype1==1.2.1
 python-bioformats==1.5.2
 imagecodecs==2021.4.28
 six==1.15.0
+scipy==1.4.1
