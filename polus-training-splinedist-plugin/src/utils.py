@@ -234,8 +234,9 @@ def train_nn(image_dir_input : str,
     assert isinstance(epochs, int), "Need to specify the number of epochs to run"
 
     # get the inputs
-    fp_image_dir_input = filepattern.FilePattern(image_dir_input,imagepattern)
-    fp_label_dir_input = filepattern.FilePattern(label_dir_input,imagepattern)
+    fp_image_dir_input = fp(image_dir_input,imagepattern)
+    fp_label_dir_input = fp(label_dir_input,imagepattern)
+
 
     input_images = []
     input_labels = []
@@ -260,8 +261,8 @@ def train_nn(image_dir_input : str,
         Y_trn = input_labels
         X_val = []
         Y_val = []
-        fp_image_dir_test = filepattern.FilePattern(image_dir_test, imagepattern)
-        fp_label_dir_test = filepattern.FilePattern(label_dir_test, imagepattern)
+        fp_image_dir_test = fp(image_dir_test, imagepattern)
+        fp_label_dir_test = fp(label_dir_test, imagepattern)
         for files in fp_image_dir_test():
             image_test = files[0]['file']
             if os.path.exists(image_test):
@@ -292,6 +293,14 @@ def train_nn(image_dir_input : str,
     num_labels_trained = len(Y_trn)
     num_images_tested = len(X_val)
     num_labels_tested = len(Y_val)
+    
+    # Get logs for end user
+    totalimages = num_images_trained+num_images_tested
+    logger.info("{}/{} images used for training".format(num_images_trained, totalimages))
+    logger.info("{}/{} labels used for training".format(num_labels_trained, totalimages))
+    logger.info("{}/{} images used for testing".format(num_images_tested, totalimages))
+    logger.info("{}/{} images used for testing".format(num_labels_tested, totalimages))
+
 
     # Renamed inputs
     del input_images
@@ -305,10 +314,7 @@ def train_nn(image_dir_input : str,
     num_trained = num_images_trained
     num_tested = num_images_tested
 
-    # Get logs for end user
-    totalimages = num_images_trained+num_images_tested
-    logger.info("{}/{} inputs used for training".format(num_images_trained, totalimages))
-    logger.info("{}/{} inputs used for testing".format(num_images_tested, totalimages))
+    
 
     # Need a list of numpy arrays to feed to SplineDist
     array_images_trained = []
@@ -321,9 +327,9 @@ def train_nn(image_dir_input : str,
     n_channel = 1 # this is based on the input data
     
     try:
-        javabridge.start_vm(args=["-Dlog4j.configuration=file:{}".format(LOG4J)],
-                    class_path=JARS,
-                    run_headless=True)
+        # javabridge.start_vm(args=["-Dlog4j.configuration=file:{}".format(LOG4J)],
+        #             class_path=JARS,
+        #             run_headless=True)
         
         model_dir_name = 'models'
         model_dir_path = os.path.join(output_directory, model_dir_name)
@@ -340,13 +346,13 @@ def train_nn(image_dir_input : str,
             assert base_image == base_label, "{} and {} do not match".format(base_image, base_label)
 
             # The original image
-            br_image = BioReader(image, max_workers=1, backend='java')
+            br_image = BioReader(image, max_workers=1)
             im_array = br_image[:,:,0:1,0:1,0:1]
             im_array = im_array.reshape(br_image.shape[:2])
             array_images_tested.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
 
             # The corresponding label for the image
-            br_label = BioReader(label, max_workers=1, backend='java')
+            br_label = BioReader(label, max_workers=1)
             lab_array = br_label[:,:,0:1,0:1,0:1]
             lab_array = lab_array.reshape(br_label.shape[:2])
             array_labels_tested.append(fill_label_holes(lab_array))
@@ -361,7 +367,7 @@ def train_nn(image_dir_input : str,
         contoursize_max = 0 # gets updated if models have not been created for config file
         for i in range(num_images_trained):
 
-            br_image = BioReader(X_trn[i], max_workers=1, backend='java')
+            br_image = BioReader(X_trn[i], max_workers=1)
             im_array = br_image[:,:,0:1,0:1,0:1]
             im_array = im_array.reshape(br_image.shape[:2])
             array_images_trained.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
@@ -369,7 +375,7 @@ def train_nn(image_dir_input : str,
             if i == 0:
                 n_channel = br_image.shape[2]
 
-            br_label = BioReader(Y_trn[i], max_workers=1, backend='java')
+            br_label = BioReader(Y_trn[i], max_workers=1)
             lab_array = br_label[:,:,0:1,0:1,0:1]
             lab_array = lab_array.reshape(br_label.shape[:2])
             array_labels_trained.append(fill_label_holes(lab_array))
@@ -399,7 +405,7 @@ def train_nn(image_dir_input : str,
             if not os.path.exists("./grid_{}.npy".format(M)):
                 training_patch_size = model.config.train_patch_size
                 logger.info("Training Patch Size {} for grid_{}.npy: {}".format(M, training_patch_size))
-                grid_generator(M, training_patch_size, conf.grid, '.')
+                grid_generator(M, training_patch_size, model.config.grid, '.')
             logger.info("Generated grid")
 
         else:
@@ -412,7 +418,6 @@ def train_nn(image_dir_input : str,
             grid                = grid,
             n_channel_in        = n_channel,
             contoursize_max     = contoursize_max,
-            train_learning_rate = learning_rate,
             train_epochs        = epochs,
             use_gpu             = gpu
             )
