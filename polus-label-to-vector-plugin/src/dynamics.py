@@ -49,9 +49,10 @@ def _extend_centers(T, y, x, ymed, xmed, Lx, niter):
 def labels_to_flows(labels):
     """ Convert labels ( masks or flows) to flows for training model
     Args:
-        labels(array):  Is used to create flows and cell probabilities.
+        labels (array):  Is used to create flows and cell probabilities.
     Returns:
-        flows(array): l[3 x Ly x Lx] arrays flows[1] is cell probability, flows[2] is Y flow, and flows[3] is X flow
+        flows (array): l[3 x Ly x Lx] arrays flows[1] is cell probability,
+            flows[2] is Y flow, and flows[3] is X flow
 
     """
 
