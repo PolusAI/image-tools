@@ -327,10 +327,6 @@ def train_nn(image_dir_input : str,
     axis_norm = (0,1)
     n_channel = 1 # this is based on the input data
     
-    # javabridge.start_vm(args=["-Dlog4j.configuration=file:{}".format(LOG4J)],
-    #             class_path=JARS,
-    #             run_headless=True)
-    
     model_dir_name = 'models'
     model_dir_path = os.path.join(output_directory, model_dir_name)
 
@@ -380,58 +376,37 @@ def train_nn(image_dir_input : str,
         lab_array = lab_array.reshape(br_label.shape[:2])
         array_labels_trained.append(fill_label_holes(lab_array))
         
-        if not os.path.exists(os.path.join(output_directory, model_dir_name)):
-            contoursize_max = update_countoursize_max(contoursize_max, lab_array)
+        contoursize_max = update_countoursize_max(contoursize_max, lab_array)
         
         if (i%tenpercent_trained == 0) and (i!=0):
             logger.info("Loaded {}% of Test Data -- contoursize_max: {}".format((i/num_trained)*100, contoursize_max))
     logger.info("Done Loading Training Data")
         
 
-    # Get the model and other necessary files to train the data.
-    if os.path.exists(os.path.join(output_directory, model_dir_name)):
-        # if model exists, then we need to continue training on it
-        model = SplineDist2D(None, name=model_dir_name, basedir=output_directory)
-        logger.info("\n Done Loading Model ...")
-        model.optimize_thresholds
-        logger.info("Optimized thresholds")
+    # Build the model and generate other necessary files to train the data.
+    logger.info("Max Contoursize: {}".format(contoursize_max))
 
-        logger.info("\n Getting extra files ...")
-        if not os.path.exists("./phi_{}.npy".format(M)):
-            contoursize_max = model.config.contoursize_max
-            logger.info("Contoursize Max for phi_{}.npy: {}".format(M, contoursize_max))
-            phi_generator(M, contoursize_max, '.')
-        logger.info("Generated phi")
-        if not os.path.exists("./grid_{}.npy".format(M)):
-            training_patch_size = model.config.train_patch_size
-            logger.info("Training Patch Size {} for grid_{}.npy: {}".format(M, training_patch_size))
-            grid_generator(M, training_patch_size, model.config.grid, '.')
-        logger.info("Generated grid")
+    n_params = M*2
+    grid = (2,2)
+    conf = Config2D (
+    n_params            = n_params,
+    grid                = grid,
+    n_channel_in        = n_channel,
+    contoursize_max     = contoursize_max,
+    train_epochs        = epochs,
+    use_gpu             = gpu
+    )
+    
 
-    else:
-        logger.info("Max Contoursize: {}".format(contoursize_max))
+    logger.info("\n Generating phi and grids ... ")
+    if not os.path.exists("./phi_{}.npy".format(M)):
+        phi_generator(M, conf.contoursize_max, '.')
+    logger.info("Generated phi")
+    if not os.path.exists("./grid_{}.npy".format(M)):
+        grid_generator(M, conf.train_patch_size, conf.grid, '.')
+    logger.info("Generated grid")
 
-        n_params = M*2
-        grid = (2,2)
-        conf = Config2D (
-        n_params            = n_params,
-        grid                = grid,
-        n_channel_in        = n_channel,
-        contoursize_max     = contoursize_max,
-        train_epochs        = epochs,
-        use_gpu             = gpu
-        )
-        
-
-        logger.info("\n Generating phi and grids ... ")
-        if not os.path.exists("./phi_{}.npy".format(M)):
-            phi_generator(M, conf.contoursize_max, '.')
-        logger.info("Generated phi")
-        if not os.path.exists("./grid_{}.npy".format(M)):
-            grid_generator(M, conf.train_patch_size, conf.grid, '.')
-        logger.info("Generated grid")
-
-        model = SplineDist2D(conf, name=model_dir_name, basedir=output_directory)
+    model = SplineDist2D(conf, name=model_dir_name, basedir=output_directory)
 
 
     # After creating or loading model, train it
