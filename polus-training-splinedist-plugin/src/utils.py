@@ -253,7 +253,9 @@ def train_nn(image_dir_input : str,
     num_inputs = len(input_images)
     
     logger.info("\n Getting Data for Training and Testing  ...")
-    if (split_percentile == None) or (int(split_percentile) == 0):
+    split_percentile = int(split_percentile)
+    logger.info("Split Percentile {} ({})".format(split_percentile, type(split_percentile)))
+    if (split_percentile == None) or (split_percentile == 0):
         # if images are already allocated for testing then use those
         logger.info("Getting From Testing Directories")
         X_trn = input_images
