@@ -442,7 +442,7 @@ def train_nn(image_dir_input : str,
     for ky,val in config_dict.items():
         logger.info("{}: {}".format(ky, val))
 
-    
+
     model.train(array_images_trained,array_labels_trained, 
                 validation_data=(array_images_tested, array_labels_tested), 
                 augmenter=augmenter, epochs=epochs)
@@ -489,29 +489,21 @@ def test_nn(image_dir_test : str,
     axis_norm = (0,1)
     n_channel = 1 # this is based on the input data
 
-    try:
-        javabridge.start_vm(args=["-Dlog4j.configuration=file:{}".format(LOG4J)],
-                    class_path=JARS,
-                    run_headless=True)
+    # Read the input images used for testing
+    for im in tqdm(range(num_images)):
+        image = os.path.join(image_dir_test, X_val[im])
+        br_image = BioReader(image, max_workers=1, backend='java')
+        im_array = br_image[:,:,0:1,0:1,0:1].reshape(br_image.shape[:2]) 
+        array_images_tested.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
 
-        # Read the input images used for testing
-        for im in tqdm(range(num_images)):
-            image = os.path.join(image_dir_test, X_val[im])
-            br_image = BioReader(image, max_workers=1, backend='java')
-            im_array = br_image[:,:,0:1,0:1,0:1].reshape(br_image.shape[:2]) 
-            array_images_tested.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
+    # Read the input labels used for testing 
+    for lab in tqdm(range(num_labels)):
+        label = os.path.join(label_dir_test, Y_val[lab])
+        br_label = BioReader(label, max_workers=1, backend='java')
+        lab_array = br_label[:,:,0:1,0:1,0:1]
+        lab_array = lab_array.reshape(br_label.shape[:2])
+        array_labels_tested.append(fill_label_holes(lab_array))
 
-        # Read the input labels used for testing 
-        for lab in tqdm(range(num_labels)):
-            label = os.path.join(label_dir_test, Y_val[lab])
-            br_label = BioReader(label, max_workers=1, backend='java')
-            lab_array = br_label[:,:,0:1,0:1,0:1]
-            lab_array = lab_array.reshape(br_label.shape[:2])
-            array_labels_tested.append(fill_label_holes(lab_array))
+    create_test_plots(array_images_tested, array_labels_tested, num_images, output_directory, M, model)
 
-        create_test_plots(array_images_tested, array_labels_tested, num_images, output_directory, M, model)
-
-
-    finally:
-        javabridge.kill_vm()
 
