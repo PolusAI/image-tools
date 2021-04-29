@@ -442,6 +442,7 @@ def train_nn(image_dir_input : str,
     for ky,val in config_dict.items():
         logger.info("{}: {}".format(ky, val))
 
+    
     model.train(array_images_trained,array_labels_trained, 
                 validation_data=(array_images_tested, array_labels_tested), 
                 augmenter=augmenter, epochs=epochs)

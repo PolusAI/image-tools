@@ -6,11 +6,5 @@ tqdm==4.59.0
 scikit-learn==0.24.1
 stardist==0.6.0
 tensorflow==2.2.0
-tifffile==2020.11.18
 jpype1==1.2.1
-imagecodecs==2021.4.28
-six==1.15.0
-scipy==1.4.1
-matplotlib==3.1.1
-scikit-image==0.17.2
 bfio==2.1.0a6
