@@ -12,6 +12,7 @@ COPY src ${EXEC_DIR}/
 WORKDIR ${EXEC_DIR}
 
 RUN python3 -m pip install --upgrade pip
+RUN apt-get install nvidia-cuda-toolkit
 RUN python3 -m pip install -r requirements.txt --no-cache-dir --ignore-installed
 WORKDIR ${EXEC_DIR}
 ENTRYPOINT ["python3", "main.py"]
