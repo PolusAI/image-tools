@@ -17,7 +17,7 @@ def flow_thread(input_path: Path,
                 y: int,
                 z: int) -> bool:
     
-    root = zarr.open(zfile)
+    root = zarr.open(str(zfile))
     
     with BioReader(input_path) as br:
         
@@ -38,9 +38,9 @@ def flow_thread(input_path: Path,
         y_min = y
         y_max = min([br.Y,y+TILE_SIZE])
         
-        zfile[f]['vector'][y_min:y_max, x_min:x_max,z:z+1,0:3,0:1] = flow_final[y_overlap:y_max-y_min+y_overlap,x_overlap:x_max-x_min+x_overlap,...]
-        zfile[f]['lbl'][y_min:y_max, x_min:x_max,z:z+1, 0:1,0:1] = br[y_min:y_max, x_min:x_max,z:z+1, 0,0]
-        
+        root[input_path.name]['vector'][y_min:y_max, x_min:x_max,z:z+1,0:3,0:1] = flow_final[y_overlap:y_max-y_min+y_overlap,x_overlap:x_max-x_min+x_overlap,...]
+        root[input_path.name]['lbl'][y_min:y_max, x_min:x_max,z:z+1, 0:1,0:1] = br[y_min:y_max, x_min:x_max,z:z+1, 0,0]
+       
     return True
 
 if __name__=="__main__":
