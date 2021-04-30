@@ -426,17 +426,34 @@ def train_nn(image_dir_input : str,
 
 def test_nn(image_dir_test : str,
             label_dir_test : str,
+            model_basedir : str,
             output_directory : str,
             gpu : bool,
             imagepattern : str):
+    """ This function tests the trained neural network from the train_nn 
+    function. 
 
+    Args:
+        image_dir_test: location for intensity based images
+        label_dir_test: location for labelled data
+        model_basedir: location for model parameters
+        output_directory: location for where the plots get saved
+        imagepattern:  The imagepattern of files to iterate through within a directory
+
+    Returns:
+        None, output_directory is filled with plots
+
+    Raises:
+        Assertion Error: if number of images does not match number of labels
+        Assertion Error: if the model does not exist.
+    """
 
     model_dir_name = 'models'
-    model_dir_path = os.path.join(output_directory, model_dir_name)
+    model_dir_path = os.path.join(model_basedir, model_dir_name)
     assert os.path.exists(model_dir_path), \
         "{} does not exist".format(model_dir_path)
 
-    model = SplineDist2D(None, name=model_dir_name, basedir=output_directory)
+    model = SplineDist2D(None, name=model_dir_name, basedir=model_basedir)
     logger.info("\n Done Loading Model ...")
 
     # make sure phi and grid exist in current directory, otherwise create.

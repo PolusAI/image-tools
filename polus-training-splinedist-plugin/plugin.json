@@ -1,6 +1,6 @@
 {
   "name": "SplineDist Training and Testing  Plugin",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "title": "Training SplineDist",
   "description": "This plugin trains or tests a neural network to identify segments using SplineDist's algorithm",
   "author": "Madhuri Vihani (Madhuri.Vihani@axleinfo.com),  Hythem Sidky (Hythem.Sidky@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "https://www.biorxiv.org/content/10.1101/2020.10.27.357640v1",
-  "containerId": "mmvihani/polus-training-splinedist-plugin:0.1.1",
+  "containerId": "mmvihani/polus-training-splinedist-plugin:0.1.2",
   "inputs": [
     {
       "name": "imagePattern",
@@ -30,18 +30,39 @@
       "required": true
     },
     {
+      "name": "TrainedImageDir",
+      "description": "Input Image collection for testing the trained neural network",
+      "type": "collection",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "TrainedLabelDir",
+      "description": "Input Label collection for testing the trained neural network",
+      "type": "collection",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "modelDir",
+      "description": "Input Model Directory containing Weights",
+      "type": "genericData",
+      "options": null,
+      "required": false
+    },
+    {
       "name": "inpImageDirTrain",
       "description": "Input Image collection for training",
       "type": "collection",
       "options": null,
-      "required": true
+      "required": false
     },
     {
       "name": "inpLabelDirTrain",
       "description": "Input Label collection for training",
       "type": "collection",
       "options": null,
-      "required": true
+      "required": false
     },
     {
       "name": "splitPercentile",
@@ -92,7 +113,7 @@
     {
       "name": "outDir",
       "description": "Precomputed output",
-      "type": "collection",
+      "type": "genericData",
       "options": null,
       "required": true
     }
@@ -107,6 +128,24 @@
       "key": "inputs.action",
       "title": "Action: ",
       "description": "test or train "
+    },
+    {
+      "key": "inputs.TrainedImageDir",
+      "title": "Input Image collection: ",
+      "description": "Collection name that contains intensity based images",
+      "condition": "inputs.action==testing"
+    },
+    {
+      "key": "inputs.TrainedLabelDir",
+      "title": "Input Label collection: ",
+      "description": "Collection name that contains labelled images",
+      "condition": "inputs.action==testing"
+    },
+    {
+      "key": "inputs.modelDir",
+      "title": "Model Directory containing Weights: ",
+      "description": "Directory containing weights for trained neural network.",
+      "condition": "inputs.action==testing"
     },
     {
       "key": "inputs.inpImageDirTrain",
