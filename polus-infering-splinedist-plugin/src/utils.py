@@ -9,6 +9,7 @@ from bfio import BioReader
 from csbdeep.utils import normalize
 
 from splinedist.models import Config2D, SplineDist2D, SplineDistData2D
+from splinedist.utils import phi_generator, grid_generator
 
 import matplotlib
 matplotlib.rcParams["image.interpolation"] = None
@@ -104,12 +105,20 @@ def predict_nn(image_dir : str,
     controlPoints = int(config_dict['n_params']/2)
     logger.info("Number of Control Points: {}".format(controlPoints))
 
-    phi_file = "phi_{}.npy".format(controlPoints)
-    grid_file = "grid_{}.npy".format(controlPoints)
-    assert os.path.exists(phi_file), "Could Not Find {} in Working Directory".format(phi_file)
-    logger.info("Found {}".format(phi_file))
-    assert os.path.exists(grid_file), "Could Not Find {} in Working Directory".format(grid_file)
-    logger.info("Found {}".format(grid_file))
+    # make sure phi and grid exist in current directory, otherwise create.
+    logger.info("\n Getting extra files ...")
+    conf = model.config
+    M = int(conf.n_params/2)
+    if not os.path.exists("./phi_{}.npy".format(M)):
+        contoursize_max = conf.contoursize_max
+        logger.info("Contoursize Max for phi_{}.npy: {}".format(M, contoursize_max))
+        phi_generator(M, contoursize_max, '.')
+        logger.info("Generated phi")
+    if not os.path.exists("./grid_{}.npy".format(M)):
+        training_patch_size = conf.train_patch_size
+        logger.info("Training Patch Size for grid_{}.npy: {}".format(training_patch_size, M))
+        grid_generator(M, training_patch_size, conf.grid, '.')
+        logger.info("Generated grid")
 
     axis_norm = (0,1)
     for im in images:
