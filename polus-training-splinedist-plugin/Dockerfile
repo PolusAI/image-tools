@@ -11,12 +11,7 @@ RUN mkdir -p ${EXEC_DIR}
 COPY src ${EXEC_DIR}/
 WORKDIR ${EXEC_DIR}
 
-RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install -r requirements.txt --no-cache-dir --ignore-installed
-WORKDIR ${EXEC_DIR}
-ENTRYPOINT ["python3", "main.py"]
-
-FROM require as splinedist
 
 RUN apt update \
     && apt-get install -y git \
