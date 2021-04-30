@@ -56,6 +56,9 @@ if __name__ == "__main__":
     logger.info("Use GPU: {}".format(gpu))
     logger.info("Output Directory to save Results: {}".format(output_directory))
 
+    if imagepattern == None:
+        imagepattern = '.*'
+
     main(image_dir = image_dir,
          base_dir = base_dir,
          imagepattern = imagepattern,
