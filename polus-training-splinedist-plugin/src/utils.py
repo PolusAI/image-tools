@@ -467,8 +467,8 @@ def test_nn(image_dir_test : str,
         logger.info("Generated phi")
     if not os.path.exists("./grid_{}.npy".format(M)):
         training_patch_size = conf.train_patch_size
-        logger.info("Training Patch Size {} for grid_{}.npy: {}".format(M, training_patch_size))
-        grid_generator(M, conf.train_patch_size, conf.grid, '.')
+        logger.info("Training Patch Size for grid_{}.npy: {}".format(training_patch_size, M))
+        grid_generator(M, training_patch_size, conf.grid, '.')
         logger.info("Generated grid")
 
     weights_best = os.path.join(model_dir_path, "weights_best.h5")
