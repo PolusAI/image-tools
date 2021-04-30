@@ -2,3 +2,4 @@ pandas==1.2.2
 scipy==1.6.0
 scikit-image==0.18.1
 filepattern==1.4.4
+opencv-contrib-python-headless==4.4.0.46

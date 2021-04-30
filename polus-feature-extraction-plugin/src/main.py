@@ -13,6 +13,7 @@ import os
 import math
 import itertools
 import filepattern
+import cv2
 import numpy as np
 import pandas as pd
 
@@ -143,33 +144,24 @@ def neighbors_find(lbl_img, im_label, pixeldistance):
     """
     nei=[]
     num_nei=[]
-    for ind in range(1,len(im_label)+1):
-        #Find contours for each label
-        contour = measure.find_contours(lbl_img == ind,level=0)
-        for i in range(0,len(contour)):
-            for j in range(0,len(contour[i])):
-                #Get the border points
-                borderpoint = contour[i][j]
-                px=borderpoint[1]
-                py=borderpoint[0]
-                pypd=int(py-pixeldistance)
-                pxpd=int(px-pixeldistance)
-                pypd_rn=int(py+pixeldistance)
-                pxpd_rn=int(px+pixeldistance)
-                for l in range(pypd,pypd_rn+1):
-                    for k in range(pxpd,pxpd_rn+1):
-                        shape_img = lbl_img.shape
-                        if l>=shape_img[0] or k>=shape_img[1]:
-                            continue
-                        if l<0 or k<0:
-                            continue
-                        value= lbl_img[l][k]
-                        if (value!=0 and value!=ind):
-                            nei.append(value)
-        #Get the labels of neighbors
+    shape_img = lbl_img.shape
+    #Find contours for all the labels in the image
+    contours =[cv2.findContours((lbl_img==ind).astype('uint8'), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_TC89_KCOS)[0] for ind in range(1,len(im_label)+1)]
+    for contour in contours:
+        ck= [(contour[i][j]) for i in range(0,len(contour)) for j in  range(0,len(contour[i])) ]
+        #Get border points
+        pxx = [x[0][0] for x in ck]
+        pyy = [x[0][1] for x in ck]
+        pypdd = [int(py-pixeldistance) for py in pyy]
+        pxpdd = [int(px-pixeldistance) for px in pxx]
+        pypd_rnn=[int(py+pixeldistance) for py in pyy]
+        pxpd_rnn=[int(px+pixeldistance) for px in pxx]
+        cand = [(l,k) for pypd,pypd_rn,pxpd,pxpd_rn in zip(pypdd,pypd_rnn,pxpdd,pxpd_rnn) for l in range(pypd,pypd_rn+1) for k in range(pxpd,pxpd_rn+1)]
+        values=[lbl_img[l][k] for l,k in cand if(l<shape_img[0] and k<shape_img[1] and l>=0 and k>=0)]
+        nei.append(values)
         uniq_nei=np.unique(nei)
         #Get list of number of neighbors
-        num_nei.append(len(uniq_nei))
+        num_nei.append(len(uniq_nei)-2)
         nei=[]
     return num_nei
 
