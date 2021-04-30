@@ -91,7 +91,7 @@ def predict_nn(image_dir : str,
         if os.path.exists(image):
             images.append(image)
 
-    model_dir_name = 'models'
+    model_dir_name = '.'
     model = SplineDist2D(None, name=model_dir_name, basedir=base_dir)
     logger.info("\n Done Loading Model ...")
 

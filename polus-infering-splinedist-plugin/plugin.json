@@ -1,6 +1,6 @@
 {
     "name": "SplineDist (Inference) Plugin",
-    "version": "0.0.1",
+    "version": "0.0.3",
     "title": "Inferring SplineDist",
     "description": "This plugin runs a neural network to identify segments using SplineDist's algorithm",
     "author": "Madhuri Vihani (Madhuri.Vihani@axleinfo.com),  Hythem Sidky (Hythem.Sidky@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "https://www.biorxiv.org/content/10.1101/2020.10.27.357640v1",
-    "containerId": "mmvihani/polus-inferring-splinedist-plugin:0.0.1",
+    "containerId": "mmvihani/polus-inferring-splinedist-plugin:0.0.3",
     "inputs": [
       {
         "name": "inpImageDir",
@@ -20,7 +20,7 @@
       {
         "name": "inpBaseDir",
         "description": "Input Label collection for training",
-        "type": "collection",
+        "type": "genericData",
         "options": null,
         "required": true
       },
@@ -28,13 +28,6 @@
         "name": "imagePattern",
         "description": "Pattern of the images in Input",
         "type": "string",
-        "options": null,
-        "required": false
-      },
-      {
-        "name": "gpuAvailability",
-        "description": "Is there a GPU to use?",
-        "type": "boolean",
         "options": null,
         "required": false
       }
@@ -51,23 +44,18 @@
     "ui": [
       {
         "key": "inputs.inpImageDir",
-        "title": "Input collection: ",
+        "title": "Input Image Directory: ",
         "description": "Collection name that contains intensity based images"
       },
       {
         "key": "inputs.inpBaseDir",
-        "title": "Input collection: ",
+        "title": "Model Directory: ",
         "description": "Collection name that contains labelled segments"
       },
       {
         "key": "inputs.imagePattern",
         "title": "Image Pattern: ",
         "description": "Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). "
-      },
-      {
-        "key": "inputs.gpuAvailability",
-        "title": "GPU: ",
-        "default": "false"
       }
     ]
   }
