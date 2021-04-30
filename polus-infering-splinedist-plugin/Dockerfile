@@ -11,7 +11,7 @@ RUN mkdir -p ${EXEC_DIR}
 COPY src ${EXEC_DIR}/
 WORKDIR ${EXEC_DIR}
 
-RUN python3 -m pip install -r requirements.txt --no-cache-dir --ignore-installed
+RUN python3 -m pip install -r requirements.txt --no-cache-dir
 
 RUN apt update \
     && apt-get install -y git \
