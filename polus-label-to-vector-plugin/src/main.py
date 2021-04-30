@@ -103,8 +103,8 @@ if __name__=="__main__":
                     for y in range(0, br.Y, tile_size):
                         
                         processes.append(executor.submit(flow_thread,
-                                                         str(Path(inpDir).joinpath(f).absolute()),
-                                                         str(Path(outDir).joinpath('flow.zarr')),
+                                                         Path(inpDir).joinpath(f).absolute(),
+                                                         Path(outDir).joinpath('flow.zarr'),
                                                          x,y,z))
                         
             br.close()
