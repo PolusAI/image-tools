@@ -1,6 +1,6 @@
 {
     "name": "SplineDist (Inference) Plugin",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "title": "Inferring SplineDist",
     "description": "This plugin runs a neural network to identify segments using SplineDist's algorithm",
     "author": "Madhuri Vihani (Madhuri.Vihani@axleinfo.com),  Hythem Sidky (Hythem.Sidky@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "https://www.biorxiv.org/content/10.1101/2020.10.27.357640v1",
-    "containerId": "mmvihani/polus-inferring-splinedist-plugin:0.0.5",
+    "containerId": "mmvihani/polus-inferring-splinedist-plugin:0.0.6",
     "inputs": [
       {
         "name": "inpImageDir",
