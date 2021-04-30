@@ -129,5 +129,5 @@ def predict_nn(image_dir : str,
         
         prediction, details = model.predict_instances(image)
 
-        create_plots(image, prediction, output_directory)
+        create_plots(image, prediction, output_directory, os.path.basename(im))
         logger.info("Created Plots for {}".format(im))
