@@ -1,4 +1,4 @@
-FROM python:3.7 as require
+FROM python:3.7
 
 COPY VERSION /
 ARG EXEC_DIR="/opt/executables"
