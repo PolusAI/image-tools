@@ -1,4 +1,4 @@
-FROM python:3.7 as require
+FROM python:3.7
 
 COPY VERSION /
 ARG EXEC_DIR="/opt/executables"
@@ -11,12 +11,7 @@ RUN mkdir -p ${EXEC_DIR}
 COPY src ${EXEC_DIR}/
 WORKDIR ${EXEC_DIR}
 
-RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install -r requirements.txt --no-cache-dir --ignore-installed
-WORKDIR ${EXEC_DIR}
-ENTRYPOINT ["python3", "main.py"]
-
-FROM require as splinedist
 
 RUN apt update \
     && apt-get install -y git \
@@ -25,3 +20,6 @@ RUN apt update \
 RUN git clone --branch training https://github.com/mmvih/splinedist.git
 RUN pip3 install cmake --no-deps
 RUN pip3 install splinedist/ --no-deps
+
+WORKDIR ${EXEC_DIR}
+ENTRYPOINT ["python3", "main.py"]
