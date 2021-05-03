@@ -6,7 +6,10 @@ import dynamics
 import zarr
 from concurrent.futures import ProcessPoolExecutor, wait
 from multiprocessing import cpu_count
+import filepattern
 import matplotlib.pyplot as plt
+import time
+
 
 TILE_SIZE = 2048
 TILE_OVERLAP = 1024
@@ -37,7 +40,14 @@ def flow_thread(input_path: Path,
         y_overlap = y - y_min
         y_min = y
         y_max = min([br.Y,y+TILE_SIZE])
-        
+        flow_img = (flow + 1) / 2
+        flow_img=flow_img.transpose(1,2,0)
+        flow_img=flow_img[:,:,1:2]
+        print(flow_img.shape,'tesdfd')
+
+        # im=plt.imshow(flow_img.squeeze() ,aspect="auto")
+        # plt.show()
+
         zfile[f]['vector'][y_min:y_max, x_min:x_max,z:z+1,0:3,0:1] = flow_final[y_overlap:y_max-y_min+y_overlap,x_overlap:x_max-x_min+x_overlap,...]
         zfile[f]['lbl'][y_min:y_max, x_min:x_max,z:z+1, 0:1,0:1] = br[y_min:y_max, x_min:x_max,z:z+1, 0,0]
         
@@ -57,6 +67,8 @@ if __name__=="__main__":
     # Input arguments
     parser.add_argument('--inpDir', dest='inpDir', type=str,
                          help='Input image collection to be processed by this plugin', required=True)
+    parser.add_argument('--inpRegex',dest='inpRegex',type=str,
+                        help='Input file name pattern.',required=False)
     # Output arguments
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
@@ -76,6 +88,10 @@ if __name__=="__main__":
     # Start  logging
     logger.info('Initializing ...')
     # Get all file names in inpDir image collection
+    fp = filepattern.FilePattern(inpDir, args.inpRegex)
+
+    inp_test= [file[0]['file'].name  for file in fp()]
+
     inpDir_files = [f.name for f in Path(inpDir).iterdir() if f.is_file() and "".join(f.suffixes) == '.ome.tif' ]
         
     root = zarr.group(store=str(Path(outDir).joinpath('flow.zarr')))
@@ -83,10 +99,11 @@ if __name__=="__main__":
     processes = []
     with ProcessPoolExecutor(num_threads) as executor:
         for f in inpDir_files:
+            start = time.time()
             logger.info('Processing image %s ',f)
             br = BioReader(str(Path(inpDir).joinpath(f).absolute()))
             tile_size = min(2048, br.X)
-            
+
             # Initialize the zarr group, create datasets
             cluster = root.create_group(f)
             init_cluster_1 = cluster.create_dataset('vector', shape=(br.Y,br.X,br.Z,3,1),
@@ -99,24 +116,21 @@ if __name__=="__main__":
             
             for z in range(br.Z):
                 for x in range(0, br.X, tile_size):
-                    x_max = min([br.X, x + tile_size])
                     for y in range(0, br.Y, tile_size):
                         
                         processes.append(executor.submit(flow_thread,
-                                                         str(Path(inpDir).joinpath(f).absolute()),
-                                                         str(Path(outDir).joinpath('flow.zarr')),
+                                                         Path(inpDir).joinpath(f).absolute(),
+                                                         Path(outDir).joinpath('flow.zarr'),
                                                          x,y,z))
-                        
+
             br.close()
-            
+        end = time.time()
+        logger.info(f'timetaken:{end - start}')
         done, not_done = wait(processes,0)
-            
         logger.info(f'Percent complete: {100*len(done)/len(processes):6.3f}%')
-        
+
         while len(not_done) > 0:
-            
-            done, not_done = wait(processes,3)
-            
-            logger.info(f'Percent complete: {100*len(done)/len(processes):6.3f}%')
-            
-            
+            done, not_done = wait(processes, 3)
+            logger.info(f'Percent complete: {100 * len(done) / len(processes):6.3f}%')
+        end = time.time()
+        logger.info(f'timetaken:{end - start}')
