@@ -27,8 +27,8 @@ def main(image_dir_train : str,
 
 
     if action == 'training':
-        utils.train_nn(image_dir_train=image_dir_train,
-                       label_dir_train=label_dir_train,
+        utils.train_nn(image_dir_input=image_dir_train,
+                       label_dir_input=label_dir_train,
                        image_dir_test=image_dir_test,
                        label_dir_test=label_dir_test,
                        split_percentile=split_percentile,
