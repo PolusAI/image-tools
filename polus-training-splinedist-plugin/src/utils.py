@@ -235,34 +235,39 @@ def train_nn(image_dir_input : str,
     # get the inputs
     input_images = []
     input_labels = []
-    for files in fp(image_dir_input,imagepattern):
+    for files in fp(image_dir_input,imagepattern)():
         image = files[0]['file']
         if os.path.exists(image):
             input_images.append(image)
-    for files in fp(label_dir_input,imagepattern):
+    for files in fp(label_dir_input,imagepattern)():
         label = files[0]['file']
         if os.path.exists(label):
             input_labels.append(label)
-    
+
     input_images = sorted(input_images)
     input_labels = sorted(input_labels)
     num_inputs = len(input_images)
     
+    X_trn = []
+    Y_trn = []
+    X_val = []
+    Y_val = []
+
     logger.info("\n Getting Data for Training and Testing  ...")
     split_percentile = int(split_percentile)
     logger.info("Split Percentile {} ({})".format(split_percentile, type(split_percentile)))
-    if (split_percentile == None) or (split_percentile == 0):
+    if (split_percentile == None) or int(split_percentile) == 0:
         # if images are already allocated for testing then use those
         logger.info("Getting From Testing Directories")
         X_trn = input_images
         Y_trn = input_labels
         X_val = []
         Y_val = []
-        for files in fp(image_dir_test, imagepattern):
+        for files in fp(image_dir_test, imagepattern)():
             image_test = files[0]['file']
             if os.path.exists(image_test):
                 X_val.append(image_test)
-        for files in fp(label_dir_test, imagepattern):
+        for files in fp(label_dir_test, imagepattern)():
             label_test = files[0]['file']
             if os.path.exists(label_test):
                 Y_val.append(label_test)
@@ -326,9 +331,9 @@ def train_nn(image_dir_input : str,
 
     # Get the testing data for neural network
     logger.info("\n Starting to Load Test Data ...")
-    tenpercent_tested = num_tested/10
+    tenpercent_tested = np.floor(num_tested/10)
     for i in range(num_tested):
-        
+
         image = X_val[i]
         label = Y_val[i]
         base_image = os.path.basename(str(image))
@@ -336,44 +341,48 @@ def train_nn(image_dir_input : str,
         assert base_image == base_label, "{} and {} do not match".format(base_image, base_label)
 
         # The original image
-        br_image = BioReader(image, max_workers=1)
+        br_image = BioReader(image)
         im_array = br_image[:,:,0:1,0:1,0:1]
         im_array = im_array.reshape(br_image.shape[:2])
         array_images_tested.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
 
         # The corresponding label for the image
-        br_label = BioReader(label, max_workers=1)
+        br_label = BioReader(label)
         lab_array = br_label[:,:,0:1,0:1,0:1]
         lab_array = lab_array.reshape(br_label.shape[:2])
         array_labels_tested.append(fill_label_holes(lab_array))
         
+        assert im_array.shape == lab_array.shape, "{} and {} do not have matching shapes".format(base_image, base_label)
+
         if (i%tenpercent_tested == 0) and (i!=0):
-            logger.info("Loaded {}% of Test Data".format((i/num_tested)*100, num_tested))
+            logger.info("Loaded ~{}% of Test Data".format(np.ceil((i/num_tested)*100), num_tested))
     logger.info("Done Loading Testing Data")
 
     # Read the input images used for training
     logger.info("\n Starting to Load Train Data ...")
-    tenpercent_trained = num_trained/10
+    tenpercent_trained = np.floor(num_trained/10)
     contoursize_max = 0 # gets updated if models have not been created for config file
     for i in range(num_trained):
 
-        br_image = BioReader(X_trn[i], max_workers=1)
+        br_image = BioReader(X_trn[i])
+        br_image_shape = br_image.shape[:2]
         im_array = br_image[:,:,0:1,0:1,0:1]
-        im_array = im_array.reshape(br_image.shape[:2])
+        im_array = im_array.reshape(br_image_shape)
         array_images_trained.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
 
         if i == 0:
             n_channel = br_image.shape[2]
 
-        br_label = BioReader(Y_trn[i], max_workers=1)
+        br_label = BioReader(Y_trn[i])
         lab_array = br_label[:,:,0:1,0:1,0:1]
         lab_array = lab_array.reshape(br_label.shape[:2])
         array_labels_trained.append(fill_label_holes(lab_array))
         
+        assert im_array.shape == lab_array.shape, "{} and {} do not have matching shapes".format(base_image, base_label)
         contoursize_max = update_countoursize_max(contoursize_max, lab_array)
         
         if (i%tenpercent_trained == 0) and (i!=0):
-            logger.info("Loaded {}% of Test Data -- contoursize_max: {}".format((i/num_trained)*100, contoursize_max))
+            logger.info("Loaded ~{}% of Train Data -- contoursize_max: {}".format(np.ceil((i/num_trained)*100), contoursize_max))
     logger.info("Done Loading Training Data")
         
 
@@ -405,7 +414,7 @@ def train_nn(image_dir_input : str,
     logger.info("Generated grid")
 
     model = SplineDist2D(conf, name=model_dir_name, basedir=output_directory)
-
+    del conf
 
     # After creating or loading model, train it
     # model.config.train_tensorboard = False
@@ -496,14 +505,14 @@ def test_nn(image_dir_test : str,
     # Read the input images used for testing
     for im in tqdm(range(num_images)):
         image = os.path.join(image_dir_test, X_val[im])
-        br_image = BioReader(image, max_workers=1)
+        br_image = BioReader(image)
         im_array = br_image[:,:,0:1,0:1,0:1].reshape(br_image.shape[:2]) 
         array_images_tested.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
 
     # Read the input labels used for testing 
     for lab in tqdm(range(num_labels)):
         label = os.path.join(label_dir_test, Y_val[lab])
-        br_label = BioReader(label, max_workers=1)
+        br_label = BioReader(label)
         lab_array = br_label[:,:,0:1,0:1,0:1]
         lab_array = lab_array.reshape(br_label.shape[:2])
         array_labels_tested.append(fill_label_holes(lab_array))
