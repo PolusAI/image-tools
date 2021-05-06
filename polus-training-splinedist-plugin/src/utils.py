@@ -233,17 +233,13 @@ def train_nn(image_dir_input : str,
     assert isinstance(epochs, int), "Need to specify the number of epochs to run"
 
     # get the inputs
-    fp_image_dir_input = fp(image_dir_input,imagepattern)
-    fp_label_dir_input = fp(label_dir_input,imagepattern)
-
-
     input_images = []
     input_labels = []
-    for files in fp_image_dir_input():
+    for files in fp(image_dir_input,imagepattern):
         image = files[0]['file']
         if os.path.exists(image):
             input_images.append(image)
-    for files in fp_label_dir_input():
+    for files in fp(label_dir_input,imagepattern):
         label = files[0]['file']
         if os.path.exists(label):
             input_labels.append(label)
@@ -262,20 +258,17 @@ def train_nn(image_dir_input : str,
         Y_trn = input_labels
         X_val = []
         Y_val = []
-        fp_image_dir_test = fp(image_dir_test, imagepattern)
-        fp_label_dir_test = fp(label_dir_test, imagepattern)
-        for files in fp_image_dir_test():
+        for files in fp(image_dir_test, imagepattern):
             image_test = files[0]['file']
             if os.path.exists(image_test):
                 X_val.append(image_test)
-        for files in fp_label_dir_test():
+        for files in fp(label_dir_test, imagepattern):
             label_test = files[0]['file']
             if os.path.exists(label_test):
                 Y_val.append(label_test)
         X_val = sorted(X_val)
         Y_val = sorted(Y_val)
-        
-        
+
     else:
         logger.info("Splitting Input Directories")
         # Used when no directory has been specified for testing
@@ -286,8 +279,6 @@ def train_nn(image_dir_input : str,
         ind_train, ind_val = index[:-n_val], index[-n_val:]
         X_val, Y_val = [input_images[i] for i in ind_val]  , [input_labels[i] for i in ind_val] # splitting data into train and testing
         X_trn, Y_trn = [input_images[i] for i in ind_train], [input_labels[i] for i in ind_train] 
-        image_dir_test = image_dir_input
-        label_dir_test = label_dir_input
     
     # Lengths
     num_images_trained = len(X_trn)
@@ -315,7 +306,10 @@ def train_nn(image_dir_input : str,
     num_trained = num_images_trained
     num_tested = num_images_tested
 
-    
+    del num_images_trained
+    del num_images_tested
+    del num_labels_trained
+    del num_labels_tested
 
     # Need a list of numpy arrays to feed to SplineDist
     array_images_trained = []
@@ -361,7 +355,7 @@ def train_nn(image_dir_input : str,
     logger.info("\n Starting to Load Train Data ...")
     tenpercent_trained = num_trained/10
     contoursize_max = 0 # gets updated if models have not been created for config file
-    for i in range(num_images_trained):
+    for i in range(num_trained):
 
         br_image = BioReader(X_trn[i], max_workers=1)
         im_array = br_image[:,:,0:1,0:1,0:1]
@@ -397,6 +391,10 @@ def train_nn(image_dir_input : str,
     use_gpu             = gpu
     )
     
+    del X_val
+    del Y_val
+    del X_trn
+    del Y_trn
 
     logger.info("\n Generating phi and grids ... ")
     if not os.path.exists("./phi_{}.npy".format(M)):
@@ -413,8 +411,7 @@ def train_nn(image_dir_input : str,
     # model.config.train_tensorboard = False
     # model.config.use_gpu = gpu
     logger.info("\n Parameters in Config File ...")
-    config_dict = model.config.__dict__
-    for ky,val in config_dict.items():
+    for ky,val in model.config.__dict__.items():
         logger.info("{}: {}".format(ky, val))
 
 
