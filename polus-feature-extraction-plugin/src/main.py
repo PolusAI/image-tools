@@ -4,16 +4,21 @@ from skimage.segmentation import clear_border
 from scipy.stats import skew
 from scipy.stats import kurtosis as kurto
 from scipy.stats import mode as modevalue
+from scipy.sparse import csr_matrix
 from scipy import stats
 from operator import itemgetter
 from bfio import BioReader
+from itertools import repeat
+from functools import partial
 import argparse
 import logging
 import os
 import math
 import itertools
 import filepattern
+import concurrent
 import cv2
+import multiprocessing
 import numpy as np
 import pandas as pd
 
@@ -22,7 +27,6 @@ logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(messa
 					datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
-
 
 def read(img_file):
     """Read the .ome.tif image using BioReader.
@@ -126,7 +130,7 @@ def box_border_search(label_image, boxsize=3):
     del pad_array, pad_flat, thresh, perimeter_indices, perimeter_indices_array, perimeter_zeros, perimeter_int, image_flat, perimeter_indices_reshape, perimeter_flat, perimeter_reshape
     return perimeter_transpose
 
-def neighbors_find(lbl_img, im_label, pixeldistance):
+def neighbors_find(lbl_img, im_label,pixeldistance):
     """Calculate the number of objects within d pixels of object n.
 
     Args:
@@ -145,13 +149,13 @@ def neighbors_find(lbl_img, im_label, pixeldistance):
     nei=[]
     num_nei=[]
     shape_img = lbl_img.shape
-    #Find contours for all the labels in the image
-    contours =[cv2.findContours((lbl_img==ind).astype('uint8'), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_TC89_KCOS)[0] for ind in range(1,len(im_label)+1)]
+    #Find contours
+    contours = cv2.findContours((lbl_img==im_label).astype('uint8'),cv2.RETR_CCOMP, cv2.CHAIN_APPROX_TC89_KCOS)[0]
     for contour in contours:
-        ck= [(contour[i][j]) for i in range(0,len(contour)) for j in  range(0,len(contour[i])) ]
-        #Get border points
-        pxx = [x[0][0] for x in ck]
-        pyy = [x[0][1] for x in ck]
+        ck= [(contour[i][j]) for i in range(0,len(contour)) for j in  range(0,len(contour[i]))]
+        #Get borderpoints
+        pxx = [x[0] for x in ck]
+        pyy = [x[1] for x in ck]
         pypdd = [int(py-pixeldistance) for py in pyy]
         pxpdd = [int(px-pixeldistance) for px in pxx]
         pypd_rnn=[int(py+pixeldistance) for py in pyy]
@@ -159,10 +163,11 @@ def neighbors_find(lbl_img, im_label, pixeldistance):
         cand = [(l,k) for pypd,pypd_rn,pxpd,pxpd_rn in zip(pypdd,pypd_rnn,pxpdd,pxpd_rnn) for l in range(pypd,pypd_rn+1) for k in range(pxpd,pxpd_rn+1)]
         values=[lbl_img[l][k] for l,k in cand if(l<shape_img[0] and k<shape_img[1] and l>=0 and k>=0)]
         nei.append(values)
-        uniq_nei=np.unique(nei)
         #Get list of number of neighbors
+        uniq_nei=np.unique(nei)
         num_nei.append(len(uniq_nei)-2)
         nei=[]
+    num_nei = num_nei[0]
     return num_nei
 
 def feret_diameter(lbl_img, boxsize, thetastart, thetastop):
@@ -437,7 +442,6 @@ def polygonality_hexagonality(area, perimeter, neighbors, solidity, maxferet, mi
         hex_area_ratio = "NAN"
         hex_ave = "NAN"
         hex_sd = "NAN"
-    
     return(poly_ave, hex_ave, hex_sd)
 
 def feature_extraction(features,
@@ -500,8 +504,17 @@ def feature_extraction(features,
         """Calculate orientation for all the regions of interest in the image."""
         label = [region.label for region in regions]
         data_dict=[]
-        for i in label:
-            x, y = np.where(seg_img == i)
+        def compute_M(data):
+            cols = np.arange(data.size)
+            return csr_matrix((cols, (data.ravel(), cols)),shape=(len(label) + 1, data.size))
+        def get_indices_sparse(data):
+            M = compute_M(data)
+            return [np.unravel_index(row.data, data.shape) for row in M]
+        ori_data = get_indices_sparse(seg_img)
+        data_pro = ori_data[1:]
+        for i in data_pro:
+            x=i[0]
+            y=i[1]
             xg, yg = x.mean(), y.mean()
             x = x - xg
             y = y - yg
@@ -525,13 +538,13 @@ def feature_extraction(features,
         return data_dict
 
     def convex_area(seg_img, units, *args):
-        """Calculate convex_area for all the regions of interest in the image."""          
+        """Calculate convex_area for all the regions of interest in the image.""" 
         data_dict1 = [region.convex_area for region in regions]
         if unitLength and not embeddedpixelsize:
             data_dict = [dt_pixel / pixelsPerunit**2 for dt_pixel in data_dict1]
         else:
             data_dict = data_dict1
-        logger.debug('Completed extracting convex area for ' + seg_file_names1.name)
+        logger.info('Completed extracting convex area for ' + seg_file_names1.name)
         return data_dict
     
     def bbox_ymin(*args):
@@ -730,9 +743,12 @@ def feature_extraction(features,
 
     def neighbors(seg_img, *args):
         """Calculate neighbors for all the regions of interest in the image."""
+        data_dict=[]
         label=[region.label for region in regions]
-        data_dict= neighbors_find(seg_img, label, pixelDistance)
-        logger.debug('Completed extracting neighbors for ' + seg_file_names1.name)
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers = multiprocessing.cpu_count())
+        results = executor.map(neighbors_find, repeat(seg_img), label,repeat(pixelDistance))
+        data_dict = list(results)
+        logger.debug('Completed extraction neighbors for ' + int_file_name)
         return data_dict
 
     def maxferet(seg_img, *args):
@@ -772,6 +788,8 @@ def feature_extraction(features,
 
     def polygonality_score(seg_img, units, *args):
         """Get polygonality score for all the regions of interest in the image."""
+        if features == 'all':
+            poly_hex = poly_hex_score(seg_img, units)
         poly_hex = poly_hex_score(seg_img, units)
         polygonality_score = [poly[0] for poly in poly_hex]
         logger.debug('Completed extracting polygonality score for ' + seg_file_names1.name)
@@ -799,14 +817,22 @@ def feature_extraction(features,
         all_peri = perimeter(seg_img, units)
         #calculate neighbors
         all_neighbor = neighbors(seg_img)
-        #calculate solidity
-        all_solidity = solidity(seg_img)
         #calculate maxferet
-        all_maxferet = maxferet(seg_img, units)
+        edges= box_border_search(seg_img, boxsize)
+        feretdiam = feret_diameter(edges, boxsize, thetastart, thetastop)
+        all_maxferet = [np.max(feret) for feret in feretdiam]
         #calculate minferet
-        all_minferet = minferet(seg_img, units)
+        all_minferet = [np.min(feret) for feret in feretdiam]  
+        if unitLength and not embeddedpixelsize:
+            maxferet = [dt_pixel / pixelsPerunit for dt_pixel in all_maxferet]
+            minferet = [dt_pixel / pixelsPerunit for dt_pixel in all_minferet]
+        else:
+            minferet = all_minferet
+            maxferet = all_maxferet
         #calculate convex area
         all_convex = convex_area(seg_img, units)
+        #calculate solidity
+        all_solidity = np.array(all_area)/np.array(all_convex)
         #calculate orientation
         all_orientation = orientation(seg_img)
         #calculate centroid row value
@@ -831,14 +857,13 @@ def feature_extraction(features,
         all_major_axis_length = major_axis_length(seg_img, units)
         #calculate minor axis length
         all_minor_axis_length = minor_axis_length(seg_img, units)
-        #calculate solidity
-        all_solidity = solidity(seg_img)
         #calculate polygonality_score
-        all_polygonality_score = polygonality_score(seg_img, units)
+        all_polygon_score = [polygonality_hexagonality(area_metric, perimeter_metric, int(neighbor_metric), solidity_metric, maxferet_metric, minferet_metric) for area_metric, perimeter_metric, neighbor_metric, solidity_metric, maxferet_metric, minferet_metric in zip(all_area, all_peri, all_neighbor, all_solidity, all_maxferet, all_minferet)]#seg_img, units)
+        all_polygonality_score = [poly[0] for poly in all_polygon_score]
         #calculate hexagonality_score
-        all_hexagonality_score = hexagonality_score(seg_img, units)
+        all_hexagonality_score = [poly[1] for poly in all_polygon_score]
         #calculate hexagonality standarddeviation
-        all_hexagonality_sd = hexagonality_sd(seg_img, units)
+        all_hexagonality_sd = [poly[2] for poly in all_polygon_score]
         #calculate mean intensity
         all_mean_intensity =  mean_intensity(seg_img, int_img)
         #calculate maximum intensity value
@@ -1053,18 +1078,18 @@ def feature_extraction(features,
             border_cells[label_nt_touching]=False
             if intensity_image is None:
             #Create column label and image
-                data = { 'label': label,
-                         'mask_image':title}                     
+                data = { 'mask_image':title,
+                         'label': label}                     
                 data1 = {'touching_border': border_cells}
-                df1 = pd.DataFrame(data,columns=['label','mask_image'])
-                df_values= ['label','mask_image']
+                df1 = pd.DataFrame(data,columns=['mask_image','label'])
+                df_values= ['mask_image','label']
             else:
-                data = { 'label': label,
-                         'mask_image':title,
-                         'intensity_image':int_file_name}                     
+                data = { 'mask_image':title,
+                         'intensity_image':int_file_name,
+                          'label': label}                     
                 data1 = {'touching_border': border_cells}
-                df1 = pd.DataFrame(data,columns=['label','mask_image','intensity_image'])
-                df_values= ['label','mask_image','intensity_image']
+                df1 = pd.DataFrame(data,columns=['mask_image','intensity_image','label'])
+                df_values= ['mask_image','intensity_image','label']
             #Create column touching border
             df2 = pd.DataFrame(data1,columns=['touching_border'])
             df_insert1 = pd.concat([df1,df_insert,df2],ignore_index=True, axis=1)

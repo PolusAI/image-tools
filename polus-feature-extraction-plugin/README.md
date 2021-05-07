@@ -62,10 +62,10 @@ The features are calculated using scikit-image (https://scikit-image.org/docs/de
 
 ## Inputs:
 ### Label image collection:
-The input should be a labeled image in OME tiled tiff format. Extracting shape-based features, feret diameter, neighbors, hexagonality and polygonality scores requires only labeled image. This is a required parameter for the plugin.
+The input should be a labeled image in OME tiled tiff format. Extracting shape-based features, feret diameter, neighbors, hexagonality and polygonality scores requires only labeled image. This is an optional parameter. The input for this parameter is required only when shape-based features needs to be extracted.
 
 ### Intensity image collection:
-Extracting intensity-based features requires intensity image and labeled image in OME tiled tiff (.ome.tif)  format. Intensity image with same size as labeled image should be used as input. This is an optional parameter. The input for this parameter is required only when intensity-based features needs to be extracted.
+Extracting intensity-based features requires intensity image in OME tiled tiff (.ome.tif) format. This is an optional parameter. The input for this parameter is required only when intensity-based features needs to be extracted.
 
 ### File pattern:
 Enter file pattern to match the intensity and labeled/segmented images to extract features (https://pypi.org/project/filepattern/)
