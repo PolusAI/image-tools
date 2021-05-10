@@ -544,7 +544,7 @@ def feature_extraction(features,
             data_dict = [dt_pixel / pixelsPerunit**2 for dt_pixel in data_dict1]
         else:
             data_dict = data_dict1
-        logger.info('Completed extracting convex area for ' + seg_file_names1.name)
+        logger.debug('Completed extracting convex area for ' + seg_file_names1.name)
         return data_dict
     
     def bbox_ymin(*args):
@@ -748,7 +748,7 @@ def feature_extraction(features,
         executor = concurrent.futures.ThreadPoolExecutor(max_workers = multiprocessing.cpu_count())
         results = executor.map(neighbors_find, repeat(seg_img), label,repeat(pixelDistance))
         data_dict = list(results)
-        logger.debug('Completed extraction neighbors for ' + int_file_name)
+        logger.debug('Completed extraction neighbors for ' + seg_file_names1.name)
         return data_dict
 
     def maxferet(seg_img, *args):
