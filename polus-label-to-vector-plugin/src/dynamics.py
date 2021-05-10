@@ -1,8 +1,7 @@
 # Code sourced from https://github.com/MouseLand/cellpose/tree/master/cellpose
 
-from scipy.ndimage.filters import maximum_filter1d
-import scipy.ndimage
 import numpy as np
+import scipy.ndimage
 from numba import njit
 
 def diameters(masks):
@@ -16,11 +15,12 @@ def diameters(masks):
 
     _, counts = np.unique(np.int32(masks), return_counts=True)
     counts = counts[1:]
-    md = np.median(counts**0.5)
+    md = np.median(counts ** 0.5)
     if np.isnan(md):
         md = 0
-    md /= (np.pi**0.5)/2
-    return md, counts**0.5
+    md /= (np.pi ** 0.5) / 2
+    return md, counts ** 0.5
+
 
 @njit('(float64[:], int32[:], int32[:], int32, int32, int32, int32)', nogil=True)
 def _extend_centers(T, y, x, ymed, xmed, Lx, niter):
@@ -46,28 +46,30 @@ def _extend_centers(T, y, x, ymed, xmed, Lx, niter):
                                   T[(y + 1) * Lx + x - 1] + T[(y + 1) * Lx + x + 1])
     return T
 
+
 def labels_to_flows(labels):
-    """ Convert labels ( masks or flows) to flows for training model
+    """ Convert labels(masks or flows) to flows for training model
     Args:
-        labels (array):  Is used to create flows and cell probabilities.
+        labels(array): Is used to create flows and cell probabilities.
     Returns:
-        flows (array): l[3 x Ly x Lx] arrays flows[1] is cell probability,
-            flows[2] is Y flow, and flows[3] is X flow
+        flows(array): l[3 x Ly x Lx] arrays flows[1] is cell probability,
+                       flows[2] is Y flow, and flows[3] is X flow
 
     """
 
-    labels=[labels]
+    labels = [labels]
     if labels[0].ndim < 3:
         labels = [labels[0][np.newaxis, :, :]]
     # compute flows
     veci = [masks_to_flows(labels[0][0])[0]]
     # concatenate flows with cell probability
-    flows = np.concatenate((veci[0],labels[0][[0]] > 0.5), axis=0).astype(np.float32)
+    flows = np.concatenate((veci[0], labels[0][[0]] > 0.5), axis=0).astype(np.float32)
     return flows
+
 
 def masks_to_flows(masks):
     """ Convert masks to flows using diffusion from center pixel.Center of masks where diffusion starts is defined to be
-    the  closest pixel to the median of all pixels that is inside the mask. Result of diffusion is converted into flows
+    the closest pixel to the median of all pixels that is inside the mask. Result of diffusion is converted into flows
     by computing the gradients of the diffusion density map.
     Args:
         masks(array[int]): 2D  array.labelled masks 0=NO masks; 1,2,...=mask labels
@@ -125,4 +127,3 @@ def masks_to_flows(masks):
 
     mu /= (1e-20 + (mu ** 2).sum(axis=0) ** 0.5)
     return mu, mu_c
-
