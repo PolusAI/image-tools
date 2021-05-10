@@ -4,6 +4,7 @@ import numpy as np
 import scipy.ndimage
 from numba import njit
 
+
 def diameters(masks):
     """ Get median 'diameter' of masks
     Args:
@@ -24,7 +25,7 @@ def diameters(masks):
 
 @njit('(float64[:], int32[:], int32[:], int32, int32, int32, int32)', nogil=True)
 def _extend_centers(T, y, x, ymed, xmed, Lx, niter):
-    """ Run diffusion from center of mask (ymed, xmed) on mask pixels (y, x)
+    """ Run diffusion from center of mask (ymed, xmed) on mask pixels (y, x).
     Args:
         T(array[float64]): _ x Lx array that diffusion is run in
         y(array[int32]): pixels in y inside mask
@@ -48,9 +49,9 @@ def _extend_centers(T, y, x, ymed, xmed, Lx, niter):
 
 
 def labels_to_flows(labels):
-    """ Convert labels(masks or flows) to flows for training model
+    """ Convert labels(masks or flows) to flows for training model.
     Args:
-        labels(array): Is used to create flows and cell probabilities.
+        labels(array): Is used to create flows and cell probabilities
     Returns:
         flows(array): l[3 x Ly x Lx] arrays flows[1] is cell probability,
                        flows[2] is Y flow, and flows[3] is X flow
@@ -72,9 +73,9 @@ def masks_to_flows(masks):
     the closest pixel to the median of all pixels that is inside the mask. Result of diffusion is converted into flows
     by computing the gradients of the diffusion density map.
     Args:
-        masks(array[int]): 2D  array.labelled masks 0=NO masks; 1,2,...=mask labels
+        masks(array[int]): 2D  array. Labelled masks 0=NO masks; 1,2,...=mask labels
     Returns:
-        mu(array[float]): 2D array.flows in Y = mu[-2], flows in X = mu[-1].
+        mu(array[float]): 2D array. Flows in Y = mu[-2], flows in X = mu[-1]
         mu_c(array[float]): 2D array.for each pixel, the distance to the center of the mask in which it resides
 
     """

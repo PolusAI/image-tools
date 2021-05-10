@@ -20,6 +20,15 @@ def flow_thread(input_path: Path,
                 x: int,
                 y: int,
                 z: int) -> bool:
+    """ Converts labels to flows
+        Args:
+            input_path(path): Path of input image collection
+            zfile(path): Path  where output zarr file will be saved
+            x(int): start index of the tile  in x dimension of image
+            y(int): start index of the tile  in y dimension of image
+            z(int): z slice of the  image
+
+        """
     root = zarr.open(zfile)
 
     with BioReader(input_path) as br:
