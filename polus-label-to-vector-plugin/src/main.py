@@ -103,7 +103,8 @@ if __name__ == "__main__":
         logger.info('Processing %d labels based on filepattern  ' % (len(inpDir_files)))
     else:
         inpDir_files = [f.name for f in Path(inpDir).iterdir() if
-                        f.is_file() and "".join(f.suffixes) == '.ome.tif']
+                        f.is_file() and str(f).endswith('.ome.tif')]
+        print(inpDir_files)
         logger.info('Processing %d labels in the directory  ' % (len(inpDir_files)))
 
     root = zarr.group(store=str(Path(outDir).joinpath('flow.zarr')))
