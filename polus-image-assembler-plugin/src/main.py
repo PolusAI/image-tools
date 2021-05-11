@@ -154,7 +154,9 @@ def _parse_stitch(stitchPath: pathlib.Path,
         stitch_groups['file'] = files[0]['file'].with_name(stitch_groups['file'])
 
         # Get the image size
-        stitch_groups['width'], stitch_groups['height'] = BioReader.image_size(stitch_groups['file'])
+        with BioReader(stitch_groups['file']) as br:
+            stitch_groups['width'] = br.X
+            stitch_groups['height'] = br.Y
 
         # Set the stitching vector values in the file dictionary
         out_dict['filePos'].append(stitch_groups)
@@ -273,6 +275,8 @@ if __name__=="__main__":
                         datefmt='%d-%b-%y %H:%M:%S')
     logger = logging.getLogger("main")
     logger.setLevel(logging.INFO)
+    
+    logging.getLogger("bfio").setLevel(logging.CRITICAL)
 
     '''Parse arguments'''
     # Setup the argument parsing
