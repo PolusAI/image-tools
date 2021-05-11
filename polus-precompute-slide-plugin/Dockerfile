@@ -1,5 +1,5 @@
 # Get image containing bfio
-FROM labshare/polus-bfio-util:2.0.6-slim-buster
+FROM python:3.9-slim
 
 COPY VERSION /
 		

@@ -5,6 +5,9 @@ from numcodecs import Blosc
 from concurrent.futures import ThreadPoolExecutor
 from preadator import ProcessManager
 from bfio.OmeXml import OMEXML
+import logging
+
+logging.getLogger("bfio").setLevel(logging.CRITICAL)
 
 # Conversion factors to nm, these are based off of supported Bioformats length units
 UNITS = {'m':  10**9,
