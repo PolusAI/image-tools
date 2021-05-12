@@ -497,22 +497,29 @@ class ZarrWriter(PyramidWriter):
             key = str(max_scale - int(scale_info['key']))
             if key not in self.root.array_keys():
                 self.writers[key] = self.root.zeros(key,
-                                                    shape=(1,self.max_output_depth,1) + tuple(scale_info['size'][0:2]),
+                                                    shape=(1,self.max_output_depth,1) + (scale_info['size'][1],scale_info['size'][0]),
                                                     chunks=(1,1,1,CHUNK_SIZE,CHUNK_SIZE),
                                                     dtype=self.dtype,
                                                     compressor=compressor)
             else:
-                self.root[key].resize((1,self.max_output_depth,1) + tuple(scale_info['size'][0:2]))
+                self.root[key].resize((1,self.max_output_depth,1) + (scale_info['size'][1],scale_info['size'][0]))
                 self.writers[key] = self.root[key]
 
     def _write_chunk(self,key,chunk_coords,buf):
         key = str(int(self.scale_info(-1)['key']) - int(key))
         chunk_coords = self._chunk_coords(chunk_coords)
-        self.writers[key][0:1,
-                          chunk_coords[4]:chunk_coords[5],
-                          0:1,
-                          chunk_coords[2]:chunk_coords[3],
-                          chunk_coords[0]:chunk_coords[1]] = buf
+        
+        try:
+            self.writers[key][0:1,
+                            chunk_coords[4]:chunk_coords[5],
+                            0:1,
+                            chunk_coords[2]:chunk_coords[3],
+                            chunk_coords[0]:chunk_coords[1]] = buf
+        except Exception:
+            print(key)
+            print(chunk_coords)
+            print(buf.shape)
+            raise
             
     def _encoder(self):
         
