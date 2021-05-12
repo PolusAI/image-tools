@@ -141,9 +141,7 @@ def main(pattern: str,
 
         # Get the height and width of each image
         for f in files:
-            with BioReader(f['file']) as br:
-                f['width'] = br.x
-                f['height'] = br.y
+            f['width'],f['height'] = BioReader.image_size(f['file'])
 
             if grid_width < f['width']:
                 grid_width = f['width']
