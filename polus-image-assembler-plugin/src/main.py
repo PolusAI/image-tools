@@ -154,9 +154,7 @@ def _parse_stitch(stitchPath: pathlib.Path,
         stitch_groups['file'] = files[0]['file'].with_name(stitch_groups['file'])
 
         # Get the image size
-        with BioReader(stitch_groups['file']) as br:
-            stitch_groups['width'] = br.X
-            stitch_groups['height'] = br.Y
+        stitch_groups['width'],stitch_groups['height'] = BioReader.image_size(stitch_groups['file'])
 
         # Set the stitching vector values in the file dictionary
         out_dict['filePos'].append(stitch_groups)
@@ -169,7 +167,10 @@ def _parse_stitch(stitchPath: pathlib.Path,
     if timepointName:
         global_regex = ".*global-positions-([0-9]+).txt"
         name = re.match(global_regex,pathlib.Path(stitchPath).name).groups()[0]
-        name += '.ome.tif'
+        if file_names[0].endswith('.ome.zarr'):
+            name += '.ome.zarr'
+        else:
+            name += '.ome.tif'
         out_dict['name'] = name
         ProcessManager.job_name(out_dict['name'])
         ProcessManager.log(f'Setting output name to timepoint slice number.')
@@ -233,7 +234,7 @@ def assemble_image(vector_path: pathlib.Path,
 
         ProcessManager.join_threads()
 
-    bw.close()
+        bw.close()
 
 def main(imgPath: pathlib.Path,
          stitchPath: pathlib.Path,
