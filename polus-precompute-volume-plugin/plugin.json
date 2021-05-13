@@ -30,7 +30,7 @@
         "required": true
       },
       {
-        "name": "imagePattern",
+        "name": "filePattern",
         "description": "Pattern of the images in Input",
         "type": "string",
         "options": null,
@@ -59,7 +59,7 @@
         "description": "Collection name..."
       },
       {
-        "key": "inputs.imagePattern",
+        "key": "inputs.filePattern",
         "title": "Image Pattern: ",
         "description": "Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). "
       },

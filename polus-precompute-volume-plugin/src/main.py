@@ -21,13 +21,13 @@ logger.setLevel(logging.INFO)
 def main(input_dir: str,
          output_dir: str,
          imagetype: str,
-         imagepattern: str,
+         filepattern: str,
          mesh: bool):
     
     # Get list of images that we are going to through
     # Get list of output paths for every image
     logger.info("\n Getting the images...")
-    fp_images = fp(Path(input_dir),imagepattern)
+    fp_images = fp(Path(input_dir),filepattern)
     input_images = []
     output_images = []
     for i in fp_images():
@@ -54,7 +54,7 @@ if __name__ == "__main__":
                         help='The output directory for ome.tif files', required=True)
     parser.add_argument('--imageType', dest='image_type', type=str,
                         help='The type of image, image or segmentation', required=True)
-    parser.add_argument('--imagePattern', dest='image_pattern', type=str,
+    parser.add_argument('--filePattern', dest='file_pattern', type=str,
                         help='Filepattern of the images in input', required=False)
     parser.add_argument('--mesh', dest='mesh', type=bool,
                         default=False, help='True or False for creating meshes', required=False)
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     input_dir = args.input_dir
     output_dir = args.output_dir
     imagetype = args.image_type
-    imagepattern = args.image_pattern
+    filepattern = args.file_pattern
     mesh = args.mesh
 
     if imagetype != 'segmentation' and mesh == True:
@@ -73,14 +73,14 @@ if __name__ == "__main__":
     logger.info('Input Directory = {}'.format(input_dir))
     logger.info('Output Directory = {}'.format(output_dir))
     logger.info('Image Type = {}'.format(imagetype))
-    logger.info('Image Pattern = {}'.format(imagepattern))
+    logger.info('Image Pattern = {}'.format(filepattern))
     logger.info('Mesh = {}'.format(mesh))
 
-    if imagepattern == None:
-        imagepattern = ".*"
+    if filepattern == None:
+        filepattern = ".*"
 
     main(input_dir,
          output_dir,
          imagetype,
-         imagepattern,
+         filepattern,
          mesh)
