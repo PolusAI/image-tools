@@ -22,9 +22,9 @@ OPTIONS = {
 def _get_resized_image_stack(flist):
     """ Load all images in a list and resize to OPTIONS['size']
 
-    When files are parsed, the variables are used in an index to provide
-    a method to reference a specific file name by its dimensions. This
-    function returns the variable index based on the input filename pattern.
+    When files are parsed, the variables are used in an index to provide a
+    method to reference a specific file name by its dimensions. This function
+    returns the variable index based on the input filename pattern.
 
     Inputs:ed th
         flist - Paths of list of images to load and resize
@@ -66,9 +66,11 @@ def _get_resized_image_stack(flist):
 def _dct2(imgflt_stack):
     """ Discrete cosine transform
 
-    This function originally existed to replicate Matlabs dct function using scipy's dct function. It was necessary
-    to perform the dct along the rows and columns. To simplify the container creation, the dct function from opencv
-    was used. This function is slower, and scipy's version should be implemented in the future.
+    This function originally existed to replicate Matlabs dct function using
+    scipy's dct function. It was necessary to perform the dct along the rows and
+    columns. To simplify the container creation, the dct function from opencv
+    was used. This function is slower, and scipy's version should be
+    implemented in the future.
 
     The scipy dct that was originally used was type-II.
 
@@ -83,11 +85,14 @@ def _dct2(imgflt_stack):
 def _idct2(imgflt_stack):
     """ Discrete cosine transform
 
-    This function originally existed to replicate Matlabs dct function using scipy's dct function. It was necessary
-    to perform the dct along the rows and columns. To simplify the container creation, the dct function from opencv
-    was used. This function is slower, and scipy's version should be implemented in the future.
+    This function originally existed to replicate Matlabs dct function using
+    scipy's dct function. It was necessary to perform the dct along the rows and
+    columns. To simplify the container creation, the dct function from opencv
+    was used. This function is slower, and scipy's version should be implemented
+    in the future.
 
-    The scipy dct that was originally used was type-III, which is the inverse of dct type-II
+    The scipy dct that was originally used was type-III, which is the inverse of
+    dct type-II
 
     Inputs:
         imgflt_stack - Input matrix to perform dct on
@@ -100,10 +105,12 @@ def _idct2(imgflt_stack):
 def _initialize_options(img_stack,get_darkfield,options):
     """ Initialize optimization options
 
-    This function modifies the default OPTIONS using information about the images to be processed.
+    This function modifies the default OPTIONS using information about the
+    images to be processed.
 
     Inputs:
-        img_stack - A numpy matrix where images are concatenated along the 3rd dimensions
+        img_stack - A numpy matrix where images are concatenated along the 3rd
+            dimensions
         get_darkfield - If true, estimate the darkfield image
         options - An existing set of options to be modified
     Outputs:
@@ -123,9 +130,10 @@ def _initialize_options(img_stack,get_darkfield,options):
 def _inexact_alm_l1(imgflt_stack,options):
     """ L1 optimization using inexact augmented Legrangian multipliers (IALM)
 
-    This function finds the smallest number of features in Fourier space (frequencies) that minimizes the
-    error when compared to images, using L1 loss and IALM optimization. By using L1 loss in Fourier space,
-    the resulting background flatfield image should be an image with smooth gradients.
+    This function finds the smallest number of features in Fourier space
+    (frequencies) that minimizes the error when compared to images, using L1
+    loss and IALM optimization. By using L1 loss in Fourier space, the resulting
+    background flatfield image should be an image with smooth gradients.
 
     This function is based off of the Matlab version of BaSiC found here:
     https://github.com/QSCD/BaSiC/blob/master/inexact_alm_rspca_l1.m
@@ -274,17 +282,19 @@ def _inexact_alm_l1(imgflt_stack,options):
 def _get_flatfield_and_reweight(flt_pxl,pxl_err,df_pxl,options):
     """ Format flatfield/darkfield and change weights
 
-    The inexact augmented legrangian multiplier method uses L1 loss, but this is only done
-    since an exact solution to L0 problems do not exist. After each round of optimization, the
-    starting weights are recalculated to give low weights to pixels that are not background and
-    high weights to background pixels. Then another round of optimization is performed.
+    The inexact augmented legrangian multiplier method uses L1 loss, but this is
+    only done since an exact solution to L0 problems do not exist. After each
+    round of optimization, the starting weights are recalculated to give low
+    weights to pixels that are not background and high weights to background
+    pixels. Then another round of optimization is performed.
 
-    Since the value of the weights are tied to the values of the flatfield and darkfield values,
-    this function formats both the flatfield and darkfield images for output and returns an updated
-    weight matrix.
+    Since the value of the weights are tied to the values of the flatfield and
+    darkfield values, this function formats both the flatfield and darkfield
+    images for output and returns an updated weight matrix.
 
-    The flatfield image is normalized so that the mean pixel value is 1. The darkfield image
-    contains raw pixel values.
+    The flatfield image is normalized so that the mean pixel value is 1. The
+    darkfield image contains raw pixel values.
+    
     Inputs:
         flt_pxl - Flatfield approximation per pixel per image
         pxl_err - Error for every pixel
@@ -292,9 +302,12 @@ def _get_flatfield_and_reweight(flt_pxl,pxl_err,df_pxl,options):
         options - optimization options
 
     Outputs:
-        flatfield - A floating precision numpy matrix containing normalized flatfield values
-        darkfield - A floating precision numpy matrix containing darkfield pixel values
-        options - optimization options with new weights (this is passed only for code readability)
+        flatfield - A floating precision numpy matrix containing normalized
+            flatfield values
+        darkfield - A floating precision numpy matrix containing darkfield pixel
+            values
+        options - optimization options with new weights (this is passed only for
+            code readability)
     """
     XA = np.reshape(flt_pxl,(options['size'],options['size'],-1))
     XE = np.reshape(pxl_err,(options['size'],options['size'],-1))
@@ -314,15 +327,16 @@ def _get_flatfield_and_reweight(flt_pxl,pxl_err,df_pxl,options):
 def _get_photobleach(imgflt_stack,flatfield,darkfield=None):
     """ Calculate the global effect of photobleaching for each image
 
-    Using the original data, flatfield, and darkfield images, estimate the total contribution of photobleaching
-    to an image in a series of images.
+    Using the original data, flatfield, and darkfield images, estimate the total
+    contribution of photobleaching to an image in a series of images.
     Inputs:
         imgflt_stack - Numpy stack of images
         flatfield - numpy floating precision matrix containing flatfield values
         darkfield - numpy floating precision matrix containing darkfield values
 
     Outputs:
-        A_coeff - A 1xn matrix of photobleaching offsets, where n is the number of input images
+        A_coeff - A 1xn matrix of photobleaching offsets, where n is the number
+            of input images
     """
     # Initialize matrices
     imgflt_stack = np.reshape(imgflt_stack,(OPTIONS['size']*OPTIONS['size'],-1)).astype(np.float64)

@@ -26,6 +26,9 @@ def main(input_dir: pathlib.Path,
         
     if get_photobleach is None:
         get_photobleach = False
+        
+    if file_pattern is None:
+        filepattern = '.*'
 
     fp = FilePattern(input_dir,file_pattern)
     
