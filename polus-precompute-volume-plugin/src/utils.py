@@ -193,7 +193,7 @@ def build_pyramid(input_image : str,
     """
 
     try:
-        bf = BioReader(input_image, backend='java')
+        bf = BioReader(input_image)
         bfshape = bf.shape
         datatype = np.dtype(bf.dtype)
         logger.info("Image Shape {}".format(bfshape))
