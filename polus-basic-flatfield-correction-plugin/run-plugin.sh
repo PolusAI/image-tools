@@ -15,6 +15,7 @@ groupBy='p'
 outDir=/data/output
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
+            --user $(id -u):$(id -g) \
             labshare/polus-basic-flatfield-correction-plugin:${version} \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
