@@ -1,4 +1,4 @@
-from bfio.bfio import BioReader, BioWriter
+from bfio import BioReader, BioWriter
 import argparse, logging, typing, csv
 import numpy as np
 from pathlib import Path
@@ -117,7 +117,7 @@ def main(imgDir: Path,
                 logger.warning("Could not find a photobleach file, skipping...")
                 continue
             
-        ProcessManager.submit_process(unshade_batch,files,outDir,flat_path,dark_path)
+        ProcessManager.submit_process(unshade_batch,files,outDir,flat_path,dark_path,photo_path)
     
     ProcessManager.join_processes()
 
