@@ -16,7 +16,7 @@ COPY src ${EXEC_DIR}/
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
-RUN python3 ${EXEC_DIR}/dl_fi.py
+RUN python3 -c "import imageio; imageio.plugins.freeimage.download()"
 
 WORKDIR ${EXEC_DIR}
 

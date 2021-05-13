@@ -5,13 +5,13 @@ datapath=$(readlink --canonicalize ../data)
 echo ${datapath}
 
 # Inputs
-inpDir=/data/label
+inpDir=/data/input
 pyramidType=Zarr
 imageType=image
-filePattern=r01c01f\(001-121\)p01-ch1sk1fk1fl1.ome.tif
+filePattern=test_c\{c+\}.ome.tif
 
 # Output paths
-outDir=/data/polus-render-ui/pyramids/data
+outDir=/data/output
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
             labshare/polus-precompute-slide-plugin:${version} \
