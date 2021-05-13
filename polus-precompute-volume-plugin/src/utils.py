@@ -16,7 +16,9 @@ from neurogen import volume as ngvol
 
 from itertools import repeat
 
-from bfio.bfio import BioReader, BioWriter
+from bfio import BioReader
+
+import traceback
 
 chunk_size = [64,64,64]
 bit_depth = 10
@@ -25,7 +27,7 @@ bit_depth = 10
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("utils")
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 def get_resolution(phys_y : tuple,
                    phys_x : tuple,
@@ -190,114 +192,115 @@ def build_pyramid(input_image : str,
         ValueError: If imagetype is not properly specified
     """
 
-    # Getting the intial information for the info file specification required by Neuroglancer 
-    bf = BioReader(input_image, max_workers=max([cpu_count()-1,2]))
-    bfshape = bf.shape
-    datatype = np.dtype(bf.dtype)
-    logger.info("Image Shape {}".format(bfshape))
-    logger.info("Image Datatype {}".format(datatype))
-    
-    # info file specifications
-    resolution = get_resolution(phys_y=bf.physical_size_y, 
-                                phys_x=bf.physical_size_x, 
-                                phys_z=bf.physical_size_z)
+    try:
+        bf = BioReader(input_image, backend='java')
+        bfshape = bf.shape
+        datatype = np.dtype(bf.dtype)
+        logger.info("Image Shape {}".format(bfshape))
+        logger.info("Image Datatype {}".format(datatype))
+        
+        # info file specifications
+        resolution = get_resolution(phys_y=bf.physical_size_y, 
+                                    phys_x=bf.physical_size_x, 
+                                    phys_z=bf.physical_size_z)
 
 
-    if imagetype == "segmentation":
-        if mesh == False:
-            logger.info("\n Creating info file for segmentations ...")
-            file_info = nginfo.info_segmentation(directory=output_image,
+        if imagetype == "segmentation":
+            if mesh == False:
+                logger.info("\n Creating info file for segmentations ...")
+                file_info = nginfo.info_segmentation(directory=output_image,
+                                                    dtype=datatype,
+                                                    chunk_size = chunk_size,
+                                                    size=bfshape[:3],
+                                                    resolution=resolution)
+                
+            else: # if generating meshes
+                
+                # Need to iterate through chunks of the input for scalabiltiy
+                xsplits = list(np.arange(0, bfshape[0], 256))
+                xsplits.append(bfshape[0])
+                ysplits = list(np.arange(0, bfshape[1], 256))
+                ysplits.append(bfshape[1])
+                zsplits = list(np.arange(0, bfshape[2], 256))
+                zsplits.append(bfshape[2])
+
+                # Keep track of the labelled segments
+                all_identities = np.array([])
+                temp_dir = os.path.join(output_image, "tempdir")
+
+                num_scales = np.floor(np.log2(max(bfshape[:3]))).astype('int')+1
+                
+                logger.info("\n Iterate through input ...")
+                # Creating a temporary files for the polygon meshes -- will later be converted to Draco
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    if not os.path.exists(temp_dir):
+                        os.makedirs(temp_dir, exist_ok=True)
+                    for y in range(len(ysplits)-1):
+                        for x in range(len(xsplits)-1):
+                            for z in range(len(zsplits)-1):
+                                start_y, end_y = (ysplits[y], ysplits[y+1])
+                                start_x, end_x = (xsplits[x], xsplits[x+1])
+                                start_z, end_z = (zsplits[z], zsplits[z+1])
+                                
+                                volume = bf[start_x:end_x,start_y:end_y,start_z:end_z]
+                                volume = volume.reshape(volume.shape[:3])
+
+                                logger.info("Loaded subvolume (YXZ) {}-{}__{}-{}__{}-{}".format(start_y, end_y,
+                                                                                                start_x, end_x,
+                                                                                                start_z, end_z))
+                                ids = np.unique(volume)
+                                if (ids == [0]).all():
+                                    continue
+                                else:
+                                    ids = np.delete(ids, np.where(ids==0))
+                                    with ThreadPoolExecutor(max_workers=max([cpu_count()-1,2])) as executor:
+                                        executor.submit(create_plyfiles(subvolume = volume,
+                                                                        ids=ids,
+                                                                        temp_dir=temp_dir,
+                                                                        start_y=start_y,
+                                                                        start_x=start_x,
+                                                                        start_z=start_z))
+                                        all_identities = np.append(all_identities, ids)
+
+                    # concatenate and decompose the meshes in the temporary file for all segments
+                    logger.info("\n Generate Progressive Meshes for segments ...")
+                    all_identities = np.unique(all_identities).astype('int')
+                    with ThreadPoolExecutor(max_workers=max([cpu_count()-1,2])) as executor:
+                        executor.map(concatenate_and_generate_meshes, 
+                                    all_identities, repeat(temp_dir), repeat(output_image), repeat(bit_depth), repeat(chunk_size)) 
+
+                # Once you have all the labelled segments, then create segment_properties file
+                logger.info("\n Creating info file for segmentations and meshes ...")
+                file_info = nginfo.info_mesh(directory=output_image,
+                                            chunk_size=chunk_size,
+                                            size=bf.shape[:3],
+                                            dtype=np.dtype(bf.dtype).name,
+                                            ids=all_identities,
+                                            resolution=resolution,
+                                            segmentation_subdirectory="segment_properties",
+                                            bit_depth=bit_depth,
+                                            order="YXZ")
+
+            logger.info("\n Creating volumes based on the info file ...")
+            # this is written outside the if/else statement regarding meshes
+            ngvol.generate_recursive_chunked_representation(volume=bf, info=file_info, dtype=datatype, directory=output_image, blurring_method='mode')
+
+
+        if imagetype == "image":
+            file_info = nginfo.info_image(directory=output_image,
                                                 dtype=datatype,
                                                 chunk_size = chunk_size,
                                                 size=bfshape[:3],
                                                 resolution=resolution)
-            
-        else: # if generating meshes
-            
-            # Need to iterate through chunks of the input for scalabiltiy
-            xsplits = list(np.arange(0, bfshape[0], 256))
-            xsplits.append(bfshape[0])
-            ysplits = list(np.arange(0, bfshape[1], 256))
-            ysplits.append(bfshape[1])
-            zsplits = list(np.arange(0, bfshape[2], 256))
-            zsplits.append(bfshape[2])
+                                                
+            logger.info("\n Creating volumes based on the info file ...")
+            ngvol.generate_recursive_chunked_representation(volume=bf, info=file_info, dtype=datatype, directory=output_image, blurring_method='average')
 
-            # Keep track of the labelled segments
-            all_identities = np.array([])
-            temp_dir = os.path.join(output_image, "tempdir")
+        
+        logger.info("Data Type: {}".format(file_info['data_type']))
+        logger.info("Number of Channels: {}".format(file_info['num_channels']))
+        logger.info("Number of Scales: {}".format(len(file_info['scales'])))
+        logger.info("Image Type: {}".format(file_info['type']))
 
-            num_scales = np.floor(np.log2(max(bfshape[:3]))).astype('int')+1
-            
-            logger.info("\n Iterate through input ...")
-            # Creating a temporary files for the polygon meshes -- will later be converted to Draco
-            with tempfile.TemporaryDirectory() as temp_dir:
-                if not os.path.exists(temp_dir):
-                    os.makedirs(temp_dir, exist_ok=True)
-                for y in range(len(ysplits)-1):
-                    for x in range(len(xsplits)-1):
-                        for z in range(len(zsplits)-1):
-                            start_y, end_y = (ysplits[y], ysplits[y+1])
-                            start_x, end_x = (xsplits[x], xsplits[x+1])
-                            start_z, end_z = (zsplits[z], zsplits[z+1])
-                            
-                            volume = bf[start_x:end_x,start_y:end_y,start_z:end_z]
-                            volume = volume.reshape(volume.shape[:3])
-
-                            logger.info("Loaded subvolume (YXZ) {}-{}__{}-{}__{}-{}".format(start_y, end_y,
-                                                                                            start_x, end_x,
-                                                                                            start_z, end_z))
-                            ids = np.unique(volume)
-                            if (ids == [0]).all():
-                                continue
-                            else:
-                                ids = np.delete(ids, np.where(ids==0))
-                                with ThreadPoolExecutor(max_workers=max([cpu_count()-1,2])) as executor:
-                                    executor.submit(create_plyfiles(subvolume = volume,
-                                                                    ids=ids,
-                                                                    temp_dir=temp_dir,
-                                                                    start_y=start_y,
-                                                                    start_x=start_x,
-                                                                    start_z=start_z))
-                                    all_identities = np.append(all_identities, ids)
-
-                # concatenate and decompose the meshes in the temporary file for all segments
-                logger.info("\n Generate Progressive Meshes for segments ...")
-                all_identities = np.unique(all_identities).astype('int')
-                with ThreadPoolExecutor(max_workers=max([cpu_count()-1,2])) as executor:
-                    executor.map(concatenate_and_generate_meshes, 
-                                all_identities, repeat(temp_dir), repeat(output_image), repeat(bit_depth), repeat(chunk_size)) 
-
-            # Once you have all the labelled segments, then create segment_properties file
-            logger.info("\n Creating info file for segmentations and meshes ...")
-            file_info = nginfo.info_mesh(directory=output_image,
-                                        chunk_size=chunk_size,
-                                        size=bf.shape[:3],
-                                        dtype=np.dtype(bf.dtype).name,
-                                        ids=all_identities,
-                                        resolution=resolution,
-                                        segmentation_subdirectory="segment_properties",
-                                        bit_depth=bit_depth,
-                                        order="YXZ")
-
-        logger.info("\n Creating volumes based on the info file ...")
-        # this is written outside the if/else statement regarding meshes
-        ngvol.generate_recursive_chunked_representation(volume=bf, info=file_info, dtype=datatype, directory=output_image, blurring_method='mode')
-
-
-    elif imagetype == "image":
-        file_info = nginfo.info_image(directory=output_image,
-                                            dtype=datatype,
-                                            chunk_size = chunk_size,
-                                            size=bfshape[:3],
-                                            resolution=resolution)
-                                            
-        logger.info("\n Creating volumes based on the info file ...")
-        ngvol.generate_recursive_chunked_representation(volume=bf, info=file_info, dtype=datatype, directory=output_image, blurring_method='average')
-    else:
-        raise ValueError("Image Type was not properly specified")
-    
-    logger.info("Data Type: {}".format(file_info['data_type']))
-    logger.info("Number of Channels: {}".format(file_info['num_channels']))
-    logger.info("Number of Scales: {}".format(len(file_info['scales'])))
-    logger.info("Image Type: {}".format(file_info['type']))
-
+    except Exception as e:
+        traceback.print_exc()

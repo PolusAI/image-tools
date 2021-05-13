@@ -7,7 +7,6 @@ import utils
 import os
 from pathlib import Path
 
-import filepattern
 from filepattern import FilePattern as fp
 
 import numpy as np
@@ -26,18 +25,14 @@ def main(input_dir: str,
     
     # Get list of images that we are going to through
     # Get list of output paths for every image
-    logger.info("\n Getting the images...")
+    logger.info("\n Getting the {}s...".format(imagetype))
     fp_images = fp(Path(input_dir),filepattern)
-    input_images = []
-    output_images = []
-    for i in fp_images():
-        image = i[0]['file']
-        if os.path.exists(image):
-            input_images.append(image)
-            output_images.append(os.path.join(output_dir, os.path.basename(image)))
-    assert len(input_images) == len(output_images)
-
+    input_images = [str(f[0]['file']) for f in fp_images]
+    output_images = [os.path.join(output_dir, os.path.basename(f)) for f in input_images]
+    
     # Build one pyramid for each image in the input directory
+        # Max of 2 workers since building individual pyrmaids allocates
+        # more CPUS as well. 
     with ProcessPoolExecutor(max_workers=2) as executor:
         executor.map(utils.build_pyramid, input_images, output_images, repeat(imagetype), repeat(mesh))
 
@@ -67,6 +62,14 @@ if __name__ == "__main__":
     filepattern = args.file_pattern
     mesh = args.mesh
 
+    # If plugin generates an image or metadata subdirectories, then it 
+     # reroute the input_dir to the images directory
+    if os.path.join(input_dir, "images").exists():
+        input_dir = os.path.join(input_dir, "images")
+
+    # There are only two types of inputs
+    assert imagetype == "segmentation" or imagetype == "image"
+
     if imagetype != 'segmentation' and mesh == True:
         logger.warning("Can only generate meshes if imageType is segmentation")
 
@@ -79,8 +82,8 @@ if __name__ == "__main__":
     if filepattern == None:
         filepattern = ".*"
 
-    main(input_dir,
-         output_dir,
-         imagetype,
-         filepattern,
-         mesh)
+    main(input_dir=input_dir,
+         output_dir=output_dir,
+         imagetype=imagetype,
+         filepattern=filepattern,
+         mesh=mesh)

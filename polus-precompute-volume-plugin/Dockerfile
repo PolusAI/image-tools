@@ -1,4 +1,4 @@
-FROM python:3.6
+FROM python:3.7
 ARG EXEC_DIR="/opt/executables"
 RUN mkdir -p ${EXEC_DIR}
 
@@ -9,7 +9,7 @@ RUN git clone https://github.com/hsidky/neurogen.git --recurse-submodules
 RUN pip3 install cmake
 RUN pip3 install neurogen/
 
-FROM python:3.6-slim
+FROM python:3.7-slim
 COPY VERSION /
 ARG EXEC_DIR="/opt/executables"
 
@@ -21,7 +21,7 @@ RUN apt-get update \
     && apt-get install -y libgl1-mesa-dev \
     && apt-get install -y libgomp1
 
-COPY --from=0 /usr/local/lib/python3.6/site-packages /usr/local/lib/python3.6/site-packages
+COPY --from=0 /usr/local/lib/python3.7/site-packages /usr/local/lib/python3.7/site-packages
 COPY --from=0 /opt/executables ${EXEC_DIR}/
 WORKDIR ${EXEC_DIR}
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
