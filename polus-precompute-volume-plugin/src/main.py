@@ -5,7 +5,6 @@ from itertools import repeat
 
 import utils
 import os
-from pathlib import Path
 
 from filepattern import FilePattern as fp
 
@@ -26,7 +25,7 @@ def main(input_dir: str,
     # Get list of images that we are going to through
     # Get list of output paths for every image
     logger.info("\n Getting the {}s...".format(imagetype))
-    fp_images = fp(Path(input_dir),filepattern)
+    fp_images = fp(input_dir,filepattern)
     input_images = [str(f[0]['file']) for f in fp_images]
     output_images = [os.path.join(output_dir, os.path.basename(f)) for f in input_images]
     
@@ -64,7 +63,7 @@ if __name__ == "__main__":
 
     # If plugin generates an image or metadata subdirectories, then it 
      # reroute the input_dir to the images directory
-    if os.path.join(input_dir, "images").exists():
+    if os.path.exists(os.path.join(input_dir, "images")):
         input_dir = os.path.join(input_dir, "images")
 
     # There are only two types of inputs

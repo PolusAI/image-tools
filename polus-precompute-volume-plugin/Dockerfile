@@ -9,6 +9,7 @@ RUN git clone https://github.com/hsidky/neurogen.git --recurse-submodules
 RUN pip3 install cmake
 RUN pip3 install neurogen/
 
+
 FROM python:3.7-slim
 COPY VERSION /
 ARG EXEC_DIR="/opt/executables"

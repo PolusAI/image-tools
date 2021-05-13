@@ -27,7 +27,7 @@ bit_depth = 10
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("utils")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 def get_resolution(phys_y : tuple,
                    phys_x : tuple,
