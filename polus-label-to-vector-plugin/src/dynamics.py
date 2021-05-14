@@ -6,7 +6,7 @@ from numba import njit
 
 
 def diameters(masks):
-    """ Get median 'diameter' of masks
+    """ Get median diameter of masks
     Args:
         masks(array[int]): 2D array.labelled masks 0=NO masks; 1,2,...=mask labels
     Returns:
@@ -25,7 +25,7 @@ def diameters(masks):
 
 @njit('(float64[:], int32[:], int32[:], int32, int32, int32, int32)', nogil=True)
 def _extend_centers(T, y, x, ymed, xmed, Lx, niter):
-    """ Run diffusion from center of mask (ymed, xmed) on mask pixels (y, x).
+    """ Run diffusion from center of mask (ymed, xmed) on mask pixels (y,x).
     Args:
         T(array[float64]): _ x Lx array that diffusion is run in
         y(array[int32]): Pixels in y inside mask
