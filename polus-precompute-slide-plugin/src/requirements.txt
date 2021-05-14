@@ -1,4 +1,4 @@
 imageio==2.8.0
 filepattern==1.4.6
-bfio[zarr]==2.1.2
+bfio[zarr]==2.1.4
 preadator==0.2.0
