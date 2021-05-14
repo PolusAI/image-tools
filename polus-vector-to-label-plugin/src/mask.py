@@ -368,7 +368,7 @@ def flow_error(maski, dP_net):
 
     return flow_errors, dP_masks
 
-def compute_masks(p,cellprob,dP,new_img,z,cellprob_threshold=0.0,flow_threshold=0.4):
+def compute_masks(p,cellprob,dP,tot,cellprob_threshold=0.0,flow_threshold=0.4):
     """ Compute masks based on users input of threshold values  and X,yY flows
         This function will call the function which generates  masks based  of a histogram
     Args:
@@ -382,15 +382,12 @@ def compute_masks(p,cellprob,dP,new_img,z,cellprob_threshold=0.0,flow_threshold=
     Returns:
         Masks(array[float]): ND-array.Predicted masks
     """
-    global total_pix
-    if new_img<0:
-        set_totalpix(0)
 
-    maski = get_masks(p,total_pix, iscell=(cellprob > cellprob_threshold),
+    maski = get_masks(p,tot, iscell=(cellprob > cellprob_threshold),
                                flows=dP, threshold=flow_threshold)
-    cnt = np.amax(maski) if np.amax(maski) !=0 else total_pix
+
     maski = fill_holes(maski)
-    set_totalpix(cnt)
+
 
     return maski
 
