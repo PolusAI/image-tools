@@ -1,0 +1,45 @@
+{
+    "name": "HDBSCAN Clustering",
+    "version": "0.1.0",
+    "title": "HDBSCAN Clustering",
+    "description": "Cluster the data using HDBSCAN.",
+    "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-hdbscan-clustering-plugin:0.1.0",
+    "inputs": [      
+      {
+        "name": "inpdir",
+        "type": "csvCollection",
+        "description": "Input csv file collection",
+        "required": "true"
+      },
+      {
+	"name": "minclustersize",
+        "type": "integer",
+        "description": "Enter minimum cluster size:",
+        "required": "true"
+      } 
+    ],
+    "outputs": [
+      {
+        "name": "outdir",
+        "type": "csvCollection",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.inpdir",
+        "title": "Input csv file",
+        "description": "Input csv file for clustering"
+      },
+      {
+        "key": "inputs.minclustersize",
+        "title": "Minimum cluster size",
+        "description": "Enter minimum cluster size:"
+      }
+    ]
+  }
