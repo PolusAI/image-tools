@@ -1,6 +1,7 @@
 ﻿# Feature Extraction
 
 The feature extraction plugin extracts shape and intensity based features from images and outputs csv file.The input image should be in OME tiled tiff format.
+
 These are the features that can be extracted from this plugin:
    1. Area - 
          Number of pixels in the region.
@@ -17,17 +18,18 @@ These are the features that can be extracted from this plugin:
    7. Solidity - 
          Ratio of pixels in the region to pixels of convex hull image.
    8. Centroid - 
-         The center point of the region. Centroid x and y indicates the (x,y) coordinates.
+         The center point of the region. Centroid_row is the x centroid coordinate and Centroid_column is the y centroid coordinate.
    9. Neighbors - 
          The number of neighbors touching the object.
    10. Maximum feret - 
-         The longest distance between any two points in the region (maximum caliber diameter) is calculated. The feret diameter for number of angles (0-180 degrees) are calculated and their maximum is selected.
+         The longest distance between any two points in the region (maximum caliber diameter) is calculated. The feret diameter for  
+         number of angles (0-180 degrees) are calculated and their maximum is selected.
    11. Minimum feret - 
-         The minimum caliber diameter is calculated. The feret diameter for number of angles (0-180 degrees) are calculated and their minimum is selected.
+         The minimum caliber diameter is calculated. The feret diameter for number of angles (0-180 degrees) are calculated and their            minimum is selected.
    12. Polygonality score - 
-         The score ranges from -infinity to 10. Score 10 indicates the object shape is polygon and score -infinity indicates the object shape is not polygon.
+         The score ranges from -infinity to 10. Score 10 indicates the object shape is polygon and score -infinity indicates the object          shape is not polygon.
    13. Hexagonality score - 
-         The score ranges from -infinity to 10. Score 10 indicates the object shape is hexagon and score -infinity indicates the object shape is not hexagon.
+         The score ranges from -infinity to 10. Score 10 indicates the object shape is hexagon and score -infinity indicates the object          shape is not hexagon.
    14. Hexagonality standard deviation - 
          Dispersion of hexagonality_score relative to its mean.
    15. Euler number - 
@@ -36,9 +38,6 @@ These are the features that can be extracted from this plugin:
          The length of major axis of the ellipse that has the same normalized second central moments as the region.
    17. Minor axis length - 
          The length of minor axis of the ellipse that has the same normalized second central moments as the region.
-   18. Bounding Box - 
-	 Position and size of the smallest box containing the region.
-	 Bounding box xmin and ymin indicates the (x,y) coordinates.Bounding box width and height indicates the width and height of the box respectively. 
    18. Mean intensity - 
          Mean intensity value of the region.
    19. Median - 
@@ -58,19 +57,12 @@ These are the features that can be extracted from this plugin:
    26. Standard deviation - 
          Dispersion of image gray level intensities
 
-The features are calculated using scikit-image (https://scikit-image.org/docs/dev/api/skimage.measure.html#skimage.measure.regionprops).
-
 ## Inputs:
 ### Label image collection:
-The input should be a labeled image in OME tiled tiff format. Extracting shape-based features, feret diameter, neighbors, hexagonality and polygonality scores requires only labeled image. This is an optional parameter. The input for this parameter is required only when shape-based features needs to be extracted.
+The input should be a labeled image in OME tiled tiff format. Extracting shape-based features, feret diameter, neighbors, hexagonality and polygonality scores requires only labeled image. This is a required parameter for the plugin.
 
 ### Intensity image collection:
-Extracting intensity-based features requires intensity image in OME tiled tiff (.ome.tif) format. This is an optional parameter. The input for this parameter is required only when intensity-based features needs to be extracted.
-
-### File pattern:
-Enter file pattern to match the intensity and labeled/segmented images to extract features (https://pypi.org/project/filepattern/)
-Filepattern will sort alphabetically the files in the labeled image folder and intensity image folder and read images in alphabetical order when universal selector(.*.ome.tif) is given as input.
-If specific pattern is mentioned as input, then filepattern will get matches from labeled image folder and intensity image folder based on that pattern.
+Extracting intensity-based features requires intensity image and labeled image in OME tiled tiff (.ome.tif)  format. Intensity image with same size as labeled image should be used as input. This is an optional parameter. The input for this parameter is required only when intensity-based features needs to be extracted.
 
 ### Pixel distance:
 Enter value for this parameter if neighbors touching cells needs to be calculated. The default value is 5. This is an optional parameter. 
@@ -87,14 +79,15 @@ Singlecsv - Allows to save all the features extracted from all the images in the
 This is an optional parameter. Use this parameter only if units are present in the metadata and want to use those embedded units for the features extraction. If this option is selected, need not enter any value for the length of unit and pixels per unit parameter.
 
 ### Length of unit:
-Mention the unit name for conversion. This is also an optional parameter. This parameter will be shown only when embedded pixel size parameter is not selected.
+Mention the unit name for conversion. This is also an optional parameter. 
 
 ### Pixels per unit:
-If there is a metric mentioned in Length of unit, then Pixels per unit cannot be left blank and hence the scale per unit value must be mentioned in this parameter. This parameter will be shown only when embedded pixel size parameter is not selected.
+If there is a metric mentioned in Length of unit, then Pixels per unit cannot be left blank and hence the scale per unit value must be mentioned in this parameter. 
 
 Note:
-1.	If Embedded pixel size is not selected and values are entered in Length of unit and Pixels per unit, then the metric mentioned in length of unit will be considered.
-2.	If Embedded pixel size, Length of unit and Pixels per unit is not selected then the units will be in pixels.
+1.	If Embedded pixel size is selected, then ignore Length of unit and Pixels per unit.
+2.	If Embedded pixel size is not selected and values are entered in Length of unit and Pixels per unit, then the metric mentioned in length of unit will be considered.
+3.	If Embedded pixel size, Length of unit and Pixels per unit is not selected then the units will be in pixels.
 
 ## Output:
    The output is a csv file containing the value of features required.
@@ -112,13 +105,12 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-This plugin takes nine input arguments and one output argument:
+This plugin takes eight input argument and one output argument:
 
 | Name                   | Description             | I/O    | Type   |
 |------------------------|-------------------------|--------|--------|
 | `--intDir` | Intensity image collection| Input | collection |
 | `--pixelDistance` | Pixel distance to calculate the neighbors touching cells | Input | integer |
-| `--filePattern` | To match intensity and labeled/segmented images | Input | string |
 | `--segDir` | Labeled image collection | Input | collection |
 | `--features` | Select intensity and shape features required | Input | array |
 | `--csvfile` | Save csv file as one csv file for all images or separate csv file for each image | Input | enum |
