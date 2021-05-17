@@ -29,7 +29,7 @@ def flow_thread(input_path: Path,
 
         """
     root = zarr.open(str(zfile))
-  #  print('xyz',x,y,z)
+
     with BioReader(input_path) as br:
         x_min = max([0, x - TILE_OVERLAP])
         x_max = min([br.X, x + TILE_SIZE + TILE_OVERLAP])
@@ -38,7 +38,8 @@ def flow_thread(input_path: Path,
         y_max = min([br.Y, y + TILE_SIZE + TILE_OVERLAP])
 
         flow = dynamics.labels_to_flows(br[y_min:y_max, x_min:x_max, z:z + 1, 0, 0].squeeze())
-        logger.info('tsedfs %d %d %d ',br.Y,br.X,br.Z)
+        logger.info('Computed flows on slice %d tile(y,x) %d :%d %d:%d ', z, y,
+                    y_max, x, x_max)
         flow_final = flow[:, :, :, np.newaxis, np.newaxis].transpose(1, 2, 3, 0, 4)
 
         x_overlap = x - x_min
@@ -108,41 +109,43 @@ if __name__ == "__main__":
 
     root = zarr.group(store=str(Path(outDir).joinpath('flow.zarr')))
     # Loop through files in inpDir image collection and process
-    # processes = []
-    # with ProcessPoolExecutor(num_threads) as executor:
-    for f in inpDir_files:
-        logger.info('Processing image %s ', f)
-        br = BioReader(str(Path(inpDir).joinpath(f).absolute()),backend ='python')
+    processes = []
+    with ProcessPoolExecutor(num_threads) as executor:
+        for f in inpDir_files:
+            logger.info('Processing image %s ', f)
+            br = BioReader(str(Path(inpDir).joinpath(f).absolute()),backend ='python')
 
-        # Initialize the zarr group, create datasets
-        cluster = root.create_group(f)
-        init_cluster_1 = cluster.create_dataset('vector', shape=(br.Y, br.X, br.Z, 3, 1),
+            # Initialize the zarr group, create datasets
+            cluster = root.create_group(f)
+            init_cluster_1 = cluster.create_dataset('vector', shape=(br.Y, br.X, br.Z, 3, 1),
                                                     chunks=(TILE_SIZE, TILE_SIZE, 1, 3, 1),
                                                     dtype=np.float32)
-        init_cluster_2 = cluster.create_dataset('lbl', shape=br.shape,
+            init_cluster_2 = cluster.create_dataset('lbl', shape=br.shape,
                                                     chunks=(TILE_SIZE, TILE_SIZE, 1, 3, 1),
                                                     dtype=np.float32)
-        cluster.attrs['metadata'] = str(br.metadata)
+            cluster.attrs['metadata'] = str(br.metadata)
 
-        for z in range(br.Z):
-            logger.info('Processing slice  %d', z)
-            for x in range(0, br.X, TILE_SIZE):
-                for y in range(0, br.Y, TILE_SIZE):
-                        # processes.append(executor.submit(flow_thread,
-                        #                                  Path(inpDir).joinpath(f).absolute(),
-                        #                                  Path(outDir).joinpath('flow.zarr'),
-                        #                                  x, y, z))
-                    logger.info('entryyxz %d %d %d', y, x, z)
-                    test=flow_thread(Path(inpDir).joinpath(f).absolute(),
-                                                          Path(outDir).joinpath('flow.zarr'),
-                                                          x, y, z)
+            for z in range(br.Z):
+                logger.info('Processing slice  %d', z)
+                for x in range(0, br.X, TILE_SIZE):
+                    for y in range(0, br.Y, TILE_SIZE):
 
-        br.close()
+                        logger.info('Calculating flows on slice %d tile(y,x) %d  %d ', z, y,
+                                     x)
+                        # test=flow_thread(Path(inpDir).joinpath(f).absolute(),
+                        #                                       Path(outDir).joinpath('flow.zarr'),
+                        #                                       x, y, z)
+                        processes.append(executor.submit(flow_thread,
+                                                     Path(inpDir).joinpath(f).absolute(),
+                                                     Path(outDir).joinpath('flow.zarr'),
+                                                     x, y, z))
 
-        # done, not_done = wait(processes, 0)
-        #
-        # logger.info(f'Percent complete: {100 * len(done) / len(processes):6.3f}%')
-        #
-        # while len(not_done) > 0:
-        #     done, not_done = wait(processes, 3)
-        #     logger.info(f'Percent complete: {100 * len(done) / len(processes):6.3f}%')
+            br.close()
+
+        done, not_done = wait(processes, 0)
+
+        logger.info(f'Percent complete: {100 * len(done) / len(processes):6.3f}%')
+
+        while len(not_done) > 0:
+            done, not_done = wait(processes, 3)
+            logger.info(f'Percent complete: {100 * len(done) / len(processes):6.3f}%')
