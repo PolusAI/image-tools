@@ -3,22 +3,17 @@ import logging
 from concurrent.futures import ProcessPoolExecutor, wait
 from multiprocessing import cpu_count
 from pathlib import Path
-
 import filepattern
 import numpy as np
 import zarr
 from bfio.bfio import BioReader
-
 import dynamics
 
 TILE_SIZE = 2048
 TILE_OVERLAP = 512
 
-def flow_thread(input_path: Path,
-                zfile: Path,
-                x: int,
-                y: int,
-                z: int) -> bool:
+
+def flow_thread(input_path: Path, zfile: Path, x: int, y: int, z: int) -> bool:
     """ Converts labels to flows
 
     This function converts labels in each tile to vector field.
@@ -50,11 +45,11 @@ def flow_thread(input_path: Path,
         y_max = min([br.Y, y + TILE_SIZE])
 
         root[f]['vector'][y_min:y_max, x_min:x_max, z:z + 1, 0:3, 0:1] = flow_final[
-                                                                          y_overlap:y_max - y_min + y_overlap,
-                                                                          x_overlap:x_max - x_min + x_overlap,
-                                                                          ...]
+                                                                         y_overlap:y_max - y_min + y_overlap,
+                                                                         x_overlap:x_max - x_min + x_overlap,
+                                                                         ...]
         root[f]['lbl'][y_min:y_max, x_min:x_max, z:z + 1, 0:1, 0:1] = br[y_min:y_max, x_min:x_max,
-                                                                       z:z + 1, 0, 0]
+                                                                      z:z + 1, 0, 0]
     return True
 
 
@@ -109,7 +104,7 @@ if __name__ == "__main__":
     with ProcessPoolExecutor(num_threads) as executor:
         for f in inpDir_files:
             logger.info('Processing image %s ', f)
-            br = BioReader(str(Path(inpDir).joinpath(f).absolute()),backend ='python')
+            br = BioReader(str(Path(inpDir).joinpath(f).absolute()), backend='python')
 
             # Initialize the zarr group, create datasets
             cluster = root.create_group(f)
@@ -126,17 +121,15 @@ if __name__ == "__main__":
                 for x in range(0, br.X, TILE_SIZE):
                     for y in range(0, br.Y, TILE_SIZE):
                         logger.info('Calculating flows on slice %d tile(y,x) %d  %d ', z, y,
-                                     x)
+                                    x)
                         processes.append(executor.submit(flow_thread,
-                                                     Path(inpDir).joinpath(f).absolute(),
-                                                     Path(outDir).joinpath('flow.zarr'),
-                                                     x, y, z))
+                                                         Path(inpDir).joinpath(f).absolute(),
+                                                         Path(outDir).joinpath('flow.zarr'),
+                                                         x, y, z))
             br.close()
 
         done, not_done = wait(processes, 0)
-
         logger.info(f'Percent complete: {100 * len(done) / len(processes):6.3f}%')
-
         while len(not_done) > 0:
             done, not_done = wait(processes, 3)
             logger.info(f'Percent complete: {100 * len(done) / len(processes):6.3f}%')
