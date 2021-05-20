@@ -2,11 +2,10 @@
 
 This Wipp plugin converts a labelled image to vector field and stores the vector field as a zarr.
 Vector field is concatenation of the horizontal,vertical gradients and cell probability. Vector
-field and label are stored as zarr groups.
-
-The plugin lets users filter images in the input image collection based on file names. By
-default, the plugin will run on the all the images in image collection. Plugin has been tested on
-bfio version 2.0.4-slim-buster and serves as a starting point for Cellpose training plugin.
+field and label are stored as zarr groups.The plugin lets users filter images in the input image
+collection based on file names. By default, the plugin will run on the all the images in image
+collection. Plugin has been tested on bfio version 2.0.4-slim-buster and serves as a starting point
+for Cellpose training plugin.
 
 ## Building
 
@@ -26,7 +25,7 @@ of `plugin.json` into the pop-up window and submit.
 
 ## Options
 
-This plugin takes one input argument and one output argument:
+This plugin takes two input arguments and one output argument:
 
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|

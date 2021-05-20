@@ -20,32 +20,31 @@ def flow_thread(input_path: Path,
                 y: int,
                 z: int) -> bool:
     """ Converts labels to flows
-        Args:
-            input_path(path): Path of input image collection
-            zfile(path): Path  where output zarr file will be saved
-            x(int): start index of the tile  in x dimension of image
-            y(int): start index of the tile  in y dimension of image
-            z(int): z slice of the  image
 
-        """
+    This function converts labels in each tile to vector field.
+
+    Args:
+        input_path(path): Path of input image collection
+        zfile(path): Path where output zarr file will be saved
+        x(int): Start index of the tile in x dimension of image
+        y(int): Start index of the tile in y dimension of image
+        z(int): Z slice of the  image
+
+    """
+
     root = zarr.open(str(zfile))
-
     with BioReader(input_path) as br:
         x_min = max([0, x - TILE_OVERLAP])
         x_max = min([br.X, x + TILE_SIZE + TILE_OVERLAP])
-
         y_min = max([0, y - TILE_OVERLAP])
         y_max = min([br.Y, y + TILE_SIZE + TILE_OVERLAP])
-
         flow = dynamics.labels_to_flows(br[y_min:y_max, x_min:x_max, z:z + 1, 0, 0].squeeze())
         logger.info('Computed flows on slice %d tile(y,x) %d :%d %d:%d ', z, y,
                     y_max, x, x_max)
         flow_final = flow[:, :, :, np.newaxis, np.newaxis].transpose(1, 2, 3, 0, 4)
-
         x_overlap = x - x_min
         x_min = x
         x_max = min([br.X, x + TILE_SIZE])
-
         y_overlap = y - y_min
         y_min = y
         y_max = min([br.Y, y + TILE_SIZE])
@@ -56,7 +55,6 @@ def flow_thread(input_path: Path,
                                                                           ...]
         root[f]['lbl'][y_min:y_max, x_min:x_max, z:z + 1, 0:1, 0:1] = br[y_min:y_max, x_min:x_max,
                                                                        z:z + 1, 0, 0]
-
     return True
 
 
@@ -92,9 +90,7 @@ if __name__ == "__main__":
     inpRegex = args.inpRegex
     logger.info('FIle pattern = {}'.format(inpRegex))
     outDir = args.outDir
-
     logger.info('outDir = {}'.format(outDir))
-
     # Start  logging
     logger.info('Initializing ...')
     # Get all file names in inpDir image collection based on input pattern
@@ -129,17 +125,12 @@ if __name__ == "__main__":
                 logger.info('Processing slice  %d', z)
                 for x in range(0, br.X, TILE_SIZE):
                     for y in range(0, br.Y, TILE_SIZE):
-
                         logger.info('Calculating flows on slice %d tile(y,x) %d  %d ', z, y,
                                      x)
-                        # test=flow_thread(Path(inpDir).joinpath(f).absolute(),
-                        #                                       Path(outDir).joinpath('flow.zarr'),
-                        #                                       x, y, z)
                         processes.append(executor.submit(flow_thread,
                                                      Path(inpDir).joinpath(f).absolute(),
                                                      Path(outDir).joinpath('flow.zarr'),
                                                      x, y, z))
-
             br.close()
 
         done, not_done = wait(processes, 0)

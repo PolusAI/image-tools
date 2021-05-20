@@ -1,6 +1,5 @@
-bfio==2.0.7
+bfio==2.1.5
 scipy==1.5.2
 zarr==2.5.0
 numba==0.51.2
 filepattern==1.4.6
-#bfio==2.1.0a6
