@@ -1,0 +1,74 @@
+{
+    "name": "Outlier removal",
+    "version": "0.2.2",
+    "title": "Outlier removal",
+    "description": "Remove outliers from the data.",
+    "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-outlier-removal-plugin:0.2.2",
+    "inputs": [      
+      {
+        "name": "inpdir",
+        "type": "csvCollection",
+        "description": "Input csv file collection",
+        "required": "true"
+      },
+      {
+        "name": "methods",
+        "type": "enum",
+	"description": "Select methods for outlier removal",	
+        "options": {
+	  "values": [
+	      		"IsolationForest"
+             ]
+          },
+	"required": "true"
+      },
+      {
+        "name": "types",
+        "type": "enum",
+	"description": "Select type of outliers to be removed",	
+        "options": {
+	  "values": [
+	      		"Global",
+			"Local"
+             ],
+	"default": "Global"
+          },
+	"required": "false"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outdir",
+        "type": "csvCollection",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.inpdir",
+        "title": "Input csv file",
+        "description": "Input csv file for outlier removal"
+      },
+      {
+        "key": "inputs.methods",
+        "title": "Remove outliers based on the method selected",
+        "description": "Select methods"
+      },
+      {
+        "key": "inputs.types",
+        "title": "Find outliers based on the type selected",
+        "description": "Select types",
+	"condition": "model.inputs.methods==['IsolationForest']"
+      },
+      {
+        "key": "inputs.outdir",
+        "title": "Output csv file",
+        "description": "Save output csv file separately for inliers and outliers"
+      }      
+    ]
+  }

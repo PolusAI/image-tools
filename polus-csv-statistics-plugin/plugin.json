@@ -17,6 +17,8 @@
           "items": {
             "type": "string",
             "title": "Select statistic",
+            "description": "Csv Statistics",
+            "required": true,
             "oneOf": [
               {
                 "description": "Mean",
@@ -89,9 +91,7 @@
             "widget": "select",
             "minItems": 1,
             "uniqueItems": "true"
-          },
-          "required": true,
-          "description": "Csv Statistics"
+          }
         }
       },
       {

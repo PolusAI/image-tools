@@ -3,6 +3,7 @@
   "version": "1.0.1",
   "title": "Import S3 Bucket as Collection",
   "description": "Imports the contents of a folder in an S3 bucket as a collection.",
+  "author": "Nick Schaub (nick.schaub@nih.gov)",
   "containerId": "labshare/polus-s3import-plugin:1.0.1",
   "inputs": [
 
