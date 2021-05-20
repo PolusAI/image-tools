@@ -1,4 +1,5 @@
-bfio==2.1.0a6
-scipy==1.5.2
-zarr ==2.5.0
-numba==0.51.2
+
+bfio==2.1.5
+cellpose==0.6.5
+zarr==2.8.2
+filepattern==1.4.6

@@ -1,5 +1,5 @@
 
-FROM labshare/polus-bfio-util:2.0.4-slim-buster
+FROM pytorch/pytorch:1.7.1-cuda11.0-cudnn8-runtime
 
 COPY VERSION /
 		
