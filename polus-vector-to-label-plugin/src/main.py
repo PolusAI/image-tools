@@ -4,6 +4,7 @@ import numpy as np
 from pathlib import Path
 import zarr
 import mask
+import scipy.ndimage
 from numba import jit
 np.seterr(divide='ignore', invalid='ignore')
 
@@ -77,8 +78,49 @@ np.seterr(divide='ignore', invalid='ignore')
 #                     masks[y:y_max, x:x_max, z + 1] = stitched[:, :]
 #
 #     return masks
+# for l in range(1, n):
+#     if objects[l] is not None:
+#         # Get individual bounding box
+#         bb_slices = objects[l]
+#         # Extract object
+#         obj = labels[bb_slices]
+#         # Compute centroid
+#
+#         coord = scipy.ndimage.center_of_mass(obj)
+#         y_test, x_test = np.unravel_index(np.argmax(obj), obj.shape)
+#         print(y_test, x_test)
+#         # Translate result from coordinate space of the bounding box back to the source image by simply adding the starting coordinate of each slice
+#         #    coord_translated = (np.around(coord[0]).astype(np.uint8) + bb_slices[0].start ,
+#         #                       np.around(coord[1]).astype(np.uint8) + bb_slices[1].start)
+#
+#         coord_translated = (x_test + bb_slices[0].start,
+#                             y_test + bb_slices[1].start)
+#         print(coord_translated)
+#         if x_test == 1024 or y_test == 1024:
+#             coords.append(obj)
+def centre(labels,x,y):
+    coords = []
+    n = labels.max()
+    # Get bounding boxes for all objects in the form of slices
+    objects = scipy.ndimage.find_objects(labels)
+    # Loop over all objects:
+    import cv2
+    for i, si in enumerate(objects):
+        if si is not None:
+            sr, sc = si
+            mask = (labels[sr, sc] == (i + 1)).astype(np.uint8)
+            contours = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            pvc, pvr = np.concatenate(contours[-2], axis=0).squeeze().T
+            vr, vc = pvr + sr.start, pvc + sc.start
+            for a in (vr,vc):
 
-TILE_SIZE = 1024
+                if a[0] == 1024 or a[1]== 1024:
+                    print(a)
+                    coords.append(mask)
+                    print(mask)
+    return coords
+
+TILE_SIZE = 2048
 TILE_OVERLAP = 512
 
 #Counter for masks across tiles
@@ -183,6 +225,11 @@ def main():
                             # Generating masks for the tile
                             maski = mask.compute_masks(p, cellprob, dP,total_pix, cellprob_threshold,
                                                             flow_threshold)
+
+                        #    coords = centre(maski,x_min , y_min)
+
+
+
                             # reshaping mask  based on tile
                             x_overlap = x - x_min
                             x_min = x
@@ -191,13 +238,17 @@ def main():
                             y_overlap = y - y_min
                             y_min = y
                             y_max = min([root[file_name]['vector'].shape[0], y + TILE_SIZE])
+
+              #              print(coords)
                             maski=maski[:,:, np.newaxis].astype(np.uint32)
+
                             test=maski[y_overlap:y_max - y_min + y_overlap,x_overlap:x_max - x_min + x_overlap, :, np.newaxis,
                                                                   np.newaxis]
+
                             bw[y_min:y_max, x_min:x_max, z:z + 1, 0, 0] = test
                             cnt = np.amax(test) if np.amax(test) != 0 else total_pix
                             set_totalpix(cnt)
-                    #        print('tseting',cnt)
+
                             new_img = 1
 
   #              del maski,old_tile,new_tile,mask_final
