@@ -3,6 +3,7 @@
 	"version": "0.4.0",
 	"title": "Jupyter Notebook executor",
 	"description": "Execute Jupyter notebook which take input of image collection and outputs to image collection.",
+	"author": "Konstantin taletskiy (konstantin.taletskiy@labshare.org),Gauhar Bains (gauhar.bains@labshare.org)",
 	"containerId": "labshare/polus-notebook-plugin:0.4.0",
 
 	"inputs": [

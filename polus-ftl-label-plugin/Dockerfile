@@ -1,17 +1,15 @@
 # Compile ftl.pyx
-FROM python:3.6-alpine
+FROM python:3.9
 ARG EXEC_DIR="/opt/executables"
 RUN mkdir -p ${EXEC_DIR}
 COPY src ${EXEC_DIR}/.
 WORKDIR ${EXEC_DIR}
-RUN apk --update add --virtual build-dependencies python3-dev build-base wget \
-    && pip3 install --upgrade cython==3.0a1 \
-    && pip3 install numpy==1.18.1 --no-cache-dir \
-    && python3 setup.py build_ext --inplace \
-    && apk del build-dependencies
+RUN pip3 install --upgrade cython==3.0a6 \
+    && pip3 install numpy==1.19.1 --no-cache-dir \
+    && python3 setup.py build_ext --inplace
 
 # Build the plugin container
-FROM labshare/polus-bfio-util:1.0.10
+FROM python:3.9-slim
 
 COPY VERSION /
 		
