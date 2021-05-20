@@ -72,16 +72,23 @@ def flow_thread(input_path: Path,
 def main(inpDir: Path,
          outDir: Path
          ) -> None:
+    """ Turn labels into flow fields.
 
+    Args:
+        inpDir: Path to the input directory
+        outDir: Path to the output directory
+    """
+
+    # Use a gpu if it's available
     use_gpu = torch.cuda.is_available()
-    # use_gpu = False
     if use_gpu:
         dev = torch.device("cuda")
     else:
         dev = torch.device("cpu")
-        
-    num_threads = max([cpu_count() // 2, 1])
     logger.info(f'Running on: {dev}')
+    
+    # Determine the number of threads to run on
+    num_threads = max([cpu_count() // 2, 1])
     logger.info(f'Number of threads: {num_threads}')
     
     # Get all file names in inpDir image collection based on input pattern
@@ -92,6 +99,7 @@ def main(inpDir: Path,
     else:
         inpDir_files = [f.name for f in Path(inpDir).iterdir() if f.is_file()]
 
+    # Initialize the output file
     root = zarr.group(store=str(Path(outDir).joinpath('flow.zarr')))
     
     # Loop through files in inpDir image collection and process
@@ -102,7 +110,6 @@ def main(inpDir: Path,
     else:
         executor = ProcessPoolExecutor(num_threads)
     
-    # with ProcessPoolExecutor(num_threads) as executor:
     for f in inpDir_files:
         logger.info('Processing image %s ', f)
         br = BioReader(str(Path(inpDir).joinpath(f).absolute()))
@@ -121,10 +128,10 @@ def main(inpDir: Path,
             for x in range(0, br.X, TILE_SIZE):
                 for y in range(0, br.Y, TILE_SIZE):
                     processes.append(executor.submit(flow_thread,
-                                                    Path(inpDir).joinpath(f).absolute(),
-                                                    Path(outDir).joinpath('flow.zarr'),
-                                                    use_gpu,dev,
-                                                    x, y, z))
+                                                     Path(inpDir).joinpath(f).absolute(),
+                                                     Path(outDir).joinpath('flow.zarr'),
+                                                     use_gpu,dev,
+                                                     x, y, z))
 
         br.close()
 
@@ -135,7 +142,7 @@ def main(inpDir: Path,
     while len(not_done) > 0:
         for r in done:
             r.result()
-        done, not_done = wait(processes, 3)
+        done, not_done = wait(processes, 5)
         logger.info(f'Percent complete: {100 * len(done) / len(processes):6.3f}%')
         
     executor.shutdown()
