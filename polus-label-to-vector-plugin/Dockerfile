@@ -15,4 +15,10 @@ WORKDIR ${EXEC_DIR}
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
+RUN mkdir ${EXEC_DIR}/numba_cache && \
+    chmod 777 ${EXEC_DIR}/numba_cache && \
+    mkdir /.cellpose && \
+    chmod 777 /.cellpose
+ENV NUMBA_CACHE_DIR=${EXEC_DIR}/numba_cache
+
 ENTRYPOINT ["python3", "main.py"]

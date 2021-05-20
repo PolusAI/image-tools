@@ -61,52 +61,21 @@ def flow_thread(input_path: Path,
         y_min = y
         y_max = min([br.Y, y + TILE_SIZE])
 
-        root[f]['vector'][y_min:y_max, x_min:x_max, z:z + 1, 0:3, 0:1] = flow_final[y_overlap:y_max - y_min + y_overlap,
+        root[input_path.name]['vector'][y_min:y_max, x_min:x_max, z:z + 1, 0:3, 0:1] = flow_final[y_overlap:y_max - y_min + y_overlap,
                                                                                     x_overlap:x_max - x_min + x_overlap,
                                                                                     ...]
-        root[f]['lbl'][y_min:y_max, x_min:x_max, z:z + 1, 0:1, 0:1] = br[y_min:y_max, x_min:x_max,
+        root[input_path.name]['lbl'][y_min:y_max, x_min:x_max, z:z + 1, 0:1, 0:1] = br[y_min:y_max, x_min:x_max,
                                                                          z:z + 1, 0, 0]
 
     return True
 
+def main(inpDir: Path,
+         outDir: Path
+         ) -> None:
 
-if __name__ == "__main__":
-    # Initialize the logger
-    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
-                        datefmt='%d-%b-%y %H:%M:%S')
-    logger = logging.getLogger("main")
-    logger.setLevel(logging.INFO)
-
-    ''' Argument parsing '''
-    logger.info("Parsing arguments...")
-    parser = argparse.ArgumentParser(prog='main', description='Cellpose parameters')
-
-    # Input arguments
-    parser.add_argument('--inpDir', dest='inpDir', type=str,
-                        help='Input image collection to be processed by this plugin', required=True)
-    parser.add_argument('--inpRegex', dest='inpRegex', type=str,
-                        help='Input file name pattern.', required=False)
-    # Output arguments
-    parser.add_argument('--outDir', dest='outDir', type=str,
-                        help='Output collection', required=True)
-
-    # Parse the arguments
-    args = parser.parse_args()
-    inpDir = args.inpDir
-    if (Path.is_dir(Path(args.inpDir).joinpath('images'))):
-        # Switch to images folder if present
-        inpDir = str(Path(args.inpDir).joinpath('images').absolute())
-    logger.info('inpDir = {}'.format(inpDir))
-    inpRegex = args.inpRegex
-    logger.info('File pattern = {}'.format(inpRegex))
-    outDir = args.outDir
-
-    logger.info('outDir = {}'.format(outDir))
     use_gpu = torch.cuda.is_available()
     # use_gpu = False
     if use_gpu:
-        import warnings
-        warnings.filterwarnings("ignore")
         dev = torch.device("cuda")
     else:
         dev = torch.device("cpu")
@@ -114,19 +83,17 @@ if __name__ == "__main__":
     num_threads = max([cpu_count() // 2, 1])
     logger.info(f'Running on: {dev}')
     logger.info(f'Number of threads: {num_threads}')
-
-    # Start  logging
-    logger.info('Initializing ...')
+    
     # Get all file names in inpDir image collection based on input pattern
     if inpRegex:
         fp = filepattern.FilePattern(inpDir, inpRegex)
         inpDir_files = [file[0]['file'].name for file in fp()]
         logger.info('Processing %d labels based on filepattern  ' % (len(inpDir_files)))
     else:
-        inpDir_files = [f.name for f in Path(inpDir).iterdir() if
-                        f.is_file() and str(f).endswith('.ome.tif')]
+        inpDir_files = [f.name for f in Path(inpDir).iterdir() if f.is_file()]
 
     root = zarr.group(store=str(Path(outDir).joinpath('flow.zarr')))
+    
     # Loop through files in inpDir image collection and process
     processes = []
     
@@ -166,7 +133,44 @@ if __name__ == "__main__":
     logger.info(f'Percent complete: {100 * len(done) / len(processes):6.3f}%')
 
     while len(not_done) > 0:
+        for r in done:
+            r.result()
         done, not_done = wait(processes, 3)
         logger.info(f'Percent complete: {100 * len(done) / len(processes):6.3f}%')
         
     executor.shutdown()
+
+if __name__ == "__main__":
+    # Initialize the logger
+    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+                        datefmt='%d-%b-%y %H:%M:%S')
+    logger = logging.getLogger("main")
+    logger.setLevel(logging.INFO)
+
+    ''' Argument parsing '''
+    logger.info("Parsing arguments...")
+    parser = argparse.ArgumentParser(prog='main', description='Cellpose parameters')
+
+    # Input arguments
+    parser.add_argument('--inpDir', dest='inpDir', type=str,
+                        help='Input image collection to be processed by this plugin', required=True)
+    parser.add_argument('--inpRegex', dest='inpRegex', type=str,
+                        help='Input file name pattern.', required=False)
+    # Output arguments
+    parser.add_argument('--outDir', dest='outDir', type=str,
+                        help='Output collection', required=True)
+
+    # Parse the arguments
+    args = parser.parse_args()
+    inpDir = args.inpDir
+    if (Path.is_dir(Path(args.inpDir).joinpath('images'))):
+        # Switch to images folder if present
+        inpDir = str(Path(args.inpDir).joinpath('images').absolute())
+    logger.info('inpDir = {}'.format(inpDir))
+    inpRegex = args.inpRegex
+    logger.info('File pattern = {}'.format(inpRegex))
+    outDir = args.outDir
+    logger.info('outDir = {}'.format(outDir))
+    
+    main(inpDir,
+         outDir)
