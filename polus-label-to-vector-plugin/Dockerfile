@@ -13,6 +13,8 @@ RUN mkdir -p ${EXEC_DIR} \
 COPY src ${EXEC_DIR}/
 WORKDIR ${EXEC_DIR}
 
+RUN pip3 uninstall -y bfio
+
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
 RUN mkdir ${EXEC_DIR}/numba_cache && \

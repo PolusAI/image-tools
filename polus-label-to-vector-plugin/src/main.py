@@ -4,18 +4,16 @@ import logging
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, wait
 from multiprocessing import cpu_count
 from pathlib import Path
-
 import filepattern
 import numpy as np
 import zarr
 from bfio.bfio import BioReader
 import torch
-torch.multiprocessing.set_start_method('spawn',force=True)
 
 from cellpose import dynamics
 
 TILE_SIZE = 2048
-TILE_OVERLAP = 256
+TILE_OVERLAP = 512
 
 def flow_thread(input_path: Path,
                 zfile: Path,
@@ -25,20 +23,27 @@ def flow_thread(input_path: Path,
                 y: int,
                 z: int) -> bool:
     """ Converts labels to flows
-        Args:
-            input_path(path): Path of input image collection
-            zfile(path): Path  where output zarr file will be saved
-            x(int): start index of the tile  in x dimension of image
-            y(int): start index of the tile  in y dimension of image
-            z(int): z slice of the  image
 
-        """
+    This function converts labels in each tile to vector field.
+
+    Args:
+        input_path(path): Path of input image collection
+        zfile(path): Path where output zarr file will be saved
+        x(int): Start index of the tile in x dimension of image
+        y(int): Start index of the tile in y dimension of image
+        z(int): Z slice of the  image
+
+    """
+    
+    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+                        datefmt='%d-%b-%y %H:%M:%S')
+    logger = logging.getLogger("flow")
+    logger.setLevel(logging.INFO)
+
     root = zarr.open(str(zfile))
-
     with BioReader(input_path) as br:
         x_min = max([0, x - TILE_OVERLAP])
         x_max = min([br.X, x + TILE_SIZE + TILE_OVERLAP])
-
         y_min = max([0, y - TILE_OVERLAP])
         y_max = min([br.Y, y + TILE_SIZE + TILE_OVERLAP])
         
@@ -51,12 +56,12 @@ def flow_thread(input_path: Path,
                                        use_gpu,
                                        dev)[0]
         
+        logger.debug('Computed flows on slice %d tile(y,x) %d:%d %d:%d ', z, y,
+                     y_max, x, x_max)
         flow_final = flow[:, :, :, np.newaxis, np.newaxis].transpose(1, 2, 3, 0, 4)
-
         x_overlap = x - x_min
         x_min = x
         x_max = min([br.X, x + TILE_SIZE])
-
         y_overlap = y - y_min
         y_min = y
         y_max = min([br.Y, y + TILE_SIZE])
@@ -70,7 +75,8 @@ def flow_thread(input_path: Path,
     return True
 
 def main(inpDir: Path,
-         outDir: Path
+         outDir: Path,
+         inpRegex: str = None
          ) -> None:
     """ Turn labels into flow fields.
 
@@ -180,4 +186,5 @@ if __name__ == "__main__":
     logger.info('outDir = {}'.format(outDir))
     
     main(inpDir,
-         outDir)
+         outDir,
+         inpRegex)
