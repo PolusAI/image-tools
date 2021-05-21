@@ -72,4 +72,12 @@ pipeline {
             }
         }
     }
+    post {
+        success {
+            jiraSendDeploymentInfo environmentId: 'dev', environmentName: 'dev', environmentType: 'development', site: 'labshare.atlassian.net', state: 'successful'
+        }
+        failure {  
+            jiraSendDeploymentInfo environmentId: 'dev', environmentName: 'dev', environmentType: 'development', site: 'labshare.atlassian.net', state: 'failed'
+        } 
+    }
 }
