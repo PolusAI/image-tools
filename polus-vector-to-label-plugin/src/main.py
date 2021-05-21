@@ -8,76 +8,6 @@ import scipy.ndimage
 from numba import jit
 np.seterr(divide='ignore', invalid='ignore')
 
-# @jit(nopython=True)
-# def _label_overlap(x, y):
-#     """ Fast function to get pixel overlaps between masks in x and y
-#     Args:
-#         x(array[int]): ND-array where 0=NO masks; 1,2... are mask labels
-#         y(array[int]): ND-array where 0=NO masks; 1,2... are mask labels
-#
-#     Returns:
-#         overlap(array[int]): ND-array.matrix of pixel overlaps of size [x.max()+1, y.max()+1]
-#
-#     """
-#
-#     x = x.ravel()
-#     y = y.ravel()
-#     overlap = np.zeros((1 + x.max(), 1 + y.max()), dtype=np.uint)
-#     for i in range(len(x)):
-#         overlap[x[i], y[i]] += 1
-#     return overlap
-#
-# def _intersection_over_union(masks_true, masks_pred):
-#     """Intersection over union of all mask pairs
-#     Args:
-#         masks_true(array[int]): ND-array.ground truth masks, where 0=NO masks; 1,2... are mask labels
-#         masks_pred(array[int]): ND-array.predicted masks, where 0=NO masks; 1,2... are mask labels
-#
-#     Returns:
-#         iou(array[float]): ND-array.matrix of IOU pairs of size [x.max()+1, y.max()+1]
-#
-#     """
-#
-#     overlap = _label_overlap(masks_true, masks_pred)
-#     n_pixels_pred = np.sum(overlap, axis=0, keepdims=True)
-#     n_pixels_true = np.sum(overlap, axis=1, keepdims=True)
-#
-#     iou = overlap / (n_pixels_pred + n_pixels_true - overlap)
-#     iou[np.isnan(iou)] = 0.0
-#     return iou
-#
-# def stitch3D(masks,tile_size, stitch_threshold=0.25):
-#     """ Stitch 2D masks into 3D volume with stitch_threshold on IOU
-#     Args:
-#         masks(array):ND-array.Mask labels
-#         stitch_threshold(int): Stitching threshold.Default value of 0.25
-#
-#     Returns:
-#         masks(array): Stitched masks based on IOU
-#
-#     """
-#     mmax = masks[0].max()
-#
-#     for z in range(masks.shape[2] - 1):
-#         for x in range(0, masks.shape[1], tile_size):
-#             x_max = min([masks.shape[1], x + tile_size])
-#             for y in range(0, masks.shape[0], tile_size):
-#                 y_max = min([masks.shape[0], y + tile_size])
-#                 iou = _intersection_over_union(np.array(masks[y:y_max, x:x_max, z + 1].squeeze()),
-#                                                np.array(masks[y:y_max, x:x_max, z].squeeze()))[1:, 1:]
-#                 iou[iou < stitch_threshold] = 0.0
-#
-#                 if not (iou.shape[0] == 0 or iou.shape[1] == 0):
-#                     iou[iou < iou.max(axis=0)] = 0.0
-#                     istitch = iou.argmax(axis=1) + 1
-#                     ino = np.nonzero(iou.max(axis=1) == 0.0)[0]
-#                     istitch[ino] = np.arange(mmax + 1, mmax + len(ino) + 1, 1, int)
-#                     mmax += len(ino)
-#                     istitch = np.append(np.array(0), istitch)
-#                     stitched = istitch[masks[y:y_max, x:x_max, z + 1].squeeze()]
-#                     masks[y:y_max, x:x_max, z + 1] = stitched[:, :]
-#
-#     return masks
 # for l in range(1, n):
 #     if objects[l] is not None:
 #         # Get individual bounding box
@@ -85,7 +15,6 @@ np.seterr(divide='ignore', invalid='ignore')
 #         # Extract object
 #         obj = labels[bb_slices]
 #         # Compute centroid
-#
 #         coord = scipy.ndimage.center_of_mass(obj)
 #         y_test, x_test = np.unravel_index(np.argmax(obj), obj.shape)
 #         print(y_test, x_test)
@@ -228,8 +157,6 @@ def main():
 
                         #    coords = centre(maski,x_min , y_min)
 
-
-
                             # reshaping mask  based on tile
                             x_overlap = x - x_min
                             x_min = x
@@ -239,9 +166,7 @@ def main():
                             y_min = y
                             y_max = min([root[file_name]['vector'].shape[0], y + TILE_SIZE])
 
-              #              print(coords)
                             maski=maski[:,:, np.newaxis].astype(np.uint32)
-
                             test=maski[y_overlap:y_max - y_min + y_overlap,x_overlap:x_max - x_min + x_overlap, :, np.newaxis,
                                                                   np.newaxis]
 
