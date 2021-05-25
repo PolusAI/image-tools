@@ -17,7 +17,7 @@
         "required": true
       },
       {
-        "name": "inpRegex",
+        "name": "filePattern",
         "type": "string",
         "description": "Input image file name pattern to be processed",
         "required": false

@@ -12,6 +12,8 @@ import torch
 
 from cellpose import dynamics
 
+logging.getLogger('cellpose').setLevel(logging.CRITICAL)
+
 TILE_SIZE = 2048
 TILE_OVERLAP = 512
 
@@ -77,7 +79,7 @@ def flow_thread(input_path: Path,
 
 def main(inpDir: Path,
          outDir: Path,
-         inpRegex: str = None
+         filePattern: str = None
          ) -> None:
     """ Turn labels into flow fields.
 
@@ -99,8 +101,8 @@ def main(inpDir: Path,
     logger.info(f'Number of threads: {num_threads}')
     
     # Get all file names in inpDir image collection based on input pattern
-    if inpRegex:
-        fp = filepattern.FilePattern(inpDir, inpRegex)
+    if filePattern:
+        fp = filepattern.FilePattern(inpDir, filePattern)
         inpDir_files = [file[0]['file'].name for file in fp()]
         logger.info('Processing %d labels based on filepattern  ' % (len(inpDir_files)))
     else:
@@ -118,7 +120,6 @@ def main(inpDir: Path,
         executor = ProcessPoolExecutor(num_threads)
     
     for f in inpDir_files:
-        logger.info('Processing image %s ', f)
         br = BioReader(str(Path(inpDir).joinpath(f).absolute()))
 
         # Initialize the zarr group, create datasets
@@ -168,7 +169,7 @@ if __name__ == "__main__":
     # Input arguments
     parser.add_argument('--inpDir', dest='inpDir', type=str,
                         help='Input image collection to be processed by this plugin', required=True)
-    parser.add_argument('--inpRegex', dest='inpRegex', type=str,
+    parser.add_argument('--filePattern', dest='filePattern', type=str,
                         help='Input file name pattern.', required=False)
     # Output arguments
     parser.add_argument('--outDir', dest='outDir', type=str,
@@ -181,11 +182,11 @@ if __name__ == "__main__":
         # Switch to images folder if present
         inpDir = str(Path(args.inpDir).joinpath('images').absolute())
     logger.info('inpDir = {}'.format(inpDir))
-    inpRegex = args.inpRegex
-    logger.info('File pattern = {}'.format(inpRegex))
+    filePattern = args.filePattern
+    logger.info('File pattern = {}'.format(filePattern))
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
     
     main(inpDir,
          outDir,
-         inpRegex)
+         filePattern)
