@@ -67,8 +67,11 @@ def flow_thread(input_path: Path,
         y_overlap = y - y_min
         y_min = y
         y_max = min([br.Y, y + TILE_SIZE])
-
-        root[input_path.name]['vector'][y_min:y_max, x_min:x_max, z:z + 1, 0:3, 0:1] = flow_final[y_overlap:y_max - y_min + y_overlap,
+        
+        root[input_path.name]['vector'][y_min:y_max, x_min:x_max, z:z + 1, 0:1, 0:1] = I[y_overlap:y_max - y_min + y_overlap,
+                                                                                         x_overlap:x_max - x_min + x_overlap,
+                                                                                         np.newaxis,np.newaxis,np.newaxis]>0
+        root[input_path.name]['vector'][y_min:y_max, x_min:x_max, z:z + 1, 1:3, 0:1] = flow_final[y_overlap:y_max - y_min + y_overlap,
                                                                                                   x_overlap:x_max - x_min + x_overlap,
                                                                                                   ...]
         root[input_path.name]['lbl'][y_min:y_max, x_min:x_max, z:z + 1, 0:1, 0:1] = I[y_overlap:y_max - y_min + y_overlap,
@@ -124,11 +127,11 @@ def main(inpDir: Path,
 
         # Initialize the zarr group, create datasets
         cluster = root.create_group(f)
-        init_cluster_1 = cluster.create_dataset('vector', shape=(br.Y, br.X, br.Z, 2, 1),
-                                                chunks=(TILE_SIZE, TILE_SIZE, 1, 2, 1),
+        init_cluster_1 = cluster.create_dataset('vector', shape=(br.Y, br.X, br.Z, 3, 1),
+                                                chunks=(TILE_SIZE, TILE_SIZE, 1, 1, 1),
                                                 dtype=np.float32)
         init_cluster_2 = cluster.create_dataset('lbl', shape=br.shape,
-                                                chunks=(TILE_SIZE, TILE_SIZE, 1, 2, 1),
+                                                chunks=(TILE_SIZE, TILE_SIZE, 1, 1, 1),
                                                 dtype=np.float32)
         cluster.attrs['metadata'] = str(br.metadata)
 
