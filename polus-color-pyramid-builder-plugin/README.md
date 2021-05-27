@@ -4,6 +4,10 @@ This WIPP plugin builds DeepZoom color image pyramids for the Web Deep Zoom Tool
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
+## ToDo
+
+Currently, if an input stitching vector is provided then at most one image will be created using this plugin. This has to do with the inability of the plugin to properly parse the file pattern and separate out variables associated with the stitching vector versus variables that are not. This should be fixed to identify variables associated with the stitching vector. This could be done by adding a new input, but it isn't ideal since the goal of the plugins is to minimize the number of plugins. A preferred option would be to identify images associated with a plugin so that images are not included in multiple pyramids.
+
 ## Input Details
 
 ### `--filePattern`
