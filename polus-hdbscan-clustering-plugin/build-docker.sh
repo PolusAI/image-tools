@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-k-means-clustering-plugin:${version}
+docker build . -t labshare/polus-hdbscan-clustering-plugin:${version}

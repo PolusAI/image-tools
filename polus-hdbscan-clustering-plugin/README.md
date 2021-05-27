@@ -6,9 +6,13 @@ The HDBSCAN Clustering plugin clusters the data using [HDBSCAN clustering](https
 ### Input csv collection:
 The input file that need to be clustered. The file should be in csv format. This is a required parameter for the plugin.
 
+### Pattern
+The input for this parameter is a regular expression with capture group. This input splits the data into groups based on the matched pattern to cluster each group separately. This is not a required parameter. 
+New column 'group' is created in the output csv file that has the matched string based on the given pattern. 
+Note: This plugin does not support multiple capture groups.
+
 ### Minimum cluster size:
-This parameter defines the smallest grouping size that should be considered as cluster.
-This is a required parameter. The input should be an integer and the value should be greater than 1.
+This parameter defines the smallest grouping size that should be considered as cluster. This is a required parameter. The input should be an integer and the value should be greater than 1.
 
 ## Output:
 The output is a csv file containing the cluster data to which each instance in the data belongs to. Outliers are defined as cluster 0.
@@ -23,12 +27,13 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 ## Options
 
-This plugin takes four input argument if methods other than 'Manual' is selected else three input arguments and one output argument:
+This plugin takes three input arguments and one output argument:
 
 | Name                   | Description             | I/O    | Type   |
 |------------------------|-------------------------|--------|--------|
 | `--inpdir` | Input csv collection| Input | csvCollection |
 | `--minclustersize` | Enter minimum cluster size| Input | integer |
+| `--pattern` | Enter regular expression with capture group| Input | string |
 | `--outdir` | Output collection | Output | csvCollection |
 
 

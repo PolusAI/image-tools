@@ -1,6 +1,6 @@
 {
     "name": "HDBSCAN Clustering",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "title": "HDBSCAN Clustering",
     "description": "Cluster the data using HDBSCAN.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-hdbscan-clustering-plugin:0.1.0",
+    "containerId": "labshare/polus-hdbscan-clustering-plugin:0.2.0",
     "inputs": [      
       {
         "name": "inpdir",
@@ -21,7 +21,13 @@
         "type": "integer",
         "description": "Enter minimum cluster size:",
         "required": "true"
-      } 
+      },
+      {
+	"name": "pattern",
+        "type": "string",
+        "description": "Enter regular expression with capture group:",
+        "required": "false"
+      }
     ],
     "outputs": [
       {
@@ -40,6 +46,11 @@
         "key": "inputs.minclustersize",
         "title": "Minimum cluster size",
         "description": "Enter minimum cluster size:"
+      },
+      {
+        "key": "inputs.pattern",
+        "title": "Pattern",
+        "description": "Enter regular expression with capture group:"
       }
     ]
   }
