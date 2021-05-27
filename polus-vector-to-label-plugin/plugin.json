@@ -28,12 +28,6 @@
         "type": "number",
         "description": "Cell probability threshold, centered at 0.0",
         "required": false
-      },
-      {
-        "name": "stitchThreshold",
-        "type": "number",
-        "description": "Stitch threshold default at 0 for stitch 2D masks into 3D volume.(Only for 3d images)",
-        "required": false
       }
     ],
     "outputs": [
@@ -60,11 +54,6 @@
         "key": "inputs.cellprobThreshold",
         "title": "Cell probability threshold",
         "description": "Cell probability threshold"
-      },
-      {
-        "key": "inputs.stitchThreshold",
-        "title": "Stitching threshold",
-        "description": "Stitching threshold"
       }
     ]
   }
