@@ -43,6 +43,7 @@
       {
         "name": "method",
         "type": "enum",
+        "description": "Projective (8 degrees of freedom), Affine (6 degrees of freedom), Partial Affine (4 degrees of freedom)",
         "options": {
           "values": [
                      "Projective",

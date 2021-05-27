@@ -22,6 +22,8 @@ if __name__=="__main__":
     # Parse the arguments
     args = parser.parse_args()
     filePattern = args.filePattern
+    if not filePattern.strip():
+        filePattern = '.*'
     logger.info('filePattern = {}'.format(filePattern))
     inpDir = args.inpDir
     logger.info('inpDir = {}'.format(inpDir))
@@ -29,22 +31,15 @@ if __name__=="__main__":
     logger.info('outDir = {}'.format(outDir))
     
     # Get all file names in inpDir image collection
-    inpDir_files = FilePattern(inpDir,filePattern)
+    fp = FilePattern(inpDir,pattern=filePattern)
 
     # Loop through files in inpDir image collection and process
-    for files in inpDir_files.iterate():
+    for files in fp():
         if isinstance(files,list):
-            # if a filename pattern is used, then files is a list of file dictionaries
+            # files is a list of file dictionaries
             for f in files:
                 input_path = Path(f['file'])
                 output_path = Path(outDir).joinpath(input_path.name)
                 logger.info('Copying file: {}'.format(input_path.name))
-                shutil.copy(str(input_path.absolute()), str(output_path.absolute()))
-        else:
-            # if no filename pattern was used, only a single file dictionary is returned
-            input_path = Path(files['file'])
-            output_path = Path(outDir).joinpath(input_path.name)
-            logger.info('Copying file: {}'.format(input_path.name))
-            shutil.copy(str(input_path.absolute()), str(output_path.absolute()))
-    
+                shutil.copy2(str(input_path.absolute()), str(output_path.absolute()))    
     logger.info('Finished copying all files!')

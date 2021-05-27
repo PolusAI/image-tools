@@ -1,6 +1,6 @@
 {
     "name": "Color Pyramid Builder",
-    "version": "0.1.1",
+    "version": "0.3.3",
     "title": "Color Pyramid Builder",
     "description": "Builds a DeepZoom color pyramid.",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-color-pyramid-builder-plugin:0.1.1",
+    "containerId": "labshare/polus-color-pyramid-builder-plugin:0.3.3",
     "inputs": [
       {
         "name": "inpDir",
@@ -26,12 +26,30 @@
         "name": "layout",
         "type": "string",
         "description": "Color ordering up to 7 colors (e.g. 1,11,,,,5,6)",
-        "required": false
+        "required": true
       },
       {
         "name": "bounds",
         "type": "string",
         "description": "Set bounds (should be float-float, int-int, or blank, e.g. 0.01-0.99,0-16000,,,,,)",
+        "required": false
+      },
+      {
+        "name": "alpha",
+        "type": "boolean",
+        "description": "If true, transparency is related to pixel intensity, where black is fully transparent.",
+        "required": false
+      },
+      {
+        "name": "stitchPath",
+        "type": "stitchingVector",
+        "description": "If stitching path is given, will assemble images in the collection according to the stitching vector.",
+        "required": false
+      },
+      {
+        "name": "background",
+        "type": "number",
+        "description": "Gray level fill intensity. Ignored if stitchPath is undefined.",
         "required": false
       }
     ],
@@ -60,8 +78,23 @@
       },
       {
         "key": "inputs.bounds",
-        "title": "Set rescaling bounds",
+        "title": "Set rescaling bounds (optional)",
         "description": "Set bounds (should be float-float, int-int, or blank, e.g. 0.01-0.99,0-16000,,,,,)"
+      },
+      {
+        "key": "inputs.alpha",
+        "title": "Make black transparent (optional)",
+        "description": "If true, transparency is related to pixel intensity, where black is fully transparent."
+      },
+      {
+        "key": "inputs.stitchPath",
+        "title": "Stitching Vector (optional)",
+        "description": "If true, transparency is related to pixel intensity, where black is fully transparent."
+      },
+      {
+        "key": "inputs.background",
+        "title": "Background gray level (optional)",
+        "description": "Gray level fill intensity from 0-1. Ignored if stitchPath is undefined."
       }
     ]
   }
