@@ -1,3 +1,4 @@
+from os import cpu_count
 from bfio import BioWriter, OmeXml
 import argparse, logging
 import numpy as np
@@ -5,15 +6,16 @@ from pathlib import Path
 import zarr
 from cellpose import dynamics, utils
 import torch
-from concurrent.futures import ThreadPoolExecutor, wait
+from concurrent.futures import ThreadPoolExecutor, wait, Future
+import typing
 
-TILE_SIZE = 2048
-TILE_OVERLAP = 512
-NITER = 200
+""" Plugin Constants """
+TILE_SIZE = 2048    # Largest chunk of an image to process
+TILE_OVERLAP = 256  # Amount of overlap between tiles
+NITER = 200         # Number of iterations to run flow dynamics
 
 # Use a gpu if it's available
 USE_GPU = torch.cuda.is_available()
-USE_GPU = True
 if USE_GPU:
     DEV = torch.device("cuda")
 else:
@@ -25,19 +27,41 @@ logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(messa
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
-def overlap(previous_values,current_values,
-                image):
+def overlap(previous_values: np.ndarray,
+            current_values: np.ndarray,
+            tile: np.ndarray
+            ) -> np.ndarray:
+    """Resolve label values between tiles
+    
+    This function takes a row/column from the previous tile and a row/column
+    from the current tile and finds labels that that likely match. If labels
+    in the current tile should be replaced with labels from the previous tile,
+    the pixels in the current tile are removed from ``tile`` and the label value
+    and pixel coordinates of the label are stored in ``labels`` and ``indices``
+    respectively.
+
+    Args:
+        previous_values (np.ndarray): Previous tile edge values
+        current_values (np.ndarray): Current tile edge values
+        tile (np.ndarray): Current tile pixel values, flattened
+
+    Returns:
+        np.ndarray: Current tile pixel values, flattened
+    """
+    
+    # Get a list of unique values in the previous and current tiles
     previous_labels = np.unique(previous_values)
     if previous_values[0] == 0:
         previous_labels = previous_values[1:]
-        
+    
     current_labels = np.unique(current_values)
     if current_labels[0] == 0:
         current_labels = current_labels[1:]
-        
+    
+    # Initialize outputs
     indices = []
     labels = []
-        
+    
     if previous_labels.size != 0 and current_labels.size != 0:
     
         # Find overlapping indices
@@ -55,20 +79,47 @@ def overlap(previous_values,current_values,
             if new_labels.size == 0:
                 continue
                 
-            # Get the most frequently occuring label
+            # Get the most frequently occuring overlapping label
             labels.append(new_labels[np.argmax(counts)])
             
-            indices.append(np.argwhere(image==label))
-            image[indices[-1]] = 0
+            # Add indices to output, remove pixel values from the tile
+            indices.append(np.argwhere(tile==label))
+            tile[indices[-1]] = 0
             
-    return image, labels, indices
+    return tile, labels, indices
 
-def mask_thread(x,y,z,
-                file_name,inpDir,bw,
-                cellprob_threshold,flow_threshold,
-                dependency1,dependency2):
+def mask_thread(coords: typing.Tuple[int,int,int],
+                file_name: str,
+                inpDir: Path,
+                bw: BioWriter,
+                cellprob_threshold: float,
+                flow_threshold: float,
+                dependency1: Future,
+                dependency2: Future
+                ) -> typing.Tuple[np.ndarray,np.ndarray,np.uint32]:
+    """[summary]
+
+    Args:
+        coords (typing.Tuple[int,int,int]): x,y,z starting coordinates of the
+            tile to process
+        file_name (str): The name of the file to process inside of flow.zarr
+        inpDir (Path): The path to flow.zarr
+        bw (BioWriter): [description]
+        cellprob_threshold (float): [description]
+        flow_threshold (float): [description]
+        dependency1 (Future): [description]
+        dependency2 (Future): [description]
+
+    Returns:
+        typing.Tuple[np.ndarray,list,list]: Returns the right column of the
+            processed tile, top row of the processed tile, and largest label
+            value.
+    """   
     
+    # Calculate indice for the tile
     root = zarr.open(str(Path(inpDir).joinpath('flow.zarr')),mode='r')
+    
+    x,y,z = coords
     
     x_min = max([0, x - TILE_OVERLAP])
     x_max = min([root[file_name]['vector'].shape[1], x + TILE_SIZE + TILE_OVERLAP])
@@ -78,25 +129,25 @@ def mask_thread(x,y,z,
 
 
     tile = root[file_name]['vector'][y_min:y_max, x_min:x_max, z:z + 1, :, :]
-    tile=tile.transpose((2, 0, 1, 3, 4)).squeeze()
-    tile_final= tile
+    tile=tile.transpose((3, 2, 0, 1, 4)).squeeze()
 
-    logger.info('Calculating flows and masks  for tile [{}:{},{}:{},{}:{}]'.format(y, y_max, x,
-                x_max, z, z + 1))
+    logger.debug('Calculating flows and masks  for tile [{}:{},{}:{},{}:{}]'.format(y, y_max, x,
+                 x_max, z, z + 1))
 
-    cellprob = tile_final[...,0]
-    dP = tile_final[..., 1:3].transpose(2,0,1)
+    # Get flows and probabilities
+    cellprob = tile[0,...]
+    dP = tile[1:3,...]
 
-    # Computing flows for the tile
+    # Compute flows for the tile
     p = dynamics.follow_flows(-1 * dP * (cellprob > cellprob_threshold) / 5., 
                                 niter=NITER, interp=True,
                                 use_gpu=USE_GPU,device=DEV)
-    maski = dynamics.get_masks(p, iscell=(cellprob>cellprob_threshold),
-                                flows=dP, threshold=flow_threshold,
-                                use_gpu=USE_GPU,device=DEV)
-    maski = utils.fill_holes_and_remove_small_masks(maski, min_size=15)
+    mask = dynamics.get_masks(p, iscell=(cellprob>cellprob_threshold),
+                              flows=dP, threshold=flow_threshold,
+                              use_gpu=USE_GPU,device=DEV)
+    mask = utils.fill_holes_and_remove_small_masks(mask, min_size=15)
 
-    # reshaping mask  based on tile
+    # reshape mask based on tile
     x_overlap = x - x_min
     x_min = x
     x_max = min([root[file_name]['vector'].shape[1], x + TILE_SIZE])
@@ -105,9 +156,9 @@ def mask_thread(x,y,z,
     y_min = y
     y_max = min([root[file_name]['vector'].shape[0], y + TILE_SIZE])
 
-    maski=maski[:,:, np.newaxis].astype(np.uint32)
-    test=maski[y_overlap:y_max - y_min + y_overlap,x_overlap:x_max - x_min + x_overlap, :, np.newaxis,
-                                            np.newaxis]
+    mask = mask[y_overlap:y_max - y_min + y_overlap,
+                x_overlap:x_max - x_min + x_overlap,
+                np.newaxis, np.newaxis, np.newaxis].astype(np.uint32)
     
     """ Fix tile conflicts if image is large enough to require tiling """
     # Get previously processed tiles if they exist
@@ -117,21 +168,21 @@ def mask_thread(x,y,z,
     # Get offset to make labels consistent between tiles
     offset = 0 if dependency1 is None else dependency1[2]
     
-    current_x = test[:,0].squeeze()
-    current_y = test[0,:].squeeze()
-    shape = test.shape
-    test = test.reshape(-1)
+    current_x = mask[:,0].squeeze()
+    current_y = mask[0,:].squeeze()
+    shape = mask.shape
+    mask = mask.reshape(-1)
     
     # Resolve label conflicts along the left border
     if x > 0:
         
-        test, labels_x, indices_x = overlap(dependency1[0].squeeze(),current_x,test)
+        mask, labels_x, indices_x = overlap(dependency1[0].squeeze(),current_x,mask)
         
     if y > 0:
         
-        test, labels_y, indices_y = overlap(dependency2[1].squeeze(),current_y,test)
+        mask, labels_y, indices_y = overlap(dependency2[1].squeeze(),current_y,mask)
     
-    uvals, image = np.unique(test, return_inverse=True)
+    _, image = np.unique(mask, return_inverse=True)
     image = image.astype(np.uint32)
     image[image>0] = image[image>0] + offset
     
@@ -152,10 +203,90 @@ def mask_thread(x,y,z,
     
     return image[:,-1],image[-1,:],image.max()
 
-#Counter for masks across tiles
-total_pix=0
+def close_thread(dependency: Future,
+                 bw: BioWriter):
+    """ Close an image once the final tile is written
 
-def main():
+    Args:
+        dependency (Future): The final tile thread
+        bw (BioWriter): The BioWriter to clsoe
+
+    Returns:
+        Returns True when completed
+    """    
+    
+    dependency.result()
+    
+    bw.close()
+    
+    return True
+
+def main(inpDir: Path,
+         cellprob_threshold: float,
+         flow_threshold: float,
+         outDir: Path
+         ) -> None:
+    
+    # Open zarr file
+    assert inpDir.joinpath('flow.zarr').exists(), 'Could not find flow.zarr.'
+    root = zarr.open(str(inpDir.joinpath('flow.zarr')),mode='r')
+    
+    num_threads = max([cpu_count()//2,1])
+    logger.info(f'Processing tiles with {num_threads} threads using {DEV}')
+    
+    processes = []
+    with ThreadPoolExecutor(6) as executor:
+
+        # Loop through files in inpDir image collection and process
+        for ind,(file_name, vec) in enumerate(root.groups()):
+            threads = np.empty((root[file_name]['vector'].shape[:3]),dtype=object)
+                            
+            logger.debug(
+                'Processing image ({}/{}): {}'.format(ind, len([file_name for file_name, _ in root.groups()]),
+                                                    file_name))
+            metadata = vec.attrs['metadata']
+
+            path = Path(outDir).joinpath(str(file_name))
+            xml_metadata = OmeXml.OMEXML(metadata)
+
+            bw = BioWriter(file_path=Path(path), backend='python', metadata=xml_metadata)
+            bw.dtype=np.dtype(np.uint32)
+
+            for z in range(0, root[file_name]['vector'].shape[2], 1):
+                
+                y_ind = None
+                dependency1 = None
+
+                for y in range(0, root[file_name]['vector'].shape[0], TILE_SIZE):
+
+                    for x in range(0, root[file_name]['vector'].shape[1], TILE_SIZE):
+                        
+                        dependency2 = None if y_ind is None else threads[y_ind,x//TILE_SIZE,z]
+
+                        processes.append(executor.submit(mask_thread,
+                                                        (x,y,z),
+                                                        file_name,inpDir,bw,
+                                                        cellprob_threshold,flow_threshold,
+                                                        dependency1,dependency2))
+                        dependency1 = processes[-1]
+                        threads[y//TILE_SIZE,x//TILE_SIZE,z] = dependency1
+                    
+                    y_ind = y//TILE_SIZE
+            
+            executor.submit(close_thread,dependency1,bw)
+                        
+        done, not_done = wait(processes, 0)
+
+        logger.info(f'Percent complete: {100 * len(done) / len(processes):6.3f}%')
+
+        while len(not_done) > 0:
+            for r in done:
+                r.result()
+            done, not_done = wait(processes, 15)
+            logger.info(f'Percent complete: {100 * len(done) / len(processes):6.3f}%')
+
+if __name__ == '__main__':
+    
     ''' Argument parsing '''
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='Cellpose parameters')
@@ -174,67 +305,16 @@ def main():
     
     # Parse the arguments
     args = parser.parse_args()
-    inpDir = args.inpDir
+    inpDir = Path(args.inpDir)
     logger.info('inpDir = {}'.format(inpDir))
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
     cellprob_threshold = args.cellprobThreshold
+    logger.info('cellprobThreshold = {}'.format(cellprob_threshold))
     flow_threshold= args.flowThreshold
+    logger.info('flowThreshold = {}'.format(flow_threshold))
     
-    logger.info('Initializing ...')
-    
-    # Open zarr file
-    root = zarr.open(str(Path(inpDir).joinpath('flow.zarr')),mode='r')
-
-    processes = []
-    with ThreadPoolExecutor(6) as executor:
-
-        # Loop through files in inpDir image collection and process
-        for ind,(file_name, vec) in enumerate(root.groups()):
-            threads = np.empty((root[file_name]['vector'].shape[:3]),dtype=object)
-                            
-            logger.info(
-                'Processing image ({}/{}): {}'.format(ind, len([file_name for file_name, _ in root.groups()]),
-                                                    file_name))
-            metadata = vec.attrs['metadata']
-
-            path = Path(outDir).joinpath(str(file_name))
-            xml_metadata = OmeXml.OMEXML(metadata)
-
-            with BioWriter(file_path=Path(path), backend='python', metadata=xml_metadata) as bw:
-                bw.dtype=np.dtype(np.uint32)
-
-                # Iterating over Z dimension
-                for z in range(0, root[file_name]['vector'].shape[2], 1):
-                    
-                    y_ind = None
-                    dependency1 = None
-
-                    for y in range(0, root[file_name]['vector'].shape[0], TILE_SIZE):
-
-                        for x in range(0, root[file_name]['vector'].shape[1], TILE_SIZE):
-                            
-                            dependency2 = None if y_ind is None else threads[y_ind,x//TILE_SIZE,z]
-
-                            processes.append(executor.submit(mask_thread,
-                                                             x,y,z,
-                                                             file_name,inpDir,bw,
-                                                             cellprob_threshold,flow_threshold,
-                                                             dependency1,dependency2))
-                            dependency1 = processes[-1]
-                            threads[y//TILE_SIZE,x//TILE_SIZE,z] = dependency1
-                        
-                        y_ind = y//TILE_SIZE
-                        
-        done, not_done = wait(processes, 0)
-
-        logger.info(f'Percent complete: {100 * len(done) / len(processes):6.3f}%')
-
-        while len(not_done) > 0:
-            for r in done:
-                r.result()
-            done, not_done = wait(processes, 15)
-            logger.info(f'Percent complete: {100 * len(done) / len(processes):6.3f}%')
-
-if __name__ == '__main__':
-    main()
+    main(inpDir,
+         cellprob_threshold,
+         flow_threshold,
+         outDir)
