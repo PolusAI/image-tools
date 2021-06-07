@@ -2,5 +2,5 @@
 bfio==2.1.7
 {% endif -%}
 {% if cookiecutter.use_bfio == "True" -%}
-filepattern==1.4.4
+filepattern==1.4.6
 {%- endif -%}
