@@ -37,7 +37,7 @@
         "description": "Input image collection to be processed by this plugin"
       },
       {
-        "key": "inputs.inpRegex",
+        "key": "inputs.filePattern",
         "title": "File name pattern",
         "description": "Input image file name pattern to be processed by this plugin"
       }
