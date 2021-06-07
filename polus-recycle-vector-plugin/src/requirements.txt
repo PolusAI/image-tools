@@ -1,1 +1,1 @@
-filepattern==1.4.4
+filepattern==1.4.5
