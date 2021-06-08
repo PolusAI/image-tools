@@ -5,7 +5,8 @@ from scipy.stats import skew
 from scipy.stats import kurtosis as kurto
 from scipy.stats import mode as modevalue
 from scipy.spatial import ConvexHull
-from bfio import BioReader
+from bfio import BioReader,BioWriter
+from multiprocessing import cpu_count
 from scipy import special,ndimage,signal
 import numpy as np
 import pandas as pd
@@ -14,6 +15,7 @@ import argparse
 import logging
 import os
 import math
+import sys
 import filepattern
 import itertools
 import tempfile
@@ -34,13 +36,33 @@ def read(img_file):
         Array of the image and the embedded unit in the metadata if present else it will be none.
         
     """
+    tile_grid_size = math.ceil(math.sqrt(cpu_count()))
+    chunk_size = tile_grid_size * 1024
     br = BioReader(img_file)
-    #Load only the first channel
-    image_bfio = br[:].squeeze()
-    #Get embedded units from metadata (physical size)
+    print(br.Y)
+    print(yyy)
+    bfshape = br.shape
     img_unit = br.ps_y[1]
+    img_data = []
+    # Loop through timepoints
+    for t in range(br.T):
+        # Loop through channels
+        for c in range(br.C):
+            # Loop through z-slices
+            for z in range(br.Z):
+                # Loop across the length of the image
+                for y in range(0,br.Y,chunk_size):
+                    y_max = min([br.Y,y+chunk_size])
+                    # Loop across the depth of the image
+                    for x in range(0,br.X,chunk_size):
+                        x_max = min([br.X,x+chunk_size])
+                        data_tile = br[y:y_max,x:x_max,z:z+1,c,t]
+                        data_tile = data_tile.flatten()
+                        img_data = np.append(img_data,data_tile)
+    img_data = np.reshape(img_data,[bfshape[0],bfshape[1],bfshape[2]])
+    label_image = img_data.astype(int)
     logger.info('Done reading the file: {}'.format(img_file.name))
-    return image_bfio, img_unit
+    return label_image, img_unit
 
 def strel_disk(radius):
     """Create a disk structuring element for morphological operations.
@@ -288,127 +310,6 @@ def qsort(distance,x_grid,y_grid,z_grid):
         output[:,flag+1:endpoint] = qsort(output_flag0[0,:].T,output_flag0[0,:].T,output_flag0[0,:].T,output_flag0[0,:].T)
     return output
     
-#Calculate Legendre
-def legendre(n,X) :
-    res = []
-    for m in range(n+1):
-        res.append(special.lpmv(m,n,X))
-    return res
-    
-#Compute spherical harmonics
-def spharm(L,M,THETA,PHI):
-    if ((L==0) and (M ==0) and (THETA==0) and (PHI==0)):
-        L=2
-        M=1
-        THETA = math.pi/4
-        PHI = math.pi/4
-        
-    if L<M:
-        raise ValueError('The ORDER (M) must be less than or eqaul to the DEGREE(L).')
-    
-    Lmn=np.array(legendre(L,np.cos(PHI)))
-    
-    if L!=0:
-        Lmn=np.squeeze(Lmn[M,...])
-
-    a1=((2*L+1)/(4*math.pi))
-    a2=math.factorial(L-M)/math.factorial(L+M)
-    C=np.sqrt(a1*a2)
-    Ymn=C*Lmn*math.e**(M*THETA*1j)
-    return Ymn
-    
-#Get Spherical descriptors
-def spherical_descriptors(file):
-    angle = math.pi/6
-    verti_trans, faces_ellip,_,_ = measure.marching_cubes(file,0)
-    verti_x = np.matrix(verti_trans[0].ravel())
-    verti_y = np.matrix(verti_trans[1].ravel())
-    verti_z = np.matrix(verti_trans[2].ravel())
-    
-    # rotated
-    c, s = np.cos(angle), np.sin(angle)
-    R = np.matrix([[c, -s], [s, c]])
-    result = R* (np.array([verti_x,verti_y]))
-    verti_x = result[0,:].T
-    verti_y = result[1,:].T
-    verti_z = verti_z.T
-    
-    #align coordinates
-    verti_x = verti_x-np.min(verti_x)
-    verti_y = verti_y-np.min(verti_y)
-    verti_z = verti_z-np.min(verti_z)
-
-    #normalize to 1 and rasterize to 2Rx2Rx2R voxel grid
-    max_value = np.max([np.max(verti_x),np.max(verti_y),np.max(verti_z)])
-    R = 32
-    x1 = np.round(verti_x/max_value*(2*R-1))
-    y1 = np.round(verti_y/max_value*(2*R-1))
-    z1 = np.round(verti_z/max_value*(2*R-1))
-    x_grid = []
-    y_grid = []
-    z_grid = []
-    grid = np.zeros((2*R,2*R,2*R))
-    n_points = len(x1)
-    for j in range(n_points):
-        if(grid[int(x1[j]),int(y1[j]),int(z1[j])]==0):
-            #register
-            grid[int(x1[j]),int(y1[j]),int(z1[j])]=1
-            x_grid.append(x1[j])
-            y_grid.append(y1[j])
-            z_grid.append(z1[j])
-
-    #get center of mass
-    x_center =np.mean(x_grid)
-    y_center =np.mean(y_grid)
-    z_center =np.mean(z_grid)
-    x_grid = np.array(x_grid).ravel() - x_center
-    y_grid = np.array(y_grid).ravel() - y_center
-    z_grid = np.array(z_grid).ravel() - z_center
-    
-    #scale and make the average distance to center of mass is R/2
-    dist = np.sqrt((x_grid)**2 + (y_grid)**2 + (z_grid)**2)
-    mean_dist = np.mean(dist)
-    scale_ratio = (R/2)/mean_dist
-    x_grid_sr = x_grid * scale_ratio
-    y_grid_sr = y_grid * scale_ratio
-    z_grid_sr = z_grid * scale_ratio
-    final_dist = np.sqrt((x_grid_sr)**2 + (y_grid_sr)**2 + (z_grid_sr)**2)
-    distance=np.matrix(final_dist).T
-    x_grid_val=np.matrix(x_grid_sr).T
-    y_grid_val=np.matrix(y_grid_sr).T
-    z_grid_val=np.matrix(z_grid_sr).T
-
-    # qsort function
-    output = qsort(distance,x_grid_val,y_grid_val,z_grid_val)
-    output1 = np.array(output).T
-    dist_vector = output1[:,0]
-    
-    #Get phi value
-    phi   = np.arctan2(output1[:,2],output1[:,1])
-    
-    #Get theta value
-    aa= output1[:,3]/dist_vector
-    theta = np.arccos(aa)
-    max_l = 16
-    max_r = 32
-    sph = np.zeros((max_r,max_l))
-    
-    #Get shape descriptors
-    for idx_n in range(0,len(dist_vector)+1,100):
-        idx_r = math.ceil(dist_vector[idx_n])
-        for idx_l in range(0,(max_l)):
-            Y_ml = 0
-            for idx_m in range(-idx_l,idx_l+1):
-                if(idx_m>=0):
-                    Y_ml = Y_ml+spharm(idx_l,idx_m,theta[idx_n],phi[idx_n])
-                else:
-                    Y_temp = spharm(idx_l,-idx_m,theta[idx_n],phi[idx_n])
-                    Y_ml = Y_ml+(-1)**(-idx_m) * np.conj(Y_temp)
-            F_lr = Y_ml
-            sph[idx_r-1,idx_l]=sph[idx_r-1,idx_l] + abs(F_lr) ** 2
-    sph_des=np.sqrt(sph)
-    return sph_des
-
 def feature_extraction(features,
                         embeddedpixelsize,
                         unitLength,
@@ -560,19 +461,24 @@ def feature_extraction(features,
     def orientation(seg_img,*args):
         """Calculate orientation for all the regions of interest in the image."""
         data_dict=[]
-        eigen = np.linalg.eigvalsh(gyration_tensor(seg_img))
-        for e in eigen:
-            x = e[0]
-            y = e[1]
-            z = e[2]
-            if x - z == 0:
-                if y < 0:
-                    orient = -math.pi / 4
-                else:
-                    orient =  math.pi / 4
-            else:
-                orient =  0.5 * math.atan2(-2 * y, z - x)
+        eigval,eigvec = np.linalg.eig(gyration_tensor(seg_img))
+        for R in eigvec:
+            R=np.matrix(R)
+            tol = sys.float_info.epsilon * 10
+            if abs(R.item(0,0))< tol and abs(R.item(1,0)) < tol:
+                eul1 = 0
+                eul2 = math.atan2(-R.item(2,0), R.item(0,0))
+                eul3 = math.atan2(-R.item(1,2), R.item(1,1))
+            else:   
+                eul1 = math.atan2(R.item(1,0),R.item(0,0))
+                sp = math.sin(eul1)
+                cp = math.cos(eul1)
+                eul2 = math.atan2(-R.item(2,0),cp*R.item(0,0)+sp*R.item(1,0))
+                eul3 = math.atan2(sp*R.item(0,2)-cp*R.item(1,2),cp*R.item(1,1)-sp*R.item(0,1))
+            eul=[eul1,eul2,eul3]
+            orient = np.array(eul)
             data_dict.append(orient)
+            
         logger.debug('Completed extracting orientation for ' + seg_file_names1.name)
         return data_dict
     
@@ -713,14 +619,14 @@ def feature_extraction(features,
         """Calculate all features for all the regions of interest in the image."""
         #calculate area
         all_volume = volume(seg_img, units)
+        #calculate convex area
+        all_convex = convex_volume(seg_img, units)
         #calculate neighbors
         all_neighbor = neighbors(seg_img)
         #calculate solidity
         all_solidity = solidity(seg_img)
         #calculate maxferet
-        all_maxferet = maxferet(seg_img, units)
-        #calculate convex area
-        all_convex = convex_volume(seg_img, units)
+        all_maxferet = maxferet(seg_img, units)        
         #calculate orientation
         all_orientation = orientation(seg_img)
         #calculate centroid x value
@@ -934,7 +840,8 @@ def feature_extraction(features,
             #List of labels for only objects that are not touching the border
             label_nt_touching = regions1-1
             #Find whether the object is touching border or not 
-            border_cells = np.full((len(regions)),True,dtype=bool)       
+            border_cells = np.full((len(regions)),True,dtype=bool)  
+    
             border_cells[label_nt_touching]=False
             if intensity_image is None:
             #Create column label and image
@@ -1157,7 +1064,7 @@ def main():
 
                     if csvfile == 'singlecsv':
                         df_csv = df_csv.append(df)
-                    
+                       
                 else:
                     if len(files_seg) != len(files_int) :
                         raise ValueError("Number of labeled/segmented images is not equal to number of intensity images")

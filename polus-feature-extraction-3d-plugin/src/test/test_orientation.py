@@ -24,8 +24,9 @@ class Testorientation(unittest.TestCase):
         self.assertEqual( orientationvalue.shape[1], 2 )
         self.assertEqual( orientationvalue.columns[-1], 'orientation' )
         self.assertEqual( orientationvalue.isnull().values.any(), False )
-        self.assertAlmostEqual( orientationvalue[orientationvalue.columns[-1]].iloc[0], 0.7854, 4 )
-        
+        self.assertTrue( orientationvalue[orientationvalue.columns[-1]].iloc[0][0] == 0)
+        self.assertTrue( orientationvalue[orientationvalue.columns[-1]].iloc[0][1] == -0)
+        self.assertTrue( orientationvalue[orientationvalue.columns[-1]].iloc[0][2] == 0)
         
                 
 if __name__ == '__main__':

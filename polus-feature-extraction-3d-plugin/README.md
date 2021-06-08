@@ -6,7 +6,7 @@ These are the features that can be extracted from this plugin:
    1. Volume - 
          Number of voxels in the region.
    3. Orientation - 
-         Angle between the 0th axis and the major axis of the ellipse that has same second moments as the region.
+         Euler angle returned as 1-by-3 vector.It represents the origin at x,y and z axis.
    4. Convex volume - 
          Number of voxels of convex hull image.
    5. Eccentricity - 
