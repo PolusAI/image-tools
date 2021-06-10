@@ -1,10 +1,6 @@
 {% if cookiecutter.use_bfio == "True" -%}
 from bfio.bfio import BioReader, BioWriter
 {%- endif %}
-{% if cookiecutter.use_java == "True" -%}
-import javabridge
-from bfio import JARS, LOG4J
-{% endif -%}
 {% if cookiecutter.use_filepattern == "True" -%}
 import filepattern
 {%- endif %}
@@ -20,8 +16,7 @@ logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
 {# Define indentation levels -#}
-{% set level1 = 4 if cookiecutter.use_java == "True" else 0 -%}
-{% set level2 = level1 + 4 if cookiecutter.use_bfio == "True" else level1 -%}
+{% set level2 = 4 if cookiecutter.use_bfio == "True" else 0 -%}
 
 {#- This generates the main function definition -#}
 {#- Required inputs are arguments -#}
@@ -61,20 +56,8 @@ def main({#- Required inputs -#}
     https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html
     """
     
-    {# Initialize the javabridge if Java was requested -#}
-    {%- if cookiecutter.use_java == "True" %}
-    # Surround with try/finally for proper error catching
-    try:
-        # Start the javabridge with proper java logging
-        logger.info('Initializing the javabridge...')
-        log_config = Path(__file__).parent.joinpath("log4j.properties")
-        javabridge.start_vm(args=["-Dlog4j.configuration=file:{}".format(LOG4J)],
-                            class_path=JARS,
-                            run_headless=True)
-    {%- endif %}
     {# Initialize a filepattern object if filepattern is going to be used -#}
     {%- if cookiecutter.use_filepattern == "True" %}
-    {%- filter indent(level1,True) -%}
     pattern = filepattern.infer_pattern(p.name for p in {% for inp,val in cookiecutter._inputs.items() if val.type=='collection' -%}
         {% if loop.first %}{{ inp }}{% endif %}
         {%- endfor -%}.iterdir())
@@ -87,37 +70,27 @@ def main({#- Required inputs -#}
         # get the first file
         file = files.pop()
         
-    {%- endfilter %}
     {%- else %}
-    {%- filter indent(level1,True) -%}
     files = list({% for inp,val in cookiecutter._inputs.items() if val.type=='collection' -%}
         {% if loop.first %}{{ inp }}{% endif %}
         {%- endfor -%}.iterdir())
     
     for file in files:
         
-    {%- endfilter %}
     {%- endif %}
     {#- Use bfio if requested #}
     {%- if cookiecutter.use_bfio == "True" %}
     {%- filter indent(level2,True) %}
     
     # Load the input image
-    with BioReader(file['file'],backend='python') as br:
+    with BioReader(file['file']) as br:
         
         # Initialize the output image
-        with BioWriter({{ cookiecutter._outputs.keys()|first }}.joinpath(file['file'].name),backend='python',metadtata=br.metadata) as bw:
+        with BioWriter({{ cookiecutter._outputs.keys()|first }}.joinpath(file['file'].name),metadtata=br.metadata) as bw:
             
             # This is where the magic happens, replace this part with your method
             bw[:] = awesome_function(br[:])
     {%- endfilter %}
-    {%- endif %}
-    
-    {%- if cookiecutter.use_java == "True" %}
-    finally:
-        # Close the javabridge regardless of successful completion
-        logger.info('Closing the javabridge')
-        javabridge.kill_vm()
     {%- endif %}
 
 if __name__=="__main__":

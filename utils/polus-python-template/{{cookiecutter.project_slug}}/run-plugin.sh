@@ -16,6 +16,7 @@ datapath=$(readlink --canonicalize ../data)
 {{ inp }}=/data/path_to_output
 {% endfor %}
 docker run --mount type=bind,source=${datapath},target=/data/ \
+            --user $(id -u):$(id -g) \
             labshare/{{ cookiecutter.project_slug }}:${version} \
             {% for inp,val in cookiecutter._inputs.items() -%}
             --{{ inp }} $({{ inp }}) {% if not loop.last %}\{% endif %}
