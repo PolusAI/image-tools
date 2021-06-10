@@ -42,8 +42,6 @@ def flow_thread(input_path: Path,
     logger = logging.getLogger("flow")
     logger.setLevel(logging.INFO)
 
-    root = zarr.open(str(zfile))
-    print(list(root.keys()))
     root = zarr.open(str(zfile))[0]
     
     with BioReader(input_path) as br:
