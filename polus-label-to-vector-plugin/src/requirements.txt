@@ -1,5 +1,4 @@
 
-bfio==2.1.5
+bfio[zarr]==2.1.7
 cellpose==0.6.5
-zarr==2.8.2
 filepattern==1.4.6

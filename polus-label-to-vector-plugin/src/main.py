@@ -7,7 +7,7 @@ from pathlib import Path
 import filepattern
 import numpy as np
 import zarr
-from bfio.bfio import BioReader
+from bfio.bfio import BioReader, BioWriter
 import torch
 
 from cellpose import dynamics
@@ -43,6 +43,9 @@ def flow_thread(input_path: Path,
     logger.setLevel(logging.INFO)
 
     root = zarr.open(str(zfile))
+    print(list(root.keys()))
+    root = zarr.open(str(zfile))[0]
+    
     with BioReader(input_path) as br:
         x_min = max([0, x - TILE_OVERLAP])
         x_max = min([br.X, x + TILE_SIZE + TILE_OVERLAP])
@@ -68,15 +71,15 @@ def flow_thread(input_path: Path,
         y_min = y
         y_max = min([br.Y, y + TILE_SIZE])
         
-        root[input_path.name]['vector'][y_min:y_max, x_min:x_max, z:z + 1, 0:1, 0:1] = I[y_overlap:y_max - y_min + y_overlap,
-                                                                                         x_overlap:x_max - x_min + x_overlap,
-                                                                                         np.newaxis,np.newaxis,np.newaxis]>0
-        root[input_path.name]['vector'][y_min:y_max, x_min:x_max, z:z + 1, 1:3, 0:1] = flow_final[y_overlap:y_max - y_min + y_overlap,
-                                                                                                  x_overlap:x_max - x_min + x_overlap,
-                                                                                                  ...]
-        root[input_path.name]['lbl'][y_min:y_max, x_min:x_max, z:z + 1, 0:1, 0:1] = I[y_overlap:y_max - y_min + y_overlap,
-                                                                                      x_overlap:x_max - x_min + x_overlap,
-                                                                                      np.newaxis,np.newaxis,np.newaxis]
+        root[0:1,0:1,z:z + 1,y_min:y_max, x_min:x_max,] = (I[y_overlap:y_max - y_min + y_overlap,
+                                                             x_overlap:x_max - x_min + x_overlap,
+                                                             np.newaxis,np.newaxis,np.newaxis]>0).transpose(4,3,2,0,1)
+        root[0:1,1:3,z:z + 1,y_min:y_max,x_min:x_max] = flow_final[y_overlap:y_max - y_min + y_overlap,
+                                                                   x_overlap:x_max - x_min + x_overlap,
+                                                                   ...].transpose(4,3,2,0,1)
+        root[0:1,3:4,z:z + 1,y_min:y_max, x_min:x_max,] = I[y_overlap:y_max - y_min + y_overlap,
+                                                            x_overlap:x_max - x_min + x_overlap,
+                                                            np.newaxis,np.newaxis,np.newaxis].astype(np.float32).transpose(4,3,2,0,1)
 
     return True
 
@@ -110,9 +113,6 @@ def main(inpDir: Path,
         logger.info('Processing %d labels based on filepattern  ' % (len(inpDir_files)))
     else:
         inpDir_files = [f.name for f in Path(inpDir).iterdir() if f.is_file()]
-
-    # Initialize the output file
-    root = zarr.group(store=str(Path(outDir).joinpath('flow.zarr')))
     
     # Loop through files in inpDir image collection and process
     processes = []
@@ -123,27 +123,24 @@ def main(inpDir: Path,
         executor = ProcessPoolExecutor(num_threads)
     
     for f in inpDir_files:
-        br = BioReader(str(Path(inpDir).joinpath(f).absolute()))
-
-        # Initialize the zarr group, create datasets
-        cluster = root.create_group(f)
-        init_cluster_1 = cluster.create_dataset('vector', shape=(br.Y, br.X, br.Z, 3, 1),
-                                                chunks=(TILE_SIZE, TILE_SIZE, 1, 1, 1),
-                                                dtype=np.float32)
-        init_cluster_2 = cluster.create_dataset('lbl', shape=br.shape,
-                                                chunks=(TILE_SIZE, TILE_SIZE, 1, 1, 1),
-                                                dtype=np.float32)
-        cluster.attrs['metadata'] = str(br.metadata)
+        br = BioReader(Path(inpDir).joinpath(f).absolute())
+        out_file = Path(outDir).joinpath(f.replace('.ome','_flow.ome').replace('.tif','.zarr')).absolute()
+        bw = BioWriter(out_file,metadata=br.metadata)
+        bw.C = 4
+        bw.dtype = np.float32
+        bw.channel_names = ['cell_probability','x','y','labels']
+        
+        bw._backend._init_writer()
 
         for z in range(br.Z):
             for x in range(0, br.X, TILE_SIZE):
                 for y in range(0, br.Y, TILE_SIZE):
                     processes.append(executor.submit(flow_thread,
                                                      Path(inpDir).joinpath(f).absolute(),
-                                                     Path(outDir).joinpath('flow.zarr'),
+                                                     out_file,
                                                      use_gpu,dev,
                                                      x, y, z))
-
+        bw.close()
         br.close()
 
     done, not_done = wait(processes, 0)
