@@ -1,0 +1,56 @@
+{
+    "name": "Image cluster annotation",
+    "version": "0.1.0",
+    "title": "Image cluster annotation",
+    "description": "Converts the original image as all zeros except at the borders which contains the cluster id.",
+    "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-image-cluster-annotation-plugin:0.1.0",
+    "inputs": [      
+      {
+        "name": "imgdir",
+        "type": "collection",
+        "description": "Input image file collection",
+        "required": "true"
+      },
+      {
+	"name": "csvdir",
+        "type": "csvCollection",
+        "description": "Input csv file collection",
+        "required": "true"
+      },
+      {
+	"name": "borderwidth",
+        "type": "integer",
+        "description": "Enter border width:",
+        "required": "false"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outdir",
+        "type": "collection",
+        "description": "Output image collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.imgdir",
+        "title": "Input image file",
+        "description": "Input image file collection"
+      },
+      {
+        "key": "inputs.csvdir",
+        "title": "Input csv file",
+        "description": "Input csv file collection"
+      },
+      {
+        "key": "inputs.borderwidth",
+        "title": "Enter border width",
+        "description": "Enter border width:"
+      }
+    ]
+  }
