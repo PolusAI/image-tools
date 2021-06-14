@@ -1,3 +1,5 @@
+from pathlib import Path
+from bfio import BioReader,BioWriter
 import argparse
 import logging
 import os
@@ -5,8 +7,6 @@ import fnmatch
 import csv
 import numpy as np
 import pandas as pd
-from pathlib import Path
-from bfio import BioReader,BioWriter
 
 # Initialize the logger
 logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
@@ -53,7 +53,7 @@ def main():
     csvdir = args.csvdir
     logger.info('csvdir = {}'.format(csvdir))
     
-    #Determine k-value using different methods
+    #Get the border width
     borderwidth = args.borderwidth
     logger.info('borderwidth = {}'.format(borderwidth))
 
@@ -65,7 +65,6 @@ def main():
     img_ext='*.ome.tif'
     configfiles = list_file(imgdir,img_ext)
     config = [os.path.basename(path) for path in configfiles]
-    
     #Check whether .ome.tif files are present in the labeled image directory
     if not configfiles:
         raise ValueError('No .ome.tif files found.')
@@ -75,18 +74,20 @@ def main():
     inputcsv = list_file(csvdir,csv_ext)
     if not inputcsv:
         raise ValueError('No .csv files found.')
-            
+
     for inpfile in inputcsv:
         #Get the full path
         split_file = os.path.normpath(inpfile)
         #split to get only the filename
         inpfilename = os.path.split(split_file)
         file_name_csv = inpfilename[-1]
+        file_path = inpfilename[0]
         file_name,file_name1 = file_name_csv.split('.', 1)
         logger.info('Reading the file ' + file_name)
         #Read csv file
         cluster_data = pd.read_csv(inpfile)
         cluster_data = cluster_data.iloc[:,[0,-1]]
+        #filesmatch = [fmatch for fmatch in config if file_name in fmatch]
         for index, row in cluster_data.iterrows():
             filename = row[0]
             cluster = row[1]
@@ -95,12 +96,17 @@ def main():
             if len(matches) == 0:
                 logger.warning(f"Could not find image files matching the filename, {filename}. Skipping...")
                 continue
-
-            PATH = Path(imgdir)
-            PATH1 = Path(outdir)
-
-            with BioReader(PATH / filename) as br, \
-                BioWriter(PATH1 / filename,metadata=br.metadata) as bw:
+            match_getpath =[s for s in configfiles if matches[0] in s]
+            #Get the full path
+            full_path = os.path.normpath(match_getpath[0])
+            #split to get only the filename
+            file_path = os.path.split(full_path)[0]
+            #Get the image path and output directory path
+            imgpath = Path(file_path)
+            outpath = Path(outdir)
+            #Read and write(after making changes) the .ome.tif files
+            with BioReader(imgpath / filename) as br, \
+                BioWriter(outpath / filename,metadata=br.metadata) as bw:
                 if borderwidth:
                     border = borderwidth
                 else:
@@ -113,7 +119,6 @@ def main():
                 mask[:,mask.shape[1]-border:]=cluster
                 bw.dtype = mask.dtype
                 bw[:]=mask
-
         logger.info("Finished all processes!")
 
 if __name__ == "__main__":
