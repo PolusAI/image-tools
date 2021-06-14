@@ -19,7 +19,7 @@ def image_to_zarr(inp_image: Path,
     
     with ProcessManager.process():
     
-        with BioReader(inp_image,backend='java') as br:
+        with BioReader(inp_image) as br:
             
             # Loop through timepoints
             for t in range(br.T):
