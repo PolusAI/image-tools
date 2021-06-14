@@ -1,6 +1,6 @@
 {
     "name": "Image cluster annotation",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "title": "Image cluster annotation",
     "description": "Converts the original image as all zeros except at the borders which contains the cluster id.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-image-cluster-annotation-plugin:0.1.0",
+    "containerId": "labshare/polus-image-cluster-annotation-plugin:0.1.1",
     "inputs": [      
       {
         "name": "imgdir",

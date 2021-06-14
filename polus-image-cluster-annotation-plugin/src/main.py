@@ -37,8 +37,8 @@ def main():
                         help='Input collection- Image data', required=True)
     parser.add_argument('--csvdir', dest='csvdir', type=str,
                         help='Input collection- csv data', required=True)
-    parser.add_argument('--borderthickness', dest='borderthickness', type=int,
-                        help='Input collection', required=False)
+    parser.add_argument('--borderwidth', dest='borderwidth', type=int,
+                        help='Border width', required=False)
     parser.add_argument('--outdir', dest='outdir', type=str,
                         help='Output collection', required=True)
     
@@ -54,8 +54,8 @@ def main():
     logger.info('csvdir = {}'.format(csvdir))
     
     #Determine k-value using different methods
-    borderthickness = args.borderthickness
-    logger.info('borderthickness = {}'.format(borderthickness))
+    borderwidth = args.borderwidth
+    logger.info('borderwidth = {}'.format(borderwidth))
 
     #Path to save output image files
     outdir = args.outdir
@@ -101,8 +101,8 @@ def main():
 
             with BioReader(PATH / filename) as br, \
                 BioWriter(PATH1 / filename,metadata=br.metadata) as bw:
-                if borderthickness:
-                    border = borderthickness
+                if borderwidth:
+                    border = borderwidth
                 else:
                     border = 2
                 #Make all pixels zero except the borders of specified thickness and assign the cluster_id to border pixels
