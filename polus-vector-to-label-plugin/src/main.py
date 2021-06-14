@@ -1,9 +1,8 @@
 from os import cpu_count
-from bfio import BioWriter, OmeXml
+from bfio import BioReader, BioWriter, OmeXml
 import argparse, logging
 import numpy as np
 from pathlib import Path
-import zarr
 from cellpose import dynamics, utils
 import torch
 from concurrent.futures import ThreadPoolExecutor, wait, Future
@@ -89,54 +88,51 @@ def overlap(previous_values: np.ndarray,
     return tile, labels, indices
 
 def mask_thread(coords: typing.Tuple[int,int,int],
-                file_name: str,
-                inpDir: Path,
+                file_path: Path,
                 bw: BioWriter,
                 cellprob_threshold: float,
                 flow_threshold: float,
-                dependency1: Future,
-                dependency2: Future
+                dependency1: typing.Optional[Future],
+                dependency2: typing.Optional[Future]
                 ) -> typing.Tuple[np.ndarray,np.ndarray,np.uint32]:
     """[summary]
 
     Args:
-        coords (typing.Tuple[int,int,int]): x,y,z starting coordinates of the
-            tile to process
-        file_name (str): The name of the file to process inside of flow.zarr
-        inpDir (Path): The path to flow.zarr
-        bw (BioWriter): [description]
-        cellprob_threshold (float): [description]
-        flow_threshold (float): [description]
-        dependency1 (Future): [description]
-        dependency2 (Future): [description]
+        coords: x,y,z starting coordinates of the tile to process
+        file_path: Vector field file path
+        bw: Output file
+        cellprob_threshold: Cell probability threshold
+        flow_threshold: Flow field threshold
+        dependency1: Tile future to the left of the current tile
+        dependency2: Tile future above the current tile
 
     Returns:
-        typing.Tuple[np.ndarray,list,list]: Returns the right column of the
-            processed tile, top row of the processed tile, and largest label
-            value.
+        typing.Tuple[np.ndarray,np.ndarray,list]: Returns the right column of
+            the processed tile, bottom row of the processed tile, and largest
+            label value.
     """   
     
     # Calculate indice for the tile
-    root = zarr.open(str(Path(inpDir).joinpath('flow.zarr')),mode='r')
-    
     x,y,z = coords
-    
-    x_min = max([0, x - TILE_OVERLAP])
-    x_max = min([root[file_name]['vector'].shape[1], x + TILE_SIZE + TILE_OVERLAP])
+    with BioReader(file_path) as br:
+        
+        image_X = br.X
+        image_Y = br.Y
+        
+        x_min = max([0, x - TILE_OVERLAP])
+        x_max = min([image_X, x + TILE_SIZE + TILE_OVERLAP])
 
-    y_min = max([0, y - TILE_OVERLAP])
-    y_max = min([root[file_name]['vector'].shape[1], y + TILE_SIZE + TILE_OVERLAP])
+        y_min = max([0, y - TILE_OVERLAP])
+        y_max = min([image_Y, y + TILE_SIZE + TILE_OVERLAP])
 
-
-    tile = root[file_name]['vector'][y_min:y_max, x_min:x_max, z:z + 1, :, :]
-    tile=tile.transpose((3, 2, 0, 1, 4)).squeeze()
+        tile = br[y_min:y_max, x_min:x_max, z:z + 1, :3, 0]
 
     logger.debug('Calculating flows and masks  for tile [{}:{},{}:{},{}:{}]'.format(y, y_max, x,
                  x_max, z, z + 1))
 
     # Get flows and probabilities
-    cellprob = tile[0,...]
-    dP = tile[1:3,...]
+    cellprob = tile[:,:,0,0].squeeze()
+    dP = tile[:,:,0,1:].squeeze().transpose(2,0,1)
 
     # Compute flows for the tile
     p = dynamics.follow_flows(-1 * dP * (cellprob > cellprob_threshold) / 5., 
@@ -150,11 +146,11 @@ def mask_thread(coords: typing.Tuple[int,int,int],
     # reshape mask based on tile
     x_overlap = x - x_min
     x_min = x
-    x_max = min([root[file_name]['vector'].shape[1], x + TILE_SIZE])
+    x_max = min([image_X, x + TILE_SIZE])
 
     y_overlap = y - y_min
     y_min = y
-    y_max = min([root[file_name]['vector'].shape[0], y + TILE_SIZE])
+    y_max = min([image_Y, y + TILE_SIZE])
 
     mask = mask[y_overlap:y_max - y_min + y_overlap,
                 x_overlap:x_max - x_min + x_overlap,
@@ -227,47 +223,50 @@ def main(inpDir: Path,
          outDir: Path
          ) -> None:
     
-    # Open zarr file
-    assert inpDir.joinpath('flow.zarr').exists(), 'Could not find flow.zarr.'
-    root = zarr.open(str(inpDir.joinpath('flow.zarr')),mode='r')
+    # Get the list of files in path
+    files = [p for p in Path(inpDir).iterdir() if ''.join(p.suffixes[-2:])=='_flow.ome.zarr']
     
     num_threads = max([cpu_count()//2,1])
     logger.info(f'Processing tiles with {num_threads} threads using {DEV}')
     
     processes = []
-    with ThreadPoolExecutor(6) as executor:
+    with ThreadPoolExecutor(num_threads) as executor:
 
         # Loop through files in inpDir image collection and process
-        for ind,(file_name, vec) in enumerate(root.groups()):
-            threads = np.empty((root[file_name]['vector'].shape[:3]),dtype=object)
+        for ind,fpath in enumerate(files):
+        
+            br = BioReader(fpath)
+                
+            threads = np.empty((br.shape[:3]),dtype=object)
                             
             logger.debug(
-                'Processing image ({}/{}): {}'.format(ind, len([file_name for file_name, _ in root.groups()]),
-                                                    file_name))
-            metadata = vec.attrs['metadata']
+                'Processing image ({}/{}): {}'.format(ind, len(files),
+                                                      fpath))
 
-            path = Path(outDir).joinpath(str(file_name))
-            xml_metadata = OmeXml.OMEXML(metadata)
+            # TODO: Hard coding to ome.tif for now, this should be changed later.
+            path = Path(outDir).joinpath(fpath.name.replace('_flow.ome.zarr','.ome.tif'))
 
-            bw = BioWriter(file_path=Path(path), backend='python', metadata=xml_metadata)
+            bw = BioWriter(file_path=Path(path), metadata=br.metadata)
             bw.dtype=np.dtype(np.uint32)
+            bw.C = 1
+            bw.channel_names = ['label']
 
-            for z in range(0, root[file_name]['vector'].shape[2], 1):
+            for z in range(0, br.Z, 1):
                 
                 y_ind = None
                 dependency1 = None
 
-                for y in range(0, root[file_name]['vector'].shape[0], TILE_SIZE):
+                for y in range(0, br.Y, TILE_SIZE):
 
-                    for x in range(0, root[file_name]['vector'].shape[1], TILE_SIZE):
+                    for x in range(0, br.X, TILE_SIZE):
                         
                         dependency2 = None if y_ind is None else threads[y_ind,x//TILE_SIZE,z]
 
                         processes.append(executor.submit(mask_thread,
-                                                        (x,y,z),
-                                                        file_name,inpDir,bw,
-                                                        cellprob_threshold,flow_threshold,
-                                                        dependency1,dependency2))
+                                                         (x,y,z),
+                                                         fpath,bw,
+                                                         cellprob_threshold,flow_threshold,
+                                                         dependency1,dependency2))
                         dependency1 = processes[-1]
                         threads[y//TILE_SIZE,x//TILE_SIZE,z] = dependency1
                     
