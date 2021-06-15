@@ -1,9 +1,7 @@
 from bfio.bfio import BioReader, BioWriter
 from preadator import ProcessManager
 
-import argparse, logging
-import numpy as np
-import typing
+import argparse, logging, os
 from pathlib import Path
 
 # Initialize the logger
@@ -11,6 +9,11 @@ logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(messa
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
+
+# TODO: In the future, uncomment this to convert files to the platform file type
+# FILE_EXT = os.environ.get('POLUS_EXT',None)
+# FILE_EXT = FILE_EXT if FILE_EXT is not None else '.ome.tif'
+FILE_EXT = '.ome.zarr'
 
 TILE_SIZE = 2**13
 
@@ -27,13 +30,13 @@ def image_to_zarr(inp_image: Path,
                 # Loop through channels
                 for c in range(br.C):
             
-                    extension = ''.join(inp_image.suffixes)
+                    extension = ''.join([suffix for suffix in inp_image.suffixes[-2:] if len(suffix) < 5])
                     
-                    out_path = out_dir.joinpath(inp_image.name.replace(extension,'.ome.zarr'))
+                    out_path = out_dir.joinpath(inp_image.name.replace(extension,FILE_EXT))
                     if br.C > 1:
-                        out_path = out_dir.joinpath(inp_image.name.replace(extension,f'_c{c}.ome.zarr'))
+                        out_path = out_dir.joinpath(out_path.name.replace(FILE_EXT,f'_c{c}' + FILE_EXT))
                     if br.T > 1:
-                        out_path = out_dir.joinpath(inp_image.name.replace(extension,f'_t{c}.ome.zarr'))
+                        out_path = out_dir.joinpath(out_path.name.replace(FILE_EXT,f'_t{c}' + FILE_EXT))
                     
                     with BioWriter(out_path,max_workers=ProcessManager._active_threads,metadata=br.metadata) as bw:
                         
