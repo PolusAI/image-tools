@@ -1,5 +1,6 @@
 This log documents the information obtained from parsing each imagej plug in.
 Log is specified in the following format:
+<<<<<<< HEAD
 
 Op Number: The count of imagej ops parsed
 
@@ -26,3 +27,12 @@ Supported: True if supported, if not a boolean list indicating why op not suppor
           True/False, # Indicates if input/output can be mapped to WIPP data types 
           True/False  # Indicates if input and output both contain collection data types
           ]
+=======
+Plugin Number: The count of plugins parsed
+Name: The imagej name of the plug in (e.g. 'ConvertImages$Int32')
+Library: The plugin library source (e.g. 'convert')
+Full Path: Full path of plug in (e.g. 'convert.ConvertImages$Int32')
+Inputs: A list of imagej and WIPP input data types (e.g. [((imagej data type of var1, imagej title of var1), WIPP data type of var1), ((imagej data type of var2, imagej title of var2) WIPP data type var2)...])
+Outputs: The output data type [(imagej data type, WIPP data type)]
+Supported: Can the current plugin be converted from immagej to WIPP
+>>>>>>> 906d1db (Added functionality to parse imagej ops help and generate json template for cookiecutter)

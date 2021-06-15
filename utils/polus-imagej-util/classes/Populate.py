@@ -4,13 +4,14 @@ import re, json, logging, copy
 import imagej, scyjava, jpype
 from pathlib import Path
 
-class Plugin:
+class Op:
     
-    def __init__(self, name, library, fullPath, inputs, outputs):
-        self.name = name
+    def __init__(self, library, name, fullPath, inputs, output):
+
         self.library = library
+        self.name = name
         self.fullPath = fullPath
-        self.__dataMap(inputs, outputs)
+        self.__dataMap(inputs, output)
         self.__support()
     
     @property
@@ -22,20 +23,35 @@ class Plugin:
         self._inputs = inputs
         
     @property
-    def outputs(self):
-        return self._outputs
+    def output(self):
+        return self._output
     
-    @outputs.setter
-    def outputs(self, outputs):
-        self._outputs = outputs
+    @output.setter
+    def output(self, output):
+        self._output = output
         
+    @property
+    def imagejInputDataTypes(self):
+        return [var[0][0] for var in self._inputs]
+    
+    @property
+    def imagejInputTitles(self):
+        return [var[0][1] for var in self._inputs]
+    
     @property
     def wippTypeInputs(self):
         return [var[1] for var in self._inputs]
     
     @property
-    def wippTypeOutputs(self):
-        return self._outputs[0][1]
+    def wippTypeOutput(self):
+        return self._output[0][1]
+    
+    @property
+    def imagejTypeOutput(self):
+        return self._output[0][0]
+    
+    
+    
     
     
     # Define the imagej data types that map to collection
@@ -98,13 +114,13 @@ class Plugin:
 
         # Create empty lists to store input and output data types
         self._inputs = []
-        self._outputs = []
+        self._output = []
         
         # Iterate over all inputs
         for imagejDataType in inputs:
             # Try to map from imagej data type to WIPP data type
             try:
-                self._inputs.append((imagejDataType, Plugin.imagej_to_Wipp_map[imagejDataType]))
+                self._inputs.append((imagejDataType, Op.imagej_to_Wipp_map[imagejDataType[0]]))
                 
             # Place WIPP data type as unknown if not currently supported
             except:
@@ -112,20 +128,75 @@ class Plugin:
         
         # Try to map output imagej data type to WIPP data type
         try:
-            self._outputs.append((outputs, Plugin.imagej_to_Wipp_map[outputs]))
+            self._output.append((outputs, Op.imagej_to_Wipp_map[outputs]))
             
         # Place WIPP data type as unknown if not currently supported
         except:
-            self._outputs.append((outputs, 'unknown'))
+            self._output.append((outputs, 'unknown'))
             
             
     def __support(self):
-        if 'collection' in self.wippTypeInputs and 'collection' in self.wippTypeOutputs:
+        if 'collection' in self.wippTypeInputs and 'collection' in self.wippTypeOutput:
             self.support = True
         else:
             self.support = False
         
 
+class Library:
+    def __init__(self, library):
+        self._library = library
+        self._ops = {}
+        self._allInputs = {}
+        self._allOutputs = {}
+        self.supportedOps = []
+        
+    def addOp(self, name, op):
+        # Add the op to the _ops dicitonary attribute
+        self._ops[name] = op
+        
+        # Check if the op is currently supported
+        if op.support:
+            
+            # Add op to list of supported ops
+            self.supportedOps.append(name)
+            
+            # Add each var to Library's input dictionary
+            for title, dtype, wippType in zip(op.imagejInputTitles, op.imagejInputDataTypes, op.wippTypeInputs):
+                
+                # Check if variable exists in input dicitonary
+                if title not in self._allInputs:
+                    self._allInputs[title] = {
+                        'type':wippType, 
+                        'title':title, 
+                        'description':title, 
+                        'required':False, 
+                        'call_types':{name:dtype}
+                    }
+            
+                # If variable key exists update it
+                else:
+                    self._allInputs[title]['call_types'].update({name:dtype})
+                    if self._allInputs[title]['type'] != wippType:
+                        #raise Exception
+                        print('The', self._library, 'library has multiple input data types for the same input title across different ops')
+            
+            # Check if the output dictionary has been created
+            if 'out' not in self._allOutputs:
+            
+                # Add the output to Library's output dictionary
+                self._allOutputs = {
+                    'out':{         
+                        'type': op.wippTypeOutput, 
+                        'title':'out', 
+                        'description':'out',
+                        'call_types': {
+                            name:op.imagejTypeOutput
+                        }
+                    }
+                }
+            
+            else:
+                self._allOutputs['out']['call_types'][name] = op.imagejTypeOutput
 
 class Populate:
     
@@ -135,7 +206,7 @@ class Populate:
         self.__logger(logfile)
         
         # Create imagej plug in by calling the parser member method
-        self.plugins = self._parser(imagej_help_docs)
+        self._parser(imagej_help_docs)
     
     def _parser(self, imagej_help_docs):
         
@@ -145,14 +216,14 @@ class Populate:
         # Complile the regular expression search pattern for the library and name
         re_paths = re.compile(r'(?:[A-z]*\.){3}(?P<library>.*)(?:\.)(?P<name>.*)(?=\()')
         
-        # Coompile the regular expression search pattern for the input data types
-        re_inputs = re.compile(r'(?<=\t\t)(.*?)(?=[^A-z0-9])')
+        # Coompile the regular expression search pattern for the input data types and title
+        re_inputs = re.compile(r'(?<=\t\t)(.*?)\s(.*)(?=,|\))')
         
         # Complile the regular expression search pattern for the outputs
-        re_outputs = re.compile(r'(?<=^\()(.*?)(?=\s.*\)|\s.*,)')
+        re_output = re.compile(r'(?<=\().*?(?=\s.*\)|\s.*,)')
         
         # Create a dictionary of Plugin object to store resutls of parser
-        plugin_dic = {}
+        self.libraries = {}
         
         # Create plugin counter
         plugin_counter = 0
@@ -177,13 +248,26 @@ class Populate:
             inputs = re_inputs.findall(plugin)
             
             # Search for the output data type
-            outputs = re_outputs.search(plugin).group()
+            output = re_output.search(plugin).group()
             
-            # Instantiate a Plugin object and add to dictionary
-            plugin_dic[name] = Plugin(name, library, fullPath, inputs, outputs)
+            op = Op(library, name, fullPath, inputs, output)
             
-            if plugin_dic[name].support:
-                support_msg = plugin_dic[name].support
+            # Check if the library exists
+            if library in self.libraries:
+                
+                # Add the op to the library
+                self.libraries[library].addOp(name, op)
+                
+            else:
+                # Create the library
+                self.libraries[library] = Library(library)
+                
+                # Add the op to the library
+                self.libraries[library].addOp(name, op)
+                
+                
+            if self.libraries[library]._ops[name].support:
+                support_msg = True
             else:
                 support_msg = 'The current plug in is not supported, no inputs are a WIPP collection data type or the output is not a WIPP collection data type'
             
@@ -191,18 +275,14 @@ class Populate:
             self._logger.info(
                 self._msg.format(    
                     counter = plugin_counter,
-                    name = plugin_dic[name].name,
-                    library = plugin_dic[name].library,
-                    fullpath = plugin_dic[name].fullPath,
-                    inputs = plugin_dic[name].inputs,
-                    outputs = plugin_dic[name].outputs,
+                    name = self.libraries[library]._ops[name].name,
+                    library = self.libraries[library]._ops[name].library,
+                    fullpath = self.libraries[library]._ops[name].fullPath,
+                    inputs = self.libraries[library]._ops[name].inputs,
+                    output = self.libraries[library]._ops[name].output,
                     support = support_msg
                 )
             )
-        
-        # Return the dictionary of plug in paths
-        return plugin_dic
-        
         
     def __logger(self, logfile):
         
@@ -229,44 +309,105 @@ class Populate:
         # Add the handler to the class logger
         self._logger.addHandler(self._fileHandler)
         
-        self._logger.info(
-'This log documents the information obtained from parsing each imagej plug in.\n\
-Log is specified in the following format:\n\n\
-Plugin Number: The count of plugins parsed\n\
-Name: The imagej name of the plug in (e.g. "ConvertImages$Int32")\n\
-Library: The plugin library source (e.g. "convert")\n\
-Full Path: Full path of plug in (e.g. "convert.ConvertImages$Int32")\n\
-Inputs: A list of imagej and WIPP input data types (e.g. [(imagej data type of var1, WIPP data type of var1), (imagej data type of var2, WIPP data type var2)...])\n\
-Outputs: The output data type [(imagej data type, WIPP data type)]\n\
-Support: Can the current plugin be converted from immagej to WIPP\n\n')
+        # Create header info for the main log
+        loginfo = ''
+        
+        # Open the main log info template
+        with open('logtemplates/mainlog.txt') as fhand:
+            for line in fhand:
+                loginfo += line
+                
+        # Close the file connection
+        fhand.close()
+        
+        # Set the header info
+        self._logger.info(loginfo)
+
         
         # Create default message for logger
-        self._msg = 'Plugin Number: {counter}\nName: {name}\nLibrary: {library}\nFull Path: {fullpath}\nInputs: {inputs}\nOutputs: {outputs}\nSupported: {support}\n\n'
+        self._msg = 'Plugin Number: {counter}\nName: {name}\nLibrary: {library}\nFull Path: {fullpath}\nInputs: {inputs}\nOutput: {output}\nSupported: {support}\n\n'
+    
+        # Create a new logger to log input warnings
         
         
-
+        
+    def buildJSON(self, author, email, github_username, version):
+        
+        # Instantiate empty dictionary to store the dictionary to be converted to json
+        self.jsonDic = {}
+            
+        
+        # Iterate over all imagej libraries that were parsed
+        for libName, lib, in self.libraries.items():
+            
+            # Check if any ops are suppported
+            if len(lib.supportedOps) > 0:
+                
+                # Define the project description
+                
+                
+                # Add the library to the dictionary
+                self.jsonDic[libName] = {
+                    'author': author,
+                    'email': email,
+                    'github_username': github_username,
+                    'version': version,
+                    'project_name': 'ImageJ' + libName.replace('.', ' '),
+                    'project_short_description': lib.availableOps.keys(),
+                    'plugin_namespace':{
+                        op.name: 'out = ij.op()' + op.library + '()' + op.name + str(tuple(op.imagejInputTitles)) for op in lib.availableOps.values()
+                        },
+                    '_inputs':{
+                        'opName':{
+                            'title': 'Operation',
+                            'type': 'enum',
+                            'options':[
+                                op.name for op in lib.availableOps.values()
+                                ],
+                            'description': 'Operation to peform',
+                            'required': 'false'
+                            }
+                        },
+                    }
+                
+            
+            # Build input dictionary for each input
+            #inputDic = {opInput: for opInput in op.imagejInputTitles}
+            
 if __name__ == '__main__':
     import imagej
     
     # Disable warning message
     def disable_loci_logs():
-        DebugTools = scyjava.jimport("loci.common.DebugTools")
-        DebugTools.setRootLevel("WARN")
+        DebugTools = scyjava.jimport('loci.common.DebugTools')
+        DebugTools.setRootLevel('WARN')
     scyjava.when_jvm_starts(disable_loci_logs)
     
     print('Starting JVM\n')
     
     # Start JVM
-    ij = imagej.init("sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4",headless=True)
+    ij = imagej.init('sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4',headless=True)
     
     # Retreive all available operations from pyimagej
     imagej_help_docs = scyjava.to_python(ij.op().help())
+    #print(imagej_help_docs)
     
     print('Parsing imagej op help\n')
     
+    # Populate ops by parsing the imagej operations help
     populater = Populate(imagej_help_docs)
-
+    
+    print('Building json template')
+    
+    #Build the json dictionary to be passed to the cookiecutter module 
+    #populater.buildJSON('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.1.1')
+    
+    for lib in populater.libraries.values():
+        print(lib._allInputs)
+           
     print('Shutting down JVM')
+    
+    del ij
     
     # Shut down JVM
     jpype.shutdownJVM()
