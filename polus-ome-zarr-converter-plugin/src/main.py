@@ -36,7 +36,7 @@ def image_to_zarr(inp_image: Path,
                     if br.C > 1:
                         out_path = out_dir.joinpath(out_path.name.replace(FILE_EXT,f'_c{c}' + FILE_EXT))
                     if br.T > 1:
-                        out_path = out_dir.joinpath(out_path.name.replace(FILE_EXT,f'_t{c}' + FILE_EXT))
+                        out_path = out_dir.joinpath(out_path.name.replace(FILE_EXT,f'_t{t}' + FILE_EXT))
                     
                     with BioWriter(out_path,max_workers=ProcessManager._active_threads,metadata=br.metadata) as bw:
                         
@@ -62,8 +62,6 @@ def main(inpDir: Path,
          ) -> None:
     
     ProcessManager.init_processes("main","zarr")
-        
-    files = list(inpDir.iterdir())
     
     for file in inpDir.iterdir():
         ProcessManager.submit_process(image_to_zarr,file,outDir)
