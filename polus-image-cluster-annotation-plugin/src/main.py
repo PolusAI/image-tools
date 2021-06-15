@@ -37,7 +37,7 @@ def main():
                         help='Input collection- Image data', required=True)
     parser.add_argument('--csvdir', dest='csvdir', type=str,
                         help='Input collection- csv data', required=True)
-    parser.add_argument('--borderwidth', dest='borderwidth', type=int,
+    parser.add_argument('--borderwidth', dest='borderwidth', type=int, default = 2,
                         help='Border width', required=False)
     parser.add_argument('--outdir', dest='outdir', type=str,
                         help='Output collection', required=True)
@@ -87,7 +87,6 @@ def main():
         #Read csv file
         cluster_data = pd.read_csv(inpfile)
         cluster_data = cluster_data.iloc[:,[0,-1]]
-        #filesmatch = [fmatch for fmatch in config if file_name in fmatch]
         for index, row in cluster_data.iterrows():
             filename = row[0]
             cluster = row[1]
@@ -107,16 +106,12 @@ def main():
             #Read and write(after making changes) the .ome.tif files
             with BioReader(imgpath / filename) as br, \
                 BioWriter(outpath / filename,metadata=br.metadata) as bw:
-                if borderwidth:
-                    border = borderwidth
-                else:
-                    border = 2
                 #Make all pixels zero except the borders of specified thickness and assign the cluster_id to border pixels
                 mask = np.zeros(br.shape)
-                mask[:border,:]=cluster
-                mask[:,:border]=cluster
-                mask[mask.shape[0]-border:,:]=cluster
-                mask[:,mask.shape[1]-border:]=cluster
+                mask[:borderwidth,:]=cluster
+                mask[:,:borderwidth]=cluster
+                mask[mask.shape[0]-borderwidth:,:]=cluster
+                mask[:,mask.shape[1]-borderwidth:]=cluster
                 bw.dtype = mask.dtype
                 bw[:]=mask
         logger.info("Finished all processes!")

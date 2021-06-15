@@ -10,7 +10,7 @@ The input image file that need to be converted as all zeros except at the border
 The input csv file that contains the cluster id. The file should be in csv format. This is a required parameter for the plugin.
 
 ### Border width:
-Enter the required thickness at the borders that should be changed as cluster id.
+Enter the required thickness at the borders that should be changed as cluster id. Default value is 2.
 
 ## Output:
 The output is a image file collection contains all zeros except at the borders.The border pixels will be cluster id.
