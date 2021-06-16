@@ -6,9 +6,8 @@ echo ${datapath}
 
 # Inputs
 inpDir=/data/input
-pyramidType=Zarr
+pyramidType=Neuroglancer
 imageType=image
-filePattern=test_c\{c+\}.ome.tif
 
 # Output paths
 outDir=/data/output
@@ -19,5 +18,4 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --inpDir ${inpDir} \
             --pyramidType ${pyramidType} \
             --imageType ${imageType} \
-            --outDir ${outDir} \
-            --filePattern ${filePattern}
+            --outDir ${outDir}
