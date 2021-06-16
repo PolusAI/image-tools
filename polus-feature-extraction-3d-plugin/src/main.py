@@ -39,8 +39,6 @@ def read(img_file):
     tile_grid_size = math.ceil(math.sqrt(cpu_count()))
     chunk_size = tile_grid_size * 1024
     br = BioReader(img_file)
-    print(br.Y)
-    print(yyy)
     bfshape = br.shape
     img_unit = br.ps_y[1]
     img_data = []
