@@ -224,10 +224,14 @@ def main(inpDir: Path,
          ) -> None:
     
     # Get the list of files in path
-    files = [p for p in Path(inpDir).iterdir() if ''.join(p.suffixes[-2:])=='_flow.ome.zarr']
+    files = [p for p in Path(inpDir).iterdir() if p.name.endswith('_flow.ome.zarr')]
     
     num_threads = max([cpu_count()//2,1])
     logger.info(f'Processing tiles with {num_threads} threads using {DEV}')
+    
+    if len(files) == 0:
+        logger.critical('No flow files detected.')
+        quit()
     
     processes = []
     with ThreadPoolExecutor(num_threads) as executor:
