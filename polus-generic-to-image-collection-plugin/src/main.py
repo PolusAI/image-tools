@@ -25,13 +25,6 @@ def validate_and_copy(file: Path,
 def main(inpDir: Path,
          outDir: Path,
          ) -> None:
-    """ Main execution function
-    
-    All functions in your code must have docstrings attached to them, and the
-    docstrings must follow the Google Python Style:
-    https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html
-    """
-    
     
     pattern = ".*.ome.tif"
     fp = filepattern.FilePattern(inpDir,pattern)

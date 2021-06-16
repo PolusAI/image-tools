@@ -1,6 +1,6 @@
 {
     "name": "Generic Data to Image Collection",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "title": "Generic to Image Collection",
     "description": "Copies .ome.tif files with proper tile format from a generic data type to an image collection.",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-generic-to-image-collection-plugin:0.1.0",
+    "containerId": "labshare/polus-generic-to-image-collection-plugin:0.1.1",
     "inputs": [
       {
         "name": "inpDir",
