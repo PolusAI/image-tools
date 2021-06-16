@@ -1,6 +1,6 @@
 {
     "name": "Vector to label",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "title": "Vector to label",
     "description": "Plugin to label masks",
     "author": "Sudharsan Prativadi (sudharsan.prativadi@labshare.org), Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1",
-    "containerId": "labshare/polus-vector-label-plugin:0.4.0",
+    "containerId": "labshare/polus-vector-label-plugin:0.4.1",
     "inputs": [
 
       {
