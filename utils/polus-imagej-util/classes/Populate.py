@@ -57,11 +57,23 @@ class Op:
     
     @property
     def imagejTypeOutput(self):
-        return self._output[0][0]
+        return self._output[0][0][0]
+    
+    @property
+    def imagejTitleOutput(self):
+        return self._output[0][0][1]
     
     @property
     def wippTypeRequiredInputs(self):
         return [var[1] for var in self._requiredInputs]
+    
+    @property
+    def imagejTypeRequiredInputs(self):
+        return [var[0][0] for var in self._requiredInputs]
+    
+    @ property
+    def imagejTitleRequiredInputs(self):
+        return [var[0][1] for var in self._requiredInputs]
     
     
     # Define the imagej data types that map to collection
@@ -150,14 +162,15 @@ class Op:
             
     def __support(self):
         
-        # Check if any inputs and the output contains collection data type and all inputs can be mapped from imagej data type to WIPP data type
-        if 'collection' in self.wippTypeInputs and 'collection' in self.wippTypeOutput and 'unknown' not in self.wippTypeInputs:
+        # Check if any inputs or the output contains collection data type and ALL inputs/output can be mapped from imagej data type to WIPP data type
+        if ('collection' in self.wippTypeInputs or 'collection' in self.wippTypeOutput) and 'unknown' not in self.wippTypeInputs + [self.wippTypeOutput]:
             
             # Set the support attribute as true (imagej op is supported)
             self.fullSupport = True
             self.partialSupport = True
         
-        elif 'collection' in self.wippTypeRequiredInputs and 'collection' in self.wippTypeOutput and 'unknown' not in self.wippTypeRequiredInputs:
+        # Check if the required inputs satisfy the requirements 
+        elif ('collection' in self.wippTypeRequiredInputs or 'collection' in self.wippTypeOutput) and 'unknown' not in self.wippTypeRequiredInputs + [self.wippTypeOutput]:
             self.partialSupport = True
             self.fullSupport = False
         
@@ -166,67 +179,82 @@ class Op:
             self.fullSupport = False
             self.partialSupport = False
             
+            # Determine why the op is not supported (check if either the input or output is a collection)
+            if 'collection' not in self.wippTypeRequiredInputs and 'collection' not in self.wippTypeOutput:
+                self.supportmsg = "None of the required inputs is a 'collection' and the output is not a 'collection'"
+                
+                # Test if all of the required data types can be converted from imagej to WIPP
+                if 'unknown' in self.wippTypeInputs + [self.wippTypeOutput]:
+                    self.supportmsg = "None of the required inputs is a 'collection' and the output is not a 'collection' and one of the required inputs and/or the output cannot currently be mapped to a WIPP data type"
+                    
+            # Test if all of the required data types can be converted from imagej to WIPP
+            elif 'unknown' in self.wippTypeInputs + [self.wippTypeOutput]:
+                self.supportmsg = "One of the required inputs and/or the output cannot currently be mapped to a WIPP data type"
         
 
-class Library:
-    def __init__(self, library):
-        self._library = library
+class Namespace:
+    def __init__(self, name):
+        self._name = name
         self._ops = {}
-        self._allInputs = {}
+        self._allRequiredInputs = {}
         self._allOutputs = {}
         self.supportedOps = {}
         
-    def addOp(self, name, op):
+    def addOp(self, op):
+
         # Add the op to the _ops dicitonary attribute
-        self._ops[name] = op
+        self._ops[op.name] = op
         
         # Check if the op is currently supported
-        if op.support:
+        if op.partialSupport:
             
             # Add op to list of supported ops
-            self.supportedOps[name] = op
+            self.supportedOps[op.name] = op
             
-            # Add each var to Library's input dictionary
-            for title, dtype, wippType in zip(op.imagejInputTitles, op.imagejInputDataTypes, op.wippTypeInputs):
+            # Add each var to namespace's input dictionary
+            for title, dtype, wippType in zip(op.imagejTitleRequiredInputs, op.imagejTypeRequiredInputs, op.wippTypeRequiredInputs):
                 
                 # Check if variable exists in input dicitonary
-                if title not in self._allInputs:
-                    self._allInputs[title] = {
+                if title not in self._allRequiredInputs:
+                    self._allRequiredInputs[title] = {
                         'type':wippType, 
                         'title':title, 
                         'description':title, 
                         'required':False, 
-                        'call_types':{name:dtype}
+                        'call_types':{op.name:dtype}
                         }
             
                 # If variable key exists update it
                 else:
-                    self._allInputs[title]['call_types'].update({name:dtype})
-                    if self._allInputs[title]['type'] != wippType:
+                    self._allRequiredInputs[title]['call_types'].update({op.name:dtype})
+                    if self._allRequiredInputs[title]['type'] != wippType:
                         #raise Exception
-                        print('The', self._library, 'library has multiple input data types for the same input title across different ops')
+                        print('The', self._name, 'namespace has multiple input data types for the same input title across different ops')
             
             # Check if the output dictionary has been created
-            if 'out' not in self._allOutputs:
+            if op.imagejTitleOutput not in self._allOutputs:
             
                 # Add the output to Library's output dictionary
                 self._allOutputs = {
                     'out':{         
                         'type': op.wippTypeOutput, 
-                        'title':'out', 
+                        'title': op.imagejTitleOutput, 
                         'description':'out',
                         'call_types': {
-                            name:op.imagejTypeOutput
+                            op.name:op.imagejTypeOutput
                             }
                         }
                     }
             
             else:
-                self._allOutputs['out']['call_types'][name] = op.imagejTypeOutput
+                self._allOutputs['out']['call_types'][op.name] = op.imagejTypeOutput
 
 class Populate:
     
     def __init__(self, imagej_help_docs, logfile='full.log'):
+        
+        # Create dictionary to store all namespaces
+        self._namespaces = {}
         
         # Create logger for class member
         self.__logger(logfile)
@@ -237,7 +265,7 @@ class Populate:
     def _parser(self, imagej_help_docs):
         
         # Get list of all available op namespaces
-        opsNameSpace = list(ij.op().ops().iterator())
+        opsNameSpace = scyjava.to_python(ij.op().ops().iterator())
         
         # Complile the regular expression search pattern for available ops in the namespace
         re_path = re.compile(r'\t(?P<path>.*\.)(?P<name>.*)(?=\()')
@@ -248,8 +276,14 @@ class Populate:
         # Complile the regular expression search pattern for the outputs
         re_output = re.compile(r'^\((.*?)\s(.*)\)')
         
+        # Create a counter for number of ops parsed
+        ops_count = 0
+        
         # Iterate over all ops
         for namespace in opsNameSpace:
+            
+            # Add the namespace to the dictionary
+            self._namespaces[namespace] = Namespace(namespace)
             
             # Get the help info about available ops for the namespace
             opDocs = scyjava.to_python(ij.op().help(namespace))
@@ -257,9 +291,7 @@ class Populate:
             # Split the help string into seperate ops
             splitOps = re.split(r'\t(?=\()', opDocs)
             
-            # Create a counter for number of ops parsed
-            ops_count = 0
-            
+            # Iterate over all ops in the namespace
             for opDoc in splitOps[1:]:
                 
                 # Increment the ops parsed count
@@ -281,10 +313,12 @@ class Populate:
                 # Create an Op object to store the op data
                 op = Op(namespace, name, fullPath, inputs, output)
 
+                # Check if the op is supported
                 if op.partialSupport:
                     support_msg = True
                 else:
-                    support_msg = 'The current plug in is not supported, no inputs are a WIPP collection data type or the output is not a WIPP collection data type'
+                    support_msg = op.supportmsg
+                    
                 
                 # Log the plugin info to the main log
                 self._logger.info(
@@ -293,85 +327,14 @@ class Populate:
                         namespace = namespace,
                         name = name,
                         fullpath = fullPath,
-                        inputs = str(op.inputs),
-                        output = str(op.output),
+                        inputs = op.inputs,
+                        output = op.output,
                         support = support_msg
                     )
                 )
                 
-                # Split each plugin's data into its own string and save in list
-                #split_plugins = re.split(r'\t(?=\()', imagej_help_docs)
-                
-                # Complile the regular expression search pattern for the library and name
-                #re_paths = re.compile(r'(?:[A-z]*\.){3}(?P<library>.*)(?:\.)(?P<name>.*)(?=\()')
-                
-                # Coompile the regular expression search pattern for the input data types and title
-                #re_inputs = re.compile(r'(?<=\t\t)(.*?)\s(.*)(?=,|\))')
-                
-                # Complile the regular expression search pattern for the outputs
-                #re_output = re.compile(r'(?<=\().*?(?=\s.*\)|\s.*,)')
-            
-                # Create a dictionary of Plugin object to store resutls of parser
-                #self.libraries = {}
-                
-                # Create plugin counter
-                #plugin_counter = 0
-            
-            # Iterate over every imagej plugin in help docs and parse name, library,
-            # input data types and output data types
-            # for plugin in split_plugins[1:]:
-                
-            #     plugin_counter += 1
-                
-            #     # Search for the plugin name and library
-            #     paths = re_paths.search(plugin).groupdict()
-                
-            #     # Save the name and library
-            #     library = paths['library']
-            #     name = paths['name']
-                
-            #     # Create the full path
-            #     fullPath = library + '.' +name
-                
-            #     # Search for the input data type
-            #     inputs = re_inputs.findall(plugin)
-                
-            #     # Search for the output data type
-            #     output = re_output.search(plugin).group()
-                
-            #     op = Op(library, name, fullPath, inputs, output)
-                
-            #     # Check if the library exists
-            #     if library in self.libraries:
-                    
-            #         # Add the op to the library
-            #         self.libraries[library].addOp(name, op)
-                    
-            #     else:
-            #         # Create the library
-            #         self.libraries[library] = Library(library)
-                    
-            #         # Add the op to the library
-            #         self.libraries[library].addOp(name, op)
-                    
-                    
-            #     if self.libraries[library]._ops[name].support:
-            #         support_msg = True
-            #     else:
-            #         support_msg = 'The current plug in is not supported, no inputs are a WIPP collection data type or the output is not a WIPP collection data type'
-                
-            #     # Log the plugin info to the main log
-            #     self._logger.info(
-            #         self._msg.format(    
-            #             counter = plugin_counter,
-            #             name = self.libraries[library]._ops[name].name,
-            #             library = self.libraries[library]._ops[name].library,
-            #             fullpath = self.libraries[library]._ops[name].fullPath,
-            #             inputs = self.libraries[library]._ops[name].inputs,
-            #             output = self.libraries[library]._ops[name].output,
-            #             support = support_msg
-            #         )
-            #     )
+                # Add the op to the namespace
+                self._namespaces[namespace].addOp(op)
         
     def __logger(self, logfile):
         
@@ -427,39 +390,43 @@ class Populate:
             
         
         # Iterate over all imagej libraries that were parsed
-        for libName, lib, in self.libraries.items():
+        for name, namespace, in self._namespaces.items():
             
             # Check if any ops are suppported
-            if len(lib.supportedOps) > 0:
+            if len(namespace.supportedOps) > 0:
                 
                 # Add the json "template" for the library to the dictionary containing all library "templates"
-                self.jsonDic[libName] = {
+                self.jsonDic[name] = {
                     'author': author,
                     'email': email,
                     'github_username': github_username,
                     'version': version,
-                    'project_name': 'ImageJ ' + libName.replace('.', ' '),
-                    'project_short_description': str([op for op in lib.supportedOps.keys()]).replace("'", '')[1:-1],
+                    'project_name': 'ImageJ ' + name.replace('.', ' '),
+                    'project_short_description': str([op for op in namespace.supportedOps.keys()]).replace("'", '')[1:-1],
                     'plugin_namespace':{
-                        op.name: 'out = ij.op().' + op.library.replace('.', '().') + '().' + op.name + str(tuple(op.imagejInputTitles)) for op in lib.supportedOps.values()
+                        op.name: 'out = ij.op().' + op.namespace.replace('.', '().') + str(tuple(op.imagejTitleRequiredInputs)).replace("'", "").replace(' ', '') for op in namespace.supportedOps.values()
                         },
                     '_inputs':{
                         'opName':{
                             'title': 'Operation',
                             'type': 'enum',
                             'options':[
-                                op.name for op in lib.supportedOps.values()
+                                op.name for op in namespace.supportedOps.values()
                                 ],
                             'description': 'Operation to peform',
                             'required': 'false'
                             }
                         },
                     'outputs':
-                        lib._allOutputs
+                        namespace._allOutputs,
+                    'project_slug': 'polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin'
                     }
                 
                 # Update the _inputs section dictionary with the inputs dictionary stored in the Library attribute
-                self.jsonDic[libName]['_inputs'].update(lib._allInputs)
+                self.jsonDic[name]['_inputs'].update(namespace._allRequiredInputs)
+                
+                print('\n')
+                print(self.jsonDic[name])
             
 if __name__ == '__main__':
     import imagej
@@ -485,12 +452,12 @@ if __name__ == '__main__':
     # Populate ops by parsing the imagej operations help
     populater = Populate(imagej_help_docs)
     
-    print('Building json template')
+    print('Building json template\n')
     
     #Build the json dictionary to be passed to the cookiecutter module 
-    #populater.buildJSON('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.1.1')
+    populater.buildJSON('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.1.1')
     
-    print('Shutting down JVM')
+    print('Shutting down JVM\n')
     
     del ij
     
