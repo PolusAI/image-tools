@@ -21,6 +21,12 @@
         "type": "boolean",
         "description": "Calculate scale invariant features.",
         "required": true
+      },
+      {
+        "name" : "numFeatures",
+        "type" : "integer",
+        "description" : "Number of spectral features to compute.",
+        "required" : true
       }
     ],
     "outputs": [
