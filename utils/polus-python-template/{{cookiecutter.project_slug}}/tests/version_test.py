@@ -3,13 +3,14 @@ from pathlib import Path
 import urllib.request as request
 
 class VersionTest(unittest.TestCase):
-    """Verify the version matches in VERSION and plugin.json """
+    """ Verify VERSION is correct """
     
     version_path = Path(__file__).parent.parent.joinpath("VERSION")
     json_path = Path(__file__).parent.parent.joinpath("plugin.json")
     url = 'https://hub.docker.com/v2/repositories/labshare/{{ cookiecutter.project_slug }}/tags/?page_size=1&page=1&ordering=last_updated'
     
     def test_plugin_manifest(self):
+        """ Tests VERSION matches the version in the plugin manifest """
         
         # Get the plugin version
         with open(self.version_path,'r') as file:
@@ -23,6 +24,7 @@ class VersionTest(unittest.TestCase):
         self.assertTrue(plugin_json['containerId'].endswith(version))
     
     def test_docker_hub(self):
+        """ Tests VERSION matches the latest docker container tag """
         
         # Get the plugin version
         with open(self.version_path,'r') as file:
