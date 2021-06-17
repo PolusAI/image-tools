@@ -1,7 +1,9 @@
 from unittest import TestSuite
 from .version_test import VersionTest
+from .plugin_test import PluginTest
 
-test_cases = (VersionTest,)
+test_cases = (VersionTest,
+              PluginTest)
 
 def load_tests(loader, tests, pattern):
     suite = TestSuite()
