@@ -1,5 +1,6 @@
 import scipy 
 import logging
+import trimesh
 import numpy as np
 from typing import Tuple
 from bfio import BioReader
@@ -78,7 +79,25 @@ def mesh_and_featurize_image(
     image: BioReader,
     chunk_size: Tuple[int, int, int] = (256, 256, 256),
     num_features : int = 50, 
-    scale_invariant : bool = False):
+    scale_invariant : bool = False,
+    limit_mesh_size : int = None):
+    """ Mesh and generate spectral features for all ROIs in a 3D image.
+
+    Image is initially scanned for all ROIs and corresponding bounding boxes. 
+    Each ROI is then loaded in its entirety and meshed. The mesh is then used 
+    to generate spectral features using the graph Laplacian. 
+
+    Inputs:
+        image - BioReader handle to the image
+        chunk_size - Size of chunks used for image traversal 
+        num_features - Number of spectral features to calculate
+        scale_invariant - Specify if the calculated features should be scale invariant
+        limit_mesh_size - If specified, the number of faces in generated meshes are limited
+                          to the supplied value
+    Outputs:
+        labels - The label IDs of each ROI
+        features - An N x num_features matrix containing the spectral features for each ROI
+    """
     
     # Store minimum and maximum bounds of every object.
     min_bounds = {}
@@ -126,6 +145,19 @@ def mesh_and_featurize_image(
         subvol = np.squeeze(subvol)
 
         verts, faces, _, _ = measure.marching_cubes((subvol == label).astype(np.uint8), 0, allow_degenerate=False)
+
+        if limit_mesh_size is not None and faces.shape[0] > limit_mesh_size: 
+            mesh_obj = trimesh.Trimesh(verts, faces).simplify_quadratic_decimation(limit_mesh_size)
+            mesh_obj.remove_degenerate_faces()
+            mesh_obj.remove_duplicate_faces()
+            mesh_obj.remove_unreferenced_vertices()
+            mesh_obj.remove_infinite_values()
+            mesh_obj.fill_holes()
+
+            verts = np.asarray(mesh_obj.vertices)
+            faces = np.asarray(mesh_obj.faces)
+
+        logger.info(f'Featurizing ROI {label} ({i + 1}/{len(labels)}) with {verts.shape[0]} vertices.')
 
         feats = mesh_spectral_features(verts, faces, k=num_features, scale_invariant=scale_invariant)
         features[i] = feats

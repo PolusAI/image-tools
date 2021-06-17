@@ -21,10 +21,12 @@ if __name__=='__main__':
     # Input arguments
     parser.add_argument('--inpDir', dest='inpDir', type=str,
                         help='Input image collection to be processed by this plugin.', required=True)
-    parser.add_argument('--scaleInvariant', dest='scaleInvariant', type=str,
-                        help='Calculate scale invariant features.', required=True)
     parser.add_argument('--numFeatures', dest='numFeatures', type=int, 
                         help='Number of spectral features to calculate.', required=True)
+    parser.add_argument('--scaleInvariant', dest='scaleInvariant', type=str,
+                        help='Calculate scale invariant features.', default='False', required=False)
+    parser.add_argument('--limitMeshSize', dest='limitMeshSize', type=int,
+                        help='Maximum number of mesh faces', default=None, required=False)
     # Output arguments
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
@@ -36,10 +38,16 @@ if __name__=='__main__':
         # switch to images folder if present
         inpDir = str(Path(args.inpDir).joinpath('images').absolute())
     logger.info('inpDir = {}'.format(inpDir))
-    scaleInvariant = args.scaleInvariant.lower() == 'true'
-    logger.info('scaleInvariant = {}'.format(scaleInvariant))
+    
     numFeatures = args.numFeatures
     logger.info(f'numFeatures = {numFeatures}')
+    
+    scaleInvariant = args.scaleInvariant.lower() == 'true'
+    logger.info('scaleInvariant = {}'.format(scaleInvariant))
+
+    limitMeshSize = args.limitMeshSize
+    logger.info(f'limitMeshSize = {limitMeshSize}')
+    
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
     
@@ -53,7 +61,7 @@ if __name__=='__main__':
         
         logger.info(f'Processing image ({i + 1}/{len(inpDir_files)}): {f}') 
 
-        labels, features = mesh.mesh_and_featurize_image(br, num_features=numFeatures, scale_invariant=scaleInvariant)
+        labels, features = mesh.mesh_and_featurize_image(br, num_features=numFeatures, scale_invariant=scaleInvariant, limit_mesh_size=limitMeshSize)
 
         df = pd.DataFrame(data=labels, columns=['Label'])
         df_data = pd.DataFrame(data=features, columns=np.arange(numFeatures).tolist())
