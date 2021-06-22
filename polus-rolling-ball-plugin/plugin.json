@@ -1,0 +1,58 @@
+{
+  "name": "Rolling Ball",
+  "version": "1.0.2",
+  "title": "Rolling Ball",
+  "description": "A WIPP plugin to perform background subtraction using the rolling-ball algorithm.",
+  "author": "Najib Ishaq (najib.ishaq@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "labshare/polus-rolling-ball-plugin:1.0.2",
+  "inputs": [
+    {
+      "name": "inputDir",
+      "type": "collection",
+      "description": "Input image collection to be processed by this plugin.",
+      "required": true
+    },
+    {
+      "name": "ballRadius",
+      "type": "number",
+      "description": "Radius of the ball used to perform background subtraction.",
+      "required": false
+    },
+    {
+      "name": "lightBackground",
+      "type": "boolean",
+      "description": "Whether the images have a light or dark background.",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outputDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inputDir",
+      "title": "Input collection",
+      "description": "Input image collection to be processed by this plugin."
+    },
+    {
+      "key": "inputs.ballRadius",
+      "title": "Ball Radius",
+      "description": "Radius of the ball used to perform background subtraction.",
+      "default": 25
+    },
+    {
+      "key": "inputs.lightBackground",
+      "title": "Light Background",
+      "description": "Whether the images have a light or dark background.",
+      "default": false
+    }
+  ]
+}
