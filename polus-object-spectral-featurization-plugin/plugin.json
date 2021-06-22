@@ -52,6 +52,16 @@
         "key": "inputs.scaleInvariant",
         "title": "Scale invariance",
         "description": "Calculate scale invariant features."
+      },
+      {
+        "key" : "inputs.numFeatures",
+        "title" : "Number of features",
+        "description" : "Number of spectral features to calculate."
+      },
+      {
+        "key" : "inputs.limitMeshSize",
+        "title" : "Mesh size limit",
+        "description" : "Maximum number of faces for generated meshes."
       }
     ]
   }

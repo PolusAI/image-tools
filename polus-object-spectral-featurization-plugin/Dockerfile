@@ -1,5 +1,5 @@
 
-FROM labshare/polus-bfio-util:2.1.6
+FROM python:3.7-slim
 
 COPY VERSION /
 		
