@@ -1,8 +1,16 @@
-# Object Spectral featurization
+# Object Spectral Featurization
 
-This WIPP plugin does things, some of which involve math and science. There is likely a lot of handwaving involved when describing how it works, but handwaving should be replaced with a good description. However, someone forgot to edit the README, so handwaving will have to do for now. Contact [Hythem Sidky](mailto:hythem.sidky@axleinfo.com) for more information.
+This plugin uses [Laplace-Beltrami](https://www.sciencedirect.com/science/article/abs/pii/S0010448509000463) [eigenvalues](https://www.mdpi.com/1999-4893/12/8/171) as shape descriptors for 3D objects. The advantage of these spectral features over traditional ones is that they are isometric, optionally scale invariant, and are robust to noise. 
 
-For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
+To use the spectral features plugin, you must specify the number of features you want to compute. Keep in mind that the features are in ordered by length scale, with the 50th capturing finer details compared to the 2nd feature. You also have the ability to specify if you want to calculate shape invariant features. Those are useful if you want to compare the same shapes at different sizes. 
+
+## Known limitations 
+
+The current implementation of spectral featurization works by first meshing the object of interest. This means that the voxels comprising each individual object must fit into memory. Also, because meshes can get quite large and slow down the eigenvalue decomposition, there is an option to decimate the mesh to a fixed upper bound. A good number here is 10,000 or so faces. 
+
+Another issue is that in some instances the graph Laplacian might be singular. In that case, this plugin automatically perturbs it and attempts to resolve the problem. Althought this often succeeds, it limit the ability to resolve the smallest eigenvalues which can affect the quality of the features. 
+
+Finally, because this plugin relies on meshing for feature generation, it currently does not support nested or hierarchical objects. Support for this will be added in the future.
 
 ## Building
 
@@ -20,6 +28,8 @@ This plugin takes one input argument and one output argument:
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
 | `--inpDir` | Input image collection to be processed by this plugin. | Input | collection |
-| `--scale_invariant` | Calculate scale invariant features. | Input | boolean |
+| `--numFeatures` | The number of features to calculate. | Input | int |
+| `--ScaleInvariant` | Calculate scale invariant features. | Input | boolean |
+| `--limitMeshSize` | Maximum number of mesh faces. | Input | int |
 | `--outDir` | Output collection | Output | csvCollection |
 
