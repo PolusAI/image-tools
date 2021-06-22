@@ -1,11 +1,125 @@
-from bfio.bfio import BioReader, BioWriter
-import argparse, logging, subprocess, time, multiprocessing
+from bfio import BioReader, BioWriter
+import argparse, logging, typing, csv
 import numpy as np
 from pathlib import Path
-from filepattern import get_regex,FilePattern,VARIABLES,val_variables
+from filepattern import get_regex,FilePattern,VARIABLES
+from preadator import ProcessManager
 
-# Variables that will be grouped for the purposes of applying a flatfield
-GROUPED = 'xyzp'
+def unshade_image(img,out_dir,
+                  brightfield,
+                  darkfield,
+                  photobleach=None,
+                  offset=None):
+    
+    with ProcessManager.thread() as active_threads:
+    
+        with BioReader(img,max_workers=active_threads.count) as br:
+            
+            with BioWriter(out_dir.joinpath(img.name),metadata=br.metadata,max_workers=active_threads.count) as bw:
+        
+                new_img = br[:,:,:1,0,0].squeeze().astype(np.float32)
+                
+                new_img = new_img - darkfield
+                new_img = np.divide(new_img,brightfield)
+                
+                if photobleach != None:
+                    new_img = new_img - np.float32(photobleach)
+                if offset != None:
+                    new_img = new_img + np.float32(offset)
+
+                new_img[new_img<0] = 0
+                
+                new_img = new_img.astype(br.dtype)
+                
+                bw[:] = new_img
+
+def unshade_batch(files: typing.List[Path],
+                  out_dir: Path,
+                  brightfield: Path,
+                  darkfield: Path,
+                  photobleach: typing.Optional[Path] = None):
+    
+    if photobleach != None:
+        with open(photobleach,'r') as f:
+            reader = csv.reader(f)
+            photo_offset = {line[0]:float(line[1]) for line in reader if line[0] != 'file'}
+        offset = np.mean([o for o in photo_offset.values()])
+    else:
+        offset = None
+    
+    with ProcessManager.process():
+    
+        with BioReader(brightfield,max_workers=2) as bf:
+            brightfield_image = bf[:,:,:,0,0].squeeze()
+            
+        with BioReader(darkfield,max_workers=2) as df:
+            darkfield_image = df[:,:,:,0,0].squeeze()
+        
+        threads = []
+
+        for file in files:
+            
+            if photobleach != None:
+                pb = photo_offset[file['file']]
+            else:
+                pb = None
+            
+            ProcessManager.submit_thread(unshade_image,file['file'],
+                                                       out_dir,
+                                                       brightfield_image,
+                                                       darkfield_image,
+                                                       pb,
+                                                       offset)
+        
+        ProcessManager.join_threads()
+        
+def main(imgDir: Path,
+         imgPattern: str,
+         ffDir: Path,
+         brightPattern: str,
+         outDir: Path,
+         darkPattern: typing.Optional[str] = None,
+         photoPattern: typing.Optional[str] = None
+         ) -> None:
+    
+    ''' Start a process for each set of brightfield/darkfield/photobleach patterns '''
+    # Create the FilePattern objects to handle file access
+    ff_files = FilePattern(ffDir,brightPattern)
+    fp = FilePattern(imgDir,imgPattern)
+    if darkPattern != None and darkPattern!='':
+        dark_files = FilePattern(ffDir,darkPattern)
+    if photoPattern != None and photoPattern!='':
+        photo_files = FilePattern(str(Path(ffDir).parents[0].joinpath('metadata').absolute()),photoPattern)
+        
+    group_by = [v for v in fp.variables if v not in ff_files.variables]
+    GROUPED = group_by + ['file']
+
+    ProcessManager.init_processes('main','unshade')
+        
+    for files in fp(group_by=group_by):
+        
+        flat_path = ff_files.get_matching(**{k.upper():v for k,v in files[0].items() if k not in GROUPED})[0]['file']
+        if flat_path is None:
+            logger.warning("Could not find a flatfield image, skipping...")
+            continue
+        
+        if darkPattern is not None and darkPattern != '':
+            dark_path = dark_files.get_matching(**{k.upper():v for k,v in files[0].items() if k not in GROUPED})[0]['file']
+            
+            if dark_path is None:
+                logger.warning("Could not find a darkfield image, skipping...")
+                continue
+        
+        if photoPattern is not None and photoPattern != '':
+            photo_path = photo_files.get_matching(**{k.upper():v for k,v in files[0].items() if k not in GROUPED})[0]['file']
+            
+            if photo_path is None:
+                logger.warning("Could not find a photobleach file, skipping...")
+                continue
+            
+        ProcessManager.submit_process(unshade_batch,files,outDir,flat_path,dark_path,photo_path)
+    
+    ProcessManager.join_processes()
 
 if __name__=="__main__":
     ''' Initialize the logger '''
@@ -37,134 +151,26 @@ if __name__=="__main__":
     args = parser.parse_args()
     darkPattern = args.darkPattern
     logger.info('darkPattern = {}'.format(darkPattern))
-    ffDir = args.ffDir
+    ffDir = Path(args.ffDir)
     # catch the case that ffDir is the output within a workflow
     if Path(ffDir).joinpath('images').is_dir():
-        ffDir = str(Path(ffDir).joinpath('images').absolute())
+        ffDir = ffDir.joinpath('images')
     logger.info('ffDir = {}'.format(ffDir))
     brightPattern = args.brightPattern
     logger.info('brightPattern = {}'.format(brightPattern))
-    imgDir = args.imgDir
+    imgDir = Path(args.imgDir)
     logger.info('imgDir = {}'.format(imgDir))
     imgPattern = args.imgPattern
     logger.info('imgPattern = {}'.format(imgPattern))
     photoPattern = args.photoPattern
     logger.info('photoPattern = {}'.format(photoPattern))
-    outDir = args.outDir
+    outDir = Path(args.outDir)
     logger.info('outDir = {}'.format(outDir))
 
-    ''' Argument validation and error checking'''
-    # Get the variables from the file patterns, if they existed
-    ff_regex, ff_variables = get_regex(brightPattern)
-    img_regex, img_variables = get_regex(imgPattern)
-    if darkPattern != None and darkPattern!='':
-        dark_regex, dark_variables = get_regex(darkPattern)
-    if photoPattern != None and photoPattern!='':
-        photo_regex, photo_variables = get_regex(photoPattern)
-
-    # Validate the variables
-    val_variables(ff_variables)
-    val_variables(img_variables)
-    if darkPattern != None and darkPattern!='':
-        val_variables(dark_variables)
-    if photoPattern != None and photoPattern!='':
-        val_variables(photo_variables)
-
-    for v in VARIABLES:
-        if v in GROUPED:
-            # Check brightfield/darkfield/photobleach patterns do not contain xyzp
-            assert v not in ff_variables, 'Variable {} cannot be in the brightfield pattern.'
-            if darkPattern != None and darkPattern!='':
-                assert v not in dark_variables, 'Variable {} cannot be in the darkfield pattern.'
-            if photoPattern != None and photoPattern!='':
-                assert v not in photo_variables, 'Variable {} cannot be in the photobleach pattern.'
-            continue
-        # If variables are specified in the img pattern, it must be present in all other patterns
-        if (v in ff_variables) != (v in img_variables): # v must be in both or neither (xor)
-            logger.error('Variable {} is not in both ffPattern and imgPattern.'.format(v))
-        if darkPattern != None and darkPattern!='':
-            if (v in dark_variables) != (v in img_variables): # v must be in both or neither (xor)
-                logger.error('Variable {} is not in both darkPattern and imgPattern.'.format(v))
-        if photoPattern != None and photoPattern!='':
-            if (v in photo_variables) != (v in img_variables): # v must be in both or neither (xor)
-                logger.error('Variable {} is not in both photoPattern and imgPattern.'.format(v))
-
-    ''' Start a process for each set of brightfield/darkfield/photobleach patterns '''
-    # Create the FilePattern objects to handle file access
-    ff_files = FilePattern(ffDir,brightPattern)
-    if darkPattern != None and darkPattern!='':
-        dark_files = FilePattern(ffDir,darkPattern)
-    if photoPattern != None and photoPattern!='':
-        photo_files = FilePattern(str(Path(ffDir).parents[0].joinpath('metadata').absolute()),photoPattern)
-
-    # Initialize variables for process management
-    processes = []
-    process_timer = []
-    pnum = 0
-    total_jobs = len([p for p in ff_files.iterate()])
-    
-    # Loop through files in ffDir image collection and process
-    base_pstring = "python3 apply_flatfield.py --inpDir {} --outDir {} --filepattern {}".format(imgDir,
-                                                                                                outDir,
-                                                                                                imgPattern)
-    for f in ff_files.iterate():
-        # If there are num_cores - 1 processes running, wait until one finishes
-        if len(processes) >= multiprocessing.cpu_count()-1 and len(processes)>0:
-            free_process = -1
-            while free_process<0:
-                for process in range(len(processes)):
-                    if processes[process].poll() is not None:
-                        free_process = process
-                        break
-                # Only check intermittently to free up processing power
-                if free_process<0:
-                    time.sleep(3)
-            pnum += 1
-            logger.info("Finished process {} of {} in {}s!".format(pnum,total_jobs,time.time() - process_timer[free_process]))
-            del processes[free_process]
-            del process_timer[free_process]
-
-        if len(f)>1: # There should only be one brightfield image matching the file pattern
-            ValueError("More than one brightfield image matched the file pattern: {}".format([ff['file']+' ' for ff in f]))
-        
-        ffpath = f[0]['file']
-        R=f[0]['r']
-        T=f[0]['t']
-        C=f[0]['c']
-
-        pstring = base_pstring + ' --brightfield "{}" --R {} --T {} --C {}'.format(ffpath,
-                                                                               R,
-                                                                               T,
-                                                                               C)
-
-        if darkPattern != None and darkPattern!='':
-            pstring += ' --darkfield "{}"'.format(dark_files.get_matching(R=R,T=T,C=C)[0]['file'])
-        if photoPattern != None and photoPattern!='':
-            pstring += ' --photobleach "{}"'.format(photo_files.get_matching(R=R,T=T,C=C)[0]['file'])
-
-        # Start the process    
-        logger.info("Starting process [R,T,C]: [{},{},{}]".format(R,T,C))
-        process_timer.append(time.time())
-        processes.append(subprocess.Popen(pstring,shell=True))
-
-    # If the process generator finishes and no processes were generated, throw an error so an empty image collection isn't generated
-    if pnum==0:
-        ValueError("No processes were generated. This could mean no brightfield images were found using the specified filepattern.")
-
-    # Wait for all processes to finish
-    while len(processes)>0:
-        free_process = -1
-        while free_process<0:
-            for process in range(len(processes)):
-                if processes[process].poll() is not None:
-                    free_process = process
-                    break
-            # Only check intermittently to free up processing power
-            if free_process<0:
-                time.sleep(3)
-        pnum += 1
-        logger.info("Finished process {} of {} in {}s!".format(pnum,total_jobs,time.time() - process_timer[free_process]))
-        del processes[free_process]
-        del process_timer[free_process]
-
-    logger.info("Finished all processes, closing...")
+    main(imgDir = imgDir,
+         imgPattern = imgPattern,
+         ffDir = ffDir,
+         brightPattern = brightPattern,
+         outDir = outDir,
+         darkPattern = darkPattern,
+         photoPattern = photoPattern)
