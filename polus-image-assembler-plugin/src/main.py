@@ -81,7 +81,7 @@ def make_tile(x_min: int,
                         image = br[Yi[0]:Yi[1],Xi[0]:Xi[1],z:z+1,0,0] # only get the first c,t layer
 
                     # Put the image in the buffer
-                    template[Yt[0]:Yt[1],Xt[0]:Xt[1],...] = image
+                    template[Yt[0]:Yt[1],Xt[0]:Xt[1],...] = image[...,numpy.newaxis,numpy.newaxis,numpy.newaxis]
 
         # Save the image
         bw.max_workers = ProcessManager._active_threads
@@ -302,7 +302,6 @@ if __name__=="__main__":
     parser.add_argument('--timesliceNaming', dest='timesliceNaming', type=str,
                         help='Use timeslice number as image name', required=False)
 
-
     # Parse the arguments
     args = parser.parse_args()
     imgPath = pathlib.Path(args.imgPath).resolve()
@@ -316,17 +315,8 @@ if __name__=="__main__":
     stitchPath = pathlib.Path(args.stitchPath)
     logger.info('stitchPath: {}'.format(stitchPath))
 
-    try:
-        main(imgPath,
-            stitchPath,
-            outDir,
-            timesliceNaming)
-
-    except Exception:
-        traceback.print_exc()
-
-    finally:
-        # Exit the program
-        logger.info('Exiting the workflow..')
+    main(imgPath,
+        stitchPath,
+        outDir,
+        timesliceNaming)
   
-

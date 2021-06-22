@@ -2,13 +2,11 @@
 
 version=$(<VERSION)
 datapath=$(readlink --canonicalize ../data)
-echo ${datapath}
 
 # Inputs
-stitchPath=/data/input_vector
-imgPath=/data/input_stitched
+stitchPath=/data/vector
+imgPath=/data/input
 timesliceNaming=false
-filePattern=".**"
 
 # Output paths
 outDir=/data/output
@@ -19,5 +17,4 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --stitchPath ${stitchPath} \
             --imgPath ${imgPath} \
             --timesliceNaming ${timesliceNaming} \
-            --filePattern {filePattern} \
             --outDir ${outDir}
