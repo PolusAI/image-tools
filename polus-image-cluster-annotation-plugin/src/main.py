@@ -110,8 +110,8 @@ def main():
                 mask = np.zeros(br.shape,dtype=np.uint16)
                 mask[:borderwidth,:]=cluster
                 mask[:,:borderwidth]=cluster
-                mask[mask.shape[0]-borderwidth:,:]=cluster
-                mask[:,mask.shape[1]-borderwidth:]=cluster
+                mask[-borderwidth:,:]=cluster
+                mask[:,-borderwidth:]=cluster
                 bw.dtype = mask.dtype
                 bw[:]=mask
         logger.info("Finished all processes!")

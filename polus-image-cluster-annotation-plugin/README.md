@@ -1,6 +1,6 @@
 ﻿# Image cluster annotation
 
-The image cluster annotation plugin converts the original image as all zeros except at the borders which contains the cluster id. The inputs for this plugin is an image collection and csv collection. The images used as input are the images from which features were extracted using imagenet featurization plugin and clustered using hdbscan clustering plugin. The csv file in csv collection is the output from hdbscan clustering plugin. The output for this plugin is an image collection.
+The image cluster annotation plugin converts the original image as all zeros except at the borders which contains the cluster id. The inputs for this plugin is an image collection and csv collection. The input csv file should have a column with filenames. The filename in input csvfile should match with the image name in image collection. The output for this plugin is an image collection.
 
 ## Inputs:
 ### Input image collection:

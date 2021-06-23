@@ -1,2 +1,2 @@
 pandas==1.2.2
-numpy==1.20.3
+bfio[zarr]==2.1.8
