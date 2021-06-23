@@ -36,28 +36,33 @@ def read(img_file):
         Array of the image and the embedded unit in the metadata if present else it will be none.
         
     """
-    tile_grid_size = math.ceil(math.sqrt(cpu_count()))
-    chunk_size = tile_grid_size * 1024
-    br = BioReader(img_file)
-    bfshape = br.shape
-    img_unit = br.ps_y[1]
-    img_data = []
-    # Loop through timepoints
-    for t in range(br.T):
-        # Loop through channels
-        for c in range(br.C):
-            # Loop through z-slices
-            for z in range(br.Z):
-                # Loop across the length of the image
-                for y in range(0,br.Y,chunk_size):
-                    y_max = min([br.Y,y+chunk_size])
-                    # Loop across the depth of the image
-                    for x in range(0,br.X,chunk_size):
-                        x_max = min([br.X,x+chunk_size])
-                        data_tile = br[y:y_max,x:x_max,z:z+1,c,t]
-                        data_tile = data_tile.flatten()
-                        img_data = np.append(img_data,data_tile)
-    img_data = np.reshape(img_data,[bfshape[0],bfshape[1],bfshape[2]])
+    image_bfio = BioReader(img_file)
+    #Get embedded units from metadata (physical size)
+    img_unit = image_bfio.ps_y[1]
+    #Image shape
+    bfshape = image_bfio.shape
+    datatype = np.dtype(image_bfio.dtype)
+    #Define chunksize
+    chunk_size = [1024,1024,1024]
+    xsplits = list(np.arange(0, bfshape[0], chunk_size[0]))
+    xsplits.append(bfshape[0])
+    ysplits = list(np.arange(0, bfshape[1], chunk_size[1]))
+    ysplits.append(bfshape[1])
+    zsplits = list(np.arange(0, bfshape[2], chunk_size[2]))
+    zsplits.append(bfshape[2])
+    all_identities = []
+    xb = np.array([])
+    for y in range(len(ysplits)-1):
+        for x in range(len(xsplits)-1):
+            for z in range(len(zsplits)-1):
+                start_y, end_y = (ysplits[y], ysplits[y+1])
+                start_x, end_x = (xsplits[x], xsplits[x+1])
+                start_z, end_z = (zsplits[z], zsplits[z+1])
+                volume = image_bfio[start_x:end_x,start_y:end_y,start_z:end_z]
+                volume = volume.flatten()
+                xb=np.append(xb,volume)
+    #Reshape array based on image shape
+    img_data = np.reshape(xb,[bfshape[0],bfshape[1],bfshape[2]])
     label_image = img_data.astype(int)
     logger.info('Done reading the file: {}'.format(img_file.name))
     return label_image, img_unit
