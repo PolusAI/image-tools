@@ -1,4 +1,4 @@
-# {{ cookiecutter.project_name }}
+# {{ cookiecutter.project_name }} (v{{ cookiecutter.version }})
 
 This WIPP plugin does things, some of which involve math and science. There is
 likely a lot of handwaving involved when describing how it works, but handwaving
