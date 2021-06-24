@@ -59,6 +59,8 @@ def main():
                         help='Regular expression for clustering each group', required=False)
     parser.add_argument('--minclustersize', dest='minclustersize', type=int,
                         help='Minimum cluster size', required=True)
+    parser.add_argument('--outlierclusterid', dest='outlierclusterid', type=str,
+                        help='Set cluster id as -1', required=False)
     parser.add_argument('--outdir', dest='outdir', type=str,
                         help='Output collection', required=True)
     
@@ -76,6 +78,10 @@ def main():
     #Minimum cluster size for clustering using HDBSCAN
     minclustersize = args.minclustersize
     logger.info('minclustersize = {}'.format(minclustersize))
+
+    #Set outlier cluster id as -1
+    outlierclusterid = args.outlierclusterid
+    logger.info('outlierclusterid = {}'.format(outlierclusterid))
     
     #Path to save output csvfiles
     outdir = args.outdir
@@ -147,7 +153,8 @@ def main():
                 
                 #Cluster data using HDBSCAN clustering
                 classified_data = clustering(sel_group_num,minclustersize)
-               
+                if outlierclusterid:
+                    classified_data[classified_data ==0] = -1
                 #Stack all columns
                 df_processed = pd.DataFrame(np.hstack((sel_group_obj, sel_group_num, get_group, classified_data)))
 
@@ -167,6 +174,8 @@ def main():
             #Cluster data using HDBSCAN clustering
             logger.info('Clustering the data')
             classified_data = clustering(num_array,minclustersize)
+            if outlierclusterid:
+                classified_data[classified_data ==0] = -1
 
             #Get clusters as last column
             df_append = tuple(np.hstack((obj_array, data_num, classified_data)))

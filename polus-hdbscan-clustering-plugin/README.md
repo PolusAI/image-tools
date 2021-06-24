@@ -14,6 +14,9 @@ Note: This plugin does not support multiple capture groups.
 ### Minimum cluster size:
 This parameter defines the smallest grouping size that should be considered as cluster. This is a required parameter. The input should be an integer and the value should be greater than 1.
 
+### Outlier Cluster ID:
+This parameter sets the outlier cluster ID as -1 else the outlier cluster ID will be 0. This is an optional parameter. Setting the outlier cluster ID to -1 helps in visualizing the clusters in Neuroglancer.
+
 ## Output:
 The output is a csv file containing the cluster data to which each instance in the data belongs to. Outliers are defined as cluster 0.
 
@@ -27,13 +30,14 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 ## Options
 
-This plugin takes three input arguments and one output argument:
+This plugin takes four input arguments and one output argument:
 
 | Name                   | Description             | I/O    | Type   |
 |------------------------|-------------------------|--------|--------|
 | `--inpdir` | Input csv collection| Input | csvCollection |
 | `--minclustersize` | Enter minimum cluster size| Input | integer |
 | `--pattern` | Enter regular expression with capture group| Input | string |
+| `--outlierclusterID` | Set outlier cluster ID as -1| Input | boolean |
 | `--outdir` | Output collection | Output | csvCollection |
 
 
