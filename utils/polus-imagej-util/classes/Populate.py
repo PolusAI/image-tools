@@ -1,8 +1,19 @@
 #%%
 
 import re, json, logging, copy
-import imagej, scyjava, jpype
+import scyjava
 from pathlib import Path
+
+"""
+This file parses the imagej ops to create cookiecutter json templates
+"""
+
+# Disable warning message
+def disable_loci_logs():
+    DebugTools = scyjava.jimport('loci.common.DebugTools')
+    DebugTools.setRootLevel('WARN')
+scyjava.when_jvm_starts(disable_loci_logs)
+
 
 class Op:
     
@@ -251,21 +262,28 @@ class Namespace:
 
 class Populate:
     
-    def __init__(self, imagej_help_docs, logfile='full.log'):
+    def __init__(self, ij, logFile='./utils/polus-imagej-util/full.log', logTemplate='./utils/polus-imagej-util/classes/logtemplates/mainlog.txt'):
+        
+        # Store the imagej instance
+        self._ij = ij
+        
+        # Store the log output file and log template file path
+        self.logFile = logFile
+        self.logTemplate = logTemplate
         
         # Create dictionary to store all namespaces
         self._namespaces = {}
         
         # Create logger for class member
-        self.__logger(logfile)
+        self.__logger(self.logFile, self.logTemplate)
         
         # Create imagej plug in by calling the parser member method
-        self._parser(imagej_help_docs)
+        self._parser()
     
-    def _parser(self, imagej_help_docs):
+    def _parser(self):
         
         # Get list of all available op namespaces
-        opsNameSpace = scyjava.to_python(ij.op().ops().iterator())
+        opsNameSpace = scyjava.to_python(self._ij.op().ops().iterator())
         
         # Complile the regular expression search pattern for available ops in the namespace
         re_path = re.compile(r'\t(?P<path>.*\.)(?P<name>.*)(?=\()')
@@ -286,7 +304,7 @@ class Populate:
             self._namespaces[namespace] = Namespace(namespace)
             
             # Get the help info about available ops for the namespace
-            opDocs = scyjava.to_python(ij.op().help(namespace))
+            opDocs = scyjava.to_python(self._ij.op().help(namespace))
             
             # Split the help string into seperate ops
             splitOps = re.split(r'\t(?=\()', opDocs)
@@ -336,12 +354,12 @@ class Populate:
                 # Add the op to the namespace
                 self._namespaces[namespace].addOp(op)
         
-    def __logger(self, logfile):
+    def __logger(self, logFile, logTemplate):
         
         # Check if excluded log exists
-        if Path(logfile).exists():
+        if Path(logFile).exists():
             # Unlink excluded log
-            Path(logfile).unlink()
+            Path(logFile).unlink()
         
         # Create a logger object with name of module
         self._logger = logging.getLogger(__name__)
@@ -353,7 +371,7 @@ class Populate:
         self._logFormatter = logging.Formatter('%(message)s')
         
         # Create handler with log file name
-        self._fileHandler = logging.FileHandler(logfile)
+        self._fileHandler = logging.FileHandler(logFile)
         
         # Set format of logs
         self._fileHandler.setFormatter(self._logFormatter)
@@ -365,7 +383,7 @@ class Populate:
         loginfo = ''
         
         # Open the main log info template
-        with open('logtemplates/mainlog.txt') as fhand:
+        with open(logTemplate) as fhand:
             for line in fhand:
                 loginfo += line
                 
@@ -383,7 +401,7 @@ class Populate:
         
         
         
-    def buildJSON(self, author, email, github_username, version):
+    def buildJSON(self, author, email, github_username, version, cookietin_path):
         
         # Instantiate empty dictionary to store the dictionary to be converted to json
         self.jsonDic = {}
@@ -417,9 +435,9 @@ class Populate:
                             'required': 'false'
                             }
                         },
-                    'outputs':
+                    '_outputs':
                         namespace._allOutputs,
-                    'project_slug': 'polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin'
+                    'project_slug': "polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin"
                     }
                 
                 # Update the _inputs section dictionary with the inputs dictionary stored in the Library attribute
@@ -427,9 +445,22 @@ class Populate:
                 
                 print('\n')
                 print(self.jsonDic[name])
-            
+                
+                # Create Path object with directory path to store cookiecutter.json file for each namespace
+                file_path = Path(cookietin_path).with_name('cookietin').joinpath(namespace._name.replace('.','-'))
+                
+                # Create the directory
+                file_path.mkdir(exist_ok=True,parents=True)
+
+                # Open the directory and place json file in directory
+                with open(file_path.joinpath('cookiecutter.json'),'w') as fw:
+                    json.dump(self.jsonDic[name], fw,indent=4)
+
+
 if __name__ == '__main__':
-    import imagej
+    
+    import imagej, jpype
+    from pathlib import Path
     
     # Disable warning message
     def disable_loci_logs():
@@ -440,22 +471,22 @@ if __name__ == '__main__':
     print('Starting JVM\n')
     
     # Start JVM
-    ij = imagej.init('sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4',headless=True)
+    ij = imagej.init('sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4', headless=True)
     
     
     # Retreive all available operations from pyimagej
-    imagej_help_docs = scyjava.to_python(ij.op().help())
+    #imagej_help_docs = scyjava.to_python(ij.op().help())
     #print(imagej_help_docs)
     
-    print('Parsing imagej op help\n')
+    print('Parsing imagej ops help\n')
     
     # Populate ops by parsing the imagej operations help
-    populater = Populate(imagej_help_docs)
+    populater = Populate(ij, logFile = 'full.log', logTemplate='logtemplates/mainlog.txt')
     
     print('Building json template\n')
     
-    #Build the json dictionary to be passed to the cookiecutter module 
-    populater.buildJSON('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.1.1')
+    # Build the json dictionary to be passed to the cookiecutter module 
+    populater.buildJSON('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.1.1', __file__)
     
     print('Shutting down JVM\n')
     
