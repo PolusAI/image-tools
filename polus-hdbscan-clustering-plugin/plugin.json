@@ -1,6 +1,6 @@
 {
     "name": "HDBSCAN Clustering",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "title": "HDBSCAN Clustering",
     "description": "Cluster the data using HDBSCAN.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-hdbscan-clustering-plugin:0.3.0",
+    "containerId": "labshare/polus-hdbscan-clustering-plugin:0.3.1",
     "inputs": [      
       {
         "name": "inpdir",

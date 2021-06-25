@@ -59,7 +59,7 @@ def main():
                         help='Regular expression for clustering each group', required=False)
     parser.add_argument('--minclustersize', dest='minclustersize', type=int,
                         help='Minimum cluster size', required=True)
-    parser.add_argument('--outlierclusterid', dest='outlierclusterid', type=str,
+    parser.add_argument('--outlierclusterID', dest='outlierclusterID', type=str,
                         help='Set cluster id as -1', required=False)
     parser.add_argument('--outdir', dest='outdir', type=str,
                         help='Output collection', required=True)
@@ -80,7 +80,7 @@ def main():
     logger.info('minclustersize = {}'.format(minclustersize))
 
     #Set outlier cluster id as -1
-    outlierclusterid = args.outlierclusterid
+    outlierclusterid = args.outlierclusterID
     logger.info('outlierclusterid = {}'.format(outlierclusterid))
     
     #Path to save output csvfiles
