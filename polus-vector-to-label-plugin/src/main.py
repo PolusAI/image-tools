@@ -29,7 +29,7 @@ logger.setLevel(logging.INFO)
 def overlap(previous_values: np.ndarray,
             current_values: np.ndarray,
             tile: np.ndarray
-            ) -> np.ndarray:
+            ) -> typing.Tuple[np.ndarray,list,list]:
     """Resolve label values between tiles
     
     This function takes a row/column from the previous tile and a row/column
@@ -45,7 +45,9 @@ def overlap(previous_values: np.ndarray,
         tile (np.ndarray): Current tile pixel values, flattened
 
     Returns:
-        np.ndarray: Current tile pixel values, flattened
+        typing.Tuple[np.ndarray,np.ndarray,np.ndarray]: Returns the modified
+            tile with overlapping labels removed, a list of new labels, and a
+            list of indices associated with the new labels.
     """
     
     # Get a list of unique values in the previous and current tiles

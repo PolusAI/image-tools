@@ -12,6 +12,16 @@ recomputed and masks above the flow error threshold are removed.
 The author's recommended values for cell probability threshold, flow error, and
 stitching threshold are 0, 0.4, and 0.
 
+This plugin is designed to make the flow field calculations scalable, operating
+on images too large to fit into memory. It does this by converting flows to
+labels in 2048x2048 pixel tiles at a time with 256 pixel overlap. This plugin
+also only uses 200 iterations when following flow fields. This means that
+objects with a radius roughly larger than 200 pixels may not be reconstructed
+properly. In the future, it may be necessary to add tile size, overlap, and
+number of iterations as inputs. However, for most of the image types that
+CellPose is properly suited for segmenting, these settings should cover the
+majority of images that will be segmented.
+
 See the
 [original paper](https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1)
 or the
@@ -24,6 +34,7 @@ To build the Docker image for the conversion plugin, run
 `./build-docker.sh`.
 
 ## To run container locally
+
 The `run-plugin.sh` script has an example of how to run the plugin locally.
 
 ## Install WIPP Plugin
