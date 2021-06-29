@@ -1,6 +1,6 @@
 {
     "name": "HDBSCAN Clustering",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "title": "HDBSCAN Clustering",
     "description": "Cluster the data using HDBSCAN.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-hdbscan-clustering-plugin:0.3.1",
+    "containerId": "labshare/polus-hdbscan-clustering-plugin:0.3.2",
     "inputs": [      
       {
         "name": "inpdir",
@@ -31,7 +31,7 @@
       {
 	"name": "outlierclusterID",
         "type": "boolean",
-        "description": "Set outlier cluster ID as -1",
+        "description": "Set outlier cluster ID as 1",
         "required": "false"
       }
     ],
@@ -61,7 +61,7 @@
       {
         "key": "inputs.outlierclusterID",
         "title": "Outlier cluster ID",
-        "description": "Set outlier cluster ID as -1"
+        "description": "Set outlier cluster ID as 1"
       }
     ]
   }
