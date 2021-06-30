@@ -107,7 +107,7 @@ def main():
             with BioReader(imgpath / filename) as br, \
                 BioWriter(outpath / filename,metadata=br.metadata) as bw:
                 #Make all pixels zero except the borders of specified thickness and assign the cluster_id to border pixels
-                mask = np.zeros(br.shape,dtype=np.int16)
+                mask = np.zeros(br.shape,dtype=np.uint16)
                 mask[:borderwidth,:]=cluster
                 mask[:,:borderwidth]=cluster
                 mask[-borderwidth:,:]=cluster
