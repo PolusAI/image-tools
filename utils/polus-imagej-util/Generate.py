@@ -13,7 +13,7 @@ if __name__ == '__main__':
     #imagej_help_docs = scyjava.to_python(ij.op().help())
     #print(imagej_help_docs)
     
-    print('Parsing imagej op help\n')
+    print('Parsing imagej ops help\n')
     
     # Populate ops by parsing the imagej operations help
     populater = cp.Populate(ij)
@@ -50,7 +50,21 @@ if __name__ == '__main__':
 
     # Get list of all plugin directories in the cookietin directory 
     plugins = list(plugin_path.iterdir()) 
+    
+    # Create path to imagej testing directory
+    test_dir = Path(cwd.joinpath('imagej-testing'))
+    
+    # Create the imagej testing directory
+    os.mkdir(test_dir)
+    
+    # Create path to the imagej shell script testing file
+    shell_test_path = test_dir.joinpath('shell_test.py')
 
+    # Create testing shell script file
+    with open(shell_test_path, 'w') as fhand:
+        fhand.write('import os, sys\nfrom pathlib import Path\nsrc_path = Path(__file__).parents[1]\nsys.path.append(str(src_path))\n')
+        fhand.close()
+    
     # Iterate over all plugin directories in the cookietin directory 
     for i,plugin in enumerate(reversed(plugins)):
         
@@ -69,6 +83,26 @@ if __name__ == '__main__':
             
             # Run the cookiecutter utility for the plugin
             os.system('cookiecutter ./utils/polus-imagej-util/ --no-input')
+            
+            # Open the shell script in append mode
+            with open(shell_test_path, 'a') as fhand:
+                
+                # Get plugin dictionary key
+                plugin_key = plugin.name.replace('-', '.')
+                
+                # Get all availavle ops for the plugin
+                ops = [op for op in populater._namespaces[plugin_key]._ops.keys()]
+                
+                # Create a list of the operating sytem commands
+                commands = ['python '+str(path)+'/tests/unit_test.py --opName '+op for op in ops]
+                
+                # Generate the shell script lines (each line is an os command to test a single op)
+                lines = ["os.system('{}')\n".format(command) for command in commands]
+                
+                for line in lines:
+                    fhand.write(line)
+                
+                fhand.close()
         
             break
         

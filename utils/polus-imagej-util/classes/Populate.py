@@ -24,6 +24,12 @@ class Op:
         self.name = name
         self.fullPath = fullPath
         
+        # Check and update if any inputs are named "in" which conflict with python's reserved key word
+        for input_index, input in enumerate(inputs):
+            if input[1] == 'in':
+                # Change the input name from "in" to "in1"
+                inputs[input_index] = (input[0], 'in1')
+        
         # Map the inputs and output from imageJ data type to WIPP data type
         self.__dataMap(inputs, output)
               
@@ -240,8 +246,9 @@ class Namespace:
                     self._allRequiredInputs[title]['call_types'].update({op.name:dtype})
                     if self._allRequiredInputs[title]['type'] != wippType:
                         #raise Exception
-                        print('The', self._name, 'namespace has multiple input data types for the same input title across different ops')
-            
+                        #print('The', self._name, 'namespace has multiple input data types for the same input title across different ops')
+                        pass
+                    
             # Check if the output dictionary has been created
             if op.imagejTitleOutput not in self._allOutputs:
             
@@ -406,10 +413,17 @@ class Populate:
         # Instantiate empty dictionary to store the dictionary to be converted to json
         self.jsonDic = {}
             
+        # Create list of characters to be replaced in namespace
+        char_to_replace = {
+            '[':'(',
+            ']':')',
+            "'":'',
+            ' ':''
+            }
         
         # Iterate over all imagej libraries that were parsed
         for name, namespace, in self._namespaces.items():
-            
+                        
             # Check if any ops are suppported
             if len(namespace.supportedOps) > 0:
                 
@@ -422,7 +436,7 @@ class Populate:
                     'project_name': 'ImageJ ' + name.replace('.', ' '),
                     'project_short_description': str([op for op in namespace.supportedOps.keys()]).replace("'", '')[1:-1],
                     'plugin_namespace':{
-                        op.name: 'out = ij.op().' + op.namespace.replace('.', '().') + str(tuple(op.imagejTitleRequiredInputs)).replace("'", "").replace(' ', '') for op in namespace.supportedOps.values()
+                        op.name: 'out = ij.op().' + op.namespace.replace('.', '().') + re.sub(r"[\s'\[\]]", lambda x: char_to_replace[x.group(0)], str(op.imagejTitleRequiredInputs)) for op in namespace.supportedOps.values()
                         },
                     '_inputs':{
                         'opName':{
@@ -432,7 +446,7 @@ class Populate:
                                 op.name for op in namespace.supportedOps.values()
                                 ],
                             'description': 'Operation to peform',
-                            'required': 'false'
+                            'required': 'False'
                             }
                         },
                     '_outputs':
@@ -443,8 +457,8 @@ class Populate:
                 # Update the _inputs section dictionary with the inputs dictionary stored in the Library attribute
                 self.jsonDic[name]['_inputs'].update(namespace._allRequiredInputs)
                 
-                print('\n')
-                print(self.jsonDic[name])
+                #print('\n')
+                #print(self.jsonDic[name])
                 
                 # Create Path object with directory path to store cookiecutter.json file for each namespace
                 file_path = Path(cookietin_path).with_name('cookietin').joinpath(namespace._name.replace('.','-'))
