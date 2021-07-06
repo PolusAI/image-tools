@@ -2,7 +2,7 @@ import scipy
 import logging
 import trimesh
 import numpy as np
-from typing import Tuple
+from typing import Tuple, List
 from bfio import BioReader
 from skimage import measure
 
@@ -13,7 +13,28 @@ logger = logging.getLogger('mesh')
 logger.setLevel(logging.INFO)
 
 
-def mesh_spectral_features(vertices, faces, k = 50, scale_invariant = False):
+def mesh_spectral_features(
+    vertices: np.ndarray, 
+    faces: np.ndarray, 
+    k: int = 50, 
+    scale_invariant: bool = False) -> np.ndarray:
+    """ Generate spectral features for a mesh, given mesh vertices and faces. 
+
+    A triangular mesh, described by vertices and faces, is featurized using the 
+    Laplace-Beltrami eigenvalues of the graph Laplacian of the geometry. The featurization 
+    can be scale invariant if desired. The user can request a specific number of 
+    features. The algorithm attempts to iteratively identify the top `k` non-zero 
+    eigenvalues. If the graph is singular, it will be perturbed, and this may 
+    introduce artifacts in the final result. 
+
+    Inputs:
+        vertices - Nx3 Numpy array of mesh vertex coordinates.
+        faces - Mx3 Numpy array of vertex indices making up mesh faces. 
+        k - Number of requested features.
+        scale_invariant - Specify if features should be scale invariant.
+    Outputs:
+        eigvals - k eigenvalues representing the featurized mesh.
+    """
     i = np.concatenate([faces[:,0], faces[:,0], faces[:,1], faces[:,1], faces[:,2], faces[:,2]])
     j = np.concatenate([faces[:,1], faces[:,2], faces[:,0], faces[:,2], faces[:,0], faces[:,1]])
     
@@ -78,9 +99,9 @@ def mesh_spectral_features(vertices, faces, k = 50, scale_invariant = False):
 def mesh_and_featurize_image(
     image: BioReader,
     chunk_size: Tuple[int, int, int] = (256, 256, 256),
-    num_features : int = 50, 
-    scale_invariant : bool = False,
-    limit_mesh_size : int = None):
+    num_features: int = 50, 
+    scale_invariant: bool = False,
+    limit_mesh_size: int = None) -> Tuple[List[int], np.ndarray]:
     """ Mesh and generate spectral features for all ROIs in a 3D image.
 
     Image is initially scanned for all ROIs and corresponding bounding boxes. 
