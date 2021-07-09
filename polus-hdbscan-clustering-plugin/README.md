@@ -7,7 +7,7 @@ The HDBSCAN Clustering plugin clusters the data using [HDBSCAN clustering](https
 The input file that need to be clustered. The file should be in csv format. This is a required parameter for the plugin.
 
 ### Pattern
-The input for this parameter is a regular expression with capture group. This input splits the data into groups based on the matched pattern to cluster each group separately. This is not a required parameter. 
+The input for this parameter is a regular expression with capture group. This input splits the data into groups based on the matched pattern to cluster each group separately. This is not a required parameter. Pattern can be given as input only when there is a string field in the csv file that need to be matched with the pattern.
 New column 'group' is created in the output csv file that has the matched string based on the given pattern. 
 Note: This plugin does not support multiple capture groups.
 

@@ -127,12 +127,13 @@ def main():
                 pd.set_option('display.max_columns', None)
                 pd.set_option('display.width', None)
                 pd.set_option('display.max_colwidth', None)
-                logger.info(f"List of files not matching the pattern in the file {file_name} \n{cluster_data_nt}\n")
+                logger.info(f"Number of rows not matching the pattern in the file {file_name}:{len(cluster_data_nt)}")
+                logger.debug(f"List of files not matching the pattern in the file {file_name} \n{cluster_data_nt}\n")
             
             if cluster_data.empty:
                 logger.warning(f"Could not find pattern match in the file {file_name}. Skipping...")
                 continue
-            
+        
             #Create a column group with matching string
             cluster_data['group'] = data_obj.apply(','.join,axis=1).str.extract(pattern, expand=False)
             group_data = cluster_data.groupby('group').apply(lambda x: x.sort_values('group'))
