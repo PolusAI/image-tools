@@ -1,6 +1,7 @@
 import classes.Populate as cp
 import os, jpype, imagej, shutil
 from pathlib import Path
+import time
     
 if __name__ == '__main__':
 
@@ -43,16 +44,21 @@ if __name__ == '__main__':
     base_path = Path(__file__).parent
     
     # Get path to cookietin dicrectory
-    plugin_path = base_path.joinpath('cookietin')
+    cookietin_path = base_path.joinpath('cookietin')
 
     # Get path to cookiecutter.json file that lives in each of the 40 folders within cookietin
     cookiecutter_path = base_path.joinpath('cookiecutter.json')
 
     # Get list of all plugin directories in the cookietin directory 
-    plugins = list(plugin_path.iterdir()) 
+    plugins = list(cookietin_path.iterdir()) 
     
     # Create path to imagej testing directory
     test_dir = Path(cwd.joinpath('imagej-testing'))
+    
+    # Check if the imagej testing directory already exists
+    if test_dir.exists():
+        # Remove directory if it exists
+        shutil.rmtree(test_dir)
     
     # Create the imagej testing directory
     os.mkdir(test_dir)
@@ -65,19 +71,27 @@ if __name__ == '__main__':
         fhand.write('import os, sys\nfrom pathlib import Path\nsrc_path = Path(__file__).parents[1]\nsys.path.append(str(src_path))\n')
         fhand.close()
     
+    # Creater counters for plugins and ops
+    pluging_count = 0
+    op_count = 0
+    
     # Iterate over all plugin directories in the cookietin directory 
-    for i,plugin in enumerate(reversed(plugins)):
+    for plugin in plugins:
         
-        if plugin.name == "image-integral":
-            
+        # DELETE THIS LINE LATTER FOR UNIT TEST DEV
+        plugins_to_generate = ['image-integral', 'image-distancetransform', 'filter-dog']
+        plugins_to_generate = ['filter-dog', 'filter-addNoise', 'filter-convolve', 'filter-bilateral', 'filter-correlate']
+        #if plugin.name == 'image-integral':
+        if plugin.name in plugins_to_generate:
+        #if True:
+             
             # Create a path for the plugin
-            path = Path(os.getcwd()).joinpath('polus-imagej-' + plugin.name + '-plugin')
-            print(path)
+            path = Path(os.getcwd()).joinpath('polus-imagej-' + plugin.name.lower() + '-plugin')
             
-            # If the pluging path is already a directory remove it and its children
-            if path.is_dir():
-                shutil.rmtree(str(path.absolute()))
-        
+            # If the plugin path is already a directory remove it and its children
+            if path.exists():
+                shutil.rmtree(path)
+            
             # Move the cookiecutter.json file for the current plug in to the polus-imagej-util directory overwriting last plugin json file
             shutil.copy(str(plugin.joinpath('cookiecutter.json')), cookiecutter_path)
             
@@ -91,21 +105,28 @@ if __name__ == '__main__':
                 plugin_key = plugin.name.replace('-', '.')
                 
                 # Get all availavle ops for the plugin
-                ops = [op for op in populater._namespaces[plugin_key]._ops.keys()]
+                ops = [op for op in populater._namespaces[plugin_key].supportedOps.keys()]
                 
                 # Create a list of the operating sytem commands
-                commands = ['python '+str(path)+'/tests/unit_test.py --opName '+op for op in ops]
+                commands = ['python '+str(path)+'/tests/unit_test2.py --opName '+op for op in ops]
                 
                 # Generate the shell script lines (each line is an os command to test a single op)
                 lines = ["os.system('{}')\n".format(command) for command in commands]
                 
+                # Write command for each plugin to the shell script
                 for line in lines:
                     fhand.write(line)
-                
+                    op_count += 1
+                    
                 fhand.close()
-        
-            break
-        
-        else:
-            pass
+                
+                pluging_count += 1
 
+            # DELETE THIS LINE LATTER FOR UNIT TEST DEV
+            #break
+                
+            
+            
+    print('There were {} plugins generated\n'.format(pluging_count))
+    print('There were {} ops created\n'.format(op_count))
+    

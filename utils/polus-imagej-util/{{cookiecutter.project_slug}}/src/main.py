@@ -71,7 +71,7 @@ def main({#- Required inputs -#}
     }
     
     # Check that all inputs are specified 
-    if _{{ inp }} == None and _opName in list({{ inp }}_types.keys()):
+    if _{{ inp }} is None and _opName in list({{ inp }}_types.keys()):
         raise ValueError('{} must be defined to run {}.'.format('{{ inp }}',_opName))
     {%- if val.type == "collection"%}
     elif _{{ inp }} != None:
@@ -132,7 +132,7 @@ def main({#- Required inputs -#}
             {%- endif %}{% endfor %}
 
             {%- for inp,val in cookiecutter._inputs.items() if val.type!='collection' and inp!='opName' %}
-            if _{{ inp }} != None:
+            if _{{ inp }} is not None:
                 {{ inp }} = ij_converter.to_java(_{{ inp }},{{ inp }}_types[_opName],dtype)
             {% endfor %}
             logger.info('Running op...')

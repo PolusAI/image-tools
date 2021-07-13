@@ -78,7 +78,7 @@ class Op:
     
     @property
     def imagejTitleOutput(self):
-        return self._output[0][0][1]
+        return self._output[0][0][1].replace('?', '')
     
     @property
     def wippTypeRequiredInputs(self):
@@ -187,7 +187,7 @@ class Op:
             self.partialSupport = True
         
         # Check if the required inputs satisfy the requirements 
-        elif ('collection' in self.wippTypeRequiredInputs or 'collection' in self.wippTypeOutput) and 'unknown' not in self.wippTypeRequiredInputs + [self.wippTypeOutput]:
+        elif ('collection' in self.wippTypeRequiredInputs and 'collection' in self.wippTypeOutput) and 'unknown' not in self.wippTypeRequiredInputs + [self.wippTypeOutput]:
             self.partialSupport = True
             self.fullSupport = False
         
@@ -238,15 +238,17 @@ class Namespace:
                         'title':title, 
                         'description':title, 
                         'required':False, 
-                        'call_types':{op.name:dtype}
+                        'call_types':{op.name:dtype},
+                        'wipp_type':{op.name:wippType}
                         }
             
                 # If variable key exists update it
                 else:
+                    self._allRequiredInputs[title]['wipp_type'].update({op.name:wippType})
                     self._allRequiredInputs[title]['call_types'].update({op.name:dtype})
                     if self._allRequiredInputs[title]['type'] != wippType:
                         #raise Exception
-                        #print('The', self._name, 'namespace has multiple input data types for the same input title across different ops')
+                        #print('The', self._name, 'namespace has multiple input data types for the same input title across different op overloading calls')
                         pass
                     
             # Check if the output dictionary has been created
@@ -254,7 +256,7 @@ class Namespace:
             
                 # Add the output to Library's output dictionary
                 self._allOutputs = {
-                    'out':{         
+                    op.imagejTitleOutput:{         
                         'type': op.wippTypeOutput, 
                         'title': op.imagejTitleOutput, 
                         'description':'out',
@@ -265,7 +267,7 @@ class Namespace:
                     }
             
             else:
-                self._allOutputs['out']['call_types'][op.name] = op.imagejTypeOutput
+                self._allOutputs[op.imagejTitleOutput]['call_types'][op.name] = op.imagejTypeOutput
 
 class Populate:
     
@@ -454,18 +456,22 @@ class Populate:
                     'project_slug': "polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin"
                     }
                 
+                # Update the plugin namespace dictionary with the new op name
+                
                 # Update the _inputs section dictionary with the inputs dictionary stored in the Library attribute
                 self.jsonDic[name]['_inputs'].update(namespace._allRequiredInputs)
                 
                 #print('\n')
                 #print(self.jsonDic[name])
-                
+                if name == 'image.distancetransform':
+                    print(self.jsonDic[name])
+            
                 # Create Path object with directory path to store cookiecutter.json file for each namespace
                 file_path = Path(cookietin_path).with_name('cookietin').joinpath(namespace._name.replace('.','-'))
                 
                 # Create the directory
                 file_path.mkdir(exist_ok=True,parents=True)
-
+                
                 # Open the directory and place json file in directory
                 with open(file_path.joinpath('cookiecutter.json'),'w') as fw:
                     json.dump(self.jsonDic[name], fw,indent=4)
