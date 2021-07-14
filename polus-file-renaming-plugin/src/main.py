@@ -1,316 +1,234 @@
-import regex as re
 import argparse
-import pandas as pd
-import numpy as np
 import logging
 from pathlib import Path
+import regex as re
 import shutil
 
-
-def add_curly_brackets(pattern):
-    #: This function changes (text) to ({text})
-    pattern_mod = ""
-    for i in pattern:
-        if i == "(":
-            pattern_mod = pattern_mod + i + "{"
-        elif i == ")":
-            pattern_mod = pattern_mod + "}" + i
-        else:
-            pattern_mod = pattern_mod + i
-    return pattern_mod
-
-def make_digit_channel_dict(input_images):
-    """#: Create dictionary {0: 'DAPI', 1: 'GFP', 2: 'TXRED'}
+def convert_filename(input_image, fpattern, outpattern):
+    """This function performs bulk of filename conversion.
+    
+    This function takes the input args to produce the desired filepath. 
+    If the user inputs a regex pattern that is a character and expects 
+    a digit, it marks the file pattern to be processed by a different 
+    function.
+    
     Args:
-        input_images:  [PosixPath('image_collection_1/img_x01_y01_DAPI.tif'), PosixPath('image_collection_1/img_x01_y01_TXRED.tif'), PosixPath('image_collection_1/img_x01_y01_GFP.tif')]
+        input_image: img_x01_y01_GFP.tif
+        fpattern: img_x{row:dd}_y{col:dd}_{channel:c+}.tif
+        outpattern: new_x{row:dd}_y{col:ddd}_c{channel:ddd}.tif
+
     Returns:
-        gfp_dict: {0: 'DAPI', 1: 'GFP', 2: 'TXRED'}
+        temp_fp: new_x01_y001_c_rgxstart_[0-9]{3}_rgxmid_GFP_rgxend_.tif
         """
-    # Convert input string to list, ['img', '01', '01', 'DAPI.tif']. Convert to ['img', '001', '001', 'DAPI.tif']
-    new_images = []
-    list2 = []
-    #: Make list of lists and convert to df
-    for image in input_images:
-        new_images.append(image.name)
-        list1 = ["_".join(x.split()) for x in re.split(r'[_]', image.name) if x.strip()] #: ['img', '01', '01', 'DAPI.tif']
-        list2.append(list1)
-    df = pd.DataFrame(list2)
-    #: Sort last column alphabetically and reset index
-    df.sort_values(by=df.columns[-1], ascending=True, inplace=True)
-    df.reset_index(inplace=True)
-    chan_series = df[df.columns[-1]]
-    chan_series  = chan_series.str.rstrip(to_strip=".tif")
-    #: Make dict where key is a number, value is channel. Values are sorted.
-    gfp_dict = chan_series.to_dict()
-    return gfp_dict
-
-def pad_it(output_format, data, input_format):
-    """
-    output_format is regex like d+, dd, ff
-    data is a number like 100
-    input_format = inputs dataformats
-        
-    Args:
-        output_format: {}
-        data: {}
-        input_format: {} ddd 01 dd
-        data2:  001
-        
-        output_format: {}
-        data: {}
-        input_format: {} nan _y nan
-        data2:  _y
-        
-        output_format: {}
-        data: {}
-        input_format: {} ddd 01 dd
-        data2:  001
-        
-        output_format: {}
-        data: {}
-        input_format: {} nan _ nan
-        data2:  _
-        
-        output_format: {}
-        data: {}
-        input_format: {} ddddd GFP .*
-        data2:  starttempnum_GFP_endtempnum_regexstart_ddddd_regexend_
-        
-        output_format: {}
-        data: {}
-        input_format: {} nan .tif nan
-        data2:  .tif
-        
-    Returns:
-        data2: See examples above
-    """
-    data2 = None
-    digits_list = ["d", "dd", "ddd", "dddd", "ddddd"]
-    try:
-        #: Filters out 'nan' and non-numeric string values
-        data = int(data)
-        output_format = str(output_format)
-        pad_digit = "{:0" + str(len(output_format)) + str(output_format[0]) + "}"
-        tmp_string = "{}".format(pad_digit)
-        data2 = tmp_string.format(data)
-    except ValueError:
-        #: Handle cases input is character and output is digit
-        data2 = ""
-        if input_format == ".*" and output_format in digits_list:
-            data2 = "starttempnum_" + data + "_endtempnum" + "_regexstart_" + output_format + "_regexend_"  
-        else:
-            data2 = data 
-    return data2
-
-def build_var_digits_dict(pattern_as_list):
-    """
-    Build dict: key=match group id, value=regex pattern
-    
-    Args:
-        pattern_as_list:  ['newdata_x', '{var_x:ddd}', '_y', '{var_y:ddd}', '_c', '{var_name:ddddd}', '.tif']
-    Returns:
-        var_digits_dict {'var_x': 'ddd', 'var_y': 'ddd', 'var_name': 'ddddd'}
-    """
-    #: Build dictionary {'var_x': 'dd', 'var_y': 'dd', 'var_name': 'c+'}
-    var_digits_dict = {}
-    for i in range (0, len(pattern_as_list)):
-        if pattern_as_list[i].startswith("{"):
-            #: Split string into list by : and remove curly brackets
-            var_digit_list = [", ".join(x.split()) for x in re.split(r'[:]', pattern_as_list[i]) if x.strip()]
-            var_digits_dict[var_digit_list[0][1:]] = var_digit_list[1][:-1]
-    return var_digits_dict
-
-def build_psuedoregex_trueregex_dict(input_pattern_as_list, var_digits_dict):
-    """
-    Build pseudoregex true regex dict
-    
-    Args:
-        input_pattern_as_list: ['img_x', '{var_x:dd}', '_y', '{var_y:dd}', '_', '{var_name:.*}', '.tif']
-        var_digits_dict: {'var_x': 'ddd', 'var_y': 'ddd', 'var_name': 'ddddd'}
-        
-    Returns:
-        pseudoregex_trueregex_dict: {'newdata_x': 'newdata_x', 'var_x:ddd': '(\\d\\d\\d)', '_y': '_y', 'var_y:ddd': '(\\d\\d\\d)', '_c': '_c', 'var_name:ddddd': '(\\d\\d\\d\\d\\d)', '.tif': '.tif'}
-    """
-    new_pattern = ""
-    pseudoregex_trueregex_dict = {}
-    for i in range (0, len(input_pattern_as_list)):
-        if input_pattern_as_list[i].startswith("{"):
-            input_pattern_as_list[i] = input_pattern_as_list[i][1:-1]
-            for each_key, each_value in var_digits_dict.items():
-                new_val = ""
-                if input_pattern_as_list[i].startswith(each_key):
-                    backslash = "\\"
-                    for char in each_value:
-                        if char != "." and char != "*":
-                            new_val = new_val + backslash + char
-                        elif char == "." or char == '*':
-                            new_val = new_val + char
-                    new_val = "(" + new_val + ")"
-                    new_pattern = new_pattern + new_val
-                    pseudoregex_trueregex_dict[input_pattern_as_list[i]] = new_val
-        elif input_pattern_as_list[i].startswith("{") == False: 
-            new_patt = "(" + input_pattern_as_list[i] + ")"
-            pseudoregex_trueregex_dict[input_pattern_as_list[i]] = input_pattern_as_list[i]
-            new_pattern = new_pattern + new_patt
-
-    return pseudoregex_trueregex_dict
-
-def get_values(df_col_as_list):
-    """
-    Args:
-        df_col_as_list: ['img_x', 'var_x:dd', '_y', 'var_y:dd', '_', 'var_name:.*', '.tif']
-        
-    Returns:
-        values_list: [nan, 'dd', nan, 'dd', nan, '.*', nan]
-    """
-    values_list = []
-    for item in df_col_as_list:
-        if ":" not in item:
-            values_list.append(np.nan)
-        else:
-            x = item.split(':')[-1]
-            values_list.append(x) 
-    return values_list
-
-def build_dataframe(pseudoregex_trueregex_in_dict, pseudoregex_trueregex_out_dict, input_image, match_groups):
-    """
-    Create intermediate filename to look like img_x001_y001_starttempnum_TXRED_endtempnum_regexstart_ddddd_regexend_.tif
-    
-    Args:
-        pseudoregex_trueregex_in_dict: {'img_x': 'img_x', 'var_x:dd': '(\\d\\d)', '_y': '_y', 'var_y:dd': '(\\d\\d)', '_': '_', 'var_name:.*': '(.*)', '.tif': '.tif'}
-        pseudoregex_trueregex_out_dict: {'newdata_x': 'newdata_x', 'var_x:ddd': '(\\d\\d\\d)', '_y': '_y', 'var_y:ddd': '(\\d\\d\\d)', '_c': '_c', 'var_name:ddddd': '(\\d\\d\\d\\d\\d)', '.tif': '.tif'}
-        input_image: img_x01_y01_GFP.tif
-        match_groups: ['img_x', '01', '_y', '01', '_', 'GFP', '.tif']
-    
-    Returns:
-        final_str: img_x001_y001_starttempnum_TXRED_endtempnum_regexstart_ddddd_regexend_.tif
-    """
-    df1 = pd.Series(pseudoregex_trueregex_in_dict).to_frame('psy_in_val').reset_index()
-    df1.rename(columns={"index": "psy_in_key"}, inplace=True)
-    df2 = pd.Series(pseudoregex_trueregex_out_dict).to_frame('psy_out_val').reset_index()
-    df2.rename(columns={"index": "psy_out_key"}, inplace=True)
-    df = pd.concat([df1, df2], axis=1)
-    #: Build new column from values in psy_out_key
-    #: Source https://stackoverflow.com/questions/63840249/pandas-in-df-column-extract-string-after-colon-if-colon-exits-if-not-keep-text
-    df['Produces'] = df['psy_out_key'].str.split(':').str[-1]
-    df_out_col_list = df['psy_out_key'].tolist()
-    df_in_col_list = df['psy_in_key'].tolist()
-    out_list2 = get_values(df_out_col_list)
-    in_list2 = get_values(df_in_col_list)
-    df['Produces2'] = out_list2
-    df["Produces1"] = in_list2
-    df["original_string"] = input_image
-    match_groups_np = np.array(match_groups)
-    df["match groups"] = match_groups_np
-    #: Use Produces column and match groups column to produce i
-    match_groups = df["match groups"].tolist()
-    produces = df["Produces2"].tolist()
-    produces1 = df["Produces1"].tolist() 
-    new_list = []
-    for i in range(0, len(produces)):
-        if produces[i] == None:
-            new_list.append(match_groups[i])
-        else:
-            new_val = pad_it(produces[i], match_groups[i], produces1[i])
-            new_list.append(new_val)
-    df['newlist'] = new_list
-    df["final"] = "".join(df["newlist"].tolist())
-    final_str = "".join(df["newlist"].tolist())
-    return final_str
-
-def temp_to_final_filename(final_filename, digit_channame_dict):
-    """
-    Args:
-        final_filename: img_x001_y001_starttempnum_GFP_endtempnum_regexstart_ddddd_regexend_.tif
-        digit_channame_dict: {0: 'DAPI', 1: 'GFP', 2: 'TXRED'}
-    Returns:
-        new_filename: img_x001_y001_00001.tif
-    """
-    temp_dict = []
-    result = re.search('starttempnum_(.*)_endtempnum_regexstart_(.*)_regexend_', final_filename)
-    x = result.group(1)
-    temp_dict.append(x)
-    #: Use temp_dict_sorted to sort channels alphabetically
-    channel_dict = {}
-    re_string = 'starttempnum_(.*)_endtempnum_regexstart_(.*)_regexend_'
-    result = re.search(re_string, final_filename)
-    x = result.group(1)
-    li = None
-    for each_key, each_value in digit_channame_dict.items():
-        if x == each_value:
-            li = each_key
-    out_format = result.group(2)
-    pad_digit = "{:0" + str(len(out_format)) + str(out_format[0]) + "}"
-    tmp_string = "{}".format(pad_digit)
-    data2 = tmp_string.format(li)
-    channel_dict[data2] = x
-    new_filename = re.sub(re_string, data2, final_filename)
-    return new_filename
-    
-def convert_filename(input_image, output_directory_name, input_pattern, output_pattern, input_images):
-    """
-    Args:
-        input_image: img_x01_y01_GFP.tif
-        output_directory_name: output_image_collection_1
-        input_pattern: img_x(var_x:dd)_y(var_y:dd)_(var_name:.*).tif
-        output_pattern: newdata_x(var_x:ddd)_y(var_y:ddd)_c(var_name:ddddd).tif
-        input_images: [PosixPath('image_collection_1/img_x01_y01_DAPI.tif'), PosixPath('image_collection_1/img_x01_y01_TXRED.tif'), PosixPath('image_collection_1/img_x01_y01_GFP.tif')]
-    Returns:
-        renamed_filepath: output_image_collection_1/img_x001_y001_00001.tif
-    
-    """
-    #: Initialize variables
-    input_pattern = add_curly_brackets(input_pattern)
-    output_pattern = add_curly_brackets(output_pattern)
-    #: ['img_x', '{var_x:dd}', '_y', '{var_y:dd}', '_', '{var_name:c+}', '.tif']
-    input_pattern_as_list = [
-        ", ".join(x.split()) for x in re.split(r'[()]', input_pattern) if x.strip()] 
-    #: ['newdata_x', '{var_x:ddd}', '_y', '{var_y:ddd}', '_c', '{var_name:ddd}', '.tif'] 
-    output_pattern_as_list = [
-        ", ".join(x.split()) for x in re.split(r'[()]', output_pattern) if x.strip()]    
-    #: Build dict: key=match group id, value=regex pattern
-    var_digits_dict_input = build_var_digits_dict(input_pattern_as_list) #: {'var_x': 'dd', 'var_y': 'dd', 'var_name': 'c+'}
-    var_digits_dict_output = build_var_digits_dict(output_pattern_as_list) #: {'var_x': 'ddd', 'var_y': 'ddd', 'var_name': 'dddd'}
-    #: Create dictionary {0: 'DAPI', 1: 'GFP', 2: 'TXRED'}
-    digit_channame_dict = make_digit_channel_dict(input_images) 
-    #: Build pseudoregex true regex dict
-    #: Ex {'img_x': 'img_x', 'var_x:dd': '(\\d\\d)', '_y': '_y', 'var_y:dd': '(\\d\\d)', '_': '_', 'var_name:.*': '(.*)', '.tif': '.tif'}
-    pseudoregex_trueregex_in_dict = build_psuedoregex_trueregex_dict(
-        input_pattern_as_list, var_digits_dict_input) 
-    pseudoregex_trueregex_out_dict = build_psuedoregex_trueregex_dict(
-        output_pattern_as_list, var_digits_dict_output)
-    #: Build match groups column 
-    psy_in_vals = list(pseudoregex_trueregex_in_dict.values())
-    #: Add parenthesis to each match group in list if doesnt contain parenthesis already
-    #: Ex: ['(img_x)', '(\\d\\d)', '(_y)', '(\\d\\d)', '(_)', '(.*)', '(.tif)']
-    match_grouping_list = [
-        "(" + item + ")" if item.startswith("(") == False else item for item in psy_in_vals
+    #: Separate input and output file pattern components into a list
+    fpattern_list = [
+        ", ".join(x.split()) for x in re.split(r"[{}]", fpattern) if x.strip()
         ] 
-    #: regex_groups = (img_x)(\d\d)(_y)(\d\d)(_)(.*)(.tif)
+    #: ["n", "{row:d}", "_y", "{col:dd}", "_c", "{chan:ddd}", ".tif"] 
+    outpattern_list = [
+        ", ".join(x.split()) for x in re.split(r"[{}]", outpattern) if x.strip()
+        ]    
+    #: Convert file pattern to computer-readable regex and store in dict
+    pseudoregex_trueregex_in_dict = translate_regex(fpattern_list) 
+    pseudoregex_trueregex_out_dict = translate_regex(outpattern_list)
+    #: Build match groups column 
+    logger.info("Psy in vals: {}".format(pseudoregex_trueregex_in_dict))
+    #: Add parentheses to match groups lacking parentheses
+    match_grouping_list = [
+        "(" + item + ")" if item.startswith("(") == False else item 
+        for item in pseudoregex_trueregex_in_dict
+        ]
     regex_groups = "".join(match_grouping_list)
     logger.debug("Regex Groups: {}".format(regex_groups))
     logger.debug("Image Name: {}".format(input_image))
     #: Search filename for regex match groups
     matches = re.search(regex_groups, input_image)
     logger.debug("Matches: {}".format(matches))
-    final_filename = None  
-    #: Create intermediate filename to look like img_x001_y001_starttempnum_TXRED_endtempnum_regexstart_ddddd_regexend_.tif
-    try:
-        match_groups = list(matches.groups())
-        final_filename = build_dataframe(
-            pseudoregex_trueregex_in_dict, 
-            pseudoregex_trueregex_out_dict, 
-            input_image, match_groups
+    #: Create intermediate output filename with markers for c-->d regex 
+    #: Ex: new_x01_y001_c_rgxstart_[0-9]{3}_rgxmid_GFP_rgxend_.tif
+    input_loc = 0
+    output_loc = 0
+    for part in range(0,len(pseudoregex_trueregex_in_dict)):
+        # We only change the ones that are not regex here
+        #: Process non-regex matches (lack [0-9] or [a-zA-Z])
+        if "[" not in pseudoregex_trueregex_in_dict[part]:
+            match_in_input = pseudoregex_trueregex_in_dict[part]
+            match_in_output = pseudoregex_trueregex_out_dict[part]
+            #: returns the index of first occurrence of the substring
+            loc = input_image.find(match_in_input, input_loc)
+            temp_fp = (
+                input_image[0: loc] 
+                + match_in_output 
+                + input_image[loc + len(match_in_input):]
+                )
+            #: Starting input_loc is where we are searching from
+            input_loc = loc + len(match_in_output)
+            output_loc = temp_fp.find(match_in_output, output_loc)
+            input_image = temp_fp
+        else:
+            rgx_match_in = pseudoregex_trueregex_in_dict[part]
+            rgx_match_out = pseudoregex_trueregex_out_dict[part]
+            result = re.search(rgx_match_in, input_image[input_loc:])
+            match_in_input = result.group(0)
+            match_in_output = format_output_digit(
+                match_in_input, rgx_match_in, rgx_match_out
+                )
+            loc = input_image.find(match_in_input, input_loc)
+            temp_fp = (
+                input_image[0: loc] 
+                + match_in_output 
+                + input_image[loc 
+                + len(match_in_input):]
+                )
+            #: Starting input_loc is where we are searching from
+            input_loc = loc + len(match_in_output)
+            output_loc = temp_fp.find(match_in_output, output_loc)
+            input_image = temp_fp
+    return temp_fp
+  
+def format_output_digit(match_in_input, rgx_match_in, rgx_match_out):
+    """
+    Change number of digits based on regex pattern or mark if c->d.
+    
+    This function formats the number of digits using the # of digits in
+    the output format. This marks any substring where the input 
+    pattern is a character and the output pattern is a digit for later 
+    processing. Otherwise, where input and output pattern data types 
+    agree, it converts the value to a designated number of output 
+    digits/characters.
+    
+    Example:
+    If input starts with [a-z] and output starts with [0-9], one may 
+    expect the following:
+    
+    Args:
+        match_in_input: GFP
+        rgx_match_in: [a-zA-Z]{2}
+        rgx_match_out:[0-9]{3}
+        
+    Returns:
+        formatted_digit: 001
+    """
+    #: Mark substring where input pattern is char and output is digit
+    if rgx_match_in.startswith("[a-zA-Z]") and "[0-9]" in rgx_match_out:
+        formatted_digit = (
+            "_rgxstart_" 
+            + rgx_match_out 
+            + "_rgxmid_" 
+            + match_in_input 
+            + "_rgxend_"
             )
-        new_filename = temp_to_final_filename(
-            final_filename, digit_channame_dict
-            )
-        renamed_filepath = Path(Path(output_directory_name) / Path(new_filename))
-        return renamed_filepath
-    except AttributeError as e:
-        logger.error("Ensure that your file pattern matches file names")
-        logger.error(e)
+    elif rgx_match_out.endswith("}"):
+        loc = rgx_match_out.find("{") + 1
+        num = str(rgx_match_out[loc:-1])
+        #: d for Decimal Integer. Outputs the number in base 10.
+        if rgx_match_out.startswith("[0-9]"):
+            format_str = "{:0" + num + "d}"
+        #: s for String format.
+        elif rgx_match_out.startswith("[a-zA-Z]"):
+            format_str = "{:0" + num + "s}"
+        formatted_digit = str(format_str.format(int(match_in_input)))
+    #: For remaining, no need to fix # of output digits/characters
+    else:
+        formatted_digit = match_in_input
+    return formatted_digit
 
+def translate_regex(fpatt_list):
+    """
+    Convert user-supplied "pseudoregex" to the proper regex format. 
+    
+    Store properly formatted regex as a value in a dictionary.
+    
+    Args:
+        fpatt_list: ["img_x", "row:dd", "_y", "col:dd", "_", "channel:c+", ".tif"]
+        
+    Returns:
+        rgx_lst: ["img_x", "[0-9]{2}", "_y", "[0-9]{2}", "_", "[a-zA-Z]*", ".tif"]
+    """
+    new_pattern = ""
+    rgx_lst = []
+    #: Loop through each match group
+    for i in range (0, len(fpatt_list)):
+        #: Isolate x:x values
+        if ":" in fpatt_list[i]:
+            #: Loop through dictionary of variables and regex
+            regex_digit = fpatt_list[i].split(":",1)[1]
+            #: Properly format file pattern into regex
+            new_val = ""
+            #: Inform user to keep it as dd, or ff, cc, or ii
+            #: Process floats and integers
+            if regex_digit == "d+":
+                new_val = "[0-9]*"
+            elif regex_digit == "c+":
+                new_val = "[a-zA-Z]*"
+            elif regex_digit == "i+":
+                new_val = "[0-9]*"
+            elif regex_digit == "f+":
+                new_val = "[+-]?([0-9]*[.])?[0-9]+"
+            #: Process remaining not listed above
+            elif "d" in regex_digit or "i" in regex_digit:
+                # Produce a regex group matching digits with # of chars
+                digit_count = "{" + str(len(regex_digit)) + "}"
+                new_val = "[0-9]" + digit_count
+            elif "c" in regex_digit:
+                #: count c's
+                c_count = "{" + str(len(regex_digit)) + "}"
+                new_val = "[a-zA-Z]" + c_count
+            new_pattern = new_pattern + new_val
+            rgx_lst.append(new_val)      
+        else: 
+            new_patt = "(" + fpatt_list[i] + ")"
+            rgx_lst.append(fpatt_list[i])
+            new_pattern = new_pattern + new_patt
+    return rgx_lst
+
+def str_to_num(input_file, chan_data_dict_sorted):
+    """
+    This function converts strings to numbers based on a file pattern.
+    
+    This function looks for marker that indicates input pattern was 
+    character and output pattern was digit.
+    Using sorted dictionary of strings from input, assign numbers 1+ 
+    to the strings.
+    Convert into proper number of digits based on output regex pattern
+    
+    Args:
+        input_file:  image_collection_1/img_x01_y01_GFP.tif
+        chan_data_dict_sorted  {
+        "1": {fpath: n1_y01_c_rgxstart_[0-9]{3}_rgxmid_DAPI_rgxend_.tif}, 
+        "2": {fpath: n1_y01_c_rgxstart_[0-9]{3}_rgxmid_GFP_rgxend_.tif}, 
+        "3": {fpath: n1_y01_c_rgxstart_[0-9]{3}_rgxmid_TXRED_rgxend_.tif}} 
+        
+    Returns:
+        final_filename:  n1_y01_c001.tif
+    """
+    input_file_name = str(Path(input_file).name)
+    for k,v in chan_data_dict_sorted.items():
+        current_dict = v
+        for k2,v2 in current_dict.items():
+            if input_file_name == str(k2.name):
+                #: get the substring between two markers 
+                start = v2.find("_rgxstart_") + len("_rgxstart_")
+                end = v2.find("_rgxmid_")
+                #: #: [0-9]{3}
+                rgx_match_out = v2[start:end]                
+                #: Combine chan_num, rgx_match_out, and match_in_input
+                chan_num = k
+                #: Convert chan_num to correct number of digits
+                if rgx_match_out.endswith("}"):
+                    loc = rgx_match_out.find("{") + 1
+                    num = str(rgx_match_out[loc:-1])
+                    format_str = "{:0" + num + "d}"
+                    formatted_digit = str(format_str.format(int(chan_num)))
+                #: For remaining, no need to fix # of output digits/char
+                else:
+                    formatted_digit = chan_num
+                #: Replace entire string marker with replacement
+                start2 = v2.find("_rgxstart_") 
+                end2 = v2.find("_rgxend_") + len("_rgxend_")
+                final_filename = v2[:start2] + formatted_digit + v2[end2:]
+                return final_filename
+                
 if __name__ == "__main__":
     #: Initialize the logger
     logging.basicConfig(
@@ -323,7 +241,12 @@ if __name__ == "__main__":
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(
         prog="main",
-        description="Renames files from a given image collection using file renaming pattern"
+        description="""
+            Renames files from a given image collection using file 
+            renaming pattern. Patterns should be d or i for 
+            digit/integer, c for character, f for floating point. 
+            Example: dd looks for 2 digits. Add + to prevent fixing the 
+            number of output digits/characters."""
         )
     parser.add_argument(
         "--inpDir",
@@ -367,12 +290,31 @@ if __name__ == "__main__":
     logger.debug("Defining paths...")
     input_directory = inpDir
     input_images = [p for p in input_directory.iterdir() if p.is_file()]
+    output_files_to_adjust = {}
     for input_file in input_directory.iterdir():
         logger.info("Parsing {}".format(input_file))
         output_file = convert_filename(
-            str(input_file.name), Path(outDir), 
-            filePattern, outFilePattern, input_images
-            )
-        logger.info("Output file {}".format(output_file))
-        logger.info("Copying output file ", output_file, "...")
-        shutil.copy2(input_file, Path(output_file))
+            str(input_file.name), filePattern, outFilePattern)
+        output_files_to_adjust[input_file] = output_file
+        logger.info("Output file location: {}".format(output_file))
+    chan_filemarker_dict = {}
+    for each_key, each_value in output_files_to_adjust.items():
+        #: get the substring between two markers 
+        start = each_value.find("_rgxmid_") + len("_rgxmid_")
+        end = each_value.find("_rgxend_")
+        substring = each_value[start:end]
+        chan_filemarker_dict[substring] = {each_key: each_value}
+    chan_data_dict = {}  
+    for key in sorted(chan_filemarker_dict.keys()):
+        chan_data_dict[key] = chan_filemarker_dict[key]
+    chan_fmarker_dict = {}
+    i = 1
+    for k,v in chan_data_dict.items():
+        chan_fmarker_dict[i] = v
+        i = i + 1
+    #: Get output filename/path. Copy to output collection.   
+    for input_file in input_directory.iterdir():
+        #: final_filename:  newdata_x001_y001_c002.tif
+        #:  This function converts marked strings to numbers
+        final_fname = outDir / Path(str_to_num(input_file, chan_fmarker_dict))
+        shutil.copy2(input_file, final_fname)
