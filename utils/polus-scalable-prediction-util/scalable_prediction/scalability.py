@@ -292,7 +292,7 @@ def scalable_prediction(bioreader_obj : bfio.bfio.BioReader,
                         out_view[out_view == old_lab] = mini
                         # check to make sure that the old label does not exist
                         # anywhere else.
-                        for ypos1, xpos1 in segment_locations[old_lab]:
+                        for ypos1, xpos1, zpos1, cpos1, tpos1 in segment_locations[old_lab]:
                             # if it does exist someplace else, then update that tile with 
                             # the new label
                             with bfio.BioReader(biowriter_obj_location, max_workers=1) as read_bw:
@@ -302,10 +302,27 @@ def scalable_prediction(bioreader_obj : bfio.bfio.BioReader,
                                 xpos1, xpos2 = get_dim1dim2(dim1=xpos1, 
                                                             image_size=read_bw.shape[1], 
                                                             window_size=window_size[1])
-                                replace_image = read_bw[ypos1:ypos2,xpos1:xpos2]
+                                zpos1, zpos2 = get_dim1dim2(dim1=zpos1, 
+                                                            image_size=read_bw.shape[2], 
+                                                            window_size=window_size[2])
+                                cpos1, cpos2 = get_dim1dim2(dim1=cpos1, 
+                                                            image_size=read_bw.shape[3], 
+                                                            window_size=window_size[3])
+                                tpos1, tpos2 = get_dim1dim2(dim1=xpos1, 
+                                                            image_size=read_bw.shape[4], 
+                                                            window_size=window_size[4])
+                                replace_image = read_bw[ypos1:ypos2,
+                                                        xpos1:xpos2,
+                                                        zpos1:zpos2,
+                                                        cpos1:cpos2,
+                                                        tpos1:cpos2]
                                 replace_image[replace_image == old_label] = new_label
-                                biowriter_obj[ypos1:ypos2, xpos1:xpos2] = replace_image
-                            segment_locations[old_lab].remove((ypos1, xpos1))
+                                biowriter_obj[ypos1:ypos2, 
+                                              xpos1:xpos2,
+                                              zpos1:zpos2,
+                                              cpos1:cpos2,
+                                              tpos1:tpos2] = replace_image
+                            segment_locations[old_lab].remove((ypos1,xpos1,zpos1,cpos1,tpos1))
                         # if labels are being replaced, then the algorithm needs to make sure 
                         # that the next label prediction uses that label number instead of 
                         # skipping over it.
@@ -350,9 +367,9 @@ def scalable_prediction(bioreader_obj : bfio.bfio.BioReader,
         # are saved to the global output.
         for new in new_labels:
             if new in segment_locations.keys(): 
-                segment_locations[new].append((y1,x1))
+                segment_locations[new].append((y1,x1,z1,c1,t1))
             else: 
-                segment_locations[new] = [(y1,x1)]
+                segment_locations[new] = [(y1,x1,z1,c1,t1)]
         
 
         # some areas of overlap had no prediction and one prediction, so
