@@ -18,6 +18,8 @@ from csbdeep.utils import normalize
 from splinedist.models import Config2D, SplineDist2D, SplineDistData2D
 from splinedist.utils import phi_generator, grid_generator
 
+import matplotlib.pyplot as plt
+
 def get_dim1dim2(dim1 : int, 
                  image_size : int, 
                  window_size : int):
@@ -116,118 +118,6 @@ def sliding_window(image : bfio.bfio.BioReader,
                             yxzct[3][0]:yxzct[3][1],
                             yxzct[4][0]:yxzct[4][1]])
 
-
-def fill_in_output_with_input(yxzct : tuple, 
-                              br_input : bfio.bfio.BioReader, 
-                              br_output : bfio.bfio.BioWriter,
-                              tile_len : int,
-                              max_val=None,
-                              min_val=None):
-
-    """ This function reads the br_input and copies it br_output padded.  
-    The padding changes the shape of the br_output to be in mulitples of 
-    the tile_len.  While copying tiles of the input to the output, it also 
-    updates the max_val.
-    Args:
-        yxzct : the range of dimensions for tiled section of the br_input
-        br_input : bfio object that is being read from
-        br_output : bfio object that is being written to
-        tile_len : the size of the tiles
-        max_val : global maximum of the bfio object
-    Returns: 
-        max_val : returns an updated value for max_val
-    """
-
-    # the starting and ending of each dimension
-    # the dimensions are in order
-    y1, y2 = yxzct[0]
-    x1, x2 = yxzct[1]
-    z1, z2 = yxzct[2]
-    c1, c2 = yxzct[3]
-    t1, t2 = yxzct[4]
-
-    # the amount of padding that needs to be done to the br_input's tile
-    y_padding = int(abs(tile_len - (y2 - y1)))
-    x_padding = int(abs(tile_len - (x2 - x1)))
-    z_padding = int(abs(tile_len - (z2 - z1)))
-    c_padding = int(abs(tile_len - (c2 - c1)))
-    t_padding = int(abs(tile_len - (t2 - t1)))
-
-    # The input tile
-    tiled_input = br_input[y1:y2, x1:x2, 0, 0, 0]
-    
-    # Return the max and min value
-    min_tile_val = np.min(tiled_input)
-    max_tile_val = np.max(tiled_input)
-
-    # copies the padded input to the output
-    padded_input = np.pad(tiled_input, ((0,y_padding), (0,x_padding)))
-    br_output[y1:y2+y_padding, x1:x2+x_padding] = padded_input
-    
-    return (min_tile_val, max_tile_val)
-
-    
-
-def make_input_compatible(input_image : str, 
-                          output_image : str,
-                          tile_len : int):
-    
-    """ This function adds padding to the input image so that bfio's 
-    BioWriter can read and write properly in perfect tiles.  
-    Args:
-        input_image - location of image that needs to be modified 
-        output_image - location of image that has been modified
-        tile_len - the size of the tile to be compatible with bfio.
-    Returns:
-        input_image - if the input is properly shaped, then it returns the 
-                      the location of the input.
-        output_image - if the input is not properly shaped, then it returns
-                      the location of the padded input (or new output).
-        max_value - the largest value in the input.  This parameter is 
-                    necessary when normalizing the tile
-    """
-
-    with bfio.BioReader(input_image) as br_input:
-        br_input_shape = br_input.shape
-
-        br_padding = np.array([0 if shape == 1 
-                               else int(np.ceil(shape/tile_len)*tile_len) - shape 
-                               for shape in br_input_shape])
-
-
-        with bfio.BioWriter(output_image,
-                            Y = br_input_shape[0] + br_padding[0],
-                            X = br_input_shape[1] + br_padding[1],
-                            Z = br_input_shape[2] + br_padding[2],
-                            C = br_input_shape[3] + br_padding[3],
-                            T = br_input_shape[4] + br_padding[4]) as br_output:
-
-            tiles = (tile_len,tile_len,tile_len,tile_len,tile_len)
-            
-            # the ranges are combined so that the code can iterate through them rather 
-            # than for loop through them.  Allows for multiprocessing.
-            yxzct_ranges = get_ranges(image_shape = br_input_shape, 
-                                        window_size = tiles,
-                                        step_size   = tiles)
-            yxzct_ranges = list(yxzct_ranges)
-
-            # keep track of global maximum in image
-            # use multiprocessing to read multiple tiles of the input at once.
-                # max_val = fill_in_output_with_input(yxzct, br_input, br_output, tile_len, max_val)
-            # for yxzct in yxzct_ranges:
-            with futures.ThreadPoolExecutor(max_workers=max([cpu_count()-1,2])) as exec:
-                min_max_vals = [exec.submit(fill_in_output_with_input, 
-                                      yxzct = yxzct, 
-                                      br_input = br_input,
-                                      br_output = br_output,
-                                      tile_len = tile_len).result() for yxzct in yxzct_ranges]
-
-    max_val = np.max(min_max_vals)
-    min_val = np.min(min_max_vals)
-
-    return output_image, max_val, min_val
-
-
 def compare_overlaps(overlap_pairs : np.ndarray):
     """ This function looks at all the overlapping pairs. 
     The first variable in the tuple is the old label and the 
@@ -279,7 +169,7 @@ def scalable_prediction(bioreader_obj : bfio.bfio.BioReader,
                         biowriter_obj_location : str,
                         overlap_size : tuple,
                         prediction_fxn,
-                        step_size=(1024,1024,1,1,1)):
+                        step_size = (1024,1024,1,1,1)):
 
     """
     Args:
@@ -302,27 +192,34 @@ def scalable_prediction(bioreader_obj : bfio.bfio.BioReader,
                                                            len(overlap_size),
                                                            step_size,
                                                            overlap_size)
-    
     assert len(step_size) == len(overlap_size), assertion_string
 
-    step_size_assert = np.unique([True for step in step_size if (step%1024==0) or (step==1)])
-    assert step_size_assert[0]==True and len(step_size_assert == 1)
+    assert isinstance(bioreader_obj, bfio.bfio.BioReader), \
+        """bioreader_obj is not of <class bfio.bfio.BioReader>"""
+    assert isinstance(biowriter_obj, bfio.bfio.BioWriter), \
+        """biowriter_obj is not of <class bfio.bfio.BioWriter>"""
 
-    assert isinstance(bioreader_obj, bfio.bfio.BioReader)
-    assert isinstance(biowriter_obj, bfio.bfio.BioWriter)
+    assert_stepsize_dims  = np.array([shape%1024 if shape != 1 else 0 for shape in step_size])
+    assert np.all((assert_stepsize_dims==0))
 
+    assert_biowriter_shape = np.array([shape%1024 if shape != 1 else 0 for shape in biowriter_obj.shape])
+    assert np.all((assert_biowriter_shape==0))
+    
     window_size = tuple(sum(win) for win in zip(step_size, overlap_size))
     
+
 
     max_label = 0
     segment_locations = {}
     skipped_segments = []
+    
 
     for yxzct, tiled_image in sliding_window(bioreader_obj, 
                                              bioreader_obj.shape, 
                                              window_size, 
                                              step_size):
 
+        
         y1, y2 = yxzct[0]
         x1, x2 = yxzct[1]
         z1, z2 = yxzct[2]
@@ -331,6 +228,16 @@ def scalable_prediction(bioreader_obj : bfio.bfio.BioReader,
 
         tiled_pred = prediction_fxn(tiled_image)
         tiled_pred_shape = tiled_pred.shape
+        padding_to_pred = [0 if tiled_pred_shape[i] > step_size[i]
+                             else abs(tiled_pred_shape[i] - step_size[i])
+                             for i in range(len(tiled_pred_shape))]
+
+        tiled_pred = np.pad(tiled_pred, ((0,padding_to_pred[0]), 
+                                         (0,padding_to_pred[1]), 
+                                         (0,padding_to_pred[2]),
+                                         (0,padding_to_pred[3]),
+                                         (0,padding_to_pred[4])), 
+                                         'constant', constant_values = '0')
 
         # Need to get the bit that is overlapping
         if y1 == 0 and x1 == 0:
@@ -338,8 +245,14 @@ def scalable_prediction(bioreader_obj : bfio.bfio.BioReader,
             out_view = np.zeros(tiled_pred_shape)
         else:
             with bfio.BioReader(biowriter_obj_location, max_workers=1) as read_bw:
-                out_view = read_bw[y1:y2, x1:x2, :, :, :]
+                out_view = read_bw[y1:y2, x1:x2, z1:z2, c1:c2, t1:t2]
                 out_view = np.reshape(out_view, tiled_pred_shape)
+                out_view = np.pad(out_view, ((0,padding_to_pred[0]), 
+                                             (0,padding_to_pred[1]), 
+                                             (0,padding_to_pred[2]),
+                                             (0,padding_to_pred[3]),
+                                             (0,padding_to_pred[4])), 
+                                             'constant', constant_values = '0')
         
         # Gets all the pairs that overlap each other in the overlap strip.
         unique_pairs = np.unique(np.c_[out_view.flatten(), tiled_pred.flatten()], axis=0)
@@ -389,7 +302,7 @@ def scalable_prediction(bioreader_obj : bfio.bfio.BioReader,
                                 xpos1, xpos2 = get_dim1dim2(dim1=xpos1, 
                                                             image_size=read_bw.shape[1], 
                                                             window_size=window_size[1])
-                                replace_image = read_bw[ypos1:ypos2, xpos1:xpos2]
+                                replace_image = read_bw[ypos1:ypos2,xpos1:xpos2]
                                 replace_image[replace_image == old_label] = new_label
                                 biowriter_obj[ypos1:ypos2, xpos1:xpos2] = replace_image
                             segment_locations[old_lab].remove((ypos1, xpos1))
@@ -441,9 +354,14 @@ def scalable_prediction(bioreader_obj : bfio.bfio.BioReader,
             else: 
                 segment_locations[new] = [(y1,x1)]
         
+
         # some areas of overlap had no prediction and one prediction, so
         # in areas where there are no prediction (pixels values = 0) and 
         # in areas where are predictions (pixel values > 0), then the 
         # algorithm saves all instances of predictions made to the output.
         maxes = np.maximum(out_view, tiled_pred)
-        biowriter_obj[int(y1):int(y2), int(x1):int(x2), :, :, :] = maxes
+        biowriter_obj[y1:y2+padding_to_pred[0], 
+                      x1:x2+padding_to_pred[1], 
+                      z1:z2+padding_to_pred[2],
+                      c1:c2+padding_to_pred[3],
+                      t1:t2+padding_to_pred[4]] = maxes
