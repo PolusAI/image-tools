@@ -24,7 +24,8 @@ def get_dim1dim2(dim1 : int,
                  image_size : int, 
                  window_size : int):
     """ This function returns the range for the dimension 
-    starting at dim1 and ending at dim2.
+    starting at dim1 and ending at dim2.  It also converts
+    dim1 to an integer.
     Args :
         dim1 : the starting point of the range
         image_size : the largest value that dim2 could be
@@ -44,7 +45,7 @@ def get_dim1dim2(dim1 : int,
         # otherwise it would be the (dim1 + window_size)
         dim2 = int(dim1+window_size)
     
-    return (int(dim1), int(dim2))
+    return (dim1, dim2)
 
 
 def get_ranges(image_shape : tuple,
@@ -172,6 +173,21 @@ def scalable_prediction(bioreader_obj : bfio.bfio.BioReader,
                         step_size = (1024,1024,1,1,1)):
 
     """
+    This function iterates through the bioreader and makes a prediction 
+    on the tiles using the model specified in the prediction_fxn variable.  
+
+    In order to piece together segments that have broken apart due to making 
+    predictions on tiles rather than all at once, the next tile overlaps with
+    the previous tile.  This helps the algorithm identify which 'broken' 
+    segments belong to the same segment.  
+
+    If two individual segments are identified as one segment in any of its
+    prediction, then the algorithm clumps the two individual segments into 
+    one (worst case scenario for predicting).  In this situation, if a broken 
+    piece lies outside the current view of the tile, then it rereads the bio-
+    writer object and makes the necessary updates to a tile that has already 
+    been written. 
+
     Args:
         bioreader_obj - bfio object that contains intensity-based information 
                        that the algorithm predicts on.
@@ -219,7 +235,6 @@ def scalable_prediction(bioreader_obj : bfio.bfio.BioReader,
                                              window_size, 
                                              step_size):
 
-        
         y1, y2 = yxzct[0]
         x1, x2 = yxzct[1]
         z1, z2 = yxzct[2]
@@ -296,6 +311,7 @@ def scalable_prediction(bioreader_obj : bfio.bfio.BioReader,
                             # if it does exist someplace else, then update that tile with 
                             # the new label
                             with bfio.BioReader(biowriter_obj_location, max_workers=1) as read_bw:
+                                # get the range (dim2) for all the dimensions
                                 ypos1, ypos2 = get_dim1dim2(dim1=ypos1,
                                                             image_size=read_bw.shape[0],
                                                             window_size=window_size[0])
