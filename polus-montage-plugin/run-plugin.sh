@@ -4,7 +4,7 @@ version=$(<VERSION)
 datapath=$(readlink --canonicalize ../data)
 
 # Inputs
-filePattern=r01c01f\{p+\}p{z+}-ch1sk1fk1fl1.ome.tif
+filePattern=test_p{p+}-z{z+}.ome.tif
 inpDir=/data/input
 layout=pz
 
@@ -16,6 +16,7 @@ gridSpacing=10
 outDir=/data/output
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
+            --user $(id -u):$(id -g) \
             labshare/polus-montage-plugin:${version} \
             --filePattern ${filePattern} \
             --inpDir ${inpDir} \
