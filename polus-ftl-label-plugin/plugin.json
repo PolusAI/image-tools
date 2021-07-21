@@ -1,14 +1,14 @@
 {
     "name": "FTL Label",
-    "version": "0.2.2",
+    "version": "0.3.4",
     "title": "FTL Label",
     "description": "Label objects in a 2d or 3d binary image.",
-    "author": "Nick Schaub (nick.schaub@nih.gov)",
+    "authors": "Nick Schaub (nick.schaub@nih.gov), Najib Ishaq (najib.ishaq@axleinfo.com)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-ftl-label-plugin:0.2.2",
+    "containerId": "labshare/polus-ftl-label-plugin:0.3.4",
     "inputs": [
       {
         "name": "inpDir",
@@ -32,14 +32,14 @@
     ],
     "ui": [
       {
-        "key": "inputs.connectivity",
-        "title": "Connectivity",
-        "description": "City block connectivity"
-      },
-      {
         "key": "inputs.inpDir",
         "title": "Input collection",
         "description": "Input image collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.connectivity",
+        "title": "Connectivity",
+        "description": "City block connectivity"
       }
     ]
   }
