@@ -14,12 +14,6 @@ from bfio import BioReader, BioWriter
 
 import numpy as np
 
-from csbdeep.utils import normalize
-from splinedist.models import Config2D, SplineDist2D, SplineDistData2D
-from splinedist.utils import phi_generator, grid_generator
-
-import matplotlib.pyplot as plt
-
 def get_dim1dim2(dim1 : int, 
                  image_size : int, 
                  window_size : int):
@@ -222,8 +216,6 @@ def scalable_prediction(bioreader_obj : bfio.bfio.BioReader,
     assert np.all((assert_biowriter_shape==0))
     
     window_size = tuple(sum(win) for win in zip(step_size, overlap_size))
-    
-
 
     max_label = 0
     segment_locations = {}
@@ -235,6 +227,7 @@ def scalable_prediction(bioreader_obj : bfio.bfio.BioReader,
                                              window_size, 
                                              step_size):
 
+        print(yxzct)
         y1, y2 = yxzct[0]
         x1, x2 = yxzct[1]
         z1, z2 = yxzct[2]
@@ -327,7 +320,7 @@ def scalable_prediction(bioreader_obj : bfio.bfio.BioReader,
                                 tpos1, tpos2 = get_dim1dim2(dim1=xpos1, 
                                                             image_size=read_bw.shape[4], 
                                                             window_size=window_size[4])
-                                replace_image = read_bw[ypos1:ypos2,
+                                replace_image = re-ad_bw[ypos1:ypos2,
                                                         xpos1:xpos2,
                                                         zpos1:zpos2,
                                                         cpos1:cpos2,
