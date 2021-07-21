@@ -4,8 +4,8 @@ import unittest
 # initializing parent directory
 polus_predict_tiles = os.path.abspath(__file__ + 2 * '/..')
 sys.path.append(polus_predict_tiles)
-from scalable_prediction.scalability import \
-    scalable_prediction
+from tiledpredictions.predict_tiles import \
+    predict_in_tiles
 
 # libraries related to reading and writing from input and outputs, respectively
 import tempfile
@@ -155,11 +155,11 @@ class TestEncodingDecoding(unittest.TestCase):
                                                       pmax_val=pmax)
 
                     # Run the prediction on tiles.
-                    scalable_prediction(bioreader_obj=br_image,
-                                        biowriter_obj=tiled_bw_pred,
-                                        biowriter_obj_location = tiled_output_zarr,
-                                        overlap_size =(24,24,0,0,0),
-                                        prediction_fxn=splinedist_prediction_lambda)
+                    predict_in_tiles(bioreader_obj=br_image,
+                                     biowriter_obj=tiled_bw_pred,
+                                     biowriter_obj_location = tiled_output_zarr,
+                                     overlap_size =(24,24,0,0,0),
+                                     prediction_fxn=splinedist_prediction_lambda)
 
                 # Name of the output when it is predicted all at once
                 whole_output_zarr = os.path.join(temp_dir, whole_zarr_image_name)
@@ -192,6 +192,7 @@ class TestEncodingDecoding(unittest.TestCase):
                             y2 = y1 + step
                             x2 = x1 + step
 
+                            print("Y: ({}, {}), X: ({}, {})".format(y1,y2,x1,x2))
                             # fragment position of chunks relative to the entire outputs
                             ypos, xpos = y1//step, x1//step
                             counter = int((num_chunks_y*(y1//step))+(x1//step))
@@ -276,7 +277,7 @@ class TestEncodingDecoding(unittest.TestCase):
 
                                 assert (score >= .70).all()
                                 scores[counter, :] = score
-
+                            print(score)
             # make sure that the average scores among all tiles are at least greater than
                 # 85%, otherwise there may have been an error to look into.
             avg = np.average(scores, axis = 1)

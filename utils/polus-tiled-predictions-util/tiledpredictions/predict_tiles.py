@@ -1,18 +1,16 @@
 
 import os
-import shutil
-import tempfile
-
-import itertools
-from itertools import repeat
-
-from concurrent import futures
-from multiprocessing import cpu_count
 
 import bfio
 from bfio import BioReader, BioWriter
 
 import numpy as np
+
+import logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    datefmt='%d-%b-%y %H:%M:%S')
+logger = logging.getLogger("tile-labeling")
+logger.setLevel(logging.INFO)
 
 def get_dim1dim2(dim1 : int, 
                  image_size : int, 
@@ -42,45 +40,6 @@ def get_dim1dim2(dim1 : int,
     return (dim1, dim2)
 
 
-def get_ranges(image_shape : tuple,
-               window_size : tuple,
-               step_size : tuple):
-
-    """ This function generates a list of yxczt dimensions to iterate 
-    through so that bfio objects can be read in tiles. 
-    Args:
-        image_shape : shape of the whole bfio object
-        tile_len : the size of tiles
-    Returns:
-        yxzct_ranges : a list of dimensions to iterate through. 
-                       [((y1, y2), (x1, x2), (z1, z2), (c1, c2), (t1, t2)), ... ,
-                        ((y1, y2), (x1, x2), (z1, z2), (c1, c2), (t1, t2))]
-    """
-
-    y_range = list(np.arange(0, image_shape[0], step_size[0]))
-    y_range = list(map(get_dim1dim2, 
-                       y_range, repeat(image_shape[0]), repeat(window_size[0])))
-
-    x_range = list(np.arange(0, image_shape[1], step_size[1]))
-    x_range = list(map(get_dim1dim2, 
-                       x_range, repeat(image_shape[1]), repeat(window_size[1])))
-
-    z_range = list(np.arange(0, image_shape[2], step_size[2]))
-    z_range = list(map(get_dim1dim2, 
-                       z_range, repeat(image_shape[2]), repeat(window_size[2])))
-
-    c_range = list(np.arange(0, image_shape[3], step_size[3]))
-    c_range = list(map(get_dim1dim2, 
-                       c_range, repeat(image_shape[3]), repeat(window_size[3])))
-
-    t_range = list(np.arange(0, image_shape[4], step_size[4]))
-    t_range = list(map(get_dim1dim2, 
-                       t_range, repeat(image_shape[4]), repeat(window_size[4])))
-
-    # https://docs.python.org/3/library/itertools.html#itertools.product
-    yxzct_ranges = itertools.product(y_range,x_range,z_range,c_range,t_range)
-    return yxzct_ranges
-
 def sliding_window(image : bfio.bfio.BioReader, 
                    image_size : tuple, 
                    window_size : tuple, 
@@ -101,17 +60,34 @@ def sliding_window(image : bfio.bfio.BioReader,
         t1, t2 - the range of the t dimension of the bfio object
         image[y1:y2, x1:x2, z1:z2, c1:c2, t1:t2] - section of the input bfio object
     """
-    yxczt_ranges = get_ranges(image_shape = image_size,
-                              window_size = window_size,
-                              step_size = step_size)
-    
-    for yxzct in yxczt_ranges:
-        # return all dimension ranges (dim1 - dim2) and the tiled image 
-        yield (yxzct, image[yxzct[0][0]:yxzct[0][1], 
-                            yxzct[1][0]:yxzct[1][1], 
-                            yxzct[2][0]:yxzct[2][1], 
-                            yxzct[3][0]:yxzct[3][1],
-                            yxzct[4][0]:yxzct[4][1]])
+
+    for y1 in range(0, image_size[0], step_size[0]):
+        y1, y2 = get_dim1dim2(dim1=y1, 
+                              image_size=image_size[0],
+                              window_size=window_size[0])
+        for x1 in range(0, image_size[1], step_size[1]):
+            x1, x2 = get_dim1dim2(dim1=x1, 
+                                  image_size=image_size[1],
+                                  window_size=window_size[1])
+            for z1 in range(0, image_size[2], step_size[2]):
+                z1, z2 = get_dim1dim2(dim1=z1,
+                                      image_size=image_size[2],
+                                      window_size=window_size[2])
+                for c1 in range(0, image_size[3], step_size[3]):
+                    c1, c2 = get_dim1dim2(dim1=c1,
+                                            image_size=image_size[3],
+                                            window_size=window_size[3])
+                    for t1 in range(0, image_size[4], step_size[4]):
+                        t1, t2 = get_dim1dim2(dim1=t1,
+                                                image_size=image_size[4],
+                                                window_size=window_size[4])
+                        
+                        yield (y1, y2, \
+                               x1, x2, \
+                               z1, z2, \
+                               c1, c2, \
+                               t1, t2, \
+                               image[y1:y2, x1:x2, z1:z2, c1:c2, t1:t2])
 
 def compare_overlaps(overlap_pairs : np.ndarray):
     """ This function looks at all the overlapping pairs. 
@@ -159,12 +135,12 @@ def compare_overlaps(overlap_pairs : np.ndarray):
 
     return overlap_dict_l2r, overlap_dict_r2l
 
-def scalable_prediction(bioreader_obj : bfio.bfio.BioReader,
-                        biowriter_obj : bfio.bfio.BioWriter,
-                        biowriter_obj_location : str,
-                        overlap_size : tuple,
-                        prediction_fxn,
-                        step_size = (1024,1024,1,1,1)):
+def predict_in_tiles(bioreader_obj : bfio.bfio.BioReader,
+                     biowriter_obj : bfio.bfio.BioWriter,
+                     biowriter_obj_location : str,
+                     overlap_size : tuple,
+                     prediction_fxn,
+                     step_size = (1024,1024,1,1,1)):
 
     """
     This function iterates through the bioreader and makes a prediction 
@@ -222,17 +198,22 @@ def scalable_prediction(bioreader_obj : bfio.bfio.BioReader,
     skipped_segments = []
     
 
-    for yxzct, tiled_image in sliding_window(bioreader_obj, 
-                                             bioreader_obj.shape, 
-                                             window_size, 
-                                             step_size):
+    for y1, y2, \
+        x1, x2, \
+        z1, z2, \
+        c1, c2, \
+        t1, t2, \
+        tiled_image in sliding_window(bioreader_obj, 
+                                      bioreader_obj.shape, 
+                                      window_size, 
+                                      step_size):
 
-        print(yxzct)
-        y1, y2 = yxzct[0]
-        x1, x2 = yxzct[1]
-        z1, z2 = yxzct[2]
-        c1, c2 = yxzct[3]
-        t1, t2 = yxzct[4]
+        logger.info("""Predicting on tiles (YXZCT):
+        Y ({}, {}), X ({}, {}), Z ({}, {}), C ({}, {}), T ({}, {})""".format(y1, y2,
+                                                                             x1, x2,
+                                                                             z1, z2,
+                                                                             c1, c2,
+                                                                             t1, t2))
 
         tiled_pred = prediction_fxn(tiled_image)
         tiled_pred_shape = tiled_pred.shape
