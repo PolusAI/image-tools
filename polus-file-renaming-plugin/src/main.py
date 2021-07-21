@@ -141,7 +141,11 @@ def format_output_digit(match_in_input, rgx_match_in, rgx_match_out):
             + match_in_input 
             + "_rgxend_"
             )
-    elif rgx_match_out.endswith("}"):
+    # rgx match in: [a-zA-Z]{4}
+    # rgx match out: [a-zA-Z]{4}
+   
+
+    elif rgx_match_out.endswith("}") and rgx_match_in != rgx_match_out:
         loc = rgx_match_out.find("{") + 1
         num = str(rgx_match_out[loc:-1])
         #: d for Decimal Integer. Outputs the number in base 10.
