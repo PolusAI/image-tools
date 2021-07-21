@@ -1,6 +1,6 @@
 {
   "name": "BaSiC Flatfield Correction Plugin",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "title": "Flatfield correction using BaSiC algorithm.",
   "description": "Generates images used for flatfield correction using the BaSiC algorithm.",
   "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "Peng et al. \"A BaSiC tool for background and shading correction of optical microscopy images\" Nature Communications (2017)",
-  "containerId": "labshare/polus-basic-flatfield-correction-plugin:1.2.3",
+  "containerId": "labshare/polus-basic-flatfield-correction-plugin:1.2.4",
   "inputs": [
 
     {
