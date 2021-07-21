@@ -4,7 +4,7 @@ from pathlib import Path
 import regex as re
 import shutil
 
-def convert_filename(input_image, fpattern, outpattern):
+def convert_fname(input_img: str, inpatt_rgx_list: list, outpatt_rgx_list: list)->str:
     """This function performs bulk of filename conversion.
     
     This function takes the input args to produce the desired filepath. 
@@ -13,100 +13,93 @@ def convert_filename(input_image, fpattern, outpattern):
     function.
     
     Args:
-        input_image: img_x01_y01_GFP.tif
-        fpattern: img_x{row:dd}_y{col:dd}_{channel:c+}.tif
-        outpattern: new_x{row:dd}_y{col:ddd}_c{channel:ddd}.tif
+        input_img: img_x01_y01_GFP.tif
+        inpatt_rgx_list: ['r', '[0-9]{2}', '_x<00-19>_y<00-29>', '[a-zA-Z]*']
+        outpatt_rgx_list: ['row_', '[0-9]{3}', '_x<00-19>', '[a-zA-Z]*']
 
     Returns:
         temp_fp: new_x01_y001_c_rgxstart_[0-9]{3}_rgxmid_GFP_rgxend_.tif
-        """
-    logger.debug("\nCONVERT FN INPUTS: \ninput_image: {}\n", "fpattern: {}\noutpattern: {}\n".format(input_image, fpattern, outpattern))
-    #: Separate input and output file pattern components into a list
-    fpattern_list = [
-        ", ".join(x.split()) for x in re.split(r"[{}]", fpattern) if x.strip()
-        ] 
-    #: ["n", "{row:d}", "_y", "{col:dd}", "_c", "{chan:ddd}", ".tif"] 
-    outpattern_list = [
-        ", ".join(x.split()) for x in re.split(r"[{}]", outpattern) if x.strip()
-        ]    
-    #: Convert file pattern to computer-readable regex and store in dict
-    pseudoregex_trueregex_in_dict = translate_regex(fpattern_list)
-    pseudoregex_trueregex_out_dict = translate_regex(outpattern_list)
+    """
+    logger.debug("convert_fname() inputs:")
+    logger.debug("input image: {}".format(input_img))
+    logger.debug("inpatt_rgx_list: {}".format(inpatt_rgx_list))
+    logger.debug("outpatt_rgx_dict: {}".format(outpatt_rgx_list))
     #: Build match groups column 
-    logger.info("Psy in vals: {}".format(pseudoregex_trueregex_in_dict))
+    logger.info("Psy in vals: {}".format(inpatt_rgx_list))
     #: Add parentheses to match groups lacking parentheses
     match_grouping_list = [
         "(" + item + ")" if item.startswith("(") == False else item 
-        for item in pseudoregex_trueregex_in_dict
+        for item in inpatt_rgx_list
         ]
     regex_groups = "".join(match_grouping_list)
     logger.debug("Regex Groups: {}".format(regex_groups))
-    logger.debug("Image Name: {}".format(input_image))
+    logger.debug("Image Name: {}".format(input_img))
     #: Search filename for regex match groups
-
-    matches = re.search(regex_groups, input_image)
+    matches = re.search(regex_groups, input_img)
     logger.debug("Matches: {}".format(matches))
     #: Create intermediate output filename with markers for c-->d regex 
     #: Ex: new_x01_y001_c_rgxstart_[0-9]{3}_rgxmid_GFP_rgxend_.tif
     input_loc = 0
-    logger.debug("pseudoregex_trueregex_in_dict: {}".format(pseudoregex_trueregex_in_dict)) #: pseudoregex_trueregex_in_dict:  ['0', '[0-9]{5}', '-', '[0-9]{1}', '-1001001', '[0-9]{3}', '.ome.tif']
+    logger.debug("inpatt_rgx_list: {}".format(inpatt_rgx_list)) 
     output_loc = 0
-    for part in range(0,len(pseudoregex_trueregex_in_dict)):
+    for i in range(0,len(inpatt_rgx_list)): #: TODO See if behavior weird bc this is list, not dict
         # We only change the ones that are not regex here
         #: Process non-regex matches (lack [0-9] or [a-zA-Z])
-        if "[" not in pseudoregex_trueregex_in_dict[part]:
-            match_in_input = pseudoregex_trueregex_in_dict[part]
-            match_in_output = pseudoregex_trueregex_out_dict[part]
-            logger.debug("###:::###match_in_input: {}".format(match_in_input))
-            logger.debug("###:::###match_in_output: {}".format(match_in_output))
-            
+        if "[" not in inpatt_rgx_list[i]:
+            match_in_input = inpatt_rgx_list[i]
+            match_in_output = outpatt_rgx_dict[i]
+            logger.debug("match_in_input: {}".format(match_in_input))
+            logger.debug("match_in_output: {}".format(match_in_output))
             #: returns the index of first occurrence of the substring
-            loc = input_image.find(match_in_input, input_loc)
+            loc = input_img.find(match_in_input, input_loc)
             temp_fp = (
-                input_image[0: loc] 
+                input_img[0: loc] 
                 + match_in_output 
-                + input_image[loc + len(match_in_input):]
+                + input_img[loc + len(match_in_input):]
                 )
             #: Starting input_loc is where we are searching from
             input_loc = loc + len(match_in_output)
             output_loc = temp_fp.find(match_in_output, output_loc)
-            logger.debug("INPUT IMAGE BEFORE: {}".format(input_image))
-            input_image = temp_fp
-            logger.debug("INPUT IMAGE AFTER: {}".format(input_image))
+            logger.debug("input_img before: {}".format(input_img))
+            input_img = temp_fp
+            logger.debug("input_img after: {}".format(input_img))
         else:
-            rgx_match_in = pseudoregex_trueregex_in_dict[part]
+            rgx_match_in = inpatt_rgx_list[i]
             logger.debug("rgx match in: {}".format(rgx_match_in))
-            
-            rgx_match_out = pseudoregex_trueregex_out_dict[part]
+            rgx_match_out = inpatt_rgx_list[i]
             logger.debug("rgx match out: {}".format(rgx_match_out))
-            logger.debug("search area: {}".format(input_image[input_loc:]))
-            logger.debug("######################all: {}".format(input_image))
-            result = re.search(rgx_match_in, input_image[input_loc:])
+            logger.debug("search area: {}".format(input_img[input_loc:]))
+            logger.debug("input_img: {}".format(input_img))
+            result = re.search(rgx_match_in, input_img[input_loc:])
             match_in_input = result.group(0)
             match_in_output = format_output_digit(
                 match_in_input, rgx_match_in, rgx_match_out
                 )
             logger.debug("match_in_input: {}".format(match_in_input))
             logger.debug("input loc: {}".format(input_loc))
-            loc = input_image.find(match_in_input, input_loc)
-            logger.debug("\nCOMPONENTS OF TEMP FP")
-            logger.debug("input_image[0: loc] {}".format(input_image[0: loc]))
+            loc = input_img.find(match_in_input, input_loc)
+            logger.debug("\ntemp file pattern components:")
+            logger.debug("input_img[0: loc] {}".format(input_img[0: loc]))
             logger.debug("match_in_output: {}".format(match_in_output))
-            logger.debug("input_image last part: {}".format(input_image[loc + len(match_in_input):]))
+            logger.debug(
+                "input_img last part: {}".format(
+                    input_img[loc + len(match_in_input):]
+                    )
+                )
             temp_fp = (
-                input_image[0: loc] 
+                input_img[0: loc] 
                 + match_in_output 
-                + input_image[loc + len(match_in_input):]
+                + input_img[loc + len(match_in_input):]
                 )
             logger.debug("temp fp: {}".format(temp_fp))
             #: Starting input_loc is where we are searching from
             input_loc = loc + len(match_in_output)
             output_loc = temp_fp.find(match_in_output, output_loc)
-            input_image = temp_fp
-    logger.debug("\nCONVERT FN OUTPUT: {}\n".format(temp_fp))
+            input_img = temp_fp
+    logger.debug("\nconvert() output: {}\n".format(temp_fp))
     return temp_fp
   
-def format_output_digit(match_in_input, rgx_match_in, rgx_match_out):
+def format_output_digit(match_in_input:str, rgx_match_in:str, rgx_match_out:str)->str:
     """
     Change number of digits based on regex pattern or mark if c->d.
     
@@ -129,9 +122,12 @@ def format_output_digit(match_in_input, rgx_match_in, rgx_match_out):
     Returns:
         formatted_digit: 001 OR "_rgxstart_[0-9]{2}_rgxmid_TXRED_rgxend_"
     """
-    logger.debug("\nFORMAT_OUTPUT_DIGIT INPUTS: ")
-    logger.debug("match_in_input: {}\nrgx_match_in: {}\nrgx_match_out: {}".format(match_in_input, rgx_match_in, rgx_match_out))
-    
+    logger.debug("\nformat_output_digit() inputs: ")
+    logger.debug(
+        "match_in_input: {}\nrgx_match_in: {}\nrgx_match_out: {}".format(
+            match_in_input, rgx_match_in, rgx_match_out
+            )
+        )
     #: Mark substring where input pattern is char and output is digit
     if rgx_match_in.startswith("[a-zA-Z]") and "[0-9]" in rgx_match_out:
         formatted_digit = (
@@ -141,10 +137,6 @@ def format_output_digit(match_in_input, rgx_match_in, rgx_match_out):
             + match_in_input 
             + "_rgxend_"
             )
-    # rgx match in: [a-zA-Z]{4}
-    # rgx match out: [a-zA-Z]{4}
-   
-
     elif rgx_match_out.endswith("}") and rgx_match_in != rgx_match_out:
         loc = rgx_match_out.find("{") + 1
         num = str(rgx_match_out[loc:-1])
@@ -158,22 +150,26 @@ def format_output_digit(match_in_input, rgx_match_in, rgx_match_out):
     #: For remaining, no need to fix # of output digits/characters
     else:
         formatted_digit = match_in_input
-    logger.debug("FORMAT_OUTPUT_DIGIT OUTPUT: {}".format(formatted_digit))
+    logger.debug("format_output_digit() output: {}".format(formatted_digit))
     return formatted_digit
 
-def translate_regex(fpatt_list):
+def translate_regex(fpatt: str)->list:
     """
     Convert user-supplied "pseudoregex" to the proper regex format. 
     
     Store properly formatted regex as a value in a dictionary.
     
     Args:
-        fpatt_list: ["img_x", "row:dd", "_y", "col:dd", "_", "channel:c+", ".tif"]
+        fpatt: user-supplied file pattern
         
     Returns:
-        rgx_lst: ["img_x", "[0-9]{2}", "_y", "[0-9]{2}", "_", "[a-zA-Z]*", ".tif"]
+        rgx_lst: ["img", "[0-9]{2}", "_y", "[0-9]{2}", "_", "[a-zA-Z]*", ".tif"]
     """
-    logger.debug("TRANSLATE REGEX INPUT: {}".format(fpatt_list))
+    #: Separate file pattern components into a list
+    fpatt_list = [
+        ", ".join(x.split()) for x in re.split(r"[{}]", fpatt) if x.strip()
+        ]
+    logger.debug("translate_regex() input: {}".format(fpatt_list))
     new_pattern = ""
     rgx_lst = []
     #: Loop through each match group
@@ -209,10 +205,10 @@ def translate_regex(fpatt_list):
             new_patt = "(" + fpatt_list[i] + ")"
             rgx_lst.append(fpatt_list[i])
             new_pattern = new_pattern + new_patt
-    logger.debug("TRANSLATE_REGEX OUTPUT: {}\n".format(rgx_lst))
+    logger.debug("translate_regex() output: {}\n".format(rgx_lst))
     return rgx_lst
 
-def str_to_num(input_file, chan_data_dict_sorted):
+def str_to_num(input_file:str, chan_data_dict_sorted:dict)->str:
     """
     This function converts strings to numbers based on a file pattern.
     
@@ -232,9 +228,12 @@ def str_to_num(input_file, chan_data_dict_sorted):
     Returns:
         final_filename:  n1_y01_c001.tif
     """
-    logger.debug("STR TO NUM INPUTS: input_file: {}, chan_data_dict_sorted {}".format(input_file, chan_data_dict_sorted))
+    logger.debug(
+        "str_to_num() inputs:\ninput_file: {}, chan_data_dict_sorted {}".format(
+            input_file, chan_data_dict_sorted
+            )
+        )
     input_file_name = str(Path(input_file).name)
-    
     for k,v in chan_data_dict_sorted.items():
         current_dict = v
         for k2,v2 in current_dict.items():
@@ -258,25 +257,37 @@ def str_to_num(input_file, chan_data_dict_sorted):
                         num = str(rgx_match_out[loc:-1])
                         format_str = "{:0" + num + "d}"
                         formatted_digit = str(format_str.format(int(chan_num)))
-                        logger.debug("1 formatted_digit: {}".format(formatted_digit))
+                        logger.debug(
+                            "1 formatted_digit: {}".format(formatted_digit)
+                            )
                     #: For remaining, no need to fix # of output digits/char
                     else:
                         formatted_digit = chan_num
-                        logger.debug("2 formatted_digit: {}".format(formatted_digit))
-
+                        logger.debug(
+                            "2 formatted_digit: {}".format(formatted_digit)
+                            )
                     #: Replace entire string marker with replacement
                     logger.debug("v2: {}".format(v2))
                     start2 = v2.find("_rgxstart_")
                     logger.debug("start2: {}".format(start2))
                     end2 = v2.find("_rgxend_") + len("_rgxend_")
 
-                    logger.debug("v2start: {} type: {}".format(v2[:start2], type(v2[:start2])))
-                    logger.debug("formatted digit: {} type: {}".format(formatted_digit, type(formatted_digit)))
-        
-                    final_filename = v2[:start2] + str(formatted_digit) + v2[end2:]
-                    logger.debug("\n\n###STR_TO_NUM OUTPUTS: {} ".format(final_filename))
+                    logger.debug(
+                        "v2start: {} type: {}".format(
+                            v2[:start2], type(v2[:start2])
+                            )
+                        )
+                    logger.debug(
+                        "formatted digit: {} type: {}".format(
+                            formatted_digit, type(formatted_digit)
+                            )
+                        )
+                    final_filename = (
+                        v2[:start2] + str(formatted_digit) + v2[end2:])
+                    logger.debug("\n\nstr_to_num() outputs: {} ".format(
+                        final_filename))
                     return final_filename
-                
+
 if __name__ == "__main__":
     #: Initialize the logger
     logging.basicConfig(
@@ -333,17 +344,19 @@ if __name__ == "__main__":
     outFilePattern = args.outFilePattern
     logger.debug("output_pattern = {}".format(outFilePattern))
     input_directory = inpDir
-    input_images = [p for p in input_directory.iterdir() if p.is_file()]
+    #: Read file pattern inputs and generate true regex patterns
+    inpatt_rgx_dict = translate_regex(filePattern)
+    outpatt_rgx_dict = translate_regex(outFilePattern)
     output_files_to_adjust = {}
     for input_file in input_directory.iterdir():
         logger.info("Parsing {}".format(input_file))
-        output_file = convert_filename(
-            str(input_file.name), filePattern, outFilePattern)
+        output_file = convert_fname(
+            str(input_file.name), inpatt_rgx_dict, outpatt_rgx_dict
+            )
         output_files_to_adjust[input_file] = output_file
         logger.info("Output file location: {}".format(output_file))
     chan_filemarker_dict = {}
     for each_key, each_value in output_files_to_adjust.items():
-        
         #: get the substring between two markers 
         if "_rgxmid_" in each_value:
             start = each_value.find("_rgxmid_") + len("_rgxmid_")
@@ -366,7 +379,15 @@ if __name__ == "__main__":
         #: final_filename:  newdata_x001_y001_c002.tif
         #:  This function converts marked strings to numbers
         logger.debug("outDir: {}".format(outDir))
-        logger.debug("\n\ninput_file: {}, \n\nchan_fmarker_dict: {}\n".format(input_file, chan_fmarker_dict))
-        logger.debug("str_to_num results: {}".format(str_to_num(input_file, chan_fmarker_dict)))
+        logger.debug(
+            "\n\ninput_file: {}, \n\nchan_fmarker_dict: {}\n".format(
+                input_file, chan_fmarker_dict
+                )
+            )
+        logger.debug(
+            "str_to_num() output: {}".format(
+                str_to_num(input_file, chan_fmarker_dict)
+                )
+            )
         final_fname = outDir / Path(str_to_num(input_file, chan_fmarker_dict))
         shutil.copy2(input_file, final_fname)
