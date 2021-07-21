@@ -1,11 +1,12 @@
-#%%
-
-import re, json, logging, copy
+import re
+import json
+import logging
 import scyjava
 from pathlib import Path
 
 """
-This file parses the imagej ops to create cookiecutter json templates
+This file provides classes to parse the imagej ops help and create cookiecutter json templates. This file is not intended to be ran directly, instead
+the classes contained here are instantiated with Generate.py.
 """
 
 # Disable warning message
@@ -17,8 +18,62 @@ scyjava.when_jvm_starts(disable_loci_logs)
 
 class Op:
     
-    def __init__(self, namespace, name, fullPath, inputs, output):
-
+    """A class to represent each Imagej overload method with corresponding inputs and outputs.
+    
+    The Op class is intended to be used in conjunction with the Namespace and Populator classes.
+    Altogether the three classes parse and store the imagej ops help and finally construct the 
+    json template files used to construct the main program and unit testing. Each Op represents
+    a single imagej overloading method. The attributes of the op store the various input and output
+    titles and their corresponding WIPP and imagej data types. The class also stores the required and 
+    optional inputs as indicated by a '?' directly following an input title in the imagej ops help.
+    Each overloading method or Op also stores 
+    
+    Attributes:
+        name: A string representing the imagej name of the overloading method
+        namespace: A Namespace class member representing the imagej op of which the overloading method belongs.
+        _inputs: A list of tuples containing the input title, imagej data type and WIPP data type (see full.log for structure of _inputs list).
+        _output: A list containing a single tuple of the output title, imagej data type and imagej data type (see full.log for structure of _output list).
+        _requiredInputs: A list of tuples containing input title, imagej data type and WIPP data type of the required inputs of the method.
+        _optionalInputs: A list of tuples containing input title, imagej data type and WIPP data type of the optional inputs of the method.
+        fullSupport: A boolean indicating if the overloading method is supported using required and optional inputs. At this time no optional inputs are supported. 
+        partialSupport: A boolean indicating if the overloading method is supported using the required inputs. Additionally a method must take a collection as input
+            and output a collection to be partially supported.
+        supportmsg: A string indicating why the overloading method is not currently supported.
+        imagejInputDataTypes: A list of strings representing the imagej data types of the method's inputs.
+        imagejInputTitles: A list of strings representing the imagej input titles of the method.
+        wippTypeInputs: A list of strings representing the WIPP data types of the method's inputs.
+        wippTypeOutput: A string representing the WIPP data type of the method's output.
+        imagejTypeOutput: A string representing the imagej data type of the method's output.
+        imagejTitleOutput: A string representing the imagej output title of the method.
+        wippTypeRequiredInputs: A list of strings representing the WIPP data type of the required inputs.
+        imagejTypeRequiredInputs: A list of strings representing the imagej data type of the required inputs.
+        imagejTitleRequiredInputs A list of strings representing the imagej input titles the required inputs.
+        
+    """
+    
+    def __init__(self, 
+                 namespace: 'Namespace', 
+                 name: str, 
+                 fullPath: str, 
+                 inputs: list, 
+                 output: tuple):
+        
+        """A method to instantiate an Op class member
+        
+        Args:
+            namespace: The namespace object representing the imagej op that the overloading method belongs. Namespace instance.
+            name: A string of representing the overloading method name.
+            fullPath: A string representing the full Java namespace call of the overloading method.
+            inputs: A list of tuples containing the imagej input titles and imagej data types.
+            output: A tuple containing the imagej output title and imagej data type.
+        
+        Raises:
+            TypeError: Raises if inputs is not a list.
+        """
+        
+        if not isinstance(inputs, list):
+            raise TypeError('inputs must be an instance of a list')
+        
         # Define class attributes
         self.namespace = namespace
         self.name = name
@@ -34,10 +89,10 @@ class Op:
         self.__dataMap(inputs, output)
               
         # Define required and optional inputs by testing last character in each input title
-        self._requiredInputs = [_input for _input in self._inputs if _input[0][1][-1] != '?']
-        self._optionalInputs = [_input for _input in self._inputs if _input[0][1][-1] == '?']
+        self._requiredInputs = [_input for _input in self._inputs if _input[0][1][-1] != '?' and _input[0][1] not in ['out']]
+        self._optionalInputs = [_input for _input in self._inputs if _input[0][1][-1] == '?' or _input[0][1] in ['out']]
         
-        # Determine if the op is currently supported
+        # Determine if the op is currently supported and define member attributes for partial and full support
         self.__support()
     
     @property
@@ -150,8 +205,32 @@ class Op:
     imagej_to_Wipp_map.update({imagej_data_type: 'string' for imagej_data_type in STRING_TYPES})
     
     
-    def __dataMap(self, inputs, output):
-
+    def __dataMap(
+        self, 
+        inputs: list, 
+        output: tuple
+        ) -> None:
+        
+        """A method to map each imagej input data type to a WIPP data type.
+        
+        This method is called when parsing the imagej ops help and is not intended to be called directly. 
+        The method attempts to map all inputs and the output from an imagej data type to a WIPP data
+        type. Note that the method does not create a WIPP data object, the data type is only stored
+        as a string in the input and output attributes of each member method. If a data type conversion is not
+        currently supported the method will store 'unknown' for the data type.
+        
+        
+        Args:
+            inputs: A list of tuples containing the imagej input titles and data types.
+            output: A tuple containing the imagej output title and data type.
+        
+        Returns:
+            None
+        
+        Raises:
+            None
+        """
+        
         # Create empty lists to store input and output data types
         self._inputs = []
         self._output = []
@@ -179,8 +258,29 @@ class Op:
             
     def __support(self):
         
+        """A method to determine if the imagej op is currently supported by the op generation pipeline.
+        
+        This method uses the input and output data types to determine if an op is currently 
+        supported. For an op to be supported is must have collection as one of the required inputs
+        and the output must also be a collection. Additionally, all the required inputs and the output 
+        must be able to map from imagej to WIPP for partial support. For full support all of the inputs
+        and output must be able to map from imagej to WIPP. If the data type conversion is not 
+        supported 'unknown' will be stored as the WIPP type when the __dataMap() member method is called.
+        At this time, this pipeline only supports required inputs. Therefore, full support is arbitrary
+        for the purposes of plugin generation, this feature was only added for future development.
+        
+        Args:
+            None
+        
+        Returns:
+            None
+        
+        Raises:
+            None
+        """
+        
         # Check if any inputs or the output contains collection data type and ALL inputs/output can be mapped from imagej data type to WIPP data type
-        if ('collection' in self.wippTypeInputs or 'collection' in self.wippTypeOutput) and 'unknown' not in self.wippTypeInputs + [self.wippTypeOutput]:
+        if ('collection' in self.wippTypeInputs and 'collection' in self.wippTypeOutput) and 'unknown' not in self.wippTypeInputs + [self.wippTypeOutput]:
             
             # Set the support attribute as true (imagej op is supported)
             self.fullSupport = True
@@ -188,8 +288,8 @@ class Op:
         
         # Check if the required inputs satisfy the requirements 
         elif ('collection' in self.wippTypeRequiredInputs and 'collection' in self.wippTypeOutput) and 'unknown' not in self.wippTypeRequiredInputs + [self.wippTypeOutput]:
-            self.partialSupport = True
             self.fullSupport = False
+            self.partialSupport = True
         
         else:
             # Set the support attribute as false (imagej op is NOT supported)
@@ -197,28 +297,76 @@ class Op:
             self.partialSupport = False
             
             # Determine why the op is not supported (check if either the input or output is a collection)
-            if 'collection' not in self.wippTypeRequiredInputs and 'collection' not in self.wippTypeOutput:
-                self.supportmsg = "None of the required inputs is a 'collection' and the output is not a 'collection'"
+            if 'collection' not in self.wippTypeRequiredInputs or 'collection' not in self.wippTypeOutput:
+                self.supportmsg = "None of the required inputs is a 'collection' or the output is not a 'collection'"
                 
                 # Test if all of the required data types can be converted from imagej to WIPP
-                if 'unknown' in self.wippTypeInputs + [self.wippTypeOutput]:
-                    self.supportmsg = "None of the required inputs is a 'collection' and the output is not a 'collection' and one of the required inputs and/or the output cannot currently be mapped to a WIPP data type"
+                if 'unknown' in self.wippTypeRequiredInputs:
+                    self.supportmsg = "None of the required inputs is a colleciton or the output is not a collection AND one of the required inputs cannot currently be mapped to a WIPP data type"
                     
             # Test if all of the required data types can be converted from imagej to WIPP
-            elif 'unknown' in self.wippTypeInputs + [self.wippTypeOutput]:
-                self.supportmsg = "One of the required inputs and/or the output cannot currently be mapped to a WIPP data type"
+            elif 'unknown' in self.wippTypeRequiredInputs:
+                self.supportmsg = "One of the required inputs cannot currently be mapped to a WIPP data type"
         
 
 class Namespace:
-    def __init__(self, name):
+    
+    """A class to represent imagej ops and plugins.
+    
+    The Namespace class is used to store all the information about each plugin, which is later
+    used to build the plugin directory and files. Each Namespace can be thought of as a single
+    imagej op. Each op in turn has a number of overloading methods for different data types.
+    The attributes of a Namespace object store the relevant information about the op and its
+    child overloading methods. The Populate class also uses to build the cookiecutter json files 
+    for plugin generation.
+    
+    Attributes:
+        _name: A string representing the imagej op
+        _ops: A dictionary containing the overloading methods of the op as keys and class Op objects as values.
+        _allRequiredInputs: A dictionary containing information about the required inputs of all overloading methods.
+        _allOutputs: A dictionary containing information about the outputs of all overloading methods.
+        supportedOps: A dictionary containing the supported overloading methods as keys and the corresponding class Op  
+            objects as values
+    """
+    
+    def __init__(self, 
+                 name: str):
+        
+        """A method to instantiate a Namespace object.
+        
+        Args:
+            name: A string representing imagej op name.
+            
+        Raises:
+            None
+        """
+        
         self._name = name
         self._ops = {}
         self._allRequiredInputs = {}
         self._allOutputs = {}
         self.supportedOps = {}
         
-    def addOp(self, op):
-
+    def addOp(self, 
+              op: 'Op') -> None:
+        
+        """A method to store information about an overloading method in the class member's attributes.
+        
+        This method's function is to store information about an imagej op and its overloading methods.
+        As overloading methods are parsed from the imagej ops help, class Ops objects are instantiated and
+        referenced in the _ops attribute. The method also stores information about the op which is used
+        to build cookiecutter json template files. 
+        
+        Args:
+            op: An object of class Op, representing one of the ops imagej overloading methods. 
+        
+        Returns:
+            None
+        
+        Raises:
+            None
+        """
+        
         # Add the op to the _ops dicitonary attribute
         self._ops[op.name] = op
         
@@ -270,8 +418,45 @@ class Namespace:
                 self._allOutputs[op.imagejTitleOutput]['call_types'][op.name] = op.imagejTypeOutput
 
 class Populate:
+    """A class to parse imagej ops information and build json templates for plugin generation.
     
-    def __init__(self, ij, logFile='./utils/polus-imagej-util/full.log', logTemplate='./utils/polus-imagej-util/classes/logtemplates/mainlog.txt'):
+    The Populate class has several methods that utilize the Op and Namespace classes to parse
+    store, and finally build cookiecutter json templates from the imagej ops help. The attributes
+    of a class Populate member store the information about all imagej ops and their overloading methods.
+    Note that this class is not intended to be called directly; instead, a class member is instantiated
+    with Generate.py
+    
+    Attributes:
+        _ij: A net.imagej.Imagej instance from which to parse the imagej ops help.
+        logFile: A str representing the path to the log file.
+        logTemplate: A str representing the path to a txt file which is used as the log header. This file
+            should explain the format of the final log file.
+        _logger: A logging.Logger object which logs information about all imagej ops and methods.
+        _logFormatter: A logging.Formatter object to set to format of the log file.
+        _fileHandler: A logging.FileHandler object to handle to log file.
+        _namespaces: A dic with op names as keys and class Namespace objects as values. This dic contains
+            the information about all imagej ops and their overloading methods.
+        jsonDic: A dictionary with op names as keys and the cookiecutter json dictionaries to be used for plugin generation.
+    
+    """
+    
+    def __init__(self,
+                 ij: 'imagej.Imagej',
+                 logFile='./utils/polus-imagej-util/full.log',
+                 logTemplate='./utils/polus-imagej-util/classes/logtemplates/mainlog.txt'):
+        
+        """A method to instantiate a class Populate object
+        
+        Args:
+            ij: A net.imagej.Imagej instance from which to parse the imagej ops help.
+            logFile: A str representing the path to the log file.
+            logTemplate: A str representing the path to a txt file which is used as the log header. This file
+                should explain the format of the final log file.
+            
+        Raises:
+            None
+        
+        """
         
         # Store the imagej instance
         self._ij = ij
@@ -289,7 +474,22 @@ class Populate:
         # Create imagej plug in by calling the parser member method
         self._parser()
     
-    def _parser(self):
+    def _parser(self) -> None:
+        """"A method to parse imagej ops help and extract imagej op information.
+        
+        This method utilizes the python re module to parse the imagej instance ops help. The method then
+        instantiates class Op and class Namespace objects to store information about the ops and methods.
+        Finally relevant information about the ops and methods is written to the log file.
+        
+        Args:
+            None
+        
+        Returns:
+            None
+        
+        Raises:
+            None
+        """
         
         # Get list of all available op namespaces
         opsNameSpace = scyjava.to_python(self._ij.op().ops().iterator())
@@ -363,8 +563,27 @@ class Populate:
                 # Add the op to the namespace
                 self._namespaces[namespace].addOp(op)
         
-    def __logger(self, logFile, logTemplate):
+    def __logger(self, 
+                 logFile: str, 
+                 logTemplate: str) -> None:
         
+        """A method to initialize a logger and log information about the imagej ops and overloading methods.
+        
+        The logger makes use of python's built-in logger module to log relevant information about each op
+        and its overloading methods as they are parsed from the imagej ops help.
+        
+        Args:
+            logFile: A str representing the path to the log file.
+            logTemplate: A str representing the path to a txt file which is used as the log header. This file
+                should explain the format of the final log file.
+        
+        Returns:
+            None
+        
+        Raises:
+            None
+        """
+
         # Check if excluded log exists
         if Path(logFile).exists():
             # Unlink excluded log
@@ -405,17 +624,41 @@ class Populate:
         
         # Create default message for logger
         self._msg = 'Op Number: {counter}\nNamespace: {namespace}\nName: {name}\nFull Path: {fullpath}\nInputs: {inputs}\nOutput: {output}\nSupported: {support}\n\n'
-    
-        # Create a new logger to log input warnings
         
         
+    def buildJSON(self, 
+                  author: str, 
+                  email: str, 
+                  github_username: str, 
+                  version: str, 
+                  cookietin_path: str) -> None:
         
-    def buildJSON(self, author, email, github_username, version, cookietin_path):
+        """A method to create cookiecutter json dictionaries for plugin generation.
+        
+        This method uses the information stored in each class Op object and class Namespace object to create the final 
+        cookiecutter json dictionaries to be used for plugin directories and files. Upon creation of the json dictionary 
+        the method utilizes the json module to write ( json.dump() ) the dictionary contents of each op into a json file in the
+        cookietin directory.
+        
+        Args:
+            author: A string representing the author of the plugin.
+            email: A string representing the email of the author of the plugin.
+            github_username: A string representing the GitHub username of the author of the plugin. 
+            version: A string representing the version number of the plugin. 
+            cookietin_path: A str representing the path to the cookietin directory.
+            
+        Returns:
+            None
+        
+        Raises:
+            None
+        """
+        
         
         # Instantiate empty dictionary to store the dictionary to be converted to json
         self.jsonDic = {}
             
-        # Create list of characters to be replaced in namespace
+        # Create dic of characters to be replaced in namespace
         char_to_replace = {
             '[':'(',
             ']':')',
@@ -456,15 +699,8 @@ class Populate:
                     'project_slug': "polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin"
                     }
                 
-                # Update the plugin namespace dictionary with the new op name
-                
                 # Update the _inputs section dictionary with the inputs dictionary stored in the Library attribute
                 self.jsonDic[name]['_inputs'].update(namespace._allRequiredInputs)
-                
-                #print('\n')
-                #print(self.jsonDic[name])
-                if name == 'image.distancetransform':
-                    print(self.jsonDic[name])
             
                 # Create Path object with directory path to store cookiecutter.json file for each namespace
                 file_path = Path(cookietin_path).with_name('cookietin').joinpath(namespace._name.replace('.','-'))
@@ -477,9 +713,14 @@ class Populate:
                     json.dump(self.jsonDic[name], fw,indent=4)
 
 
+
+
+"""This section is for testing only, the classes contained in this file were intended to be instantiated in Generate.py"""
+
 if __name__ == '__main__':
     
-    import imagej, jpype
+    import imagej
+    import jpype
     from pathlib import Path
     
     # Disable warning message
@@ -493,15 +734,15 @@ if __name__ == '__main__':
     # Start JVM
     ij = imagej.init('sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4', headless=True)
     
-    
     # Retreive all available operations from pyimagej
     #imagej_help_docs = scyjava.to_python(ij.op().help())
     #print(imagej_help_docs)
     
     print('Parsing imagej ops help\n')
     
+    
     # Populate ops by parsing the imagej operations help
-    populater = Populate(ij, logFile = 'full.log', logTemplate='logtemplates/mainlog.txt')
+    populater = Populate(ij, logFile = 'full.log', logTemplate='utils/polus-imagej-util/classes/logtemplates/mainlog.txt')
     
     print('Building json template\n')
     
@@ -514,6 +755,3 @@ if __name__ == '__main__':
     
     # Shut down JVM
     jpype.shutdownJVM()
-    
-
-# %%
