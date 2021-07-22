@@ -1,4 +1,4 @@
-# WIPP Widget
+# SplineDist Training Plugin
 
 This WIPP plugin trains and tests a neural network with SplineDist in order to automate cell segmentation with Spline Interpolation. 
 
