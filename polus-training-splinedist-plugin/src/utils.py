@@ -232,6 +232,7 @@ def train_nn(image_dir_input : str,
     assert isinstance(M, int), "Neeed to specify the number of control points"
     assert isinstance(epochs, int), "Need to specify the number of epochs to run"
 
+
     # get the inputs
     input_images = []
     input_labels = []
@@ -345,13 +346,15 @@ def train_nn(image_dir_input : str,
         im_array = br_image[:,:,0:1,0:1,0:1]
         im_array = im_array.reshape(br_image.shape[:2])
         array_images_tested.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
+        br_image.close()
 
         # The corresponding label for the image
         br_label = BioReader(label)
         lab_array = br_label[:,:,0:1,0:1,0:1]
         lab_array = lab_array.reshape(br_label.shape[:2])
         array_labels_tested.append(fill_label_holes(lab_array))
-        
+        br_label.close()
+
         assert im_array.shape == lab_array.shape, "{} and {} do not have matching shapes".format(base_image, base_label)
 
         if (i%tenpercent_tested == 0) and (i!=0):
@@ -360,7 +363,7 @@ def train_nn(image_dir_input : str,
 
     # Read the input images used for training
     logger.info("\n Starting to Load Train Data ...")
-    tenpercent_trained = np.floor(num_trained/10)
+    tenpercent_trained = num_trained//10
     contoursize_max = 0 # gets updated if models have not been created for config file
     for i in range(num_trained):
 
@@ -369,22 +372,27 @@ def train_nn(image_dir_input : str,
         im_array = br_image[:,:,0:1,0:1,0:1]
         im_array = im_array.reshape(br_image_shape)
         array_images_trained.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
+        br_image.close()
 
         if i == 0:
             n_channel = br_image.shape[2]
+        else:
+            assert n_channel == br_image.shape[2]
 
         br_label = BioReader(Y_trn[i])
         lab_array = br_label[:,:,0:1,0:1,0:1]
         lab_array = lab_array.reshape(br_label.shape[:2])
         array_labels_trained.append(fill_label_holes(lab_array))
-        
+        br_label.close()
+
         assert im_array.shape == lab_array.shape, "{} and {} do not have matching shapes".format(base_image, base_label)
         contoursize_max = update_countoursize_max(contoursize_max, lab_array)
         
         if (i%tenpercent_trained == 0) and (i!=0):
             logger.info("Loaded ~{}% of Train Data -- contoursize_max: {}".format(np.ceil((i/num_trained)*100), contoursize_max))
+    
     logger.info("Done Loading Training Data")
-        
+
 
     # Build the model and generate other necessary files to train the data.
     logger.info("Max Contoursize: {}".format(contoursize_max))
@@ -417,8 +425,7 @@ def train_nn(image_dir_input : str,
     del conf
 
     # After creating or loading model, train it
-    # model.config.train_tensorboard = False
-    # model.config.use_gpu = gpu
+    model.config.use_gpu = gpu
     logger.info("\n Parameters in Config File ...")
     for ky,val in model.config.__dict__.items():
         logger.info("{}: {}".format(ky, val))

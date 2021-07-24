@@ -104,6 +104,16 @@ if __name__ == "__main__":
     M = args.controlPoints
     epochs = args.epochs
 
+    # exclusively define:
+    # split_percentile OR (image_dir_test and label_dir_test)
+    if split_percentile == None:
+        assert image_dir_test != None
+        assert label_dir_test != None
+    
+    if split_percentile != None:
+        assert image_dir_test == None
+        assert label_dir_test == None
+
     # for testing trained neural network
     trained_imageDir = args.trained_ImageDir
     trained_labelDir = args.trained_LabelDir
