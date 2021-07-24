@@ -31,8 +31,8 @@ class TestEncodingDecoding(unittest.TestCase):
     def test_splinedist(self):
 
         # need to define inputs
-        model_path = "/home/ec2-user/workdir/splinedist_scalability/models"
-        image_path = "/home/ec2-user/workdir/data/scalability/cropped_r01c01f_001-121_p_01-60_-ch1sk1fk1fl1.ome.tif"
+        model_path = ""
+        image_path = ""
 
         def get_scores(y_true : np.ndarray,
                        y_pred : np.ndarray,
