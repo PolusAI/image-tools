@@ -6,7 +6,7 @@ This plugin requires the user to specify how to split the testing and training d
 The user can either:
 1) Specify the percentage that the input directories are split into
 2) Specify the testing directories where the images are located
-The user can specify both, otherwise an error will be thrown.
+In order to specify the testing directories then split percentile must be either 0 or None.
 
 The user must also specify the number of Control Points, which defines the number of points for closed planar spline curve that generates the mask on one cyst.
 More details are described in SplineDist's paper.

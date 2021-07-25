@@ -12,6 +12,8 @@ logger.setLevel(logging.INFO)
 
 def main(image_dir_train : str,
          label_dir_train : str,
+         image_dir_test : str,
+         label_dir_test : str,
          split_percentile : int,
          output_directory : str,
          gpu : bool,
@@ -19,14 +21,21 @@ def main(image_dir_train : str,
          epochs : int,
          imagepattern: str):
 
-    utils.train_nn(image_dir_input=image_dir_train,
-                    label_dir_input=label_dir_train,
-                    split_percentile=split_percentile,
-                    output_directory=output_directory,
-                    gpu=gpu,
-                    imagepattern=imagepattern,
-                    M=M,
-                    epochs=epochs)
+    X_trn, Y_trn, X_val, Y_val = utils.split_train_and_test_data(image_dir_input=image_dir_train,
+                                                                 label_dir_input=label_dir_train,
+                                                                 image_dir_test=image_dir_test,
+                                                                 label_dir_test=label_dir_test,
+                                                                 split_percentile=split_percentile,
+                                                                 imagepattern=imagepattern)
+
+    utils.train_nn(X_trn            = X_trn,
+                   Y_trn            = Y_trn,
+                   X_val            = X_val,
+                   Y_val            = Y_val,
+                   output_directory = output_directory,
+                   gpu              = gpulist,
+                   M                = M,
+                   epochs           = epochs)
 
 
 if __name__ == "__main__":
@@ -38,6 +47,10 @@ if __name__ == "__main__":
                         help='Path to folder with intesity based images for training', required=False)
     parser.add_argument('--inpLabelDirTrain', dest='input_directory_labels_train', type=str,
                         help='Path to folder with labelled segments, ground truth for training', required=False)
+    parser.add_argument('--inpImageDirTest', dest='input_directory_images_test', type=str,
+                        help='Path to folder with intesity based images for testing', required=False)
+    parser.add_argument('--inpLabelDirTest', dest='input_directory_labels_test', type=str,
+                        help='Path to folder with labelled segments, ground truth for testing', required=False)
     parser.add_argument('--splitPercentile', dest='split_percentile', type=int,
                         help='Percentage of data that is allocated for testing', required=False)
     parser.add_argument('--controlPoints', dest='controlPoints', type=int,
@@ -57,6 +70,8 @@ if __name__ == "__main__":
     # for training neural network
     image_dir_train = args.input_directory_images_train
     label_dir_train = args.input_directory_labels_train
+    image_dir_test = args.input_directory_images_test
+    label_dir_test = args.input_directory_labels_test
     split_percentile = args.split_percentile
     M = args.controlPoints
     epochs = args.epochs
@@ -67,14 +82,15 @@ if __name__ == "__main__":
 
     # exclusively define:
     # split_percentile OR (image_dir_test and label_dir_test)
-    if split_percentile == None:
-        assert image_dir_train != None
-        assert label_dir_train != None
-    
-    if split_percentile != None:
+    if (split_percentile != None) and (split_percentile != 0) :
         assert image_dir_train == None
         assert label_dir_train == None
 
+    if (split_percentile == None) or (split_percentile == 0):
+        assert image_dir_train != None
+        assert label_dir_train != None
+        
+    
     # If there is a GPU to use, then use it
     gpu = False
     local_device_protos = device_lib.list_local_devices()
@@ -84,17 +100,18 @@ if __name__ == "__main__":
 
     logger.info("Image Pattern: {}".format(imagepattern))
     logger.info("Output Directory: {}".format(output_directory))
-    logger.info("Action: {} a neural network".format(action))
 
-    if split_percentile == None:
+    if split_percentile == None or split_percentile == "0":
         logger.info("Input Training Directory for Intensity Based Images: {}".format(image_dir_train))
         logger.info("Input Training Directory for Labelled Images: {}".format(label_dir_train))
+        logger.info("Input Testing Directory for Intensity Based Images: {}".format(image_dir_test))
+        logger.info("Input Testing Directory for Labelled Images: {}".format(label_dir_test))
         
     else:
         logger.info("Input Directory for Intensity Based Images: {}".format(image_dir_train))
         logger.info("Input Directory for Labelled Images: {}".format(label_dir_train))
         logger.info("Splitting Input Directory into {}:{} Ratio for Training:Testing".format(split_percentile, 100-split_percentile))
-    
+
     logger.info("Number of Control Points {}".format(M))
     logger.info("Number of Epochs {}".format(epochs))
 
@@ -105,6 +122,8 @@ if __name__ == "__main__":
 
     main(image_dir_train=image_dir_train,
          label_dir_train=label_dir_train,
+         image_dir_test=image_dir_test,
+         label_dir_test=label_dir_test,
          split_percentile=split_percentile,
          output_directory=output_directory,
          gpu=gpu,

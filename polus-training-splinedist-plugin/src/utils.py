@@ -99,46 +99,38 @@ def augmenter(x : np.ndarray,
     x = x + sig*np.random.normal(0,1,x.shape)
     return x, y
 
-def train_nn(image_dir_input : str,
-             label_dir_input : str,
-             image_dir_test : str,
-             label_dir_test : str,
-             split_percentile : int,
-             output_directory : str,
-             gpu : bool,
-             imagepattern : str,
-             M : int,
-             epochs : int):
-
-    """ This function either trains or continues to train a neural network 
-    for SplineDist.
-    Either testing directories are specified or the the input directory gets 
-    split into training and testing data. 
-
+def split_train_and_test_data(image_dir_input : str,
+                              label_dir_input : str,
+                              image_dir_test : str,
+                              label_dir_test : str,
+                              split_percentile : int,
+                              imagepattern: str):
+    
+    """ This function separates out the input data into either training and testing data 
+        if split_percentile equals zero.  Otherwise, it converts the input data into the 
+        training data and it converts the test data into testing data for the model. 
+    
     Args:
-        image_dir_input: location for Intensity Based Images
-        label_dir_input: location for Ground Truths of the images
-        image_dir_test: Specifies the location for Intensity Based Images for testing
-        label_dir_test: Specifies the location for Ground truth images for testing
-        split_percentile: Specifies what percentages of the input should be allocated for tested
-        output_directory: Specifies the location for the output generated
-        gpu: Specifies whether or not there is a GPU to use
+        image_dir_input:  Directory containing inputs for intensity based images
+            Contains data for either:
+                1) Only Training Data
+                2) Training and Testing Data
+        label_dir_input:  Directory containing inputs for labelled data
+            Contains data for either:
+                1) Only Training Data
+                2) Training and Testing Data
+        image_dir_test:   If specified, directory containing testing data for intensity based images
+        label_dir_test:   If specified, directory containing testing data for labelled data
+        split_percentile: Specifies what percentages of the input should be allocated for training and testing
         imagepattern: The imagepattern of files to iterate through within a directory
-        M: Specifies the number of control points
-        epochs : Specifies the number of epochs to be run
 
     Returns:
-        None, a trained neural network whose performance is calculated by the jaccard index
+        X_trn: list of locations for training data containing intensity based images
+        Y_trn: list of lcoations for training data containing labelled data
+        X_val: list of locations for testing data containing intensity based images
+        Y_val: list of locations for testing data containing labelled data
     
-    Raises:
-        AssertionError: If there is less than one training image
-        AssertionError: If the number of images to do not match the number of ground truths 
-                        available.
     """
-
-    assert isinstance(M, int), "Neeed to specify the number of control points"
-    assert isinstance(epochs, int), "Need to specify the number of epochs to run"
-
 
     # get the inputs
     input_images = []
@@ -151,10 +143,6 @@ def train_nn(image_dir_input : str,
         label = files[0]['file']
         if os.path.exists(label):
             input_labels.append(label)
-
-    input_images = sorted(input_images)
-    input_labels = sorted(input_labels)
-    num_inputs = len(input_images)
     
     X_trn = []
     Y_trn = []
@@ -162,9 +150,7 @@ def train_nn(image_dir_input : str,
     Y_val = []
 
     logger.info("\n Getting Data for Training and Testing  ...")
-    split_percentile = int(split_percentile)
-    logger.info("Split Percentile {} ({})".format(split_percentile, type(split_percentile)))
-    if (split_percentile == None) or int(split_percentile) == 0:
+    if (split_percentile == None) or split_percentile == 0:
         # if images are already allocated for testing then use those
         logger.info("Getting From Testing Directories")
         X_trn = input_images
@@ -192,7 +178,42 @@ def train_nn(image_dir_input : str,
         ind_train, ind_val = index[:-n_val], index[-n_val:]
         X_val, Y_val = [input_images[i] for i in ind_val]  , [input_labels[i] for i in ind_val] # splitting data into train and testing
         X_trn, Y_trn = [input_images[i] for i in ind_train], [input_labels[i] for i in ind_train] 
-    
+
+    return (X_trn, Y_trn, X_val, Y_val)
+
+def train_nn(X_trn            : list,
+             Y_trn            : list,
+             X_val            : list,
+             Y_val            : list,
+             output_directory : str,
+             gpu              : bool,
+             M                : int,
+             epochs           : int):
+
+    """ This function trains a neural network for SplineDist.
+
+    Args:
+        image_dir_train: list of locations for Intensity Based Images used for training
+        label_dir_train: list of locations for Ground Truths of the images used for training
+        image_dir_test: list of locations for Intensity Based Images for testing
+        label_dir_test: Specifies the location for Ground truth images for testing
+        output_directory: Specifies the location for the output generated
+        gpu: Specifies whether or not there is a GPU to use
+        M: Specifies the number of control points
+        epochs : Specifies the number of epochs to be run
+
+    Returns:
+        None, a trained neural network saved in the output directory
+
+    Raises:
+        AssertionError: If there is less than one training image
+        AssertionError: If the number of images to do not match the number of ground truths 
+                        available.
+    """
+
+    assert isinstance(M, int), "Neeed to specify the number of control points"
+    assert isinstance(epochs, int), "Need to specify the number of epochs to run"
+
     # Lengths
     num_images_trained = len(X_trn)
     num_labels_trained = len(Y_trn)
@@ -206,16 +227,9 @@ def train_nn(image_dir_input : str,
     logger.info("{}/{} images used for testing".format(num_images_tested, totalimages))
     logger.info("{}/{} images used for testing".format(num_labels_tested, totalimages))
 
-
-    # Renamed inputs
-    del input_images
-    del input_labels
-    del num_inputs
-
     # assertions
     assert num_images_trained > 1, "Not Enough Training Data"
     assert num_images_trained == num_labels_trained, "The number of images does not match the number of ground truths for training"
-    assert num_images_tested == num_labels_tested, "The number of images does not match the number of ground for testing"
     num_trained = num_images_trained
     num_tested = num_images_tested
 
@@ -319,6 +333,11 @@ def train_nn(image_dir_input : str,
     del Y_val
     del X_trn
     del Y_trn
+
+    # change working directory to output directory because phi and grid files 
+        # must be in working directory.  Those files should be generated 
+        # in the output directory
+    os.chdir(output_directory)
 
     logger.info("\n Generating phi and grids ... ")
     if not os.path.exists("./phi_{}.npy".format(M)):

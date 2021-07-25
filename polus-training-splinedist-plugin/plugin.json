@@ -1,6 +1,6 @@
 {
   "name": "SplineDist Training and Testing  Plugin",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "title": "Training SplineDist",
   "description": "This plugin trains or tests a neural network to identify segments using SplineDist's algorithm",
   "author": "Madhuri Vihani (Madhuri.Vihani@axleinfo.com),  Hythem Sidky (Hythem.Sidky@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "https://www.biorxiv.org/content/10.1101/2020.10.27.357640v1",
-  "containerId": "mmvihani/polus-training-splinedist-plugin:0.1.7",
+  "containerId": "mmvihani/polus-training-splinedist-plugin:0.1.8",
   "inputs": [
     {
       "name": "imagePattern",
@@ -45,8 +45,21 @@
           "40",
           "50"
         ]
-      },
-      "default": "0"
+      }
+    },
+    {
+      "name": "inpImageDirTest",
+      "description": "Input Image collection for testing",
+      "type": "collection",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "inpLabelDirTest",
+      "description": "Input Image collection for testing",
+      "type": "collection",
+      "options": null,
+      "required": false
     },
     {
       "name": "controlPoints",
@@ -84,14 +97,25 @@
       "description": "Collection name that contains intensity based images"
     },
     {
+      "key": "inputs.inpLabelDirTrain",
+      "title": "Input Label collection for Training: ",
+      "description": "Collection name that contains labelled segments"
+    },
+    {
       "key": "inputs.splitPercentile",
-      "title": "Percentage of Training Data to be used for Testing: ",
+      "title": "Percentage of Training Data to be used for Testing (If 0, then specify label directory for testing data): ",
       "description": "Percent of data that is allocated for testing"
     },
     {
-      "key": "inputs.inpLabelDirTrain",
-      "title": "Input Label collection for Training: ",
-      "description": "Collection name that contains labelled segments",
+      "key": "inputs.inpImageDirTest",
+      "title": "Input Image collection for Testing: ",
+      "description": "Collection name that contains labelled segments. Split Percentile must be 0",
+      "condition": "inputs.splitPercentile==0"
+    },
+    {
+      "key": "inputs.inpLabelDirTest",
+      "title": "Input Label collection for Testing: ",
+      "description": "Collection name that contains labelled segments. Split Percentile must be 0",
       "condition": "inputs.splitPercentile==0"
     },
     {
