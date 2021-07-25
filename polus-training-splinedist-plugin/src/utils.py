@@ -2,41 +2,30 @@ import logging
 import os 
 
 import numpy as np
-import collections
 
 import bfio
 from bfio import BioReader, LOG4J, JARS
 
+import tqdm
 from csbdeep.utils import normalize
-
 from splinedist import fill_label_holes
 from splinedist.utils import phi_generator, grid_generator
 from splinedist.models import Config2D, SplineDist2D, SplineDistData2D
 from splinedist.utils import phi_generator, grid_generator
 from splinedist import random_label_cmap
 
-from tqdm import tqdm
-
 import keras.backend as K
 import tensorflow as tf
 from tensorflow import keras
 
-import sklearn.metrics
-from sklearn.metrics import jaccard_score
-
 import cv2
-
-import matplotlib
-matplotlib.rcParams["image.interpolation"] = None
-import matplotlib.pyplot as plt
-lbl_cmap = random_label_cmap()
 
 import filepattern
 from filepattern import FilePattern as fp
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
-logger = logging.getLogger("train")
+logger = logging.getLogger("train_splinedist")
 logger.setLevel(logging.INFO)
 
 def update_countoursize_max(contoursize_max : int, 
@@ -73,30 +62,6 @@ def update_countoursize_max(contoursize_max : int,
     return contoursize_max
     
 
-def get_jaccard_index(prediction : np.ndarray,
-                      ground_truth : np.ndarray):
-    """ This function gets the jaccard index between the 
-    predicted image and its ground truth.
-
-    Args:
-        prediction - the predicted output from trained neural network
-        ground_truth - ground truth given by inputs
-    Returns:
-        jaccard - The jaccard index between the two inputs
-                  https://en.wikipedia.org/wiki/Jaccard_index
-    Raises:
-        None
-    """
-    imageshape = prediction.shape
-    prediction = prediction.ravel()
-    ground_truth = ground_truth.ravel()
-    prediction[prediction > 0] = 1.0
-    ground_truth[ground_truth > 0] = 1.0
-
-    jaccard = jaccard_score(prediction, ground_truth)
-
-    return jaccard
-
 def random_fliprot(img, mask): 
     img = np.array(img)
     mask = np.array(mask)
@@ -119,7 +84,11 @@ def augmenter(x : np.ndarray,
               y : np.ndarray):
     """Augmentation of a single input/label image pair.
         Taken from SplineDist's training notebook.
-
+        This augmenter applies random 
+        rotations, flips, and intensity changes
+        which are typically sensible for (2D) 
+        microscopy images
+    
     Args:
         x - is an input image
         y - is the corresponding ground-truth label image
@@ -129,68 +98,6 @@ def augmenter(x : np.ndarray,
     sig = 0.02*np.random.uniform(0,1)
     x = x + sig*np.random.normal(0,1,x.shape)
     return x, y
-
-
-def create_test_plots(array_images : list, 
-                 array_labels : list, 
-                 input_len : int, 
-                 output_dir : list,
-                 M : int,
-                 model):
-    
-    """ This function generates subplots of the 
-    original image, the ground truth and prediction with 
-    the jaccard index specified at the bottom of the image.
-
-    Args:
-        array_images - a list of numpy arrays of the intensity based images
-        array_labels - a list of numpy arrays of the images's corresponding 
-                       ground truth
-        input_len - the number of images in array_images and array_label
-        output_dir - the location where the jpeg files are saved
-        model - the neural network used to make the prediction
-    Returns:
-        None, saves images in output directory
-    """
-    jaccard_indexes = []
-    
-    for i in range(input_len):
-        fig, (a_image,a_groundtruth,a_prediction) = plt.subplots(1, 3, 
-                                                            figsize=(12,5), 
-                                                            gridspec_kw=dict(width_ratios=(1,1,1)))
-
-        image = array_images[i]
-        ground_truth = array_labels[i]
-        prediction, details = model.predict_instances(image)
-
-        plt_image = a_image.imshow(image)
-        a_image.set_title("Image")
-
-        plt_groundtruth = a_groundtruth.imshow(ground_truth)
-        a_groundtruth.set_title("Ground Truth")
-
-        plt_prediction = a_prediction.imshow(prediction)
-        a_prediction.set_title("Prediction")
-
-        jaccard = get_jaccard_index(prediction, ground_truth)
-        jaccard_indexes.append(jaccard)
-        plot_file = "{}.jpg".format(i)
-        fig.text(0.5, 0.90, "Control Points {}".format(M), 
-            horizontalalignment='center', wrap=True, fontsize=14)
-        fig.text(0.50, 0.05, 'Jaccard Index = {}'.format(jaccard), 
-            horizontalalignment='center', wrap=True, fontsize=14)
-        plt.savefig(os.path.join(output_dir, plot_file))
-        plt.clf()
-        plt.cla()
-        plt.close(fig)
- 
-        logger.info("{} has a jaccard index of {}".format(plot_file, format(jaccard, ".3f")))
-
-    average_jaccard = sum(jaccard_indexes)/input_len
-    average_jaccard = format(average_jaccard, ".3f")
-    standard_deviation_jaccard = np.std(jaccard_indexes)
-    standard_deviation_jaccard = format(standard_deviation_jaccard, ".3f")
-    logger.info("Average Jaccard Index for Testing Data: {} ± {}".format(average_jaccard, standard_deviation_jaccard))
 
 def train_nn(image_dir_input : str,
              label_dir_input : str,
@@ -430,98 +337,7 @@ def train_nn(image_dir_input : str,
     for ky,val in model.config.__dict__.items():
         logger.info("{}: {}".format(ky, val))
 
-
     model.train(array_images_trained,array_labels_trained, 
                 validation_data=(array_images_tested, array_labels_tested), 
                 augmenter=augmenter, epochs=epochs)
     logger.info("\n Done Training Model ...")
-
-
-def test_nn(image_dir_test : str,
-            label_dir_test : str,
-            model_basedir : str,
-            output_directory : str,
-            gpu : bool,
-            imagepattern : str):
-    """ This function tests the trained neural network from the train_nn 
-    function. 
-
-    Args:
-        image_dir_test: location for intensity based images
-        label_dir_test: location for labelled data
-        model_basedir: location for model parameters
-        output_directory: location for where the plots get saved
-        imagepattern:  The imagepattern of files to iterate through within a directory
-
-    Returns:
-        None, output_directory is filled with plots
-
-    Raises:
-        Assertion Error: if number of images does not match number of labels
-        Assertion Error: if the model does not exist.
-    """
-
-    model_dir_name = '.'
-    model_dir_path = os.path.join(model_basedir, model_dir_name)
-    assert os.path.exists(model_dir_path), \
-        "{} does not exist".format(model_dir_path)
-
-    model = SplineDist2D(None, name=model_dir_name, basedir=model_basedir)
-    logger.info("\n Done Loading Model ...")
-
-    # make sure phi and grid exist in current directory, otherwise create.
-    logger.info("\n Getting extra files ...")
-    conf = model.config
-    M = int(conf.n_params/2)
-    if not os.path.exists("./phi_{}.npy".format(M)):
-        contoursize_max = conf.contoursize_max
-        logger.info("Contoursize Max for phi_{}.npy: {}".format(M, contoursize_max))
-        phi_generator(M, contoursize_max, '.')
-        logger.info("Generated phi")
-    if not os.path.exists("./grid_{}.npy".format(M)):
-        training_patch_size = conf.train_patch_size
-        logger.info("Training Patch Size for grid_{}.npy: {}".format(training_patch_size, M))
-        grid_generator(M, training_patch_size, conf.grid, '.')
-        logger.info("Generated grid")
-
-    weights_best = os.path.join(model_dir_path, "weights_best.h5")
-    model.keras_model.load_weights(weights_best)
-    logger.info("\n Done Loading Best Weights ...")
-
-    logger.info("\n Parameters in Config File ...")
-    config_dict = model.config.__dict__
-    for ky,val in config_dict.items():
-        logger.info("{}: {}".format(ky, val))
-
-    M = int(config_dict['n_params']/2)
-    X_val = sorted(os.listdir(image_dir_test))
-    Y_val = sorted(os.listdir(label_dir_test))
-    num_images = len(X_val)
-    num_labels = len(Y_val)
-
-    assert num_images > 0, "Input Directory is empty"
-    assert num_images == num_labels, "The number of images do not match the number of ground truths"
-
-    array_images_tested = []
-    array_labels_tested = []
-
-    # Neural network parameters
-    axis_norm = (0,1)
-    n_channel = 1 # this is based on the input data
-
-    # Read the input images used for testing
-    for im in tqdm(range(num_images)):
-        image = os.path.join(image_dir_test, X_val[im])
-        br_image = BioReader(image)
-        im_array = br_image[:,:,0:1,0:1,0:1].reshape(br_image.shape[:2]) 
-        array_images_tested.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
-
-    # Read the input labels used for testing 
-    for lab in tqdm(range(num_labels)):
-        label = os.path.join(label_dir_test, Y_val[lab])
-        br_label = BioReader(label)
-        lab_array = br_label[:,:,0:1,0:1,0:1]
-        lab_array = lab_array.reshape(br_label.shape[:2])
-        array_labels_tested.append(fill_label_holes(lab_array))
-
-    create_test_plots(array_images_tested, array_labels_tested, num_images, output_directory, M, model)
