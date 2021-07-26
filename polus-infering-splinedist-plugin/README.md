@@ -1,4 +1,4 @@
-# WIPP Widget
+# SplineDist Inference Plugin
 
 This WIPP plugin uses a trained SplineDist Model to make predictions on intensity based images
 This WIPP plugin is also capable of making predictions in tiles
