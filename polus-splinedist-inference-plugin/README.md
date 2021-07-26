@@ -3,7 +3,7 @@
 This WIPP plugin uses a trained SplineDist Model to make predictions on intensity based images
 This WIPP plugin is also capable of making predictions in tiles
 
-For more information on SplineDist:
+For more information on SplineDist:  
 [Published Paper](https://www.biorxiv.org/content/10.1101/2020.10.27.357640v1)  
 [Github Repository](https://github.com/uhlmanngroup/splinedist)  
 SideNote: The input images are filled.  There are no empty holes in the output predictions made with SplineDist
