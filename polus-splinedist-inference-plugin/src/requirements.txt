@@ -1,8 +1,9 @@
 filepattern==1.4.4
 csbdeep==0.6.1
-bfio==2.1.9
+bfio[all]==2.1.8
 tensorflow==2.2.0
 jpype1==1.2.1
 gputools==0.2.9
 stardist==0.6.0
 opencv-python==4.5.1.48
+zarr==2.8.3

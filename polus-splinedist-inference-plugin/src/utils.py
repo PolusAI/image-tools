@@ -7,14 +7,14 @@ import bfio
 from bfio import BioReader, BioWriter
 import predict_tiles
 
+import itertools
+from itertools import repeat
+import concurrent
+
 from csbdeep.utils import normalize
 from csbdeep.utils import normalize_mi_ma
 from splinedist.models import Config2D, SplineDist2D, SplineDistData2D
 from splinedist.utils import phi_generator, grid_generator
-
-import matplotlib
-matplotlib.rcParams["image.interpolation"] = None
-import matplotlib.pyplot as plt
 
 import filepattern
 from filepattern import FilePattern as fp
@@ -23,6 +23,45 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("infer")
 logger.setLevel(logging.INFO)
+
+def get_ranges(image_shape : tuple,
+               window_size : tuple,
+               step_size : tuple):
+
+    """ This function generates a list of yxczt dimensions to iterate 
+    through so that bfio objects can be read in tiles. 
+    Args:
+        image_shape : shape of the whole bfio object
+        tile_len : the size of tiles
+    Returns:
+        yxzct_ranges : a list of dimensions to iterate through. 
+                       [((y1, y2), (x1, x2), (z1, z2), (c1, c2), (t1, t2)), ... ,
+                        ((y1, y2), (x1, x2), (z1, z2), (c1, c2), (t1, t2))]
+    """
+
+    y_range = list(np.arange(0, image_shape[0], step_size[0]))
+    y_range = list(map(predict_tiles.get_dim1dim2, 
+                       y_range, repeat(image_shape[0]), repeat(window_size[0])))
+
+    x_range = list(np.arange(0, image_shape[1], step_size[1]))
+    x_range = list(map(predict_tiles.get_dim1dim2, 
+                       x_range, repeat(image_shape[1]), repeat(window_size[1])))
+
+    z_range = list(np.arange(0, image_shape[2], step_size[2]))
+    z_range = list(map(predict_tiles.get_dim1dim2, 
+                       z_range, repeat(image_shape[2]), repeat(window_size[2])))
+
+    c_range = list(np.arange(0, image_shape[3], step_size[3]))
+    c_range = list(map(predict_tiles.get_dim1dim2, 
+                       c_range, repeat(image_shape[3]), repeat(window_size[3])))
+
+    t_range = list(np.arange(0, image_shape[4], step_size[4]))
+    t_range = list(map(predict_tiles.get_dim1dim2, 
+                       t_range, repeat(image_shape[4]), repeat(window_size[4])))
+
+    # https://docs.python.org/3/library/itertools.html#itertools.product
+    yxzct_ranges = itertools.product(y_range,x_range,z_range,c_range,t_range)
+    return yxzct_ranges
 
 def get_image_minmax(br_image   : bfio.bfio.BioReader, 
                      image_size : np.ndarray,
@@ -42,44 +81,26 @@ def get_image_minmax(br_image   : bfio.bfio.BioReader,
         image_max_val: the largest value in the bfio object
     """
     
+
     datatype = br_image.dtype
 
-    image_max_value = 0
-    image_min_value = np.iinfo(datatype).max
+    tile_size_dims = [tile_size] * len(image_size)
 
-    for y1 in range(0, image_size[0], tile_size):
-        y1, y2 = predict_tiles.get_dim1dim2(dim1=y1, 
-                              image_size=image_size[0],
-                              window_size=tile_size)
-        for x1 in range(0, image_size[1], tile_size):
-            x1, x2 = predict_tiles.get_dim1dim2(dim1=x1, 
-                                  image_size=image_size[1],
-                                  window_size=tile_size)
-            for z1 in range(0, image_size[2], tile_size):
-                z1, z2 = predict_tiles.get_dim1dim2(dim1=z1,
-                                      image_size=image_size[2],
-                                      window_size=tile_size)
-                for c1 in range(0, image_size[3], tile_size):
-                    c1, c2 = predict_tiles.get_dim1dim2(dim1=c1,
-                                            image_size=image_size[3],
-                                            window_size=tile_size)
-                    for t1 in range(0, image_size[4], tile_size):
-                        t1, t2 = predict_tiles.get_dim1dim2(dim1=t1,
-                                                image_size=image_size[4],
-                                                window_size=tile_size)
+    yxzct_ranges = get_ranges(image_shape = image_size,
+                              window_size = tile_size_dims,
+                              step_size   = tile_size_dims)
 
-                        br_tiled = br_image[y1:y2, x1:x2, z1:z2, c1:c2, t1:t2]
-                        
-                        # get the tiled min and max values
-                        max_tile_val = np.max(br_tiled)
-                        min_tile_val = np.min(br_tiled)
-
-                        if image_max_value < max_tile_val:
-                            image_max_value = max_tile_val
-                        
-                        if image_min_value > min_tile_val:
-                            image_min_value = min_tile_val
-
+    get_min_max = lambda image: [np.min(image), np.max(image)]
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers = os.cpu_count() - 1) as executor:
+        futures = executor.map(get_min_max, (br_image[yxzct[0][0]:yxzct[0][1], 
+                                                      yxzct[1][0]:yxzct[1][1],
+                                                      yxzct[2][0]:yxzct[2][1],
+                                                      yxzct[3][0]:yxzct[3][1],
+                                                      yxzct[4][0]:yxzct[4][1]] for yxzct in yxzct_ranges))
+    min_max_values  = np.array(list(futures))
+    image_min_value = np.min(min_max_values[:, 0])
+    image_max_value = np.max(min_max_values[:, 1])
 
     return image_min_value, image_max_value
 

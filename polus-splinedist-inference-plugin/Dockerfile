@@ -11,6 +11,7 @@ RUN mkdir -p ${EXEC_DIR}
 COPY src ${EXEC_DIR}/
 WORKDIR ${EXEC_DIR}
 
+RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install -r requirements.txt --no-cache-dir
 
 RUN apt update \
@@ -23,3 +24,4 @@ RUN pip3 install splinedist/
 
 WORKDIR ${EXEC_DIR}
 ENTRYPOINT ["python3", "main.py"]
+
