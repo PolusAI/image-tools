@@ -5,6 +5,10 @@ import numpy as np
 
 import bfio
 from bfio import BioReader, BioWriter
+
+polus_tilepredictions = os.path.abspath(__file__ + 3 * '/..')
+polus_tilepredictions = os.path.join(polus_tilepredictions, "utils/polus-tiled-predictions-util/tiledpredictions")
+sys.path.append(polus_tilepredictions)
 import predict_tiles
 
 import itertools
