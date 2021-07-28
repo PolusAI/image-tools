@@ -6,7 +6,6 @@ polus_predict_tiles = os.path.abspath(__file__ + 2 * '/..')
 sys.path.append(polus_predict_tiles)
 from tiledpredictions.predict_tiles import \
     predict_in_tiles
-print(polus_predict_tiles)
 
 # libraries related to reading and writing from input and outputs, respectively
 import tempfile
@@ -23,9 +22,6 @@ from splinedist.models import Config2D, SplineDist2D, SplineDistData2D
 
 # libraries for calculating metrics
 from sklearn.metrics import fbeta_score, jaccard_score
-
-
-
 
 class TestEncodingDecoding(unittest.TestCase):
 
