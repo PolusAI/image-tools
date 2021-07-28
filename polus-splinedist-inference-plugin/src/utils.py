@@ -90,18 +90,25 @@ def get_image_minmax(br_image   : bfio.bfio.BioReader,
 
     tile_size_dims = [tile_size] * len(image_size)
 
+    # getting a list of tile dimensions to iterate through with
+        # multithreading
     yxzct_ranges = get_ranges(image_shape = image_size,
                               window_size = tile_size_dims,
                               step_size   = tile_size_dims)
 
+    # function to get the min and max values of the tiles
     get_min_max = lambda image: [np.min(image), np.max(image)]
     
+    # appending all the min and max values of every tile into a list
     with concurrent.futures.ThreadPoolExecutor(max_workers = os.cpu_count() - 1) as executor:
         futures = executor.map(get_min_max, (br_image[yxzct[0][0]:yxzct[0][1], 
                                                       yxzct[1][0]:yxzct[1][1],
                                                       yxzct[2][0]:yxzct[2][1],
                                                       yxzct[3][0]:yxzct[3][1],
                                                       yxzct[4][0]:yxzct[4][1]] for yxzct in yxzct_ranges))
+    
+    # going through all the min and max values of the tiles and 
+    # getting the global min and max value.
     min_max_values  = np.array(list(futures))
     image_min_value = np.min(min_max_values[:, 0])
     image_max_value = np.max(min_max_values[:, 1])
