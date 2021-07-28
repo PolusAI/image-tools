@@ -24,9 +24,8 @@ naming conventions.
 
 * The user can format the output digit using the number of digits 
 specified in the output format.
- * `d` or `i` represent *digit*/*integer*
+ * `d` represents *digit*
  * `c` represents *character*
- * `f` represents *floating point*
 
 * If the output formats have plus signs (+), then the number of output 
 digits/characters is not fixed.
@@ -35,7 +34,7 @@ digits/characters is not fixed.
 exception:
  * If the input is a chracter and the output is digit, 
 then the script sorts the strings that match the character pattern and 
-assigns numbers 1+ to them.
+assigns numbers 0+ to them.
 
 
 Contact [Melanie Parham](mailto:melanie.parham@axleinfo.com) for more 

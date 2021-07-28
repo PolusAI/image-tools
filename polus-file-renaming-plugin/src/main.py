@@ -3,107 +3,111 @@ import argparse
 from pathlib import Path
 import re
 import shutil
+
 def pattern_to_regex(pattern:str) -> dict:
-    """Here, we add in a "named regular expression (capture) group: ?p<>
+    """Add named regular expression group, ?p<>, and make pattern regex.
     
-    Looks at pattern. Finds word: dd or cc or d+
-    
-    findall() finds all the matches and returns them as a list of strings, 
-    with each string representing one match
-    Source: https://developers.google.com/edu/python/regular-expressions#findall)
-    
+    Ultimately, this function builds a dictionary where the key is the 
+    named regex group and the value is the regex.
     
     Args:
-        pattern: "img_x{row:dd}_y{col:dd}_{channel:c+}.tif"
+        pattern: file pattern provided by the user
     Returns:
-        regex_patterns: {'row': '(?P<row>[0-9][0-9])', 'col': '(?P<col>[0-9][0-9])','channel': '(?P<channel>[a-zA-Z]+)'}
+        rgx_patterns: named group and regex value dictionary
     """
+    #: Make list of (named group, user file pattern) tuples
     patterns = re.findall(r'\{(\w+):([dc+]+)\}', pattern)
     pattern_map = {
     'd' : r'[0-9]',
     'c' : r'[a-zA-Z]',
     '+' : '+'
     }
-    regex_patterns = {}
+    rgx_patterns = {}
     for var, pat in patterns:
         pp = ''.join([pattern_map[p] for p in pat])
-        regex_patterns[var] = fr'(?P<{var}>{pp})'
-    
-    return regex_patterns
-
+        rgx_patterns[var] = fr'(?P<{var}>{pp})'
+    logger.debug("Pattern_to_regex() returns {}.".format(rgx_patterns))
+    return rgx_patterns
 
 def pattern_to_raw_f_string(pattern:str, regex_patterns:dict)->str:
     """
-    Here we create an f strings
-    (cleaner in python 3.7 than using .format())
-    You can create raw f-strings by using the prefix “fr” 
-    Source: https://cito.github.io/blog/f-strings/
+    Create f strings, a cleaner version of .format().
     
+    Using the file pattern and the dictionary with regex patterns, where
+    the key is a named group and the value is a regex, we replace the 
+    file pattern with a file pattern that can be read by the re library.
+        
     Args:
-        pattern: "img_x{row:dd}_y{col:dd}_{channel:c+}.tif"
-        regex_patterns: {'row': '(?P<row>[0-9][0-9])', 'col': '(?P<col>[0-9][0-9])', 'channel': '(?P<channel>[a-zA-Z]+)'}
+        pattern: file pattern provided by the user
+        regex_patterns: named group and regex value dictionary
     Returns:
-        inp: "img_x(?P<row>[0-9][0-9])_y(?P<col>[0-9][0-9])_(?P<channel>[a-zA-Z]+).tif"
+        rgx_pattern: file pattern that is readable by re library
     """
-    
-    inp = pattern
-    for k, v in regex_patterns.items():
-        inp = re.sub(fr'\{{{k}:.*?\}}', v, inp)
-    return inp
+    rgx_pattern = pattern
+    for named_grp, regex_str in regex_patterns.items():
+        #: Using the prefix "fr" creates raw f-strings
+        rgx_pattern = re.sub(fr'\{{{named_grp}:.*?\}}', regex_str, rgx_pattern)
+    logger.debug("pattern_to_raw_f_string() returns {}.".format(rgx_pattern))
+    return rgx_pattern
 
-def gen_all_matches(inp:str, inp_files:list)->dict:
+def gen_all_matches(rgx_pattern:str, inp_files:list)->dict:
     """
     Get matches from input pattern and input filename
     
-    Generate a list of dictionaries, where each dictionary 
-    is the named regular expression capture group and 
-    corresponding match.
+    Generate a list of dictionaries, where each dictionary key is the 
+    named regular expression capture group and the value is the
+    corresponding match from the filename.
     
     Args:
-        inp: input pattern as f string (contains ?P for capturing regex capture groups)
+        rgx_pattern: input pattern as f string (has ?P for rgx groups)
+        inp_files: list of files in input directory
     
     Returns:
-        all_matches: list of dicts, where keys are regex capture group names and correspnding matches from filename
-    
+        grp_match_dict_list: k=capture grps, v=match, last item has filename info
     """
-    all_matches =[]
-    for x in inp_files:
-        tmp = re.match(inp, x.name).groupdict()
-        tmp["name"] = x
-        all_matches.append(tmp)
-    return all_matches
+    grp_match_dict_list =[]
+    #: Build list of dicts, where key is capture group and value is match
+    for inp_file in inp_files:
+        grp_match_dict = re.match(rgx_pattern, inp_file.name).groupdict()
+        #: Add filename information to dictionary
+        grp_match_dict["fname"] = inp_file
+        grp_match_dict_list.append(grp_match_dict)
+    logger.debug("gen_all_matches() returns {}.".format(grp_match_dict_list))
+    return grp_match_dict_list
 
 def pattern_to_fstring(out_pattern:str)->str:
-    
     """
-    Convert outpattern to format string, :03d 
+    Convert outpattern to format string, :03d. 
+    
+    For example, "newdata_x{row:ddd}" returns "new_data{row:03d}".
+  
     Args:
-        out_patterns: 'newdata_x{row:ddd}_y{col:ddd}_c{channel:ddd}.tif'
+        out_pattern: output file pattern provided by the user
     
     Returns:
-        out_pattern_fstring: 'newdata_x{row:03d}_y{col:03d}_c{channel:03d}.tif'
+        out_pattern_fstring: output file pattern converted to f-string
     """
+    #: Make list of (named groups, user file pattern) tuples 
     out_patterns = re.findall(r'\{(\w+):([dc+]+)\}', out_pattern)
     f_string_dict = {}
     for key, value in out_patterns:
         temp_value = value[:1]
-        if "+" not in value:
-            if temp_value == "c":
-                temp_value = "s"
-                f_string_dict[key] = "{" + key + ":" + str(len(value)) + temp_value + "}"
-            else:
-                # Preceding the width field by a zero ('0') character enables sign-aware zero-padding for numeric types
-                f_string_dict[key] = "{" + key + ":0" + str(len(value)) + temp_value + "}"
-        else:
-            if temp_value == "c":
-                temp_value = "s"
-                f_string_dict[key] = "{" + key  + ":" + temp_value + "}"
-            else:
-                f_string_dict[key] = "{" + key  + ":0" + temp_value + "}"
-    
+        if "+" not in value and temp_value == "c":
+            temp_value = "s"
+            f_string_dict[key] = "{" + key + ":" + str(len(value)) + temp_value + "}"
+        # Prepend "0" to field to enable 0-padding of numeric types
+        elif "+" not in value and temp_value != "c":
+            f_string_dict[key] = "{" + key + ":0" + str(len(value)) + temp_value + "}"
+        elif "+" in value and temp_value == "c":
+            temp_value = "s"
+            f_string_dict[key] = "{" + key  + ":" + temp_value + "}"
+        # Prepend "0" to field to enable 0-padding of numeric types
+        elif "+" in value and temp_value != "c":
+            f_string_dict[key] = "{" + key  + ":0" + temp_value + "}"
     out_pattern_fstring = out_pattern
     for named_group, fstring in f_string_dict.items():
         out_pattern_fstring = re.sub(fr'\{{{named_group}:.*?\}}', fstring, out_pattern_fstring)
+    logger.debug("pattern_to_f_string() returns {}.".format(out_pattern_fstring))
     return out_pattern_fstring
 
 def convert_match_to_int(tmp_match):
@@ -115,37 +119,49 @@ def convert_match_to_int(tmp_match):
             new_tmp_match[key] = int(value)
         except Exception:
             new_tmp_match[key] = value
+    logger.debug("convert_match_to_int() returns {}.".format(new_tmp_match))
     return new_tmp_match
 
-def replace_cat_label(inp_pattern:str, out_pattern:str):
-    """This function replaces with the categorical label
+def replace_cat_label(inp_pattern:str, out_pattern:str)->list:
+    """Return categorical labels if inpatt is char and outpatt is digit.
     
     Args:
-        inp_pattern
-        out_pattern:
+        inp_pattern: user input pattern
+        out_pattern: user output pattern
     Returns:
-        
+        unique_keys: list of unique category labels to make numeric
     """
     #: Generate list [('row', 'dd'), ('col', 'dd'), ('channel', 'c+')]
-    in_pattts = re.findall(r'\{(\w+):([dc+]+)\}', inp_pattern)
-    out_pattts = re.findall(r'\{(\w+):([dc+]+)\}', out_pattern)
+    in_patts = re.findall(r'\{(\w+):([dc+]+)\}', inp_pattern)
+    out_patts = re.findall(r'\{(\w+):([dc+]+)\}', out_pattern)
     
-    #: ['channel'] If input is c and output starts with d, store unique key in list
-    my_list = list(set([a for (a,b) in in_pattts for (c,d) in out_pattts  if b.startswith("c") and d.startswith("d")]))
-    
-    return my_list
+    #: If input file pattern is c and output is d, list unique key
+    unique_keys = list(set([
+        inp_grp for (inp_grp,inp_rgx) in in_patts 
+        for (out_grp, out_rgx) in out_patts  
+        if inp_rgx.startswith("c") and out_rgx.startswith("d")
+        ]))
+    logger.debug("replace_cat_label() returns {}.".format(unique_keys))
+    return unique_keys
 
-def dict_str_to_digit(element, all_matches):
+def dict_str_to_digit(c_to_d_category:str, all_matches)->dict:
     """
-    Perform string to digit datatype conversion
+    Make dictionary of category labels and numbers.
+    This is used to later perform string to digit datatype conversion.
+    
+    Args:
+        category: category group name to convert from char to digit
+        all_matches: list of dicts, k=capture grps, v=match, last item has fname info
+    Returns:
+        cat_index_dict: dict key=category name, value=index after sorting
     """
-    #tmp_match2 = new_tmp_match
-    #: find the index of item in the list
-    set_list = sorted(list(set([x[element] for x in all_matches])))
-    indices = dict()
-    for i in range(0, len(set_list)):
-        indices[set_list[i]] = i
-    return indices
+    #: Generate list of strings belonging to the given category (element).
+    cat_str_list = sorted(list(set([x[c_to_d_category] for x in all_matches])))
+    cat_index_dict = dict()
+    for i in range(0, len(cat_str_list)):
+        cat_index_dict[cat_str_list[i]] = i
+    logger.debug("dict_str_to_digit() returns {}.".format(cat_index_dict))
+    return cat_index_dict
 
 if __name__ == "__main__":
     #: Initialize the logger
@@ -154,7 +170,7 @@ if __name__ == "__main__":
         datefmt = "%d-%b-%y %H:%M:%S"
         )
     logger = logging.getLogger("main")
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     #: Set up the argument parsing
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(
@@ -213,14 +229,16 @@ if __name__ == "__main__":
         tmp_match = all_matches[i]
         all_matches[i] = convert_match_to_int(tmp_match)
     char_to_num = dict()
-    for element in category_list:
-        char_to_num[element] = dict_str_to_digit(element, all_matches)
+    for c_to_d_category in category_list:
+        char_to_num[c_to_d_category] = dict_str_to_digit(
+            c_to_d_category, all_matches)
     #: Convert tmp_match to integers, if applicable
-    for element in category_list:
+    for c_to_d_category in category_list:
         for i in range(0, len(all_matches)):
-            if all_matches[i].get(element):
-                all_matches[i][element] = char_to_num[element][all_matches[i][element]]
+            if all_matches[i].get(c_to_d_category):
+                all_matches[i][c_to_d_category] = char_to_num[c_to_d_category][all_matches[i][c_to_d_category]]
     for match in all_matches:
         new_name = Path(outDir).resolve() / out_pattern_fstring.format(**match)
-        logger.info(f'old name {match["name"]} and new name {new_name}')
-        shutil.copy2(match["name"], new_name)
+        logger.info(f'old name {match["fname"]} and new name {new_name}')
+        #: Copy renamed file to output directory
+        shutil.copy2(match["fname"], new_name)
