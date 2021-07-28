@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t mmvihani/polus-inferring-splinedist-plugin:${version}
+docker build . -t labshare/polus-splinedist-inference-plugin:${version}
