@@ -6,6 +6,7 @@ polus_predict_tiles = os.path.abspath(__file__ + 2 * '/..')
 sys.path.append(polus_predict_tiles)
 from tiledpredictions.predict_tiles import \
     predict_in_tiles
+print(polus_predict_tiles)
 
 # libraries related to reading and writing from input and outputs, respectively
 import tempfile
