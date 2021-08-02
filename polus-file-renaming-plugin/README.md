@@ -25,7 +25,9 @@ naming conventions.
 * The user can format the output digit using the number of digits 
 specified in the output format.
  * `d` represents *digit*
- * `c` represents *character*
+ * `c` represents *character*. 
+ 
+* Note that c+ only matches letters in the alphabet, not symbols and numbers
 
 * If the output formats have plus signs (+), then the number of output 
 digits/characters is not fixed.

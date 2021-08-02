@@ -4,6 +4,18 @@ from pathlib import Path
 import re
 import shutil
 
+"""
+This is the order in which functions are called:
+
+pattern_to_regex(): Convert pattern to regex; include named regex group
+pattern_to_raw_f_string(): Create raw f strings (ex: (?P<row>[a-zA-Z]+))
+pattern_to_fstring(): Convert outpattern to format string (ex: {row:03d})
+replace_cat_label(): Map chars to nums if input is char and out is digit
+gen_all_matches(): Get matches from input pattern and input filename
+numstrvalue_to_int(): Convert numeric str dictionary values to integers
+non_numstr_value_to_int(): Make dictionary of category labels and numbers.
+"""
+
 def pattern_to_regex(pattern:str) -> dict:
     """Add named regular expression group, ?p<>, and make pattern regex.
     
@@ -58,34 +70,6 @@ def pattern_to_raw_f_string(pattern:str, rgx_patts:dict)->str:
     logger.debug("pattern_to_raw_f_string() returns {}.".format(rgx_pattern))
     return rgx_pattern
 
-def gen_all_matches(rgx_pattern:str, inp_files:list)->dict:
-    """
-    Get matches from input pattern and input filename
-    
-    Generate a list of dictionaries, where each dictionary key is the 
-    named regular expression capture group and the value is the
-    corresponding match from the filename.
-    
-    Args:
-        rgx_pattern: input pattern as f string (has ?P for rgx groups)
-        inp_files: list of files in input directory
-    
-    Returns:
-        grp_match_dict_list: k=capture grps, v=match, last item has filename info
-    """
-    #: Return reference to logger instance
-    logger = logging.getLogger("main")
-    logger.debug("gen_all_matches() inputs: {}, {}".format(rgx_pattern, inp_files))
-    grp_match_dict_list =[]
-    #: Build list of dicts, where key is capture group and value is match
-    for inp_file in inp_files:
-        grp_match_dict = re.match(rgx_pattern, inp_file.name).groupdict()
-        #: Add filename information to dictionary
-        grp_match_dict["fname"] = inp_file
-        grp_match_dict_list.append(grp_match_dict)
-    logger.debug("gen_all_matches() returns {}.".format(grp_match_dict_list))
-    return grp_match_dict_list
-
 def pattern_to_fstring(out_pattern:str)->str:
     """
     Convert outpattern to format string, :03d. 
@@ -124,25 +108,6 @@ def pattern_to_fstring(out_pattern:str)->str:
     logger.debug("pattern_to_f_string() returns {}.".format(out_pattern_fstring))
     return out_pattern_fstring
 
-def numstrvalue_to_int(ngrp_match_dict:dict)->dict:
-    """Convert numeric str dictionary values to integers, if applicable
-    Args:
-        ngrp_match_dict: named groups to match dict, last value=filename
-    Returns:
-        ngrp_nummatch_dict: input dict, with numeric str values to int
-    """
-    #: Return reference to logger instance
-    logger = logging.getLogger("main")
-    logger.debug("numstrvalue_to_int() inputs: {}".format(ngrp_match_dict))
-    ngrp_nummatch_dict = {}
-    for key, value in ngrp_match_dict.items():
-        try:
-            ngrp_nummatch_dict[key] = int(value)
-        except Exception:
-            ngrp_nummatch_dict[key] = value
-    logger.debug("numstrvalue_to_int() returns {}.".format(ngrp_nummatch_dict))
-    return ngrp_nummatch_dict
-
 def replace_cat_label(inp_pattern:str, out_pattern:str)->list:
     """Return categorical labels if inpatt is char and outpatt is digit.
     
@@ -168,6 +133,59 @@ def replace_cat_label(inp_pattern:str, out_pattern:str)->list:
         ]))
     logger.debug("replace_cat_label() returns {}.".format(unique_keys))
     return unique_keys
+
+def gen_all_matches(rgx_pattern:str, inp_files:list)->dict:
+    """
+    Get matches from input pattern and input filename
+    
+    Generate a list of dictionaries, where each dictionary key is the 
+    named regular expression capture group and the value is the
+    corresponding match from the filename.
+    
+    Args:
+        rgx_pattern: input pattern as f string (has ?P for rgx groups)
+        inp_files: list of files in input directory
+    
+    Returns:
+        grp_match_dict_list: k=capture grps, v=match, last item has filename info
+    """
+    #: Return reference to logger instance
+    logger = logging.getLogger("main")
+    logger.debug("gen_all_matches() inputs: {}, {}".format(rgx_pattern, inp_files))
+    grp_match_dict_list =[]
+    #: Build list of dicts, where key is capture group and value is match
+    for inp_file in inp_files:
+        try:
+            grp_match_dict = re.match(rgx_pattern, inp_file.name).groupdict()
+            #: Add filename information to dictionary
+            grp_match_dict["fname"] = inp_file
+            grp_match_dict_list.append(grp_match_dict)
+        except AttributeError:
+            logger.error(
+                "File pattern does not match one or more files. See README for pattern rules.")
+            raise AttributeError(
+                "File pattern does not match one or more files. See README for pattern rules.") 
+    logger.debug("gen_all_matches() returns {}.".format(grp_match_dict_list))
+    return grp_match_dict_list
+
+def numstrvalue_to_int(ngrp_match_dict:dict)->dict:
+    """Convert numeric str dictionary values to integers, if applicable
+    Args:
+        ngrp_match_dict: named groups to match dict, last value=filename
+    Returns:
+        ngrp_nummatch_dict: input dict, with numeric str values to int
+    """
+    #: Return reference to logger instance
+    logger = logging.getLogger("main")
+    logger.debug("numstrvalue_to_int() inputs: {}".format(ngrp_match_dict))
+    ngrp_nummatch_dict = {}
+    for key, value in ngrp_match_dict.items():
+        try:
+            ngrp_nummatch_dict[key] = int(value)
+        except Exception:
+            ngrp_nummatch_dict[key] = value
+    logger.debug("numstrvalue_to_int() returns {}.".format(ngrp_nummatch_dict))
+    return ngrp_nummatch_dict
 
 def non_numstr_value_to_int(c_to_d_category:str, all_matches:list)->dict:
     """
@@ -197,7 +215,7 @@ if __name__ == "__main__":
         datefmt = "%d-%b-%y %H:%M:%S"
         )
     logger = logging.getLogger("main")
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     #: Set up the argument parsing
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(
@@ -248,10 +266,11 @@ if __name__ == "__main__":
     inp = pattern_to_raw_f_string(inp_pattern, regex_patterns)
     #: Convert out pattern to fstring to be used for str formatting
     out_pattern_fstring = pattern_to_fstring(out_pattern)
-    #: Label categories where input, output patterns are c, d)
+    #: List category names where input, output patterns are c, d)
     category_list = replace_cat_label(inp_pattern, out_pattern)
     #: List dict for each filename, capture groups, and corresponding matches
     all_matches = gen_all_matches(inp, inp_files)
+    #: Iterate through matches
     for i in range(0, len(all_matches)):
         tmp_match = all_matches[i]
         #: Convert numeric str dictionary values to int, if applicable
@@ -264,9 +283,10 @@ if __name__ == "__main__":
     for c_to_d_category in category_list:
         for i in range(0, len(all_matches)):
             if all_matches[i].get(c_to_d_category):
-                all_matches[i][c_to_d_category] = char_to_num[c_to_d_category][all_matches[i][c_to_d_category]]
+                all_matches[i][c_to_d_category] = char_to_num[c_to_d_category][
+                    all_matches[i][c_to_d_category]]
     for match in all_matches:
-        new_name = Path(outDir).resolve() / out_pattern_fstring.format(**match)
-        logger.info(f'old name {match["fname"]} and new name {new_name}')
+        out_name = Path(outDir).resolve() / out_pattern_fstring.format(**match)
+        logger.info(f'old file name {match["fname"]} and new file name {out_name}')
         #: Copy renamed file to output directory
-        shutil.copy2(match["fname"], new_name)
+        shutil.copy2(match["fname"], out_name)
