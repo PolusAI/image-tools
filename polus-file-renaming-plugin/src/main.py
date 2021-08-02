@@ -197,7 +197,7 @@ if __name__ == "__main__":
         datefmt = "%d-%b-%y %H:%M:%S"
         )
     logger = logging.getLogger("main")
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     #: Set up the argument parsing
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(
