@@ -16,13 +16,18 @@ class TestFileRenaming(unittest.TestCase):
             (
                 ("img_x{row:dd}_y{col:dd}_{channel:c+}.tif"),
                 ({"row": "(?P<row>[0-9][0-9])", "col": "(?P<col>[0-9][0-9])", "channel": "(?P<channel>[a-zA-Z]+)"}),
-            ),
+                ),
             #: Test case 2
             (
                 ("img_x{row:c+}.tif"),
                 ({"row": "(?P<row>[a-zA-Z]+)"})
-            )
-        ]
+                ),
+            #: Test case 3
+            (
+                (""),
+                ({})
+                )
+            ]
         for test_case in test_cases:
             (from_val, to_val) = test_case
             result = main.pattern_to_regex(from_val)
@@ -41,7 +46,13 @@ class TestFileRenaming(unittest.TestCase):
                 ("img_x{row:c+}.tif"),
                 ({"row": "(?P<row>[a-zA-Z]+)"}),
                 ("img_x(?P<row>[a-zA-Z]+).tif")
-                )
+                ),
+            #: Test case 3
+            (
+                ("img_x01.tif"),
+                ({}),
+                ("img_x01.tif")
+            )
             ]
         for test_case in test_cases:
             (from_val1, from_val2, to_val) = test_case
@@ -59,6 +70,11 @@ class TestFileRenaming(unittest.TestCase):
             (
                 ("newdata_x{row:c+}.tif"),
                 ("newdata_x{row:s}.tif")
+            ),
+            #: Test case 3
+            (
+                ("newdata_x01.tif"),
+                ("newdata_x01.tif")
             )
             ]
         for test_case in test_cases:
@@ -79,7 +95,13 @@ class TestFileRenaming(unittest.TestCase):
                 ("img_x{row:c+}.tif"),
                 ("newdata_x{row:c+}.tif"),
                 ([]) 
-                )            
+                ),
+            #: Test case 3
+            (
+                ("img_x01.tif"),
+                ("newdata_x01.tif"),
+                ([])
+            )       
             ]
         for test_case in test_cases:
             (from_val1, from_val2, to_val) = test_case
@@ -94,6 +116,12 @@ class TestFileRenaming(unittest.TestCase):
                 ([Path("../tests/test_data/image_collection_1/img_x01_y01_DAPI.tif"), Path("../tests/test_data/image_collection_1/img_x01_y01_GFP.tif"), Path("../tests/test_data/image_collection_1/img_x01_y01_TXRED.tif")]),
                 ([{"row": "01", "col": "01", "channel": "DAPI", "fname": Path("../tests/test_data/image_collection_1/img_x01_y01_DAPI.tif")}, {"row": "01", "col": "01", "channel": "GFP", "fname": Path("../tests/test_data/image_collection_1/img_x01_y01_GFP.tif")}, {"row": "01", "col": "01", "channel": "TXRED", "fname": Path("../tests/test_data/image_collection_1/img_x01_y01_TXRED.tif")}])
                 ),
+            #: Test case 2
+            (
+                ("img_x01.tif"),
+                ([Path("../tests/test_data/onefile_in/img_x01.tif")]),
+                ([{'fname': Path('../tests/test_data/onefile_in/img_x01.tif')}])
+            )
             ]
         for test_case in test_cases:
             (from_val1, from_val2, to_val) = test_case

@@ -124,7 +124,7 @@ def replace_cat_label(inp_pattern:str, out_pattern:str)->list:
     #: Generate list [("row", "dd"), ("col", "dd"), ("channel", "c+"")]
     in_patts = re.findall(r"\{(\w+):([dc+]+)\}", inp_pattern)
     out_patts = re.findall(r"\{(\w+):([dc+]+)\}", out_pattern)
-    
+    unique_keys = []
     #: If input file pattern is c and output is d, list unique key
     unique_keys = list(set([
         inp_grp for (inp_grp,inp_rgx) in in_patts 
