@@ -31,16 +31,16 @@ def pattern_to_regex(pattern:str) -> dict:
     logger = logging.getLogger("main")
     logger.debug("pattern_to_regex() inputs: {}".format(pattern))
     #: Make list of (named group, user file pattern) tuples
-    patterns = re.findall(r'\{(\w+):([dc+]+)\}', pattern)
+    patterns = re.findall(r"\{(\w+):([dc+]+)\}", pattern)
     pattern_map = {
-    'd' : r'[0-9]',
-    'c' : r'[a-zA-Z]',
-    '+' : '+'
-    }
+        "d" : r"[0-9]",
+        "c" : r"[a-zA-Z]",
+        "+" : "+"
+        }
     rgx_patterns = {}
     for var, pat in patterns:
-        pp = ''.join([pattern_map[p] for p in pat])
-        rgx_patterns[var] = fr'(?P<{var}>{pp})'
+        pp = "".join([pattern_map[p] for p in pat])
+        rgx_patterns[var] = fr"(?P<{var}>{pp})"
     logger.debug("pattern_to_regex() returns {}.".format(rgx_patterns))
     return rgx_patterns
 
@@ -66,7 +66,7 @@ def pattern_to_raw_f_string(pattern:str, rgx_patts:dict)->str:
     rgx_pattern = pattern
     for named_grp, regex_str in rgx_patts.items():
         #: Using the prefix "fr" creates raw f-strings
-        rgx_pattern = re.sub(fr'\{{{named_grp}:.*?\}}', regex_str, rgx_pattern)
+        rgx_pattern = re.sub(fr"\{{{named_grp}:.*?\}}", regex_str, rgx_pattern)
     logger.debug("pattern_to_raw_f_string() returns {}.".format(rgx_pattern))
     return rgx_pattern
 
@@ -86,7 +86,7 @@ def pattern_to_fstring(out_pattern:str)->str:
     logger = logging.getLogger("main")
     logger.debug("pattern_to_fstring() inputs: {}".format(out_pattern))
     #: Make list of (named groups, user file pattern) tuples 
-    out_patterns = re.findall(r'\{(\w+):([dc+]+)\}', out_pattern)
+    out_patterns = re.findall(r"\{(\w+):([dc+]+)\}", out_pattern)
     f_string_dict = {}
     for key, value in out_patterns:
         temp_value = value[:1]
@@ -104,7 +104,7 @@ def pattern_to_fstring(out_pattern:str)->str:
             f_string_dict[key] = "{" + key  + ":0" + temp_value + "}"
     out_pattern_fstring = out_pattern
     for named_group, fstring in f_string_dict.items():
-        out_pattern_fstring = re.sub(fr'\{{{named_group}:.*?\}}', fstring, out_pattern_fstring)
+        out_pattern_fstring = re.sub(fr"\{{{named_group}:.*?\}}", fstring, out_pattern_fstring)
     logger.debug("pattern_to_f_string() returns {}.".format(out_pattern_fstring))
     return out_pattern_fstring
 
@@ -121,9 +121,9 @@ def replace_cat_label(inp_pattern:str, out_pattern:str)->list:
     logger = logging.getLogger("main")
     logger.debug(
         "replace_cat_label() inputs: {}, {}".format(inp_pattern, out_pattern))
-    #: Generate list [('row', 'dd'), ('col', 'dd'), ('channel', 'c+')]
-    in_patts = re.findall(r'\{(\w+):([dc+]+)\}', inp_pattern)
-    out_patts = re.findall(r'\{(\w+):([dc+]+)\}', out_pattern)
+    #: Generate list [("row", "dd"), ("col", "dd"), ("channel", "c+"")]
+    in_patts = re.findall(r"\{(\w+):([dc+]+)\}", inp_pattern)
+    out_patts = re.findall(r"\{(\w+):([dc+]+)\}", out_pattern)
     
     #: If input file pattern is c and output is d, list unique key
     unique_keys = list(set([
@@ -160,11 +160,16 @@ def gen_all_matches(rgx_pattern:str, inp_files:list)->dict:
             #: Add filename information to dictionary
             grp_match_dict["fname"] = inp_file
             grp_match_dict_list.append(grp_match_dict)
-        except AttributeError:
-            logger.error(
-                "File pattern does not match one or more files. See README for pattern rules.")
-            raise AttributeError(
-                "File pattern does not match one or more files. See README for pattern rules.") 
+        except AttributeError as e:
+            logger.error(e)
+            logger.error("File pattern does not match one or more files. See README for pattern rules.")
+            raise AttributeError("File pattern does not match one or more files. Check that each named group in your file pattern is unique or see README for pattern rules.")
+        except Exception as e:
+            if str(e).startswith("redefinition of group name"):
+                logger.error("Ensure that named groups in your file patterns have unique names. Original error: {}".format(e))
+                raise ValueError("Ensure that named groups in your file patterns have unique names ({})".format(e))
+            else:
+                raise ValueError("Something went wrong. See README for pattern rules. Original error: {}".format(e))
     logger.debug("gen_all_matches() returns {}.".format(grp_match_dict_list))
     return grp_match_dict_list
 
@@ -287,6 +292,6 @@ if __name__ == "__main__":
                     all_matches[i][c_to_d_category]]
     for match in all_matches:
         out_name = Path(outDir).resolve() / out_pattern_fstring.format(**match)
-        logger.info(f'old file name {match["fname"]} and new file name {out_name}')
+        logger.info(f"Old file name {match['fname']} and new file name {out_name}")
         #: Copy renamed file to output directory
         shutil.copy2(match["fname"], out_name)
