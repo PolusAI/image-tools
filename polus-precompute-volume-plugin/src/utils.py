@@ -23,8 +23,8 @@ from bfio import BioReader, BioWriter
 
 import traceback
 
-chunk_size = [64, 64, 64]
-mesh_chunk_size = [256, 256, 256]
+chunk_size = [256, 256, 256]
+mesh_chunk_size = [512, 512, 512]
 
 bit_depth = 10
 
@@ -32,7 +32,7 @@ bit_depth = 10
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("utils")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 def get_resolution(phys_y : tuple,
                    phys_x : tuple,
@@ -205,6 +205,7 @@ def build_pyramid(input_image : str,
             logger.info("Image Shape {}".format(bfshape))
             logger.info("Image Datatype {}".format(datatype))
             
+
             # info file specifications
             resolution = get_resolution(phys_y=bf.physical_size_y, 
                                         phys_x=bf.physical_size_x, 
@@ -231,19 +232,29 @@ def build_pyramid(input_image : str,
 
                         # keep track of labelled segments
                         all_identities = []
+                        cache_tile = bf._TILE_SIZE
+                        
 
+                        logger.info("\n Starting to Cache Section Sizes of {}".format(cache_tile))
                         # cache tiles of 1024 
-                        for y1_cache in range(0, bf.Y, bf._TILE_SIZE):
-                            for x1_cache in range(0, bf.X, bf._TILE_SIZE):
-                                for z1_cache in range(0, bf.Z, bf._TILE_SIZE):
-                                    for c1_cache in range(0, bf.C, bf._TILE_SIZE):
-                                        for t1_cache in range(0, bf.T, bf._TILE_SIZE):
+                        for y1_cache in range(0, bf.Y, cache_tile):
+                            for x1_cache in range(0, bf.X, cache_tile):
+                                for z1_cache in range(0, bf.Z, cache_tile):
+                                    for c1_cache in range(0, bf.C, cache_tile):
+                                        for t1_cache in range(0, bf.T, cache_tile):
 
-                                            y1_cache, y2_cache = get_dim1dim2(y1_cache, bf.Y, bf._TILE_SIZE)
-                                            x1_cache, x2_cache = get_dim1dim2(x1_cache, bf.X, bf._TILE_SIZE)
-                                            z1_cache, z2_cache = get_dim1dim2(z1_cache, bf.Z, bf._TILE_SIZE)
-                                            c1_cache, c2_cache = get_dim1dim2(c1_cache, bf.C, bf._TILE_SIZE)
-                                            t1_cache, t2_cache = get_dim1dim2(t1_cache, bf.T, bf._TILE_SIZE)
+                                            y1_cache, y2_cache = get_dim1dim2(y1_cache, bf.Y, cache_tile)
+                                            x1_cache, x2_cache = get_dim1dim2(x1_cache, bf.X, cache_tile)
+                                            z1_cache, z2_cache = get_dim1dim2(z1_cache, bf.Z, cache_tile)
+                                            c1_cache, c2_cache = get_dim1dim2(c1_cache, bf.C, cache_tile)
+                                            t1_cache, t2_cache = get_dim1dim2(t1_cache, bf.T, cache_tile)
+
+                                            logger.info("Caching: " + \
+                                                        "Y ({0:0>4}-{1:0>4}), ".format(y1_cache, y2_cache) + \
+                                                        "X ({0:0>4}-{1:0>4}), ".format(x1_cache, x2_cache) + \
+                                                        "Z ({0:0>4}-{1:0>4}), ".format(z1_cache, z2_cache) + \
+                                                        "C ({0:0>4}-{1:0>4}), ".format(c1_cache, c2_cache) + \
+                                                        "T ({0:0>4}-{1:0>4})".format(t1_cache, t2_cache))
 
                                             bf.cache = bf[y1_cache:y2_cache, 
                                                           x1_cache:x2_cache, 
@@ -264,17 +275,24 @@ def build_pyramid(input_image : str,
 
                                                         volume = bf.cache[y1_chunk:y2_chunk, x1_chunk:x2_chunk, z1_chunk:z2_chunk]
                                                         volume = np.reshape(volume, volume.shape[:3])
-                                                        
+
                                                         ids = np.unique(volume[volume>0])
+                                                        len_ids = len(ids)
+                                                        logger.info("\t Chunk: " + \
+                                                                    "Y ({0:0>4}-{1:0>4}), ".format(y1_cache+y1_chunk, y1_cache+y2_chunk) + \
+                                                                    "X ({0:0>4}-{1:0>4}), ".format(x1_cache+x1_chunk, x1_cache+x2_chunk) + \
+                                                                    "Z ({0:0>4}-{1:0>4}) ".format(z1_cache+z1_chunk, z1_cache+z2_chunk) + \
+                                                                    "has {0:0>2} IDS".format(len_ids))
+
                                                         all_identities = np.unique(np.append(all_identities, ids))
-                                                        if len(ids) > 0:
+                                                        if len_ids > 0:
                                                             with ThreadPoolExecutor(max_workers=max([cpu_count()-1,2])) as executor:
                                                                 executor.submit(create_plyfiles(subvolume = volume,
                                                                                                 ids=ids,
                                                                                                 temp_dir=temp_dir,
-                                                                                                start_y=y1_chunk,
-                                                                                                start_x=x1_chunk,
-                                                                                                start_z=z1_chunk))
+                                                                                                start_y=y1_cache+y1_chunk,
+                                                                                                start_x=x1_cache+x1_chunk,
+                                                                                                start_z=z1_cache+z1_chunk))
 
                         # concatenate and decompose the meshes in the temporary file for all segments
                         logger.info("\n Generate Progressive Meshes for segments ...")
