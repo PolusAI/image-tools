@@ -9,7 +9,7 @@
 
     {
       "name": "inpDir",
-      "type": "collection",
+      "type": "genericData",
       "description": "Input collection",
       "required": true
     }
