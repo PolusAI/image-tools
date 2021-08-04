@@ -1,4 +1,4 @@
-# Polus CZI Extraction Plugin (vvvvvv1.1.0)
+# Polus CZI Extraction Plugin (v1.1.0)
 
 This WIPP plugin will import individual fields of view from a CZI file (will
 only import one scene or collection of images). Images are exported as tiled

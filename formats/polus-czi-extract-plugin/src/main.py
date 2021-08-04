@@ -3,7 +3,7 @@
 # https://github.com/PolusAI/polus-plugins/blob/40495bfeaff31ec636bbc73e7335179dbb3a3eb7/utils/polus-bfio-util/bfio/czi2tif.py
 
 import czifile
-from bfio.bfio import BioWriter, BioReader
+from bfio.bfio import BioWriter, BioReader, OmeXml
 import numpy as np
 import re, os, logging, argparse
 from pathlib import Path
@@ -31,6 +31,8 @@ def _get_image_dim(s,dim):
         return s.shape[ind]
     
 def _get_image_name(base_name,row,col,Z=None,C=None,T=None,padding=3):
+    """ This function generates an image name from image coordinates """
+    
     name = base_name
     name += "_y" + str(row).zfill(padding)
     name += "_x" + str(col).zfill(padding)
@@ -44,9 +46,19 @@ def _get_image_name(base_name,row,col,Z=None,C=None,T=None,padding=3):
     return name
 
 def write_thread(out_file_path: Path,
-                 data,
-                 metadata,
-                 chan_name):
+                 data: np.ndarray,
+                 metadata: OmeXml,
+                 chan_name: str):
+    """ Thread for saving images
+
+    This function is intended to be run inside a threadpool to save an image.
+
+    Args:
+        out_file_path (Path): Path to an output file
+        data (np.ndarray): FOV to save
+        metadata (OmeXml): Metadata for the image
+        chan_name (str): Name of the channel
+    """
         
     ProcessManager.log(f'Writing: {out_file_path.name}')
     
@@ -60,7 +72,24 @@ def write_thread(out_file_path: Path,
         
         bw[:] = data
     
-def extract_fovs(file_path,out_path):
+def extract_fovs(file_path: Path,
+                 out_path: Path):
+    """ Extract individual FOVs from a czi file
+
+    When CZI files are loaded by BioFormats, it will generally try to mosaic
+    images together by stage position if the image was captured with the
+    intention of mosaicing images together. At the time this function was
+    written, there was no clear way of extracting individual FOVs so this
+    algorithm was created.
+    
+    Every field of view in each z-slice, channel, and timepoint contained in a
+    CZI file is saved as an individual image.
+
+    Args:
+        file_path (Path): Path to CZI file
+        out_path (Path): Path to output directory
+    """
+    
     with ProcessManager.process(file_path.name):
         
         logger.info('Starting extraction from ' + str(file_path) + '...')
@@ -68,20 +97,21 @@ def extract_fovs(file_path,out_path):
         if Path(file_path).suffix != '.czi':
             TypeError("Path must be to a czi file.")
             
-        base_name = Path(Path(file_path).name).stem
+        base_name = Path(file_path.name).stem
         
         # Load files without mosaicing
         czi = czifile.CziFile(file_path,detectmosaic=False)
         subblocks = [s for s in czi.filtered_subblock_directory if s.mosaic_index is not None]
         
         ind = {'X': [],
-                'Y': [],
-                'Z': [],
-                'C': [],
-                'T': [],
-                'Row': [],
-                'Col': []}
+               'Y': [],
+               'Z': [],
+               'C': [],
+               'T': [],
+               'Row': [],
+               'Col': []}
         
+        # Get the indices of each FOV
         for s in subblocks:
             scene = [dim.start for dim in s.dimension_entries if dim.dimension=='S']
             if scene is not None and scene[0] != 0:
@@ -117,11 +147,11 @@ def extract_fovs(file_path,out_path):
             T = None if len(ind['T'])==0 else ind['T'][i]
         
             out_file_path = out_path.joinpath(_get_image_name(base_name,
-                                                                row=ind['Row'][i],
-                                                                col=ind['Col'][i],
-                                                                Z=Z,
-                                                                C=C,
-                                                                T=T))
+                                                              row=ind['Row'][i],
+                                                              col=ind['Col'][i],
+                                                              Z=Z,
+                                                              C=C,
+                                                              T=T))
             
             dims = [_get_image_dim(s,'Y'),
                     _get_image_dim(s,'X'),
@@ -141,7 +171,7 @@ def main(input_dir: Path,
          ) -> None:
 
     logger.info('Extracting tiffs and saving as ome.tif...')
-    files = [f for f in Path(input_dir).iterdir() if f.is_file() and f.suffix=='.czi']
+    files = [f for f in Path(input_dir).iterdir() if f.suffix=='.czi']
     if not files:
         logger.error('No CZI files found.')
         raise ValueError('No CZI files found.')
@@ -149,7 +179,7 @@ def main(input_dir: Path,
     ProcessManager.init_processes()
     
     for file in files:
-        ProcessManager.submit_process(extract_fovs,file.absolute(),output_dir)
+        ProcessManager.submit_process(extract_fovs,file,output_dir)
         
     ProcessManager.join_processes()
 
