@@ -6,10 +6,14 @@ The HDBSCAN Clustering plugin clusters the data using [HDBSCAN clustering](https
 ### Input csv collection:
 The input file that need to be clustered. The file should be in csv format. This is a required parameter for the plugin.
 
+### Average Pattern
+The input for this parameter is a regular expression with capture group. This input splits the data into groups based on the matched pattern and average the value for each group and cluster the data. This is not a required parameter. New column 'group' is created in the output csv file that has the matched string based on the given pattern.
+
 ### Pattern
-The input for this parameter is a regular expression with capture group. This input splits the data into groups based on the matched pattern to cluster each group separately. This is not a required parameter. Pattern can be given as input only when there is a string field in the csv file that need to be matched with the pattern.
-New column 'group' is created in the output csv file that has the matched string based on the given pattern. 
-Note: This plugin does not support multiple capture groups.
+The input for this parameter is a regular expression with capture group. This input splits the data into groups based on the matched pattern to cluster each group separately. This is not a required parameter. New column 'group' is created in the output csv file that has the matched string based on the given pattern.
+Note: 
+If both pattern and average pattern has inputs, then average pattern will be considered. 
+'Average pattern' and 'Pattern' can be given as input only when there is a string field in the csv file that need to be matched with the pattern.
 
 ### Minimum cluster size:
 This parameter defines the smallest grouping size that should be considered as cluster. This is a required parameter. The input should be an integer and the value should be greater than 1.
@@ -36,7 +40,8 @@ This plugin takes four input arguments and one output argument:
 |------------------------|-------------------------|--------|--------|
 | `--inpdir` | Input csv collection| Input | csvCollection |
 | `--minclustersize` | Enter minimum cluster size| Input | integer |
-| `--pattern` | Enter regular expression with capture group| Input | string |
+| `--avgpattern` | Enter regular expression with capture group to average and cluster data| Input | string |
+| `--pattern` | Enter regular expression with capture group to cluster each group separately| Input | string |
 | `--outlierclusterID` | Set outlier cluster ID as 1| Input | boolean |
 | `--outdir` | Output collection | Output | csvCollection |
 
