@@ -234,8 +234,9 @@ def main():
             os.chdir(outdir)
             logger.info('Saving csv file')
             export_csv = np.savetxt('%s.csv'%file_name, df_append, header = col_names, fmt="%s", comments='', delimiter=',')
-        os.chdir(outdir)
-        export_csv = df_append.to_csv('%s.csv'%file_name, index=None, header=True, encoding='utf-8-sig')
+        else:
+            os.chdir(outdir)
+            export_csv = df_append.to_csv('%s.csv'%file_name, index=None, header=True, encoding='utf-8-sig')
     logger.info("Finished all processes!")
 
 if __name__ == "__main__":
