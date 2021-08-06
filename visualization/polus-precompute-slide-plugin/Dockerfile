@@ -1,24 +1,17 @@
-# Get image containing bfio
-FROM labshare/polus-bfio-util:2.0.6-slim-buster
+FROM labshare/polus-bfio-util:2.1.9
 
-COPY VERSION /
-		
-ARG EXEC_DIR="/opt/executables"
-ARG DATA_DIR="/data"
+# environment variables defined in labshare/polus-bfio-util
+# ENV EXEC_DIR="/opt/executables"
+# ENV DATA_DIR="/data"
+# ENV POLUS_EXT=".ome.tif"
+# ENV POLUS_LOG="INFO" # Change to WARNING for fewer logs, and DEBUG for debugging
 
-#Create folders
-RUN mkdir -p ${EXEC_DIR} \
-    && mkdir -p ${DATA_DIR}/inputs \
-    && mkdir ${DATA_DIR}/outputs
+# Work directory defined in the base container
+# WORKDIR ${EXEC_DIR}
 
-#Copy executable
+COPY VERSION ${EXEC_DIR}
 COPY src ${EXEC_DIR}/
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
-RUN python3 ${EXEC_DIR}/dl_fi.py
-
-WORKDIR ${EXEC_DIR}
-
-# Default command. Additional arguments are provided through the command line
-ENTRYPOINT ["python3", "main.py"]
+RUN python3 -c "import imageio; imageio.plugins.freeimage.download()"

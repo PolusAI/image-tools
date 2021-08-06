@@ -5,6 +5,9 @@ from numcodecs import Blosc
 from concurrent.futures import ThreadPoolExecutor
 from preadator import ProcessManager
 from bfio.OmeXml import OMEXML
+import logging
+
+logging.getLogger("bfio").setLevel(logging.CRITICAL)
 
 # Conversion factors to nm, these are based off of supported Bioformats length units
 UNITS = {'m':  10**9,
@@ -154,7 +157,7 @@ class PyramidWriter():
             image_path = pathlib.Path(image_path)
         self.image_path = image_path
         if isinstance(base_dir,str):
-            base_path = pathlib.Path(base_path)
+            base_dir = pathlib.Path(base_dir)
         self.base_path = base_dir
         self.image_depth = image_depth
         self.output_depth = output_depth
@@ -494,22 +497,23 @@ class ZarrWriter(PyramidWriter):
             key = str(max_scale - int(scale_info['key']))
             if key not in self.root.array_keys():
                 self.writers[key] = self.root.zeros(key,
-                                                    shape=(1,self.max_output_depth,1) + tuple(scale_info['size'][0:2]),
+                                                    shape=(1,self.max_output_depth,1) + (scale_info['size'][1],scale_info['size'][0]),
                                                     chunks=(1,1,1,CHUNK_SIZE,CHUNK_SIZE),
                                                     dtype=self.dtype,
                                                     compressor=compressor)
             else:
-                self.root[key].resize((1,self.max_output_depth,1) + tuple(scale_info['size'][0:2]))
+                self.root[key].resize((1,self.max_output_depth,1) + (scale_info['size'][1],scale_info['size'][0]))
                 self.writers[key] = self.root[key]
 
     def _write_chunk(self,key,chunk_coords,buf):
         key = str(int(self.scale_info(-1)['key']) - int(key))
         chunk_coords = self._chunk_coords(chunk_coords)
+        
         self.writers[key][0:1,
-                          chunk_coords[4]:chunk_coords[5],
-                          0:1,
-                          chunk_coords[2]:chunk_coords[3],
-                          chunk_coords[0]:chunk_coords[1]] = buf
+                        chunk_coords[4]:chunk_coords[5],
+                        0:1,
+                        chunk_coords[2]:chunk_coords[3],
+                        chunk_coords[0]:chunk_coords[1]] = buf
             
     def _encoder(self):
         
