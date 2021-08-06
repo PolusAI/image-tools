@@ -81,7 +81,7 @@ def make_tile(x_min: int,
                         image = br[Yi[0]:Yi[1],Xi[0]:Xi[1],z:z+1,0,0] # only get the first c,t layer
 
                     # Put the image in the buffer
-                    template[Yt[0]:Yt[1],Xt[0]:Xt[1],...] = image
+                    template[Yt[0]:Yt[1],Xt[0]:Xt[1],...] = image[...,numpy.newaxis,numpy.newaxis,numpy.newaxis]
 
         # Save the image
         bw.max_workers = ProcessManager._active_threads
@@ -156,7 +156,7 @@ def _parse_stitch(stitchPath: pathlib.Path,
         stitch_groups['file'] = files[0]['file'].with_name(stitch_groups['file'])
 
         # Get the image size
-        stitch_groups['width'], stitch_groups['height'] = BioReader.image_size(stitch_groups['file'])
+        stitch_groups['width'],stitch_groups['height'] = BioReader.image_size(stitch_groups['file'])
 
         # Set the stitching vector values in the file dictionary
         out_dict['filePos'].append(stitch_groups)
@@ -169,7 +169,10 @@ def _parse_stitch(stitchPath: pathlib.Path,
     if timepointName:
         global_regex = ".*global-positions-([0-9]+).txt"
         name = re.match(global_regex,pathlib.Path(stitchPath).name).groups()[0]
-        name += '.ome.tif'
+        if file_names[0].endswith('.ome.zarr'):
+            name += '.ome.zarr'
+        else:
+            name += '.ome.tif'
         out_dict['name'] = name
         ProcessManager.job_name(out_dict['name'])
         ProcessManager.log(f'Setting output name to timepoint slice number.')
@@ -238,7 +241,7 @@ def assemble_image(vector_path: pathlib.Path,
 
             ProcessManager.join_threads()
 
-    bw.close()
+        bw.close()
 
 def main(imgPath: pathlib.Path,
          stitchPath: pathlib.Path,
@@ -284,6 +287,8 @@ if __name__=="__main__":
                         datefmt='%d-%b-%y %H:%M:%S')
     logger = logging.getLogger("main")
     logger.setLevel(logging.INFO)
+    
+    logging.getLogger("bfio").setLevel(logging.CRITICAL)
 
     '''Parse arguments'''
     # Setup the argument parsing
@@ -296,7 +301,6 @@ if __name__=="__main__":
                         help='Output collection', required=True)
     parser.add_argument('--timesliceNaming', dest='timesliceNaming', type=str,
                         help='Use timeslice number as image name', required=False)
-
 
     # Parse the arguments
     args = parser.parse_args()
@@ -311,17 +315,8 @@ if __name__=="__main__":
     stitchPath = pathlib.Path(args.stitchPath)
     logger.info('stitchPath: {}'.format(stitchPath))
 
-    try:
-        main(imgPath,
-            stitchPath,
-            outDir,
-            timesliceNaming)
-
-    except Exception:
-        traceback.print_exc()
-
-    finally:
-        # Exit the program
-        logger.info('Exiting the workflow..')
+    main(imgPath,
+        stitchPath,
+        outDir,
+        timesliceNaming)
   
-
