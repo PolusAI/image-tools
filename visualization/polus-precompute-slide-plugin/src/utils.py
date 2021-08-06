@@ -157,7 +157,7 @@ class PyramidWriter():
             image_path = pathlib.Path(image_path)
         self.image_path = image_path
         if isinstance(base_dir,str):
-            base_path = pathlib.Path(base_path)
+            base_dir = pathlib.Path(base_dir)
         self.base_path = base_dir
         self.image_depth = image_depth
         self.output_depth = output_depth
@@ -509,17 +509,11 @@ class ZarrWriter(PyramidWriter):
         key = str(int(self.scale_info(-1)['key']) - int(key))
         chunk_coords = self._chunk_coords(chunk_coords)
         
-        try:
-            self.writers[key][0:1,
-                            chunk_coords[4]:chunk_coords[5],
-                            0:1,
-                            chunk_coords[2]:chunk_coords[3],
-                            chunk_coords[0]:chunk_coords[1]] = buf
-        except Exception:
-            print(key)
-            print(chunk_coords)
-            print(buf.shape)
-            raise
+        self.writers[key][0:1,
+                        chunk_coords[4]:chunk_coords[5],
+                        0:1,
+                        chunk_coords[2]:chunk_coords[3],
+                        chunk_coords[0]:chunk_coords[1]] = buf
             
     def _encoder(self):
         
