@@ -1,16 +1,116 @@
-import argparse, time, logging, subprocess, multiprocessing
-from pathlib import Path
-from utils import _parse_files_p,_parse_files_xy,_parse_fpattern
+import argparse, logging, math, filepattern, time, queue
+from bfio import BioReader, BioWriter
+import pathlib
+from preadator import ProcessManager
+
+logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+                    datefmt='%d-%b-%y %H:%M:%S')
+
+# length/width of the chunk each _merge_layers thread processes at once
+chunk_size = 8192
+
+# Units for conversion
+UNITS = {'m':  10**9,
+         'cm': 10**7,
+         'mm': 10**6,
+         'µm': 10**3,
+         'nm': 1,
+         'Å':  10**-1}
+
+def _merge_layers(input_files,output_path):
+    
+    with ProcessManager.process(output_path.name):
+
+        # Get the number of layers to stack
+        z_size = 0
+        for f in input_files:
+            with BioReader(f['file']) as br:
+                z_size += br.z
+                
+        # Get some basic info about the files to stack
+        with BioReader(input_files[0]['file']) as br:
+
+            # Get the physical z-distance if available, set to physical x if not
+            ps_z = br.ps_z
+            
+            # If the z-distances are undefined, average the x and y together
+            if None in ps_z:
+                # Get the size and units for x and y
+                x_val,x_units = br.ps_x
+                y_val,y_units = br.ps_y
+                
+                # Convert x and y values to the same units and average
+                z_val = (x_val*UNITS[x_units] + y_val*UNITS[y_units])/2
+                
+                # Set z units to the smaller of the units between x and y
+                z_units = x_units if UNITS[x_units] < UNITS[y_units] else y_units
+                
+                # Convert z to the proper unit scale
+                z_val /= UNITS[z_units]
+                ps_z = (z_val,z_units)
+                ProcessManager.log('Could not find physical z-size. Using the average of x & y {}.'.format(ps_z))
+
+            # Hold a reference to the metadata once the file gets closed
+            metadata = br.metadata
+
+        # Create the output file within a context manager
+        with BioWriter(output_path,metadata=metadata,max_workers=ProcessManager._active_threads) as bw:
+
+            # Adjust the dimensions before writing
+            bw.z = z_size
+            bw.ps_z = ps_z
+
+            # ZIndex tracking for the output file
+            zi = 0
+
+            # Start stacking
+            for file in input_files:
+
+                # Open an image
+                with BioReader(file['file'],max_workers=ProcessManager._active_threads) as br:
+
+                    # Open z-layers one at a time
+                    for z in range(br.z):
+
+                        # Use tiled reading in x&y to conserve memory
+                        # At most, [chunk_size, chunk_size] pixels are loaded
+                        for xs in range(0,br.x,chunk_size):
+                            xe = min([br.x,xs + chunk_size])
+
+                            for ys in range(0,br.y,chunk_size):
+                                ye = min([br.y,ys + chunk_size])
+
+                                bw[ys:ye,xs:xe,zi:zi+1,...] = br[ys:ye,xs:xe,z:z+1,...]
+
+                        zi += 1
+
+                # update the BioWriter in case the ProcessManager found more threads
+                bw.max_workers = ProcessManager._active_threads
+                
+def main(input_dir: pathlib.Path,
+         file_pattern: str,
+         output_dir: pathlib.Path
+         ) -> None:
+    
+    # create the filepattern object
+    fp = filepattern.FilePattern(input_dir,file_pattern)
+    
+    for files in fp(group_by='z'):
+
+        output_name = fp.output_name(files)
+        output_file = output_dir.joinpath(output_name)
+
+        ProcessManager.submit_process(_merge_layers,files,output_file)
+    
+    ProcessManager.join_processes()
 
 if __name__ == "__main__":
-    # Initialize the logger
-    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
-                        datefmt='%d-%b-%y %H:%M:%S')
-    logger = logging.getLogger("main")
+    # Initialize the main thread logger
+    logger = logging.getLogger('main')
     logger.setLevel(logging.INFO)
-    
+
     # Setup the Argument parsing
-    logger.info("Parsing arguments...")
+    logger.info('Parsing arguments...')
     parser = argparse.ArgumentParser(prog='main', description='Compile individual tiled tiff images into a single volumetric tiled tiff.')
 
     parser.add_argument('--inpDir', dest='input_dir', type=str,
@@ -21,127 +121,18 @@ if __name__ == "__main__":
                         help='A filename pattern specifying variables in filenames.', required=True)
 
     args = parser.parse_args()
-    input_dir = args.input_dir
-    output_dir = args.output_dir
+    input_dir = pathlib.Path(args.input_dir)
+    if input_dir.joinpath("images").is_dir():
+        input_dir = input_dir.joinpath("images")
+    output_dir = pathlib.Path(args.output_dir)
     file_pattern = args.file_pattern
-    logger.info('input_dir = {}'.format(input_dir))
-    logger.info('output_dir = {}'.format(output_dir))
-    logger.info('file_pattern = {}'.format(file_pattern))
+    logger.info(f'input_dir = {input_dir}')
+    logger.info(f'output_dir = {output_dir}')
+    logger.info(f'file_pattern = {file_pattern}')
+    logger.info(f'max_threads: {ProcessManager.num_processes()}')
     
-    # Parse the filename pattern
-    regex,variables = _parse_fpattern(file_pattern)
-    
-    # Parse files based on regex
-    if 'p' not in variables:
-        logger.info('Using x and y as the position variable if present...')
-        files = _parse_files_xy(input_dir,regex,variables)
-    else:
-        logger.info('Using p as the position variable...')
-        files = _parse_files_p(input_dir,regex,variables)
-    
-    # Initialize variables for process management
-    processes = []
-    process_timer = []
-    pnum = 0
-    
-    # Cycle through image replicate variables
-    rs = [r for r in files.keys()]
-    rs.sort() # sorted list of replicate values
-    for r in rs:
-        # Cycle through image timepoint variables
-        ts = [t for t in files[r].keys()] 
-        ts.sort() # sorted list of timepoint values
-        for t in ts:
-            # Cycle through image channel variables
-            cs = [c for c in files[r][t].keys()] 
-            cs.sort() # sorted list of channel values
-            for c in cs:
-                if 'p' not in variables:
-                    # Cycle through image x positions
-                    xs = [x for x in files[r][t][c].keys()] 
-                    xs.sort() # sorted list of x-positions
-                    for x in xs:
-                        # Cycle through image y positions
-                        ys = [y for y in files[r][t][c][x].keys()] 
-                        ys.sort() # sorted list of y-positions
-                        for y in ys:
-                            # If there are num_cores - 1 processes running, wait until one finishes
-                            if len(processes) >= multiprocessing.cpu_count()-1 and len(processes) > 0:
-                                free_process = -1
-                                while free_process<0:
-                                    for process in range(len(processes)):
-                                        if processes[process].poll() is not None:
-                                            free_process = process
-                                            break
-                                    # Only check intermittently to free up processing power
-                                    if free_process<0:
-                                        time.sleep(3)
-                                pnum += 1
-                                logger.info("Finished process {} of {} in {}s!".format(pnum,len(ts)*len(cs)*len(xs)*len(ys),time.time() - process_timer[free_process]))
-                                del processes[free_process]
-                                del process_timer[free_process]
-                            
-                            # Spawn a stack building process and record the starting time
-                            processes.append(subprocess.Popen("python3 merge_layers.py --inpDir {} --outDir {} --regex {} --X {} --Y {} --C {} --T {} --R {}".format(input_dir,
-                                                                                                                                                                     output_dir,
-                                                                                                                                                                     file_pattern,
-                                                                                                                                                                     x,
-                                                                                                                                                                     y,
-                                                                                                                                                                     c,
-                                                                                                                                                                     t,
-                                                                                                                                                                     r),
-                                                                                                                                                                     shell=True))
-                            process_timer.append(time.time())
-                else:
-                    # Cycle through image sequence positions
-                    ps = [p for p in files[r][t][c].keys()]
-                    ps.sort()
-                    for p in ps:
-                        # If there are num_cores - 1 processes running, wait until one finishes
-                        if len(processes) >= multiprocessing.cpu_count()-1 and len(processes) > 0:
-                            free_process = -1
-                            while free_process<0:
-                                for process in range(len(processes)):
-                                    if processes[process].poll() is not None:
-                                        free_process = process
-                                        break
-                                # Only check intermittently to free up processing power
-                                if free_process<0:
-                                    time.sleep(3)
-                            pnum += 1
-                            logger.info("Finished process {} of {} in {}s!".format(pnum,len(ts)*len(cs)*len(ps),time.time() - process_timer[free_process]))
-                            del processes[free_process]
-                            del process_timer[free_process]
-                        
-                        # Spawn a stack building process and record the starting time
-                        processes.append(subprocess.Popen("python3 merge_layers.py --inpDir {} --outDir {} --regex {} --P {} --C {} --T {} --R {}".format(input_dir,
-                                                                                                                                                          output_dir,
-                                                                                                                                                          file_pattern,
-                                                                                                                                                          p,
-                                                                                                                                                          c,
-                                                                                                                                                          t,
-                                                                                                                                                          r),
-                                                                                                                                                          shell=True))
-                        process_timer.append(time.time())
-    
-    # Wait for all processes to finish
-    while len(processes)>0:
-        free_process = -1
-        while free_process<0:
-            for process in range(len(processes)):
-                if processes[process].poll() is not None:
-                    free_process = process
-                    break
-            # Only check intermittently to free up processing power
-            if free_process<0:
-                time.sleep(3)
-        pnum += 1
-        if 'p' not in variables:
-            logger.info("Finished process {} of {} in {}s!".format(pnum,len(ts)*len(cs)*len(xs)*len(ys),time.time() - process_timer[free_process]))
-        else:
-            logger.info("Finished process {} of {} in {}s!".format(pnum,len(ts)*len(cs)*len(ps),time.time() - process_timer[free_process]))
-        del processes[free_process]
-        del process_timer[free_process]
+    ProcessManager.init_processes('main','stack')
 
-    logger.info("Finished all processes, closing...")
-    
+    main(input_dir,
+         file_pattern,
+         output_dir)

@@ -46,6 +46,9 @@ def main():
     logger.info('collection_regex = {}'.format(collection_regex))
     logger.info('output_dir = {}'.format(output_dir))
     
+    # Parse files in the image collection
+    fp = filepattern.FilePattern(collection_dir,collection_regex)
+    
     # Process group_by variable
     if group_by==None:
         group_by = ''
@@ -53,10 +56,8 @@ def main():
         if v not in group_by:
             group_by += v
     group_by = group_by.lower()
+    group_by = ''.join([g for g in group_by if g in fp.variables])
     logger.info('group_by = {}'.format(group_by))
-    
-    # Parse files in the image collection
-    fp = filepattern.FilePattern(collection_dir,collection_regex)
     
     # Loop through the stitching vectors
     vectors = [v for v in Path(stitch_dir).iterdir() if Path(v).name.startswith('img-global-positions')]
@@ -78,9 +79,10 @@ def main():
         vector_dict = {}
         
         # Loop through lines in the stitching vector, generate new vectors
-        for v in sp.iterate():
+        for v in sp():
             variables = {key.upper():value for key,value in v[0].items() if key in group_by}
             file_matches = fp.get_matching(**variables)
+            
             
             for f in file_matches:
                 

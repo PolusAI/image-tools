@@ -1,6 +1,6 @@
 {
   "name": "BaSiC Flatfield Correction Plugin",
-  "version": "1.0.6",
+  "version": "1.2.4",
   "title": "Flatfield correction using BaSiC algorithm.",
   "description": "Generates images used for flatfield correction using the BaSiC algorithm.",
   "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,13 +8,19 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "Peng et al. \"A BaSiC tool for background and shading correction of optical microscopy images\" Nature Communications (2017)",
-  "containerId": "labshare/polus-basic-flatfield-correction-plugin:1.0.6",
+  "containerId": "labshare/polus-basic-flatfield-correction-plugin:1.2.4",
   "inputs": [
 
     {
       "name": "inpDir",
       "type": "collection",
       "description": "Input image collection.",
+      "required": true
+    },
+    {
+      "name": "filePattern",
+      "type": "string",
+      "description": "Filename pattern used to separate images by channel, timepoint, and replicate.",
       "required": true
     },
     {
@@ -30,10 +36,10 @@
       "required": true
     },
     {
-      "name": "inpRegex",
+      "name": "groupBy",
       "type": "string",
-      "description": "Filename pattern used to separate images by channel, timepoint, and replicate.",
-      "required": true
+      "description": "Group images together for flatfield by variable.",
+      "required": false
     }
   ],
   "outputs": [
@@ -50,6 +56,16 @@
       "description": "Image collection..."
     },
     {
+      "key": "inputs.filePattern",
+      "title": "Filename pattern: ",
+      "description": "Use a filename pattern to calculate flatfield information by subsets"
+    },
+    {
+      "key": "inputs.groupBy",
+      "title": "Grouping Variables: ",
+      "description": "Group data together with varying variable values."
+    },
+    {
       "key": "inputs.darkfield",
       "title": "Calculate darkfield: ",
       "description": "If selected, will generate a darkfield image"
@@ -58,11 +74,6 @@
       "key": "inputs.photobleach",
       "title": "Calclate photobleaching offset: ",
       "description": "If selected, will generate an offset scalar for each image"
-    },
-    {
-      "key": "inputs.inpRegex",
-      "title": "Filename pattern: ",
-      "description": "Use a filename pattern to calculate flatfield information by subsets"
     }
   ]
 }
