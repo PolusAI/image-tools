@@ -1,3 +1,3 @@
-bfio==2.1.2
+bfio==2.1.5
 filepattern==1.4.6
 preadator==0.2.0
