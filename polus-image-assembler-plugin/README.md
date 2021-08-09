@@ -19,15 +19,15 @@ There are two general options for output file name format:
 
 1. `--timesliceNaming true`: Each image will be named according to the time
 index extracted from the stitching vector.
-2. `--timesliceNaming false`: The [filepattern](https://github.com/LabShare/polus-plugins/tree/master/utils/polus-filepattern-util) utility will attempt to infer an output
-file name based on all of the input files (using the method
-`filepattern.output_name`). *If this fails, it will default to the first file.*
-name in the stitching vector.
+2. `--timesliceNaming false`: The
+[filepattern](https://github.com/LabShare/polus-plugins/tree/master/utils/polus-filepattern-util)
+utility will attempt to infer an output file name based on all of the input
+files (using the method `filepattern.output_name`). *If this fails, it will
+default to the first file name in the stitching vector.*
 
 ## Building
 
-To build the Docker image for the conversion plugin, run
-`./build-docker.sh`.
+To build the Docker image for the conversion plugin, run `./build-docker.sh`.
 
 ## Install WIPP Plugin
 
