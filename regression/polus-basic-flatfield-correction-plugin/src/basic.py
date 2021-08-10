@@ -41,10 +41,8 @@ def _get_resized_image_stack(flist):
     
     if len(flist) > OPTIONS['n_sample']:
         N = OPTIONS['n_sample']
-        samples = np.random.randint(len(flist),
-                                    size=(N,),
-                                    replace=False).tolist()
-        flist = [flist[s] for s in samples]
+        samples = np.random.permutation(len(flist)).tolist()
+        flist = [flist[s] for s in samples[:OPTIONS['n_sample']]]
     else:
         N = len(flist)
     
