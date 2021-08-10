@@ -1,6 +1,6 @@
 {
     "name": "Image Assembler",
-    "version": "0.2.2",
+    "version": "1.1.2",
     "title": "Image Assembler",
     "description": "A scalable image assembling plugin.",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,13 +8,13 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-image-assembler-plugin:0.2.2",
+    "containerId": "labshare/polus-image-assembler-plugin:1.1.2",
     "inputs": [
       {
         "name": "stitchPath",
         "type": "stitchingVector",
-        "description": "Filename pattern used to separate data",
-        "required": false
+        "description": "Stitching vector for data",
+        "required": true
       },
       {
         "name": "imgPath",

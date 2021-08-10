@@ -3,6 +3,7 @@
   "version": "1.0.6",
   "title": "Extract TIFFs From CZI",
   "description": "Extracts individual fields of view from a CZI file. Saves as OME TIFF.",
+  "author": "Nick Schaub (nick.schaub@nih.gov)",
   "containerId": "labshare/polus-czi-extract-plugin:1.0.6",
   "inputs": [
 
