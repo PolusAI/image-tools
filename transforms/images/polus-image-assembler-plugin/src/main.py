@@ -156,7 +156,7 @@ def _parse_stitch(stitchPath: pathlib.Path,
         stitch_groups['file'] = files[0]['file'].with_name(stitch_groups['file'])
 
         # Get the image size
-        stitch_groups['width'], stitch_groups['height'] = BioReader.image_size(stitch_groups['file'])
+        stitch_groups['width'],stitch_groups['height'] = BioReader.image_size(stitch_groups['file'])
 
         # Set the stitching vector values in the file dictionary
         out_dict['filePos'].append(stitch_groups)
@@ -169,7 +169,10 @@ def _parse_stitch(stitchPath: pathlib.Path,
     if timepointName:
         global_regex = ".*global-positions-([0-9]+).txt"
         name = re.match(global_regex,pathlib.Path(stitchPath).name).groups()[0]
-        name += '.ome.tif'
+        if file_names[0].endswith('.ome.zarr'):
+            name += '.ome.zarr'
+        else:
+            name += '.ome.tif'
         out_dict['name'] = name
         ProcessManager.job_name(out_dict['name'])
         ProcessManager.log(f'Setting output name to timepoint slice number.')
@@ -286,6 +289,8 @@ if __name__=="__main__":
                         datefmt='%d-%b-%y %H:%M:%S')
     logger = logging.getLogger("main")
     logger.setLevel(logging.INFO)
+    
+    logging.getLogger("bfio").setLevel(logging.CRITICAL)
 
     '''Parse arguments'''
     # Setup the argument parsing
@@ -298,7 +303,6 @@ if __name__=="__main__":
                         help='Output collection', required=True)
     parser.add_argument('--timesliceNaming', dest='timesliceNaming', type=str,
                         help='Use timeslice number as image name', required=False)
-
 
     # Parse the arguments
     args = parser.parse_args()
@@ -318,4 +322,3 @@ if __name__=="__main__":
          outDir,
          timesliceNaming)
   
-

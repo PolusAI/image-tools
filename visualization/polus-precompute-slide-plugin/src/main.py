@@ -16,7 +16,7 @@ PyramidWriter = {
 def main(input_dir: pathlib.Path,
          pyramid_type: str,
          image_type: str,
-         file_patter: str,
+         file_pattern: str,
          output_dir: pathlib.Path):
     
     # Set ProcessManager config and initialize
