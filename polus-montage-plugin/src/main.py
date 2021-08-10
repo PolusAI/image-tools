@@ -112,7 +112,7 @@ def main(pattern: str,
             if v not in VARIABLES:
                 logger.error("Variables must be one of {}".format(VARIABLES))
                 raise ValueError("Variables must be one of {}".format(VARIABLES))
-        if len(layout)>2 or len(layout)<1:
+        if len(l)>2 or len(l)<1:
             logger.error("Each layout subgrid must have one or two variables assigned to it.")
             raise ValueError("Each layout subgrid must have one or two variables assigned to it.")
 
@@ -141,13 +141,12 @@ def main(pattern: str,
 
         # Get the height and width of each image
         for f in files:
-            f['width'], f['height'] = BioReader.image_size(f['file'])
+            f['width'],f['height'] = BioReader.image_size(f['file'])
 
             if grid_width < f['width']:
                 grid_width = f['width']
             if grid_height < f['height']:
                 grid_height = f['height']
-        logger.info('Got the size of {} images...'.format(len(files)))
 
         # Set the pixel and tile dimensions
         layout_dimensions['tile_size'][len(layout)-1].append([grid_width,grid_height])
@@ -172,7 +171,7 @@ def main(pattern: str,
                                                 layout_dimensions['grid_size'][len(layout)-1][1] * layout_dimensions['tile_size'][len(layout)-1][1]]
     logger.info('Grid size for layer ({}): {}'.format(layout[0],grid_size))
 
-    # Build the rest of the subgrid indexes
+    # Build the rest of the subgrid indices
     for i in range(1,len(layout)):
         # Get the largest size subgrid image in pixels
         index = len(layout) - 1 - i
