@@ -84,6 +84,12 @@ class Op:
             if input[1] == 'in':
                 # Change the input name from "in" to "in1"
                 inputs[input_index] = (input[0], 'in1')
+                
+        # Check if the output is not titled 'out' and change to 'out' if neccessary
+        if output[1] != 'out':
+            output = list(output)
+            output[1] = 'out'
+            output = tuple(output)
         
         # Map the inputs and output from imageJ data type to WIPP data type
         self.__dataMap(inputs, output)
@@ -399,8 +405,8 @@ class Namespace:
                         #print('The', self._name, 'namespace has multiple input data types for the same input title across different op overloading calls')
                         pass
                     
-            # Check if the output dictionary has been created
-            if op.imagejTitleOutput not in self._allOutputs:
+            # Check if the output dictionary is empty
+            if self._allOutputs == {}:
             
                 # Add the output to Library's output dictionary
                 self._allOutputs = {
@@ -413,6 +419,19 @@ class Namespace:
                             }
                         }
                     }
+            
+            # Check if the output title is not in dictionary
+            elif op.imagejTitleOutput not in self._allOutputs:
+                self._allOutputs.update({
+                    op.imagejTitleOutput:{         
+                        'type': op.wippTypeOutput, 
+                        'title': op.imagejTitleOutput, 
+                        'description':'out',
+                        'call_types': {
+                            op.name:op.imagejTypeOutput
+                        }
+                    }
+                })
             
             else:
                 self._allOutputs[op.imagejTitleOutput]['call_types'][op.name] = op.imagejTypeOutput
@@ -715,7 +734,7 @@ class Populate:
 
 
 
-"""This section is for testing only, the classes contained in this file were intended to be instantiated in Generate.py"""
+"""This section is for testing only, the classes contained in this file were intended to be instantiated in generate.py"""
 
 if __name__ == '__main__':
     

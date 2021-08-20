@@ -41,13 +41,33 @@ class UnitTest(unittest.TestCase):
         file_handler.setFormatter(formatter)
         cls.summary.addHandler(file_handler)
     
-    def generate_data(self, input, dtype):
+    def generate_data(self, input, wipp_type, imagej_type):
+            
+        numpy_types = {
+            'double'     : np.float64,
+            'float'      : np.float32,
+            'long'       : np.int64, # np.int64 not supported by bfio
+            'int'        : np.int32,
+            'short'      : np.int16,
+            'char'       : np.ubyte, # np.ubyte not supported by bfio
+            'byte'       : np.int8,
+            'boolean'    : np.bool_ # np.bool_ not supported by bfio
+        }
         
-        if dtype == None:
+        if wipp_type == None:
             return None
         
         # Determine if the input data type is a collection
-        elif dtype == 'collection':
+        elif wipp_type == 'collection':
+            
+            if imagej_type == None:
+                dtype = np.double
+            
+            elif imagej_type in numpy_types.keys():
+                dtype = numpy_types[imagej_type]
+        
+            else:
+                dtype = np.double
             
             # Create input and output path objects for the randomly generated image file
             input_path = Path(__file__).parent.joinpath('{}/random.ome.tif'.format(input))
@@ -73,14 +93,17 @@ class UnitTest(unittest.TestCase):
                 low = 0,
                 high = 255,
                 size = image_shape,
-                dtype = np.uint8
+                dtype = np.uint16
             )
-        
+
+            array = dtype(random_image)
+            
             # Create a BioWriter object to write the ramdomly generated image file to tests/input dir
             with BioWriter(input_path) as writer:
                 writer.X = image_shape[0]
                 writer.Y = image_shape[1]
-                writer[:] = random_image[:]
+                writer.dtype = array.dtype
+                writer[:] = array[:]
                 # Not neccessary: writer.close()
             
             
@@ -105,17 +128,17 @@ class UnitTest(unittest.TestCase):
             
             return input_path.parent
         
-        elif dtype == 'array':
+        elif wipp_type == 'array':
             # arr = np.random.rand(2048,2048)
             arr = '1,2'
             return arr
         
-        elif dtype == 'number':
+        elif wipp_type == 'number':
             number = np.random.randint(5)
             return number
         
         else:
-            self.logger.info('FAILURE: The data type, {}, of input, {}, is currently not supported\n'.format(dtype, input))
+            self.logger.info('FAILURE: The data type, {}, of input, {}, is currently not supported\n'.format(wipp_type, input))
             raise TypeError('The input data type is not currently supported')
     
     def output_handler(self, output, dtype):
@@ -141,15 +164,39 @@ class UnitTest(unittest.TestCase):
         projectName = '{{ cookiecutter.project_name }}'
         self.logger.info('Testing the op: {} with overloading option: {}'.format(projectName, op))
         
+        method_call_types = {}
+        
+        supported_data_types = [
+            'double',
+            'float',
+            'long',
+            'int',
+            'short',
+            'char',
+            'byte',
+            'boolean',
+        ]
+        
+        # Get WIPP and ImageJ data types
         {% for inp,val in cookiecutter._inputs.items() -%}
         {% if inp == 'opName' -%}
         _{{ inp }} = op
         {% else -%}
-        _{{ inp }}_types = {{ val.wipp_type }}
-        _{{ inp }} = self.generate_data('{{ inp }}', _{{ inp }}_types.get(op, None))
-        #_{{ inp }} = self.generate_data('{{ inp }}', '{{ val.type }}')
+        _{{ inp }}_wipp_types = {{ val.wipp_type }}
+        _{{ inp }}_imagej_types =  {{ val.call_types }}
+        if _{{ inp }}_wipp_types.get(op, None) != 'collection':
+            method_call_types.update({method:dtype for method,dtype in _{{ inp }}_imagej_types.items() if dtype in supported_data_types})
         {% endif -%}
         {% endfor -%}
+        
+        # Generate data for the inputs
+        {% for inp,val in cookiecutter._inputs.items() -%}
+        {% if inp != 'opName' -%}
+        _{{ inp }} = self.generate_data('{{ inp }}', _{{ inp }}_wipp_types.get(op, None), method_call_types.get(op, None))
+        {% endif -%}
+        {% endfor -%}
+        
+        # Handle the op output
         {% for out,val in cookiecutter._outputs.items() -%}
         _{{ out }} = self.output_handler('{{ out }}', '{{ val.type }}')
         {% endfor -%}

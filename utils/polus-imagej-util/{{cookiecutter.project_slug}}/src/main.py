@@ -61,7 +61,7 @@ def main({#- Required inputs -#}
     
     """ Validate and organize the inputs """
     args = []
-    arg_types = []
+    argument_types = []
     arg_len = 0
 
     {% for inp,val in cookiecutter._inputs.items() %}
@@ -84,7 +84,7 @@ def main({#- Required inputs -#}
         args.append([f for f in _{{ inp }}.iterdir() if f.is_file()])
         arg_len = len(args[-1])
     else:
-        arg_types.append(None)
+        argument_types.append(None)
         args.append([None])
     {%- else %}
     else:

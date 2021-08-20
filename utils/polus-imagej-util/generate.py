@@ -6,7 +6,7 @@ import classes.populate as cp
 from pathlib import Path
 
 
-"""This file uses the classes in populate.py and cookiecutter to automatically parse the Imagej ops help and create plugins"""
+"""This file uses the classes in populate.py and cookiecutter to automatically parse the ImageJ ops help and create plugins"""
 
 if __name__ == '__main__':
 
@@ -15,9 +15,9 @@ if __name__ == '__main__':
     # Start JVM
     ij = imagej.init('sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4', headless=True)
     
-    # Retreive all available operations from pyimagej
-    #imagej_help_docs = scyjava.to_python(ij.op().help())
-    #print(imagej_help_docs)
+    # # Retreive all available operations from pyimagej
+    # imagej_help_docs = scyjava.to_python(ij.op().help())
+    # print(imagej_help_docs)
     
     print('Parsing imagej ops help\n')
     
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     # Iterate over all plugin directories in the cookietin directory 
     for plugin in plugins:
         
-        # DELETE THIS LINE LATTER FOR UNIT TEST DEV
+        #plugins_to_generate = ['math-add']
         #plugins_to_generate = ['image-integral', 'image-distancetransform', 'filter-dog']
         #plugins_to_generate += ['filter-dog', 'filter-addNoise', 'filter-convolve', 'filter-bilateral', 'filter-correlate']
         #if plugin.name in plugins_to_generate:
@@ -115,10 +115,11 @@ if __name__ == '__main__':
                 ops = [op for op in populater._namespaces[plugin_key].supportedOps.keys()]
                 
                 # Create a list of the operating sytem commands
-                commands = ['python '+str(path)+'/tests/unit_test.py --opName '+op for op in ops]
+                #commands = ["python "+str(path)+"/tests/unit_test.py --opName "+op for op in ops]
+                commands = ["python "+str(path)+"/tests/unit_test.py --opName '{}'".format(op) for op in ops]
                 
                 # Generate the shell script lines (each line is an os command to test a single op)
-                lines = ["os.system('{}')\n".format(command) for command in commands]
+                lines = ['os.system("{}")\n'.format(command) for command in commands]
                 
                 # Write command for each plugin to the shell script
                 for line in lines:
@@ -128,12 +129,10 @@ if __name__ == '__main__':
                 fhand.close()
                 
                 pluging_count += 1
-
-            # DELETE THIS LINE LATTER FOR UNIT TEST DEV
+                
             #break
                 
             
             
     print('There were {} plugins generated\n'.format(pluging_count))
-    print('There were {} ops created\n'.format(op_count))
-    
+    print('There were {} plugin overloading methods created\n'.format(op_count))
