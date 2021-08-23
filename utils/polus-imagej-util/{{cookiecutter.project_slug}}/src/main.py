@@ -8,13 +8,18 @@ import numpy as np
 from pathlib import Path
 import ij_converter
 import jpype, imagej, scyjava
-import typing
+import typing, os
+
+# Import environment variables
+POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
+POLUS_EXT = os.environ.get('POLUS_EXT','.ome.tif')
 
 # Initialize the logger
 logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
+logger.setLevel(POLUS_LOG)
 
 def main({#- Required inputs -#}
          {% for inp,val in cookiecutter._inputs.items() -%}
