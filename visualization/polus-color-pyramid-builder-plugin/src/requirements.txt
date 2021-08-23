@@ -1,0 +1,2 @@
+imageio==2.8.0
+filepattern==1.2.4
