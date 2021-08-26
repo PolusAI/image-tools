@@ -3,7 +3,8 @@ import numpy as np
 from pathlib import Path
 from parser import parse_collection
 import shutil
-
+from preadator import ProcessManager
+from image_registration import register
 
 if __name__=="__main__":
     # Initialize the logger
@@ -56,6 +57,7 @@ if __name__=="__main__":
     registration_dictionary=parse_collection(inpDir,filePattern,registrationVariable, TransformationVariable, template_image_path)
     
     logger.info('Iterating over registration_dictionary....')
+    ProcessManager.init_processes(name='register')
     for registration_set,similar_transformation_set in registration_dictionary.items():
         
         # registration_dictionary consists of set of already registered images as well
@@ -63,16 +65,15 @@ if __name__=="__main__":
             similar_transformation_set=similar_transformation_set.tolist()
             similar_transformation_set.append(registration_set[0])
             for image_path in similar_transformation_set:
-                image_name=image_path[-1*filename_len:]
-                logger.info('Copying image {} to output directory'.format(image_name))
-                shutil.copy2(image_path,str(Path(outDir).joinpath(image_name).absolute()))            
+                logger.info('Copying image {} to output directory'.format(image_path.name))
+                shutil.copy2(image_path,str(Path(outDir).joinpath(image_path.name).absolute()))            
             continue
         
         # concatenate lists into a string to pass as an argument to argparse
-        registration_string=' '.join(registration_set)
-        similar_transformation_string=' '.join(similar_transformation_set)        
-
-        # open subprocess image_registration.py
-        registration = subprocess.Popen("python3 image_registration.py --registrationString '{}' --similarTransformationString '{}' --outDir '{}' --template '{}' --method '{}'".format(registration_string,similar_transformation_string,outDir,template,method), shell=True )
-        registration.wait()
+        registration_string=' '.join([str(f) for f in registration_set])
+        similar_transformation_string=' '.join([str(f) for f in similar_transformation_set])
+        
+        ProcessManager.submit_process(register,registration_string,similar_transformation_string,outDir,template,method)
+        
+    ProcessManager.join_processes()
         

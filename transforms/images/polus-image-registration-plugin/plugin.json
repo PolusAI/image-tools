@@ -1,6 +1,6 @@
 {
     "name": "Image Registration",
-    "version": "0.3.5",
+    "version": "1.0.0",
     "title": "Image Registration",
     "description": "This plugin registers an image collection",
     "author": "Gauhar Bains (gauhar.bains@labshare.org), Nick Schaub (nick.schaub@nih.gov) ",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-image-registration-plugin:0.3.5",
+    "containerId": "labshare/polus-image-registration-plugin:1.0.0",
     "inputs": [
       {
         "name": "inpDir",

@@ -1,3 +1,5 @@
-numpy==1.19.1
-opencv_python_headless==4.1.2.30
-filepattern==1.2.4
+
+opencv_python_headless==4.5.3.56
+filepattern==1.4.7
+bfio[all]==2.1.9
+preadator==0.2.0
