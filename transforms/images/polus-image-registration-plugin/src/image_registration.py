@@ -1,4 +1,4 @@
-import cv2, argparse, logging
+import cv2, logging, os
 import numpy as np
 from bfio.bfio import BioReader, BioWriter
 from pathlib import Path
@@ -6,10 +6,15 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from multiprocessing import cpu_count
 from preadator import ProcessManager
     
+# Import environment variables
+POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
+POLUS_EXT = os.environ.get('POLUS_EXT','.ome.tif')
+
+# Initialize the logger
 logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
-logger = logging.getLogger("register")
-logger.setLevel(logging.INFO)
+logger = logging.getLogger("main")
+logger.setLevel(POLUS_LOG)
     
 def corr2(a,b):
     """corr2 Calculate correlation between 2 images
@@ -107,8 +112,8 @@ def get_transform(moving_image,reference_image,max_val,min_val,method):
 
 def get_scale_factor(height,width):
     """
-    This function returns the appropriate scale factor w.r.t to 
-    a target size. Target size has been fixed to 5 megapixels.
+    This function returns the appropriate scale factor w.r.t to a target size.
+    Target size has been fixed to 5 megapixels.
     
     Inputs:
         height (int): Image height
@@ -125,7 +130,8 @@ def get_scale_factor(height,width):
 
 def get_scaled_down_images(image,scale_factor,get_max=False):
     """
-    This function returns the scaled down version of an image.    
+    This function returns the scaled down version of an image.
+    
     Inputs:
         image : A BioReader object
         scale_factor : the factor by which the image needs
@@ -153,8 +159,8 @@ def get_scaled_down_images(image,scale_factor,get_max=False):
         """load_and_scale Load a section of an image and downscale
         
         This is a transient method, and only works within the get
-        scaled_down_images method.
-        It's used to thread out loading and downscaling of large images.
+        scaled_down_images method. It is used to thread out loading and
+        downscaling of large images.
         
         """
         
@@ -204,9 +210,9 @@ def register_image(br_ref,
                    Rough_Homography_Upscaled):
     """register_image Register one section of two images
 
-    This method is designed to be used within a thread. It registers
-    one section of two different images, saves the output, and
-    returns the homography matrix used to transform the image.
+    This method is designed to be used within a thread. It registers one section
+    of two different images, saves the output, and returns the homography matrix
+    used to transform the image.
 
     """
     
@@ -215,8 +221,8 @@ def register_image(br_ref,
         logger.debug('register_image: start')
         
         # Load a section of the reference and moving images
-        ref_tile = br_ref.read(X=[Xt[0],Xt[1]],Y=[Yt[0],Yt[1]],Z=[0,1],C=[0],T=[0]).squeeze()
-        mov_tile = br_mov.read(X=[Xm[0],Xm[1]],Y=[Ym[0],Ym[1]],Z=[0,1],C=[0],T=[0]).squeeze()
+        ref_tile = br_ref[Yt[0]:Yt[1],Xt[0]:Xt[1],0:1].squeeze()
+        mov_tile = br_mov[Ym[0]:Ym[1],Xm[0]:Xm[1],0:1].squeeze()
         
         # Get the transformation matrix
         projective_transform = get_transform(mov_tile,ref_tile,max_val,min_val,method)
@@ -264,7 +270,7 @@ def apply_transform(br_mov,bw,tiles,shape,transform,method):
     Xm,Ym,Xt,Yt = tiles
     
     # Read the moving image tile
-    mov_tile = br_mov.read(X=[Xm[0],Xm[1]],Y=[Ym[0],Ym[1]],Z=[0,1],C=[0],T=[0]).squeeze()
+    mov_tile = br_mov[Ym[0]:Ym[1],Xm[0]:Xm[1],0:1].squeeze()
     
     # Get the image coordinates and shape
     x,y,X_crop,Y_crop = shape
@@ -290,7 +296,7 @@ def register(registration_string: str,
     
     # extract filenames from registration_string and similar_transformation_string
     registration_set=registration_string.split()
-    similar_transformation_set=similar_transformation_string.split()
+    similar_transformation_set=[Path(f) for f in similar_transformation_string.split()]
     
     filename_len=len(template)
         
@@ -395,14 +401,16 @@ def register(registration_string: str,
     # iterate across all images which have the similar transformation as the moving image above
     for moving_image_path in similar_transformation_set:
         
-        # seperate image name from the path to it
-        moving_image_name=moving_image_path[-1*filename_len:]
-        
         logger.info('Applying registration to image: {}'.format(moving_image_name))
         
         br_mov = BioReader(moving_image_path,max_workers=read_workers)
     
-        bw = BioWriter(str(Path(outDir).joinpath(moving_image_name)), metadata=br_mov.metadata,max_workers=write_workers)
+        # Change the file extension if needed
+        input_extension = ''.join([s for s in moving_image_path.suffixes[-2:] if len(s) < 6])
+        out_name = moving_image_path.name.replace(input_extension,POLUS_EXT)
+        out_path = Path(outDir).joinpath(out_name)
+        
+        bw = BioWriter(out_path, metadata=br_mov.metadata,max_workers=write_workers)
         bw.x = br_ref.x
         bw.y = br_ref.y
         bw.z = 1

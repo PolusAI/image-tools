@@ -1,17 +1,57 @@
-import argparse, logging, subprocess
-import numpy as np
+import argparse, logging, os
 from pathlib import Path
 from parser import parse_collection
 import shutil
 from preadator import ProcessManager
 from image_registration import register
 
+# Import environment variables
+POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
+POLUS_EXT = os.environ.get('POLUS_EXT','.ome.tif')
+
+# Initialize the logger
+logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+                    datefmt='%d-%b-%y %H:%M:%S')
+logger = logging.getLogger("main")
+logger.setLevel(POLUS_LOG)
+
+def main(filePattern: str,
+         inpDir: Path,
+         registrationVariable: str,
+         template: str,
+         TransformationVariable: str,
+         outDir: Path,
+         method: str):
+    
+    # get template image path
+    template_image_path=str(Path(inpDir).joinpath(template).absolute())
+     
+    # parse the input collection
+    logger.info('Parsing the input collection and getting registration_dictionary')
+    registration_dictionary=parse_collection(inpDir,filePattern,registrationVariable, TransformationVariable, template_image_path)
+    
+    logger.info('Iterating over registration_dictionary....')
+    ProcessManager.init_processes(name='register')
+    for registration_set,similar_transformation_set in registration_dictionary.items():
+        
+        # registration_dictionary consists of set of already registered images as well
+        if registration_set[0]==registration_set[1]:            
+            similar_transformation_set=similar_transformation_set.tolist()
+            similar_transformation_set.append(registration_set[0])
+            for image_path in similar_transformation_set:
+                logger.info('Copying image {} to output directory'.format(image_path.name))
+                shutil.copy2(image_path,str(Path(outDir).joinpath(image_path.name).absolute()))            
+            continue
+        
+        # concatenate lists into a string to pass as an argument to argparse
+        registration_string=' '.join([str(f) for f in registration_set])
+        similar_transformation_string=' '.join([str(f) for f in similar_transformation_set])
+        
+        ProcessManager.submit_process(register,registration_string,similar_transformation_string,outDir,template,method)
+        
+    ProcessManager.join_processes()
+
 if __name__=="__main__":
-    # Initialize the logger
-    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
-                        datefmt='%d-%b-%y %H:%M:%S')
-    logger = logging.getLogger("main")
-    logger.setLevel(logging.INFO)
 
     # Setup the argument parsing
     logger.info("Parsing arguments...")
@@ -46,34 +86,11 @@ if __name__=="__main__":
     method = args.method
     logger.info('method = {}'.format(method)) 
     
-     # get template image path
-    template_image_path=str(Path(inpDir).joinpath(template).absolute())  
-    
-    # filename len
-    filename_len= len(template)
-     
-    # parse the input collection
-    logger.info('Parsing the input collection and getting registration_dictionary')
-    registration_dictionary=parse_collection(inpDir,filePattern,registrationVariable, TransformationVariable, template_image_path)
-    
-    logger.info('Iterating over registration_dictionary....')
-    ProcessManager.init_processes(name='register')
-    for registration_set,similar_transformation_set in registration_dictionary.items():
-        
-        # registration_dictionary consists of set of already registered images as well
-        if registration_set[0]==registration_set[1]:            
-            similar_transformation_set=similar_transformation_set.tolist()
-            similar_transformation_set.append(registration_set[0])
-            for image_path in similar_transformation_set:
-                logger.info('Copying image {} to output directory'.format(image_path.name))
-                shutil.copy2(image_path,str(Path(outDir).joinpath(image_path.name).absolute()))            
-            continue
-        
-        # concatenate lists into a string to pass as an argument to argparse
-        registration_string=' '.join([str(f) for f in registration_set])
-        similar_transformation_string=' '.join([str(f) for f in similar_transformation_set])
-        
-        ProcessManager.submit_process(register,registration_string,similar_transformation_string,outDir,template,method)
-        
-    ProcessManager.join_processes()
+    main(filePattern,
+         inpDir,
+         registrationVariable,
+         template,
+         TransformationVariable,
+         outDir,
+         method)
         

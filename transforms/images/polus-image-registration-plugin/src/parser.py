@@ -1,29 +1,38 @@
-from filepattern import FilePattern, parse_directory,get_matching,parse_filename,get_regex
-import os
+from filepattern import FilePattern, parse_directory,get_regex
 import itertools
 import numpy as np
 
 
-def parse_collection(directory_path,file_pattern,registration_variable, similarity_variable, template_image):
+def parse_collection(directory_path,
+                     file_pattern,
+                     registration_variable,
+                     similarity_variable,
+                     template_image):
     
     """
-    This function parses the input directory and returns a dictionary. Each key in the dictionary is a tuple 
-    consisting of a template and a moving image. The value corresponding to each key is a list of images that have 
-    similar transformation as the moving image. 
-    Note: The code produces the expected output when len(registration_variable)==len(similarity_variable)==1.
-          The code will NOT spit out an error when the more than one variable is passed as registration or
-          similarity variable, but additional testing needs to be done to validate the script for this usecase.
+    This function parses the input directory and returns a dictionary. Each key
+    in the dictionary is a tuple consisting of a template and a moving image.
+    The value corresponding to each key is a list of images that have similar
+    transformation as the moving image. 
     
-    inputs : 
+    Note: The code produces the expected output when
+          len(registration_variable)==len(similarity_variable)==1.
+          The code will NOT spit out an error when the more than one variable is
+          passed as registration or similarity variable, but additional testing
+          needs to be done to validate the script for this usecase.
+    
+    Inputs:
         directory_path: path to the input collection
         file_pattern: file name pattern of the input images
-        registration_variable : variable to help determine the set of moving and template images
-        similarity variable: variable to help determine the set of images having a similar transformation
-                             corresponding to each set of moving and template images
+        registration_variable: variable to help determine the set of moving and
+                               template images
+        similarity variable: variable to help determine the set of images having
+                             a similar transformation corresponding to each set
+                             of moving and template images
         template_image: name of a template image
     
-    outputs : result_dic 
-              example of result_dic is shown below
+    Outputs:
+        result_dic: example of result_dic is shown below
          
     result_dic = {  (template_img1 : moving_img1) : [set1_img1,set1_img2, set1_img3....],
                     (template_img2 : moving_img2) : [set2_img1,set2_img2, set2_img3....],
