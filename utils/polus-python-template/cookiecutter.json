@@ -4,8 +4,10 @@
     "github_username": "datascientist",
     "project_name": "WIPP Widget",
     "project_short_description": "Everything you need to start a WIPP plugin.",
-    "version": "0.1.1",
-    "use_bfio": "True",
+    "version": "0.1.0",
+    "use_bfio": true,
+    "use_filepattern": true,
+    "use_java": false,
     "_inputs": {
         "inpDir": {
             "type": "collection",
@@ -17,7 +19,7 @@
             "type": "string",
             "title": "Filename pattern",
             "description": "Filename pattern used to separate data",
-            "required": "True"
+            "required": "False"
         }
     },
     "_outputs": {
@@ -27,5 +29,9 @@
         }
     },
     
-    "project_slug": "polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin"
+    "project_slug": "polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin",
+
+    "_extensions": [
+        "jinja2_ospath.extensions.OSPathExtension"
+    ]
 }
