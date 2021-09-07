@@ -1,3 +1,4 @@
+from typing import Tuple
 import numpy as np
 import json, copy, os
 import math
@@ -15,6 +16,7 @@ from neurogen import mesh as ngmesh
 from neurogen import info as nginfo
 from neurogen import volume as ngvol
 
+
 from itertools import repeat
 from itertools import product
 
@@ -23,16 +25,22 @@ from bfio import BioReader, BioWriter
 
 import traceback
 
-chunk_size = [256, 256, 256]
+chunk_size = [256,256,256]
+CHUNK_SIZE = 256
 mesh_chunk_size = [512, 512, 512]
+MESH_CHUNK_SIZE = 512
 
 bit_depth = 10
+
+get_dim1dim2 = lambda dimension1, dimension_size, rng_size: \
+                    (int(dimension1), int(min(dimension1+rng_size, dimension_size)))
 
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("utils")
 logger.setLevel(logging.INFO)
+
 
 def get_resolution(phys_y : tuple,
                    phys_x : tuple,
@@ -72,6 +80,151 @@ def get_resolution(phys_y : tuple,
         phys_z = phys_z[0] * UNITS[phys_z[1]]
     
     return [phys_y, phys_x, phys_z]
+
+
+def save_resolution(output_directory: str,
+                    xyz_volume: tuple):
+    """This function encodes a chunked volume.
+    
+    Args:
+        output_directory : where the encoded image gets saved to
+        xyz_volume : (xyz, volume)
+            xyz : contains the dimensions of the chunk
+            volume : the volume that gets encoded
+    """
+    try:
+        xyz, volume = xyz_volume
+        y1_chunk, y2_chunk = xyz[0]
+        x1_chunk, x2_chunk = xyz[1]
+        z1_chunk, z2_chunk = xyz[2] 
+        volume = np.reshape(volume, volume.shape[:3])
+        logger.debug("({0:0>4}, {0:0>4}), ".format(x1_chunk, x2_chunk) + \
+                    "({0:0>4}, {0:0>4}), ".format(y1_chunk, y2_chunk) + \
+                    "({0:0>4}, {0:0>4})".format(z1_chunk, z2_chunk))
+        volume_encoded = ngvol.encode_volume(volume)
+        ngvol.write_image(image=volume_encoded, volume_directory=output_directory, 
+                x=(y1_chunk, y2_chunk),
+                y=(x1_chunk, x2_chunk),  
+                z=(z1_chunk, z2_chunk))
+    except Exception as e:
+        print(e)
+
+def iterate_cache_tiles(bf_image: bfio.bfio.BioReader):
+
+    """ This function iterates through the bfio object
+        tiles and caches the information for easy access."""
+    
+    cache_tile = bf_image._TILE_SIZE
+    for y1_cache in range(0, bf_image.Y, cache_tile):
+        for x1_cache in range(0, bf_image.X, cache_tile):
+            for z1_cache in range(0, bf_image.Z, cache_tile):
+                for c1_cache in range(0, bf_image.C, cache_tile):
+                    for t1_cache in range(0, bf_image.T, cache_tile):
+
+                        y1_cache, y2_cache = get_dim1dim2(y1_cache, bf_image.Y, cache_tile)
+                        x1_cache, x2_cache = get_dim1dim2(x1_cache, bf_image.X, cache_tile)
+                        z1_cache, z2_cache = get_dim1dim2(z1_cache, bf_image.Z, cache_tile)
+                        c1_cache, c2_cache = get_dim1dim2(c1_cache, bf_image.C, cache_tile)
+                        t1_cache, t2_cache = get_dim1dim2(t1_cache, bf_image.T, cache_tile)
+
+                        logger.info("Caching: " + \
+                                    "Y ({0:0>4}-{1:0>4}), ".format(y1_cache, y2_cache) + \
+                                    "X ({0:0>4}-{1:0>4}), ".format(x1_cache, x2_cache) + \
+                                    "Z ({0:0>4}-{1:0>4}), ".format(z1_cache, z2_cache) + \
+                                    "C ({0:0>4}-{1:0>4}), ".format(c1_cache, c2_cache) + \
+                                    "T ({0:0>4}-{1:0>4})".format(t1_cache, t2_cache))
+
+                        bf_image.cache = bf_image[y1_cache:y2_cache, 
+                                                  x1_cache:x2_cache, 
+                                                  z1_cache:z2_cache, 
+                                                  c1_cache:c2_cache, 
+                                                  t1_cache:t2_cache]
+                        
+                        yield (y1_cache, y2_cache, \
+                               x1_cache, x2_cache, \
+                               z1_cache, z2_cache, \
+                               c1_cache, c2_cache, \
+                               z1_cache, z2_cache, bf_image.cache)
+
+def get_highest_resolution_volumes(bf_image: bfio.bfio.BioReader,
+                                   resolution_directory: str):
+    """ This function gets the most detailed pyramid and saves it in encoded 
+        chunks that can be processed by Neuroglancer.
+
+    Args:
+        bf_image: the image that gets read
+        resolution_directory: the directory that the images get saved into    
+    """
+    # get tiles of 1024
+    for y1_cache, y2_cache, \
+        x1_cache, x2_cache, \
+        z1_cache, z2_cache, \
+        c1_cache, c2_cache, \
+        t1_cache, t2_cache, bf_image.cache in iterate_cache_tiles(bf_image = bf_image):
+
+        # chunk sections of the tiles
+        y_chunks = list(map(get_dim1dim2, 
+                            range(y1_cache, y2_cache, CHUNK_SIZE), 
+                            repeat(y2_cache), 
+                            repeat(CHUNK_SIZE)))
+        x_chunks = list(map(get_dim1dim2, 
+                            range(x1_cache, x2_cache, CHUNK_SIZE), 
+                            repeat(x2_cache), 
+                            repeat(CHUNK_SIZE)))
+        z_chunks = list(map(get_dim1dim2,
+                            range(z1_cache, z2_cache, CHUNK_SIZE),
+                            repeat(z2_cache),
+                            repeat(CHUNK_SIZE)))
+        xyz_chunks = product(y_chunks,x_chunks,z_chunks)
+
+        # use multiprocessing to encode every chunk
+        try:
+            with ThreadPoolExecutor(max_workers = os.cpu_count()-1) as executor:
+                executor.map(save_resolution,
+                            repeat(resolution_directory),
+                            ((xyz, bf_image.cache[xyz[0][0]-y1_cache:xyz[0][1]-y1_cache,
+                                                  xyz[1][0]-x1_cache:xyz[1][1]-x1_cache,
+                                                  xyz[2][0]-z1_cache:xyz[2][1]-z1_cache]) for xyz in xyz_chunks))
+        except Exception as e:
+            print(e)
+
+
+def get_volumes(bf: bfio.bfio.BioReader,
+                output_directory: str,
+                highest_res_directory: str,
+                imagetype: str,
+                datatype: np.dtype,
+                num_scales: int):
+    """ This functions generates volumes 
+    Args:
+        bf : the input image that needs to processed into pyramids
+        output_directory : the directory containing all the pyramids
+        highest_res_directory : the directory containing the highest resolution tiles
+        imagetype : Either image or segmentation 
+        datatype : the datatype of the input image, bf
+        num_scales : the number of pyramid levels
+    """
+
+    bfshape = bf.shape
+    get_highest_resolution_volumes(bf_image=bf, resolution_directory=highest_res_directory)
+
+    logger.info("\n Getting the Rest of the Pyramid ...")
+    for higher_scale in reversed(range(0, num_scales)):
+        
+        inputshape = np.ceil(np.array(bfshape)/(2**(num_scales-higher_scale-1))).astype('int')
+        scale_directory = os.path.join(output_directory, str(higher_scale+1)) #images are read from this directory
+        if not os.path.exists(scale_directory):
+            os.makedirs(scale_directory)
+        assert os.path.exists(scale_directory), f"Key Directory {scale_directory} does not exist"
+        
+        if imagetype == "image":
+            ngvol.get_rest_of_the_pyramid(directory=scale_directory, input_shape=inputshape, chunk_size=chunk_size,
+                                        datatype=datatype, blurring_method='average')
+        else:
+            ngvol.get_rest_of_the_pyramid(directory=scale_directory, input_shape=inputshape, chunk_size=chunk_size,
+                                        datatype=datatype, blurring_method='mode')
+        logger.info(f"Saved Encoded Volumes for Scale {higher_scale} from Key Directory {os.path.basename(scale_directory)}")
+              
     
 def create_plyfiles(subvolume : np.ndarray, 
                     ids : list,
@@ -204,6 +357,12 @@ def build_pyramid(input_image : str,
             datatype = np.dtype(bf.dtype)
             logger.info("Image Shape {}".format(bfshape))
             logger.info("Image Datatype {}".format(datatype))
+
+            num_scales = np.floor(np.log2(max(bfshape[:3]))).astype('int')+1
+            highest_res_directory = os.path.join(output_image, f"{num_scales}")
+            if not os.path.exists(highest_res_directory):
+                os.makedirs(highest_res_directory)
+
             
 
             # info file specifications
@@ -225,10 +384,6 @@ def build_pyramid(input_image : str,
                     
                     # Creating a temporary files for the polygon meshes -- will later be converted to Draco
                     with tempfile.TemporaryDirectory() as temp_dir:
-                        
-                        # function to get the range of chunks
-                        get_dim1dim2 = lambda dimension1, dimension_size, rng_size: \
-                                            (int(dimension1), int(min(dimension1+rng_size, dimension_size)))
 
                         # keep track of labelled segments
                         all_identities = []
@@ -237,62 +392,42 @@ def build_pyramid(input_image : str,
 
                         logger.info("\n Starting to Cache Section Sizes of {}".format(cache_tile))
                         # cache tiles of 1024 
-                        for y1_cache in range(0, bf.Y, cache_tile):
-                            for x1_cache in range(0, bf.X, cache_tile):
-                                for z1_cache in range(0, bf.Z, cache_tile):
-                                    for c1_cache in range(0, bf.C, cache_tile):
-                                        for t1_cache in range(0, bf.T, cache_tile):
+                        for y1_cache, y2_cache, \
+                            x1_cache, x2_cache, \
+                            z1_cache, z2_cache, \
+                            c1_cache, c2_cache, \
+                            t1_cache, t2_cache, bf.cache in iterate_cache_tiles(bf_image = bf):
 
-                                            y1_cache, y2_cache = get_dim1dim2(y1_cache, bf.Y, cache_tile)
-                                            x1_cache, x2_cache = get_dim1dim2(x1_cache, bf.X, cache_tile)
-                                            z1_cache, z2_cache = get_dim1dim2(z1_cache, bf.Z, cache_tile)
-                                            c1_cache, c2_cache = get_dim1dim2(c1_cache, bf.C, cache_tile)
-                                            t1_cache, t2_cache = get_dim1dim2(t1_cache, bf.T, cache_tile)
+                            cached_shape = bf.cache.shape
+                            # iterate through mesh chunks in cached tile
+                            for y1_chunk in range(0, cached_shape[0], MESH_CHUNK_SIZE):
+                                for x1_chunk in range(0, cached_shape[1], MESH_CHUNK_SIZE):
+                                    for z1_chunk in range(0, cached_shape[2], MESH_CHUNK_SIZE):
+                                
+                                        y1_chunk, y2_chunk = get_dim1dim2(y1_chunk, cached_shape[0], MESH_CHUNK_SIZE)
+                                        x1_chunk, x2_chunk = get_dim1dim2(x1_chunk, cached_shape[1], MESH_CHUNK_SIZE)
+                                        z1_chunk, z2_chunk = get_dim1dim2(z1_chunk, cached_shape[2], MESH_CHUNK_SIZE)
 
-                                            logger.info("Caching: " + \
-                                                        "Y ({0:0>4}-{1:0>4}), ".format(y1_cache, y2_cache) + \
-                                                        "X ({0:0>4}-{1:0>4}), ".format(x1_cache, x2_cache) + \
-                                                        "Z ({0:0>4}-{1:0>4}), ".format(z1_cache, z2_cache) + \
-                                                        "C ({0:0>4}-{1:0>4}), ".format(c1_cache, c2_cache) + \
-                                                        "T ({0:0>4}-{1:0>4})".format(t1_cache, t2_cache))
+                                        volume = bf.cache[y1_chunk:y2_chunk, x1_chunk:x2_chunk, z1_chunk:z2_chunk]
+                                        volume = np.reshape(volume, volume.shape[:3])
 
-                                            bf.cache = bf[y1_cache:y2_cache, 
-                                                          x1_cache:x2_cache, 
-                                                          z1_cache:z2_cache, 
-                                                          c1_cache:c2_cache, 
-                                                          t1_cache:t2_cache]
+                                        ids = np.unique(volume[volume>0])
+                                        len_ids = len(ids)
+                                        logger.info("\t Chunk: " + \
+                                                    "Y ({0:0>4}-{1:0>4}), ".format(y1_cache+y1_chunk, y1_cache+y2_chunk) + \
+                                                    "X ({0:0>4}-{1:0>4}), ".format(x1_cache+x1_chunk, x1_cache+x2_chunk) + \
+                                                    "Z ({0:0>4}-{1:0>4}) ".format(z1_cache+z1_chunk, z1_cache+z2_chunk) + \
+                                                    "has {0:0>2} IDS".format(len_ids))
 
-                                            cached_shape = bf.cache.shape
-
-                                            # iterate through mesh chunks in cached tile
-                                            for y1_chunk in range(0, cached_shape[0], mesh_chunk_size[0]):
-                                                for x1_chunk in range(0, cached_shape[1], mesh_chunk_size[1]):
-                                                    for z1_chunk in range(0, cached_shape[2], mesh_chunk_size[2]):
-                                                
-                                                        y1_chunk, y2_chunk = get_dim1dim2(y1_chunk, cached_shape[0], mesh_chunk_size[0])
-                                                        x1_chunk, x2_chunk = get_dim1dim2(x1_chunk, cached_shape[1], mesh_chunk_size[1])
-                                                        z1_chunk, z2_chunk = get_dim1dim2(z1_chunk, cached_shape[2], mesh_chunk_size[2])
-
-                                                        volume = bf.cache[y1_chunk:y2_chunk, x1_chunk:x2_chunk, z1_chunk:z2_chunk]
-                                                        volume = np.reshape(volume, volume.shape[:3])
-
-                                                        ids = np.unique(volume[volume>0])
-                                                        len_ids = len(ids)
-                                                        logger.info("\t Chunk: " + \
-                                                                    "Y ({0:0>4}-{1:0>4}), ".format(y1_cache+y1_chunk, y1_cache+y2_chunk) + \
-                                                                    "X ({0:0>4}-{1:0>4}), ".format(x1_cache+x1_chunk, x1_cache+x2_chunk) + \
-                                                                    "Z ({0:0>4}-{1:0>4}) ".format(z1_cache+z1_chunk, z1_cache+z2_chunk) + \
-                                                                    "has {0:0>2} IDS".format(len_ids))
-
-                                                        all_identities = np.unique(np.append(all_identities, ids))
-                                                        if len_ids > 0:
-                                                            with ThreadPoolExecutor(max_workers=max([cpu_count()-1,2])) as executor:
-                                                                executor.submit(create_plyfiles(subvolume = volume,
-                                                                                                ids=ids,
-                                                                                                temp_dir=temp_dir,
-                                                                                                start_y=y1_cache+y1_chunk,
-                                                                                                start_x=x1_cache+x1_chunk,
-                                                                                                start_z=z1_cache+z1_chunk))
+                                        all_identities = np.unique(np.append(all_identities, ids))
+                                        if len_ids > 0:
+                                            with ThreadPoolExecutor(max_workers=max([cpu_count()-1,2])) as executor:
+                                                executor.submit(create_plyfiles(subvolume = volume,
+                                                                                ids=ids,
+                                                                                temp_dir=temp_dir,
+                                                                                start_y=y1_cache+y1_chunk,
+                                                                                start_x=x1_cache+x1_chunk,
+                                                                                start_z=z1_cache+z1_chunk))
 
                         # concatenate and decompose the meshes in the temporary file for all segments
                         logger.info("\n Generate Progressive Meshes for segments ...")
@@ -313,20 +448,22 @@ def build_pyramid(input_image : str,
                                                 bit_depth=bit_depth,
                                                 order="XYZ")
 
-                logger.info("\n Creating volumes based on the info file ...")
-                # this is written outside the if/else statement regarding meshes
-                ngvol.generate_recursive_chunked_representation(volume=bf, info=file_info, dtype=datatype, directory=output_image, blurring_method='mode')
-
 
             if imagetype == "image":
                 file_info = nginfo.info_image(directory=output_image,
-                                                    dtype=datatype,
-                                                    chunk_size = chunk_size,
-                                                    size=bfshape[:3],
-                                                    resolution=resolution)
-                                                    
-                logger.info("\n Creating volumes based on the info file ...")
-                ngvol.generate_recursive_chunked_representation(volume=bf, info=file_info, dtype=datatype, directory=output_image, blurring_method='average')
+                                              dtype=datatype,
+                                              chunk_size = chunk_size,
+                                              size=bfshape[:3],
+                                              resolution=resolution)
+
+
+            logger.info("\n Creating volumes based on the info file ...")
+            get_volumes(bf                    = bf,
+                        output_directory      = output_image,
+                        highest_res_directory = highest_res_directory,
+                        imagetype             = imagetype,
+                        datatype              = datatype,
+                        num_scales            = num_scales)
 
             
             logger.info("Data Type: {}".format(file_info['data_type']))
