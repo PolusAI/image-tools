@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "polusai/image-quality-plugin:0.1.4",
+    "containerId": "polusai/image-quality-plugin:0.1.5",
     "inputs": [
       {
         "name": "inputDir",
