@@ -1,0 +1,63 @@
+{
+  "robot": [
+    "003011-3-001001002.tif",
+    "005008-4-001001001.tif",
+    "006003-2-001001002.tif",
+    "006005-2-001001001.tif",
+    "007005-1-001001001.tif",
+    "007011-3-001001002.tif",
+    "006008-4-001001002.tif",
+    "006004-1-001001001.tif",
+    "007010-2-001001001.tif"
+  ],
+  "brain": [
+    "S1_R3_C1-C11_A1_y001_x010_c005.ome.tif",
+    "S1_R3_C1-C11_A1_y011_x021_c005.ome.tif",
+    "S1_R1_C1-C11_A1_y013_x007_c003.ome.tif",
+    "S1_R2_C1-C11_A1_y007_x006_c004.ome.tif",
+    "S1_R2_C1-C11_A1_y005_x012_c003.ome.tif",
+    "S1_R5_C1-C11_A1_y009_x016_c005.ome.tif",
+    "S1_R2_C1-C11_A1_y002_x018_c000.ome.tif"
+  ],
+  "variable": [
+    "S1_R4_C1-C11_A1_y2_x011_c6.ome.tif",
+    "S1_R4_C1-C11_A1_y1_x4_c4.ome.tif",
+    "S1_R1_C1-C11_A1_y7_x0_c0.ome.tif",
+    "S1_R2_C1-C11_A1_y011_x7_c8.ome.tif",
+    "S1_R5_C1-C11_A1_y012_x3_c4.ome.tif",
+    "S1_R2_C1-C11_A1_y3_x0_c6.ome.tif",
+    "S1_R2_C1-C11_A1_y7_x5_c3.ome.tif",
+    "S1_R2_C1-C11_A1_y011_x4_c6.ome.tif",
+    "S1_R2_C1-C11_A1_y2_x018_c0.ome.tif"
+  ],
+  "parenthesis": [
+    "img_x01_y01_(TXRED).tif",
+    "img_x01_y01_(GFP).tif",
+    "img_x01_y01_(DAPI).tif"
+  ],
+  "two_chan": [
+    "img_x01_y01_TXRED_TXYELLOW.tif",
+    "img_x01_y02_GFP_YFP.tif",
+    "img_x03_y03_DAPI_DAPIYELLOW.tif"
+  ],
+  "three_chan": [
+    "img_x01_y01_TXRED_TXYELLOW_ABC.tif",
+    "img_x01_y02_GFP_YFP_DEF.tif",
+    "img_x03_y03_DAPI_DAPIYELLOW_GHI.tif"
+  ],
+  "non_alphanum_int": [
+    "img x01 y01 TXRED.tif",
+    "img x01 y02 GFP.tif",
+    "img x03 y03 DAPI.tif"
+  ],
+  "non_alphanum_float": [
+    "img x01.22 y01 TXRED.tif",
+    "img x01.33 y02 GFP.tif",
+    "img x03.44 y03 DAPI.tif"
+  ],
+  "kph-kirill": [
+    "0(01-16)0(01-24)-(1-4)-002.ome.tif",
+    "0(01-16)0(01-24)-(1-4)-001.ome.tif",
+    "0(01-16)0(01-24)-(1-4)-003.ome.tif"
+  ]
+}
