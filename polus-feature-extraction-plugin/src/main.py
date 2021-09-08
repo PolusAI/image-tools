@@ -506,6 +506,7 @@ def feature_extraction(features,
         data_dict=[]
         def compute_M(data):
             cols = np.arange(data.size)
+            data[data>=len(label)+1] = len(label)   # Limit it
             return csr_matrix((cols, (data.ravel(), cols)),shape=(len(label) + 1, data.size))
         def get_indices_sparse(data):
             M = compute_M(data)
@@ -518,8 +519,8 @@ def feature_extraction(features,
             xg, yg = x.mean(), y.mean()
             x = x - xg
             y = y - yg
-            uxx = (y**2).sum()
-            uyy = (x**2).sum()
+            uyy = (y**2).sum()
+            uxx = (x**2).sum()
             uxy = (x*y).sum()
             if (uyy > uxx):
                 num = uyy - uxx + np.sqrt((uyy - uxx)**2 + 4*uxy**2)
@@ -1074,7 +1075,8 @@ def feature_extraction(features,
             #List of labels for only objects that are not touching the border
             label_nt_touching = regions1-1
             #Find whether the object is touching border or not 
-            border_cells = np.full((len(regions)),True,dtype=bool)       
+            border_cells = np.full((len(regions)),True,dtype=bool)  
+            label_nt_touching[label_nt_touching>=len(border_cells)] = len(border_cells)-1   # Limit it 
             border_cells[label_nt_touching]=False
             if intensity_image is None:
             #Create column label and image
