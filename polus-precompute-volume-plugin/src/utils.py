@@ -260,7 +260,7 @@ def create_plyfiles(subvolume : np.ndarray,
     for iden in ids:
         vertices,faces,_,_ = measure.marching_cubes((subvolume==iden).astype("uint8"), step_size=1)
         root_mesh = trimesh.Trimesh(vertices=vertices, faces=faces) # creates mesh
-        chunk_filename = '{}_{}_{}_{}.ply'.format(iden, start_y, start_x, start_z)
+        chunk_filename = '{}_{}_{}_{}.ply'.format(iden, start_x, start_y, start_z)
         export_to = os.path.join(temp_dir, chunk_filename) # saves mesh in temp directory
         root_mesh.export(export_to)
         logger.debug("Saved Segment {} as {}".format(iden, chunk_filename))
@@ -323,7 +323,7 @@ def concatenate_and_generate_meshes(iden : int,
                 mesh2 = trimesh.load_mesh(file_obj=mesh2_path, file_type='ply')
                 logger.debug('** Loaded chunk #{}: {} ---- {} bytes'.format(i+2, idenfiles[i], os.path.getsize(mesh2_path)))
                 transformationmatrix = [int(trans) for trans in stripped_files_middle[i]]
-                offset = [transformationmatrix[i]/chunk_size[i] for i in range(3)]
+                offset = [transformationmatrix[i]/mesh_chunk_size[i] for i in range(3)]
                 middle_mesh = transformationmatrix
                 translate_middle = ([1, 0, 0, middle_mesh[0] - offset[0]],
                                     [0, 1, 0, middle_mesh[1] - offset[1]],
@@ -410,34 +410,51 @@ def build_pyramid(input_image : str,
 
                             cached_shape = bf.cache.shape
                             # iterate through mesh chunks in cached tile
-                            for y1_chunk in range(0, cached_shape[0], MESH_CHUNK_SIZE):
-                                for x1_chunk in range(0, cached_shape[1], MESH_CHUNK_SIZE):
-                                    for z1_chunk in range(0, cached_shape[2], MESH_CHUNK_SIZE):
-                                
-                                        y1_chunk, y2_chunk = get_dim1dim2(y1_chunk, cached_shape[0], MESH_CHUNK_SIZE)
-                                        x1_chunk, x2_chunk = get_dim1dim2(x1_chunk, cached_shape[1], MESH_CHUNK_SIZE)
-                                        z1_chunk, z2_chunk = get_dim1dim2(z1_chunk, cached_shape[2], MESH_CHUNK_SIZE)
+                            bf.cache = np.reshape(bf.cache, cached_shape[:3])
+                            bf.cache = np.transpose(bf.cache, (1,0,2))
+                            
+                            # chunk sections of the tiles
+                            x_chunks = list(map(get_dim1dim2, 
+                                                range(x1_cache, x2_cache, MESH_CHUNK_SIZE), 
+                                                repeat(x2_cache), 
+                                                repeat(MESH_CHUNK_SIZE)))
+                            y_chunks = list(map(get_dim1dim2, 
+                                                range(y1_cache, y2_cache, MESH_CHUNK_SIZE), 
+                                                repeat(y2_cache), 
+                                                repeat(MESH_CHUNK_SIZE)))
+                            z_chunks = list(map(get_dim1dim2,
+                                                range(z1_cache, z2_cache, MESH_CHUNK_SIZE),
+                                                repeat(z2_cache),
+                                                repeat(MESH_CHUNK_SIZE)))
+                            xyz_chunks = product(x_chunks,y_chunks,z_chunks)
 
-                                        volume = bf.cache[y1_chunk:y2_chunk, x1_chunk:x2_chunk, z1_chunk:z2_chunk]
-                                        volume = np.reshape(volume, volume.shape[:3])
+                            for xyz in xyz_chunks:
 
-                                        ids = np.unique(volume[volume>0])
-                                        len_ids = len(ids)
-                                        logger.info("\t Chunk: " + \
-                                                    "Y ({0:0>4}-{1:0>4}), ".format(y1_cache+y1_chunk, y1_cache+y2_chunk) + \
-                                                    "X ({0:0>4}-{1:0>4}), ".format(x1_cache+x1_chunk, x1_cache+x2_chunk) + \
-                                                    "Z ({0:0>4}-{1:0>4}) ".format(z1_cache+z1_chunk, z1_cache+z2_chunk) + \
-                                                    "has {0:0>2} IDS".format(len_ids))
+                                x1_chunk, x2_chunk = xyz[0]
+                                y1_chunk, y2_chunk = xyz[1]
+                                z1_chunk, z2_chunk = xyz[2] 
 
-                                        all_identities = np.unique(np.append(all_identities, ids))
-                                        if len_ids > 0:
-                                            with ThreadPoolExecutor(max_workers=max([cpu_count()-1,2])) as executor:
-                                                executor.submit(create_plyfiles(subvolume = volume,
-                                                                                ids=ids,
-                                                                                temp_dir=temp_dir,
-                                                                                start_y=y1_cache+y1_chunk,
-                                                                                start_x=x1_cache+x1_chunk,
-                                                                                start_z=z1_cache+z1_chunk))
+                                volume = bf.cache[x1_chunk-x1_cache:x2_chunk-x1_cache,
+                                                  y1_chunk-y1_cache:y2_chunk-y1_cache,
+                                                  z1_chunk-z1_cache:z2_chunk-z1_cache]
+                                volume = np.reshape(volume, volume.shape[:3])
+
+                                ids = np.unique(volume[volume>0])
+                                len_ids = len(ids)
+                                logger.debug("({0:0>4}, {0:0>4}), ".format(x1_chunk, x2_chunk) + \
+                                             "({0:0>4}, {0:0>4}), ".format(y1_chunk, y2_chunk) + \
+                                             "({0:0>4}, {0:0>4})  ".format(z1_chunk, z2_chunk) + \
+                                             "has {0:0>2} IDS".format(len_ids))
+
+                                all_identities = np.unique(np.append(all_identities, ids))
+                                if len_ids > 0:
+                                    with ThreadPoolExecutor(max_workers=max([cpu_count()-1,2])) as executor:
+                                        executor.submit(create_plyfiles(subvolume = volume,
+                                                                        ids=ids,
+                                                                        temp_dir=temp_dir,
+                                                                        start_y=y1_chunk,
+                                                                        start_x=x1_chunk,
+                                                                        start_z=z1_chunk))
 
                         # concatenate and decompose the meshes in the temporary file for all segments
                         logger.info("\n Generate Progressive Meshes for segments ...")
