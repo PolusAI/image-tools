@@ -1,28 +1,28 @@
 import os
 import jpype
-import imagej
 import shutil
 import classes.populate as cp
 from pathlib import Path
 
 
-"""This file uses the classes in populate.py and cookiecutter to automatically parse the ImageJ ops help and create plugins"""
+"""This file uses the classes in populate.py and cookiecutter to automatically 
+parse the ImageJ ops help and create plugins"""
 
 if __name__ == '__main__':
 
-    print('Starting JVM\n')
+    print('Starting JVM and parsing ops help\n')
     
     # Start JVM
-    ij = imagej.init('sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4', headless=True)
+    #ij = imagej.init('sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4', headless=True)
     
     # # Retreive all available operations from pyimagej
     # imagej_help_docs = scyjava.to_python(ij.op().help())
     # print(imagej_help_docs)
     
-    print('Parsing imagej ops help\n')
+    #print('Parsing imagej ops help\n')
     
     # Populate ops by parsing the imagej operations help
-    populater = cp.Populate(ij)
+    populater = cp.Populate()
     
     print('Building json templates\n')
     
@@ -33,12 +33,12 @@ if __name__ == '__main__':
     cookietin_path = cwd.joinpath('utils/polus-imagej-util/cookietin')
     
     # Build the json dictionary to be passed to the cookiecutter module 
-    populater.buildJSON('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.2.0', cookietin_path)
+    populater.build_json('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.2.0', cookietin_path)
     
     print('Shutting down JVM\n')
     
     # Remove the imagej instance
-    del ij
+    del populater._ij
     
     # Shut down JVM
     jpype.shutdownJVM()
@@ -51,7 +51,8 @@ if __name__ == '__main__':
     # Get path to cookietin dicrectory
     cookietin_path = base_path.joinpath('cookietin')
 
-    # Get path to cookiecutter.json file that lives in each of the 40 folders within cookietin
+    # Get path to cookiecutter.json file that lives in each of the 40 folders 
+    # within cookietin
     cookiecutter_path = base_path.joinpath('cookiecutter.json')
 
     # Get list of all plugin directories in the cookietin directory 
@@ -87,8 +88,9 @@ if __name__ == '__main__':
     for plugin in plugins:
         
         #plugins_to_generate = ['math-add']
-        #plugins_to_generate = ['image-integral', 'image-distancetransform', 'filter-dog']
-        #plugins_to_generate += ['filter-dog', 'filter-addNoise', 'filter-convolve', 'filter-bilateral', 'filter-correlate']
+        #plugins_to_generate = ['image-integral',
+        #                       'image-distancetransform', 'filter-dog']
+        #plugins_to_generate = ['filter-dog', 'filter-addNoise', 'filter-convolve', 'filter-bilateral', 'filter-correlate']
         #if plugin.name in plugins_to_generate:
         if True:
              
@@ -99,7 +101,8 @@ if __name__ == '__main__':
             if path.exists():
                 shutil.rmtree(path)
             
-            # Move the cookiecutter.json file for the current plug in to the polus-imagej-util directory overwriting last plugin json file
+            # Move the cookiecutter.json file for the current plug in to the 
+            # polus-imagej-util directory overwriting last plugin json file
             shutil.copy(str(plugin.joinpath('cookiecutter.json')), cookiecutter_path)
             
             # Run the cookiecutter utility for the plugin
@@ -112,7 +115,7 @@ if __name__ == '__main__':
                 plugin_key = plugin.name.replace('-', '.')
                 
                 # Get all available ops for the plugin
-                ops = [op for op in populater._namespaces[plugin_key].supportedOps.keys()]
+                ops = [op for op in populater._plugins[plugin_key].supported_ops.keys()]
                 
                 # Create a list of the operating sytem commands
                 #commands = ["python "+str(path)+"/tests/unit_test.py --opName "+op for op in ops]

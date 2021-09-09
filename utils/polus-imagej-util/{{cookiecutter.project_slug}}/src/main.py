@@ -11,8 +11,8 @@ import jpype, imagej, scyjava
 import typing
 
 # Initialize the logger
-logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
-                    datefmt='%d-%b-%y %H:%M:%S')
+# logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+#                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
@@ -56,7 +56,7 @@ def main({#- Required inputs -#}
     logger.info('Starting ImageJ...')
     ij = imagej.init("sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4",
                      headless=True)
-    ij_converter.ij = ij
+    #ij_converter.ij = ij
     logger.info('Loaded ImageJ version: {}'.format(ij.getVersion()))
     
     """ Validate and organize the inputs """
@@ -123,7 +123,7 @@ def main({#- Required inputs -#}
                 {{ inp }}_br = BioReader({{ inp }}_path)
                 
                 # Convert to appropriate numpy array
-                {{ inp }} = ij_converter.to_java(np.squeeze({{ inp }}_br[:,:,0:1,0,0]),{{ inp }}_type)
+                {{ inp }} = ij_converter.to_java(ij, np.squeeze({{ inp }}_br[:,:,0:1,0,0]),{{ inp }}_type)
                 {%- if loop.first %}
                 metadata = {{ inp }}_br.metadata
                 fname = {{ inp }}_path.name
@@ -133,7 +133,7 @@ def main({#- Required inputs -#}
 
             {%- for inp,val in cookiecutter._inputs.items() if val.type!='collection' and inp!='opName' %}
             if _{{ inp }} is not None:
-                {{ inp }} = ij_converter.to_java(_{{ inp }},{{ inp }}_types[_opName],dtype)
+                {{ inp }} = ij_converter.to_java(ij, _{{ inp }},{{ inp }}_types[_opName],dtype)
             {% endfor %}
             logger.info('Running op...')
             {% for i,v in cookiecutter.plugin_namespace.items() %}
@@ -152,7 +152,7 @@ def main({#- Required inputs -#}
 
             # Saving output file to {{ out }}
             logger.info('Saving...')
-            {{ out }}_array = ij_converter.from_java({{ out }},{{ out }}_types[_opName])
+            {{ out }}_array = ij_converter.from_java(ij, {{ out }},{{ out }}_types[_opName])
             bw = BioWriter(_{{ out }}.joinpath(fname),metadata=metadata)
             bw.Z = 1
             bw.dtype = {{ out }}_array.dtype
