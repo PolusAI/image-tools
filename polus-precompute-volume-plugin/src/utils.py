@@ -25,10 +25,14 @@ from bfio import BioReader, BioWriter
 
 import traceback
 
-chunk_size = [256,256,256]
+from PIL import Image
+
 CHUNK_SIZE = 256
-mesh_chunk_size = [512, 512, 512]
+chunk_size = [CHUNK_SIZE,CHUNK_SIZE,CHUNK_SIZE]
+
 MESH_CHUNK_SIZE = 512
+mesh_chunk_size = [MESH_CHUNK_SIZE, MESH_CHUNK_SIZE, MESH_CHUNK_SIZE]
+
 
 bit_depth = 10
 
@@ -94,8 +98,8 @@ def save_resolution(output_directory: str,
     """
     try:
         xyz, volume = xyz_volume
-        y1_chunk, y2_chunk = xyz[0]
-        x1_chunk, x2_chunk = xyz[1]
+        x1_chunk, x2_chunk = xyz[0]
+        y1_chunk, y2_chunk = xyz[1]
         z1_chunk, z2_chunk = xyz[2] 
         volume = np.reshape(volume, volume.shape[:3])
         logger.debug("({0:0>4}, {0:0>4}), ".format(x1_chunk, x2_chunk) + \
@@ -103,8 +107,8 @@ def save_resolution(output_directory: str,
                     "({0:0>4}, {0:0>4})".format(z1_chunk, z2_chunk))
         volume_encoded = ngvol.encode_volume(volume)
         ngvol.write_image(image=volume_encoded, volume_directory=output_directory, 
-                x=(y1_chunk, y2_chunk),
-                y=(x1_chunk, x2_chunk),  
+                y=(y1_chunk, y2_chunk),
+                x=(x1_chunk, x2_chunk),  
                 z=(z1_chunk, z2_chunk))
     except Exception as e:
         print(e)
@@ -115,8 +119,8 @@ def iterate_cache_tiles(bf_image: bfio.bfio.BioReader):
         tiles and caches the information for easy access."""
     
     cache_tile = bf_image._TILE_SIZE
-    for y1_cache in range(0, bf_image.Y, cache_tile):
-        for x1_cache in range(0, bf_image.X, cache_tile):
+    for x1_cache in range(0, bf_image.X, cache_tile):
+        for y1_cache in range(0, bf_image.Y, cache_tile):
             for z1_cache in range(0, bf_image.Z, cache_tile):
                 for c1_cache in range(0, bf_image.C, cache_tile):
                     for t1_cache in range(0, bf_image.T, cache_tile):
@@ -128,17 +132,18 @@ def iterate_cache_tiles(bf_image: bfio.bfio.BioReader):
                         t1_cache, t2_cache = get_dim1dim2(t1_cache, bf_image.T, cache_tile)
 
                         logger.info("Caching: " + \
-                                    "Y ({0:0>4}-{1:0>4}), ".format(y1_cache, y2_cache) + \
                                     "X ({0:0>4}-{1:0>4}), ".format(x1_cache, x2_cache) + \
+                                    "Y ({0:0>4}-{1:0>4}), ".format(y1_cache, y2_cache) + \
                                     "Z ({0:0>4}-{1:0>4}), ".format(z1_cache, z2_cache) + \
                                     "C ({0:0>4}-{1:0>4}), ".format(c1_cache, c2_cache) + \
                                     "T ({0:0>4}-{1:0>4})".format(t1_cache, t2_cache))
 
                         bf_image.cache = bf_image[y1_cache:y2_cache, 
-                                                  x1_cache:x2_cache, 
+                                                  x1_cache:x2_cache,
                                                   z1_cache:z2_cache, 
                                                   c1_cache:c2_cache, 
                                                   t1_cache:t2_cache]
+                        
                         
                         yield (y1_cache, y2_cache, \
                                x1_cache, x2_cache, \
@@ -160,30 +165,33 @@ def get_highest_resolution_volumes(bf_image: bfio.bfio.BioReader,
         x1_cache, x2_cache, \
         z1_cache, z2_cache, \
         c1_cache, c2_cache, \
-        t1_cache, t2_cache, bf_image.cache in iterate_cache_tiles(bf_image = bf_image):
+        t1_cache, t2_cache, bf_image_cache in iterate_cache_tiles(bf_image = bf_image):
+
+        # now its XYZ order
+        bf_image_cache = np.reshape(bf_image_cache, bf_image_cache.shape[:3])
+        bf_image_cache = np.transpose(bf_image_cache, (1,0,2))
 
         # chunk sections of the tiles
-        y_chunks = list(map(get_dim1dim2, 
-                            range(y1_cache, y2_cache, CHUNK_SIZE), 
-                            repeat(y2_cache), 
-                            repeat(CHUNK_SIZE)))
         x_chunks = list(map(get_dim1dim2, 
                             range(x1_cache, x2_cache, CHUNK_SIZE), 
                             repeat(x2_cache), 
+                            repeat(CHUNK_SIZE)))
+        y_chunks = list(map(get_dim1dim2, 
+                            range(y1_cache, y2_cache, CHUNK_SIZE), 
+                            repeat(y2_cache), 
                             repeat(CHUNK_SIZE)))
         z_chunks = list(map(get_dim1dim2,
                             range(z1_cache, z2_cache, CHUNK_SIZE),
                             repeat(z2_cache),
                             repeat(CHUNK_SIZE)))
-        xyz_chunks = product(y_chunks,x_chunks,z_chunks)
-
+        xyz_chunks = product(x_chunks,y_chunks,z_chunks)
         # use multiprocessing to encode every chunk
         try:
             with ThreadPoolExecutor(max_workers = os.cpu_count()-1) as executor:
                 executor.map(save_resolution,
                             repeat(resolution_directory),
-                            ((xyz, bf_image.cache[xyz[0][0]-y1_cache:xyz[0][1]-y1_cache,
-                                                  xyz[1][0]-x1_cache:xyz[1][1]-x1_cache,
+                            ((xyz, bf_image_cache[xyz[0][0]-x1_cache:xyz[0][1]-x1_cache,
+                                                  xyz[1][0]-y1_cache:xyz[1][1]-y1_cache,
                                                   xyz[2][0]-z1_cache:xyz[2][1]-z1_cache]) for xyz in xyz_chunks))
         except Exception as e:
             print(e)
@@ -212,6 +220,7 @@ def get_volumes(bf: bfio.bfio.BioReader,
     for higher_scale in reversed(range(0, num_scales)):
         
         inputshape = np.ceil(np.array(bfshape)/(2**(num_scales-higher_scale-1))).astype('int')
+        inputshape = [inputshape[1], inputshape[0], inputshape[2]]
         scale_directory = os.path.join(output_directory, str(higher_scale+1)) #images are read from this directory
         if not os.path.exists(scale_directory):
             os.makedirs(scale_directory)
@@ -353,9 +362,10 @@ def build_pyramid(input_image : str,
     try:
         with bfio.BioReader(input_image) as bf:
             bf = BioReader(input_image)
-            bfshape = bf.shape
+            bfshape = (bf.X, bf.Y, bf.Z, bf.C, bf.T)
             datatype = np.dtype(bf.dtype)
-            logger.info("Image Shape {}".format(bfshape))
+            logger.info("Image Shape (XYZCT) {}".format(bfshape))
+
             logger.info("Image Datatype {}".format(datatype))
 
             num_scales = np.floor(np.log2(max(bfshape[:3]))).astype('int')+1
@@ -377,7 +387,7 @@ def build_pyramid(input_image : str,
                     file_info = nginfo.info_segmentation(directory=output_image,
                                                         dtype=datatype,
                                                         chunk_size = chunk_size,
-                                                        size=bfshape[:3],
+                                                        size=(bf.X, bf.Y, bf.Z),
                                                         resolution=resolution)
                     
                 else: # if generating meshes
@@ -440,7 +450,7 @@ def build_pyramid(input_image : str,
                     logger.info("\n Creating info file for segmentations and meshes ...")
                     file_info = nginfo.info_mesh(directory=output_image,
                                                 chunk_size=chunk_size,
-                                                size=bf.shape[:3],
+                                                size=(bf.X, bf.Y, bf.Z),
                                                 dtype=np.dtype(bf.dtype).name,
                                                 ids=all_identities,
                                                 resolution=resolution,
@@ -453,11 +463,11 @@ def build_pyramid(input_image : str,
                 file_info = nginfo.info_image(directory=output_image,
                                               dtype=datatype,
                                               chunk_size = chunk_size,
-                                              size=bfshape[:3],
+                                              size=(bf.X, bf.Y, bf.Z),
                                               resolution=resolution)
 
 
-            logger.info("\n Creating volumes based on the info file ...")
+            logger.info(f"\n Creating chunked volumes of {chunk_size} based on the info file ...")
             get_volumes(bf                    = bf,
                         output_directory      = output_image,
                         highest_res_directory = highest_res_directory,
