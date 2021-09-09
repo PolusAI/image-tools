@@ -1,0 +1,3 @@
+bfio[zarr]==2.1.9
+cellpose[all]==0.6.5
+filepattern==1.4.7
