@@ -62,7 +62,23 @@ class TestFileRenaming(unittest.TestCase):
         out_dir = ""
         result = main.main(inp_pattern, out_pattern, inp_files, out_dir)
         print("result: ", result)
-           
+    
+    def test_three_char_chan(self):
+        inp_pattern = "img x{row:dd} y{col:dd} {chan:ccc}.tif"
+        out_pattern = "output{row:ddd}_{col:ddd}_{chan:ccc}.tif"
+        inp_files = self.data['three_char_chan']
+        out_dir = ""
+        result = main.main(inp_pattern, out_pattern, inp_files, out_dir)
+        print("result: ", result)
+        
+    def test_varied_digits(self):
+        inp_pattern = "p{p:d}_y{y:d}_r{r:d+}_c{c:d+}.ome.tif"
+        out_pattern = "p{p:dd}_y{y:dd}_r{r:dddd}_c{c:ddd}.ome.tif"
+        inp_files = self.data['tissuenet-val-labels-45-C']
+        out_dir = ""
+        result = main.main(inp_pattern, out_pattern, inp_files, out_dir)
+        print("result: ", result)
+        
     def test_spaces(self):
         """Ensure non-alphanumeric chars are handled properly
         (spaces only)"""

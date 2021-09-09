@@ -59,5 +59,31 @@
     "0(01-16)0(01-24)-(1-4)-002.ome.tif",
     "0(01-16)0(01-24)-(1-4)-001.ome.tif",
     "0(01-16)0(01-24)-(1-4)-003.ome.tif"
+  ],
+  "three_char_chan": [
+    "img x01 y01 GFP.tif",
+    "img x02 y02 YFP.tif",
+    "img x03 y02 ABC.tif",
+    "img x04 y00 DEF.tif"
+  ],
+  "tissuenet-val-labels-45-C": [
+    "p0_y4_r730_c1.ome.tif",
+    "p2_y0_r36_c1.ome.tif",
+    "p4_y1_r232_c1.ome.tif",
+    "p0_y4_r731_c1.ome.tif",
+    "p2_y0_r37_c1.ome.tif",
+    "p4_y1_r233_c1.ome.tif",
+    "p0_y4_r732_c1.ome.tif",
+    "p2_y0_r38_c1.ome.tif",
+    "p4_y1_r234_c1.ome.tif",
+    "p1_y3_r365_c1.ome.tif",
+    "p3_y5_r110_c1.ome.tif",
+    "p5_y4_r18_c1.ome.tif",
+    "p1_y3_r366_c1.ome.tif",
+    "p3_y5_r111_c1.ome.tif",
+    "p5_y4_r19_c1.ome.tif",
+    "p1_y3_r367_c1.ome.tif",
+    "p3_y5_r112_c1.ome.tif",
+    "p5_y4_r20_c1.ome.tif"
   ]
 }

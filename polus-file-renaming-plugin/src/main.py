@@ -44,12 +44,12 @@ def main(inp_pattern, out_pattern, inp_files, outDir):
         inp_files = [str(inp_file.name) for inp_file in inp_files]
     #: Generate dict of named regular expression groups
     logger.debug("pattern_to_regex() inputs: {}".format(inp_pattern))
-    # Escape any existing parentheses and periods
-    inp_pattern = inp_pattern.replace('(','\(').replace(')','\)')
-    inp_pattern = inp_pattern.replace('.', '\.')
+    # Escape any existing parentheses, periods, square brackets
+    chars_to_escape = ['(', ")", ".", "[", "]", "$"]
+    for char in chars_to_escape:
+        inp_pattern = inp_pattern.replace(char, ("\\" + char))
     regex_patterns = pattern_to_regex(inp_pattern)
     logger.debug("pattern_to_regex() returns {}.".format(regex_patterns))
-    
     #: Convert file pattern regex, using dict of regex_patterns
     logger.debug(
         "pattern_to_raw_f_string() inputs: {}, {}". format(
@@ -61,7 +61,7 @@ def main(inp_pattern, out_pattern, inp_files, outDir):
     logger.debug("pattern_to_fstring() inputs: {}".format(out_pattern))
     out_pattern_fstring = pattern_to_fstring(out_pattern)
     logger.debug("pattern_to_fstring() returns {}.".format(out_pattern_fstring))
-    #: List category names where input, output patterns are c, d)
+    #: List cat name where inp_pattern is char and out_pattern is digit
     logger.debug(
         "replace_cat_label() inputs: {}, {}".format(inp_pattern, out_pattern))
     category_list = replace_cat_label(inp_pattern, out_pattern)
@@ -79,6 +79,7 @@ def main(inp_pattern, out_pattern, inp_files, outDir):
         logger.debug("numstrvalue_to_int() returns {}.".format(all_matches[i]))
     char_to_num = dict()
     for c_to_d_category in category_list:
+        logger.debug("non_numstr_value_to_int() inputs: {}, {}".format(c_to_d_category, all_matches))
         char_to_num[c_to_d_category] = non_numstr_value_to_int(
             c_to_d_category, all_matches)
         logger.debug("non_numstr_value_to_int() returns {}.".format(char_to_num[c_to_d_category]))
@@ -96,7 +97,7 @@ def main(inp_pattern, out_pattern, inp_files, outDir):
             old_file_name = parent_path / match['fname']
             shutil.copy2(old_file_name, out_name)
         #: If running on WIPP
-        else:
+        elif outDir == "":
             out_name = out_pattern_fstring.format(**match)
             old_file_name = match['fname']
         logger.info(f"Old file name {old_file_name} and new file name {out_name}")
@@ -192,16 +193,14 @@ def replace_cat_label(inp_pattern:str, out_pattern:str)->list:
         unique_keys: list of unique category labels to make numeric
     """
     #: Generate list [("row", "dd"), ("col", "dd"), ("channel", "c+"")]
-    matched_in_patterns = re.findall(r"\{(\w+):([dc+]+)\}", inp_pattern)
-    matched_out_patterns = re.findall(r"\{(\w+):([dc+]+)\}", out_pattern)
-    unique_keys = []
-    #: If input file pattern is c and output is d, list unique key
-    unique_keys = list(set([
-        inp_grp for (inp_grp,inp_rgx) in matched_in_patterns 
-        for (out_grp, out_rgx) in matched_out_patterns  
-        if inp_rgx.startswith("c") and out_rgx.startswith("d")
-        ]))
-    return unique_keys
+    in_rgx = re.findall(r"\{(\w+):([dc+]+)\}", inp_pattern)
+    out_rgx = re.findall(r"\{(\w+):([dc+]+)\}", out_pattern)
+    #: Add named group to empty list only if input=char and output=digit
+    c_to_d_list = []
+    for k, v in dict(out_rgx).items():
+        if dict(in_rgx)[k].startswith("c") and dict(out_rgx)[k].startswith("d"):
+            c_to_d_list.append(k)
+    return c_to_d_list
 
 def gen_all_matches(rgx_pattern:str, inp_files:list)->dict:
     """
