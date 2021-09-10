@@ -137,6 +137,16 @@ def iterate_chunk_tiles(cached_image: bfio.bfio.BioReader,
         for y1_chunk in range(y_dimensions[0], y_dimensions[1], chunk_tile_size[1]):
             for z1_chunk in range(z_dimensions[0], z_dimensions[1], chunk_tile_size[2]):
 
+                # sometimes output is four dimensional or two dimensional, need to make sure 
+                    # thats its only three dimensional 
+                cached_image_shape = list(cached_image.shape)
+                if len(cached_image_shape) > 3:
+                    cached_image = np.reshape(cached_image, (cached_image_shape[:3]))
+                elif len(cached_image_shape) == 2:
+                    cached_image = np.reshape(cached_image, cached_image_shape.append(1))
+                else:
+                    raise ValueError("Input Image is only 1 dimensional")
+
                 x1_chunk, x2_chunk = get_dim1dim2(x1_chunk, x_dimensions[1], chunk_tile_size[0])
                 y1_chunk, y2_chunk = get_dim1dim2(y1_chunk, y_dimensions[1], chunk_tile_size[1])
                 z1_chunk, z2_chunk = get_dim1dim2(z1_chunk, z_dimensions[1], chunk_tile_size[2])
