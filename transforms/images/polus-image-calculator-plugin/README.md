@@ -1,14 +1,18 @@
 # Image Calculator (v0.1.0)
 
-This WIPP plugin does things, some of which involve math and science. There is
-likely a lot of handwaving involved when describing how it works, but handwaving
-should be replaced with a good description. However, someone forgot to edit the
-README, so handwaving will have to do for now. Contact
-[Nick Schaub](mailto:nick.schaub@nih.gov) for more
-information.
+This plugin performs pixelwise operations between two image collections. For
+example, images in one image collection are subtracted from images in another
+collection.
 
 For more information on WIPP, visit the
 [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
+
+## TODO
+
+1. Enable simple matching rather than relying only on variables in filepatterns
+2. Size/type checking of both images the operation is applied to. Currently, the
+plugin assumes the images are the same size and data type. Also, data type
+overflow is not currently handled.
 
 ## Building
 
