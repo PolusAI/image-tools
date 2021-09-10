@@ -22,9 +22,6 @@ from itertools import product
 import bfio
 from bfio import BioReader, BioWriter
 
-import traceback
-
-from PIL import Image
 
 CHUNK_SIZE = 64
 chunk_size = [CHUNK_SIZE,CHUNK_SIZE,CHUNK_SIZE]
@@ -140,12 +137,13 @@ def iterate_chunk_tiles(cached_image: bfio.bfio.BioReader,
                 # sometimes output is four dimensional or two dimensional, need to make sure 
                     # thats its only three dimensional 
                 cached_image_shape = list(cached_image.shape)
-                if len(cached_image_shape) > 3:
-                    cached_image = np.reshape(cached_image, (cached_image_shape[:3]))
-                elif len(cached_image_shape) == 2:
-                    cached_image = np.reshape(cached_image, cached_image_shape.append(1))
-                else:
-                    raise ValueError("Input Image is only 1 dimensional")
+                if len(cached_image_shape) != 3:
+                    if len(cached_image_shape) > 3:
+                        cached_image = np.reshape(cached_image, (cached_image_shape[:3]))
+                    elif len(cached_image_shape) == 2:
+                        cached_image = np.reshape(cached_image, cached_image_shape.append(1))
+                    else:
+                        raise ValueError("Input Image is only 1 dimensional")
 
                 x1_chunk, x2_chunk = get_dim1dim2(x1_chunk, x_dimensions[1], chunk_tile_size[0])
                 y1_chunk, y2_chunk = get_dim1dim2(y1_chunk, y_dimensions[1], chunk_tile_size[1])
@@ -271,7 +269,7 @@ def concatenate_and_generate_meshes(iden : int,
                                     temp_dir : str,
                                     output_image : str,
                                     bit_depth : int,
-                                    chunk_size : list):
+                                    mesh_chunk_size : list):
     """ This function concatenates the appropriate polygons in the temporary directory
     and generates progressive meshes as defined in neurogen.
     
@@ -402,7 +400,7 @@ def build_pyramid(input_image : str,
                         cache_tile = bf._TILE_SIZE
                         
 
-                        logger.info("\n Starting to Cache Section Sizes of {}".format(cache_tile))
+                        logger.info("\n Starting to Cache Section Sizes of {} for Meshes".format(cache_tile))
                         # cache tiles of 1024 
                         for x1_cache, x2_cache, \
                             y1_cache, y2_cache, \
@@ -417,10 +415,7 @@ def build_pyramid(input_image : str,
                                                                                    x_dimensions    = (x1_cache, x2_cache), 
                                                                                    y_dimensions    = (y1_cache, y2_cache), 
                                                                                    z_dimensions    = (z1_cache, z2_cache),
-                                                                                   chunk_tile_size = chunk_size):
-                                # encodes the volume
-                                save_resolution(output_directory=highest_res_directory,
-                                                xyz_volume=((x_dim, y_dim, z_dim), volume))
+                                                                                   chunk_tile_size = mesh_chunk_size):
 
                                 # iterate through mesh chunks in cached tile
                                 ids = np.unique(volume[volume>0])
@@ -467,11 +462,9 @@ def build_pyramid(input_image : str,
                                               size=(bf.X, bf.Y, bf.Z),
                                               resolution=resolution)
                     
-                logger.info(f"\n Creating chunked volumes of {chunk_size} based on the info file ...")
-                get_highest_resolution_volumes(bf_image = bf,
-                                               resolution_directory = highest_res_directory)
-
-            
+            logger.info(f"\n Creating chunked volumes of {chunk_size} based on the info file ...")
+            get_highest_resolution_volumes(bf_image = bf,
+                                           resolution_directory = highest_res_directory)
 
             logger.info("\n Getting the Rest of the Pyramid ...")
             for higher_scale in reversed(range(0, num_scales)):
@@ -491,7 +484,7 @@ def build_pyramid(input_image : str,
                                                 datatype=datatype, blurring_method='mode')
                 logger.info(f"Saved Encoded Volumes for Scale {higher_scale} from Key Directory {os.path.basename(scale_directory)}")
 
-            
+            logger.info("\n Info basesd on Info File ...")
             logger.info("Data Type: {}".format(file_info['data_type']))
             logger.info("Number of Channels: {}".format(file_info['num_channels']))
             logger.info("Number of Scales: {}".format(len(file_info['scales'])))
