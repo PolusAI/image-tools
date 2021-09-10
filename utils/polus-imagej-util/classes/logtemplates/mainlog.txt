@@ -1,9 +1,28 @@
 This log documents the information obtained from parsing each imagej plug in.
 Log is specified in the following format:
-Op Number: The count of imagej ops  parsed
-Op Name: The namespace.op of the op (e.g. morphology.erode)
-Op Method: The imagej op overload method (e.g. 'ListErode')
-Full Path: Full path of the overloading method namespace.op.method (e.g. 'net.imagej.ops.morphology.erode.ListErode')
-Inputs: A list of imagej and WIPP input data types (e.g. [((imagej data type of var1, imagej title of var1), WIPP data type of var1), ((imagej data type of var2, imagej title of var2) WIPP data type var2)...])
-Outputs: The output data type [(imagej data type, WIPP data type)]
-Supported: Can the current plugin be converted from immagej to WIPP
+
+Op Number: The count of imagej ops parsed
+
+Op Name: The namespace.op of the op 
+    e.g. morphology.erode
+    
+Op Method: The imagej op overload method 
+    e.g. 'ListErode'
+
+Full Path: Full path of the overloading method namespace.op.method 
+    e.g. 'net.imagej.ops.morphology.erode.ListErode'
+
+Inputs: A list of imagej and WIPP input data types 
+    e.g. [
+          ((imagej data type of var1, imagej title of var1), WIPP data type of var1), 
+          ((imagej data type of var2, imagej title of var2), WIPP data type var2)...
+          ]
+
+Outputs: The output data type 
+    e.g. [(imagej data type, WIPP data type)]
+
+Supported: True if supported, if not a boolean list indicating why op not supported 
+    e.g. [
+          True/False, # Indicates if input/output can be mapped to WIPP data types 
+          True/False  # Indicates if input and output both contain collection data types
+          ]

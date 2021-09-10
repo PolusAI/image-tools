@@ -1,6 +1,7 @@
 import re
 import json
 import logging
+from numpy import False_
 import scyjava
 import imagej
 from pathlib import Path
@@ -52,8 +53,11 @@ class Op:
             supported using the required inputs. Additionally a method must take 
             a collection as input and output a collection to be partially 
             supported.
-        support_msg: A string indicating why the overloading method is not 
-            currently supported.
+        support_msg: A list of booleans indicating why an op method is or is not
+            supported. The first value indicates if all required inputs and 
+            output can be mapped to a WIPP data type and the secod value 
+            indcates if both the required inputs and output contain a collection 
+            data type.
         imagej_input_data_types: A list of strings representing the imagej data 
             types of the method's inputs.
         imagej_input_titles: A list of strings representing the imagej input 
@@ -302,10 +306,10 @@ class Op:
         must be able to map from imagej to WIPP for partial support. For full 
         support all of the inputs and output must be able to map from imagej to 
         WIPP. If the data type conversion is not supported 'unknown' will be 
-        stored as the WIPP type when the __dataMap() member method is called. At 
-        this time, this pipeline only supports required inputs. Therefore, full 
-        support is arbitrary for the purposes of plugin generation, this feature 
-        was only added for future development.
+        stored as the WIPP type. At this time, this pipeline only supports 
+        required inputs. Therefore, full support is arbitrary for the purposes 
+        of plugin generation, this feature was only added for future 
+        development.
         
         Args:
             None
@@ -316,41 +320,43 @@ class Op:
         Raises:
             None
         """
+        # Create initial support message for partial
+        self.support_msg = [
+            True, 
+            True
+        ]
         
-        # Check if any inputs or the output contains collection data type and 
-        # ALL inputs/output can be mapped from imagej data type to WIPP data 
-        # type
-        if ('collection' in self.wipp_type_inputs and 'collection' in self.wipp_type_output) and 'unknown' not in self.wipp_type_inputs + [self.wipp_type_output]:
+        """Check for full support"""
+        
+        # Initially full support True
+        self.full_support = True
+        
+        # If inputs or output cannot be mapped to WIPP data type
+        if 'unknown' in self.wipp_type_inputs + [self.wipp_type_output]:
+            self.full_support = False
+        
+        # Check if the input and output both contain collection data types
+        elif 'collection' not in self.wipp_type_inputs or 'collection' not in self.wipp_type_output:
+            self.full_support = False
             
-            # Set the support attribute as true (imagej op is supported)
-            self.full_support = True
-            self.partial_support = True
+        """Check for partial support"""
         
-        # Check if the required inputs satisfy the requirements 
-        elif ('collection' in self.wipp_type_required_inputs and 'collection' in self.wipp_type_output) and 'unknown' not in self.wipp_type_required_inputs + [self.wipp_type_output]:
-            self.full_support = False
-            self.partial_support = True
+        # Set partial support to True
+        self.partial_support = True
         
-        else:
-            # Set the support attribute as false (imagej op is NOT supported)
-            self.full_support = False
+        # Check that required inputs and ouput can be mapped to WIPP data type
+        if 'unknown' in self.wipp_type_required_inputs + [self.wipp_type_output]:
             self.partial_support = False
+            self.support_msg[0] = False
             
-            # Determine why the op is not supported (check if either the input or output is a collection)
-            if 'collection' not in self.wipp_type_required_inputs or 'collection' not in self.wipp_type_output:
-                self.support_msg = "None of the required inputs is a 'collection' or the output is not a 'collection'"
-                
-                # Test if all of the required data types can be converted from imagej to WIPP
-                if 'unknown' in self.wipp_type_required_inputs:
-                    self.support_msg = "None of the required inputs is a colleciton or the output is not a collection AND one of the required inputs cannot currently be mapped to a WIPP data type"
-                    
-            # Test if all of the required data types can be converted from imagej to WIPP
-            elif 'unknown' in self.wipp_type_required_inputs:
-                self.support_msg = "One of the required inputs cannot currently be mapped to a WIPP data type"
+        # Check if the input and output both contain collection data types
+        if 'collection' not in self.wipp_type_required_inputs or 'collection' not in self.wipp_type_output:
+            self.partial_support = False
+            self.support_msg[1] = False
         
-        print(self.partial_support)
         
-
+            
+        
 class Plugin:
     
     """A class to represent imagej ops and plugins.
@@ -583,8 +589,6 @@ class Populate:
         
         # Iterate over all ops
         for plugin in plugins:
-            
-            print(plugin)
             
             # Add the plugin to the dictionary
             self._plugins[plugin] = Plugin(plugin)

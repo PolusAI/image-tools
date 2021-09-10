@@ -88,11 +88,11 @@ if __name__ == '__main__':
     for plugin in plugins:
         
         #plugins_to_generate = ['math-add']
-        #plugins_to_generate = ['image-integral',
-        #                       'image-distancetransform', 'filter-dog']
+        plugins_to_generate = ['image-integral',
+                               'image-distancetransform', 'filter-dog']
         #plugins_to_generate = ['filter-dog', 'filter-addNoise', 'filter-convolve', 'filter-bilateral', 'filter-correlate']
-        #if plugin.name in plugins_to_generate:
-        if True:
+        if plugin.name in plugins_to_generate:
+        #if True:
              
             # Create a path for the plugin
             path = Path(os.getcwd()).joinpath('polus-imagej-' + plugin.name.lower() + '-plugin')
