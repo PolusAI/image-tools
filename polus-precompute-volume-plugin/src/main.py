@@ -10,11 +10,14 @@ from filepattern import FilePattern as fp
 
 import numpy as np
 
+# Import environment variables, if POLUS_LOG empty then automatically sets to INFO
+POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG', 'INFO'))
+
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("main")
-logger.setLevel(logging.INFO)
+logger.setLevel(POLUS_LOG)
 
 def main(input_dir: str,
          output_dir: str,

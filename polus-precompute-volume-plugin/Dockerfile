@@ -11,6 +11,10 @@ RUN pip3 install neurogen/
 
 
 FROM python:3.7-slim
+
+# Change to WARNING for fewer logs, and DEBUG for debugging
+ENV POLUS_LOG="DEBUG" 
+
 COPY VERSION /
 ARG EXEC_DIR="/opt/executables"
 

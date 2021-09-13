@@ -22,6 +22,8 @@ from itertools import product
 import bfio
 from bfio import BioReader, BioWriter
 
+# Import environment variables, if POLUS_LOG empty then automatically sets to INFO
+POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
 
 CHUNK_SIZE = 64
 chunk_size = [CHUNK_SIZE,CHUNK_SIZE,CHUNK_SIZE]
@@ -39,7 +41,7 @@ get_dim1dim2 = lambda dimension1, dimension_size, rng_size: \
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("utils")
-logger.setLevel(logging.INFO)
+logger.setLevel(POLUS_LOG)
 
 
 def get_resolution(phys_y : tuple,
