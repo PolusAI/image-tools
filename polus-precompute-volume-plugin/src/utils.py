@@ -444,18 +444,17 @@ def build_pyramid(input_image : str,
                             executor.map(concatenate_and_generate_meshes, 
                                         all_identities, repeat(temp_dir), repeat(output_image), repeat(bit_depth), repeat(mesh_chunk_size)) 
 
-                    # Once you have all the labelled segments, then create segment_properties file
-                    logger.info("\n Creating info file for segmentations and meshes ...")
-                    file_info = nginfo.info_mesh(directory=output_image,
-                                                chunk_size=chunk_size,
-                                                size=(bf.X, bf.Y, bf.Z),
-                                                dtype=np.dtype(bf.dtype).name,
-                                                ids=all_identities,
-                                                resolution=resolution,
-                                                segmentation_subdirectory="segment_properties",
-                                                bit_depth=bit_depth,
-                                                order="XYZ")
-
+                        # Once you have all the labelled segments, then create segment_properties file
+                        logger.info("\n Creating info file for segmentations and meshes ...")
+                        file_info = nginfo.info_mesh(directory=output_image,
+                                                    chunk_size=chunk_size,
+                                                    size=(bf.X, bf.Y, bf.Z),
+                                                    dtype=np.dtype(bf.dtype).name,
+                                                    ids=all_identities,
+                                                    resolution=resolution,
+                                                    segmentation_subdirectory="segment_properties",
+                                                    bit_depth=bit_depth,
+                                                    order="XYZ")
 
             if imagetype == "image":
                 file_info = nginfo.info_image(directory=output_image,
