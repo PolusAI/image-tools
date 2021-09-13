@@ -100,7 +100,8 @@ def save_resolution(output_directory: str,
         y1_chunk, y2_chunk = xyz[1]
         z1_chunk, z2_chunk = xyz[2] 
         volume = np.reshape(volume, volume.shape[:3])
-        logger.debug("({0:0>4}, {0:0>4}), ".format(x1_chunk, x2_chunk) + \
+        logger.debug("Global Index of Chunk being Saved: " + \
+                    "({0:0>4}, {0:0>4}), ".format(x1_chunk, x2_chunk) + \
                     "({0:0>4}, {0:0>4}), ".format(y1_chunk, y2_chunk) + \
                     "({0:0>4}, {0:0>4})".format(z1_chunk, z2_chunk))
         volume_encoded = ngvol.encode_volume(volume)
@@ -150,7 +151,6 @@ def iterate_chunk_tiles(cached_image: bfio.bfio.BioReader,
                 x1_chunk, x2_chunk = get_dim1dim2(x1_chunk, x_dimensions[1], chunk_tile_size[0])
                 y1_chunk, y2_chunk = get_dim1dim2(y1_chunk, y_dimensions[1], chunk_tile_size[1])
                 z1_chunk, z2_chunk = get_dim1dim2(z1_chunk, z_dimensions[1], chunk_tile_size[2])
-                logger.debug(f"({x1_chunk}, {x2_chunk}), ({y1_chunk}, {y2_chunk}), ({z1_chunk}, {z2_chunk})")
                 yield (x1_chunk, x2_chunk), \
                       (y1_chunk, y2_chunk), \
                       (z1_chunk, z2_chunk), cached_image[x1_chunk-x_dimensions[0]:x2_chunk-x_dimensions[0],
