@@ -43,7 +43,7 @@ def read(img_file):
     image_bfio = br[:,:,0:1,0,0].squeeze()
     #Get embedded units from metadata (physical size)
     img_unit = br.ps_y[1]
-    logger.info('Done reading the file: {}'.format(img_file.name))
+    logger.info('Reading file\t{}/ {}'.format(img_file.parent, img_file.name))
     return image_bfio, img_unit
     
 def box_border_search(label_image, boxsize=3):
@@ -928,13 +928,11 @@ def feature_extraction(features,
         title = seg_file_names1.name
     if label_image is None:
         title = int_file_name
-
     
     #If features parameter left empty then raise value error 
     if not features:
         raise ValueError('Select features for extraction.')
-    
-        
+            
     #Check whether the pixels per unit contain values when embeddedpixelsize is not required and metric for unitlength is entered
     if unitLength and not embeddedpixelsize:
         if not pixelsPerunit:
@@ -966,6 +964,7 @@ def feature_extraction(features,
             feature_value = FEAT[each_feature](label_image,unitLength,intensity_image)
         else:
             feature_value = FEAT[each_feature](intensity_image)
+
         #get all features
         if each_feature  == 'all':
             #create dataframe for all features
@@ -1029,7 +1028,7 @@ def feature_extraction(features,
                 df = pd.DataFrame({each_feature: feature_value},index=[0])
             else:
                 df = pd.DataFrame({each_feature: feature_value})
-            if 'area' or 'convex_area' or 'equivalent_diameter' or 'major_axis_length' or 'maxferet' or 'minor_axis_length' or 'minferet' or 'perimeter' in df.columns:
+            if any({'area', 'convex_area', 'equivalent_diameter', 'major_axis_length', 'maxferet', 'minor_axis_length', 'minferet', 'perimeter'}.intersection (df.columns)):
                 #Change the units depending on selection
                 if embeddedpixelsize:
                     units = img_emb_unit
@@ -1063,49 +1062,55 @@ def feature_extraction(features,
     if label_image is not None:
         #Lists all the labels in the image
         label = [r.label for r in regions]
-        
-        if len(label)==1:
-            df_insert.insert(0, 'mask_image', title)
-            if intensity_image is not None:
-               df_insert.insert(1, 'intensity_image', int_file_name) 
 
+        #Measure region props for only the object not touching the border
+        regions1 = np.unique(cleared)[1:]
+        #List of labels for only objects that are not touching the border
+        label_nt_touching = regions1-1
+        #Find whether the object is touching border or not 
+        border_cells = np.full((len(regions)),True,dtype=bool)  
+        label_nt_touching[label_nt_touching>=len(border_cells)] = len(border_cells)-1   # Limit it 
+        border_cells[label_nt_touching]=False
+        if intensity_image is None:
+        #Create column label and image
+            data = { 'mask_image':title,
+                        'label': label}                     
+            data1 = {'touching_border': border_cells}
+            df1 = pd.DataFrame(data,columns=['mask_image','label'])
+            df_values= ['mask_image','label']
         else:
-            #Measure region props for only the object not touching the border
-            regions1 = np.unique(cleared)[1:]
-            #List of labels for only objects that are not touching the border
-            label_nt_touching = regions1-1
-            #Find whether the object is touching border or not 
-            border_cells = np.full((len(regions)),True,dtype=bool)  
-            label_nt_touching[label_nt_touching>=len(border_cells)] = len(border_cells)-1   # Limit it 
-            border_cells[label_nt_touching]=False
-            if intensity_image is None:
-            #Create column label and image
-                data = { 'mask_image':title,
-                         'label': label}                     
-                data1 = {'touching_border': border_cells}
-                df1 = pd.DataFrame(data,columns=['mask_image','label'])
-                df_values= ['mask_image','label']
-            else:
-                data = { 'mask_image':title,
-                         'intensity_image':int_file_name,
-                          'label': label}                     
-                data1 = {'touching_border': border_cells}
-                df1 = pd.DataFrame(data,columns=['mask_image','intensity_image','label'])
-                df_values= ['mask_image','intensity_image','label']
-            #Create column touching border
-            df2 = pd.DataFrame(data1,columns=['touching_border'])
-            df_insert1 = pd.concat([df1,df_insert,df2],ignore_index=True, axis=1)
-            dfch = df_insert.columns.tolist()
-            
-            df_values1 = ['touching_border']
-            joinedlist= df_values + dfch + df_values1
-            df_insert = df_insert1
-            df_insert.columns =joinedlist
+            data = { 'mask_image':title,
+                        'intensity_image':int_file_name,
+                        'label': label}                     
+            data1 = {'touching_border': border_cells}
+            df1 = pd.DataFrame(data,columns=['mask_image','intensity_image','label'])
+            df_values= ['mask_image','intensity_image','label']
+        #Create column touching border
+        df2 = pd.DataFrame(data1,columns=['touching_border'])
+        df_insert1 = pd.concat([df1,df_insert,df2],ignore_index=True, axis=1)
+        dfch = df_insert.columns.tolist()
+        
+        df_values1 = ['touching_border']
+        joinedlist= df_values + dfch + df_values1
+        df_insert = df_insert1
+        df_insert.columns =joinedlist
 
     if label_image is None:
         #Insert filename as 1st column     
         df_insert.insert(0, 'intensity_image', int_file_name)
     return df_insert, title
+
+def labeling_is_blank(label_image):
+    """Check if the label image is trivial (blank, missing, non-informative).
+    
+    Args:
+        label_image (ndarray): Labeled image array.
+        
+    Returns:
+        True if the labeling is non-informative
+        
+    """
+    return (label_image.min()==0 and label_image.max()==0)
 
 # Setup the argument parsing
 def main():
@@ -1257,6 +1262,11 @@ def main():
         #Run analysis for each labeled image in the list
         for img_file in itertools.zip_longest(files_seg,files_int):
             label_image,img_emb_unit = read(img_file[0][0]['file'])
+
+            #Skip feature calculation and saving results for an image having trivial/blank/missing segmentation
+            if labeling_is_blank(label_image):
+                continue;
+
             df = None
             files=''
             channel=''
@@ -1328,6 +1338,7 @@ def main():
                                           seg_file_names1=img_file[0][0]['file'],
                                           int_file_name=int_filename
                                           )
+
             #Save each csv file separately
             os.chdir(outDir)
             
@@ -1349,7 +1360,7 @@ def main():
          if df_csv.empty:
              raise ValueError('No output to save as csv files')
          else:
-            logger.info('Saving dataframe to csv file for all images')
+            logger.info('Saving dataframe to csv file for all images in {}'.format(outDir))
             df_csv.dropna(inplace=True, axis=1, how='all')
             df_csv = df_csv.loc[:,~df_csv.columns.duplicated()]
             if 'touching_border' in df_csv.columns:
