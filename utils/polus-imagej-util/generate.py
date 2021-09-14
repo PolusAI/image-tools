@@ -69,7 +69,7 @@ if __name__ == '__main__':
     # Create testing shell script file
     with open(shell_test_path, 'w') as fhand:
         fhand.write(
-            'import os, sys\nfrom pathlib import Path\n' /
+            'import os, sys\nfrom pathlib import Path\n' \
             'src_path = Path(__file__).parents[1]\nsys.path.append(str(src_path))\n'
         )
         fhand.close()
@@ -94,7 +94,7 @@ if __name__ == '__main__':
             # Create a path for the plugin
             path = Path(os.getcwd()).joinpath('polus-imagej-' + plugin.name.lower() + '-plugin')
             
-            # If the plugin path is already a directory remove it and its children
+            # If the plugin path is already a directory remove it recursively 
             if path.exists():
                 shutil.rmtree(path)
             
