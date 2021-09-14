@@ -12,15 +12,6 @@ if __name__ == '__main__':
 
     print('Starting JVM and parsing ops help\n')
     
-    # Start JVM
-    #ij = imagej.init('sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4', headless=True)
-    
-    # # Retreive all available operations from pyimagej
-    # imagej_help_docs = scyjava.to_python(ij.op().help())
-    # print(imagej_help_docs)
-    
-    #print('Parsing imagej ops help\n')
-    
     # Populate ops by parsing the imagej operations help
     populater = cp.Populate()
     
@@ -77,7 +68,10 @@ if __name__ == '__main__':
 
     # Create testing shell script file
     with open(shell_test_path, 'w') as fhand:
-        fhand.write('import os, sys\nfrom pathlib import Path\nsrc_path = Path(__file__).parents[1]\nsys.path.append(str(src_path))\n')
+        fhand.write(
+            'import os, sys\nfrom pathlib import Path\n' /
+            'src_path = Path(__file__).parents[1]\nsys.path.append(str(src_path))\n'
+        )
         fhand.close()
     
     # Creater counters for plugins and ops
@@ -88,8 +82,11 @@ if __name__ == '__main__':
     for plugin in plugins:
         
         #plugins_to_generate = ['math-add']
-        plugins_to_generate = ['image-integral',
-                               'image-distancetransform', 'filter-dog']
+        plugins_to_generate = [
+            'image-integral',
+            'image-distancetransform', 
+            'filter-dog'
+        ]
         #plugins_to_generate = ['filter-dog', 'filter-addNoise', 'filter-convolve', 'filter-bilateral', 'filter-correlate']
         if plugin.name in plugins_to_generate:
         #if True:
@@ -133,9 +130,6 @@ if __name__ == '__main__':
                 
                 pluging_count += 1
                 
-            #break
-                
-            
             
     print('There were {} plugins generated\n'.format(pluging_count))
     print('There were {} plugin overloading methods created\n'.format(op_count))

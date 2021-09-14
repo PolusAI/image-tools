@@ -328,7 +328,7 @@ class Op:
         
         """Check for full support"""
         
-        # Initially full support True
+        # Initially set full support True
         self.full_support = True
         
         # If inputs or output cannot be mapped to WIPP data type
@@ -341,7 +341,7 @@ class Op:
             
         """Check for partial support"""
         
-        # Set partial support to True
+        # Initially set partial support to True
         self.partial_support = True
         
         # Check that required inputs and ouput can be mapped to WIPP data type
@@ -852,7 +852,6 @@ if __name__ == '__main__':
     
     # Populate ops by parsing the imagej operations help
     populater = Populate(
-                    ij, 
                     log_file = 'full.log', 
                     log_template='utils/polus-imagej-util/classes/logtemplates/mainlog.txt'
                     )
