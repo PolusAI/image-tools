@@ -2,8 +2,8 @@
 
 This WIPP plugin will import individual fields of view from a CZI file (will
 only import one scene or collection of images). Images are exported as tiled
-tiffs using Bioformats. File names indicate their relative X and Y coordinates,
-as well as their channel, z-slice, and time-slice.
+tiffs using bfio. File names indicate their relative X and Y coordinates, as
+well as their channel, z-slice, and time-slice.
 
 The need for this plugin is due to the bioformats mechanism of importing CZI
 images. If the image in the CZI file is mosaiced (stitched based off image
@@ -17,9 +17,9 @@ images than use of stage positions alone.
 The file names exported by this plugin use the following convention:
 (imageName)_y000_x000_c000_z000_t000.ome.tif
 
-If any of the zct coordinates are present, they are ommitted from the filename.
-Three characters are always used to indicate a position (for example, `_y000_`,
-`_y001_`, etc).
+If any of the zct coordinates are not present, they are ommitted from the
+filename. Three characters are always used to indicate a position (for example,
+`_y000_`, `_y001_`, etc).
 
 For more information on WIPP, visit the
 [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
