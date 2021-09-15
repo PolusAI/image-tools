@@ -1,5 +1,5 @@
 # Base packages
-import argparse, logging, re, typing, pathlib, traceback
+import argparse, logging, re, typing, pathlib
 
 # 3rd party packages
 import filepattern, numpy
@@ -49,7 +49,7 @@ def make_tile(x_min: int,
             dtype = br.dtype
 
         # initialize the supertile
-        template = numpy.zeros((y_max-y_min,x_max-x_min,1,1,1),dtype=dtype)
+        template = numpy.zeros((y_max-y_min,x_max-x_min),dtype=dtype)
 
         # get images in bounds of current super tile
         for f in parsed_vector['filePos']:
@@ -78,10 +78,10 @@ def make_tile(x_min: int,
 
                     # Load the image
                     with BioReader(f['file'],max_workers=active_threads.count) as br:
-                        image = br[Yi[0]:Yi[1],Xi[0]:Xi[1],z:z+1,0,0] # only get the first c,t layer
+                        image = br[Yi[0]:Yi[1],Xi[0]:Xi[1],z,0,0] # only get the first c,t layer
 
                     # Put the image in the buffer
-                    template[Yt[0]:Yt[1],Xt[0]:Xt[1],...] = image[...,numpy.newaxis,numpy.newaxis,numpy.newaxis]
+                    template[Yt[0]:Yt[1],Xt[0]:Xt[1]] = image
 
         # Save the image
         bw.max_workers = ProcessManager._active_threads
@@ -271,6 +271,7 @@ def main(imgPath: pathlib.Path,
         depth = br.z
 
     '''Run stitching jobs in separate processes'''
+    # ProcessManager.init_threads()
     ProcessManager.init_processes('main','asmbl')
 
     for v in vectors:
@@ -278,6 +279,7 @@ def main(imgPath: pathlib.Path,
         if 'img-global-positions' not in v.name:
             continue
 
+        # assemble_image(v,outDir, depth)
         ProcessManager.submit_process(assemble_image,v,outDir, depth)
 
     ProcessManager.join_processes()
@@ -316,7 +318,7 @@ if __name__=="__main__":
     logger.info('stitchPath: {}'.format(stitchPath))
 
     main(imgPath,
-        stitchPath,
-        outDir,
-        timesliceNaming)
+         stitchPath,
+         outDir,
+         timesliceNaming)
   
