@@ -4,6 +4,11 @@
     "r002_c001_z001.ome.tif",
     "r001_c001_z000.ome.tif"
   ],
+  "duplicate_channels_to_digit": [
+    "r001_c001_GFP.ome.tif",
+    "r002_c001_GFP.ome.tif",
+    "r001_c001_YFP.ome.tif"
+  ],
   "percentage_file": [
     "%033_c333_z5050.ome.tif",
     "%444_c123_z50493.ome.tif"

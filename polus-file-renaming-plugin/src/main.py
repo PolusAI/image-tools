@@ -261,6 +261,9 @@ def main(inpDir: Union[Path, str],
     """Use parsed inputs to rename and copy files to a new directory.
     
     First, the script converts the input filePattern to regex.
+    Next, it converts the output file pattern using format strings.
+    Then, it replaces matched letters with a digit if needed.
+    Finally, it copies the renamed file to a new directory.
     
     See README for pattern rules.
     

@@ -14,6 +14,50 @@ class TestFileRenaming(unittest.TestCase):
         with open(Path(__file__).with_name('file_rename_test.json'),'r') as fr:
             self.data = json.load(fr)
             
+    def test_duplicate_channels_to_digit(self):
+        test_cases = [
+            (
+                ("r{row:ddd}_c{col:ddd}_{chan:ccc}.ome.tif"), 
+                ("output_r{row:dddd}_c{col:dddd}_{chan:ddd}.ome.tif")
+                ),
+            ]
+        for test_case in test_cases:
+            (inp_pattern, out_pattern) = test_case
+            inp = self.data["duplicate_channels_to_digit"]
+            out = ""
+            result = main.main(inp, inp_pattern, out, out_pattern)
+            self.assertTrue(result)
+    
+    def test_duplicate_channels_to_digit_non_spec_digit_len(self):
+        test_cases = [
+            (
+                ("r{row:ddd}_c{col:ddd}_{chan:ccc}.ome.tif"), 
+                ("output_r{row:dddd}_c{col:dddd}_{chan:d+}.ome.tif")
+                ),
+            ]
+        for test_case in test_cases:
+            (inp_pattern, out_pattern) = test_case
+            inp = self.data["duplicate_channels_to_digit"]
+            out = ""
+            result = main.main(inp, inp_pattern, out, out_pattern)
+            self.assertTrue(result)
+            
+    def test_invalid_input_raises_error(self):
+        test_cases = [
+            (
+                ("r.ome.tif"), 
+                ("output_r{row:dddd}_c{col:dddd}_{chan:d+}.ome.tif")
+                ),
+            ]
+        for test_case in test_cases:
+            (inp_pattern, out_pattern) = test_case
+            inp = self.data["duplicate_channels_to_digit"]
+            out = ""
+            #result = main.main(inp, inp_pattern, out, out_pattern)
+            self.assertRaises(
+                KeyError, main.main, inp, inp_pattern, out, out_pattern
+                )
+                 
     def test_non_alphanum_inputs_percentage_sign(self):
         test_cases = [
             (
@@ -169,7 +213,7 @@ class TestFileRenaming(unittest.TestCase):
             (from_val, to_val) = test_case
             result = main.map_pattern_grps_to_regex(from_val)
             self.assertEqual(result, to_val)
-    
+            
     def test_convert_to_regex_valid_input(self):
         test_cases = [
             (
