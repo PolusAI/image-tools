@@ -187,7 +187,7 @@ def main():
         #Get column names
         col_name = next(reader)
         data_list = list(reader)
-        data = np.array(data_list, dtype=np.float)
+        data = np.array(data_list, dtype=np.float64)
         
         if methods != 'Manual':
             #Check whether minimum range and maximum range value is entered
