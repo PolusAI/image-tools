@@ -15,7 +15,7 @@ OPTIONS = {
     'darkfield': False,
     'size': 128,
     'epsilon': 0.1,
-    'n_sample': 1000
+    'n_sample': 1024
 }
 
 """ Load files and create an image stack """
@@ -25,8 +25,12 @@ def _get_resized_image_stack(flist):
     When files are parsed, the variables are used in an index to provide a
     method to reference a specific file name by its dimensions. This function
     returns the variable index based on the input filename pattern.
+    
+    To help reduce memory overhead, the number of images loaded for fitting are
+    limited to OPTIONS['n_sample'] number of images. If there are more than
+    n_sample number of images, images are selected at random.
 
-    Inputs:ed th
+    Inputs:
         flist - Paths of list of images to load and resize
     Outputs:
         img_stack - A 3D stack of 2D images
