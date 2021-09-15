@@ -4,5 +4,4 @@ numpy==1.20.3
 scikit_image==0.18.2
 trimesh==3.8.19
 open3d==0.13.0
-jpype1==1.2.1
 bfio[all]==2.1.8
