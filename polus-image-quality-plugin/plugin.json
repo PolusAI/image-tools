@@ -1,0 +1,78 @@
+{
+    "name": "Image Quality",
+    "version": "0.1.6",
+    "title": "Image Quality",
+    "description": "Implementation of Extracting Quality Metrics from Images",
+    "author": "Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "polusai/image-quality-plugin:0.1.6",
+    "inputs": [
+      {
+        "name": "inputDir",
+        "type": "collection",
+        "description": "Input image collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "minI",
+        "type": "number",
+        "description": "Choose minimum Intensity for scaling images",
+        "required": true
+      },
+      {
+        "name": "maxI",
+        "type": "number",
+        "description": "Choose Maximum Intensity for scaling images",
+        "required": true
+      },
+      {
+        "name": "scale",
+        "type": "number",
+        "description": "Choose Spatial scale for calculation of Image Bluriness",
+        "required": true
+      },
+      {
+        "name": "filename",
+        "type": "string",
+        "description": "Filename of the output CSV",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "csvCollection",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.inputDir",
+        "title": "Input collection",
+        "description": "Input image collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.minI",
+        "title": "Minimum Intensity",
+        "description": "Choose minimum Intensity for scaling images"
+      },
+      {
+        "key": "inputs.maxI",
+        "title": "Maximum Intensity",
+        "description": "Choose Maximum Intensity for scaling images"
+      },
+      {
+        "key": "inputs.scale",
+        "title": "Spatial Scale",
+        "description": "Choose Spatial scale for calculation of Image Bluriness"
+      },
+      {
+        "key": "inputs.filename",
+        "title": "Output Filename",
+        "description": "Filename of the output CSV"
+      }
+    ]
+  }
