@@ -1,0 +1,46 @@
+{
+    "name": "Label to Vector",
+    "version": "0.5.4",
+    "title": "Label to Vector",
+    "description": "Convert labelled masks to flow-field vectors.",
+    "author": "Sudharsan Prativadi (sudharsan.prativadi@labshare.org), Nick Schaub (nick.schaub@nih.gov), Najib Ishaq (najib.ishaq@axleinfo.com)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/PolusAI/polus-plugins/tree/dev/formats/polus-vector-converter-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1",
+    "containerId": "labshare/polus-label-to-vector-plugin:0.5.4",
+    "inputs": [
+        {
+            "name": "inpDir",
+            "type": "genericData",
+            "description": "Input image collection to be processed by this plugin",
+            "required": true
+        },
+        {
+            "name": "filePattern",
+            "type": "string",
+            "description": "Image-name pattern to use when selecting images for processing.",
+            "required": false
+        }
+    ],
+    "outputs": [
+        {
+            "name": "outDir",
+            "type": "genericData",
+            "description": "Output collection"
+        }
+    ],
+    "ui": [
+        {
+            "key": "inputs.inpDir",
+            "title": "Input collection",
+            "description": "Input image collection to be processed by this plugin"
+        },
+        {
+            "key": "inputs.filePattern",
+            "title": "File Pattern",
+            "description": "Image-name pattern to use when selecting images for processing.",
+            "default": ".+"
+        }
+    ]
+}
