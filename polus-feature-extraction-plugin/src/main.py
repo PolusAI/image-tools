@@ -506,8 +506,12 @@ def feature_extraction(features,
         data_dict=[]
         def compute_M(data):
             cols = np.arange(data.size)
-            data[data>=len(label)+1] = len(label)   # Limit it
-            return csr_matrix((cols, (data.ravel(), cols)),shape=(len(label) + 1, data.size))
+            """ Limit it (with a safe copy) """
+            data_sc = np.empty_like (data)
+            np.copyto(data_sc, data)
+            data_sc[data_sc>=len(label)+1] = len(label)
+            """"""
+            return csr_matrix((cols, (data_sc.ravel(), cols)),shape=(len(label) + 1, data_sc.size))
         def get_indices_sparse(data):
             M = compute_M(data)
             return [np.unravel_index(row.data, data.shape) for row in M]
