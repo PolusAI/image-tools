@@ -1,4 +1,0 @@
-bfio[zarr]==2.1.8
-scipy==1.5.2
-numba==0.51.2
-cellpose==0.6.5
