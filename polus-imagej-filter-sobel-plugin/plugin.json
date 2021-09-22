@@ -1,0 +1,49 @@
+{
+  "name": "ImageJ filter sobel",
+  "version": "0.2.0",
+  "title": "ImageJ filter sobel",
+  "description": "SobelRAI",
+  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "labshare/polus-imagej-filter-sobel-plugin:0.2.0",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": ["SobelRAI"]
+      },
+      "description": "Operation to peform",
+      "required": false
+    },
+    {
+      "name": "in1",
+      "type": "collection",
+      "description": "in1",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "out",
+      "type": "collection",
+      "description": "out"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "Operation",
+      "description": "Operation to peform"
+    },
+    {
+      "key": "inputs.in1",
+      "title": "in1",
+      "description": "in1",
+      "condition": "model.inputs.opName==['SobelRAI']"
+    }
+  ]
+}
