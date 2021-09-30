@@ -1,6 +1,6 @@
 {
     "name": "Label to Vector",
-    "version": "0.5.4",
+    "version": "0.5.5",
     "title": "Label to Vector",
     "description": "Convert labelled masks to flow-field vectors.",
     "author": "Sudharsan Prativadi (sudharsan.prativadi@labshare.org), Nick Schaub (nick.schaub@nih.gov), Najib Ishaq (najib.ishaq@axleinfo.com)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/PolusAI/polus-plugins/tree/dev/formats/polus-vector-converter-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1",
-    "containerId": "labshare/polus-label-to-vector-plugin:0.5.4",
+    "containerId": "labshare/polus-label-to-vector-plugin:0.5.5",
     "inputs": [
         {
             "name": "inpDir",

@@ -55,7 +55,9 @@ def masks_to_flows(masks: numpy.ndarray, *, device: Optional[int] = None) -> num
         return numpy.zeros(shape=(masks.ndim, *masks.shape), dtype=numpy.float32)
     clean_masks = numpy.reshape(inverse, masks.shape)
 
-    labelled_mask, num_labels = scipy.ndimage.label(clean_masks)
+    labelled_mask = clean_masks
+    num_labels = numpy.max(clean_masks)
+    
     logger.debug(f'Creating flow-fields for {num_labels} masks.')
 
     # We will run the diffusion simulation on each object in turn. This saves a

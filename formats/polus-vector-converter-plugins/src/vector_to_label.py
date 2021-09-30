@@ -288,7 +288,7 @@ def vector_to_label(
     zarr_path = output_dir.joinpath(utils.replace_extension(in_path, extension='_tmp.ome.zarr'))
     init_zarr_file(zarr_path, metadata)
 
-    threads: Dict[tuple[int, int, int], Future[ThreadFuture]] = dict()
+    threads: Dict[Tuple[int, int, int], Future[ThreadFuture]] = dict()
     thread_kwargs: Dict[str, Any] = {
         'in_path': in_path,
         'zarr_path': zarr_path,
@@ -461,6 +461,7 @@ if __name__ == '__main__':
     )
 
     # Parse the arguments
+    # noinspection DuplicatedCode
     _args = parser.parse_args()
 
     _input_dir = Path(_args.inpDir).resolve()
