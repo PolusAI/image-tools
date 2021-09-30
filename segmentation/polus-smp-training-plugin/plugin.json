@@ -1,0 +1,2966 @@
+{
+    "name": "SegmentationModelsTraining",
+    "version": "0.3.2debug4",
+    "title": "SegmentationModelsTraining",
+    "description": "Segmentation models training plugin",
+    "author": "Gauhar Bains (gauhar.bains@labshare.org), Najib Ishaq (najib.ishaq@axleinfo.com)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/polus-au/polus-plugins-dl",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-smp-training-plugin::0.3.2debug4",
+    "inputs": [
+        {
+            "name": "pretrainedModel",
+            "description": "Path to a model that was previously trained with this plugin. If starting fresh, you must instead provide: 'modelName', 'encoderBaseVariantWeights', and 'optimizerName'. See the README for available options.",
+            "type": "genericData",
+            "required": false
+        },
+        {
+            "name": "modelName",
+            "description": "Model architecture to use. Required if starting fresh.",
+            "type": "enum",
+            "required": false,
+            "options": {
+                "values": [
+                    "Unet",
+                    "UnetPlusPlus",
+                    "MAnet",
+                    "Linknet",
+                    "FPN",
+                    "PSPNet",
+                    "PAN",
+                    "DeepLabV3",
+                    "DeepLabV3Plus"
+                ]
+            }
+        },
+        {
+            "name": "encoderBase",
+            "description": "The name of the base encoder to use.",
+            "type": "enum",
+            "required": false,
+            "options": {
+                "values": [
+                    "ResNet",
+                    "ResNeXt",
+                    "ResNeSt",
+                    "Res2Ne(X)t",
+                    "RegNet(x/y)",
+                    "GERNet",
+                    "SE-Net",
+                    "SK-ResNe(X)t",
+                    "DenseNet",
+                    "Inception",
+                    "EfficientNet",
+                    "MobileNet",
+                    "DPN",
+                    "VGG"
+                ]
+            }
+        },
+        {
+            "name": "encoderVariant",
+            "description": "The name of the specific variant to use.",
+            "type": "enum",
+            "required": false,
+            "options": {
+                "values": [
+                    "resnet18",
+                    "resnet34",
+                    "resnet50",
+                    "resnet101",
+                    "resnet152",
+                    "resnext50_32x4d",
+                    "resnext101_32x4d",
+                    "resnext101_32x8d",
+                    "resnext101_32x16d",
+                    "resnext101_32x32d",
+                    "resnext101_32x48d",
+                    "timm-resnest14d",
+                    "timm-resnest26d",
+                    "timm-resnest50d",
+                    "timm-resnest101e",
+                    "timm-resnest200e",
+                    "timm-resnest269e",
+                    "timm-resnest50d_4s2x40d",
+                    "timm-resnest50d_1s4x24d",
+                    "timm-res2net50_26w_4s",
+                    "timm-res2net101_26w_4s",
+                    "timm-res2net50_26w_6s",
+                    "timm-res2net50_26w_8s",
+                    "timm-res2net50_48w_2s",
+                    "timm-res2net50_14w_8s",
+                    "timm-res2next50",
+                    "timm-regnetx_002",
+                    "timm-regnetx_004",
+                    "timm-regnetx_006",
+                    "timm-regnetx_008",
+                    "timm-regnetx_016",
+                    "timm-regnetx_032",
+                    "timm-regnetx_040",
+                    "timm-regnetx_064",
+                    "timm-regnetx_080",
+                    "timm-regnetx_120",
+                    "timm-regnetx_160",
+                    "timm-regnetx_320",
+                    "timm-regnety_002",
+                    "timm-regnety_004",
+                    "timm-regnety_006",
+                    "timm-regnety_008",
+                    "timm-regnety_016",
+                    "timm-regnety_032",
+                    "timm-regnety_040",
+                    "timm-regnety_064",
+                    "timm-regnety_080",
+                    "timm-regnety_120",
+                    "timm-regnety_160",
+                    "timm-regnety_320",
+                    "timm-gernet_s",
+                    "timm-gernet_m",
+                    "timm-gernet_l",
+                    "senet154",
+                    "se_resnet50",
+                    "se_resnet101",
+                    "se_resnet152",
+                    "se_resnext50_32x4d",
+                    "se_resnext101_32x4d",
+                    "timm-skresnet18",
+                    "timm-skresnet34",
+                    "timm-skresnext50_32x4d",
+                    "densenet121",
+                    "densenet169",
+                    "densenet201",
+                    "densenet161",
+                    "inceptionresnetv2",
+                    "inceptionv4",
+                    "xception",
+                    "efficientnet-b0",
+                    "efficientnet-b1",
+                    "efficientnet-b2",
+                    "efficientnet-b3",
+                    "efficientnet-b4",
+                    "efficientnet-b5",
+                    "efficientnet-b6",
+                    "efficientnet-b7",
+                    "timm-efficientnet-b0",
+                    "timm-efficientnet-b1",
+                    "timm-efficientnet-b2",
+                    "timm-efficientnet-b3",
+                    "timm-efficientnet-b4",
+                    "timm-efficientnet-b5",
+                    "timm-efficientnet-b6",
+                    "timm-efficientnet-b7",
+                    "timm-efficientnet-b8",
+                    "timm-efficientnet-l2",
+                    "timm-efficientnet-lite0",
+                    "timm-efficientnet-lite1",
+                    "timm-efficientnet-lite2",
+                    "timm-efficientnet-lite3",
+                    "timm-efficientnet-lite4",
+                    "mobilenet_v2",
+                    "timm-mobilenetv3_large_075",
+                    "timm-mobilenetv3_large_100",
+                    "timm-mobilenetv3_large_minimal_100",
+                    "timm-mobilenetv3_small_075",
+                    "timm-mobilenetv3_small_100",
+                    "timm-mobilenetv3_small_minimal_100",
+                    "dpn68",
+                    "dpn68b",
+                    "dpn92",
+                    "dpn98",
+                    "dpn107",
+                    "dpn131",
+                    "vgg11",
+                    "vgg11_bn",
+                    "vgg13",
+                    "vgg13_bn",
+                    "vgg16",
+                    "vgg16_bn",
+                    "vgg19",
+                    "vgg19_bn"
+                ]
+            }
+        },
+        {
+            "name": "encoderWeights",
+            "description": "The name of the pretrained weights to use.",
+            "type": "enum",
+            "required": false,
+            "options": {
+                "values": [
+                    "advprop",
+                    "imagenet",
+                    "imagenet+5k",
+                    "imagenet+background",
+                    "instagram",
+                    "noisy-student",
+                    "random",
+                    "ssl",
+                    "swsl"
+                ]
+            }
+        },
+        {
+            "name": "optimizerName",
+            "description": "Name of optimization algorithm to use for training the model. Required if starting fresh.",
+            "type": "enum",
+            "required": false,
+            "options": {
+                "values": [
+                    "Adadelta",
+                    "Adagrad",
+                    "Adam",
+                    "AdamW",
+                    "SparseAdam",
+                    "Adamax",
+                    "ASGD",
+                    "LBFGS",
+                    "RMSprop",
+                    "Rprop",
+                    "SGD"
+                ]
+            }
+        },
+        {
+            "name": "batchSize",
+            "description": "Size of each batch for training. If left unspecified, we use the maximum possible based on memory constraints.",
+            "type": "number",
+            "required": false
+        },
+        {
+            "name": "imagesDir",
+            "description": "Collection containing images.",
+            "type": "collection",
+            "required": true
+        },
+        {
+            "name": "imagesPattern",
+            "description": "Filename pattern for images.",
+            "type": "string",
+            "required": true
+        },
+        {
+            "name": "labelsDir",
+            "description": "Collection containing labels, i.e. the ground-truth, for the images.",
+            "type": "collection",
+            "required": true
+        },
+        {
+            "name": "labelsPattern",
+            "description": "Filename pattern for labels.",
+            "type": "string",
+            "required": true
+        },
+        {
+            "name": "trainFraction",
+            "description": "Fraction of dataset to use for training.",
+            "type": "number",
+            "required": false
+        },
+        {
+            "name": "segmentationMode",
+            "description": "The kind of segmentation to perform.",
+            "type": "enum",
+            "required": false,
+            "options": {
+                "values": [
+                    "binary",
+                    "multilabel",
+                    "multiclass"
+                ]
+            }
+        },
+        {
+            "name": "lossName",
+            "description": "Name of loss function to use.",
+            "type": "enum",
+            "required": false,
+            "options": {
+                "values": [
+                    "JaccardLoss",
+                    "DiceLoss",
+                    "TverskyLoss",
+                    "FocalLoss",
+                    "LovaszLoss",
+                    "SoftBCEWithLogitsLoss",
+                    "SoftCrossEntropyLoss"
+                ]
+            }
+        },
+        {
+            "name": "metricName",
+            "description": "Name of performance metric to track.",
+            "type": "enum",
+            "required": false,
+            "options": {
+                "values": [
+                    "IoU",
+                    "Fscore",
+                    "Accuracy",
+                    "Recall",
+                    "Precision"
+                ]
+            }
+        },
+        {
+            "name": "maxEpochs",
+            "description": "Maximum number of epochs for which to continue training the model.",
+            "type": "number",
+            "required": false
+        },
+        {
+            "name": "patience",
+            "description": "Maximum number of epochs to wait for model to improve.",
+            "type": "number",
+            "required": false
+        },
+        {
+            "name": "minDelta",
+            "description": "Minimum improvement in loss to reset patience.",
+            "type": "number",
+            "required": false
+        }
+    ],
+    "outputs": [
+        {
+            "name": "outputDir",
+            "type": "genericData",
+            "description": "Output model and checkpoint."
+        }
+    ],
+    "ui": [
+        {
+            "key": "inputs.pretrainedModel",
+            "title": "pretrainedModel",
+            "description": "Path to a model that was previously trained with this plugin. If starting fresh, you must instead provide: 'modelName', 'encoderBaseVariantWeights', and 'optimizerName'. See the README for available options."
+        },
+        {
+            "key": "inputs.modelName",
+            "title": "modelName",
+            "description": "Model architecture to use. Required if starting fresh.",
+            "default": "Unet"
+        },
+        {
+            "key": "inputs.encoderBase",
+            "title": "encoderBase",
+            "description": "The name of the base encoder to use.",
+            "default": "ResNet"
+        },
+        {
+            "key": "inputs.encoderVariant",
+            "title": "encoderVariant",
+            "description": "The name of the specific variant to use.",
+            "default": "resnet34"
+        },
+        {
+            "key": "inputs.encoderWeights",
+            "title": "encoderWeights",
+            "description": "The name of the pretrained weights to use.",
+            "default": "imagenet"
+        },
+        {
+            "key": "inputs.optimizerName",
+            "title": "optimizerName",
+            "description": "Name of optimization algorithm to use for training the model. Required if starting fresh.",
+            "default": "Adam"
+        },
+        {
+            "key": "inputs.batchSize",
+            "title": "batchSize",
+            "description": "Size of each batch for training. If left unspecified, we use the maximum possible based on memory constraints."
+        },
+        {
+            "key": "inputs.imagesDir",
+            "title": "imagesDir",
+            "description": "Collection containing images."
+        },
+        {
+            "key": "inputs.imagesPattern",
+            "title": "imagesPattern",
+            "description": "Filename pattern for images."
+        },
+        {
+            "key": "inputs.labelsDir",
+            "title": "labelsDir",
+            "description": "Collection containing labels, i.e. the ground-truth, for the images."
+        },
+        {
+            "key": "inputs.labelsPattern",
+            "title": "labelsPattern",
+            "description": "Filename pattern for labels."
+        },
+        {
+            "key": "inputs.trainFraction",
+            "title": "trainFraction",
+            "description": "Fraction of dataset to use for training.",
+            "default": 0.7
+        },
+        {
+            "key": "inputs.segmentationMode",
+            "title": "segmentationMode",
+            "description": "The kind of segmentation to perform."
+        },
+        {
+            "key": "inputs.lossName",
+            "title": "lossName",
+            "description": "Name of loss function to use.",
+            "default": "JaccardLoss"
+        },
+        {
+            "key": "inputs.metricName",
+            "title": "metricName",
+            "description": "Name of performance metric to track.",
+            "default": "IoU"
+        },
+        {
+            "key": "inputs.maxEpochs",
+            "title": "maxEpochs",
+            "description": "Maximum number of epochs for which to continue training the model.",
+            "default": 100
+        },
+        {
+            "key": "inputs.patience",
+            "title": "patience",
+            "description": "Maximum number of epochs to wait for model to improve.",
+            "default": 10
+        },
+        {
+            "key": "inputs.minDelta",
+            "title": "minDelta",
+            "description": "Minimum improvement in loss to reset patience.",
+            "default": 0.0001
+        }
+    ],
+    "validators": [
+        {
+            "condition": [
+                {
+                    "input": "encoderBase",
+                    "value": "ResNet",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderVariant",
+                    "values": [
+                        "resnet18",
+                        "resnet34",
+                        "resnet50",
+                        "resnet101",
+                        "resnet152"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderBase",
+                    "value": "ResNeXt",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderVariant",
+                    "values": [
+                        "resnext50_32x4d",
+                        "resnext101_32x4d",
+                        "resnext101_32x8d",
+                        "resnext101_32x16d",
+                        "resnext101_32x32d",
+                        "resnext101_32x48d"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderBase",
+                    "value": "ResNeSt",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderVariant",
+                    "values": [
+                        "timm-resnest14d",
+                        "timm-resnest26d",
+                        "timm-resnest50d",
+                        "timm-resnest101e",
+                        "timm-resnest200e",
+                        "timm-resnest269e",
+                        "timm-resnest50d_4s2x40d",
+                        "timm-resnest50d_1s4x24d"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderBase",
+                    "value": "Res2Ne(X)t",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderVariant",
+                    "values": [
+                        "timm-res2net50_26w_4s",
+                        "timm-res2net101_26w_4s",
+                        "timm-res2net50_26w_6s",
+                        "timm-res2net50_26w_8s",
+                        "timm-res2net50_48w_2s",
+                        "timm-res2net50_14w_8s",
+                        "timm-res2next50"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderBase",
+                    "value": "RegNet(x/y)",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderVariant",
+                    "values": [
+                        "timm-regnetx_002",
+                        "timm-regnetx_004",
+                        "timm-regnetx_006",
+                        "timm-regnetx_008",
+                        "timm-regnetx_016",
+                        "timm-regnetx_032",
+                        "timm-regnetx_040",
+                        "timm-regnetx_064",
+                        "timm-regnetx_080",
+                        "timm-regnetx_120",
+                        "timm-regnetx_160",
+                        "timm-regnetx_320",
+                        "timm-regnety_002",
+                        "timm-regnety_004",
+                        "timm-regnety_006",
+                        "timm-regnety_008",
+                        "timm-regnety_016",
+                        "timm-regnety_032",
+                        "timm-regnety_040",
+                        "timm-regnety_064",
+                        "timm-regnety_080",
+                        "timm-regnety_120",
+                        "timm-regnety_160",
+                        "timm-regnety_320"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderBase",
+                    "value": "GERNet",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderVariant",
+                    "values": [
+                        "timm-gernet_s",
+                        "timm-gernet_m",
+                        "timm-gernet_l"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderBase",
+                    "value": "SE-Net",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderVariant",
+                    "values": [
+                        "senet154",
+                        "se_resnet50",
+                        "se_resnet101",
+                        "se_resnet152",
+                        "se_resnext50_32x4d",
+                        "se_resnext101_32x4d"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderBase",
+                    "value": "SK-ResNe(X)t",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderVariant",
+                    "values": [
+                        "timm-skresnet18",
+                        "timm-skresnet34",
+                        "timm-skresnext50_32x4d"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderBase",
+                    "value": "DenseNet",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderVariant",
+                    "values": [
+                        "densenet121",
+                        "densenet169",
+                        "densenet201",
+                        "densenet161"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderBase",
+                    "value": "Inception",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderVariant",
+                    "values": [
+                        "inceptionresnetv2",
+                        "inceptionv4",
+                        "xception"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderBase",
+                    "value": "EfficientNet",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderVariant",
+                    "values": [
+                        "efficientnet-b0",
+                        "efficientnet-b1",
+                        "efficientnet-b2",
+                        "efficientnet-b3",
+                        "efficientnet-b4",
+                        "efficientnet-b5",
+                        "efficientnet-b6",
+                        "efficientnet-b7",
+                        "timm-efficientnet-b0",
+                        "timm-efficientnet-b1",
+                        "timm-efficientnet-b2",
+                        "timm-efficientnet-b3",
+                        "timm-efficientnet-b4",
+                        "timm-efficientnet-b5",
+                        "timm-efficientnet-b6",
+                        "timm-efficientnet-b7",
+                        "timm-efficientnet-b8",
+                        "timm-efficientnet-l2",
+                        "timm-efficientnet-lite0",
+                        "timm-efficientnet-lite1",
+                        "timm-efficientnet-lite2",
+                        "timm-efficientnet-lite3",
+                        "timm-efficientnet-lite4"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderBase",
+                    "value": "MobileNet",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderVariant",
+                    "values": [
+                        "mobilenet_v2",
+                        "timm-mobilenetv3_large_075",
+                        "timm-mobilenetv3_large_100",
+                        "timm-mobilenetv3_large_minimal_100",
+                        "timm-mobilenetv3_small_075",
+                        "timm-mobilenetv3_small_100",
+                        "timm-mobilenetv3_small_minimal_100"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderBase",
+                    "value": "DPN",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderVariant",
+                    "values": [
+                        "dpn68",
+                        "dpn68b",
+                        "dpn92",
+                        "dpn98",
+                        "dpn107",
+                        "dpn131"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderBase",
+                    "value": "VGG",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderVariant",
+                    "values": [
+                        "vgg11",
+                        "vgg11_bn",
+                        "vgg13",
+                        "vgg13_bn",
+                        "vgg16",
+                        "vgg16_bn",
+                        "vgg19",
+                        "vgg19_bn"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "resnet18",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "ssl",
+                        "swsl",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "resnet34",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "resnet50",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "ssl",
+                        "swsl",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "resnet101",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "resnet152",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "resnext50_32x4d",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "ssl",
+                        "swsl",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "resnext101_32x4d",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "ssl",
+                        "swsl",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "resnext101_32x8d",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "instagram",
+                        "ssl",
+                        "swsl",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "resnext101_32x16d",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "instagram",
+                        "ssl",
+                        "swsl",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "resnext101_32x32d",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "instagram",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "resnext101_32x48d",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "instagram",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-resnest14d",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-resnest26d",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-resnest50d",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-resnest101e",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-resnest200e",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-resnest269e",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-resnest50d_4s2x40d",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-resnest50d_1s4x24d",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-res2net50_26w_4s",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-res2net101_26w_4s",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-res2net50_26w_6s",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-res2net50_26w_8s",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-res2net50_48w_2s",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-res2net50_14w_8s",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-res2next50",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnetx_002",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnetx_004",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnetx_006",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnetx_008",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnetx_016",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnetx_032",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnetx_040",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnetx_064",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnetx_080",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnetx_120",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnetx_160",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnetx_320",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnety_002",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnety_004",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnety_006",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnety_008",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnety_016",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnety_032",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnety_040",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnety_064",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnety_080",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnety_120",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnety_160",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-regnety_320",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-gernet_s",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-gernet_m",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-gernet_l",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "senet154",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "se_resnet50",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "se_resnet101",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "se_resnet152",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "se_resnext50_32x4d",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "se_resnext101_32x4d",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-skresnet18",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-skresnet34",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-skresnext50_32x4d",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "densenet121",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "densenet169",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "densenet201",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "densenet161",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "inceptionresnetv2",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "imagenet+background",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "inceptionv4",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "imagenet+background",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "xception",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "efficientnet-b0",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "efficientnet-b1",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "efficientnet-b2",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "efficientnet-b3",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "efficientnet-b4",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "efficientnet-b5",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "efficientnet-b6",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "efficientnet-b7",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-efficientnet-b0",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "advprop",
+                        "noisy-student",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-efficientnet-b1",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "advprop",
+                        "noisy-student",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-efficientnet-b2",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "advprop",
+                        "noisy-student",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-efficientnet-b3",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "advprop",
+                        "noisy-student",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-efficientnet-b4",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "advprop",
+                        "noisy-student",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-efficientnet-b5",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "advprop",
+                        "noisy-student",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-efficientnet-b6",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "advprop",
+                        "noisy-student",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-efficientnet-b7",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "advprop",
+                        "noisy-student",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-efficientnet-b8",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "advprop",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-efficientnet-l2",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "noisy-student",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-efficientnet-lite0",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-efficientnet-lite1",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-efficientnet-lite2",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-efficientnet-lite3",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-efficientnet-lite4",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "mobilenet_v2",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-mobilenetv3_large_075",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-mobilenetv3_large_100",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-mobilenetv3_large_minimal_100",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-mobilenetv3_small_075",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-mobilenetv3_small_100",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "timm-mobilenetv3_small_minimal_100",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "dpn68",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "dpn68b",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet+5k",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "dpn92",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet+5k",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "dpn98",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "dpn107",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet+5k",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "dpn131",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "vgg11",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "vgg11_bn",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "vgg13",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "vgg13_bn",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "vgg16",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "vgg16_bn",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "vgg19",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        },
+        {
+            "condition": [
+                {
+                    "input": "encoderVariant",
+                    "value": "vgg19_bn",
+                    "eval": "=="
+                }
+            ],
+            "then": [
+                {
+                    "action": "show",
+                    "input": "encoderWeights",
+                    "value": [
+                        "imagenet",
+                        "random"
+                    ]
+                }
+            ]
+        }
+    ]
+}
