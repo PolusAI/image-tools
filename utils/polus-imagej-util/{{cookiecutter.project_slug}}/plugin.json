@@ -35,7 +35,7 @@
       "key": "inputs.{{ inp }}",
       "title": "{{ val.title }}",
       "description": "{{ val.description }}"{%- if inp!='opName' %},
-      "condition": "model.inputs.opName==[{% for v in val.call_types %}'{{v}}'{% if not loop.last %},{% endif %}{% endfor %}]"
+      "condition": "{% for v in val.call_types %}model.inputs.opName=={{v}}{% if not loop.last %} or {% endif %}{% endfor %}"
     {%- endif %}
     }{% if not loop.last %},{% endif %}{% endfor %}
   ]

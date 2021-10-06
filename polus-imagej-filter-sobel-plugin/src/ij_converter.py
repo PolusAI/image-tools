@@ -73,16 +73,16 @@ def _java_setup():
     #     'byte'       : jpype.JByte,
     #     'boolean'    : jpype.JBoolean
     # }
-    # PRIMITIVES = {
-    #     'double'     : jpype.JDouble,
-    #     'float'      : jpype.JFloat,
-    #     'long'       : jpype.JLong,
-    #     'int'        : jpype.JInt,
-    #     'short'      : jpype.JShort,
-    #     'char'       : jpype.JChar,
-    #     'byte'       : jpype.JByte,
-    #     'boolean'    : jpype.JBoolean
-    # }
+    PRIMITIVES = {
+        'double'     : jpype.JDouble,
+        'float'      : jpype.JFloat,
+        'long'       : jpype.JLong,
+        'int'        : jpype.JInt,
+        'short'      : jpype.JShort,
+        'char'       : jpype.JChar,
+        'byte'       : jpype.JByte,
+        'boolean'    : jpype.JBoolean
+    }
     PRIMITIVE_ARRAYS = {
         'double[]'     : jpype.JDouble[:],
         'float[]'      : jpype.JFloat[:],
@@ -97,18 +97,18 @@ def _java_setup():
 scyjava.when_jvm_starts(_java_setup)
 
 JAVA_CONVERT = {}
-# JAVA_CONVERT.update({
-#     t:lambda s,t,st: IMGLYB_PRIMITIVES[str(st)](st.type(s)) for t in ABSTRACT_SCALARS
-# })
-# JAVA_CONVERT.update({
-#     t:lambda s,t,st: PRIMITIVES[t](float(s)) for t in SCALARS
-# })
+JAVA_CONVERT.update({
+    t:lambda s,t,st: IMGLYB_PRIMITIVES[str(st)](st.type(s)) for t in ABSTRACT_SCALARS
+})
+JAVA_CONVERT.update({
+    t:lambda s,t,st: PRIMITIVES[t](float(s)) for t in SCALARS
+})
 JAVA_CONVERT.update({
     t:lambda s,t,st: PRIMITIVE_ARRAYS[t]([float(si) for si in s.split(',')]) for t in ARRAYS
 })
-JAVA_CONVERT.update({
-    t: lambda s,t,st: IMGLYB_PRIMITIVES[str(st)](s) for t in SCALARS
-})
+# JAVA_CONVERT.update({
+#     t: lambda s,t,st: IMGLYB_PRIMITIVES[str(st)](s) for t in SCALARS
+# })
 
 JAVA_CONVERT.update({
     t:lambda s: imglyb.util.Views.iterable(ij.py.to_java(s)) for t in ABSTRACT_ITERABLES

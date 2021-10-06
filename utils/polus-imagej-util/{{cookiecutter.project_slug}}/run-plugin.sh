@@ -16,7 +16,7 @@ datapath=$(readlink --canonicalize ../data)
 {{ inp }}=/data/output
 {% endfor %}
 docker run --mount type=bind,source=${datapath},target=/data/ \
-            labshare/{{ cookiecutter.project_slug }}:${version} \
+            polusai/{{ cookiecutter.project_slug }}:${version} \
             {% for inp,val in cookiecutter._inputs.items() -%}
             --{{ inp }} {% raw %}${{% endraw %}{{ inp }}{% raw %}}{% endraw %} \
             {% endfor -%}
