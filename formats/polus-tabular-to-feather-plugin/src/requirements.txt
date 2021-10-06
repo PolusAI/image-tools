@@ -1,0 +1,6 @@
+fcsparser==0.2.2
+vaex_viz==0.5.0
+numpy==1.19.5
+filepattern==1.4.7
+vaex==4.5.0
+dask[complete]==2.30.0
