@@ -1,0 +1,49 @@
+{
+  "name": "ImageJ image integral",
+  "version": "0.2.5",
+  "title": "ImageJ image integral",
+  "description": "DefaultIntegralImg, WrappedIntegralImg",
+  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-image-integral-plugin:0.2.5",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": ["DefaultIntegralImg",
+                    "WrappedIntegralImg"]
+      },
+      "description": "ImageJ op overloading method to perform",
+      "required": true
+    },
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Image file collection",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "Operation",
+      "description": "ImageJ op overloading method to perform"
+    },
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Image file collection"
+    }
+  ]
+}

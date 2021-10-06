@@ -136,11 +136,11 @@ if __name__=="__main__":
     parser.add_argument('--opName', dest='opName', type=str,
                         help='Operation to peform', required=False)
     parser.add_argument('--inpDir', dest='in1', type=str,
-                        help='inpDir', required=False)
+                        help='Image file collection', required=False)
     
     # Add command-line argument for each of the output arguments
     parser.add_argument('--outDir', dest='out', type=str,
-                        help='outDir', required=True)
+                        help='Output collection', required=True)
     
     """ Parse the arguments """
     args = parser.parse_args()
