@@ -1,0 +1,61 @@
+{
+    "name": "SplineDist (Inference) Plugin",
+    "version": "0.1.7",
+    "title": "SplineDist Inference",
+    "description": "This plugin runs a neural network to identify segments using SplineDist's algorithm",
+    "author": "Madhuri Vihani (Madhuri.Vihani@nih.gov),  Hythem Sidky (Hythem.Sidky@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "https://www.biorxiv.org/content/10.1101/2020.10.27.357640v1",
+    "containerId": "labshare/polus-splinedist-inference-plugin:0.1.7",
+    "inputs": [
+      {
+        "name": "inpImageDir",
+        "description": "Input Image collection to make predictions on",
+        "type": "collection",
+        "options": null,
+        "required": true
+      },
+      {
+        "name": "inpBaseDir",
+        "description": "Input SplineDist Model that contains weights",
+        "type": "genericData",
+        "options": null,
+        "required": true
+      },
+      {
+        "name": "imagePattern",
+        "description": "Pattern of the images in Input",
+        "type": "string",
+        "options": null,
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "description": "Output Directory for Predicted Images",
+        "type": "collection",
+        "options": null,
+        "required": true
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.inpImageDir",
+        "title": "Input Image Directory: ",
+        "description": "Collection name that contains intensity based images"
+      },
+      {
+        "key": "inputs.inpBaseDir",
+        "title": "Model Directory: ",
+        "description": "Directory containing the model weights and config file"
+      },
+      {
+        "key": "inputs.imagePattern",
+        "title": "Image Pattern: ",
+        "description": "Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). "
+      }
+    ]
+  }
