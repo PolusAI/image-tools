@@ -75,9 +75,13 @@ def main(inpDir: Path,
         
         # Surround with try/finally for proper error catching
         try:
+            #Workaround for Image Collections data type in WIPP Frontend
+            inpdir_meta = inpDir.parent.joinpath('metadata_files')
+            if not inpdir_meta.is_dir():
+                raise FileNotFoundError('metadata_files not found')
             #List the files in the directory
             logger.info('Checking for .csv or .fcs files in the directory ')
-            fcs_filelist = list(Path(inpDir).glob('*.fcs'))
+            fcs_filelist = list(Path(inpdir_meta).glob('*.fcs'))
             if not fcs_filelist:
                 raise FileNotFoundError('No .fcs files were found in the directory. Please check file directory.' )
         
@@ -118,6 +122,7 @@ if __name__=="__main__":
     
     inpDir = Path(args.inpDir)
     logger.info('inpDir = {}'.format(inpDir))
+    
     
     outDir = Path(args.outDir)
     logger.info('outDir = {}'.format(outDir))
