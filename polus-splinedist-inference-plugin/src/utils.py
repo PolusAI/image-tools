@@ -359,7 +359,7 @@ def predict_nn(image_dir : str,
                 # Do not have control of what tiles get passed into splinedist
             normalized_image = os.path.join(temp_zarr_directory, 'normalized_' + os.path.splitext(base_image)[0] + ".zarr")
             # end product: output zarr file 
-            output_zarr_path = os.path.join(temp_zarr_directory, os.path.splitext(base_image)[0] + ".zarr")
+            output_zarr_path = os.path.join(output_directory, os.path.splitext(base_image)[0] + ".zarr")
 
             tile_size = 1024
             with BioReader(im) as br_image:
@@ -407,4 +407,5 @@ def predict_nn(image_dir : str,
             br_normed.close()
                 
             logger.info("{}/{} -- Created Output Prediction for {}. ".format(img_counter, num_images, base_image))
+            logger.debug(f"Output Location: {output_zarr_path}")
             img_counter += 1
