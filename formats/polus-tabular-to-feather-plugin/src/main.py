@@ -1,5 +1,4 @@
 from bfio.bfio import BioReader, BioWriter
-import filepattern
 from pathlib import Path
 import fcsparser
 import os
@@ -67,8 +66,8 @@ def main(inpDir: Path,
         https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html
         """
         
-        pattern = filePattern if filePattern is not None else '.*'
-        fp = filepattern.FilePattern(inpDir,pattern)
+        # pattern = filePattern if filePattern is not None else '.*'
+        # fp = filepattern.FilePattern(inpDir,pattern)
         
         
         logger.info('outDir converted to = {}'.format(outDir))
@@ -79,13 +78,10 @@ def main(inpDir: Path,
             #List the files in the directory
             logger.info('Checking for .csv or .fcs files in the directory ')
             fcs_filelist = list(Path(inpDir).glob('*.fcs'))
-            # fcs_filelist = fnmatch.filter(os.listdir(in_dir), "*.fcs")
             if not fcs_filelist:
                 raise FileNotFoundError('No .fcs files were found in the directory. Please check file directory.' )
         
             for each_file in fcs_filelist:
-                print(fcs_filelist)
-                print(os.getcwd())
                 #Convert fcs to csv
                 logger.info("Checking for fcs files...")
                 file_ext = Path(each_file).suffix
@@ -95,13 +91,10 @@ def main(inpDir: Path,
         finally:    
             logger.info('Checking for .csv files in the directory ')
             filelist = list(Path(outDir).glob('*.csv'))
-            # filelist = fnmatch.filter(os.listdir(out_dir), "*.csv")
             if not filelist:
                 raise FileNotFoundError('No .csv files were found in the directory. Please check file directory.' )
                 
             for each_file in filelist:
-                print(filelist)
-                print(os.getcwd()) 
                 #Read the csv file into feather
                 df_toFeather(each_file,outDir)
                 
@@ -116,8 +109,6 @@ if __name__=="__main__":
     # Input arguments
     parser.add_argument('--inpDir', dest='inpDir', type=str,
                         help='Input image collection to be processed by this plugin', required=False)
-    parser.add_argument('--filePattern', dest='filePattern', type=str,
-                        help='Filename pattern used to separate data', required=False)
     # Output arguments
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
@@ -128,12 +119,8 @@ if __name__=="__main__":
     inpDir = Path(args.inpDir)
     logger.info('inpDir = {}'.format(inpDir))
     
-    filePattern = args.filePattern
-    logger.info('filePattern = {}'.format(filePattern))
-    
     outDir = Path(args.outDir)
     logger.info('outDir = {}'.format(outDir))
     
     main(inpDir=inpDir,
-         filePattern=filePattern,
          outDir=outDir)
