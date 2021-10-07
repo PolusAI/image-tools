@@ -195,13 +195,13 @@ if __name__=="__main__":
 
     ''' Setup Command Line Arguments '''
     logger.info("Parsing arguments...")
-    parser = argparse.ArgumentParser(prog='main', description='DoGSingleSigmas, DoGVaryingSigmas')
+    parser = argparse.ArgumentParser(prog='main', description='Difference of Gaussians (DoG) implementation')
     
     # Add command-line argument for each of the input arguments
     parser.add_argument('--opName', dest='opName', type=str,
-                        help='Operation to peform', required=False)
-    parser.add_argument('--in1', dest='in1', type=str,
-                        help='in1', required=False)
+                        help='Operation to peform', required=True)
+    parser.add_argument('--inpDir', dest='in1', type=str,
+                        help='Input image collection to be processed by this plugin', required=True)
     parser.add_argument('--sigma1', dest='sigma1', type=str,
                         help='sigma1', required=False)
     parser.add_argument('--sigma2', dest='sigma2', type=str,
@@ -212,8 +212,8 @@ if __name__=="__main__":
                         help='sigmas2', required=False)
     
     # Add command-line argument for each of the output arguments
-    parser.add_argument('--out', dest='out', type=str,
-                        help='out', required=True)
+    parser.add_argument('--outDir', dest='out', type=str,
+                        help='Output collection', required=True)
     
     """ Parse the arguments """
     args = parser.parse_args()
@@ -223,7 +223,7 @@ if __name__=="__main__":
     logger.info('opName = {}'.format(_opName))
     
     _in1 = Path(args.in1)
-    logger.info('in1 = {}'.format(_in1))
+    logger.info('inpDir = {}'.format(_in1))
     
     _sigma1 = args.sigma1
     logger.info('sigma1 = {}'.format(_sigma1))
@@ -239,7 +239,7 @@ if __name__=="__main__":
     
     # Output Args
     _out = Path(args.out)
-    logger.info('out = {}'.format(_out))
+    logger.info('outDir = {}'.format(_out))
     
     main(_opName=_opName,
          _in1=_in1,

@@ -1,6 +1,6 @@
 {
   "name": "ImageJ filter dog",
-  "version": "0.2.8",
+  "version": "0.2.11",
   "title": "ImageJ filter dog",
   "description": "Difference of Gaussians (DoG) implementation",
   "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-filter-dog-plugin:0.2.8",
+  "containerId": "polusai/imagej-filter-dog-plugin:0.2.11",
   "inputs": [
     {
       "name": "opName",
@@ -17,80 +17,94 @@
         "values": ["DoGSingleSigmas",
                     "DoGVaryingSigmas"]
       },
-      "description": "Operation to peform",
+      "description": "Imagej op overloading method to perform",
       "required": true
     },
     {
-      "name": "in1",
+      "name": "inpDir",
       "type": "collection",
-      "description": "in1",
+      "description": "Input image collection to be processed by this plugin",
       "required": true
     },
     {
       "name": "sigma1",
       "type": "number",
-      "description": "sigma1",
+      "description": "A single value for sigma1",
       "required": false
     },
     {
       "name": "sigma2",
       "type": "number",
-      "description": "sigma2",
+      "description": "A sigle value for sigma2",
       "required": false
     },
     {
       "name": "sigmas1",
       "type": "array",
       "description": "sigmas1",
-      "required": false
+      "required": false,
+      "options": {
+        "items": {
+          "type": "string",
+          "title": "A list of varying sigmas1",
+          "widget": "string"
+        }
+      }
     },
     {
       "name": "sigmas2",
       "type": "array",
       "description": "sigmas2",
-      "required": false
+      "required": false,
+      "options": {
+        "items": {
+          "type": "string",
+          "title": "A list of varying sigmas2",
+          "widget": "string"
+        }
+      }
     }
   ],
   "outputs": [
     {
-      "name": "out",
+      "name": "outDir",
       "type": "collection",
-      "description": "out"
+      "description": "Output collection"
     }
   ],
   "ui": [
     {
       "key": "inputs.opName",
       "title": "Operation",
-      "description": "Operation to peform"
+      "description": "Imagej op overloading method to perform"
     },
     {
-      "key": "inputs.in1",
-      "title": "in1",
-      "description": "in1"
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Input image collection to be processed by this plugin"
     },
     {
       "key": "inputs.sigma1",
       "title": "sigma1",
-      "description": "sigma1",
+      "description": "A single value for sigma1",
       "condition": "model.inputs.opName==DoGSingleSigmas"
     },
     {
       "key": "inputs.sigma2",
       "title": "sigma2",
-      "description": "sigma2",
+      "description": "A single value for sigma1",
       "condition": "model.inputs.opName==DoGSingleSigmas"
     },
     {
       "key": "inputs.sigmas1",
       "title": "sigmas1",
-      "description": "sigmas1",
+      "description": "A list of varying sigmas1",
       "condition": "model.inputs.opName==DoGVaryingSigmas"
     },
     {
       "key": "inputs.sigmas2",
       "title": "sigmas2",
-      "description": "sigmas2",
+      "description": "A list of varying sigmas2",
       "condition": "model.inputs.opName==DoGVaryingSigmas"
     }
   ]
