@@ -1,0 +1,97 @@
+{
+  "name": "ImageJ filter dog",
+  "version": "0.2.8",
+  "title": "ImageJ filter dog",
+  "description": "Difference of Gaussians (DoG) implementation",
+  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-filter-dog-plugin:0.2.8",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": ["DoGSingleSigmas",
+                    "DoGVaryingSigmas"]
+      },
+      "description": "Operation to peform",
+      "required": true
+    },
+    {
+      "name": "in1",
+      "type": "collection",
+      "description": "in1",
+      "required": true
+    },
+    {
+      "name": "sigma1",
+      "type": "number",
+      "description": "sigma1",
+      "required": false
+    },
+    {
+      "name": "sigma2",
+      "type": "number",
+      "description": "sigma2",
+      "required": false
+    },
+    {
+      "name": "sigmas1",
+      "type": "array",
+      "description": "sigmas1",
+      "required": false
+    },
+    {
+      "name": "sigmas2",
+      "type": "array",
+      "description": "sigmas2",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "out",
+      "type": "collection",
+      "description": "out"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "Operation",
+      "description": "Operation to peform"
+    },
+    {
+      "key": "inputs.in1",
+      "title": "in1",
+      "description": "in1"
+    },
+    {
+      "key": "inputs.sigma1",
+      "title": "sigma1",
+      "description": "sigma1",
+      "condition": "model.inputs.opName==DoGSingleSigmas"
+    },
+    {
+      "key": "inputs.sigma2",
+      "title": "sigma2",
+      "description": "sigma2",
+      "condition": "model.inputs.opName==DoGSingleSigmas"
+    },
+    {
+      "key": "inputs.sigmas1",
+      "title": "sigmas1",
+      "description": "sigmas1",
+      "condition": "model.inputs.opName==DoGVaryingSigmas"
+    },
+    {
+      "key": "inputs.sigmas2",
+      "title": "sigmas2",
+      "description": "sigmas2",
+      "condition": "model.inputs.opName==DoGVaryingSigmas"
+    }
+  ]
+}
