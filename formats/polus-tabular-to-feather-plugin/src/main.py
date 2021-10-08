@@ -56,7 +56,6 @@ def df_toFeather(file,outDir):
         df.export_feather(feather_filename,outDir)
 
 def main(inpDir: Path,
-            filePattern: str,
             outDir: Path,
             ) -> None:
         """ Main execution function
@@ -70,18 +69,15 @@ def main(inpDir: Path,
         # fp = filepattern.FilePattern(inpDir,pattern)
         
         
-        logger.info('outDir converted to = {}'.format(outDir))
+        logger.info('outDir = {}'.format(outDir))
         logger.info('inpDir = {}'.format(inpDir))
         
         # Surround with try/finally for proper error catching
         try:
-            #Workaround for Image Collections data type in WIPP Frontend
-            inpdir_meta = inpDir.parent.joinpath('metadata_files')
-            if not inpdir_meta.is_dir():
-                raise FileNotFoundError('metadata_files not found')
+            
             #List the files in the directory
             logger.info('Checking for .csv or .fcs files in the directory ')
-            fcs_filelist = list(Path(inpdir_meta).glob('*.fcs'))
+            fcs_filelist = list(Path(inpDir).glob('*.fcs'))
             if not fcs_filelist:
                 raise FileNotFoundError('No .fcs files were found in the directory. Please check file directory.' )
         

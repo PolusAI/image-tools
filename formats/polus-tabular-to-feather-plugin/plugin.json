@@ -12,7 +12,7 @@
     "inputs": [
       {
         "name": "inpDir",
-        "type": "collection",
+        "type": "genericData",
         "description": "Input data collection to be processed by this plugin",
         "required": true
       }
@@ -20,7 +20,7 @@
     "outputs": [
       {
         "name": "outDir",
-        "type": "collection",
+        "type": "genericData",
         "description": "Output collection"
       }
     ],
