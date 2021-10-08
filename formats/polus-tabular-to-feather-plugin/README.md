@@ -13,7 +13,7 @@ For more information on WIPP, visit the
 ## Building
 
 To build the Docker image for the conversion plugin, run
-`./build-docker.sh`.
+`bash build-docker.sh`.
 
 ## Install WIPP Plugin
 
@@ -27,7 +27,6 @@ This plugin takes 2 input arguments and
 
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
-| `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--filePattern` | Filename pattern used to separate data | Input | string |
-| `--outDir` | Output collection | Output | collection |
+| `--inpDir` | Input generic data collection to be processed by this plugin | Input | genericData |
+| `--outDir` | Output collection | Output | genericData |
 

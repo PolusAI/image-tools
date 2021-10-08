@@ -53,6 +53,7 @@ def df_toFeather(file,outDir):
         logger.info('Started converting the csv file ' + file_name)
         df = vaex.from_csv(file)
         logger.info('writing file...')
+        os.chdir(outDir)
         df.export_feather(feather_filename,outDir)
 
 def main(inpDir: Path,
@@ -87,10 +88,10 @@ def main(inpDir: Path,
                 file_ext = Path(each_file).suffix
                 if file_ext == '.fcs':
                     logger.info('Converting fcs file to csv ')
-                    each_file = fcs_csv(each_file, outDir)
+                    each_file = fcs_csv(each_file, inpDir)
         finally:    
             logger.info('Checking for .csv files in the directory ')
-            filelist = list(Path(outDir).glob('*.csv'))
+            filelist = list(Path(inpDir).glob('*.csv'))
             if not filelist:
                 raise FileNotFoundError('No .csv files were found in the directory. Please check file directory.' )
                 

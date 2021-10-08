@@ -5,16 +5,16 @@ version=$(<VERSION)
 #echo $(datapath)
 
 # Inputs
-inpDir=/opt/executables/data/inputs
+inpDir=/data/inputs
 
 
 # Output paths
-outDir=/opt/executables/data/outputs
+outDir=/data/outputs
 
 # Log level, must be one of ERROR, CRITICAL, WARNING, INFO, DEBUG
 LOGLEVEL=INFO
 
-docker run -v /Users/mezukn/polus-plugins/polus-tabular-to-feather-plugin/src/data:/opt/executables/data \
+docker run -v /Users/mezukn/Desktop/polus/data:/data \
             --env POLUS_LOG=${LOGLEVEL} \
             polusai/tabular-to-feather-plugin:${version} \
             --inpDir ${inpDir} \
