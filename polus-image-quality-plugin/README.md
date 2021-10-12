@@ -58,8 +58,6 @@ This plugin takes 5 input arguments and
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
 | `--inputDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--minI` | Choose minimum Intensity for scaling images | Input | number |
-| `--maxI` | Choose Maximum Intensity for scaling images | Input | number |
 | `--scale` | Choose Spatial scale for calculation of Image Bluriness | Input | number |
 | `--filename` | Filename of the output CSV | Input | string |
 | `--outDir` | Output collection | Output | collection |

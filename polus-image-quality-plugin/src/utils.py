@@ -1,4 +1,7 @@
-from bfio import BioReader, BioWriter
+## powerspectrum and rps functions are adapted from this link "https://github.com/CellProfiler/centrosome/tree/master/centrosome"
+## Sharpness calculation is adapted from "https://github.com/umang-singhal/pydom"
+
+from bfio import BioReader
 import argparse, logging, os
 import numpy as np
 from pathlib import Path
@@ -20,10 +23,6 @@ class Image_quality:
         ----------
         path : Path to the Image directory (inputDir)
         image : ndarray
-        minI: int, float
-        Minimum intensity to normalize image intensities
-        maxI: int, float
-        Maximum intensity to normalize image intensities
         scale: int, float
         Divides the the (M * N) image in to the non overlapping tiles for the given scale 
         Returns
@@ -31,28 +30,22 @@ class Image_quality:
         Output CSV 
         Notes
         -------
-        Image normalization minimum and maximum intensity ranges are following
-        1) 0 , 1
-        2) -1 , 1
-        3) 0 , 255
+         
         """
-    def __init__(self, path, image, minI, maxI, scale):
+    def __init__(self, path, image, scale):
         self.path = path
         self.image = skimage.color.rgb2gray(image)
-        self.minI = minI
-        self.maxI = maxI
         self.scale = scale
 
     def normalize_intensities(self):
-        assert self.minI in [0, -1], 'Invalid minI value!!'
-        assert self.maxI in [1, 255], 'Invalid maxI value!!'    
-        if (self.minI == -1 and self.maxI == 1):
-            normalized_img = 2 * (self.image - np.min(self.image)) / (np.max(self.image) - np.min(self.image)) - 1
-        elif (self.minI == 0 and self.maxI == 255):
-            normalized_img = (self.image - np.min(self.image)) / (np.max(self.image) - np.min(self.image))
-            normalized_img *= 255.0
-        else:
-            normalized_img = (self.image - np.min(self.image)) / (np.max(self.image) - np.min(self.image))
+        ''' Image normalization minimum and maximum intensity ranges are [0, 1]
+        args:
+            image: image 
+        Returns: 
+            Normalized image
+        '''        
+
+        normalized_img = (self.image - np.min(self.image)) / (np.max(self.image) - np.min(self.image))
         return normalized_img
 
     def Focus_score(self):

@@ -5,8 +5,6 @@ datapath=$(readlink --canonicalize ../data)
 
 # Inputs
 inputDir=/data/path_to_files
-minI="minI"
-maxI="maxI"
 scale="scale"
 filename="filename"
 
@@ -25,8 +23,6 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --env POLUS_LOG=${LOGLEVEL} \
             labshare/polus-image-quality-plugin:${version} \
             --inputDir ${inputDir} \
-            --minI ${minI} \
-            --maxI ${maxI} \
             --scale ${scale} \
             --filename ${filename} \
             --outDir ${outDir} 

@@ -1,6 +1,6 @@
 {
     "name": "Image Quality",
-    "version": "0.1.6",
+    "version": "0.1.7",
     "title": "Image Quality",
     "description": "Implementation of Extracting Quality Metrics from Images",
     "author": "Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "polusai/image-quality-plugin:0.1.6",
+    "containerId": "polusai/image-quality-plugin:0.1.7",
     "inputs": [
       {
         "name": "inputDir",
@@ -16,18 +16,7 @@
         "description": "Input image collection to be processed by this plugin",
         "required": true
       },
-      {
-        "name": "minI",
-        "type": "number",
-        "description": "Choose minimum Intensity for scaling images",
-        "required": true
-      },
-      {
-        "name": "maxI",
-        "type": "number",
-        "description": "Choose Maximum Intensity for scaling images",
-        "required": true
-      },
+ 
       {
         "name": "scale",
         "type": "number",
@@ -53,16 +42,6 @@
         "key": "inputs.inputDir",
         "title": "Input collection",
         "description": "Input image collection to be processed by this plugin"
-      },
-      {
-        "key": "inputs.minI",
-        "title": "Minimum Intensity",
-        "description": "Choose minimum Intensity for scaling images"
-      },
-      {
-        "key": "inputs.maxI",
-        "title": "Maximum Intensity",
-        "description": "Choose Maximum Intensity for scaling images"
       },
       {
         "key": "inputs.scale",
