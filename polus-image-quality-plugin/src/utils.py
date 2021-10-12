@@ -44,7 +44,6 @@ class Image_quality:
         Returns: 
             Normalized image
         '''        
-
         normalized_img = (self.image - np.min(self.image)) / (np.max(self.image) - np.min(self.image))
         return normalized_img
 
