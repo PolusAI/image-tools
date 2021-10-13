@@ -1,14 +1,15 @@
 # Tabular to Feather (v0.1.0)
+This WIPP plugin allows analysts to convert various file formats received by researchers into Arrow Feather File Format (V2). This plugin supports the following file extensions: 
+    - `*.fcs`
+    - `*.csv`
+    - `*.hdf5`
+    - `*.fits`
+    - `*.parquet`
+    - `*.arrow`
 
-This WIPP plugin does things, some of which involve math and science. There is
-likely a lot of handwaving involved when describing how it works, but handwaving
-should be replaced with a good description. However, someone forgot to edit the
-README, so handwaving will have to do for now. Contact
-[Kelechi Nina Mezu](mailto:nina.mezu@nih.gov) for more
-information.
+Contact [Kelechi Nina Mezu](mailto:nina.mezu@nih.gov) for more information.
 
-For more information on WIPP, visit the
-[official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
+For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
 ## Building
 
@@ -22,11 +23,10 @@ contents of `plugin.json` into the pop-up window and submit.
 
 ## Options
 
-This plugin takes 2 input arguments and
-1 output argument:
+This plugin takes two input arguments and one output argument:
 
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
-| `--inpDir` | Input generic data collection to be processed by this plugin | Input | genericData |
-| `--outDir` | Output collection | Output | genericData |
-
+| `--filePattern` | Filename pattern to convert | Input | string |
+| `--inpDir` | Input generic data collection to be processed by this plugin | Input | collection |
+| `--outDir` | Output collection | Output | collection |
