@@ -10,21 +10,10 @@ FROM labshare/polus-bfio-util:2.1.9
 # Work directory defined in the base container
 # WORKDIR ${EXEC_DIR}
 
-#Create folders
-RUN mkdir -p ${EXEC_DIR} \
-    && mkdir -p ${DATA_DIR}/inputs \
-    && mkdir -p ${DATA_DIR}/outputs
-
 COPY VERSION ${EXEC_DIR}
 COPY src ${EXEC_DIR}/
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
-
-WORKDIR ${EXEC_DIR}
-
-RUN ls -la ${EXEC_DIR}/*
-
-RUN ls -la ${DATA_DIR}/*
 
 # Default command. Additional arguments are provided through the command line
 ENTRYPOINT ["python3", "main.py"]
