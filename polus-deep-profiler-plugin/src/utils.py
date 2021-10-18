@@ -6,6 +6,7 @@ from skimage import morphology, io
 from skimage.measure import regionprops
 from keras.applications.vgg16 import VGG16 
 import tensorflow as tf
+from bfio import BioReader
 
 
 class deepprofiler:
@@ -30,13 +31,15 @@ class deepprofiler:
         self.path = path 
         self.maskpath = maskpath
         
-    def z_normalization(self):      
-        img = io.imread(self.path)
+    def z_normalization(self):
+        br = BioReader(self.path)
+        img = br.read().squeeze() 
         znormalized = (img - np.mean(img)) / np.std(img) 
         return znormalized
       
     def loading_image(self):
-        mask = io.imread(self.maskpath) 
+        br = BioReader(self.maskpath)
+        mask = br.read().squeeze() 
         image = self.z_normalization()
         return image, mask
     

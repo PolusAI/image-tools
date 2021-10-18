@@ -9,6 +9,7 @@ from skimage import morphology, io
 from skimage.measure import regionprops
 from keras.applications.vgg16 import VGG16 
 import tensorflow as tf
+from bfio import BioReader
 
 
 #Import environment variables
@@ -60,18 +61,26 @@ def main(inputDir:Path,
         model = VGG16(include_top=False, weights='imagenet', pooling='avg')
         prf = []
         for i, image in enumerate(os.listdir(inputDir)):
-            imgpath = os.path.join(inputDir, image)
-            maskname = os.path.split(imgpath)[1].split('.tif')[0] + '_mask.tif'
-            maskpath = os.path.join(maskDir, maskname) 
-            dclass = deepprofiler(imgpath,  maskpath)
-            labels = dclass.__len__()
-            pf = profiling(dclass, labels, model)
-            prf.append(pf)   
-        prf = pd.concat(prf)
-        prf.to_csv(filename, index = False)
-        return prf      
-if __name__=="__main__":
+            logger.info(f'Processing image: {image}')
+            if image.endswith('.ome.tif'):
+                logger.debug(f'Initializing BioReader for {image}')
 
+                imgpath = os.path.join(inputDir, image)
+                maskname = os.path.split(imgpath)[1].split('.ome.tif')[0] + '_mask.ome.tif'
+                logger.info(f'Processing mask: {maskname}')
+                maskpath = os.path.join(maskDir, maskname) 
+                dclass = deepprofiler(imgpath,  maskpath)
+                labels = dclass.__len__()
+                pf = profiling(dclass, labels, model)
+                prf.append(pf)   
+        prf = pd.concat(prf)
+        os.chdir(outDir)
+        logger.info('Saving Output CSV File')
+        prf.to_csv(filename, index = False)
+        logger.info('Finished all processes')
+        return prf  
+
+if __name__=="__main__":
     main(inputDir=inputDir,
          maskDir=maskDir,
          filename=filename,
