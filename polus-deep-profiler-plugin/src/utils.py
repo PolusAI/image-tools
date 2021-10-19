@@ -80,10 +80,10 @@ class deepprofiler:
     
     
     
-def model():
-    if self.modelname == 'VGG16' and self.modelweights == 'imagenet':  
-        model = VGG16(include_top=False, weights='imagenet', pooling='avg')
-    return model
+
+def get_model(model):
+    modelname = getattr(tf.keras.applications, model)
+    return modelname(weights='imagenet', include_top=False, pooling='avg')
 
 def model_prediction(model, image):  
     features = model.predict(image)[0]
@@ -116,8 +116,6 @@ def profiling(dclass, labels, model):
     return prf
 
 
-        
- 
 
 
 
