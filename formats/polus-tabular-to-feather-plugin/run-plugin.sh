@@ -12,7 +12,7 @@ inpDir=/data/inputs
 outDir=/data/outputs
 
 #
-filePattern=*.fcs
+filePattern=.csv
 
 # Log level, must be one of ERROR, CRITICAL, WARNING, INFO, DEBUG
 LOGLEVEL=INFO
