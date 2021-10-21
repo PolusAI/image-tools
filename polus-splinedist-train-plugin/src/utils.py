@@ -1,32 +1,74 @@
-import logging
-import os 
+from __future__ import print_function, unicode_literals, absolute_import, division
+import logging, os
+import json
 
-import numpy as np
-
-import bfio
-from bfio import BioReader, LOG4J, JARS
-
-import tqdm
-from csbdeep.utils import normalize
-from splinedist import fill_label_holes
-from splinedist.utils import phi_generator, grid_generator
-from splinedist.models import Config2D, SplineDist2D, SplineDistData2D
-from splinedist.utils import phi_generator, grid_generator
-from splinedist import random_label_cmap
-
-import keras.backend as K
-import tensorflow as tf
-from tensorflow import keras
-
-import cv2
+from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import cpu_count
 
 import filepattern
 from filepattern import FilePattern as fp
+import readline
+
+import numpy as np
+import cv2
+import matplotlib.pyplot as plt
+
+import bfio
+from bfio import BioReader, BioWriter, LOG4J, JARS
+
+from csbdeep.utils import normalize
+from csbdeep.utils import _raise, axes_dict
+from csbdeep.utils.tf import keras_import, IS_TF_1, CARETensorBoard, CARETensorBoardImage
+
+from splinedist import fill_label_holes
+from splinedist.utils import phi_generator, grid_generator
+from splinedist.models import Config2D, SplineDist2D, SplineDistData2D
+
+import keras.backend as K
+import tensorflow as tf
+
+
+keras = keras_import()
+K = keras_import('backend')
+Input, Conv2D, MaxPooling2D = keras_import('layers', 'Input', 'Conv2D', 'MaxPooling2D')
+Model = keras_import('models', 'Model')
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("train_splinedist")
 logger.setLevel(logging.INFO)
+
+class SplinedistKerasSequence(tf.keras.utils.Sequence):
+
+    def __init__(self, data_path, type):
+        self.set = data_path
+        self.imagetype = type
+
+        assert self.imagetype == "image" or self.imagetype == "label", \
+            f"Imagetype must be image or label, not {self.imagetype}"
+
+    def __iter__(self):
+        for i in range(len(self)):
+            yield self[i]
+
+    def __len__(self):
+        return len(self.set)
+
+    def __getitem__(self, idx):
+        full_data_path = self.set[idx]
+        assert os.path.exists(full_data_path), f"{full_data_path} does not exist"
+        with bfio.BioReader(full_data_path) as br_data:
+            br_data_shape = br_data.shape
+            br_array = br_data[:]
+            br_array = np.reshape(br_array, br_data_shape[:2])
+            if self.imagetype == "image":
+                br_array = normalize(br_array, pmin=1, pmax=99.8)
+            elif self.imagetype == "label":
+                br_array = fill_label_holes(br_array)
+            else:
+                raise ValueError(f"Imagetype must be image or label, not {self.imagetype}")
+
+        return  br_array
 
 def update_countoursize_max(contoursize_max : int, 
                             lab_array : np.ndarray):
@@ -99,6 +141,105 @@ def augmenter(x : np.ndarray,
     x = x + sig*np.random.normal(0,1,x.shape)
     return x, y
 
+def train_kerasmodel(model, X, Y, validation_data, augmenter, seed=None, epochs=None, steps_per_epoch=None):
+        """Train the neural network with the given data.
+
+        Parameters
+        ----------
+        X : tuple, list, `numpy.ndarray`, `keras.utils.Sequence`
+            Input images
+        Y : tuple, list, `numpy.ndarray`, `keras.utils.Sequence`
+            Label masks
+        validation_data : tuple(:class:`numpy.ndarray`, :class:`numpy.ndarray`)
+            Tuple of X,Y validation arrays.
+        augmenter : None or callable
+            Function with expected signature ``xt, yt = augmenter(x, y)``
+            that takes in a single pair of input/label image (x,y) and returns
+            the transformed images (xt, yt) for the purpose of data augmentation
+            during training. Not applied to validation images.
+            Example:
+            def simple_augmenter(x,y):
+                x = x + 0.05*np.random.normal(0,1,x.shape)
+                return x,y
+        seed : int
+            Convenience to set ``np.random.seed(seed)``. (To obtain reproducible validation patches, etc.)
+        epochs : int
+            Optional argument to use instead of the value from ``config``.
+        steps_per_epoch : int
+            Optional argument to use instead of the value from ``config``.
+
+        Returns
+        -------
+        ``History`` object
+            See `Keras training history <https://keras.io/models/model/#fit>`_.
+
+        """
+        if seed is not None:
+            # https://keras.io/getting-started/faq/#how-can-i-obtain-reproducible-results-using-keras-during-development
+            np.random.seed(seed)
+        if epochs is None:
+            epochs = model.config.train_epochs
+        if steps_per_epoch is None:
+            steps_per_epoch = model.config.train_steps_per_epoch
+
+        validation_data is not None or _raise(ValueError())
+        ((isinstance(validation_data,(list,tuple)) and len(validation_data)==2)
+            or _raise(ValueError('validation_data must be a pair of numpy arrays')))
+
+        patch_size = model.config.train_patch_size
+        axes = model.config.axes.replace('C','')
+        b = model.config.train_completion_crop if model.config.train_shape_completion else 0
+        div_by = model._axes_div_by(axes)
+        [(p-2*b) % d == 0 or _raise(ValueError(
+            "'train_patch_size' - 2*'train_completion_crop' must be divisible by {d} along axis '{a}'".format(a=a,d=d) if model.config.train_shape_completion else
+            "'train_patch_size' must be divisible by {d} along axis '{a}'".format(a=a,d=d)
+         )) for p,d,a in zip(patch_size,div_by,axes)]
+
+        if not model._model_prepared:
+            model.prepare_for_training()
+
+        data_kwargs = dict (
+            n_params         = model.config.n_params,
+            patch_size       = model.config.train_patch_size,
+            grid             = model.config.grid,
+            shape_completion = model.config.train_shape_completion,
+            b                = model.config.train_completion_crop,
+            use_gpu          = model.config.use_gpu,
+            foreground_prob  = model.config.train_foreground_only,
+            contoursize_max  = model.config.contoursize_max,
+        )
+
+        # generate validation data and store in numpy arrays
+        n_data_val = len(validation_data[0])
+        data_val = SplineDistData2D(*validation_data, batch_size=model.config.train_batch_size, length=n_data_val//model.config.train_batch_size, **data_kwargs)
+
+        data_train = SplineDistData2D(X, Y, batch_size=model.config.train_batch_size, augmenter=augmenter, length=epochs*steps_per_epoch, **data_kwargs)
+        
+        if model.config.train_tensorboard:
+            # show dist for three rays
+            _n = min(3, model.config.n_params)
+            channel = axes_dict(model.config.axes)['C']
+            output_slices = [[slice(None)]*4,[slice(None)]*4]
+            output_slices[1][1+channel] = slice(0,(model.config.n_params//_n)*_n,model.config.n_params//_n)
+            if IS_TF_1:
+                for cb in model.callbacks:
+                    if isinstance(cb,CARETensorBoard):
+                        cb.output_slices = output_slices
+                        # target image for dist includes dist_mask and thus has more channels than dist output
+                        cb.output_target_shapes = [None,[None]*4]
+                        cb.output_target_shapes[1][1+channel] = data_val[1][1].shape[1+channel]
+            elif model.basedir is not None and not any(isinstance(cb,CARETensorBoardImage) for cb in model.callbacks):
+                model.callbacks.append(CARETensorBoardImage(model=model.keras_model, data=data_val, log_dir=str(model.logdir/'logs'/'images'),
+                                                           n_images=3, prob_out=False, output_slices=output_slices))
+
+        fit = model.keras_model.fit_generator if IS_TF_1 else model.keras_model.fit
+        history = fit(iter(data_train), validation_data=data_val,
+                      epochs=epochs, steps_per_epoch=steps_per_epoch,
+                      callbacks=model.callbacks, verbose=1)
+        model._training_finished()
+        return history
+
+
 def split_train_and_test_data(image_dir_input : str,
                               label_dir_input : str,
                               image_dir_test : str,
@@ -135,6 +276,7 @@ def split_train_and_test_data(image_dir_input : str,
     # get the inputs
     input_images = []
     input_labels = []
+
     for files in fp(image_dir_input,imagepattern)():
         image = files[0]['file']
         if os.path.exists(image):
@@ -149,7 +291,7 @@ def split_train_and_test_data(image_dir_input : str,
     X_val = []
     Y_val = []
 
-    logger.info("\n Getting Data for Training and Testing  ...")
+    logger.info("\n Getting Data for Training and Validating  ...")
     if (split_percentile == None) or split_percentile == 0:
         # if images are already allocated for testing then use those
         logger.info("Getting From Testing Directories")
@@ -170,16 +312,18 @@ def split_train_and_test_data(image_dir_input : str,
 
     else:
         logger.info("Splitting Input Directories")
+        num_inputs = len(input_images)
+        assert num_inputs == len(input_labels)
         # Used when no directory has been specified for testing
         # Splits the input directories into testing and training
         rng = np.random.RandomState(42)
         index = rng.permutation(num_inputs)
         n_val = np.ceil((split_percentile/100) * num_inputs).astype('int')
         ind_train, ind_val = index[:-n_val], index[-n_val:]
-        X_val, Y_val = [input_images[i] for i in ind_val]  , [input_labels[i] for i in ind_val] # splitting data into train and testing
-        X_trn, Y_trn = [input_images[i] for i in ind_train], [input_labels[i] for i in ind_train] 
+        X_val, Y_val = [str(input_images[i]) for i in ind_val]  , [str(input_labels[i]) for i in ind_val] # splitting data into train and testing
+        X_trn, Y_trn = [str(input_images[i]) for i in ind_train], [str(input_labels[i]) for i in ind_train] 
 
-    return (X_trn, Y_trn, X_val, Y_val)
+    return X_trn, Y_trn, X_val, Y_val
 
 def train_nn(X_trn            : list,
              Y_trn            : list,
@@ -217,146 +361,115 @@ def train_nn(X_trn            : list,
     # Lengths
     num_images_trained = len(X_trn)
     num_labels_trained = len(Y_trn)
-    num_images_tested = len(X_val)
-    num_labels_tested = len(Y_val)
+    num_images_valid = len(X_val)
+    num_labels_valid = len(Y_val)
     
+
     # Get logs for end user
-    totalimages = num_images_trained+num_images_tested
+    totalimages = num_images_trained+num_images_valid
     logger.info("{}/{} images used for training".format(num_images_trained, totalimages))
     logger.info("{}/{} labels used for training".format(num_labels_trained, totalimages))
-    logger.info("{}/{} images used for testing".format(num_images_tested, totalimages))
-    logger.info("{}/{} images used for testing".format(num_labels_tested, totalimages))
+    logger.info("{}/{} images used for validating".format(num_images_valid, totalimages))
+    logger.info("{}/{} images used for validating".format(num_labels_valid, totalimages))
 
     # assertions
-    assert num_images_trained > 1, "Not Enough Training Data"
+    assert num_images_trained > 1, "Not Enough Training Data (Less than 1)"
     assert num_images_trained == num_labels_trained, "The number of images does not match the number of ground truths for training"
     num_trained = num_images_trained
-    num_tested = num_images_tested
+    num_valid = num_images_valid
 
     del num_images_trained
-    del num_images_tested
+    del num_images_valid
     del num_labels_trained
-    del num_labels_tested
+    del num_labels_valid
 
-    # Need a list of numpy arrays to feed to SplineDist
-    array_images_trained = []
-    array_labels_trained = []
-    array_images_tested = []
-    array_labels_tested = []
+    seq_imgs_trained = SplinedistKerasSequence(X_trn, type="image")
+    seq_labs_trained = SplinedistKerasSequence(Y_trn, type="label")
+    seq_imgs_valid   = SplinedistKerasSequence(X_val, type="image")
+    seq_labs_valid   = SplinedistKerasSequence(Y_val, type="label")
 
-    # Neural network parameters
-    axis_norm = (0,1)
-    n_channel = 1 # this is based on the input data
+
+    contoursize_max = 0
+    with ThreadPoolExecutor(max_workers = os.cpu_count()-1) as executor:
+        contoursizes = [executor.submit(update_countoursize_max, 0, seq_lab_trained).result() for seq_lab_trained in seq_labs_trained]
+        contoursize_max = np.max(contoursizes)
+    
+    n_channel = 1
     
     model_dir_name = '.'
     model_dir_path = os.path.join(output_directory, model_dir_name)
 
-    # Get the testing data for neural network
-    logger.info("\n Starting to Load Test Data ...")
-    tenpercent_tested = np.floor(num_tested/10)
-    for i in range(num_tested):
-
-        image = X_val[i]
-        label = Y_val[i]
-        base_image = os.path.basename(str(image))
-        base_label = os.path.basename(str(label))
-        assert base_image == base_label, "{} and {} do not match".format(base_image, base_label)
-
-        # The original image
-        br_image = BioReader(image)
-        im_array = br_image[:,:,0:1,0:1,0:1]
-        im_array = im_array.reshape(br_image.shape[:2])
-        array_images_tested.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
-        br_image.close()
-
-        # The corresponding label for the image
-        br_label = BioReader(label)
-        lab_array = br_label[:,:,0:1,0:1,0:1]
-        lab_array = lab_array.reshape(br_label.shape[:2])
-        array_labels_tested.append(fill_label_holes(lab_array))
-        br_label.close()
-
-        assert im_array.shape == lab_array.shape, "{} and {} do not have matching shapes".format(base_image, base_label)
-
-        if (i%tenpercent_tested == 0) and (i!=0):
-            logger.info("Loaded ~{}% of Test Data".format(np.ceil((i/num_tested)*100), num_tested))
-    logger.info("Done Loading Testing Data")
-
-    # Read the input images used for training
-    logger.info("\n Starting to Load Train Data ...")
-    tenpercent_trained = num_trained//10
-    contoursize_max = 0 # gets updated if models have not been created for config file
-    for i in range(num_trained):
-
-        br_image = BioReader(X_trn[i])
-        br_image_shape = br_image.shape[:2]
-        im_array = br_image[:,:,0:1,0:1,0:1]
-        im_array = im_array.reshape(br_image_shape)
-        array_images_trained.append(normalize(im_array,pmin=1,pmax=99.8,axis=axis_norm))
-        br_image.close()
-
-        if i == 0:
-            n_channel = br_image.shape[2]
-        else:
-            assert n_channel == br_image.shape[2]
-
-        br_label = BioReader(Y_trn[i])
-        lab_array = br_label[:,:,0:1,0:1,0:1]
-        lab_array = lab_array.reshape(br_label.shape[:2])
-        array_labels_trained.append(fill_label_holes(lab_array))
-        br_label.close()
-
-        assert im_array.shape == lab_array.shape, "{} and {} do not have matching shapes".format(base_image, base_label)
-        contoursize_max = update_countoursize_max(contoursize_max, lab_array)
-        
-        if (i%tenpercent_trained == 0) and (i!=0):
-            logger.info("Loaded ~{}% of Train Data -- contoursize_max: {}".format(np.ceil((i/num_trained)*100), contoursize_max))
-    
-    logger.info("Done Loading Training Data")
-
+    del X_trn
+    del Y_trn
+    del X_val
+    del Y_val
 
     # Build the model and generate other necessary files to train the data.
     logger.info("Max Contoursize: {}".format(contoursize_max))
 
     n_params = M*2
     grid = (2,2)
+    train_batch_size = 4
+    train_steps_per_epoch = np.ceil(len(seq_imgs_trained)/train_batch_size)
     conf = Config2D (
-    n_params            = n_params,
-    grid                = grid,
-    n_channel_in        = n_channel,
-    contoursize_max     = contoursize_max,
-    train_epochs        = epochs,
-    use_gpu             = gpu
+    n_params              = n_params,
+    grid                  = grid,
+    n_channel_in          = n_channel,
+    contoursize_max       = contoursize_max,
+    train_epochs          = epochs,
+    use_gpu               = False,
+    train_steps_per_epoch = int(train_steps_per_epoch)
     )
     
-    del X_val
-    del Y_val
-    del X_trn
-    del Y_trn
-
     # change working directory to output directory because phi and grid files 
         # must be in working directory.  Those files should be generated 
         # in the output directory
     os.chdir(output_directory)
 
-    logger.info("\n Generating phi and grids ... ")
-    if not os.path.exists("./phi_{}.npy".format(M)):
-        phi_generator(M, conf.contoursize_max, '.')
+    logger.info("\n Generating/Overriding phi and grids ... ")
+    if os.path.exists("./phi_{}.npy".format(M)):
+        logger.info("OVERRIDING PHI")
+    phi_generator(M, conf.contoursize_max, '.')
     logger.info("Generated phi")
-    if not os.path.exists("./grid_{}.npy".format(M)):
-        grid_generator(M, conf.train_patch_size, conf.grid, '.')
+    if os.path.exists("./grid_{}.npy".format(M)):
+        logger.info("OVERRIDING GRID")
+    grid_generator(M, conf.train_patch_size, conf.grid, '.')
     logger.info("Generated grid")
 
     model = SplineDist2D(conf, name=model_dir_name, basedir=output_directory)
     del conf
 
-    # After creating or loading model, train it
-    model.config.use_gpu = gpu
+    # model.train_patch_size = (1,256,256)
     logger.info("\n Parameters in Config File ...")
     for ky,val in model.config.__dict__.items():
         logger.info("{}: {}".format(ky, val))
 
-    model.train(array_images_trained,array_labels_trained, 
-                validation_data=(array_images_tested, array_labels_tested), 
-                augmenter=augmenter, epochs=epochs)
+    
+    validation_data = (seq_imgs_valid, seq_labs_valid)
+    history = train_kerasmodel(model,
+                               seq_imgs_trained,
+                               seq_labs_trained,
+                               validation_data=(validation_data), 
+                               augmenter=augmenter, epochs=epochs)
+    
+    history_dictionary = history.history
+    json_file = open(os.path.join(output_directory, "history.json"), "w")
+    json.dump(str(history_dictionary), json_file)
+
+    
+    def create_plots(title, X, Y, output_directory):
+
+        plt.plot(X, Y)
+        plt.xlabel("Epochs")
+        plt.ylabel(title)
+        plt.savefig(os.path.join(output_directory, f"{title}.jpg"))
+        plt.clf()
+
+    epochs_list = [int(epoch) for epoch in list(range(epochs))]
+    print(epochs_list)
+    for history_key in history_dictionary.keys():
+        history_values = history_dictionary[history_key]
+        create_plots(history_key, epochs_list, history_values, output_directory)
+
     logger.info("\n Done Training Model ...")
+
