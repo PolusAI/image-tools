@@ -7,5 +7,11 @@ repos:
     rev: 4.0.1
     hooks:
       - id: flake8
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: check-added-large-files
+      - id: trailing-whitespace
+      - id: requirements-txt-fixer
 default_language_version:
   python: python3.9
