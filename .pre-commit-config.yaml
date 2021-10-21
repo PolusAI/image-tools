@@ -13,5 +13,9 @@ repos:
       - id: check-added-large-files
       - id: trailing-whitespace
       - id: requirements-txt-fixer
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.0.1
+    hooks:
+      - id: eslint
 default_language_version:
   python: python3.9
