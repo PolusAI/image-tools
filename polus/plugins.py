@@ -338,6 +338,13 @@ class Input(WippInput, IOBase):
             )
 
 
+class RunSettings(object):
+
+    gpu: typing.Union[int, typing.List[int], None] = -1
+    gpu: typing.Union[int, None] = -1
+    mem: int = -1
+
+
 class Plugin(WIPPPluginManifest):
     """Required until json schema is fixed"""
 
@@ -422,7 +429,15 @@ class Plugin(WIPPPluginManifest):
                 args.append(str(o.value))
 
         client = docker.from_env()
-        client.containers.run(self.containerId, args, mounts=mnts)
+        client.containers.run(
+            self.containerId,
+            args,
+            mounts=mnts,
+            user=f"{os.getuid()}:{os.getegid()}",
+            device_requests=[
+                docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])
+            ],
+        )
 
     def __getattribute__(self, name):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
