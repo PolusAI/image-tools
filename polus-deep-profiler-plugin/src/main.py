@@ -30,8 +30,12 @@ parser.add_argument('--inputDir', dest='inputDir', type=str,
                         help='Input image collection to be processed by this plugin', required=True)
 parser.add_argument('--maskDir', dest='maskDir', type=str,
                         help='Input mask collections in int16 or int32 format', required=True)
+parser.add_argument('--inputcsv', dest='inputcsv', type=str,
+                        help='Boundingbox cooridnate position of cells are computed using Nyxus Plugin', required=True)
 parser.add_argument('--model', dest='model', type=str,
                         help='Select model for Feature extraction', required=True)
+parser.add_argument('--batchsize', dest='batchsize', type=int,
+                        help='Select batchsize for model predictions', required=True)
 #  # Output arguments
 parser.add_argument('--filename', dest='filename', type=str,
                         help='Filename of the output CSV file', required=True)
@@ -48,21 +52,26 @@ if (maskDir.joinpath('masks').is_dir()):
     maskDir = maskDir.joinpath('masks').absolute()
 logger.info('inputDir = {}'.format(inputDir))
 logger.info('maskDir = {}'.format(maskDir))
+inputcsv = Path(args.inputcsv)
+logger.info('inputcsv = {}'.format(inputcsv))
 model = str(args.model) 
 logger.info('model = {}'.format(model))
+batchsize=int(args.batchsize)
+logger.info("batchsize = {}".format(batchsize))
 filename = str(args.filename) 
 logger.info('filename = {}'.format(filename))
 outDir = Path(args.outDir)
 logger.info('outDir = {}'.format(outDir))
 
-
-
 def main(inputDir:Path,
          maskDir:Path,
+         inputcsv:Path,
          model:str,
+         batchsize:int,
          filename:str,
          outDir:str
-         ) -> None:    
+         ) -> None:
+            
         model_lists =  ['Xception', 'VGG16', 'VGG19', 'ResNet50', 'ResNet101',
                         'ResNet152','ResNet50V2','ResNet101V2','ResNet152V2','InceptionV3',
                         'InceptionResNetV2','DenseNet121','DenseNet169','DenseNet201','EfficientNetB0',
@@ -70,33 +79,44 @@ def main(inputDir:Path,
                         'EfficientNetB6','EfficientNetB7']
         if not model in  model_lists:
             logger.error("Invalid model selection! Please select from the list")
-
         modelname = get_model(model)
         logger.info(f'Single cell Feature Extraction using: {model} model')
-        prf = []
-        for i, image in enumerate(os.listdir(inputDir)):
-            logger.info(f'Processing image: {image}')
-            if image.endswith('.ome.tif'):
-                logger.debug(f'Initializing BioReader for {image}')
-                imgpath = os.path.join(inputDir, image)
-                maskname = os.path.split(imgpath)[1].split('.ome.tif')[0] + '_mask.ome.tif'
+        prf = dataframe_parsing(inputcsv)
+        pf = chunker(prf, batchsize)
+        deepfeatures = []
+        for batch in pf: 
+            roi_images =[]
+            roi_labels =[]
+            for i, row in batch.iterrows():
+                dclass = deepprofiler(row, inputDir, maskDir)
+                imgname, maskname = dclass.__name__()
+                logger.info(f'Processing image: {imgname}')
                 logger.info(f'Processing mask: {maskname}')
-                maskpath = os.path.join(maskDir, maskname) 
-                dclass = deepprofiler(imgpath,  maskpath)
-                labels = dclass.__len__()
-                pf = profiling(dclass, labels, modelname)
-                prf.append(pf)   
-        prf = pd.concat(prf)
+                imgpad = dclass.zero_padding()
+                img = np.dstack((imgpad, imgpad))
+                img = np.dstack((img, imgpad)) 
+                roi_labels.append(row['label'])
+                roi_images.append(img)
+            batch_images = np.asarray(roi_images)
+            batch_labels = roi_labels
+            dfeat = model_prediction(modelname,batch_images)
+            pdm = feature_extraction(batch_labels, row,  dfeat) 
+            deepfeatures.append(pdm)
+
+        deepfeatures = pd.concat(deepfeatures)
+        fn = renaming_columns(deepfeatures)
         os.chdir(outDir)
         logger.info('Saving Output CSV File')
-        prf.to_csv(filename, index = False)
+        fn.to_csv(filename, index = False)
         logger.info('Finished all processes')
-        return prf  
+        return fn  
 
 if __name__=="__main__":
     main(inputDir=inputDir,
          maskDir=maskDir,
+         inputcsv=inputcsv,
          model=model,
+         batchsize=batchsize,
          filename=filename,
          outDir=outDir)
 

@@ -1,38 +1,29 @@
-import os
-import cv2
-import pandas as pd
-import numpy as np
-from skimage import morphology, io
-from skimage.measure import regionprops
-from keras.applications.vgg16 import VGG16 
-import tensorflow as tf
-from bfio import BioReader
-
-
 class deepprofiler:
 
     """Create output z-Normalize Images.
         Parameters
         ----------
-        x: Row of CSV file
-        inputdir : Path of Intensity Images directory
-        maskdir: Path of Masks Images directory
+        image : ndarray
+        Path of an input image
         Returns
         -------
-        Padded image
+        normalized_img : z normalized
+        Output image
+        Notes
+        -------
+        Clipping allow to set min value and maximum intensity values
+        1) clipped values [-1, 1] to [0 , 1]
        
         """
 
-    def __init__(self, x, inputdir, maskdir):
+    def __init__(self, x, inputdir, maskdir, desired_size):
         self.inputdir = inputdir
         self.maskdir =  maskdir
         self.x = x
         self.imagepath = os.path.join(self.inputdir, self.x['intensity_image'])
         self.maskpath = os.path.join(self.maskdir, self.x['mask_image'])
-
-    def __name__(self):
-        return self.x['intensity_image'], self.x['mask_image']
-           
+        self.desired_size = desired_size
+             
     def loading_images(self):
         br_img = BioReader(self.imagepath)
         br_img = br_img.read().squeeze()
@@ -53,56 +44,59 @@ class deepprofiler:
         msk_img = timage[self.x[3]:self.x[3]+self.x[5], self.x[4]:self.x[4]+self.x[6]]
         tsk_img = tmask[self.x[3]:self.x[3]+self.x[5], self.x[4]:self.x[4]+self.x[6]]
         return msk_img, tsk_img
-         
+    
+    
+        
+        
     def resizing(self):
-        desired_size = 128
         x, _ = self.masking_roi() 
         Y, X = x.shape
         aspectratio = Y/X
-        if Y and X > desired_size and aspectratio < 1:
+        if Y and X > self.desired_size and aspectratio < 1:
             Y = int(aspectratio * desired_size)
-            X = desired_size
+            X = self.desired_size
             return cv2.resize(x, dsize=(X, Y), interpolation=cv2.INTER_CUBIC)
-        elif X and Y > desired_size and aspectratio > 1:
+
+        elif X and Y > self.desired_size and aspectratio > 1:
             X = int(X/Y * desired_size)
-            Y = desired_size
+            Y = self.desired_size
             return cv2.resize(x, dsize=(X, Y), interpolation=cv2.INTER_CUBIC)
-        elif Y > desired_size:
-            X = int(X/Y * desired_size)
-            Y = desired_size
+
+        elif Y > self.desired_size:
+            X = int(X/Y * self.desired_size)
+            Y = self.desired_size
             return cv2.resize(x, dsize=(X, Y), interpolation=cv2.INTER_CUBIC)
-        elif X > desired_size:
+
+        elif X > self.desired_size:
             Y = int(aspectratio * X)
-            X = desired_size
+            X = self.desired_size
             return cv2.resize(x, dsize=(X, Y), interpolation=cv2.INTER_CUBIC)
+
         else:
             return x
 
     def zero_padding(self):
         x = self.resizing() 
-        desired_size = 128
         Y, X = x.shape
-        ch_w = desired_size - X
-        ch_h = desired_size - Y 
+        ch_w = self.desired_size - X
+        ch_h = self.desired_size - Y 
         top, bottom = ch_h//2, ch_h-(ch_h//2)
         left, right = ch_w//2, ch_w-(ch_w//2)
         pad_img = cv2.copyMakeBorder(x, top, bottom, left, right, 
                                      cv2.BORDER_CONSTANT,value=[0, 0, 0])          
         return pad_img
 
- 
 
-    
 
+
+def chunker(df, batchsize):
+    for pos in range(0, len(df), batchsize):
+        yield df.iloc[pos:pos + batchsize] 
+        
 def get_model(model):
     modelname = getattr(tf.keras.applications, model)
     return modelname(weights='imagenet', include_top=False, pooling='avg')
-  
-       
-def chunker(df, batchsize):
-    for idx in range(0, len(df), batchsize):
-        yield df.iloc[idx:idx + batchsize] 
-        
+
 
 def model_prediction(model, image):  
     features = model.predict(image)
@@ -118,34 +112,68 @@ def feature_extraction(labels, x, features):
     df.insert(2, 'Cell_ID', cellid ) 
     return df
 
-def dataframe_parsing(csvpath):
-    columnlist = ['mask_image','intensity_image','label',
-    'BBOX_YMIN','BBOX_XMIN', 'BBOX_HEIGHT','BBOX_WIDTH']
-    df = pd.read_csv(csvpath)[columnlist]
-    return df
 
-def renaming_columns(x):
-    x['Cell_ID'] = x['Cell_ID'].astype('str')
-    columns = x.select_dtypes(include=[np.number]).columns.tolist()
-    newcol = ['Feature_'+ str(col) for col in columns]
-    x.columns = x.columns[:3].tolist() + newcol
-    return x
+modelname = get_model('VGG16')
+IMG_SIZE = 128        
+batch_size = 2
+pf = chunker(df, 2)
 
 
 
+total_feat = []
+for batch in pf:
+    
+    roi_images =[]
+    roi_labels =[]
+
+    for i, row in batch.iterrows():
+
+        dclass = deepprofiler(row, inputdir, maskdir, 128)
+
+        imgpad = dclass.zero_padding()
+        img = np.dstack((imgpad, imgpad))
+        img = np.dstack((img, imgpad))
+        
+        roi_labels.append(row['label'])
+        
+        roi_images.append(img)
+
+    batch_images = np.asarray(roi_images)
+    batch_labels = roi_labels
+    feat = model_prediction(modelname,batch_images)
+    pdm = feature_extraction(batch_labels, row,  feat) 
+    total_feat.append(pdm)
 
 
 
 
 
-
-
+# Old
 
 
 
     
-        
+#     def resizing(self):
+#         x, _ = self.masking_roi()  
+#         Y, X = x.shape
+#         if Y > self.desired_size:
+#             aspectratio = Y/X
+#             Y = self.desired_size
+#             X = int( Y/aspectratio)
+#             return cv2.resize(x, dsize=(X, desired_size), interpolation=cv2.INTER_CUBIC)
+
+#         elif X > self.desired_size:
+#             aspectratio = X/Y
+#             X = self.desired_size
+#             Y = int(X/aspectratio)
+#             return cv2.resize(x, dsize=(desired_size, Y), interpolation=cv2.INTER_CUBIC)
+
+#         elif X and Y > self.desired_size:
+#             return cv2.resize(x, dsize=(desired_size, desired_size), interpolation=cv2.INTER_CUBIC)
+
+#         else:
+#             return x
 
 
-
+    
 

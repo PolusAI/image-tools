@@ -1,14 +1,14 @@
 {
-    "name": "Image Quality",
-    "version": "0.1.7",
-    "title": "Image Quality",
-    "description": "Implementation of Extracting Quality Metrics from Images",
+    "name": "DeepProfiler",
+    "version": "0.1.0",
+    "title": "DeepProfiler",
+    "description": "Implementation and extraction of deep learning representations at the single cell level from fluorescent Images",
     "author": "Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "polusai/image-quality-plugin:0.1.7",
+    "containerId": "polusai/DeepProfiler-plugin:0.1.0",
     "inputs": [
       {
         "name": "inputDir",
@@ -16,11 +16,30 @@
         "description": "Input image collection to be processed by this plugin",
         "required": true
       },
+      {
+        "name": "maskDir",
+        "type": "collection",
+        "description": "Input mask collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "inputcsv",
+        "type": "csvCollection",
+        "description": "Input csv file which contains boundingbox coordinates for all cells",
+        "required": true
+      },
+
+      {
+        "name": "model",
+        "type": "string",
+        "description": "Input csv file which contains boundingbox coordinates for all cells",
+        "required": true
+      },
  
       {
-        "name": "scale",
+        "name": "batchsize",
         "type": "number",
-        "description": "Choose Spatial scale for calculation of Image Bluriness",
+        "description": "Choose batchsize of cells to be used in model prediction",
         "required": true
       },
       {
@@ -40,14 +59,30 @@
     "ui": [
       {
         "key": "inputs.inputDir",
-        "title": "Input collection",
+        "title": "Input Intensity Images",
         "description": "Input image collection to be processed by this plugin"
       },
       {
-        "key": "inputs.scale",
-        "title": "Spatial Scale",
-        "description": "Choose Spatial scale for calculation of Image Bluriness"
+        "key": "inputs.maskDir",
+        "title": "Input Mask Images",
+        "description": "Input mask collection to be processed by this plugin"
       },
+      {
+        "key": "inputs.inputcsv",
+        "title": "Input CSV",
+        "description": "Choose Input CSV containing cell boundingbox coordinates"
+      },
+      {
+        "key": "inputs.model",
+        "title": "model",
+        "description": "Choose model for feature Extraction"
+      },
+      {
+        "key": "inputs.batchsize",
+        "title": "batchsize",
+        "description": "Choose a batchsize"
+      },
+
       {
         "key": "inputs.filename",
         "title": "Output Filename",
