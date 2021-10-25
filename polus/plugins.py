@@ -532,7 +532,7 @@ def submit_plugin(manifest: typing.Union[str, dict, pathlib.Path]) -> Plugin:
 
     # Save the manifest if it doesn't already exist in the database
     org_path = PLUGIN_DIR.joinpath(plugin.organization.lower())
-    org_path.mkdir(exist_ok=True)
+    org_path.mkdir(exist_ok=True, parents=True)
     if not org_path.joinpath(out_name).exists():
         with open(org_path.joinpath(out_name), "w") as fw:
             json.dump(manifest, fw, indent=4)
