@@ -1,6 +1,6 @@
 {
     "name": "Vector to Label",
-    "version": "0.5.5",
+    "version": "0.6.1",
     "title": "Vector to Label",
     "description": "Create labelled masks from flow-field vectors.",
     "author": "Sudharsan Prativadi (sudharsan.prativadi@labshare.org), Nick Schaub (nick.schaub@nih.gov), Najib Ishaq (najib.ishaq@axleinfo.com)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/PolusAI/polus-plugins/tree/dev/formats/polus-vector-converter-plugin",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1",
-    "containerId": "labshare/polus-vector-label-plugin:0.5.5",
+    "containerId": "labshare/polus-vector-label-plugin:0.6.1",
     "inputs": [
         {
             "name": "inpDir",
@@ -23,39 +23,9 @@
             "required": false
         },
         {
-            "name": "flowThreshold",
+            "name": "flowMagnitudeThreshold",
             "type": "number",
-            "description": "Maximum MSE between flow-fields computed from labelled masks against input flow-fields. Defaults to 0.4.",
-            "required": false
-        },
-        {
-            "name": "maskSizeThreshold",
-            "type": "number",
-            "description": "Maximum fraction of a tile that a labelled object can cover. Defaults to 1.0 to not remove any large masks.",
-            "required": false
-        },
-        {
-            "name": "interpolate",
-            "type": "boolean",
-            "description": "Whether to use bilinear/trilinear interpolation on 2d/3d flow-fields respectively. Defaults to true.",
-            "required": false
-        },
-        {
-            "name": "cellprobThreshold",
-            "type": "number",
-            "description": "Cell probability threshold. Defaults to 0.4.",
-            "required": false
-        },
-        {
-            "name": "numIterations",
-            "type": "number",
-            "description": "Number of iterations for which to follow flows. Defaults to 200.",
-            "required": false
-        },
-        {
-            "name": "minObjectSize",
-            "type": "number",
-            "description": "Minimum number of pixels for an object to be valid. Any object with fewer pixels is removed. Defaults to 15.",
+            "description": "The minimum flow magnitude at a pixel for it to be considered part of a cell. Defaults to 0.1",
             "required": false
         }
     ],
@@ -79,40 +49,10 @@
             "default": ".+"
         },
         {
-            "key": "inputs.flowThreshold",
-            "title": "Flow Error threshold.",
-            "description": "Maximum MSE between flow-fields computed from labelled masks against input flow-fields.",
-            "default": 0.4
-        },
-        {
-            "key": "inputs.maskSizeThreshold",
-            "title": "Mask size threshold.",
-            "description": "Maximum fraction of a tile that a labelled object can cover.",
-            "default": 1.0
-        },
-        {
-            "key": "inputs.interpolate",
-            "title": "Interpolate.",
-            "description": "Whether to use bilinear/trilinear interpolation on 2d/3d flow-fields respectively.",
-            "default": true
-        },
-        {
-            "key": "inputs.cellprobThreshold",
-            "title": "Cell probability threshold",
-            "description": "Cell probability threshold",
-            "default": 0.4
-        },
-        {
-            "key": "inputs.numIterations",
-            "title": "Number of Iterations.",
-            "description": "Number of iterations for which to follow flows.",
-            "default": 200
-        },
-        {
-            "key": "inputs.minObjectSize",
-            "title": "Minimum Object Size.",
-            "description": "Minimum number of pixels for an object to be valid. Object with fewer pixels are removed.",
-            "default": 15
+            "key": "inputs.flowMagnitudeThreshold",
+            "title": "Flow Magnitude Threshold",
+            "description": "The minimum flow magnitude at a pixel for it to be considered part of a cell.",
+            "default": 0.1
         }
     ]
 }

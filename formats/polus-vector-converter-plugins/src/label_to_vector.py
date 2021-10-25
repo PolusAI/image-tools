@@ -218,6 +218,7 @@ if __name__ == "__main__":
     _args = parser.parse_args()
 
     _input_dir = Path(_args.inpDir).resolve()
+    assert _input_dir.exists(), f'input directory {_input_dir} does not exist'
     if _input_dir.joinpath('images').is_dir():
         # switch to images folder if present
         _input_dir = _input_dir.joinpath('images')
@@ -227,6 +228,7 @@ if __name__ == "__main__":
     logger.info(f'filePattern = {_file_pattern}')
 
     _output_dir = Path(_args.outDir).resolve()
+    assert _output_dir.exists(), f'output directory {_output_dir} does not exist'
     logger.info(f'outDir = {_output_dir}')
 
     main(

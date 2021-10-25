@@ -16,7 +16,7 @@ import zarr
 from bfio import BioReader
 from bfio import BioWriter
 
-import dynamics
+import mask_reconstruction
 import utils
 
 logging.basicConfig(
@@ -103,17 +103,12 @@ def reconcile_overlap(
 
 
 def vector_thread(
+        *,
         in_path: Path,
         zarr_path: Path,
         coordinates: Tuple[int, int, int],
         reader_shape: Tuple[int, int, int],
-        flow_error_threshold: float,
-        mask_size_threshold: float,
-        interpolate: bool,
-        cell_probability_threshold: float,
-        num_iterations: int,
-        min_mask_size: int,
-        device: Optional[int],
+        flow_magnitude_threshold: float,
         future_z: Optional[Future],
         future_y: Optional[Future],
         future_x: Optional[Future],
@@ -138,33 +133,15 @@ def vector_thread(
     z_min, z_max = max(0, z - utils.TILE_OVERLAP), min(z_shape, z + utils.TILE_SIZE + utils.TILE_OVERLAP)
 
     with BioReader(in_path) as reader:
-        cell_probabilities = numpy.squeeze(reader[y_min:y_max, x_min:x_max, z_min:z_max, 0:1, 0])
         flows = numpy.squeeze(reader[y_min:y_max, x_min:x_max, z_min:z_max, 1:ndims + 1, 0])
 
     # arrays are stored as (y, x, z, c, t) but need to be processed as (c, z, y, x)
     if ndims == 2:
         flows = numpy.transpose(flows, (2, 0, 1))
     else:
-        cell_probabilities = numpy.transpose(cell_probabilities, (2, 0, 1))
         flows = numpy.transpose(flows, (3, 2, 0, 1))
 
-    is_cell: numpy.ndarray = (cell_probabilities > cell_probability_threshold)
-
-    locations = dynamics.follow_flows(
-        flows=-flows * is_cell,
-        num_iterations=num_iterations,
-        interpolate=interpolate,
-        device=device,
-    )
-    labels = dynamics.get_masks(
-        locations=locations,
-        is_cell=is_cell,
-        flows=flows,
-        flow_error_threshold=flow_error_threshold,
-        mask_size_threshold=mask_size_threshold,
-        device=device,
-    )
-    labels = dynamics.fill_holes_and_remove_small_masks(labels, min_mask_size)
+    _, labels = mask_reconstruction.flows_to_labels(flows, flow_magnitude_threshold)
 
     x_overlap, x_min, x_max = x - x_min, x, min(x_shape, x + utils.TILE_SIZE)
     y_overlap, y_min, y_max = y - y_min, y, min(y_shape, y + utils.TILE_SIZE)
@@ -243,8 +220,6 @@ def vector_thread(
 
 
 def zarr_to_tif(zarr_path: Path, out_path: Path):
-    utils.TILE_SIZE = 1024
-
     with BioReader(zarr_path, max_workers=utils.NUM_THREADS) as reader:
         with BioWriter(out_path, metadata=reader.metadata, max_workers=utils.NUM_THREADS) as writer:
             writer.dtype = numpy.uint32
@@ -265,13 +240,9 @@ def zarr_to_tif(zarr_path: Path, out_path: Path):
 
 
 def vector_to_label(
+        *,
         in_path: Path,
-        flow_error_threshold: float,
-        mask_size_threshold: float,
-        interpolate: bool,
-        cell_probability_threshold: float,
-        num_iterations: int,
-        min_mask_size: int,
+        flow_magnitude_threshold: float,
         output_dir: Path,
 ):
     # TODO: This next line breaks in the docker container because the base pytorch container comes with python3.7
@@ -294,13 +265,7 @@ def vector_to_label(
         'zarr_path': zarr_path,
         'coordinates': (0, 0, 0),
         'reader_shape': reader_shape,
-        'flow_error_threshold': flow_error_threshold,
-        'mask_size_threshold': mask_size_threshold,
-        'interpolate': interpolate,
-        'cell_probability_threshold': cell_probability_threshold,
-        'num_iterations': num_iterations,
-        'min_mask_size': min_mask_size,
-        'device': None,
+        'flow_magnitude_threshold': flow_magnitude_threshold,
         'future_z': None,
         'future_y': None,
         'future_x': None,
@@ -310,11 +275,8 @@ def vector_to_label(
     for z_index, z in enumerate(range(0, reader_shape[0], utils.TILE_SIZE)):
         for y_index, y in enumerate(range(0, reader_shape[1], utils.TILE_SIZE)):
             for x_index, x in enumerate(range(0, reader_shape[2], utils.TILE_SIZE)):
-
-                device = (tile_count % utils.NUM_THREADS) if utils.USE_GPU else None
                 tile_count += 1
                 thread_kwargs['coordinates'] = x, y, z
-                thread_kwargs['device'] = device
                 thread_kwargs['future_z'] = None if z_index == 0 else threads[(z_index - 1, y_index, x_index)]
                 thread_kwargs['future_y'] = None if y_index == 0 else threads[(z_index, y_index - 1, x_index)]
                 thread_kwargs['future_x'] = None if x_index == 0 else threads[(z_index, y_index, x_index - 1)]
@@ -334,14 +296,10 @@ def vector_to_label(
 
 
 def main(
+        *,
         input_dir: Path,
         file_pattern: str,
-        flow_error_threshold: float,
-        mask_size_threshold: float,
-        interpolate: bool,
-        cell_probability_threshold: float,
-        num_iterations: int,
-        min_mask_size: int,
+        flow_magnitude_threshold: float,
         output_dir: Path,
 ):
     fp = filepattern.FilePattern(input_dir, file_pattern)
@@ -358,14 +316,9 @@ def main(
     for i, in_path in enumerate(files, start=1):
         logger.info(f'Processing image ({i}/{len(files)}): {in_path}')
         vector_to_label(
-            in_path,
-            flow_error_threshold,
-            mask_size_threshold,
-            interpolate,
-            cell_probability_threshold,
-            num_iterations,
-            min_mask_size,
-            output_dir,
+            in_path=in_path,
+            flow_magnitude_threshold=flow_magnitude_threshold,
+            output_dir=output_dir,
         )
     return
 
@@ -397,61 +350,15 @@ if __name__ == '__main__':
     )
 
     parser.add_argument(
-        '--flowThreshold',
-        dest='flowThreshold',
-        type=float,
-        help='Flow-error Threshold. Margin between flow-fields computed from labelled masks against input flow-fields.',
-        required=False,
-        default=1.0,
-    )
-
-    parser.add_argument(
-        '--maskSizeThreshold',
-        dest='maskSizeThreshold',
-        type=float,
-        help='Maximum fraction of a tile that a labelled object can cover.',
-        required=False,
-        default=1.0,
-    )
-
-    parser.add_argument(
-        '--interpolate',
-        dest='interpolate',
-        type=str,
-        help='Whether to use bilinear/trilinear interpolation on 2d/3d flow-fields respectively.',
-        required=False,
-        default='true',
-    )
-
-    parser.add_argument(
-        '--cellprobThreshold',
-        dest='cellprobThreshold',
+        '--flowMagnitudeThreshold',
+        dest='flowMagnitudeThreshold',
         type=float,
         help='Cell Probability Threshold.',
         required=False,
-        default=0.4,
-    )
-
-    parser.add_argument(
-        '--numIterations',
-        dest='numIterations',
-        type=int,
-        help='Number of iterations for which to follow flows.',
-        required=False,
-        default=200,  # TODO: Figure out how to set this intelligently
-    )
-
-    parser.add_argument(
-        '--minObjectSize',
-        dest='minObjectSize',
-        type=int,
-        help='Minimum number of pixels for an object to be valid. Any object with fewer pixels is removed.',
-        required=False,
-        default=15,
+        default=0.1,
     )
 
     # Output arguments
-    # noinspection DuplicatedCode
     parser.add_argument(
         '--outDir',
         dest='outDir',
@@ -461,7 +368,6 @@ if __name__ == '__main__':
     )
 
     # Parse the arguments
-    # noinspection DuplicatedCode
     _args = parser.parse_args()
 
     _input_dir = Path(_args.inpDir).resolve()
@@ -473,39 +379,12 @@ if __name__ == '__main__':
     _file_pattern = _args.filePattern
     logger.info(f'filePattern = {_file_pattern}')
 
-    _flow_error_threshold = float(_args.flowThreshold)
-    if not 0. <= _flow_error_threshold <= 1.0:
-        _message = f'flowThreshold must be a float between 0 and 1. Got {_flow_error_threshold} instead.'
+    _flow_magnitude_threshold = _args.flowMagnitudeThreshold
+    if not 0. <= _flow_magnitude_threshold <= 1.0:
+        _message = f'flowMagnitudeThreshold must be a float between 0 and 1. Got {_flow_magnitude_threshold} instead.'
         logger.error(_message)
         raise ValueError(_message)
-    logger.info(f'flowThreshold = {_flow_error_threshold:.3f}')
-    if _flow_error_threshold == 1.0:
-        _flow_error_threshold = None
-
-    _mask_size_threshold = _args.maskSizeThreshold
-    if not 0. <= _mask_size_threshold <= 1.0:
-        _message = f'maskSizeThreshold must be a float between 0 and 1. Got {_mask_size_threshold} instead.'
-        logger.error(_message)
-        raise ValueError(_message)
-    logger.info(f'maskSizeThreshold = {_mask_size_threshold}')
-    if _mask_size_threshold == 1.0:
-        _mask_size_threshold = None
-
-    _interpolate = (_args.interpolate == 'true')
-    logger.info(f'interpolate = {_interpolate}')
-
-    _cell_probability_threshold = _args.cellprobThreshold
-    if not 0. <= _cell_probability_threshold <= 1.0:
-        _message = f'cellprobThreshold must be a float between 0 and 1. Got {_cell_probability_threshold} instead.'
-        logger.error(_message)
-        raise ValueError(_message)
-    logger.info(f'cellprobThreshold = {_cell_probability_threshold}')
-
-    _num_iterations = max(_args.numIterations, 200)
-    logger.info(f'numIterations = {_num_iterations}')
-
-    _min_mask_size = max(_args.minObjectSize, 15)
-    logger.info(f'minObjectSize = {_min_mask_size}')
+    logger.info(f'flowMagnitudeThreshold = {_flow_magnitude_threshold}')
 
     _output_dir = Path(_args.outDir).resolve()
     logger.info(f'outDir = {_output_dir}')
@@ -513,11 +392,6 @@ if __name__ == '__main__':
     main(
         input_dir=_input_dir,
         file_pattern=_file_pattern,
-        flow_error_threshold=_flow_error_threshold,
-        mask_size_threshold=_mask_size_threshold,
-        interpolate=_interpolate,
-        cell_probability_threshold=_cell_probability_threshold,
-        num_iterations=_num_iterations,
-        min_mask_size=_min_mask_size,
+        flow_magnitude_threshold=_flow_magnitude_threshold,
         output_dir=_output_dir,
     )

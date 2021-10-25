@@ -5,9 +5,8 @@ ARG DATA_DIR="/data"
 
 COPY src/requirements.txt .
 
-RUN mkdir -p ${DATA_DIR}/{inputs,outputs} && \
-    mkdir -p ${EXEC_DIR}/numba_cache && \
-    chmod 777 ${EXEC_DIR}/numba_cache && \
+RUN mkdir -m 777 -p ${DATA_DIR}/{inputs,outputs} && \
+    mkdir -m 777 -p ${EXEC_DIR}/numba_cache && \
     pip3 install -r requirements.txt --no-cache-dir
 
 ENV NUMBA_CACHE_DIR=${EXEC_DIR}/numba_cache

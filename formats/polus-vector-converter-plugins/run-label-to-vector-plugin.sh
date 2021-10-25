@@ -1,14 +1,14 @@
 #!/bin/bash
 
 version=$(<VERSION)
-data_path=$(readlink --canonicalize /data/axle/tests)
+data_path=$(readlink --canonicalize ../../data/vector_converters/label_to_vector)
 
 # Inputs
 inpDir=/data/input
 filePattern=".+"
 
 # Output paths
-outDir=/data/output_zarr
+outDir=/data/output
 
 # GPU configuration for testing GPU usage in the container
 GPUS=all
