@@ -1,0 +1,90 @@
+{
+    "name": "Feature Heatmap Pyramid",
+    "version": "0.2.0",
+    "title": "Feature Heatmap Pyramid",
+    "description": "Build a heatmap pyramid for features values in a csv as an overlay for another pyramid.",
+    "author": "Nick Schaub (nick.schaub@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-feature-heatmap-pyramid-plugin:0.2.0",
+    "inputs": [
+      {
+        "name": "features",
+        "type": "csvCollection",
+        "description": "CSV collection containing features",
+        "required": true
+      },
+      {
+        "name": "inpDir",
+        "type": "collection",
+        "description": "Input image collection used to build a pyramid that this plugin will make an overlay for",
+        "required": true
+      },
+      {
+        "name": "vector",
+        "type": "stitchingVector",
+        "description": "Stitching vector used to buld the image pyramid.",
+        "required": true
+      },
+      {
+        "name": "method",
+        "description": "Method used to create the heatmap",
+        "type": "enum",
+        "options": {
+          "values": [
+            "mean",
+            "count",
+            "var",
+            "median",
+            "std",
+            "skewness",
+            "kurtosis",
+            "iqr"
+          ]
+        },
+        "required": true
+      },
+      {
+        "name": "vectorInMetadata",
+        "type": "boolean",
+        "description": "Store stitching vector in metadata instead of a stitching collection.",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outImages",
+        "type": "collection",
+        "description": "Heatmap images"
+      },
+      {
+        "name": "outVectors",
+        "type": "stitchingVector",
+        "description": "Heatmap vectors"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.features",
+        "title": "Features",
+        "description": "CSV collection containing features"
+      },
+      {
+        "key": "inputs.inpDir",
+        "title": "Input collection",
+        "description": "Input image collection used to build a pyramid that this plugin will make an overlay for"
+      },
+      {
+        "key": "inputs.vector",
+        "title": "Stitching Vector",
+        "description": "Stitching vector used to buld the image pyramid."
+      },
+      {
+        "key": "inputs.vectorInMetadata",
+        "title": "Store stitching vector in collection metadata",
+        "description": "Store stitching vectors in metadata of the output image collection."
+      }
+    ]
+  }
