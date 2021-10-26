@@ -112,10 +112,10 @@ JAVA_CONVERT.update({
 # })
 
 JAVA_CONVERT.update({
-    t:lambda s: imglyb.util.Views.iterable(ij.py.to_java(s)) for t in ABSTRACT_ITERABLES
+    t:lambda s,ij: imglyb.util.Views.iterable(ij.py.to_java(s)) for t in ABSTRACT_ITERABLES
 })
 JAVA_CONVERT.update({
-    t:lambda s: imglyb.util._to_imglib(s) for t in IMG_ARRAYS
+    t:lambda s,ij: imglyb.util._to_imglib(s) for t in IMG_ARRAYS
 })
 
 def to_java(ij, np_array,java_type,java_dtype=None):
@@ -130,7 +130,7 @@ def to_java(ij, np_array,java_type,java_dtype=None):
         if str(java_dtype) != 'None':
             out_array = JAVA_CONVERT[java_type](np_array,java_type,java_dtype)
         else:
-            out_array = JAVA_CONVERT[java_type](np_array)
+            out_array = JAVA_CONVERT[java_type](np_array, ij)
     else:
         logger.warning('Did not recognize type, {}, will pass default.'.format(java_type))
         out_array = ij.py.to_java(np_array)
