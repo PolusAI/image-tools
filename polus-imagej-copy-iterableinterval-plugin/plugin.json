@@ -1,6 +1,6 @@
 {
   "name": "ImageJ copy iterableInterval",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "title": "ImageJ copy iterableInterval",
   "description": "CopyII",
   "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "labshare/polus-imagej-copy-iterableinterval-plugin:0.2.0",
+  "containerId": "polusai/imagej-copy-iterableinterval-plugin:0.2.1",
   "inputs": [
     {
       "name": "opName",
@@ -16,34 +16,34 @@
       "options": {
         "values": ["CopyII"]
       },
-      "description": "Operation to peform",
+      "description": "Op overloading method to peform",
       "required": false
     },
     {
-      "name": "in1",
+      "name": "inpDir",
       "type": "collection",
-      "description": "in1",
+      "description": "Input image collection to be processed by this plugin",
       "required": false
     }
   ],
   "outputs": [
     {
-      "name": "out",
+      "name": "outDir",
       "type": "collection",
-      "description": "out"
+      "description": "Output collection"
     }
   ],
   "ui": [
     {
       "key": "inputs.opName",
       "title": "Operation",
-      "description": "Operation to peform"
+      "description": "Op overloading method to peform"
     },
     {
-      "key": "inputs.in1",
-      "title": "in1",
-      "description": "in1",
-      "condition": "model.inputs.opName==['CopyII']"
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Input image collection to be processed by this plugin",
+      "condition": "model.inputs.opName==CopyII"
     }
   ]
 }

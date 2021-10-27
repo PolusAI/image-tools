@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-imagej-copy-iterableinterval-plugin:${version}
+docker build . -t polusai/imagej-copy-iterableinterval-plugin:${version}
