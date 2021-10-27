@@ -4,11 +4,14 @@ import json
 
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import cpu_count
+from multiprocessing import Process
+from queue import Queue
 
 import filepattern
 from filepattern import FilePattern as fp
 import readline
 
+from tqdm import tqdm
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
@@ -24,51 +27,46 @@ from splinedist import fill_label_holes
 from splinedist.utils import phi_generator, grid_generator
 from splinedist.models import Config2D, SplineDist2D, SplineDistData2D
 
-import keras.backend as K
+# import keras.backend as K
+# import keras.engine as KE
 import tensorflow as tf
 
+os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
-keras = keras_import()
+# keras = keras_import()
 K = keras_import('backend')
+K.clear_session()
+
 Input, Conv2D, MaxPooling2D = keras_import('layers', 'Input', 'Conv2D', 'MaxPooling2D')
 Model = keras_import('models', 'Model')
+
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("train_splinedist")
 logger.setLevel(logging.INFO)
 
+
 class SplinedistKerasSequence(tf.keras.utils.Sequence):
 
-    def __init__(self, data_path, type):
-        self.set = data_path
-        self.imagetype = type
-
-        assert self.imagetype == "image" or self.imagetype == "label", \
-            f"Imagetype must be image or label, not {self.imagetype}"
-
+    def __init__(self, data):
+        self.np_array = data
+        assert self.np_array.ndim == 3, f"Input Numpy Array should only be 3 Dimensions but instead has {self.np_array.ndim}"
+        
+        self.shape = data.shape
+        self.len = data.shape[0]
+        
     def __iter__(self):
-        for i in range(len(self)):
+        for i in range(self.len):
             yield self[i]
 
     def __len__(self):
-        return len(self.set)
+        return self.len
 
     def __getitem__(self, idx):
-        full_data_path = self.set[idx]
-        assert os.path.exists(full_data_path), f"{full_data_path} does not exist"
-        with bfio.BioReader(full_data_path) as br_data:
-            br_data_shape = br_data.shape
-            br_array = br_data[:]
-            br_array = np.reshape(br_array, br_data_shape[:2])
-            if self.imagetype == "image":
-                br_array = normalize(br_array, pmin=1, pmax=99.8)
-            elif self.imagetype == "label":
-                br_array = fill_label_holes(br_array)
-            else:
-                raise ValueError(f"Imagetype must be image or label, not {self.imagetype}")
-
-        return  br_array
+        array = self.np_array[idx, :, :]
+        return  array
 
 def update_countoursize_max(contoursize_max : int, 
                             lab_array : np.ndarray):
@@ -99,7 +97,10 @@ def update_countoursize_max(contoursize_max : int,
         contour = np.squeeze(contours[max_ind])
         contour = np.reshape(contour,(-1,2))
         contour = np.append(contour,contour[0].reshape((-1,2)),axis=0)
-        contoursize_max = max(int(contour.shape[0]), contoursize_max)
+        if int(contour.shape[0]) > contoursize_max:
+            contoursize_max = int(contour.shape[0]) 
+            logger.info(f"Max Contoursize is Updated to: {contoursize_max}")
+        
     
     return contoursize_max
     
@@ -239,100 +240,101 @@ def train_kerasmodel(model, X, Y, validation_data, augmenter, seed=None, epochs=
         model._training_finished()
         return history
 
-
-def split_train_and_test_data(image_dir_input : str,
-                              label_dir_input : str,
-                              image_dir_test : str,
-                              label_dir_test : str,
-                              split_percentile : int,
-                              imagepattern: str):
+def get_Data(image_path   : str, 
+             label_path   : str, 
+             imagepattern : str):
     
-    """ This function separates out the input data into either training and testing data 
-        if split_percentile equals zero.  Otherwise, it converts the input data into the 
-        training data and it converts the test data into testing data for the model. 
-    
-    Args:
-        image_dir_input:  Directory containing inputs for intensity based images
-            Contains data for either:
-                1) Only Training Data
-                2) Training and Testing Data
-        label_dir_input:  Directory containing inputs for labelled data
-            Contains data for either:
-                1) Only Training Data
-                2) Training and Testing Data
-        image_dir_test:   If specified, directory containing testing data for intensity based images
-        label_dir_test:   If specified, directory containing testing data for labelled data
-        split_percentile: Specifies what percentages of the input should be allocated for training and testing
-        imagepattern: The imagepattern of files to iterate through within a directory
+    fp_images = fp(image_path,imagepattern)()
+    num_images = len(fp_images.files)
 
-    Returns:
-        X_trn: list of locations for training data containing intensity based images
-        Y_trn: list of lcoations for training data containing labelled data
-        X_val: list of locations for testing data containing intensity based images
-        Y_val: list of locations for testing data containing labelled data
-    
-    """
+    fp_labels = fp(label_path,imagepattern)()
+    num_labels = len(fp_labels.files)
 
-    # get the inputs
-    input_images = []
-    input_labels = []
+    assert num_images == num_labels, f"Number of Images ({num_images}) does not match the Number of Labels ({num_labels})"
 
-    for files in fp(image_dir_input,imagepattern)():
-        image = files[0]['file']
-        if os.path.exists(image):
-            input_images.append(image)
-    for files in fp(label_dir_input,imagepattern)():
-        label = files[0]['file']
-        if os.path.exists(label):
-            input_labels.append(label)
-    
-    X_trn = []
-    Y_trn = []
-    X_val = []
-    Y_val = []
+    image_array = []
+    label_array = []
 
-    logger.info("\n Getting Data for Training and Validating  ...")
-    if (split_percentile == None) or split_percentile == 0:
-        # if images are already allocated for testing then use those
-        logger.info("Getting From Testing Directories")
-        X_trn = input_images
-        Y_trn = input_labels
-        X_val = []
-        Y_val = []
-        for files in fp(image_dir_test, imagepattern)():
-            image_test = files[0]['file']
-            if os.path.exists(image_test):
-                X_val.append(image_test)
-        for files in fp(label_dir_test, imagepattern)():
-            label_test = files[0]['file']
-            if os.path.exists(label_test):
-                Y_val.append(label_test)
-        X_val = sorted(X_val)
-        Y_val = sorted(Y_val)
+    idx = 0
+    for img_file, lab_file in tqdm(zip(fp_images(), fp_labels())):
+        base_image_path = os.path.basename(img_file[0]['file'])
+        base_label_path = os.path.basename(lab_file[0]['file'])
+        full_image_path = os.path.join(image_path, base_image_path)
+        full_label_path = os.path.join(label_path, base_label_path)
+        assert base_image_path == base_label_path, f"{base_image_path} does not match {base_label_path}"
 
-    else:
-        logger.info("Splitting Input Directories")
-        num_inputs = len(input_images)
-        assert num_inputs == len(input_labels)
-        # Used when no directory has been specified for testing
-        # Splits the input directories into testing and training
-        rng = np.random.RandomState(42)
-        index = rng.permutation(num_inputs)
-        n_val = np.ceil((split_percentile/100) * num_inputs).astype('int')
-        ind_train, ind_val = index[:-n_val], index[-n_val:]
-        X_val, Y_val = [str(input_images[i]) for i in ind_val]  , [str(input_labels[i]) for i in ind_val] # splitting data into train and testing
-        X_trn, Y_trn = [str(input_images[i]) for i in ind_train], [str(input_labels[i]) for i in ind_train] 
+        # base_name = os.path.basename(img_file[0]['file'])
+        # full_image_path = os.path.join(image_path, base_name)
+        # full_label_path = os.path.join(label_path, base_name)
+        assert os.path.exists(full_image_path), f"{full_image_path} does not exist"
+        assert os.path.exists(full_label_path), f"{full_label_path} does not exist"
 
-    return X_trn, Y_trn, X_val, Y_val
+        with bfio.BioReader(full_image_path) as br_image:
+            with bfio.BioReader(full_label_path) as br_label:
+                
+                assert br_image.shape == br_label.shape
+                inp_shape = br_image.shape[:2]
+                br_image = np.reshape(br_image[:], inp_shape)
+                br_label = np.reshape(br_label[:], inp_shape)
 
-def train_nn(X_trn            : list,
-             Y_trn            : list,
-             X_val            : list,
-             Y_val            : list,
+                if isinstance(image_array, list):
+                    image_array = np.empty((num_images, inp_shape[0], inp_shape[1]))
+                    label_array = np.empty((num_images, inp_shape[0], inp_shape[1]))
+                
+                image_array[idx,:,:] = normalize(br_image, pmin=1, pmax=99.8)
+                label_array[idx,:,:] = fill_label_holes(br_label)
+        idx = idx + 1
+
+    img_keras = SplinedistKerasSequence(image_array)
+    lab_keras = SplinedistKerasSequence(label_array)
+
+    # image_array = []
+    # image_idx = 0
+    # for files in tqdm(fp(image_path,imagepattern)()):
+    #     base_image_path = files[0]['file']
+    #     full_image_path = os.path.join(image_path, base_image_path)
+    #     assert os.path.exists(full_image_path), f"Image {full_image_path} does not exist"
+    #     assert os.path.exists(os.path.join(label_path, base_image_path)), f"Matching Label for Image does not Exist: {base_image_path}"
+    #     with bfio.BioReader(full_image_path) as br_image:
+    #         br_image_shape = br_image.shape
+    #         br_image_arr = np.reshape(br_image[:], br_image_shape[:2])
+    #         if isinstance(image_array, list):
+    #             image_array = np.empty((num_images, br_image_shape[0], br_image_shape[1]))
+    #         image_array[image_idx, :, :] = normalize(br_image_arr, pmin=1, pmax=99.8)
+    #     image_idx = image_idx + 1
+    # logger.info(f"Shape of Images: {image_array.shape}")
+    # img_keras = SplinedistKerasSequence(image_array)
+
+    # label_array = []
+    # label_idx = 0
+    # for files in tqdm(fp(label_path,imagepattern)()):
+    #     base_label_path = files[0]['file']
+    #     full_image_path = os.path.join(label_path, base_label_path)
+    #     assert os.path.exists(full_label_path), f"Label {full_label_path} does not exists"
+    #     assert os.path.exists(os.path.join(image_path, base_label_path)), f"Matching Image for Label does not Exist: {base_label_path}"
+    #     with bfio.BioReader(full_label_path) as br_label:
+    #         br_label_shape = br_label.shape
+    #         br_label_arr = np.reshape(br_label[:], br_label_shape[:2])
+    #         if isinstance(label_array, list):
+    #             label_array = np.empty((num_labels, br_label_shape[0], br_label_shape[1]))
+    #         label_array[label_idx, :, :] = fill_label_holes(br_label_arr)
+    #     label_idx = label_idx + 1
+    # logger.info(f"Shape of Labels: {label_array.shape}")
+    # lab_keras = SplinedistKerasSequence(label_array)
+
+    # assert img_keras.shape == lab_keras.shape, f"Images Shape ({img_keras.shape}) does not match Label Shape ({lab_keras.shape})"
+
+    return img_keras, lab_keras
+
+def train_nn(image_dir_train  : list,
+             label_dir_train  : list,
+             image_dir_valid  : list,
+             label_dir_valid  : list,
              output_directory : str,
              gpu              : bool,
              M                : int,
-             epochs           : int):
+             epochs           : int,
+             imagepattern     : str):
 
     """ This function trains a neural network for SplineDist.
 
@@ -358,40 +360,91 @@ def train_nn(X_trn            : list,
     assert isinstance(M, int), "Neeed to specify the number of control points"
     assert isinstance(epochs, int), "Need to specify the number of epochs to run"
 
-    # Lengths
-    num_images_trained = len(X_trn)
-    num_labels_trained = len(Y_trn)
-    num_images_valid = len(X_val)
-    num_labels_valid = len(Y_val)
+    logger.info("\n GETTING TRAINING DATA")
+    train_queue = Queue()
+    train_process = Process(target = get_Data, args=(image_dir_train, label_dir_train, imagepattern))
+
+    logger.info("\n GETTING VALIDATION DATA")
+    valid_queue = Queue()
+    valid_process = Process(target = get_Data, args=(image_dir_valid, label_dir_valid, imagepattern))
     
 
-    # Get logs for end user
+    train_process.start()
+    valid_process.start()
+    train_process.join()
+    valid_process.join()
+
+    seq_imgs_train, seq_labs_train = train_queue.get()
+    seq_imgs_valid, seq_labs_valid = valid_queue.get()
+    # Lengths
+    # num_images_trained = len(X_trn)
+    # num_labels_trained = len(Y_trn)
+    # num_images_valid = len(X_val)
+    # num_labels_valid = len(Y_val)
+
+    # # Get logs for end user
     totalimages = num_images_trained+num_images_valid
-    logger.info("{}/{} images used for training".format(num_images_trained, totalimages))
-    logger.info("{}/{} labels used for training".format(num_labels_trained, totalimages))
-    logger.info("{}/{} images used for validating".format(num_images_valid, totalimages))
-    logger.info("{}/{} images used for validating".format(num_labels_valid, totalimages))
+    logger.info("{} images used for training".format(len(seq_imgs_train)))
+    logger.info("{} labels used for training".format(len(seq_labs_train)))
+    logger.info("{} images used for validating".format(len(seq_imgs_valid)))
+    logger.info("{} images used for validating".format(len(seq_labs_valid)))
 
-    # assertions
-    assert num_images_trained > 1, "Not Enough Training Data (Less than 1)"
-    assert num_images_trained == num_labels_trained, "The number of images does not match the number of ground truths for training"
-    num_trained = num_images_trained
-    num_valid = num_images_valid
+    # # assertions
+    # assert num_images_trained > 1, "Not Enough Training Data (Less than 1)"
+    # assert num_images_trained == num_labels_trained, "The number of images does not match the number of ground truths for training"
+    # num_trained = num_images_trained
+    # num_valid = num_images_valid
 
-    del num_images_trained
-    del num_images_valid
-    del num_labels_trained
-    del num_labels_valid
+    # del num_images_trained
+    # del num_images_valid
+    # del num_labels_trained
+    # del num_labels_valid
 
-    seq_imgs_trained = SplinedistKerasSequence(X_trn, type="image")
-    seq_labs_trained = SplinedistKerasSequence(Y_trn, type="label")
-    seq_imgs_valid   = SplinedistKerasSequence(X_val, type="image")
-    seq_labs_valid   = SplinedistKerasSequence(Y_val, type="label")
+    # seq_imgs_trained = SplinedistKerasSequence(X_trn, type="image")
+    # seq_labs_trained = SplinedistKerasSequence(Y_trn, type="label")
+    # seq_imgs_valid   = SplinedistKerasSequence(X_val, type="image")
+    # seq_labs_valid   = SplinedistKerasSequence(Y_val, type="label")
 
+    # del X_trn
+    # del Y_trn
+    # del X_val
+    # del Y_val
+
+
+    # train_npz = np.load("/home/ec2-user/workdir/polus-data/polus/images/TissueNet/raw/tissuenet_v1.0_train.npz")
+    # logger.info("getting (training) images")
+    # train_images = train_npz['X'][0:100,:,:,0]
+    # logger.info("getting (training) labels")
+    # train_labels = train_npz['y'][0:100,:,:,1]
+    # assert train_images.shape == train_labels.shape
+    # train_len    = train_images.shape[0]
+
+    # for train_idx in tqdm(range(train_len)):
+    #     train_images[train_idx,:,:] = normalize(train_images[train_idx,:,:], pmin=1, pmax=99.8)
+    #     train_labels[train_idx,:,:] = fill_label_holes(train_labels[train_idx,:,:].astype('int'))
+    # seq_imgs_train = SplinedistKerasSequence(train_images)
+    # seq_labs_train = SplinedistKerasSequence(train_labels)
+    # del train_npz, train_images, train_labels, train_len
+
+    # logger.info("\n GETTING VALIDATION DATA")
+    # valid_npz = np.load("/home/ec2-user/workdir/polus-data/polus/images/TissueNet/raw/tissuenet_v1.0_val.npz")
+    # logger.info("getting (validation) images")
+    # valid_images = valid_npz['X'][0:120,:,:,0]
+    # logger.info("getting (validation) labels")
+    # valid_labels = valid_npz['y'][0:120,:,:,1]
+    # assert valid_images.shape == valid_labels.shape
+    # valid_len    = valid_images.shape[0]
+
+    # for valid_idx in tqdm(range(valid_len)):
+    #     valid_images[valid_idx,:,:] = normalize(valid_images[valid_idx,:,:], pmin=1, pmax=99.8)
+    #     valid_labels[valid_idx,:,:] = fill_label_holes(valid_labels[valid_idx,:,:].astype('int'))
+    # seq_imgs_valid = SplinedistKerasSequence(valid_images)
+    # seq_labs_valid = SplinedistKerasSequence(valid_labels)
+    # del valid_npz, valid_images, valid_labels, valid_len
 
     contoursize_max = 0
     with ThreadPoolExecutor(max_workers = os.cpu_count()-1) as executor:
-        contoursizes = [executor.submit(update_countoursize_max, 0, seq_lab_trained).result() for seq_lab_trained in seq_labs_trained]
+        contoursizes = [executor.submit(update_countoursize_max, 0, seq_lab_train).result() for seq_lab_train in seq_labs_train]
         contoursize_max = np.max(contoursizes)
     
     n_channel = 1
@@ -399,10 +452,6 @@ def train_nn(X_trn            : list,
     model_dir_name = '.'
     model_dir_path = os.path.join(output_directory, model_dir_name)
 
-    del X_trn
-    del Y_trn
-    del X_val
-    del Y_val
 
     # Build the model and generate other necessary files to train the data.
     logger.info("Max Contoursize: {}".format(contoursize_max))
@@ -410,14 +459,14 @@ def train_nn(X_trn            : list,
     n_params = M*2
     grid = (2,2)
     train_batch_size = 4
-    train_steps_per_epoch = np.ceil(len(seq_imgs_trained)/train_batch_size)
+    train_steps_per_epoch = np.ceil(len(seq_imgs_train)/train_batch_size)
     conf = Config2D (
     n_params              = n_params,
     grid                  = grid,
     n_channel_in          = n_channel,
     contoursize_max       = contoursize_max,
     train_epochs          = epochs,
-    use_gpu               = False,
+    use_gpu               = True,
     train_steps_per_epoch = int(train_steps_per_epoch)
     )
     
@@ -447,8 +496,8 @@ def train_nn(X_trn            : list,
     
     validation_data = (seq_imgs_valid, seq_labs_valid)
     history = train_kerasmodel(model,
-                               seq_imgs_trained,
-                               seq_labs_trained,
+                               seq_imgs_train,
+                               seq_labs_train,
                                validation_data=(validation_data), 
                                augmenter=augmenter, epochs=epochs)
     
@@ -466,7 +515,6 @@ def train_nn(X_trn            : list,
         plt.clf()
 
     epochs_list = [int(epoch) for epoch in list(range(epochs))]
-    print(epochs_list)
     for history_key in history_dictionary.keys():
         history_values = history_dictionary[history_key]
         create_plots(history_key, epochs_list, history_values, output_directory)
