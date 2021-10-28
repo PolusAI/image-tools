@@ -10,6 +10,7 @@ from skimage.measure import regionprops
 from keras.applications.vgg16 import VGG16 
 import tensorflow as tf
 from bfio import BioReader
+import time
 
 
 #Import environment variables
@@ -71,6 +72,8 @@ def main(inputDir:Path,
          filename:str,
          outDir:str
          ) -> None:
+
+        starttime= time.time()
             
         model_lists =  ['Xception', 'VGG16', 'VGG19', 'ResNet50', 'ResNet101',
                         'ResNet152','ResNet50V2','ResNet101V2','ResNet152V2','InceptionV3',
@@ -82,6 +85,7 @@ def main(inputDir:Path,
         modelname = get_model(model)
         logger.info(f'Single cell Feature Extraction using: {model} model')
         prf = dataframe_parsing(inputcsv)
+        #prf = prf.iloc[:498, :]
         pf = chunker(prf, batchsize)
         deepfeatures = []
         for batch in pf: 
@@ -109,7 +113,12 @@ def main(inputDir:Path,
         logger.info('Saving Output CSV File')
         fn.to_csv(filename, index = False)
         logger.info('Finished all processes')
+        endtime = (time.time() - starttime)/60
+        print(f'Total time taken to process all images: {endtime}')
         return fn  
+
+
+
 
 if __name__=="__main__":
     main(inputDir=inputDir,

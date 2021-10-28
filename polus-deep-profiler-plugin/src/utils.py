@@ -45,14 +45,24 @@ class deepprofiler:
         znormalized = (img - np.mean(img)) / np.std(img) 
         return znormalized, mask
     
+    # def masking_roi(self): 
+    #     image, mask = self.z_normalization()
+    #     timage, tmask = image.copy(), mask.copy()
+    #     tmask[mask !=self.x[2]] = 0
+    #     timage[tmask!=self.x[2]] =0
+    #     msk_img = timage[self.x[3]:self.x[3]+self.x[5], self.x[4]:self.x[4]+self.x[6]]
+    #     tsk_img = tmask[self.x[3]:self.x[3]+self.x[5], self.x[4]:self.x[4]+self.x[6]]
+    #     return msk_img, tsk_img
+
     def masking_roi(self): 
         image, mask = self.z_normalization()
         timage, tmask = image.copy(), mask.copy()
         tmask[mask !=self.x[2]] = 0
         timage[tmask!=self.x[2]] =0
-        msk_img = timage[self.x[3]:self.x[3]+self.x[5], self.x[4]:self.x[4]+self.x[6]]
-        tsk_img = tmask[self.x[3]:self.x[3]+self.x[5], self.x[4]:self.x[4]+self.x[6]]
+        msk_img = timage[self.x[3]:self.x[5], self.x[4]:self.x[6]]
+        tsk_img = tmask[self.x[3]:self.x[5], self.x[4]:self.x[6]]
         return msk_img, tsk_img
+         
          
     def resizing(self):
         desired_size = 128
@@ -89,8 +99,6 @@ class deepprofiler:
         pad_img = cv2.copyMakeBorder(x, top, bottom, left, right, 
                                      cv2.BORDER_CONSTANT,value=[0, 0, 0])          
         return pad_img
-
- 
 
     
 
