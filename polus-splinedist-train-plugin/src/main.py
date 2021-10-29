@@ -2,6 +2,7 @@ import logging, argparse
 import os 
 
 import utils
+os.environ['CUDA_VISIBLE_DEVICES'] = "0"
 from tensorflow.python.client import device_lib
 
 # Initialize the logger    
@@ -12,47 +13,39 @@ logger.setLevel(logging.INFO)
 
 def main(image_dir_train : str,
          label_dir_train : str,
-         image_dir_test : str,
-         label_dir_test : str,
-         split_percentile : int,
+         image_dir_valid : str,
+         label_dir_valid : str,
          output_directory : str,
          gpu : bool,
          M : int,
          epochs : int,
          imagepattern: str):
 
-    X_trn, Y_trn, X_val, Y_val = utils.split_train_and_test_data(image_dir_input=image_dir_train,
-                                                                 label_dir_input=label_dir_train,
-                                                                 image_dir_test=image_dir_test,
-                                                                 label_dir_test=label_dir_test,
-                                                                 split_percentile=split_percentile,
-                                                                 imagepattern=imagepattern)
-
-    utils.train_nn(X_trn            = X_trn,
-                   Y_trn            = Y_trn,
-                   X_val            = X_val,
-                   Y_val            = Y_val,
+    utils.train_nn(image_dir_train  = image_dir_train,
+                   label_dir_train  = label_dir_train,
+                   image_dir_valid  = image_dir_valid,
+                   label_dir_valid  = label_dir_valid,
                    output_directory = output_directory,
                    gpu              = gpulist,
                    M                = M,
-                   epochs           = epochs)
-
+                   epochs           = epochs,
+                   imagepattern     = imagepattern)
 
 if __name__ == "__main__":
 
     logger.info("\n Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='Training SplineDist')
 
-    parser.add_argument('--inpImageDirTrain', dest='input_directory_images_train', type=str,
+    # Key for NPZ file OR Pathway to Directories
+    parser.add_argument('--inpImageTrain', dest='input_images_train', type=str,
                         help='Path to folder with intesity based images for training', required=False)
-    parser.add_argument('--inpLabelDirTrain', dest='input_directory_labels_train', type=str,
+    parser.add_argument('--inpLabelTrain', dest='input_labels_train', type=str,
                         help='Path to folder with labelled segments, ground truth for training', required=False)
-    parser.add_argument('--inpImageDirTest', dest='input_directory_images_test', type=str,
-                        help='Path to folder with intesity based images for testing', required=False)
-    parser.add_argument('--inpLabelDirTest', dest='input_directory_labels_test', type=str,
-                        help='Path to folder with labelled segments, ground truth for testing', required=False)
-    parser.add_argument('--splitPercentile', dest='split_percentile', type=int,
-                        help='Percentage of data that is allocated for testing', required=False)
+    parser.add_argument('--inpImageValid', dest='input_images_valid', type=str,
+                        help='Path to folder with intesity based images for validation', required=False)
+    parser.add_argument('--inpLabelValid', dest='input_labels_valid', type=str,
+                        help='Path to folder with labelled segments, ground truth for validation', required=False)
+    
     parser.add_argument('--controlPoints', dest='controlPoints', type=int,
                         help='Define the number of control points', required=False)
     parser.add_argument('--epochs', dest='epochs', type=int,
@@ -66,13 +59,12 @@ if __name__ == "__main__":
 
     # Parse the arguments
     args = parser.parse_args()
-    
-    # for training neural network
-    image_dir_train = args.input_directory_images_train
-    label_dir_train = args.input_directory_labels_train
-    image_dir_test = args.input_directory_images_test
-    label_dir_test = args.input_directory_labels_test
-    split_percentile = args.split_percentile
+
+    image_train = args.input_images_train
+    label_train = args.input_labels_train
+    image_valid = args.input_images_valid
+    label_valid = args.input_labels_valid
+
     M = args.controlPoints
     epochs = args.epochs
     
@@ -80,17 +72,6 @@ if __name__ == "__main__":
     output_directory = args.output_directory
     imagepattern = args.image_pattern
 
-    # exclusively define:
-    # split_percentile OR (image_dir_test and label_dir_test)
-    if (split_percentile != None) and (split_percentile != 0) :
-        assert image_dir_train == None
-        assert label_dir_train == None
-
-    if (split_percentile == None) or (split_percentile == 0):
-        assert image_dir_train != None
-        assert label_dir_train != None
-        
-    
     # If there is a GPU to use, then use it
     gpu = False
     local_device_protos = device_lib.list_local_devices()
@@ -101,17 +82,11 @@ if __name__ == "__main__":
     logger.info("Image Pattern: {}".format(imagepattern))
     logger.info("Output Directory: {}".format(output_directory))
 
-    if split_percentile == None or split_percentile == "0":
-        logger.info("Input Training Directory for Intensity Based Images: {}".format(image_dir_train))
-        logger.info("Input Training Directory for Labelled Images: {}".format(label_dir_train))
-        logger.info("Input Testing Directory for Intensity Based Images: {}".format(image_dir_test))
-        logger.info("Input Testing Directory for Labelled Images: {}".format(label_dir_test))
+    logger.info("Input Training Directory for Intensity Based Images: {}".format(image_train))
+    logger.info("Input Training Directory for Labelled Images: {}".format(label_train))
+    logger.info("Input Validation Directory for Intensity Based Images: {}".format(image_valid))
+    logger.info("Input Validation Directory for Labelled Images: {}".format(label_valid))
         
-    else:
-        logger.info("Input Directory for Intensity Based Images: {}".format(image_dir_train))
-        logger.info("Input Directory for Labelled Images: {}".format(label_dir_train))
-        logger.info("Splitting Input Directory into {}:{} Ratio for Training:Testing".format(split_percentile, 100-split_percentile))
-
     logger.info("Number of Control Points {}".format(M))
     logger.info("Number of Epochs {}".format(epochs))
 
@@ -120,15 +95,14 @@ if __name__ == "__main__":
     if imagepattern == None:
         imagepattern = '.*'
 
-    main(image_dir_train=image_dir_train,
-         label_dir_train=label_dir_train,
-         image_dir_test=image_dir_test,
-         label_dir_test=label_dir_test,
-         split_percentile=split_percentile,
-         output_directory=output_directory,
-         gpu=gpu,
-         M=M,
-         epochs=epochs,
-         imagepattern=imagepattern)
+    main(image_dir_train  = image_train,
+         label_dir_train  = label_train,
+         image_dir_valid   = image_valid,
+         label_dir_valid   = label_valid,
+         output_directory = output_directory,
+         gpu              = gpu,
+         M                = M,
+         epochs           = epochs,
+         imagepattern     = imagepattern)
 
 
