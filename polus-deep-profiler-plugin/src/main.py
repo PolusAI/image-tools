@@ -1,17 +1,10 @@
-# from bfio import BioReader
+import os
 from pathlib import Path
-from utils import *
 import argparse, logging, os
-import cv2
 import pandas as pd
 import numpy as np
-from skimage import morphology, io
-from skimage.measure import regionprops
-from keras.applications.vgg16 import VGG16 
-import tensorflow as tf
-from bfio import BioReader
 import time
-
+from utils import *
 
 #Import environment variables
 POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
@@ -85,7 +78,7 @@ def main(inputDir:Path,
         modelname = get_model(model)
         logger.info(f'Single cell Feature Extraction using: {model} model')
         prf = dataframe_parsing(inputcsv)
-        #prf = prf.iloc[:498, :]
+
         pf = chunker(prf, batchsize)
         deepfeatures = []
         for batch in pf: 
@@ -96,6 +89,9 @@ def main(inputDir:Path,
                 imgname, maskname = dclass.__name__()
                 logger.info(f'Processing image: {imgname}')
                 logger.info(f'Processing mask: {maskname}')
+                logger.info(f'Processing cell: {row[2]}')
+                if row[3] == 0 and row[4] == 0 and row[5] == 0 and row[6] == 0:
+                    continue
                 imgpad = dclass.zero_padding()
                 img = np.dstack((imgpad, imgpad))
                 img = np.dstack((img, imgpad)) 
@@ -116,8 +112,6 @@ def main(inputDir:Path,
         endtime = (time.time() - starttime)/60
         print(f'Total time taken to process all images: {endtime}')
         return fn  
-
-
 
 
 if __name__=="__main__":

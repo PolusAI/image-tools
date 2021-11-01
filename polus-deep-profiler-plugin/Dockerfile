@@ -1,5 +1,5 @@
 
-FROM labshare/polus-bfio-util:2.1.9
+FROM tensorflow/tensorflow:2.4.1-gpu
 
 # environment variables defined in labshare/polus-bfio-util
 # ENV EXEC_DIR="/opt/executables"
