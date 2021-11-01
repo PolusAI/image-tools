@@ -2,7 +2,7 @@
 
 #!/bin/bash
 version=$(<VERSION)
-#echo $(datapath)
+datapath=$(readlink --canonicalize ../data)
 
 # Inputs
 inpDir=/data/inputs
@@ -17,7 +17,7 @@ filePattern=.csv
 # Log level, must be one of ERROR, CRITICAL, WARNING, INFO, DEBUG
 LOGLEVEL=INFO
 
-docker run -v /Users/mezukn/Desktop/polus/data:/data \
+docker run -v /--mount type=bind,source=${datapath},target=/data/ \
             --env POLUS_LOG=${LOGLEVEL} \
             polusai/tabular-to-feather-plugin:${version} \
             --inpDir ${inpDir} \
