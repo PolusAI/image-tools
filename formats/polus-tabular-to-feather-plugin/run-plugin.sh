@@ -9,7 +9,7 @@ inpDir=/data/inputs
 
 
 # Output paths
-outDir=/data/outputs
+outDir=/data/feather
 
 #
 filePattern=.csv

@@ -6,6 +6,10 @@ import os
 import argparse
 import logging
 import vaex
+import pyarrow.feather as feather
+import pyarrow as pa
+import pyarrow.parquet as pq
+import pyarrow.csv
 
 # Import environment variables
 POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
@@ -17,62 +21,74 @@ logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(messa
 logger = logging.getLogger("main")
 logger.setLevel(POLUS_LOG)
 
-# Step 1: Access files in input directory
-# Step 2: Filter files into array by filepatten provided
-# Step 3: Convert filetype to intermediate file type or Vaex DF
-# Step 4: Convert Vaex DF to Arrow Feather File
-# Step 5: Save feather file in output collection
-# Step 6: remove all intermediate files
 
-def csv_to_df(file):
-    """Convert csv into datafram or hdf5 file. Copied partially from Nicholas-Schaub polus-csv-to-feather-plugin
+def csv_to_feather(file):
+    """Converts csv into feather file using pyarrow.CSVStreamingReader
             
             Args:
                 file (str): Path to input file.
-                filePattern (str): extension of file to convert.
                 
             Returns:
-                Vaex dataframe or hdf5 file
+                Feather file
                 
     """
-    
+    file_name = Path(file).stem
+    feather_file = file_name + ".feather"
+    outputF = os.path.join(outDir, feather_file)
     logger.info('CSV CONVERSION: Checking size of csv file...')
     # Open csv file and count rows in file
     with open(file,'r', encoding='utf-8') as fr:
         ncols = len(fr.readline().split(','))
-        
+    
     chunk_size = max([2**24 // ncols, 1])
     logger.info('CSV CONVERSION: # of columns are: ' + str(ncols))
-        
-    # Convert large csv files to hdf5 if more than 1,000,000 rows
-    if ncols < 1000000:
-        logger.info('CSV CONVERSION: converting file into hdf5 format')
-        df = vaex.from_csv(file,convert=True,chunk_size=chunk_size)
-    else:
-        logger.info('CSV CONVERSION: converting file...')
-        df = vaex.from_csv(file)
-    return df
+    
+    arrow_schema = pa.Schema
+    # Preparing convert options
+    co = pyarrow.csv.ConvertOptions(column_types=arrow_schema)
 
-def binary_to_df(file,filePattern):
-    """Convert any binary formats into vaex dataframe (.arrow, .parquet, .hdf5, or .fits).
+    # Preparing read options
+    ro = pyarrow.csv.ReadOptions(block_size=chunk_size)
+    
+    # Streaming contents of CSV into batches
+    logger.info('CSV CONVERSION: converting csv into arrow table')
+    with pyarrow.csv.open_csv(file,read_options=ro, convert_options=co) as stream_reader:
+        for chunk in stream_reader:
+            if chunk is None:
+                break
+
+            # Emit batches from generator. Arrow schema is inferred unless explicitly specified
+            ds = pa.Table.from_batches(batches=[chunk])
+    
+    # Convert arrow table to feather file
+    
+    feather.write_feather(ds,outputF)
+
+def binary_to_feather(file,filePattern):
+    """Convert any binary formats into feather file via vaex (.arrow, .parquet, .hdf5, or .fits).
             
             Args:
                 file (str): Path to input file.
                 filePattern (str): extension of file to convert.
                 
             Returns:
-                Vaex dataframe.
+                feather file.
                 
     """
     binary_patterns = [".fits", ".arrow", ".parquet", ".hdf5"]
-
+    file_name = Path(file).stem
+    output_file = file_name + ".feather"
     logger.info('BINARY FILE: Scanning directory for binary file pattern... ')
     if filePattern in binary_patterns:
         #convert hdf5 to vaex df
         df = vaex.open(file)
-        return df
     else:
         raise FileNotFoundError('No supported binary file extensions were found in the directory. Please check file directory again.' )
+    
+    logger.info('writing file...')
+    os.chdir(outDir)
+    logger.info('DF to Feather: Writing Vaex Dataframe to Feather File Format for:' + file_name)
+    df.export_feather(output_file,outDir)
     
 def fcs_to_feather(file,outDir):
     """Convert fcs file to csv. Copied from polus-fcs-to-csv-converter plugin.
@@ -99,35 +115,7 @@ def fcs_to_feather(file,outDir):
     os.chdir(outDir)
     logger.info('DF to Feather: Writing Vaex Dataframe to Feather File Format for:' + file_name)
     df.export_feather(feather_filename,outDir)
-    
-    
-
-def df_to_feather(input_file,filePattern,outDir):
-    """Convert vaex dataframe to Arrow feather file.
-                
-        Args:
-            inpDir (str): Path to the directory to grab file.
-            filepattern (str): File extension.
-            outDir (str): Path to the directory to save feather file.
-                    
-        Returns:
-            Feather format file.
-                    
-    """  
-    file_name = Path(input_file).stem
-    output_file = file_name + ".feather"
-    logger.info('DF to Feather: Scanning input directory files... ')
-    if filePattern == ".csv":
-        #convert csv to vaex df or hdf5
-        df = csv_to_df(input_file)    
-    else:
-        df = binary_to_df(input_file,filePattern)  
         
-    logger.info('writing file...')
-    os.chdir(outDir)
-    logger.info('DF to Feather: Writing Vaex Dataframe to Feather File Format for:' + file_name)
-    df.export_feather(output_file,outDir)
-
 def main(inpDir: Path,
          filePattern: str,
             outDir: Path,
@@ -135,9 +123,6 @@ def main(inpDir: Path,
         """ Main execution function
         
         """
-        logger.info('outDir = {}'.format(outDir))
-        logger.info('inpDir = {}'.format(inpDir))
-        logger.info('filePattern = {}'.format(filePattern))
         
         if filePattern is None:
             filePattern = '.*'
@@ -145,17 +130,18 @@ def main(inpDir: Path,
         input_dir = Path(inpDir)
         input_file_list = list(Path(input_dir).glob('*' + filePattern))
         
-        print(input_file_list)
-        
         for file in input_file_list:
             if filePattern == '.fcs':
                 logger.info('Converting fcs file to csv ')
                 fcs_to_feather(file, outDir)
+            elif filePattern == '.csv':
+                csv_to_feather(file)
             else:
-                df_to_feather(file,filePattern,outDir)
+                binary_to_feather(file,filePattern)
         
-    
-            logger.info("Finished all processes!")
+        # remove_files(outDir)
+        
+        logger.info("Finished all processes!")
 
 if __name__=="__main__":
 
@@ -188,3 +174,5 @@ if __name__=="__main__":
     main(inpDir=inpDir,
          filePattern = filePattern,
          outDir=outDir)
+    
+    
