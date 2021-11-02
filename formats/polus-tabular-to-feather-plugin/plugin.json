@@ -1,6 +1,6 @@
 {
   "name": "Tabular to Feather",
-  "version": "0.1.1-beta",
+  "version": "0.1.2",
   "title": "Tabular to Feather",
   "description": "WIPP plugin to converts Tabular Data to Feather file format.",
   "author": "Kelechi Nina Mezu (nina.mezu@nih.gov)",
