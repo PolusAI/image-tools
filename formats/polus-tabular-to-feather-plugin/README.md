@@ -1,4 +1,4 @@
-# Tabular to Feather (v0.1.1)
+# Tabular to Feather (v0.1.2)
 This WIPP plugin allows analysts to convert various file formats received by researchers into Arrow Feather File Format (V2). This plugin supports the following file extensions: 
     - `.fcs`
     - `.csv`
