@@ -249,7 +249,7 @@ def prediction_splinedist(normalized_img : bfio.bfio.BioReader,
     input_img_shape = normalized_img.shape
     
     bw[:] = np.zeros(bw.shape)
-    with BioReader(bw_location) as read_bw:
+    with BioReader(bw_location, backend='zarr') as read_bw:
         # if large image, then run scalable predictions
         input_img = BfioReaderLessThan5D(normalized_img, 2) # need a wrapper to input 2D bfio reader object
         if max(input_img_shape) > bw._TILE_SIZE:
@@ -394,7 +394,7 @@ def predict_nn(image_dir : str,
 
             # use the normalized images to make the predictions
             model.config.axes = "YXC"
-            with BioReader(normalized_image, max_workers=1) as br_normed:
+            with BioReader(normalized_image, backend='zarr', max_workers=1) as br_normed:
                 with BioWriter(file_path = output_zarr_path, \
                                metadata  = br_normed.metadata, \
                                    dtype = np.int32, backend='zarr') as bw:
