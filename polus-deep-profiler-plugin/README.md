@@ -23,10 +23,9 @@ This plugin takes 7 input arguments and
 |---------------|-------------------------|--------|--------|
 | `--inputDir` | Input Intensity images collection to be processed by this plugin | Input | collection |
 | `--maskDir` | Input mask images collection to be processed by this plugin | Input | collection |
-| `--inputcsv` | Input csv file containing boundingbox coordinates for cells | Input | csvcollection |
+| `--featureDir` | Input csv file containing boundingbox coordinates for cells | Input | csvcollection |
 | `--model` | Choose a model for Feature Extraction| Input | enum |
-| `--batchsize` | Choose a batchsize for cells to be used for model prediction|Input | number|
-| `--filename` | Filename of the output CSV | Input | string |
+| `--batchSize` | Choose a batchSize for cells to be used for model prediction|Input | number|
 | `--outDir` | Output collection | Output | collection |
 
 

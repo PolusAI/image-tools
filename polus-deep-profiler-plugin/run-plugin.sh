@@ -6,10 +6,9 @@ datapath=$(readlink --canonicalize ../data)
 # Inputs
 inputDir=/data/path_to_files
 maskDir=/data/path_to_mask
-inputcsv=/data/path_to_csvfile
+featureDir=/data/path_to_featureDir
 model='model'
-batchsize='batchsize'
-filename="filename"
+batchSize='batchSize'
 
 
 # Output paths
@@ -28,9 +27,8 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             labshare/polus-deep-profiler-plugin:${version} \
             --inputDir ${inputDir} \
             --maskDir ${maskDir} \
-            --inputcsv ${inputcsv} \
+            --featureDir ${featureDir} \
             --model ${model} \
-            --batchsize ${batchsize} \
-            --filename ${filename} \
+            --batchSize ${batchSize} \
             --outDir ${outDir} 
             
