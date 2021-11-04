@@ -5,4 +5,3 @@ scipy==1.7.1
 opencv-python==4.5.3.56
 image-quality==1.2.7
 scikit-image==0.18.2
-
