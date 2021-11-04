@@ -84,8 +84,4 @@ if __name__=="__main__":
          scale=scale,
          filename=filename,
          outDir=outDir)
-
-
-
-
-
+    
