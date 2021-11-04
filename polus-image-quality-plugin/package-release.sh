@@ -10,7 +10,7 @@ bump2version --config-file bumpversion.cfg --new-version ${version} --allow-dirt
 ./build-docker.sh
 
 # Push to dockerhub
-docker push labshare/polus-image-quality-plugin:${version}
+docker push polusai/image-quality-plugin:${version}
 
 # Run unittests
 python -m unittest
