@@ -21,7 +21,7 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --user $(id -u):$(id -g) \
             --gpus ${GPUS} \
             --env POLUS_LOG=${LOGLEVEL} \
-            labshare/polus-image-quality-plugin:${version} \
+            polusai/image-quality-plugin:${version} \
             --inputDir ${inputDir} \
             --scale ${scale} \
             --filename ${filename} \
