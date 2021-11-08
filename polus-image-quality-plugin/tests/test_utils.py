@@ -17,16 +17,11 @@ class Test_Image_quality(unittest.TestCase):
         self.imgpath = os.path.join(self.inputDir, os.listdir(self.inputDir)[0])
         self.br = BioReader(self.imgpath)
         self.image = self.br.read().squeeze()
-        self.minI = 0
-        self.maxI = 1
         self.scale =2
-        self.qc = Image_quality(self.inputDir, self.image, self.minI, self.maxI,  self.scale)
+        self.qc = Image_quality(self.inputDir, self.image, self.scale)
       
     def test_normalize_intensities(self):
-        minI = 0
-        maxI = 1
-        scale =2
-        qc = Image_quality(self.inputDir, self.image, minI, maxI,  scale)
+        qc = Image_quality(self.inputDir, self.image,self.scale)
         result = qc.normalize_intensities()
         min_value, max_value  = np.min(result), np.max(result)
         self.assertFalse(min_value==-1, max_value==1)
