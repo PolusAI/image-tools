@@ -16,10 +16,17 @@ logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(messa
 logger = logging.getLogger("main")
 logger.setLevel(POLUS_LOG)
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "0" 
+sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(log_device_placement=True))
+if tf.test.gpu_device_name():
+    logger.info('Default GPU Device: {}'.format(tf.test.gpu_device_name()))
+else:
+    logger.info('Default Device is CPU')
+
 # ''' Argument parsing '''
 logger.info("Parsing arguments...")
 parser = argparse.ArgumentParser(prog='main', description='Deep Feature Extraction Plugin')    
-#     # Input arguments
+#   # Input arguments
 parser.add_argument('--inputDir', dest='inputDir', type=str,
                         help='Input image collection to be processed by this plugin', required=True)
 parser.add_argument('--maskDir', dest='maskDir', type=str,
@@ -72,23 +79,25 @@ def main(inputDir:Path,
         modelname = get_model(model)
         logger.info(f'Single cell Feature Extraction using: {model} model')
         prf = dataframe_parsing(featureDir)
-        index=0
+        count=0
         deepfeatures = []
         for filename, roi in prf.groupby('intensity_image'):
+            count += 1
             roi_images =[]
             roi_labels =[]
             pf = chunker(roi, batchSize)
             for batch in pf:
-                index += 1
                 for _, (image, mask, label, BBOX_YMIN, BBOX_XMIN, BBOX_HEIGHT, BBOX_WIDTH) in batch.iterrows():
                     logger.info(f'Processing image: {image}')
                     logger.info(f'Processing mask: {mask}')
                     logger.info(f'Processing cell: {label}')
+                    logger.info(f'Processing ImageNumber: {count}')
                     intensity_image, mask_image = loadimage(inputDir, maskDir, filename)
                     intensity_image = z_normalization(intensity_image)
-                    msk_img, tsk_img = masking_roi(intensity_image, mask_image, label, BBOX_YMIN, BBOX_XMIN, BBOX_HEIGHT, BBOX_WIDTH)            
+                    msk_img, _ = masking_roi(intensity_image, mask_image, label, BBOX_YMIN, BBOX_XMIN, BBOX_HEIGHT, BBOX_WIDTH)           
                     if BBOX_YMIN == 0 and  BBOX_XMIN == 0 and BBOX_HEIGHT == 0 and BBOX_WIDTH == 0:
-                            continue 
+                        logger.info(f'Skipping cell Number: {label}')
+                        continue 
                     msk_img = resizing(msk_img)
                     imgpad = zero_padding(msk_img)
                     img = np.dstack((imgpad, imgpad))
@@ -101,7 +110,7 @@ def main(inputDir:Path,
             dfeat = model_prediction(modelname,batch_images)
             pdm=feature_extraction(image, mask, batch_labels, dfeat)
             deepfeatures.append(pdm)
-            logger.info(f'Completed Batch: {index}')
+            
         deepfeatures = pd.concat(deepfeatures)
         fn = renaming_columns(deepfeatures)
         os.chdir(outDir)

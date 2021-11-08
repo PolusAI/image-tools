@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t polusai/polus-deep-profiler-plugin:${version}
+docker build . -t polusai/deep-profiler-plugin:${version}

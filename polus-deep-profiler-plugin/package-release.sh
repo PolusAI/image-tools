@@ -10,7 +10,7 @@ bump2version --config-file bumpversion.cfg --new-version ${version} --allow-dirt
 ./build-docker.sh
 
 # Push to dockerhub
-docker push labshare/polus-deep-profiler-plugin:${version}
+docker push polusai/deep-profiler-plugin:${version}
 
 # Run unittests
 python -m unittest

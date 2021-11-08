@@ -82,9 +82,10 @@ def feature_extraction(image, mask, labels, features):
     return df
 
 def dataframe_parsing(featureDir):
+    csvpath = [os.path.join(featureDir, f) for f in os.listdir(featureDir) if ".csv" in f][0]
     columnlist = ['mask_image','intensity_image','label',
     'BBOX_YMIN','BBOX_XMIN', 'BBOX_HEIGHT','BBOX_WIDTH']
-    df = pd.read_csv(featureDir)[columnlist]
+    df = pd.read_csv(csvpath)[columnlist]
     return df
 
 def renaming_columns(x):

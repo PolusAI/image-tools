@@ -1,12 +1,14 @@
-FROM tensorflow/tensorflow:2.4.1-gpu
+FROM labshare/polus-bfio-util:2.1.9-tensorflow
 
 
 COPY VERSION ${EXEC_DIR}
 COPY src ${EXEC_DIR}/
 
+RUN apt-get update
 
-RUN python3 -m pip install --upgrade pip setuptools wheel 
+RUN apt install -y libgl1-mesa-glx
 
+RUN pip3 install opencv-python-headless==4.5.3.56
 
 RUN python3 -m pip install -r ${EXEC_DIR}/requirements.txt
                                                                                                                                                                                             

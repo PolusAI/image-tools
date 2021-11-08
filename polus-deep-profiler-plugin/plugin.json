@@ -1,6 +1,6 @@
 {
     "name": "DeepProfiler",
-    "version": "0.1.0",
+    "version": "0.1.7",
     "title": "DeepProfiler",
     "description": "Implementation and extraction of deep learning representations at the single cell level from fluorescent Images",
     "author": "Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "polusai/DeepProfiler-plugin:0.1.0",
+    "containerId": "polusai/deep-profiler-plugin:0.1.7",
     "inputs": [
       {
         "name": "inputDir",
@@ -28,13 +28,12 @@
         "description": "Input csv file which contains boundingbox coordinates for all cells",
         "required": true
       },
-
       {
         "name": "model",
         "type": "enum",
-        "description": "Choose the model with pre-trained ImageNet weights for deep Features extraction",
+        "description": "Pre-trained ImageNet model to use for featurization",
         "options" : {
-          "values" : [ 
+          "values" : [
             "Xception",
             "VGG16",
             "VGG19",
@@ -61,14 +60,13 @@
         },
         "required": true
       },
- 
       {
         "name": "batchSize",
         "type": "number",
         "description": "Choose batchSize of cells to be used in model prediction",
-        "required": true
-      },
-  
+        "required": true,
+        "default" : 8
+      }
     ],
     "outputs": [
       {
@@ -90,12 +88,12 @@
       },
       {
         "key": "inputs.featureDir",
-        "title": "Input CSV",
+        "title": "Input Features CSV",
         "description": "Choose Input CSV containing cell boundingbox coordinates"
       },
       {
         "key": "inputs.model",
-        "title": "model",
+        "title": "Model",
         "description": "Choose model for feature Extraction"
       },
       {
