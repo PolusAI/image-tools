@@ -1,9 +1,10 @@
 FROM python:3.9-alpine
-LABEL maintainer="Axle Informatics"
 
 COPY VERSION /
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV POLUS_LOG="INFO"
+ENV POLUS_EXT=".ome.tif"
+
 ARG EXEC_DIR="/opt/executables"
 ARG DATA_DIR="/data"
 
