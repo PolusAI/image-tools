@@ -4,6 +4,7 @@ import argparse, logging, os
 import pandas as pd
 import numpy as np
 import time
+
 from utils import *
 
 #Import environment variables
@@ -60,13 +61,13 @@ logger.info("batchSize = {}".format(batchSize))
 outDir = Path(args.outDir)
 logger.info('outDir = {}'.format(outDir))
 
-def main(inputDir:Path,
-         maskDir:Path,
-         featureDir:Path,
-         model:str,
-         batchSize:int,
-         outDir:str
-         ) -> None:
+def main(inputDir,
+         maskDir,
+         featureDir,
+         model,
+         batchSize,
+         outDir
+         ):
 
         starttime= time.time()    
         model_lists =  ['Xception', 'VGG16', 'VGG19', 'ResNet50', 'ResNet101',
@@ -74,32 +75,33 @@ def main(inputDir:Path,
                         'InceptionResNetV2','DenseNet121','DenseNet169','DenseNet201','EfficientNetB0',
                         'EfficientNetB1','EfficientNetB2','EfficientNetB3','EfficientNetB4','EfficientNetB5',
                         'EfficientNetB6','EfficientNetB7']
-        if not model in  model_lists:
-            logger.error("Invalid model selection! Please select from the list")
-        modelname = get_model(model)
-        logger.info(f'Single cell Feature Extraction using: {model} model')
-        prf = dataframe_parsing(featureDir)
+        
+        if not model in model_lists:
+            logger.error(f"This model {model} selection is invalid")
+
+        modelname = deepprofiler.get_model(model)
+        prf = deepprofiler.dataframe_parsing(featureDir)
         count=0
         deepfeatures = []
         for filename, roi in prf.groupby('intensity_image'):
             count += 1
             roi_images =[]
             roi_labels =[]
-            pf = chunker(roi, batchSize)
+            pf = deepprofiler.chunker(roi, batchSize)
             for batch in pf:
                 for _, (image, mask, label, BBOX_YMIN, BBOX_XMIN, BBOX_HEIGHT, BBOX_WIDTH) in batch.iterrows():
-                    logger.info(f'Processing image: {image}')
-                    logger.info(f'Processing mask: {mask}')
-                    logger.info(f'Processing cell: {label}')
-                    logger.info(f'Processing ImageNumber: {count}')
-                    intensity_image, mask_image = loadimage(inputDir, maskDir, filename)
-                    intensity_image = z_normalization(intensity_image)
-                    msk_img, _ = masking_roi(intensity_image, mask_image, label, BBOX_YMIN, BBOX_XMIN, BBOX_HEIGHT, BBOX_WIDTH)           
+            
+                    dclass = deepprofiler(inputDir, maskDir, filename)
+                    intensity_image, mask_image = dclass.loadimage()
+                    intensity_image = deepprofiler.z_normalization(intensity_image)
+                    msk_img, _ = deepprofiler.masking_roi(intensity_image, mask_image, label, BBOX_YMIN, BBOX_XMIN, BBOX_HEIGHT, BBOX_WIDTH)           
                     if BBOX_YMIN == 0 and  BBOX_XMIN == 0 and BBOX_HEIGHT == 0 and BBOX_WIDTH == 0:
                         logger.info(f'Skipping cell Number: {label}')
                         continue 
-                    msk_img = resizing(msk_img)
-                    imgpad = zero_padding(msk_img)
+                    msk_img = deepprofiler.resizing(msk_img)
+                    imgpad = deepprofiler.zero_padding(msk_img)
+                    if imgpad.shape[0] != 128 and imgpad.shape[1] != 128:
+                        logger.error(f"Invalid Shape of a padded image: {label}")
                     img = np.dstack((imgpad, imgpad))
                     img = np.dstack((img, imgpad)) 
                     roi_labels.append(label)
@@ -107,18 +109,18 @@ def main(inputDir:Path,
             batch_images = np.asarray(roi_images)
             batch_labels = roi_labels
             logger.info('Feature Extraction Step')
-            dfeat = model_prediction(modelname,batch_images)
-            pdm=feature_extraction(image, mask, batch_labels, dfeat)
+            dfeat = deepprofiler.model_prediction(modelname,batch_images)
+            pdm=deepprofiler.feature_extraction(image, mask, batch_labels, dfeat)
             deepfeatures.append(pdm)
             
         deepfeatures = pd.concat(deepfeatures)
-        fn = renaming_columns(deepfeatures)
+        fn = deepprofiler.renaming_columns(deepfeatures)
         os.chdir(outDir)
         logger.info('Saving Output CSV File')
         fn.to_csv('DeepFeatures.csv', index = False)
         logger.info('Finished all processes')
         endtime = (time.time() - starttime)/60
-        print(f'Total time taken to process all images: {endtime}')
+        logger.info(f'Total time taken to process all images: {endtime}')
         return 
 
 if __name__=="__main__":
