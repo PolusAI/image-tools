@@ -1,14 +1,11 @@
-from sklearn.preprocessing import StandardScaler
 import argparse
 import logging
 import os
 import fnmatch
-import csv
-import re
 import hdbscan
 import numpy as np
 import pandas as pd
-import numpy.matlib
+import typing
 
 # Initialize the logger
 logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
@@ -16,7 +13,8 @@ logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(messa
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
-def list_file(csv_directory):
+
+def list_files(csv_directory: str) -> typing.List[str]:
     """List all the .csv files in the directory.
     
     Args:
@@ -31,23 +29,24 @@ def list_file(csv_directory):
                      for file_name in fnmatch.filter(files, '*.csv')]
     return list_of_files
 
-def clustering(clu_array,minclustersize):
+
+def clustering(data: np.ndarray, min_cluster_size: int, increment_outlier_id: bool) -> np.ndarray:
     """Cluster data using HDBSCAN.
     
     Args:
-        clu_array (array): Data that need to be clustered.
-        minclustersize (int): Smallest size grouping that should be considered as a cluster.
+        data (array): Data that need to be clustered.
+        min_cluster_size (int): Smallest size grouping that should be considered as a cluster.
+        increment_outlier_id (bool) : Increment outlier ID to unity.
         
     Returns:
-        Labeled data.
-        
+        Cluster labels for each row of data.
     """
-    hdbclus = hdbscan.HDBSCAN(min_cluster_size = minclustersize).fit(clu_array)
-    label_data = hdbclus.labels_
-    classified_data = label_data.reshape(label_data.shape[0],-1)
-    #Adding one to convert the instances with -1 as 0 for outliers
-    classified_data = classified_data.astype(int) + 1
-    return classified_data
+    clusters = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size).fit(data)
+    labels = clusters.labels_.flatten().astype(np.uint16) + 1
+    labels = labels + 1 if increment_outlier_id else labels
+
+    return labels
+
 
 def capgrp_pattern(pattern, cluster_data, data_obj,file_name):
     """Get matching files based on pattern.
@@ -88,155 +87,114 @@ def main():
     parser = argparse.ArgumentParser(prog='main', description='HDBSCAN clustering plugin')
     parser.add_argument('--inpdir', dest='inpdir', type=str,
                         help='Input collection-Data need to be clustered', required=True)
-    parser.add_argument('--pattern', dest='pattern', type=str,
-                        help='Regular expression for clustering each group', required=False)
-    parser.add_argument('--avgpattern', dest='avgpattern', type=str,
-                        help='Regular expression for averaging each group', required=False)
-    parser.add_argument('--minclustersize', dest='minclustersize', type=int,
+    parser.add_argument('--groupingPattern', dest='groupingPattern', type=str,
+                        help='Regular expression to group rows. Clustering will be applied across capture groups.', required=False)
+    parser.add_argument('--averageGroups', dest='averageGroups', type=str,
+                        help='Whether to average data across groups. Requires capture groups.', default='false', required=False)
+    parser.add_argument('--labelCol', dest='labelCol', type=str,
+                        help='Name of column containing labels. Required only for grouping operations.', required=False)
+    parser.add_argument('--minClusterSize', dest='minClusterSize', type=int,
                         help='Minimum cluster size', required=True)
-    parser.add_argument('--outlierclusterID', dest='outlierclusterID', type=str,
-                        help='Set cluster id as 1', required=False)
+    parser.add_argument('--incrementOutlierId', dest='incrementOutlierId', type=str,
+                        help='Increments outlier ID to 1.', default='false', required=False)
     parser.add_argument('--outdir', dest='outdir', type=str,
                         help='Output collection', required=True)
     
-    # Parse the arguments
+    # Parse the arguments.
     args = parser.parse_args()
     
-    #Path to csvfile directory
+    # Path to csvfile directory.
     inpdir = args.inpdir
     logger.info('inpdir = {}'.format(inpdir))
 
-    #Regular expression for cluster by channels
-    pattern = args.pattern
-    logger.info('pattern = {}'.format(pattern))
+    # Regular expression for grouping.
+    grouping_pattern = args.groupingPattern
+    logger.info('grouping_pattern = {}'.format(grouping_pattern))
 
-    #Regular expression for each well and average
-    avgpattern = args.avgpattern
-    logger.info('avgpattern = {}'.format(avgpattern))
-    
-    #Minimum cluster size for clustering using HDBSCAN
-    minclustersize = args.minclustersize
-    logger.info('minclustersize = {}'.format(minclustersize))
+    # Whether to average data for each group.
+    avg_groups = args.averageGroups.lower() != 'false'
+    logger.info('avg_groups = {}'.format(avg_groups))
 
-    #Set outlier cluster id as 1
-    outlierclusterid = args.outlierclusterID
-    logger.info('outlierclusterid = {}'.format(outlierclusterid))
+    # Name of column to use for grouping.
+    label_col = args.labelCol
+    logger.info('label_col = {}'.format(label_col))
+
+    # Minimum cluster size for clustering using HDBSCAN.
+    min_cluster_size = args.minClusterSize
+    logger.info('min_cluster_size = {}'.format(min_cluster_size))
+
+    # Set outlier cluster id as 1.
+    increment_outlier_id = args.incrementOutlierId.lower() != 'false' 
+    logger.info('increment_outlier_id = {}'.format(increment_outlier_id))
     
-    #Path to save output csvfiles
+    # Path to save output csvfiles.
     outdir = args.outdir
     logger.info('outdir = {}'.format(outdir))
-    
-    #Get list of .csv files in the directory including sub folders for clustering
-    inputcsv = list_file(inpdir)
-    if not inputcsv:
+
+    # Get list of .csv files in the directory including sub folders for clustering
+    input_csvs = list_files(inpdir)
+    if input_csvs is None:
         raise ValueError('No .csv files found.')
             
-    for inpfile in inputcsv:
-        #Get the full path
-        split_file = os.path.normpath(inpfile)
-        #split to get only the filename
-        inpfilename = os.path.split(split_file)
-        file_name_csv = inpfilename[-1]
-        file_name,file_name1 = file_name_csv.split('.', 1)
+    for csv in input_csvs:
+        # Get the full path and split to get only the filename.
+        split_file = os.path.normpath(csv)
+        file_name = os.path.split(split_file)[-1]
+        file_prefix, _ = file_name.split('.', 1)
+
         logger.info('Reading the file ' + file_name)
-        #Read csv file
-        cluster_data = pd.read_csv(inpfile)
-        #Get fields with datatype as object to concate after clustering
-        data_obj = cluster_data.select_dtypes(include='object')
-        #Exclude fields with datatype as object for clustering
-        data_num = cluster_data.select_dtypes(exclude='object')
-        if avgpattern:
-            cluster_data = capgrp_pattern(avgpattern,cluster_data,data_obj,file_name)
-            if cluster_data.empty:
-                logger.warning(f"Could not find pattern match in the file {file_name}. Skipping...")
-                continue
-            
-            #Create a column group with matching string
-            cluster_data['group'] = data_obj.apply(','.join,axis=1).str.extract(avgpattern, expand=False)
-            group_data = cluster_data.groupby('group').apply(lambda x: x.sort_values('group'))
-            data_num = group_data.select_dtypes(exclude='object')
-            avg_values = data_num.groupby("group").mean().reset_index()
-            data_num_avg = avg_values.select_dtypes(exclude='object')
-            num_array = np.array(data_num_avg, dtype=np.float64)
-           
-            #Cluster data using HDBSCAN clustering
-            logger.info('Clustering the data')
-            classified_data = clustering(num_array,minclustersize)
-            if outlierclusterid:
-                classified_data = classified_data + 1
 
-            #Get clusters as last column
-            avg_values['cluster'] = pd.DataFrame(classified_data)
-            avg_value_clus = avg_values.iloc[:,[0,-1]]
-            df_append = pd.DataFrame.merge(cluster_data,avg_value_clus,on='group')
+        # Read csv file
+        df = pd.read_csv(csv)
 
-        if pattern and avgpattern==None:
-            cluster_data = capgrp_pattern(pattern,cluster_data,data_obj,file_name)
-            if cluster_data.empty:
-                logger.warning(f"Could not find pattern match in the file {file_name}. Skipping...")
+        # If user provided a regular expression.
+        if grouping_pattern is not None:
+            df = df[df[label_col].str.match(grouping_pattern)].copy()
+            if df.empty:
+                logger.warning(f"Could not find any files matching the pattern {grouping_pattern} in file {csv}. Skipping...")
                 continue
         
             #Create a column group with matching string
-            cluster_data['group'] = data_obj.apply(','.join,axis=1).str.extract(pattern, expand=False)
-            group_data = cluster_data.groupby('group').apply(lambda x: x.sort_values('group'))
+            df['group'] = df[label_col].str.extract(grouping_pattern, expand=True).apply(','.join, axis=1)
 
-            #Get column names
-            col_name = cluster_data.columns.values.tolist()
+            # Get column(s) containing data.
+            df_data = df.select_dtypes(exclude='object').copy()
+            df_data['group'] = df['group']
+            
+            # If we want to average features for each group.
+            if avg_groups:
+                df_grouped = df_data.groupby('group').apply(lambda x: x.sort_values('group').mean(numeric_only=True))           
+            
+                # Cluster data using HDBSCAN clustering.
+                logger.info('Clustering the data')
+                cluster_ids = clustering(df_grouped.values, min_cluster_size, increment_outlier_id)
 
-            #Get unique values in group
-            df = group_data.group.unique()
-            df_append=pd.DataFrame([])
-            logger.info('Clustering the data')
-            #for i in df:
-            for index, i in enumerate(df):
-                sel_group=group_data.loc[group_data['group'] == i]
-                sel_group_num = sel_group.select_dtypes(exclude='object')
-                sel_group_obj = sel_group.select_dtypes(include='object')
-                get_group = sel_group_obj.iloc[:,-1:]
-                sel_group_obj = sel_group_obj.drop(labels='group', axis=1)
+                df_grouped['cluster'] = cluster_ids
+                df = df.merge(df_grouped['cluster'], left_on='group', right_index=True)
+            else: # We want separate clustering results for each group.
+                dfs = []
+                for group, df_ss in df_data.groupby('group'):
+                    # Cluster data using HDBSCAN clustering.
+                    logger.info(f'Clustering data in group {group}')
+
+                    cluster_ids = clustering(df_ss.values, min_cluster_size, increment_outlier_id)
+                    df_ss['cluster'] = cluster_ids
+                    dfs.append(df_ss)
                 
-                #Cluster data using HDBSCAN clustering
-                classified_data = clustering(sel_group_num,minclustersize)
-                #Stack all columns
-                df_processed = pd.DataFrame(np.hstack((sel_group_obj, sel_group_num, get_group, classified_data)))
-
-                if not df_append.empty:
-                    #Get max cluster number of a group and add to next group to have continuous numbering of clusters
-                    max_clu = df_append.iloc[:,-1:].max().tolist()
-                    add_clu = int(max_clu[0])
-                    df_processed[df_processed.iloc[:,-1:] != 0] = add_clu + df_processed.iloc[:,-1:]
-
-                df_append = df_append.append(df_processed)
-
-            if outlierclusterid:
-                df_append.iloc[:,-1]+=1
-        if (pattern==None) and (avgpattern==None):
-            obj_array = np.array(data_obj)
-            #Get column names
-            col_name = cluster_data.columns.values.tolist()
-            num_array = np.array(data_num, dtype=np.float64)
-
+                df_grouped = pd.concat(dfs)
+                df = df.merge(df_grouped['cluster'], left_index=True, right_index=True)
+            
+        # No grouping. Vanilla clustering. 
+        else:
+            # Get column(s) containing data.
+            df_data = df.select_dtypes(exclude='object').copy()
+            
             #Cluster data using HDBSCAN clustering
             logger.info('Clustering the data')
-            classified_data = clustering(num_array,minclustersize)
-            if outlierclusterid:
-                classified_data = classified_data + 1
+            cluster_ids = clustering(df_data.values, min_cluster_size, increment_outlier_id)
+            df['cluster'] = cluster_ids
 
-            #Get clusters as last column
-            df_append = pd.DataFrame(np.hstack((obj_array, data_num, classified_data)))
-        if 'cluster' not in df_append.columns:
-            #Get clusters as last column
-            col_name.append('cluster')
-            col_name_sep = ","
-            col_names = col_name_sep.join(str(v) for v in col_name)
-            
-            #Save dataframe into csv file
-            os.chdir(outdir)
-            logger.info('Saving csv file')
-            export_csv = np.savetxt('%s.csv'%file_name, df_append, header = col_names, fmt="%s", comments='', delimiter=',')
-        else:
-            os.chdir(outdir)
-            export_csv = df_append.to_csv('%s.csv'%file_name, index=None, header=True, encoding='utf-8-sig')
+        df.to_csv(os.path.join(outdir, f'{file_prefix}.csv'), index=None, header=True, encoding='utf-8-sig')
     logger.info("Finished all processes!")
 
 if __name__ == "__main__":
