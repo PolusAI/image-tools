@@ -1,6 +1,6 @@
 {
     "name": "HDBSCAN Clustering",
-    "version": "0.4.2",
+    "version": "0.4.5",
     "title": "HDBSCAN Clustering",
     "description": "Cluster the data using HDBSCAN.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,71 +8,82 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-hdbscan-clustering-plugin:0.4.2",
+    "containerId": "labshare/polus-hdbscan-clustering-plugin:0.4.5",
     "inputs": [      
       {
-        "name": "inpdir",
+        "name": "inpDir",
         "type": "csvCollection",
-        "description": "Input csv file collection",
+        "description": "Input CSV file collection",
         "required": "true"
       },
       {
-	"name": "minclustersize",
-        "type": "integer",
-        "description": "Enter minimum cluster size:",
-        "required": "true"
-      },
-      {
-	"name": "avgpattern",
+	      "name": "groupingPattern",
         "type": "string",
-        "description": "Enter regular expression with capture group to average and cluster data:",
+        "description": "Regular expression for optional row grouping.",
         "required": "false"
       },
       {
-	"name": "pattern",
-        "type": "string",
-        "description": "Enter regular expression with capture group to cluster each group separately:",
-        "required": "false"
-      },
-      {
-	"name": "outlierclusterID",
+	      "name": "averageGroups",
         "type": "boolean",
-        "description": "Set outlier cluster ID as 1",
+        "description": "Whether to average data across groups. Requires grouping pattern to be defined.",
+        "required": "false"
+      },
+      {
+	      "name": "labelCol",
+        "type": "string",
+        "description": "Name of column containing labels. Required for grouping pattern.",
+        "required": "false"
+      },
+      {
+	      "name": "minClusterSize",
+        "type": "integer",
+        "description": "Minimum cluster size",
+        "required": "true"
+      },
+      {
+	      "name": "incrementOutlierId",
+        "type": "boolean",
+        "description": "Increments outlier ID to 1",
         "required": "false"
       }
     ],
     "outputs": [
       {
-        "name": "outdir",
+        "name": "outDir",
         "type": "csvCollection",
         "description": "Output collection"
       }
     ],
     "ui": [
       {
-        "key": "inputs.inpdir",
-        "title": "Input csv file",
-        "description": "Input csv file for clustering"
+        "key": "inputs.inpDir",
+        "title": "Input CSV file",
+        "description": "Input csv file collection for clustering."
       },
       {
-        "key": "inputs.minclustersize",
+        "key": "inputs.groupingPattern",
+        "title": "Grouping pattern",
+        "description": "Regular expression for optional row grouping."
+      },
+      {
+        "key": "inputs.averageGroups",
+        "title": "Group averaging",
+        "description": "Whether to average data across groups. Requires grouping pattern to be defined."
+      },
+      {
+        "key": "inputs.labelCol",
+        "title": "Label column",
+        "description": "Name of column containing labels. Required for grouping pattern."
+      },
+      {
+        "key": "inputs.minClusterSize",
         "title": "Minimum cluster size",
-        "description": "Enter minimum cluster size:"
+        "description": "Minimum number of points in a cluster."
       },
       {
-        "key": "inputs.avgpattern",
-        "title": "Average Pattern",
-        "description": "Enter regular expression with capture group to average and cluster data:"
-      },
-      {
-        "key": "inputs.pattern",
-        "title": "Pattern",
-        "description": "Enter regular expression with capture group to cluster each group separately:"
-      },
-      {
-        "key": "inputs.outlierclusterID",
-        "title": "Outlier cluster ID",
-        "description": "Set outlier cluster ID as 1"
+        "key": "inputs.incrementOutlierId",
+        "title": "Increment outlier ID",
+        "description": "Set outlier ID to unity."
       }
     ]
   }

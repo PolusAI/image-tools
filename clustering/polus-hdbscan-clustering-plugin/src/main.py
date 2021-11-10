@@ -46,46 +46,13 @@ def clustering(data: np.ndarray, min_cluster_size: int, increment_outlier_id: bo
     labels = labels + 1 if increment_outlier_id else labels
 
     return labels
-
-
-def capgrp_pattern(pattern, cluster_data, data_obj,file_name):
-    """Get matching files based on pattern.
-    
-    Args:
-        pattern(str): Regular expression for clustering.
-        cluster_data(dataframe): Data that need to be matched with the pattern.
-        data_obj(dataframe):Fields with datatype as object.
-        file_name(str): Name of the file in process.
-                
-    Returns:
-        Dataframe with all the files that matches with the pattern.
-        
-    """
-    mask = data_obj.apply(
-                lambda x: x.str.findall(
-                pattern
-                )
-            ).any(axis=1)
-    #Get dataframe with all the files that matches with the pattern
-    cluster_data = cluster_data[mask]
-
-    #Get dataframe with all the files that are not matching with the pattern
-    cluster_data_nt=data_obj[~mask]
-    if not cluster_data_nt.empty:
-        pd.set_option('display.max_rows', None)
-        pd.set_option('display.max_columns', None)
-        pd.set_option('display.width', None)
-        pd.set_option('display.max_colwidth', None)
-        logger.info(f"Number of rows not matching the pattern in the file {file_name}:{len(cluster_data_nt)}")
-        logger.debug(f"List of files not matching the pattern in the file {file_name} \n{cluster_data_nt}\n")
-    return cluster_data
     
    
 # Setup the argument parsing
 def main():
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='HDBSCAN clustering plugin')
-    parser.add_argument('--inpdir', dest='inpdir', type=str,
+    parser.add_argument('--inpDir', dest='inpDir', type=str,
                         help='Input collection-Data need to be clustered', required=True)
     parser.add_argument('--groupingPattern', dest='groupingPattern', type=str,
                         help='Regular expression to group rows. Clustering will be applied across capture groups.', required=False)
@@ -97,15 +64,15 @@ def main():
                         help='Minimum cluster size', required=True)
     parser.add_argument('--incrementOutlierId', dest='incrementOutlierId', type=str,
                         help='Increments outlier ID to 1.', default='false', required=False)
-    parser.add_argument('--outdir', dest='outdir', type=str,
+    parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
     
     # Parse the arguments.
     args = parser.parse_args()
     
     # Path to csvfile directory.
-    inpdir = args.inpdir
-    logger.info('inpdir = {}'.format(inpdir))
+    inpDir = args.inpDir
+    logger.info('inpDir = {}'.format(inpDir))
 
     # Regular expression for grouping.
     grouping_pattern = args.groupingPattern
@@ -128,11 +95,11 @@ def main():
     logger.info('increment_outlier_id = {}'.format(increment_outlier_id))
     
     # Path to save output csvfiles.
-    outdir = args.outdir
-    logger.info('outdir = {}'.format(outdir))
+    outDir = args.outDir
+    logger.info('outDir = {}'.format(outDir))
 
     # Get list of .csv files in the directory including sub folders for clustering
-    input_csvs = list_files(inpdir)
+    input_csvs = list_files(inpDir)
     if input_csvs is None:
         raise ValueError('No .csv files found.')
             
@@ -194,7 +161,7 @@ def main():
             cluster_ids = clustering(df_data.values, min_cluster_size, increment_outlier_id)
             df['cluster'] = cluster_ids
 
-        df.to_csv(os.path.join(outdir, f'{file_prefix}.csv'), index=None, header=True, encoding='utf-8-sig')
+        df.to_csv(os.path.join(outDir, f'{file_prefix}.csv'), index=None, header=True, encoding='utf-8-sig')
     logger.info("Finished all processes!")
 
 if __name__ == "__main__":

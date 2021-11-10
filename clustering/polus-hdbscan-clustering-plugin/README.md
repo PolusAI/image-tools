@@ -1,28 +1,28 @@
 ﻿# Hierarchical Density-Based Spatial Clustering of Applications with Noise(HDBSCAN) Clustering
 
-The HDBSCAN Clustering plugin clusters the data using [HDBSCAN clustering](https://pypi.org/project/hdbscan/) library. The input and output for this plugin is csv file. Each instance(row) in the input csv file is assigned to one of the clusters. The output csv file contains the column 'Cluster' that shows which cluster the instance belongs to.
+The HDBSCAN Clustering plugin clusters the data using [HDBSCAN clustering](https://pypi.org/project/hdbscan/) library. The input and output for this plugin is a CSV file. Each observation (row) in the input CSV file is assigned to one of the clusters. The output CSV file contains the column `cluster` that identifies the cluster to which each observation belongs. A user can supply a regular expression with capture groups if they wish to cluster each group independently, or if they wish to average the numerical features across each group and treat them as a single observation.
 
 ## Inputs:
-### Input csv collection:
-The input file that need to be clustered. The file should be in csv format. This is a required parameter for the plugin.
+### Input CSV collection:
+The input file(s) that need to be clustered. The file should be in CSV format. This is a required parameter for the plugin.
 
-### Average Pattern
-The input for this parameter is a regular expression with capture group. This input splits the data into groups based on the matched pattern and average the value for each group and cluster the data. This is not a required parameter. New column 'group' is created in the output csv file that has the matched string based on the given pattern.
+### Grouping pattern:
+The input for this parameter is a regular expression with capture group. This input splits the data into groups based on the matched pattern. A new column `group` is created in the output CSV file that has the group based on the given pattern. Unless `averageGroups` is set to `true`, providing a grouping pattern will cluster each group independently. 
 
-### Pattern
-The input for this parameter is a regular expression with capture group. This input splits the data into groups based on the matched pattern to cluster each group separately. This is not a required parameter. New column 'group' is created in the output csv file that has the matched string based on the given pattern.
-Note: 
-If both pattern and average pattern has inputs, then average pattern will be considered. 
-'Average pattern' and 'Pattern' can be given as input only when there is a string field in the csv file that need to be matched with the pattern.
+### Average groups:
+Setting this equal to `true` will use the supplied `groupingPattern` to average the numerical features and produce a single row per group which is then clustered. The resulting cluster is assigned to all observations belonging in that group.
+
+### Label column:
+This is the name of the column containing the labels to be used with `groupingPattern`.
 
 ### Minimum cluster size:
-This parameter defines the smallest grouping size that should be considered as cluster. This is a required parameter. The input should be an integer and the value should be greater than 1.
+This parameter defines the smallest number of points that should be considered as cluster. This is a required parameter. The input should be an integer and the value should be greater than 1.
 
-### Outlier Cluster ID:
-This parameter sets the outlier cluster ID as 1 else the outlier cluster ID will be 0. This is an optional parameter. Setting the outlier cluster ID to 1 helps in visualizing the clusters in Neuroglancer.
+### Increment outlier ID:
+This parameter sets the ID of the outlier cluster to `1`, otherwise it will be 0. This is useful for visualization purposes if the resulting cluster IDs are turned into image annotations. 
 
 ## Output:
-The output is a csv file containing the cluster data to which each instance in the data belongs to. Outliers are defined as cluster 0 (if outlier cluster ID is not selected).
+The output is a CSV file containing the clustered data.
 
 ## Building
 To build the Docker image for the conversion plugin, run
@@ -38,11 +38,12 @@ This plugin takes four input arguments and one output argument:
 
 | Name                   | Description             | I/O    | Type   |
 |------------------------|-------------------------|--------|--------|
-| `--inpdir` | Input csv collection| Input | csvCollection |
-| `--minclustersize` | Enter minimum cluster size| Input | integer |
-| `--avgpattern` | Enter regular expression with capture group to average and cluster data| Input | string |
-| `--pattern` | Enter regular expression with capture group to cluster each group separately| Input | string |
-| `--outlierclusterID` | Set outlier cluster ID as 1| Input | boolean |
-| `--outdir` | Output collection | Output | csvCollection |
+| `--inpDir` | Input csv collection. | Input | csvCollection |
+| `--groupingPattern` | Regular expression to group rows. Clustering will be applied across capture groups by default. | Input | string |
+| `--averageGroups` | If set to `true`, will average data across groups. Requires capture groups | Input | string |
+| `--labelCol` | Name of the column containing labels for grouping pattern. | Input | string |
+| `--minClusterSize` | Minimum cluster size. | Input | integer |
+| `--incrementOutlierId` | Increments outlier ID to 1. | Input | string |
+| `--outDir` | Output collection | Output | csvCollection |
 
 
