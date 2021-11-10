@@ -74,10 +74,8 @@ def main(inputDir,
                         'InceptionResNetV2','DenseNet121','DenseNet169','DenseNet201','EfficientNetB0',
                         'EfficientNetB1','EfficientNetB2','EfficientNetB3','EfficientNetB4','EfficientNetB5',
                         'EfficientNetB6','EfficientNetB7']
-        
         if not model in model_lists:
             logger.error(f"This model {model} selection is invalid")
-
         modelname = Deepprofiler.get_model(model)
         prf = Deepprofiler.dataframe_parsing(featureDir)
         count=0
@@ -89,7 +87,6 @@ def main(inputDir,
             pf = Deepprofiler.chunker(roi, batchSize)
             for batch in pf:
                 for _, (image, mask, label, BBOX_YMIN, BBOX_XMIN, BBOX_HEIGHT, BBOX_WIDTH) in batch.iterrows():
-            
                     dclass = Deepprofiler(inputDir, maskDir, filename)
                     intensity_image, mask_image = dclass.loadimage()
                     intensity_image = Deepprofiler.z_normalization(intensity_image)
@@ -110,8 +107,7 @@ def main(inputDir,
             logger.info('Feature Extraction Step')
             dfeat = Deepprofiler.model_prediction(modelname,batch_images)
             pdm=Deepprofiler.feature_extraction(image, mask, batch_labels, dfeat)
-            deepfeatures.append(pdm)
-            
+            deepfeatures.append(pdm)       
         deepfeatures = pd.concat(deepfeatures)
         fn = Deepprofiler.renaming_columns(deepfeatures)
         os.chdir(outDir)
