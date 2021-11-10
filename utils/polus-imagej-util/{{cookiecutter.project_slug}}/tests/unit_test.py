@@ -19,8 +19,8 @@ plugin_dir = Path(__file__).parents[1]
 sys.path.append(str(plugin_dir))
 
 # Get src directory
-ij_converter_path = plugin_dir.joinpath('src')
-sys.path.append(str(ij_converter_path))
+src_path = plugin_dir.joinpath('src')
+sys.path.append(str(src_path))
 
 from src.main import main
 
