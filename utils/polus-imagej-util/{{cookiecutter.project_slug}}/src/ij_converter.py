@@ -1,9 +1,6 @@
 
 '''
 A conversion utility built to convert abstract to primitive
-This works for Threshold Apply and Gaussian Filter functions
-Note change from jnius to jpype for handling conversions in ij_converter.py
-
 '''
 
 import imagej
@@ -18,8 +15,6 @@ logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(messa
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("ij_converter")
 logger.setLevel(logging.INFO)
-
-ij = None
 
 ## fill in types to convert
 ABSTRACT_ITERABLES = [
