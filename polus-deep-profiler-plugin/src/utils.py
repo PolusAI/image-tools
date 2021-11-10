@@ -6,29 +6,27 @@ import tensorflow as tf
 from bfio import BioReader
 
 
-class deepprofiler:
+class Deepprofiler:
 
     """Extract Deeplearning features at the resolution of a single cell.
         Parameters
         ----------
         inputdir : Path of Intensity Images directory
         maskdir: Path of Masks Images directory
-        filename: Name of an Intensity Image
-       
+        filename: Name of an Intensity Image    
         """
-
     def __init__(self, inputdir, maskdir, filename):
         self.inputdir = inputdir
         self.maskdir =  maskdir
         self.filename = filename
         self.imagepath = os.path.join(self.inputdir, self.filename)
         self.maskpath = os.path.join(self.maskdir, self.filename)
+        self.br_image = BioReader(self.imagepath)
+        self.br_mask = BioReader(self.maskpath)
 
     def loadimage(self):
-        br_image = BioReader(self.imagepath)
-        br_mask = BioReader(self.maskpath)
-        intensity_image= br_image.read().squeeze()
-        mask_image= br_mask.read().squeeze()
+        intensity_image= self.br_image.read().squeeze()
+        mask_image= self.br_mask.read().squeeze()
         return intensity_image, mask_image
 
     @classmethod

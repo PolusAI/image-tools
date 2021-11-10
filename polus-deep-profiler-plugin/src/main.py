@@ -4,7 +4,6 @@ import argparse, logging, os
 import pandas as pd
 import numpy as np
 import time
-
 from utils import *
 
 #Import environment variables
@@ -79,27 +78,27 @@ def main(inputDir,
         if not model in model_lists:
             logger.error(f"This model {model} selection is invalid")
 
-        modelname = deepprofiler.get_model(model)
-        prf = deepprofiler.dataframe_parsing(featureDir)
+        modelname = Deepprofiler.get_model(model)
+        prf = Deepprofiler.dataframe_parsing(featureDir)
         count=0
         deepfeatures = []
         for filename, roi in prf.groupby('intensity_image'):
             count += 1
             roi_images =[]
             roi_labels =[]
-            pf = deepprofiler.chunker(roi, batchSize)
+            pf = Deepprofiler.chunker(roi, batchSize)
             for batch in pf:
                 for _, (image, mask, label, BBOX_YMIN, BBOX_XMIN, BBOX_HEIGHT, BBOX_WIDTH) in batch.iterrows():
             
-                    dclass = deepprofiler(inputDir, maskDir, filename)
+                    dclass = Deepprofiler(inputDir, maskDir, filename)
                     intensity_image, mask_image = dclass.loadimage()
-                    intensity_image = deepprofiler.z_normalization(intensity_image)
-                    msk_img, _ = deepprofiler.masking_roi(intensity_image, mask_image, label, BBOX_YMIN, BBOX_XMIN, BBOX_HEIGHT, BBOX_WIDTH)           
+                    intensity_image = Deepprofiler.z_normalization(intensity_image)
+                    msk_img, _ = Deepprofiler.masking_roi(intensity_image, mask_image, label, BBOX_YMIN, BBOX_XMIN, BBOX_HEIGHT, BBOX_WIDTH)           
                     if BBOX_YMIN == 0 and  BBOX_XMIN == 0 and BBOX_HEIGHT == 0 and BBOX_WIDTH == 0:
                         logger.info(f'Skipping cell Number: {label}')
                         continue 
-                    msk_img = deepprofiler.resizing(msk_img)
-                    imgpad = deepprofiler.zero_padding(msk_img)
+                    msk_img = Deepprofiler.resizing(msk_img)
+                    imgpad = Deepprofiler.zero_padding(msk_img)
                     if imgpad.shape[0] != 128 and imgpad.shape[1] != 128:
                         logger.error(f"Invalid Shape of a padded image: {label}")
                     img = np.dstack((imgpad, imgpad))
@@ -109,12 +108,12 @@ def main(inputDir,
             batch_images = np.asarray(roi_images)
             batch_labels = roi_labels
             logger.info('Feature Extraction Step')
-            dfeat = deepprofiler.model_prediction(modelname,batch_images)
-            pdm=deepprofiler.feature_extraction(image, mask, batch_labels, dfeat)
+            dfeat = Deepprofiler.model_prediction(modelname,batch_images)
+            pdm=Deepprofiler.feature_extraction(image, mask, batch_labels, dfeat)
             deepfeatures.append(pdm)
             
         deepfeatures = pd.concat(deepfeatures)
-        fn = deepprofiler.renaming_columns(deepfeatures)
+        fn = Deepprofiler.renaming_columns(deepfeatures)
         os.chdir(outDir)
         logger.info('Saving Output CSV File')
         fn.to_csv('DeepFeatures.csv', index = False)

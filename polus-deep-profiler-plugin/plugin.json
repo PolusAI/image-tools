@@ -1,6 +1,6 @@
 {
     "name": "DeepProfiler",
-    "version": "0.1.7",
+    "version": "0.1.9",
     "title": "DeepProfiler",
     "description": "Implementation and extraction of deep learning representations at the single cell level from fluorescent Images",
     "author": "Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "polusai/deep-profiler-plugin:0.1.7",
+    "containerId": "polusai/deep-profiler-plugin:0.1.9",
     "inputs": [
       {
         "name": "inputDir",
