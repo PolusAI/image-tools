@@ -18,6 +18,10 @@ It is not intended to be run directly. Run imagej-testing/shell_test.py to begin
 plugin_dir = Path(__file__).parents[1]
 sys.path.append(str(plugin_dir))
 
+# Get src directory
+ij_converter_path = plugin_dir.joinpath('src')
+sys.path.append(str(ij_converter_path))
+
 from src.main import main
 
 
