@@ -5,6 +5,7 @@ import os
 import argparse
 import logging
 import vaex
+import shutil
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from multiprocessing import cpu_count
 import tqdm
@@ -33,10 +34,15 @@ def csv_to_df(file):
                 Vaex dataframe
                 
     """
+    logger.info('CSV CONVERSION: Copy csv file into outDir for processing...')
+    file_name = Path(file).stem
+    output = file_name + ".csv"
+    outputfile = os.path.join(outDir, output)
+    shutil.copyfile(file, outputfile)
     
     logger.info('CSV CONVERSION: Checking size of csv file...')
     # Open csv file and count rows in file
-    with open(file,'r', encoding='utf-8') as fr:
+    with open(outputfile,'r', encoding='utf-8') as fr:
         ncols = len(fr.readline().split(','))
         
     chunk_size = max([2**24 // ncols, 1])
@@ -44,7 +50,7 @@ def csv_to_df(file):
         
     # Convert large csv files to hdf5 if more than 1,000,000 rows
     logger.info('CSV CONVERSION: converting file into hdf5 format')
-    df = vaex.from_csv(file,convert=True,chunk_size=chunk_size)
+    df = vaex.from_csv(outputfile,convert=True,chunk_size=chunk_size)
     return df
 
 def binary_to_df(file,filePattern):
@@ -111,6 +117,7 @@ def df_to_feather(input_file,filePattern,outDir):
     logger.info('DF to Feather: Scanning input directory files... ')
     if filePattern == ".csv":
         #convert csv to vaex df or hdf5
+        os.chdir(outDir)
         df = csv_to_df(input_file)    
     else:
         df = binary_to_df(input_file,filePattern)  
@@ -120,16 +127,13 @@ def df_to_feather(input_file,filePattern,outDir):
     logger.info('DF to Feather: Writing Vaex Dataframe to Feather File Format for:' + file_name)
     df.export_feather(output_file,outDir)
     
-    #Clean up intermediate files
-    if filePattern == ".csv":
-        input_file.with_name(input_file.name + ".yaml").unlink()
-        input_file.with_name(input_file.name + ".hdf5").unlink()
-
 def remove_files(outDir):
     logger.info('Removing intermediate files... ')
-    outputF = list(Path(outDir).glob('*.lock'))
-    for file in outputF:
-        os.remove(file)
+    outP = Path(outDir)
+    for file in outP.iterdir():
+        ext = Path(file).suffix
+        if not ext == '.feather':
+            os.remove(file)
     logger.info('Done')
     
 def main(inpDir: Path,
@@ -157,10 +161,6 @@ def main(inpDir: Path,
                 else:
                     processes.append(executor.submit(df_to_feather,file,filePattern,outDir))
                               
-        for process in tqdm.tqdm(
-            as_completed(processes), desc="Tabular to Feather", total=len(processes)
-        ):
-            process.result()
         
         remove_files(outDir)
         
