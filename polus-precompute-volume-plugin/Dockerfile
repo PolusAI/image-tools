@@ -6,7 +6,7 @@ RUN mkdir -p ${EXEC_DIR}
 COPY src ${EXEC_DIR}/.
 WORKDIR ${EXEC_DIR}
 
-RUN git clone --branch cache https://github.com/mmvih/neurogen.git --recurse-submodules
+RUN git clone https://github.com/LabShare/neurogen.git --recurse-submodules
 RUN pip3 install cmake
 RUN pip3 install neurogen/
 
