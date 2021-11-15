@@ -255,8 +255,16 @@ def prediction_splinedist(normalized_img : bfio.bfio.BioReader,
         if max(input_img_shape) > bw._TILE_SIZE:
             # need a wrapper for bfio writer object
             t_wrapper = BfioWriterWrapper(bw=bw, br=read_bw, shape=bw.shape[:2])
+            # min_overlap is the minimum amount of overlap between the blocks.
+            # For example (one dimension): 
+                # Size: 1080, min_overlap = 56, block_size = 1024
+                # slices can vary from 0:1024, 56:1080) to (0:1024, 968:1080) 
+            min_overlap = np.mod(t_wrapper.shape, bw._TILE_SIZE)
+            min_overlap[min_overlap == 0] = 32
+            block_size = min_overlap + 1024
+            block_size = np.min((block_size,t_wrapper.shape-min_overlap), axis=0)
             pred, _ = model.predict_instances_big(img = input_img, axes='YX', \
-                block_size=(1280,1280), min_overlap = (32,32), labels_out = t_wrapper, context=(0,0)) 
+                block_size=block_size, min_overlap = min_overlap, labels_out = t_wrapper, context=(0,0)) 
         # otherwise save output directly to output
         else:
             bw[:], _ = model.predict_instances(img = input_img) #splinedist calls input_img.ndim, 
