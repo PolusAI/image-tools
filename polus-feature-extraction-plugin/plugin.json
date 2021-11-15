@@ -1,6 +1,6 @@
 {
     "name": "Feature Extraction",
-    "version": "0.7.8",
+    "version": "0.12.1",
     "title": "Feature Extraction",
     "description": "Extract shape and intensity features from images.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -8,19 +8,25 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-feature-extraction-plugin:0.7.8",
+    "containerId": "labshare/polus-feature-extraction-plugin:0.12.1",
     "inputs": [      
       {
         "name": "segDir",
         "type": "collection",
         "description": "Labeled image collection",
-        "required": "true"
+        "required": "false"
       },
       {
         "name": "intDir",
         "type": "collection",
         "description": "Intensity image collection",
         "required": "false"
+      },
+      {
+        "name": "filePattern",
+        "type": "string",
+        "description": "To match intensity and labeled/segmented image",
+        "required": "true"
       },
       {
         "name": "pixelDistance",
@@ -42,8 +48,9 @@
                       { "description": "Perimeter", "enum": [ "perimeter" ] },
 		      { "description": "Orientation", "enum": [ "orientation" ] },
 		      { "description": "Convex Area", "enum": [ "convex_area" ] },
-                      { "description": "Centroid Row", "enum": [ "centroid_row" ] },
-		      { "description": "Centroid Column", "enum": [ "centroid_column" ] },
+                      { "description": "Centroid", "enum": [ "centroid" ] },
+		      { "description": "Boundingbox location", "enum": [ "boundingbox_location" ] },
+		      { "description": "Boundingbox dimension", "enum": [ "boundingbox_dimension" ] },
 		      { "description": "Eccentricity", "enum": [ "eccentricity" ] },
                       { "description": "Equivalent Diameter", "enum": [ "equivalent_diameter" ] },
 		      { "description": "Euler Number", "enum": [ "euler_number" ] },
@@ -126,6 +133,11 @@
         "description": "Intensity image collection"
       },
       {
+        "key": "inputs.filePattern",
+        "title": "File pattern",
+        "description": "To match intensity and labeled/segmented images"
+      },
+      {
         "key": "inputs.pixelDistance",
         "title": "Pixel Distance",
         "description": "Pixel distance to calculate the neighbors touching cells"
@@ -143,17 +155,20 @@
       {
         "key": "inputs.embeddedpixelsize",
         "title": "Embedded pixel size",
-        "description": "Use embedded pixel size"
+        "description": "Use embedded pixel size",
+	"default": true
       },
       {
         "key": "inputs.unitLength",
         "title": "Length of unit",
-        "description": "Unit name"
+        "description": "Unit name",
+	"condition": "model.inputs.embeddedpixelsize==false"
       },
       {
         "key": "inputs.pixelsPerunit",
         "title": "Pixels per unit",
-        "description": "Enter the number of pixels per unit of the metric"
+        "description": "Enter the number of pixels per unit of the metric",
+	"condition": "model.inputs.embeddedpixelsize==false"
       }      
       
     ]

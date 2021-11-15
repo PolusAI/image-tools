@@ -1,6 +1,6 @@
 {
     "name": "Subset Data",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "title": "Subset Data",
     "description": "Create a new image collection that is a subset of an existing image collection.",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-subset-data-plugin:0.1.1",
+    "containerId": "labshare/polus-subset-data-plugin:0.1.2",
     "inputs": [
       {
         "name": "filePattern",

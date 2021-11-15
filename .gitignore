@@ -20,3 +20,6 @@ build/
 *.egg-info
 *.conf
 __pycache__
+
+# data folder to ignore
+data

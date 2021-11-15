@@ -10,14 +10,21 @@ from filepattern import FilePattern as fp
 
 import numpy as np
 
+<<<<<<< HEAD
 # Import environment variables, if POLUS_LOG empty then automatically sets to INFO
 POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG', 'INFO'))
 
+=======
+>>>>>>> 40c934ac1c15f51043855a01b4bd5dbb7eb6eeb0
 # Initialize the logger    
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("main")
+<<<<<<< HEAD
 logger.setLevel(POLUS_LOG)
+=======
+logger.setLevel(logging.INFO)
+>>>>>>> 40c934ac1c15f51043855a01b4bd5dbb7eb6eeb0
 
 def main(input_dir: str,
          output_dir: str,
@@ -29,6 +36,7 @@ def main(input_dir: str,
     # Get list of output paths for every image
     logger.info("\n Getting the {}s...".format(imagetype))
     fp_images = fp(input_dir,filepattern)
+<<<<<<< HEAD
     
     input_images = [str(f[0]['file']) for f in fp_images]
     output_images = [os.path.join(output_dir, os.path.basename(f)) for f in input_images]
@@ -39,6 +47,17 @@ def main(input_dir: str,
                             output_image=output_images[image],
                             imagetype = imagetype,
                             mesh = mesh)
+=======
+    input_images = [str(f[0]['file']) for f in fp_images]
+    output_images = [os.path.join(output_dir, os.path.basename(f)) for f in input_images]
+    
+    # Build one pyramid for each image in the input directory
+        # Max of 2 workers since building individual pyrmaids allocates
+        # more CPUS as well. 
+    with ProcessPoolExecutor(max_workers=2) as executor:
+        executor.map(utils.build_pyramid, input_images, output_images, repeat(imagetype), repeat(mesh))
+
+>>>>>>> 40c934ac1c15f51043855a01b4bd5dbb7eb6eeb0
 
 if __name__ == "__main__":
 
