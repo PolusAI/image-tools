@@ -308,11 +308,7 @@ def predict_nn(image_dir : str,
 
     # grab the images that match imagepattern
     fp_images = fp(image_dir,imagepattern)
-    images = []
-    for files in fp_images():
-        image = files[0]['file']
-        if os.path.exists(image):
-            images.append(image)
+    images = [files[0]['file'] for files in fp_images() if os.path.exists(files[0]['file'])]
     num_images = len(images)
 
     # Load the Model

@@ -1,4 +1,4 @@
-filepattern==1.4.4
+filepattern==1.4.7
 csbdeep==0.6.1
 bfio[all]==2.1.8
 tensorflow==2.2.0
