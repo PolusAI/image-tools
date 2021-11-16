@@ -1,11 +1,10 @@
 from bfio.bfio import BioReader, BioWriter
 from pathlib import Path
-import fcsparser
-import filepattern
 import os
 import argparse
 import logging
-import vaex
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from multiprocessing import cpu_count
 import pyarrow as pa
 import pyarrow.feather as pf
 import pyarrow.parquet as pq
@@ -16,13 +15,24 @@ import shutil
 POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
 POLUS_EXT = os.environ.get('POLUS_EXT','.ome.tif')
 
+#Set number of processors for scalability
+NUM_CPUS = max(1, cpu_count() // 2)
+
 # Initialize the logger
 logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("main")
 logger.setLevel(POLUS_LOG)
 
-
+def remove_files(outDir):
+    logger.info('Removing intermediate files... ')
+    outP = Path(outDir)
+    for file in outP.iterdir():
+        ext = Path(file).suffix
+        if ext == '.feather':
+            os.remove(file)
+    logger.info('Done') 
+    
 def feather_to_tabular(file, filePattern, outDir):
     """Converts feather file into tabular file using pyarrow
             
@@ -46,23 +56,21 @@ def feather_to_tabular(file, filePattern, outDir):
     
     logger.info('Feather CONVERSION: Converting file into Vaex DF')
     # Result is vaex dataframe
-    if Path(outputfile).suffix == '.feather':
-        df = pf.read_table(outputfile)
-        
-        if filePattern == ".csv":
-            # Streaming contents of Arrow Table into csv
-            logger.info('Feather CONVERSION: converting arrow table into .csv file')
-            with csv.CSVWriter(csv_file, df.schema) as writer:
-                writer.write_table(df)
-        elif filePattern ==".parquet":
-            logger.info('Feather CONVERSION: converting arrow table into .parquet file')
-            pq.write_table(df, pq_file)
+    
+    df = pf.read_table(outputfile)
+    if filePattern == ".csv":
+        # Streaming contents of Arrow Table into csv
+        logger.info('Feather CONVERSION: converting arrow table into .csv file')
+        os.chdir(outDir)
+        return csv.write_csv(df, csv_file)
+    elif filePattern ==".parquet":
+        logger.info('Feather CONVERSION: converting arrow table into .parquet file')
+        os.chdir(outDir)
+        return pq.write_table(df, pq_file)
         # If neither, log error
-        else:
-            logger.error('Feather CONVERSION Error: This filePattern is not supported in this plugin')
-    
-    
-         
+    else:
+        logger.error('Feather CONVERSION Error: This filePattern is not supported in this plugin')    
+             
 def main(inpDir: Path,
          filePattern: str,
             outDir: Path,
@@ -75,10 +83,15 @@ def main(inpDir: Path,
             filePattern = '.*'
         
         input_dir = Path(inpDir)
-        # input_file_list = list(Path(input_dir).glob('*' + filePattern))
         
-        for file in input_dir.iterdir():
-            feather_to_tabular(file, filePattern, outDir)
+        processes = []
+        with ProcessPoolExecutor(NUM_CPUS) as executor:
+
+            for file in input_dir.iterdir():
+                if filePattern == '.fcs':
+                    processes.append(executor.submit(feather_to_tabular,file, filePattern, outDir))
+            
+        remove_files(outDir)
         
         logger.info("Finished all processes!")
 

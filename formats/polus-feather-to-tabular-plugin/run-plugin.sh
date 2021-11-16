@@ -11,7 +11,7 @@ inpDir=/data/feather
 outDir=/data/outputs
 
 #
-filePattern=.csv
+filePattern=.parquet
 
 # Log level, must be one of ERROR, CRITICAL, WARNING, INFO, DEBUG
 LOGLEVEL=INFO
