@@ -104,6 +104,13 @@ if __name__ == '__main__':
             # Run the cookiecutter utility for the plugin
             os.system('cookiecutter ./utils/polus-imagej-util/ --no-input')
             
+            print('Reformatting ' + str(path))
+            
+            # Run code formatter
+            os.system('black ' + str(path))
+            
+            print('\n')
+            
             # Open the shell script in append mode
             with open(shell_test_path, 'a') as fhand:
                 
