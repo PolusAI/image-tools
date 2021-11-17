@@ -30,12 +30,16 @@ class Deepprofiler:
         return intensity_image, mask_image
 
     @classmethod
-    def z_normalization(cls, x): 
+    def z_normalization(cls, x):
+        '''This function performs z-normalization on each single image, calculated by subtracting the mean of 
+        image intensities and dividing with a standard deviation of image intensities'''
         znormalized = (x - np.mean(x)) / np.std(x) 
         return znormalized
 
     @classmethod
-    def masking_roi(cls, intensity_image, mask_image, label,BBOX_YMIN, BBOX_XMIN, BBOX_HEIGHT, BBOX_WIDTH): 
+    def masking_roi(cls, intensity_image, mask_image, label,BBOX_YMIN, BBOX_XMIN, BBOX_HEIGHT, BBOX_WIDTH):
+        '''This function returns masked single cell and its labelled cell image which is calculated using 
+        the bounding box coordinates extracted using Nyxus pluin''' 
         timage, tmask = intensity_image.copy(), mask_image.copy()
         tmask[mask_image !=label] = 0
         timage[tmask!=label] =0
@@ -45,6 +49,8 @@ class Deepprofiler:
 
     @classmethod
     def resizing(cls, x):
+        '''This function resize each single cell image proportionally while keeping the aspect ratio at the sametime.
+          The desired size of the final single cell image is 128 * 128 which is then passed into neural networks''' 
         desired_size = 128
         Y, X = x.shape
         aspectratio = Y/X
@@ -68,7 +74,9 @@ class Deepprofiler:
             return x
 
     @classmethod    
-    def zero_padding(cls, x): 
+    def zero_padding(cls, x):
+        '''This function adds zero padding on either side of the single cell image dimensions in order to get the
+         128 * 128 as a final desired size of a single cell which is then passed into neural networks''' 
         desired_size = 128
         Y, X = x.shape
         ch_w = desired_size - X
@@ -81,21 +89,25 @@ class Deepprofiler:
 
     @classmethod
     def chunker(cls, df, batchSize):
+        '''This function generates chunks of a defined batchSize to iterate over dataframe efficiently'''   
         for idx in range(0, len(df), batchSize):
             yield df.iloc[idx:idx + batchSize] 
 
     @classmethod   
     def get_model(cls, model):
+        '''loading of Pre-trained Keras models in tensorflow''' 
         modelname = getattr(tf.keras.applications, model)
         return modelname(weights='imagenet', include_top=False, pooling='avg')
 
     @classmethod 
-    def model_prediction(cls, model, image):  
+    def model_prediction(cls, model, image):
+        '''Average pooling layer of the Pre-trained model is used for feature extraction'''  
         features = model.predict(image)
         return features
 
     @classmethod 
-    def feature_extraction(cls, image, mask, labels, features):  
+    def feature_extraction(cls, image, mask, labels, features):
+        '''This function adds metadata data columns to the predicted features of single cell images'''   
         cellid = labels
         df = pd.DataFrame(features)
         df.insert(0, 'ImageName', image)
@@ -105,6 +117,8 @@ class Deepprofiler:
 
     @classmethod 
     def dataframe_parsing(cls, featureDir):
+        '''This function reads NyxusFeatures CSV file and extracts only selected columns related to filenames of intenstiy 
+        and labelled images, labels (cell IDs) and bounding box coordinates calculated for each single cell''' 
         csvpath = [os.path.join(featureDir, f) for f in os.listdir(featureDir) if ".csv" in f][0]
         columnlist = ['mask_image','intensity_image','label',
         'BBOX_YMIN','BBOX_XMIN', 'BBOX_HEIGHT','BBOX_WIDTH']
@@ -113,6 +127,7 @@ class Deepprofiler:
         
     @classmethod 
     def renaming_columns(cls, x):
+        '''This function rename column integers to strings columns with the prefix added to each column name''' 
         x['Cell_ID'] = x['Cell_ID'].astype('str')
         columns = x.select_dtypes(include=[np.number]).columns.tolist()
         newcol = ['Feature_'+ str(col) for col in columns]
