@@ -7,8 +7,8 @@ datapath=$(readlink --canonicalize ../data)
 inputDir=/data/path_to_files
 maskDir=/data/path_to_mask
 featureDir=/data/path_to_featureDir
-model='model'
-batchSize='batchSize'
+model='VGG16'
+batchSize=8
 
 
 # Output paths

@@ -60,12 +60,12 @@ logger.info("batchSize = {}".format(batchSize))
 outDir = Path(args.outDir)
 logger.info('outDir = {}'.format(outDir))
 
-def main(inputDir,
-         maskDir,
-         featureDir,
-         model,
-         batchSize,
-         outDir
+def main(inputDir:Path,
+         maskDir:Path,
+         featureDir:Path,
+         model:str,
+         batchSize:int,
+         outDir:Path
          ):
 
         starttime= time.time()    
