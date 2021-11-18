@@ -479,7 +479,7 @@ def _get_photobleach(imgflt_stack, flatfield, darkfield=None):
                     (imgflt_stack.shape[0], imgflt_stack.shape[1], 1),
                 ),
                 -1,
-                initial=0,
+                initial=10 ** -6,
             ) + np.min(
                 np.reshape(
                     E1 + weights / (ent1 * mu),
@@ -584,9 +584,23 @@ def basic(
             if np.max(mad_flat, initial=mad_dark) < new_options["reweight_tol"]:
                 break
 
-        # Calculate photobleaching effects if specified
+        # Export the photobleaching components as csv
         if photobleach:
-            pb = _get_photobleach(copy.deepcopy(img_stk), flatfield, darkfield)
+            ProcessManager.log("Calculating photobleaching components...")
+
+            offsets_out = base_output.replace(extension, "_offsets.csv")
+            with open(metadata_dir.joinpath(offsets_out), "w") as fw:
+                fw.write("file,offset\n")
+
+                for batch in range(0, len(files), OPTIONS["n_sample"]):
+
+                    file_batch = files[
+                        batch : min([batch + OPTIONS["n_sample"], len(files)])
+                    ]
+                    img_stk, X, Y = _get_resized_image_stack(file_batch)
+                    pb = _get_photobleach(img_stk, flatfield, darkfield)
+                    for f, o in zip(file_batch, pb[0, :].tolist()):
+                        fw.write("{},{}\n".format(f["file"].name, o))
 
         # Resize images back to original image size
         ProcessManager.log("Saving outputs...")
@@ -622,11 +636,3 @@ def basic(
                 bw.x = X
                 bw.y = Y
                 bw[:] = np.reshape(darkfield, (Y, X, 1, 1, 1))
-
-        # Export the photobleaching components as csv
-        if photobleach:
-            offsets_out = base_output.replace(extension, "_offsets.csv")
-            with open(metadata_dir.joinpath(offsets_out), "w") as fw:
-                fw.write("file,offset\n")
-                for f, o in zip(files, pb[0, :].tolist()):
-                    fw.write("{},{}\n".format(f, o))
