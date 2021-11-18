@@ -1,4 +1,4 @@
-# Polus Recycle Stitching Vector Plugin
+# Polus Recycle Stitching Vector Plugin (v1.5.0)
 
 This WIPP plugin applies an existing stitching vector to an image collection.
 The
