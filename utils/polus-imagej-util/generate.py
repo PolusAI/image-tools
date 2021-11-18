@@ -1,4 +1,5 @@
 import os
+import json
 import jpype
 import shutil
 import classes.populate as cp
@@ -10,29 +11,29 @@ parse the ImageJ ops help and create plugins"""
 
 if __name__ == '__main__':
 
-    print('Starting JVM and parsing ops help\n')
+    # print('Starting JVM and parsing ops help\n')
     
-    # Populate ops by parsing the imagej operations help
-    populater = cp.Populate()
+    # # Populate ops by parsing the imagej operations help
+    # populater = cp.Populate()
     
-    print('Building json templates\n')
+    # print('Building json templates\n')
     
     # Get the current working directory
     cwd = Path(os.getcwd())
     
-    # Save a directory for the cookietin json files
-    cookietin_path = cwd.joinpath('utils/polus-imagej-util/cookietin')
+    # # Save a directory for the cookietin json files
+    # cookietin_path = cwd.joinpath('utils/polus-imagej-util/cookietin')
     
-    # Build the json dictionary to be passed to the cookiecutter module 
-    populater.build_json('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.2.0', cookietin_path)
+    # # Build the json dictionary to be passed to the cookiecutter module 
+    # populater.build_json('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.2.0', cookietin_path)
     
-    print('Shutting down JVM\n')
+    # print('Shutting down JVM\n')
     
-    # Remove the imagej instance
-    del populater._ij
+    # # Remove the imagej instance
+    # del populater._ij
     
-    # Shut down JVM
-    jpype.shutdownJVM()
+    # # Shut down JVM
+    # jpype.shutdownJVM()
     
     print('Generating plugins with cookiecutter\n')
     
@@ -81,12 +82,13 @@ if __name__ == '__main__':
     # Iterate over all plugin directories in the cookietin directory 
     for plugin in plugins:
         
+        #plugins_to_generate = ['math-add']
         plugins_to_generate = [
-            'filter-dog',
-            #'image-integral',
-            #'filter-sobel'
+            'image-integral',
+            'image-distancetransform', 
+            'filter-dog'
         ]
-    
+        #plugins_to_generate = ['filter-dog', 'filter-addNoise', 'filter-convolve', 'filter-bilateral', 'filter-correlate']
         if plugin.name in plugins_to_generate:
         #if True:
              
@@ -104,12 +106,10 @@ if __name__ == '__main__':
             # Run the cookiecutter utility for the plugin
             os.system('cookiecutter ./utils/polus-imagej-util/ --no-input')
             
-            print('Reformatting ' + str(path))
-            
-            # Run code formatter
-            os.system('black ' + str(path))
-            
-            print('\n')
+            # Get the overloading methods from the op
+            with open(cookiecutter_path, 'r') as f:
+                op_methods = json.load(f)['_inputs']['opName']['options']
+                f.close()
             
             # Open the shell script in append mode
             with open(shell_test_path, 'a') as fhand:
@@ -118,11 +118,11 @@ if __name__ == '__main__':
                 plugin_key = plugin.name.replace('-', '.')
                 
                 # Get all available ops for the plugin
-                ops = [op for op in populater._plugins[plugin_key].supported_ops.keys()]
+                #ops = [op for op in populater._plugins[plugin_key].supported_ops.keys()]
                 
                 # Create a list of the operating sytem commands
                 #commands = ["python "+str(path)+"/tests/unit_test.py --opName "+op for op in ops]
-                commands = ["python "+str(path)+"/tests/unit_test.py --opName '{}'".format(op) for op in ops]
+                commands = ["python "+str(path)+"/tests/unit_test.py --opName '{}'".format(op) for op in op_methods]
                 
                 # Generate the shell script lines (each line is an os command to test a single op)
                 lines = ['os.system("{}")\n'.format(command) for command in commands]
