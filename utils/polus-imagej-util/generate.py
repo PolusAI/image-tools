@@ -106,6 +106,11 @@ if __name__ == '__main__':
             # Run the cookiecutter utility for the plugin
             os.system('cookiecutter ./utils/polus-imagej-util/ --no-input')
             
+            # Use python black to format code
+            os.system('black {}'.format(path))
+            
+            print('\n')
+            
             # Get the overloading methods from the op
             with open(cookiecutter_path, 'r') as f:
                 op_methods = json.load(f)['_inputs']['opName']['options']
