@@ -44,7 +44,7 @@
         "name": "photoPattern",
         "type": "string",
         "description": "Filename pattern used to match photobleach files to image files",
-        "required": true
+        "required": false
       }
     ],
     "outputs": [
