@@ -1,6 +1,6 @@
 {
     "name": "Apply Flatfield",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "title": "Apply Flatfield",
     "description": "Apply a flatfield algorithm to a collection of images.",
     "author": "Nick Schaub (Nick.Schaub@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-apply-flatfield-plugin:1.0.5",
+    "containerId": "labshare/polus-apply-flatfield-plugin:1.0.6",
     "inputs": [
       {
         "name": "darkPattern",
