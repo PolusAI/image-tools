@@ -186,12 +186,12 @@ if __name__=="__main__":
     
     # Add command-line argument for each of the input arguments
     {% for inp,val in cookiecutter._inputs.items() -%}
-    parser.add_argument('--{{ inp }}', dest='{{ inp }}', type=str,
+    parser.add_argument('--{{ val.title }}', dest='{{ inp }}', type=str,
                         help='{{ val.description }}', required={{ val.required }})
     {% endfor %}
     # Add command-line argument for each of the output arguments
     {%- for out,val in cookiecutter._outputs.items() %}
-    parser.add_argument('--{{ out }}', dest='{{ out }}', type=str,
+    parser.add_argument('--{{ val.title }}', dest='{{ out }}', type=str,
                         help='{{ val.description }}', required=True)
     {% endfor %}
     """ Parse the arguments """
@@ -206,12 +206,12 @@ if __name__=="__main__":
     {% else -%}
     _{{ inp }} = args.{{ inp }}
     {% endif -%}
-    logger.info('{{ inp }} = {}'.format(_{{ inp }}))
+    logger.info('{{ val.title }} = {}'.format(_{{ inp }}))
     {% endfor %}
     # Output Args
     {%- for out,val in cookiecutter._outputs.items() %}
     _{{ out }} = Path(args.{{ out }})
-    logger.info('{{ out }} = {}'.format(_{{ out }}))
+    logger.info('{{ val.title }} = {}'.format(_{{ out }}))
     {%- endfor %}
     
     main(
