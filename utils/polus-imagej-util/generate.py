@@ -1,12 +1,12 @@
 import os
 import jpype
-import imagej
 import shutil
 import classes.populate as cp
 from pathlib import Path
 
 
-"""This file uses the classes in populate.py and cookiecutter to automatically parse the ImageJ ops help and create plugins"""
+"""This file uses the classes in populate.py and cookiecutter to automatically 
+parse the ImageJ ops help and create plugins"""
 
 if __name__ == "__main__":
 

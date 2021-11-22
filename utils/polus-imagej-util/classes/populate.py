@@ -1,12 +1,15 @@
 import re
 import json
 import logging
+from numpy import False_
 import scyjava
+import imagej
 from pathlib import Path
 
 """
-This file provides classes to parse the imagej ops help and create cookiecutter json templates. This file is not intended to be ran directly, instead
-the classes contained here are instantiated with Generate.py.
+This file provides classes to parse the imagej ops help and create cookiecutter 
+json templates. This file is not intended to be ran directly, instead the 
+classes contained here are instantiated with Generate.py.
 """
 
 # Disable warning message
@@ -65,7 +68,8 @@ class Op:
         """A method to instantiate an Op class member
 
         Args:
-            namespace: The namespace object representing the imagej op that the overloading method belongs. Namespace instance.
+            plugin: The Plugin object representing the imagej op that the
+                overloading method belongs. Plugin instance.
             name: A string of representing the overloading method name.
             fullPath: A string representing the full Java namespace call of the overloading method.
             inputs: A list of tuples containing the imagej input titles and imagej data types.
@@ -79,7 +83,7 @@ class Op:
             raise TypeError("inputs must be an instance of a list")
 
         # Define class attributes
-        self.namespace = namespace
+        self.plugin = plugin
         self.name = name
         self.fullPath = fullPath
 
@@ -134,19 +138,19 @@ class Op:
         return [var[0][0] for var in self._inputs]
 
     @property
-    def imagejInputTitles(self):
+    def imagej_input_titles(self):
         return [var[0][1] for var in self._inputs]
 
     @property
-    def wippTypeInputs(self):
+    def wipp_type_inputs(self):
         return [var[1] for var in self._inputs]
 
     @property
-    def wippTypeOutput(self):
+    def wipp_type_output(self):
         return self._output[0][1]
 
     @property
-    def imagejTypeOutput(self):
+    def imagej_type_output(self):
         return self._output[0][0][0]
 
     @property
@@ -250,7 +254,8 @@ class Op:
 
 
         Args:
-            inputs: A list of tuples containing the imagej input titles and data types.
+            inputs: A list of tuples containing the imagej input titles and data
+                types.
             output: A tuple containing the imagej output title and data type.
 
         Returns:
@@ -595,10 +600,10 @@ class Populate:
                 output = re_output.findall(opDoc)[0]
 
                 # Create an Op object to store the op data
-                op = Op(namespace, name, fullPath, inputs, output)
+                op = Op(plugin, name, full_path, inputs, output)
 
                 # Check if the op is supported
-                if op.partialSupport:
+                if op.partial_support:
                     support_msg = True
                 else:
                     support_msg = op.supportmsg
@@ -639,7 +644,7 @@ class Populate:
         """
 
         # Check if excluded log exists
-        if Path(logFile).exists():
+        if Path(log_file).exists():
             # Unlink excluded log
             Path(logFile).unlink()
 
@@ -665,7 +670,7 @@ class Populate:
         loginfo = ""
 
         # Open the main log info template
-        with open(logTemplate) as fhand:
+        with open(log_template) as fhand:
             for line in fhand:
                 loginfo += line
 
@@ -776,7 +781,8 @@ class Populate:
                     json.dump(self.jsonDic[name], fw, indent=4)
 
 
-"""This section is for testing only, the classes contained in this file were intended to be instantiated in generate.py"""
+"""This section is for testing only, the classes contained in this file were 
+intended to be instantiated in generate.py"""
 
 if __name__ == "__main__":
 

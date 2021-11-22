@@ -18,6 +18,10 @@ It is not intended to be run directly. Run imagej-testing/shell_test.py to begin
 plugin_dir = Path(__file__).parents[1]
 sys.path.append(str(plugin_dir))
 
+# Get src directory
+src_path = plugin_dir.joinpath('src')
+sys.path.append(str(src_path))
+
 from src.main import main
 
 
@@ -138,7 +142,9 @@ class UnitTest(unittest.TestCase):
             return number
         
         else:
-            self.logger.info('FAILURE: The data type, {}, of input, {}, is currently not supported\n'.format(wipp_type, input))
+            self.logger.info(
+                'FAILURE: The data type, {}, of input, {}, is currently not supported\n'.format(wipp_type, input)
+                )
             raise TypeError('The input data type is not currently supported')
     
     def output_handler(self, output, dtype):
@@ -185,14 +191,19 @@ class UnitTest(unittest.TestCase):
         _{{ inp }}_wipp_types = {{ val.wipp_type }}
         _{{ inp }}_imagej_types =  {{ val.call_types }}
         if _{{ inp }}_wipp_types.get(op, None) != 'collection':
-            method_call_types.update({method:dtype for method,dtype in _{{ inp }}_imagej_types.items() if dtype in supported_data_types})
+            method_call_types.update({method:dtype for method,dtype in _{{ inp }}_imagej_types.items() \
+                if dtype in supported_data_types})
         {% endif -%}
         {% endfor -%}
         
         # Generate data for the inputs
         {% for inp,val in cookiecutter._inputs.items() -%}
         {% if inp != 'opName' -%}
-        _{{ inp }} = self.generate_data('{{ inp }}', _{{ inp }}_wipp_types.get(op, None), method_call_types.get(op, None))
+        _{{ inp }} = self.generate_data(
+            '{{ inp }}',
+            _{{ inp }}_wipp_types.get(op, None), 
+            method_call_types.get(op, None)
+            )
         {% endif -%}
         {% endfor -%}
         
@@ -215,7 +226,9 @@ class UnitTest(unittest.TestCase):
             self.logger.info('SUCCESS: op: {} with option {} was successful\n'.format(projectName, op))
             self.summary.info('1')
         except Exception:
-            self.logger.info('FAILURE: op: {} with option {} was NOT successful'.format(projectName, op)+'\n'+str(sys.exc_info()))
+            self.logger.info(
+                'FAILURE: op: {} with option {} was NOT successful'.format(projectName, op)+'\n'+str(sys.exc_info())
+                )
             self.logger.info(traceback.format_exc()+'\n')
             self.summary.info('0')
             
