@@ -1,0 +1,10 @@
+*.png
+*.so
+*.html
+*.cpp
+*.npy
+build
+dist
+ftl_rust.egg-info
+target
+Cargo.lock

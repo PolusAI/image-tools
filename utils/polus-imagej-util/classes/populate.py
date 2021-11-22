@@ -55,7 +55,11 @@ class Op:
             supported.
         support_msg: A list of booleans indicating why an op method is or is not
             supported. The first value indicates if all required inputs and 
+<<<<<<< HEAD
             output can be mapped to a WIPP data type and the second value 
+=======
+            output can be mapped to a WIPP data type and the secod value 
+>>>>>>> 32c0d333bfa71d6311e616bb15d50a6e35b64c8c
             indcates if both the required inputs and output contain a collection 
             data type.
         imagej_input_data_types: A list of strings representing the imagej data 

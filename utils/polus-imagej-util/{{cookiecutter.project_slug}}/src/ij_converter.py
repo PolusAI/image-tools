@@ -1,6 +1,12 @@
 
 '''
 A conversion utility built to convert abstract to primitive
+<<<<<<< HEAD
+=======
+This works for Threshold Apply and Gaussian Filter functions
+Note change from jnius to jpype for handling conversions in ij_converter.py
+
+>>>>>>> 32c0d333bfa71d6311e616bb15d50a6e35b64c8c
 '''
 
 import imagej
@@ -16,6 +22,11 @@ logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(messa
 logger = logging.getLogger("ij_converter")
 logger.setLevel(logging.INFO)
 
+<<<<<<< HEAD
+=======
+ij = None
+
+>>>>>>> 32c0d333bfa71d6311e616bb15d50a6e35b64c8c
 ## fill in types to convert
 ABSTRACT_ITERABLES = [
     'IterableInterval',
@@ -68,6 +79,7 @@ def _java_setup():
     #     'byte'       : jpype.JByte,
     #     'boolean'    : jpype.JBoolean
     # }
+<<<<<<< HEAD
     PRIMITIVES = {
         'double'     : jpype.JDouble,
         'float'      : jpype.JFloat,
@@ -78,6 +90,18 @@ def _java_setup():
         'byte'       : jpype.JByte,
         'boolean'    : jpype.JBoolean
     }
+=======
+    # PRIMITIVES = {
+    #     'double'     : jpype.JDouble,
+    #     'float'      : jpype.JFloat,
+    #     'long'       : jpype.JLong,
+    #     'int'        : jpype.JInt,
+    #     'short'      : jpype.JShort,
+    #     'char'       : jpype.JChar,
+    #     'byte'       : jpype.JByte,
+    #     'boolean'    : jpype.JBoolean
+    # }
+>>>>>>> 32c0d333bfa71d6311e616bb15d50a6e35b64c8c
     PRIMITIVE_ARRAYS = {
         'double[]'     : jpype.JDouble[:],
         'float[]'      : jpype.JFloat[:],
@@ -92,6 +116,7 @@ def _java_setup():
 scyjava.when_jvm_starts(_java_setup)
 
 JAVA_CONVERT = {}
+<<<<<<< HEAD
 
 JAVA_CONVERT.update({
     t:lambda s,t,st: IMGLYB_PRIMITIVES[str(st)](st.type(s)) for t in ABSTRACT_SCALARS
@@ -111,6 +136,26 @@ JAVA_CONVERT.update({
 })
 JAVA_CONVERT.update({
     t:lambda s,ij: imglyb.util._to_imglib(s) for t in IMG_ARRAYS
+=======
+# JAVA_CONVERT.update({
+#     t:lambda s,t,st: IMGLYB_PRIMITIVES[str(st)](st.type(s)) for t in ABSTRACT_SCALARS
+# })
+# JAVA_CONVERT.update({
+#     t:lambda s,t,st: PRIMITIVES[t](float(s)) for t in SCALARS
+# })
+JAVA_CONVERT.update({
+    t:lambda s,t,st: PRIMITIVE_ARRAYS[t]([float(si) for si in s.split(',')]) for t in ARRAYS
+})
+JAVA_CONVERT.update({
+    t: lambda s,t,st: IMGLYB_PRIMITIVES[str(st)](s) for t in SCALARS
+})
+
+JAVA_CONVERT.update({
+    t:lambda s: imglyb.util.Views.iterable(ij.py.to_java(s)) for t in ABSTRACT_ITERABLES
+})
+JAVA_CONVERT.update({
+    t:lambda s: imglyb.util._to_imglib(s) for t in IMG_ARRAYS
+>>>>>>> 32c0d333bfa71d6311e616bb15d50a6e35b64c8c
 })
 
 def to_java(ij, np_array,java_type,java_dtype=None):
@@ -125,7 +170,11 @@ def to_java(ij, np_array,java_type,java_dtype=None):
         if str(java_dtype) != 'None':
             out_array = JAVA_CONVERT[java_type](np_array,java_type,java_dtype)
         else:
+<<<<<<< HEAD
             out_array = JAVA_CONVERT[java_type](np_array, ij)
+=======
+            out_array = JAVA_CONVERT[java_type](np_array)
+>>>>>>> 32c0d333bfa71d6311e616bb15d50a6e35b64c8c
     else:
         logger.warning('Did not recognize type, {}, will pass default.'.format(java_type))
         out_array = ij.py.to_java(np_array)

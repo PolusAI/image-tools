@@ -8,7 +8,11 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
+<<<<<<< HEAD
   "containerId": "polusai/{{ cookiecutter.project_slug }}:{{ cookiecutter.version }}",
+=======
+  "containerId": "labshare/{{ cookiecutter.project_slug }}:{{ cookiecutter.version }}",
+>>>>>>> 32c0d333bfa71d6311e616bb15d50a6e35b64c8c
   "inputs": [{% for inp,val in cookiecutter._inputs.items() %}
     {
       "name": "{{ inp }}",
@@ -35,7 +39,11 @@
       "key": "inputs.{{ inp }}",
       "title": "{{ val.title }}",
       "description": "{{ val.description }}"{%- if inp!='opName' %},
+<<<<<<< HEAD
       "condition": "{% for v in val.call_types %}model.inputs.opName=={{v}}{% if not loop.last %} or {% endif %}{% endfor %}"
+=======
+      "condition": "model.inputs.opName==[{% for v in val.call_types %}'{{v}}'{% if not loop.last %},{% endif %}{% endfor %}]"
+>>>>>>> 32c0d333bfa71d6311e616bb15d50a6e35b64c8c
     {%- endif %}
     }{% if not loop.last %},{% endif %}{% endfor %}
   ]

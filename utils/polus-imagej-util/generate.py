@@ -81,12 +81,22 @@ if __name__ == '__main__':
     # Iterate over all plugin directories in the cookietin directory 
     for plugin in plugins:
         
+<<<<<<< HEAD
         plugins_to_generate = [
             'filter-dog',
             #'image-integral',
             #'filter-sobel'
         ]
     
+=======
+        #plugins_to_generate = ['math-add']
+        plugins_to_generate = [
+            'image-integral',
+            'image-distancetransform', 
+            'filter-dog'
+        ]
+        #plugins_to_generate = ['filter-dog', 'filter-addNoise', 'filter-convolve', 'filter-bilateral', 'filter-correlate']
+>>>>>>> 32c0d333bfa71d6311e616bb15d50a6e35b64c8c
         if plugin.name in plugins_to_generate:
         #if True:
              
