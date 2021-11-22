@@ -1,4 +1,3 @@
-
 FROM labshare/polus-bfio-util:2.1.9-imagej
 
 # environment variables defined in labshare/polus-bfio-util
