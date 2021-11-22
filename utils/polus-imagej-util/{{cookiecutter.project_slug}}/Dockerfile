@@ -14,9 +14,12 @@ COPY src ${EXEC_DIR}/
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 <<<<<<< HEAD
+<<<<<<< HEAD
 RUN mkdir /.jgo && chmod 777 /.jgo
 =======
 >>>>>>> 32c0d333bfa71d6311e616bb15d50a6e35b64c8c
+=======
+>>>>>>> origin/imagej-util-clean
 
 # Default command. Additional arguments are provided through the command line
 ENTRYPOINT ["python3", "main.py"]

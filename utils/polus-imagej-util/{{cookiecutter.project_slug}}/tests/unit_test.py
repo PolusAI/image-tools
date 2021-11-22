@@ -19,12 +19,18 @@ plugin_dir = Path(__file__).parents[1]
 sys.path.append(str(plugin_dir))
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/imagej-util-clean
 # Get src directory
 src_path = plugin_dir.joinpath('src')
 sys.path.append(str(src_path))
 
+<<<<<<< HEAD
 =======
 >>>>>>> 32c0d333bfa71d6311e616bb15d50a6e35b64c8c
+=======
+>>>>>>> origin/imagej-util-clean
 from src.main import main
 
 
