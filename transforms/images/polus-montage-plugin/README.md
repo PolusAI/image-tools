@@ -1,4 +1,4 @@
-# Montage
+# Montage (v0.2.3)
 
 This plugin generates a stitching vector that will montage images together. The
 inputs are an image collection, a file pattern, and a layout array that
@@ -54,11 +54,6 @@ of images would be transposed. There are no restrictions on which variables can
 be placed together, so it would be possible to have `xt,y` as a layout array.
 
 ## To do
-
-**User specified grid spacing.** Currently, images in the smallest subgrid are
-placed 10 pixels apart, and each larger subgrid has spacing 4 times that of the
-previous subgrid. So, the first subgrid has spacing of 10 pixels, the 2nd has
-40, the 4th will have 160.
 
 **User defined grid shape.** Currently, grid dimensions are determined by the
 size of each dimension if two variable are present or the closest square that
