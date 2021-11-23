@@ -791,18 +791,19 @@ class Populate:
                         },
                     '_inputs':{
                         'opName':{
-                            'title': 'Operation',
+                            'title': 'opName',
                             'type': 'enum',
                             'options':[
                                 op.name for op in plugin.supported_ops.values()
                                 ],
-                            'description': 'Operation to peform',
+                            'description': 'Operation to perform',
                             'required': 'False'
                             }
                         },
                     '_outputs':
                         plugin._all_outputs,
-                    'project_slug': "polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin"
+                    'project_slug': "polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin",
+                    'docker_repo' : "{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin"
                     }
                 
                 # Update the _inputs section dictionary with the inputs 
@@ -844,7 +845,7 @@ if __name__ == '__main__':
     cookietin_path = cwd.joinpath('utils/polus-imagej-util/cookietin')
     
     # Build the json dictionary to be passed to the cookiecutter module 
-    populater.build_json('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.2.0', cookietin_path)
+    populater.build_json('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.3.0', cookietin_path)
     
     print('Shutting down JVM\n')
     
