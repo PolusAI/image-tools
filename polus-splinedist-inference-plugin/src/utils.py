@@ -11,6 +11,7 @@ import concurrent
 
 from csbdeep.utils import normalize
 from csbdeep.utils import normalize_mi_ma
+from numpy.core.numeric import count_nonzero
 from splinedist.models import Config2D, SplineDist2D, SplineDistData2D
 from splinedist.utils import phi_generator, grid_generator
 
@@ -259,12 +260,17 @@ def prediction_splinedist(normalized_img : bfio.bfio.BioReader,
             # For example (one dimension): 
                 # Size: 1080, min_overlap = 56, block_size = 1024
                 # slices can vary from 0:1024, 56:1080) to (0:1024, 968:1080) 
+            context = [94,94]
             min_overlap = np.mod(t_wrapper.shape, bw._TILE_SIZE)
-            min_overlap[min_overlap == 0] = 32
+            min_overlap_difference = 1024-min_overlap
+            min_overlap = np.minimum(min_overlap, min_overlap_difference)
+            min_overlap[min_overlap <= 0] = 32
             block_size = min_overlap + 1024
+            assertion_check = min_overlap+[2*cntxt for cntxt in context]
+            assert (assertion_check < block_size).all(), f"min_overlap+2*context ({min_overlap}+2*{context}={assertion_check}) is not smaller than block_size ({block_size})"
             block_size = np.min((block_size,t_wrapper.shape-min_overlap), axis=0)
             pred, _ = model.predict_instances_big(img = input_img, axes='YX', \
-                block_size=block_size, min_overlap = min_overlap, labels_out = t_wrapper, context=(0,0)) 
+                block_size=block_size, min_overlap = min_overlap, labels_out = t_wrapper, context=context) 
         # otherwise save output directly to output
         else:
             bw[:], _ = model.predict_instances(img = input_img) #splinedist calls input_img.ndim, 
