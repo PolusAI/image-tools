@@ -82,4 +82,5 @@ There are three to five input arguments and one output argument:
 | `--layout`       | Specify montage organization                          | Input  | array           |
 | `--gridSpacing`  | Specify spacing between images in the lowest grid     | Input  | string          |
 | `--imageSpacing` | Specify spacing multiplier between grids              | Input  | string          |
+| `--flipAxis`     | Axes to flip when laying out images                   | Input  | string          |
 | `--outDir`       | Output collection                                     | Output | stitchingVector |
