@@ -10,7 +10,9 @@ SPACING = 10
 MULTIPLIER = 4
 
 
-def _get_xy_index(files, dims, layout):
+def _get_xy_index(
+    files: typing.List[typing.Dict], dims: str, layout: typing.List[str], flipAxis: str
+):
     """Get the x and y indices from a list of filename dictionaries
 
     The FilePattern iterate function returns a list of dictionaries containing a
@@ -54,18 +56,23 @@ def _get_xy_index(files, dims, layout):
 
         # convert to 0 based grid indexing, store in dictionary
         index = len(layout) - 1
-        for l in layout[:-1]:
-            if dims[0] in l or dims[1] in l:
+        for lt in layout[:-1]:
+            if dims[0] in lt or dims[1] in lt:
                 break
             index -= 1
         for f in files:
-            f[str(index) + "_gridX"] = f[dims[0]] - col_min
-            f[str(index) + "_gridY"] = f[dims[1]] - row_min
+            f[str(index) + "_gridX"] = (
+                col_max - f[dims[0]] if dims[0] in flipAxis else f[dims[0]] - col_min
+            )
+            f[str(index) + "_gridY"] = (
+                row_max - f[dims[1]] if dims[1] in flipAxis else f[dims[1]] - row_min
+            )
     else:
         # determine number of rows and columns
         pos = [f[dims[0]] for f in files]
         pos = list(set(pos))
         pos_min = min(pos)
+        pos_max = max(pos)
         col_max = int(math.ceil(math.sqrt(len(pos))))
         row_max = int(round(math.sqrt(len(pos))))
         grid_dims.append(col_max)
@@ -73,13 +80,14 @@ def _get_xy_index(files, dims, layout):
 
         # Store grid positions in the dictionary
         index = len(layout) - 1
-        for l in layout[:-1]:
-            if l == dims:
+        for lt in layout[:-1]:
+            if lt == dims:
                 break
             index -= 1
         for f in files:
-            f[str(index) + "_gridX"] = int((f[dims[0]] - pos_min) % col_max)
-            f[str(index) + "_gridY"] = int((f[dims[0]] - pos_min) // col_max)
+            pos = pos_max - f[dims[0]] if dims[0] in flipAxis else f[dims[0]] - pos_min
+            f[str(index) + "_gridX"] = int(pos % col_max)
+            f[str(index) + "_gridY"] = int(pos // col_max)
 
     return grid_dims
 
@@ -88,6 +96,7 @@ def main(
     pattern: str,
     inpDir: pathlib.Path,
     layout: typing.List[str],
+    flipAxis: str,
     outDir: pathlib.Path,
     imageSpacing: typing.Optional[int] = None,
     gridSpacing: typing.Optional[int] = None,
@@ -97,9 +106,9 @@ def main(
     global MULTIPLIER
 
     # Set new image spacing and grid spacing arguments if present
-    if image_spacing != None:
+    if image_spacing is not None:
         SPACING = int(imageSpacing)
-    if grid_spacing != None:
+    if grid_spacing is not None:
         MULTIPLIER = int(gridSpacing)
 
     # Set up the file pattern parser
@@ -112,12 +121,12 @@ def main(
     layout = layout.replace(" ", "")
     layout = layout.split(",")
 
-    for l in layout:  # Error checking
-        for v in l:
+    for lt in layout:  # Error checking
+        for v in lt:
             if v not in VARIABLES:
                 logger.error("Variables must be one of {}".format(VARIABLES))
                 raise ValueError("Variables must be one of {}".format(VARIABLES))
-        if len(l) > 2 or len(l) < 1:
+        if len(lt) > 2 or len(lt) < 1:
             logger.error(
                 "Each layout subgrid must have one or two variables assigned to it."
             )
@@ -127,8 +136,8 @@ def main(
 
     for v in reversed(variables):  # Add supergrids if a variable is undefined in layout
         is_defined = False
-        for l in layout:
-            if v in l:
+        for lt in layout:
+            if v in lt:
                 is_defined = True
                 break
         if not is_defined:
@@ -147,9 +156,10 @@ def main(
     logger.info("Get the size of every image...")
     grid_width = 0
     grid_height = 0
+
     for files in fp(group_by=layout[0]):
         # Determine number of rows and columns in the smallest subgrid
-        grid_size = _get_xy_index(files, layout[0], layout)
+        grid_size = _get_xy_index(files, layout[0], layout, flipAxis)
         layout_dimensions["grid_size"][len(layout) - 1].append(grid_size)
 
         # Get the height and width of each image
@@ -203,7 +213,7 @@ def main(
 
         for files in fp(group_by="".join(layout[: i + 1])):
             # determine number of rows and columns in the current subgrid
-            grid_size = _get_xy_index(files, layout[i], layout)
+            grid_size = _get_xy_index(files, layout[i], layout, flipAxis)
             layout_dimensions["grid_size"][index].append(grid_size)
 
         # Get the current subgrid size
@@ -306,6 +316,13 @@ if __name__ == "__main__":
         "--outDir", dest="outDir", type=str, help="Output collection", required=True
     )
     parser.add_argument(
+        "--flipAxis",
+        dest="flipAxis",
+        type=str,
+        help="Axes to flip or reverse order",
+        required=False,
+    )
+    parser.add_argument(
         "--imageSpacing",
         dest="imageSpacing",
         type=str,
@@ -328,6 +345,9 @@ if __name__ == "__main__":
     layout = args.layout
     logger.info("layout = {}".format(layout))
 
+    flipAxis = args.flipAxis
+    logger.info("flipAxis = {}".format(flipAxis))
+
     outDir = args.outDir
     logger.info("outDir = {}".format(outDir))
 
@@ -338,9 +358,9 @@ if __name__ == "__main__":
     logger.info("grid_spacing = {}".format(grid_spacing))
 
     # Set new image spacing and grid spacing arguments if present
-    if image_spacing != None:
+    if image_spacing is not None:
         image_spacing = int(image_spacing)
-    if grid_spacing != None:
+    if grid_spacing is not None:
         grid_spacing = int(grid_spacing)
 
-    main(pattern, inpDir, layout, outDir, image_spacing, grid_spacing)
+    main(pattern, inpDir, layout, flipAxis, outDir, image_spacing, grid_spacing)

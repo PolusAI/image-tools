@@ -1,4 +1,4 @@
-# Montage (v0.2.3)
+# Montage (v0.3.0)
 
 This plugin generates a stitching vector that will montage images together. The
 inputs are an image collection, a file pattern, and a layout array that
