@@ -6,14 +6,12 @@ import enum
 import re
 import pprint
 import os
-from os.path import basename, isdir, join, splitext
+from os.path import basename
 import uuid
 import requests
 from urllib.parse import urljoin
 
-import requests.exceptions as request_exceptions
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
 
 
 import docker
@@ -731,19 +729,27 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
 class Registry:
     """Class that contains methods to interact with the REST API of WIPP Registry."""
 
-    def get_current_schema(registry_url="https://wipp-registry.ci.aws.labshare.org/"):
+    def get_current_schema(
+        registry_url="https://wipp-registry.ci.aws.labshare.org/",
+        verify:bool=True
+        ):
         """Return current schema in WIPP
         """
         response = requests.get(
             urljoin(registry_url, "rest/template-version-manager/global/?title=res-md.xsd"),
-            verify=False
+            verify=verify
         )
         if response.ok:
             return response.json()[0]["current"]
         else:
             response.raise_for_status()
 
-    def upload_data(filepath, schema_id, registry_url="https://wipp-registry.ci.aws.labshare.org/"):
+    def upload_data(
+        filepath,
+        schema_id,
+        registry_url="https://wipp-registry.ci.aws.labshare.org/",
+        verify:bool=True
+        ):
         """Upload data to registry
         """
         with open(filepath, "r") as file_reader:
@@ -758,7 +764,7 @@ class Registry:
         response = requests.post(
             urljoin(registry_url, "rest/data/"), data,
             auth=("admin","admin"),
-            verify=False
+            verify=verify
         )
         response_code = response.status_code
 
@@ -767,18 +773,21 @@ class Registry:
                 data["title"], str(response_code)
             ))
             response.raise_for_status()
-            return None
 
         return response.json()
 
-    def publish_data(data, registry_url="https://wipp-registry.ci.aws.labshare.org/"):
+    def publish_data(
+        data,
+        registry_url="https://wipp-registry.ci.aws.labshare.org/",
+        verify:bool=True
+        ):
         """Publish to public workspace
         """
         data_publish_id = data["id"] + "/publish/"
         response = requests.patch(
             urljoin(registry_url, "rest/data/" + data_publish_id),
             auth=("admin","admin"),
-            verify=False
+            verify=verify
         )
         response_code = response.status_code
 
