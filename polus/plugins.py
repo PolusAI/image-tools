@@ -6,7 +6,15 @@ import enum
 import re
 import pprint
 import os
+from os.path import basename, isdir, join, splitext
 import uuid
+import requests
+from urllib.parse import urljoin
+
+import requests.exceptions as request_exceptions
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
 
 import docker
 
@@ -718,6 +726,83 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
 
         except ValidationError as val_err:
             _error_log(val_err, manifest)
+
+
+class Registry:
+    """Class that contains methods to interact with the REST API of WIPP Registry."""
+
+    def get_current_schema(registry_url="https://wipp-registry.ci.aws.labshare.org/"):
+        """Return current schema in WIPP
+        """
+        response = requests.get(
+            urljoin(registry_url, "rest/template-version-manager/global/?title=res-md.xsd"),
+            verify=False
+        )
+        if response.ok:
+            return response.json()[0]["current"]
+        else:
+            response.raise_for_status()
+
+    def upload_data(filepath, schema_id, registry_url="https://wipp-registry.ci.aws.labshare.org/"):
+        """Upload data to registry
+        """
+        with open(filepath, "r") as file_reader:
+            xml_content = file_reader.read()
+
+        data = {
+            "title": basename(filepath),
+            "template": schema_id,
+            "xml_content": xml_content
+        }
+
+        response = requests.post(
+            urljoin(registry_url, "rest/data/"), data,
+            auth=("admin","admin"),
+            verify=False
+        )
+        response_code = response.status_code
+
+        if response_code != 201:
+            print("Error uploading file (%s), code %s" % (
+                data["title"], str(response_code)
+            ))
+            response.raise_for_status() # Camilo added
+            return None
+
+        return response.json()
+
+    def publish_data(data, registry_url="https://wipp-registry.ci.aws.labshare.org/"):
+        """Publish to public workspace
+        """
+        data_publish_id = data["id"] + "/publish/"
+        response = requests.patch(
+            urljoin(registry_url, "rest/data/" + data_publish_id),
+            auth=("admin","admin"),
+            verify=False
+        )
+        response_code = response.status_code
+
+        if response_code != 200:
+            print("Error publishing data (%s), code %s" % (
+                data["title"], str(response_code)
+            ))
+            response.raise_for_status() # Camilo added
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # def _update_schema(gh_auth: typing.Optional[str] = None):
