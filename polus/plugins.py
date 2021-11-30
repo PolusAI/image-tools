@@ -766,7 +766,7 @@ class Registry:
             print("Error uploading file (%s), code %s" % (
                 data["title"], str(response_code)
             ))
-            response.raise_for_status() # Camilo added
+            response.raise_for_status()
             return None
 
         return response.json()
@@ -786,23 +786,7 @@ class Registry:
             print("Error publishing data (%s), code %s" % (
                 data["title"], str(response_code)
             ))
-            response.raise_for_status() # Camilo added
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            response.raise_for_status()
 
 
 # def _update_schema(gh_auth: typing.Optional[str] = None):
