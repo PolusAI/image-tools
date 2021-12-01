@@ -98,17 +98,6 @@ if __name__ == '__main__':
 
     # Iterate over all plugin directories in the cookietin directory 
     for plugin in plugins:
-<<<<<<< HEAD
-
-=======
-        
-        plugins_to_generate = [
-            'filter-dog',
-            #'image-integral',
-            #'filter-sobel'
-        ]
-    
->>>>>>> polus-plugins/dev
         if plugin.name in plugins_to_generate:
 
             # Define the plugin dir path
