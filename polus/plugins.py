@@ -12,8 +12,6 @@ import requests
 from urllib.parse import urljoin
 
 
-
-
 import docker
 
 from pydantic import BaseModel, Extra, errors, validator
@@ -730,14 +728,16 @@ class Registry:
     """Class that contains methods to interact with the REST API of WIPP Registry."""
 
     def get_current_schema(
+        self,
         registry_url="https://wipp-registry.ci.aws.labshare.org/",
-        verify:bool=True
-        ):
-        """Return current schema in WIPP
-        """
+        verify: bool = True,
+    ):
+        """Return current schema in WIPP"""
         response = requests.get(
-            urljoin(registry_url, "rest/template-version-manager/global/?title=res-md.xsd"),
-            verify=verify
+            urljoin(
+                registry_url, "rest/template-version-manager/global/?title=res-md.xsd"
+            ),
+            verify=verify,
         )
         if response.ok:
             return response.json()[0]["current"]
@@ -745,56 +745,99 @@ class Registry:
             response.raise_for_status()
 
     def upload_data(
+        self,
         filepath,
         schema_id,
+        username,
+        password,
         registry_url="https://wipp-registry.ci.aws.labshare.org/",
-        verify:bool=True
-        ):
-        """Upload data to registry
-        """
+        verify: bool = True,
+    ):
+        """Upload data to registry"""
         with open(filepath, "r") as file_reader:
             xml_content = file_reader.read()
 
         data = {
             "title": basename(filepath),
             "template": schema_id,
-            "xml_content": xml_content
+            "xml_content": xml_content,
         }
 
         response = requests.post(
-            urljoin(registry_url, "rest/data/"), data,
-            auth=("admin","admin"),
-            verify=verify
+            urljoin(registry_url, "rest/data/"),
+            data,
+            auth=(username, password),
+            verify=verify,
         )
         response_code = response.status_code
 
         if response_code != 201:
-            print("Error uploading file (%s), code %s" % (
-                data["title"], str(response_code)
-            ))
+            print(
+                "Error uploading file (%s), code %s"
+                % (data["title"], str(response_code))
+            )
             response.raise_for_status()
 
         return response.json()
 
     def publish_data(
+        self,
         data,
+        username,
+        password,
         registry_url="https://wipp-registry.ci.aws.labshare.org/",
-        verify:bool=True
-        ):
-        """Publish to public workspace
-        """
+        verify: bool = True,
+    ):
+        """Publish to public workspace"""
         data_publish_id = data["id"] + "/publish/"
         response = requests.patch(
             urljoin(registry_url, "rest/data/" + data_publish_id),
-            auth=("admin","admin"),
-            verify=verify
+            auth=(username, password),
+            verify=verify,
         )
         response_code = response.status_code
 
         if response_code != 200:
-            print("Error publishing data (%s), code %s" % (
-                data["title"], str(response_code)
-            ))
+            print(
+                "Error publishing data (%s), code %s"
+                % (data["title"], str(response_code))
+            )
+            response.raise_for_status()
+
+    def get_resource_by_pid(self, pid, verify: bool = True):
+        """Return current resource."""
+        response = requests.get(pid, verify=verify)
+        return response.json()
+
+    def patch_resource(
+        self,
+        pid,
+        version,
+        username,
+        password,
+        registry_url="https://wipp-registry.ci.aws.labshare.org/",
+        verify: bool = True,
+    ):
+        """Patch resource."""
+        # Get current version of the resource
+        current_resource = self.get_resource_by_pid(pid, verify)
+
+        data = {
+            "version": version,
+        }
+        response = requests.patch(
+            urljoin(registry_url, "rest/data/" + data["id"]),
+            data,
+            auth=(username, password),
+            verify=verify,
+        )
+        response_code = response.status_code
+
+        if response_code != 200:
+            print(
+                "Error publishing data (%s), code %s"
+                % (data["title"], str(response_code))
+            )
             response.raise_for_status()
 
 
