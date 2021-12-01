@@ -8,11 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-<<<<<<< HEAD
   "containerId": "polusai/{{ cookiecutter.docker_repo }}:{{ cookiecutter.version }}",
-=======
-  "containerId": "polusai/{{ cookiecutter.project_slug }}:{{ cookiecutter.version }}",
->>>>>>> polus-plugins/dev
   "inputs": [{% for inp,val in cookiecutter._inputs.items() %}
     {
       "name": "{{ val.title }}",
