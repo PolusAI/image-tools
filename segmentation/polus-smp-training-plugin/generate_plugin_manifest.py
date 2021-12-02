@@ -195,7 +195,7 @@ def variants_conditionals():
             'then': [{
                 'action': 'show',
                 'input': 'encoderVariant',
-                'values': list(variant.keys()),
+                'value': list(variant.keys()),
             }]
         })
     return validator
@@ -215,7 +215,7 @@ def weights_conditionals():
                 'then': [{
                     'action': 'show',
                     'input': 'encoderWeights',
-                    'values': [*weights, 'random'],
+                    'value': [*weights, 'random'],
                 }],
             })
 

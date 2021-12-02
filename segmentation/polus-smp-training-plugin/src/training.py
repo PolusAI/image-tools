@@ -28,7 +28,11 @@ logger = logging.getLogger("training")
 logger.setLevel(utils.POLUS_LOG)
 
 
-def initialize_model(checkpoint: Dict[str, Any], state_dict: Optional = None) -> Tuple[SegmentationModel, Optimizer, int]:
+def initialize_model(
+        checkpoint: Dict[str, Any],
+        state_dict: Optional = None,
+        device: torch.device = None,
+) -> Tuple[SegmentationModel, Optimizer, int]:
     """ Initializes a model from a Checkpoint. A checkpoint knows the:
 
         * 'model_name': The architecture of the model in use.
@@ -48,6 +52,7 @@ def initialize_model(checkpoint: Dict[str, Any], state_dict: Optional = None) ->
     Args:
         checkpoint: A Checkpoint dictionary.
         state_dict: For a model previously trained by this plugin.
+        device: The device to use for the model.
 
     Returns:
         A 3-tuple of the:
@@ -69,6 +74,7 @@ def initialize_model(checkpoint: Dict[str, Any], state_dict: Optional = None) ->
     )
     if state_dict is not None:
         model.load_state_dict(state_dict)
+    model.to(device)
 
     # noinspection PyArgumentList
     optimizer = utils.OPTIMIZERS[checkpoint['optimizer_name']](params=model.parameters())

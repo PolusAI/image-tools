@@ -1,6 +1,6 @@
 {
     "name": "SegmentationModelsTraining",
-    "version": "0.3.2debug6",
+    "version": "0.3.2debug8",
     "title": "SegmentationModelsTraining",
     "description": "Segmentation models training plugin",
     "author": "Gauhar Bains (gauhar.bains@labshare.org), Najib Ishaq (najib.ishaq@axleinfo.com)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/polus-au/polus-plugins-dl",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-smp-training-plugin::0.3.2debug6",
+    "containerId": "labshare/polus-smp-training-plugin::0.3.2debug8",
     "inputs": [
         {
             "name": "pretrainedModel",
@@ -284,7 +284,8 @@
                     "FocalLoss",
                     "LovaszLoss",
                     "SoftBCEWithLogitsLoss",
-                    "SoftCrossEntropyLoss"
+                    "SoftCrossEntropyLoss",
+                    "MCCLoss"
                 ]
             }
         },
@@ -445,7 +446,7 @@
                 {
                     "action": "show",
                     "input": "encoderVariant",
-                    "values": [
+                    "value": [
                         "resnet18",
                         "resnet34",
                         "resnet50",
@@ -467,7 +468,7 @@
                 {
                     "action": "show",
                     "input": "encoderVariant",
-                    "values": [
+                    "value": [
                         "resnext50_32x4d",
                         "resnext101_32x4d",
                         "resnext101_32x8d",
@@ -490,7 +491,7 @@
                 {
                     "action": "show",
                     "input": "encoderVariant",
-                    "values": [
+                    "value": [
                         "timm-resnest14d",
                         "timm-resnest26d",
                         "timm-resnest50d",
@@ -515,7 +516,7 @@
                 {
                     "action": "show",
                     "input": "encoderVariant",
-                    "values": [
+                    "value": [
                         "timm-res2net50_26w_4s",
                         "timm-res2net101_26w_4s",
                         "timm-res2net50_26w_6s",
@@ -539,7 +540,7 @@
                 {
                     "action": "show",
                     "input": "encoderVariant",
-                    "values": [
+                    "value": [
                         "timm-regnetx_002",
                         "timm-regnetx_004",
                         "timm-regnetx_006",
@@ -580,7 +581,7 @@
                 {
                     "action": "show",
                     "input": "encoderVariant",
-                    "values": [
+                    "value": [
                         "timm-gernet_s",
                         "timm-gernet_m",
                         "timm-gernet_l"
@@ -600,7 +601,7 @@
                 {
                     "action": "show",
                     "input": "encoderVariant",
-                    "values": [
+                    "value": [
                         "senet154",
                         "se_resnet50",
                         "se_resnet101",
@@ -623,7 +624,7 @@
                 {
                     "action": "show",
                     "input": "encoderVariant",
-                    "values": [
+                    "value": [
                         "timm-skresnet18",
                         "timm-skresnet34",
                         "timm-skresnext50_32x4d"
@@ -643,7 +644,7 @@
                 {
                     "action": "show",
                     "input": "encoderVariant",
-                    "values": [
+                    "value": [
                         "densenet121",
                         "densenet169",
                         "densenet201",
@@ -664,7 +665,7 @@
                 {
                     "action": "show",
                     "input": "encoderVariant",
-                    "values": [
+                    "value": [
                         "inceptionresnetv2",
                         "inceptionv4",
                         "xception"
@@ -684,7 +685,7 @@
                 {
                     "action": "show",
                     "input": "encoderVariant",
-                    "values": [
+                    "value": [
                         "efficientnet-b0",
                         "efficientnet-b1",
                         "efficientnet-b2",
@@ -724,7 +725,7 @@
                 {
                     "action": "show",
                     "input": "encoderVariant",
-                    "values": [
+                    "value": [
                         "mobilenet_v2",
                         "timm-mobilenetv3_large_075",
                         "timm-mobilenetv3_large_100",
@@ -748,7 +749,7 @@
                 {
                     "action": "show",
                     "input": "encoderVariant",
-                    "values": [
+                    "value": [
                         "dpn68",
                         "dpn68b",
                         "dpn92",
@@ -771,7 +772,7 @@
                 {
                     "action": "show",
                     "input": "encoderVariant",
-                    "values": [
+                    "value": [
                         "vgg11",
                         "vgg11_bn",
                         "vgg13",

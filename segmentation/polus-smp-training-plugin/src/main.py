@@ -235,8 +235,9 @@ if __name__ == "__main__":
     logger.info(f'Using device: {device}...')
 
     model, optimizer, starting_epoch = training.initialize_model(
-        checkpoint,
+        checkpoint=checkpoint,
         state_dict=checkpoint['model_state_dict'],
+        device=device,
     )
 
     logger.info('Determining maximum possible batch size...')
@@ -262,7 +263,8 @@ if __name__ == "__main__":
     )
 
     # TODO: segmentation_mode 'multiclass' is broken on some datasets. Investigate why.
-    loss = utils.LOSSES[loss_name](segmentation_mode)
+    # noinspection PyArgumentList
+    loss = utils.LOSSES[loss_name](mode=segmentation_mode)
     loss.__name__ = loss_name
     epoch_iterators = training.initialize_epoch_iterators(
         model=model,
