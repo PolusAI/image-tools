@@ -7,6 +7,7 @@ from typing import Tuple
 
 import segmentation_models_pytorch as smp
 import torch
+import torch.nn.functional
 from filepattern import FilePattern
 from segmentation_models_pytorch.base import SegmentationModel
 from segmentation_models_pytorch.utils.base import Metric

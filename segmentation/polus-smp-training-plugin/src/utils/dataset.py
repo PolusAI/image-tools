@@ -148,7 +148,7 @@ class Dataset(TorchDataset):
         # read and preprocess label
         with BioReader(label_path) as reader:
             label_tile = reader[y_min:y_max, x_min:x_max, 0, 0, 0]
-        label_tile = numpy.asarray(label_tile, dtype=numpy.float32)
+        label_tile = numpy.asarray(label_tile, dtype=numpy.int64)
         # label_tile = numpy.reshape(label_tile, (1, y_max - y_min, x_max - x_min))
 
         transform = albumentations.Compose(

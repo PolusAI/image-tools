@@ -1,4 +1,5 @@
 import argparse
+import inspect
 import logging
 from pathlib import Path
 from typing import Any
@@ -263,8 +264,15 @@ if __name__ == "__main__":
     )
 
     # TODO: segmentation_mode 'multiclass' is broken on some datasets. Investigate why.
-    # noinspection PyArgumentList
-    loss = utils.LOSSES[loss_name](mode=segmentation_mode)
+    loss_class = utils.LOSSES[loss_name]
+    loss_params = inspect.signature(loss_class.__init__).parameters
+    loss_kwargs = dict()
+    if 'mode' in loss_params:
+        loss_kwargs['mode'] = segmentation_mode
+    elif 'smooth_factor' in loss_params:
+        loss_kwargs['smooth_factor'] = 0.1
+
+    loss = loss_class(**loss_kwargs)
     loss.__name__ = loss_name
     epoch_iterators = training.initialize_epoch_iterators(
         model=model,
