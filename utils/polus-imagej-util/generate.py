@@ -98,6 +98,7 @@ if __name__ == '__main__':
 
     # Iterate over all plugin directories in the cookietin directory 
     for plugin in plugins:
+        
         if plugin.name in plugins_to_generate:
 
             # Define the plugin dir path
