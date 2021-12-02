@@ -1,6 +1,6 @@
 {
   "name": "OME Zarr Converter",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "title": "OME Zarr Converter",
   "description": "Convert Bioformats supported format to OME Zarr.",
   "author": "Nick Schaub (nick.schaub@nih.gov)",

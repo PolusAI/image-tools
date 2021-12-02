@@ -17,12 +17,12 @@ logger.setLevel(logging.INFO)
 # TODO: In the future, uncomment this to convert files to the platform file type
 # FILE_EXT = os.environ.get('POLUS_EXT',None)
 # FILE_EXT = FILE_EXT if FILE_EXT is not None else '.ome.tif'
-FILE_EXT = ".ome.zarr"
+#FILE_EXT = ".ome.zarr"
 
 TILE_SIZE = 2 ** 13
 
 
-def image_to_zarr(inp_image: Path, out_dir: Path) -> None:
+def image_converter(inp_image, fileExtension, out_dir):
 
     with ProcessManager.process():
 
@@ -34,30 +34,41 @@ def image_to_zarr(inp_image: Path, out_dir: Path) -> None:
                 # Loop through channels
                 for c in range(br.C):
 
-                    extension = "".join(
-                        [
-                            suffix
-                            for suffix in inp_image.suffixes[-2:]
-                            if len(suffix) < 5
-                        ]
-                    )
+                    if fileExtension == ".ome.tif":
+
+                        extension = "".join(
+                            [
+                                suffix
+                                for suffix in inp_image.suffixes[-4:]
+                            ]
+                        )
+                    else:
+                        extension = "".join(
+                            [
+                                suffix
+                                for suffix in inp_image.suffixes[-2:]
+                                if len(suffix) < 5
+                            ]
+                        )
+
 
                     out_path = out_dir.joinpath(
-                        inp_image.name.replace(extension, FILE_EXT)
+                        inp_image.name.replace(extension, fileExtension)
                     )
                     if br.C > 1:
                         out_path = out_dir.joinpath(
-                            out_path.name.replace(FILE_EXT, f"_c{c}" + FILE_EXT)
+                            out_path.name.replace(fileExtension, f"_c{c}" + fileExtension)
                         )
                     if br.T > 1:
                         out_path = out_dir.joinpath(
-                            out_path.name.replace(FILE_EXT, f"_t{t}" + FILE_EXT)
+                            out_path.name.replace(fileExtension, f"_t{t}" + fileExtension)
                         )
 
                     with BioWriter(
                         out_path,
                         max_workers=ProcessManager._active_threads,
                         metadata=br.metadata,
+                        backend='python'
                     ) as bw:
 
                         bw.C = 1
@@ -86,16 +97,17 @@ def image_to_zarr(inp_image: Path, out_dir: Path) -> None:
 def main(
     inpDir: Path,
     filePattern: str,
+    fileExtension:str,
     outDir: Path,
 ) -> None:
 
-    ProcessManager.init_processes("main", "zarr")
+    ProcessManager.init_processes("main")
 
     fp = FilePattern(inpDir, filePattern)
 
     for files in fp():
         for file in files:
-            ProcessManager.submit_process(image_to_zarr, file["file"], outDir)
+            ProcessManager.submit_process(image_converter, file["file"], fileExtension, outDir)
 
     ProcessManager.join_processes()
 
@@ -127,6 +139,17 @@ if __name__ == "__main__":
         default=".*",
     )
 
+    # Input arguments
+    parser.add_argument(
+        "--fileExtension",
+        dest="fileExtension",
+        type=str,
+        help="Type of image conversion",
+        required=True,
+        default=".*",
+    )
+
+
     # Output arguments
     parser.add_argument(
         "--outDir", dest="outDir", type=str, help="Output collection", required=True
@@ -138,7 +161,9 @@ if __name__ == "__main__":
     logger.info("inpDir = {}".format(inpDir))
     filePattern = args.filePattern
     logger.info("filePattern = {}".format(filePattern))
+    fileExtension = args.fileExtension
+    logger.info("fileExtension = {}".format(fileExtension))
     outDir = Path(args.outDir)
     logger.info("outDir = {}".format(outDir))
-
-    main(inpDir=inpDir, filePattern=filePattern, outDir=outDir)
+    
+    main(inpDir=inpDir, filePattern=filePattern, fileExtension=fileExtension, outDir=outDir)
