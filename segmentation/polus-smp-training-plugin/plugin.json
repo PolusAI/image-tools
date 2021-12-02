@@ -1,6 +1,6 @@
 {
     "name": "SegmentationModelsTraining",
-    "version": "0.3.2debug8",
+    "version": "0.3.2debug9",
     "title": "SegmentationModelsTraining",
     "description": "Segmentation models training plugin",
     "author": "Gauhar Bains (gauhar.bains@labshare.org), Najib Ishaq (najib.ishaq@axleinfo.com)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/polus-au/polus-plugins-dl",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-smp-training-plugin::0.3.2debug8",
+    "containerId": "labshare/polus-smp-training-plugin::0.3.2debug9",
     "inputs": [
         {
             "name": "pretrainedModel",

@@ -149,7 +149,6 @@ class Dataset(TorchDataset):
         with BioReader(label_path) as reader:
             label_tile = reader[y_min:y_max, x_min:x_max, 0, 0, 0]
         label_tile = numpy.asarray(label_tile, dtype=numpy.int64)
-        # label_tile = numpy.reshape(label_tile, (1, y_max - y_min, x_max - x_min))
 
         transform = albumentations.Compose(
             [
@@ -172,6 +171,9 @@ class Dataset(TorchDataset):
         image_tile, label_tile = sample['image'], sample['mask']
 
         image_tile = self.preprocessing(image_tile).numpy()
+        label_tile = label_tile[None, ...]
+        # label_tile = numpy.reshape(label_tile, (1, y_max - y_min, x_max - x_min))
+        assert image_tile.shape == label_tile.shape, f'image and label and different shapes: {image_tile.shape} vs {label_tile.shape}'
 
         return image_tile, label_tile
 

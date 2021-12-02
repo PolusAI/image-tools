@@ -20,6 +20,8 @@ trainFraction=0.7
 segmentationMode="multilabel"
 
 lossName="MCCLoss"
+#lossName="DiceLoss"
+#lossName="SoftBCEWithLogitsLoss"
 metricName="IoU"
 maxEpochs=5
 patience=2
