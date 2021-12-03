@@ -1,7 +1,6 @@
 from bfio.bfio import BioReader, BioWriter
 from preadator import ProcessManager
 from filepattern import FilePattern
-
 import argparse
 import logging
 from pathlib import Path
@@ -145,7 +144,7 @@ if __name__ == "__main__":
         "--fileExtension",
         dest="fileExtension",
         type=str,
-        help="Type of image conversion",
+        help="Type of data conversion",
         required=True,
         default=".*",
     )
