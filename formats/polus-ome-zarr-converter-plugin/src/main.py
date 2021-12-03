@@ -39,7 +39,8 @@ def image_converter(inp_image, fileExtension, out_dir):
                         extension = "".join(
                             [
                                 suffix
-                                for suffix in inp_image.suffixes[-4:]
+                                for suffix in inp_image.suffixes[-2:]
+                                if len(suffix) < 6
                             ]
                         )
                     else:
