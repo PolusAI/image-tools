@@ -1,4 +1,4 @@
-# OME Zarr Converter (v0.3.0)
+# OME Zarr Converter (v0.5.0)
 
 This WIPP plugin converts BioFormats supported data types to the 
 OME Zarr and Zarr OME fileformat. This is not a complete implementation, rather it implements a file
