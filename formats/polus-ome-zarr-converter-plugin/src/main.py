@@ -67,8 +67,7 @@ def image_converter(inp_image, fileExtension, out_dir):
                     with BioWriter(
                         out_path,
                         max_workers=ProcessManager._active_threads,
-                        metadata=br.metadata,
-                        backend='python'
+                        metadata=br.metadata
                     ) as bw:
 
                         bw.C = 1

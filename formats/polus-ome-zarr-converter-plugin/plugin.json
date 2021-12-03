@@ -1,56 +1,57 @@
+
 {
-  "name": "OME Zarr Converter",
-  "version": "0.3.0",
-  "title": "OME Zarr Converter",
-  "description": "Convert Bioformats supported format to OME Zarr and Zarr OME.",
-  "author": "Nick Schaub (nick.schaub@nih.gov)",
-  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-  "repository": "https://github.com/labshare/polus-plugins",
-  "website": "https://ncats.nih.gov/preclinical/core/informatics",
-  "citation": "",
-  "containerId": "labshare/polus-ome-zarr-converter-plugin:0.3.0",
-  "inputs": [
-    {
-      "name": "inpDir",
-      "type": "genericData",
-      "description": "Input generic data collection to be processed by this plugin",
-      "required": true
-    },
-    {
-      "name": "filePattern",
-      "type": "str",
-      "description": "A filepattern, used to select data to be converted",
-      "required": true
-    },
-    {
-      "name": "fileExtension",
-      "type": "str",
-      "description": "Type of data conversion",
-      "required": true
-    }
-  ],
-  "outputs": [
-    {
-      "name": "outDir",
-      "type": "genericData",
-      "description": "Output collection"
-    }
-  ],
-  "ui": [
-    {
-      "key": "inputs.inpDir",
-      "title": "Input generic collection",
-      "description": "Input generic data collection to be processed by this plugin"
-    },
-    {
-      "key": "inputs.filePattern",
-      "title": "Filepattern",
-      "description": "A filepattern, used to select data for conversion"
-    },
-    {
-      "key": "inputs.fileExtension",
-      "title": "fileExtension",
-      "description": "Type of data conversion"
-    }
-  ]
-}
+    "name": "OME Zarr Converter",
+    "version": "0.5.0",
+    "title": "OME Zarr Converter",
+    "description": "Convert Bioformats supported format to OME Zarr.",
+    "author": "Nick Schaub (nick.schaub@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-ome-zarr-converter-plugin:0.5.0",
+    "inputs": [
+      {
+        "name": "inpDir",
+        "type": "genericData",
+        "description": "Input generic data collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "filePattern",
+        "type": "string",
+        "description": "A filepattern, used to select data to be converted",
+        "required": true
+      },
+      {
+        "name": "fileExtension",
+        "type": "string",
+        "description": "Type of data conversion",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "genericData",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.inpDir",
+        "title": "Input generic collection",
+        "description": "Input generic data collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.filePattern",
+        "title": "Filepattern",
+        "description": "A filepattern, used to select data for conversion"
+      },
+      {
+        "key": "inputs.fileExtension",
+        "title": "fileExtension",
+        "description": "Type of data conversion"
+      }
+    ]
+  }
