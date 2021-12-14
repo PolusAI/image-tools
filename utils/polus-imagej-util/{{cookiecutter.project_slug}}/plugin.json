@@ -20,7 +20,15 @@
       },
     {%- endif %}
       "description": "{{ val.description }}",
-      "required": {{ val.required.lower() }}
+      "required": {{ val.required.lower() }}{%- if val.type=='array' %},
+      "options":{
+        "items": {
+          "type": "string",
+          "title": "{{ val.description }}",
+          "widget": "string"
+        }
+      }
+      {%- endif %}
     }{% if not loop.last %},{% endif %}{% endfor %}
   ],
   "outputs": [{% for out,val in cookiecutter._outputs.items() %}
