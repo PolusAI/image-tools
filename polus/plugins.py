@@ -7,6 +7,7 @@ import re
 import pprint
 import os
 import uuid
+import time
 
 import docker
 
@@ -383,29 +384,57 @@ class Plugin(WIPPPluginManifest):
     def organization(self):
         return self.containerId.split("/")[0]
 
-    def run(self):
+    def run(self, dryRun: bool = False, multiple: bool = False, **kwargs):
 
         inp_dirs = []
         out_dirs = []
 
-        # Find common paths in input and output directories
         for i in self.inputs:
             if isinstance(i.value, pathlib.Path):
                 inp_dirs.append(str(i.value))
+
+        # st = time.time()
+        # inp_dirs = [
+        #     str(x.value)
+        #     for x in filter(lambda n: isinstance(n.value, pathlib.Path), self.inputs)
+        # ]
+        # stop = time.time()
+        # print(f"List comp in {stop-st} seconds")
+
+        # st = time.time()
+        # out_dirs = [
+        #     str(x.value) for x in self.outputs if isinstance(x.value, pathlib.Path)
+        # ]
+        # stop = time.time()
+        # print(f"List comp in {stop-st} seconds")
 
         for o in self.outputs:
             if isinstance(o.value, pathlib.Path):
                 out_dirs.append(str(o.value))
 
-        inp_root = pathlib.Path(os.path.commonpath(inp_dirs))
-        out_root = pathlib.Path(os.path.commonpath(out_dirs))
-        mnts = [
-            docker.types.Mount(
-                "/data/inputs/", str(inp_root), type="bind", read_only=True
-            ),
-            docker.types.Mount("/data/outputs/", str(out_root), type="bind"),
+        # inp_root = pathlib.Path(os.path.commonpath(inp_dirs))
+        # out_root = pathlib.Path(os.path.commonpath(out_dirs))
+        # mnts = [
+        #     docker.types.Mount(
+        #         "/data/inputs/", str(inp_root), type="bind", read_only=True
+        #     ),
+        #     docker.types.Mount("/data/outputs/", str(out_root), type="bind"),
+        # ]
+
+        inp_dirs_dict = {x: f"/data/iputs/input{n}" for (n, x) in enumerate(inp_dirs)}
+        out_dirs_dict = {
+            x: f"/data/outputs/output{n}" for (n, x) in enumerate(out_dirs)
+        }
+
+        mnts_in = [
+            docker.types.Mount(v, k, type="bind", read_only=True)
+            for (k, v) in inp_dirs_dict.items()
+        ]
+        mnts_out = [
+            docker.types.Mount(v, k, type="bind") for (k, v) in out_dirs_dict.items()
         ]
 
+        mnts = mnts_in + mnts_out
         args = []
 
         for i in self.inputs:
@@ -413,7 +442,7 @@ class Plugin(WIPPPluginManifest):
             args.append(f"--{i.name}")
 
             if isinstance(i.value, pathlib.Path):
-                args.append("/data/inputs" + str(i.value.relative_to(inp_root))[1:])
+                args.append(inp_dirs_dict[str(i.value)])
 
             else:
                 args.append(str(i.value))
@@ -423,21 +452,38 @@ class Plugin(WIPPPluginManifest):
             args.append(f"--{o.name}")
 
             if isinstance(o.value, pathlib.Path):
-                args.append("/data/outputs" + str(o.value.relative_to(out_root))[1:])
-
+                args.append(out_dirs_dict[str(o.value)])
             else:
                 args.append(str(o.value))
 
-        client = docker.from_env()
-        client.containers.run(
-            self.containerId,
-            args,
-            mounts=mnts,
-            user=f"{os.getuid()}:{os.getegid()}",
-            device_requests=[
-                docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])
-            ],
-        )
+        if not dryRun:
+            print("Args: %s" % args)
+            client = docker.from_env()
+            dc = client.containers.run(
+                self.containerId,
+                args,
+                mounts=mnts,
+                user=f"{os.getuid()}:{os.getegid()}",
+                device_requests=[
+                    docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])
+                ],
+                init=False,
+                detach=True,
+                stop_signal="SIGINT",
+                remove=True,
+                **kwargs,
+            )
+
+            for l in dc.logs(stream=True, follow=True):
+                print(l.decode("utf-8").strip())
+
+        else:
+            print("Inp Dir: %s" % inp_dirs)
+            print("Out Dir: %s" % out_dirs)
+            print("Args: %s" % args)
+            print("Mntsin: %s" % mnts_in)
+            print("Mntsout: %s" % mnts_out)
+            print("Mnts: %s" % mnts)
 
     def __getattribute__(self, name):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
