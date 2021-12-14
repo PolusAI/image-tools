@@ -1,5 +1,14 @@
-import argparse, logging, os, glob, copy
+import argparse
+import logging 
+import os
+import csv
+from io import StringIO
+import copy
 from pathlib import Path
+import logging
+import vaex
+import pandas as pd
+import shutil
 
 if __name__=="__main__":
     # Initialize the logger
@@ -22,6 +31,24 @@ if __name__=="__main__":
     parser.add_argument('--sameRows', dest='sameRows', type=str,
                         help='Only merge csvs if they contain the same number of rows', required=False)
     
+    def csv_to_feather(csvdata):
+        file_name = 'merged'
+        output = file_name + ".feather"
+        outputfile = os.path.join(outDir, output)
+
+        logger.info('CSV CONVERSION: Checking size of csv file...')
+        # Open csv file and count rows in file
+        writer = csv.writer(output, quoting=csv.QUOTE_NONNUMERIC)
+        ncols = writer.writerow(csvdata)
+
+        chunk_size = max([2**24 // ncols, 1])
+        logger.info('CSV CONVERSION: # of columns are: ' + str(ncols))
+
+        # Convert large csv files to hdf5 if more than 1,000,000 rows
+        logger.info('CSV CONVERSION: converting file into hdf5 format')
+        df = vaex.from_csv(StringIO(csvdata),convert=True,chunk_size=chunk_size)
+        df.export_feather(outputfile,outDir)
+        
     # Parse the arguments
     args = parser.parse_args()
     inpDir = args.inpDir
@@ -61,11 +88,15 @@ if __name__=="__main__":
             
             inp_files = [open(f) for f in out_files[key]]
             
-            with open(outPath,'w') as fw:
-                logger.info("Generating file: {}".format(Path(outPath).name))
-                for l in range(key):
-                    fw.write(','.join([f.readline().rstrip('\n') for f in inp_files]))
-                    fw.write('\n')
+            
+            logger.info("Generating feather file: {}".format(Path(outPath).name))
+            for l in range(key):
+                for f in inp_files:
+                    csv_reader = csv.reader(f)
+                # fw.write(','.join([f.readline().rstrip('\n') for f in inp_files]))
+                # fw.write('\n')
+            csv_to_feather(csv_reader)      
+        
                     
     else:
         # Get the column headers
@@ -114,12 +145,14 @@ if __name__=="__main__":
         line_dict = {key:'NaN' for key in headers}
         
         # Generate the path to the output file
-        outPath = str(Path(outDir).joinpath('merged.csv').absolute())
+        # outPath = str(Path(outDir).joinpath('merged.csv').absolute())
+        outPath = os.path.join(outDir, 'merged.csv')
         
         # Merge data
         if dim=='rows':
             logger.info("Merging the data along rows...")
             with open(outPath,'w') as out_file:
+                print(out_file)
                 out_file.write(','.join(headers) + '\n')
                 if identifiers:
                     out_file.write(line_template.format(**identifiers))
@@ -153,7 +186,7 @@ if __name__=="__main__":
                             out_file.write(line_template.format(**file_dict))
         elif dim=='columns':
             logger.info("Merging the data along columns...")
-            outPath = str(Path(outDir).joinpath('merged.csv').absolute())
+            outPath = os.path.join(outDir, 'merged.csv')
             
             # Load the first csv and generate a dictionary to hold all values
             out_dict = {}
