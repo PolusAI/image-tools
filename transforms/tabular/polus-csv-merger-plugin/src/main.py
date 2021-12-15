@@ -31,23 +31,23 @@ if __name__=="__main__":
     parser.add_argument('--sameRows', dest='sameRows', type=str,
                         help='Only merge csvs if they contain the same number of rows', required=False)
     
-    def csv_to_feather(csvdata):
-        file_name = 'merged'
-        output = file_name + ".feather"
-        outputfile = os.path.join(outDir, output)
-
-        logger.info('CSV CONVERSION: Checking size of csv file...')
-        # Open csv file and count rows in file
-        writer = csv.writer(output, quoting=csv.QUOTE_NONNUMERIC)
-        ncols = writer.writerow(csvdata)
-
-        chunk_size = max([2**24 // ncols, 1])
-        logger.info('CSV CONVERSION: # of columns are: ' + str(ncols))
-
-        # Convert large csv files to hdf5 if more than 1,000,000 rows
-        logger.info('CSV CONVERSION: converting file into hdf5 format')
-        df = vaex.from_csv(StringIO(csvdata),convert=True,chunk_size=chunk_size)
-        df.export_feather(outputfile,outDir)
+    def to_feather(files): 
+        count = 1
+        outPath_feather = str(Path(outDir).joinpath('merged_{}.feather'.format(count)).absolute())
+        count=+ 1   
+        file_count = len(files)
+        # create empty list
+        dataframes_list = []  
+        # append datasets to the list
+        for i in range(file_count):
+            temp_df = pd.read_csv(files[i])
+            dataframes_list.append(temp_df)
+                
+        df_total=pd.concat(dataframes_list)
+        df = vaex.from_pandas(df_total)
+        os.chdir(outDir)
+        
+        df.export(outPath_feather)
         
     # Parse the arguments
     args = parser.parse_args()
@@ -84,19 +84,32 @@ if __name__=="__main__":
         for key in out_files.keys():
             
             outPath = str(Path(outDir).joinpath('merged_{}.csv'.format(count)).absolute())
+            
             count += 1
             
             inp_files = [open(f) for f in out_files[key]]
             
+            # Write Merged CSV
+            with open(outPath,'w') as fw:
+                logger.info("Generating file: {}".format(Path(outPath).name))
+                for l in range(key):
+                    fw.write(','.join([f.readline().rstrip('\n') for f in inp_files]))
+                    fw.write('\n')    
+
+            # Write Merged Feather
+            file_count = len(inp_files)
+            # create empty list
+            dataframes_list = []
             
-            logger.info("Generating feather file: {}".format(Path(outPath).name))
-            for l in range(key):
-                for f in inp_files:
-                    csv_reader = csv.reader(f)
-                # fw.write(','.join([f.readline().rstrip('\n') for f in inp_files]))
-                # fw.write('\n')
-            csv_to_feather(csv_reader)      
-        
+            # append datasets to the list
+            for i in range(file_count):
+                temp_df = pd.read_csv(inp_files[i])
+                dataframes_list.append(temp_df)
+               
+            df_total=pd.concat(dataframes_list)
+            df = vaex.from_pandas(df_total)
+            os.chdir(outDir)
+            df.export('merged.feather')
                     
     else:
         # Get the column headers
@@ -152,7 +165,6 @@ if __name__=="__main__":
         if dim=='rows':
             logger.info("Merging the data along rows...")
             with open(outPath,'w') as out_file:
-                print(out_file)
                 out_file.write(','.join(headers) + '\n')
                 if identifiers:
                     out_file.write(line_template.format(**identifiers))
@@ -184,6 +196,9 @@ if __name__=="__main__":
                             for el,val in enumerate(line.rstrip('\n').split(',')):
                                 file_dict[file_map[el]] = val
                             out_file.write(line_template.format(**file_dict))
+                            
+            logger.info("Merging the data along rows for feather file")
+            to_feather(inpDir_files)
         elif dim=='columns':
             logger.info("Merging the data along columns...")
             outPath = os.path.join(outDir, 'merged.csv')

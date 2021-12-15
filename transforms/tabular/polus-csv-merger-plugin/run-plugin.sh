@@ -13,7 +13,7 @@ outDir=/data/csv_output
 #Other params
 stripExtension=false
 dim=rows
-# sameRows=
+# sameRows=true
 
 # Log level, must be one of ERROR, CRITICAL, WARNING, INFO, DEBUG
 LOGLEVEL=INFO
