@@ -388,7 +388,6 @@ class Plugin(WIPPPluginManifest):
         inp_dirs = []
         out_dirs = []
 
-        # Find common paths in input and output directories
         for i in self.inputs:
             if isinstance(i.value, pathlib.Path):
                 inp_dirs.append(str(i.value))
@@ -397,15 +396,20 @@ class Plugin(WIPPPluginManifest):
             if isinstance(o.value, pathlib.Path):
                 out_dirs.append(str(o.value))
 
-        inp_root = pathlib.Path(os.path.commonpath(inp_dirs))
-        out_root = pathlib.Path(os.path.commonpath(out_dirs))
-        mnts = [
-            docker.types.Mount(
-                "/data/inputs/", str(inp_root), type="bind", read_only=True
-            ),
-            docker.types.Mount("/data/outputs/", str(out_root), type="bind"),
+        inp_dirs_dict = {x: f"/data/iputs/input{n}" for (n, x) in enumerate(inp_dirs)}
+        out_dirs_dict = {
+            x: f"/data/outputs/output{n}" for (n, x) in enumerate(out_dirs)
+        }
+
+        mnts_in = [
+            docker.types.Mount(v, k, type="bind", read_only=True)
+            for (k, v) in inp_dirs_dict.items()
+        ]
+        mnts_out = [
+            docker.types.Mount(v, k, type="bind") for (k, v) in out_dirs_dict.items()
         ]
 
+        mnts = mnts_in + mnts_out
         args = []
 
         for i in self.inputs:
@@ -413,7 +417,7 @@ class Plugin(WIPPPluginManifest):
             args.append(f"--{i.name}")
 
             if isinstance(i.value, pathlib.Path):
-                args.append("/data/inputs" + str(i.value.relative_to(inp_root))[1:])
+                args.append(inp_dirs_dict[str(i.value)])
 
             else:
                 args.append(str(i.value))
@@ -423,8 +427,7 @@ class Plugin(WIPPPluginManifest):
             args.append(f"--{o.name}")
 
             if isinstance(o.value, pathlib.Path):
-                args.append("/data/outputs" + str(o.value.relative_to(out_root))[1:])
-
+                args.append(out_dirs_dict[str(o.value)])
             else:
                 args.append(str(o.value))
 
