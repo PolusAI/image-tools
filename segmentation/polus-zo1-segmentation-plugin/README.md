@@ -26,3 +26,46 @@ This plugin takes one input argument and one output argument:
 | `--inpDir` | Input image collection to be processed by this plugin | Input  | collection |
 | `--outDir` | Output collection                                     | Output | collection |
 
+## Example Code 
+
+Getting Z01 Flurorescent Data from Publication
+```Linux
+wget "https://isg.nist.gov/deepzoomweb/dissemination/rpecells/fluorescentZ01.zip"
+unzip fluorescentZ01.zip
+```
+
+Running Container on Current Directory
+``` Linux
+mkdir output
+basedir=$(basename ${PWD})
+docker run -v ${PWD}:/$basedir labshare/polus-zo1-segmentation-plugin:0.1.7 \
+--inpDir /$basedir/"images/" \
+--outDir /$basedir/"output/"
+```
+
+Viewing the Results using Python
+```Python
+import os
+import matplotlib.pyplot as plt
+
+import bfio
+from bfio import BioReader, BioWriter
+
+input_dir = "./images/"
+output_dir = "./output/"
+
+images = os.listdir(input_dir)
+image = images[0]
+
+with BioReader(os.path.join(input_dir, image), backend='java') as br_image:
+    img = br_image[:]
+
+with BioReader(os.path.join(output_dir, image)) as br_output:
+    lab = br_output[:]
+
+fig, ax = plt.subplots(1, 2, figsize=(16,8))
+ax[0].imshow(img), ax[0].set_title("Z01 Fluroescent Image")
+ax[1].imshow(lab), ax[1].set_title("Z01 Segmentation")
+fig.suptitle(image)
+plt.show()
+```
