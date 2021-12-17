@@ -1,0 +1,146 @@
+{
+  "name": "Binary Operations Plugin",
+  "version": "0.3.9",
+  "containerId": "labshare/polus-binary-operations-plugin:0.3.9",
+  "title": "Binary Operations Plugin",
+  "description": "Everything you need to start a WIPP plugin.",
+  "author": "Madhuri Vihani (Madhuri.Vihani@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "inputs": [
+    {
+      "name": "inpDir",
+      "description": "Input image collection to be processed by this plugin",
+      "type": "collection",
+      "options": null,
+      "required": true
+    },
+    {
+      "name": "kernelsize",
+      "description": "Kernel size that should be used for transformation",
+      "type": "number",
+      "options": null,
+      "required": true
+    },
+    {
+      "name": "Operation",
+      "description": "The Binary Operations that will be done on the image",
+      "type": "enum",
+      "options": {
+        "values": [
+          "inversion",
+          "opening",
+          "closing",
+          "morphological_gradient",
+          "dilation",
+          "erosion",
+          "fill_holes",
+          "skeleton",
+          "filter_area_remove_large_objects",
+          "filter_area_remove_small_objects",
+          "top_hat",
+          "black_hat"
+        ]
+      },
+      "required": true
+    },
+    {
+      "name": "structuringshape",
+      "description": "Structuring Shape (Default is Elliptical)",
+      "type": "enum",
+      "options": {
+        "values": [
+          "Elliptical",
+          "Rectangular",
+          "Cross"
+        ]
+      },
+      "required": true
+    },
+    {
+      "name": "ThresholdAreaRemoveLarge",
+      "description": "Minimum Area of objects to keep.",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "ThresholdAreaRemoveSmall",
+      "description": "Maximum Area of objects to keep.",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "IterationsDilation",
+      "description": "Number of times to dilate an object",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "IterationsErosion",
+      "description": "Number of times to erode an object",
+      "type": "number",
+      "options": null,
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "description": "Output collection",
+      "type": "collection",
+      "options": null,
+      "required": true
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.Operation",
+      "title": "Operations",
+      "description": "Operations that will be used on image"
+    },
+    {
+      "key": "inputs.inpDir",
+      "title": "Input collection",
+      "description": "Input image collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.kernelsize",
+      "title": "Default Kernel Size",
+      "description": "Default Kernel Size to use for Operations"
+    },
+    {
+      "key": "inputs.structuringshape",
+      "title": "Structuring Shape (Default is Elliptical)",
+      "description": "Default Kernel Size to use for Operations"
+    },
+    {
+      "key": "inputs.ThresholdAreaRemoveLarge",
+      "title": "Threshold of Area for objects in images",
+      "description": "Default Kernel Size to use for Operations",
+      "condition": "inputs.Operation==filter_area_remove_large_objects"
+    },
+    {
+      "key": "inputs.ThresholdAreaRemoveSmall",
+      "title": "Threshold of Area for objects in images",
+      "description": "Default Kernel Size to use for Operations",
+      "condition": "inputs.Operation==filter_area_remove_small_objects"
+    },
+    {
+      "key": "inputs.IterationsDilation",
+      "title": "Iterate",
+      "description": "Default Kernel Size to use for Operations",
+      "condition": "inputs.Operation==dilation"
+    },
+    {
+      "key": "inputs.IterationsErosion",
+      "title": "Iterate",
+      "description": "Default Kernel Size to use for Operations",
+      "condition": "inputs.Operation==erosion"
+    }
+  ]
+}
