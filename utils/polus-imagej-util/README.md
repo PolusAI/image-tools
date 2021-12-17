@@ -25,7 +25,7 @@ In addition to the above criteria, at this time only the required inputs of the 
 
 ### Installing Dependencies
 
-To run the plugin generation pipeline or run a plugin outside of WIPP [openjdk8](https://openjdk.java.net/install/) and the other dependencies in `polus-plugins/utils/polus-imagej-util/requirements.txt` need to be installed. Note that `openjdk==8` is listed in `requirements.txt`.
+To run the plugin generation pipeline or run a plugin outside of WIPP [openjdk8](https://openjdk.java.net/install/) and the other dependencies in `polus-plugins/utils/polus-imagej-util/requirements.txt` need to be installed. Note that `openjdk==8` is not listed in `requirements.txt`.
 
 These requirements can be installed by running the following command from the `polus-plugins` directory.
 
