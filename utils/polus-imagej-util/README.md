@@ -29,7 +29,7 @@ To run the plugin generation pipeline or run a plugin outside of WIPP [openjdk8]
 
 These requirements can be installed by running the following command from the `polus-plugins` directory.
 
-`pip install -r polus-plugins/utils/polus-imagej-util/requirements.txt`
+`pip install -r utils/polus-imagej-util/requirements.txt`
 
 ## Explanation of File Structure and Settings
 
