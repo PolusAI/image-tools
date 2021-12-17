@@ -58,7 +58,6 @@ This plugin takes one input argument and one output argument:
 ```Linux
 mkdir examples
 cd examples
-wget -P https://data.broadinstitute.org/bbbc/BBBC033/BBBC033_v1_dataset.zip
 mkdir output
 wget -P images/ https://data.broadinstitute.org/bbbc/BBBC033/BBBC033_v1_dataset.zip
 unzip images/BBBC033_v1_dataset.zip
