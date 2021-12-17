@@ -59,7 +59,7 @@ This plugin takes one input argument and one output argument:
 | `--outDir`       | Output collection                                     | Output | collection |
 
 ## Example Code
-```
+```Linux
 cd examples
 mkdir output
 basedir=$(basename ${PWD})
@@ -70,7 +70,7 @@ docker run -v ${PWD}:/$basedir labshare/polus-ftl-label-plugin:0.3.10 \
 ```
 
 ## Viewing the results using Python
-```
+```Python
 from bfio import BioReader
 from pathlib import Path
 import matplotlib.pyplot as plt
