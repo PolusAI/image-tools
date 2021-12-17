@@ -1,0 +1,42 @@
+{
+  "name": "{{ cookiecutter.project_name }}",
+  "version": "{{ cookiecutter.version }}",
+  "title": "{{ cookiecutter.project_name }}",
+  "description": "{{ cookiecutter.project_short_description }}",
+  "author": "{{ cookiecutter.author }} ({{ cookiecutter.email }})",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/{{ cookiecutter.project_slug }}:{{ cookiecutter.version }}",
+  "inputs": [{% for inp,val in cookiecutter._inputs.items() %}
+    {
+      "name": "{{ inp }}",
+      "type": "{{ val.type }}",
+    {%- if val.type=='enum' %}
+      "options": {
+        "values": [{% for v in val.options %}"{{v}}"{% if not loop.last %},
+                    {% endif %}{% endfor %}]
+      },
+    {%- endif %}
+      "description": "{{ val.description }}",
+      "required": {{ val.required.lower() }}
+    }{% if not loop.last %},{% endif %}{% endfor %}
+  ],
+  "outputs": [{% for out,val in cookiecutter._outputs.items() %}
+    {
+      "name": "{{ out }}",
+      "type": "{{ val.type }}",
+      "description": "{{ val.description }}"
+    }{% if not loop.last %},{% endif %}{% endfor %}
+  ],
+  "ui": [{% for inp,val in cookiecutter._inputs.items() %}
+    {
+      "key": "inputs.{{ inp }}",
+      "title": "{{ val.title }}",
+      "description": "{{ val.description }}"{%- if inp!='opName' %},
+      "condition": "{% for v in val.call_types %}model.inputs.opName=={{v}}{% if not loop.last %} or {% endif %}{% endfor %}"
+    {%- endif %}
+    }{% if not loop.last %},{% endif %}{% endfor %}
+  ]
+}
