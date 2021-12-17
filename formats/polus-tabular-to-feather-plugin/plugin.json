@@ -34,7 +34,7 @@
     {
       "key": "inputs.filePattern",
       "title": "Filename pattern",
-      "description": "Filename pattern used to separate data. ex: .fcs or .csv"
+      "description": "Filename pattern used to separate data"
     },
     {
       "key": "inputs.inpDir",
