@@ -1,1 +1,2 @@
-cellpose[all]==0.6.5
+cellpose[all]==0.7.0
+scikit-image==0.19.0

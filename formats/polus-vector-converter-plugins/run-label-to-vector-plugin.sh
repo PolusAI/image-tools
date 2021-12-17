@@ -1,14 +1,15 @@
 #!/bin/bash
 
 version=$(<VERSION)
-data_path=$(readlink --canonicalize ../../data/vector_converters/label_to_vector)
+# data_path=$(readlink --canonicalize /home/schaubnj/anaconda3/envs/py39/lib/python3.9/site-packages/polus/images/Nadia2017ImportTest/raw/labels_columbus)
+data_path=/home/schaubnj/Desktop/Projects/polus-plugins/test
 
 # Inputs
-inpDir=/data/input
+inpDir=/data/3d_labels
 filePattern=".+"
 
 # Output paths
-outDir=/data/output
+outDir=/data/3d_vectors
 
 # GPU configuration for testing GPU usage in the container
 GPUS=all

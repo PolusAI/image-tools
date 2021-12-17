@@ -1,15 +1,19 @@
 #!/bin/bash
 
+# version=$(<VERSION)
 version=$(<VERSION)
 data_path=$(readlink --canonicalize ../../../data)
+data_path=/home/schaubnj/Desktop/Projects/polus-plugins/test/
 
 # Inputs
-inpDir=/data/cellpose_inference/rat-brain-standard-out
-filePattern="S1_R{r}_C1-C11_A1_c000_flow.ome.zarr"
-flowMagnitudeThreshold=0.1
+inpDir=/data/eastman_flows
+filePattern=".+"
+
+# GPU configuration for testing GPU usage in the container
+GPUS=all
 
 # Output paths
-outDir=/data/vector_converters/vector_to_label/rat-brain-standard-out
+outDir=/data/3d_reconstructed
 
 # Must be one of ERROR, CRITICAL, WARNING, INFO, DEBUG
 POLUS_LOG=INFO
@@ -20,10 +24,10 @@ POLUS_EXT=".ome.tif"
 # If your computer does not have a gpu, you need to remove the line with the --gpu flag.
 docker run --mount type=bind,source="${data_path}",target=/data/ \
             --user "$(id -u)":"$(id -g)" \
+            --gpus ${GPUS} \
             --env POLUS_LOG=${POLUS_LOG} \
             --env POLUS_EXT=${POLUS_EXT} \
             polusai/vector-to-label-plugin:"${version}" \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
-            --flowMagnitudeThreshold ${flowMagnitudeThreshold} \
             --outDir ${outDir}

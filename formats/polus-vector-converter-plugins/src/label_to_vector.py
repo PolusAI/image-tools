@@ -2,26 +2,30 @@ import argparse
 import logging
 from concurrent.futures import Future
 from concurrent.futures import ProcessPoolExecutor
-from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
 from pathlib import Path
 from typing import Any
 from typing import List
 from typing import Optional
 from typing import Tuple
-
 import filepattern
 import numpy
+
+if __name__ == "__main__":
+    # This needs to be done before importing zarr
+    import multiprocessing
+
+    multiprocessing.set_start_method("spawn")
+
 import zarr
 from bfio.bfio import BioReader
 from bfio.bfio import BioWriter
-
 import dynamics
 import utils
 
 logging.basicConfig(
-    format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
-    datefmt='%d-%b-%y %H:%M:%S',
+    format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
+    datefmt="%d-%b-%y %H:%M:%S",
 )
 logger = logging.getLogger("label-to-vector")
 logger.setLevel(utils.POLUS_LOG)
@@ -32,19 +36,22 @@ def init_zarr_file(path: Path, ndims: int, metadata: Any):
         writer.dtype = numpy.float32
         writer.C = ndims + 2
         if ndims == 2:
-            writer.channel_names = ['cell_probability', 'flow_y', 'flow_x', 'labels']
+            writer.channel_names = ["cell_probability", "flow_y", "flow_x", "labels"]
         else:
-            writer.channel_names = ['cell_probability', 'flow_z', 'flow_y', 'flow_x', 'labels']
+            writer.channel_names = [
+                "cell_probability",
+                "flow_z",
+                "flow_y",
+                "flow_x",
+                "labels",
+            ]
         # noinspection PyProtectedMember
         writer._backend._init_writer()
     return
 
 
 def flow_thread(
-        file_name: Path,
-        zarr_path: Path,
-        coordinates: Tuple[int, int, Optional[int]],
-        device: Optional[int],
+    file_name: Path, zarr_path: Path, coordinates: Tuple[int, int, Optional[int]]
 ) -> bool:
     x, y, z = coordinates
     ndims = 2 if z is None else 3
@@ -64,10 +71,10 @@ def flow_thread(
         z_max = min(z_shape, z + utils.TILE_SIZE + utils.TILE_OVERLAP)
 
         masks = numpy.squeeze(reader[y_min:y_max, x_min:x_max, z_min:z_max, 0, 0])
-    
+
     masks = masks if ndims == 2 else numpy.transpose(masks, (2, 0, 1))
     masks_shape = masks.shape
-    
+
     # Calculate index and offsets
     x_overlap = x - x_min
     x_min, x_max = x, min(x_shape, x + utils.TILE_SIZE)
@@ -80,7 +87,7 @@ def flow_thread(
     z_overlap = z - z_min
     z_min, z_max = z, min(z_shape, z + utils.TILE_SIZE)
     cz_min, cz_max = z_overlap, z_max - z_min + z_overlap
-    
+
     # Save the mask before transforming
     if ndims == 2:
         masks_original = masks[numpy.newaxis, numpy.newaxis, numpy.newaxis, :, :]
@@ -90,23 +97,33 @@ def flow_thread(
 
     # noinspection PyTypeChecker
     zarr_root = zarr.open(str(zarr_path))[0]
-    zarr_root[0:1, 0:1, z_min:z_max, y_min:y_max, x_min:x_max] = numpy.asarray(masks_original != 0, dtype=numpy.float32)
-    zarr_root[0:1, ndims + 1:ndims + 2, z_min:z_max, y_min:y_max, x_min:x_max] = numpy.asarray(masks_original, dtype=numpy.float32)
-    
+    zarr_root[0:1, 0:1, z_min:z_max, y_min:y_max, x_min:x_max] = numpy.asarray(
+        masks_original != 0, dtype=numpy.float32
+    )
+    zarr_root[
+        0:1, ndims + 1 : ndims + 2, z_min:z_max, y_min:y_max, x_min:x_max
+    ] = numpy.asarray(masks_original, dtype=numpy.float32)
+
     if not numpy.any(masks):
-        logger.debug(f'Tile (x, y, z) = {x, y, z} in file {file_name.name} has no objects. Setting flows to zero...')
+        logger.debug(
+            f"Tile (x, y, z) = {x, y, z} in file {file_name.name} has no objects. Setting flows to zero..."
+        )
         flows = numpy.zeros((ndims, *masks.shape), dtype=numpy.float32)
     else:
         # Normalize
         labels, masks = numpy.unique(masks, return_inverse=True)
         if len(labels) == 1:
-            logger.debug(f'Tile (x, y, z) = {x, y, z} in file {file_name.name} has only one object.')
+            logger.debug(
+                f"Tile (x, y, z) = {x, y, z} in file {file_name.name} has only one object."
+            )
             masks += 1
 
         masks = numpy.reshape(masks, newshape=masks_shape)
-        flows = dynamics.masks_to_flows(masks, device=device)
-        
-        logger.debug(f'Computed flows on tile (x, y, z) = {x, y, z} in file {file_name.name}')
+        flows = dynamics.labels_to_vectors(masks, file_name.name + f"{x, y, z}")
+
+        logger.debug(
+            f"Computed flows on tile (x, y, z) = {x, y, z} in file {file_name.name}"
+        )
 
     # Zarr axes ordering should be (t, c, z, y, x). Add missing t, c, and z axes
     if ndims == 2:
@@ -115,25 +132,29 @@ def flow_thread(
         flows = flows[numpy.newaxis, :, :, :]
 
     flows = flows[:, :, cz_min:cz_max, cy_min:cy_max, cx_min:cx_max]
-    
-    zarr_root[0:1, 1:ndims + 1, z_min:z_max, y_min:y_max, x_min:x_max] = flows
+
+    zarr_root[0:1, 1 : ndims + 1, z_min:z_max, y_min:y_max, x_min:x_max] = flows
 
     return True
 
 
 def main(
-        input_dir: Path,
-        file_pattern: str,
-        output_dir: Path,
+    input_dir: Path,
+    file_pattern: str,
+    output_dir: Path,
 ):
-    fp = filepattern.FilePattern(input_dir, file_pattern)
-    files = [Path(file[0]['file']).resolve() for file in fp]
-    files = list(filter(
-        lambda file_path: file_path.name.endswith('.ome.tif') or file_path.name.endswith('.ome.zarr'),
-        files
-    ))
 
-    executor = (ThreadPoolExecutor if utils.USE_GPU else ProcessPoolExecutor)(utils.NUM_THREADS)
+    fp = filepattern.FilePattern(input_dir, file_pattern)
+    files = [Path(file[0]["file"]).resolve() for file in fp]
+    files = list(
+        filter(
+            lambda file_path: file_path.name.endswith(".ome.tif")
+            or file_path.name.endswith(".ome.zarr"),
+            files,
+        )
+    )
+
+    executor = ProcessPoolExecutor(utils.NUM_THREADS)
     processes: List[Future[bool]] = list()
 
     for in_file in files:
@@ -143,7 +164,9 @@ def main(
 
         ndims = 2 if z_shape == 1 else 3
 
-        out_file = output_dir.joinpath(utils.replace_extension(in_file, extension='_flow.ome.zarr'))
+        out_file = output_dir.joinpath(
+            utils.replace_extension(in_file, extension="_flow.ome.zarr")
+        )
         init_zarr_file(out_file, ndims, metadata)
 
         tile_count = 0
@@ -153,63 +176,58 @@ def main(
             for y in range(0, y_shape, utils.TILE_SIZE):
                 for x in range(0, x_shape, utils.TILE_SIZE):
                     coordinates = x, y, z
-                    device = (tile_count % utils.NUM_THREADS) if utils.USE_GPU else None
                     tile_count += 1
 
-                    # flow_thread(in_file, out_file, coordinates, device)
+                    processes.append(
+                        executor.submit(flow_thread, in_file, out_file, coordinates)
+                    )
 
-                    processes.append(executor.submit(
-                        flow_thread,
-                        in_file,
-                        out_file,
-                        coordinates,
-                        device,
-                    ))
-
-    done, not_done = wait(processes, 0)
+    not_done = [1]
     while len(not_done) > 0:
-        logger.info(f'Percent complete: {100 * len(done) / len(processes):6.3f}%')
+        done, not_done = wait(processes, 5)
         for r in done:
             r.result()
-        done, not_done = wait(processes, 5)
+        logger.info(f"Percent complete: {100 * len(done) / len(processes):6.3f}%")
+
     executor.shutdown()
 
     return
 
 
 if __name__ == "__main__":
-    """ Argument parsing """
+
+    """Argument parsing"""
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(
-        prog='label_to_vec',
-        description='Flow field calculations to convert labels to vectors.',
+        prog="label_to_vec",
+        description="Flow field calculations to convert labels to vectors.",
     )
 
     # Input arguments
     parser.add_argument(
-        '--inpDir',
-        dest='inpDir',
+        "--inpDir",
+        dest="inpDir",
         type=str,
-        help='Input image collection to be processed by this plugin.',
+        help="Input image collection to be processed by this plugin.",
         required=True,
     )
 
     parser.add_argument(
-        '--filePattern',
-        dest='filePattern',
+        "--filePattern",
+        dest="filePattern",
         type=str,
-        help='Image-name pattern to use when selecting images to process.',
+        help="Image-name pattern to use when selecting images to process.",
         required=False,
-        default='.+'
+        default=".+",
     )
 
     # Output arguments
     # noinspection DuplicatedCode
     parser.add_argument(
-        '--outDir',
-        dest='outDir',
+        "--outDir",
+        dest="outDir",
         type=str,
-        help='Output collection.',
+        help="Output collection.",
         required=True,
     )
 
@@ -218,18 +236,18 @@ if __name__ == "__main__":
     _args = parser.parse_args()
 
     _input_dir = Path(_args.inpDir).resolve()
-    assert _input_dir.exists(), f'input directory {_input_dir} does not exist'
-    if _input_dir.joinpath('images').is_dir():
+    assert _input_dir.exists(), f"input directory {_input_dir} does not exist"
+    if _input_dir.joinpath("images").is_dir():
         # switch to images folder if present
-        _input_dir = _input_dir.joinpath('images')
-    logger.info(f'inpDir = {_input_dir}')
+        _input_dir = _input_dir.joinpath("images")
+    logger.info(f"inpDir = {_input_dir}")
 
     _file_pattern = _args.filePattern
-    logger.info(f'filePattern = {_file_pattern}')
+    logger.info(f"filePattern = {_file_pattern}")
 
     _output_dir = Path(_args.outDir).resolve()
-    assert _output_dir.exists(), f'output directory {_output_dir} does not exist'
-    logger.info(f'outDir = {_output_dir}')
+    assert _output_dir.exists(), f"output directory {_output_dir} does not exist"
+    logger.info(f"outDir = {_output_dir}")
 
     main(
         input_dir=_input_dir,
