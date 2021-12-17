@@ -1,0 +1,6 @@
+filepattern==1.4.7
+numpy==1.21.1
+zarr==2.8.3
+bfio[all]==2.1.9
+scipy==1.7.1
+numba==0.53.1
