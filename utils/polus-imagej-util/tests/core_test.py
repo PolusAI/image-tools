@@ -17,6 +17,7 @@ if __name__ == "__main__":
     import numpy as np
     from bfio import BioReader, BioWriter
     from pathlib import Path
+
     # Bioformats throws a debug message, disable the loci debugger to mute it
     def disable_loci_logs():
         DebugTools = scyjava.jimport("loci.common.DebugTools")
