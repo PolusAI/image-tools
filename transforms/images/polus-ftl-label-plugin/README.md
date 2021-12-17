@@ -63,7 +63,7 @@ This plugin takes one input argument and one output argument:
 cd examples
 mkdir output
 basedir=$(basename ${PWD})
-docker run -v ${PWD}:/$basedir labshare/polus-ftl-label-plugin:0.3.9 \
+docker run -v ${PWD}:/$basedir labshare/polus-ftl-label-plugin:0.3.10 \
 --inpDir /$basedir/"images/" \
 --outDir /$basedir/"output/" \
 --connectivity 1
