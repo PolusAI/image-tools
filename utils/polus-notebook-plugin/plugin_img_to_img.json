@@ -1,0 +1,55 @@
+{
+    "name": "Notebook executor (Image->Image)",
+	"version": "0.4.0",
+	"title": "Jupyter Notebook executor",
+	"description": "Execute Jupyter notebook which take input of image collection and outputs to image collection.",
+	"author": "Konstantin taletskiy (konstantin.taletskiy@labshare.org),Gauhar Bains (gauhar.bains@labshare.org)",
+	"containerId": "labshare/polus-notebook-plugin:0.4.0",
+
+	"inputs": [
+		{
+			"name": "input-collection",
+			"type": "collection",
+			"description": "Input image collection for the plugin."
+		},
+		{
+			"name": "config-file",
+			"type": "collection",
+			"description": "Config file for the notebook"
+        },
+        {
+            "name": "input-notebook",
+            "type": "notebook",
+            "description": "Jupyter Notebook to execute"
+        }
+	],
+	"outputs": [
+		{
+			"name": "output-collection",
+			"type": "collection",
+			"description": "Output image collection for the plugin"
+		},
+		{
+            "name": "output-notebook",
+            "type": "notebook",
+            "description": "Jupyter Notebook after execution"
+        }
+	],
+	"ui": [
+		{
+			"key": "inputs.input-collection",
+			"title": "Image Collection: ",
+			"description": "Pick a collection..."
+		},
+		{
+			"key": "inputs.config-file",
+			"title": "Config File (Optional): ",
+			"description": "Pick config file..."
+        },
+        {
+            "key": "inputs.input-notebook",
+            "title": "Notebook: ",
+            "description": "Pick a notebook to execute..."
+        }
+	]
+}

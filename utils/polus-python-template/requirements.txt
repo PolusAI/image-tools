@@ -1,0 +1,4 @@
+cookiecutter==1.7.2
+jinja2_ospath==0.3.0
+bfio[all]==2.1.9
+filepattern==1.4.6
