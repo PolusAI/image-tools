@@ -7,7 +7,7 @@ than loading a single, large image). For file formats with a pyramid-like
 structure with multiple resolutions (or series), this plugin only saves the 
 first series to a tiff (usually, the first series is the highest resolution).
 
-The current need for this plugin is that WIPPs tiled tiff conversion process
+The current need for this plugin is that WIPP's tiled tiff conversion process
 only grabs the first image plane, while this plugin grabs all image planes in a
 series. Ultimately, this permits complete data conversion (including all
 channels, z-positions, and time points). Each image plane (defined as a single
@@ -56,6 +56,7 @@ This plugin takes one input argument and one output argument:
 ## Example Code
 
 ```Linux
+mkdir examples
 cd examples
 wget -P https://data.broadinstitute.org/bbbc/BBBC033/BBBC033_v1_dataset.zip
 mkdir output
