@@ -44,7 +44,7 @@ __Morphology features:__
 
 *Centroid* - The center point of the ROI. Centroid x and y indicates the (x,y) coordinates.
 
-*Neighbors* - The number of neighbors bordering the ROI's shell of specified thickness.
+*Neighbors* - The number of neighbors bordering the ROI's perimeter. Algorithmically calculating this feature invilves solving the nearest neighbors search problem that in turn involves the proximity measure and the proximity threshold. Particularly, this plugin uses the $L_2$ norm measure over Cartesian space of pixel coordinates and parameter _--pixelDistance_. 
 
 *Maximum Feret* - Feret diameter (or maximum caliber diameter) is the longest distance between any two ROI points along the same (horizontal) direction. This feature is the maximum Feret diameter for angles ranging 0 to 180 degrees.
 
@@ -86,7 +86,7 @@ __Example - testing docker image with local data__
 
 Assuming the Docker image's hash is 87f3b560bbf2, the root of the data directory on the test machine is /images/collections, and intensity and segmentation mask image collections are in subdirectories /images/collections/c1/int and /images/collections/c1/seg respectively, the image can be test-run with command
 ```
-docker run -it --mount type=bind,source=/images/collections,target=/data 87f3b560bbf2 --outputType=separatecsv --intDir=/data/c1/int --segDir=/data/c1/seg --outDir=/data/output --filePattern=.* --csvfile=separatecsv --features=all
+docker run -it --mount type=bind,source=/images/collections,target=/data 87f3b560bbf2 --intDir=/data/c1/int --segDir=/data/c1/seg --outDir=/data/output --filePattern=.* --csvfile=separatecsv --features=all
 ```
 ## Deploying as a legit POLUS plugin
 
@@ -169,7 +169,7 @@ Parameter __*features*__ defines a set of desired features to be calculated. Val
 
 __Table 2 - Feature selection keys for parameter '--features'__
 
----
+-----------------------------------------
 | Key | Feature |
 --------|--------------------------------
 | area | ROI area |
@@ -204,4 +204,13 @@ __Table 2 - Feature selection keys for parameter '--features'__
 | solidity | ROI solidity (fraction of ROI pixels shared with its convex hull) |
 | standard_deviation | Standard deviation of ROI pixels |
 | all | All the features |
--------------
+-----------------------------------------
+
+The following command line is an example of running the dockerized feature extractor (image hash 87f3b560bbf2) with only intensity features selected:
+```
+docker run -it --mount type=bind,source=/images/collections,target=/data 87f3b560bbf2 --intDir=/data/c1/int --segDir=/data/c1/seg --outDir=/data/output --filePattern=.* --csvfile=separatecsv --features=entropy,kurtosis,skewness,max_intensity,mean_intensity,min_intensity,median,mode,standard_deviation
+```
+or its undockerized equivalent:
+```
+python main.py --intDir=/images/collections/c1/int --segDir=/images/collections/c1/seg --outDir=/temp_fe/output --filePattern=.* --csvfile=separatecsv --features=entropy,kurtosis,skewness,max_intensity,mean_intensity,min_intensity,median,mode,standard_deviation
+```
