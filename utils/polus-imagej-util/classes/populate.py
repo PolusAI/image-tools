@@ -791,18 +791,19 @@ class Populate:
                         },
                     '_inputs':{
                         'opName':{
-                            'title': 'Operation',
+                            'title': 'opName',
                             'type': 'enum',
                             'options':[
                                 op.name for op in plugin.supported_ops.values()
                                 ],
-                            'description': 'Operation to peform',
+                            'description': 'Operation to perform',
                             'required': 'False'
                             }
                         },
                     '_outputs':
                         plugin._all_outputs,
-                    'project_slug': "polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin"
+                    'project_slug': "polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin",
+                    'docker_repo' : "{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin"
                     }
                 
                 # Update the _inputs section dictionary with the inputs 
@@ -823,47 +824,33 @@ class Populate:
 
 
 
-"""This section is for testing only, the classes contained in this file were 
-intended to be instantiated in generate.py"""
+"""This section of uses the above classes to generate cookiecutter templates"""
 
 if __name__ == '__main__':
     
-    import imagej
     import jpype
-    from pathlib import Path
+    import os
     
-    # Disable warning message
-    def disable_loci_logs():
-        DebugTools = scyjava.jimport('loci.common.DebugTools')
-        DebugTools.setRootLevel('WARN')
-    scyjava.when_jvm_starts(disable_loci_logs)
-    
-    print('Starting JVM\n')
-    
-    # Start JVM
-    ij = imagej.init('sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4', headless=True)
-    
-    # Retreive all available operations from pyimagej
-    #imagej_help_docs = scyjava.to_python(ij.op().help())
-    #print(imagej_help_docs)
-    
-    print('Parsing imagej ops help\n')
-    
+    print('Starting JVM and parsing ops help\n')
     
     # Populate ops by parsing the imagej operations help
-    populater = Populate(
-                    log_file = 'full.log', 
-                    log_template='utils/polus-imagej-util/classes/logtemplates/mainlog.txt'
-                    )
+    populater = Populate()
     
-    print('Building json template\n')
+    print('Building json templates\n')
+    
+    # Get the current working directory
+    cwd = Path(os.getcwd())
+    
+    # Save a directory for the cookietin json files
+    cookietin_path = cwd.joinpath('utils/polus-imagej-util/cookietin')
     
     # Build the json dictionary to be passed to the cookiecutter module 
-    populater.build_json('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.1.1', __file__)
+    populater.build_json('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.3.0', cookietin_path)
     
     print('Shutting down JVM\n')
     
-    del ij
+    # Remove the imagej instance
+    del populater._ij
     
     # Shut down JVM
     jpype.shutdownJVM()
