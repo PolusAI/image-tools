@@ -34,6 +34,11 @@ wget "https://isg.nist.gov/deepzoomweb/dissemination/rpecells/fluorescentZ01.zip
 unzip fluorescentZ01.zip
 ```
 
+Installing Additional Dependencies 
+```Linux
+pip install -r src/requirements.txt
+```
+
 Running Container on Current Directory
 ``` Linux
 mkdir output
@@ -43,7 +48,7 @@ docker run -v ${PWD}:/$basedir labshare/polus-zo1-segmentation-plugin:0.1.7 \
 --outDir /$basedir/"output/"
 ```
 
-Viewing the Results using Python
+### Viewing the Results Using Python
 ```Python
 import os
 import matplotlib.pyplot as plt
