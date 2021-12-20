@@ -25,34 +25,11 @@ In addition to the above criteria, at this time only the required inputs of the 
 
 ### Installing Dependencies
 
-To run `populate.py` or run a plugin outside of WIPP the following dependencies need to be installed:
+To run the plugin generation pipeline or run a plugin outside of WIPP [openjdk8](https://openjdk.java.net/install/) and the other dependencies in `polus-plugins/utils/polus-imagej-util/requirements.txt` need to be installed. Note that `openjdk==8` is not listed in `requirements.txt`.
 
-- `pyimagej=1.0.0`
-- `openjdk=8`
-- `scyjava=1.1.0`
-- `jpype1=1.2.1`
-- `imglyb=1.0.0`
-- `bfio[all]==2.1.9`
+These requirements can be installed by running the following command from the `polus-plugins` directory.
 
-If desired these can easily be installed from the terminal with `conda` when using the notebooks hub.
-
-- `conda init bash`
-- `conda create -y -n pyimagej pyimagej=1.0.0 openjdk=8 scyjava=1.1.0 jpype1=1.2.1 imglyb=1.0.0 ipykernel`
-- `conda activate pyimagej`
-- `pip install bfio[all]==2.1.9`
-- `python -m ipykernel install --user --name [USER-NAME] --display-name "Python (pyimagej)`
-- `python utils/polus-imagej-util/classes/populate.py`
-
-Now the dashboard, `imagej_ui.ipynb` can be run by installing the following dependencies.
-
-- `black`
-- `cookiecutter`
-- `kubernetes`
-- `ipywidgets`
-
-Note that you must either specify which python interpreter to use by editing the source code in `utils/polus-imagej-util/imagej_ui.ipynb` or installing the 4 modules listed above in the notebooks hub base enviornment. By default, the dashboard will try to use the base interpreter.
-
-`pip install black cookiecutter kubernetes ipywidgets` 
+`pip install -r utils/polus-imagej-util/requirements.txt`
 
 ## Explanation of File Structure and Settings
 
