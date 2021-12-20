@@ -1,12 +1,10 @@
 import numpy as np
-import json, copy, os
+import os
 import math
 
 import logging, traceback
 from concurrent.futures import ThreadPoolExecutor
-from multiprocessing import cpu_count
 import tempfile
-from numpy.lib.arraysetops import unique
 
 import trimesh
 from skimage import measure
@@ -15,12 +13,9 @@ from neurogen import mesh as ngmesh
 from neurogen import info as nginfo
 from neurogen import volume as ngvol
 
-
 from itertools import repeat
-from itertools import product
 
 import bfio
-from bfio import BioReader, BioWriter
 
 # Import environment variables, if POLUS_LOG empty then automatically sets to INFO
 POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
@@ -110,7 +105,7 @@ def save_resolution(output_directory: str,
                 x=(x1_chunk, x2_chunk),  
                 z=(z1_chunk, z2_chunk))
     except Exception as e:
-        print(e)
+        raise ValueError(f"Something Went Wrong!: {traceback.print_exc()}")
 
 def iterate_chunk_tiles(cached_image: bfio.bfio.BioReader,
                         x_dimensions: tuple,
@@ -363,7 +358,6 @@ def build_pyramid(input_image : str,
 
     try:
         with bfio.BioReader(input_image) as bf:
-            bf = BioReader(input_image)
             bfshape = (bf.X, bf.Y, bf.Z, bf.C, bf.T)
             datatype = np.dtype(bf.dtype)
             logger.info("Image Shape (XYZCT) {}".format(bfshape))
@@ -429,7 +423,7 @@ def build_pyramid(input_image : str,
 
                                 all_identities = np.unique(np.append(all_identities, ids))
                                 if len_ids > 0:
-                                    with ThreadPoolExecutor(max_workers=max([cpu_count()-1,2])) as executor:
+                                    with ThreadPoolExecutor(max_workers=max([os.cpu_count()-1,2])) as executor:
                                         executor.submit(create_plyfiles(subvolume = volume,
                                                                         ids=ids,
                                                                         temp_dir=temp_dir,
@@ -440,7 +434,7 @@ def build_pyramid(input_image : str,
                         # concatenate and decompose the meshes in the temporary file for all segments
                         logger.info("\n Generate Progressive Meshes for segments ...")
                         all_identities = np.unique(all_identities).astype('int')
-                        with ThreadPoolExecutor(max_workers=max([cpu_count()-1,2])) as executor:
+                        with ThreadPoolExecutor(max_workers=max([os.cpu_count()-1,2])) as executor:
                             executor.map(concatenate_and_generate_meshes, 
                                         all_identities, repeat(temp_dir), repeat(output_image), repeat(bit_depth), repeat(mesh_chunk_size)) 
 
@@ -492,4 +486,5 @@ def build_pyramid(input_image : str,
             logger.info("Image Type: {}".format(file_info['type']))
 
     except Exception as e:
-        traceback.print_exc()
+        raise ValueError(f"Something Went Wrong!: {traceback.print_exc()}")
+        
