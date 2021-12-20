@@ -25,7 +25,6 @@ logger.setLevel(POLUS_LOG)
 # Set number of processors for scalability
 NUM_CPUS = max(1, cpu_count() // 2)
 
-
 def csv_to_df(file:str):
     """Convert csv into datafram or hdf5 file.
 
@@ -68,7 +67,7 @@ def binary_to_df(file: str, filePattern: str):
         Vaex dataframe.
 
     """
-    binary_patterns = [".fits", ".arrow", ".parquet", ".hdf5"]
+    binary_patterns = [".*.fits", ".*.arrow", ".*.parquet", ".*.hdf5"]
 
     logger.info("binary_to_df: Scanning directory for binary file pattern... ")
     if filePattern in binary_patterns:
@@ -125,7 +124,7 @@ def df_to_feather(input_file: str, filePattern: str, outDir: Path):
     file_name = Path(input_file).stem
     output_file = file_name + ".feather"
     logger.info("df_to_feather: Scanning input directory files... ")
-    if filePattern == ".csv":
+    if filePattern == ".*.csv":
         # convert csv to vaex df or hdf5
         os.chdir(outDir)
         df = csv_to_df(input_file)
@@ -159,16 +158,15 @@ def main(
 
     if filePattern is None:
         filePattern = ".*"
-
+    
     fp = filepattern.FilePattern(inpDir,filePattern)
-
 
     processes = []
     with ProcessPoolExecutor(NUM_CPUS) as executor:
 
         for files in fp:
             file = files[0]
-            if filePattern == ".fcs":
+            if filePattern == ".*.fcs":
                 processes.append(executor.submit(fcs_to_feather, file, outDir))
             else:
                 processes.append(
