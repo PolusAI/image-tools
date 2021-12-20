@@ -1,10 +1,9 @@
 import os
 import json
-#import jpype
 import shutil
-#import classes.populate as cp
-from pathlib import Path
 import argparse
+import logging
+from pathlib import Path
 
 
 """This file uses the classes in populate.py and cookiecutter to automatically 
@@ -12,6 +11,29 @@ parse the ImageJ ops help and create plugins"""
 
 if __name__ == '__main__':
 
+    
+    # Define the logger
+    logger = logging.getLogger(__name__)
+    
+    # Set log level
+    logger.setLevel(logging.DEBUG)
+    
+    # Define the logger format
+    formatter = logging.Formatter(
+        format = '%(asctime)s - %(levelname)s - %(name)s - %(message)s',
+        datefmt = '%d-%b-%y %H:%M:%S'
+        )
+    
+    # Define the logger file handler
+    file_handler = logging.FileHandler('generate.log')
+    
+    # Set the filehandler format
+    file_handler.setFormatter(formatter)
+    
+    # Add the file handler
+    logger.addHandler(file_handler)
+    
+    # Define the parser
     parser = argparse.ArgumentParser(prog='main', description='Generate Plugins')
 
     # Add command-line argument for plugin name, docker repo and version
@@ -28,32 +50,15 @@ if __name__ == '__main__':
     # Parse the arguments
     args = parser.parse_args()
     plugins_to_generate = args.plugins_to_generate
-
-    # print('Starting JVM and parsing ops help\n')
-
-    # # Populate ops by parsing the imagej operations help
-    # populater = cp.Populate()
-
-    # print('Building json templates\n')
+    
+    # Add plugins to generate to logger
+    logger.debug('Plugins to Generate: {}'.format(plugins_to_generate))
 
     # Get the polus plugins directory
     polus_plugins_dir = Path(__file__).parents[2]
 
-    # # Save a directory for the cookietin json files
-    # cookietin_path = cwd.joinpath('utils/polus-imagej-util/cookietin')
-
-    # # Build the json dictionary to be passed to the cookiecutter module 
-    # populater.build_json('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.2.0', cookietin_path)
-
-    # print('Shutting down JVM\n')
-
-    # # Remove the imagej instance
-    # del populater._ij
-
-    # # Shut down JVM
-    # jpype.shutdownJVM()
-
-    #print('Generating plugins with cookiecutter\n')
+    # Add logger message
+    logger.debug('Generating plugins with cookiecutter')
 
     # Get the generic.py file path so that it can find the cookietin directory
     base_path = Path(__file__).parent
@@ -129,9 +134,6 @@ if __name__ == '__main__':
                 # Get plugin dictionary key
                 plugin_key = plugin.name.replace('-', '.')
 
-                # Get all available ops for the plugin
-                #ops = [op for op in populater._plugins[plugin_key].supported_ops.keys()]
-
                 # Create a list of the operating sytem commands
                 commands = ["python "+str(path)+"/tests/unit_test.py --opName '{}'".format(op) for op in op_methods]
 
@@ -147,5 +149,5 @@ if __name__ == '__main__':
 
                 pluging_count += 1
 
-    #print('There were {} plugins generated\n'.format(pluging_count))
-    #print('There were {} plugin overloading methods created\n'.format(op_count))
+    logger.debug('There were {} plugins generated\n'.format(pluging_count))
+    logger.debug('There were {} plugin overloading methods created\n'.format(op_count))
