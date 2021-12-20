@@ -55,6 +55,9 @@ This plugin takes one input argument and one output argument:
 
 ## Example Code
 
+Download an example dataset and convert the data to tiled tiff using the tiled 
+tiff converter plugin.
+
 ```Linux
 mkdir examples
 cd examples
@@ -71,6 +74,10 @@ Navigate to the `examples/output/` directory to visualize the tiles using a
 tool such as bfio.
 
 ## Viewing the results using Python
+
+To run the code below, install the required dependencies by running 
+`pip install bfio` and `pip install matplotlib`. The following code was 
+tested with versions `bfio==2.1.9` and `matplotlib==3.5.1`.
 
 ```Python
 from bfio import BioReader
@@ -90,8 +97,7 @@ with BioReader(outDir / output_files[0].name) as br_out:
     img_out = br_out[:]
 
 fig, ax = plt.subplots(1, 2, figsize=(16,8))
-ax[0].imshow(img_in), ax[0].set_title("Image 1")
-ax[1].imshow(img_out), ax[1].set_title("Tile 1")
-fig.suptitle(file.name)
+ax[0].imshow(img_in), ax[0].set_title(input_files[0].name)
+ax[1].imshow(img_out), ax[1].set_title(output_files[0].name)
 plt.show()
 ```
