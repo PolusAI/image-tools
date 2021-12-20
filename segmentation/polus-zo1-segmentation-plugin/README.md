@@ -28,18 +28,18 @@ This plugin takes one input argument and one output argument:
 
 ## Example Code 
 
-Getting Z01 Flurorescent Data from Publication
+### Getting Z01 Flurorescent Data from Publication
 ```Linux
 wget "https://isg.nist.gov/deepzoomweb/dissemination/rpecells/fluorescentZ01.zip"
 unzip fluorescentZ01.zip
 ```
 
-Installing Additional Dependencies 
+### Installing Additional Dependencies 
 ```Linux
 pip install -r src/requirements.txt
 ```
 
-Running Container on Current Directory
+### Running Container on Current Directory
 ``` Linux
 mkdir output
 basedir=$(basename ${PWD})
