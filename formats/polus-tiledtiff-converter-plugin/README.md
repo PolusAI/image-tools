@@ -77,7 +77,7 @@ tool such as bfio.
 
 To run the code below, install the required dependencies by running 
 `pip install bfio` and `pip install matplotlib`. The following code was 
-tested with versions `bfio==2.1.9` and `matplotlib==3.5.1`.
+tested with versions `bfio==2.1.9`, `matplotlib==3.5.1`, and `pathlib==1.0.1`.
 
 ```Python
 from bfio import BioReader
