@@ -852,9 +852,9 @@ cdef np.ndarray label(unsigned char [:] image,
                       tuple shape,
                       long long connectivity):
 
-    cpdef long long i,d,index,num_points
-    cpdef unsigned long size = image.size
-    cpdef unsigned long dim_max = np.max(shape)
+    cdef long long i,d,index,num_points
+    cdef unsigned long size = image.size
+    cdef unsigned long dim_max = np.max(shape)
 
     if dim_max < 2**16-1:
         rle_objects = run_length_encode_16(image,shape)
