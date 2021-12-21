@@ -5,7 +5,7 @@
     "description": "Cluster the data using HDBSCAN.",
     "author": "Jayapriya Nagarajan (github.com/Priyaaxle) and Hythem Sidky (hythem.sidky@nih.gov)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-    "repository": "https://github.com/labshare/polus-plugins",
+    "repository": "https://github.com/PolusAI/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
     "containerId": "labshare/polus-hdbscan-clustering-plugin:0.4.6",
