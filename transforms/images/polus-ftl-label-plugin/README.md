@@ -1,5 +1,7 @@
 # FTL Label
 
+This plugin performs a transformation on binary images which, in a certain limiting case, can be thought of as segmentation.
+
 This plugin is an n-dimensional connected component algorithm that is similar to the [Light Speed Labeling](http://www-soc.lip6.fr/~lacas/Publications/ICIP09_LSL.pdf) algorithm.
 As mentioned in the Wikipedia article, (Connected-component labeling)
 [https://en.wikipedia.org/wiki/Connected-component_labeling] should not
