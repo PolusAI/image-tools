@@ -339,11 +339,11 @@ class Input(WippInput, IOBase):
             )
 
 
-class RunSettings(object):
+# class RunSettings(object):
 
-    gpu: typing.Union[int, typing.List[int], None] = -1
-    gpu: typing.Union[int, None] = -1
-    mem: int = -1
+#     gpu: typing.Union[int, typing.List[int], None] = -1
+#     gpu: typing.Union[int, None] = -1
+#     mem: int = -1
 
 
 class Plugin(WIPPPluginManifest):
@@ -384,7 +384,7 @@ class Plugin(WIPPPluginManifest):
     def organization(self):
         return self.containerId.split("/")[0]
 
-    def run(self, dryRun: bool = False, multiple: bool = False, **kwargs):
+    def run(self, gpu: bool = True, gpu_count: int = -1, **kwargs):
 
         inp_dirs = []
         out_dirs = []
@@ -411,15 +411,6 @@ class Plugin(WIPPPluginManifest):
         for o in self.outputs:
             if isinstance(o.value, pathlib.Path):
                 out_dirs.append(str(o.value))
-
-        # inp_root = pathlib.Path(os.path.commonpath(inp_dirs))
-        # out_root = pathlib.Path(os.path.commonpath(out_dirs))
-        # mnts = [
-        #     docker.types.Mount(
-        #         "/data/inputs/", str(inp_root), type="bind", read_only=True
-        #     ),
-        #     docker.types.Mount("/data/outputs/", str(out_root), type="bind"),
-        # ]
 
         inp_dirs_dict = {x: f"/data/iputs/input{n}" for (n, x) in enumerate(inp_dirs)}
         out_dirs_dict = {
@@ -456,34 +447,35 @@ class Plugin(WIPPPluginManifest):
             else:
                 args.append(str(o.value))
 
-        if not dryRun:
-            print("Args: %s" % args)
-            client = docker.from_env()
+        client = docker.from_env()
+        if gpu:
+            logger.info("Running container with GPU. gpu_count = %s" % gpu_count)
             dc = client.containers.run(
                 self.containerId,
                 args,
                 mounts=mnts,
                 user=f"{os.getuid()}:{os.getegid()}",
                 device_requests=[
-                    docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])
+                    docker.types.DeviceRequest(count=gpu_count, capabilities=[["gpu"]])
                 ],
-                init=False,
-                detach=True,
-                stop_signal="SIGINT",
-                remove=True,
+                remove=True,  # remove container after stopping
+                detach=True,  # equivalent to -d in CLI,
+                **kwargs,
+            )
+        else:
+            logger.info("Running container without GPU")
+            dc = client.containers.run(
+                self.containerId,
+                args,
+                mounts=mnts,
+                user=f"{os.getuid()}:{os.getegid()}",
+                remove=True,  # remove container after stopping
+                detach=True,  # equivalent to -d in CLI,
                 **kwargs,
             )
 
-            for l in dc.logs(stream=True, follow=True):
-                print(l.decode("utf-8").strip())
-
-        else:
-            print("Inp Dir: %s" % inp_dirs)
-            print("Out Dir: %s" % out_dirs)
-            print("Args: %s" % args)
-            print("Mntsin: %s" % mnts_in)
-            print("Mntsout: %s" % mnts_out)
-            print("Mnts: %s" % mnts)
+        for l in dc.logs(stream=True, follow=True):
+            print(l.decode("utf-8").strip())
 
     def __getattribute__(self, name):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
