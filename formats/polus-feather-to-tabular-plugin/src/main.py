@@ -10,6 +10,7 @@ import pyarrow.feather as pf
 import pyarrow.parquet as pq
 import pyarrow.csv as csv
 import shutil
+import filepattern
 
 # Import environment variables
 POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
@@ -33,11 +34,11 @@ def remove_files(outDir):
             os.remove(file)
     logger.info('Done') 
     
-def feather_to_tabular(file, filePattern, outDir):
+def feather_to_tabular(file: Path, filePattern: str, outDir: Path):
     """Converts feather file into tabular file using pyarrow
             
             Args:
-                file (str): Path to input file.
+                file (Path): Path to input file.
                 filePattern (str): Filepattern of desired tabular output file
                 
             Returns:
@@ -48,7 +49,7 @@ def feather_to_tabular(file, filePattern, outDir):
     file_name = Path(file).stem
     pq_file = file_name + ".parquet"
     csv_file = file_name + ".csv"
-    # outputF = os.path.join(outDir, pq_file)
+
     logger.info('Feather CONVERSION: Copy file into outDir for processing...')
     output = file_name + ".feather"
     outputfile = os.path.join(outDir, output)
@@ -58,12 +59,12 @@ def feather_to_tabular(file, filePattern, outDir):
     # Result is vaex dataframe
     
     df = pf.read_table(outputfile)
-    if filePattern == ".csv":
+    if filePattern == ".*.csv":
         # Streaming contents of Arrow Table into csv
         logger.info('Feather CONVERSION: converting arrow table into .csv file')
         os.chdir(outDir)
         return csv.write_csv(df, csv_file)
-    elif filePattern ==".parquet":
+    elif filePattern ==".*.parquet":
         logger.info('Feather CONVERSION: converting arrow table into .parquet file')
         os.chdir(outDir)
         return pq.write_table(df, pq_file)
@@ -84,12 +85,14 @@ def main(inpDir: Path,
         
         input_dir = Path(inpDir)
         
+        fp = filepattern.FilePattern(input_dir,filePattern)
+        
         processes = []
         with ProcessPoolExecutor(NUM_CPUS) as executor:
 
-            for file in input_dir.iterdir():
-                if filePattern == '.fcs':
-                    processes.append(executor.submit(feather_to_tabular,file, filePattern, outDir))
+            for files in fp:
+                file = files[0]
+                processes.append(executor.submit(feather_to_tabular,file, filePattern, outDir))
             
         remove_files(outDir)
         
