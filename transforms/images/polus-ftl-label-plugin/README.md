@@ -68,9 +68,10 @@ unzip dsb2018.zip
 mv dsb2018/test/masks/ images/
 
 # Convert the *.tif files to *.ome.tif tiled tif format using bfio.
-# For simplicity, this uses the docker container because it already contains the java backend.
 basedir=$(basename ${PWD})
-docker run -v ${PWD}:/$basedir labshare/polus-bfio-util:2.0.7-slim-buster-java python3 /$basedir/SimpleTiledTiffConverter.py --inpDir /$basedir/images/ --outDir /$basedir/images_ome/
+docker run -v ${PWD}:/$basedir labshare/polus-tiledtiff-converter-plugin:1.1.0 \
+  --input /$basedir/images/ \
+  --output /$basedir/images_ome/
 
 # Run the FTL label plugin
 mkdir output
