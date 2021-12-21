@@ -60,40 +60,27 @@ This plugin takes one input argument and one output argument:
 
 ## Example Code
 ```Linux
-cd examples
-mkdir output
+# Download some example *.tif files
+wget https://github.com/stardist/stardist/releases/download/0.1.0/dsb2018.zip
+unzip dsb2018.zip
+mv dsb2018/test/masks/ images/
+
+# Convert the *.tif files to *.ome.tif tiled tif format using bfio.
+# For simplicity, this uses the docker container because it already contains the java backend.
 basedir=$(basename ${PWD})
+docker run -v ${PWD}:/$basedir labshare/polus-bfio-util:2.0.7-slim-buster-java python3 /$basedir/SimpleTiledTiffConverter.py --inpDir /$basedir/images/ --outDir /$basedir/images_ome/
+
+# Run the FTL label plugin
+mkdir output
 docker run -v ${PWD}:/$basedir labshare/polus-ftl-label-plugin:0.3.10 \
---inpDir /$basedir/"images/" \
+--inpDir /$basedir/"images_ome/" \
 --outDir /$basedir/"output/" \
 --connectivity 1
-```
 
-## Viewing the results using Python
-```Python
-from bfio import BioReader
-from pathlib import Path
-import matplotlib.pyplot as plt
-
-inpDir = Path("./images/")
-outDir = Path("./output/")
-
-files = [f for f in inpDir.iterdir() if f.is_file() and f.name.endswith('.ome.tif')]
-
-for file in files:
-    with BioReader(inpDir / file.name) as br_in:
-        img_in = br_in[:]
-
-    with BioReader(outDir / file.name) as br_out:
-        img_out = br_out[:]
-
-    fig, ax = plt.subplots(1, 2, figsize=(16,8))
-    ax[0].imshow(img_in), ax[0].set_title("Original Image")
-    ax[1].imshow(img_out), ax[1].set_title("Labelled Image")
-    fig.suptitle(file.name)
-    plt.show()
-    # Use savefig if you are on a headless machine, i.e. AWS EC2 instance
-    # plt.savefig(outDir / (file.stem.split('.ome')[0] + '.png'))
+# View the results using bfio and matplotlib
+# Let's run directly on the host since we just need the python backend.
+pip install bfio==2.1.9 matplotlib==3.5.1
+python3 SimpleTiledTiffViewer.py --inpDir images_ome/ --outDir output/
 ```
 
 **NOTE:**
