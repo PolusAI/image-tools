@@ -338,11 +338,11 @@ class Input(WippInput, IOBase):
             )
 
 
-class RunSettings(object):
+# class RunSettings(object):
 
-    gpu: typing.Union[int, typing.List[int], None] = -1
-    gpu: typing.Union[int, None] = -1
-    mem: int = -1
+#     gpu: typing.Union[int, typing.List[int], None] = -1
+#     gpu: typing.Union[int, None] = -1
+#     mem: int = -1
 
 
 class Plugin(WIPPPluginManifest):
@@ -433,6 +433,7 @@ class Plugin(WIPPPluginManifest):
 
         client = docker.from_env()
         if gpu:
+            logger.info("Running container with GPU. gpu_count = %s" % gpu_count)
             dc = client.containers.run(
                 self.containerId,
                 args,
@@ -446,6 +447,7 @@ class Plugin(WIPPPluginManifest):
                 **kwargs,
             )
         else:
+            logger.info("Running container without GPU")
             dc = client.containers.run(
                 self.containerId,
                 args,
