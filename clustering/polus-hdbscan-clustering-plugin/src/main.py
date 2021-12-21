@@ -49,55 +49,7 @@ def clustering(data: np.ndarray, min_cluster_size: int, increment_outlier_id: bo
     
    
 # Setup the argument parsing
-def main():
-    logger.info("Parsing arguments...")
-    parser = argparse.ArgumentParser(prog='main', description='HDBSCAN clustering plugin')
-    parser.add_argument('--inpDir', dest='inpDir', type=str,
-                        help='Input collection-Data need to be clustered', required=True)
-    parser.add_argument('--groupingPattern', dest='groupingPattern', type=str,
-                        help='Regular expression to group rows. Clustering will be applied across capture groups.', required=False)
-    parser.add_argument('--averageGroups', dest='averageGroups', type=str,
-                        help='Whether to average data across groups. Requires capture groups.', default='false', required=False)
-    parser.add_argument('--labelCol', dest='labelCol', type=str,
-                        help='Name of column containing labels. Required only for grouping operations.', required=False)
-    parser.add_argument('--minClusterSize', dest='minClusterSize', type=int,
-                        help='Minimum cluster size', required=True)
-    parser.add_argument('--incrementOutlierId', dest='incrementOutlierId', type=str,
-                        help='Increments outlier ID to 1.', default='false', required=False)
-    parser.add_argument('--outDir', dest='outDir', type=str,
-                        help='Output collection', required=True)
-    
-    # Parse the arguments.
-    args = parser.parse_args()
-    
-    # Path to csvfile directory.
-    inpDir = args.inpDir
-    logger.info('inpDir = {}'.format(inpDir))
-
-    # Regular expression for grouping.
-    grouping_pattern = args.groupingPattern
-    logger.info('grouping_pattern = {}'.format(grouping_pattern))
-
-    # Whether to average data for each group.
-    avg_groups = args.averageGroups.lower() != 'false'
-    logger.info('avg_groups = {}'.format(avg_groups))
-
-    # Name of column to use for grouping.
-    label_col = args.labelCol
-    logger.info('label_col = {}'.format(label_col))
-
-    # Minimum cluster size for clustering using HDBSCAN.
-    min_cluster_size = args.minClusterSize
-    logger.info('min_cluster_size = {}'.format(min_cluster_size))
-
-    # Set outlier cluster id as 1.
-    increment_outlier_id = args.incrementOutlierId.lower() != 'false' 
-    logger.info('increment_outlier_id = {}'.format(increment_outlier_id))
-    
-    # Path to save output csvfiles.
-    outDir = args.outDir
-    logger.info('outDir = {}'.format(outDir))
-
+def main(inpDir, grouping_pattern, avg_groups, label_col, min_cluster_size, increment_outlier_id, outDir):
     # Get list of .csv files in the directory including sub folders for clustering
     input_csvs = list_files(inpDir)
     if input_csvs is None:
@@ -165,4 +117,60 @@ def main():
     logger.info("Finished all processes!")
 
 if __name__ == "__main__":
-    main()
+    logger.info("Parsing arguments...")
+    parser = argparse.ArgumentParser(prog='main', description='HDBSCAN clustering plugin')
+    parser.add_argument('--inpDir', dest='inpDir', type=str,
+                        help='Input collection-Data need to be clustered', required=True)
+    parser.add_argument('--groupingPattern', dest='groupingPattern', type=str,
+                        help='Regular expression to group rows. Clustering will be applied across capture groups.', required=False)
+    parser.add_argument('--averageGroups', dest='averageGroups', type=str,
+                        help='Whether to average data across groups. Requires capture groups.', default='false', required=False)
+    parser.add_argument('--labelCol', dest='labelCol', type=str,
+                        help='Name of column containing labels. Required only for grouping operations.', required=False)
+    parser.add_argument('--minClusterSize', dest='minClusterSize', type=int,
+                        help='Minimum cluster size', required=True)
+    parser.add_argument('--incrementOutlierId', dest='incrementOutlierId', type=str,
+                        help='Increments outlier ID to 1.', default='false', required=False)
+    parser.add_argument('--outDir', dest='outDir', type=str,
+                        help='Output collection', required=True)
+    
+    # Parse the arguments.
+    args = parser.parse_args()
+    
+    # Path to csvfile directory.
+    inpDir = args.inpDir
+    logger.info('inpDir = {}'.format(inpDir))
+
+    # Regular expression for grouping.
+    grouping_pattern = args.groupingPattern
+    logger.info('grouping_pattern = {}'.format(grouping_pattern))
+
+    # Whether to average data for each group.
+    avg_groups = args.averageGroups.lower() != 'false'
+    logger.info('avg_groups = {}'.format(avg_groups))
+
+    # Name of column to use for grouping.
+    label_col = args.labelCol
+    logger.info('label_col = {}'.format(label_col))
+
+    # Minimum cluster size for clustering using HDBSCAN.
+    min_cluster_size = args.minClusterSize
+    logger.info('min_cluster_size = {}'.format(min_cluster_size))
+
+    # Set outlier cluster id as 1.
+    increment_outlier_id = args.incrementOutlierId.lower() != 'false' 
+    logger.info('increment_outlier_id = {}'.format(increment_outlier_id))
+    
+    # Path to save output csvfiles.
+    outDir = args.outDir
+    logger.info('outDir = {}'.format(outDir))
+
+    main(
+        inpDir, 
+        grouping_pattern, 
+        avg_groups, 
+        label_col, 
+        min_cluster_size, 
+        increment_outlier_id, 
+        outDir
+    )
