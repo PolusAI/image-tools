@@ -8,7 +8,10 @@ import pprint
 import os
 import uuid
 import time
+import signal
+import random
 
+from typing import Union
 from python_on_whales import docker
 
 from pydantic import BaseModel, Extra, errors, validator
@@ -385,7 +388,9 @@ class Plugin(WIPPPluginManifest):
         return self.containerId.split("/")[0]
 
     def run(
-        self, gpu: bool = True, gpu_count: int = -1, dryRun: bool = False, **kwargs
+        self,
+        gpus: Union[None, str, int] = "all",
+        **kwargs,
     ):
 
         inp_dirs = []
@@ -394,21 +399,6 @@ class Plugin(WIPPPluginManifest):
         for i in self.inputs:
             if isinstance(i.value, pathlib.Path):
                 inp_dirs.append(str(i.value))
-
-        # st = time.time()
-        # inp_dirs = [
-        #     str(x.value)
-        #     for x in filter(lambda n: isinstance(n.value, pathlib.Path), self.inputs)
-        # ]
-        # stop = time.time()
-        # print(f"List comp in {stop-st} seconds")
-
-        # st = time.time()
-        # out_dirs = [
-        #     str(x.value) for x in self.outputs if isinstance(x.value, pathlib.Path)
-        # ]
-        # stop = time.time()
-        # print(f"List comp in {stop-st} seconds")
 
         for o in self.outputs:
             if isinstance(o.value, pathlib.Path):
@@ -424,7 +414,7 @@ class Plugin(WIPPPluginManifest):
             for (k, v) in inp_dirs_dict.items()
         ]
         mnts_out = [
-            [f"type=bind,source={k},target={v},readonly"]  # must be a list of lists
+            [f"type=bind,source={k},target={v}"]  # must be a list of lists
             for (k, v) in out_dirs_dict.items()
         ]
 
@@ -450,40 +440,39 @@ class Plugin(WIPPPluginManifest):
             else:
                 args.append(str(o.value))
 
-        if dryRun:
+        container_name = f"polus{random.randint(10, 99)}"
+
+        def sig(
+            signal, frame
+        ):  # signal handler to kill container when KeyboardInterrupt
+            print(f"Exiting container {container_name}")
+            docker.kill(container_name)
+
+        signal.signal(
+            signal.SIGINT, sig
+        )  # make of sig the handler for KeyboardInterrupt
+        if gpus is None:
+            logger.info("Running container without GPU.")
             d = docker.run(
-                "ubuntu", remove=True, interactive=True, tty=True, mounts=mnts
+                self.containerId,
+                args,
+                name=container_name,
+                remove=True,
+                mounts=mnts,
+                **kwargs,
             )
             print(d)
-        # client = docker.from_env()
-        # if gpu:
-        #     logger.info("Running container with GPU. gpu_count = %s" % gpu_count)
-        #     dc = client.containers.run(
-        #         self.containerId,
-        #         args,
-        #         mounts=mnts,
-        #         user=f"{os.getuid()}:{os.getegid()}",
-        #         device_requests=[
-        #             docker.types.DeviceRequest(count=gpu_count, capabilities=[["gpu"]])
-        #         ],
-        #         remove=True,  # remove container after stopping
-        #         detach=True,  # equivalent to -d in CLI,
-        #         **kwargs,
-        #     )
-        # else:
-        #     logger.info("Running container without GPU")
-        #     dc = client.containers.run(
-        #         self.containerId,
-        #         args,
-        #         mounts=mnts,
-        #         user=f"{os.getuid()}:{os.getegid()}",
-        #         remove=True,  # remove container after stopping
-        #         detach=True,  # equivalent to -d in CLI,
-        #         **kwargs,
-        #     )
-
-        # for l in dc.logs(stream=True, follow=True):
-        #     print(l.decode("utf-8").strip())
+        else:
+            logger.info("Running container with GPU: --gpus %s" % gpus)
+            d = docker.run(
+                self.containerId,
+                args,
+                name=container_name,
+                remove=True,
+                mounts=mnts,
+                **kwargs,
+            )
+            print(d)
 
     def __getattribute__(self, name):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
