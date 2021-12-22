@@ -7,7 +7,6 @@ import re
 import pprint
 import os
 import uuid
-import time
 import signal
 import random
 
