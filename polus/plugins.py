@@ -9,7 +9,7 @@ import os
 import uuid
 import time
 
-import docker
+from python_on_whales import docker
 
 from pydantic import BaseModel, Extra, errors, validator
 from pydantic.error_wrappers import ValidationError
@@ -384,7 +384,9 @@ class Plugin(WIPPPluginManifest):
     def organization(self):
         return self.containerId.split("/")[0]
 
-    def run(self, gpu: bool = True, gpu_count: int = -1, **kwargs):
+    def run(
+        self, gpu: bool = True, gpu_count: int = -1, dryRun: bool = False, **kwargs
+    ):
 
         inp_dirs = []
         out_dirs = []
@@ -412,17 +414,18 @@ class Plugin(WIPPPluginManifest):
             if isinstance(o.value, pathlib.Path):
                 out_dirs.append(str(o.value))
 
-        inp_dirs_dict = {x: f"/data/iputs/input{n}" for (n, x) in enumerate(inp_dirs)}
+        inp_dirs_dict = {x: f"/data/inputs/input{n}" for (n, x) in enumerate(inp_dirs)}
         out_dirs_dict = {
             x: f"/data/outputs/output{n}" for (n, x) in enumerate(out_dirs)
         }
 
         mnts_in = [
-            docker.types.Mount(v, k, type="bind", read_only=True)
+            [f"type=bind,source={k},target={v},readonly"]  # must be a list of lists
             for (k, v) in inp_dirs_dict.items()
         ]
         mnts_out = [
-            docker.types.Mount(v, k, type="bind") for (k, v) in out_dirs_dict.items()
+            [f"type=bind,source={k},target={v},readonly"]  # must be a list of lists
+            for (k, v) in out_dirs_dict.items()
         ]
 
         mnts = mnts_in + mnts_out
@@ -447,35 +450,40 @@ class Plugin(WIPPPluginManifest):
             else:
                 args.append(str(o.value))
 
-        client = docker.from_env()
-        if gpu:
-            logger.info("Running container with GPU. gpu_count = %s" % gpu_count)
-            dc = client.containers.run(
-                self.containerId,
-                args,
-                mounts=mnts,
-                user=f"{os.getuid()}:{os.getegid()}",
-                device_requests=[
-                    docker.types.DeviceRequest(count=gpu_count, capabilities=[["gpu"]])
-                ],
-                remove=True,  # remove container after stopping
-                detach=True,  # equivalent to -d in CLI,
-                **kwargs,
+        if dryRun:
+            d = docker.run(
+                "ubuntu", remove=True, interactive=True, tty=True, mounts=mnts
             )
-        else:
-            logger.info("Running container without GPU")
-            dc = client.containers.run(
-                self.containerId,
-                args,
-                mounts=mnts,
-                user=f"{os.getuid()}:{os.getegid()}",
-                remove=True,  # remove container after stopping
-                detach=True,  # equivalent to -d in CLI,
-                **kwargs,
-            )
+            print(d)
+        # client = docker.from_env()
+        # if gpu:
+        #     logger.info("Running container with GPU. gpu_count = %s" % gpu_count)
+        #     dc = client.containers.run(
+        #         self.containerId,
+        #         args,
+        #         mounts=mnts,
+        #         user=f"{os.getuid()}:{os.getegid()}",
+        #         device_requests=[
+        #             docker.types.DeviceRequest(count=gpu_count, capabilities=[["gpu"]])
+        #         ],
+        #         remove=True,  # remove container after stopping
+        #         detach=True,  # equivalent to -d in CLI,
+        #         **kwargs,
+        #     )
+        # else:
+        #     logger.info("Running container without GPU")
+        #     dc = client.containers.run(
+        #         self.containerId,
+        #         args,
+        #         mounts=mnts,
+        #         user=f"{os.getuid()}:{os.getegid()}",
+        #         remove=True,  # remove container after stopping
+        #         detach=True,  # equivalent to -d in CLI,
+        #         **kwargs,
+        #     )
 
-        for l in dc.logs(stream=True, follow=True):
-            print(l.decode("utf-8").strip())
+        # for l in dc.logs(stream=True, follow=True):
+        #     print(l.decode("utf-8").strip())
 
     def __getattribute__(self, name):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
