@@ -1,7 +1,7 @@
-# OME Zarr Converter (v0.5.0)
+# OME Converter (v0.1.0)
 
 This WIPP plugin converts BioFormats supported data types to the 
-OME Zarr and Zarr OME fileformat. This is not a complete implementation, rather it implements a file
+OME Zarr and Zarr OME file format. This is not a complete implementation, rather it implements a file
 format similar to the OME tiled tiff specification used by WIPP. Chunk sizes
 are 1024x1024x1x1x1, and OME metadata is stored as a Zarr attribute.
 
@@ -30,6 +30,6 @@ This plugin takes 1 input arguments and
 |------------------|--------------------------------------------------------------|--------|-------------|
 | `--inpDir`       | Input generic data collection to be processed by this plugin | Input  | genericData |
 | `--filePattern`  | A filepattern, used to select data for conversion            | Input  | string      |
-| `--fileExtension`| A filepattern, used to select data for conversion            | Input  | string      |
+| `--fileExtension`| A desired file format for conversion                         | Input  | enum        |
 | `--outDir`       | Output collection                                            | Output | genericData |
 

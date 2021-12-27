@@ -16,7 +16,7 @@ logger.setLevel(logging.INFO)
 # TODO: In the future, uncomment this to convert files to the platform file type
 # FILE_EXT = os.environ.get('POLUS_EXT',None)
 # FILE_EXT = FILE_EXT if FILE_EXT is not None else '.ome.tif'
-#FILE_EXT = ".ome.zarr"
+
 
 TILE_SIZE = 2 ** 13
 
@@ -32,36 +32,26 @@ def image_converter(inp_image, fileExtension, out_dir):
 
                 # Loop through channels
                 for c in range(br.C):
-
-                    if fileExtension == ".ome.tif":
-
-                        extension = "".join(
-                            [
-                                suffix
-                                for suffix in inp_image.suffixes[-2:]
-                                if len(suffix) < 6
-                            ]
-                        )
-                    else:
-                        extension = "".join(
-                            [
-                                suffix
-                                for suffix in inp_image.suffixes[-2:]
-                                if len(suffix) < 5
-                            ]
-                        )
-
-
+                    
+                    FILE_EXT = fileExtension
+                    extension = "".join(
+                        [
+                            suffix
+                            for suffix in inp_image.suffixes[-2:]
+                            if len(suffix) < 6
+                        ]
+                    )
+               
                     out_path = out_dir.joinpath(
-                        inp_image.name.replace(extension, fileExtension)
+                        inp_image.name.replace(extension, FILE_EXT)
                     )
                     if br.C > 1:
                         out_path = out_dir.joinpath(
-                            out_path.name.replace(fileExtension, f"_c{c}" + fileExtension)
+                            out_path.name.replace(FILE_EXT, f"_c{c}" + FILE_EXT)
                         )
                     if br.T > 1:
                         out_path = out_dir.joinpath(
-                            out_path.name.replace(fileExtension, f"_t{t}" + fileExtension)
+                            out_path.name.replace(FILE_EXT, f"_t{t}" + FILE_EXT)
                         )
 
                     with BioWriter(
@@ -144,8 +134,6 @@ if __name__ == "__main__":
         dest="fileExtension",
         type=str,
         help="Type of data conversion",
-        required=True,
-        default=".*",
     )
 
 
