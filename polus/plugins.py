@@ -9,7 +9,7 @@ import os
 import uuid
 import signal
 import random
-from alive_progress import alive_bar, alive_it
+from alive_progress import alive_it
 
 from typing import Union
 from python_on_whales import docker
