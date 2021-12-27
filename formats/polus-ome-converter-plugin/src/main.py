@@ -134,6 +134,7 @@ if __name__ == "__main__":
         dest="fileExtension",
         type=str,
         help="Type of data conversion",
+        required=False,
     )
 
 
