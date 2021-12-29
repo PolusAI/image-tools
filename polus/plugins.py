@@ -114,7 +114,7 @@ class _Plugins(object):
 
                     # Add the current version to the list of available versions
                     PLUGINS[plugin.__class__.__name__].versions.append(plugin.version)
-                else: # if Force. All plugins are rewritten
+                else:  # if Force. All plugins are rewritten
                     PLUGINS[plugin.__class__.__name__] = plugin
 
                     # Add the current version to the list of available versions
@@ -393,9 +393,7 @@ class Plugin(WIPPPluginManifest):
         return self.containerId.split("/")[0]
 
     def run(
-        self,
-        gpus: Union[None, str, int] = "all",
-        **kwargs,
+        self, gpus: Union[None, str, int] = "all", **kwargs,
     ):
 
         inp_dirs = []
