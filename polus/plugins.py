@@ -114,7 +114,7 @@ class _Plugins(object):
 
                     # Add the current version to the list of available versions
                     PLUGINS[plugin.__class__.__name__].versions.append(plugin.version)
-                else:
+                else: # if Force. All plugins are rewritten
                     PLUGINS[plugin.__class__.__name__] = plugin
 
                     # Add the current version to the list of available versions
@@ -769,4 +769,4 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
 #         "plugin-manifest/schema/wipp-plugin-manifest-schema.json"
 #     )
 
-_Plugins().refresh()  # call the refresh method every time it inits
+_Plugins().refresh()  # calls the refresh method when library is imported
