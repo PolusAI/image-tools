@@ -1,6 +1,6 @@
 {
   "name": "ImageJ filter convolve",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "title": "ImageJ filter convolve",
   "description": "ConvolveNaiveF, PadAndConvolveFFTF, PadAndConvolveFFT, ConvolveFFTC",
   "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-filter-convolve-plugin:0.2.1",
+  "containerId": "polusai/imagej-filter-convolve-plugin:0.3.0",
   "inputs": [
     {
       "name": "opName",
@@ -19,19 +19,19 @@
                     "PadAndConvolveFFT",
                     "ConvolveFFTC"]
       },
-      "description": "Op overloading method to peform",
+      "description": "Operation to peform",
       "required": false
     },
     {
       "name": "inpDir",
       "type": "collection",
-      "description": "Input image collection to be processed by this plugin",
+      "description": "Collection to be processed by this plugin",
       "required": false
     },
     {
-      "name": "weights",
+      "name": "kernel",
       "type": "collection",
-      "description": "Array of weights with same number of dimensions as input",
+      "description": "The convolutional kernel to be applied to the collection",
       "required": false
     }
   ],
@@ -39,25 +39,25 @@
     {
       "name": "outDir",
       "type": "collection",
-      "description": "OUtput collection"
+      "description": "Output collection"
     }
   ],
   "ui": [
     {
       "key": "inputs.opName",
-      "title": "Operation",
-      "description": "Op overlaoding method to peform"
+      "title": "opName",
+      "description": "Operation to peform"
     },
     {
       "key": "inputs.inpDir",
       "title": "inpDir",
-      "description": "Input image collection to be processed by this plugin",
+      "description": "Collection to be processed by this plugin",
       "condition": "model.inputs.opName==ConvolveNaiveF or model.inputs.opName==PadAndConvolveFFTF or model.inputs.opName==PadAndConvolveFFT or model.inputs.opName==ConvolveFFTC"
     },
     {
-      "key": "inputs.weights",
-      "title": "weights",
-      "description": "Array of weights with same number of dimensions as input",
+      "key": "inputs.kernel",
+      "title": "kernel",
+      "description": "The convolutional kernel to be applied to the collection",
       "condition": "model.inputs.opName==ConvolveNaiveF or model.inputs.opName==PadAndConvolveFFTF or model.inputs.opName==PadAndConvolveFFT or model.inputs.opName==ConvolveFFTC"
     }
   ]

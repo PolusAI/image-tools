@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker push polusai/imagej-filter-convolve-plugin:${version}
+docker push polusai/polus-imagej-filter-convolve-plugin:${version}
