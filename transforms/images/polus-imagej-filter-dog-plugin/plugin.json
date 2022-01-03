@@ -1,14 +1,14 @@
 {
   "name": "ImageJ filter dog",
-  "version": "0.2.11",
+  "version": "0.3.0",
   "title": "ImageJ filter dog",
-  "description": "Difference of Gaussians (DoG) implementation",
+  "description": "This plugin applies the Difference of Gaussians algorithm to an input collection.",
   "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-filter-dog-plugin:0.2.11",
+  "containerId": "polusai/imagej-filter-dog-plugin:0.3.0",
   "inputs": [
     {
       "name": "opName",
@@ -17,36 +17,36 @@
         "values": ["DoGSingleSigmas",
                     "DoGVaryingSigmas"]
       },
-      "description": "Imagej op overloading method to perform",
-      "required": true
+      "description": "Operation to peform",
+      "required": false
     },
     {
-      "name": "inpDir",
+      "name": "inpDIr",
       "type": "collection",
-      "description": "Input image collection to be processed by this plugin",
-      "required": true
+      "description": "The collection to be processed by this plugin",
+      "required": false
     },
     {
       "name": "sigma1",
       "type": "number",
-      "description": "A single value for sigma1",
+      "description": "The standard deviation of the first Gaussian filter",
       "required": false
     },
     {
       "name": "sigma2",
       "type": "number",
-      "description": "A sigle value for sigma2",
+      "description": "The standard deviation of the second Gaussian filter",
       "required": false
     },
     {
       "name": "sigmas1",
       "type": "array",
-      "description": "sigmas1",
+      "description": "The standard deviations of the first Gaussian filter (x,y)",
       "required": false,
-      "options": {
+      "options":{
         "items": {
           "type": "string",
-          "title": "A list of varying sigmas1",
+          "title": "The standard deviations of the first Gaussian filter (x,y)",
           "widget": "string"
         }
       }
@@ -54,12 +54,12 @@
     {
       "name": "sigmas2",
       "type": "array",
-      "description": "sigmas2",
+      "description": "The standard deviations of the second Gaussian filter (x,y)",
       "required": false,
-      "options": {
+      "options":{
         "items": {
           "type": "string",
-          "title": "A list of varying sigmas2",
+          "title": "The standard deviations of the second Gaussian filter (x,y)",
           "widget": "string"
         }
       }
@@ -75,36 +75,37 @@
   "ui": [
     {
       "key": "inputs.opName",
-      "title": "Operation",
-      "description": "Imagej op overloading method to perform"
+      "title": "opName",
+      "description": "Operation to peform"
     },
     {
-      "key": "inputs.inpDir",
-      "title": "inpDir",
-      "description": "Input image collection to be processed by this plugin"
+      "key": "inputs.inpDIr",
+      "title": "inpDIr",
+      "description": "The collection to be processed by this plugin",
+      "condition": "model.inputs.opName==DoGSingleSigmas or model.inputs.opName==DoGVaryingSigmas"
     },
     {
       "key": "inputs.sigma1",
       "title": "sigma1",
-      "description": "A single value for sigma1",
+      "description": "The standard deviation of the first Gaussian filter",
       "condition": "model.inputs.opName==DoGSingleSigmas"
     },
     {
       "key": "inputs.sigma2",
       "title": "sigma2",
-      "description": "A single value for sigma1",
+      "description": "The standard deviation of the second Gaussian filter",
       "condition": "model.inputs.opName==DoGSingleSigmas"
     },
     {
       "key": "inputs.sigmas1",
       "title": "sigmas1",
-      "description": "A list of varying sigmas1",
+      "description": "The standard deviations of the first Gaussian filter (x,y)",
       "condition": "model.inputs.opName==DoGVaryingSigmas"
     },
     {
       "key": "inputs.sigmas2",
       "title": "sigmas2",
-      "description": "A list of varying sigmas2",
+      "description": "The standard deviations of the second Gaussian filter (x,y)",
       "condition": "model.inputs.opName==DoGVaryingSigmas"
     }
   ]
