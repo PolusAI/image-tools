@@ -2,18 +2,17 @@
 
 version=$(<VERSION)
 datapath=$(readlink --canonicalize ../data)
-#echo $(datapath)
 
 # Inputs
-opName="SobelRAI"
-inpDir=/data/input
+opName=
+in1=/data/input
 
 # Output paths
-outDir=/data/output
+out=/data/output
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
-            polusai/imagej-sobel-plugin:${version} \
+            polusai/polus-imagej-filter-sobel-plugin:${version} \
             --opName ${opName} \
-            --inpDir ${inpDir} \
-            --outDir ${outDir}
+            --in1 ${in1} \
+            --out ${out}
             

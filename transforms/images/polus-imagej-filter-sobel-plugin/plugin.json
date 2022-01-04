@@ -1,14 +1,14 @@
 {
   "name": "ImageJ filter sobel",
-  "version": "0.2.7",
+  "version": "0.3.0",
   "title": "ImageJ filter sobel",
-  "description": "SobelRAI",
+  "description": "This plugin applies the Sobel operator to an input collection",
   "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-  "repository": "https://github.com/PolusAI/polus-plugins",
+  "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-sobel-plugin:0.2.7",
+  "containerId": "polusai/imagej-filter-sobel-plugin:0.3.0",
   "inputs": [
     {
       "name": "opName",
@@ -16,14 +16,14 @@
       "options": {
         "values": ["SobelRAI"]
       },
-      "description": "ImageJ op overloading method to perform",
-      "required": true
+      "description": "Op overloading method to perform",
+      "required": false
     },
     {
       "name": "inpDir",
       "type": "collection",
-      "description": "Image file collection",
-      "required": true
+      "description": "Collection to be processed by this plugin",
+      "required": false
     }
   ],
   "outputs": [
@@ -36,13 +36,13 @@
   "ui": [
     {
       "key": "inputs.opName",
-      "title": "Operation",
-      "description": "ImageJ op overloading method to perform"
+      "title": "opName",
+      "description": "Op overloading method to perform"
     },
     {
       "key": "inputs.inpDir",
       "title": "inpDir",
-      "description": "Image file collection",
+      "description": "Collection to be processed by this plugin",
       "condition": "model.inputs.opName==SobelRAI"
     }
   ]
