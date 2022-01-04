@@ -393,9 +393,7 @@ class Plugin(WIPPPluginManifest):
         return self.containerId.split("/")[0]
 
     def run(
-        self,
-        gpus: Union[None, str, int] = "all",
-        **kwargs,
+        self, gpus: Union[None, str, int] = "all", **kwargs,
     ):
 
         inp_dirs = []
