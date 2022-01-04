@@ -539,7 +539,9 @@ def submit_plugin(
     json), or a pathlib.Path object pointed at a plugin manifest.
 
     Args:
-        manifest: A plugin manifest
+        manifest:
+        A plugin manifest. It can be a url, a dictionary,
+        a path to a JSON file or a string that can be parsed as a dictionary
 
     Returns:
         A Plugin object populated with information from the plugin manifest.
