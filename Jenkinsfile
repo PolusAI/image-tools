@@ -3,7 +3,7 @@ pipeline {
         node { label 'linux && build && aws' }
     }
     environment {
-        PROJECT_URL = 'https://github.com/labshare/polus-plugins'
+        PROJECT_URL = 'https://github.com/polusai/polus-plugins'
     }
     triggers {
         pollSCM('H/5 * * * *')
