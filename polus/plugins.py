@@ -827,3 +827,4 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
 #     content = repo.get_content(
 #         "plugin-manifest/schema/wipp-plugin-manifest-schema.json"
 #     )
+_Plugins().refresh()  # calls the refresh method when library is imported
