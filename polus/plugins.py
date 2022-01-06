@@ -115,12 +115,24 @@ class _Plugins(object):
                         PLUGINS[plugin.__class__.__name__] = plugin
 
                     # Add the current version to the list of available versions
-                    PLUGINS[plugin.__class__.__name__].versions.append(plugin.version)
+                    if (
+                        plugin.version
+                        not in PLUGINS[plugin.__class__.__name__].versions
+                    ):
+                        PLUGINS[plugin.__class__.__name__].versions.append(
+                            plugin.version
+                        )
                 else:  # if Force. All plugins are rewritten
                     PLUGINS[plugin.__class__.__name__] = plugin
 
                     # Add the current version to the list of available versions
-                    PLUGINS[plugin.__class__.__name__].versions.append(plugin.version)
+                    if (
+                        plugin.version
+                        not in PLUGINS[plugin.__class__.__name__].versions
+                    ):
+                        PLUGINS[plugin.__class__.__name__].versions.append(
+                            plugin.version
+                        )
 
 
 plugins = _Plugins()
