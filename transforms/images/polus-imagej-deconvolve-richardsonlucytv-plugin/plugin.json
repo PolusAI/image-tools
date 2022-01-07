@@ -1,0 +1,85 @@
+{
+  "name": "ImageJ deconvolve richardsonLucyTV",
+  "version": "0.3.0",
+  "title": "ImageJ deconvolve richardsonLucyTV",
+  "description": "This plugin applies the Richardson Lucy algorithm with total variation regularization.",
+  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-deconvolve-richardsonlucytv-plugin:0.3.0",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": ["PadAndRichardsonLucyTV"]
+      },
+      "description": "Op overloading method to perform",
+      "required": false
+    },
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Collection to be processed by this plugin",
+      "required": false
+    },
+    {
+      "name": "psf",
+      "type": "collection",
+      "description": "The point spread function mask to be used",
+      "required": false
+    },
+    {
+      "name": "maxIterations",
+      "type": "number",
+      "description": "The maximum number of algorithm iterations",
+      "required": false
+    },
+    {
+      "name": "regularizationFactor",
+      "type": "number",
+      "description": "The regularization factor",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "opName",
+      "description": "Op overloading method to perform"
+    },
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Collection to be processed by this plugin",
+      "condition": "model.inputs.opName==PadAndRichardsonLucyTV"
+    },
+    {
+      "key": "inputs.psf",
+      "title": "psf",
+      "description": "The point spread function mask to be used",
+      "condition": "model.inputs.opName==PadAndRichardsonLucyTV"
+    },
+    {
+      "key": "inputs.maxIterations",
+      "title": "maxIterations",
+      "description": "The maximum number of algorithm iterations",
+      "condition": "model.inputs.opName==PadAndRichardsonLucyTV"
+    },
+    {
+      "key": "inputs.regularizationFactor",
+      "title": "regularizationFactor",
+      "description": "The regularization factor",
+      "condition": "model.inputs.opName==PadAndRichardsonLucyTV"
+    }
+  ]
+}
