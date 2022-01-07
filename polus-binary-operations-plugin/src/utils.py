@@ -1,18 +1,16 @@
-from bfio import BioReader, BioWriter
-import bioformats
-import javabridge as jutil
-
 import logging, traceback
-from pathlib import Path
 import os
+
+from bfio import BioReader, BioWriter
+import numpy as np
+
+import matplotlib.pyplot as plt
 
 import cv2
 
-import numpy as np
-
 logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                         datefmt='%d-%b-%y %H:%M:%S')
-logger = logging.getLogger("main")
+logger = logging.getLogger("utils")
 logger.setLevel(logging.INFO)
 
 
@@ -183,13 +181,32 @@ def areafiltering_remove_larger_objects_binary(image, kernel=None, n=None):
     logger.info("{} ROI removed in tile".format(count_removed))
     return af
 
-def binary_operation(image,
-                     output,
+def iterate_tiles(shape, window_size, step_size):
+
+    for y1 in range(0, shape[0], step_size):
+        for x1 in range(0, shape[1], step_size):
+
+            y2_window = min(shape[0], y1+window_size)
+            x2_window = min(shape[1], x1+window_size)
+
+            y2_step   = min(shape[0], y1+step_size)
+            x2_step   = min(shape[1], x1+step_size)
+
+            window_slice = (slice(y1, y2_window), slice(x1, x2_window), 
+                                slice(0,1), slice(0,1), slice(0,1))
+            step_slice   = (slice(y1, y2_step), slice(x1, x2_step), 
+                                slice(0,1), slice(0,1), slice(0,1))
+
+            yield window_slice, step_slice
+
+
+def binary_operation(input_path: str,
+                     output_path: str,
                      function,
                      extra_arguments,
-                     extra_padding, 
-                     kernel,
-                     Tile_Size):
+                     override: bool,
+                     extra_padding: int =512,
+                     kernel: int =None):
     """
     This function goes through the images and calls the appropriate binary operation
 
@@ -212,67 +229,65 @@ def binary_operation(image,
         Tile Size for reading images 
     """
 
-    # Start the javabridge with proper java logging
-    logger.info('Initializing the javabridge...')
-    log_config = Path(__file__).parent.joinpath("log4j.properties")
-    jutil.start_vm(args=["-Dlog4j.configuration=file:{}".format(str(log_config.absolute()))],class_path=bioformats.JARS)
 
     try: 
         # Read the image
-        br = BioReader(image)
+        logger.info(f"\n\n OPERATING ON {os.path.basename(input_path)}")
+        logger.debug(f"Input Path: {input_path}")
+        logger.debug(f"Output Path: {output_path}")
 
-        # Get the dimensions of the Image
-        br_x, br_y, br_z, br_c, br_t = br.num_x(), br.num_y(), br.num_z(), br.num_c(), br.num_t()
-        br_shape = (br_x, br_y, br_z, br_c, br_t)
-        datatype = br.pixel_type()
-        max_datatype_val = np.iinfo(datatype).max
+        with BioReader(input_path, backend='java') as br:
+            with BioWriter(output_path, backend='java',
+                             metadata=br.metadata, dtype=br.dtype) as bw:
+                
+                bw_numpy = np.zeros(bw.shape).squeeze()
+                assert br.shape == bw.shape
+                bfio_shape = br.shape
+                logger.info(f"Shape of BioReader&BioWriter (YXZCT): {bfio_shape}")
+                logger.info(f"DataType of BioReader&BioWriter: {br.dtype}")
 
-        logger.info("Original Datatype {}: ({})".format(datatype, max_datatype_val))
-        logger.info("Shape of Input (XYZCT): {}".format(br_shape))
+                step_size = br._TILE_SIZE
+                window_size = step_size + (2*extra_padding)
 
-        # Initialize Output
-        bw = BioWriter(file_path=output, metadata=br.read_metadata())
+                for window_slice, step_slice in iterate_tiles(shape       = bfio_shape, 
+                                                              window_size = window_size,
+                                                              step_size   = step_size):
+                    
+                    logger.debug("\n SLICES...")
+                    logger.debug(f"Window Y: {window_slice[0]}")
+                    logger.debug(f"Window X: {window_slice[1]}")
+                    logger.debug(f"Step Y: {step_slice[0]}")
+                    logger.debug(f"Step X: {step_slice[1]}")
 
-        # Initialize the Python Generators to go through each "tile" of the image
-        tsize = Tile_Size + (2*extra_padding)
-        logger.info("Tile Size {}x{}".format(tsize, tsize))
-        readerator = br.iterate(tile_stride=[Tile_Size, Tile_Size],tile_size=[tsize, tsize], batch_size=1)
-        writerator = bw.writerate(tile_size=[Tile_Size, Tile_Size], tile_stride=[Tile_Size, Tile_Size], batch_size=1)
-        next(writerator)
+                    tile_readarray = br[window_slice]
+                    tile_labels = np.unique(tile_readarray)
 
-        for images,indices in readerator:
-            # Extra tiles do not need to be calculated.
+                    tile_writearray = np.zeros(tile_readarray.shape).astype(br.dtype)
+                    for label in tile_labels[1:]: # do not want to include zero (the background)
+                        tile_binaryarray = (tile_readarray == label).astype(np.uint16)
+                        if callable(function):
+                            tile_binaryarray_modified = function(tile_binaryarray, 
+                                                                 kernel=kernel, 
+                                                                 n=extra_arguments)
+                            tile_binaryarray_modified[tile_binaryarray_modified == 1] = label
+                        
+                        if override == True:
+                            idx = (tile_binaryarray != tile_binaryarray_modified) | (tile_readarray == label)
+                        else:
+                            idx = ((tile_readarray == label) | (tile_readarray == 0)) & (tile_writearray == 0)
 
-            # Indices should range from -intkernel < index value < Image_Dimension + intkernel
-            if (indices[0][0][0] == br_x - extra_padding) or (indices[1][0][0] == br_y - extra_padding):
-                continue
-            logger.info(indices)
+                        tile_writearray[idx] = tile_binaryarray_modified[idx].astype(br.dtype)
+                        
+                    logger.debug(f"Input Tile has {len(np.unique(tile_writearray)[1:])} labels & " + \
+                                 f"Output Tile has {len(tile_labels[1:])} labels")
+                    
+                    # bw[step_slice] = tile_writearray[0:step_size, 0:step_size]
+                    bw_numpy[step_slice[:2]] = tile_writearray[0:step_size, 0:step_size]
 
-            # Images are (1, Tile_Size, Tile_Size, 1)
-            # Need to convert to (Tile_Size, Tile_Size) to be able to do operation
-            images = np.squeeze(images)
-            images[images == max_datatype_val] = 1
-            
-            # Initialize which function we are dispatching
-            if callable(function):
-                trans_image = function(images, kernel=kernel, n=extra_arguments)
-                trans_image = trans_image.astype(datatype)
-                trans_image[trans_image==1] = max_datatype_val
+                plt.imshow(bw_numpy)
+                plt.savefig(output_path + ".jpg")
 
-            # The image needs to be converted back to (1, Tile_Size_Tile_Size, 1) to write it
-            reshape_img = np.reshape(trans_image[extra_padding:-extra_padding,extra_padding:-extra_padding], (1, Tile_Size, Tile_Size, 1))
+        return output_path
 
-            # Send it to the Writerator
-            writerator.send(reshape_img)
-
-        # Close the image
-        bw.close_image()
-
-    except:
-        traceback.print_exc()
-
-    # Always close the JavaBridge
-    finally:
-        jutil.kill_vm()
-    
-    
+    except Exception as e:
+        raise ValueError(f"Something went wrong: {traceback.print_exc(e)}")

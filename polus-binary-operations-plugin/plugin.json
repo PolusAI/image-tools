@@ -18,14 +18,14 @@
       "required": true
     },
     {
-      "name": "kernelsize",
+      "name": "kernelSize",
       "description": "Kernel size that should be used for transformation",
       "type": "number",
       "options": null,
       "required": true
     },
     {
-      "name": "Operation",
+      "name": "operation",
       "description": "The Binary Operations that will be done on the image",
       "type": "enum",
       "options": {
@@ -47,7 +47,7 @@
       "required": true
     },
     {
-      "name": "structuringshape",
+      "name": "structuringShape",
       "description": "Structuring Shape (Default is Elliptical)",
       "type": "enum",
       "options": {
@@ -60,28 +60,28 @@
       "required": true
     },
     {
-      "name": "ThresholdAreaRemoveLarge",
+      "name": "thresholdAreaRemoveLarge",
       "description": "Minimum Area of objects to keep.",
       "type": "number",
       "options": null,
       "required": false
     },
     {
-      "name": "ThresholdAreaRemoveSmall",
+      "name": "thresholdAreaRemoveSmall",
       "description": "Maximum Area of objects to keep.",
       "type": "number",
       "options": null,
       "required": false
     },
     {
-      "name": "IterationsDilation",
+      "name": "iterationsDilation",
       "description": "Number of times to dilate an object",
       "type": "number",
       "options": null,
       "required": false
     },
     {
-      "name": "IterationsErosion",
+      "name": "iterationsErosion",
       "description": "Number of times to erode an object",
       "type": "number",
       "options": null,
@@ -99,7 +99,7 @@
   ],
   "ui": [
     {
-      "key": "inputs.Operation",
+      "key": "inputs.operation",
       "title": "Operations",
       "description": "Operations that will be used on image"
     },
