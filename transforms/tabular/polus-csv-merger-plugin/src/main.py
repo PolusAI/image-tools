@@ -2,6 +2,7 @@ import argparse
 import logging 
 import os
 import csv
+import numpy as np
 from io import StringIO
 import copy
 from pathlib import Path
@@ -89,7 +90,7 @@ if __name__=="__main__":
             
             inp_files = [open(f) for f in out_files[key]]
             
-            # Write Merged CSV
+            # # Write Merged CSV
             with open(outPath,'w') as fw:
                 logger.info("Generating file: {}".format(Path(outPath).name))
                 for l in range(key):
@@ -158,8 +159,7 @@ if __name__=="__main__":
         line_dict = {key:'NaN' for key in headers}
         
         # Generate the path to the output file
-        # outPath = str(Path(outDir).joinpath('merged.csv').absolute())
-        outPath = os.path.join(outDir, 'merged.csv')
+        outPath = str(Path(outDir).joinpath('merged.csv').absolute())
         
         # Merge data
         if dim=='rows':
@@ -198,7 +198,12 @@ if __name__=="__main__":
                             out_file.write(line_template.format(**file_dict))
                             
             logger.info("Merging the data along rows for feather file")
-            to_feather(inpDir_files)
+            # Write Merged Feather
+            temp_df = pd.read_csv(outPath)
+            df = vaex.from_pandas(temp_df)
+            os.chdir(outDir)
+            df.export('merged_by_rows.feather')
+            
         elif dim=='columns':
             logger.info("Merging the data along columns...")
             outPath = os.path.join(outDir, 'merged.csv')
@@ -247,9 +252,17 @@ if __name__=="__main__":
                                 out_dict[line_vals[file_ind]][file_map[el]] = val
                                 
             # Write the output file
-            with open(outPath,'w') as out_file:
-                # Write headers
-                out_file.write(','.join(headers) + '\n')
-                
-                for val in out_dict.values():
-                    out_file.write(line_template.format(**val))
+            # with open(outPath,'w') as out_file:
+            #     # Write headers
+            #     out_file.write(','.join(headers) + '\n')
+        
+            #     for val in out_dict.values():
+            #         out_file.write(line_template.format(**val))
+                    
+            # Write Merged Feather by reading lines into dataframe
+            
+            array = np.append(line_template.format(**val))
+            df = pd.DataFrame(data = array, columns = headers)
+            vaex_df = vaex.from_pandas(df)
+            os.chdir(outDir)
+            vaex_df.export('merged_by_columns.feather')
