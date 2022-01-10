@@ -1,15 +1,24 @@
 
-import argparse, logging, traceback
+import argparse, logging
 from concurrent.futures import ThreadPoolExecutor
 
 import filepattern
 from filepattern import FilePattern as fp
+
+from typing import Any
 
 import numpy as np
 import cv2
 
 import os
 import utils
+
+POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG', 'INFO'))
+# Initialize the logger
+logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+                    datefmt='%d-%b-%y %H:%M:%S')
+logger = logging.getLogger("main")
+logger.setLevel(POLUS_LOG)
 
 def main(inp_dir: str,
          out_dir: str,
@@ -19,9 +28,9 @@ def main(inp_dir: str,
          iterations_dilation: int,
          iterations_erosion: int,
          operations: str,
-         structuring_shape: int,
          file_pattern: str,
-         override_instances: bool):
+         override_instances: bool,
+         structuring_shape: Any):
 
     try:
 
@@ -30,6 +39,7 @@ def main(inp_dir: str,
                         for f in fp(inp_dir,file_pattern) 
                             if os.path.exists(str(f[0]['file']))]
         num_inputs = len(input_images)
+        logger.info(f"Number of Inputs = {num_inputs}")
 
         # A dictionary specifying the function that will be run based on user input. 
         dispatch = {
@@ -65,18 +75,27 @@ def main(inp_dir: str,
 
         # Need extra padding when doing operations so it does not skew results
             # Initialize variables based on operation
+        
         if (threshold_area_rm_large == None) and (threshold_area_rm_small == None):
+            assert int_kernel != None, "Need to Specify a Kernel Size"
+            logger.info(f"Integer Kernel Size: {int_kernel}")
             extra_padding = int_kernel
             kernel = cv2.getStructuringElement(structuring_shape,(int_kernel,int_kernel))
+        else:
+            extra_padding = 512
+            kernel = None
         function = dispatch[operations]
         extra_arguments = dict_n_args[operations]
+
+        logger.info("\n Initializing key word arguments ...")
 
         kwargs = {
             "function"        : function,
             "extra_arguments" : extra_arguments,
             "extra_padding"   : extra_padding,
             "kernel"          : kernel,
-            "override"        : override_instances
+            "override"        : override_instances,
+            "operation"       : operations
         }
 
         # Loop through files in inpDir image collection and process
@@ -94,16 +113,10 @@ def main(inp_dir: str,
                 counter += 1
 
     except Exception as e:
-        raise ValueError(f"Something went wrong: {traceback.print_exc(e)}")
-
+        raise ValueError(f"Something went wrong: {e}")
 
 
 if __name__=="__main__":
-    # Initialize the logger
-    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
-                        datefmt='%d-%b-%y %H:%M:%S')
-    logger = logging.getLogger("main")
-    logger.setLevel(logging.INFO)
 
     # Setup the argument parsing
     logger.info("\n Parsing arguments...")
@@ -123,8 +136,8 @@ if __name__=="__main__":
                         help='Boolean for whether instances are allowed to be overlapped or not')
 
     # Extra arguments based on operation
-    parser.add_argument('--kernelSize', dest='kernelSize', type=int, # not used for the area filtering
-                        help='Kernel size that should be used for all operations', required=False)
+    parser.add_argument('--kernelSize', dest='kernelSize', type=int,# not used for the area filtering
+                        help='Kernel size that should be used for all operations')
     parser.add_argument('--thresholdAreaRemoveLarge', dest='thresholdAreaRemoveLarge', type=int,
                         help='Area threshold of objects in image', required=False)
     parser.add_argument('--thresholdAreaRemoveSmall', dest='thresholdAreaRemoveSmall', type=int,
@@ -149,11 +162,11 @@ if __name__=="__main__":
 
 
     if args.structuringShape == 'Elliptical':
-        structuring_shape: int = cv2.MORPH_ELLIPSE
+        structuring_shape = cv2.MORPH_ELLIPSE # datatype is INT, but throws TypeError if specified
     elif args.structuringShape == 'Rectangular':
-        structuring_shape: int = cv2.MORPH_RECT
+        structuring_shape = cv2.MORPH_RECT
     elif args.structuringShape == 'Cross':
-        structuring_shape: int = cv2.MORPH_CROSS
+        structuring_shape = cv2.MORPH_CROSS
     else:
         raise ValueError("Structuring Shape is not correct")
     logger.info(f"Structuring Shape = {args.structuringShape}")

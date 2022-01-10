@@ -1,5 +1,4 @@
-scipy==1.4.1
-numpy==1.18.1
-bfio==2.1.9
+numpy==1.22.0
+bfio[all]==2.1.9
 filepattern==1.4.7
-opencv_python==4.3.0.36
+opencv_python==4.5.5.62
