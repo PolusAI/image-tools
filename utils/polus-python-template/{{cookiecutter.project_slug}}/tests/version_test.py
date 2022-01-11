@@ -33,7 +33,7 @@ class VersionTest(unittest.TestCase):
         response = json.load(request.urlopen(self.url))
         if len(response['results']) == 0:
             self.fail('Could not find repository or no containers are in the repository.')
-        latest_tag = json.load(response)['results'][0]['name']
+        latest_tag = response['results'][0]['name']
         
         self.assertEqual(latest_tag,version)
         
