@@ -396,7 +396,7 @@ class Plugin(WIPPPluginManifest):
             if isinstance(o.value, pathlib.Path):
                 out_dirs.append(str(o.value))
 
-        inp_dirs_dict = {x: f"/data/iputs/input{n}" for (n, x) in enumerate(inp_dirs)}
+        inp_dirs_dict = {x: f"/data/inputs/input{n}" for (n, x) in enumerate(inp_dirs)}
         out_dirs_dict = {
             x: f"/data/outputs/output{n}" for (n, x) in enumerate(out_dirs)
         }
