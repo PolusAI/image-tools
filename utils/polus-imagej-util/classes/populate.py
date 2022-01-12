@@ -135,10 +135,10 @@ class Op:
         # Define required and optional inputs by testing last character in each 
         # input title
         self._required_inputs = [
-            _input for _input in self._inputs if _input[0][1][-1] != '?' and _input[0][1] not in ['out']
+            _input for _input in self._inputs if _input[0][1][-1] != '?'
         ]
         self._optional_inputs = [
-            _input for _input in self._inputs if _input[0][1][-1] == '?' or _input[0][1] in ['out']
+            _input for _input in self._inputs if _input[0][1][-1] == '?'
         ]
         
         # Determine if the op is currently supported and define member 
