@@ -11,12 +11,18 @@ import vaex
 import pandas as pd
 import shutil
 
+POLUS_LOG = getattr(logging, os.environ.get('POLUS_LOG', 'INFO'))
+
+FILE_EXT = os.environ.get('POLUS_EXT',None)
+FILE_EXT = FILE_EXT if FILE_EXT is not None else '.csv'
+
 if __name__=="__main__":
     # Initialize the logger
     logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                         datefmt='%d-%b-%y %H:%M:%S')
     logger = logging.getLogger("main")
     logger.setLevel(logging.INFO)
+
 
     # Setup the argument parsing
     logger.info("Parsing arguments...")
@@ -32,23 +38,6 @@ if __name__=="__main__":
     parser.add_argument('--sameRows', dest='sameRows', type=str,
                         help='Only merge csvs if they contain the same number of rows', required=False)
     
-    def to_feather(files): 
-        count = 1
-        outPath_feather = str(Path(outDir).joinpath('merged_{}.feather'.format(count)).absolute())
-        count=+ 1   
-        file_count = len(files)
-        # create empty list
-        dataframes_list = []  
-        # append datasets to the list
-        for i in range(file_count):
-            temp_df = pd.read_csv(files[i])
-            dataframes_list.append(temp_df)
-                
-        df_total=pd.concat(dataframes_list)
-        df = vaex.from_pandas(df_total)
-        os.chdir(outDir)
-        
-        df.export(outPath_feather)
         
     # Parse the arguments
     args = parser.parse_args()
@@ -68,6 +57,7 @@ if __name__=="__main__":
     inpDir_files.sort() # be a little fancy and merge alphabetically
     
     ''' If sameRows is set to true, nothing fancy to do. Just do the work and get out '''
+    # Case One: If merging by columns and have same rows:
     if dim=='columns' and same_rows:
         logger.info("Merging data with identical number of rows...")
             
@@ -91,26 +81,28 @@ if __name__=="__main__":
             inp_files = [open(f) for f in out_files[key]]
             
             # # Write Merged CSV
-            with open(outPath,'w') as fw:
-                logger.info("Generating file: {}".format(Path(outPath).name))
-                for l in range(key):
-                    fw.write(','.join([f.readline().rstrip('\n') for f in inp_files]))
-                    fw.write('\n')    
+            if FILE_EXT == '.csv':
+                with open(outPath,'w') as fw:
+                    logger.info("Generating file: {}".format(Path(outPath).name))
+                    for l in range(key):
+                        fw.write(','.join([f.readline().rstrip('\n') for f in inp_files]))
+                        fw.write('\n')    
 
             # Write Merged Feather
-            file_count = len(inp_files)
-            # create empty list
-            dataframes_list = []
-            
-            # append datasets to the list
-            for i in range(file_count):
-                temp_df = pd.read_csv(inp_files[i])
-                dataframes_list.append(temp_df)
-               
-            df_total=pd.concat(dataframes_list)
-            df = vaex.from_pandas(df_total)
-            os.chdir(outDir)
-            df.export('merged.feather')
+            if FILE_EXT == '.feather':
+                file_count = len(inp_files)
+                # create empty list
+                dataframes_list = []
+                
+                # append datasets to the list
+                for i in range(file_count):
+                    temp_df = pd.read_csv(inp_files[i])
+                    dataframes_list.append(temp_df)
+                
+                df_total=pd.concat(dataframes_list)
+                df = vaex.from_pandas(df_total)
+                os.chdir(outDir)
+                df.export('merged.feather')
                     
     else:
         # Get the column headers
@@ -162,6 +154,7 @@ if __name__=="__main__":
         outPath = str(Path(outDir).joinpath('merged.csv').absolute())
         
         # Merge data
+        # Case Two: Merger along rows only
         if dim=='rows':
             logger.info("Merging the data along rows...")
             with open(outPath,'w') as out_file:
@@ -198,12 +191,13 @@ if __name__=="__main__":
                             out_file.write(line_template.format(**file_dict))
                             
             logger.info("Merging the data along rows for feather file")
-            # Write Merged Feather
+            # Write Merged file
             temp_df = pd.read_csv(outPath)
             df = vaex.from_pandas(temp_df)
             os.chdir(outDir)
             df.export('merged_by_rows.feather')
             
+        # Case Three: Merger along columns only
         elif dim=='columns':
             logger.info("Merging the data along columns...")
             outPath = os.path.join(outDir, 'merged.csv')
@@ -251,18 +245,21 @@ if __name__=="__main__":
                             else:
                                 out_dict[line_vals[file_ind]][file_map[el]] = val
                                 
-            # Write the output file
-            # with open(outPath,'w') as out_file:
-            #     # Write headers
-            #     out_file.write(','.join(headers) + '\n')
-        
-            #     for val in out_dict.values():
-            #         out_file.write(line_template.format(**val))
+            # Write the output file using ENV Variable
+            if FILE_EXT == '.csv':
+                with open(outPath,'w') as out_file:
+                # Write headers
+                    out_file.write(','.join(headers) + '\n')
+            
+                    for val in out_dict.values():
+                        out_file.write(line_template.format(**val))
                     
             # Write Merged Feather by reading lines into dataframe
-            
-            array = np.append(line_template.format(**val))
-            df = pd.DataFrame(data = array, columns = headers)
-            vaex_df = vaex.from_pandas(df)
-            os.chdir(outDir)
-            vaex_df.export('merged_by_columns.feather')
+            elif FILE_EXT == '.feather':
+                for val in out_dict.values():
+                    array = np.append(line_template.format(**val))
+                
+                df = pd.DataFrame(data = array, columns = headers)
+                vaex_df = vaex.from_pandas(df)
+                os.chdir(outDir)
+                vaex_df.export('merged.feather')
