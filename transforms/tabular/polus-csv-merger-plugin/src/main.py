@@ -81,12 +81,11 @@ if __name__=="__main__":
             inp_files = [open(f) for f in out_files[key]]
             
             # # Write Merged CSV
-            if FILE_EXT == '.csv':
-                with open(outPath,'w') as fw:
-                    logger.info("Generating file: {}".format(Path(outPath).name))
-                    for l in range(key):
-                        fw.write(','.join([f.readline().rstrip('\n') for f in inp_files]))
-                        fw.write('\n')    
+            with open(outPath,'w') as fw:
+                logger.info("Generating file: {}".format(Path(outPath).name))
+                for l in range(key):
+                    fw.write(','.join([f.readline().rstrip('\n') for f in inp_files]))
+                    fw.write('\n')    
 
             # Write Merged Feather
             if FILE_EXT == '.feather':
@@ -121,7 +120,7 @@ if __name__=="__main__":
                 h = line.rstrip('\n').split(',')
                 headers.update(h)
                 
-                # Check to see if column identifiers exist in the 2nd row
+                # Check to see if column identifiers for Plots API exist in the 2nd row
                 line = fr.readline()
                 ident = line.rstrip('\n').split(',')
                 no_identifier = sum(1 for f in ident if f not in 'FC')
@@ -200,7 +199,7 @@ if __name__=="__main__":
         # Case Three: Merger along columns only
         elif dim=='columns':
             logger.info("Merging the data along columns...")
-            outPath = os.path.join(outDir, 'merged.csv')
+            outPath = str(Path(outDir).joinpath('merged.csv').absolute())
             
             # Load the first csv and generate a dictionary to hold all values
             out_dict = {}
@@ -246,16 +245,15 @@ if __name__=="__main__":
                                 out_dict[line_vals[file_ind]][file_map[el]] = val
                                 
             # Write the output file using ENV Variable
-            if FILE_EXT == '.csv':
-                with open(outPath,'w') as out_file:
-                # Write headers
-                    out_file.write(','.join(headers) + '\n')
+            with open(outPath,'w') as out_file:
+            # Write headers
+                out_file.write(','.join(headers) + '\n')
             
-                    for val in out_dict.values():
-                        out_file.write(line_template.format(**val))
+                for val in out_dict.values():
+                    out_file.write(line_template.format(**val))
                     
             # Write Merged Feather by reading lines into dataframe
-            elif FILE_EXT == '.feather':
+            if FILE_EXT == '.feather':
                 for val in out_dict.values():
                     array = np.append(line_template.format(**val))
                 
