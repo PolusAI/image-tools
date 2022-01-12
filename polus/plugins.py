@@ -429,7 +429,7 @@ class Plugin(WIPPPluginManifest):
                 args.append(str(o.value))
 
         client = docker.from_env()
-        client.containers.run(
+        dc = client.containers.run(
             self.containerId,
             args,
             mounts=mnts,
@@ -437,7 +437,12 @@ class Plugin(WIPPPluginManifest):
             device_requests=[
                 docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])
             ],
+            remove=True,  # remove container after stopping
+            detach=True,  # equivalent to -d in CLI
         )
+
+        for l in dc.logs(stream=True, follow=True):
+            print(l.decode("utf-8").strip())
 
     def __getattribute__(self, name):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
