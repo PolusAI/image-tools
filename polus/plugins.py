@@ -338,11 +338,11 @@ class Input(WippInput, IOBase):
             )
 
 
-class RunSettings(object):
+# class RunSettings(object):
 
-    gpu: typing.Union[int, typing.List[int], None] = -1
-    gpu: typing.Union[int, None] = -1
-    mem: int = -1
+#     gpu: typing.Union[int, typing.List[int], None] = -1
+#     gpu: typing.Union[int, None] = -1
+#     mem: int = -1
 
 
 class Plugin(WIPPPluginManifest):
@@ -383,7 +383,7 @@ class Plugin(WIPPPluginManifest):
     def organization(self):
         return self.containerId.split("/")[0]
 
-    def run(self):
+    def run(self, gpu: bool = True, gpu_count: int = -1, **kwargs):
 
         inp_dirs = []
         out_dirs = []
@@ -432,17 +432,31 @@ class Plugin(WIPPPluginManifest):
                 args.append(str(o.value))
 
         client = docker.from_env()
-        dc = client.containers.run(
-            self.containerId,
-            args,
-            mounts=mnts,
-            user=f"{os.getuid()}:{os.getegid()}",
-            device_requests=[
-                docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])
-            ],
-            remove=True,  # remove container after stopping
-            detach=True,  # equivalent to -d in CLI
-        )
+        if gpu:
+            logger.info("Running container with GPU. gpu_count = %s" % gpu_count)
+            dc = client.containers.run(
+                self.containerId,
+                args,
+                mounts=mnts,
+                user=f"{os.getuid()}:{os.getegid()}",
+                device_requests=[
+                    docker.types.DeviceRequest(count=gpu_count, capabilities=[["gpu"]])
+                ],
+                remove=True,  # remove container after stopping
+                detach=True,  # equivalent to -d in CLI,
+                **kwargs,
+            )
+        else:
+            logger.info("Running container without GPU")
+            dc = client.containers.run(
+                self.containerId,
+                args,
+                mounts=mnts,
+                user=f"{os.getuid()}:{os.getegid()}",
+                remove=True,  # remove container after stopping
+                detach=True,  # equivalent to -d in CLI,
+                **kwargs,
+            )
 
         for l in dc.logs(stream=True, follow=True):
             print(l.decode("utf-8").strip())
