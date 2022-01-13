@@ -9,6 +9,8 @@ import os
 import uuid
 import signal
 import random
+import requests
+from urllib.parse import urlparse, urljoin
 from alive_progress import alive_it
 
 from typing import Union
@@ -541,14 +543,19 @@ def is_valid_manifest(plugin: dict) -> bool:
     return True
 
 
-def submit_plugin(manifest: typing.Union[str, dict, pathlib.Path]) -> Plugin:
+def submit_plugin(
+    manifest: typing.Union[str, dict, pathlib.Path],
+    refresh: bool = False,
+) -> Plugin:
     """Parses a plugin and returns a Plugin object.
 
     This function accepts a plugin manifest as a string, a dictionary (parsed
     json), or a pathlib.Path object pointed at a plugin manifest.
 
     Args:
-        manifest: A plugin manifest
+        manifest:
+        A plugin manifest. It can be a url, a dictionary,
+        a path to a JSON file or a string that can be parsed as a dictionary
 
     Returns:
         A Plugin object populated with information from the plugin manifest.
@@ -563,9 +570,13 @@ def submit_plugin(manifest: typing.Union[str, dict, pathlib.Path]) -> Plugin:
         with open(manifest, "r") as fr:
             manifest = json.load(fr)
 
-    if isinstance(manifest, str):
-
-        manifest = json.loads(manifest)
+    elif isinstance(manifest, str):
+        if urlparse(manifest).netloc == "":
+            manifest = json.loads(manifest)
+        else:
+            manifest = requests.get(manifest).json()
+    if not isinstance(manifest, dict):
+        raise ValueError("invalid manifest")
 
     """ Create a Plugin subclass """
     replace_chars = "()<>-_"
@@ -591,8 +602,40 @@ def submit_plugin(manifest: typing.Union[str, dict, pathlib.Path]) -> Plugin:
         with open(org_path.joinpath(out_name), "w") as fw:
             json.dump(manifest, fw, indent=4)
 
+    # Refresh plugins list if refresh = True
+    if refresh:
+        plugins.refresh()
+
     # Return in case additional QA checks should be made
     return plugin
+
+
+def add_plugin(
+    user: str,
+    branch: str,
+    plugin: str,
+    repo: str = "polus-plugins",
+    manifest_name: str = "plugin.json",
+):
+    """Add plugin from GitHub.
+
+    This function adds a plugin hosted on GitHub and returns a Plugin object.
+
+    Args:
+        user: GitHub username
+        branch: GitHub branch
+        plugin: Plugin's name
+        repo: Name of GitHub repository, default is `polus-plugins`
+        manifest_name: Name of manifest file, default is `plugin.json`
+
+    Returns:
+        A Plugin object populated with information from the plugin manifest.
+    """
+    l = [user, repo, branch, plugin, manifest_name]
+    u = "/".join(l)
+    url = urljoin("https://raw.githubusercontent.com", u)
+    logger.info("Adding %s" % url)
+    return submit_plugin(url, refresh=True)
 
 
 def scrape_manifests(
@@ -785,5 +828,4 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
 #     content = repo.get_content(
 #         "plugin-manifest/schema/wipp-plugin-manifest-schema.json"
 #     )
-
 _Plugins().refresh()  # calls the refresh method when library is imported
