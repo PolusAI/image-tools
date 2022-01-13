@@ -11,6 +11,7 @@ import signal
 import random
 import requests
 from urllib.parse import urljoin
+from alive_progress import alive_it
 
 from typing import Union
 from python_on_whales import docker
@@ -517,6 +518,7 @@ class Plugin(WIPPPluginManifest):
             d = docker.run(
                 self.containerId,
                 args,
+                gpus=gpus,
                 name=container_name,
                 remove=True,
                 mounts=mnts,
@@ -693,7 +695,7 @@ def scrape_manifests(
 
     for d in range(0, max_depth):
 
-        for content in contents:
+        for content in alive_it(contents, title=f"{repo.full_name}: {d}"):
 
             if content.type == "dir":
                 next_contents.extend(repo.get_contents(content.path))
@@ -714,7 +716,7 @@ def scrape_manifests(
         return valid_manifests
 
 
-def _error_log(val_err, manifest):
+def _error_log(val_err, manifest, fct):
 
     report = []
 
@@ -728,14 +730,14 @@ def _error_log(val_err, manifest):
                     manifest["name"], err.args[0]
                 )
             )
-            logger.critical(f"update_polus_plugins: {report[-1]}")
+            logger.critical(f"{fct}: {report[-1]}")
         elif isinstance(err.exc, errors.MissingError):
             report.append(
                 "The plugin ({}) is missing fields: {}".format(
                     manifest["name"], err.loc_tuple()
                 )
             )
-            logger.critical(f"update_polus_plugins: {report[-1]}")
+            logger.critical(f"{fct}: {report[-1]}")
         elif errors.ExtraError:
             if err.loc_tuple()[0] in ["inputs", "outputs", "ui"]:
                 report.append(
@@ -752,10 +754,11 @@ def _error_log(val_err, manifest):
                         manifest["name"], err.exc.args[0][0]
                     )
                 )
-            logger.critical(f"update_polus_plugins: {report[-1]}")
+            logger.critical(f"{fct}: {report[-1]}")
         else:
             logger.warning(
-                "update_polus_plugins: Uncaught manifest Error in ({}): {}".format(
+                "{}: Uncaught manifest Error in ({}): {}".format(
+                    fct,
                     manifest["name"],
                     str(val_err).replace("\n", ", ").replace("  ", " "),
                 )
@@ -764,12 +767,14 @@ def _error_log(val_err, manifest):
 
 def update_polus_plugins(gh_auth: typing.Optional[str] = None):
 
+    logger.info("Updating polus plugins.")
     # Get all manifests
     valid, invalid = scrape_manifests(
         "polusai/polus-plugins", init_github(gh_auth), 1, 2, True
     )
     manifests = valid.copy()
     manifests.extend(invalid)
+    logger.info("Submitting %s plugins." % len(manifests))
 
     for manifest in manifests:
 
@@ -819,7 +824,7 @@ def update_polus_plugins(gh_auth: typing.Optional[str] = None):
                 raise ValidationError(error_list, plugin.__class__)
 
         except ValidationError as val_err:
-            _error_log(val_err, manifest)
+            _error_log(val_err, manifest, "update_polus_plugins")
 
 
 def update_nist_plugins(gh_auth: typing.Optional[str] = None):
@@ -833,8 +838,8 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
         r"\[manifest\]\((https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))\)"
     )
     matches = pattern.findall(str(readme.decoded_content))
-
-    for match in matches:
+    logger.info("Updating NIST plugins.")
+    for match in alive_it(matches, title="NIST Manifests"):
         url_parts = match[0].split("/")[3:]
         plugin_repo = gh.get_repo("/".join(url_parts[:2]))
         manifest = json.loads(
@@ -845,7 +850,7 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
             submit_plugin(manifest)
 
         except ValidationError as val_err:
-            _error_log(val_err, manifest)
+            _error_log(val_err, manifest, "update_nist_plugins")
 
 
 # def _update_schema(gh_auth: typing.Optional[str] = None):
