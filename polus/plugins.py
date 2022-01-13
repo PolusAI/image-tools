@@ -85,7 +85,7 @@ class _Plugins(object):
         output.sort()
         return output
 
-    def refresh(self):
+    def refresh(self, force: bool = False):
         """Refresh the plugin list
 
         This should be optimized, since it will become noticeably slow when
@@ -104,16 +104,34 @@ class _Plugins(object):
                 with open(file, "r") as fr:
                     plugin = submit_plugin(json.load(fr))
 
-                # Create the entry if it doesn't exist
-                if plugin.__class__.__name__ not in PLUGINS.keys():
+                if not force:
+                    # Create the entry if it doesn't exist
+                    if plugin.__class__.__name__ not in PLUGINS.keys():
+                        PLUGINS[plugin.__class__.__name__] = plugin
+
+                    # If the entry exists, update it if the current version is newer
+                    elif PLUGINS[plugin.__class__.__name__] < plugin:
+                        PLUGINS[plugin.__class__.__name__] = plugin
+
+                    # Add the current version to the list of available versions
+                    if (
+                        plugin.version
+                        not in PLUGINS[plugin.__class__.__name__].versions
+                    ):
+                        PLUGINS[plugin.__class__.__name__].versions.append(
+                            plugin.version
+                        )
+                else:  # if Force. All plugins are rewritten
                     PLUGINS[plugin.__class__.__name__] = plugin
 
-                # If the entry exists, update it if the current version is newer
-                elif PLUGINS[plugin.__class__.__name__] < plugin:
-                    PLUGINS[plugin.__class__.__name__] = plugin
-
-                # Add the current version to the list of available versions
-                PLUGINS[plugin.__class__.__name__].versions.append(plugin.version)
+                    # Add the current version to the list of available versions
+                    if (
+                        plugin.version
+                        not in PLUGINS[plugin.__class__.__name__].versions
+                    ):
+                        PLUGINS[plugin.__class__.__name__].versions.append(
+                            plugin.version
+                        )
 
 
 plugins = _Plugins()
@@ -767,3 +785,5 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
 #     content = repo.get_content(
 #         "plugin-manifest/schema/wipp-plugin-manifest-schema.json"
 #     )
+
+_Plugins().refresh()  # calls the refresh method when library is imported
