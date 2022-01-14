@@ -10,7 +10,7 @@ import uuid
 import signal
 import random
 import requests
-from urllib.parse import urljoin
+from urllib.parse import urlparse, urljoin
 from alive_progress import alive_it
 
 from typing import Union
@@ -571,16 +571,12 @@ def submit_plugin(
             manifest = json.load(fr)
 
     elif isinstance(manifest, str):
-        try:
+        if urlparse(manifest).netloc == "":
             manifest = json.loads(manifest)
-        except:
-            try:
-                manifest = requests.get(manifest).json()
-            except:
-                requests.get(manifest).raise_for_status()
-        finally:
-            if not isinstance(manifest, dict):
-                raise ValueError("invalid manifest")
+        else:
+            manifest = requests.get(manifest).json()
+    if not isinstance(manifest, dict):
+        raise ValueError("invalid manifest")
 
     """ Create a Plugin subclass """
     replace_chars = "()<>-_"
