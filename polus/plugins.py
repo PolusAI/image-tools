@@ -76,10 +76,10 @@ class _Plugins(object):
         return object.__getattribute__(self, name)
 
     def __len__(self):
-        return len(self.list())
+        return len(self.list)
 
     def __repr__(self):
-        return pprint.pformat(self.list())
+        return pprint.pformat(self.list)
 
     @property
     def list(self):
