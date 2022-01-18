@@ -8,11 +8,14 @@ import pprint
 import os
 from os.path import basename
 import uuid
+import signal
+import random
 import requests
-from urllib.parse import urljoin
+from urllib.parse import urlparse, urljoin
+from alive_progress import alive_it
 
-
-import docker
+from typing import Union
+from python_on_whales import docker
 
 from pydantic import BaseModel, Extra, errors, validator
 from pydantic.error_wrappers import ValidationError
@@ -85,7 +88,7 @@ class _Plugins(object):
         output.sort()
         return output
 
-    def refresh(self):
+    def refresh(self, force: bool = False):
         """Refresh the plugin list
 
         This should be optimized, since it will become noticeably slow when
@@ -104,16 +107,34 @@ class _Plugins(object):
                 with open(file, "r") as fr:
                     plugin = submit_plugin(json.load(fr))
 
-                # Create the entry if it doesn't exist
-                if plugin.__class__.__name__ not in PLUGINS.keys():
+                if not force:
+                    # Create the entry if it doesn't exist
+                    if plugin.__class__.__name__ not in PLUGINS.keys():
+                        PLUGINS[plugin.__class__.__name__] = plugin
+
+                    # If the entry exists, update it if the current version is newer
+                    elif PLUGINS[plugin.__class__.__name__] < plugin:
+                        PLUGINS[plugin.__class__.__name__] = plugin
+
+                    # Add the current version to the list of available versions
+                    if (
+                        plugin.version
+                        not in PLUGINS[plugin.__class__.__name__].versions
+                    ):
+                        PLUGINS[plugin.__class__.__name__].versions.append(
+                            plugin.version
+                        )
+                else:  # if Force. All plugins are rewritten
                     PLUGINS[plugin.__class__.__name__] = plugin
 
-                # If the entry exists, update it if the current version is newer
-                elif PLUGINS[plugin.__class__.__name__] < plugin:
-                    PLUGINS[plugin.__class__.__name__] = plugin
-
-                # Add the current version to the list of available versions
-                PLUGINS[plugin.__class__.__name__].versions.append(plugin.version)
+                    # Add the current version to the list of available versions
+                    if (
+                        plugin.version
+                        not in PLUGINS[plugin.__class__.__name__].versions
+                    ):
+                        PLUGINS[plugin.__class__.__name__].versions.append(
+                            plugin.version
+                        )
 
 
 plugins = _Plugins()
@@ -342,11 +363,11 @@ class Input(WippInput, IOBase):
             )
 
 
-class RunSettings(object):
+# class RunSettings(object):
 
-    gpu: typing.Union[int, typing.List[int], None] = -1
-    gpu: typing.Union[int, None] = -1
-    mem: int = -1
+#     gpu: typing.Union[int, typing.List[int], None] = -1
+#     gpu: typing.Union[int, None] = -1
+#     mem: int = -1
 
 
 class Plugin(WIPPPluginManifest):
@@ -387,12 +408,15 @@ class Plugin(WIPPPluginManifest):
     def organization(self):
         return self.containerId.split("/")[0]
 
-    def run(self):
+    def run(
+        self,
+        gpus: Union[None, str, int] = "all",
+        **kwargs,
+    ):
 
         inp_dirs = []
         out_dirs = []
 
-        # Find common paths in input and output directories
         for i in self.inputs:
             if isinstance(i.value, pathlib.Path):
                 inp_dirs.append(str(i.value))
@@ -401,15 +425,21 @@ class Plugin(WIPPPluginManifest):
             if isinstance(o.value, pathlib.Path):
                 out_dirs.append(str(o.value))
 
-        inp_root = pathlib.Path(os.path.commonpath(inp_dirs))
-        out_root = pathlib.Path(os.path.commonpath(out_dirs))
-        mnts = [
-            docker.types.Mount(
-                "/data/inputs/", str(inp_root), type="bind", read_only=True
-            ),
-            docker.types.Mount("/data/outputs/", str(out_root), type="bind"),
+        inp_dirs_dict = {x: f"/data/inputs/input{n}" for (n, x) in enumerate(inp_dirs)}
+        out_dirs_dict = {
+            x: f"/data/outputs/output{n}" for (n, x) in enumerate(out_dirs)
+        }
+
+        mnts_in = [
+            [f"type=bind,source={k},target={v},readonly"]  # must be a list of lists
+            for (k, v) in inp_dirs_dict.items()
+        ]
+        mnts_out = [
+            [f"type=bind,source={k},target={v}"]  # must be a list of lists
+            for (k, v) in out_dirs_dict.items()
         ]
 
+        mnts = mnts_in + mnts_out
         args = []
 
         for i in self.inputs:
@@ -417,7 +447,7 @@ class Plugin(WIPPPluginManifest):
             args.append(f"--{i.name}")
 
             if isinstance(i.value, pathlib.Path):
-                args.append("/data/inputs" + str(i.value.relative_to(inp_root))[1:])
+                args.append(inp_dirs_dict[str(i.value)])
 
             else:
                 args.append(str(i.value))
@@ -427,21 +457,44 @@ class Plugin(WIPPPluginManifest):
             args.append(f"--{o.name}")
 
             if isinstance(o.value, pathlib.Path):
-                args.append("/data/outputs" + str(o.value.relative_to(out_root))[1:])
-
+                args.append(out_dirs_dict[str(o.value)])
             else:
                 args.append(str(o.value))
 
-        client = docker.from_env()
-        client.containers.run(
-            self.containerId,
-            args,
-            mounts=mnts,
-            user=f"{os.getuid()}:{os.getegid()}",
-            device_requests=[
-                docker.types.DeviceRequest(count=-1, capabilities=[["gpu"]])
-            ],
-        )
+        container_name = f"polus{random.randint(10, 99)}"
+
+        def sig(
+            signal, frame
+        ):  # signal handler to kill container when KeyboardInterrupt
+            print(f"Exiting container {container_name}")
+            docker.kill(container_name)
+
+        signal.signal(
+            signal.SIGINT, sig
+        )  # make of sig the handler for KeyboardInterrupt
+        if gpus is None:
+            logger.info("Running container without GPU.")
+            d = docker.run(
+                self.containerId,
+                args,
+                name=container_name,
+                remove=True,
+                mounts=mnts,
+                **kwargs,
+            )
+            print(d)
+        else:
+            logger.info("Running container with GPU: --gpus %s" % gpus)
+            d = docker.run(
+                self.containerId,
+                args,
+                gpus=gpus,
+                name=container_name,
+                remove=True,
+                mounts=mnts,
+                **kwargs,
+            )
+            print(d)
 
     def __getattribute__(self, name):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
@@ -491,14 +544,19 @@ def is_valid_manifest(plugin: dict) -> bool:
     return True
 
 
-def submit_plugin(manifest: typing.Union[str, dict, pathlib.Path]) -> Plugin:
+def submit_plugin(
+    manifest: typing.Union[str, dict, pathlib.Path],
+    refresh: bool = False,
+) -> Plugin:
     """Parses a plugin and returns a Plugin object.
 
     This function accepts a plugin manifest as a string, a dictionary (parsed
     json), or a pathlib.Path object pointed at a plugin manifest.
 
     Args:
-        manifest: A plugin manifest
+        manifest:
+        A plugin manifest. It can be a url, a dictionary,
+        a path to a JSON file or a string that can be parsed as a dictionary
 
     Returns:
         A Plugin object populated with information from the plugin manifest.
@@ -513,9 +571,13 @@ def submit_plugin(manifest: typing.Union[str, dict, pathlib.Path]) -> Plugin:
         with open(manifest, "r") as fr:
             manifest = json.load(fr)
 
-    if isinstance(manifest, str):
-
-        manifest = json.loads(manifest)
+    elif isinstance(manifest, str):
+        if urlparse(manifest).netloc == "":
+            manifest = json.loads(manifest)
+        else:
+            manifest = requests.get(manifest).json()
+    if not isinstance(manifest, dict):
+        raise ValueError("invalid manifest")
 
     """ Create a Plugin subclass """
     replace_chars = "()<>-_"
@@ -541,8 +603,40 @@ def submit_plugin(manifest: typing.Union[str, dict, pathlib.Path]) -> Plugin:
         with open(org_path.joinpath(out_name), "w") as fw:
             json.dump(manifest, fw, indent=4)
 
+    # Refresh plugins list if refresh = True
+    if refresh:
+        plugins.refresh()
+
     # Return in case additional QA checks should be made
     return plugin
+
+
+def add_plugin(
+    user: str,
+    branch: str,
+    plugin: str,
+    repo: str = "polus-plugins",
+    manifest_name: str = "plugin.json",
+):
+    """Add plugin from GitHub.
+
+    This function adds a plugin hosted on GitHub and returns a Plugin object.
+
+    Args:
+        user: GitHub username
+        branch: GitHub branch
+        plugin: Plugin's name
+        repo: Name of GitHub repository, default is `polus-plugins`
+        manifest_name: Name of manifest file, default is `plugin.json`
+
+    Returns:
+        A Plugin object populated with information from the plugin manifest.
+    """
+    l = [user, repo, branch, plugin, manifest_name]
+    u = "/".join(l)
+    url = urljoin("https://raw.githubusercontent.com", u)
+    logger.info("Adding %s" % url)
+    return submit_plugin(url, refresh=True)
 
 
 def scrape_manifests(
@@ -569,7 +663,7 @@ def scrape_manifests(
 
     for d in range(0, max_depth):
 
-        for content in contents:
+        for content in alive_it(contents, title=f"{repo.full_name}: {d}"):
 
             if content.type == "dir":
                 next_contents.extend(repo.get_contents(content.path))
@@ -590,7 +684,7 @@ def scrape_manifests(
         return valid_manifests
 
 
-def _error_log(val_err, manifest):
+def _error_log(val_err, manifest, fct):
 
     report = []
 
@@ -604,14 +698,14 @@ def _error_log(val_err, manifest):
                     manifest["name"], err.args[0]
                 )
             )
-            logger.critical(f"update_polus_plugins: {report[-1]}")
+            logger.critical(f"{fct}: {report[-1]}")
         elif isinstance(err.exc, errors.MissingError):
             report.append(
                 "The plugin ({}) is missing fields: {}".format(
                     manifest["name"], err.loc_tuple()
                 )
             )
-            logger.critical(f"update_polus_plugins: {report[-1]}")
+            logger.critical(f"{fct}: {report[-1]}")
         elif errors.ExtraError:
             if err.loc_tuple()[0] in ["inputs", "outputs", "ui"]:
                 report.append(
@@ -628,10 +722,11 @@ def _error_log(val_err, manifest):
                         manifest["name"], err.exc.args[0][0]
                     )
                 )
-            logger.critical(f"update_polus_plugins: {report[-1]}")
+            logger.critical(f"{fct}: {report[-1]}")
         else:
             logger.warning(
-                "update_polus_plugins: Uncaught manifest Error in ({}): {}".format(
+                "{}: Uncaught manifest Error in ({}): {}".format(
+                    fct,
                     manifest["name"],
                     str(val_err).replace("\n", ", ").replace("  ", " "),
                 )
@@ -640,12 +735,14 @@ def _error_log(val_err, manifest):
 
 def update_polus_plugins(gh_auth: typing.Optional[str] = None):
 
+    logger.info("Updating polus plugins.")
     # Get all manifests
     valid, invalid = scrape_manifests(
         "polusai/polus-plugins", init_github(gh_auth), 1, 2, True
     )
     manifests = valid.copy()
     manifests.extend(invalid)
+    logger.info("Submitting %s plugins." % len(manifests))
 
     for manifest in manifests:
 
@@ -695,7 +792,7 @@ def update_polus_plugins(gh_auth: typing.Optional[str] = None):
                 raise ValidationError(error_list, plugin.__class__)
 
         except ValidationError as val_err:
-            _error_log(val_err, manifest)
+            _error_log(val_err, manifest, "update_polus_plugins")
 
 
 def update_nist_plugins(gh_auth: typing.Optional[str] = None):
@@ -709,8 +806,8 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
         r"\[manifest\]\((https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*))\)"
     )
     matches = pattern.findall(str(readme.decoded_content))
-
-    for match in matches:
+    logger.info("Updating NIST plugins.")
+    for match in alive_it(matches, title="NIST Manifests"):
         url_parts = match[0].split("/")[3:]
         plugin_repo = gh.get_repo("/".join(url_parts[:2]))
         manifest = json.loads(
@@ -721,7 +818,7 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
             submit_plugin(manifest)
 
         except ValidationError as val_err:
-            _error_log(val_err, manifest)
+            _error_log(val_err, manifest, "update_nist_plugins")
 
 
 class Registry:
@@ -849,3 +946,4 @@ class Registry:
 #     content = repo.get_content(
 #         "plugin-manifest/schema/wipp-plugin-manifest-schema.json"
 #     )
+_Plugins().refresh()  # calls the refresh method when library is imported

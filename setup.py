@@ -32,5 +32,11 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.7",
-    install_requires=["pygithub>=1.55", "docker>=5.0.3", "pydantic>=1.8.2"],
+    install_requires=[
+        "pygithub>=1.55",
+        "docker>=5.0.3",
+        "pydantic>=1.8.2",
+        "python_on_whales>=0.34.0",
+        "alive-progress>=2.1.0",
+    ],
 )
