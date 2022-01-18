@@ -68,13 +68,14 @@ def init_github(auth=None):
 Plugin Fetcher Class
 """
 PLUGINS = {}
+VERSIONS = {}
 
 
 class _Plugins(object):
-    def __getattribute__(self, name):
+    def __getattribute__(cls, name):
         if name in PLUGINS.keys():
             return PLUGINS[name].copy()
-        return object.__getattribute__(self, name)
+        return object.__getattribute__(cls, name)
 
     def __len__(self):
         return len(self.list)
@@ -87,6 +88,23 @@ class _Plugins(object):
         output = list(PLUGINS.keys())
         output.sort()
         return output
+
+    def get_plugin(self, name: str, version: typing.Optional[str] = None):
+        """Returns a plugin object.
+
+        Return a plugin object with the option to specify a version. The specified version's manifest must exist in manifests folder.
+
+        Args:
+            name: Name of the plugin.
+            version: Optional version of the plugin, must follow semver.
+
+        Returns:
+            Plugin object
+        """
+        if version is None:
+            return getattr(self, name)
+        else:
+            return submit_plugin(VERSIONS[name][version])
 
     def refresh(self, force: bool = False):
         """Refresh the plugin list
@@ -106,6 +124,12 @@ class _Plugins(object):
 
                 with open(file, "r") as fr:
                     plugin = submit_plugin(json.load(fr))
+
+                # Add version and path to VERSIONS
+                if plugin.__class__.__name__ not in VERSIONS.keys():
+                    VERSIONS[plugin.__class__.__name__] = {}
+
+                VERSIONS[plugin.__class__.__name__][plugin.version.version] = file
 
                 if not force:
                     # Create the entry if it doesn't exist
@@ -138,6 +162,7 @@ class _Plugins(object):
 
 
 plugins = _Plugins()
+get_plugin = plugins.get_plugin
 
 """
 Paths and Fields
@@ -473,7 +498,10 @@ class Plugin(WIPPPluginManifest):
             signal.SIGINT, sig
         )  # make of sig the handler for KeyboardInterrupt
         if gpus is None:
-            logger.info("Running container without GPU.")
+            logger.info(
+                "Running container without GPU. %s version %s"
+                % (self.__class__.__name__, self.version.version)
+            )
             d = docker.run(
                 self.containerId,
                 args,
@@ -484,7 +512,10 @@ class Plugin(WIPPPluginManifest):
             )
             print(d)
         else:
-            logger.info("Running container with GPU: --gpus %s" % gpus)
+            logger.info(
+                "Running container with GPU: --gpus %s. %s version %s"
+                % (gpus, self.__class__.__name__, self.version.version)
+            )
             d = docker.run(
                 self.containerId,
                 args,
@@ -495,8 +526,6 @@ class Plugin(WIPPPluginManifest):
                 **kwargs,
             )
             print(d)
-
-    def __getattribute__(self, name):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
             if name in self._io_keys:
                 value = self._io_keys[name].value
