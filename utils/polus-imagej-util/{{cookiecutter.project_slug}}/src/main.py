@@ -123,7 +123,7 @@ def main({#- Required inputs -#}
     try:
         for ind, (
             {%- for inp,val in cookiecutter._inputs.items() -%}
-            {%- if val.type=='collection' %}{{ inp }}_path,{% endif -%}
+            {%- if val.type=='collection' and inp != 'out_input'%}{{ inp }}_path,{% endif -%}
             {%- endfor %}) in enumerate(zip(*args)):
             
             {%- for inp,val in cookiecutter._inputs.items() if val.type=='collection' %}
@@ -140,13 +140,21 @@ def main({#- Required inputs -#}
                 metadata = {{ inp }}_br.metadata
                 fname = {{ inp }}_path.name
                 dtype = ij.py.dtype({{ inp }})
+                # Save the shape for out input
+                shape = {{ inp }}.shape
             {%- endif %}
             {%- endif %}{% endfor %}
 
-            {%- for inp,val in cookiecutter._inputs.items() if val.type!='collection' and inp!='opName' %}
+            {%- for inp,val in cookiecutter._inputs.items() if val.type!='collection' and inp not in ['opName', 'out_input'] %}
             if _{{ inp }} is not None:
                 {{ inp }} = ij_converter.to_java(ij, _{{ inp }},{{ inp }}_types[_opName],dtype)
             {% endfor %}
+            
+            # Generate the out input variable if required
+            {%- for inp,val in cookiecutter._inputs.items() if val.type!='collection' and inp == 'out_input' %}
+            {{ inp }} = ij_converter.to_java(ij, np.zeros(shape=shape, dtype=dtype), 'IterableInterval')
+            {% endfor %}
+            
             logger.info('Running op...')
             {% for i,v in cookiecutter.plugin_namespace.items() %}
             {%- if loop.first %}if{% else %}elif{% endif %} _opName == "{{ i }}":

@@ -141,6 +141,18 @@ class Op:
             _input for _input in self._inputs if _input[0][1][-1] == '?'
         ]
         
+        # Change the name of the out as input argument so it does not interfere 
+        # with output from op
+        for _input in self._required_inputs:
+            if _input[0][1] == 'out':
+                _input[0][1] = 'out_input'
+        
+        # Change name of out as input for optional inputs
+        for _input in self._optional_inputs:
+            if _input[0][1] == 'out?':
+                _input[0][1] = 'out_input?'
+            
+        
         # Determine if the op is currently supported and define member 
         # attributes for partial and full support
         self.__support()
