@@ -229,9 +229,9 @@ def main():
             logger.info('Saving csv file')
             export_csv = np.savetxt('%s.csv'%file_name, df_processed, header = col_names, fmt="%s", delimiter=',')
         # # Save dataframe to feather file
-        # if FILE_EXT == '.feather':
-        #     feather_filename = inpfilename + ".feather"
-        #     df_processed.export_feather(feather_filename, outdir)
+        if FILE_EXT == '.feather':
+            feather_filename = inpfilename + ".feather"
+            df_processed.export_feather(feather_filename, outdir)
         logger.info("Finished all processes!")
 
 if __name__ == "__main__":

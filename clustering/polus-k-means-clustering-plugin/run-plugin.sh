@@ -1,14 +1,14 @@
 #!/bin/bash
 
 #!/bin/bash
-version=$(<VERSION)
-datapath=$(readlink --canonicalize ../data)
+# version=$(<VERSION)
+# datapath=$(readlink --canonicalize ../data)
 
 # Inputs
-inpDir=/data/inputs
+inpDir=/data/cell
 
 # Output paths
-outDir=/data/outputs
+outDir=/data
 
 #Additional args
 methods=
@@ -19,9 +19,9 @@ numofclus=
 # Log level, must be one of ERROR, CRITICAL, WARNING, INFO, DEBUG
 LOGLEVEL=INFO
 
-docker run --mount type=bind,source=${datapath},target=/data/  \
+docker run -v /Users/mezukn/Desktop/polus/s3/data:/data \
             --env POLUS_LOG=${LOGLEVEL} \
-            polusai/feather-to-tabular-plugin:${version} \
+            labshare/polus-k-means-clustering-plugin:${version} \
             --inpDir ${inpDir} \
             --methods ${methods} \
             --minimumrange ${minimumrange} \
