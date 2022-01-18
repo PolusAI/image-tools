@@ -16,7 +16,7 @@ logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(messa
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
-FILE_EXT = os.environ.get('POLUS_EXT',None)
+FILE_EXT = os.environ.get('POLUS_TAB_EXT',None)
 FILE_EXT = FILE_EXT if FILE_EXT is not None else '.csv'
 
 def list_file(csv_directory):
@@ -222,12 +222,16 @@ def main():
         
         #Save dataframe into csv file
         os.chdir(outdir)
-        logger.info('Saving csv file')
-        export_csv = np.savetxt('%s.csv'%file_name, df_processed, header = col_names, fmt="%s", delimiter=',')
-        # Save dataframe to feather file
         if FILE_EXT == '.feather':
             feather_filename = inpfilename + ".feather"
             df_processed.export_feather(feather_filename, outdir)
+        else:
+            logger.info('Saving csv file')
+            export_csv = np.savetxt('%s.csv'%file_name, df_processed, header = col_names, fmt="%s", delimiter=',')
+        # # Save dataframe to feather file
+        # if FILE_EXT == '.feather':
+        #     feather_filename = inpfilename + ".feather"
+        #     df_processed.export_feather(feather_filename, outdir)
         logger.info("Finished all processes!")
 
 if __name__ == "__main__":

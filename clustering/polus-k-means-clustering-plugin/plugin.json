@@ -1,6 +1,6 @@
 {
     "name": "K-Means Clustering",
-    "version": "0.2.29",
+    "version": "0.3.0",
     "title": "K-Means Clustering",
     "description": "Cluster the data using K-Means.",
     "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
@@ -23,8 +23,8 @@
         "options": {
 	  "values": [
 	      		"Manual",
-			"Elbow",
-                        "CalinskiHarabasz",
+			      "Elbow",
+            "CalinskiHarabasz",
 		        "DaviesBouldin"
              ]
           },
@@ -52,9 +52,10 @@
     ],
     "outputs": [
       {
-        "name": "outdir",
-        "type": "csvCollection",
-        "description": "Output collection"
+      "name": "outDir",
+      "description": "Output collection",
+      "type": "genericData",
+      "required": true
       }
     ],
     "ui": [
