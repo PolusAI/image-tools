@@ -6,6 +6,7 @@ import enum
 import re
 import pprint
 import os
+from os.path import basename
 import uuid
 import signal
 import random
@@ -818,6 +819,120 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
 
         except ValidationError as val_err:
             _error_log(val_err, manifest, "update_nist_plugins")
+
+
+class Registry:
+    """Class that contains methods to interact with the REST API of WIPP Registry."""
+
+    def __init__(self, registry_url: str, username: str, password: str):
+
+        self.registry_url = registry_url
+        self.username = username
+        self.password = password
+
+    def get_current_schema(
+        self,
+        verify: bool = True,
+    ):
+        """Return current schema in WIPP"""
+        response = requests.get(
+            urljoin(
+                self.registry_url,
+                "rest/template-version-manager/global/?title=res-md.xsd",
+            ),
+            verify=verify,
+        )
+        if response.ok:
+            return response.json()[0]["current"]
+        else:
+            response.raise_for_status()
+
+    def upload_data(
+        self,
+        filepath,
+        schema_id,
+        verify: bool = True,
+    ):
+        """Upload data to registry"""
+        with open(filepath, "r") as file_reader:
+            xml_content = file_reader.read()
+
+        data = {
+            "title": basename(filepath),
+            "template": schema_id,
+            "xml_content": xml_content,
+        }
+
+        response = requests.post(
+            urljoin(self.registry_url, "rest/data/"),
+            data,
+            auth=(self.username, self.password),
+            verify=verify,
+        )
+        response_code = response.status_code
+
+        if response_code != 201:
+            print(
+                "Error uploading file (%s), code %s"
+                % (data["title"], str(response_code))
+            )
+            response.raise_for_status()
+
+        return response.json()
+
+    def publish_data(
+        self,
+        data,
+        verify: bool = True,
+    ):
+        """Publish to public workspace"""
+        data_publish_id = data["id"] + "/publish/"
+        response = requests.patch(
+            urljoin(self.registry_url, "rest/data/" + data_publish_id),
+            auth=(self.username, self.password),
+            verify=verify,
+        )
+        response_code = response.status_code
+
+        if response_code != 200:
+            print(
+                "Error publishing data (%s), code %s"
+                % (data["title"], str(response_code))
+            )
+            response.raise_for_status()
+
+    def get_resource_by_pid(self, pid, verify: bool = True):
+        """Return current resource."""
+        response = requests.get(pid, verify=verify)
+        return response.json()
+
+    def patch_resource(
+        self,
+        pid,
+        version,
+        verify: bool = True,
+    ):
+        """Patch resource."""
+        # Get current version of the resource
+        current_resource = self.get_resource_by_pid(pid, verify)
+
+        data = {
+            "version": version,
+        }
+        response = requests.patch(
+            urljoin(self.registry_url, "rest/data/" + data["id"]),
+            data,
+            auth=(self.username, self.password),
+            verify=verify,
+        )
+        response_code = response.status_code
+
+        if response_code != 200:
+            print(
+                "Error publishing data (%s), code %s"
+                % (data["title"], str(response_code))
+            )
+            response.raise_for_status()
 
 
 # def _update_schema(gh_auth: typing.Optional[str] = None):
