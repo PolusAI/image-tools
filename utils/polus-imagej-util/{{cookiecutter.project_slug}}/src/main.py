@@ -30,7 +30,7 @@ logger.setLevel(POLUS_LOG)
 
 def main({#- Required inputs -#}
          {% for inp,val in cookiecutter._inputs.items() -%}
-         {%     if val.required -%}
+         {%     if val.required and inp != 'out_input' -%}
          {%         if val.type=="boolean" -%}
          _{{ inp }}: bool,
          {%         elif val.type=="collection" -%}
@@ -76,7 +76,7 @@ def main({#- Required inputs -#}
     argument_types = []
     arg_len = 0
 
-    {% for inp,val in cookiecutter._inputs.items() %}
+    {% for inp,val in cookiecutter._inputs.items() if inp != 'out_input' %}
     # Validate {{ inp }}{% if inp != "opName" %}
     {{ inp }}_types = { {% for i,v in val.call_types.items() %}
         "{{ i }}": "{{ v }}",{% endfor %}
@@ -123,10 +123,10 @@ def main({#- Required inputs -#}
     try:
         for ind, (
             {%- for inp,val in cookiecutter._inputs.items() -%}
-            {%- if val.type=='collection' and inp != 'out_input'%}{{ inp }}_path,{% endif -%}
+            {%- if val.type=='collection' and inp != 'out_input' %}{{ inp }}_path,{% endif -%}
             {%- endfor %}) in enumerate(zip(*args)):
             
-            {%- for inp,val in cookiecutter._inputs.items() if val.type=='collection' %}
+            {%- for inp,val in cookiecutter._inputs.items() if val.type=='collection' and inp != 'out_input' %}
             {%- if val.type=='collection' %}
             if {{ inp }}_path != None:
 
@@ -144,14 +144,14 @@ def main({#- Required inputs -#}
                 shape = {{ inp }}.shape
             {%- endif %}
             {%- endif %}{% endfor %}
-
-            {%- for inp,val in cookiecutter._inputs.items() if val.type!='collection' and inp not in ['opName', 'out_input'] %}
+            
+            {%- for inp,val in cookiecutter._inputs.items() if val.type != 'collection' and inp != 'opName' and inp != 'out_input' %}
             if _{{ inp }} is not None:
                 {{ inp }} = ij_converter.to_java(ij, _{{ inp }},{{ inp }}_types[_opName],dtype)
             {% endfor %}
             
             # Generate the out input variable if required
-            {%- for inp,val in cookiecutter._inputs.items() if val.type!='collection' and inp == 'out_input' %}
+            {%- for inp,val in cookiecutter._inputs.items() if inp == 'out_input' %}
             {{ inp }} = ij_converter.to_java(ij, np.zeros(shape=shape, dtype=dtype), 'IterableInterval')
             {% endfor %}
             
@@ -162,7 +162,7 @@ def main({#- Required inputs -#}
             {% endfor %}
             logger.info('Completed op!')
             
-            {%- for inp,val in cookiecutter._inputs.items() %}
+            {%- for inp,val in cookiecutter._inputs.items() if inp != 'out_input' %}
             {%- if val.type=='collection' %}
             if {{ inp }}_path != None:
                 {{ inp }}_br.close()
