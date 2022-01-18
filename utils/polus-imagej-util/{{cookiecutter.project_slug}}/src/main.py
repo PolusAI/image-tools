@@ -141,7 +141,7 @@ def main({#- Required inputs -#}
                 fname = {{ inp }}_path.name
                 dtype = ij.py.dtype({{ inp }})
                 # Save the shape for out input
-                shape = {{ inp }}.shape
+                shape = ij.py.dims({{ inp }})
             {%- endif %}
             {%- endif %}{% endfor %}
             
