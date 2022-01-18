@@ -824,15 +824,21 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
 class Registry:
     """Class that contains methods to interact with the REST API of WIPP Registry."""
 
+    def __init__(self, registry_url: str, username: str, password: str):
+
+        self.registry_url = registry_url
+        self.username = username
+        self.password = password
+
     def get_current_schema(
         self,
-        registry_url="https://wipp-registry.ci.aws.labshare.org/",
         verify: bool = True,
     ):
         """Return current schema in WIPP"""
         response = requests.get(
             urljoin(
-                registry_url, "rest/template-version-manager/global/?title=res-md.xsd"
+                self.registry_url,
+                "rest/template-version-manager/global/?title=res-md.xsd",
             ),
             verify=verify,
         )
@@ -845,9 +851,6 @@ class Registry:
         self,
         filepath,
         schema_id,
-        username,
-        password,
-        registry_url="https://wipp-registry.ci.aws.labshare.org/",
         verify: bool = True,
     ):
         """Upload data to registry"""
@@ -861,9 +864,9 @@ class Registry:
         }
 
         response = requests.post(
-            urljoin(registry_url, "rest/data/"),
+            urljoin(self.registry_url, "rest/data/"),
             data,
-            auth=(username, password),
+            auth=(self.username, self.password),
             verify=verify,
         )
         response_code = response.status_code
@@ -880,16 +883,13 @@ class Registry:
     def publish_data(
         self,
         data,
-        username,
-        password,
-        registry_url="https://wipp-registry.ci.aws.labshare.org/",
         verify: bool = True,
     ):
         """Publish to public workspace"""
         data_publish_id = data["id"] + "/publish/"
         response = requests.patch(
-            urljoin(registry_url, "rest/data/" + data_publish_id),
-            auth=(username, password),
+            urljoin(self.registry_url, "rest/data/" + data_publish_id),
+            auth=(self.username, self.password),
             verify=verify,
         )
         response_code = response.status_code
@@ -910,9 +910,6 @@ class Registry:
         self,
         pid,
         version,
-        username,
-        password,
-        registry_url="https://wipp-registry.ci.aws.labshare.org/",
         verify: bool = True,
     ):
         """Patch resource."""
@@ -923,9 +920,9 @@ class Registry:
             "version": version,
         }
         response = requests.patch(
-            urljoin(registry_url, "rest/data/" + data["id"]),
+            urljoin(self.registry_url, "rest/data/" + data["id"]),
             data,
-            auth=(username, password),
+            auth=(self.username, self.password),
             verify=verify,
         )
         response_code = response.status_code
