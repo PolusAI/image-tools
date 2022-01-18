@@ -325,8 +325,8 @@ class IOBase(BaseModel):
             if isinstance(value, pathlib.Path):
 
                 value = value.absolute()
-                assert value.exists()
-                assert value.is_dir()
+                assert value.exists(), f"{value} is invalid or does not exist"
+                assert value.is_dir(), f"{value} is not a valid directory"
 
         super().__setattr__("value", value)
 
@@ -651,7 +651,7 @@ def scrape_manifests(
         max_depth = min_depth
         min_depth = 0
 
-    assert max_depth >= min_depth
+    assert max_depth >= min_depth, "max_depth is smaller than min_depth"
 
     if isinstance(repo, str):
         repo = gh.get_repo(repo)
