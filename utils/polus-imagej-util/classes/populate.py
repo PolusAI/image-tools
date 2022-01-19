@@ -855,7 +855,7 @@ if __name__ == '__main__':
         cookietin_path = cwd.joinpath('utils/polus-imagej-util/cookietin')
         
         # Build the json dictionary to be passed to the cookiecutter module 
-        populater.build_json('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.3.0', cookietin_path)
+        populater.build_json('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.3.1', cookietin_path)
         
         print('Shutting down JVM\n')
         
