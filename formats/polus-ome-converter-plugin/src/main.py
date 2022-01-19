@@ -4,6 +4,7 @@ from filepattern import FilePattern
 import argparse
 import logging
 from pathlib import Path
+import os
 
 # Initialize the logger
 logging.basicConfig(
@@ -13,10 +14,9 @@ logging.basicConfig(
 logger = logging.getLogger("main")
 logger.setLevel(logging.INFO)
 
-# TODO: In the future, uncomment this to convert files to the platform file type
-# FILE_EXT = os.environ.get('POLUS_EXT',None)
+#TODO: In the future, uncomment this to convert files to the platform file type
 # FILE_EXT = FILE_EXT if FILE_EXT is not None else '.ome.tif'
-
+FILE_EXT =os.environ.get('POLUS_EXT','.ome.zarr')
 
 TILE_SIZE = 2 ** 13
 
@@ -32,6 +32,10 @@ def image_converter(inp_image, fileExtension, out_dir):
 
                 # Loop through channels
                 for c in range(br.C):
+
+                    if fileExtension is None:
+                        FILE_EXT = FILE_EXT
+
                     
                     FILE_EXT = fileExtension
                     extension = "".join(
@@ -135,6 +139,7 @@ if __name__ == "__main__":
         type=str,
         help="Type of data conversion",
         required=False,
+        default=FILE_EXT,
     )
 
 
