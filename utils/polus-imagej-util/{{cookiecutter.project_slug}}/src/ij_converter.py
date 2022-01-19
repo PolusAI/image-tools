@@ -55,24 +55,24 @@ INT_SCALARS = [
     "boolean",
 ]
 
-CHAR_PRIMATIVES = [
+CHAR_PRIMITIVES = [
     "char"
 ]
 
-BYTE_PRIMATIVES = [
+BYTE_PRIMITIVES = [
     "byte"
 ]
 
-BOOL_PRIMATIVES = [
+BOOL_PRIMITIVES = [
     "boolean"
 ]
 
-# Recognize array objects as primative objects + '[]'
+# Recognize array objects as primitive objects + '[]'
 FLOAT_ARRAYS = [s + "[]" for s in FLOAT_SCALARS]
 INT_ARRAYS = [s + "[]" for s in INT_SCALARS]
-CHAR_ARRAYS = [s + "[]" for s in CHAR_PRIMATIVES]
-BYTE_ARRAYS = [s + "[]" for s in BYTE_PRIMATIVES]
-BOOL_ARRAYS = [s + "[]" for s in BOOL_PRIMATIVES]
+CHAR_ARRAYS = [s + "[]" for s in CHAR_PRIMITIVES]
+BYTE_ARRAYS = [s + "[]" for s in BYTE_PRIMITIVES]
+BOOL_ARRAYS = [s + "[]" for s in BOOL_PRIMITIVES]
 
 
 def _java_setup():
@@ -182,11 +182,6 @@ JAVA_CONVERT.update(
         for t in IMG_ARRAYS
         }
 )
-# JAVA_CONVERT.update(
-#     {
-#         t: lambda s,t,st: IMGLYB_PRIMITIVES[str(st)](s) for t in SCALARS
-#     }
-# )
 
 def to_java(ij, np_array, imagej_type, java_dtype=None):
 
