@@ -833,7 +833,6 @@ class Populate:
 
 
 
-
 """This section of uses the above classes to generate cookiecutter templates"""
 
 if __name__ == '__main__':
