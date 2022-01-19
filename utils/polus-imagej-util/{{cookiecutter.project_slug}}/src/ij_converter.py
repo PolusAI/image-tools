@@ -102,15 +102,12 @@ def _java_setup():
     }
     PRIMITIVE_FLOAT_ARRAYS = {
         "double[]": jpype.JDouble[:],
-        "float[]": jpype.JFloat[:],
-        "long[]": jpype.JLong[:],
+        "float[]": jpype.JFloat[:]
     }
     PRIMITIVE_INT_ARRAYS = {
         "int[]": jpype.JInt[:],
         "short[]": jpype.JShort[:],
-        "byte[]": jpype.JByte[:],
-        "char[]": jpype.JChar[:],
-        "boolean[]": jpype.JBoolean[:],
+        "long[]": jpype.JLong[:]
     }
     PRIMITIVE_CHAR_ARRAYS = {
         "char[]": jpype.JChar[:],
