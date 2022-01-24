@@ -1,8 +1,9 @@
 #!/bin/bash
 
 #!/bin/bash
-# version=$(<VERSION)
-# datapath=$(readlink --canonicalize ../data)
+version=$(<VERSION)
+
+datapath=$(readlink --canonicalize ../data)
 
 # Inputs
 inpDir=/data/cell

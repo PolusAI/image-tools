@@ -4,6 +4,7 @@ import os
 import fnmatch
 import csv
 import numpy as np
+import pandas as pd
 import vaex
 import numpy.matlib
 from sklearn.cluster import KMeans
@@ -215,24 +216,22 @@ def main():
         #Cluster data using K-Means clustering
         classified_data = label_data.reshape(label_data.shape[0],-1)
         classified_data = classified_data.astype(int) + 1
-        df_processed = tuple(np.hstack((data, classified_data)))
+        df_processed = np.hstack((data, classified_data))
         col_name.append('Cluster')
         col_name_sep = ","
         col_names = col_name_sep.join(col_name) 
         
-        #Save dataframe into csv file
+        
+        #Save dataframe to feather file or to csv file
         os.chdir(outdir)
         if FILE_EXT == '.feather':
-            feather_filename = inpfilename + ".feather"
-            df_processed.export_feather(feather_filename, outdir)
+            col = col_names.split(",")
+            vx = vaex.from_pandas(pd.DataFrame(df_processed, columns = col))
+            feather_filename = file_name_csv + ".feather"
+            vx.export_feather(feather_filename, outdir)
         else:
             logger.info('Saving csv file')
             export_csv = np.savetxt('%s.csv'%file_name, df_processed, header = col_names, fmt="%s", delimiter=',')
-        # # Save dataframe to feather file
-        if FILE_EXT == '.feather':
-            feather_filename = inpfilename + ".feather"
-            df_processed.export_feather(feather_filename, outdir)
-        logger.info("Finished all processes!")
 
 if __name__ == "__main__":
     main()

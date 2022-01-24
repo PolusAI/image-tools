@@ -1,7 +1,7 @@
 FROM labshare/polus-bfio-util:2.1.9
 
 # Change to .feather to save output images as feather files.
-ENV POLUS_TAB_EXT=".feather"
+ENV POLUS_TAB_EXT=".csv"
 
 # Change to WARNING for fewer logs, or DEBUG for debugging.
 ENV POLUS_LOG="INFO"
