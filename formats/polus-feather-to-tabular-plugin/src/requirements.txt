@@ -4,3 +4,4 @@ fcsparser==0.2.2
 filepattern==1.4.7
 bfio==2.1.9
 vaex==4.5.0
+blake3==0.2.1
