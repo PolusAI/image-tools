@@ -2,23 +2,23 @@
 
 #!/bin/bash
 version=$(<VERSION)
-#echo $(datapath)
+echo $(datapath)
 
 # Inputs
-inpDir=/data/csv_input
+inpDir=/data/input
 
 # Output paths
-outDir=/data/csv_output
+outDir=/data/output
 
 #Other params
 stripExtension=false
-dim=rows
-# sameRows=true
+dim=columns
+# sameRows=True
 
 # Log level, must be one of ERROR, CRITICAL, WARNING, INFO, DEBUG
 LOGLEVEL=INFO
 
-docker run -v /Users/mezukn/Desktop/polus/data:/data \
+docker run --mount type=bind,source=${datapath},target=/data/  \
             --env POLUS_LOG=${LOGLEVEL} \
             labshare/polus-csv-merger-plugin:${version} \
             --inpDir ${inpDir} \

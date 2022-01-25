@@ -58,7 +58,7 @@ if __name__=="__main__":
     
     ''' If sameRows is set to true, nothing fancy to do. Just do the work and get out '''
     # Case One: If merging by columns and have same rows:
-    if dim=='columns' and same_rows:
+    if dim=='columns' and same_rows==True:
         logger.info("Merging data with identical number of rows...")
             
         # Determine the number of output files, and a list of files to be merged in each file
@@ -90,16 +90,16 @@ if __name__=="__main__":
             # Write Merged Feather
             if FILE_EXT == '.feather':
                 file_count = len(inp_files)
-                # create empty list
+            # create empty list
                 dataframes_list = []
                 
                 # append datasets to the list
-                for i in range(file_count):
-                    temp_df = pd.read_csv(inp_files[i])
-                    dataframes_list.append(temp_df)
-                
-                df_total=pd.concat(dataframes_list)
+                for filename in inp_files:
+                    temp_df = pd.read_csv(filename, index_col=0)
+                    dataframes_list.append(temp_df)         
+                df_total = pd.concat(dataframes_list)
                 df = vaex.from_pandas(df_total)
+                print(df)
                 os.chdir(outDir)
                 df.export('merged.feather')
                     
@@ -152,7 +152,6 @@ if __name__=="__main__":
         # Generate the path to the output file
         outPath = str(Path(outDir).joinpath('merged.csv').absolute())
         
-        # Merge data
         # Case Two: Merger along rows only
         if dim=='rows':
             logger.info("Merging the data along rows...")
@@ -191,10 +190,11 @@ if __name__=="__main__":
                             
             logger.info("Merging the data along rows for feather file")
             # Write Merged file
-            temp_df = pd.read_csv(outPath)
-            df = vaex.from_pandas(temp_df)
-            os.chdir(outDir)
-            df.export('merged_by_rows.feather')
+            if FILE_EXT == '.feather':
+                temp_df = pd.read_csv(outPath)
+                df = vaex.from_pandas(temp_df)
+                os.chdir(outDir)
+                df.export('ABA_merged_by_rows.feather')
             
         # Case Three: Merger along columns only
         elif dim=='columns':
@@ -223,7 +223,6 @@ if __name__=="__main__":
                 
                 with open(f,'r') as in_file:
                     file_dict = copy.deepcopy(line_dict)
-                    
                     file_map = in_file.readline().rstrip('\n')
                     file_map = file_map.split(',')
                     file_ind = [i for i,v in enumerate(file_map) if v == 'file'][0]
@@ -254,10 +253,7 @@ if __name__=="__main__":
                     
             # Write Merged Feather by reading lines into dataframe
             if FILE_EXT == '.feather':
-                for val in out_dict.values():
-                    array = np.append(line_template.format(**val))
-                
-                df = pd.DataFrame(data = array, columns = headers)
+                df = pd.DataFrame.from_dict(out_dict, orient='index')
                 vaex_df = vaex.from_pandas(df)
                 os.chdir(outDir)
                 vaex_df.export('merged.feather')
