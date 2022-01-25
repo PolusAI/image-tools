@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 from pathlib import Path
+from typing import List, Tuple
 
 import numpy
 from bfio import BioReader
@@ -28,7 +29,7 @@ def get_output_name(filename: str) -> str:
     return f'{name}{POLUS_EXT}'
 
 
-def filter_by_size(file_paths: list[Path], size_threshold: int) -> tuple[list[Path], list[Path]]:
+def filter_by_size(file_paths: List[Path], size_threshold: int) -> Tuple[List[Path], List[Path]]:
     """ Partitions the input files by the memory-footprint for the images.
 
     Args:
@@ -56,7 +57,7 @@ def filter_by_size(file_paths: list[Path], size_threshold: int) -> tuple[list[Pa
         else:
             pixel_bytes = 64
 
-        image_size = num_pixels * pixel_bytes
+        image_size = num_pixels * (pixel_bytes / 8)  # Convert bits to bytes
         (small_files if image_size <= threshold else large_files).append(file_path)
 
     return small_files, large_files
