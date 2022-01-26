@@ -3,8 +3,9 @@ FROM labshare/polus-bfio-util:2.1.9
 # environment variables defined in labshare/polus-bfio-util
 # ENV EXEC_DIR="/opt/executables"
 # ENV DATA_DIR="/data"
-# Change to .ome.zarr to save output images as zarr files.
-ENV POLUS_EXT=".feather"
+
+# Change to .feather to save output file as feather file format.
+# ENV POLUS_EXT=".feather"
 
 # Change to WARNING for fewer logs, or DEBUG for debugging.
 ENV POLUS_LOG="INFO"
