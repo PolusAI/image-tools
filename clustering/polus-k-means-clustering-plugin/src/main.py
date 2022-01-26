@@ -168,6 +168,7 @@ def main():
     
         
     #Get list of .csv files in the directory including sub folders for clustering
+
     inputcsv = list_file(inpdir)
     if not inputcsv:
         raise ValueError('No .csv files found.')
@@ -227,7 +228,7 @@ def main():
         if FILE_EXT == '.feather':
             col = col_names.split(",")
             vx = vaex.from_pandas(pd.DataFrame(df_processed, columns = col))
-            feather_filename = file_name_csv + ".feather"
+            feather_filename = file_name + ".feather"
             vx.export_feather(feather_filename, outdir)
         else:
             logger.info('Saving csv file')
