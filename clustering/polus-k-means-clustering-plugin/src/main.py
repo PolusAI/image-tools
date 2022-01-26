@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import vaex
 import numpy.matlib
+import filepattern
+from pathlib import Path
 from sklearn.cluster import KMeans
 from sklearn.metrics import calinski_harabasz_score
 from sklearn.metrics import davies_bouldin_score 
@@ -19,22 +21,7 @@ logger.setLevel(logging.INFO)
 
 FILE_EXT = os.environ.get('POLUS_TAB_EXT',None)
 FILE_EXT = FILE_EXT if FILE_EXT is not None else '.csv'
-
-def list_file(csv_directory):
-    """List all the .csv files in the directory.
-    
-    Args:
-        csv_directory (str): Path to the directory containing the csv files.
-        
-    Returns:
-        The path to directory, list of names of the subdirectories in dirpath (if any) and the filenames of .csv files.
-        
-    """
-    list_of_files = [os.path.join(dirpath, file_name)
-                     for dirpath, dirnames, files in os.walk(csv_directory)
-                     for file_name in fnmatch.filter(files, '*.csv')]
-    return list_of_files
-   
+  
 def elbow(data_array, minimumrange, maximumrange):
     """Determine k value and cluster data using elbow method.
     
@@ -169,25 +156,27 @@ def main():
         
     #Get list of .csv files in the directory including sub folders for clustering
 
-    inputcsv = list_file(inpdir)
-    if not inputcsv:
+    # inputcsv = list_file(inpdir)
+    
+    filePattern ='.*.csv'
+    fp = filepattern.FilePattern(inpdir,filePattern)
+    if not fp:
         raise ValueError('No .csv files found.')
-            
+          
     #Dictionary of methods to determine k-value
     FEAT = {'Elbow': elbow,
             'CalinskiHarabasz': calinski_davies,
             'DaviesBouldin': calinski_davies}
-       
-    for inpfile in inputcsv:
-        #Get the full path
-        split_file = os.path.normpath(inpfile)
+    
+    for files in fp:
+        file = files[0]
+        # Get filepath
+        filepath = file.get('file')
+        # Get file name
+        filename = Path(filepath).stem
         
-        #split to get only the filename
-        inpfilename = os.path.split(split_file)
-        file_name_csv = inpfilename[-1]
-        file_name,file_name1 = file_name_csv.split('.', 1)
-        logger.info('Started reading the file ' + file_name)
-        read_csv = open(inpfile, "rt", encoding="utf8")
+        logger.info('Started reading the file ' + filename)
+        read_csv = open(filepath, "rt", encoding="utf8")
         #Read csv file
         reader = csv.reader(read_csv)
         #Get column names
@@ -228,11 +217,11 @@ def main():
         if FILE_EXT == '.feather':
             col = col_names.split(",")
             vx = vaex.from_pandas(pd.DataFrame(df_processed, columns = col))
-            feather_filename = file_name + ".feather"
+            feather_filename = filename + ".feather"
             vx.export_feather(feather_filename, outdir)
         else:
             logger.info('Saving csv file')
-            export_csv = np.savetxt('%s.csv'%file_name, df_processed, header = col_names, fmt="%s", delimiter=',')
+            export_csv = np.savetxt('%s.csv'%filename, df_processed, header = col_names, fmt="%s", delimiter=',')
 
 if __name__ == "__main__":
     main()
