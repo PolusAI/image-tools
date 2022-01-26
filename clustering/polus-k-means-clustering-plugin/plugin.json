@@ -52,7 +52,7 @@
     ],
     "outputs": [
       {
-      "name": "outDir",
+      "name": "outdir",
       "description": "Output collection",
       "type": "genericData",
       "required": true
