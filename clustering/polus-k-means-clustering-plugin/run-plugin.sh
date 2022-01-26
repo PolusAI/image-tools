@@ -2,7 +2,7 @@
 
 #!/bin/bash
 version=$(<VERSION)
-# datapath=$(readlink --canonicalize ../data)
+datapath=$(readlink --canonicalize ../data)
 
 # Inputs
 inpDir=/data/input
@@ -19,7 +19,7 @@ numofclus=
 # Log level, must be one of ERROR, CRITICAL, WARNING, INFO, DEBUG
 LOGLEVEL=INFO
 
-docker run -v /Users/mezukn/Desktop/polus/s3/data:/data \
+docker run --mount type=bind,source=${datapath},target=/data/ \
             --env POLUS_LOG=${LOGLEVEL} \
             labshare/polus-k-means-clustering-plugin:${version} \
             --inpdir ${inpDir} \
