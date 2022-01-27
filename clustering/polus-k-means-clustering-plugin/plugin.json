@@ -21,7 +21,7 @@
         "type": "enum",
 	"description": "Select Manual or Elbow or Calinski Harabasz or Davies Bouldin methods",	
         "options": {
-	  "values": [
+	      "values": [
 	      		"Manual",
 			      "Elbow",
             "CalinskiHarabasz",
@@ -32,19 +32,19 @@
       },
       {
 	"name": "minimumrange",
-        "type": "integer",
+        "type": "number",
         "description": "Enter minimum k-value:",
         "required": "false"
       },
       {
 	"name": "maximumrange",
-        "type": "integer",
+        "type": "number",
         "description": "Enter maximum k-value:",
         "required": "false"
       },
       {
 	"name": "numofclus",
-        "type": "integer",
+        "type": "number",
         "description": "Number of clusters:",
         "required": "false"
       }      
@@ -73,19 +73,19 @@
         "key": "inputs.minimumrange",
         "title": "Enter minimum range",
         "description": "Enter minimum k-value:",
-	"condition": "model.inputs.methods==['Elbow', 'CalinskiHarabasz', 'DaviesBouldin']"
+	      "condition": "model.inputs.methods==Elbow or model.inputs.methods==CalinskiHarabasz or model.inputs.methods==DaviesBouldin"
       },
       {
         "key": "inputs.maximumrange",
         "title": "Enter maximum range",
         "description": "Enter maximum k-value:",
-	"condition": "model.inputs.methods==['Elbow', 'CalinskiHarabasz', 'DaviesBouldin']"
+	      "condition": "model.inputs.methods==Elbow or model.inputs.methods==CalinskiHarabasz or model.inputs.methods==DaviesBouldin"
       },
       {
         "key": "inputs.numofclus",
         "title": "Enter number of clusters",
         "description": "Number of clusters:",
-	"condition": "model.inputs.methods=='Manual'"
+	      "condition": "model.inputs.methods==Manual"
       }
     ]
   }
