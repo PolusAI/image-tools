@@ -1,20 +1,21 @@
-from bfio.bfio import BioReader, BioWriter
 from pathlib import Path
 import os
 import argparse
 import logging
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor
 from multiprocessing import cpu_count
+import filepattern
 import pyarrow as pa
 import pyarrow.feather as pf
 import pyarrow.parquet as pq
 import pyarrow.csv as csv
 import shutil
-import filepattern
+
 
 # Import environment variables
 POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
-POLUS_EXT = os.environ.get('POLUS_EXT','.ome.tif')
+FILE_EXT = os.environ.get('POLUS_TAB_EXT')
+# FILE_EXT = FILE_EXT if FILE_EXT is not None else '.csv'
 
 #Set number of processors for scalability
 NUM_CPUS = max(1, cpu_count() // 2)
@@ -39,64 +40,67 @@ def feather_to_tabular(file: Path, filePattern: str, outDir: Path):
             
             Args:
                 file (Path): Path to input file.
-                filePattern (str): Filepattern of desired tabular output file
-                
+                filePattern (str): Filepattern of desired tabular output file.
+                outDir (Path): Path to output directory.              
             Returns:
                 Tabular File
                 
     """
-    #Get filename for output file
-    file_name = Path(file).stem
+    # Copy file into output directory for WIPP Processing
+    filepath = file.get('file')
+    file_name = Path(filepath).stem
+    logger.info('Feather CONVERSION: Copy %s into outDir for processing...', file_name)
+    output = file_name + ".feather"
+    outputfile = os.path.join(outDir, output)
+    shutil.copyfile(filepath, outputfile)
+    
+    #Get filename for tabular output file
     pq_file = file_name + ".parquet"
     csv_file = file_name + ".csv"
 
-    logger.info('Feather CONVERSION: Copy file into outDir for processing...')
-    output = file_name + ".feather"
-    outputfile = os.path.join(outDir, output)
-    shutil.copyfile(file, outputfile)
+    logger.info('Feather CONVERSION: Converting file into PyArrow Table')
     
-    logger.info('Feather CONVERSION: Converting file into Vaex DF')
-    # Result is vaex dataframe
-    
-    df = pf.read_table(outputfile)
+    table = pf.read_table(outputfile)
+
     if filePattern == ".*.csv":
         # Streaming contents of Arrow Table into csv
-        logger.info('Feather CONVERSION: converting arrow table into .csv file')
+        logger.info('Feather CONVERSION: converting PyArrow Table into .csv file')
         os.chdir(outDir)
-        return csv.write_csv(df, csv_file)
-    elif filePattern ==".*.parquet":
-        logger.info('Feather CONVERSION: converting arrow table into .parquet file')
+        return csv.write_csv(table, csv_file)
+    elif filePattern == ".*.parquet":
+        logger.info('Feather CONVERSION: converting PyArrow Table into .parquet file')
         os.chdir(outDir)
-        return pq.write_table(df, pq_file)
-        # If neither, log error
+        return pq.write_table(table, pq_file)
+    # If neither, log error
     else:
-        logger.error('Feather CONVERSION Error: This filePattern is not supported in this plugin')    
+        logger.error('Feather CONVERSION Error: This filePattern is not supported in this plugin')
+    
+    # remove_files(outDir)    
              
-def main(inpDir: Path,
-         filePattern: str,
-            outDir: Path,
-            ) -> None:
-        """ Main execution function
-        
-        """
-        
-        if filePattern is None:
-            filePattern = '.*'
-        
-        input_dir = Path(inpDir)
-        
-        fp = filepattern.FilePattern(input_dir,filePattern)
-        
-        processes = []
-        with ProcessPoolExecutor(NUM_CPUS) as executor:
+def main(
+    inpDir: Path,
+    filePattern: str,
+    outDir: Path,
+) -> None:
+    """Main execution function"""
 
-            for files in fp:
-                file = files[0]
-                processes.append(executor.submit(feather_to_tabular,file, filePattern, outDir))
-            
-        remove_files(outDir)
+    if filePattern is None:
+        filePattern = ".*"
+    
+    featherPattern = '.*.feather'
+    
+    fp = filepattern.FilePattern(inpDir,featherPattern)
+    
         
-        logger.info("Finished all processes!")
+    with ProcessPoolExecutor(NUM_CPUS) as executor:
+        processes = []
+        for files in fp:
+            file = files[0]
+            processes.append(executor.submit(feather_to_tabular,file,filePattern,outDir))
+            
+    remove_files(outDir)    
+    logger.info("Finished all processes!")
+
 
 if __name__=="__main__":
 
