@@ -1,0 +1,2 @@
+matplotlit==3.5.1
+seaborn==0.11.2
