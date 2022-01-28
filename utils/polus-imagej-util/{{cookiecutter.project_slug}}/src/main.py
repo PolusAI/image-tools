@@ -192,7 +192,7 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser(prog='main', description='{{ cookiecutter.project_short_description }}')
     
     # Add command-line argument for each of the input arguments
-    {% for inp,val in cookiecutter._inputs.items() -%}
+    {% for inp,val in cookiecutter._inputs.items() if inp != 'out_input' -%}
     parser.add_argument('--{{ val.title }}', dest='{{ inp }}', type=str,
                         help='{{ val.description }}', required={{ val.required }})
     {% endfor %}
@@ -205,7 +205,7 @@ if __name__=="__main__":
     args = parser.parse_args()
     
     # Input Args
-    {%- for inp,val in cookiecutter._inputs.items() %}
+    {%- for inp,val in cookiecutter._inputs.items() if inp != 'out_input' %}
     {% if val.type=="boolean" -%}
     _{{ inp }} = args.{{ inp }} == 'true'
     {% elif val.type=="collection" -%}
@@ -223,7 +223,7 @@ if __name__=="__main__":
     
     main(
     {%- filter indent(5) %}
-    {%- for inp,val in cookiecutter._inputs.items() -%}
+    {%- for inp,val in cookiecutter._inputs.items() if inp != 'out_input' -%}
     _{{ inp }}=_{{ inp }},
     {% endfor -%}
     {%- for inp,val in cookiecutter._outputs.items() -%}
