@@ -6,6 +6,7 @@ import numpy as np
 import time
 from utils import *
 
+
 #Import environment variables
 POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
 POLUS_EXT = os.environ.get('POLUS_EXT','.ome.tif')
@@ -37,6 +38,7 @@ parser.add_argument('--model', dest='model', type=str,
                         help='Select model for Feature extraction', required=True)
 parser.add_argument('--batchSize', dest='batchSize', type=int,
                         help='Select batchsize for model predictions', required=True)
+                        
 #  # Output arguments
 parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output directory', required=True)   
@@ -67,7 +69,6 @@ def main(inputDir:Path,
          batchSize:int,
          outDir:Path
          ):
-
         starttime= time.time()    
         model_lists =  ['Xception', 'VGG16', 'VGG19', 'ResNet50', 'ResNet101',
                         'ResNet152','ResNet50V2','ResNet101V2','ResNet152V2','InceptionV3',
@@ -78,8 +79,9 @@ def main(inputDir:Path,
             logger.error(f"This model {model} selection is invalid")
         modelname = Deepprofiler.get_model(model)
         prf = Deepprofiler.dataframe_parsing(featureDir)
+        flist = len([f for f, _ in  prf.groupby('intensity_image')])
         count=0
-        deepfeatures = []
+    
         for filename, roi in prf.groupby('intensity_image'):
             count += 1
             roi_images =[]
@@ -87,6 +89,9 @@ def main(inputDir:Path,
             pf = Deepprofiler.chunker(roi, batchSize)
             for batch in pf:
                 for _, (image, mask, label, BBOX_YMIN, BBOX_XMIN, BBOX_HEIGHT, BBOX_WIDTH) in batch.iterrows():
+                    if not image == mask:
+                        logger.info(f'Intensity image: {image} and Label image {mask} are not matching')
+                        break
                     dclass = Deepprofiler(inputDir, maskDir, filename)
                     intensity_image, mask_image = dclass.loadimage()
                     intensity_image = Deepprofiler.z_normalization(intensity_image)
@@ -107,16 +112,15 @@ def main(inputDir:Path,
             logger.info('Feature Extraction Step')
             dfeat = Deepprofiler.model_prediction(modelname,batch_images)
             pdm=Deepprofiler.feature_extraction(image, mask, batch_labels, dfeat)
-            deepfeatures.append(pdm)       
-        deepfeatures = pd.concat(deepfeatures)
-        fn = Deepprofiler.renaming_columns(deepfeatures)
-        os.chdir(outDir)
-        logger.info('Saving Output CSV File')
-        fn.to_csv('DeepFeatures.csv', index = False)
+            fn = Deepprofiler.renaming_columns(pdm)
+            os.chdir(outDir)     
+            logger.info(f'Saving {count}/{flist} DeepFeatures Output CSV File: {filename}.csv') 
+            fn.to_csv(f'{filename}.csv', index = False)
+
         logger.info('Finished all processes')
         endtime = (time.time() - starttime)/60
         logger.info(f'Total time taken to process all images: {endtime}')
-        return 
+   
 
 if __name__=="__main__":
     main(inputDir=inputDir,
@@ -124,14 +128,5 @@ if __name__=="__main__":
          featureDir=featureDir,
          model=model,
          batchSize=batchSize,
-         outDir=outDir)
-
-
-
-
-
-
-
-
-
-
+         outDir=outDir,
+         )

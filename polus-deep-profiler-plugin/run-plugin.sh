@@ -24,7 +24,7 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --user $(id -u):$(id -g) \
             --gpus ${GPUS} \
             --env POLUS_LOG=${LOGLEVEL} \
-            labshare/polus-deep-profiler-plugin:${version} \
+            labshare/deep-profiler-plugin:${version} \
             --inputDir ${inputDir} \
             --maskDir ${maskDir} \
             --featureDir ${featureDir} \
