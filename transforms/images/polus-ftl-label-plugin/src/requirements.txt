@@ -1,0 +1,6 @@
+Cython==3.0.0a9
+preadator==0.2.0
+numpy==1.21.4
+bfio[all]==2.1.9
+filepattern==1.4.7
+

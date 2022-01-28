@@ -1,2 +1,0 @@
-scikit-image==0.18.1
-bfio[zarr]==2.1.7

@@ -1,0 +1,78 @@
+{
+    "name": "Polus Precompute Volume Plugin",
+    "version": "0.4.8",
+    "containerId": "labshare/polus-precompute-volume-plugin:0.4.8",
+    "title": "WIPP Widget",
+    "description": "This plugin generates precomputed volumes and meshes for labelled data to view in Neuroglancer",
+    "author": "Madhuri Vihani (Madhuri.Vihani@nih.gov), Nicholas Schaub (Nick.Schaub@nih.gov), Hythem Sidky (Hythem.Sidky@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "https://github.com/LabShare/neurogen",
+    "inputs": [
+      {
+        "name": "inpDir",
+        "description": "Input collection",
+        "type": "collection",
+        "options": null,
+        "required": true
+      },
+      {
+        "name": "imageType",
+        "description": "Image or Segmentation",
+        "type": "enum",
+        "options": {
+          "values": [
+            "image",
+            "segmentation"
+          ]
+        },
+        "required": true
+      },
+      {
+        "name": "filePattern",
+        "description": "Pattern of the images in Input",
+        "type": "string",
+        "options": null,
+        "required": false
+      },
+      {
+        "name": "mesh",
+        "description": "Create meshes",
+        "type": "boolean",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "description": "Precomputed output",
+        "type": "pyramid",
+        "options": null,
+        "required": true
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.inpDir",
+        "title": "Input collection: ",
+        "description": "Collection name..."
+      },
+      {
+        "key": "inputs.filePattern",
+        "title": "Image Pattern: ",
+        "description": "Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). "
+      },
+      {
+        "key": "inputs.imageType",
+        "title": "Image Type: ",
+        "description": "Image or Segmentation?"
+      },
+      {
+        "key": "inputs.mesh",
+        "title": "Create meshes: ",
+        "default": "false",
+        "condition": "inputs.imageType==segmentation"
+      }
+    ]
+  }
