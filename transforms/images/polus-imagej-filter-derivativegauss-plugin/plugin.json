@@ -3,7 +3,7 @@
   "version": "0.4.3",
   "title": "ImageJ filter derivativeGauss",
   "description": "This plugin applies the nth derivative of a Gaussian to an input collection. ",
-  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
+  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com), Anjali Taneja, Nick Schaub (nick.schaub@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
