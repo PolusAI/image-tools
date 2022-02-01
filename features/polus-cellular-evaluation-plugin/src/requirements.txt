@@ -1,0 +1,7 @@
+
+numpy==1.20.1
+tifffile==2020.10.1
+opencv_python==4.5.1.48
+scikit-image==0.18.1
+scikit-learn==0.24.2
+filepattern==1.4.4
