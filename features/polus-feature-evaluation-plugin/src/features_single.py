@@ -119,11 +119,6 @@ def comparison(expected_array, actual_array, combine, bin_count):
 	def ws_d(cdf1, cdf2):
 		return scipy.stats.wasserstein_distance(cdf1, cdf2)
 
-
-	###### INCORRECT DEFINITION - IGNORE THIS METRIC ########
-	def ks_test(cdf1, cdf2):
-		return scipy.stats.ks_2samp(cdf1, cdf2)
-
 	### metrics that take pdf input
 	psi_value = np.sum(sub_psi(expected_percents[i], actual_percents[i]) for i in range(0, len(expected_percents)))
 
@@ -137,11 +132,9 @@ def comparison(expected_array, actual_array, combine, bin_count):
 
 	wd_value = ws_d(cdf1, cdf2)
 
-	p_value = ks_test(cdf1, cdf2)  ### Ignore this value.
-
 	return(hist_intersect(pdf1, pdf2),correlation(pdf1, pdf2), chi_square(pdf1, pdf2), bhattacharya(pdf1, pdf2), \
 		l1(pdf1, pdf2),l2(pdf1, pdf2), linfinity(pdf1, pdf2),cosine_d(pdf1, pdf2),canberra(pdf1, pdf2),ks_divergence(cdf1, cdf2),match(cdf1, cdf2),cvm(cdf1, cdf2),\
-		psi_value, kld_value, jsd_value, wd_value, p_value, errors)
+		psi_value, kld_value, jsd_value, wd_value, errors)
 
 
 def runMain(gt, pred, outFileFormat, combineLabels, filePattern, singleCSV, outDir):
@@ -152,7 +145,7 @@ def runMain(gt, pred, outFileFormat, combineLabels, filePattern, singleCSV, outD
 		lst = []
 	
 	header = ['Image','features','histogram intersection','correlation', 'chi square', 'bhattacharya distance','L1 score','L2 score', 'L infinity score','cosine distance','canberra distance','ks divergence','match distance','cvm distance',\
-				'psi value','kl divergence','js divergence', 'wasserstein distance', 'p-value', 'Mean square error', 'Root mean square error', 'Normalized Root Mean Squared Error', 'Mean Error', 'Mean Absolute Error',\
+				'psi value','kl divergence','js divergence', 'wasserstein distance', 'Mean square error', 'Root mean square error', 'Normalized Root Mean Squared Error', 'Mean Error', 'Mean Absolute Error',\
 				'Geometric Mean Absolute Error', 'Median Absolute Error', 'Mean Percentage Error', 'Mean Absolute Percentage Error', 'Median Absolute Percentage Error', 'Symmetric Mean Absolute Percentage Error', 'Symmetric Median Absolute Percentage Error',\
 				'Mean Arctangent Absolute Percentage Error', 'Normalized Absolute Error', 'Normalized Absolute Percentage Error', 'Root Mean Squared Percentage Error', 'Root Median Squared Percentage Error', 'Integral Normalized Root Squared Error',\
 				'Root Relative Squared Error', 'Relative Absolute Error (aka Approximation Error)', 'Mean Directional Accuracy']
@@ -212,10 +205,10 @@ def runMain(gt, pred, outFileFormat, combineLabels, filePattern, singleCSV, outD
 							bin_count = int(bin_count)
 
 						hist_intersect,correlation, chi_square, bhattacharya,l1,l2, linfinity,cosine_d,canberra,ks_divergence,match,cvm,\
-						psi_value, kld_value, jsd_value, wd_value, p_value, errors = comparison(z_gt, z_pred, combineLabels, bin_count)
+						psi_value, kld_value, jsd_value, wd_value, errors = comparison(z_gt, z_pred, combineLabels, bin_count)
 
 						data_result = [file_name.name, feature, hist_intersect,correlation, chi_square, bhattacharya,l1,l2, linfinity,cosine_d,canberra,ks_divergence,match,cvm,\
-						psi_value, kld_value, jsd_value, wd_value, p_value[1], errors.get('mse'),errors.get('rmse'), errors.get('nrmse'), errors.get('me'), errors.get('mae'),\
+						psi_value, kld_value, jsd_value, wd_value, errors.get('mse'),errors.get('rmse'), errors.get('nrmse'), errors.get('me'), errors.get('mae'),\
 						errors.get('gmae'), errors.get('mdae'), errors.get('mpe'), errors.get('mape'), errors.get('mdape'), errors.get('smape'), errors.get('smdape'),\
 						errors.get('maape'), errors.get('std_ae'), errors.get('std_ape') , errors.get('rmspe'), errors.get('rmdspe'), errors.get('inrse'),\
 						errors.get('rrse'), errors.get('rae'),errors.get('mda')]
