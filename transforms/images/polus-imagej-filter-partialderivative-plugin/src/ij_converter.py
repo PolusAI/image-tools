@@ -17,7 +17,7 @@ logging.basicConfig(
 logger = logging.getLogger("ij_converter")
 logger.setLevel(logging.INFO)
 
-## fill in types to convert
+# Fill in types to convert
 ABSTRACT_ITERABLES = [
     "IterableInterval",
     "Iterable",
@@ -40,7 +40,7 @@ SCALARS = [
     "boolean",
 ]
 
-## recognize array objects as scalar objects + '[]'
+# Recognize array objects as scalar objects + '[]'
 ARRAYS = [s + "[]" for s in SCALARS]
 
 
@@ -122,7 +122,7 @@ JAVA_CONVERT.update({t: lambda s, ij: imglyb.util._to_imglib(s) for t in IMG_ARR
 
 def to_java(ij, np_array, java_type, java_dtype=None):
 
-    if ij == None:
+    if ij is None:
         raise ValueError("No imagej instance found.")
 
     if isinstance(np_array, type(None)):
@@ -144,7 +144,7 @@ def to_java(ij, np_array, java_type, java_dtype=None):
 
 def from_java(ij, java_array, java_type):
 
-    if ij == None:
+    if ij is None:
         raise ValueError("No imagej instance found.")
 
     if ij.py.dtype(java_array) == bool:

@@ -73,7 +73,7 @@ def main(
     # Check that all inputs are specified
     if _in1 is None and _opName in list(in1_types.keys()):
         raise ValueError("{} must be defined to run {}.".format("in1", _opName))
-    elif _in1 != None:
+    elif _in1 is not None:
         in1_type = in1_types[_opName]
 
         # switch to images folder if present
@@ -109,7 +109,7 @@ def main(
     """ Run the plugin """
     try:
         for ind, (in1_path,) in enumerate(zip(*args)):
-            if in1_path != None:
+            if in1_path is not None:
 
                 # Load the first plane of image in in1 collection
                 logger.info("Processing image: {}".format(in1_path))
@@ -132,7 +132,7 @@ def main(
                 out = ij.op().filter().partialDerivative(in1, dimension)
 
             logger.info("Completed op!")
-            if in1_path != None:
+            if in1_path is not None:
                 in1_br.close()
 
             # Saving output file to out

@@ -11,8 +11,11 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 ## Building
 
-To build the Docker image for the conversion plugin, run
+Advance the version number in the `VERSION` file.
+
+Then to build the Docker image for the conversion plugin, run
 `./build-docker.sh`.
+
 
 ## Install WIPP Plugin
 
