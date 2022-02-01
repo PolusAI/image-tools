@@ -1,0 +1,5 @@
+
+filepattern==1.4.7
+opencv-python==4.5.1.48
+deepcell==0.10.0
+imagecodecs
