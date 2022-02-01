@@ -59,43 +59,24 @@ def run(xtrain_path, ytrain_path, xtest_path, ytest_path, outDir, tilesize, iter
     rootdir = Path(xtrain_path)
     x_train = get_data(rootdir)
     X_train = np.array(x_train)
-#    X_train = tensorflow.convert_to_tensor(X_train)
 
     rootdir = Path(ytrain_path)
     y_train = get_data(rootdir)
     y_train = np.array(y_train)
-#    y_train = tensorflow.convert_to_tensor(y_train)
 
     rootdir = Path(xtest_path)
     x_test = get_data(rootdir)
     X_test = np.array(x_test)
-#    X_test = tensorflow.convert_to_tensor(X_test)
 
     rootdir = Path(ytest_path)
     y_test = get_data(rootdir)
     y_test = np.array(y_test)
-#    y_test = tensorflow.convert_to_tensor(y_test)
     logger.info("input loaded...")
 
     X_train, y_train = reshape_matrix(X_train, y_train, reshape_size=size)
     X_test, y_test = reshape_matrix(X_test, y_test, reshape_size=size)
     print('X.shape: {}\ny.shape: {}'.format(X_train.shape, y_train.shape))
 
-
-    # change DATA_DIR if you are not using `deepcell.datasets`
-#    DATA_DIR = os.path.expanduser(os.path.join('~', '.keras', 'datasets'))
-
-    # DATA_FILE should be a npz file, preferably from `make_training_data`
-#    DATA_FILE = os.path.join(DATA_DIR, filename)
-
-    # confirm the data file is available
-#    assert os.path.isfile(DATA_FILE)
-
-
-    # Set up other required filepaths
-
-    # If the data file is in a subdirectory, mirror it in MODEL_DIR and LOG_DIR
-#    PREFIX = os.path.relpath(DATA_DIR)
     PREFIX = os.path.abspath(outDir)
 
     ROOT_DIR = '/data'  # TODO: Change this! Usually a mounted volume
