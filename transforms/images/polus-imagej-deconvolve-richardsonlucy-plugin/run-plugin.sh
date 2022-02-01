@@ -4,8 +4,8 @@ version=$(<VERSION)
 datapath=$(readlink --canonicalize ../../../data)
 
 # Inputs
-opName=RichardsonLucyC
-#opName=PadAndRichardsonLucy
+#opName=RichardsonLucyC
+opName=PadAndRichardsonLucy
 in1=/data/input
 in2=/data/kernels
 maxIterations=5
