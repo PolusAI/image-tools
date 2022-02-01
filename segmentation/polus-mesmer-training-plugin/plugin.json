@@ -1,0 +1,100 @@
+{
+    "name": "MESMER Training",
+    "version": "0.0.4",
+    "title": "MESMER Training",
+    "description": "WIPP plugin to train PanopticNet model.",
+    "author": "Vishakha Goyal (vishakha.goyal@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "polusai/mesmer-training-plugin:0.0.4",
+    "inputs": [
+      {
+        "name": "tilesize",
+        "type": "number",
+        "description": "tile size",
+        "required": false
+      },
+      {
+        "name": "batchSize",
+        "type": "number",
+        "description": "batch size for training",
+        "required": false
+      },
+      {
+        "name": "iterations",
+        "type": "number",
+        "description": "Number of training iterations",
+        "required": false
+      },
+      {
+        "name": "testingImages",
+        "type": "collection",
+        "description": "Input testing image collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "trainingImages",
+        "type": "collection",
+        "description": "Input training image collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "testingLabels",
+        "type": "collection",
+        "description": "Input testing label collection to be processed by this plugin",
+        "required": true
+      },
+      {
+        "name": "trainingLabels",
+        "type": "collection",
+        "description": "Input training label collection to be processed by this plugin",
+        "required": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "genericData",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.tilesize",
+        "title": "tile size",
+        "description": "tile size. Default is 256."
+      },
+      {
+        "key": "inputs.batchSize",
+        "title": "batch size",
+        "description": "batch size. Default is 1."
+      },
+      {
+        "key": "inputs.iterations",
+        "title": "training iterations",
+        "description": "Number of training iterations. Default is 10."
+      },
+      {
+        "key": "inputs.testingImages",
+        "title": "testingImages",
+        "description": "Input testing image collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.trainingImages",
+        "title": "trainingImages",
+        "description": "Input training image collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.testingLabels",
+        "title": "testingLabels",
+        "description": "Input testing label collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.trainingLabels",
+        "title": "trainingLabels",
+        "description": "Input training label collection to be processed by this plugin"
+      }
+    ]
+  }
