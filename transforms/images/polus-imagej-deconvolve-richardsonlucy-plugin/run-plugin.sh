@@ -6,9 +6,8 @@ datapath=$(readlink --canonicalize ../../../data)
 # Inputs
 opName=RichardsonLucyC
 #opName=PadAndRichardsonLucy
-out_input=/data/input
 in1=/data/input
-in2=/data/input
+in2=/data/kernels
 maxIterations=5
 
 # Output paths
