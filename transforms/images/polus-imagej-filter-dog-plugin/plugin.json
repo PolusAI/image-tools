@@ -18,13 +18,13 @@
                     "DoGVaryingSigmas"]
       },
       "description": "Operation to peform",
-      "required": false
+      "required": true
     },
     {
       "name": "inpDIr",
       "type": "collection",
       "description": "The collection to be processed by this plugin",
-      "required": false
+      "required": true
     },
     {
       "name": "sigma1",
@@ -81,8 +81,7 @@
     {
       "key": "inputs.inpDIr",
       "title": "inpDIr",
-      "description": "The collection to be processed by this plugin",
-      "condition": "model.inputs.opName==DoGSingleSigmas or model.inputs.opName==DoGVaryingSigmas"
+      "description": "The collection to be processed by this plugin"
     },
     {
       "key": "inputs.sigma1",
