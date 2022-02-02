@@ -1,0 +1,87 @@
+{
+  "name": "Filepattren Generator",
+  "version": "0.1.0",
+  "title": "Filepattren Generator",
+  "description": "Filepattren Generator plugin creates a csv or feather file containing a number of new filepatterns, where each filepattern will subset the data in the directory",
+  "author": "Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/PolusAI/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/filepattern-generator-plugin:0.1.0",
+  "inputs": [
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Input image collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "pattern",
+      "type": "string",
+      "description": "Filepattren to parse image files",
+      "required": false
+    },
+    {
+      "name": "chunkSize",
+      "type": "number",
+      "description": "Number of images to generate collective filepattern",
+      "required": false,
+      "default" : 30
+    },
+    {
+      "name": "groupBy",
+      "type": "string",
+      "description": "Select a parameter to generate filepatterns in specific order",
+      "required": false
+    },
+    {
+      "name": "outFormat",
+      "type": "enum",
+      "description": "Output Format of collective filepatterns. Only Supports (CSV and feather) file format. (default file format is CSV)",
+      "required": false,
+      "options" : {
+        "values" : [
+          "csv",
+          "feather"  
+        ]
+      }
+      
+    }
+
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "csvCollection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "Input Image collection",
+      "description": "Input image collection"
+    },
+    {
+      "key": "inputs.pattern",
+      "title": "Pattern",
+      "description": "Filepattren to parse image files"
+    },
+    {
+      "key": "inputs.chunkSize",
+      "title": "chunkSize",
+      "description": "Number of images to generate collective filepattern"
+    },
+    {
+      "key": "inputs.groupBy",
+      "title": "groupBy",
+      "description": "Select a parameter to generate filepatterns in specific order"
+    },
+    {
+      "key": "inputs.outFormat",
+      "title": "outFormat",
+      "description": "Output Format of collective filepatterns"
+    }
+  ]
+}
