@@ -11,7 +11,7 @@ import time
 
 
 
-class Filepattren_Generator:
+class Filepattern_Generator:
     def __init__(self, 
                 inpDir:Path,
                 outDir:Path,
@@ -28,7 +28,7 @@ class Filepattren_Generator:
         outDir : Path
             Ouput Collection
         pattern: : str, optional
-            Filepattren regex to parse image files
+            Filepattern regex to parse image files
         chunkSize: : int, optional
             Number of images to generate collective filepattern (default value=30)
         groupBy: : str, optional
@@ -38,7 +38,7 @@ class Filepattren_Generator:
 
         Returns
         -------
-        A collection of generated filepattrens in either (CSV and feather) file format
+        A collection of generated filepatterns in either (CSV and feather) file format
 
         """
         self.inpDir=Path(inpDir)
@@ -77,10 +77,10 @@ class Filepattren_Generator:
 
 
     def pattern_generator(self):
-        """This function iterates over batches of image files and returns filepattrens for each batch and batch sizes
+        """This function iterates over batches of image files and returns filepatterns for each batch and batch sizes
         Args:
             iterator: calling batch_chunker function
-            pattern (str): Filepattren to parse image files
+            pattern (str): Filepattern to parse image files
 
         Returns:
             pandas DataFrame
@@ -100,7 +100,7 @@ class Filepattren_Generator:
             df.append(pattern_regex)
             batch_size.append(len(batch))
 
-        prf = pd.DataFrame(list(zip(df, batch_size)), columns=['FilePattren', 'Batch_Size'])
+        prf = pd.DataFrame(list(zip(df, batch_size)), columns=['FilePattern', 'Batch_Size'])
         return prf
 
     def saving_generator_outputs(self):
@@ -114,12 +114,12 @@ class Filepattren_Generator:
         prf = self.pattern_generator()
         os.chdir(self.outDir)
         if self.outFormat == 'csv':
-            prf.to_csv('pattren_generator.csv', index=False)
+            prf.to_csv('pattern_generator.csv', index=False)
         elif self.outFormat == 'feather':
-            pyarrow.feather.write_feather(prf, "pattren_generator.feather")
+            pyarrow.feather.write_feather(prf, "pattern_generator.feather")
         else:
-            prf.to_csv('pattren_generator.csv', index=False)
-            pyarrow.feather.write_feather(prf, "pattren_generator.feather")
+            prf.to_csv('pattern_generator.csv', index=False)
+            pyarrow.feather.write_feather(prf, "pattern_generator.feather")
      
         return
 
@@ -134,9 +134,9 @@ def main(inpDir:Path,
 
     logger.info(f'Start parsing Image Filenames') 
     assert inpDir.exists(), logger.info('Input directory does not exist')
-    fg = Filepattren_Generator(inpDir,outDir, pattern,chunkSize,groupBy,outFormat)
+    fg = Filepattern_Generator(inpDir,outDir, pattern,chunkSize,groupBy,outFormat)
     fg.saving_generator_outputs()
-    logger.info(f'Saving the Outputs: pattren_generator{outFormat}') 
+    logger.info(f'Saving the Outputs: pattern_generator{outFormat}') 
 
     logger.info('Finished all processes')
     endtime = (time.time() - starttime)/60
@@ -157,18 +157,18 @@ if __name__=="__main__":
 
     # ''' Argument parsing '''
     logger.info("Parsing arguments...")
-    parser = argparse.ArgumentParser(prog='main', description='Filepattren generator Plugin')    
+    parser = argparse.ArgumentParser(prog='main', description='Filepattern generator Plugin')    
     #   # Input arguments
     parser.add_argument('--inpDir', dest='inpDir', type=str,
                             help='Input image collection to be processed by this plugin', required=True)
     parser.add_argument('--outDir', dest='outDir', type=str,
                             help='Output collection', required=True)
     parser.add_argument('--pattern', dest='pattern', type=str,
-                            help='Filepattren regex used to parse image files', required=False)
+                            help='Filepattern regex used to parse image files', required=False)
     parser.add_argument('--chunkSize', dest='chunkSize', type=int, default=30,
-                            help='Select chunksize for generating Filepattren from collective image set', required=False)
+                            help='Select chunksize for generating Filepattern from collective image set', required=False)
     parser.add_argument('--groupBy', dest='groupBy', type=str,
-                            help='Select a parameter to generate Filepattrens in specific order', required=False)
+                            help='Select a parameter to generate Filepatterns in specific order', required=False)
     parser.add_argument('--outFormat', dest='outFormat', type=str, default='csv',
                             help='Output Format of this plugin. It supports only two file-formats: CSV & feather', required=False)
                             

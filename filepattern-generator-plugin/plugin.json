@@ -1,8 +1,8 @@
 {
-  "name": "Filepattren Generator",
+  "name": "Filepattern Generator",
   "version": "0.1.0",
-  "title": "Filepattren Generator",
-  "description": "Filepattren Generator plugin creates a csv or feather file containing a number of new filepatterns, where each filepattern will subset the data in the directory",
+  "title": "Filepattern Generator",
+  "description": "Filepattern Generator plugin creates a csv or feather file containing a number of new filepatterns, where each filepattern will subset the data in the directory",
   "author": "Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/PolusAI/polus-plugins",
@@ -19,7 +19,7 @@
     {
       "name": "pattern",
       "type": "string",
-      "description": "Filepattren to parse image files",
+      "description": "Filepattern to parse image files",
       "required": false
     },
     {
@@ -66,7 +66,7 @@
     {
       "key": "inputs.pattern",
       "title": "Pattern",
-      "description": "Filepattren to parse image files"
+      "description": "Filepattern to parse image files"
     },
     {
       "key": "inputs.chunkSize",

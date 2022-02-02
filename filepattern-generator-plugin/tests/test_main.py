@@ -17,7 +17,7 @@ groupBy='c'
 chunkSize=30
 outFormat=None
 
-class Test_Filepattren_Generator(unittest.TestCase):
+class Test_Filepattern_Generator(unittest.TestCase):
 
     def setUp(self) -> None:
 
@@ -33,7 +33,7 @@ class Test_Filepattren_Generator(unittest.TestCase):
             self.fp = filepattern.FilePattern(self.inpDir, self.pattern,var_order='rxytpc')
             self.fileslist = [file[0] for file in self.fp(group_by=self.groupBy)]
 
-        self.fg = Filepattren_Generator(self.inpDir, self.outDir, self.pattern, self.chunkSize, self.outFormat)
+        self.fg = Filepattern_Generator(self.inpDir, self.outDir, self.pattern, self.chunkSize, self.outFormat)
 
     def teardown(self):
         self.outFormat = None

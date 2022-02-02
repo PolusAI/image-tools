@@ -1,7 +1,7 @@
-# Filepattren Generator
+# Filepattern Generator
 
 
-Filepattren Generator plugin creates a csv or feather file containing a number of new filepatterns, where each filepattern will subset the image data in the directory
+Filepattern Generator plugin creates a csv or feather file containing a number of new filepatterns, where each filepattern will subset the image data in the directory
 
 Contact [Hamdah Shafqat Abbasi](mailto:hamdah.abbasi@axleinfo.com) for more information.
 
@@ -27,7 +27,7 @@ This plugin takes 5 input arguments and
 |---------------|---------------------------------------------------------------|--------|---------------|
 | `--inpDir`    | Input image directory                                         | Input  | collection    |
 | `--outDir`    | Output collection                                             | Output | csvcollection |
-| `--pattern`   | Filepattren to parse image files                              | Input  | string        |
+| `--pattern`   | Filepattern to parse image files                              | Input  | string        |
 | `--chunkSize` | Number of images to generate collective filepattern           | Input  | number        |
 | `--groupBy`   | Select a parameter to generate filepatterns in specific order | Input  | string        |
 | `--outFormat` | Output Format of collective filepatterns                      | Input  | enum          |
