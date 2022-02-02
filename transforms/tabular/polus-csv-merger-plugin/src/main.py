@@ -58,7 +58,7 @@ if __name__=="__main__":
     
     ''' If sameRows is set to true, nothing fancy to do. Just do the work and get out '''
     # Case One: If merging by columns and have same rows:
-    if dim=='columns' and same_rows==True:
+    if dim=='columns' and same_rows:
         logger.info("Merging data with identical number of rows...")
             
         # Determine the number of output files, and a list of files to be merged in each file
@@ -188,13 +188,14 @@ if __name__=="__main__":
                                 file_dict[file_map[el]] = val
                             out_file.write(line_template.format(**file_dict))
                             
-            logger.info("Merging the data along rows for feather file")
+            
             # Write Merged file
             if FILE_EXT == '.feather':
+                logger.info("Merging the data along rows for feather file")
                 temp_df = pd.read_csv(outPath)
                 df = vaex.from_pandas(temp_df)
                 os.chdir(outDir)
-                df.export('ABA_merged_by_rows.feather')
+                df.export('merged.feather')
             
         # Case Three: Merger along columns only
         elif dim=='columns':

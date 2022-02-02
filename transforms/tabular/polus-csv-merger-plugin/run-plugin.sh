@@ -2,18 +2,18 @@
 
 #!/bin/bash
 version=$(<VERSION)
-echo $(datapath)
+datapath='/Users/mezukn/Desktop/polus/s3/data/'
 
 # Inputs
-inpDir=/data/input
+inpDir=/data/cytoplasm
 
 # Output paths
 outDir=/data/output
 
 #Other params
 stripExtension=false
-dim=columns
-# sameRows=True
+dim=rows
+sameRows= true
 
 # Log level, must be one of ERROR, CRITICAL, WARNING, INFO, DEBUG
 LOGLEVEL=INFO
