@@ -2,7 +2,7 @@
 
 #!/bin/bash
 version=$(<VERSION)
-datapath=$(readlink --canonicalize ../data)
+datapath='/Users/mezukn/Desktop/polus/s3/data/'
 
 # Inputs
 inpDir=/data/feather
@@ -11,7 +11,7 @@ inpDir=/data/feather
 outDir=/data/outputs
 
 #
-filePattern=.*.csv
+format=csv
 
 # Log level, must be one of ERROR, CRITICAL, WARNING, INFO, DEBUG
 LOGLEVEL=INFO
