@@ -1,0 +1,45 @@
+{
+  "name": "Tabular to Feather",
+  "version": "0.1.2",
+  "title": "Tabular to Feather",
+  "description": "WIPP plugin to converts Tabular Data to Feather file format.",
+  "author": "Kelechi Nina Mezu (nina.mezu@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/PolusAI/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/tabular-to-feather-plugin:0.1.2",
+  "inputs": [
+    {
+      "name": "filePattern",
+      "type": "string",
+      "description": "Filename pattern used to separate data",
+      "required": true
+    },
+    {
+      "name": "inpDir",
+      "type": "genericData",
+      "description": "Input image collection to be processed by this plugin",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "genericData",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.filePattern",
+      "title": "Filename pattern",
+      "description": "Filename pattern used to separate data"
+    },
+    {
+      "key": "inputs.inpDir",
+      "title": "Input collection",
+      "description": "Input generic data collection to be processed by this plugin"
+    }
+  ]
+}

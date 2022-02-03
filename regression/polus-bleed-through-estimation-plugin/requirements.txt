@@ -1,0 +1,5 @@
+filepattern==1.4.7
+numpy==1.22.1
+scikit-learn==1.0.2
+scipy==1.7.3
+bfio==2.1.9
