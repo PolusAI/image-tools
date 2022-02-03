@@ -60,22 +60,22 @@
     {
       "key": "inputs.inpDir",
       "title": "inpDir",
-      "description": "Collection to be processed by this plugin",
+      "description": "Collection to be processed by this plugin"
     },
     {
       "key": "inputs.psf",
       "title": "psf",
-      "description": "The point spread function mask to be used",
+      "description": "The point spread function mask to be used"
     },
     {
       "key": "inputs.maxIterations",
       "title": "maxIterations",
-      "description": "The maximum number of algorithm iterations",
+      "description": "The maximum number of algorithm iterations"
     },
     {
       "key": "inputs.regularizationFactor",
       "title": "regularizationFactor",
-      "description": "The total variation regularization factor",
+      "description": "The total variation regularization factor"
     }
   ]
 }
