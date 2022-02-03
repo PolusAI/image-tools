@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-imagej-filter-convolve-plugin:${version}
+docker build . -t labshare/imagej-filter-convolve-plugin:${version}

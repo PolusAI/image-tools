@@ -1,22 +1,24 @@
 #!/bin/bash
 
 version=$(<VERSION)
-datapath=$(readlink --canonicalize ../data)
+datapath=$(readlink --canonicalize ../../../data)
 
 # Inputs
-opName=
-in1=/data/input
-in2=/data/input
-out_input=/data/input
+opName=ConvolveNaiveF
+#opName=PadAndConvolveFFTF
+#opName=PadAndConvolveFFT
+#opName=ConvolveFFTC
+inpDir=/data/input
+kernel=/data/kernels
+outDir=/data/output
 
 # Output paths
 out=/data/output
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
-            polusai/polus-imagej-filter-convolve-plugin:${version} \
+            polusai/imagej-filter-convolve-plugin:${version} \
             --opName ${opName} \
-            --in1 ${in1} \
-            --in2 ${in2} \
-            --out_input ${out_input} \
-            --out ${out}
+            --inpDir ${inpDir} \
+            --kernel ${kernel} \
+            --outDir ${out}
             
