@@ -24,37 +24,37 @@ export interface CLTSchema {
   author?: string;
   baseCommand?: string[];
   citation?: string;
-  class?: string;
-  containerId?: string;
+  containerId: string;
   customInputs?: boolean;
-  cwlVersion?: string;
-  description?: string;
-  id?: string;
-  inputs?: PluginInput[];
+  description: string;
+  inputs: PluginInput[];
   institution?: string;
-  name?: string;
-  outputs?: PluginOutput[];
-  pluginHardwareRequirements?: PluginHardwareRequirements;
+  name: string;
+  outputs: PluginOutput[];
+  pluginHardwareRequirements: PluginHardwareRequirements;
   repository?: string;
-  stderr?: string;
-  stdout?: string;
-  title?: string;
-  ui?: (PluginUIInput | PluginUIOutput)[];
-  version?: string;
+  title: string;
+  ui: (PluginUIInput | PluginUIOutput)[];
+  version: string;
   website?: string;
+  cwlVersion: string;
+  id: string;
+  class_: string;
+  stderr: string;
+  stdout: string;
 }
 export interface PluginInput {
   format?: string;
   label?: string;
-  name?: string;
-  required?: boolean;
-  type?: PluginInputType;
+  name: string;
+  required: boolean;
+  type: PluginInputType;
 }
 export interface PluginOutput {
   format?: string;
   label?: string;
-  name?: string;
-  type?: PluginOutputType;
+  name: string;
+  type: PluginOutputType;
 }
 export interface PluginHardwareRequirements {
   coresMax?: string | number;
@@ -80,44 +80,44 @@ export interface PluginUIInput {
   description?: string;
   fieldset?: string[];
   hidden?: boolean;
-  key?: string;
-  title?: string;
-  type?: PluginUIType;
+  key: string;
+  title: string;
+  type: PluginUIType;
 }
 export interface Validator {
   then?: ThenEntry[];
   validator?: ConditionEntry[];
 }
 export interface ThenEntry {
-  action?: string;
-  input?: string;
-  value?: string;
+  action: string;
+  input: string;
+  value: string;
 }
 export interface ConditionEntry {
-  expression?: string;
+  expression: string;
 }
 export interface PluginUIOutput {
-  description?: string;
+  description: string;
   format?: string;
-  name?: string;
-  type?: PluginUIType;
+  name: string;
+  type: PluginUIType;
+  website?: string;
 }
-export interface Model {}
 export interface PluginSchema {
   author?: string;
   baseCommand?: string[];
   citation?: string;
-  containerId?: string;
+  containerId: string;
   customInputs?: boolean;
-  description?: string;
-  inputs?: PluginInput[];
+  description: string;
+  inputs: PluginInput[];
   institution?: string;
-  name?: string;
-  outputs?: PluginOutput[];
-  pluginHardwareRequirements?: PluginHardwareRequirements;
+  name: string;
+  outputs: PluginOutput[];
+  pluginHardwareRequirements: PluginHardwareRequirements;
   repository?: string;
-  title?: string;
-  ui?: (PluginUIInput | PluginUIOutput)[];
+  title: string;
+  ui: (PluginUIInput | PluginUIOutput)[];
   version: string;
   website?: string;
 }

@@ -5,17 +5,13 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, List, Optional, Union
+from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field, constr
 
 
-class Model(BaseModel):
-    __root__: Any
-
-
 class ConditionEntry(BaseModel):
-    expression: Optional[str] = None
+    expression: str
 
 
 class CustomUIType(str, Enum):
@@ -78,9 +74,9 @@ class PluginUIType(Enum):
 
 
 class ThenEntry(BaseModel):
-    action: Optional[str] = None
-    input: Optional[str] = None
-    value: Optional[str] = None
+    action: str
+    input: str
+    value: str
 
 
 class Validator(BaseModel):
@@ -91,16 +87,16 @@ class Validator(BaseModel):
 class PluginInput(BaseModel):
     format: Optional[str] = None
     label: Optional[str] = None
-    name: Optional[str] = None
-    required: Optional[bool] = None
-    type: Optional[PluginInputType] = None
+    name: str
+    required: bool
+    type: PluginInputType
 
 
 class PluginOutput(BaseModel):
     format: Optional[str] = None
     label: Optional[str] = None
-    name: Optional[str] = None
-    type: Optional[PluginOutputType] = None
+    name: str
+    type: PluginOutputType
 
 
 class PluginUIInput(BaseModel):
@@ -110,41 +106,16 @@ class PluginUIInput(BaseModel):
     description: Optional[str] = None
     fieldset: Optional[List[str]] = None
     hidden: Optional[bool] = None
-    key: Optional[str] = None
-    title: Optional[str] = None
-    type: Optional[PluginUIType] = None
+    key: str
+    title: str
+    type: PluginUIType
 
 
 class PluginUIOutput(BaseModel):
-    description: Optional[str] = None
+    description: str
     format: Optional[str] = None
-    name: Optional[str] = None
-    type: Optional[PluginUIType] = None
-
-
-class CLTSchema(BaseModel):
-    author: Optional[str] = None
-    baseCommand: Optional[List[str]] = None
-    citation: Optional[str] = None
-    class_: Optional[str] = Field(None, alias="class")
-    containerId: Optional[str] = None
-    customInputs: Optional[bool] = None
-    cwlVersion: Optional[str] = None
-    description: Optional[str] = None
-    id: Optional[str] = None
-    inputs: Optional[List[PluginInput]] = None
-    institution: Optional[str] = None
-    name: Optional[str] = None
-    outputs: Optional[List[PluginOutput]] = None
-    pluginHardwareRequirements: Optional[PluginHardwareRequirements] = None
-    repository: Optional[str] = None
-    stderr: Optional[str] = None
-    stdout: Optional[str] = None
-    title: Optional[str] = None
-    ui: Optional[List[Union[PluginUIInput, PluginUIOutput]]] = None
-    version: constr(
-        regex="^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
-    ) = None
+    name: str
+    type: PluginUIType
     website: Optional[str] = None
 
 
@@ -152,18 +123,27 @@ class PluginSchema(BaseModel):
     author: Optional[str] = None
     baseCommand: Optional[List[str]] = None
     citation: Optional[str] = None
-    containerId: Optional[str] = None
+    containerId: str
     customInputs: Optional[bool] = None
-    description: Optional[str] = None
-    inputs: Optional[List[PluginInput]] = None
+    description: str
+    inputs: List[PluginInput]
     institution: Optional[str] = None
-    name: Optional[str] = None
-    outputs: Optional[List[PluginOutput]] = None
-    pluginHardwareRequirements: Optional[PluginHardwareRequirements] = None
+    name: str
+    outputs: List[PluginOutput]
+    pluginHardwareRequirements: PluginHardwareRequirements
     repository: Optional[str] = None
-    title: Optional[str] = None
-    ui: Optional[List[Union[PluginUIInput, PluginUIOutput]]] = None
+    title: str
+    ui: List[Union[PluginUIInput, PluginUIOutput]]
     version: constr(
-        regex=r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
+        regex=r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"  # NOQA 722
     ) = Field(examples=["0.1.0", "0.1.0rc1"])
     website: Optional[str] = None
+
+
+class CLTSchema(PluginSchema):
+
+    cwlVersion: str
+    id: str
+    class_: str
+    stderr: str
+    stdout: str

@@ -34,7 +34,12 @@
         "type": {
           "$ref": "#/definitions/PluginInputType"
         }
-      }
+      },
+      "required": [
+        "name",
+        "required",
+        "type"
+      ]
     },
     "PluginOutputType": {
       "title": "PluginOutputType",
@@ -63,7 +68,11 @@
         "type": {
           "$ref": "#/definitions/PluginOutputType"
         }
-      }
+      },
+      "required": [
+        "name",
+        "type"
+      ]
     },
     "GpuVendor": {
       "title": "GpuVendor",
@@ -213,7 +222,12 @@
           "title": "Value",
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "action",
+        "input",
+        "value"
+      ]
     },
     "ConditionEntry": {
       "title": "ConditionEntry",
@@ -223,7 +237,10 @@
           "title": "Expression",
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "expression"
+      ]
     },
     "Validator": {
       "title": "Validator",
@@ -323,7 +340,12 @@
         "type": {
           "$ref": "#/definitions/PluginUIType"
         }
-      }
+      },
+      "required": [
+        "key",
+        "title",
+        "type"
+      ]
     },
     "PluginUIOutput": {
       "title": "PluginUIOutput",
@@ -343,8 +365,17 @@
         },
         "type": {
           "$ref": "#/definitions/PluginUIType"
+        },
+        "website": {
+          "title": "Website",
+          "type": "string"
         }
-      }
+      },
+      "required": [
+        "description",
+        "name",
+        "type"
+      ]
     },
     "PluginSchema": {
       "title": "PluginSchema",
@@ -439,6 +470,14 @@
         }
       },
       "required": [
+        "containerId",
+        "description",
+        "inputs",
+        "name",
+        "outputs",
+        "pluginHardwareRequirements",
+        "title",
+        "ui",
         "version"
       ]
     }
