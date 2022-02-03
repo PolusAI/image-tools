@@ -1,14 +1,14 @@
 {
   "name": "ImageJ filter convolve",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "title": "ImageJ filter convolve",
-  "description": "ConvolveNaiveF, PadAndConvolveFFTF, PadAndConvolveFFT, ConvolveFFTC",
+  "description": "This plugin applies a user specified convolutional kernel to an input collection.",
   "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-filter-convolve-plugin:0.3.0",
+  "containerId": "polusai/imagej-filter-convolve-plugin:0.4.0",
   "inputs": [
     {
       "name": "opName",
@@ -19,7 +19,7 @@
                     "PadAndConvolveFFT",
                     "ConvolveFFTC"]
       },
-      "description": "Operation to peform",
+      "description": "Op overloading method to perform",
       "required": false
     },
     {
@@ -46,7 +46,7 @@
     {
       "key": "inputs.opName",
       "title": "opName",
-      "description": "Operation to peform"
+      "description": "Op overloading method to perform"
     },
     {
       "key": "inputs.inpDir",

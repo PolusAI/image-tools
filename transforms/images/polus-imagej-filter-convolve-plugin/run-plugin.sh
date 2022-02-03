@@ -7,6 +7,7 @@ datapath=$(readlink --canonicalize ../data)
 opName=
 in1=/data/input
 in2=/data/input
+out_input=/data/input
 
 # Output paths
 out=/data/output
@@ -16,5 +17,6 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --opName ${opName} \
             --in1 ${in1} \
             --in2 ${in2} \
+            --out_input ${out_input} \
             --out ${out}
             

@@ -16,18 +16,12 @@ import typing, os
 POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
 POLUS_EXT = os.environ.get("POLUS_EXT", ".ome.tif")
 
-
-# Import environment variables
-POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
-POLUS_EXT = os.environ.get("POLUS_EXT", ".ome.tif")
-
 # Initialize the logger
 logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
     datefmt="%d-%b-%y %H:%M:%S",
 )
 logger = logging.getLogger("main")
-logger.setLevel(logging.INFO)
 logger.setLevel(POLUS_LOG)
 
 
@@ -147,6 +141,8 @@ def main(
                 metadata = in1_br.metadata
                 fname = in1_path.name
                 dtype = ij.py.dtype(in1)
+                # Save the shape for out input
+                shape = ij.py.dims(in1)
             if in2_path != None:
 
                 # Load the first plane of image in in2 collection
@@ -157,15 +153,21 @@ def main(
                 in2 = ij_converter.to_java(
                     ij, np.squeeze(in2_br[:, :, 0:1, 0, 0]), in2_type
                 )
+
+            # Generate the out input variable if required
+            out_input = ij_converter.to_java(
+                ij, np.zeros(shape=shape, dtype=dtype), "IterableInterval"
+            )
+
             logger.info("Running op...")
             if _opName == "ConvolveNaiveF":
                 out = ij.op().filter().convolve(in1, in2)
             elif _opName == "PadAndConvolveFFTF":
                 out = ij.op().filter().convolve(in1, in2)
             elif _opName == "PadAndConvolveFFT":
-                out = ij.op().filter().convolve(in1, in2)
+                out = ij.op().filter().convolve(out_input, in1, in2)
             elif _opName == "ConvolveFFTC":
-                out = ij.op().filter().convolve(in1, in2)
+                out = ij.op().filter().convolve(out_input, in1, in2)
 
             logger.info("Completed op!")
             if in1_path != None:
@@ -200,12 +202,16 @@ if __name__ == "__main__":
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(
         prog="main",
-        description="ConvolveNaiveF, PadAndConvolveFFTF, PadAndConvolveFFT, ConvolveFFTC",
+        description="This plugin applies a user specified convolutional kernel to an input collection.",
     )
 
     # Add command-line argument for each of the input arguments
     parser.add_argument(
-        "--opName", dest="opName", type=str, help="Operation to peform", required=False
+        "--opName",
+        dest="opName",
+        type=str,
+        help="Op overloading method to perform",
+        required=False,
     )
     parser.add_argument(
         "--inpDir",
