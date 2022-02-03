@@ -20,7 +20,7 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --user $(id -u):$(id -g) \
             --env POLUS_LOG=${LOGLEVEL} \
             polusai/filepattern-generator-plugin:${version} \
-            --inputDir ${inpDir} \
+            --inpDir ${inpDir} \
             --outDir ${outDir} \
             --pattern ${pattern} \
             --chunkSize ${chunkSize} \
