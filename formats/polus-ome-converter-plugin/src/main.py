@@ -23,6 +23,8 @@ TILE_SIZE = 2 ** 13
 
 def image_converter(inp_image, fileExtension, out_dir):
 
+    FILE_EXT = FILE_EXT if fileExtension is None else fileExtension
+
     with ProcessManager.process():
 
         with BioReader(inp_image) as br:
@@ -33,11 +35,6 @@ def image_converter(inp_image, fileExtension, out_dir):
                 # Loop through channels
                 for c in range(br.C):
 
-                    if fileExtension is None:
-                        FILE_EXT = FILE_EXT
-
-                    
-                    FILE_EXT = fileExtension
                     extension = "".join(
                         [
                             suffix
