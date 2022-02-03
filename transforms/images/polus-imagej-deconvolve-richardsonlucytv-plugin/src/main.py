@@ -16,18 +16,12 @@ import typing, os
 POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
 POLUS_EXT = os.environ.get("POLUS_EXT", ".ome.tif")
 
-
-# Import environment variables
-POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
-POLUS_EXT = os.environ.get("POLUS_EXT", ".ome.tif")
-
 # Initialize the logger
 logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
     datefmt="%d-%b-%y %H:%M:%S",
 )
 logger = logging.getLogger("main")
-logger.setLevel(logging.INFO)
 logger.setLevel(POLUS_LOG)
 
 
@@ -165,6 +159,8 @@ def main(
                 metadata = in1_br.metadata
                 fname = in1_path.name
                 dtype = ij.py.dtype(in1)
+                # Save the shape for out input
+                shape = ij.py.dims(in1)
             if in2_path != None:
 
                 # Load the first plane of image in in2 collection
@@ -188,12 +184,19 @@ def main(
                     dtype,
                 )
 
+            # Generate the out input variable if required
+            out_input = ij_converter.to_java(
+                ij, np.zeros(shape=shape, dtype=dtype), "IterableInterval"
+            )
+
             logger.info("Running op...")
             if _opName == "PadAndRichardsonLucyTV":
                 out = (
                     ij.op()
                     .deconvolve()
-                    .richardsonLucyTV(in1, in2, maxIterations, regularizationFactor)
+                    .richardsonLucyTV(
+                        out_input, in1, in2, maxIterations, regularizationFactor
+                    )
                 )
 
             logger.info("Completed op!")
@@ -227,10 +230,7 @@ if __name__ == "__main__":
 
     """Setup Command Line Arguments"""
     logger.info("Parsing arguments...")
-    parser = argparse.ArgumentParser(
-        prog="main",
-        description="This plugin applies the Richardson Lucy algorithm with total variation regularization.",
-    )
+    parser = argparse.ArgumentParser(prog="main", description="PadAndRichardsonLucyTV")
 
     # Add command-line argument for each of the input arguments
     parser.add_argument(
@@ -265,7 +265,7 @@ if __name__ == "__main__":
         "--regularizationFactor",
         dest="regularizationFactor",
         type=str,
-        help="The regularization factor",
+        help="The total variation regularization factor",
         required=False,
     )
 
