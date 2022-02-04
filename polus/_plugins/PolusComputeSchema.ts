@@ -49,6 +49,7 @@ export interface PluginInput {
   name: string;
   required: boolean;
   type: PluginInputType;
+  default?: string | number | boolean;
 }
 export interface PluginOutput {
   format?: string;

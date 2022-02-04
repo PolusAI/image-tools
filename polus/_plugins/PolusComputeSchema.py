@@ -90,6 +90,7 @@ class PluginInput(BaseModel):
     name: str
     required: bool
     type: PluginInputType
+    default: Optional[Union[str, float, bool]] = None
 
 
 class PluginOutput(BaseModel):

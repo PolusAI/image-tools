@@ -33,6 +33,20 @@
         },
         "type": {
           "$ref": "#/definitions/PluginInputType"
+        },
+        "default": {
+          "title": "Default",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         }
       },
       "required": [
