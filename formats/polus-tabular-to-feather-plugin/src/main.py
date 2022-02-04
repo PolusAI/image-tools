@@ -6,9 +6,11 @@ import argparse
 import logging
 import vaex
 import shutil
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, wait
 from multiprocessing import cpu_count
 import filepattern
+from tqdm import tqdm
+
 
 # Import environment variables
 POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
@@ -25,7 +27,8 @@ logger.setLevel(POLUS_LOG)
 # Set number of processors for scalability
 NUM_CPUS = max(1, cpu_count() // 2)
 
-def csv_to_df(file:str):
+
+def csv_to_df(file: str):
     """Convert csv into datafram or hdf5 file.
 
     Args:
@@ -36,23 +39,17 @@ def csv_to_df(file:str):
         Vaex dataframe
 
     """
-    logger.info("csv_to_df: Copy csv file into outDir for processing...")
-    file_name = Path(file).stem
-    output = file_name + ".csv"
-    outputfile = os.path.join(outDir, output)
-    shutil.copyfile(file, outputfile)
-
     logger.info("csv_to_df: Checking size of csv file...")
     # Open csv file and count rows in file
-    with open(outputfile, "r", encoding="utf-8") as fr:
+    with open(file, "r", encoding="utf-8") as fr:
         ncols = len(fr.readline().split(","))
 
     chunk_size = max([2 ** 24 // ncols, 1])
-    logger.info("csv_to_df: # of columns are: " + str(ncols))
+    logger.info("csv_to_df: # of columns are %s ", str(ncols))
 
     # Convert large csv files to hdf5 if more than 1,000,000 rows
     logger.info("csv_to_df: converting file into hdf5 format")
-    df = vaex.from_csv(outputfile, convert=True, chunk_size=chunk_size)
+    df = vaex.from_csv(file, convert=True, chunk_size=chunk_size)
     return df
 
 
@@ -91,22 +88,22 @@ def fcs_to_feather(file: str, outDir: Path):
         Converted csv file.
 
     """
-    file_name = Path(file).stem
-    feather_filename = file_name + ".feather"
+    filepath = file.get('file')
+    file_name = Path(filepath).stem
     logger.info("fcs_to_feather : Begin parsing data out of .fcs file" + file_name)
 
     # Use fcsparser to parse data into python dataframe
-    meta, data = fcsparser.parse(file, meta_data_only=False, reformat_meta=True)
+    meta, data = fcsparser.parse(filepath, meta_data_only=False, reformat_meta=True)
 
     # Export the fcs data to vaex df
     logger.info("fcs_to_feather: converting data to vaex dataframe...")
     df = vaex.from_pandas(data)
     logger.info("fcs_to_feather: writing file...")
-    os.chdir(outDir)
+    outputfile = os.path.join(outDir, (file_name + ".feather"))
     logger.info(
         "fcs_to_feather: Writing Vaex Dataframe to Feather File Format for:" + file_name
     )
-    df.export_feather(feather_filename, outDir)
+    df.export_feather(outputfile, outDir)
 
 
 def df_to_feather(input_file: str, filePattern: str, outDir: Path):
@@ -121,21 +118,25 @@ def df_to_feather(input_file: str, filePattern: str, outDir: Path):
         Feather format file.
 
     """
-    file_name = Path(input_file).stem
-    output_file = file_name + ".feather"
+    print("enter df to feather function")
+    filepath = input_file.get('file')
+    file_name = Path(filepath).stem
+    outputfile = os.path.join(outDir, (file_name + '.csv'))
+    shutil.copyfile(filepath, outputfile)
+
     logger.info("df_to_feather: Scanning input directory files... ")
     if filePattern == ".*.csv":
         # convert csv to vaex df or hdf5
-        os.chdir(outDir)
-        df = csv_to_df(input_file)
+        df = csv_to_df(outputfile)
     else:
-        df = binary_to_df(input_file, filePattern)
+        df = binary_to_df(outputfile, filePattern)
 
     logger.info("df_to_feather: writing file...")
-    os.chdir(outDir)
     logger.info(
         "df_to_feather: Writing Vaex Dataframe to Feather File Format for:" + file_name
     )
+    # output_file = file_name + ".feather"
+    output_file = os.path.join(outDir, (file_name + ".feather"))
     df.export_feather(output_file, outDir)
 
 
@@ -159,20 +160,23 @@ def main(
     if filePattern is None:
         filePattern = ".*"
     
-    fp = filepattern.FilePattern(inpDir,filePattern)
+    fp = filepattern.FilePattern(inpDir, filePattern)
 
-    processes = []
+    print(fp)
     with ProcessPoolExecutor(NUM_CPUS) as executor:
-
+        processes = []
+        
+        
         for files in fp:
             file = files[0]
             if filePattern == ".*.fcs":
-                processes.append(executor.submit(fcs_to_feather, file, outDir))
+                processes.append(
+                    executor.submit(fcs_to_feather, file, outDir)
+                )
             else:
                 processes.append(
                     executor.submit(df_to_feather, file, filePattern, outDir)
                 )
-
     remove_files(outDir)
 
     logger.info("Finished all processes!")
@@ -204,11 +208,7 @@ if __name__ == "__main__":
     )
     # Output arguments
     parser.add_argument(
-        "--outDir", 
-        dest="outDir", 
-        type=Path, 
-        help="Output collection", 
-        required=True
+        "--outDir", dest="outDir", type=Path, help="Output collection", required=True
     )
 
     # Parse the arguments

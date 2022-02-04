@@ -12,9 +12,20 @@
   "inputs": [
     {
       "name": "filePattern",
-      "type": "string",
+      "type": "enum",
       "description": "Filename pattern used to separate data",
-      "required": true
+      "required": true,
+      "options": {
+        "values": [
+          ".*.fcs",
+          ".*.csv",
+          ".*.arrow",
+          ".*.parquet",
+          ".*.hdf5",
+          ".*.fits"
+        ]
+
+      }
     },
     {
       "name": "inpDir",
