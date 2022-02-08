@@ -6,16 +6,16 @@ import filepattern
 dirpath = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(dirpath, '../'))
 import unittest
-import fnmatch
 from src.main import *
-
+import fnmatch
+import pyarrow.feather as py
 
 inpDir = Path(dirpath).parent.joinpath('images')
 outDir = Path(dirpath).parent.joinpath('out')
 pattern='p0{r}_x{x+}_y{y+}_wx{t}_wy{p}_c{c}.ome.tif'
-groupBy='c'
-chunkSize=30
-outFormat=None
+groupBy=None
+chunkSize=2
+outFormat='feather'
 
 class Test_Filepattern_Generator(unittest.TestCase):
 
@@ -34,9 +34,7 @@ class Test_Filepattern_Generator(unittest.TestCase):
             self.fileslist = [file[0] for file in self.fp(group_by=self.groupBy)]
 
         self.fg = Filepattern_Generator(self.inpDir, self.outDir, self.pattern, self.chunkSize, self.outFormat)
-
-    def teardown(self):
-        self.outFormat = None
+        
 
     def test_batch_chunker(self):
         pf = self.fg.batch_chunker()
@@ -55,19 +53,17 @@ class Test_Filepattern_Generator(unittest.TestCase):
         self.assertTrue('(' in pf.iloc[:, 0][0])
 
 
-    def test_saving_generator_outputs(self):
-        
-        self.fg.saving_generator_outputs()  
-        checking_outfiles = [f for f in os.listdir(Path(outDir))]
-        check1 = fnmatch.filter(checking_outfiles, '*.feather')
-        check2 = fnmatch.filter(checking_outfiles, '*.csv')
-        self.assertTrue(check1)
-        self.assertTrue(check2)
 
-        
+    def test_saving_generator_outputs(self):
+        pf = self.fg.pattern_generator()
+        saving_generator_outputs(pf, outDir, outFormat)
+        checking_outfiles = [f for f in os.listdir(Path(outDir))]
+        match=fnmatch.filter(checking_outfiles, f'*.{outFormat}')
+        self.assertTrue(match)
+
+    
 if __name__=="__main__":
     unittest.main()
-
 
 
 

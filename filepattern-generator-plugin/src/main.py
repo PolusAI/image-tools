@@ -6,7 +6,7 @@ from pathlib import Path
 from numpy import empty
 import pandas as pd
 from typing import Optional
-import pyarrow.feather 
+import pyarrow.feather as pya
 import time
 
 
@@ -14,39 +14,31 @@ import time
 class Filepattern_Generator:
     def __init__(self, 
                 inpDir:Path,
-                outDir:Path,
                 pattern:Optional[str]= None,
                 chunkSize:Optional[int]= 30,
-                groupBy: Optional[str]= None,
-                outFormat: Optional[str] = None
+                groupBy: Optional[str]= None
                 ):
         """
         Parameters
         ----------
         inpDir : Path
             Input image collection
-        outDir : Path
-            Ouput Collection
         pattern: : str, optional
             Filepattern regex to parse image files
         chunkSize: : int, optional
             Number of images to generate collective filepattern (default value=30)
         groupBy: : str, optional
             Select a parameter to generate filepatterns in specific order
-        outFormat: : str, optional
-            Output Format of collective filepatterns. Only Supports (CSV and feather) file format. (default file format is CSV)
-
+      
         Returns
         -------
         A collection of generated filepatterns in either (CSV and feather) file format
 
         """
         self.inpDir=Path(inpDir)
-        self.outDir=Path(outDir)
         self.pattern=pattern
         self.chunkSize=chunkSize
         self.groupBy=groupBy
-        self.outFormat=outFormat
         if self.pattern is None:
             self.fileslist = [f.name for f in self.inpDir.iterdir() if f.with_suffix('.ome.tif')]
         else:
@@ -99,30 +91,27 @@ class Filepattern_Generator:
                 pattern_regex = self.fp.output_name(batch_files)
             df.append(pattern_regex)
             batch_size.append(len(batch))
-
         prf = pd.DataFrame(list(zip(df, batch_size)), columns=['FilePattern', 'Batch_Size'])
         return prf
 
-    def saving_generator_outputs(self):
-        """Saving Outputs to CSV/Feather file format
-        Args:
-            DataFrame: calling pattern_generator function
-
-        Returns:
-            CSV/Feather format file
-            """    
-        prf = self.pattern_generator()
-        os.chdir(self.outDir)
-        if self.outFormat == 'csv':
-            prf.to_csv('pattern_generator.csv', index=False)
-        elif self.outFormat == 'feather':
-            pyarrow.feather.write_feather(prf, "pattern_generator.feather")
-        else:
-            prf.to_csv('pattern_generator.csv', index=False)
-            pyarrow.feather.write_feather(prf, "pattern_generator.feather")
-     
-        return
-
+def saving_generator_outputs(x:pd.DataFrame, 
+                             outDir:Path, 
+                             outFormat: Optional[str] = 'csv'):
+                             
+    """Saving Outputs to CSV/Feather file format
+    Args:
+        x: pandas DataFrame
+        outDir : Path of Ouput Collection     
+        outFormat: : Output Format of collective filepatterns. Only Supports (CSV and feather) file format. (default file format is CSV)
+                    
+    Returns:
+        CSV/Feather format file
+        """    
+    if outFormat == 'feather':
+        pya.write_feather(x, os.path.join(outDir, "pattern_generator.feather"))
+    else:
+        x.to_csv(os.path.join(outDir, "pattern_generator.csv"), index=False)
+    return
   
 def main(inpDir:Path,
          outDir:Path,
@@ -136,8 +125,10 @@ def main(inpDir:Path,
     assert inpDir.exists(), logger.info('Input directory does not exist')
     assert [f for f in os.listdir(inpDir) if f.endswith(POLUS_EXT)], logger.error('Image files are not recognized as ome.tif')
 
-    fg = Filepattern_Generator(inpDir,outDir, pattern,chunkSize,groupBy,outFormat)
-    fg.saving_generator_outputs()
+    fg = Filepattern_Generator(inpDir,pattern,chunkSize,groupBy)
+    prf =fg.pattern_generator()
+    saving_generator_outputs(prf, outDir, outFormat)
+   
     logger.info(f'Saving the Outputs: pattern_generator{outFormat}') 
 
     logger.info('Finished all processes')
