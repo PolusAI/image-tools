@@ -492,7 +492,6 @@ class Plugin(WIPPPluginManifest):
             else:
                 args.append(str(o.value))
 
-
         container_name = f"polus{random.randint(10, 99)}"
 
         def sig(
@@ -552,6 +551,7 @@ class Plugin(WIPPPluginManifest):
                     % (name, self.__class__.__name__, value)
                 )
                 self._io_keys[name].value = value
+                return
             else:
                 raise IOKeyError(
                     "Attempting to set %s in %s but %s is not a valid I/O parameter"
