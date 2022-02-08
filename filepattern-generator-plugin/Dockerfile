@@ -15,4 +15,5 @@ COPY src ${EXEC_DIR}/
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
 # Default command. Additional arguments are provided through the command line
-ENTRYPOINT ["python3", "main.py"]
+# ENTRYPOINT ["python3", "main.py"]
+CMD ["python3", "${EXEC_DIR}/main.py"]
