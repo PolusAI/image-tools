@@ -126,6 +126,7 @@ def main(inpDir:Path,
     assert [f for f in os.listdir(inpDir) if f.endswith(POLUS_EXT)], logger.error('Image files are not recognized as ome.tif')
     fg = Filepattern_Generator(inpDir,pattern,chunkSize,groupBy)
     prf =fg.pattern_generator()
+    logger.info(f'Generated patterns: {prf.head(30)}')
     saving_generator_outputs(prf, outDir, outFormat)
     logger.info(f'Saving the Outputs: pattern_generator{outFormat}') 
     logger.info('Finished all processes')
