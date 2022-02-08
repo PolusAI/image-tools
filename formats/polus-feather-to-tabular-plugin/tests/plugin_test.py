@@ -1,6 +1,7 @@
 import unittest
 import sys
 from pathlib import Path
+import vaex
 import filepattern
 from src import main
 
@@ -20,8 +21,8 @@ class PluginTest(unittest.TestCase):
         self.convert = Convert()
     
     
-    inpDir = 'formats/polus-feather-to-tabular-plugin/tests/data/input'
-    outDir = 'formats/polus-feather-to-tabular-plugin/tests/data/output'
+    inpDir = '/input'
+    outDir = '/output'
     
     def fileExists(outDir,pattern):
         fp = filepattern.FilePattern(outDir,pattern)

@@ -31,7 +31,7 @@ logger = logging.getLogger("main")
 logger.setLevel(POLUS_LOG)
 
 
-def feather_to_tabular(file: Path, file_format: str, outDir: Path):
+def feather_to_tabular(file: Path, file_format: str, outDir: Path) -> None:
     """Converts feather file into tabular file using pyarrow
 
     Args:
@@ -46,7 +46,7 @@ def feather_to_tabular(file: Path, file_format: str, outDir: Path):
     # Copy file into output directory for WIPP Processing
     filepath = file.get("file")
     file_name = Path(filepath).stem
-    logger.info("Feather CONVERSION: Copy ${file_name} into outDir for processing...")
+    logger.info("Feather CONVERSION: Copy {file_name} into outDir for processing...")
 
     pq_file = os.path.join(outDir, (file_name + ".parquet"))
     csv_file = os.path.join(outDir, (file_name + ".csv"))
