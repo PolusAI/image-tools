@@ -6,7 +6,7 @@ from pathlib import Path
 from numpy import empty
 import pandas as pd
 from typing import Optional
-import pyarrow.feather as pya
+import pyarrow.feather
 import time
 
 
@@ -108,7 +108,7 @@ def saving_generator_outputs(x:pd.DataFrame,
         CSV/Feather format file
         """    
     if outFormat == 'feather':
-        pya.write_feather(x, os.path.join(outDir, "pattern_generator.feather"))
+        pyarrow.feather.write_feather(x, os.path.join(outDir, "pattern_generator.feather"))
     else:
         x.to_csv(os.path.join(outDir, "pattern_generator.csv"), index=False)
     return

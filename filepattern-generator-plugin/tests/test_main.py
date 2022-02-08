@@ -8,33 +8,31 @@ sys.path.append(os.path.join(dirpath, '../'))
 import unittest
 from src.main import *
 import fnmatch
-import pyarrow.feather as py
+import pyarrow.feather
+import csv
 
 inpDir = Path(dirpath).parent.joinpath('images')
 outDir = Path(dirpath).parent.joinpath('out')
 pattern='p0{r}_x{x+}_y{y+}_wx{t}_wy{p}_c{c}.ome.tif'
 groupBy=None
 chunkSize=2
-outFormat='feather'
+outFormat='csv'
 
 class Test_Filepattern_Generator(unittest.TestCase):
 
     def setUp(self) -> None:
 
         self.inpDir = inpDir
-        self.outDir = outDir
         self.pattern = pattern
         self.chunkSize = chunkSize
         self.groupBy = groupBy
-        self.outFormat = outFormat
         if self.pattern is None:
             self.fileslist = [f.name for f in self.inpDir.iterdir() if f.with_suffix('.ome.tif')]
         else:
             self.fp = filepattern.FilePattern(self.inpDir, self.pattern,var_order='rxytpc')
             self.fileslist = [file[0] for file in self.fp(group_by=self.groupBy)]
 
-        self.fg = Filepattern_Generator(self.inpDir, self.outDir, self.pattern, self.chunkSize, self.outFormat)
-        
+        self.fg = Filepattern_Generator(self.inpDir, self.pattern, self.chunkSize)        
 
     def test_batch_chunker(self):
         pf = self.fg.batch_chunker()
@@ -53,7 +51,6 @@ class Test_Filepattern_Generator(unittest.TestCase):
         self.assertTrue('(' in pf.iloc[:, 0][0])
 
 
-
     def test_saving_generator_outputs(self):
         pf = self.fg.pattern_generator()
         saving_generator_outputs(pf, outDir, outFormat)
@@ -61,6 +58,19 @@ class Test_Filepattern_Generator(unittest.TestCase):
         match=fnmatch.filter(checking_outfiles, f'*.{outFormat}')
         self.assertTrue(match)
 
+    def test_generated_outputs(self):
+        pf = self.fg.pattern_generator()
+        saving_generator_outputs(pf, outDir, outFormat)
+        filename='pattern_generator'
+        if outFormat=='feather':
+            df = pyarrow.feather.read_feather(outDir.joinpath(f'{filename}.{outFormat}'))
+            self.assertFalse(len(df.iloc[:, 0].tolist()) == 0)
+        else:
+            with open(outDir.joinpath(f'{filename}.csv'), 'r') as csvfile:
+                csvfile = csv.reader(csvfile)
+                file_p = [row[0] for row in csvfile if row is not None]
+                self.assertFalse(file_p[1:]== None)
+        
     
 if __name__=="__main__":
     unittest.main()
