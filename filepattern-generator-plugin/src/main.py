@@ -97,7 +97,7 @@ class Filepattern_Generator:
 def saving_generator_outputs(x:pd.DataFrame, 
                              outDir:Path, 
                              outFormat: Optional[str] = 'csv'):
-                             
+
     """Saving Outputs to CSV/Feather file format
     Args:
         x: pandas DataFrame
@@ -124,13 +124,10 @@ def main(inpDir:Path,
     logger.info(f'Start parsing Image Filenames') 
     assert inpDir.exists(), logger.info('Input directory does not exist')
     assert [f for f in os.listdir(inpDir) if f.endswith(POLUS_EXT)], logger.error('Image files are not recognized as ome.tif')
-
     fg = Filepattern_Generator(inpDir,pattern,chunkSize,groupBy)
     prf =fg.pattern_generator()
     saving_generator_outputs(prf, outDir, outFormat)
-   
     logger.info(f'Saving the Outputs: pattern_generator{outFormat}') 
-
     logger.info('Finished all processes')
     endtime = (time.time() - starttime)/60
     logger.info(f'Total time taken to process all images: {endtime}')
