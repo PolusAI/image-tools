@@ -17,7 +17,7 @@ pattern='p0{r}_x{x+}_y{y+}_wx{t}_wy{p}_c{c}.ome.tif'
 groupBy=None
 chunkSize=2
 outFormat='csv'
-
+filename='pattern_generator'
 class Test_Filepattern_Generator(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -26,6 +26,7 @@ class Test_Filepattern_Generator(unittest.TestCase):
         self.pattern = pattern
         self.chunkSize = chunkSize
         self.groupBy = groupBy
+        self.filename=filename
         if self.pattern is None:
             self.fileslist = [f.name for f in self.inpDir.iterdir() if f.with_suffix('.ome.tif')]
         else:
@@ -58,19 +59,22 @@ class Test_Filepattern_Generator(unittest.TestCase):
         match=fnmatch.filter(checking_outfiles, f'*.{outFormat}')
         self.assertTrue(match)
 
-    def test_generated_outputs(self):
+    def test_generated_csv_output(self):
+        outFormat='csv'
         pf = self.fg.pattern_generator()
         saving_generator_outputs(pf, outDir, outFormat)
-        filename='pattern_generator'
-        if outFormat=='feather':
-            df = pyarrow.feather.read_feather(outDir.joinpath(f'{filename}.{outFormat}'))
-            self.assertFalse(len(df.iloc[:, 0].tolist()) == 0)
-        else:
-            with open(outDir.joinpath(f'{filename}.csv'), 'r') as csvfile:
-                csvfile = csv.reader(csvfile)
-                file_p = [row[0] for row in csvfile if row is not None]
-                self.assertFalse(file_p[1:]== None)
-        
+        with open(outDir.joinpath(f'{self.filename}.csv'), 'r') as csvfile:
+            csvfile = csv.reader(csvfile)
+            file_p = [row[0] for row in csvfile if row is not None]
+            self.assertFalse(file_p[1:]== None)
+
+    def test_generated_feather_output(self):
+        outFormat='feather'
+        pf = self.fg.pattern_generator()
+        saving_generator_outputs(pf, outDir, outFormat)
+        df = pyarrow.feather.read_feather(outDir.joinpath(f'{self.filename}.{outFormat}'))
+        self.assertFalse(len(df.iloc[:, 0].tolist()) == 0)
+
     
 if __name__=="__main__":
     unittest.main()
