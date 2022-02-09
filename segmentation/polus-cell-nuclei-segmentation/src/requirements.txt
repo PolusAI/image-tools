@@ -1,5 +1,5 @@
 https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow_cpu-2.1.0-cp37-cp37m-manylinux2010_x86_64.whl ; sys_platform == 'linux'
 opencv_python_headless==4.1.2.30
 Keras==2.3.1
-tensorflow_cpu==2.1.0
+tensorflow_cpu==2.5.3
 
