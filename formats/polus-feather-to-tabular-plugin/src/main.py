@@ -7,7 +7,6 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from multiprocessing import cpu_count
 from tqdm import tqdm
 import filepattern
-import pyarrow as pa
 import pyarrow.feather as pf
 import vaex
 import tqdm as tq
@@ -16,8 +15,8 @@ import shutil
 
 # Import environment variables
 POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
-FILE_EXT = os.environ.get("POLUS_TAB_EXT", ".*.csv")
-assert FILE_EXT in [".*.feather", ".*.csv"]
+FILE_EXT = os.environ.get("POLUS_TAB_EXT", ".csv")
+assert FILE_EXT in [".feather", ".csv"]
 
 # Set number of processors for scalability
 NUM_CPUS = max(1, cpu_count() // 2)
@@ -46,10 +45,9 @@ def feather_to_tabular(file: Path, file_format: str, outDir: Path) -> None:
     # Copy file into output directory for WIPP Processing
     filepath = file.get("file")
     file_name = Path(filepath).stem
-    logger.info("Feather CONVERSION: Copy {file_name} into outDir for processing...")
+    logger.info("Feather CONVERSION: Copy ${file_name} into outDir for processing...")
 
-    pq_file = os.path.join(outDir, (file_name + ".parquet"))
-    csv_file = os.path.join(outDir, (file_name + ".csv"))
+    output_file = os.path.join(outDir, (file_name + file_format))
 
     logger.info("Feather CONVERSION: Converting file into PyArrow Table")
 
@@ -61,21 +59,19 @@ def feather_to_tabular(file: Path, file_format: str, outDir: Path) -> None:
 
     logger.info("Feather CONVERSION: checking for file format")
 
-    if file_format == "csv":
+    if file_format == ".csv":
         logger.info("Feather CONVERSION: converting PyArrow Table into .csv file")
         # Streaming contents of Arrow Table into csv
-        return data.export_csv(csv_file, chunksize=chunk_size)
+        return data.export_csv(output_file, chunksize=chunk_size)
         
-    elif file_format == "parquet":
+    elif file_format == ".parquet":
         logger.info("Feather CONVERSION: converting PyArrow Table into .parquet file")
-        return data.export_parquet(pq_file)
+        return data.export_parquet(output_file)
     # If neither, log error
     else:
         logger.error(
             "Feather CONVERSION Error: This format is not supported in this plugin"
         )
-
-    # remove_files(outDir)
 
 
 def main(

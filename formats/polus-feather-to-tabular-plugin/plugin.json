@@ -16,8 +16,8 @@
       "description": "Output file type to convert from feather file",
       "options": {
         "values": [
-          "csv",
-          "parquet"
+          ".csv",
+          ".parquet"
         ]
               },
       "required": true
