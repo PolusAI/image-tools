@@ -2,7 +2,7 @@
 
 #!/bin/bash
 version=$(<VERSION)
-datapath=$(readlink --canonicalize ../data)
+datapath='/Users/mezukn/Desktop/polus/s3/data/'
 
 # Inputs
 inpDir=/data/input

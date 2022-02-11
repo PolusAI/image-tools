@@ -11,7 +11,8 @@ import filepattern
 from pathlib import Path
 from sklearn.cluster import KMeans
 from sklearn.metrics import calinski_harabasz_score
-from sklearn.metrics import davies_bouldin_score 
+from sklearn.metrics import davies_bouldin_score
+import shutil
 
 # Initialize the logger
 logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
@@ -36,22 +37,24 @@ def elbow(data_array, minimumrange, maximumrange):
     """
     sse = []
     label_value = []
-
+    logger.info('Starting Elbow Method...')
     K = range(minimumrange, maximumrange+1)
     for k in K:
         kmeans = KMeans(n_clusters = k, random_state=9).fit(data_array)
         centroids = kmeans.cluster_centers_
         pred_clusters = kmeans.predict(data_array)
         curr_sse = 0
-
+    
         # calculate square of Euclidean distance of each point from its cluster center and add to current WSS
+        logger.info('Calculating Euclidean distance...')
         for i in range(len(data_array)):
             curr_center = centroids[pred_clusters[i]]
             curr_sse += np.linalg.norm(data_array[i]-np.array(curr_center)) ** 2
         sse.append(curr_sse)
         labels = kmeans.labels_
         label_value.append(labels)
- 
+    
+    logger.info('Finding elbow point in curve...')
     #Find the elbow point in the curve
     points = len(sse)
     #Get coordinates of all points
@@ -73,6 +76,9 @@ def elbow(data_array, minimumrange, maximumrange):
     dist = np.sqrt(np.sum(vecline ** 2, axis=1))
     #Maximum distance point
     k_cluster = np.argmax(dist)+minimumrange
+    logger.info("k cluster: %s",k_cluster)
+    logger.info("label value: %s",label_value)
+    logger.info('Setting label_data')
     label_data = label_value[k_cluster]
     return label_data
     
@@ -174,15 +180,31 @@ def main():
         filepath = file.get('file')
         # Get file name
         filename = Path(filepath).stem
+        # Copy file into output directory
+        print(FILE_EXT)
+        outputfile = os.path.join(outdir,(filename + FILE_EXT))
+        shutil.copy(filepath, outputfile)
         
         logger.info('Started reading the file ' + filename)
-        read_csv = open(filepath, "rt", encoding="utf8")
-        #Read csv file
-        reader = csv.reader(read_csv)
-        #Get column names
-        col_name = next(reader)
-        data_list = list(reader)
-        data = np.array(data_list, dtype=np.float64)
+        with open(outputfile, "r", encoding="utf-8") as fr:
+            ncols = len(fr.readline().split(","))
+        chunk_size = max([2 ** 24 // ncols, 1])
+        
+        df = vaex.read_csv(outputfile, convert=True, chunk_size=chunk_size)
+        # Get list of column names
+        cols = df.get_column_names()
+        # Separate data by categorical and numerical data types
+        numerical = []
+        categorical = []
+        for col in cols:
+            if df[col].dtype == str:
+                categorical.append(col)
+            else:
+                numerical.append(col)
+        # Remove label field
+        # numerical.remove("label")
+        data = df[numerical]
+        cat_array = df[categorical]
         
         if methods != 'Manual':
             #Check whether minimum range and maximum range value is entered
@@ -204,24 +226,23 @@ def main():
             label_data = kmeans.labels_
         
         #Cluster data using K-Means clustering
-        classified_data = label_data.reshape(label_data.shape[0],-1)
-        classified_data = classified_data.astype(int) + 1
-        df_processed = np.hstack((data, classified_data))
-        col_name.append('Cluster')
-        col_name_sep = ","
-        col_names = col_name_sep.join(col_name) 
+        logger.info('Adding Cluster Data')
+        data['Cluster'] = label_data
         
+        #Add Categorical Data back to data processed
+        logger.info('Adding categorical data')
+        for col in categorical:
+            data[col] = cat_array[col].values
         
         #Save dataframe to feather file or to csv file
-        os.chdir(outdir)
+        outputfile = os.path.join(outdir,(filename + FILE_EXT))
+        
         if FILE_EXT == '.feather':
-            col = col_names.split(",")
-            vx = vaex.from_pandas(pd.DataFrame(df_processed, columns = col))
-            feather_filename = filename + ".feather"
-            vx.export_feather(feather_filename, outdir)
+            data.export_feather(outputfile)
         else:
             logger.info('Saving csv file')
-            export_csv = np.savetxt('%s.csv'%filename, df_processed, header = col_names, fmt="%s", delimiter=',')
+            # export_csv = np.savetxt('%s.csv'%filename, df_processed, header = cols, fmt="%s", delimiter=',')
+            data.export_csv(outputfile, chunk_size=chunk_size)
 
 if __name__ == "__main__":
     main()
