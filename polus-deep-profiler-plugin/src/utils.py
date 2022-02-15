@@ -4,7 +4,8 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 from bfio import BioReader
-
+import scipy.ndimage
+from pathlib import Path
 
 class Deepprofiler:
 
@@ -119,10 +120,17 @@ class Deepprofiler:
     def dataframe_parsing(cls, featureDir):
         '''This function reads NyxusFeatures CSV file and extracts only selected columns related to filenames of intenstiy 
         and labelled images, labels (cell IDs) and bounding box coordinates calculated for each single cell''' 
-        csvpath = [os.path.join(featureDir, f) for f in os.listdir(featureDir) if ".csv" in f][0]
         columnlist = ['mask_image','intensity_image','label',
         'BBOX_YMIN','BBOX_XMIN', 'BBOX_HEIGHT','BBOX_WIDTH']
-        df = pd.read_csv(csvpath)[columnlist]
+        csvpath = [os.path.join(featureDir, f) for f in os.listdir(featureDir) if ".csv" in f][0]
+        if csvpath.endswith("Feature_Extraction.csv"):
+            df = pd.read_csv(csvpath)
+            col1 = [x.upper() for x in df.columns[3:]]
+            col2 = ['mask_image','intensity_image','label']
+            df.columns = col1 + col2
+            df = df[columnlist]
+        else:
+            df = pd.read_csv(csvpath)[columnlist]
         return df
         
     @classmethod 
@@ -133,3 +141,46 @@ class Deepprofiler:
         newcol = ['Feature_'+ str(col) for col in columns]
         x.columns = x.columns[:3].tolist() + newcol
         return x
+
+
+def generating_bbox_CSV(maskDir:Path):
+    """
+    This function computes boundingboxes coordinates for image labels
+        Parameters
+        ----------
+        maskDir : Path
+            Masks Images directory
+
+        Returns
+        -------
+        A DataFrame of computed image labels boundingbox coordinates
+    """                    
+    csv_data = []
+    masklist = [f for f in os.listdir(maskDir) if f.endswith('.ome.tif')]
+    for msk in masklist:
+        br = BioReader(Path(maskDir, msk))
+        msk_img= br.read().squeeze()
+        objects = scipy.ndimage.measurements.find_objects(msk_img)
+        label , bbox = [], []
+        for i, obj in enumerate(objects):           
+            if obj is not None:
+                height = int(obj[0].stop - obj[0].start)
+                width = int(obj[1].stop - obj[1].start)
+                ymin = obj[0].start
+                xmin = obj[1].start
+                box = [ymin, xmin, height, width]
+            else:
+                box = [0, 0, 0, 0] 
+            bbox.append(box)
+            label.append(i+1)    
+        df = pd.DataFrame(bbox, columns=['BBOX_YMIN', 'BBOX_XMIN', 'BBOX_HEIGHT', 'BBOX_WIDTH'])
+        labels = pd.DataFrame(label, columns=['label'])
+        df = pd.concat([labels, df], axis=1)
+        df['mask_image'] = msk
+        df['intensity_image'] = msk
+        df = df[['mask_image', 'intensity_image', 'label', 'BBOX_YMIN', 'BBOX_XMIN', 'BBOX_HEIGHT', 'BBOX_WIDTH']]
+        csv_data.append(df)
+    prf = pd.concat(csv_data)
+    return prf
+    
+

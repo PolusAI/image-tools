@@ -1,6 +1,6 @@
 {
     "name": "DeepProfiler",
-    "version": "1.2.1",
+    "version": "1.2.0",
     "title": "DeepProfiler",
     "description": "Implementation and extraction of deep learning representations at the single cell level from fluorescent Images",
     "author": "Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "polusai/deep-profiler-plugin:1.2.1",
+    "containerId": "polusai/deep-profiler-plugin:1.2.0",
     "inputs": [
       {
         "name": "inputDir",
@@ -20,12 +20,6 @@
         "name": "maskDir",
         "type": "collection",
         "description": "Input mask collection to be processed by this plugin",
-        "required": true
-      },
-      {
-        "name": "featureDir",
-        "type": "csvCollection",
-        "description": "Input csv file which contains boundingbox coordinates for all cells",
         "required": true
       },
       {
@@ -66,6 +60,12 @@
         "description": "Choose batchSize of cells to be used in model prediction",
         "required": true,
         "default" : 8
+      },
+      {
+        "name": "featureDir",
+        "type": "csvCollection",
+        "description": "Input csv file which contains boundingbox coordinates for all cells",
+        "required": false
       }
     ],
     "outputs": [
@@ -87,11 +87,6 @@
         "description": "Input mask collection to be processed by this plugin"
       },
       {
-        "key": "inputs.featureDir",
-        "title": "Input Features CSV",
-        "description": "Choose Input CSV containing cell boundingbox coordinates"
-      },
-      {
         "key": "inputs.model",
         "title": "Model",
         "description": "Choose model for feature Extraction"
@@ -100,6 +95,11 @@
         "key": "inputs.batchSize",
         "title": "batchSize",
         "description": "Choose a batchSize"
+      },
+      {
+        "key": "inputs.featureDir",
+        "title": "Input Features CSV",
+        "description": "Choose Input CSV containing cell boundingbox coordinates"
       }
     ]
   }

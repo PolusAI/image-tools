@@ -4,72 +4,26 @@ import argparse, logging, os
 import pandas as pd
 import numpy as np
 import time
+import tensorflow as tf
 from utils import *
+from typing import Optional
 
-
-#Import environment variables
-POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
-POLUS_EXT = os.environ.get('POLUS_EXT','.ome.tif')
-
-# Initialize the logger
-logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
-                    datefmt='%d-%b-%y %H:%M:%S')
-logger = logging.getLogger("main")
-logger.setLevel(POLUS_LOG)
-
-os.environ["CUDA_VISIBLE_DEVICES"] = "0" 
-sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(log_device_placement=True))
-if tf.test.gpu_device_name():
-    logger.info('Default GPU Device: {}'.format(tf.test.gpu_device_name()))
-else:
-    logger.info('Default Device is CPU')
-
-# ''' Argument parsing '''
-logger.info("Parsing arguments...")
-parser = argparse.ArgumentParser(prog='main', description='Deep Feature Extraction Plugin')    
-#   # Input arguments
-parser.add_argument('--inputDir', dest='inputDir', type=str,
-                        help='Input image collection to be processed by this plugin', required=True)
-parser.add_argument('--maskDir', dest='maskDir', type=str,
-                        help='Input mask collections in int16 or int32 format', required=True)
-parser.add_argument('--featureDir', dest='featureDir', type=str,
-                        help='Boundingbox cooridnate position of cells are computed using Nyxus Plugin', required=True)
-parser.add_argument('--model', dest='model', type=str,
-                        help='Select model for Feature extraction', required=True)
-parser.add_argument('--batchSize', dest='batchSize', type=int,
-                        help='Select batchsize for model predictions', required=True)
-                        
-#  # Output arguments
-parser.add_argument('--outDir', dest='outDir', type=str,
-                        help='Output directory', required=True)   
-# # Parse the arguments
-args = parser.parse_args()
-inputDir = Path(args.inputDir)
-maskDir = Path(args.maskDir)
-
-if (inputDir.joinpath('images').is_dir()):
-    inputDir = inputDir.joinpath('images').absolute()
-if (maskDir.joinpath('masks').is_dir()):
-    maskDir = maskDir.joinpath('masks').absolute()
-logger.info('inputDir = {}'.format(inputDir))
-logger.info('maskDir = {}'.format(maskDir))
-featureDir = Path(args.featureDir)
-logger.info('featureDir = {}'.format(featureDir))
-model = str(args.model) 
-logger.info('model = {}'.format(model))
-batchSize=int(args.batchSize)
-logger.info("batchSize = {}".format(batchSize))
-outDir = Path(args.outDir)
-logger.info('outDir = {}'.format(outDir))
 
 def main(inputDir:Path,
          maskDir:Path,
-         featureDir:Path,
          model:str,
          batchSize:int,
-         outDir:Path
+         outDir:Path,
+         featureDir:Optional[Path] = None,
          ):
-        starttime= time.time()    
+        starttime= time.time()
+
+        if featureDir is None:
+            prf = generating_bbox_CSV(maskDir)
+            logger.info(f"Features CSV is being generated")
+        else:
+            prf = Deepprofiler.dataframe_parsing(featureDir)
+
         model_lists =  ['Xception', 'VGG16', 'VGG19', 'ResNet50', 'ResNet101',
                         'ResNet152','ResNet50V2','ResNet101V2','ResNet152V2','InceptionV3',
                         'InceptionResNetV2','DenseNet121','DenseNet169','DenseNet201','EfficientNetB0',
@@ -78,7 +32,6 @@ def main(inputDir:Path,
         if not model in model_lists:
             logger.error(f"This model {model} selection is invalid")
         modelname = Deepprofiler.get_model(model)
-        prf = Deepprofiler.dataframe_parsing(featureDir)
         flist = len([f for f, _ in  prf.groupby('intensity_image')])
         count=0
     
@@ -120,13 +73,69 @@ def main(inputDir:Path,
         logger.info('Finished all processes')
         endtime = (time.time() - starttime)/60
         logger.info(f'Total time taken to process all images: {endtime}')
-   
+
+
+#Import environment variables
+POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
+POLUS_EXT = os.environ.get('POLUS_EXT','.ome.tif')
+
+# Initialize the logger
+logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+                    datefmt='%d-%b-%y %H:%M:%S')
+logger = logging.getLogger("main")
+logger.setLevel(POLUS_LOG)
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "0" 
+sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(log_device_placement=True))
+if tf.test.gpu_device_name():
+    logger.info('Default GPU Device: {}'.format(tf.test.gpu_device_name()))
+else:
+    logger.info('Default Device is CPU')
+
+# ''' Argument parsing '''
+logger.info("Parsing arguments...")
+parser = argparse.ArgumentParser(prog='main', description='Deep Feature Extraction Plugin')    
+#   # Input arguments
+parser.add_argument('--inputDir', dest='inputDir', type=str,
+                        help='Input image collection to be processed by this plugin', required=True)
+parser.add_argument('--maskDir', dest='maskDir', type=str,
+                        help='Input mask collections in int16 or int32 format', required=True)
+parser.add_argument('--featureDir', dest='featureDir', type=str,
+                        help='Boundingbox cooridnate position of cells are computed using Nyxus Plugin', required=False)
+parser.add_argument('--model', dest='model', type=str,
+                        help='Select model for Feature extraction', required=True)
+parser.add_argument('--batchSize', dest='batchSize', type=int,
+                        help='Select batchsize for model predictions', required=True)
+                        
+#  # Output arguments
+parser.add_argument('--outDir', dest='outDir', type=str,
+                        help='Output directory', required=True)   
+# # Parse the arguments
+args = parser.parse_args()
+inputDir = Path(args.inputDir)
+maskDir = Path(args.maskDir)
+
+if (inputDir.joinpath('images').is_dir()):
+    inputDir = inputDir.joinpath('images').absolute()
+if (maskDir.joinpath('masks').is_dir()):
+    maskDir = maskDir.joinpath('masks').absolute()
+logger.info('inputDir = {}'.format(inputDir))
+logger.info('maskDir = {}'.format(maskDir))
+model = str(args.model) 
+logger.info('model = {}'.format(model))
+batchSize=int(args.batchSize)
+logger.info("batchSize = {}".format(batchSize))
+outDir = Path(args.outDir)
+logger.info('outDir = {}'.format(outDir))
+featureDir = args.featureDir
+logger.info('featureDir = {}'.format(featureDir))
+
 
 if __name__=="__main__":
     main(inputDir=inputDir,
          maskDir=maskDir,
-         featureDir=featureDir,
          model=model,
          batchSize=batchSize,
          outDir=outDir,
+         featureDir=featureDir
          )

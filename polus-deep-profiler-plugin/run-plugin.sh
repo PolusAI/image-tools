@@ -27,8 +27,8 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             labshare/deep-profiler-plugin:${version} \
             --inputDir ${inputDir} \
             --maskDir ${maskDir} \
-            --featureDir ${featureDir} \
             --model ${model} \
             --batchSize ${batchSize} \
-            --outDir ${outDir} 
+            --outDir ${outDir} \
+            --featureDir ${featureDir}
             
