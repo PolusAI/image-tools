@@ -2,4 +2,3 @@ bfio>=2.0.0
 filepattern==1.4.6
 pandas==1.1.5
 scipy== 1.8.0
-
