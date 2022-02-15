@@ -75,6 +75,7 @@ def main(
 
         args.append([f for f in _in1.iterdir() if f.is_file()])
         arg_len = len(args[-1])
+
     else:
         argument_types.append(None)
         args.append([None])
@@ -97,9 +98,15 @@ def main(
                 logger.info("Processing image: {}".format(in1_path))
                 in1_br = BioReader(in1_path)
 
+                # Normalize the image to 0-255 range
+                image = np.squeeze(in1_br[:, :, 0:1, 0, 0]).astype(np.float64)
+                imin = image.min()
+                imax = image.max()
+                norm = (image - imin)*((255-0)/(imax - imin)) + 0
+                
                 # Convert to appropriate numpy array
                 in1 = ij_converter.to_java(
-                    ij, np.squeeze(in1_br[:, :, 0:1, 0, 0]), in1_type
+                    ij, norm, in1_type
                 )
                 metadata = in1_br.metadata
                 fname = in1_path.name
@@ -123,11 +130,16 @@ def main(
             # Saving output file to out
             logger.info("Saving...")
             out_array = ij_converter.from_java(ij, out, out_types[_opName])
+            
+            # Un-normalize the output array
+            nmin = out_array.min()
+            out_unnorm = (image - nmin)*((imax - imin)/(255 - 0)) + imin
+            
             bw = BioWriter(_out.joinpath(fname), metadata=metadata)
             bw.Z = 1
             bw.dtype = out_array.dtype
-            bw[:] = out_array.astype(bw.dtype)
-            bw.close()
+            bw = out_array.astype(bw.dtype)
+            bw[:] = out_unnorm.astype(bw.dtype)
 
     except:
         logger.error("There was an error, shutting down jvm before raising...")
