@@ -1,3 +1,0 @@
-filepattern==1.4.6
-bfio[zarr]==2.1.8
-preadator==0.2.0

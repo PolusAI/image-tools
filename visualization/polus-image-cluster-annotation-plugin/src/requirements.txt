@@ -1,0 +1,2 @@
+pandas==1.2.2
+bfio[zarr]==2.1.8
