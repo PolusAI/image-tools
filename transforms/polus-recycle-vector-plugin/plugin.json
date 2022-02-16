@@ -1,0 +1,57 @@
+{
+  "name": "Recycle Stitching Vector Plugin",
+  "version": "1.5.0",
+  "title": "Recycle Existing Stitching Vector",
+  "description": "Apply existing stitching vector to an image collection.",
+  "author": "Nick Schaub (nick.schaub@nih.gov)",
+  "institution": "National Center for the Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "labshare/polus-recycle-vector-plugin:1.5.0",
+  "inputs": [
+
+    {
+      "name": "stitchDir",
+      "type": "stitchingVector",
+      "description": "Stitching Vector.",
+      "required": true
+    },
+    {
+      "name": "collectionDir",
+      "type": "collection",
+      "description": "Image Collection.",
+      "required": true
+    },
+    {
+      "name": "filepattern",
+      "type": "string",
+      "description": "Filepattern to select files for vector recycling.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "stitchingVector",
+      "description": "Output stitching vector."
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.stitchDir",
+      "title": "Input stitching vector: ",
+      "description": "Stitching vector to recycle"
+    },
+    {
+      "key": "inputs.collectionDir",
+      "title": "Input image collection: ",
+      "description": "Image collection to apply stitching vector against"
+    },
+    {
+      "key": "inputs.filepattern",
+      "title": "Filepattern: ",
+      "description": "Filepattern to select files for vector recycling."
+    }
+  ]
+}

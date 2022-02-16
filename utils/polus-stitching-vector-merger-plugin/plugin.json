@@ -1,0 +1,78 @@
+{
+    "name": "Stitching vector merger",
+    "version": "0.1.8",
+    "title": "Merge StitchingVector",
+    "description": "This plugin merges stitching vector collections",
+    "author": "Gauhar Bains (gauhar.bains@labshare.org)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "labshare/polus-stitching-vector-merger-plugin:0.1.8",
+    "inputs": [
+      {
+        "name": "VectorCollection1",
+        "type": "stitchingVector",
+        "description": "1st stitchingVector Collection",
+        "required": true
+      },
+      {
+        "name": "VectorCollection2",
+        "type": "stitchingVector",
+        "description": "2nd stitchingVector Collection",
+        "required": true
+      },
+      {
+        "name": "VectorCollection3",
+        "type": "stitchingVector",
+        "description": "3rd stitchingVector Collection",
+        "required": false
+      },
+      {
+        "name": "VectorCollection4",
+        "type": "stitchingVector",
+        "description": "4th stitchingVector Collection",
+        "required": false
+      },
+      {
+        "name": "VectorCollection5",
+        "type": "stitchingVector",
+        "description": "5th stitchingVector Collection",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "stitchingVector",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.VectorCollection1",
+        "title": "Stitching Vector Collection 1",
+        "description": "1st stitchingVector Collection"
+      },
+      {
+        "key": "inputs.VectorCollection2",
+        "title": "Stitching Vector Collection 2",
+        "description": "2nd stitchingVector Collection"
+      },
+      {
+        "key": "inputs.VectorCollection3",
+        "title": "Stitching Vector Collection 3",
+        "description": "3rd stitchingVector Collection"
+      },
+      {
+        "key": "inputs.VectorCollection4",
+        "title": "Stitching Vector Collection 4",
+        "description": "4th stitchingVector Collection"
+      },
+      {
+        "key": "inputs.VectorCollection5",
+        "title": "Stitching Vector Collection 5",
+        "description": "5th stitchingVector Collection"
+      }
+    ]
+  }
