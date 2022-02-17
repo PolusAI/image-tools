@@ -19,7 +19,7 @@ def get_grouping(
         groupBy (str, optional): Specify variable to group image filenames
         chunk_size (str, optional): Number of images to generate collective filepattern
     Returns:
-        variables for grouping image filenames, count
+        variables for grouping image filenames, count 
     """
 
     fp = filepattern.FilePattern(inpDir, pattern)
@@ -42,6 +42,7 @@ def get_grouping(
         count *= counts[v]
     if count >= chunk_size:
         return groupBy, count
+    best_group, best_count = groupBy,count
 
     # Search for a combination of `variables` that give a value close to the chunk_size
     variables = [v for v in fp.variables if v not in groupBy]
@@ -147,7 +148,6 @@ if __name__ == "__main__":
 
     # Import environment variables
     POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
-    POLUS_EXT = os.environ.get("POLUS_EXT", ".ome.tif")
     OUT_FORMAT = os.environ.get("OUT_FORMAT", "csv")
 
     # Initialize the logger

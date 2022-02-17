@@ -1,22 +1,17 @@
 
 from pathlib import Path
-import os
-import sys
-import filepattern
+import os, sys
 dirpath = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(dirpath, '../'))
 import unittest
 from src.main import *
-import fnmatch
 import pyarrow.feather
 import csv
 
 inpDir = Path(dirpath).parent.joinpath('images')
 outDir = Path(dirpath).parent.joinpath('out')
 pattern='p0{r}_x{x+}_y{y+}_wx{t}_wy{p}_c{c}.ome.tif'
-groupBy=None
-chunkSize=2
-outFormat='csv'
+chunkSize=9
 filename='pattern_generator'
 data = {'p00_x01_y{rr}_wx0_wy0_c{t}.ome.tif':30, 
         'p00_x01_y{rr}_wx0_wy1_c{t}.ome.tif':30,
@@ -30,11 +25,20 @@ class Test_Filepattern_Generator(unittest.TestCase):
         self.inpDir = inpDir
         self.pattern = pattern
         self.chunkSize = chunkSize
-        self.groupBy = groupBy
         self.filename=filename
         self.outDir=outDir
         self.data = data
-      
+
+    def test_get_grouping(self):
+        groupBy=None
+        groupby, count = get_grouping(self.inpDir, self.pattern, groupBy, self.chunkSize)
+        self.assertFalse(count!= self.chunkSize)
+        self.assertFalse(groupby== None)
+        groupBy='t'
+        groupby, count = get_grouping(self.inpDir, self.pattern, groupBy, self.chunkSize)
+        self.assertTrue(count== self.chunkSize)
+        self.assertTrue(groupby!= None)
+
 
     def test_generated_csv_output(self):
         outFormat='csv'
