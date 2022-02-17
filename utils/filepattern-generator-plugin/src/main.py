@@ -1,16 +1,26 @@
-import argparse, logging, os
-import filepattern
+import argparse, logging, os, time, csv, filepattern, pyarrow.feather
 from pathlib import Path
-import pandas as pd
-from typing import Optional
-import pyarrow.feather
-import time
+from typing import Dict, Optional
 from itertools import combinations
+import pandas as pd
 
 
 def get_grouping(
-    inpDir: Path, pattern: str, groupBy: str = None, chunk_size: int = None
+    inpDir: Path,
+    pattern: Optional[str],
+    groupBy: Optional[str],
+    chunk_size: Optional[int] = None,
 ) -> str:
+
+    """This function produces the best combination of variables for a given chunksize
+    Args:
+        inpDir (Path): Path to Image files
+        pattern (str, optional): Regex to parse image files
+        groupBy (str, optional): Specify variable to group image filenames
+        chunk_size (str, optional): Number of images to generate collective filepattern
+    Returns:
+        variables for grouping image filenames, count
+    """
 
     fp = filepattern.FilePattern(inpDir, pattern)
 
@@ -22,11 +32,9 @@ def get_grouping(
     if groupBy is None:
         for k, v in counts.items():
             if v <= chunk_size and v < best_count:
-                best_group = k
-                best_count = v
+                best_group, best_count = k, v
             elif best_count == 0:
-                best_group = k
-                best_count = v
+                best_group, best_count = k, v
         groupBy = best_group
 
     count = 1
@@ -52,36 +60,43 @@ def get_grouping(
 
         # Find the best_group
         for k, v in groups.items():
-
             if v > chunk_size:
                 continue
-
             if v > best_count:
-                best_group = k
-                best_count = v
-
+                best_group, best_count = k, v
     return best_group, best_count
 
 
 def save_generator_outputs(
-    x: pd.DataFrame, outDir: Path, outFormat: Optional[str] = "csv"
+    x: Dict[str, int], outDir: Path, outFormat: Optional[str] = None
 ):
-
-    """Saving Outputs to CSV/Feather file format
+    """Convert dictionary of filepatterns and number of image files which can be parsed with each filepattern to csv or feather file
     Args:
-        x: pandas DataFrame
-        outDir : Path of Ouput Collection
-        outFormat: : Output Format of collective filepatterns. Only Supports (CSV and feather) file format. (default file format is CSV)
-
+        x (Dict): A dictionary of filepatterns and number of image files which can be parsed with each filepattern
+        outDir (Path): Path to save the outputs
+        outFormat (str):Output Format of collective filepatterns. Only Supports (csv and feather) file format.
     Returns:
         CSV/Feather format file
     """
-    if outFormat == "feather":
+    OUT_FORMAT = OUT_FORMAT if outFormat is None else outFormat
+    if OUT_FORMAT == "feather":
+        df = (
+            pd.DataFrame.from_dict(x, orient="index")
+            .reset_index()
+            .rename(columns={"index": "filepattern", 0: "count"})
+        )
         pyarrow.feather.write_feather(
-            x, os.path.join(outDir, "pattern_generator.feather")
+            df, os.path.join(outDir, "pattern_generator.feather")
         )
     else:
-        x.to_csv(os.path.join(outDir, "pattern_generator.csv"), index=False)
+        header = ["filepattern", "count"]
+        with open(os.path.join(outDir, "pattern_generator.csv"), "w") as csvfile:
+            w = csv.writer(csvfile)
+            w.writerow(header)
+            for key, value in x.items():
+                w.writerow([key, value])
+            csvfile.close()
+
     return
 
 
@@ -114,17 +129,15 @@ def main(
 
     logger.info("Generating filepatterns...")
     fp = filepattern.FilePattern(inpDir, pattern)
-    fps = []
-    counts = []
+    fps, counts = [], []
     for files in fp(group_by=groupBy):
-
         fps.append(filepattern.infer_pattern([f["file"].name for f in files]))
         fp_temp = filepattern.FilePattern(inpDir, fps[-1])
         counts.append(sum(len(f) for f in fp_temp))
 
     assert sum(counts) == len([f for f in fp])
 
-    save_generator_outputs(pd.DataFrame({"filepattern": fps, "count": counts}), outDir)
+    save_generator_outputs(dict(zip(fps, counts)), outDir, outFormat)
 
     endtime = (time.time() - starttime) / 60
     logger.info(f"Total time taken to process all images: {endtime}")
@@ -135,6 +148,7 @@ if __name__ == "__main__":
     # Import environment variables
     POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
     POLUS_EXT = os.environ.get("POLUS_EXT", ".ome.tif")
+    OUT_FORMAT = os.environ.get("OUT_FORMAT", "csv")
 
     # Initialize the logger
     logging.basicConfig(
@@ -186,7 +200,7 @@ if __name__ == "__main__":
         "--outFormat",
         dest="outFormat",
         type=str,
-        default="csv",
+        default=OUT_FORMAT,
         help="Output Format of this plugin. It supports only two file-formats: CSV & feather",
         required=False,
     )

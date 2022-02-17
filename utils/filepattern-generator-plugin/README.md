@@ -3,7 +3,7 @@
 
 Filepattern Generator plugin creates a csv or feather file containing a number of new filepatterns, where each filepattern will subset the image data in the directory
 
-Contact [Hamdah Shafqat Abbasi](mailto:hamdah.abbasi@axleinfo.com) for more information.
+Contact [Nick Schaub , Hamdah Shafqat Abbasi](mailto:nick.schaub@nih.gov, hamdah.abbasi@axleinfo.com) for more information.
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 

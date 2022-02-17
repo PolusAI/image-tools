@@ -1,14 +1,14 @@
 {
   "name": "Filepattern Generator",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "title": "Filepattern Generator",
   "description": "Filepattern Generator plugin creates a csv or feather file containing a number of new filepatterns, where each filepattern will subset the data in the directory",
-  "author": "Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com)",
+  "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/PolusAI/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/filepattern-generator-plugin:0.1.1",
+  "containerId": "polusai/filepattern-generator-plugin:0.1.2",
   "inputs": [
     {
       "name": "inpDir",
@@ -26,8 +26,7 @@
       "name": "chunkSize",
       "type": "number",
       "description": "Number of images to generate collective filepattern",
-      "required": false,
-      "default" : 30
+      "required": false
     },
     {
       "name": "groupBy",
