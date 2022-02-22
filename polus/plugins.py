@@ -526,6 +526,8 @@ class Plugin(WIPPPluginManifest):
                 **kwargs,
             )
             print(d)
+
+    def __getattribute__(self, name):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
             if name in self._io_keys:
                 value = self._io_keys[name].value
