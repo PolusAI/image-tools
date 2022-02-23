@@ -1,6 +1,7 @@
 {
   "name": "Filepattern Generator",
-  "version": "0.1.2",
+  "version": "0.1.6",
+  "containerId": "polusai/filepattern-generator-plugin:0.1.6",
   "title": "Filepattern Generator",
   "description": "Filepattern Generator plugin creates a csv or feather file containing a number of new filepatterns, where each filepattern will subset the data in the directory",
   "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com)",
@@ -8,52 +9,55 @@
   "repository": "https://github.com/PolusAI/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/filepattern-generator-plugin:0.1.2",
   "inputs": [
     {
       "name": "inpDir",
-      "type": "collection",
       "description": "Input image collection to be processed by this plugin",
+      "type": "collection",
+      "options": null,
       "required": true
     },
     {
       "name": "pattern",
-      "type": "string",
       "description": "Filepattern to parse image files",
+      "type": "string",
+      "options": null,
       "required": false
     },
     {
       "name": "chunkSize",
-      "type": "number",
       "description": "Number of images to generate collective filepattern",
+      "type": "number",
+      "options": null,
       "required": false
     },
     {
       "name": "groupBy",
-      "type": "string",
       "description": "Select a parameter to generate filepatterns in specific order",
+      "type": "string",
+      "options": null,
       "required": false
     },
     {
       "name": "outFormat",
-      "type": "enum",
       "description": "Output Format of collective filepatterns. Only Supports (CSV and feather) file format. (default file format is CSV)",
-      "required": false,
-      "options" : {
-        "values" : [
+      "type": "enum",
+      "options": {
+        "values": [
           "csv",
-          "feather"  
+          "feather"
         ]
-      }
-      
+      },
+      "required": false
     }
-
   ],
   "outputs": [
     {
       "name": "outDir",
-      "type": "csvCollection",
-      "description": "Output collection"
+      "description": "Output collection",
+      "type": "genericData",
+      "options": null,
+      "required": true
     }
   ],
   "ui": [
@@ -82,5 +86,6 @@
       "title": "outFormat",
       "description": "Output Format of collective filepatterns"
     }
-  ]
+  ],
+  "validators": null
 }

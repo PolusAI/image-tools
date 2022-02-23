@@ -1,6 +1,6 @@
 import argparse, logging, os, time, csv, filepattern, pyarrow.feather
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 from itertools import combinations
 import pandas as pd
 
@@ -9,8 +9,8 @@ def get_grouping(
     inpDir: Path,
     pattern: Optional[str],
     groupBy: Optional[str],
-    chunk_size: Optional[int] = None,
-) -> str:
+    chunkSize: Optional[int] = None,
+) -> Tuple[str, int]:
 
     """This function produces the best combination of variables for a given chunksize
     Args:
@@ -27,11 +27,11 @@ def get_grouping(
     # Get the number of unique values for each variable
     counts = {k: len(v) for k, v in fp.uniques.items()}
 
-    # Check to see if groupBy already gives a sufficient chunk_size
+    # Check to see if groupBy already gives a sufficient chunkSize
     best_count = 0
     if groupBy is None:
         for k, v in counts.items():
-            if v <= chunk_size and v < best_count:
+            if v <= chunkSize and v < best_count:
                 best_group, best_count = k, v
             elif best_count == 0:
                 best_group, best_count = k, v
@@ -40,7 +40,7 @@ def get_grouping(
     count = 1
     for v in groupBy:
         count *= counts[v]
-    if count >= chunk_size:
+    if count >= chunkSize:
         return groupBy, count
     best_group, best_count = groupBy,count
 
@@ -56,12 +56,12 @@ def get_grouping(
             groups[group] = count
 
         # If all groups are over the chunk_size, then return just return the best_group
-        if all(v > chunk_size for k, v in groups.items()):
+        if all(v > chunkSize for k, v in groups.items()):
             return best_group, best_count
 
         # Find the best_group
         for k, v in groups.items():
-            if v > chunk_size:
+            if v > chunkSize:
                 continue
             if v > best_count:
                 best_group, best_count = k, v
@@ -103,11 +103,11 @@ def save_generator_outputs(
 
 def main(
     inpDir: Path,
-    outDir: Path,
     pattern: str,
     chunkSize: int,
     groupBy: str,
     outFormat: str,
+    outDir: Path,
 ):
 
     starttime = time.time()
@@ -172,9 +172,6 @@ if __name__ == "__main__":
         required=True,
     )
     parser.add_argument(
-        "--outDir", dest="outDir", type=str, help="Output collection", required=True
-    )
-    parser.add_argument(
         "--pattern",
         dest="pattern",
         type=str,
@@ -204,6 +201,9 @@ if __name__ == "__main__":
         help="Output Format of this plugin. It supports only two file-formats: CSV & feather",
         required=False,
     )
+    parser.add_argument(
+        "--outDir", dest="outDir", type=str, help="Output collection", required=True
+    )
 
     # # Parse the arguments
     args = parser.parse_args()
@@ -225,9 +225,9 @@ if __name__ == "__main__":
 
     main(
         inpDir=inpDir,
-        outDir=outDir,
         pattern=pattern,
         chunkSize=chunkSize,
         groupBy=groupBy,
         outFormat=outFormat,
+        outDir=outDir
     )

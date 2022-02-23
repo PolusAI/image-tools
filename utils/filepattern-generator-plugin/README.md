@@ -26,7 +26,7 @@ This plugin takes 5 input arguments and
 | Name          | Description                                                   | I/O    | Type          |
 |---------------|---------------------------------------------------------------|--------|---------------|
 | `--inpDir`    | Input image directory                                         | Input  | collection    |
-| `--outDir`    | Output collection                                             | Output | csvcollection |
+| `--outDir`    | Output collection                                             | Output | collection    |
 | `--pattern`   | Filepattern to parse image files                              | Input  | string        |
 | `--chunkSize` | Number of images to generate collective filepattern           | Input  | number        |
 | `--groupBy`   | Select a parameter to generate filepatterns in specific order | Input  | string        |
