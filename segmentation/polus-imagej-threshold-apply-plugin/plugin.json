@@ -3,7 +3,7 @@
   "version": "0.4.0",
   "title": "ImageJ threshold apply",
   "description": "This plugin applies a constant or manual threshold to an input collection.",
-  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
+  "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
@@ -14,8 +14,9 @@
       "name": "opName",
       "type": "enum",
       "options": {
-        "values": ["ApplyConstantThreshold",
-                    "ApplyManualThreshold"]
+        "values": [
+          "ApplyManualThreshold"
+        ]
       },
       "description": "Op overloading method to perform",
       "required": true
@@ -24,19 +25,13 @@
       "name": "inpDir",
       "type": "collection",
       "description": "Collection to be processed by this plugin",
-      "required": false
+      "required": true
     },
     {
-      "name": "constantThreshold",
+      "name": "threshold",
       "type": "number",
       "description": "The threshold value to be applied to the input",
-      "required": false
-    },
-    {
-      "name": "manualThreshold",
-      "type": "number",
-      "description": "The threshold value to be applied to the input",
-      "required": false
+      "required": true
     }
   ],
   "outputs": [
@@ -55,20 +50,12 @@
     {
       "key": "inputs.inpDir",
       "title": "inpDir",
-      "description": "Collection to be processed by this plugin",
-      "condition": "model.inputs.opName==ApplyConstantThreshold or model.inputs.opName==ApplyManualThreshold"
+      "description": "Collection to be processed by this plugin"
     },
     {
-      "key": "inputs.constantThreshold",
-      "title": "constantThreshold",
-      "description": "The threshold value to be applied to the input",
-      "condition": "model.inputs.opName==ApplyConstantThreshold"
-    },
-    {
-      "key": "inputs.manualThreshold",
-      "title": "manualThreshold",
-      "description": "The threshold value to be applied to the input",
-      "condition": "model.inputs.opName==ApplyManualThreshold"
+      "key": "inputs.threshold",
+      "title": "threshold",
+      "description": "The threshold value to be applied to the input"
     }
   ]
 }

@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-imagej-threshold-apply-plugin:${version}
+docker build . -t polusai/imagej-threshold-apply-plugin:${version}

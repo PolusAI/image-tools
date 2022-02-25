@@ -28,7 +28,6 @@ logger.setLevel(POLUS_LOG)
 def main(
     _opName: str,
     _in1: Path,
-    _in2: str,
     _threshold: str,
     _out: Path,
 ) -> None:
@@ -56,14 +55,12 @@ def main(
 
     # Validate opName
     opName_values = [
-        "ApplyConstantThreshold",
-        "ApplyManualThreshold",
+        "ApplyManualThreshold"
     ]
     assert _opName in opName_values, "opName must be one of {}".format(opName_values)
 
     # Validate in1
     in1_types = {
-        "ApplyConstantThreshold": "Iterable",
         "ApplyManualThreshold": "IterableInterval",
     }
 
@@ -83,16 +80,6 @@ def main(
         argument_types.append(None)
         args.append([None])
 
-    # Validate in2
-    in2_types = {
-        "ApplyConstantThreshold": "RealType",
-    }
-
-    # Check that all inputs are specified
-    if _in2 is None and _opName in list(in2_types.keys()):
-        raise ValueError("{} must be defined to run {}.".format("in2", _opName))
-    else:
-        in2 = None
 
     # Validate threshold
     threshold_types = {
@@ -111,7 +98,6 @@ def main(
 
     """ Set up the output """
     out_types = {
-        "ApplyConstantThreshold": "Iterable",
         "ApplyManualThreshold": "IterableInterval",
     }
 
@@ -123,18 +109,18 @@ def main(
                 # Load the first plane of image in in1 collection
                 logger.info("Processing image: {}".format(in1_path))
                 in1_br = BioReader(in1_path)
-
+                
                 # Convert to appropriate numpy array
                 in1 = ij_converter.to_java(
                     ij, np.squeeze(in1_br[:, :, 0:1, 0, 0]), in1_type
                 )
+                
                 metadata = in1_br.metadata
                 fname = in1_path.name
                 dtype = ij.py.dtype(in1)
+                
                 # Save the shape for out input
                 shape = ij.py.dims(in1)
-            if _in2 is not None:
-                in2 = ij_converter.to_java(ij, _in2, in2_types[_opName], dtype)
 
             if _threshold is not None:
                 threshold = ij_converter.to_java(
@@ -146,10 +132,9 @@ def main(
                 ij, np.zeros(shape=shape, dtype=dtype), "IterableInterval"
             )
 
-            logger.info("Running op...")
-            if _opName == "ApplyConstantThreshold":
-                out = ij.op().threshold().apply(out_input, in1, in2)
-            elif _opName == "ApplyManualThreshold":
+            logger.info("Running op...")      
+                
+            if _opName == "ApplyManualThreshold":
                 out = ij.op().threshold().apply(in1, threshold)
 
             logger.info("Completed op!")
@@ -202,14 +187,7 @@ if __name__ == "__main__":
         required=False,
     )
     parser.add_argument(
-        "--constantThreshold",
-        dest="in2",
-        type=str,
-        help="The threshold value to be applied to the input",
-        required=False,
-    )
-    parser.add_argument(
-        "--manualThreshold",
+        "--threshold",
         dest="threshold",
         type=str,
         help="The threshold value to be applied to the input",
@@ -231,14 +209,11 @@ if __name__ == "__main__":
     _in1 = Path(args.in1)
     logger.info("inpDir = {}".format(_in1))
 
-    _in2 = args.in2
-    logger.info("constantThreshold = {}".format(_in2))
-
     _threshold = args.threshold
-    logger.info("manualThreshold = {}".format(_threshold))
+    logger.info("threshold = {}".format(_threshold))
 
     # Output Args
     _out = Path(args.out)
     logger.info("outDir = {}".format(_out))
 
-    main(_opName=_opName, _in1=_in1, _in2=_in2, _threshold=_threshold, _out=_out)
+    main(_opName=_opName, _in1=_in1, _threshold=_threshold, _out=_out)

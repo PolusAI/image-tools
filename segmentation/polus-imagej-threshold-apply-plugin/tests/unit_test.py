@@ -185,28 +185,16 @@ class UnitTest(unittest.TestCase):
         # Get WIPP and ImageJ data types
         _opName = op
         _in1_wipp_types = {
-            "ApplyConstantThreshold": "collection",
-            "ApplyManualThreshold": "collection",
+            "ApplyManualThreshold": "collection"
         }
         _in1_imagej_types = {
-            "ApplyConstantThreshold": "Iterable",
-            "ApplyManualThreshold": "IterableInterval",
+            "ApplyManualThreshold": "IterableInterval"
         }
         if _in1_wipp_types.get(op, None) != "collection":
             method_call_types.update(
                 {
                     method: dtype
                     for method, dtype in _in1_imagej_types.items()
-                    if dtype in supported_data_types
-                }
-            )
-        _in2_wipp_types = {"ApplyConstantThreshold": "number"}
-        _in2_imagej_types = {"ApplyConstantThreshold": "RealType"}
-        if _in2_wipp_types.get(op, None) != "collection":
-            method_call_types.update(
-                {
-                    method: dtype
-                    for method, dtype in _in2_imagej_types.items()
                     if dtype in supported_data_types
                 }
             )
@@ -224,9 +212,6 @@ class UnitTest(unittest.TestCase):
         _in1 = self.generate_data(
             "in1", _in1_wipp_types.get(op, None), method_call_types.get(op, None)
         )
-        _in2 = self.generate_data(
-            "in2", _in2_wipp_types.get(op, None), method_call_types.get(op, None)
-        )
         _threshold = self.generate_data(
             "threshold",
             _threshold_wipp_types.get(op, None),
@@ -237,7 +222,7 @@ class UnitTest(unittest.TestCase):
         try:
             # Call the op
             main(
-                _opName=_opName, _in1=_in1, _in2=_in2, _threshold=_threshold, _out=_out
+                _opName=_opName, _in1=_in1, _threshold=_threshold, _out=_out
             )
             self.logger.info(
                 "SUCCESS: op: {} with option {} was successful\n".format(
