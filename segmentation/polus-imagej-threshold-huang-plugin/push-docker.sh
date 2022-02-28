@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker push polusai/polus-imagej-threshold-huang-plugin:${version}
+docker push polusai/imagej-threshold-huang-plugin:${version}
