@@ -6,7 +6,7 @@ datapath=$(readlink --canonicalize ../../data)
 # Inputs
 opName='ApplyThresholdMethod$Huang'
 inpDir=/data/input
-outDir=data/output
+outDir=/data/output
 
 # Output paths
 out=/data/output
