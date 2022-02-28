@@ -17,13 +17,13 @@
         "values": ["ApplyThresholdMethod$IJ1"]
       },
       "description": "Op overloading method to perform",
-      "required": false
+      "required": true
     },
     {
       "name": "inpDir",
       "type": "collection",
       "description": "The collection to be processed by this plugin",
-      "required": false
+      "required": true
     }
   ],
   "outputs": [
@@ -42,8 +42,7 @@
     {
       "key": "inputs.inpDir",
       "title": "inpDir",
-      "description": "The collection to be processed by this plugin",
-      "condition": "model.inputs.opName==ApplyThresholdMethod$IJ1"
+      "description": "The collection to be processed by this plugin"
     }
   ]
 }
