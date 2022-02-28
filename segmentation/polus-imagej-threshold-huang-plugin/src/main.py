@@ -134,7 +134,7 @@ if __name__=="__main__":
 
     ''' Setup Command Line Arguments '''
     logger.info("Parsing arguments...")
-    parser = argparse.ArgumentParser(prog='main', description='This plugin implements Huang's threshold method by Huang Wang.')
+    parser = argparse.ArgumentParser(prog='main', description="This plugin implements Huang's threshold method by Huang Wang.")
     
     # Add command-line argument for each of the input arguments
     parser.add_argument('--opName', dest='opName', type=str,
