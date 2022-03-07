@@ -546,7 +546,7 @@ class Plugin(WIPPPluginManifest):
     def __setattr__(self, name, value):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
             if name in self._io_keys:
-                logger.info(
+                logger.debug(
                     "Value of %s in %s set to %s"
                     % (name, self.__class__.__name__, value)
                 )
