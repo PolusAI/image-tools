@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker push polusai/polus-imagej-threshold-maxentropy-plugin:${version}
+docker push polusai/imagej-threshold-maxentropy-plugin:${version}
