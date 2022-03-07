@@ -3,7 +3,7 @@
 Implements Li’s Minimum Cross Entropy thresholding method based on the iterative 
 version of the algorithm. This is an iterative method to find the threshold 
 value which minimizes the cross entropy between the segmented image and the 
-orginal image as described in: Li, C. H., & Tam, P. K. S. (1998). An iterative 
+original image as described in: Li, C. H., & Tam, P. K. S. (1998). An iterative 
 algorithm for minimum cross entropy thresholding. Pattern Recognition Letters, 
 19(8), 771–776. [doi:10.1016/s0167-8655(98)00057-9 (PDF)](https://www.sciencedirect.com/science/article/abs/pii/S0167865598000579?via%3Dihub).
 
