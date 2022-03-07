@@ -14,5 +14,5 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             polusai/imagej-threshold-maxentropy-plugin:${version} \
             --opName ${opName} \
             --inpDir ${inpDir} \
-            --outDir ${out}
+            --outDir ${outDir}
             
