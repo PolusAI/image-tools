@@ -1,7 +1,7 @@
 # ImageJ threshold maxLikelihood
 
-Implements a maximum likelihood threshold method by Dempster, Laird, Rubin and 
-Glasbey:
+Implements a maximum likelihood threshold method using the [EM algorithm](https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm) 
+by Dempster, Laird, Rubin and Glasbey:
 
 A. P. Dempster, N. M. Laird, and D. B. Rubin, "Maximum likelihood from 
 incomplete data via the EM algorithm," Journal of the Royal Statistical Society, 
