@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t polusai/polus-imagej-threshold-mean-plugin:${version}
+docker build . -t polusai/imagej-threshold-mean-plugin:${version}
