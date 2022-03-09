@@ -17,20 +17,20 @@
         "values": ["ApplyThresholdMethod$Mean"]
       },
       "description": "Operation to perform",
-      "required": false
+      "required": true
     },
     {
       "name": "inpDir",
       "type": "collection",
       "description": "Collection to be processed by this plugin",
-      "required": false
+      "required": true
     }
   ],
   "outputs": [
     {
       "name": "outDir",
       "type": "collection",
-      "description": "Output colleciton"
+      "description": "Output collection"
     }
   ],
   "ui": [
@@ -42,8 +42,7 @@
     {
       "key": "inputs.inpDir",
       "title": "inpDir",
-      "description": "Collection to be processed by this plugin",
-      "condition": "model.inputs.opName==ApplyThresholdMethod$Mean"
+      "description": "Collection to be processed by this plugin"
     }
   ]
 }

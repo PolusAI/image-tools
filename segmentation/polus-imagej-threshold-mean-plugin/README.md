@@ -32,5 +32,5 @@ This plugin takes one input argument and one output argument:
 |---------------|-------------------------|--------|--------|
 | `--inpDir` | Collection to be processed by this plugin | Input | collection |
 | `--opName` | Operation to perform | Input | enum |
-| `--outDir` | Output colleciton | Output | collection |
+| `--outDir` | Output collection | Output | collection |
 

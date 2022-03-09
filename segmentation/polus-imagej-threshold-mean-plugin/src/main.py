@@ -161,7 +161,7 @@ if __name__ == "__main__":
 
     # Add command-line argument for each of the output arguments
     parser.add_argument(
-        "--outDir", dest="out", type=str, help="Output colleciton", required=True
+        "--outDir", dest="out", type=str, help="Output collection", required=True
     )
 
     """ Parse the arguments """
