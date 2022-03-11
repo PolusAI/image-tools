@@ -404,6 +404,7 @@ class Input(WippInput, IOBase):
 class Plugin(WIPPPluginManifest):
     """Required until json schema is fixed"""
 
+    manifest: dict
     version: Version
     inputs: typing.List[Input]
     outputs: typing.List[Output]
@@ -415,6 +416,8 @@ class Plugin(WIPPPluginManifest):
         allow_mutation = False
 
     def __init__(self, **data):
+
+        data["manifest"] = data.copy()
 
         data["id"] = uuid.uuid4()
 
@@ -439,10 +442,36 @@ class Plugin(WIPPPluginManifest):
     def organization(self):
         return self.containerId.split("/")[0]
 
+    @property
+    def config_file(self):
+        inp = {x.name: str(x.value) for x in self.inputs}
+        out = {x.name: str(x.value) for x in self.outputs}
+        config = {"inputs": inp, "outputs": out}
+        return config
+
+    def save_manifest(self, path: typing.Union[str, pathlib.Path], indent: int = 4):
+        with open(path, "w") as fw:
+            json.dump(self.manifest, fw, indent=indent)
+        logger.debug("Saved manifest to %s" % (path))
+
+    def save_config(self, path: typing.Union[str, pathlib.Path]):
+        with open(path, "w") as fw:
+            json.dump(self.config_file, fw)
+        logger.debug("Saved config to %s" % (path))
+
+    def load_config(self, path: typing.Union[str, pathlib.Path]):
+        with open(path, "r") as fw:
+            config = json.load(fw)
+        inp = config["inputs"]
+        out = config["outputs"]
+        for k, v in inp.items():
+            setattr(self, k, v)
+        for k, v in out.items():
+            setattr(self, k, v)
+        logger.debug("Loaded config from %s" % (path))
+
     def run(
-        self,
-        gpus: Union[None, str, int] = "all",
-        **kwargs,
+        self, gpus: Union[None, str, int] = "all", **kwargs,
     ):
 
         inp_dirs = []
@@ -591,8 +620,7 @@ def is_valid_manifest(plugin: dict) -> bool:
 
 
 def submit_plugin(
-    manifest: typing.Union[str, dict, pathlib.Path],
-    refresh: bool = False,
+    manifest: typing.Union[str, dict, pathlib.Path], refresh: bool = False,
 ) -> Plugin:
     """Parses a plugin and returns a Plugin object.
 
@@ -879,8 +907,7 @@ class Registry:
         self.password = password
 
     def get_current_schema(
-        self,
-        verify: bool = True,
+        self, verify: bool = True,
     ):
         """Return current schema in WIPP"""
         response = requests.get(
@@ -896,10 +923,7 @@ class Registry:
             response.raise_for_status()
 
     def upload_data(
-        self,
-        filepath,
-        schema_id,
-        verify: bool = True,
+        self, filepath, schema_id, verify: bool = True,
     ):
         """Upload data to registry"""
         with open(filepath, "r") as file_reader:
@@ -929,9 +953,7 @@ class Registry:
         return response.json()
 
     def publish_data(
-        self,
-        data,
-        verify: bool = True,
+        self, data, verify: bool = True,
     ):
         """Publish to public workspace"""
         data_publish_id = data["id"] + "/publish/"
@@ -955,10 +977,7 @@ class Registry:
         return response.json()
 
     def patch_resource(
-        self,
-        pid,
-        version,
-        verify: bool = True,
+        self, pid, version, verify: bool = True,
     ):
         """Patch resource."""
         # Get current version of the resource
