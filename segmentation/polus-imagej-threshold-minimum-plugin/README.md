@@ -1,6 +1,6 @@
 # ImageJ threshold minimum
 
-As descibed by [ImageJ](https://imagej.net/plugins/auto-threshold#minimum) this
+As described by [ImageJ](https://imagej.net/plugins/auto-threshold#minimum) this
 operation is similar to the Intermodes method, this assumes a bimodal histogram. 
 The histogram is iteratively smoothed using a running average of size 3, until 
 there are only two local maxima. The threshold value is then selected as the
