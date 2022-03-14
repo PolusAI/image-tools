@@ -13,6 +13,6 @@ outDir=/data/output
 docker run --mount type=bind,source=${datapath},target=/data/ \
             polusai/imagej-threshold-moments-plugin:${version} \
             --opName ${opName} \
-            --inpDir ${in1} \
-            --outDir ${out}
+            --inpDir ${inpDir} \
+            --outDir ${outDir}
             
