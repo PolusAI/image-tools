@@ -2,7 +2,7 @@
   "name": "ImageJ threshold moments",
   "version": "0.4.0",
   "title": "ImageJ threshold moments",
-  "description": "Tsai’s method attempts to preserve the moments of the original image in the thresholded result.",
+  "description": "Tsai's method attempts to preserve the moments of the original image in the thresholded result.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/labshare/polus-plugins",
@@ -17,13 +17,13 @@
         "values": ["ApplyThresholdMethod$Moments"]
       },
       "description": "Op overloading method to perform",
-      "required": false
+      "required": true
     },
     {
       "name": "inpDir",
       "type": "collection",
       "description": "Collection to be processed by this plugin",
-      "required": false
+      "required": true
     }
   ],
   "outputs": [
@@ -42,8 +42,7 @@
     {
       "key": "inputs.inpDir",
       "title": "inpDir",
-      "description": "Collection to be processed by this plugin",
-      "condition": "model.inputs.opName==ApplyThresholdMethod$Moments"
+      "description": "Collection to be processed by this plugin"
     }
   ]
 }
