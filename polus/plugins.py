@@ -442,35 +442,10 @@ class Plugin(WIPPPluginManifest):
     def organization(self):
         return self.containerId.split("/")[0]
 
-    @property
-    def _config_file(self):
-        inp = {x.name: str(x.value) for x in self.inputs}
-        out = {x.name: str(x.value) for x in self.outputs}
-        config = {"inputs": inp, "outputs": out}
-        return config
-
     def save_manifest(self, path: typing.Union[str, pathlib.Path], indent: int = 4):
         with open(path, "w") as fw:
             json.dump(self.manifest, fw, indent=indent)
         logger.debug("Saved manifest to %s" % (path))
-
-    def save_config(self, path: typing.Union[str, pathlib.Path]):
-        with open(path, "w") as fw:
-            json.dump(self._config_file, fw)
-        logger.debug("Saved config to %s" % (path))
-
-    def load_config(self, path: typing.Union[str, pathlib.Path]):
-        with open(path, "r") as fw:
-            config = json.load(fw)
-        inp = config["inputs"]
-        out = config["outputs"]
-        for k, v in inp.items():
-            if k in self._io_keys:
-                setattr(self, k, v)
-        for k, v in out.items():
-            if k in self._io_keys:
-                setattr(self, k, v)
-        logger.debug("Loaded config from %s" % (path))
 
     def run(
         self,
