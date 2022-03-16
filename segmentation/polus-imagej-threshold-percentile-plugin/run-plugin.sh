@@ -13,6 +13,6 @@ outDir=/data/output
 docker run --mount type=bind,source=${datapath},target=/data/ \
             polusai/imagej-threshold-percentile-plugin:${version} \
             --opName ${opName} \
-            --in1 ${inpDir} \
-            --out ${outDir}
+            --inpDir ${inpDir} \
+            --outDir ${outDir}
             
