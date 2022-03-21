@@ -11,10 +11,11 @@ import uuid
 import signal
 import random
 import requests
+import xmltodict
 from urllib.parse import urlparse, urljoin
 from alive_progress import alive_it
 
-from typing import Union
+from typing import Union, Optional
 from python_on_whales import docker
 
 from pydantic import BaseModel, Extra, errors, validator
@@ -902,14 +903,83 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
             _error_log(val_err, manifest, "update_nist_plugins")
 
 
-class Registry:
+class registry:
     """Class that contains methods to interact with the REST API of WIPP Registry."""
 
-    def __init__(self, registry_url: str, username: str, password: str):
+    def __init__(
+        self,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        registry_url: str = "https://wipp-registry.ci.aws.labshare.org",
+    ):
 
         self.registry_url = registry_url
         self.username = username
         self.password = password
+
+    def _parse_xml(xml: str):
+        d = xmltodict.parse(xml)["Resource"]["role"]["PluginManifest"][
+            "PluginManifestContent"
+        ]["#text"]
+        submit_plugin(json.loads(d))
+
+    def update_plugins(self, verify: bool = True):
+        url = self.registry_url + "/rest/data/query/"
+        headers = {"Content-type": "application/json"}
+        data = '{"query":{}}'
+        r = requests.post(url, headers=headers, data=data)
+        for r in r.json()["results"]:
+            try:
+                plugin = registry._parse_xml(r["xml_content"])
+
+                """ Parsing checks specific to polus-plugins """
+                error_list = []
+
+                # Check that plugin version matches container version tag
+                container_name, version = tuple(plugin.containerId.split(":"))
+                version = Version(version=version)
+                organization, container_name = tuple(container_name.split("/"))
+                try:
+                    assert (
+                        plugin.version == version
+                    ), f"containerId version ({version}) does not match plugin version ({plugin.version})"
+                except AssertionError as err:
+                    error_list.append(err)
+
+                # Check to see that the plugin is registered to Labshare
+                try:
+                    assert organization in [
+                        "polusai",
+                        "labshare",
+                    ], "All polus plugin containers must be under the Labshare organization."
+                except AssertionError as err:
+                    error_list.append(err)
+
+                # Checks for container name, they are somewhat related to our
+                # Jenkins build
+                try:
+                    assert container_name.startswith(
+                        "polus"
+                    ), "containerId name must begin with polus-"
+                except AssertionError as err:
+                    error_list.append(err)
+
+                try:
+                    assert container_name.endswith(
+                        "plugin"
+                    ), "containerId name must end with -plugin"
+                except AssertionError as err:
+                    error_list.append(err)
+
+                if len(error_list) > 0:
+                    raise ValidationError(error_list, plugin.__class__)
+
+            except ValidationError as val_err:
+                _error_log(val_err, manifest, "update_polus_plugins")
+
+            except KeyError as key_err:
+                # To Do
+                print("Invalid Format")
 
     def get_current_schema(
         self,
@@ -1024,4 +1094,5 @@ class Registry:
 #     content = repo.get_content(
 #         "plugin-manifest/schema/wipp-plugin-manifest-schema.json"
 #     )
+plugins.registry = registry
 _Plugins().refresh()  # calls the refresh method when library is imported
