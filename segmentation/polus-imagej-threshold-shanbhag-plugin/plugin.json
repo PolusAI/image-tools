@@ -7,7 +7,7 @@
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
-  "citation": "",
+  "citation": "Shanbhag, A. G. (1994). Utilization of Information Measure as a Means of Image Thresholding. CVGIP: Graphical Models and Image Processing, 56(5), 414-419. doi:10.1006/cgip.1994.1037",
   "containerId": "polusai/imagej-threshold-shanbhag-plugin:0.4.0",
   "inputs": [
     {
@@ -17,13 +17,13 @@
         "values": ["ApplyThresholdMethod$Shanbhag"]
       },
       "description": "Operation to perform",
-      "required": false
+      "required": true
     },
     {
       "name": "inpDir",
       "type": "collection",
       "description": "Collection to be processed by this plugin",
-      "required": false
+      "required": true
     }
   ],
   "outputs": [
@@ -42,8 +42,7 @@
     {
       "key": "inputs.inpDir",
       "title": "inpDir",
-      "description": "Collection to be processed by this plugin",
-      "condition": "model.inputs.opName==ApplyThresholdMethod$Shanbhag"
+      "description": "Collection to be processed by this plugin"
     }
   ]
 }
