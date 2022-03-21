@@ -1,6 +1,7 @@
 # ImageJ threshold renyiEntropy
 
-Uses Renyi entropy method by Kapur, Sahoo, to threshold an input collection. 
+Uses Renyi entropy method by Kapur, Sahoo, to threshold an input collection as
+described by [ImageJ](https://imagej.net/plugins/auto-threshold#renyientropy). 
 This method calculates the entropy for the background and foreground objects and 
 finds the threshold value which maximizes the sum of theses entropy values. This 
 method is similar to the MaxEntropy method.
