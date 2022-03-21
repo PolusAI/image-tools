@@ -8,10 +8,10 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/{{ cookiecutter.docker_repo }}:{{ cookiecutter.version }}",
+  "containerId": "polusai/{{ cookiecutter.project_slug }}:{{ cookiecutter.version }}",
   "inputs": [{% for inp,val in cookiecutter._inputs.items() %}
     {
-      "name": "{{ val.title }}",
+      "name": "{{ inp }}",
       "type": "{{ val.type }}",
     {%- if val.type=='enum' %}
       "options": {
@@ -20,27 +20,19 @@
       },
     {%- endif %}
       "description": "{{ val.description }}",
-      "required": {{ val.required.lower() }}{%- if val.type=='array' %},
-      "options":{
-        "items": {
-          "type": "string",
-          "title": "{{ val.description }}",
-          "widget": "string"
-        }
-      }
-      {%- endif %}
+      "required": {{ val.required.lower() }}
     }{% if not loop.last %},{% endif %}{% endfor %}
   ],
   "outputs": [{% for out,val in cookiecutter._outputs.items() %}
     {
-      "name": "{{ val.title }}",
+      "name": "{{ out }}",
       "type": "{{ val.type }}",
       "description": "{{ val.description }}"
     }{% if not loop.last %},{% endif %}{% endfor %}
   ],
   "ui": [{% for inp,val in cookiecutter._inputs.items() %}
     {
-      "key": "inputs.{{ val.title }}",
+      "key": "inputs.{{ inp }}",
       "title": "{{ val.title }}",
       "description": "{{ val.description }}"{%- if inp!='opName' %},
       "condition": "{% for v in val.call_types %}model.inputs.opName=={{v}}{% if not loop.last %} or {% endif %}{% endfor %}"
