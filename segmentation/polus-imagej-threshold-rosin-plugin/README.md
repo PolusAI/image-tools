@@ -1,7 +1,7 @@
 # ImageJ threshold rosin
 
 Implements Rosin's thresholding method for unimodal distributions. This method
-assumes that the histogram of the image has a unimodal distirubtion.
+assumes that the histogram of the image has a unimodal distirbution.
 
 Rosin, Paul L. Unimodal thresholding. Pattern recognition 34.11 (2001): 
 2083-2096. [doi:10.1016/S0031-3203(00)00136-9](https://doi.org/10.1016/S0031-3203(00)00136-9)
