@@ -1,0 +1,2 @@
+filepattern==1.4.7
+pandas==1.4.0
