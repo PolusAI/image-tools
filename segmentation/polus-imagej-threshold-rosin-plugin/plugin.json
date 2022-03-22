@@ -2,12 +2,12 @@
   "name": "ImageJ threshold rosin",
   "version": "0.4.0",
   "title": "ImageJ threshold rosin",
-  "description": "Implements Rosins thresholding method for unimodal distributions.",
+  "description": "Implements Rosin's thresholding method for unimodal distributions.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
-  "citation": "",
+  "citation": "Rosin, Paul L. Unimodal thresholding. Pattern recognition 34.11 (2001): 2083-2096.",
   "containerId": "polusai/imagej-threshold-rosin-plugin:0.4.0",
   "inputs": [
     {
@@ -17,13 +17,13 @@
         "values": ["ApplyThresholdMethod$Rosin"]
       },
       "description": "Operation to perform",
-      "required": false
+      "required": true
     },
     {
       "name": "inpDir",
       "type": "collection",
       "description": "Collection to be processed by this plugin",
-      "required": false
+      "required": true
     }
   ],
   "outputs": [
@@ -42,8 +42,7 @@
     {
       "key": "inputs.inpDir",
       "title": "inpDir",
-      "description": "Collection to be processed by this plugin",
-      "condition": "model.inputs.opName==ApplyThresholdMethod$Rosin"
+      "description": "Collection to be processed by this plugin"
     }
   ]
 }

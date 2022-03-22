@@ -144,7 +144,7 @@ if __name__ == "__main__":
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(
         prog="main",
-        description="Implements Rosins thresholding method for unimodal distributions.",
+        description="Implements Rosin's thresholding method for unimodal distributions.",
     )
 
     # Add command-line argument for each of the input arguments
