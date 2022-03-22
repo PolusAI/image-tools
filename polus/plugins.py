@@ -921,16 +921,18 @@ class registry:
         d = xmltodict.parse(xml)["Resource"]["role"]["PluginManifest"][
             "PluginManifestContent"
         ]["#text"]
-        submit_plugin(json.loads(d))
+        return json.loads(d)
 
     def update_plugins(self, verify: bool = True):
         url = self.registry_url + "/rest/data/query/"
         headers = {"Content-type": "application/json"}
         data = '{"query":{}}'
         r = requests.post(url, headers=headers, data=data)
-        for r in r.json()["results"]:
+        valid, invalid = 0, {}
+        for r in alive_it(r.json()["results"], title="Updating Plugins from WIPP"):
             try:
-                plugin = registry._parse_xml(r["xml_content"])
+                manifest = registry._parse_xml(r["xml_content"])
+                plugin = submit_plugin(manifest)
 
                 """ Parsing checks specific to polus-plugins """
                 error_list = []
@@ -973,13 +975,26 @@ class registry:
 
                 if len(error_list) > 0:
                     raise ValidationError(error_list, plugin.__class__)
+                valid += 1
 
             except ValidationError as val_err:
-                _error_log(val_err, manifest, "update_polus_plugins")
+                _error_log(val_err, manifest, "registry.update_plugins")
 
             except KeyError as key_err:
-                # To Do
-                print("Invalid Format")
+                invalid.update({r["title"]: "Invalid format in WIPP"})
+
+            except BaseException as err:
+                invalid.update({r["title"]: err.args[0]})
+
+            finally:
+                if len(invalid) > 0:
+                    self.invalid = invalid
+                    logger.debug(
+                        "Submitted %s plugins successfully. See registry.invalid to check errors in unsubmitted plugins"
+                        % (valid)
+                    )
+                logger.debug("Submitted %s plugins successfully." % (valid))
+                plugins.refresh()
 
     def get_current_schema(
         self,
