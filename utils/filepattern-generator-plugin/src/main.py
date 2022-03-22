@@ -71,13 +71,12 @@ def get_grouping(
 def save_generator_outputs(
     x: Dict[str, int], outDir: Path
 ):
-    """Convert dictionary of filepatterns and number of image files which can be parsed with each filepattern to csv or feather file
+    """Convert dictionary of filepatterns and number of image files which can be parsed with each filepattern to json file
     Args:
         x (Dict): A dictionary of filepatterns and number of image files which can be parsed with each filepattern
         outDir (Path): Path to save the outputs
-        outFormat (str):Output Format of collective filepatterns. Only Supports (csv and feather) file format.
     Returns:
-        CSV/Feather format file
+        json file with array of file patterns
     """
     data = json.loads('{"filePatterns": []}')
     with open(os.path.join(outDir, "file_patterns.json"), "w") as cwlout:
