@@ -927,7 +927,10 @@ class registry:
         url = self.registry_url + "/rest/data/query/"
         headers = {"Content-type": "application/json"}
         data = '{"query":{}}'
-        r = requests.post(url, headers=headers, data=data)
+        if self.username and self.password:
+            r = requests.post(url, headers=headers, data=data, auth=(self.username, self.password)) # authenticated request
+        else:
+            r = requests.post(url, headers=headers, data=data)
         valid, invalid = 0, {}
         for r in alive_it(r.json()["results"], title="Updating Plugins from WIPP"):
             try:
