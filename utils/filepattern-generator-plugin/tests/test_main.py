@@ -41,7 +41,7 @@ class Test_Filepattern_Generator(unittest.TestCase):
 
     def test_generated_json_output(self):
         save_generator_outputs(self.data, outDir)
-        with open(outDir.joinpath('cwl.output.json'), "r") as read_file:
+        with open(outDir.joinpath('file_patterns.json'), "r") as read_file:
             data = json.load(read_file)
             file_pattern = data["filePatterns"]
             self.assertTrue(file_pattern[0]=="p00_x01_y{rr}_wx0_wy0_c{t}.ome.tif")

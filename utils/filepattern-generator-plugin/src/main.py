@@ -1,4 +1,4 @@
-import argparse, logging, os, time, csv, filepattern
+import argparse, logging, os, time, filepattern
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 from itertools import combinations
