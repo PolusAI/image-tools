@@ -928,7 +928,9 @@ class registry:
         headers = {"Content-type": "application/json"}
         data = '{"query": {"$or":[{"Resource.role.type":"Plugin"},{"Resource.role.type.#text":"Plugin"}]}}'
         if self.username and self.password:
-            r = requests.post(url, headers=headers, data=data, auth=(self.username, self.password)) # authenticated request
+            r = requests.post(
+                url, headers=headers, data=data, auth=(self.username, self.password)
+            )  # authenticated request
         else:
             r = requests.post(url, headers=headers, data=data)
         valid, invalid = 0, {}
