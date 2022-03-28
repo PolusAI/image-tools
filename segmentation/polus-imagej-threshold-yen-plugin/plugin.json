@@ -17,21 +17,13 @@
         "values": ["ApplyThresholdMethod$Yen"]
       },
       "description": "Operation to perform",
-<<<<<<< HEAD
       "required": true
-=======
-      "required": false
->>>>>>> Commit imagej-threshold-yen-plugin after UI generation
     },
     {
       "name": "inpDir",
       "type": "collection",
       "description": "Collection to be processed by this plugin",
-<<<<<<< HEAD
       "required": true
-=======
-      "required": false
->>>>>>> Commit imagej-threshold-yen-plugin after UI generation
     }
   ],
   "outputs": [
