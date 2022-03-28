@@ -1,0 +1,49 @@
+{
+  "name": "ImageJ transform flatIterableView",
+  "version": "0.4.0",
+  "title": "ImageJ transform flatIterableView",
+  "description": "Transforms input image into a flatIterableView object",
+  "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-transform-flatiterableview-plugin:0.4.0",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": ["DefaultFlatIterableView"]
+      },
+      "description": "Operation to perform",
+      "required": false
+    },
+    {
+      "name": "inpDIr",
+      "type": "collection",
+      "description": "Collection to be processed by this plugin",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "opName",
+      "description": "Operation to perform"
+    },
+    {
+      "key": "inputs.inpDIr",
+      "title": "inpDIr",
+      "description": "Collection to be processed by this plugin",
+      "condition": "model.inputs.opName==DefaultFlatIterableView"
+    }
+  ]
+}
