@@ -38,5 +38,6 @@ setup(
         "pydantic>=1.8.2",
         "python_on_whales>=0.34.0",
         "alive-progress>=2.1.0",
+        "xmltodict>=0.12.0",
     ],
 )
