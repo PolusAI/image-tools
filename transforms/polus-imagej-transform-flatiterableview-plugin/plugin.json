@@ -17,13 +17,13 @@
         "values": ["DefaultFlatIterableView"]
       },
       "description": "Operation to perform",
-      "required": false
+      "required": true
     },
     {
       "name": "inpDIr",
       "type": "collection",
       "description": "Collection to be processed by this plugin",
-      "required": false
+      "required": true
     }
   ],
   "outputs": [
@@ -42,8 +42,7 @@
     {
       "key": "inputs.inpDIr",
       "title": "inpDIr",
-      "description": "Collection to be processed by this plugin",
-      "condition": "model.inputs.opName==DefaultFlatIterableView"
+      "description": "Collection to be processed by this plugin"
     }
   ]
 }

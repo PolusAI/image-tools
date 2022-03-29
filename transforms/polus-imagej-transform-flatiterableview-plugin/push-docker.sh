@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker push polusai/polus-imagej-transform-flatiterableview-plugin:${version}
+docker push polusai/imagej-transform-flatiterableview-plugin:${version}
