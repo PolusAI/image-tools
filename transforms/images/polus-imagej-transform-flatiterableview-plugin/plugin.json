@@ -20,7 +20,7 @@
       "required": true
     },
     {
-      "name": "inpDIr",
+      "name": "inpDir",
       "type": "collection",
       "description": "Collection to be processed by this plugin",
       "required": true
@@ -40,8 +40,8 @@
       "description": "Operation to perform"
     },
     {
-      "key": "inputs.inpDIr",
-      "title": "inpDIr",
+      "key": "inputs.inpDir",
+      "title": "inpDir",
       "description": "Collection to be processed by this plugin"
     }
   ]

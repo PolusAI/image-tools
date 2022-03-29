@@ -151,7 +151,7 @@ if __name__ == "__main__":
         "--opName", dest="opName", type=str, help="Operation to perform", required=False
     )
     parser.add_argument(
-        "--inpDIr",
+        "--inpDir",
         dest="in1",
         type=str,
         help="Collection to be processed by this plugin",
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     logger.info("opName = {}".format(_opName))
 
     _in1 = Path(args.in1)
-    logger.info("inpDIr = {}".format(_in1))
+    logger.info("inpDir = {}".format(_in1))
 
     # Output Args
     _out = Path(args.out)
