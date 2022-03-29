@@ -8,7 +8,7 @@ with open("./polus/_plugins/VERSION", "r") as fh:
     with open("./polus/_plugins/VERSION", "w") as fw:
         fw.write(version)
 
-package_data = ["_plugins/VERSION"]
+package_data = ["_plugins/VERSION", "manifests/*"]
 
 setup(
     name="polus-plugins",
