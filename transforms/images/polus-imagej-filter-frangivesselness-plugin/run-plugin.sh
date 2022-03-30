@@ -1,24 +1,23 @@
 #!/bin/bash
 
 version=$(<VERSION)
-datapath=$(readlink --canonicalize ../data)
+datapath=$(readlink --canonicalize ../../../data)
 
 # Inputs
-opName=
+opName='DefaultFrangi'
 out_input=/data/input
-in1=/data/input
-spacing=
-scale=
+inpDir=/data/input
+spacing='1,1'
+scale=1
 
 # Output paths
-out=/data/output
+outDir=/data/output
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
-            polusai/polus-imagej-filter-frangivesselness-plugin:${version} \
+            polusai/imagej-filter-frangivesselness-plugin:${version} \
             --opName ${opName} \
-            --out_input ${out_input} \
-            --in1 ${in1} \
+            --inpDir ${inpDir} \
             --spacing ${spacing} \
             --scale ${scale} \
-            --out ${out}
-            
+            --outDir ${outDir}
+     

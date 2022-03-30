@@ -118,9 +118,9 @@ JAVA_CONVERT.update(
     }
 )
 JAVA_CONVERT.update({t: lambda s, t, st: PRIMITIVES[t](float(s)) for t in SCALARS})
-JAVA_CONVERT.update(
-    {t: lambda s, t, st: IMGLYB_PRIMITIVES[str(st)](s) for t in SCALARS}
-)
+# JAVA_CONVERT.update(
+#     {t: lambda s, t, st: IMGLYB_PRIMITIVES[str(st)](int(s)) for t in SCALARS}
+# )
 JAVA_CONVERT.update(
     {
         t: lambda s, t, st: PRIMITIVE_FLOAT_ARRAYS[t](
