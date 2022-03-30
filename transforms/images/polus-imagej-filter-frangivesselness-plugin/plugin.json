@@ -7,7 +7,7 @@
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
-  "citation": "",
+  "citation": "Frangi, A. F., Niessen, W. J., Vincken, K. L., & Viergever, M. A. (1998). Multiscale vessel enhancement filtering. In Medical Image Computing and Computer-Assisted Intervention — MICCAI'98 (pp. 130-137). Springer Berlin Heidelberg. doi:10.1007/bfb0056195",
   "containerId": "polusai/imagej-filter-frangivesselness-plugin:0.4.0",
   "inputs": [
     {
@@ -17,19 +17,19 @@
         "values": ["DefaultFrangi"]
       },
       "description": "Operation to perform",
-      "required": false
+      "required": true
     },
     {
       "name": "inpDir",
       "type": "collection",
       "description": "Collection to be processed by this plugin",
-      "required": false
+      "required": true
     },
     {
       "name": "spacing",
       "type": "array",
       "description": "The physical distance between data points in the  image, can vary for each dimension of the image.",
-      "required": false,
+      "required": true,
       "options":{
         "items": {
           "type": "string",
@@ -42,7 +42,7 @@
       "name": "scale",
       "type": "number",
       "description": "The input collection scale",
-      "required": false
+      "required": true
     }
   ],
   "outputs": [
@@ -61,20 +61,17 @@
     {
       "key": "inputs.inpDir",
       "title": "inpDir",
-      "description": "Collection to be processed by this plugin",
-      "condition": "model.inputs.opName==DefaultFrangi"
+      "description": "Collection to be processed by this plugin"
     },
     {
       "key": "inputs.spacing",
       "title": "spacing",
-      "description": "The physical distance between data points in the  image, can vary for each dimension of the image.",
-      "condition": "model.inputs.opName==DefaultFrangi"
+      "description": "The physical distance between data points in the  image, can vary for each dimension of the image."
     },
     {
       "key": "inputs.scale",
       "title": "scale",
-      "description": "The input collection scale",
-      "condition": "model.inputs.opName==DefaultFrangi"
+      "description": "The input collection scale"
     }
   ]
 }
