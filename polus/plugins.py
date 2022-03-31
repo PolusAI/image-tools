@@ -1013,6 +1013,33 @@ class registry:
         query: Optional[str] = None,
         verify: bool = True,
     ):
+        """Query Plugins in WIPP Registry.
+
+        This function executes queries for Plugins in the WIPP Registry.
+
+        Args:
+            title:
+                title of the plugin to query.
+                Example: "OME Tiled Tiff Converter"
+            version:
+                version of the plugins to query.
+                Must follow semantic versioning. Example: "1.1.0"
+            title_contains:
+                keyword that must be part of the title of plugins to query.
+                Example: "Converter" will return all plugins with the word "Converter" in their title
+            contains:
+                keyword that must be part of the description of plugins to query.
+                Example: "bioformats" will return all plugins with the word "bioformats" in their description
+            query_all: if True it will override any other parameter and will return all plugins
+            advanced:
+                if True it will override any other parameter.
+                `query` must be included
+            query: query to execute. This query must be in MongoDB format
+            verify: SSL verification. Default is True
+
+        Returns:
+            An array of the manifests of the Plugins returned by the query.
+        """
 
         url = self.registry_url + "/rest/data/query/"
         headers = {"Content-type": "application/json"}
