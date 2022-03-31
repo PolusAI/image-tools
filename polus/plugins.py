@@ -24,6 +24,7 @@ import github
 from polus._plugins._plugin_model import Input as WippInput
 from polus._plugins._plugin_model import Output as WippOutput
 from polus._plugins._plugin_model import WIPPPluginManifest
+from polus._plugins._registry import _generate_query
 
 """
 Set up logging for the module
@@ -1000,6 +1001,38 @@ class registry:
                     )
                 logger.debug("Submitted %s plugins successfully." % (valid))
                 plugins.refresh()
+
+    def query(
+        self,
+        title: Optional[str] = None,
+        version: Optional[str] = None,
+        title_contains: Optional[str] = None,
+        contains: Optional[str] = None,
+        query_all: bool = False,
+        advanced: bool = False,
+        query: Optional[str] = None,
+        verify: bool = True,
+    ):
+
+        url = self.registry_url + "/rest/data/query/"
+        headers = {"Content-type": "application/json"}
+        query = _generate_query(
+            title, version, title_contains, contains, query_all, advanced, query, verify
+        )
+
+        data = '{"query": %s}' % str(query).replace("'", '"')
+
+        if self.username and self.password:
+            r = requests.post(
+                url,
+                headers=headers,
+                data=data,
+                auth=(self.username, self.password),
+                verify=verify,
+            )  # authenticated request
+        else:
+            r = requests.post(url, headers=headers, data=data, verify=verify)
+        return [registry._parse_xml(x["xml_content"]) for x in r.json()["results"]]
 
     def get_current_schema(
         self,
