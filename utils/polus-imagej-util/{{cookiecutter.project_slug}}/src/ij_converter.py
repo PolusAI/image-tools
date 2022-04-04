@@ -30,29 +30,15 @@ ABSTRACT_SCALARS = [
     "RealType",
 ]
 
-SCALARS = [
-    "double",
-    "float",
-    "long",
-    "int",
-    "short",
-    "char",
-    "byte",
-    "boolean",
-]
-
-FLOAT_SCALARS = [
+FLOAT_PRIMITIVES = [
     "double",
     "float",
     "long"
 ]
 
-INT_SCALARS = [
+INT_PRIMITIVES = [
     "int",
-    "short",
-    "char",
-    "byte",
-    "boolean",
+    "short"
 ]
 
 CHAR_PRIMITIVES = [
@@ -68,8 +54,8 @@ BOOL_PRIMITIVES = [
 ]
 
 # Recognize array objects as primitive objects + '[]'
-FLOAT_ARRAYS = [s + "[]" for s in FLOAT_SCALARS]
-INT_ARRAYS = [s + "[]" for s in INT_SCALARS]
+FLOAT_ARRAYS = [s + "[]" for s in FLOAT_PRIMITIVES]
+INT_ARRAYS = [s + "[]" for s in INT_PRIMITIVES]
 CHAR_ARRAYS = [s + "[]" for s in CHAR_PRIMITIVES]
 BYTE_ARRAYS = [s + "[]" for s in BYTE_PRIMITIVES]
 BOOL_ARRAYS = [s + "[]" for s in BOOL_PRIMITIVES]
@@ -131,9 +117,33 @@ JAVA_CONVERT.update(
         for t in ABSTRACT_SCALARS
     }
 )
+# Older method for converting primitive scalars with imglyb as opposed to jpype
+# JAVA_CONVERT.update({
+#     t: lambda s,t,st: IMGLYB_PRIMITIVES[str(st)](s) for t in SCALARS
+# })
 JAVA_CONVERT.update(
     {
-        t: lambda s, t, st: PRIMITIVES[t](float(s)) for t in SCALARS
+        t: lambda s, t, st: PRIMITIVES[t](float(s)) for t in FLOAT_PRIMITIVES
+        }
+)
+JAVA_CONVERT.update(
+    {
+        t: lambda s, t, st: PRIMITIVES[t](int(s)) for t in INT_PRIMITIVES
+        }
+)
+JAVA_CONVERT.update(
+    {
+        t: lambda s, t, st: PRIMITIVES[t](s) for t in CHAR_PRIMITIVES
+        }
+)
+JAVA_CONVERT.update(
+    {
+        t: lambda s, t, st: PRIMITIVES[t](np.int8(s)) for t in BYTE_PRIMITIVES
+        }
+)
+JAVA_CONVERT.update(
+    {
+        t: lambda s, t, st: PRIMITIVES[t](bool(s)) for t in BOOL_PRIMITIVES
         }
 )
 JAVA_CONVERT.update(
