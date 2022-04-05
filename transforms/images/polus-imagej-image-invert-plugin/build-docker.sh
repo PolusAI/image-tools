@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-imagej-image-invert-plugin:${version}
+docker build . -t polusai/imagej-image-invert-plugin:${version}

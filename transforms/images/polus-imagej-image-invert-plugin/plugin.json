@@ -18,13 +18,13 @@
                     "InvertII"]
       },
       "description": "Op overloading method to perform",
-      "required": false
+      "required": true
     },
     {
       "name": "inpDir",
       "type": "collection",
       "description": "Collection to be processed by this plugin",
-      "required": false
+      "required": true
     }
   ],
   "outputs": [
@@ -43,8 +43,7 @@
     {
       "key": "inputs.inpDir",
       "title": "inpDir",
-      "description": "Collection to be processed by this plugin",
-      "condition": "model.inputs.opName==InvertIIInteger or model.inputs.opName==InvertII"
+      "description": "Collection to be processed by this plugin"
     }
   ]
 }
