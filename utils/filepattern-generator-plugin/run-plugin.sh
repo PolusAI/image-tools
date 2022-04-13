@@ -9,7 +9,6 @@ outDir=/data/path_to_output
 pattern='p0{r}_x{x+}_y{y+}_wx{t}_wy{p}_c{c}.ome.tif'
 chunkSize=50
 groupBy='c'
-outFormat='csv'
 
 
 
@@ -25,5 +24,4 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --pattern ${pattern} \
             --chunkSize ${chunkSize} \
             --groupBy ${groupBy} \
-            --outFormat ${outFormat} 
             

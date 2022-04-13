@@ -19,7 +19,7 @@ def get_grouping(
         groupBy (str, optional): Specify variable to group image filenames
         chunk_size (str, optional): Number of images to generate collective filepattern
     Returns:
-        variables for grouping image filenames, count 
+        variables for grouping image filenames, count
     """
 
     fp = filepattern.FilePattern(inpDir, pattern)
@@ -42,7 +42,7 @@ def get_grouping(
         count *= counts[v]
     if count >= chunkSize:
         return groupBy, count
-    best_group, best_count = groupBy,count
+    best_group, best_count = groupBy, count
 
     # Search for a combination of `variables` that give a value close to the chunk_size
     variables = [v for v in fp.variables if v not in groupBy]
@@ -68,9 +68,7 @@ def get_grouping(
     return best_group, best_count
 
 
-def save_generator_outputs(
-    x: Dict[str, int], outDir: Path
-):
+def save_generator_outputs(x: Dict[str, int], outDir: Path):
     """Convert dictionary of filepatterns and number of image files which can be parsed with each filepattern to json file
     Args:
         x (Dict): A dictionary of filepatterns and number of image files which can be parsed with each filepattern
@@ -81,7 +79,7 @@ def save_generator_outputs(
     data = json.loads('{"filePatterns": []}')
     with open(os.path.join(outDir, "file_patterns.json"), "w") as cwlout:
         for key, value in x.items():
-            data['filePatterns'].append(key)
+            data["filePatterns"].append(key)
         json.dump(data, cwlout)
 
     return
@@ -202,5 +200,5 @@ if __name__ == "__main__":
         pattern=pattern,
         chunkSize=chunkSize,
         groupBy=groupBy,
-        outDir=outDir
+        outDir=outDir,
     )
