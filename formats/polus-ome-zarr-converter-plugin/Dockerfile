@@ -15,4 +15,4 @@ COPY src ${EXEC_DIR}/
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
-ENTRYPOINT ["python3", "main.py"]
+CMD ["python3", "/opt/executables/main.py"]
