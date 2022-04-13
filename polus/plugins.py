@@ -24,7 +24,8 @@ import github
 from polus._plugins._plugin_model import Input as WippInput
 from polus._plugins._plugin_model import Output as WippOutput
 from polus._plugins._plugin_model import WIPPPluginManifest
-from polus._plugins._registry import _generate_query
+from polus._plugins._registry import _generate_query, _to_xml, FailedToPublish
+from requests.exceptions import HTTPError
 
 """
 Set up logging for the module
@@ -1066,50 +1067,76 @@ class registry:
         verify: bool = True,
     ):
         """Return current schema in WIPP"""
-        response = requests.get(
+        r = requests.get(
             urljoin(
                 self.registry_url,
                 "rest/template-version-manager/global/?title=res-md.xsd",
             ),
             verify=verify,
         )
-        if response.ok:
-            return response.json()[0]["current"]
+        if r.ok:
+            return r.json()[0]["current"]
         else:
-            response.raise_for_status()
+            r.raise_for_status()
 
-    def upload_data(
+    def upload(
         self,
-        filepath,
-        schema_id,
+        plugin: Plugin,
+        author: Optional[str] = None,
+        email: Optional[str] = None,
+        publish: bool = True,
         verify: bool = True,
     ):
-        """Upload data to registry"""
-        with open(filepath, "r") as file_reader:
-            xml_content = file_reader.read()
+        manifest = plugin.manifest
+
+        xml_content = _to_xml(manifest, author, email)
+
+        schema_id = self.get_current_schema()
 
         data = {
-            "title": basename(filepath),
+            "title": manifest["name"],
             "template": schema_id,
             "xml_content": xml_content,
         }
 
-        response = requests.post(
-            urljoin(self.registry_url, "rest/data/"),
-            data,
-            auth=(self.username, self.password),
-            verify=verify,
-        )
-        response_code = response.status_code
+        url = self.registry_url + "/rest/data/"
+        headers = {"Content-type": "application/json"}
+        if self.username and self.password:
+            r = requests.post(
+                url,
+                headers=headers,
+                data=json.dumps(data),
+                auth=(self.username, self.password),
+                verify=verify,
+            )  # authenticated request
+        else:
+            r = requests.post(url, headers=headers, data=data, verify=verify)
+
+        response_code = r.status_code
 
         if response_code != 201:
             print(
                 "Error uploading file (%s), code %s"
                 % (data["title"], str(response_code))
             )
-            response.raise_for_status()
+            r.raise_for_status()
+        if publish:
+            _id = r.json()["id"]
+            _purl = url + _id + "/publish/"
+            r2 = requests.patch(
+                _purl,
+                headers=headers,
+                auth=(self.username, self.password),
+                verify=verify,
+            )
+            try:
+                r2.raise_for_status()
+            except HTTPError as err:
+                raise FailedToPublish(
+                    "Failed to publish %s with id %s" % (data["title"], _id)
+                ) from err
 
-        return response.json()
+        return "Successfully uploaded %s" % data["title"]
 
     def publish_data(
         self,
