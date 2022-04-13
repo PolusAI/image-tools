@@ -29,7 +29,7 @@ This plugin takes 5 input arguments and
 | `--pattern`   | Filepattern to parse image files                              | Input  | string        |
 | `--chunkSize` | Number of images to generate collective filepattern           | Input  | number        |
 | `--groupBy`   | Select a parameter to generate filepatterns in specific order | Input  | string        |
-| `--outDir`    | Output collection                                             | Output | genericData    |
+| `--outDir`    | Output generic collection                                     | Output | genericData    |
 
 
 
