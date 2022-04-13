@@ -140,12 +140,12 @@ if __name__ == "__main__":
     logger = logging.getLogger("main")
     logger.setLevel(POLUS_LOG)
 
-    # ''' Argument parsing '''
+    # Argument parsing
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(
         prog="main", description="Filepattern generator Plugin"
     )
-    #   # Input arguments
+    # Input arguments
     parser.add_argument(
         "--inpDir",
         dest="inpDir",
@@ -179,7 +179,7 @@ if __name__ == "__main__":
         "--outDir", dest="outDir", type=str, help="Output collection", required=True
     )
 
-    # # Parse the arguments
+    # Parse the arguments
     args = parser.parse_args()
     inpDir = Path(args.inpDir)
 
