@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "labshare/polus-recycle-vector-plugin:1.5.1",
+  "containerId": "labshare/polus-recycle-vector-plugin:compute-1.5.1",
   "inputs": [
 
     {
