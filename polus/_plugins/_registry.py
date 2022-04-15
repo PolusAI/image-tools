@@ -7,6 +7,10 @@ class FailedToPublish(Exception):
     pass
 
 
+class MissingUserInfo(Exception):
+    pass
+
+
 def _generate_query(
     title,
     version,

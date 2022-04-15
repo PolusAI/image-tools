@@ -24,7 +24,12 @@ import github
 from polus._plugins._plugin_model import Input as WippInput
 from polus._plugins._plugin_model import Output as WippOutput
 from polus._plugins._plugin_model import WIPPPluginManifest
-from polus._plugins._registry import _generate_query, _to_xml, FailedToPublish
+from polus._plugins._registry import (
+    _generate_query,
+    _to_xml,
+    FailedToPublish,
+    MissingUserInfo,
+)
 from requests.exceptions import HTTPError
 
 """
@@ -1036,7 +1041,7 @@ class registry:
                 if True it will override any other parameter.
                 `query` must be included
             query: query to execute. This query must be in MongoDB format
-            verify: SSL verification. Default is True
+            verify: SSL verification. Default is `True`
 
         Returns:
             An array of the manifests of the Plugins returned by the query.
@@ -1087,6 +1092,32 @@ class registry:
         publish: bool = True,
         verify: bool = True,
     ):
+        """Upload Plugin to WIPP Registry.
+
+        This function uploads a Plugin object to the WIPP Registry.
+        Author name and email to be passed to the Plugin object
+        information on the WIPP Registry are taken from the value
+        of the field `author` in the `Plugin` manifest. That is,
+        the first email and the first name (first and last) will
+        be passed. The value of these two fields can be overridden
+        by specifying them in the arguments.
+
+        Args:
+            plugin:
+                Plugin to be uploaded
+            author:
+                Optional `str` to override author name
+            email:
+                Optional `str` to override email
+            publish:
+                If `False`, Plugin will not be published to the public
+                workspace. It will be visible only to the user uploading
+                it. Default is `True`
+            verify: SSL verification. Default is `True`
+
+        Returns:
+            A message indicating a successful upload.
+        """
         manifest = plugin.manifest
 
         xml_content = _to_xml(manifest, author, email)
@@ -1110,7 +1141,7 @@ class registry:
                 verify=verify,
             )  # authenticated request
         else:
-            r = requests.post(url, headers=headers, data=data, verify=verify)
+            raise MissingUserInfo("The registry connection must be authenticated.")
 
         response_code = r.status_code
 
@@ -1137,27 +1168,6 @@ class registry:
                 ) from err
 
         return "Successfully uploaded %s" % data["title"]
-
-    def publish_data(
-        self,
-        data,
-        verify: bool = True,
-    ):
-        """Publish to public workspace"""
-        data_publish_id = data["id"] + "/publish/"
-        response = requests.patch(
-            urljoin(self.registry_url, "rest/data/" + data_publish_id),
-            auth=(self.username, self.password),
-            verify=verify,
-        )
-        response_code = response.status_code
-
-        if response_code != 200:
-            print(
-                "Error publishing data (%s), code %s"
-                % (data["title"], str(response_code))
-            )
-            response.raise_for_status()
 
     def get_resource_by_pid(self, pid, verify: bool = True):
         """Return current resource."""
