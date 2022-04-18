@@ -1,7 +1,7 @@
 {
   "name": "Discard Border Objects",
-  "version": "0.1.0",
-  "containerId": "polusai/discard-border-objects-plugin:0.1.0",
+  "version": "0.1.2",
+  "containerId": "polusai/discard-border-objects-plugin:0.1.2",
   "title": "Discard Border Objects",
   "description": "Discard Border Objects plugin clear objects which touch image borders and squentially relabelling of image objects",
   "author": "Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com)",
@@ -12,7 +12,7 @@
   "inputs": [
     {
       "name": "inpDir",
-      "description": "Input label image collection to be processed by this plugin",
+      "description": "Input image collection to be processed by this plugin",
       "type": "collection",
       "options": null,
       "required": true
@@ -30,7 +30,7 @@
       "type": "string",
       "options": null,
       "required": false
-    },
+    }
   ],
   "outputs": [
     {
@@ -44,8 +44,18 @@
   "ui": [
     {
       "key": "inputs.inpDir",
-      "title": "Input label Image collection",
-      "description": "Input label image collection"
+      "title": "Input Image collection",
+      "description": "Input image collection"
+    },
+    {
+      "key": "inputs.pattern",
+      "title": "Pattern",
+      "description": "Filepattern to parse image files"
+    },
+    {
+      "key": "inputs.groupBy",
+      "title": "groupBy",
+      "description": "Select a parameter to generate filepatterns in specific order"
     }
   ],
   "validators": null
