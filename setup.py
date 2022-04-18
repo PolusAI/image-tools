@@ -8,7 +8,7 @@ with open("./polus/_plugins/VERSION", "r") as fh:
     with open("./polus/_plugins/VERSION", "w") as fw:
         fw.write(version)
 
-package_data = ["_plugins/VERSION"]
+package_data = ["_plugins/VERSION", "manifests/*"]
 
 setup(
     name="polus-plugins",
@@ -37,6 +37,6 @@ setup(
         "docker>=5.0.3",
         "pydantic>=1.8.2",
         "python_on_whales>=0.34.0",
-        "alive-progress>=2.1.0",
+        "xmltodict>=0.12.0",
     ],
 )

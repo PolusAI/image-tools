@@ -11,10 +11,11 @@ import uuid
 import signal
 import random
 import requests
+import xmltodict
 from urllib.parse import urlparse, urljoin
-from alive_progress import alive_it
+from tqdm import tqdm
 
-from typing import Union
+from typing import Union, Optional
 from python_on_whales import docker
 
 from pydantic import BaseModel, Extra, errors, validator
@@ -23,6 +24,7 @@ import github
 from polus._plugins._plugin_model import Input as WippInput
 from polus._plugins._plugin_model import Output as WippOutput
 from polus._plugins._plugin_model import WIPPPluginManifest
+from polus._plugins._registry import _generate_query
 
 """
 Set up logging for the module
@@ -33,6 +35,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger("polus.plugins")
 logger.setLevel(logging.INFO)
+
+
+class IOKeyError(Exception):
+    pass
+
 
 """
 Initialize the Github interface
@@ -199,7 +206,7 @@ WIPP_TYPES = {
     "number": float,
     "string": str,
     "boolean": bool,
-    "array": list,
+    "array": str,
     "enum": enum.Enum,
 }
 
@@ -345,6 +352,7 @@ class IOBase(BaseModel):
                 )
                 raise
         else:
+
             value = WIPP_TYPES[self.type](value)
 
             if isinstance(value, pathlib.Path):
@@ -398,6 +406,7 @@ class Input(WippInput, IOBase):
 class Plugin(WIPPPluginManifest):
     """Required until json schema is fixed"""
 
+    manifest: dict
     version: Version
     inputs: typing.List[Input]
     outputs: typing.List[Output]
@@ -410,6 +419,8 @@ class Plugin(WIPPPluginManifest):
 
     def __init__(self, **data):
 
+        data["manifest"] = data.copy()
+
         data["id"] = uuid.uuid4()
 
         super().__init__(**data)
@@ -417,7 +428,7 @@ class Plugin(WIPPPluginManifest):
         self.Config.allow_mutation = True
         self._io_keys = {i.name: i for i in self.inputs}
         self._io_keys.update({o.name: o for o in self.outputs})
-        self.Config.allow_mutation = False
+        # self.Config.allow_mutation = False
 
         if self.author == "":
             logger.warning(
@@ -432,6 +443,36 @@ class Plugin(WIPPPluginManifest):
     @property
     def organization(self):
         return self.containerId.split("/")[0]
+
+    @property
+    def _config_file(self):
+        inp = {x.name: str(x.value) for x in self.inputs}
+        out = {x.name: str(x.value) for x in self.outputs}
+        config = {"inputs": inp, "outputs": out}
+        return config
+
+    def save_manifest(self, path: typing.Union[str, pathlib.Path], indent: int = 4):
+        with open(path, "w") as fw:
+            json.dump(self.manifest, fw, indent=indent)
+        logger.debug("Saved manifest to %s" % (path))
+
+    def save_config(self, path: typing.Union[str, pathlib.Path]):
+        with open(path, "w") as fw:
+            json.dump(self._config_file, fw)
+        logger.debug("Saved config to %s" % (path))
+
+    def load_config(self, path: typing.Union[str, pathlib.Path]):
+        with open(path, "r") as fw:
+            config = json.load(fw)
+        inp = config["inputs"]
+        out = config["outputs"]
+        for k, v in inp.items():
+            if k in self._io_keys:
+                setattr(self, k, v)
+        for k, v in out.items():
+            if k in self._io_keys:
+                setattr(self, k, v)
+        logger.debug("Loaded config from %s" % (path))
 
     def run(
         self,
@@ -526,6 +567,8 @@ class Plugin(WIPPPluginManifest):
                 **kwargs,
             )
             print(d)
+
+    def __getattribute__(self, name):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
             if name in self._io_keys:
                 value = self._io_keys[name].value
@@ -538,8 +581,17 @@ class Plugin(WIPPPluginManifest):
     def __setattr__(self, name, value):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
             if name in self._io_keys:
+                logger.debug(
+                    "Value of %s in %s set to %s"
+                    % (name, self.__class__.__name__, value)
+                )
                 self._io_keys[name].value = value
                 return
+            else:
+                raise IOKeyError(
+                    "Attempting to set %s in %s but %s is not a valid I/O parameter"
+                    % (name, self.__class__.__name__, name)
+                )
 
         super().__setattr__(name, value)
 
@@ -692,7 +744,7 @@ def scrape_manifests(
 
     for d in range(0, max_depth):
 
-        for content in alive_it(contents, title=f"{repo.full_name}: {d}"):
+        for content in tqdm(contents, desc=f"{repo.full_name}: {d}"):
 
             if content.type == "dir":
                 next_contents.extend(repo.get_contents(content.path))
@@ -762,12 +814,14 @@ def _error_log(val_err, manifest, fct):
             )
 
 
-def update_polus_plugins(gh_auth: typing.Optional[str] = None):
+def update_polus_plugins(
+    gh_auth: typing.Optional[str] = None, min_depth: int = 2, max_depth: int = 3
+):
 
     logger.info("Updating polus plugins.")
     # Get all manifests
     valid, invalid = scrape_manifests(
-        "polusai/polus-plugins", init_github(gh_auth), 1, 2, True
+        "polusai/polus-plugins", init_github(gh_auth), min_depth, max_depth, True
     )
     manifests = valid.copy()
     manifests.extend(invalid)
@@ -836,7 +890,7 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
     )
     matches = pattern.findall(str(readme.decoded_content))
     logger.info("Updating NIST plugins.")
-    for match in alive_it(matches, title="NIST Manifests"):
+    for match in tqdm(matches, desc="NIST Manifests"):
         url_parts = match[0].split("/")[3:]
         plugin_repo = gh.get_repo("/".join(url_parts[:2]))
         manifest = json.loads(
@@ -850,14 +904,162 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
             _error_log(val_err, manifest, "update_nist_plugins")
 
 
-class Registry:
+class registry:
     """Class that contains methods to interact with the REST API of WIPP Registry."""
 
-    def __init__(self, registry_url: str, username: str, password: str):
+    def __init__(
+        self,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        registry_url: str = "https://wipp-registry.ci.aws.labshare.org",
+    ):
 
         self.registry_url = registry_url
         self.username = username
         self.password = password
+
+    def _parse_xml(xml: str):
+        d = xmltodict.parse(xml)["Resource"]["role"]["PluginManifest"][
+            "PluginManifestContent"
+        ]["#text"]
+        return json.loads(d)
+
+    def update_plugins(self, verify: bool = True):
+        url = self.registry_url + "/rest/data/query/"
+        headers = {"Content-type": "application/json"}
+        data = '{"query": {"$or":[{"Resource.role.type":"Plugin"},{"Resource.role.type.#text":"Plugin"}]}}'
+        if self.username and self.password:
+            r = requests.post(
+                url, headers=headers, data=data, auth=(self.username, self.password)
+            )  # authenticated request
+        else:
+            r = requests.post(url, headers=headers, data=data)
+        valid, invalid = 0, {}
+        for r in tqdm(r.json()["results"], desc="Updating Plugins from WIPP"):
+            try:
+                manifest = registry._parse_xml(r["xml_content"])
+                plugin = submit_plugin(manifest)
+
+                """ Parsing checks specific to polus-plugins """
+                error_list = []
+
+                # Check that plugin version matches container version tag
+                container_name, version = tuple(plugin.containerId.split(":"))
+                version = Version(version=version)
+                organization, container_name = tuple(container_name.split("/"))
+                try:
+                    assert (
+                        plugin.version == version
+                    ), f"containerId version ({version}) does not match plugin version ({plugin.version})"
+                except AssertionError as err:
+                    error_list.append(err)
+
+                # Check to see that the plugin is registered to Labshare
+                try:
+                    assert organization in [
+                        "polusai",
+                        "labshare",
+                    ], "All polus plugin containers must be under the Labshare organization."
+                except AssertionError as err:
+                    error_list.append(err)
+
+                # Checks for container name, they are somewhat related to our
+                # Jenkins build
+                try:
+                    assert container_name.startswith(
+                        "polus"
+                    ), "containerId name must begin with polus-"
+                except AssertionError as err:
+                    error_list.append(err)
+
+                try:
+                    assert container_name.endswith(
+                        "plugin"
+                    ), "containerId name must end with -plugin"
+                except AssertionError as err:
+                    error_list.append(err)
+
+                if len(error_list) > 0:
+                    raise ValidationError(error_list, plugin.__class__)
+                valid += 1
+
+            except ValidationError as val_err:
+                _error_log(val_err, manifest, "registry.update_plugins")
+
+            except KeyError as key_err:
+                invalid.update({r["title"]: "Invalid format in WIPP"})
+
+            except BaseException as err:
+                invalid.update({r["title"]: err.args[0]})
+
+            finally:
+                if len(invalid) > 0:
+                    self.invalid = invalid
+                    logger.debug(
+                        "Submitted %s plugins successfully. See registry.invalid to check errors in unsubmitted plugins"
+                        % (valid)
+                    )
+                logger.debug("Submitted %s plugins successfully." % (valid))
+                plugins.refresh()
+
+    def query(
+        self,
+        title: Optional[str] = None,
+        version: Optional[str] = None,
+        title_contains: Optional[str] = None,
+        contains: Optional[str] = None,
+        query_all: bool = False,
+        advanced: bool = False,
+        query: Optional[str] = None,
+        verify: bool = True,
+    ):
+        """Query Plugins in WIPP Registry.
+
+        This function executes queries for Plugins in the WIPP Registry.
+
+        Args:
+            title:
+                title of the plugin to query.
+                Example: "OME Tiled Tiff Converter"
+            version:
+                version of the plugins to query.
+                Must follow semantic versioning. Example: "1.1.0"
+            title_contains:
+                keyword that must be part of the title of plugins to query.
+                Example: "Converter" will return all plugins with the word "Converter" in their title
+            contains:
+                keyword that must be part of the description of plugins to query.
+                Example: "bioformats" will return all plugins with the word "bioformats" in their description
+            query_all: if True it will override any other parameter and will return all plugins
+            advanced:
+                if True it will override any other parameter.
+                `query` must be included
+            query: query to execute. This query must be in MongoDB format
+            verify: SSL verification. Default is True
+
+        Returns:
+            An array of the manifests of the Plugins returned by the query.
+        """
+
+        url = self.registry_url + "/rest/data/query/"
+        headers = {"Content-type": "application/json"}
+        query = _generate_query(
+            title, version, title_contains, contains, query_all, advanced, query, verify
+        )
+
+        data = '{"query": %s}' % str(query).replace("'", '"')
+
+        if self.username and self.password:
+            r = requests.post(
+                url,
+                headers=headers,
+                data=data,
+                auth=(self.username, self.password),
+                verify=verify,
+            )  # authenticated request
+        else:
+            r = requests.post(url, headers=headers, data=data, verify=verify)
+        return [registry._parse_xml(x["xml_content"]) for x in r.json()["results"]]
 
     def get_current_schema(
         self,
@@ -972,4 +1174,5 @@ class Registry:
 #     content = repo.get_content(
 #         "plugin-manifest/schema/wipp-plugin-manifest-schema.json"
 #     )
+plugins.registry = registry
 _Plugins().refresh()  # calls the refresh method when library is imported
