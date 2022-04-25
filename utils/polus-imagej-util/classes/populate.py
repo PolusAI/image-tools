@@ -554,6 +554,9 @@ class Populate:
         self.log_file = log_file
         self.log_template = log_template
         
+        # Load the scalability configuration file
+        self.scale = json.load(Path(__file__).parents[1].joinpath('scale.json'))
+        
         # Create dictionary to store all plugins
         self._plugins = {}
         
@@ -815,7 +818,8 @@ class Populate:
                     '_outputs':
                         plugin._all_outputs,
                     'project_slug': "polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin",
-                    'docker_repo' : "{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin"
+                    'docker_repo' : "{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin",
+                    'scalability': self.scale[name]
                     }
                 
                 # Update the _inputs section dictionary with the inputs 
