@@ -10,6 +10,7 @@ from os.path import basename
 import uuid
 import signal
 import random
+import pydantic
 import requests
 import xmltodict
 from urllib.parse import urlparse, urljoin
@@ -25,6 +26,13 @@ from polus._plugins._plugin_model import Input as WippInput
 from polus._plugins._plugin_model import Output as WippOutput
 from polus._plugins._plugin_model import WIPPPluginManifest
 from polus._plugins._registry import _generate_query
+from polus._plugins.PolusComputeSchema import PluginSchema as NewSchema  # new schema
+from polus._plugins.PolusComputeSchema import (
+    PluginUIInput,
+    PluginUIOutput,
+    PluginHardwareRequirements,
+)
+from copy import deepcopy
 
 """
 Set up logging for the module
@@ -443,6 +451,74 @@ class Plugin(WIPPPluginManifest):
     @property
     def organization(self):
         return self.containerId.split("/")[0]
+
+    def newschema(self, set_hardware_req: bool = False):
+        data = deepcopy(self.manifest)
+        type_dict = {
+            "path": "text",
+            "string": "text",
+            "boolean": "checkbox",
+            "number": "number",
+            "array": "text",
+        }
+
+        def _clean(d: dict):
+            rg = re.compile("Dir")
+            if d["type"] == "collection":
+                d["type"] = "path"
+            elif bool(rg.search(d["name"])):
+                d["type"] = "path"
+            return d
+
+        def _ui_in(d: dict):  # assuming old all ui input
+            # assuming format inputs. ___
+            inp = d["key"].split(".")[-1]  # e.g inpDir
+            try:
+                tp = [x["type"] for x in data["inputs"] if x["name"] == inp][0]
+            except IndexError:
+                tp = "string"
+            except BaseException:
+                raise
+
+            d["type"] = type_dict[tp]
+            return PluginUIInput(**d)
+
+        def _ui_out(d: dict):
+            nd = deepcopy(d)
+            nd["name"] = "outputs." + nd["name"]
+            nd["type"] = type_dict[nd["type"]]
+            return PluginUIOutput(**nd)
+
+        data["inputs"] = [_clean(x) for x in data["inputs"]]
+        data["outputs"] = [_clean(x) for x in data["outputs"]]
+        data["pluginHardwareRequirements"] = {}
+        data["ui"] = [_ui_in(x) for x in data["ui"]]  # inputs
+        data["ui"].extend([_ui_out(x) for x in data["outputs"]])  # outputs
+
+        if set_hardware_req:
+
+            def _get_types(v):
+                # if v.name == "gpu":
+                #     return [x._value_ for x in GpuVendor if x._value_ != "none"]
+                if isinstance(v.type_, enum.EnumMeta):
+                    return [x for x in v.type_._member_names_ if x != "none"]
+                elif isinstance(v.type_, type):
+                    return [v.type_.__name__]
+                else:
+                    return [
+                        x.__name__ for x in v.type_.__args__ if x.__name__ != "NoneType"
+                    ]
+
+            def _set(data: dict):
+                for k, v in PluginHardwareRequirements.__fields__.items():
+                    i = input(f"{k}{_get_types(v)}: ".replace("'", ""))
+                    if i == "":
+                        i = None
+                    data[k] = i
+
+            _set(data["pluginHardwareRequirements"])
+
+        return NewSchema(**data)
 
     @property
     def _config_file(self):
