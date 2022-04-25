@@ -527,9 +527,20 @@ class Plugin(WIPPPluginManifest):
         config = {"inputs": inp, "outputs": out}
         return config
 
-    def save_manifest(self, path: typing.Union[str, pathlib.Path], indent: int = 4):
+    def save_manifest(
+        self,
+        path: typing.Union[str, pathlib.Path],
+        set_hardware_req: bool = False,
+        indent: int = 4,
+    ):
         with open(path, "w") as fw:
-            json.dump(self.manifest, fw, indent=indent)
+            d = self.newschema(set_hardware_req=set_hardware_req).json()
+            d = json.loads(d)
+            json.dump(
+                d,
+                fw,
+                indent=indent,
+            )
         logger.debug("Saved manifest to %s" % (path))
 
     def save_config(self, path: typing.Union[str, pathlib.Path]):
