@@ -527,12 +527,16 @@ class Populate:
             their overloading methods.
         json_dic: A dictionary with op names as keys and the cookiecutter json 
             dictionaries to be used for plugin generation.
+        scale (dict): Plugins represented as keys and scale type/class 
+            represented as values.
     
     """
     
-    def __init__(self,
-                 log_file='./utils/polus-imagej-util/full.log',
-                 log_template='./utils/polus-imagej-util/classes/logtemplates/mainlog.txt'):
+    def __init__(
+        self,
+        log_file='./utils/polus-imagej-util/full.log',
+        log_template='./utils/polus-imagej-util/classes/logtemplates/mainlog.txt'
+        ):
         
         """A method to instantiate a class Populate object
         
@@ -555,7 +559,8 @@ class Populate:
         self.log_template = log_template
         
         # Load the scalability configuration file
-        self.scale = json.load(Path(__file__).parents[1].joinpath('scale.json'))
+        with open(Path(__file__).parents[1].joinpath('scale.json'), 'r') as f:
+            self.scale = json.load(f)
         
         # Create dictionary to store all plugins
         self._plugins = {}
@@ -819,7 +824,7 @@ class Populate:
                         plugin._all_outputs,
                     'project_slug': "polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin",
                     'docker_repo' : "{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin",
-                    'scalability': self.scale[name]
+                    'scalability': self.scale.get(name.replace('.', '-'), None)
                     }
                 
                 # Update the _inputs section dictionary with the inputs 
