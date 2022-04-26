@@ -518,7 +518,8 @@ class Plugin(WIPPPluginManifest):
 
             _set(data["pluginHardwareRequirements"])
 
-        return NewSchema(**data)
+        plugin_class = type(self.__class__.__name__, (NewSchema,), {})
+        return plugin_class(**data)
 
     @property
     def _config_file(self):
