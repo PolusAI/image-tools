@@ -34,6 +34,11 @@ logging.basicConfig(
 logger = logging.getLogger("polus.plugins")
 logger.setLevel(logging.INFO)
 
+
+class IOKeyError(Exception):
+    pass
+
+
 """
 Initialize the Github interface
 """
@@ -199,7 +204,7 @@ WIPP_TYPES = {
     "number": float,
     "string": str,
     "boolean": bool,
-    "array": list,
+    "array": str,
     "enum": enum.Enum,
 }
 
@@ -345,6 +350,7 @@ class IOBase(BaseModel):
                 )
                 raise
         else:
+
             value = WIPP_TYPES[self.type](value)
 
             if isinstance(value, pathlib.Path):
@@ -417,7 +423,7 @@ class Plugin(WIPPPluginManifest):
         self.Config.allow_mutation = True
         self._io_keys = {i.name: i for i in self.inputs}
         self._io_keys.update({o.name: o for o in self.outputs})
-        self.Config.allow_mutation = False
+        # self.Config.allow_mutation = False
 
         if self.author == "":
             logger.warning(
@@ -540,8 +546,17 @@ class Plugin(WIPPPluginManifest):
     def __setattr__(self, name, value):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
             if name in self._io_keys:
+                logger.debug(
+                    "Value of %s in %s set to %s"
+                    % (name, self.__class__.__name__, value)
+                )
                 self._io_keys[name].value = value
                 return
+            else:
+                raise IOKeyError(
+                    "Attempting to set %s in %s but %s is not a valid I/O parameter"
+                    % (name, self.__class__.__name__, name)
+                )
 
         super().__setattr__(name, value)
 
