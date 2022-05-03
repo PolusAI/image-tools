@@ -779,12 +779,14 @@ def _error_log(val_err, manifest, fct):
             )
 
 
-def update_polus_plugins(gh_auth: typing.Optional[str] = None):
+def update_polus_plugins(
+    gh_auth: typing.Optional[str] = None, min_depth: int = 2, max_depth: int = 3
+):
 
     logger.info("Updating polus plugins.")
     # Get all manifests
     valid, invalid = scrape_manifests(
-        "polusai/polus-plugins", init_github(gh_auth), 1, 2, True
+        "polusai/polus-plugins", init_github(gh_auth), min_depth, max_depth, True
     )
     manifests = valid.copy()
     manifests.extend(invalid)
