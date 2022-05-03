@@ -453,9 +453,9 @@ class Plugin(WIPPPluginManifest, PluginMethods):
         path: typing.Union[str, pathlib.Path],
         set_hardware_req: bool = False,
         indent: int = 4,
-        _old: bool = False,
+        old: bool = False,
     ):
-        if not _old:
+        if not old:
             with open(path, "w") as fw:
                 d = self.new_schema(set_hardware_req=set_hardware_req).json()
                 d = json.loads(d)
@@ -481,7 +481,6 @@ class Plugin(WIPPPluginManifest, PluginMethods):
     @property
     def _config_file(self):
         m = json.loads(self.json())
-        # m["version"] = m["version"]["version"]  # leave only string value
         m["class"] = "OldPlugin"
         for x in m["inputs"]:
             x["value"] = None
@@ -613,6 +612,11 @@ class ComputePlugin(NewSchema, PluginMethods):
         with open(path, "w") as fw:
             json.dump(self._config_file, fw, indent=4)
         logger.debug("Saved config to %s" % (path))
+
+    def save_manifest(self, path: typing.Union[str, pathlib.Path]):
+        with open(path, "w") as fw:
+            json.dump(self.manifest, fw, indent=4)
+        logger.debug("Saved manifest to %s" % (path))
 
 
 def is_valid_manifest(plugin: dict) -> bool:
