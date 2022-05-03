@@ -5,9 +5,11 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Any
 
 from pydantic import BaseModel, Field, constr
+
+from ._io import IOBase, Version
 
 
 class ConditionEntry(BaseModel):
@@ -48,7 +50,7 @@ class PluginHardwareRequirements(BaseModel):
     tmpDirMin: Optional[Union[str, float]] = None
 
 
-class PluginInputType(Enum):
+class PluginInputType(str, Enum):
     path = "path"
     string = "string"
     number = "number"
@@ -84,20 +86,22 @@ class Validator(BaseModel):
     validator: Optional[List[ConditionEntry]] = None
 
 
-class PluginInput(BaseModel):
+class PluginInput(IOBase):
     format: Optional[str] = None
     label: Optional[str] = None
     name: str
     required: bool
     type: PluginInputType
     default: Optional[Union[str, float, bool]] = None
+    value: Optional[Any] = None
 
 
-class PluginOutput(BaseModel):
+class PluginOutput(IOBase):
     format: Optional[str] = None
     label: Optional[str] = None
     name: str
     type: PluginOutputType
+    value: Optional[Any] = None
 
 
 class PluginUIInput(BaseModel):
@@ -135,9 +139,7 @@ class PluginSchema(BaseModel):
     repository: Optional[str] = None
     title: str
     ui: List[Union[PluginUIInput, PluginUIOutput]]
-    version: constr(
-        regex=r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"  # NOQA 722
-    ) = Field(examples=["0.1.0", "0.1.0rc1"])
+    version: Version
     website: Optional[str] = None
 
 
