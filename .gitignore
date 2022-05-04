@@ -22,4 +22,6 @@ build/
 __pycache__
 
 # data folder to ignore
-data
+datautils/filepattern-generator-plugin/
+.gitignore
+utils/filepattern-generator-plugin/

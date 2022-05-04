@@ -1,7 +1,7 @@
-# Discard Border Objects
+# Remove border objects
 
 
-Discard Border Objects plugin clear objects which touch image borders and squentially relabelling of image objects
+Remove border objects plugin clear objects which touch image borders and squentially relabelling of image objects
 
 Contact [Hamdah Shafqat Abbasi](mailto: hamdah.abbasi@axleinfo.com) for more information.
 
