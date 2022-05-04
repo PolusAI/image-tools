@@ -14,9 +14,7 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 
 **a -** Original image contains 67 unique label objects 
-
 **b -** Image with 16 detected border objects
-
 **c -** Removing Border objects and sequential relabelling
 
 
