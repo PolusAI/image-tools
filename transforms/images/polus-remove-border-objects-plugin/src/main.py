@@ -1,7 +1,17 @@
 import argparse, logging, os, time, filepattern
 from pathlib import Path
-import tensorflow as tf
 from functions import *
+
+
+#Import environment variables
+POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
+POLUS_EXT = os.environ.get('POLUS_EXT','.ome.tif')
+
+# Initialize the logger
+logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+                    datefmt='%d-%b-%y %H:%M:%S')
+logger = logging.getLogger("main")
+logger.setLevel(POLUS_LOG)
 
 
 def main(inpDir:Path, 
@@ -12,16 +22,8 @@ def main(inpDir:Path,
         starttime= time.time()
         if pattern is None:
             logger.info(
-                    "No filepattern was provided so filepattern infer pattern from the input files"
+                    "No filepattern was provided so filepattern uses all input files"
                 )
-            try:
-                pattern = filepattern.infer_pattern([f.name for f in inpDir.iterdir()])
-            except ValueError:
-                logger.error(
-                    "Could not infer a filepattern from the input files, "
-                    + "and no filepattern was provided."
-                )
-                raise
 
         assert inpDir.exists(), logger.info("Input directory does not exist")
         count=0
@@ -37,26 +39,10 @@ def main(inpDir:Path,
             relabel_img, _ = db.relabel_sequential()
             db.save_relabel_image(relabel_img)
             logger.info(f'Saving {count}/{imagelist} Relabelled image with discarded objects: {file}') 
-            logger.info('Finished all processes')
-            endtime = (time.time() - starttime)/60
-            logger.info(f'Total time taken to process all images: {endtime}')
+        logger.info('Finished all processes')
+        endtime = (time.time() - starttime)/60
+        logger.info(f'Total time taken to process all images: {endtime}')
 
-#Import environment variables
-POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
-POLUS_EXT = os.environ.get('POLUS_EXT','.ome.tif')
-
-# Initialize the logger
-logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
-                    datefmt='%d-%b-%y %H:%M:%S')
-logger = logging.getLogger("main")
-logger.setLevel(POLUS_LOG)
-
-os.environ["CUDA_VISIBLE_DEVICES"] = "0" 
-sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(log_device_placement=True))
-if tf.test.gpu_device_name():
-    logger.info('Default GPU Device: {}'.format(tf.test.gpu_device_name()))
-else:
-    logger.info('Default Device is CPU')
 
 # ''' Argument parsing '''
 logger.info("Parsing arguments...")
@@ -74,6 +60,7 @@ parser.add_argument(
         "--pattern",
         dest="pattern",
         type=str,
+        default=".+",
         help="Filepattern regex used to parse image files",
         required=False
     )

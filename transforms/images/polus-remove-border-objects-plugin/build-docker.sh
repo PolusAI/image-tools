@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t polusai/discard-border-objects-plugin:${version}
+docker build . -t polusai/polus-remove-border-objects-plugin:${version}

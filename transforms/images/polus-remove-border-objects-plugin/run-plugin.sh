@@ -19,7 +19,7 @@ LOGLEVEL=INFO
 docker run --mount type=bind,source=${datapath},target=/data/ \
             --user $(id -u):$(id -g) \
             --env POLUS_LOG=${LOGLEVEL} \
-            polusai/discard-border-objects-plugin:${version} \
+            polusai/polus-remove-border-objects-plugin:${version} \
             --inpDir ${inpDir} \
             --pattern ${pattern} \
             --groupBy ${groupBy} \

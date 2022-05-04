@@ -30,14 +30,13 @@ class Discard_borderobjects:
         """
         borderobj = list(self.label_img[0, :])
         borderobj.extend(self.label_img[:, 0])
-        borderobj.extend(self.label_img[self.label_img.shape[0] - 1, :])
-        borderobj.extend(self.label_img[:, self.label_img.shape[1] - 1])
+        borderobj.extend(self.label_img[- 1, :])
+        borderobj.extend(self.label_img[:, - 1])
         borderobj = np.unique(borderobj).tolist()
 
-        for i in range(self.label_img.shape[0]):
-            for j in range(self.label_img.shape[1]):
-                if self.label_img[i][j] in borderobj:
-                    self.label_img[i][j] = 0
+        for obj in borderobj:
+            self.label_img[self.label_img == obj] = 0
+
         return self.label_img
 
     def relabel_sequential(self):
