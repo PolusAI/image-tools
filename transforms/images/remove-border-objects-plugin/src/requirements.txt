@@ -1,3 +1,2 @@
-bfio[all]==2.1.9
-filepattern==1.4.6
-scikit-image==0.18.2
+filepattern==1.4.7
+scikit-image>=0.17.2
