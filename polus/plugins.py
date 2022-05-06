@@ -935,6 +935,7 @@ class WippPluginRegistry:
         else:
             r = requests.post(url, headers=headers, data=data)
         valid, invalid = 0, {}
+
         for r in tqdm(r.json()["results"], desc="Updating Plugins from WIPP"):
             try:
                 manifest = WippPluginRegistry._parse_xml(r["xml_content"])
@@ -952,6 +953,7 @@ class WippPluginRegistry:
                     )
                 logger.debug("Submitted %s plugins successfully." % (valid))
                 plugins.refresh()
+
 
     def query(
         self,
