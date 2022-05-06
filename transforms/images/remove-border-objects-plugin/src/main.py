@@ -16,7 +16,6 @@ logger.setLevel(POLUS_LOG)
 
 def main(inpDir:Path, 
          pattern:str,
-         groupBy:str,
          outDir:Path,         
          ):       
         starttime= time.time()
@@ -30,7 +29,7 @@ def main(inpDir:Path,
         fp = filepattern.FilePattern(inpDir,pattern)
         imagelist = len([f for f in fp])
 
-        for f in fp(group_by=groupBy):
+        for f in fp():
             count += 1
             file = f[0]['file'].name
             logger.info(f'Label image: {file}')
@@ -63,14 +62,7 @@ parser.add_argument(
         default=".+",
         help="Filepattern regex used to parse image files",
         required=False
-    )
-parser.add_argument(
-    "--groupBy",
-    dest="groupBy",
-    type=str,
-    help="Select a parameter to select images in specific order",
-    required=False
-)                    
+    )                   
 #  # Output arguments
 parser.add_argument('--outDir',
     dest='outDir',
@@ -87,14 +79,11 @@ if (inpDir.joinpath('images').is_dir()):
 logger.info('inpDir = {}'.format(inpDir))
 pattern = args.pattern
 logger.info("pattern = {}".format(pattern))
-groupBy = args.groupBy
-logger.info("groupBy = {}".format(groupBy))
 outDir = Path(args.outDir)
 logger.info('outDir = {}'.format(outDir))
 
 if __name__=="__main__":
     main(inpDir=inpDir,
          pattern=pattern,
-         groupBy=groupBy,
          outDir=outDir
          )

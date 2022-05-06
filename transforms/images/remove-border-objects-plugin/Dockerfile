@@ -1,4 +1,4 @@
-FROM labshare/polus-bfio-util:2.1.9
+FROM labshare/polus-bfio-util:2.1.9-tensorflow
 ENV EXEC_DIR="/opt/executables"
 RUN mkdir -p ${EXEC_DIR}
 COPY VERSION ${EXEC_DIR}

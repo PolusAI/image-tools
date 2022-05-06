@@ -1,7 +1,7 @@
 {
   "name": "Remove border objects",
-  "version": "0.1.0",
-  "containerId": "polusai/remove-border-objects-plugin:0.1.0",
+  "version": "0.1.1",
+  "containerId": "polusai/remove-border-objects-plugin:0.1.1",
   "title": "Remove border objects",
   "description": "Remove border objects plugin clear objects which touch image borders and squentially relabelling of image objects",
   "author": "Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com)",
@@ -20,13 +20,6 @@
     {
       "name": "pattern",
       "description": "Filepattern to parse image files",
-      "type": "string",
-      "options": null,
-      "required": false
-    },
-    {
-      "name": "groupBy",
-      "description": "Select a parameter to generate filepatterns in specific order",
       "type": "string",
       "options": null,
       "required": false
@@ -51,11 +44,6 @@
       "key": "inputs.pattern",
       "title": "Pattern",
       "description": "Filepattern to parse image files"
-    },
-    {
-      "key": "inputs.groupBy",
-      "title": "groupBy",
-      "description": "Select a parameter to generate filepatterns in specific order"
     }
   ],
   "validators": null

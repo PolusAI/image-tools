@@ -7,6 +7,9 @@ Contact [Hamdah Shafqat Abbasi](mailto: hamdah.abbasi@axleinfo.com) for more inf
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
+## To Do
+At the moment this plugin supports label images with two dimensions only. We will add support for higher dimensions later.
+
 
 ## Description
 
@@ -30,14 +33,13 @@ contents of `plugin.json` into the pop-up window and submit.
 
 ## Options
 
-This plugin takes three input arguments and
+This plugin takes two input arguments and
 1 output argument:
 
 | Name          | Description                                                   | I/O    | Type          |
 |---------------|---------------------------------------------------------------|--------|---------------|
 | `--inpDir`    | Input image directory                                         | Input  | collection    |
 | `--pattern`   | Filepattern to parse image files                              | Input  | string        |
-| `--groupBy`   | Select a parameter to select image files in specific order    | Input  | string        |
 | `--outDir`    | Output collection                                             | Output | collection    |
 
 
