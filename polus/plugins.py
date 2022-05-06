@@ -13,7 +13,7 @@ import random
 import requests
 import xmltodict
 from urllib.parse import urlparse, urljoin
-from alive_progress import alive_it
+from tqdm import tqdm
 
 from typing import Union, Optional
 from python_on_whales import docker
@@ -743,7 +743,7 @@ def scrape_manifests(
 
     for d in range(0, max_depth):
 
-        for content in alive_it(contents, title=f"{repo.full_name}: {d}"):
+        for content in tqdm(contents, desc=f"{repo.full_name}: {d}"):
 
             if content.type == "dir":
                 next_contents.extend(repo.get_contents(content.path))
@@ -889,7 +889,7 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
     )
     matches = pattern.findall(str(readme.decoded_content))
     logger.info("Updating NIST plugins.")
-    for match in alive_it(matches, title="NIST Manifests"):
+    for match in tqdm(matches, desc="NIST Manifests"):
         url_parts = match[0].split("/")[3:]
         plugin_repo = gh.get_repo("/".join(url_parts[:2]))
         manifest = json.loads(
