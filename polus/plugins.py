@@ -904,7 +904,7 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
             _error_log(val_err, manifest, "update_nist_plugins")
 
 
-class registry:
+class WippPluginRegistry:
     """Class that contains methods to interact with the REST API of WIPP Registry."""
 
     def __init__(
@@ -924,7 +924,7 @@ class registry:
         ]["#text"]
         return json.loads(d)
 
-    def update_plugins(self, verify: bool = True):
+    def update_plugins(self):
         url = self.registry_url + "/rest/data/query/"
         headers = {"Content-type": "application/json"}
         data = '{"query": {"$or":[{"Resource.role.type":"Plugin"},{"Resource.role.type.#text":"Plugin"}]}}'
@@ -937,58 +937,9 @@ class registry:
         valid, invalid = 0, {}
         for r in tqdm(r.json()["results"], desc="Updating Plugins from WIPP"):
             try:
-                manifest = registry._parse_xml(r["xml_content"])
+                manifest = WippPluginRegistry._parse_xml(r["xml_content"])
                 plugin = submit_plugin(manifest)
-
-                """ Parsing checks specific to polus-plugins """
-                error_list = []
-
-                # Check that plugin version matches container version tag
-                container_name, version = tuple(plugin.containerId.split(":"))
-                version = Version(version=version)
-                organization, container_name = tuple(container_name.split("/"))
-                try:
-                    assert (
-                        plugin.version == version
-                    ), f"containerId version ({version}) does not match plugin version ({plugin.version})"
-                except AssertionError as err:
-                    error_list.append(err)
-
-                # Check to see that the plugin is registered to Labshare
-                try:
-                    assert organization in [
-                        "polusai",
-                        "labshare",
-                    ], "All polus plugin containers must be under the Labshare organization."
-                except AssertionError as err:
-                    error_list.append(err)
-
-                # Checks for container name, they are somewhat related to our
-                # Jenkins build
-                try:
-                    assert container_name.startswith(
-                        "polus"
-                    ), "containerId name must begin with polus-"
-                except AssertionError as err:
-                    error_list.append(err)
-
-                try:
-                    assert container_name.endswith(
-                        "plugin"
-                    ), "containerId name must end with -plugin"
-                except AssertionError as err:
-                    error_list.append(err)
-
-                if len(error_list) > 0:
-                    raise ValidationError(error_list, plugin.__class__)
                 valid += 1
-
-            except ValidationError as val_err:
-                _error_log(val_err, manifest, "registry.update_plugins")
-
-            except KeyError as key_err:
-                invalid.update({r["title"]: "Invalid format in WIPP"})
-
             except BaseException as err:
                 invalid.update({r["title"]: err.args[0]})
 
@@ -996,7 +947,7 @@ class registry:
                 if len(invalid) > 0:
                     self.invalid = invalid
                     logger.debug(
-                        "Submitted %s plugins successfully. See registry.invalid to check errors in unsubmitted plugins"
+                        "Submitted %s plugins successfully. See WippPluginRegistry.invalid to check errors in unsubmitted plugins"
                         % (valid)
                     )
                 logger.debug("Submitted %s plugins successfully." % (valid))
