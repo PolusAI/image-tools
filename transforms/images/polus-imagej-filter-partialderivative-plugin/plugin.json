@@ -1,0 +1,61 @@
+{
+  "name": "ImageJ filter partialDerivative",
+  "version": "0.3.3",
+  "title": "ImageJ filter partialDerivative",
+  "description": "ImageJ op that applies partial derivative filter to input collection. ",
+  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-filter-partialderivative-plugin:0.3.3",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": ["PartialDerivativeRAI"]
+      },
+      "description": "Op overloading method to perform.",
+      "required": false
+    },
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Input image collection to be processed by this plugin",
+      "required": false
+    },
+    {
+      "name": "dimension",
+      "type": "number",
+      "description": "Dimension in which the partial derivative should be applied",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "opName",
+      "description": "Op overloading method to perform."
+    },
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Input image collection to be processed by this plugin",
+      "condition": "model.inputs.opName==PartialDerivativeRAI"
+    },
+    {
+      "key": "inputs.dimension",
+      "title": "dimension",
+      "description": "Dimension in which the partial derivative should be applied",
+      "condition": "model.inputs.opName==PartialDerivativeRAI"
+    }
+  ]
+}
