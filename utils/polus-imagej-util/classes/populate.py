@@ -1019,7 +1019,6 @@ class GeneratedParser:
             # Write the cookiecutter template file
             with open(cookiecutter_path,'w') as fw:
                 json.dump(template, fw,indent=4)
-            
 
 """This section of uses the above classes to generate cookiecutter templates"""
 
