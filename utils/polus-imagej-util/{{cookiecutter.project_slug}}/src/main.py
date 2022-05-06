@@ -16,21 +16,15 @@ import typing, os
 POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
 POLUS_EXT = os.environ.get('POLUS_EXT','.ome.tif')
 
-
-# Import environment variables
-POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
-POLUS_EXT = os.environ.get('POLUS_EXT','.ome.tif')
-
 # Initialize the logger
 logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("main")
-logger.setLevel(logging.INFO)
 logger.setLevel(POLUS_LOG)
 
 def main({#- Required inputs -#}
          {% for inp,val in cookiecutter._inputs.items() -%}
-         {%     if val.required -%}
+         {%     if val.required and inp != 'out_input' -%}
          {%         if val.type=="boolean" -%}
          _{{ inp }}: bool,
          {%         elif val.type=="collection" -%}
@@ -76,7 +70,7 @@ def main({#- Required inputs -#}
     argument_types = []
     arg_len = 0
 
-    {% for inp,val in cookiecutter._inputs.items() %}
+    {% for inp,val in cookiecutter._inputs.items() if inp != 'out_input' %}
     # Validate {{ inp }}{% if inp != "opName" %}
     {{ inp }}_types = { {% for i,v in val.call_types.items() %}
         "{{ i }}": "{{ v }}",{% endfor %}
@@ -123,10 +117,10 @@ def main({#- Required inputs -#}
     try:
         for ind, (
             {%- for inp,val in cookiecutter._inputs.items() -%}
-            {%- if val.type=='collection' %}{{ inp }}_path,{% endif -%}
+            {%- if val.type=='collection' and inp != 'out_input' %}{{ inp }}_path,{% endif -%}
             {%- endfor %}) in enumerate(zip(*args)):
             
-            {%- for inp,val in cookiecutter._inputs.items() if val.type=='collection' %}
+            {%- for inp,val in cookiecutter._inputs.items() if val.type=='collection' and inp != 'out_input' %}
             {%- if val.type=='collection' %}
             if {{ inp }}_path != None:
 
@@ -140,13 +134,21 @@ def main({#- Required inputs -#}
                 metadata = {{ inp }}_br.metadata
                 fname = {{ inp }}_path.name
                 dtype = ij.py.dtype({{ inp }})
+                # Save the shape for out input
+                shape = ij.py.dims({{ inp }})
             {%- endif %}
             {%- endif %}{% endfor %}
-
-            {%- for inp,val in cookiecutter._inputs.items() if val.type!='collection' and inp!='opName' %}
+            
+            {%- for inp,val in cookiecutter._inputs.items() if val.type != 'collection' and inp != 'opName' and inp != 'out_input' %}
             if _{{ inp }} is not None:
                 {{ inp }} = ij_converter.to_java(ij, _{{ inp }},{{ inp }}_types[_opName],dtype)
             {% endfor %}
+            
+            # Generate the out input variable if required
+            {%- for inp,val in cookiecutter._inputs.items() if inp == 'out_input' %}
+            {{ inp }} = ij_converter.to_java(ij, np.zeros(shape=shape, dtype=dtype), 'IterableInterval')
+            {% endfor %}
+            
             logger.info('Running op...')
             {% for i,v in cookiecutter.plugin_namespace.items() %}
             {%- if loop.first %}if{% else %}elif{% endif %} _opName == "{{ i }}":
@@ -154,7 +156,7 @@ def main({#- Required inputs -#}
             {% endfor %}
             logger.info('Completed op!')
             
-            {%- for inp,val in cookiecutter._inputs.items() %}
+            {%- for inp,val in cookiecutter._inputs.items() if inp != 'out_input' %}
             {%- if val.type=='collection' %}
             if {{ inp }}_path != None:
                 {{ inp }}_br.close()
@@ -190,7 +192,7 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser(prog='main', description='{{ cookiecutter.project_short_description }}')
     
     # Add command-line argument for each of the input arguments
-    {% for inp,val in cookiecutter._inputs.items() -%}
+    {% for inp,val in cookiecutter._inputs.items() if inp != 'out_input' -%}
     parser.add_argument('--{{ val.title }}', dest='{{ inp }}', type=str,
                         help='{{ val.description }}', required={{ val.required }})
     {% endfor %}
@@ -203,7 +205,7 @@ if __name__=="__main__":
     args = parser.parse_args()
     
     # Input Args
-    {%- for inp,val in cookiecutter._inputs.items() %}
+    {%- for inp,val in cookiecutter._inputs.items() if inp != 'out_input' %}
     {% if val.type=="boolean" -%}
     _{{ inp }} = args.{{ inp }} == 'true'
     {% elif val.type=="collection" -%}
@@ -221,7 +223,7 @@ if __name__=="__main__":
     
     main(
     {%- filter indent(5) %}
-    {%- for inp,val in cookiecutter._inputs.items() -%}
+    {%- for inp,val in cookiecutter._inputs.items() if inp != 'out_input' -%}
     _{{ inp }}=_{{ inp }},
     {% endfor -%}
     {%- for inp,val in cookiecutter._outputs.items() -%}

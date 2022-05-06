@@ -113,12 +113,22 @@ class Op:
         self._inputs = []
         self._output = []
         
-        # Check and update if any inputs are named "in" which conflict with 
-        # python's reserved key word
+        # Check and update if any input titles
         for input_index, input in enumerate(inputs):
+            # Check if input title will interfere with reserved python keyword
             if input[1] == 'in':
-                # Change the input name from "in" to "in1"
+                # Change the input name from "in" to "in1" 
                 inputs[input_index] = (input[0], 'in1')
+            
+            # Change the name of the out as input argument so it does not 
+            # interfere with output from op
+            elif input[1] == 'out':
+                # Change name from "out" to "out_input"
+                inputs[input_index] = (input[0], 'out_input')
+
+            elif input[1] == 'out?':
+                # Change name from "out" to "out_input"
+                inputs[input_index] = (input[0], 'out_input?')
                 
         # Check if the output is not titled 'out' and change to 'out' if 
         # neccessary
@@ -135,10 +145,10 @@ class Op:
         # Define required and optional inputs by testing last character in each 
         # input title
         self._required_inputs = [
-            _input for _input in self._inputs if _input[0][1][-1] != '?' and _input[0][1] not in ['out']
+            _input for _input in self._inputs if _input[0][1][-1] != '?'
         ]
         self._optional_inputs = [
-            _input for _input in self._inputs if _input[0][1][-1] == '?' or _input[0][1] in ['out']
+            _input for _input in self._inputs if _input[0][1][-1] == '?'
         ]
         
         # Determine if the op is currently supported and define member 
@@ -823,7 +833,6 @@ class Populate:
 
 
 
-
 """This section of uses the above classes to generate cookiecutter templates"""
 
 if __name__ == '__main__':
@@ -831,26 +840,28 @@ if __name__ == '__main__':
     import jpype
     import os
     
-    print('Starting JVM and parsing ops help\n')
+    try:
+        print('Starting JVM and parsing ops help\n')
+        
+        # Populate ops by parsing the imagej operations help
+        populater = Populate()
+        
+        print('Building json templates\n')
+        
+        # Get the current working directory
+        cwd = Path(os.getcwd())
+        
+        # Save a directory for the cookietin json files
+        cookietin_path = cwd.joinpath('utils/polus-imagej-util/cookietin')
+        
+        # Build the json dictionary to be passed to the cookiecutter module 
+        populater.build_json('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.3.1', cookietin_path)
+        
+        print('Shutting down JVM\n')
+        
+        # Remove the imagej instance
+        del populater._ij
     
-    # Populate ops by parsing the imagej operations help
-    populater = Populate()
-    
-    print('Building json templates\n')
-    
-    # Get the current working directory
-    cwd = Path(os.getcwd())
-    
-    # Save a directory for the cookietin json files
-    cookietin_path = cwd.joinpath('utils/polus-imagej-util/cookietin')
-    
-    # Build the json dictionary to be passed to the cookiecutter module 
-    populater.build_json('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.3.0', cookietin_path)
-    
-    print('Shutting down JVM\n')
-    
-    # Remove the imagej instance
-    del populater._ij
-    
-    # Shut down JVM
-    jpype.shutdownJVM()
+    finally:
+        # Shut down JVM
+        jpype.shutdownJVM()
