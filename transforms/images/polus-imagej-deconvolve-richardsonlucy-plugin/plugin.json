@@ -1,6 +1,6 @@
 {
   "name": "ImageJ deconvolve richardsonLucy",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "title": "ImageJ deconvolve richardsonLucy",
   "description": "This plugin applies the Richardson-Lucy Deconvolution to input collection.",
   "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
