@@ -25,7 +25,13 @@ import github
 from polus._plugins._plugin_model import Input as WippInput
 from polus._plugins._plugin_model import Output as WippOutput
 from polus._plugins._plugin_model import WIPPPluginManifest
-from polus._plugins._registry import _generate_query
+from polus._plugins._registry import (
+    _generate_query,
+    _to_xml,
+    FailedToPublish,
+    MissingUserInfo,
+)
+from requests.exceptions import HTTPError
 from polus._plugins.PolusComputeSchema import PluginSchema as NewSchema  # new schema
 from polus._plugins.PolusComputeSchema import (
     PluginUIInput,
@@ -921,7 +927,7 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
             _error_log(val_err, manifest, "update_nist_plugins")
 
 
-class registry:
+class WippPluginRegistry:
     """Class that contains methods to interact with the REST API of WIPP Registry."""
 
     def __init__(
@@ -941,7 +947,7 @@ class registry:
         ]["#text"]
         return json.loads(d)
 
-    def update_plugins(self, verify: bool = True):
+    def update_plugins(self):
         url = self.registry_url + "/rest/data/query/"
         headers = {"Content-type": "application/json"}
         data = '{"query": {"$or":[{"Resource.role.type":"Plugin"},{"Resource.role.type.#text":"Plugin"}]}}'
@@ -952,60 +958,13 @@ class registry:
         else:
             r = requests.post(url, headers=headers, data=data)
         valid, invalid = 0, {}
+
         for r in tqdm(r.json()["results"], desc="Updating Plugins from WIPP"):
+
             try:
-                manifest = registry._parse_xml(r["xml_content"])
+                manifest = WippPluginRegistry._parse_xml(r["xml_content"])
                 plugin = submit_plugin(manifest)
-
-                """ Parsing checks specific to polus-plugins """
-                error_list = []
-
-                # Check that plugin version matches container version tag
-                container_name, version = tuple(plugin.containerId.split(":"))
-                version = Version(version=version)
-                organization, container_name = tuple(container_name.split("/"))
-                try:
-                    assert (
-                        plugin.version == version
-                    ), f"containerId version ({version}) does not match plugin version ({plugin.version})"
-                except AssertionError as err:
-                    error_list.append(err)
-
-                # Check to see that the plugin is registered to Labshare
-                try:
-                    assert organization in [
-                        "polusai",
-                        "labshare",
-                    ], "All polus plugin containers must be under the Labshare organization."
-                except AssertionError as err:
-                    error_list.append(err)
-
-                # Checks for container name, they are somewhat related to our
-                # Jenkins build
-                try:
-                    assert container_name.startswith(
-                        "polus"
-                    ), "containerId name must begin with polus-"
-                except AssertionError as err:
-                    error_list.append(err)
-
-                try:
-                    assert container_name.endswith(
-                        "plugin"
-                    ), "containerId name must end with -plugin"
-                except AssertionError as err:
-                    error_list.append(err)
-
-                if len(error_list) > 0:
-                    raise ValidationError(error_list, plugin.__class__)
                 valid += 1
-
-            except ValidationError as val_err:
-                _error_log(val_err, manifest, "registry.update_plugins")
-
-            except KeyError as key_err:
-                invalid.update({r["title"]: "Invalid format in WIPP"})
-
             except BaseException as err:
                 invalid.update({r["title"]: err.args[0]})
 
@@ -1013,11 +972,12 @@ class registry:
                 if len(invalid) > 0:
                     self.invalid = invalid
                     logger.debug(
-                        "Submitted %s plugins successfully. See registry.invalid to check errors in unsubmitted plugins"
+                        "Submitted %s plugins successfully. See WippPluginRegistry.invalid to check errors in unsubmitted plugins"
                         % (valid)
                     )
                 logger.debug("Submitted %s plugins successfully." % (valid))
                 plugins.refresh()
+
 
     def query(
         self,
@@ -1052,7 +1012,7 @@ class registry:
                 if True it will override any other parameter.
                 `query` must be included
             query: query to execute. This query must be in MongoDB format
-            verify: SSL verification. Default is True
+            verify: SSL verification. Default is `True`
 
         Returns:
             An array of the manifests of the Plugins returned by the query.
@@ -1076,78 +1036,112 @@ class registry:
             )  # authenticated request
         else:
             r = requests.post(url, headers=headers, data=data, verify=verify)
-        return [registry._parse_xml(x["xml_content"]) for x in r.json()["results"]]
+        return [
+            WippPluginRegistry._parse_xml(x["xml_content"]) for x in r.json()["results"]
+        ]
+
 
     def get_current_schema(
         self,
         verify: bool = True,
     ):
         """Return current schema in WIPP"""
-        response = requests.get(
+        r = requests.get(
             urljoin(
                 self.registry_url,
                 "rest/template-version-manager/global/?title=res-md.xsd",
             ),
             verify=verify,
         )
-        if response.ok:
-            return response.json()[0]["current"]
+        if r.ok:
+            return r.json()[0]["current"]
         else:
-            response.raise_for_status()
+            r.raise_for_status()
 
-    def upload_data(
+    def upload(
         self,
-        filepath,
-        schema_id,
+        plugin: Plugin,
+        author: Optional[str] = None,
+        email: Optional[str] = None,
+        publish: bool = True,
         verify: bool = True,
     ):
-        """Upload data to registry"""
-        with open(filepath, "r") as file_reader:
-            xml_content = file_reader.read()
+        """Upload Plugin to WIPP Registry.
+
+        This function uploads a Plugin object to the WIPP Registry.
+        Author name and email to be passed to the Plugin object
+        information on the WIPP Registry are taken from the value
+        of the field `author` in the `Plugin` manifest. That is,
+        the first email and the first name (first and last) will
+        be passed. The value of these two fields can be overridden
+        by specifying them in the arguments.
+
+        Args:
+            plugin:
+                Plugin to be uploaded
+            author:
+                Optional `str` to override author name
+            email:
+                Optional `str` to override email
+            publish:
+                If `False`, Plugin will not be published to the public
+                workspace. It will be visible only to the user uploading
+                it. Default is `True`
+            verify: SSL verification. Default is `True`
+
+        Returns:
+            A message indicating a successful upload.
+        """
+        manifest = plugin.manifest
+
+        xml_content = _to_xml(manifest, author, email)
+
+        schema_id = self.get_current_schema()
 
         data = {
-            "title": basename(filepath),
+            "title": manifest["name"],
             "template": schema_id,
             "xml_content": xml_content,
         }
 
-        response = requests.post(
-            urljoin(self.registry_url, "rest/data/"),
-            data,
-            auth=(self.username, self.password),
-            verify=verify,
-        )
-        response_code = response.status_code
+        url = self.registry_url + "/rest/data/"
+        headers = {"Content-type": "application/json"}
+        if self.username and self.password:
+            r = requests.post(
+                url,
+                headers=headers,
+                data=json.dumps(data),
+                auth=(self.username, self.password),
+                verify=verify,
+            )  # authenticated request
+        else:
+            raise MissingUserInfo("The registry connection must be authenticated.")
+
+        response_code = r.status_code
 
         if response_code != 201:
             print(
                 "Error uploading file (%s), code %s"
                 % (data["title"], str(response_code))
             )
-            response.raise_for_status()
-
-        return response.json()
-
-    def publish_data(
-        self,
-        data,
-        verify: bool = True,
-    ):
-        """Publish to public workspace"""
-        data_publish_id = data["id"] + "/publish/"
-        response = requests.patch(
-            urljoin(self.registry_url, "rest/data/" + data_publish_id),
-            auth=(self.username, self.password),
-            verify=verify,
-        )
-        response_code = response.status_code
-
-        if response_code != 200:
-            print(
-                "Error publishing data (%s), code %s"
-                % (data["title"], str(response_code))
+            r.raise_for_status()
+        if publish:
+            _id = r.json()["id"]
+            _purl = url + _id + "/publish/"
+            r2 = requests.patch(
+                _purl,
+                headers=headers,
+                auth=(self.username, self.password),
+                verify=verify,
             )
-            response.raise_for_status()
+            try:
+                r2.raise_for_status()
+            except HTTPError as err:
+                raise FailedToPublish(
+                    "Failed to publish %s with id %s" % (data["title"], _id)
+                ) from err
+
+        return "Successfully uploaded %s" % data["title"]
 
     def get_resource_by_pid(self, pid, verify: bool = True):
         """Return current resource."""
@@ -1191,5 +1185,6 @@ class registry:
 #     content = repo.get_content(
 #         "plugin-manifest/schema/wipp-plugin-manifest-schema.json"
 #     )
-plugins.registry = registry
+
+plugins.registry = WippPluginRegistry
 _Plugins().refresh()  # calls the refresh method when library is imported
