@@ -11,10 +11,11 @@ import uuid
 import signal
 import random
 import requests
+import xmltodict
 from urllib.parse import urlparse, urljoin
 from alive_progress import alive_it
 
-from typing import Union
+from typing import Union, Optional
 from python_on_whales import docker
 
 from pydantic import BaseModel, Extra, errors, validator
@@ -404,6 +405,7 @@ class Input(WippInput, IOBase):
 class Plugin(WIPPPluginManifest):
     """Required until json schema is fixed"""
 
+    manifest: dict
     version: Version
     inputs: typing.List[Input]
     outputs: typing.List[Output]
@@ -415,6 +417,8 @@ class Plugin(WIPPPluginManifest):
         allow_mutation = False
 
     def __init__(self, **data):
+
+        data["manifest"] = data.copy()
 
         data["id"] = uuid.uuid4()
 
@@ -438,6 +442,36 @@ class Plugin(WIPPPluginManifest):
     @property
     def organization(self):
         return self.containerId.split("/")[0]
+
+    @property
+    def _config_file(self):
+        inp = {x.name: str(x.value) for x in self.inputs}
+        out = {x.name: str(x.value) for x in self.outputs}
+        config = {"inputs": inp, "outputs": out}
+        return config
+
+    def save_manifest(self, path: typing.Union[str, pathlib.Path], indent: int = 4):
+        with open(path, "w") as fw:
+            json.dump(self.manifest, fw, indent=indent)
+        logger.debug("Saved manifest to %s" % (path))
+
+    def save_config(self, path: typing.Union[str, pathlib.Path]):
+        with open(path, "w") as fw:
+            json.dump(self._config_file, fw)
+        logger.debug("Saved config to %s" % (path))
+
+    def load_config(self, path: typing.Union[str, pathlib.Path]):
+        with open(path, "r") as fw:
+            config = json.load(fw)
+        inp = config["inputs"]
+        out = config["outputs"]
+        for k, v in inp.items():
+            if k in self._io_keys:
+                setattr(self, k, v)
+        for k, v in out.items():
+            if k in self._io_keys:
+                setattr(self, k, v)
+        logger.debug("Loaded config from %s" % (path))
 
     def run(
         self,
@@ -869,14 +903,54 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
             _error_log(val_err, manifest, "update_nist_plugins")
 
 
-class Registry:
+class WippPluginRegistry:
     """Class that contains methods to interact with the REST API of WIPP Registry."""
 
-    def __init__(self, registry_url: str, username: str, password: str):
+    def __init__(
+        self,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        registry_url: str = "https://wipp-registry.ci.aws.labshare.org",
+    ):
 
         self.registry_url = registry_url
         self.username = username
         self.password = password
+
+    def _parse_xml(xml: str):
+        d = xmltodict.parse(xml)["Resource"]["role"]["PluginManifest"][
+            "PluginManifestContent"
+        ]["#text"]
+        return json.loads(d)
+
+    def update_plugins(self):
+        url = self.registry_url + "/rest/data/query/"
+        headers = {"Content-type": "application/json"}
+        data = '{"query": {"$or":[{"Resource.role.type":"Plugin"},{"Resource.role.type.#text":"Plugin"}]}}'
+        if self.username and self.password:
+            r = requests.post(
+                url, headers=headers, data=data, auth=(self.username, self.password)
+            )  # authenticated request
+        else:
+            r = requests.post(url, headers=headers, data=data)
+        valid, invalid = 0, {}
+        for r in alive_it(r.json()["results"], title="Updating Plugins from WIPP"):
+            try:
+                manifest = WippPluginRegistry._parse_xml(r["xml_content"])
+                plugin = submit_plugin(manifest)
+                valid += 1
+            except BaseException as err:
+                invalid.update({r["title"]: err.args[0]})
+
+            finally:
+                if len(invalid) > 0:
+                    self.invalid = invalid
+                    logger.debug(
+                        "Submitted %s plugins successfully. See WippPluginRegistry.invalid to check errors in unsubmitted plugins"
+                        % (valid)
+                    )
+                logger.debug("Submitted %s plugins successfully." % (valid))
+                plugins.refresh()
 
     def get_current_schema(
         self,
@@ -991,4 +1065,5 @@ class Registry:
 #     content = repo.get_content(
 #         "plugin-manifest/schema/wipp-plugin-manifest-schema.json"
 #     )
+plugins.registry = registry
 _Plugins().refresh()  # calls the refresh method when library is imported
