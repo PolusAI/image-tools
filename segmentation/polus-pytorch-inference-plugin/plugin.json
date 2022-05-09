@@ -1,0 +1,68 @@
+{
+    "name": "Pytorch Inference",
+    "version": "0.1.0",
+    "title": "Pytorch Inference",
+    "description": "Scalable, Multi-GPU inference using any PyTorch based image segmentation model.",
+    "author": "Najib Ishaq (najib.ishaq@axleinfo.com)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/PolusAI/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "https://www.biorxiv.org/content/10.1101/2020.02.02.931238v1",
+    "containerId": "polusai/pytorch-inference-plugin:0.1.0",
+    "inputs": [
+        {
+            "name": "modelDir",
+            "type": "genericData",
+            "description": "Directory with a \"model.pth\" file that was saved using torchscript.",
+            "required": true
+        },
+        {
+            "name": "imagesDir",
+            "type": "collection",
+            "description": "A Collection of images on which to run inference.",
+            "required": true
+        },
+        {
+            "name": "filePattern",
+            "type": "string",
+            "description": "File pattern used to select files for segmentation.",
+            "required": true
+        },
+        {
+            "name": "device",
+            "type": "string",
+            "description": "Which device(s) to use for running the model. See README for details.",
+            "required": true
+        }
+    ],
+    "outputs": [
+        {
+            "name": "outDir",
+            "type": "genericData",
+            "description": "Output collection."
+        }
+    ],
+    "ui": [
+        {
+            "key": "inputs.modelDir",
+            "title": "Model Directory",
+            "description": "Directory with a \"model.pth\" file that was saved using torchscript."
+        },
+        {
+            "key": "inputs.imagesDir",
+            "title": "Input collection",
+            "description": "Input image collection to be processed by this plugin."
+        },
+        {
+            "key": "inputs.filePattern",
+            "title": "File Pattern",
+            "description": "File pattern to select images for segmentation.",
+            "default": ".+"
+        },
+        {
+            "key": "inputs.device",
+            "title": "Device",
+            "description": "Which device(s) to use for running the model."
+        }
+    ]
+}
