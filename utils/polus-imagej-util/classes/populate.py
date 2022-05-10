@@ -1,8 +1,6 @@
 import re
 import json
 import logging
-from matplotlib.font_manager import json_load
-from numpy import False_
 import scyjava
 import imagej
 from pathlib import Path
@@ -930,7 +928,7 @@ class GeneratedParser:
             plugin_name = str(p.parent.name).replace('polus-imagej-', '').replace('-plugin', '')
             
             # Load the plugins manifest and save in the member attribute dict
-            self.manifests[plugin_name] = json_load(p)
+            self.manifests[plugin_name] = json.load(open(p))
             
         
         # Define path to all cookiecutter template files
@@ -946,7 +944,7 @@ class GeneratedParser:
             plugin_name = str(p.parent.name)
             
             # Load the cookiecutter template files
-            self.cookiecutter[plugin_name] = json_load(p)
+            self.cookiecutter[plugin_name] = json.load(open(p))
     
     
     def update_templates(self, ops='all', skip=[]):
@@ -1022,13 +1020,26 @@ class GeneratedParser:
             # Iterate over the cookiecutter template inputs and thier data
             for cinp, d in template['_inputs'].items():
                 
-                # Skip the memory allocaiton input "out_input"
+                # Skip the memory allocation input "out_input"
                 if cinp == 'out_input':
                     continue
                 
                 # Update the inputs data/description
                 d['title'] = manifest['inputs'][i]['name']
                 d['description'] = manifest['inputs'][i]['description']
+                
+                # Increment the manifest input index
+                i += 1
+            
+            # Start a manifest output index
+            i = 0
+            
+            # Iterate over the cookiecutter template outputs and thier data
+            for _, d in template['_outputs'].items():
+                
+                # Update the inputs data/description
+                d['title'] = manifest['outputs'][i]['name']
+                d['description'] = manifest['outputs'][i]['description']
                 
                 # Increment the manifest input index
                 i += 1
