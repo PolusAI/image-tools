@@ -1,0 +1,48 @@
+{
+  "name": "ImageJ threshold percentile",
+  "version": "0.4.0",
+  "title": "ImageJ threshold percentile",
+  "description": "This plugin assumes the fraction of foreground pixels to be 0.5.",
+  "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "Doyle, W. (1962). Operations Useful for Similarity-Invariant Pattern Recognition. Journal of the ACM, 9(2), 259-267. doi:10.1145/321119.321123",
+  "containerId": "polusai/imagej-threshold-percentile-plugin:0.4.0",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": ["ApplyThresholdMethod$Percentile"]
+      },
+      "description": "Op overloading method to perform",
+      "required": true
+    },
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Collection to be processed by this plugin",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "opName",
+      "description": "Op overloading method to perform"
+    },
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Collection to be processed by this plugin"
+    }
+  ]
+}

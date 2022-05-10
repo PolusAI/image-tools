@@ -1034,7 +1034,6 @@ class GeneratedParser:
             # Write the cookiecutter template file
             with open(cookiecutter_path,'w') as fw:
                 json.dump(template, fw,indent=4)
-            
 
 """This section of uses the above classes to generate cookiecutter templates"""
 
@@ -1057,22 +1056,30 @@ if __name__ == '__main__':
         # Save a directory for the cookietin json files
         cookietin_path = cwd.joinpath('utils/polus-imagej-util/cookietin')
         
+        # Get the pipeline VERSION
+        version_path = Path(__file__).parents[1].joinpath('VERSION')
+        with open(version_path, 'r') as fhand:
+            version = next(fhand)
+        
         # Build the json dictionary to be passed to the cookiecutter module 
         populater.build_json(
             'Benjamin Houghton', 
             'benjamin.houghton@axleinfo.com', 
             'bthoughton', 
-            '0.5.0', 
+            version, 
             cookietin_path)
+    
+    finally:
         
         print('Shutting down JVM\n')
         
         # Remove the imagej instance
         del populater._ij
-    
-    finally:
+        
         # Shut down JVM
         jpype.shutdownJVM()
+    
+    print('Updating templates with previously genreated ops')
     
     # Instantiate the generated ops parser and update templates with manifests
     parser = GeneratedParser()
