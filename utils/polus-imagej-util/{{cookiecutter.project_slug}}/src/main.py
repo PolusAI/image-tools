@@ -1,5 +1,3 @@
-from fnmatch import fnmatchcase
-from importlib.metadata import metadata
 import typing, os, argparse, logging
 import ij_converter
 import jpype, imagej, scyjava
