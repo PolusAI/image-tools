@@ -114,7 +114,8 @@ class Op:
         self._inputs = []
         self._output = []
         
-        # Check and update if any input titles
+        # Check and update input titles that will interfere with other variable
+        # names and/or python reserved words
         for input_index, input in enumerate(inputs):
             # Check if input title will interfere with reserved python keyword
             if input[1] == 'in':
