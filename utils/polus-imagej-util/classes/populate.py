@@ -1051,22 +1051,45 @@ if __name__ == '__main__':
         # Save a directory for the cookietin json files
         cookietin_path = cwd.joinpath('utils/polus-imagej-util/cookietin')
         
+<<<<<<< HEAD
+=======
+        # Get the pipeline VERSION
+        version_path = Path(__file__).parents[1].joinpath('VERSION')
+        with open(version_path, 'r') as fhand:
+            version = next(fhand)
+        
+>>>>>>> e34769b1618bcf9713a476f5c2496f4c683070a5
         # Build the json dictionary to be passed to the cookiecutter module 
         populater.build_json(
             'Benjamin Houghton', 
             'benjamin.houghton@axleinfo.com', 
             'bthoughton', 
+<<<<<<< HEAD
             '0.5.0', 
             cookietin_path)
+=======
+            version, 
+            cookietin_path)
+    
+    finally:
+>>>>>>> e34769b1618bcf9713a476f5c2496f4c683070a5
         
         print('Shutting down JVM\n')
         
         # Remove the imagej instance
         del populater._ij
+<<<<<<< HEAD
     
     finally:
         # Shut down JVM
         jpype.shutdownJVM()
+=======
+        
+        # Shut down JVM
+        jpype.shutdownJVM()
+    
+    print('Updating templates with previously genreated ops')
+>>>>>>> e34769b1618bcf9713a476f5c2496f4c683070a5
     
     # Instantiate the generated ops parser and update templates with manifests
     parser = GeneratedParser()
