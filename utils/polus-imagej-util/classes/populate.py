@@ -949,7 +949,7 @@ class GeneratedParser:
             self.cookiecutter[plugin_name] = json_load(p)
     
     
-    def update_templates(self, ops, skip):
+    def update_templates(self, ops='all', skip=[]):
         """A method to update the cookiecutter template files with the 
         previously generated ImageJ plugin manifests.
         
