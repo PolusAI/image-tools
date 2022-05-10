@@ -1,3 +1,5 @@
+from fnmatch import fnmatchcase
+from importlib.metadata import metadata
 import typing, os, argparse, logging
 import ij_converter
 import jpype, imagej, scyjava
@@ -9,6 +11,57 @@ from bfio.bfio import BioReader, BioWriter
 """
 This file was automatically generated from an ImageJ plugin generation pipeline.
 """
+
+{% if cookiecutter.scalability == 'threshold' %}
+
+def create_iterable(path, ij):
+    
+    # Read the image with BioReader
+    with BioReader(path) as br:
+        
+        # Create the numpy array of the image
+        numpy_image = np.squeeze(br[:, :, 0:1, 0, 0])
+        fname = path.name
+        metadata = br.metadata
+        
+        # Close the BioReader
+        br.close()
+        
+    # Convert the image to a IterableInterval object
+    iterable_interval = ij_converter.to_java(
+        ij, 
+        numpy_image, 
+        'IterableInterval'
+        )
+    
+    return iterable_interval, fname, metadata
+
+
+def create_histogram(path, ij):
+    
+    # Create the iterable interval object from the tile
+    iterable_interval, fname, metadata = create_iterable(path, ij)
+    
+    # Define the histogram mapper class
+    Mapper = jpype.JClass('net.imglib2.histogram.Real1dBinMapper')
+    
+    # Instantiate a mapper
+    mapper = Mapper(
+        jpype.JDouble(0),       # min bin value
+        jpype.JDouble(2**16),   # max bin value
+        jpype.JLong(1024),      # number of bins
+        jpype.JBoolean(False)   # track values outside of range
+        )
+    
+    # Define a histogram class
+    Histogram = jpype.JClass('net.imglib2.histogram.Histogram1d')
+    
+    # Instantiate a histogram
+    histogram = Histogram(iterable_interval, mapper)
+    
+    return histogram
+{% endif -%}
+        
 
 # Import environment variables
 POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
@@ -130,7 +183,7 @@ def main({#- Required inputs -#}
     }{%- endfor %}
     
     {%- if cookiecutter.scalability == 'independent' %}
-    """ Run the plugin """
+    # Attempt to convert inputs to java types and run the pixel indepent op
     try:
         for ind, (
             {%- for inp,val in cookiecutter._inputs.items() -%}
@@ -201,6 +254,73 @@ def main({#- Required inputs -#}
         del ij
         jpype.shutdownJVM()
         logger.info('Complete!')
+        
+    {% elif cookiecutter.scalability == 'threshold' %}
+    
+    try:
+        
+        logger.info('Computing threshold value...')
+        
+        # Create a tile count
+        tile_count = 0
+        
+        for {%- for inp,val in cookiecutter._inputs.items() -%}
+            {%- if val.type=='collection' and inp != 'out_input' %} {{ inp }}_path, in zip(*args):
+            
+            # Check if any tiles have been processed
+            if tile_count == 0:
+                
+                # Create the initial histogram
+                histogram = create_histogram({{ inp }}_path, ij)
+            
+            else:
+                
+                # Convert the image to an iterable interval
+                iterable_interval, fname, metadata = create_iterable({{ inp }}_path, ij)
+                
+                # Add the image tile to the histogram
+                histogram.addData(iterable_interval)
+            
+            tile_count += 1
+            {% endif -%}{%- endfor %}
+        
+        # Calculate the threshold value
+        {{ cookiecutter.compute_threshold }}
+        
+        logger.info('The threshold value is {}'.format(threshold))
+        
+        for {%- for inp,val in cookiecutter._inputs.items() -%}
+        {%- if val.type=='collection' and inp != 'out_input' %} {{ inp }}_path, in zip(*args):
+        
+                    # Load the first plane of image in {{ inp }} collection
+                    logger.info('Processing image: {}'.format({{ inp }}_path))
+                    
+                    # Convert the image to an iterable interval
+                    iterable_interval, fname, metadata = create_iterable({{ inp }}_path, ij)
+                    
+                    # Apply the threshold
+                    out = ij.op().threshold().apply(iterable_interval, threshold)
+                    
+                    # Write image to file
+                    logger.info('Saving image {}'.format(fname))
+                    out_array = ij_converter.from_java(ij, out, 'Iterable')
+                    bw = BioWriter(_out.joinpath(fname), metadata=metadata)
+                    bw.Z = 1
+                    bw.dtype = out_array.dtype
+                    bw[:] = out_array.astype(bw.dtype)
+                    bw.close()     
+        {% endif -%}{%- endfor %}
+        
+    except:
+        logger.error('There was an error, shutting down jvm before raising...')
+        raise
+            
+    finally:
+        # Exit the program
+        logger.info('Shutting down jvm...')
+        del ij
+        jpype.shutdownJVM()
+        logger.info('JVM shutdown complete')
     
     {% else %}
     

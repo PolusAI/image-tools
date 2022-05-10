@@ -824,9 +824,15 @@ class Populate:
                         plugin._all_outputs,
                     'project_slug': "polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin",
                     'docker_repo' : "{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin",
-                    'scalability': self.scale.get(name.replace('.', '-'), None)
+                    'scalability': self.scale.get(name.replace('.', '-'), "independent")
                     }
                 
+                
+                # If threhsolding op add compute threhsold call to template
+                if self.json_dic[name]['scalability'] == 'threshold':
+                    self.json_dic[name]['compute_threshold'] = 'threshold = ij.op().' \
+                        + name.replace('.', '().') + '(histogram)'
+              
                 # Update the _inputs section dictionary with the inputs 
                 # dictionary stored in the Library attribute
                 self.json_dic[name]['_inputs'].update(plugin._all_required_inputs)
