@@ -287,6 +287,12 @@ def main({#- Required inputs -#}
         # Calculate the threshold value
         {{ cookiecutter.compute_threshold }}
         
+        # Check if array was returned
+        if isinstance(threshold, jpype.JClass('java.util.ArrayList')):
+            
+            # Get the threshold value, disregard the errMsg output
+            threshold = threshold[0]
+        
         logger.info('The threshold value is {}'.format(threshold))
         
         for {%- for inp,val in cookiecutter._inputs.items() -%}
