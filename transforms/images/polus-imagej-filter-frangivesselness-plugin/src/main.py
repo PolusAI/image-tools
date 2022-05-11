@@ -203,7 +203,7 @@ if __name__ == "__main__":
         "--scale",
         dest="scale",
         type=str,
-        help="The input collection scale",
+        help="The Frangi scale parameter",
         required=False,
     )
 

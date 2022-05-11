@@ -35,7 +35,7 @@ This plugin takes one input argument and one output argument:
 |---------------|-------------------------|--------|--------|
 | `--inpDir` | Collection to be processed by this plugin | Input | collection |
 | `--opName` | Operation to perform | Input | enum |
-| `--scale` | The input collection scale | Input | number |
+| `--scale` | The Frangi scale parameter | Input | number |
 | `--spacing` | The physical distance between data points in the  image, can vary for each dimension of the image. | Input | array |
 | `--outDir` | Output collection | Output | collection |
 

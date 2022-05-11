@@ -41,7 +41,7 @@
     {
       "name": "scale",
       "type": "number",
-      "description": "The input collection scale",
+      "description": "The Frangi scale parameter",
       "required": true
     }
   ],
@@ -71,7 +71,7 @@
     {
       "key": "inputs.scale",
       "title": "scale",
-      "description": "The input collection scale"
+      "description": "The Frangi scale parameter"
     }
   ]
 }
