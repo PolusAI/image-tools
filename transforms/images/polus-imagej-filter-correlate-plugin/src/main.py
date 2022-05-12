@@ -156,7 +156,7 @@ def main(
 
             logger.info("Running op...")
             if _opName == "PadAndCorrelateFFT":
-                out = ij.op().filter().correlate(out_input, in1, in2)
+                out = ij.op().filter().correlate(out_input, in1, in2, borderSize)
             elif _opName == "CorrelateFFTC":
                 out = ij.op().filter().correlate(out_input, in1, in2, borderSize)
 
