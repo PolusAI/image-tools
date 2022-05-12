@@ -114,7 +114,8 @@ class Op:
         self._inputs = []
         self._output = []
         
-        # Check and update if any input titles
+        # Check and update input titles that will interfere with other variable
+        # names and/or python reserved words
         for input_index, input in enumerate(inputs):
             # Check if input title will interfere with reserved python keyword
             if input[1] == 'in':
@@ -527,12 +528,16 @@ class Populate:
             their overloading methods.
         json_dic: A dictionary with op names as keys and the cookiecutter json 
             dictionaries to be used for plugin generation.
+        scale (dict): Plugins represented as keys and scale type/class 
+            represented as values.
     
     """
     
-    def __init__(self,
-                 log_file='./utils/polus-imagej-util/full.log',
-                 log_template='./utils/polus-imagej-util/classes/logtemplates/mainlog.txt'):
+    def __init__(
+        self,
+        log_file='./utils/polus-imagej-util/full.log',
+        log_template='./utils/polus-imagej-util/classes/logtemplates/mainlog.txt'
+        ):
         
         """A method to instantiate a class Populate object
         
@@ -553,6 +558,10 @@ class Populate:
         # Store the log output file and log template file path
         self.log_file = log_file
         self.log_template = log_template
+        
+        # Load the scalability configuration file
+        with open(Path(__file__).parents[1].joinpath('scale.json'), 'r') as f:
+            self.scale = json.load(f)
         
         # Create dictionary to store all plugins
         self._plugins = {}
@@ -815,7 +824,8 @@ class Populate:
                     '_outputs':
                         plugin._all_outputs,
                     'project_slug': "polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin",
-                    'docker_repo' : "{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin"
+                    'docker_repo' : "{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin",
+                    'scalability': self.scale.get(name.replace('.', '-'), None)
                     }
                 
                 # Update the _inputs section dictionary with the inputs 
@@ -1019,6 +1029,7 @@ class GeneratedParser:
             # Write the cookiecutter template file
             with open(cookiecutter_path,'w') as fw:
                 json.dump(template, fw,indent=4)
+            
 
 """This section of uses the above classes to generate cookiecutter templates"""
 
