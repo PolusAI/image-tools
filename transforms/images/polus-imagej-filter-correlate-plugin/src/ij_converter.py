@@ -39,11 +39,12 @@ SCALARS = [
     "boolean",
 ]
 
-FLOAT_SCALARS = ["double", "float", "long"]
+FLOAT_SCALARS = ["double", "float"]
 
 INT_SCALARS = [
-    "int",
     "short",
+    "int",
+    "long",
     "char",
     "byte",
     "boolean",
@@ -201,3 +202,7 @@ def from_java(ij, java_array, java_type):
         java_array = ij.op().convert().uint8(java_array)
 
     return ij.py.from_java(java_array)
+
+
+if __name__ == '__main__':
+    print(JAVA_CONVERT.keys())

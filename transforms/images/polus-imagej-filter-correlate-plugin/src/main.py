@@ -150,12 +150,15 @@ def main(
             out_input = ij_converter.to_java(
                 ij, np.zeros(shape=shape, dtype=dtype), "IterableInterval"
             )
+            
+            # Define the optional border size argument
+            borderSize = shape
 
             logger.info("Running op...")
             if _opName == "PadAndCorrelateFFT":
                 out = ij.op().filter().correlate(out_input, in1, in2)
             elif _opName == "CorrelateFFTC":
-                out = ij.op().filter().correlate(out_input, in1, in2)
+                out = ij.op().filter().correlate(out_input, in1, in2, borderSize)
 
             logger.info("Completed op!")
             if in1_path != None:
