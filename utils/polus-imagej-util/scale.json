@@ -1,0 +1,20 @@
+{
+    "convert-bit": "independent",
+    "convert-cfloat32": "independent",
+    "convert-cfloat64": "independent",
+    "convert-float32": "independent",
+    "convert-float64": "independent",
+    "convert-int8": "independent",
+    "convert-int16": "independent",
+    "convert-int32": "independent",
+    "convert-int64": "independent",
+    "convert-uint2": "independent",
+    "convert-uint4": "independent",
+    "convert-uint8": "independent",
+    "convert-uint12": "independent",
+    "convert-uint16": "independent",
+    "convert-uint32": "independent",
+    "convert-uint64": "independent",
+    "convert-uint128": "independent",
+    "copy-img": "independent"
+}
