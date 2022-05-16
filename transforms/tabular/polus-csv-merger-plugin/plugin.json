@@ -3,7 +3,7 @@
     "version": "0.4.0",
     "title": "CSV Merger",
     "description": "Merge all csv files in a csv collection into a single csv file.",
-    "author": "Nick Schaub (nick.schaub@nih.gov)",
+    "author": "Kelechi Nina Mezu (nina.mezu@nih.gov)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
