@@ -1,5 +1,6 @@
 import pathlib
 import json
+from tkinter import E
 import typing
 import logging
 import enum
@@ -919,10 +920,18 @@ class WippPluginRegistry:
         self.password = password
 
     def _parse_xml(xml: str):
+        """Returns dictionary of Plugin Manifest. If error, returns None."""
         d = xmltodict.parse(xml)["Resource"]["role"]["PluginManifest"][
             "PluginManifestContent"
         ]["#text"]
-        return json.loads(d)
+        try:
+            return json.loads(d)
+        except:
+            e = eval(d)
+            if isinstance(e, dict):
+                return e
+            else:
+                return None
 
     def update_plugins(self):
         url = self.registry_url + "/rest/data/query/"
@@ -953,7 +962,6 @@ class WippPluginRegistry:
                     )
                 logger.debug("Submitted %s plugins successfully." % (valid))
                 plugins.refresh()
-
 
     def query(
         self,
@@ -997,7 +1005,7 @@ class WippPluginRegistry:
         url = self.registry_url + "/rest/data/query/"
         headers = {"Content-type": "application/json"}
         query = _generate_query(
-            title, version, title_contains, contains, query_all, advanced, query, verify
+            title, version, title_contains, contains, query_all, advanced, query
         )
 
         data = '{"query": %s}' % str(query).replace("'", '"')
@@ -1012,7 +1020,9 @@ class WippPluginRegistry:
             )  # authenticated request
         else:
             r = requests.post(url, headers=headers, data=data, verify=verify)
-        return [registry._parse_xml(x["xml_content"]) for x in r.json()["results"]]
+        return [
+            WippPluginRegistry._parse_xml(x["xml_content"]) for x in r.json()["results"]
+        ]
 
     def get_current_schema(
         self,
@@ -1127,5 +1137,5 @@ class WippPluginRegistry:
 #     content = repo.get_content(
 #         "plugin-manifest/schema/wipp-plugin-manifest-schema.json"
 #     )
-plugins.registry = registry
+plugins.WippPluginRegistry = WippPluginRegistry
 _Plugins().refresh()  # calls the refresh method when library is imported
