@@ -1,0 +1,62 @@
+{
+  "name": "ImageJ deconvolve richardsonLucyUpdate",
+  "version": "0.7.0",
+  "title": "ImageJ deconvolve richardsonLucyUpdate",
+  "description": "RichardsonLucyTVUpdate, RichardsonLucyUpdate",
+  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-deconvolve-richardsonlucyupdate-plugin:0.7.0",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": ["RichardsonLucyTVUpdate",
+                    "RichardsonLucyUpdate"]
+      },
+      "description": "Operation to perform",
+      "required": false
+    },
+    {
+      "name": "in1",
+      "type": "collection",
+      "description": "in1",
+      "required": false
+    },
+    {
+      "name": "regularizationFactor",
+      "type": "number",
+      "description": "regularizationFactor",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "out",
+      "type": "collection",
+      "description": "out"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "opName",
+      "description": "Operation to perform"
+    },
+    {
+      "key": "inputs.in1",
+      "title": "in1",
+      "description": "in1",
+      "condition": "model.inputs.opName==RichardsonLucyTVUpdate or model.inputs.opName==RichardsonLucyUpdate"
+    },
+    {
+      "key": "inputs.regularizationFactor",
+      "title": "regularizationFactor",
+      "description": "regularizationFactor",
+      "condition": "model.inputs.opName==RichardsonLucyTVUpdate"
+    }
+  ]
+}
