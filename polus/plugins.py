@@ -1020,7 +1020,6 @@ class WippPluginRegistry:
         valid, invalid = 0, {}
 
         for r in tqdm(r.json()["results"], desc="Updating Plugins from WIPP"):
-
             try:
                 manifest = WippPluginRegistry._parse_xml(r["xml_content"])
                 plugin = submit_plugin(manifest)
@@ -1037,7 +1036,6 @@ class WippPluginRegistry:
                     )
                 logger.debug("Submitted %s plugins successfully." % (valid))
                 plugins.refresh()
-
 
     def query(
         self,
@@ -1099,7 +1097,6 @@ class WippPluginRegistry:
         return [
             WippPluginRegistry._parse_xml(x["xml_content"]) for x in r.json()["results"]
         ]
-
 
     def get_current_schema(
         self,
@@ -1245,6 +1242,5 @@ class WippPluginRegistry:
 #     content = repo.get_content(
 #         "plugin-manifest/schema/wipp-plugin-manifest-schema.json"
 #     )
-
-plugins.registry = WippPluginRegistry
+plugins.WippPluginRegistry = WippPluginRegistry
 _Plugins().refresh()  # calls the refresh method when library is imported
