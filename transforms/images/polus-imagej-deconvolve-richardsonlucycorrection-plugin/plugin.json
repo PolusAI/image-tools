@@ -1,0 +1,85 @@
+{
+  "name": "ImageJ deconvolve richardsonLucyCorrection",
+  "version": "0.7.0",
+  "title": "ImageJ deconvolve richardsonLucyCorrection",
+  "description": "RichardsonLucyCorrection",
+  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-deconvolve-richardsonlucycorrection-plugin:0.7.0",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": ["RichardsonLucyCorrection"]
+      },
+      "description": "Operation to perform",
+      "required": false
+    },
+    {
+      "name": "in1",
+      "type": "collection",
+      "description": "in1",
+      "required": false
+    },
+    {
+      "name": "in2",
+      "type": "collection",
+      "description": "in2",
+      "required": false
+    },
+    {
+      "name": "fftBuffer",
+      "type": "collection",
+      "description": "fftBuffer",
+      "required": false
+    },
+    {
+      "name": "fftKernel",
+      "type": "collection",
+      "description": "fftKernel",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "out",
+      "type": "collection",
+      "description": "out"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "opName",
+      "description": "Operation to perform"
+    },
+    {
+      "key": "inputs.in1",
+      "title": "in1",
+      "description": "in1",
+      "condition": "model.inputs.opName==RichardsonLucyCorrection"
+    },
+    {
+      "key": "inputs.in2",
+      "title": "in2",
+      "description": "in2",
+      "condition": "model.inputs.opName==RichardsonLucyCorrection"
+    },
+    {
+      "key": "inputs.fftBuffer",
+      "title": "fftBuffer",
+      "description": "fftBuffer",
+      "condition": "model.inputs.opName==RichardsonLucyCorrection"
+    },
+    {
+      "key": "inputs.fftKernel",
+      "title": "fftKernel",
+      "description": "fftKernel",
+      "condition": "model.inputs.opName==RichardsonLucyCorrection"
+    }
+  ]
+}
