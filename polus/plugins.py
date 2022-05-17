@@ -664,7 +664,7 @@ def submit_plugin(
     plugin_name = manifest["name"]
     for char in replace_chars:
         plugin_name = plugin_name.replace(char, " ")
-    plugin_name = plugin_name.title().replace(" ", "")
+    plugin_name = plugin_name.title().replace(" ", "").replace("/", "_")
     plugin_class = type(plugin_name, (Plugin,), {})
 
     # Parse the manifest
