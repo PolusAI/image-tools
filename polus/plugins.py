@@ -41,6 +41,7 @@ from polus._plugins.PolusComputeSchema import (
 from polus._plugins._io import IOBase, InputTypes, Version
 from copy import deepcopy
 
+
 """
 Set up logging for the module
 """

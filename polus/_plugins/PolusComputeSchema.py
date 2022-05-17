@@ -50,6 +50,7 @@ class PluginHardwareRequirements(BaseModel):
     tmpDirMin: Optional[Union[str, float]] = None
 
 
+
 class PluginInputType(str, Enum):
     path = "path"
     string = "string"
@@ -86,6 +87,7 @@ class Validator(BaseModel):
     validator: Optional[List[ConditionEntry]] = None
 
 
+
 class PluginInput(IOBase):
     format: Optional[str] = None
     label: Optional[str] = None
@@ -102,6 +104,7 @@ class PluginOutput(IOBase):
     name: str
     type: PluginOutputType
     value: Optional[Any] = None
+
 
 
 class PluginUIInput(BaseModel):
