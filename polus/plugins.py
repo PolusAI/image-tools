@@ -25,7 +25,13 @@ import github
 from polus._plugins._plugin_model import Input as WippInput
 from polus._plugins._plugin_model import Output as WippOutput
 from polus._plugins._plugin_model import WIPPPluginManifest
-from polus._plugins._registry import _generate_query
+from polus._plugins._registry import (
+    _generate_query,
+    _to_xml,
+    FailedToPublish,
+    MissingUserInfo,
+)
+from requests.exceptions import HTTPError
 
 """
 Set up logging for the module
@@ -996,7 +1002,9 @@ class WippPluginRegistry:
                 if True it will override any other parameter.
                 `query` must be included
             query: query to execute. This query must be in MongoDB format
-            verify: SSL verification. Default is True
+
+            verify: SSL verification. Default is `True`
+
 
         Returns:
             An array of the manifests of the Plugins returned by the query.
@@ -1029,71 +1037,102 @@ class WippPluginRegistry:
         verify: bool = True,
     ):
         """Return current schema in WIPP"""
-        response = requests.get(
+        r = requests.get(
             urljoin(
                 self.registry_url,
                 "rest/template-version-manager/global/?title=res-md.xsd",
             ),
             verify=verify,
         )
-        if response.ok:
-            return response.json()[0]["current"]
+        if r.ok:
+            return r.json()[0]["current"]
         else:
-            response.raise_for_status()
+            r.raise_for_status()
 
-    def upload_data(
+    def upload(
         self,
-        filepath,
-        schema_id,
+        plugin: Plugin,
+        author: Optional[str] = None,
+        email: Optional[str] = None,
+        publish: bool = True,
         verify: bool = True,
     ):
-        """Upload data to registry"""
-        with open(filepath, "r") as file_reader:
-            xml_content = file_reader.read()
+        """Upload Plugin to WIPP Registry.
+
+        This function uploads a Plugin object to the WIPP Registry.
+        Author name and email to be passed to the Plugin object
+        information on the WIPP Registry are taken from the value
+        of the field `author` in the `Plugin` manifest. That is,
+        the first email and the first name (first and last) will
+        be passed. The value of these two fields can be overridden
+        by specifying them in the arguments.
+
+        Args:
+            plugin:
+                Plugin to be uploaded
+            author:
+                Optional `str` to override author name
+            email:
+                Optional `str` to override email
+            publish:
+                If `False`, Plugin will not be published to the public
+                workspace. It will be visible only to the user uploading
+                it. Default is `True`
+            verify: SSL verification. Default is `True`
+
+        Returns:
+            A message indicating a successful upload.
+        """
+        manifest = plugin.manifest
+
+        xml_content = _to_xml(manifest, author, email)
+
+        schema_id = self.get_current_schema()
 
         data = {
-            "title": basename(filepath),
+            "title": manifest["name"],
             "template": schema_id,
             "xml_content": xml_content,
         }
 
-        response = requests.post(
-            urljoin(self.registry_url, "rest/data/"),
-            data,
-            auth=(self.username, self.password),
-            verify=verify,
-        )
-        response_code = response.status_code
+        url = self.registry_url + "/rest/data/"
+        headers = {"Content-type": "application/json"}
+        if self.username and self.password:
+            r = requests.post(
+                url,
+                headers=headers,
+                data=json.dumps(data),
+                auth=(self.username, self.password),
+                verify=verify,
+            )  # authenticated request
+        else:
+            raise MissingUserInfo("The registry connection must be authenticated.")
+
+        response_code = r.status_code
 
         if response_code != 201:
             print(
                 "Error uploading file (%s), code %s"
                 % (data["title"], str(response_code))
             )
-            response.raise_for_status()
-
-        return response.json()
-
-    def publish_data(
-        self,
-        data,
-        verify: bool = True,
-    ):
-        """Publish to public workspace"""
-        data_publish_id = data["id"] + "/publish/"
-        response = requests.patch(
-            urljoin(self.registry_url, "rest/data/" + data_publish_id),
-            auth=(self.username, self.password),
-            verify=verify,
-        )
-        response_code = response.status_code
-
-        if response_code != 200:
-            print(
-                "Error publishing data (%s), code %s"
-                % (data["title"], str(response_code))
+            r.raise_for_status()
+        if publish:
+            _id = r.json()["id"]
+            _purl = url + _id + "/publish/"
+            r2 = requests.patch(
+                _purl,
+                headers=headers,
+                auth=(self.username, self.password),
+                verify=verify,
             )
-            response.raise_for_status()
+            try:
+                r2.raise_for_status()
+            except HTTPError as err:
+                raise FailedToPublish(
+                    "Failed to publish %s with id %s" % (data["title"], _id)
+                ) from err
+
+        return "Successfully uploaded %s" % data["title"]
 
     def get_resource_by_pid(self, pid, verify: bool = True):
         """Return current resource."""
