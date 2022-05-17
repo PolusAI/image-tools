@@ -40,6 +40,7 @@ from polus._plugins.PolusComputeSchema import (
 )
 from copy import deepcopy
 
+
 """
 Set up logging for the module
 """
