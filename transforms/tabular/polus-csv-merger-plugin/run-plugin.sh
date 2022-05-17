@@ -2,7 +2,7 @@
 
 #!/bin/bash
 version=$(<VERSION)
-datapath='/Users/mezukn/Desktop/polus/s3/data/'
+datapath=''
 
 # Inputs
 inpDir=/data/cytoplasm
@@ -20,7 +20,7 @@ LOGLEVEL=INFO
 
 docker run --mount type=bind,source=${datapath},target=/data/  \
             --env POLUS_LOG=${LOGLEVEL} \
-            labshare/polus-csv-merger-plugin:${version} \
+            polusai/polus-csv-merger-plugin:${version} \
             --inpDir ${inpDir} \
             --stripExtension ${stripExtension} \
             --dim ${dim} \

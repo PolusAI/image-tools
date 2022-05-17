@@ -10,11 +10,11 @@ import logging
 import vaex
 import pandas as pd
 import shutil
+import functools as ft
 
 POLUS_LOG = getattr(logging, os.environ.get('POLUS_LOG', 'INFO'))
 
-FILE_EXT = os.environ.get('POLUS_EXT',None)
-FILE_EXT = FILE_EXT if FILE_EXT is not None else '.csv'
+FILE_EXT = os.environ.get('POLUS_EXT', '.csv')
 
 if __name__=="__main__":
     # Initialize the logger
@@ -80,28 +80,15 @@ if __name__=="__main__":
             
             inp_files = [open(f) for f in out_files[key]]
             
-            # # Write Merged CSV
-            with open(outPath,'w') as fw:
-                logger.info("Generating file: {}".format(Path(outPath).name))
-                for l in range(key):
-                    fw.write(','.join([f.readline().rstrip('\n') for f in inp_files]))
-                    fw.write('\n')    
-
-            # Write Merged Feather
-            if FILE_EXT == '.feather':
-                file_count = len(inp_files)
-            # create empty list
-                dataframes_list = []
-                
-                # append datasets to the list
-                for filename in inp_files:
-                    temp_df = pd.read_csv(filename, index_col=0)
-                    dataframes_list.append(temp_df)         
-                df_total = pd.concat(dataframes_list)
-                df = vaex.from_pandas(df_total)
-                print(df)
-                os.chdir(outDir)
-                df.export('merged.feather')
+            dfs = list()
+            for l in range(key):
+                for f in inpDir_files:
+                    df = pd.read_csv(f)
+                    dfs.append(df)
+                    df_final = ft.reduce(lambda left, right: pd.merge(left, right), dfs)
+                    vaex_df = vaex.from_pandas(df_final)
+                    os.chdir(outDir)
+                    vaex_df.export('merged.feather')
                     
     else:
         # Get the column headers
@@ -124,16 +111,7 @@ if __name__=="__main__":
                 line = fr.readline()
                 ident = line.rstrip('\n').split(',')
                 no_identifier = sum(1 for f in ident if f not in 'FC')
-                if not no_identifier:
-                    for ind,t in enumerate(h):
-                        if t in identifiers.keys() and identifiers[t] != ident[i]:
-                            logger.info('Header "{}" was previously identified as "{}", but was labeled in {} as "{}". Ignoring new identifier.'.format(t,
-                                                                                                                                                        identifiers[t],
-                                                                                                                                                        in_file,
-                                                                                                                                                        ident[i]))
-                        else:
-                            identifiers[t] = ident[ind]
-                
+                               
         if 'file' in headers:
             headers.remove('file')
         headers = list(headers)
