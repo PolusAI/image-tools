@@ -80,16 +80,21 @@ if __name__=="__main__":
             
             inp_files = [open(f) for f in out_files[key]]
             
-            dfs = list()
-            for l in range(key):
-                for f in inpDir_files:
-                    df = pd.read_csv(f)
-                    dfs.append(df)
-                    df_final = ft.reduce(lambda left, right: pd.merge(left, right), dfs)
-                    vaex_df = vaex.from_pandas(df_final)
-                    os.chdir(outDir)
-                    vaex_df.export('merged.feather')
-                    
+            if FILE_EXT == ".feather":
+                dfs = list()
+                for l in range(key):
+                    for f in inpDir_files:
+                        df = pd.read_csv(f)
+                        dfs.append(df)
+                        df_final = ft.reduce(lambda left, right: pd.merge(left, right), dfs)
+                        vaex_df = vaex.from_pandas(df_final)
+                        vaex_df.export(outPath)
+            else:
+                with open(outPath,'w') as fw:
+                    for l in range(key):
+                        fw.write(','.join([f.readline().rstrip('\n') for f in inp_files]))
+                        fw.write('\n')
+                        
     else:
         # Get the column headers
         logger.info("Getting all unique headers...")
@@ -128,7 +133,7 @@ if __name__=="__main__":
         line_dict = {key:'NaN' for key in headers}
         
         # Generate the path to the output file
-        outPath = str(Path(outDir).joinpath('merged.csv').absolute())
+        outPath = str(Path(outDir).joinpath('merged.feather').absolute()) if FILE_EXT == 'feather' else str(Path(outDir).joinpath('merged.csv').absolute())
         
         # Case Two: Merger along rows only
         if dim=='rows':
@@ -173,7 +178,7 @@ if __name__=="__main__":
                 temp_df = pd.read_csv(outPath)
                 df = vaex.from_pandas(temp_df)
                 os.chdir(outDir)
-                df.export('merged.feather')
+                df.export(outPath)
             
         # Case Three: Merger along columns only
         elif dim=='columns':
@@ -234,5 +239,4 @@ if __name__=="__main__":
             if FILE_EXT == '.feather':
                 df = pd.DataFrame.from_dict(out_dict, orient='index')
                 vaex_df = vaex.from_pandas(df)
-                os.chdir(outDir)
-                vaex_df.export('merged.feather')
+                vaex_df.export(outPath)
