@@ -514,6 +514,9 @@ class Plugin(WIPPPluginManifest):
             if isinstance(i.value, pathlib.Path):
                 args.append(inp_dirs_dict[str(i.value)])
 
+            elif isinstance(i.value, enum.Enum):
+                args.append(str(i.value._name_))
+
             else:
                 args.append(str(i.value))
 
@@ -523,6 +526,10 @@ class Plugin(WIPPPluginManifest):
 
             if isinstance(o.value, pathlib.Path):
                 args.append(out_dirs_dict[str(o.value)])
+
+            elif isinstance(o.value, enum.Enum):
+                args.append(str(o.value._name_))
+
             else:
                 args.append(str(o.value))
 
