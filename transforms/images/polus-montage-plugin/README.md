@@ -80,7 +80,7 @@ There are three to five input arguments and one output argument:
 | `--filePattern`  | Filename pattern used to parse data                   | Input  | string          |
 | `--inpDir`       | Input image collection to be processed by this plugin | Input  | collection      |
 | `--layout`       | Specify montage organization                          | Input  | array           |
-| `--gridSpacing`  | Specify spacing between images in the lowest grid     | Input  | string          |
-| `--imageSpacing` | Specify spacing multiplier between grids              | Input  | string          |
+| `--gridSpacing`  | Specify spacing between images in the lowest grid     | Input  | integer         |
+| `--imageSpacing` | Specify spacing multiplier between grids              | Input  | integer         |
 | `--flipAxis`     | Axes to flip when laying out images                   | Input  | string          |
 | `--outDir`       | Output collection                                     | Output | stitchingVector |

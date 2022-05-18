@@ -37,13 +37,13 @@
     },
     {
       "name": "imageSpacing",
-      "type": "number",
+      "type": "integer",
       "description": "Spacing between images at the lowest subgrid",
       "required": false
     },
     {
       "name": "gridSpacing",
-      "type": "number",
+      "type": "integer",
       "description": "Input image collection to be processed by this plugin",
       "required": false
     },
