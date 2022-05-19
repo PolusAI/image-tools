@@ -1,7 +1,11 @@
-import os, sys
+import os
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
+from scipy.stats import gaussian_kde
+
+import imageio
+imageio.plugins.freeimage.download()
 
 import numpy as np
 import pandas as pd
@@ -11,14 +15,12 @@ from textwrap import wrap
 from decimal import Decimal
 
 import logging
-
 # Initialize the logger
 POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG', 'INFO'))
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("figures")
 logger.setLevel(POLUS_LOG)
-
 
 convert_tolog = lambda t : np.sign(t)*(1/np.log(10))*(-1+(10**abs(t)))
 
@@ -163,7 +165,6 @@ class Figures():
 
         self.CHUNK_SIZE = CHUNK_SIZE
         self.fig, self.ax = plt.subplots(dpi=int(self.CHUNK_SIZE/4),figsize=(4,4),tight_layout={'h_pad':1,'w_pad':1})
-        self.fig.canvas.draw()
 
         self.cmap = get_cmap()
 
@@ -172,16 +173,6 @@ class Figures():
 
         self.ax.set_xlabel(" ")
         self.ax.set_ylabel(" ")
-
-        self.ax_label = self.fig.add_axes([.075, 0, 1, .075], frameon = False, alpha = .5, facecolor = 'b')
-        self.ax_label.set_xticks([])
-        self.ax_label.set_yticks([])
-        self.ax_label.set_clip_on(True)
-        
-        self.ay_label = self.fig.add_axes([0, .075, .075, 1], frameon = False, alpha = .5, facecolor = 'b')
-        self.ay_label.set_xticks([])
-        self.ay_label.set_yticks([])
-        self.ay_label.set_clip_on(True)
 
         self.convert_tolog = convert_tolog
 
@@ -293,7 +284,12 @@ class Figures():
         self.fig.suptitle(series.name)
         self.ax.patch.set_facecolor(self.color)
         self.ax.patch.set_alpha(0.05)
-        self.fig.savefig(output_filename)
+
+        # this is faster than self.fig.savefig()
+        self.fig.canvas.draw()
+        output_plot = np.array(self.fig.canvas.renderer.buffer_rgba())
+        imageio.imwrite(output_filename, output_plot, format='PNG-FI',compression=1)
+
         if os.path.exists(output_filename):
             self.ax.cla()
 
@@ -309,11 +305,14 @@ class HeatMap(Figures):
         self.range_tickvals_offset = self.range_tickvals - 0.5 # the ticks are in the center of bins,
         # want the ticks on the edge of the bin
 
+        self.clear_axis()
+        self.dtype = get_dtype(nrows)
+
+    def clear_axis(self):
+        self.ax.cla()
         self.ax.grid(linestyle='dotted')
         self.ax.set_xticks(list(self.range_tickvals_offset))
         self.ax.set_yticks(list(self.range_tickvals_offset))
-        
-        self.dtype = get_dtype(nrows)
 
     def save_heatmap(self, 
                      output_image : np.ndarray,
@@ -346,40 +345,49 @@ class HeatMap(Figures):
         if (self.stats['min'][seriesy_name] < 0):
             self.ax.axhline(y=self.bins-seriesy_zero+0.5, linewidth=1)
         
-        self.fig.savefig(output_filename)
+        # this is faster than self.fig.savefig()
+        self.fig.canvas.draw()
+        output_plot = np.array(self.fig.canvas.renderer.buffer_rgba())
+        imageio.imwrite(output_filename, output_plot,format='PNG-FI',compression=1)
 
-        # clear axis, these change for every graph that is created
-        while len(self.ax.lines) > 0:
-            self.ax.lines[-1].remove()
+        logger.debug(f"Saved to: {output_filename}")
+        self.clear_axis()
 
     def plot_graph(self,
-                   series1 : pd.core.series.Series, 
-                   series2 : pd.core.series.Series,
+                   series : pd.core.frame.DataFrame, 
                    output_filename_1 : str, 
                    output_filename_2 : str):
         """ This function gets individuals data for plotting heatmaps.
         Inputs:
-            series1           - one of the two series used to create the heatmap
-            series2           - one of the two series used to create the heatmap 
+            series            - dataframe containing x and y datapoints
             output_filename_1 - location of one of the two graphs saved 
             output_filename_2 - location of one of the two graphs saved
         """
 
-        # only need to update the labels of the graphs
+        # do not want to plot data that is null
+        series_ind = pd.notnull(series)
+        series[~series_ind] = 255
+
+        # separate out the series
+        series1 = series.iloc[:,0]
+        series2 = series.iloc[:,1]
+
         logger.debug(f"\n Graphing: {series1.name}, {series2.name}")
+        # only need to update the labels of the graphs
         ticks_1 = (np.linspace(self.stats['bin_min'][series1.name], self.stats['bin_max'][series1.name], self.nticks))
         ticks_2 = (np.linspace(self.stats['bin_min'][series2.name], self.stats['bin_max'][series2.name], self.nticks))
         logger.debug(f"Tick 1 Values : {ticks_1}")
         logger.debug(f"Tick 2 Values : {ticks_2}")
         
+        # for plotting x=0 and y=0
         series1_zero = abs(self.stats['bin_min'][series1.name]//self.stats['binwidth'][series1.name])
         series2_zero = abs(self.stats['bin_min'][series2.name]//self.stats['binwidth'][series2.name])
 
-        if self.scale == "log":
+        if self.scale == "log": #would be in linear
             ticks_1 = self.convert_tolog(ticks_1)
             ticks_2 = self.convert_tolog(ticks_2)
 
-        ticks_1formatted = format_ticks(ticks_1)
+        ticks_1formatted = format_ticks(ticks_1) #make it pretty
         ticks_2formatted = format_ticks(ticks_2)
         logger.debug(f"Tick 1 Labels : {ticks_1formatted}")
         logger.debug(f"Tick 2 Labels : {ticks_2formatted}")
@@ -398,7 +406,6 @@ class HeatMap(Figures):
         output_image_1[rows[0], cols[0]] = index[0] + 1
         output_image_1[rows[1:],cols[1:]] = counts
 
-
         self.save_heatmap(output_image     = output_image_1,
                           output_filename  = output_filename_1,
                           seriesx_zero     = series1_zero,     seriesy_zero     = series2_zero,
@@ -415,7 +422,7 @@ class HeatMap(Figures):
                           output_filename  = output_filename_2,
                           seriesx_zero     = series2_zero,     seriesy_zero     = series1_zero,
                           seriesx_name     = series2.name,     seriesy_name     = series1.name,
-                          ticks_xformatted = ticks_2formatted, ticks_yformatted = ticks_2formatted)
+                          ticks_xformatted = ticks_2formatted, ticks_yformatted = ticks_1formatted)
 
 
 class ScatterPlot(Figures):
@@ -426,20 +433,29 @@ class ScatterPlot(Figures):
         Figures.__init__(self, bins, CHUNK_SIZE, color, scale, stats, output_dir)
 
     def plot_graph(self, 
-                   series1 : pd.core.series.Series, 
-                   series2 : pd.core.series.Series,
+                   series : pd.core.frame.DataFrame,
                    output_filename_1 : str, 
                    output_filename_2 : str):
 
         """ This function gets individuals data for scatterplots.
         Inputs:
-            series1           - one of the two series used to create the heatmap
-            series2           - one of the two series used to create the heatmap 
+            series            - dataframe containing x and y datapoints
             output_filename_1 - location of one of the two graphs saved 
             output_filename_2 - location of one of the two graphs saved
         """
 
-        print("here", flush=True)
+        # do not want to plot data that is null
+        series_ind = pd.notnull(series)
+        series[~series_ind] = 255
+
+        # separate out the series
+        series1 = series.iloc[:,0]
+        series2 = series.iloc[:,1]
+
+        # https://stackoverflow.com/questions/20105364/how-can-i-make-a-scatter-plot-colored-by-density-in-matplotlib
+        xy = np.vstack([series1, series2])
+        z  = gaussian_kde(xy)(xy)
+
         logger.debug(f"\n Graphing: {series1.name}, {series2.name}")
         range_1_lims, range_1_tickvals = self.get_axis_metadata(minimum=series1.min(), maximum=series1.max(), padding=5)
         range_2_lims, range_2_tickvals = self.get_axis_metadata(minimum=series2.min(), maximum=series2.max(), padding=5)
@@ -464,9 +480,12 @@ class ScatterPlot(Figures):
                          ticks_xformatted = range_1_formattedticks,  ticks_yformatted = range_2_formattedticks,
                          range_xlim       = range_1_lims,            range_ylim       = range_2_lims)
 
+        self.ax.scatter(series1, series2, c=z, s=100)
+        # this is faster than self.fig.savefig()
+        self.fig.canvas.draw()
+        output_plot = np.array(self.fig.canvas.renderer.buffer_rgba())
+        imageio.imwrite(output_filename_1, output_plot, format='PNG-FI',compression=1)
 
-        self.ax.scatter(series1, series2, color=self.color)
-        self.fig.savefig(output_filename_1)
         logger.debug(f"Saved to: {output_filename_1}")
         self.ax.cla()
 
@@ -476,8 +495,12 @@ class ScatterPlot(Figures):
                          ticks_xformatted = range_2_formattedticks,  ticks_yformatted = range_1_formattedticks,
                          range_xlim       = range_2_lims,            range_ylim       = range_1_lims)
 
-        self.ax.scatter(series2, series1, color=self.color)
-        self.fig.savefig(output_filename_2)
+        self.ax.scatter(series2, series1, c=z, s=100)
+        # this is faster than self.fig.savefig()
+        self.fig.canvas.draw()
+        output_plot = np.array(self.fig.canvas.renderer.buffer_rgba())
+        imageio.imwrite(output_filename_2, output_plot, format='PNG-FI',compression=1)
+
         logger.debug(f"Saved to: {output_filename_2}")
         self.ax.cla()
 

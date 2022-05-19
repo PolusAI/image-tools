@@ -1,14 +1,8 @@
 import argparse, logging
 
-import imageio
-from matplotlib import colorbar
-imageio.plugins.freeimage.download()
-
 import os
-from threading import Thread
 import numpy as np
 import pandas as pd
-np.set_printoptions(suppress=True)
 
 from Dataset import LinearData, LogData
 from Pyramid import GraphPyramid
@@ -16,14 +10,7 @@ from Figure import Figures
 from Figure import HeatMap
 from Figure import ScatterPlot
 
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-
-
 from concurrent.futures import ProcessPoolExecutor
-from concurrent.futures import ThreadPoolExecutor
-import itertools
 
 POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG', 'INFO'))
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -63,14 +50,11 @@ def plots_2D(graphPyramid,
         dataset.bin_data(bincount=bincount)
 
     logger.info("Generating 2D plots ...")
-    # we create both graphs on either side of the diagonal; only need to iterate through the combinations once
-
     for data_x, data_y in combo_names:
+        # we create both graphs on either side of the diagonal; only need to iterate through the combinations once
         
         logger.info(f"Generating plots for {data_x} and {data_y}")
-
-        figures.plot_graph(series1 = dataset.dataframe[data_x],
-                           series2 = dataset.dataframe[data_y],
+        figures.plot_graph(series            = dataset.dataframe[[data_x, data_y]],
                            output_filename_1 = os.path.join(graphPyramid.bottom_pyramidDir, 
                                                                 graphPyramid.base_imagenames[(data_x, data_y)]),
                            output_filename_2 = os.path.join(graphPyramid.bottom_pyramidDir, 
@@ -90,7 +74,10 @@ def histograms(graphPyramid,
                       CHUNK_SIZE=CHUNK_SIZE,
                       output_dir=output_path)
 
+    logger.info("Generating 1D plots ...")
     for data in column_names:
+
+        logger.info(f"Generating histograms for {data}")
         figures.plot_histogram(dataset.dataframe[data], 
                                os.path.join(graphPyramid.bottom_pyramidDir, graphPyramid.base_imagenames[(data,data)]))
 
@@ -162,9 +149,10 @@ def main(input_path  : str,
                 for i in range(0, num_combos, processor_count_2D):
                     list_columns = list(dataset.plot_combinations_unique[i:i+processor_count_2D])
                     i += processor_count_2D
-                    executor.submit(plots_2D,
-                                    combo_names = list_columns,
-                                    **data_kwargs)
+                    plots_2D(combo_names = list_columns, **data_kwargs)
+                    # executor.submit(plots_2D,
+                    #                 combo_names = list_columns,
+                    #                 **data_kwargs)
 
             # need to use the images in the base directory to build rest of the pyramid for deepzooming
             logger.info("Building up the Pyramid ...")
