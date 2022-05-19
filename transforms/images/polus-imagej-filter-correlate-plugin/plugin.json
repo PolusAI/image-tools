@@ -2,7 +2,7 @@
   "name": "ImageJ filter correlate",
   "version": "0.4.0",
   "title": "ImageJ filter correlate",
-  "description": "The plugin applied a correlation operation to an input image with a user specified kernel",
+  "description": "The plugin applies a correlation operation to an input image with a user specified kernel",
   "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/labshare/polus-plugins",
