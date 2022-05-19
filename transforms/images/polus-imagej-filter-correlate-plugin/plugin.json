@@ -34,7 +34,7 @@
     },
     {
       "name": "borderSize",
-      "type": "enum",
+      "type": "string",
       "description": "The number of pixels to pad to each side of the image in each dimension: x,y",
       "required": true
     }
