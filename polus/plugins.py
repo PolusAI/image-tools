@@ -10,6 +10,7 @@ from os.path import basename
 import uuid
 import signal
 import random
+import pydantic
 import requests
 import xmltodict
 from urllib.parse import urlparse, urljoin
@@ -24,6 +25,21 @@ import github
 from polus._plugins._plugin_model import Input as WippInput
 from polus._plugins._plugin_model import Output as WippOutput
 from polus._plugins._plugin_model import WIPPPluginManifest
+from polus._plugins._registry import (
+    _generate_query,
+    _to_xml,
+    FailedToPublish,
+    MissingUserInfo,
+)
+from requests.exceptions import HTTPError
+from polus._plugins.PolusComputeSchema import PluginSchema as NewSchema  # new schema
+from polus._plugins.PolusComputeSchema import (
+    PluginUIInput,
+    PluginUIOutput,
+    PluginHardwareRequirements,
+)
+from polus._plugins._io import IOBase, InputTypes, Version
+from copy import deepcopy
 
 """
 Set up logging for the module
@@ -112,6 +128,25 @@ class _Plugins(object):
         else:
             return submit_plugin(VERSIONS[name][version])
 
+    def load_config(self, path: typing.Union[str, pathlib.Path]):
+        with open(path, "r") as fr:
+            m = json.load(fr)
+        _io = m["_io_keys"]
+        m.pop("_io_keys", None)
+        cl = m["class"]
+        m.pop("class", None)
+        if cl == "NewPlugin":
+            pl = ComputePlugin(_uuid=False, **m)
+        elif cl == "OldPlugin":
+            pl = Plugin(_uuid=False, **m)
+        else:
+            raise ValueError("Invalid value of class")
+        for k, v in _io.items():
+            val = v["value"]
+            if val:  # exclude those values not set
+                setattr(pl, k, val)
+        return pl
+
     def refresh(self, force: bool = False):
         """Refresh the plugin list
 
@@ -169,6 +204,7 @@ class _Plugins(object):
 
 plugins = _Plugins()
 get_plugin = plugins.get_plugin
+load_config = plugins.load_config
 
 """
 Paths and Fields
@@ -187,27 +223,6 @@ REQUIRED_FIELDS = [
     "outputs",
     "ui",
 ]
-
-"""
-Enums for validating plugin input, output, and ui components
-"""
-WIPP_TYPES = {
-    "collection": pathlib.Path,
-    "pyramid": pathlib.Path,
-    "csvCollection": pathlib.Path,
-    "genericData": pathlib.Path,
-    "stitchingVector": pathlib.Path,
-    "notebook": pathlib.Path,
-    "tensorflowModel": pathlib.Path,
-    "tensorboardLogs": pathlib.Path,
-    "pyramidAnnotation": pathlib.Path,
-    "integer": int,
-    "number": float,
-    "string": str,
-    "boolean": bool,
-    "array": str,
-    "enum": enum.Enum,
-}
 
 
 class OutputTypes(str, enum.Enum):
@@ -228,150 +243,7 @@ class OutputTypes(str, enum.Enum):
         return list(map(lambda c: c.value, cls))
 
 
-class InputTypes(str, enum.Enum):
-    """This is needed until the json schema is updated"""
-
-    collection = "collection"
-    pyramid = "pyramid"
-    csvCollection = "csvCollection"
-    genericData = "genericData"
-    stitchingVector = "stitchingVector"
-    notebook = "notebook"
-    tensorflowModel = "tensorflowModel"
-    tensorboardLogs = "tensorboardLogs"
-    pyramidAnnotation = "pyramidAnnotation"
-    integer = "integer"
-    number = "number"
-    string = "string"
-    boolean = "boolean"
-    array = "array"
-    enum = "enum"
-
-    @classmethod
-    def list(cls):
-        return list(map(lambda c: c.value, cls))
-
-
 """ Plugin and Input/Output Classes """
-
-
-class Version(BaseModel):
-    version: str
-
-    def __init__(self, version):
-
-        super().__init__(version=version)
-
-    @validator("version")
-    def semantic_version(cls, value):
-
-        version = value.split(".")
-
-        assert (
-            len(version) == 3
-        ), "Version must follow semantic versioning. See semver.org for more information."
-
-        return value
-
-    @property
-    def major(self):
-        return self.version.split(".")[0]
-
-    @property
-    def minor(self):
-        return self.version.split(".")[1]
-
-    @property
-    def patch(self):
-        return self.version.split(".")[2]
-
-    def __lt__(self, other):
-
-        assert isinstance(other, Version), "Can only compare version objects."
-
-        if other.major > self.major:
-            return True
-        elif other.major == self.major:
-            if other.minor > self.minor:
-                return True
-            elif other.minor == self.minor:
-                if other.patch > self.patch:
-                    return True
-                else:
-                    return False
-            else:
-                return False
-        else:
-            return False
-
-    def __gt__(self, other):
-
-        return other < self
-
-    def __eq__(self, other):
-
-        return (
-            other.major == self.major
-            and other.minor == self.minor
-            and other.patch == self.patch
-        )
-
-
-class IOBase(BaseModel):
-
-    type: typing.Any
-    options: typing.Optional[dict] = None
-    value: typing.Optional[typing.Any] = None
-    id: typing.Optional[typing.Any] = None
-
-    def _validate(self):
-
-        value = self.value
-
-        if value is None:
-
-            if self.required:
-                raise TypeError(
-                    f"The input value ({self.name}) is required, but the value was not set."
-                )
-
-            else:
-                return
-
-        if self.type == InputTypes.enum:
-            try:
-                if isinstance(value, str):
-                    value = enum.Enum(self.name, self.options["values"])[value]
-                elif not isinstance(value, enum.Enum):
-                    raise ValueError
-
-            except KeyError:
-                logging.error(
-                    f"Value ({value}) is not a valid value for the enum input ({self.name}). Must be one of {self.options['values']}."
-                )
-                raise
-        else:
-
-            value = WIPP_TYPES[self.type](value)
-
-            if isinstance(value, pathlib.Path):
-
-                value = value.absolute()
-                assert value.exists(), f"{value} is invalid or does not exist"
-                assert value.is_dir(), f"{value} is not a valid directory"
-
-        super().__setattr__("value", value)
-
-    def __setattr__(self, name, value):
-
-        if name not in ["value", "id"]:
-            # Don't permit any other values to be changed
-            raise TypeError(f"Cannot set property: {name}")
-
-        super().__setattr__(name, value)
-
-        if name == "value":
-            self._validate()
 
 
 class Output(WippOutput, IOBase):
@@ -402,76 +274,10 @@ class Input(WippInput, IOBase):
 #     mem: int = -1
 
 
-class Plugin(WIPPPluginManifest):
-    """Required until json schema is fixed"""
-
-    manifest: dict
-    version: Version
-    inputs: typing.List[Input]
-    outputs: typing.List[Output]
-    versions: typing.List[Version] = []
-    id: uuid.UUID
-
-    class Config:
-        extra = Extra.allow
-        allow_mutation = False
-
-    def __init__(self, **data):
-
-        data["manifest"] = data.copy()
-
-        data["id"] = uuid.uuid4()
-
-        super().__init__(**data)
-
-        self.Config.allow_mutation = True
-        self._io_keys = {i.name: i for i in self.inputs}
-        self._io_keys.update({o.name: o for o in self.outputs})
-        # self.Config.allow_mutation = False
-
-        if self.author == "":
-            logger.warning(
-                f"The plugin ({self.name}) is missing the author field. This field is not required but should be filled in."
-            )
-
-    @validator("version", pre=True)
-    def cast_version(cls, value):
-
-        return Version(version=value)
-
+class PluginMethods:
     @property
     def organization(self):
         return self.containerId.split("/")[0]
-
-    @property
-    def _config_file(self):
-        inp = {x.name: str(x.value) for x in self.inputs}
-        out = {x.name: str(x.value) for x in self.outputs}
-        config = {"inputs": inp, "outputs": out}
-        return config
-
-    def save_manifest(self, path: typing.Union[str, pathlib.Path], indent: int = 4):
-        with open(path, "w") as fw:
-            json.dump(self.manifest, fw, indent=indent)
-        logger.debug("Saved manifest to %s" % (path))
-
-    def save_config(self, path: typing.Union[str, pathlib.Path]):
-        with open(path, "w") as fw:
-            json.dump(self._config_file, fw)
-        logger.debug("Saved config to %s" % (path))
-
-    def load_config(self, path: typing.Union[str, pathlib.Path]):
-        with open(path, "r") as fw:
-            config = json.load(fw)
-        inp = config["inputs"]
-        out = config["outputs"]
-        for k, v in inp.items():
-            if k in self._io_keys:
-                setattr(self, k, v)
-        for k, v in out.items():
-            if k in self._io_keys:
-                setattr(self, k, v)
-        logger.debug("Loaded config from %s" % (path))
 
     def run(
         self,
@@ -610,6 +416,222 @@ class Plugin(WIPPPluginManifest):
         return other.version < self.version
 
 
+class Plugin(WIPPPluginManifest, PluginMethods):
+    """Required until json schema is fixed"""
+
+    version: Version
+    inputs: typing.List[Input]
+    outputs: typing.List[Output]
+    versions: typing.List[Version] = []
+    id: uuid.UUID
+
+    class Config:
+        extra = Extra.allow
+        allow_mutation = False
+
+    def __init__(self, _uuid: bool = True, **data):
+
+        if _uuid:
+            data["id"] = uuid.uuid4()
+        else:
+            data["id"] = uuid.UUID(data["id"])
+
+        super().__init__(**data)
+
+        self.Config.allow_mutation = True
+        self._io_keys = {i.name: i for i in self.inputs}
+        self._io_keys.update({o.name: o for o in self.outputs})
+
+        if self.author == "":
+            logger.warning(
+                f"The plugin ({self.name}) is missing the author field. This field is not required but should be filled in."
+            )
+
+    @property
+    def manifest(self):
+        return json.loads(self.json(exclude={"_io_keys"}))
+
+    @validator("version", pre=True)
+    def cast_version(cls, value):
+        if isinstance(value, dict):  # if init from a Version object
+            value = value["version"]
+        return Version(version=value)
+
+    def new_schema(self, set_hardware_req: bool = False):
+        data = deepcopy(self.manifest)
+        return ComputePlugin(set_hardware_req=set_hardware_req, _from_old=True, **data)
+
+    def save_manifest(
+        self,
+        path: typing.Union[str, pathlib.Path],
+        set_hardware_req: bool = False,
+        indent: int = 4,
+        old: bool = False,
+    ):
+        if not old:
+            with open(path, "w") as fw:
+                d = self.new_schema(set_hardware_req=set_hardware_req).json()
+                d = json.loads(d)
+                json.dump(
+                    d,
+                    fw,
+                    indent=indent,
+                )
+        else:
+            with open(path, "w") as fw:
+                d = self.manifest
+                json.dump(
+                    d,
+                    fw,
+                    indent=indent,
+                )
+
+        logger.debug("Saved manifest to %s" % (path))
+
+    def __setattr__(self, name, value):
+        PluginMethods.__setattr__(self, name, value)
+
+    @property
+    def _config_file(self):
+        m = json.loads(self.json())
+        m["class"] = "OldPlugin"
+        for x in m["inputs"]:
+            x["value"] = None
+        return m
+
+    def save_config(self, path: typing.Union[str, pathlib.Path]):
+        with open(path, "w") as fw:
+            json.dump(self._config_file, fw, indent=4)
+        logger.debug("Saved config to %s" % (path))
+
+
+class ComputePlugin(NewSchema, PluginMethods):
+    class Config:
+        extra = Extra.allow
+        allow_mutation = False
+
+    @validator("version", pre=True)
+    def cast_version(cls, value):
+        if isinstance(value, dict):  # if init from a Version object
+            value = value["version"]
+
+        return Version(version=value)
+
+    def __init__(
+        self,
+        set_hardware_req: bool = False,
+        _from_old: bool = False,
+        _uuid: bool = True,
+        **data,
+    ):
+
+        if _uuid:
+            data["id"] = uuid.uuid4()
+        else:
+            data["id"] = uuid.UUID(data["id"])
+
+        if _from_old:
+            type_dict = {
+                "path": "text",
+                "string": "text",
+                "boolean": "checkbox",
+                "number": "number",
+                "array": "text",
+            }
+
+            def _clean(d: dict):
+                rg = re.compile("Dir")
+                if d["type"] == "collection":
+                    d["type"] = "path"
+                elif bool(rg.search(d["name"])):
+                    d["type"] = "path"
+                elif d["type"] == "enum":
+                    d["type"] = "string"
+                return d
+
+            def _ui_in(d: dict):  # assuming old all ui input
+                # assuming format inputs. ___
+                inp = d["key"].split(".")[-1]  # e.g inpDir
+                try:
+                    tp = [x["type"] for x in data["inputs"] if x["name"] == inp][0]
+                except IndexError:
+                    tp = "string"
+                except BaseException:
+                    raise
+
+                d["type"] = type_dict[tp]
+                return PluginUIInput(**d)
+
+            def _ui_out(d: dict):
+                nd = deepcopy(d)
+                nd["name"] = "outputs." + nd["name"]
+                nd["type"] = type_dict[nd["type"]]
+                return PluginUIOutput(**nd)
+
+            data["inputs"] = [_clean(x) for x in data["inputs"]]
+            data["outputs"] = [_clean(x) for x in data["outputs"]]
+            data["pluginHardwareRequirements"] = {}
+            data["ui"] = [_ui_in(x) for x in data["ui"]]  # inputs
+            data["ui"].extend([_ui_out(x) for x in data["outputs"]])  # outputs
+
+        if set_hardware_req:
+
+            def _get_types(v):
+                if isinstance(v.type_, enum.EnumMeta):
+                    return [x for x in v.type_._member_names_ if x != "none"]
+                elif isinstance(v.type_, type):
+                    return [v.type_.__name__]
+                else:
+                    return [
+                        x.__name__ for x in v.type_.__args__ if x.__name__ != "NoneType"
+                    ]
+
+            def _set(data: dict):
+                for k, v in PluginHardwareRequirements.__fields__.items():
+                    i = input(f"{k}{_get_types(v)}: ".replace("'", ""))
+                    if i == "":
+                        i = None
+                    data[k] = i
+
+            _set(data["pluginHardwareRequirements"])
+
+        super().__init__(**data)
+        self.Config.allow_mutation = True
+        self._io_keys = {i.name: i for i in self.inputs}
+        self._io_keys.update({o.name: o for o in self.outputs})
+
+        if self.author == "":
+            logger.warning(
+                f"The plugin ({self.name}) is missing the author field. This field is not required but should be filled in."
+            )
+
+    @property
+    def _config_file(self):
+        m = json.loads(self.json())
+        m["class"] = "NewPlugin"
+        for x in m["inputs"]:
+            x["value"] = None
+        return m
+
+    @property
+    def manifest(self):
+        m = json.loads(self.json(exclude={"_io_keys"}))
+        return m
+
+    def __setattr__(self, name, value):
+        PluginMethods.__setattr__(self, name, value)
+
+    def save_config(self, path: typing.Union[str, pathlib.Path]):
+        with open(path, "w") as fw:
+            json.dump(self._config_file, fw, indent=4)
+        logger.debug("Saved config to %s" % (path))
+
+    def save_manifest(self, path: typing.Union[str, pathlib.Path]):
+        with open(path, "w") as fw:
+            json.dump(self.manifest, fw, indent=4)
+        logger.debug("Saved manifest to %s" % (path))
+
+
 def is_valid_manifest(plugin: dict) -> bool:
     """Validates basic attributes of a plugin manifest.
 
@@ -634,7 +656,7 @@ def is_valid_manifest(plugin: dict) -> bool:
 def submit_plugin(
     manifest: typing.Union[str, dict, pathlib.Path],
     refresh: bool = False,
-) -> Plugin:
+) -> Union[Plugin, ComputePlugin]:
     """Parses a plugin and returns a Plugin object.
 
     This function accepts a plugin manifest as a string, a dictionary (parsed
@@ -666,20 +688,22 @@ def submit_plugin(
     if not isinstance(manifest, dict):
         raise ValueError("invalid manifest")
 
-    """ Create a Plugin subclass """
+    """Create a Plugin subclass"""
     replace_chars = "()<>-_"
     plugin_name = manifest["name"]
     for char in replace_chars:
         plugin_name = plugin_name.replace(char, " ")
     plugin_name = plugin_name.title().replace(" ", "").replace("/", "_")
-    plugin_class = type(plugin_name, (Plugin,), {})
-
-    # Parse the manifest
-    plugin = plugin_class(**manifest)
+    if "pluginHardwareRequirements" in manifest:
+        plugin = ComputePlugin(**manifest)
+    else:
+        plugin_class = type(plugin_name, (Plugin,), {})
+        # Parse the manifest
+        plugin = plugin_class(**manifest)
 
     # Get Major/Minor/Patch versions
     out_name = (
-        plugin.__class__.__name__
+        plugin_name
         + f"_M{plugin.version.major}m{plugin.version.minor}p{plugin.version.patch}.json"
     )
 
@@ -941,6 +965,7 @@ class WippPluginRegistry:
         else:
             r = requests.post(url, headers=headers, data=data)
         valid, invalid = 0, {}
+
         for r in tqdm(r.json()["results"], desc="Updating Plugins from WIPP"):
             try:
                 manifest = WippPluginRegistry._parse_xml(r["xml_content"])
@@ -959,76 +984,168 @@ class WippPluginRegistry:
                 logger.debug("Submitted %s plugins successfully." % (valid))
                 plugins.refresh()
 
+    def query(
+        self,
+        title: Optional[str] = None,
+        version: Optional[str] = None,
+        title_contains: Optional[str] = None,
+        contains: Optional[str] = None,
+        query_all: bool = False,
+        advanced: bool = False,
+        query: Optional[str] = None,
+        verify: bool = True,
+    ):
+        """Query Plugins in WIPP Registry.
+
+        This function executes queries for Plugins in the WIPP Registry.
+
+        Args:
+            title:
+                title of the plugin to query.
+                Example: "OME Tiled Tiff Converter"
+            version:
+                version of the plugins to query.
+                Must follow semantic versioning. Example: "1.1.0"
+            title_contains:
+                keyword that must be part of the title of plugins to query.
+                Example: "Converter" will return all plugins with the word "Converter" in their title
+            contains:
+                keyword that must be part of the description of plugins to query.
+                Example: "bioformats" will return all plugins with the word "bioformats" in their description
+            query_all: if True it will override any other parameter and will return all plugins
+            advanced:
+                if True it will override any other parameter.
+                `query` must be included
+            query: query to execute. This query must be in MongoDB format
+            verify: SSL verification. Default is `True`
+
+        Returns:
+            An array of the manifests of the Plugins returned by the query.
+        """
+
+        url = self.registry_url + "/rest/data/query/"
+        headers = {"Content-type": "application/json"}
+        query = _generate_query(
+            title, version, title_contains, contains, query_all, advanced, query, verify
+        )
+
+        data = '{"query": %s}' % str(query).replace("'", '"')
+
+        if self.username and self.password:
+            r = requests.post(
+                url,
+                headers=headers,
+                data=data,
+                auth=(self.username, self.password),
+                verify=verify,
+            )  # authenticated request
+        else:
+            r = requests.post(url, headers=headers, data=data, verify=verify)
+        return [
+            WippPluginRegistry._parse_xml(x["xml_content"]) for x in r.json()["results"]
+        ]
+
     def get_current_schema(
         self,
         verify: bool = True,
     ):
         """Return current schema in WIPP"""
-        response = requests.get(
+        r = requests.get(
             urljoin(
                 self.registry_url,
                 "rest/template-version-manager/global/?title=res-md.xsd",
             ),
             verify=verify,
         )
-        if response.ok:
-            return response.json()[0]["current"]
+        if r.ok:
+            return r.json()[0]["current"]
         else:
-            response.raise_for_status()
+            r.raise_for_status()
 
-    def upload_data(
+    def upload(
         self,
-        filepath,
-        schema_id,
+        plugin: Plugin,
+        author: Optional[str] = None,
+        email: Optional[str] = None,
+        publish: bool = True,
         verify: bool = True,
     ):
-        """Upload data to registry"""
-        with open(filepath, "r") as file_reader:
-            xml_content = file_reader.read()
+        """Upload Plugin to WIPP Registry.
+
+        This function uploads a Plugin object to the WIPP Registry.
+        Author name and email to be passed to the Plugin object
+        information on the WIPP Registry are taken from the value
+        of the field `author` in the `Plugin` manifest. That is,
+        the first email and the first name (first and last) will
+        be passed. The value of these two fields can be overridden
+        by specifying them in the arguments.
+
+        Args:
+            plugin:
+                Plugin to be uploaded
+            author:
+                Optional `str` to override author name
+            email:
+                Optional `str` to override email
+            publish:
+                If `False`, Plugin will not be published to the public
+                workspace. It will be visible only to the user uploading
+                it. Default is `True`
+            verify: SSL verification. Default is `True`
+
+        Returns:
+            A message indicating a successful upload.
+        """
+        manifest = plugin.manifest
+
+        xml_content = _to_xml(manifest, author, email)
+
+        schema_id = self.get_current_schema()
 
         data = {
-            "title": basename(filepath),
+            "title": manifest["name"],
             "template": schema_id,
             "xml_content": xml_content,
         }
 
-        response = requests.post(
-            urljoin(self.registry_url, "rest/data/"),
-            data,
-            auth=(self.username, self.password),
-            verify=verify,
-        )
-        response_code = response.status_code
+        url = self.registry_url + "/rest/data/"
+        headers = {"Content-type": "application/json"}
+        if self.username and self.password:
+            r = requests.post(
+                url,
+                headers=headers,
+                data=json.dumps(data),
+                auth=(self.username, self.password),
+                verify=verify,
+            )  # authenticated request
+        else:
+            raise MissingUserInfo("The registry connection must be authenticated.")
+
+        response_code = r.status_code
 
         if response_code != 201:
             print(
                 "Error uploading file (%s), code %s"
                 % (data["title"], str(response_code))
             )
-            response.raise_for_status()
-
-        return response.json()
-
-    def publish_data(
-        self,
-        data,
-        verify: bool = True,
-    ):
-        """Publish to public workspace"""
-        data_publish_id = data["id"] + "/publish/"
-        response = requests.patch(
-            urljoin(self.registry_url, "rest/data/" + data_publish_id),
-            auth=(self.username, self.password),
-            verify=verify,
-        )
-        response_code = response.status_code
-
-        if response_code != 200:
-            print(
-                "Error publishing data (%s), code %s"
-                % (data["title"], str(response_code))
+            r.raise_for_status()
+        if publish:
+            _id = r.json()["id"]
+            _purl = url + _id + "/publish/"
+            r2 = requests.patch(
+                _purl,
+                headers=headers,
+                auth=(self.username, self.password),
+                verify=verify,
             )
-            response.raise_for_status()
+            try:
+                r2.raise_for_status()
+            except HTTPError as err:
+                raise FailedToPublish(
+                    "Failed to publish %s with id %s" % (data["title"], _id)
+                ) from err
+
+        return "Successfully uploaded %s" % data["title"]
 
     def get_resource_by_pid(self, pid, verify: bool = True):
         """Return current resource."""
