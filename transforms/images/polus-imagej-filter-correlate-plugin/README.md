@@ -31,7 +31,7 @@ This plugin takes one input argument and one output argument:
 
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
-| `--borderSize` | The number of pixels to pad to each side of the image in each dimension: x,y | Input | enum |
+| `--borderSize` | The number of pixels to pad to each side of the image in each dimension: x,y | Input | string |
 | `--inpDir` | Collection to be processed by this plugin | Input | collection |
 | `--kernel` | Kernel to be applied to image in correlation operation | Input | collection |
 | `--opName` | Op overloading method to perform | Input | enum |
