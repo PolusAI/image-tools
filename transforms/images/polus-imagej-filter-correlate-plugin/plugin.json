@@ -24,13 +24,19 @@
       "name": "inpDir",
       "type": "collection",
       "description": "Collection to be processed by this plugin",
-      "required": false
+      "required": true
     },
     {
       "name": "kernel",
       "type": "collection",
       "description": "Kernel to be applied to image in correlation operation",
-      "required": false
+      "required": true
+    },
+    {
+      "name": "borderSize",
+      "type": "enum",
+      "description": "The number of pixels to pad to each side of the image in each dimension: x,y",
+      "required": true
     }
   ],
   "outputs": [
@@ -49,14 +55,17 @@
     {
       "key": "inputs.inpDir",
       "title": "inpDir",
-      "description": "Collection to be processed by this plugin",
-      "condition": "model.inputs.opName==PadAndCorrelateFFT or model.inputs.opName==CorrelateFFTC"
+      "description": "Collection to be processed by this plugin"
     },
     {
       "key": "inputs.kernel",
       "title": "kernel",
-      "description": "Kernel to be applied to image in correlation operation",
-      "condition": "model.inputs.opName==PadAndCorrelateFFT or model.inputs.opName==CorrelateFFTC"
+      "description": "Kernel to be applied to image in correlation operation"
+    },
+    {
+      "key": "inputs.borderSize",
+      "title": "borderSize",
+      "description": "The number of pixels to pad to each side of the image in each dimension: x,y"
     }
   ]
 }

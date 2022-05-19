@@ -29,6 +29,7 @@ def main(
     _opName: str,
     _in1: Path,
     _in2: Path,
+    _borderSize: str,
     _out: Path,
 ) -> None:
 
@@ -152,7 +153,9 @@ def main(
             )
             
             # Define the optional border size argument
-            borderSize = shape
+            borderSize = ij_converter.to_java(
+                ij, _borderSize, 'long[]', 'long[]'
+            )
 
             logger.info("Running op...")
             if _opName == "PadAndCorrelateFFT":
@@ -209,14 +212,21 @@ if __name__ == "__main__":
         dest="in1",
         type=str,
         help="Collection to be processed by this plugin",
-        required=False,
+        required=True,
     )
     parser.add_argument(
         "--kernel",
         dest="in2",
         type=str,
         help="Kernel to be applied to image in correlation operation",
-        required=False,
+        required=True,
+    )
+    parser.add_argument(
+        "--borderSize",
+        dest="borderSize",
+        type=str,
+        help="The number of pixels to pad to each side of the image in each dimension: x,y",
+        required=True,
     )
 
     # Add command-line argument for each of the output arguments
@@ -236,9 +246,18 @@ if __name__ == "__main__":
 
     _in2 = Path(args.in2)
     logger.info("kernel = {}".format(_in2))
+    
+    _borderSize = args.borderSize
+    logger.info("borderSize = {}".format(_borderSize))
 
     # Output Args
     _out = Path(args.out)
     logger.info("outDir = {}".format(_out))
 
-    main(_opName=_opName, _in1=_in1, _in2=_in2, _out=_out)
+    main(
+        _opName=_opName, 
+        _in1=_in1, 
+        _in2=_in2, 
+        _borderSize=_borderSize, 
+        _out=_out
+        )
