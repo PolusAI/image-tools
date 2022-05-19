@@ -445,16 +445,20 @@ class ScatterPlot(Figures):
         """
 
         # do not want to plot data that is null
-        series_ind = pd.notnull(series)
-        series[~series_ind] = 255
+        # series_ind = pd.notnull(series)
+        # series[~series_ind] = 255
 
         # separate out the series
         series1 = series.iloc[:,0]
         series2 = series.iloc[:,1]
 
-        # https://stackoverflow.com/questions/20105364/how-can-i-make-a-scatter-plot-colored-by-density-in-matplotlib
-        xy = np.vstack([series1, series2])
-        z  = gaussian_kde(xy)(xy)
+        plot_density = True # can sometimes have wrong data
+        try:
+            # https://stackoverflow.com/questions/20105364/how-can-i-make-a-scatter-plot-colored-by-density-in-matplotlib
+            xy = np.vstack([series1, series2])
+            z  = gaussian_kde(xy)(xy)
+        except:
+            plot_density = False
 
         logger.debug(f"\n Graphing: {series1.name}, {series2.name}")
         range_1_lims, range_1_tickvals = self.get_axis_metadata(minimum=series1.min(), maximum=series1.max(), padding=5)
@@ -480,7 +484,10 @@ class ScatterPlot(Figures):
                          ticks_xformatted = range_1_formattedticks,  ticks_yformatted = range_2_formattedticks,
                          range_xlim       = range_1_lims,            range_ylim       = range_2_lims)
 
-        self.ax.scatter(series1, series2, c=z, s=100)
+        if plot_density:
+            self.ax.scatter(series1, series2, c=z, s=100)
+        else:
+            self.ax.scatter(series1, series2, color=self.color)
         # this is faster than self.fig.savefig()
         self.fig.canvas.draw()
         output_plot = np.array(self.fig.canvas.renderer.buffer_rgba())
@@ -495,7 +502,10 @@ class ScatterPlot(Figures):
                          ticks_xformatted = range_2_formattedticks,  ticks_yformatted = range_1_formattedticks,
                          range_xlim       = range_2_lims,            range_ylim       = range_1_lims)
 
-        self.ax.scatter(series2, series1, c=z, s=100)
+        if plot_density:
+            self.ax.scatter(series2, series1, c=z, s=100)
+        else:
+            self.ax.scatter(series2, series1, color=self.color)
         # this is faster than self.fig.savefig()
         self.fig.canvas.draw()
         output_plot = np.array(self.fig.canvas.renderer.buffer_rgba())
