@@ -26,28 +26,24 @@ def _avg2(image):
     x_max = imageshape1 - imageshape1 % 2
     
     # Perform averaging
-    avg_img = np.zeros(np.ceil([image.shape[0]/2,image.shape[1]/2,image.shape[2]]).astype(np.uint32))
-    for z in range(4):
-        avg_img[0:int(y_max/2),0:int(x_max/2),z]= (image[0:y_max-1:2,0:x_max-1:2,z] + \
-                                                   image[1:y_max:2,0:x_max-1:2,z] + \
-                                                   image[0:y_max-1:2,1:x_max:2,z] + \
-                                                   image[1:y_max:2,1:x_max:2,z]) / 4
-        
+    avg_img = np.zeros(np.ceil([image.shape[0]/2,image.shape[1]/2,*image.shape[2:]]).astype(np.uint32))
+    avg_img[0:int(y_max/2),0:int(x_max/2),...]= (image[0:y_max-1:2,0:x_max-1:2,...] + \
+                                                 image[1:y_max:2,0:x_max-1:2,...] + \
+                                                 image[0:y_max-1:2,1:x_max:2,...] + \
+                                                 image[1:y_max:2,1:x_max:2,...]) / 4
+    
     # The next if statements handle edge cases if the height or width of the
     # image has an odd number of pixels
     if y_max != imageshape0:
-        for z in range(3):
-            avg_img[-1,:int(x_max/2),z] = (image[-1,0:x_max-1:2,z] + \
-                                           image[-1,1:x_max:2,z]) / 2
+        avg_img[-1,:int(x_max/2),...] = (image[-1,0:x_max-1:2,...] + \
+                                         image[-1,1:x_max:2,...]) / 2
     if x_max != imageshape1:
-        for z in range(4):
-            avg_img[:int(y_max/2),-1,z] = (image[0:y_max-1:2,-1,z] + \
-                                           image[1:y_max:2,-1,z]) / 2
+        avg_img[:int(y_max/2),-1,...] = (image[0:y_max-1:2,-1,...] + \
+                                         image[1:y_max:2,-1,...]) / 2
     if y_max != imageshape0 and x_max != imageshape1:
-        for z in range(4):
-            avg_img[-1,-1,z] = image[-1,-1,z]
+        avg_img[-1,-1,...] = image[-1,-1,...]
 
-    return avg_img
+    return avg_img.astype(np.uint8)
 
 class GraphPyramid():
 
@@ -79,7 +75,7 @@ class GraphPyramid():
 
         with open(os.path.join(output_dir, f"{output_name}.dzi"), "w") as out_dzi:
             out_dzi.write(f'<?xml version="1.0" encoding="utf-8"?><Image TileSize="{self.CHUNK_SIZE}' + \
-                            '" Overlap="0" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008">' + \
+                            f'" Overlap="0" Format="{self.image_extension}" xmlns="http://schemas.microsoft.com/deepzoom/2008">' + \
                             f'<Size Width="{self.sizes[0]}" Height="{self.sizes[1]}"/></Image>')
 
         with open(os.path.join(output_dir, f"{output_name}.csv"), "w") as out_csv:
@@ -131,17 +127,18 @@ class GraphPyramid():
                 # https://en.wikipedia.org/wiki/Z-order
             if os.path.exists(top_right):
                 rightexists = True
-                topright_array = _avg2(np.array(Image.open(top_right))).astype(np.uint8)
+                topright_array = _avg2(np.array(Image.open(top_right)))
             if os.path.exists(bottom_left):
                 bottomexists = True
-                bottomleft_array = _avg2(np.array(Image.open(bottom_left))).astype(np.uint8)
+                bottomleft_array = _avg2(np.array(Image.open(bottom_left)))
 
             # The top left must exist.  Otherwise the entire New Node is empty
             if not os.path.exists(top_left):
                 logger.debug(f"{top_left} does not exist")
                 return
             
-            topleft_array = _avg2(np.array(Image.open(top_left))).astype(np.uint8)
+            # logger.debug(f"right exists - {rightexists}, bottom exists - {bottomexists}")
+            topleft_array = _avg2(np.array(Image.open(top_left)))
 
             logger.debug(f"SCALE - {os.path.basename(scale_dir)}: \n" + 
                 f"\tTOP LEFT NODE: {x_node}_{y_node} - Should Always Exist\n" +
@@ -160,24 +157,24 @@ class GraphPyramid():
 
                 output_image = np.zeros((self.HALF_CHUNK_SIZE+bottomleft_array.shape[0], 
                                          self.HALF_CHUNK_SIZE+topright_array.shape[1], 
-                                         topleft_array.shape[2]), dtype=np.uint8)
+                                         *topleft_array.shape[2:]), dtype=np.uint8)
                 logger.debug(f"Output Shape: {output_image.shape}")
 
-                output_image[0:self.HALF_CHUNK_SIZE, 0:self.HALF_CHUNK_SIZE, :] = topleft_array
+                output_image[0:self.HALF_CHUNK_SIZE, 0:self.HALF_CHUNK_SIZE, ...] = topleft_array
 
                 logger.debug(f"top right array shape: {topright_array.shape}, " + \
                                 f"add in: (0:{self.HALF_CHUNK_SIZE}, {self.HALF_CHUNK_SIZE}:{self.HALF_CHUNK_SIZE+topright_array.shape[1]})")
                 logger.debug(f"bottom left array shape: {bottomleft_array.shape}, " + \
                                 f"add in: ({self.HALF_CHUNK_SIZE}:{self.HALF_CHUNK_SIZE+bottomleft_array.shape[0]}, 0:{self.HALF_CHUNK_SIZE})")
 
-                output_image[0:self.HALF_CHUNK_SIZE, self.HALF_CHUNK_SIZE:(self.HALF_CHUNK_SIZE+topright_array.shape[1]), :] = topright_array
-                output_image[self.HALF_CHUNK_SIZE:(self.HALF_CHUNK_SIZE+bottomleft_array.shape[0]), 0:self.HALF_CHUNK_SIZE, :] = bottomleft_array
+                output_image[0:self.HALF_CHUNK_SIZE, self.HALF_CHUNK_SIZE:(self.HALF_CHUNK_SIZE+topright_array.shape[1]), ...] = topright_array
+                output_image[self.HALF_CHUNK_SIZE:(self.HALF_CHUNK_SIZE+bottomleft_array.shape[0]), 0:self.HALF_CHUNK_SIZE, ...] = bottomleft_array
 
                 # if the top right and bottom left do not exist, then the bottom right should not exist -- this follows z order too
                 if os.path.exists(bottom_right):
                     logger.debug(f"ALL 4/4 NODES USED TO CREATE (scale {os.path.basename(scale_dir)}): {output_node}")
-                    output_image[self.HALF_CHUNK_SIZE:output_image.shape[0], self.HALF_CHUNK_SIZE:output_image.shape[1], :] = \
-                        _avg2(np.array(Image.open(bottom_right))).astype(np.uint8)
+                    output_image[self.HALF_CHUNK_SIZE:output_image.shape[0], self.HALF_CHUNK_SIZE:output_image.shape[1], ...] = \
+                        _avg2(np.array(Image.open(bottom_right)))
 
                 output_im = Image.fromarray(output_image)
 
@@ -222,7 +219,7 @@ class GraphPyramid():
             with ThreadPoolExecutor(max_workers=os.cpu_count()-1) as executor:
                 for x in range(0, image_nodes[0]+1, 2):
                     for y in range(0, image_nodes[1]+1, 2):
-                            executor.submit(self.build_nextlayer, x, y, scale_dir, readfrom_dir)
+                        executor.submit(self.build_nextlayer, x_node=x, y_node=y, scale_dir=scale_dir, readfrom_dir=readfrom_dir)
 
             logger.debug(f"Done Building Scale: {scale} ...\n\n")
             readfrom_dir = scale_dir

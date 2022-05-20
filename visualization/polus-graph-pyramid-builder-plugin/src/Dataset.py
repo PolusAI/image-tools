@@ -70,11 +70,11 @@ class csvDataset():
 
         self.bincount = bincount
 
-        self.stats['bin_min']   = self.dataframe.min()
-        self.stats['bin_max']   = self.dataframe.max()
-        self.stats['binwidth'] = (self.dataframe.max()-self.dataframe.min()+(10**-6))/self.bincount
+        self.stats['bin_min']   = self.dataframe.min() # needs to be redefined, because data might be logged
+        self.stats['bin_max']   = self.dataframe.max() # needs to be redefined, because data might be logged
+        self.stats['binwidth'] = (self.stats['bin_max']-self.stats['bin_min']+(10**-6))/self.bincount
 
-        self.dataframe = ((self.dataframe - self.dataframe.min())/self.stats['binwidth']).apply(np.floor).astype(np.uint16)
+        self.dataframe = ((self.dataframe - self.stats['bin_min'])/self.stats['binwidth']).apply(np.floor).astype(np.uint16)
         self.dataframe [self.dataframe  >= self.bincount] = self.bincount-1 
 
 
@@ -92,4 +92,3 @@ class LogData(csvDataset):
         self.scale = "log"
         self.C = 1/np.log(10)
         self.dataframe = np.sign(self.dataframe) * np.log10(1 + (abs(self.dataframe/self.C)))
-       

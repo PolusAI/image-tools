@@ -6,6 +6,8 @@ inpDir=/data/smalldata/ # relative directory for where the input data is saved
 graphing=scatter #heatmap or scatter
 scale=linear #linear or log
 bincount=50 #number of bins
+color=forestgreen #color of grpahs
+tickFormat=scientificNotation #type of tick label
 
 # Outputs
 outDir=/data/output/
@@ -17,4 +19,6 @@ sudo docker run --mount type=bind,source=${datapath},target=/data/ \
     --graphing ${graphing} \
     --scale ${scale} \
     --bincount ${bincount} \
+    --color ${color} \
+    --tickFormat ${tickFormat} \
     --outDir ${outDir}
