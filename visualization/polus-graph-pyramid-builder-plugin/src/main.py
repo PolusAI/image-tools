@@ -149,10 +149,9 @@ def main(input_path  : str,
                 for i in range(0, num_combos, processor_count_2D):
                     list_columns = list(dataset.plot_combinations_unique[i:i+processor_count_2D])
                     i += processor_count_2D
-                    plots_2D(combo_names = list_columns, **data_kwargs)
-                    # executor.submit(plots_2D,
-                    #                 combo_names = list_columns,
-                    #                 **data_kwargs)
+                    executor.submit(plots_2D,
+                                    combo_names = list_columns,
+                                    **data_kwargs)
 
             # need to use the images in the base directory to build rest of the pyramid for deepzooming
             logger.info("Building up the Pyramid ...")
