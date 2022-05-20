@@ -3,7 +3,7 @@ FROM python:3.9-slim
 
 COPY VERSION /
 		
-ENV POLUS_LOG="INFO"
+ENV POLUS_LOG="DEBUG"
 ENV EXEC_DIR="/opt/executables"
 ENV DATA_DIR="/data"
 

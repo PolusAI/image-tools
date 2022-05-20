@@ -31,7 +31,7 @@ class GaussianKde(gaussian_kde):
     to the covmat eigenvalues, to prevent exceptions due to numerical error.
     """
 
-    EPSILON = 1e-10  # adjust this at will
+    EPSILON = 1e-4  # adjust this at will
 
     def _compute_covariance(self):
         """Computes the covariance matrix for each Gaussian kernel using
