@@ -75,23 +75,23 @@ class PluginTest(unittest.TestCase):
                     self.assertTrue(img_zero.shape[1] == 1)
                     self.assertTrue(img_zero.shape[1] == 1)
 
-        def test_loglinear_conversions(self):
+    def test_loglinear_conversions(self):
 
-            # this is what we expect to see after the conversion
-            expected_data = {"Column1" : random.sample(range(-30, 30), 20)}
-            
-            # this converts expected_data
-            logdata = dataset.LogData(expected_data)
+        # this is what we expect to see after the conversion
+        expected_data = {"Column1" : random.sample(range(-30, 30), 20)}
+        
+        # this converts expected_data
+        logdata = dataset.LogData(expected_data)
 
-            # this convert the logarithmic data back to the original input
-                # this is important for formatting the graphs
-            actual_data = figure.convert_tolog(logdata.dataframe)
+        # this convert the logarithmic data back to the original input
+            # this is important for formatting the graphs
+        actual_data = figure.convert_tolinear(logdata.dataframe)
 
-            # need numpy arrays to test whether they are close enough
-            expected_array = np.array(expected_data["Column1"])
-            actual_array   = np.array(actual_data["Column1"])
+        # need numpy arrays to test whether they are close enough
+        expected_array = np.array(expected_data["Column1"])
+        actual_array   = np.array(actual_data["Column1"])
 
-            self.assertTrue(np.allclose(expected_array, actual_array, atol=.003))
+        self.assertTrue(np.allclose(expected_array, actual_array, atol=.003))
 
 
 if __name__=="__main__":
