@@ -11,6 +11,8 @@ ENV DATA_DIR="/data"
 COPY src ${EXEC_DIR}/
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
+# install imageio
+RUN python3 ${EXEC_DIR}/dl_fi.py 
 
 WORKDIR ${EXEC_DIR}
 

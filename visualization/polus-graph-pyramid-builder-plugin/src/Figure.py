@@ -5,7 +5,6 @@ from matplotlib.colors import ListedColormap
 from scipy.stats import gaussian_kde
 
 import imageio
-imageio.plugins.freeimage.download()
 
 import numpy as np
 import pandas as pd
