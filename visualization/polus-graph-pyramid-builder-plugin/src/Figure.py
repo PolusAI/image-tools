@@ -20,10 +20,117 @@ POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG', 'INFO'))
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 logger = logging.getLogger("figures")
-logger.setLevel("DEBUG")
+logger.setLevel(POLUS_LOG)
 
 # define separately for importing for unit testing
-convert_tolog = lambda t : np.sign(t)*(1/np.log(10))*(-1+(10**abs(t)))
+convert_tolinear = lambda t : np.sign(t)*(1/np.log(10))*(-1+(10**abs(t)))
+
+class GaussianKde(gaussian_kde):
+    """
+    Drop-in replacement for gaussian_kde that adds the class attribute EPSILON
+    to the covmat eigenvalues, to prevent exceptions due to numerical error.
+    """
+
+    EPSILON = 1e-10  # adjust this at will
+
+    def _compute_covariance(self):
+        """Computes the covariance matrix for each Gaussian kernel using
+        covariance_factor().
+        """
+        self.factor = self.covariance_factor()
+        # Cache covariance and inverse covariance of the data
+        if not hasattr(self, '_data_inv_cov'):
+            self._data_covariance = np.atleast_2d(np.cov(self.dataset, rowvar=1,
+                                                            bias=False,
+                                                            aweights=self.weights))
+            # we're going the easy way here
+            self._data_covariance += self.EPSILON * np.eye(
+                len(self._data_covariance))
+            self._data_inv_cov = np.linalg.inv(self._data_covariance)
+
+        self.covariance = self._data_covariance * self.factor**2
+        self.inv_cov = self._data_inv_cov / self.factor**2
+        L = np.linalg.cholesky(self.covariance * 2 * np.pi)
+        self._norm_factor = 2*np.log(np.diag(L)).sum()  # needed for scipy 1.5.2
+        self.log_det = 2*np.log(np.diag(L)).sum()  # changed var name on 1.6.2
+
+def format_ticks(tick_value : float):
+    """ Generate tick labels
+    Polus Plots uses D3 to generate the plots. This function tries to mimic the
+    formatting of tick labels. In place of using scientific notation a scale
+    prefix is appended to the end of the number. See _prefix comments to see the
+    suffixes that are used. Numbers that are larger or smaller than 10**24 or
+    10**-24 respectively are not handled and may throw an error. Values outside
+    of this range do not currently have an agreed upon prefix in the measurement
+    science community.
+        
+    Inputs:
+        tick_value - value of the tick 
+    Outputs:
+        formtick   - formatted tick of tick_value
+    """
+    _prefix = {
+        -24: 'y',  # yocto
+        -21: 'z',  # zepto
+        -18: 'a',  # atto
+        -15: 'f',  # femto
+        -12: 'p',  # pico
+         -9: 'n',  # nano
+         -6: 'u',  # micro
+         -3: 'm',  # mili
+          0: ' ',
+          3: 'k',  # kilo
+          6: 'M',  # mega
+          9: 'G',  # giga
+         12: 'T',  # tera
+         15: 'P',  # peta
+         18: 'E',  # exa
+         21: 'Z',  # zetta
+         24: 'Y',  # yotta
+    }
+
+
+    formtick = "%#.3f" % tick_value
+    decformtick = '%.2e' % Decimal(formtick)
+    convertexponent = float(decformtick[-3:])
+    numbers = float(decformtick[:-4])
+    if convertexponent > 0:
+        if convertexponent % 3 == 2:
+            movednum = round(numbers/10,2)
+            newprefix = _prefix[int(convertexponent + 1)]
+            formtick = str(movednum) + newprefix
+        elif convertexponent % 3 == 1:
+            movednum = round(numbers*10,1)
+            newprefix = _prefix[int(convertexponent - 1)]
+            formtick = str(movednum) + newprefix
+        else:
+            newprefix = _prefix[int(convertexponent)]
+            if tick_value < 0:
+                formtick = str(decformtick[:5]) + newprefix
+            else: 
+                formtick = str(decformtick[:4]) + newprefix
+    elif convertexponent < 0:
+        if convertexponent % -3 == -2:
+            movednum = round(numbers*10,1)
+            newprefix = _prefix[int(convertexponent - 1)]
+            formtick = str(movednum) + newprefix
+        elif convertexponent % -3 == -1:
+            movednum = round(numbers/10,2)
+            newprefix = _prefix[int(convertexponent + 1)]
+            formtick = str(movednum) + newprefix
+        else:
+            newprefix = _prefix[convertexponent]
+            if tick_value < 0:
+                formtick = str(decformtick[:5]) + newprefix
+            else: 
+                formtick = str(decformtick[:4]) + newprefix
+    else:
+        if tick_value < 0:
+            formtick = str(decformtick[:5]) + _prefix[int(convertexponent)]
+        else: 
+            formtick = str(decformtick[:4]) + _prefix[int(convertexponent)]
+
+    return formtick
 
 def get_cmap():
     """ This function gives the range of colors for the heatmaps generated. """
@@ -65,17 +172,19 @@ class Figures():
                        color : str, 
                        scale : str, 
                        stats : dict, 
+                       tick_format: str,
                        output_dir : str):
         """ This function intializes the graphs to build the data. 
         Some of the parameters of the graphs are consistent amoung a number of graphs.
         
         Inputs: 
-            bins       - this number specifies the number of bins for heatmaps and histograms
-            CHUNK_SIZE - the size of one image 
-            color      - color of graphs
-            scale      - lienar or log, this affects the formatting
-            stats      - a dictionary containing the stats of the data that is being plotted
-            output_dir - location of where all the images are saved
+            bins        - this number specifies the number of bins for heatmaps and histograms
+            CHUNK_SIZE  - the size of one image 
+            color       - color of graphs
+            scale       - linear or log, this affects the tick values
+            stats       - a dictionary containing the stats of the data that is being plotted
+            tick_format - scientific notation or metric prefix
+            output_dir  - location of where all the images are saved
         """
 
         self.bins = bins
@@ -93,8 +202,12 @@ class Figures():
         self.ax.set_xlabel(" ")
         self.ax.set_ylabel(" ")
 
-        self.convert_tolog = convert_tolog
-        self.format_ticks  = lambda tick: np.format_float_scientific(tick, precision=3, min_digits=3)
+        self.convert_tolinear = convert_tolinear
+
+        if tick_format == "scientificNotation":
+            self.format_ticks  = lambda tick: np.format_float_scientific(tick, precision=3, min_digits=3)
+        else:
+            self.format_ticks  = lambda tick: format_ticks(tick)
 
         self.output_dir = output_dir
 
@@ -190,7 +303,7 @@ class Figures():
         
 
         if self.scale == "log":
-            ticks_xformatted = list(map(self.format_ticks, self.convert_tolog(ticks_x)))
+            ticks_xformatted = list(map(self.format_ticks, self.convert_tolinear(ticks_x)))
         else:
             ticks_xformatted = list(map(self.format_ticks, ticks_x))
         
@@ -219,8 +332,8 @@ class HeatMap(Figures):
 
     """ This class Generates Heat Maps """
 
-    def __init__(self, bins, CHUNK_SIZE, color, scale, stats, output_dir, nrows=None):
-        Figures.__init__(self, bins, CHUNK_SIZE, color, scale, stats, output_dir)
+    def __init__(self, bins, CHUNK_SIZE, color, scale, stats, output_dir, tick_format, nrows=None):
+        Figures.__init__(self, bins, CHUNK_SIZE, color, scale, stats, tick_format, output_dir)
 
         self.range_lims, self.range_tickvals = self.get_axis_metadata(0, self.bins, padding = 0)
         self.range_tickvals_offset = self.range_tickvals - 0.5 # the ticks are in the center of bins,
@@ -295,7 +408,7 @@ class HeatMap(Figures):
 
         logger.debug(f"\n Graphing: {series1.name}, {series2.name}")
         
-        # for plotting x=0 and y=0 axis
+        # which bins do x=0 and y=0 belong in for plotting
         series1_zero = abs(self.stats['bin_min'][series1.name]//self.stats['binwidth'][series1.name])
         series2_zero = abs(self.stats['bin_min'][series2.name]//self.stats['binwidth'][series2.name])
 
@@ -304,15 +417,16 @@ class HeatMap(Figures):
         ticks_2 = (np.linspace(self.stats['bin_min'][series2.name], self.stats['bin_max'][series2.name], self.nticks))
         
         if self.scale == "log": #would be in linear
-            ticks_1 = self.convert_tolog(ticks_1)
-            ticks_2 = self.convert_tolog(ticks_2)
-        logger.debug(f"Tick 1 Values (Placement):\n{ticks_1}")
-        logger.debug(f"Tick 2 Values (Placement):\n{ticks_2}")
+            ticks_1 = self.convert_tolinear(ticks_1)
+            ticks_2 = self.convert_tolinear(ticks_2)
+        logger.debug(f"Tick 1 {series1.name} Values (Placement):\n{ticks_1}")
+        logger.debug(f"Tick 2 {series2.name} Values (Placement):\n{ticks_2}")
 
         ticks_1formatted = list(map(self.format_ticks, ticks_1)) #make it pretty
         ticks_2formatted = list(map(self.format_ticks, ticks_2))
-        logger.debug(f"Tick 1 Labels:\n{ticks_1formatted}")
-        logger.debug(f"Tick 2 Labels:\n{ticks_2formatted}")
+        logger.debug(f"Tick 1 {series1.name} Labels:\n{ticks_1formatted}")
+        logger.debug(f"Tick 2 {series2.name} Labels:\n{ticks_2formatted}")
+
 
         # get data to build the heatmaps
         sorted_feats = np.sort((series1 * self.bins) + series2)
@@ -351,8 +465,8 @@ class ScatterPlot(Figures):
 
     """ This class Generates Heat Maps """
 
-    def __init__(self, bins, CHUNK_SIZE, color, scale, stats, output_dir, nrows=None):
-        Figures.__init__(self, bins, CHUNK_SIZE, color, scale, stats, output_dir)
+    def __init__(self, bins, CHUNK_SIZE, color, scale, stats, output_dir, tick_format, nrows=None):
+        Figures.__init__(self, bins, CHUNK_SIZE, color, scale, stats, tick_format, output_dir)
 
     def plot_graph(self, 
                    series : pd.core.frame.DataFrame,
@@ -370,34 +484,34 @@ class ScatterPlot(Figures):
         series.dropna()
 
         # separate out the series
-        series1 = series.iloc[:,0]
-        series2 = series.iloc[:,1]
+        series1 = series.iloc[:,0].astype(np.float64)
+        series2 = series.iloc[:,1].astype(np.float64)
+
+        # https://stackoverflow.com/questions/20105364/how-can-i-make-a-scatter-plot-colored-by-density-in-matplotlib
+        xy = np.vstack([series1, series2])
+        if np.any(np.linalg.eigh(np.cov([series1, series2]))[0]<=0.001):
+            z  = GaussianKde(xy)(xy) # https://stackoverflow.com/questions/63812970/scipy-gaussian-kde-matrix-is-not-positive-definite
+        else:
+            z  = gaussian_kde(xy)(xy) # want to avoid changing data
 
         logger.debug(f"\n Graphing: {series1.name}, {series2.name}")
-        plot_density = True # can sometimes have bad data
-        try:
-            # https://stackoverflow.com/questions/20105364/how-can-i-make-a-scatter-plot-colored-by-density-in-matplotlib
-            xy = np.vstack([series1, series2])
-            z  = gaussian_kde(xy)(xy)
-        except:
-            plot_density = False
 
         range_1lims, ticks_1 = self.get_axis_metadata(minimum=series1.min(), maximum=series1.max(), padding=5)
         range_2lims, ticks_2 = self.get_axis_metadata(minimum=series2.min(), maximum=series2.max(), padding=5)
-        logger.debug(f"Range 1 Lims: {range_1lims}")
-        logger.debug(f"Range 2 Lims: {range_2lims}")
-        logger.debug(f"Tick 1 Values (Placement):\n{ticks_1}")
-        logger.debug(f"Tick 2 Values (Placement):\n{ticks_2}")
+        logger.debug(f"Range 1 {series1.name} Lims: {range_1lims}")
+        logger.debug(f"Range 2 {series2.name} Lims: {range_2lims}")
+        logger.debug(f"Tick 1 {series1.name} Values (Placement):\n{ticks_1}")
+        logger.debug(f"Tick 2 {series2.name} Values (Placement):\n{ticks_2}")
 
         if self.scale == "log":
-            ticks_1formatted = list(map(self.format_ticks, self.convert_tolog(ticks_1)))
-            ticks_2formatted = list(map(self.format_ticks, self.convert_tolog(ticks_2)))
+            ticks_1formatted = list(map(self.format_ticks, self.convert_tolinear(ticks_1)))
+            ticks_2formatted = list(map(self.format_ticks, self.convert_tolinear(ticks_2)))
         else:
             # cannot override
             ticks_1formatted = list(map(self.format_ticks, ticks_1)) # still need ticks_1 as a separate variable to format the axis
             ticks_2formatted = list(map(self.format_ticks, ticks_2)) # still need ticks_2 as a separate variable to format the axis
-        logger.debug(f"Ticks 1 Labels:\n{ticks_1formatted}")
-        logger.debug(f"Ticks 2 Labels:\n{ticks_2formatted}")
+        logger.debug(f"Ticks 1 {series1.name} Labels:\n{ticks_1formatted}")
+        logger.debug(f"Ticks 2 {series2.name} Labels:\n{ticks_2formatted}")
 
         plt.tight_layout()
 
@@ -407,10 +521,7 @@ class ScatterPlot(Figures):
                          ticks_xformatted = ticks_1formatted, ticks_yformatted = ticks_2formatted,
                          range_xlim       = range_1lims,      range_ylim       = range_2lims)
 
-        if plot_density:
-            self.ax.scatter(series1, series2, c=z, s=100)
-        else:
-            self.ax.scatter(series1, series2, color=self.color)
+        self.ax.scatter(series1, series2, c=z, s=100)
     
         # this is faster than self.fig.savefig()
         self.fig.canvas.draw()
@@ -426,10 +537,7 @@ class ScatterPlot(Figures):
                          ticks_xformatted = ticks_2formatted, ticks_yformatted = ticks_1formatted,
                          range_xlim       = range_2lims,      range_ylim       = range_1lims)
 
-        if plot_density:
-            self.ax.scatter(series2, series1, c=z, s=100)
-        else:
-            self.ax.scatter(series2, series1, color=self.color)
+        self.ax.scatter(series2, series1, c=z, s=100)
 
         # this is faster than self.fig.savefig()
         self.fig.canvas.draw()
