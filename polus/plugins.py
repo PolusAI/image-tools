@@ -459,7 +459,7 @@ class Plugin(WIPPPluginManifest):
     def organization(self):
         return self.containerId.split("/")[0]
 
-    def newschema(self, set_hardware_req: bool = False):
+    def newschema(self, **kwargs):
         data = deepcopy(self.manifest)
         type_dict = {
             "path": "text",
@@ -502,28 +502,8 @@ class Plugin(WIPPPluginManifest):
         data["ui"] = [_ui_in(x) for x in data["ui"]]  # inputs
         data["ui"].extend([_ui_out(x) for x in data["outputs"]])  # outputs
 
-        if set_hardware_req:
-
-            def _get_types(v):
-                # if v.name == "gpu":
-                #     return [x._value_ for x in GpuVendor if x._value_ != "none"]
-                if isinstance(v.type_, enum.EnumMeta):
-                    return [x for x in v.type_._member_names_ if x != "none"]
-                elif isinstance(v.type_, type):
-                    return [v.type_.__name__]
-                else:
-                    return [
-                        x.__name__ for x in v.type_.__args__ if x.__name__ != "NoneType"
-                    ]
-
-            def _set(data: dict):
-                for k, v in PluginHardwareRequirements.__fields__.items():
-                    i = input(f"{k}{_get_types(v)}: ".replace("'", ""))
-                    if i == "":
-                        i = None
-                    data[k] = i
-
-            _set(data["pluginHardwareRequirements"])
+        for k, v in kwargs.items():
+            data["pluginHardwareRequirements"][k] = v
 
         plugin_class = type(self.__class__.__name__, (NewSchema,), {})
         return plugin_class(**data)
