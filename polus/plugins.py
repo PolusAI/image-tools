@@ -1,6 +1,5 @@
 import pathlib
 import json
-from tkinter import E
 import typing
 import logging
 import enum
