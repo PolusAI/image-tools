@@ -1,3 +1,16 @@
+import re
+
+from typing import Optional
+
+
+class FailedToPublish(Exception):
+    pass
+
+
+class MissingUserInfo(Exception):
+    pass
+
+
 def _generate_query(
     title, version, title_contains, contains, query_all, advanced, query
 ):
@@ -86,3 +99,43 @@ def _generate_query(
             }
         )
     return q
+
+
+
+def _get_email(author: str):
+    regex = re.compile(r"[A-Za-z][A-Za-z0-9.]*@[A-Za-z0-9.]*")
+    return regex.search(author).group()
+
+
+def _get_author(author: str):
+    return " ".join(author.split()[0:2])
+
+
+def _to_xml(manifest: dict, author: Optional[str] = None, email: Optional[str] = None):
+    if email is None:
+        email = _get_email(manifest["author"])
+    if author is None:
+        author = _get_author(manifest["author"])
+
+    xml = (
+        '<Resource xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
+        'xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017" '
+        'localid="" '
+        'status="active"><identity xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">'
+        f'<title xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">{manifest["name"]}</title>'
+        f'<version xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">{str(manifest["version"])}</version>'
+        '</identity><providers xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">'
+        f'<publisher xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">{manifest["institution"]}</publisher>'
+        '<contact xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">'
+        f'<name xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">{author}</name>'
+        f'<emailAddress xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">{email}</emailAddress>'
+        '</contact></providers><content xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">'
+        f'<description xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">{manifest["description"]}</description>'
+        '<subject xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017"/><landingPage xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017"/></content>'
+        '<role xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017" xsi:type="Plugin"><type xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">Plugin</type>'
+        f'<DockerImage xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">{manifest["containerId"]}</DockerImage>'
+        '<PluginManifest xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">'
+        f'<PluginManifestContent xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">{str(manifest)}</PluginManifestContent></PluginManifest></role></Resource>'
+    )
+
+    return xml
