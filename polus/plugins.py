@@ -530,6 +530,7 @@ class ComputePlugin(NewSchema, PluginMethods):
                 "boolean": "checkbox",
                 "number": "number",
                 "array": "text",
+                "integer": "number",
             }
 
             def _clean(d: dict):
@@ -540,6 +541,8 @@ class ComputePlugin(NewSchema, PluginMethods):
                     d["type"] = "path"
                 elif d["type"] == "enum":
                     d["type"] = "string"
+                elif d["type"] == "integer":
+                    d["type"] = "number"
                 return d
 
             def _ui_in(d: dict):  # assuming old all ui input
