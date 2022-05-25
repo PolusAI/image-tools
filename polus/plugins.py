@@ -6,7 +6,6 @@ import enum
 import re
 import pprint
 import os
-from os.path import basename
 import uuid
 import signal
 import random
@@ -925,10 +924,18 @@ class WippPluginRegistry:
         self.password = password
 
     def _parse_xml(xml: str):
+        """Returns dictionary of Plugin Manifest. If error, returns None."""
         d = xmltodict.parse(xml)["Resource"]["role"]["PluginManifest"][
             "PluginManifestContent"
         ]["#text"]
-        return json.loads(d)
+        try:
+            return json.loads(d)
+        except:
+            e = eval(d)
+            if isinstance(e, dict):
+                return e
+            else:
+                return None
 
     def update_plugins(self):
         url = self.registry_url + "/rest/data/query/"
@@ -993,7 +1000,9 @@ class WippPluginRegistry:
                 if True it will override any other parameter.
                 `query` must be included
             query: query to execute. This query must be in MongoDB format
+
             verify: SSL verification. Default is `True`
+
 
         Returns:
             An array of the manifests of the Plugins returned by the query.
@@ -1002,7 +1011,7 @@ class WippPluginRegistry:
         url = self.registry_url + "/rest/data/query/"
         headers = {"Content-type": "application/json"}
         query = _generate_query(
-            title, version, title_contains, contains, query_all, advanced, query, verify
+            title, version, title_contains, contains, query_all, advanced, query
         )
 
         data = '{"query": %s}' % str(query).replace("'", '"')
