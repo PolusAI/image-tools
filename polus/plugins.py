@@ -450,20 +450,22 @@ class Plugin(WIPPPluginManifest, PluginMethods):
             value = value["version"]
         return Version(version=value)
 
-    def new_schema(self, set_hardware_req: bool = False):
+    def new_schema(self, hardware_requirements: Optional[dict] = None):
         data = deepcopy(self.manifest)
-        return ComputePlugin(set_hardware_req=set_hardware_req, _from_old=True, **data)
+        return ComputePlugin(
+            hardware_requirements=hardware_requirements, _from_old=True, **data
+        )
 
     def save_manifest(
         self,
         path: typing.Union[str, pathlib.Path],
-        set_hardware_req: bool = False,
+        hardware_requirements: Optional[dict] = None,
         indent: int = 4,
         old: bool = False,
     ):
         if not old:
             with open(path, "w") as fw:
-                d = self.new_schema(set_hardware_req=set_hardware_req).json()
+                d = self.new_schema(hardware_requirements=hardware_requirements).json()
                 d = json.loads(d)
                 json.dump(
                     d,
@@ -512,7 +514,7 @@ class ComputePlugin(NewSchema, PluginMethods):
 
     def __init__(
         self,
-        set_hardware_req: bool = False,
+        hardware_requirements: Optional[dict] = None,
         _from_old: bool = False,
         _uuid: bool = True,
         **data,
@@ -567,26 +569,9 @@ class ComputePlugin(NewSchema, PluginMethods):
             data["ui"] = [_ui_in(x) for x in data["ui"]]  # inputs
             data["ui"].extend([_ui_out(x) for x in data["outputs"]])  # outputs
 
-        if set_hardware_req:
-
-            def _get_types(v):
-                if isinstance(v.type_, enum.EnumMeta):
-                    return [x for x in v.type_._member_names_ if x != "none"]
-                elif isinstance(v.type_, type):
-                    return [v.type_.__name__]
-                else:
-                    return [
-                        x.__name__ for x in v.type_.__args__ if x.__name__ != "NoneType"
-                    ]
-
-            def _set(data: dict):
-                for k, v in PluginHardwareRequirements.__fields__.items():
-                    i = input(f"{k}{_get_types(v)}: ".replace("'", ""))
-                    if i == "":
-                        i = None
-                    data[k] = i
-
-            _set(data["pluginHardwareRequirements"])
+        if hardware_requirements:
+            for k, v in hardware_requirements.items():
+                data["pluginHardwareRequirements"][k] = v
 
         super().__init__(**data)
         self.Config.allow_mutation = True
