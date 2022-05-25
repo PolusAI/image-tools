@@ -31,6 +31,7 @@ from polus._plugins._registry import (
 )
 from requests.exceptions import HTTPError
 
+
 """
 Set up logging for the module
 """
