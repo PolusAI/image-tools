@@ -35,5 +35,7 @@
     "threshold-rosin": "threshold",
     "threshold-shanbhag": "threshold",
     "threshold-triangle": "threshold",
-    "threshold-yen": "threshold"
+    "threshold-yen": "threshold",
+    "filter-correlate": "fft-filter",
+    "filter-convolve": "fft-filter"
 }
