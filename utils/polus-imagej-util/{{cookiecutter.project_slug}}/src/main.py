@@ -64,9 +64,8 @@ def pad_image(fp, y, x, padding_size):
 
     # Get the file path to the image to pad
     img_path = fp.get_matching(Y=y, X=x)[0]['file']
-    print(img_path)
     
-    print('Reading {} - position x:{} y:{}'.format(img_path.name, x, y))
+    logger.info('Reading {} - position x:{} y:{}'.format(img_path.name, x, y))
     
     # Read the image to pad
     br = BioReader(img_path, backend='python')
@@ -74,7 +73,6 @@ def pad_image(fp, y, x, padding_size):
     img = br[:]
     br.close()
     original_shape = img.shape
-    print(original_shape)
     
     # Pad the image with symmetric reflection
     padded_img = np.pad(img, original_shape, mode='symmetric')
@@ -94,12 +92,11 @@ def pad_image(fp, y, x, padding_size):
             # Try to get file path to the current image in the 3x3 grid
             next_image = fp.get_matching(X=X, Y=Y)
             
+            # Check if adjacent tile exists for current position
             if len(next_image) == 0:
-                print('No image in position y:{}, x:{}'.format(Y,X))
+                pass
             
             else:
-                print(next_image)
-                
                 # Read the next image
                 br = BioReader(Path(next_image[0]['file']))
                 img = br[:]
@@ -110,11 +107,6 @@ def pad_image(fp, y, x, padding_size):
                 y2 = y1 + original_shape[0]
                 x1 = (c + 1)*original_shape[0]
                 x2 = x1 + original_shape[0]
-                
-                print('y1:', y1)
-                print('y2:', y2)
-                print('x1:', x1)
-                print('x2:', x2)
                 
                 # Slice in the current image
                 padded_img[y1:y2, x1:x2] = img
@@ -150,6 +142,7 @@ def main({#- Required inputs -#}
          {% endfor -%}
          {%- if cookiecutter.scalability == 'fft-filter' -%}
          _pattern: str,
+         _padding: int,
          {%- endif %}
          {#- Required Outputs (all outputs are required, and should be a Path) -#}
          {% for inp,val in cookiecutter._outputs.items() -%}
@@ -426,11 +419,6 @@ def main({#- Required inputs -#}
     # Attempt to convert inputs to java types and run the filter op
     try:
         
-        {%- for inp,val in cookiecutter._inputs.items() if val.type != 'collection' and inp != 'opName' and inp != 'out_input' %}
-            if _{{ inp }} is not None:
-                {{ inp }} = ij_converter.to_java(ij, _{{ inp }},{{ inp }}_types[_opName],dtype)
-        {% endfor %}
-        
         {%- for inp,val in cookiecutter._inputs.items() if val.title in ['in2', 'kernel'] and val.type=='collection' %}
         # Load the kernel image
         logger.info('Loading image: {}'.format({{ inp }}_path[0]))
@@ -441,7 +429,19 @@ def main({#- Required inputs -#}
         {{ inp }}_br.close()
         
         kernel_shape = ij.py.dims({{ inp }})
+        
+        # Check if padding argument was passed
+        if _padding is None:
+            # Set padding based upon kernel dimensions
+            _padding = kernel_shape[0]
+        
         {% endfor %}
+        
+        # Check if padding argument is defined
+        if _padding is None:
+            
+            # Set a large arbitrary padding size
+            _padding = 30
         
         for ind, (
             {%- for inp,val in cookiecutter._inputs.items() if val.type=='collection' and inp not in ['out_input', 'in2', 'kernel'] -%}
@@ -464,7 +464,7 @@ def main({#- Required inputs -#}
                 
                 # Pad the tile
                 padded_img, orginal_shape, metadata = pad_image(
-                    fp={{ inp }}_fp, y=y, x=x, padding_size=kernel_shape[0]
+                    fp={{ inp }}_fp, y=y, x=x, padding_size=_padding
                     )
                 
                 # Convert to appropriate numpy array
@@ -474,6 +474,11 @@ def main({#- Required inputs -#}
                 shape = ij.py.dims({{ inp }})
                 dtype = ij.py.dtype({{ inp }})
                 {%- endif %}
+            {% endfor %}
+            
+            {%- for inp,val in cookiecutter._inputs.items() if val.type != 'collection' and inp != 'opName' and inp != 'out_input' %}
+            if _{{ inp }} is not None:
+                {{ inp }} = ij_converter.to_java(ij, _{{ inp }},{{ inp }}_types[_opName],dtype)
             {% endfor %}
             
             # Generate the out input variable if required
@@ -495,8 +500,8 @@ def main({#- Required inputs -#}
             
             
             # Define padding indices to trim
-            i1 = kernel_shape[0]
-            i2 = orginal_shape[0] + kernel_shape[0]
+            i1 = _padding
+            i2 = orginal_shape[0] + _padding
             
             {{ out }}_array = {{ out }}_array[i1:i2, i1:i2]
             
@@ -544,6 +549,8 @@ if __name__=="__main__":
     {%- if cookiecutter.scalability == 'fft-filter' %}
     parser.add_argument('--pattern', dest='pattern', type=str,
                         help='Input collection file pattern', required=True)
+    parser.add_argument('--padding', dest='padding', type=int,
+                        help='Inter-tile padding size', required=False)
     {% endif %}
     """ Parse the arguments """
     args = parser.parse_args()
@@ -562,6 +569,9 @@ if __name__=="__main__":
     {%- if cookiecutter.scalability == 'fft-filter' %}
     _pattern = args.pattern
     logger.info('pattern = {}'.format(_pattern))
+    
+    _padding = args.padding
+    logger.info('padding = {}'.format(_padding))
     {% endif %}
     # Output Args
     {%- for out,val in cookiecutter._outputs.items() %}
@@ -576,6 +586,7 @@ if __name__=="__main__":
     {% endfor -%}
     {%- if cookiecutter.scalability == 'fft-filter' %}
     _pattern = _pattern,
+    _padding = _padding,
     {% endif -%}
     {%- for inp,val in cookiecutter._outputs.items() -%}
     _{{ inp }}=_{{ inp }}{% if not loop.last %},{% endif %}{% endfor %}{% endfilter -%}
