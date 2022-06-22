@@ -1,5 +1,5 @@
 filepattern==1.4.7
-numpy==1.21.1
+numpy==1.22.0
 zarr==2.8.3
 bfio[all]==2.1.9
 scipy==1.7.1
