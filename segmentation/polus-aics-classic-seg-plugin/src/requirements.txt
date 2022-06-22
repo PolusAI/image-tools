@@ -1,5 +1,5 @@
 
-numpy==1.18.1
+numpy==1.22.0
 git+https://github.com/AllenInstitute/aics-segmentation@d1c666b26e901cbe6d7c74f57eafefa5af9443a5
 opencv_python_headless==4.3.0.38
 
