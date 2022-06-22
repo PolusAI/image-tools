@@ -1,6 +1,6 @@
 wheel==0.36.2
 filepattern==1.4.7
-numpy==1.20.3
+numpy==1.22.0
 scikit_image==0.18.2
 trimesh==3.8.19
 open3d==0.13.0
