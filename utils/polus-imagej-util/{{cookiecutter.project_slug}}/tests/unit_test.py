@@ -184,7 +184,7 @@ class UnitTest(unittest.TestCase):
         ]
         
         # Get WIPP and ImageJ data types
-        {% for inp,val in cookiecutter._inputs.items() -%}
+        {% for inp,val in cookiecutter._inputs.items() if inp != 'out_input' -%}
         {% if inp == 'opName' -%}
         _{{ inp }} = op
         {% else -%}
@@ -197,7 +197,7 @@ class UnitTest(unittest.TestCase):
         {% endfor -%}
         
         # Generate data for the inputs
-        {% for inp,val in cookiecutter._inputs.items() -%}
+        {% for inp,val in cookiecutter._inputs.items() if inp != 'out_input' -%}
         {% if inp != 'opName' -%}
         _{{ inp }} = self.generate_data(
             '{{ inp }}',
@@ -217,7 +217,7 @@ class UnitTest(unittest.TestCase):
         # Call the op
             main(
             {%- filter indent(5) %}
-            {%- for inp,val in cookiecutter._inputs.items() -%}
+            {%- for inp,val in cookiecutter._inputs.items() if inp != 'out_input' -%}
             _{{ inp }}=_{{ inp }},
             {% endfor -%}
             {%- for out,val in cookiecutter._outputs.items() -%}
