@@ -39,14 +39,12 @@ SCALARS = [
     "boolean",
 ]
 
-FLOAT_SCALARS = ["double", "float", "long"]
+FLOAT_SCALARS = ["double", "float"]
 
 INT_SCALARS = [
     "int",
     "short",
-    "char",
-    "byte",
-    "boolean",
+    "long",
 ]
 
 CHAR_PRIMITIVES = ["char"]
@@ -117,10 +115,15 @@ JAVA_CONVERT.update(
         for t in ABSTRACT_SCALARS
     }
 )
-JAVA_CONVERT.update({t: lambda s, t, st: PRIMITIVES[t](float(s)) for t in SCALARS})
+
+JAVA_CONVERT.update(
+    {t: lambda s, t, st: PRIMITIVES[t](float(s)) for t in SCALARS}
+    )
+
 JAVA_CONVERT.update(
     {t: lambda s, t, st: IMGLYB_PRIMITIVES[str(st)](s) for t in SCALARS}
 )
+
 JAVA_CONVERT.update(
     {
         t: lambda s, t, st: PRIMITIVE_FLOAT_ARRAYS[t](

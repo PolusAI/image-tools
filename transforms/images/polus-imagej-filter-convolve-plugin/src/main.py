@@ -158,6 +158,10 @@ def main(
             out_input = ij_converter.to_java(
                 ij, np.zeros(shape=shape, dtype=dtype), "IterableInterval"
             )
+            
+            borderSize = ij_converter.to_java(
+                ij, '0,0', "long[]", dtype
+            )
 
             logger.info("Running op...")
             if _opName == "ConvolveNaiveF":
@@ -165,9 +169,9 @@ def main(
             elif _opName == "PadAndConvolveFFTF":
                 out = ij.op().filter().convolve(in1, in2)
             elif _opName == "PadAndConvolveFFT":
-                out = ij.op().filter().convolve(out_input, in1, in2)
+                out = ij.op().filter().convolve(out_input, in1, in2, borderSize)
             elif _opName == "ConvolveFFTC":
-                out = ij.op().filter().convolve(out_input, in1, in2)
+                out = ij.op().filter().convolve(out_input, in1, in2, borderSize)
 
             logger.info("Completed op!")
             if in1_path != None:
