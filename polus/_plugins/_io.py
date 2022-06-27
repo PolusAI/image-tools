@@ -1,8 +1,9 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, PrivateAttr
 import typing
 import enum
 import logging
 import pathlib
+import fsspec
 
 """
 Enums for validating plugin input, output, and ui components
@@ -57,6 +58,9 @@ class IOBase(BaseModel):
     options: typing.Optional[dict] = None
     value: typing.Optional[typing.Any] = None
     id: typing.Optional[typing.Any] = None
+    _fs: typing.Optional[typing.Type[fsspec.spec.AbstractFileSystem]] = PrivateAttr(
+        default=None
+    )  # type checking is done at plugin level
 
     def _validate(self):
 
@@ -88,16 +92,22 @@ class IOBase(BaseModel):
             value = WIPP_TYPES[self.type](value)
 
             if isinstance(value, pathlib.Path):
-
                 value = value.absolute()
-                assert value.exists(), f"{value} is invalid or does not exist"
-                assert value.is_dir(), f"{value} is not a valid directory"
+                if self._fs:
+                    assert self._fs.exists(
+                        str(value)
+                    ), f"{value} is invalid or does not exist"
+                    assert self._fs.isdir(
+                        str(value)
+                    ), f"{value} is not a valid directory"
+                else:
+                    assert value.exists(), f"{value} is invalid or does not exist"
+                    assert value.is_dir(), f"{value} is not a valid directory"
 
         super().__setattr__("value", value)
 
     def __setattr__(self, name, value):
-
-        if name not in ["value", "id"]:
+        if name not in ["value", "id", "_fs"]:
             # Don't permit any other values to be changed
             raise TypeError(f"Cannot set property: {name}")
 
