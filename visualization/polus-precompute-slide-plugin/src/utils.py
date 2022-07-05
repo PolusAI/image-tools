@@ -477,51 +477,65 @@ class ZarrWriter(PyramidWriter):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
-        out_name = self.base_path.name.replace(''.join(self.base_path.suffixes),'')
+
+        out_name = self.base_path.name.replace("".join(self.base_path.suffixes), "")
         self.base_path = self.base_path.with_name(out_name)
         self.base_path.mkdir(exist_ok=True)
-        self.root = zarr.open(str(self.base_path.joinpath("data.zarr").resolve()),
-                              mode='a')
+        self.root = zarr.open(
+            str(self.base_path.joinpath("data.zarr").resolve()), mode="a"
+        )
         if "0" in self.root.group_keys():
             self.root = self.root["0"]
         else:
             self.root = self.root.create_group("0")
-        
-        
+
         self.writers = {}
-        max_scale = int(self.scale_info(-1)['key'])
-        compressor = Blosc(cname='zstd', clevel=3, shuffle=Blosc.BITSHUFFLE)
-        for S in range(10,len(self.info['scales'])):
+        max_scale = int(self.scale_info(-1)["key"])
+        compressor = Blosc(cname="zstd", clevel=3, shuffle=Blosc.BITSHUFFLE)
+        for S in range(
+            min(10, int(self.scale_info(-1)["key"])), len(self.info["scales"])
+        ):
             scale_info = self.scale_info(S)
-            key = str(max_scale - int(scale_info['key']))
+            key = str(max_scale - int(scale_info["key"]))
             if key not in self.root.array_keys():
-                self.writers[key] = self.root.zeros(key,
-                                                    shape=(1,self.max_output_depth,1) + (scale_info['size'][1],scale_info['size'][0]),
-                                                    chunks=(1,1,1,CHUNK_SIZE,CHUNK_SIZE),
-                                                    dtype=self.dtype,
-                                                    compressor=compressor)
+                self.writers[key] = self.root.zeros(
+                    key,
+                    shape=(1, self.max_output_depth, 1)
+                    + (scale_info["size"][1], scale_info["size"][0]),
+                    chunks=(1, 1, 1, CHUNK_SIZE, CHUNK_SIZE),
+                    dtype=self.dtype,
+                    compressor=compressor,
+                )
             else:
-                self.root[key].resize((1,self.max_output_depth,1) + (scale_info['size'][1],scale_info['size'][0]))
+                self.root[key].resize(
+                    (1, self.max_output_depth, 1)
+                    + (scale_info["size"][1], scale_info["size"][0])
+                )
                 self.writers[key] = self.root[key]
 
-    def _write_chunk(self,key,chunk_coords,buf):
-        key = str(int(self.scale_info(-1)['key']) - int(key))
+    def _write_chunk(self, key, chunk_coords, buf):
+        key = str(int(self.scale_info(-1)["key"]) - int(key))
         chunk_coords = self._chunk_coords(chunk_coords)
-        
-        self.writers[key][0:1,
-                        chunk_coords[4]:chunk_coords[5],
-                        0:1,
-                        chunk_coords[2]:chunk_coords[3],
-                        chunk_coords[0]:chunk_coords[1]] = buf
-            
+
+        self.writers[key][
+            0:1,
+            chunk_coords[4] : chunk_coords[5],
+            0:1,
+            chunk_coords[2] : chunk_coords[3],
+            chunk_coords[0] : chunk_coords[1],
+        ] = buf
+
     def _encoder(self):
-        
+
         return ZarrChunkEncoder(self.info)
-    
+
     def _write_slide(self):
-    
-        _get_higher_res(10,self,Z=(self.image_depth,self.image_depth+1))
+
+        _get_higher_res(
+            min(10, int(self.scale_info(-1)["key"])),
+            self,
+            Z=(self.image_depth, self.image_depth + 1),
+        )
             
     def write_info(self):
         """ This creates the multiscales metadata for zarr pyramids """
