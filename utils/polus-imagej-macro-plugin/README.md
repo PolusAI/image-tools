@@ -20,7 +20,7 @@ original = getTitle();
 // Run your awesome macro here, mine is simple
 run("Gaussian Blur...", "sigma=10");
 
-rename(getTitle() + "-output");
+rename(original + "-output");
 ```
 
 3. To ensure the macro was performed on the correct image the output image must 
