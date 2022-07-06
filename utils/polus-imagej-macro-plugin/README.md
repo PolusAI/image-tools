@@ -55,6 +55,6 @@ This plugin takes one input argument and one output argument:
 | `--maxIterations` | Maximum number of macro attempts | Input | number |
 
 > Note the `--macroDir` input should be a path to a directory containing a `.txt` file
-> e.g., `mymacro` might contain `awesome-macro.txt`
-> The plugin will always run the first `.txt` macro file it finds in the macro directory
-> Other macros should be removed from the macro directory before running plugin
+> e.g., `mymacro` might contain `awesome-macro.txt`.<br>
+> The plugin will always run the first `.txt` macro file it finds in the macro directory.
+> Other macros should be removed from the macro directory before running plugin.
