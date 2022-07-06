@@ -24,7 +24,7 @@ rename(original + "-output");
 ```
 
 3. To ensure the macro was performed on the correct image the output image must 
-be a differnt version of the original input image or the plugin will fail. The
+be a different version of the original input image or the plugin will fail. The
 optional `--maxIterations` argument (defaults to 10) can be used to specify
 how many times a macro should be attempted before terminating the plugin.
 
