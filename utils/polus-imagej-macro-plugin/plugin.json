@@ -2,7 +2,7 @@
   "name": "ImageJ Macro Plugin",
   "version": "0.1.0",
   "title": "ImageJ Macro Plugin",
-  "description": "This plugin runs any ImageJ macro which inputs a image and outputs an image.",
+  "description": "This plugin runs any ImageJ macro which inputs an image and outputs an image.",
   "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/PolusAI/polus-plugins",
