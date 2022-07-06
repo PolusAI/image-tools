@@ -141,17 +141,20 @@ def run_macro(
 
     return numpy_output
     
-def main(inpDir, macro, outDir, maxIterations):
+def main(inpDir, macroDir, outDir, maxIterations):
     
-    # Load the macro script
-    script = """"""
+    # Define the macro path
+    macro = [m for m in macroDir.iterdir() if m.suffix == '.txt'][0]
 
+    # Load and define the macro script
+    script = ""
     with open(macro) as fhand:
         for line in fhand:
             script += line
 
     
     logger.debug('Macro script:\n' + script)
+    logger.info('macro = {}'.format(macro))
 
     # Infer the file pattern of the collection
     pattern_guess = filepattern.infer_pattern(inpDir.iterdir())
@@ -247,8 +250,8 @@ if __name__ == '__main__':
         )
     
     parser.add_argument(
-        "--macro", 
-        dest="macro", 
+        "--macroDir", 
+        dest="macroDir", 
         type=str, 
         help="The macro to apply to the collection", 
         required=True
@@ -276,8 +279,8 @@ if __name__ == '__main__':
     _inpDir = Path(args.inpDir)
     logger.info('inpDir = {}'.format(_inpDir))
     
-    _macro = Path(args.macro)
-    logger.info('macro = {}'.format(_macro))
+    _macroDir = Path(args.macroDir)
+    logger.info('macroDir = {}'.format(_macroDir))
         
     _outDir = Path(args.outDir)
     logger.info('outDir = {}'.format(_outDir))
@@ -293,7 +296,7 @@ if __name__ == '__main__':
     
     main(
         inpDir=_inpDir, 
-        macro=_macro, 
+        macroDir=_macroDir, 
         outDir=_outDir, 
         maxIterations=_maxIterations
         )

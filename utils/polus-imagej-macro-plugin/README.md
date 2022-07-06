@@ -50,9 +50,11 @@ This plugin takes one input argument and one output argument:
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
 | `--inpDir` | Collection to be processed by this plugin | Input | collection |
-| `--macro` | The macro to run | Input | generic |
+| `--macroDir` | The macro to run | Input | generic |
 | `--outDir` | Output collection | Output | collection |
-| `--maxIterations` | Maximum number of macro attempts | Input | enum |
+| `--maxIterations` | Maximum number of macro attempts | Input | number |
 
-> Note the macro script input should be a full path text file e.g., `mymacros/macro.txt`
-> They can be uploaded in WIPP as generic data collections
+> Note the `--macroDir` input should be a path to a directory containing a `.txt` file
+> e.g., `mymacro` might contain `awesome-macro.txt`
+> The plugin will always run the first `.txt` macro file it finds in the macro directory
+> Other macros should be removed from the macro directory before running plugin
