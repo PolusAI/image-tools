@@ -1,15 +1,15 @@
 # ImageJ Macro Plugin
 
 The plugin implements the ImageJ macro. Any macro can be run on an image as long
-as long as the macro is perfomed on some input image. Note that running ImageJ 
-macros in headless mode is not yet fully supported by 
+as the macro is performed on some input image. Note that running ImageJ macros 
+in headless mode is not yet fully supported by 
 [pyimagej](https://github.com/imagej/pyimagej); therefore, there are several 
 items which are important to note when scripting macros.
 
 1. All macros must have this line at the top `setBatchMode(true);`. If this is
 not present the plugin will fail to find the input image.
 
-2. After the macro has been run on the input image it will retreive the image 
+2. After the macro has been run on the input image it will retrieve the image 
 with the same title as the input image + '-output'. An example of how to achieve
 this in the macro script is below.
 
@@ -54,5 +54,5 @@ This plugin takes one input argument and one output argument:
 | `--outDir` | Output collection | Output | collection |
 | `--maxIterations` | Maximum number of macro attempts | Input | enum |
 
-> Note the macro script input should be a full path text file e.g. `mymacros/macro.txt`
+> Note the macro script input should be a full path text file e.g., `mymacros/macro.txt`
 > They can be uploaded in WIPP as generic data collections
