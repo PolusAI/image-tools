@@ -5,7 +5,7 @@ datapath=$(readlink --canonicalize ../../data)
 
 # Inputs
 inpDir=/data/input
-macro=/data/macro/macro-blur.txt
+macro=/data/macro-blur.txt
 maxIterations=15
 
 # Output paths

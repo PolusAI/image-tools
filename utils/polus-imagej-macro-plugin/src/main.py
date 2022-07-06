@@ -9,7 +9,7 @@ from bfio import BioReader, BioWriter
 
 
 # Import environment variables
-POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "DEBUG"))
+POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
 POLUS_EXT = os.environ.get("POLUS_EXT", ".ome.tif")
 
 # Initialize the logger
@@ -64,7 +64,7 @@ def run_macro(
         
         # Increment iteration counter
         i += 1
-        logger.info('Running macro attempt {}'.format(i))
+        logger.debug('Running macro attempt {}'.format(i))
         
         try:
             
@@ -127,10 +127,6 @@ def run_macro(
             logger.debug('Creating numpy output array...')
             # Convert the xarray to numpy array
             numpy_output = xarr_output.to_numpy()
-            
-            # Check if the input and output images are identical
-            if np.array_equal(numpy_input, numpy_output):
-                logger.debug('The input and output images are identical, attempting macro again')
         
         except:
             logger.debug('Macro attempt {} failed'.format(i))
@@ -139,7 +135,7 @@ def run_macro(
             # Use window manager to close all windows - clears up memory
             ij.WindowManager.closeAllWindows()
             
-            # Terminate the plugin after 10 attempts to run macro on same image
+            # Terminate the plugin after max attempts to run macro on same image
             if i >= maxIterations:
                 raise Exception('Failed to run macro on image {} after {} attempts'.format(image_title, i))
 
@@ -147,18 +143,13 @@ def run_macro(
     
 def main(inpDir, macro, outDir, maxIterations):
     
-    # Check if the macro is a file path object
-    if isinstance(macro, Path):
-        script = """"""
-        
-        # Load the macro
-        with open(macro) as fhand:
-            for line in fhand:
-                script += line
-    
-    else:
-        # For passing macro as string
-        script = macro
+    # Load the macro script
+    script = """"""
+
+    with open(macro) as fhand:
+        for line in fhand:
+            script += line
+
     
     logger.debug('Macro script:\n' + script)
 
@@ -285,13 +276,8 @@ if __name__ == '__main__':
     _inpDir = Path(args.inpDir)
     logger.info('inpDir = {}'.format(_inpDir))
     
-    # Check if macro is a file path
-    if Path(args.macro).exists():
-        _macro = Path(args.macro)
-        logger.info('macro = {}'.format(_macro))
-    
-    else:
-        _macro = args.macro
+    _macro = Path(args.macro)
+    logger.info('macro = {}'.format(_macro))
         
     _outDir = Path(args.outDir)
     logger.info('outDir = {}'.format(_outDir))
