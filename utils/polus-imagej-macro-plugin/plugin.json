@@ -1,0 +1,56 @@
+{
+  "name": "ImageJ Macro Plugin",
+  "version": "0.1.0",
+  "title": "ImageJ Macro Plugin",
+  "description": "This plugin runs any ImageJ macro which inputs a image and outputs an image.",
+  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/PolusAI/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-macro-plugin:0.1.0",
+  "inputs": [
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "macro",
+      "type": "generic",
+      "description": "The macro to run on the input collection",
+      "required": true
+    },
+    {
+      "name": "maxIterations",
+      "type": "enum",
+      "description": "The maximum number of macro attempts",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.macro",
+      "title": "macro",
+      "description": "The macro to run on the input collection"
+    },
+    {
+      "key": "inputs.maxIterations",
+      "title": "maxIterations",
+      "description": "The maximum number of macro attempts"
+    }
+  ]
+}
