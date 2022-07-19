@@ -39,5 +39,6 @@ setup(
         "python_on_whales>=0.34.0",
         "tqdm==4.64.0",
         "xmltodict>=0.12.0",
+        "fsspec==2021.11.0",
     ],
 )
