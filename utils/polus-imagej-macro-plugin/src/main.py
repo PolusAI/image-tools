@@ -60,7 +60,7 @@ def run_macro(
     i = 0
     
     # Run macro until input image does not equal output
-    while np.array_equal(numpy_input, numpy_output):
+    while i < maxIterations:
         
         # Increment iteration counter
         i += 1
@@ -89,6 +89,9 @@ def run_macro(
             logger.debug('Registering as active image...')
             # HACK sets the ImagePlus object as the active image
             java_input.show()
+            
+            # Use window manager to close all windows
+            ij.WindowManager.closeAllWindows()
             
             # Get the available images
             available_images = list(ij.WindowManager.getImageTitles())
@@ -127,9 +130,19 @@ def run_macro(
             logger.debug('Creating numpy output array...')
             # Convert the xarray to numpy array
             numpy_output = xarr_output.to_numpy()
+            
+            # Log no changes were made to the image and attempt failed
+            if np.array_equal(numpy_input, numpy_output):
+                logger.info('Macro attempt {} failed'.format(i))
+                continue
+            
+            # If changes were not made break the while loop
+            else:
+                break
         
         except:
-            logger.debug('Macro attempt {} failed'.format(i))
+            # Log the attempt failed on exception
+            logger.info('Macro attempt {} failed'.format(i))
 
         finally:
             # Use window manager to close all windows - clears up memory
@@ -187,7 +200,7 @@ def main(inpDir, macroDir, outDir, maxIterations):
     for app in apps:
         if ij.app().getApp(app) is not None:
             versions[app] = ij.app().getApp(app).getVersion()
-        logger.debug('Loaded {} version {}'.format(app, versions[app]))
+        logger.info('Loaded {} version {}'.format(app, versions[app]))
     
     # Iterate over the collection
     for path in image_paths:
