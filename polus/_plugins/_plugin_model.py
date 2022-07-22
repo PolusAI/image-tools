@@ -8,64 +8,7 @@ from enum import Enum
 from typing import Any, List, Optional, Union
 
 from pydantic import BaseModel, Field, constr
-
-
-class Type(Enum):
-    collection = "collection"
-    stitchingVector = "stitchingVector"
-    tensorflowModel = "tensorflowModel"
-    csvCollection = "csvCollection"
-    pyramid = "pyramid"
-    notebook = "notebook"
-    string = "string"
-    number = "number"
-    integer = "integer"
-    enum = "enum"
-    array = "array"
-    boolean = "boolean"
-
-
-class Input(BaseModel):
-    name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(  # noqa: F722
-        ...,
-        description="Input name as expected by the plugin CLI",
-        examples=["inputImages", "fileNamePattern", "thresholdValue"],
-        title="Input name",
-    )
-    type: Type = Field(
-        ..., examples=["collection", "string", "number"], title="Input Type"
-    )
-    description: constr(regex=r"^(.*)$") = Field(  # noqa: F722
-        ..., examples=["Input Images"], title="Input description"
-    )
-    required: Optional[bool] = Field(
-        True,
-        description="Whether an input is required or not",
-        examples=[True],
-        title="Required input",
-    )
-
-
-class Type1(Enum):
-    collection = "collection"
-    stitchingVector = "stitchingVector"
-    tensorflowModel = "tensorflowModel"
-    tensorboardLogs = "tensorboardLogs"
-    csvCollection = "csvCollection"
-    pyramid = "pyramid"
-
-
-class Output(BaseModel):
-    name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(  # noqa: F722
-        ..., examples=["outputCollection"], title="Output name"
-    )
-    type: Type1 = Field(
-        ..., examples=["stitchingVector", "collection"], title="Output type"
-    )
-    description: constr(regex=r"^(.*)$") = Field(  # noqa: F722
-        ..., examples=["Output collection"], title="Output description"
-    )
-
+from ._io import Input, Output
 
 class UiItem(BaseModel):
     key: Union[Any, Any] = Field(
