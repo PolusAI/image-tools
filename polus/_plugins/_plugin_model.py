@@ -72,8 +72,9 @@ class UiItem(BaseModel):
         ...,
         description="Key of the input which this UI definition applies to, the expected format is 'inputs.inputName'. Special keyword 'fieldsets' can be used to define arrangement of inputs by sections.",
         examples=["inputs.inputImages", "inputs.fileNamPattern", "fieldsets"],
-        title="UI key",
     )
+    title: str
+    description: str
 
 
 class WIPPPluginManifest(BaseModel):
