@@ -9,7 +9,6 @@ import os
 import uuid
 import signal
 import random
-import pydantic
 import requests
 import xmltodict
 from urllib.parse import urlparse, urljoin
@@ -21,8 +20,6 @@ from python_on_whales import docker
 
 from pydantic import Extra, errors, ValidationError
 import github
-from polus._plugins._plugin_model import Input as WippInput
-from polus._plugins._plugin_model import Output as WippOutput
 from polus._plugins._plugin_model import WIPPPluginManifest
 from polus._plugins._registry import (
     _generate_query,
