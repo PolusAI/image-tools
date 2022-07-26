@@ -183,6 +183,9 @@ class Input(IOBase):
 class Version(BaseModel):
     version: str
 
+    def __init__(self, version):
+        super().__init__(version=version)
+
     @validator("version")
     def semantic_version(cls, value):
 

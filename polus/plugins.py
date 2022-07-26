@@ -90,7 +90,6 @@ PLUGINS = {}
 # PLUGINS = {"BasicFlatfieldCorrectionPlugin":
 #               {Version('0.1.4'): Path(<...>), Version('0.1.5'): Path(<...>)}.
 #            "VectorToLabel": {Version(...)}}
-# VERSIONS = {}
 
 
 class _Plugins:
@@ -188,7 +187,6 @@ class _Plugins:
                 # Add version and path to VERSIONS
                 if key not in PLUGINS:
                     PLUGINS[key] = {}
-
                 if plugin.version in PLUGINS[key]:
                     if not file == PLUGINS[key][plugin.version]:
                         raise DuplicateVersionFound(
@@ -339,7 +337,7 @@ class PluginMethods:
 
     @property
     def versions(self):
-        return list(PLUGINS[self._key])
+        return list(PLUGINS[name_cleaner(self.name)])
 
     @property
     def manifest(self):
@@ -389,14 +387,15 @@ class PluginMethods:
 
         return other.version < self.version
 
+    
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name='{self.name}', version={self.version.version})"
+
 
 
 class Plugin(WIPPPluginManifest, PluginMethods):
     """Required until json schema is fixed"""
 
-    version: Version
     id: uuid.UUID
 
     class Config:
@@ -409,9 +408,6 @@ class Plugin(WIPPPluginManifest, PluginMethods):
             data["id"] = uuid.uuid4()
         else:
             data["id"] = uuid.UUID(data["id"])
-
-        data["version"] = Version(**{"version": data["version"]})
-        # data["version"]._type = "old"
 
         super().__init__(**data)
 
@@ -536,14 +532,10 @@ class ComputePlugin(NewSchema, PluginMethods):
             data["pluginHardwareRequirements"] = {}
             data["ui"] = [_ui_in(x) for x in data["ui"]]  # inputs
             data["ui"].extend([_ui_out(x) for x in data["outputs"]])  # outputs
-            data["version"] = Version(**{"version": data["version"]["version"]})
 
         if hardware_requirements:
             for k, v in hardware_requirements.items():
                 data["pluginHardwareRequirements"][k] = v
-        if not _from_old:
-            data["version"] = Version(**{"version": data["version"]})
-        # data["version"]._type = "new"
         super().__init__(**data)
         self.Config.allow_mutation = True
         self._io_keys = {i.name: i for i in self.inputs}
@@ -578,209 +570,6 @@ class ComputePlugin(NewSchema, PluginMethods):
     def __repr__(self) -> str:
         return PluginMethods.__repr__(self)
 
-
-class Plugin(WIPPPluginManifest, PluginMethods):
-    """Required until json schema is fixed"""
-
-    version: Version
-    inputs: typing.List[Input]
-    outputs: typing.List[Output]
-    versions: typing.List[Version] = []
-    id: uuid.UUID
-
-    class Config:
-        extra = Extra.allow
-        allow_mutation = False
-
-    def __init__(self, _uuid: bool = True, **data):
-
-        if _uuid:
-            data["id"] = uuid.uuid4()
-        else:
-            data["id"] = uuid.UUID(data["id"])
-
-        super().__init__(**data)
-
-        self.Config.allow_mutation = True
-        self._io_keys = {i.name: i for i in self.inputs}
-        self._io_keys.update({o.name: o for o in self.outputs})
-
-        if self.author == "":
-            logger.warning(
-                f"The plugin ({self.name}) is missing the author field. This field is not required but should be filled in."
-            )
-
-    @property
-    def manifest(self):
-        return json.loads(self.json(exclude={"_io_keys"}))
-
-    @validator("version", pre=True)
-    def cast_version(cls, value):
-        if isinstance(value, dict):  # if init from a Version object
-            value = value["version"]
-        return Version(version=value)
-
-    def new_schema(self, hardware_requirements: Optional[dict] = None):
-        data = deepcopy(self.manifest)
-        return ComputePlugin(
-            hardware_requirements=hardware_requirements, _from_old=True, **data
-        )
-
-    def save_manifest(
-        self,
-        path: typing.Union[str, pathlib.Path],
-        hardware_requirements: Optional[dict] = None,
-        indent: int = 4,
-        old: bool = False,
-    ):
-        if not old:
-            with open(path, "w") as fw:
-                d = self.new_schema(hardware_requirements=hardware_requirements).json()
-                d = json.loads(d)
-                json.dump(
-                    d,
-                    fw,
-                    indent=indent,
-                )
-        else:
-            with open(path, "w") as fw:
-                d = self.manifest
-                json.dump(
-                    d,
-                    fw,
-                    indent=indent,
-                )
-
-        logger.debug("Saved manifest to %s" % (path))
-
-    def __setattr__(self, name, value):
-        PluginMethods.__setattr__(self, name, value)
-
-    @property
-    def _config_file(self):
-        m = json.loads(self.json())
-        m["class"] = "OldPlugin"
-        for x in m["inputs"]:
-            x["value"] = None
-        return m
-
-    def save_config(self, path: typing.Union[str, pathlib.Path]):
-        with open(path, "w") as fw:
-            json.dump(self._config_file, fw, indent=4)
-        logger.debug("Saved config to %s" % (path))
-
-
-class ComputePlugin(NewSchema, PluginMethods):
-    class Config:
-        extra = Extra.allow
-        allow_mutation = False
-
-    @validator("version", pre=True)
-    def cast_version(cls, value):
-        if isinstance(value, dict):  # if init from a Version object
-            value = value["version"]
-
-        return Version(version=value)
-
-    def __init__(
-        self,
-        hardware_requirements: Optional[dict] = None,
-        _from_old: bool = False,
-        _uuid: bool = True,
-        **data,
-    ):
-
-        if _uuid:
-            data["id"] = uuid.uuid4()
-        else:
-            data["id"] = uuid.UUID(data["id"])
-
-        if _from_old:
-            type_dict = {
-                "path": "text",
-                "string": "text",
-                "boolean": "checkbox",
-                "number": "number",
-                "array": "text",
-                "integer": "number",
-            }
-
-            def _clean(d: dict):
-                rg = re.compile("Dir")
-                if d["type"] == "collection":
-                    d["type"] = "path"
-                elif bool(rg.search(d["name"])):
-                    d["type"] = "path"
-                elif d["type"] == "enum":
-                    d["type"] = "string"
-                elif d["type"] == "integer":
-                    d["type"] = "number"
-                return d
-
-            def _ui_in(d: dict):  # assuming old all ui input
-                # assuming format inputs. ___
-                inp = d["key"].split(".")[-1]  # e.g inpDir
-                try:
-                    tp = [x["type"] for x in data["inputs"] if x["name"] == inp][0]
-                except IndexError:
-                    tp = "string"
-                except BaseException:
-                    raise
-
-                d["type"] = type_dict[tp]
-                return PluginUIInput(**d)
-
-            def _ui_out(d: dict):
-                nd = deepcopy(d)
-                nd["name"] = "outputs." + nd["name"]
-                nd["type"] = type_dict[nd["type"]]
-                return PluginUIOutput(**nd)
-
-            data["inputs"] = [_clean(x) for x in data["inputs"]]
-            data["outputs"] = [_clean(x) for x in data["outputs"]]
-            data["pluginHardwareRequirements"] = {}
-            data["ui"] = [_ui_in(x) for x in data["ui"]]  # inputs
-            data["ui"].extend([_ui_out(x) for x in data["outputs"]])  # outputs
-
-        if hardware_requirements:
-            for k, v in hardware_requirements.items():
-                data["pluginHardwareRequirements"][k] = v
-
-        super().__init__(**data)
-        self.Config.allow_mutation = True
-        self._io_keys = {i.name: i for i in self.inputs}
-        self._io_keys.update({o.name: o for o in self.outputs})
-
-        if self.author == "":
-            logger.warning(
-                f"The plugin ({self.name}) is missing the author field. This field is not required but should be filled in."
-            )
-
-    @property
-    def _config_file(self):
-        m = json.loads(self.json())
-        m["class"] = "NewPlugin"
-        for x in m["inputs"]:
-            x["value"] = None
-        return m
-
-    @property
-    def manifest(self):
-        m = json.loads(self.json(exclude={"_io_keys"}))
-        return m
-
-    def __setattr__(self, name, value):
-        PluginMethods.__setattr__(self, name, value)
-
-    def save_config(self, path: typing.Union[str, pathlib.Path]):
-        with open(path, "w") as fw:
-            json.dump(self._config_file, fw, indent=4)
-        logger.debug("Saved config to %s" % (path))
-
-    def save_manifest(self, path: typing.Union[str, pathlib.Path]):
-        with open(path, "w") as fw:
-            json.dump(self.manifest, fw, indent=4)
-        logger.debug("Saved manifest to %s" % (path))
 
 
 def is_valid_manifest(plugin: dict) -> bool:
@@ -903,9 +692,6 @@ def submit_plugin(
     # Refresh plugins list if refresh = True
     if refresh:
         plugins.refresh()
-
-    # Return in case additional QA checks should be made
-    # return plugin
 
 
 def add_plugin(

@@ -7,8 +7,9 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, List, Optional, Union
 
-from pydantic import BaseModel, Field, constr
-from ._io import Input, Output
+from pydantic import BaseModel, Field, constr, validator
+from ._io import Input, Output, Version
+from ._utils import utils_cast_version
 
 class UiItem(BaseModel):
     key: Union[Any, Any] = Field(
@@ -24,9 +25,7 @@ class WIPPPluginManifest(BaseModel):
     name: constr(regex=r"^(.*)$", min_length=1) = Field(  # noqa: F722
         ..., examples=["My Awesome Plugin"], title="Name of the plugin"
     )
-    version: constr(regex=r"^(.*)$", min_length=1) = Field(  # noqa: F722
-        ..., examples=["1.0.0"], title="Plugin version"
-    )
+    version: Version
     title: constr(regex=r"^(.*)$", min_length=1) = Field(  # noqa: F722
         ..., examples=["My really awesome plugin"], title="Plugin title"
     )
@@ -69,3 +68,7 @@ class WIPPPluginManifest(BaseModel):
         ..., description="Defines the outputs of the plugin", title="List of Outputs"
     )
     ui: List[UiItem] = Field(..., title="Plugin form UI definition")
+
+    @validator("version", pre=True)
+    def cast_version(cls, value):
+        return utils_cast_version(value)
