@@ -30,6 +30,7 @@ from polus._plugins._registry import (
     FailedToPublish,
     MissingUserInfo,
 )
+from polus._plugins._io import IOBase, InputTypes, Version
 from requests.exceptions import HTTPError
 from polus._plugins.PolusComputeSchema import PluginSchema as NewSchema  # new schema
 from polus._plugins.PolusComputeSchema import (
