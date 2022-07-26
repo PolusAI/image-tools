@@ -832,12 +832,7 @@ def update_polus_plugins(
 
             # Check that plugin version matches container version tag
             container_name, version = tuple(plugin.containerId.split(":"))
-            if isinstance(plugin, Plugin):
-                version = Version(version=version)
-            elif isinstance(plugin, ComputePlugin):
-                version = Version(version=version, _new=True)
-            else:
-                raise TypeError("plugin must be a Plugin object")
+            version = Version(version=version)
             organization, container_name = tuple(container_name.split("/"))
             try:
                 assert (
