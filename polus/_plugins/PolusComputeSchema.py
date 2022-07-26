@@ -50,7 +50,6 @@ class PluginHardwareRequirements(BaseModel):
     tmpDirMin: Optional[Union[str, float]] = None
 
 
-
 class PluginInputType(str, Enum):
     path = "path"
     string = "string"
@@ -104,7 +103,6 @@ class PluginOutput(IOBase):
     name: str
     type: PluginOutputType
     value: Optional[Any] = None
-
 
 
 class PluginUIInput(BaseModel):

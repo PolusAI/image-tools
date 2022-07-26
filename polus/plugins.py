@@ -6,7 +6,6 @@ import enum
 import re
 import pprint
 import os
-from os.path import basename
 import uuid
 import signal
 import random
@@ -315,23 +314,32 @@ class PluginMethods:
         args = []
 
         for i in self.inputs:
-            i._validate()
-            args.append(f"--{i.name}")
+            if i.value:  # do not include those with value=None
+                i._validate()
+                args.append(f"--{i.name}")
 
-            if isinstance(i.value, pathlib.Path):
-                args.append(inp_dirs_dict[str(i.value)])
+                if isinstance(i.value, pathlib.Path):
+                    args.append(inp_dirs_dict[str(i.value)])
 
-            else:
-                args.append(str(i.value))
+                elif isinstance(i.value, enum.Enum):
+                    args.append(str(i.value._name_))
+
+                else:
+                    args.append(str(i.value))
 
         for o in self.outputs:
-            o._validate()
-            args.append(f"--{o.name}")
+            if o.value:  # do not include those with value=None
+                o._validate()
+                args.append(f"--{o.name}")
 
-            if isinstance(o.value, pathlib.Path):
-                args.append(out_dirs_dict[str(o.value)])
-            else:
-                args.append(str(o.value))
+                if isinstance(o.value, pathlib.Path):
+                    args.append(out_dirs_dict[str(o.value)])
+
+                elif isinstance(o.value, enum.Enum):
+                    args.append(str(o.value._name_))
+
+                else:
+                    args.append(str(o.value))
 
         container_name = f"polus{random.randint(10, 99)}"
 
@@ -533,6 +541,7 @@ class ComputePlugin(NewSchema, PluginMethods):
                 "boolean": "checkbox",
                 "number": "number",
                 "array": "text",
+                "integer": "number",
             }
 
             def _clean(d: dict):
@@ -543,6 +552,8 @@ class ComputePlugin(NewSchema, PluginMethods):
                     d["type"] = "path"
                 elif d["type"] == "enum":
                     d["type"] = "string"
+                elif d["type"] == "integer":
+                    d["type"] = "number"
                 return d
 
             def _ui_in(d: dict):  # assuming old all ui input
@@ -672,7 +683,7 @@ def submit_plugin(
     plugin_name = manifest["name"]
     for char in replace_chars:
         plugin_name = plugin_name.replace(char, " ")
-    plugin_name = plugin_name.title().replace(" ", "")
+    plugin_name = plugin_name.title().replace(" ", "").replace("/", "_")
     if "pluginHardwareRequirements" in manifest:
         plugin = ComputePlugin(**manifest)
     else:
@@ -928,10 +939,18 @@ class WippPluginRegistry:
         self.password = password
 
     def _parse_xml(xml: str):
+        """Returns dictionary of Plugin Manifest. If error, returns None."""
         d = xmltodict.parse(xml)["Resource"]["role"]["PluginManifest"][
             "PluginManifestContent"
         ]["#text"]
-        return json.loads(d)
+        try:
+            return json.loads(d)
+        except:
+            e = eval(d)
+            if isinstance(e, dict):
+                return e
+            else:
+                return None
 
     def update_plugins(self):
         url = self.registry_url + "/rest/data/query/"
@@ -996,7 +1015,9 @@ class WippPluginRegistry:
                 if True it will override any other parameter.
                 `query` must be included
             query: query to execute. This query must be in MongoDB format
+
             verify: SSL verification. Default is `True`
+
 
         Returns:
             An array of the manifests of the Plugins returned by the query.
@@ -1005,7 +1026,7 @@ class WippPluginRegistry:
         url = self.registry_url + "/rest/data/query/"
         headers = {"Content-type": "application/json"}
         query = _generate_query(
-            title, version, title_contains, contains, query_all, advanced, query, verify
+            title, version, title_contains, contains, query_all, advanced, query
         )
 
         data = '{"query": %s}' % str(query).replace("'", '"')
