@@ -1,0 +1,71 @@
+{
+  "name": "ImageJ filter correlate",
+  "version": "0.4.0",
+  "title": "ImageJ filter correlate",
+  "description": "The plugin applies a correlation operation to an input image with a user specified kernel",
+  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-filter-correlate-plugin:0.4.0",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": ["PadAndCorrelateFFT",
+                    "CorrelateFFTC"]
+      },
+      "description": "Op overloading method to perform",
+      "required": false
+    },
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "kernel",
+      "type": "collection",
+      "description": "Kernel to be applied to image in correlation operation",
+      "required": true
+    },
+    {
+      "name": "borderSize",
+      "type": "string",
+      "description": "The number of pixels to pad to each side of the image in each dimension: x,y",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "opName",
+      "description": "Op overloading method to perform"
+    },
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.kernel",
+      "title": "kernel",
+      "description": "Kernel to be applied to image in correlation operation"
+    },
+    {
+      "key": "inputs.borderSize",
+      "title": "borderSize",
+      "description": "The number of pixels to pad to each side of the image in each dimension: x,y"
+    }
+  ]
+}
