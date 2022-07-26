@@ -6,6 +6,7 @@ import pathlib
 import fsspec
 
 logger = logging.getLogger("polus.plugins")
+
 """
 Enums for validating plugin input, output, and ui components
 """
@@ -80,6 +81,7 @@ class IOBase(BaseModel):
     _fs: typing.Optional[typing.Type[fsspec.spec.AbstractFileSystem]] = PrivateAttr(
         default=None
     )  # type checking is done at plugin level
+
 
     def _validate(self):
 

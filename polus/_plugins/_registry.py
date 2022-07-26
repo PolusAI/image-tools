@@ -101,6 +101,7 @@ def _generate_query(
     return q
 
 
+
 def _get_email(author: str):
     regex = re.compile(r"[A-Za-z][A-Za-z0-9.]*@[A-Za-z0-9.]*")
     return regex.search(author).group()
