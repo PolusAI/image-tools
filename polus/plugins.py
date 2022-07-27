@@ -147,24 +147,6 @@ class _Plugins:
                 setattr(pl, k, val)
         return pl
 
-    def load_config(self, path: typing.Union[str, pathlib.Path]):
-        with open(path, "r") as fr:
-            m = json.load(fr)
-        _io = m["_io_keys"]
-        m.pop("_io_keys", None)
-        cl = m["class"]
-        m.pop("class", None)
-        if cl == "NewPlugin":
-            pl = ComputePlugin(_uuid=False, **m)
-        elif cl == "OldPlugin":
-            pl = Plugin(_uuid=False, **m)
-        else:
-            raise ValueError("Invalid value of class")
-        for k, v in _io.items():
-            val = v["value"]
-            if val:  # exclude those values not set
-                setattr(pl, k, val)
-        return pl
 
     def refresh(self, force: bool = False):
         """Refresh the plugin list
