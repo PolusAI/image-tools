@@ -128,11 +128,16 @@ class _Plugins:
         else:
             return load_plugin(PLUGINS[name][Version(**{"version": version})])
 
-    def load_config(self, path: typing.Union[str, pathlib.Path]):
-        with open(path, "r") as fr:
-            m = json.load(fr)
+    def load_config(self, config: typing.Union[dict, pathlib.Path]):
+        if isinstance(config, pathlib.Path):
+            with open(config, "r") as fr:
+                m = json.load(fr)
+        elif isinstance(config, dict):
+            m = config
+        else:
+            raise TypeError("config must be a dict or a path")
         _io = m["_io_keys"]
-        m.pop("_io_keys", None)
+        # m.pop("_io_keys", None)
         cl = m["class"]
         m.pop("class", None)
         if cl == "NewPlugin":
@@ -320,6 +325,13 @@ class PluginMethods:
     @property
     def versions(self):
         return list(PLUGINS[name_cleaner(self.name)])
+    
+    @property
+    def _config(self):
+        m = self.dict()
+        for x in m["inputs"]:
+            x["value"] = None
+        return m
 
     @property
     def manifest(self):
@@ -389,7 +401,7 @@ class Plugin(WIPPPluginManifest, PluginMethods):
         if _uuid:
             data["id"] = uuid.uuid4()
         else:
-            data["id"] = uuid.UUID(data["id"])
+            data["id"] = uuid.UUID(str(data["id"]))
 
         super().__init__(**data)
 
@@ -435,10 +447,8 @@ class Plugin(WIPPPluginManifest, PluginMethods):
 
     @property
     def _config_file(self):
-        m = json.loads(self.json())
+        m = self._config
         m["class"] = "OldPlugin"
-        for x in m["inputs"]:
-            x["value"] = None
         return m
 
     def save_config(self, path: typing.Union[str, pathlib.Path]):
@@ -466,7 +476,7 @@ class ComputePlugin(NewSchema, PluginMethods):
         if _uuid:
             data["id"] = uuid.uuid4()
         else:
-            data["id"] = uuid.UUID(data["id"])
+            data["id"] = uuid.UUID(str(data["id"]))
 
         if _from_old:
 
@@ -519,10 +529,8 @@ class ComputePlugin(NewSchema, PluginMethods):
 
     @property
     def _config_file(self):
-        m = json.loads(self.json())
+        m = self._config
         m["class"] = "NewPlugin"
-        for x in m["inputs"]:
-            x["value"] = None
         return m
 
     def __setattr__(self, name, value):
