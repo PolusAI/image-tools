@@ -28,14 +28,17 @@ from polus._plugins._registry import (
     FailedToPublish,
     MissingUserInfo,
 )
+from polus._plugins._io import IOBase, InputTypes, Version
 from requests.exceptions import HTTPError
 from polus._plugins.PolusComputeSchema import PluginSchema as NewSchema  # new schema
 from polus._plugins.PolusComputeSchema import (
     PluginUIInput,
     PluginUIOutput
 )
+
 from polus._plugins._io import Version, DuplicateVersionFound
 from polus._plugins._utils import name_cleaner
+
 from copy import deepcopy
 
 """
@@ -230,6 +233,85 @@ class PluginMethods:
     @property
     def organization(self):
         return self.containerId.split("/")[0]
+
+    def newschema(self, **kwargs):
+        data = deepcopy(self.manifest)
+        type_dict = {
+            "path": "text",
+            "string": "text",
+            "boolean": "checkbox",
+            "number": "number",
+            "array": "text",
+        }
+
+        def _clean(d: dict):
+            rg = re.compile("Dir")
+            if d["type"] == "collection":
+                d["type"] = "path"
+            elif bool(rg.search(d["name"])):
+                d["type"] = "path"
+            return d
+
+        def _ui_in(d: dict):  # assuming old all ui input
+            # assuming format inputs. ___
+            inp = d["key"].split(".")[-1]  # e.g inpDir
+            try:
+                tp = [x["type"] for x in data["inputs"] if x["name"] == inp][0]
+            except IndexError:
+                tp = "string"
+            except BaseException:
+                raise
+
+            d["type"] = type_dict[tp]
+            return PluginUIInput(**d)
+
+        def _ui_out(d: dict):
+            nd = deepcopy(d)
+            nd["name"] = "outputs." + nd["name"]
+            nd["type"] = type_dict[nd["type"]]
+            return PluginUIOutput(**nd)
+
+        data["inputs"] = [_clean(x) for x in data["inputs"]]
+        data["outputs"] = [_clean(x) for x in data["outputs"]]
+        data["pluginHardwareRequirements"] = {}
+        data["ui"] = [_ui_in(x) for x in data["ui"]]  # inputs
+        data["ui"].extend([_ui_out(x) for x in data["outputs"]])  # outputs
+
+        for k, v in kwargs.items():
+            data["pluginHardwareRequirements"][k] = v
+
+        plugin_class = type(self.__class__.__name__, (NewSchema,), {})
+        return plugin_class(**data)
+
+    @property
+    def _config_file(self):
+        inp = {x.name: str(x.value) for x in self.inputs}
+        out = {x.name: str(x.value) for x in self.outputs}
+        config = {"inputs": inp, "outputs": out}
+        return config
+
+    def save_manifest(self, path: typing.Union[str, pathlib.Path], indent: int = 4):
+        with open(path, "w") as fw:
+            json.dump(self.manifest, fw, indent=indent)
+        logger.debug("Saved manifest to %s" % (path))
+
+    def save_config(self, path: typing.Union[str, pathlib.Path]):
+        with open(path, "w") as fw:
+            json.dump(self._config_file, fw)
+        logger.debug("Saved config to %s" % (path))
+
+    def load_config(self, path: typing.Union[str, pathlib.Path]):
+        with open(path, "r") as fw:
+            config = json.load(fw)
+        inp = config["inputs"]
+        out = config["outputs"]
+        for k, v in inp.items():
+            if k in self._io_keys:
+                setattr(self, k, v)
+        for k, v in out.items():
+            if k in self._io_keys:
+                setattr(self, k, v)
+        logger.debug("Loaded config from %s" % (path))
 
     def run(
         self,
