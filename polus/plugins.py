@@ -573,7 +573,7 @@ def is_valid_manifest(plugin: dict) -> bool:
 
 
 def _load_manifest(manifest: typing.Union[str, dict, pathlib.Path]) -> dict:
-    """Convert to dictionary if pathlib.Path or str, validate manifest"""
+    """Convert to dictionary if pathlib.Path or str"""
     if isinstance(manifest, dict):
         return manifest
     elif isinstance(manifest, pathlib.Path):
@@ -617,7 +617,7 @@ def validate_manifest(
         try:
             plugin = NewSchema(**manifest)  # New Schema
         except ValidationError as err:
-            raise ValueError("Error in %s" % (manifest["name"])) from err
+            raise err
         except BaseException as e:
             raise e
     else:
@@ -625,7 +625,7 @@ def validate_manifest(
         try:
             plugin = WIPPPluginManifest(**manifest)  # New Schema
         except ValidationError as err:
-            raise ValueError("Error in %s" % (manifest["name"])) from err
+            raise err
         except BaseException as e:
             raise e
     return plugin
@@ -648,12 +648,10 @@ def submit_plugin(
     Returns:
         A Plugin object populated with information from the plugin manifest.
     """
-    manifest = _load_manifest(manifest)
-
-    plugin_name = name_cleaner(manifest["name"])
-    plugin = load_plugin(
+    plugin = validate_manifest(
         manifest
     )
+    plugin_name = name_cleaner(plugin.name)
 
     # Get Major/Minor/Patch versions
     out_name = (
@@ -662,7 +660,8 @@ def submit_plugin(
     )
 
     # Save the manifest if it doesn't already exist in the database
-    org_path = PLUGIN_DIR.joinpath(plugin.organization.lower())
+    organization = plugin.containerId.split("/")[0]
+    org_path = PLUGIN_DIR.joinpath(organization.lower())
     org_path.mkdir(exist_ok=True, parents=True)
     if not org_path.joinpath(out_name).exists():
         with open(org_path.joinpath(out_name), "w") as fw:
@@ -671,6 +670,7 @@ def submit_plugin(
     # Refresh plugins list if refresh = True
     if refresh:
         plugins.refresh()
+    return plugin 
 
 
 def add_plugin(
@@ -856,7 +856,14 @@ def update_polus_plugins(
                 raise ValidationError(error_list, plugin.__class__)
 
         except ValidationError as val_err:
-            _error_log(val_err, manifest, "update_polus_plugins")
+            try:
+                _error_log(val_err, manifest, "update_polus_plugins")
+            except BaseException as e:
+                # logger.debug(f"There was an error {e} in {plugin.name}")
+                logger.exception(f"In {plugin.name}: {e}")
+        except BaseException as e:
+            # logger.debug(f"There was an error {e} in {plugin.name}")
+            logger.exception(f"In {plugin.name}: {e}")
 
 
 def update_nist_plugins(gh_auth: typing.Optional[str] = None):
