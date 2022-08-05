@@ -1,8 +1,7 @@
 import logging
-import math
 import typing
 
-import numpy
+import math
 import torch
 import torchvision
 from albumentations.core.transforms_interface import BasicTransform
@@ -104,14 +103,14 @@ class PoissonTransform(BasicTransform):
         self.peak: int = peak
 
     def apply(self, image: Tensor, **_):
-        value = math.exp(10 - self.peak)
+        value = torch.tensor(math.exp(10 - self.peak))
 
         if torch.any(torch.isnan(image)):
             message = f'image had nan values.'
             logger.error(message)
             raise ValueError(message)
 
-        if torch.any(image < 0):
+        if torch.any(torch.lt(image, 0)):
             message = f'image had negative values.'
             logger.error(message)
             raise ValueError(message)

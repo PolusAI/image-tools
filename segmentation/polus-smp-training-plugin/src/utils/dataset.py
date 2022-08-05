@@ -29,7 +29,7 @@ logger.setLevel(helpers.POLUS_LOG)
 class Dataset(TorchDataset):
     preprocessing = torchvision.transforms.Compose([
         torchvision.transforms.ToTensor(),
-        augmentations.LocalNorm(window_size=257),  # TODO(Najib): Replace with Global Norm
+        augmentations.LocalNorm(radius=128),  # TODO(Najib): Replace with Global Norm
         torch.nn.Sigmoid(),
     ])
 
