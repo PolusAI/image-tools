@@ -7,7 +7,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import List, Optional, Union, Any
 
-from pydantic import BaseModel, Field, constr, validator
+from pydantic import BaseModel, validator
 
 from ._io import IOBase, Version
 from ._utils import utils_cast_version

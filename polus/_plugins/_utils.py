@@ -1,4 +1,5 @@
 from ._io import Version
+
 def name_cleaner(name: str) -> str:
     replace_chars = "()<>-_"
     for char in replace_chars:

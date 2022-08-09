@@ -1,7 +1,15 @@
-import re
+from urllib.error import HTTPError
+from urllib.parse import urljoin
+import xmltodict
+import requests
+import logging
+import json
+from tqdm import tqdm
+from ._plugins import _Plugins as plugins, submit_plugin, Plugin, ComputePlugin
+from ._registry_utils import _generate_query, _to_xml
+import typing
 
-from typing import Optional
-
+logger = logging.getLogger("polus.plugins")
 
 class FailedToPublish(Exception):
     pass
@@ -11,131 +19,257 @@ class MissingUserInfo(Exception):
     pass
 
 
-def _generate_query(
-    title, version, title_contains, contains, query_all, advanced, query
-):
+class WippPluginRegistry:
+    """Class that contains methods to interact with the REST API of WIPP Registry."""
 
-    if advanced:
-        if not query:
-            raise ValueError("query cannot be empty if advanced is True")
+    def __init__(
+        self,
+        username: typing.Optional[str] = None,
+        password: typing.Optional[str] = None,
+        registry_url: str = "https://wipp-registry.ci.aws.labshare.org",
+    ):
+
+        self.registry_url = registry_url
+        self.username = username
+        self.password = password
+
+    def _parse_xml(xml: str):
+        """Returns dictionary of Plugin Manifest. If error, returns None."""
+        d = xmltodict.parse(xml)["Resource"]["role"]["PluginManifest"][
+            "PluginManifestContent"
+        ]["#text"]
+        try:
+            return json.loads(d)
+        except:
+            e = eval(d)
+            if isinstance(e, dict):
+                return e
+            else:
+                return None
+
+    def update_plugins(self):
+        url = self.registry_url + "/rest/data/query/"
+        headers = {"Content-type": "application/json"}
+        data = '{"query": {"$or":[{"Resource.role.type":"Plugin"},{"Resource.role.type.#text":"Plugin"}]}}'
+        if self.username and self.password:
+            r = requests.post(
+                url, headers=headers, data=data, auth=(self.username, self.password)
+            )  # authenticated request
         else:
-            return query
-    if query_all:
-        q = {
-            "$or": [
-                {"Resource.role.type": "Plugin"},
-                {"Resource.role.type.#text": "Plugin"},
-            ]
-        }  # replace query
-        return q
+            r = requests.post(url, headers=headers, data=data)
+        valid, invalid = 0, {}
 
-    # Check for possible errors:
-    if title and title_contains:
-        raise ValueError("Cannot define title and title_contains together")
-    q = {}  # query to return
-    q["$and"] = []
-    q["$and"].append(
-        {
-            "$or": [
-                {"Resource.role.type": "Plugin"},
-                {"Resource.role.type.#text": "Plugin"},
-            ]
+        for r in tqdm(r.json()["results"], desc="Updating Plugins from WIPP"):
+            try:
+                manifest = WippPluginRegistry._parse_xml(r["xml_content"])
+                plugin = submit_plugin(manifest)
+                valid += 1
+            except BaseException as err:
+                invalid.update({r["title"]: err.args[0]})
+
+            finally:
+                if len(invalid) > 0:
+                    self.invalid = invalid
+                    logger.debug(
+                        "Submitted %s plugins successfully. See WippPluginRegistry.invalid to check errors in unsubmitted plugins"
+                        % (valid)
+                    )
+                logger.debug("Submitted %s plugins successfully." % (valid))
+                plugins.refresh()
+
+    def query(
+        self,
+        title: typing.Optional[str] = None,
+        version: typing.Optional[str] = None,
+        title_contains: typing.Optional[str] = None,
+        contains: typing.Optional[str] = None,
+        query_all: bool = False,
+        advanced: bool = False,
+        query: typing.Optional[str] = None,
+        verify: bool = True,
+    ):
+        """Query Plugins in WIPP Registry.
+
+        This function executes queries for Plugins in the WIPP Registry.
+
+        Args:
+            title:
+                title of the plugin to query.
+                Example: "OME Tiled Tiff Converter"
+            version:
+                version of the plugins to query.
+                Must follow semantic versioning. Example: "1.1.0"
+            title_contains:
+                keyword that must be part of the title of plugins to query.
+                Example: "Converter" will return all plugins with the word "Converter" in their title
+            contains:
+                keyword that must be part of the description of plugins to query.
+                Example: "bioformats" will return all plugins with the word "bioformats" in their description
+            query_all: if True it will override any other parameter and will return all plugins
+            advanced:
+                if True it will override any other parameter.
+                `query` must be included
+            query: query to execute. This query must be in MongoDB format
+
+            verify: SSL verification. Default is `True`
+
+
+        Returns:
+            An array of the manifests of the Plugins returned by the query.
+        """
+
+        url = self.registry_url + "/rest/data/query/"
+        headers = {"Content-type": "application/json"}
+        query = _generate_query(
+            title, version, title_contains, contains, query_all, advanced, query
+        )
+
+        data = '{"query": %s}' % str(query).replace("'", '"')
+
+        if self.username and self.password:
+            r = requests.post(
+                url,
+                headers=headers,
+                data=data,
+                auth=(self.username, self.password),
+                verify=verify,
+            )  # authenticated request
+        else:
+            r = requests.post(url, headers=headers, data=data, verify=verify)
+        return [
+            WippPluginRegistry._parse_xml(x["xml_content"]) for x in r.json()["results"]
+        ]
+
+    def get_current_schema(
+        self,
+        verify: bool = True,
+    ):
+        """Return current schema in WIPP"""
+        r = requests.get(
+            urljoin(
+                self.registry_url,
+                "rest/template-version-manager/global/?title=res-md.xsd",
+            ),
+            verify=verify,
+        )
+        if r.ok:
+            return r.json()[0]["current"]
+        else:
+            r.raise_for_status()
+
+    def upload(
+        self,
+        plugin: typing.Union[Plugin, ComputePlugin],
+        author: typing.Optional[str] = None,
+        email: typing.Optional[str] = None,
+        publish: bool = True,
+        verify: bool = True,
+    ):
+        """Upload Plugin to WIPP Registry.
+
+        This function uploads a Plugin object to the WIPP Registry.
+        Author name and email to be passed to the Plugin object
+        information on the WIPP Registry are taken from the value
+        of the field `author` in the `Plugin` manifest. That is,
+        the first email and the first name (first and last) will
+        be passed. The value of these two fields can be overridden
+        by specifying them in the arguments.
+
+        Args:
+            plugin:
+                Plugin to be uploaded
+            author:
+                Optional `str` to override author name
+            email:
+                Optional `str` to override email
+            publish:
+                If `False`, Plugin will not be published to the public
+                workspace. It will be visible only to the user uploading
+                it. Default is `True`
+            verify: SSL verification. Default is `True`
+
+        Returns:
+            A message indicating a successful upload.
+        """
+        manifest = plugin.manifest
+
+        xml_content = _to_xml(manifest, author, email)
+
+        schema_id = self.get_current_schema()
+
+        data = {
+            "title": manifest["name"],
+            "template": schema_id,
+            "xml_content": xml_content,
         }
-    )
-    if title:
-        q["$and"].append(
-            {
-                "$or": [
-                    {"Resource.identity.title.#text": title},
-                    {"Resource.identity.title": title},
-                ]
-            }
+
+        url = self.registry_url + "/rest/data/"
+        headers = {"Content-type": "application/json"}
+        if self.username and self.password:
+            r = requests.post(
+                url,
+                headers=headers,
+                data=json.dumps(data),
+                auth=(self.username, self.password),
+                verify=verify,
+            )  # authenticated request
+        else:
+            raise MissingUserInfo("The registry connection must be authenticated.")
+
+        response_code = r.status_code
+
+        if response_code != 201:
+            print(
+                "Error uploading file (%s), code %s"
+                % (data["title"], str(response_code))
+            )
+            r.raise_for_status()
+        if publish:
+            _id = r.json()["id"]
+            _purl = url + _id + "/publish/"
+            r2 = requests.patch(
+                _purl,
+                headers=headers,
+                auth=(self.username, self.password),
+                verify=verify,
+            )
+            try:
+                r2.raise_for_status()
+            except HTTPError as err:
+                raise FailedToPublish(
+                    "Failed to publish %s with id %s" % (data["title"], _id)
+                ) from err
+
+        return "Successfully uploaded %s" % data["title"]
+
+    def get_resource_by_pid(self, pid, verify: bool = True):
+        """Return current resource."""
+        response = requests.get(pid, verify=verify)
+        return response.json()
+
+    def patch_resource(
+        self,
+        pid,
+        version,
+        verify: bool = True,
+    ):
+        """Patch resource."""
+        # Get current version of the resource
+        data = self.get_resource_by_pid(pid, verify)
+
+        data.update(
+            {"version": version})
+        response = requests.patch(
+            urljoin(self.registry_url, "rest/data/" + data["id"]),
+            data,
+            auth=(self.username, self.password),
+            verify=verify,
         )
-    if version:
-        q["$and"].append(
-            {
-                "$or": [
-                    {"Resource.identity.version.#text": version},
-                    {"Resource.identity.version": version},
-                ]
-            }
-        )
-    if contains:
-        q["$and"].append(
-            {
-                "$or": [
-                    {
-                        "Resource.content.description.#text": {
-                            "$regex": f".*{contains}.*",
-                            "$options": "i",
-                        }
-                    },
-                    {
-                        "Resource.content.description": {
-                            "$regex": f".*{contains}.*",
-                            "$options": "i",
-                        }
-                    },
-                ]
-            }
-        )
-    if title_contains:
-        q["$and"].append(
-            {
-                "$or": [
-                    {
-                        "Resource.identity.title.#text": {
-                            "$regex": f".*{title_contains}.*",
-                            "$options": "i",
-                        }
-                    },
-                    {
-                        "Resource.identity.title": {
-                            "$regex": f".*{title_contains}.*",
-                            "$options": "i",
-                        }
-                    },
-                ]
-            }
-        )
-    return q
+        response_code = response.status_code
 
-
-
-def _get_email(author: str):
-    regex = re.compile(r"[A-Za-z][A-Za-z0-9.]*@[A-Za-z0-9.]*")
-    return regex.search(author).group()
-
-
-def _get_author(author: str):
-    return " ".join(author.split()[0:2])
-
-
-def _to_xml(manifest: dict, author: Optional[str] = None, email: Optional[str] = None):
-    if email is None:
-        email = _get_email(manifest["author"])
-    if author is None:
-        author = _get_author(manifest["author"])
-
-    xml = (
-        '<Resource xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
-        'xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017" '
-        'localid="" '
-        'status="active"><identity xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">'
-        f'<title xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">{manifest["name"]}</title>'
-        f'<version xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">{str(manifest["version"])}</version>'
-        '</identity><providers xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">'
-        f'<publisher xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">{manifest["institution"]}</publisher>'
-        '<contact xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">'
-        f'<name xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">{author}</name>'
-        f'<emailAddress xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">{email}</emailAddress>'
-        '</contact></providers><content xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">'
-        f'<description xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">{manifest["description"]}</description>'
-        '<subject xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017"/><landingPage xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017"/></content>'
-        '<role xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017" xsi:type="Plugin"><type xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">Plugin</type>'
-        f'<DockerImage xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">{manifest["containerId"]}</DockerImage>'
-        '<PluginManifest xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">'
-        f'<PluginManifestContent xmlns="http://schema.nist.gov/xml/res-md/1.0wd-02-2017">{str(manifest)}</PluginManifestContent></PluginManifest></role></Resource>'
-    )
-
-    return xml
+        if response_code != 200:
+            print(
+                "Error publishing data (%s), code %s"
+                % (data["title"], str(response_code))
+            )
+            response.raise_for_status()
