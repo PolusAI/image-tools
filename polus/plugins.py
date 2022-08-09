@@ -35,10 +35,8 @@ from polus._plugins.PolusComputeSchema import (
     PluginUIInput,
     PluginUIOutput
 )
-
-from polus._plugins._io import Version, DuplicateVersionFound
+from polus._plugins._io import Version, DuplicateVersionFound, _in_old_to_new, _ui_old_to_new
 from polus._plugins._utils import name_cleaner
-
 from copy import deepcopy
 
 """
@@ -131,11 +129,16 @@ class _Plugins:
         else:
             return load_plugin(PLUGINS[name][Version(**{"version": version})])
 
-    def load_config(self, path: typing.Union[str, pathlib.Path]):
-        with open(path, "r") as fr:
-            m = json.load(fr)
+    def load_config(self, config: typing.Union[dict, pathlib.Path]):
+        if isinstance(config, pathlib.Path):
+            with open(config, "r") as fr:
+                m = json.load(fr)
+        elif isinstance(config, dict):
+            m = config
+        else:
+            raise TypeError("config must be a dict or a path")
         _io = m["_io_keys"]
-        m.pop("_io_keys", None)
+        # m.pop("_io_keys", None)
         cl = m["class"]
         m.pop("class", None)
         if cl == "NewPlugin":
@@ -150,24 +153,6 @@ class _Plugins:
                 setattr(pl, k, val)
         return pl
 
-    def load_config(self, path: typing.Union[str, pathlib.Path]):
-        with open(path, "r") as fr:
-            m = json.load(fr)
-        _io = m["_io_keys"]
-        m.pop("_io_keys", None)
-        cl = m["class"]
-        m.pop("class", None)
-        if cl == "NewPlugin":
-            pl = ComputePlugin(_uuid=False, **m)
-        elif cl == "OldPlugin":
-            pl = Plugin(_uuid=False, **m)
-        else:
-            raise ValueError("Invalid value of class")
-        for k, v in _io.items():
-            val = v["value"]
-            if val:  # exclude those values not set
-                setattr(pl, k, val)
-        return pl
 
     def refresh(self, force: bool = False):
         """Refresh the plugin list
@@ -420,6 +405,13 @@ class PluginMethods:
     @property
     def versions(self):
         return list(PLUGINS[name_cleaner(self.name)])
+    
+    @property
+    def _config(self):
+        m = self.dict()
+        for x in m["inputs"]:
+            x["value"] = None
+        return m
 
     @property
     def manifest(self):
@@ -489,7 +481,7 @@ class Plugin(WIPPPluginManifest, PluginMethods):
         if _uuid:
             data["id"] = uuid.uuid4()
         else:
-            data["id"] = uuid.UUID(data["id"])
+            data["id"] = uuid.UUID(str(data["id"]))
 
         super().__init__(**data)
 
@@ -535,10 +527,8 @@ class Plugin(WIPPPluginManifest, PluginMethods):
 
     @property
     def _config_file(self):
-        m = json.loads(self.json())
+        m = self._config
         m["class"] = "OldPlugin"
-        for x in m["inputs"]:
-            x["value"] = None
         return m
 
     def save_config(self, path: typing.Union[str, pathlib.Path]):
@@ -566,51 +556,40 @@ class ComputePlugin(NewSchema, PluginMethods):
         if _uuid:
             data["id"] = uuid.uuid4()
         else:
-            data["id"] = uuid.UUID(data["id"])
+            data["id"] = uuid.UUID(str(data["id"]))
 
         if _from_old:
-            type_dict = {
-                "path": "text",
-                "string": "text",
-                "boolean": "checkbox",
-                "number": "number",
-                "array": "text",
-                "integer": "number",
-            }
 
-            def _clean(d: dict):
-                rg = re.compile("Dir")
-                if d["type"] == "collection":
-                    d["type"] = "path"
-                elif bool(rg.search(d["name"])):
-                    d["type"] = "path"
-                elif d["type"] == "enum":
-                    d["type"] = "string"
-                elif d["type"] == "integer":
-                    d["type"] = "number"
+
+            def _convert_input(d: dict):
+                d["type"] = _in_old_to_new(d["type"])
+                return d
+
+            def _convert_output(d: dict):
+                d["type"] = "path"
                 return d
 
             def _ui_in(d: dict):  # assuming old all ui input
                 # assuming format inputs. ___
                 inp = d["key"].split(".")[-1]  # e.g inpDir
                 try:
-                    tp = [x["type"] for x in data["inputs"] if x["name"] == inp][0]
+                    tp = [x["type"] for x in data["inputs"] if x["name"] == inp][0] # get type from i/o
                 except IndexError:
-                    tp = "string"
+                    tp = "string" # default to string
                 except BaseException:
                     raise
 
-                d["type"] = type_dict[tp]
+                d["type"] = _ui_old_to_new(tp)
                 return PluginUIInput(**d)
 
             def _ui_out(d: dict):
                 nd = deepcopy(d)
                 nd["name"] = "outputs." + nd["name"]
-                nd["type"] = type_dict[nd["type"]]
+                nd["type"] = _ui_old_to_new(nd["type"])
                 return PluginUIOutput(**nd)
 
-            data["inputs"] = [_clean(x) for x in data["inputs"]]
-            data["outputs"] = [_clean(x) for x in data["outputs"]]
+            data["inputs"] = [_convert_input(x) for x in data["inputs"]]
+            data["outputs"] = [_convert_output(x) for x in data["outputs"]]
             data["pluginHardwareRequirements"] = {}
             data["ui"] = [_ui_in(x) for x in data["ui"]]  # inputs
             data["ui"].extend([_ui_out(x) for x in data["outputs"]])  # outputs
@@ -630,10 +609,8 @@ class ComputePlugin(NewSchema, PluginMethods):
 
     @property
     def _config_file(self):
-        m = json.loads(self.json())
+        m = self._config
         m["class"] = "NewPlugin"
-        for x in m["inputs"]:
-            x["value"] = None
         return m
 
     def __setattr__(self, name, value):

@@ -30,7 +30,7 @@ WIPP_TYPES = {
 }
 
 
-class InputTypes(str, enum.Enum):
+class InputTypes(str, enum.Enum): # old schema
     """This is needed until the json schema is updated"""
 
     collection = "collection"
@@ -54,7 +54,7 @@ class InputTypes(str, enum.Enum):
         return list(map(lambda c: c.value, cls))
 
 
-class OutputTypes(str, enum.Enum):
+class OutputTypes(str, enum.Enum): # old schema
     """This is needed until the json schema is updated"""
 
     collection = "collection"
@@ -70,6 +70,35 @@ class OutputTypes(str, enum.Enum):
     @classmethod
     def list(cls):
         return list(map(lambda c: c.value, cls))
+
+
+def _in_old_to_new(old: str) -> str: # map old InputType to new schema's InputType
+    """Map an InputType from old schema to one of new schema"""
+    d = {
+        "integer": "number",
+        "enum": "string"
+    }
+    if old in ["string", "array", "number", "boolean"]:
+        return old
+    elif old in d:
+        return d[old] # integer or enum
+    else:
+        return "path" # everything else
+
+def _ui_old_to_new(old: str) -> str: # map old InputType to new schema's UIType
+    """Map an InputType from old schema to a UIType of new schema"""
+    type_dict = {
+        "string": "text",
+        "boolean": "checkbox",
+        "number": "number",
+        "array": "text",
+        "integer": "number",
+    }
+    if old in type_dict:
+        return type_dict[old]
+    else:
+        return "text"
+
 
 
 class IOBase(BaseModel):
