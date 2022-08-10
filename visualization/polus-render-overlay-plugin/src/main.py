@@ -2,7 +2,7 @@ import os, logging, argparse, json
 import filepattern
 from pathlib import Path
 from utils import TextCell, TextLayerSpec, OverlaySpec, to_bijective
-
+import pprint
 
 # Import environment variables
 POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
@@ -41,26 +41,48 @@ def main(
         for v in vp.variables:
 
             files = [file for file in vp(group_by=v)]
-        
-            # Get the grid range for each variable which represents its total 
-            # range across the image excluding the its last subgrid
-            x_grid = [int(file['gridX']) for file in files[0]]
-            y_grid = [int(file['gridY']) for file in files[0]]
-            x_grid.sort()
-            y_grid.sort()
-            x_range = x_grid[-1] - x_grid[0]
-            y_range = y_grid[-1] - y_grid[0]
-            var_stats[v]['x_range'] = x_range
-            var_stats[v]['y_range'] = y_range
             
-            # Get the grid step for each variable; the step represents the 
-            # distance to the next image when only the variable being considered 
-            # is allowed to vary.
-            x_step = x_grid[1] - x_grid[0]
-            y_step = y_grid[1] - y_grid[0]
-            var_stats[v]['x_step'] = x_step
-            var_stats[v]['y_step'] = y_step
+            # Check if the variable is constant over the stitching vector if so
+            # then it is a top grid level variable
+            if len(files[0]) < 2:
+                print("{} is a top level variable".format(v))
+                x_grid = [int(file[0]['gridX']) for file in files]
+                y_grid = [int(file[0]['gridY']) for file in files]
+                
+                x_grid.sort()
+                y_grid.sort()
+                
+                x_range = x_step = x_grid[-1] - x_grid[0]
+                y_range = y_step = y_grid[-1] - y_grid[0]
+                
+                var_stats[v]['x_range'] = x_range
+                var_stats[v]['y_range'] = y_range
+                
+                var_stats[v]['x_step'] = x_step
+                var_stats[v]['y_step'] = y_step
+                
+            else:
+                # Get the grid range for each variable which represents its
+                # total range across its grid minus the size of its child grid
+                x_grid = [int(file['gridX']) for file in files[0]]
+                y_grid = [int(file['gridY']) for file in files[0]]
+                
+                x_grid.sort()
+                y_grid.sort()
             
+                x_range = x_grid[-1] - x_grid[0]
+                y_range = y_grid[-1] - y_grid[0]
+                var_stats[v]['x_range'] = x_range
+                var_stats[v]['y_range'] = y_range
+            
+                # Get the grid step for each variable; the step represents the 
+                # distance to the next image when only the variable being 
+                # considered is allowed to vary.
+                x_step = x_grid[1] - x_grid[0]
+                y_step = y_grid[1] - y_grid[0]
+                var_stats[v]['x_step'] = x_step
+                var_stats[v]['y_step'] = y_step
+                
             
             # Save the variable, step size and x,y or w variable type. A x 
             # variable means the variable only vaires in the x dimension and y 
@@ -343,6 +365,7 @@ def main(
             )
         
         var_stats, layout = get_var_stats(vp)
+        pprint.pprint(var_stats)
         grid = [f[0] for f in vp()]
         layout = layout.split(',')
 

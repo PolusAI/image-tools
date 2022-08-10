@@ -19,14 +19,14 @@
     {
       "name": "filePattern",
       "description": "Path to the output directory",
-      "type": "genericData",
+      "type": "string",
       "required": false
     },
 
     {
       "name": "concatenate",
       "description": "If a concatenated file should be created",
-      "type": "bool",
+      "type": "boolean",
       "required": false
     }
   ],
@@ -34,8 +34,7 @@
     {
       "name": "outDir",
       "description": "Path to the output directory",
-      "type": "genericData",
-      "required": true
+      "type": "genericData"
     }
   ],
   "ui": [

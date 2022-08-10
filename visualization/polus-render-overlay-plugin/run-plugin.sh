@@ -6,7 +6,7 @@ echo ${datapath}
 
 # Inputs
 stitchingVector=/data/eastman
-filePattern="p02_x{x+}_y{y+}_wx{t}_wy{p}_c{c}.ome.tif"
+filePattern="p{zz}_x{x+}_y{y+}_wx{t}_wy{p}_c{c}.ome.tif"
 concatenate=True
 
 # Output paths
