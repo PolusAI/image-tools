@@ -13,7 +13,7 @@
     {
       "name": "stitchingVector",
       "description": "Path to the stitching vector directory",
-      "type": "genericData",
+      "type": "stitchingVector",
       "required": true
     },
     {

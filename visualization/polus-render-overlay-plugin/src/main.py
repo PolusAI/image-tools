@@ -2,7 +2,7 @@ import os, logging, argparse, json
 import filepattern
 from pathlib import Path
 from utils import TextCell, TextLayerSpec, OverlaySpec, to_bijective
-import pprint
+
 
 # Import environment variables
 POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
@@ -45,7 +45,6 @@ def main(
             # Check if the variable is constant over the stitching vector if so
             # then it is a top grid level variable
             if len(files[0]) < 2:
-                print("{} is a top level variable".format(v))
                 x_grid = [int(file[0]['gridX']) for file in files]
                 y_grid = [int(file[0]['gridY']) for file in files]
                 
@@ -365,7 +364,6 @@ def main(
             )
         
         var_stats, layout = get_var_stats(vp)
-        pprint.pprint(var_stats)
         grid = [f[0] for f in vp()]
         layout = layout.split(',')
 
