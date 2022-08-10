@@ -371,8 +371,8 @@ def main(
         overlays = [text_cell for level in overlays_by_level.values() 
                     for text_cell in level]
         
-        output_name = vp.output_name()
-        output_path = outDir.joinpath(output_name)
+        output_name = ''.join(vp.output_name().split('.')[:-2])
+        output_path = outDir.joinpath(output_name).with_suffix('.json')
         
         tls = TextLayerSpec(
             id=output_name,
