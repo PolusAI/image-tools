@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# version=$(<VERSION)
-version=1.2.6
+version=$(<VERSION)
 datapath=$(readlink --canonicalize /home/schaubnj/polus-data/polus/images/Eastman2021Infectivity/)
 echo ${datapath}
 

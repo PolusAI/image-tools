@@ -58,7 +58,7 @@ def _get_resized_image_stack(flist):
     for ind, fname in enumerate(flist):
         ProcessManager.submit_thread(load_and_store, fname, ind)
 
-    ProcessManager.join_threads()
+    ProcessManager.join_threads(5)
 
     return img_stack
 
@@ -85,12 +85,20 @@ def basic(
     with ProcessManager.process(base_output):
 
         # Load files and sort
-        ProcessManager.log("Loading and sorting images...")
+        ProcessManager.log("Loading images...")
         img_stk = _get_resized_image_stack(files)
+
+    # Restart context to free up loading threads for other processes
+    with ProcessManager.process(base_output):
 
         # Run basic fit
         ProcessManager.log("Beginning flatfield estimation")
-        basic = BaSiC(get_darkfield=get_darkfield)
+        basic = BaSiC(
+            get_darkfield=get_darkfield,
+            lambda_flatfield_coef=500,
+            intensity=True,
+            fitting_mode="approximate",
+        )
         basic.fit(img_stk)
 
         # Resize images back to original image size

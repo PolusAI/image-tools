@@ -2,3 +2,5 @@ filepattern==1.4.7
 bfio[all]==2.1.9
 basicpy==1.0.0
 preadator==0.2.0
+jaxlib
+jax==0.3.15
