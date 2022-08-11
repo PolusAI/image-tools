@@ -24,4 +24,3 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --brightPattern ${brightPattern} \
             --darkPattern ${darkPattern} \
             --outDir ${outDir}
-            # --photoPattern ${photoPattern} \
