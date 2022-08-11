@@ -29,7 +29,7 @@ def unshade_images(
     for ind, fname in enumerate(flist):
         ProcessManager.submit_thread(load_and_store, fname, ind)
 
-    ProcessManager.join_threads()
+    ProcessManager.join_threads(5)
 
     # Apply flatfield correction
     if darkfield is not None:
@@ -51,7 +51,7 @@ def unshade_images(
     for ind, fname in enumerate(flist):
         ProcessManager.submit_thread(save_output, fname, ind)
 
-    ProcessManager.join_threads()
+    ProcessManager.join_threads(5)
 
 
 def unshade_batch(
@@ -77,7 +77,7 @@ def unshade_batch(
 
         for i_start, i_end in zip(batches[:-1], batches[1:]):
 
-            ProcessManager.log(f"Processing batch: {1+i_start//1024,len(batches)}")
+            ProcessManager.log(f"Processing batch: {1+i_start//1024}/{len(batches)-1}")
 
             unshade_images(
                 files[i_start:i_end], out_dir, brightfield_image, darkfield_image
@@ -109,6 +109,7 @@ def main(
     GROUPED = group_by + ["file"]
 
     ProcessManager.init_processes("main", "unshade")
+    logger.info(f"Running with {ProcessManager.num_processes()} processes.")
 
     for files in fp(group_by=group_by):
 
