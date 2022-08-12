@@ -52,63 +52,63 @@ def getLogs(logCSV   : str,
     return log_dict
 
 
-num_images = os.listdir(images_test_dir)
-num_labels = os.listdir(labels_test_dir)
-assert num_images == num_labels
+# num_images = os.listdir(images_test_dir)
+# num_labels = os.listdir(labels_test_dir)
+# assert num_images == num_labels
 
-bestmodelPath = os.path.join(modelDir, "model.pth")
-configPath    = os.path.join(modelDir, "config.json")
-configObj     = open(configPath, 'r')
-configDict    = json.load(configObj)
+# bestmodelPath = os.path.join(modelDir, "model.pth")
+# configPath    = os.path.join(modelDir, "config.json")
+# configObj     = open(configPath, 'r')
+# configDict    = json.load(configObj)
 
-bestmodel = torch.load(bestmodelPath).cpu()
-loss = configDict['lossName']
+# bestmodel = torch.load(bestmodelPath).cpu()
+# loss = configDict['lossName']
 
-patience  = configDict['patience']
-maxEpochs = configDict['maxEpochs']
+# patience  = configDict['patience']
+# maxEpochs = configDict['maxEpochs']
 
-metrics = list(metric() for metric in METRICS.values())
-metric_loss = LOSSES[loss]()
-metric_loss.__name__ = loss
-metrics.append(metric_loss)
+# metrics = list(metric() for metric in METRICS.values())
+# metric_loss = LOSSES[loss]()
+# metric_loss.__name__ = loss
+# metrics.append(metric_loss)
 
-metric_outputs = {}
-trainlog_dict = {}
-validlog_dict = {}
+# metric_outputs = {}
+# trainlog_dict = {}
+# validlog_dict = {}
 
-for metric in metrics:
-    metric_outputs[metric.__name__] = {'avg': 0, 'maxi': 0, 'mini': 1}
-    trainlog_dict[metric.__name__] = {'all': [], 'avg': 0, 'maxi': 0, 'mini': 1}
-    validlog_dict[metric.__name__] = {'all': [], 'avg': 0, 'maxi': 0, 'mini': 1}
+# for metric in metrics:
+#     metric_outputs[metric.__name__] = {'avg': 0, 'maxi': 0, 'mini': 1}
+#     trainlog_dict[metric.__name__] = {'all': [], 'avg': 0, 'maxi': 0, 'mini': 1}
+#     validlog_dict[metric.__name__] = {'all': [], 'avg': 0, 'maxi': 0, 'mini': 1}
 
-traincsv_path = os.path.join(modelDir, "trainlogs.csv")
-validcsv_path = os.path.join(modelDir, "validlogs.csv")
+# traincsv_path = os.path.join(modelDir, "trainlogs.csv")
+# validcsv_path = os.path.join(modelDir, "validlogs.csv")
 
-trainlog_dict = getLogs(logCSV = traincsv_path, patience = patience, log_dict = trainlog_dict)
-validlog_dict = getLogs(logCSV = validcsv_path, patience = patience, log_dict = validlog_dict)
+# trainlog_dict = getLogs(logCSV = traincsv_path, patience = patience, log_dict = trainlog_dict)
+# validlog_dict = getLogs(logCSV = validcsv_path, patience = patience, log_dict = validlog_dict)
 
-test_loader = tqdm(initialize_dataloader(
-    images_dir=images_test_dir,
-    labels_dir=labels_test_dir,
-    pattern="nuclear_test_61{x}.tif",
-    batch_size=1,
-    type="test"
-))
+# test_loader = tqdm(initialize_dataloader(
+#     images_dir=images_test_dir,
+#     labels_dir=labels_test_dir,
+#     pattern="nuclear_test_61{x}.tif",
+#     batch_size=1,
+#     mode="validation"
+# ))
 
-test_loader_len = len(test_loader)
+# test_loader_len = len(test_loader)
 
-for test in test_loader:
-    test0 = test[0]
-    test1 = test[1]
-    pr_mask = bestmodel.predict(test0)
-    for metric in metrics:
-        try:
-            metric_value = (METRICS[metric.__name__].forward(self=metric, y_pr=pr_mask, y_gt=test1).numpy())
-        except:
-            metric_value = (LOSSES[metric.__name__].forward(self=metric, y_pred=pr_mask, y_true=test1).numpy())
-        metric_outputs[metric.__name__]['avg'] += metric_value/test_loader_len
-        metric_outputs[metric.__name__]['mini'] = np.minimum(metric_value, metric_outputs[metric.__name__]['mini'])
-        metric_outputs[metric.__name__]['maxi'] = np.maximum(metric_value, metric_outputs[metric.__name__]['maxi'])
+# for test in test_loader:
+#     test0 = test[0]
+#     test1 = test[1]
+#     pr_mask = bestmodel.predict(test0)
+#     for metric in metrics:
+#         try:
+#             metric_value = (METRICS[metric.__name__].forward(self=metric, y_pr=pr_mask, y_gt=test1).numpy())
+#         except:
+#             metric_value = (LOSSES[metric.__name__].forward(self=metric, y_pred=pr_mask, y_true=test1).numpy())
+#         metric_outputs[metric.__name__]['avg'] += metric_value/test_loader_len
+#         metric_outputs[metric.__name__]['mini'] = np.minimum(metric_value, metric_outputs[metric.__name__]['mini'])
+#         metric_outputs[metric.__name__]['maxi'] = np.maximum(metric_value, metric_outputs[metric.__name__]['maxi'])
 
 
 class ModelTest(unittest.TestCase):
