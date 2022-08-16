@@ -5,10 +5,7 @@ import signal
 import typing
 import re
 from copy import deepcopy
-from polus._plugins.PolusComputeSchema import (
-    PluginUIInput,
-    PluginUIOutput
-)
+from polus._plugins.PolusComputeSchema import PluginUIInput, PluginUIOutput
 import pathlib
 import fsspec
 from python_on_whales import docker
@@ -17,62 +14,15 @@ from .PolusComputeSchema import PluginSchema as NewSchema  # new schema
 
 logger = logging.getLogger("polus.plugins")
 
+
 class IOKeyError(Exception):
     pass
+
 
 class PluginMethods:
     @property
     def organization(self):
         return self.containerId.split("/")[0]
-
-    def newschema(self, **kwargs):
-        data = deepcopy(self.manifest)
-        type_dict = {
-            "path": "text",
-            "string": "text",
-            "boolean": "checkbox",
-            "number": "number",
-            "array": "text",
-        }
-
-        def _clean(d: dict):
-            rg = re.compile("Dir")
-            if d["type"] == "collection":
-                d["type"] = "path"
-            elif bool(rg.search(d["name"])):
-                d["type"] = "path"
-            return d
-
-        def _ui_in(d: dict):  # assuming old all ui input
-            # assuming format inputs. ___
-            inp = d["key"].split(".")[-1]  # e.g inpDir
-            try:
-                tp = [x["type"] for x in data["inputs"] if x["name"] == inp][0]
-            except IndexError:
-                tp = "string"
-            except BaseException:
-                raise
-
-            d["type"] = type_dict[tp]
-            return PluginUIInput(**d)
-
-        def _ui_out(d: dict):
-            nd = deepcopy(d)
-            nd["name"] = "outputs." + nd["name"]
-            nd["type"] = type_dict[nd["type"]]
-            return PluginUIOutput(**nd)
-
-        data["inputs"] = [_clean(x) for x in data["inputs"]]
-        data["outputs"] = [_clean(x) for x in data["outputs"]]
-        data["pluginHardwareRequirements"] = {}
-        data["ui"] = [_ui_in(x) for x in data["ui"]]  # inputs
-        data["ui"].extend([_ui_out(x) for x in data["outputs"]])  # outputs
-
-        for k, v in kwargs.items():
-            data["pluginHardwareRequirements"][k] = v
-
-        plugin_class = type(self.__class__.__name__, (NewSchema,), {})
-        return plugin_class(**data)
 
     @property
     def _config_file(self):
@@ -207,8 +157,6 @@ class PluginMethods:
             )
             print(d)
 
-
-    
     @property
     def _config(self):
         m = self.dict()
@@ -264,6 +212,5 @@ class PluginMethods:
 
         return other.version < self.version
 
-    
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name='{self.name}', version={self.version.version})"
