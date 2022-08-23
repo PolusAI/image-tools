@@ -10,5 +10,7 @@ inputs:
 outputs:
 
 hints:
+  DockerRequirement:
+    dockerPull:
   cwltool:LoadListingRequirement:
     loadListing: shallow_listing
