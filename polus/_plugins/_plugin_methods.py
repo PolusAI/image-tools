@@ -89,7 +89,7 @@ class PluginMethods:
         args = []
 
         for i in self.inputs:
-            if i.value:  # do not include those with value=None
+            if i.value is not None:  # do not include those with value=None
                 i._validate()
                 args.append(f"--{i.name}")
 
