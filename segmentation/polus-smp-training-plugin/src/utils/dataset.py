@@ -5,6 +5,7 @@ from typing import Union
 
 import albumentations
 import numpy
+import torch
 import torch.nn
 import torchvision
 from torch.utils.data import DataLoader as TorchDataLoader
@@ -130,29 +131,30 @@ class Tile(torch.nn.Module):
         self.tile_size = tile_size
 
     def forward(self, x):
+        
+        with torch.no_grad():
+            n, c, h, w = x.shape
 
-        n, c, h, w = x.shape
+            # Calculate number of tiles for each image
+            h_tiles = (h - 1) // self.tile_size[0] + 1
+            w_tiles = (w - 1) // self.tile_size[1] + 1
 
-        # Calculate number of tiles for each image
-        h_tiles = (h - 1) // self.tile_size[0] + 1
-        w_tiles = (w - 1) // self.tile_size[1] + 1
+            # Pad the image if needed
+            pad_size = (
+                0,
+                w_tiles * self.tile_size[1] - w,
+                0,
+                h_tiles * self.tile_size[0] - h,
+            )
+            x = torch.nn.functional.pad(x, pad_size, mode="reflect")
 
-        # Pad the image if needed
-        pad_size = (
-            0,
-            w_tiles * self.tile_size[1] - w,
-            0,
-            h_tiles * self.tile_size[0] - h,
-        )
-        x = torch.nn.functional.pad(x, pad_size, mode="reflect")
+            # Reshape the data into tiles
+            x = x.reshape(n, c, h_tiles, self.tile_size[0], w_tiles, self.tile_size[1])
 
-        # Reshape the data into tiles
-        x = x.reshape(n, c, h_tiles, self.tile_size[0], w_tiles, self.tile_size[1])
-
-        # Reshape the data into proper torch format
-        x = x.permute(0, 1, 2, 4, 3, 5).reshape(
-            -1, c, self.tile_size[0], self.tile_size[1]
-        )
+            # Reshape the data into proper torch format
+            x = x.permute(0, 1, 2, 4, 3, 5).reshape(
+                -1, c, self.tile_size[0], self.tile_size[1]
+            )
 
         # Return both the tiled input and the shape of the original tensor
         return x, (n, c, h, w)
@@ -163,24 +165,25 @@ class UnTile(Tile):
 
     def forward(self, x, output_shape):
 
-        n, c, h, w = x.shape
+        with torch.no_grad():
+            n, c, h, w = x.shape
 
-        # Get untiling shapes
-        n_images = output_shape[0]
-        h_tiles = output_shape[2] // (x.shape[2] - 1) + 1
-        w_tiles = output_shape[3] // (x.shape[3] - 1) + 1
+            # Get untiling shapes
+            n_images = output_shape[0]
+            h_tiles = output_shape[2] // (x.shape[2] - 1) + 1
+            w_tiles = output_shape[3] // (x.shape[3] - 1) + 1
 
-        # Reshape the data into tiles
-        x = x.reshape(
-            n_images, c, h_tiles, w_tiles, self.tile_size[0], self.tile_size[1]
-        )
+            # Reshape the data into tiles
+            x = x.reshape(
+                n_images, c, h_tiles, w_tiles, self.tile_size[0], self.tile_size[1]
+            )
 
-        # Reconstruct original image size
-        x = x.permute(0, 1, 2, 4, 3, 5)
+            # Reconstruct original image size
+            x = x.permute(0, 1, 2, 4, 3, 5)
 
-        x = x.reshape(
-            n_images, c, h_tiles * self.tile_size[0], w_tiles * self.tile_size[1]
-        )
-        x = x[:, :, : output_shape[2], : output_shape[3]]
+            x = x.reshape(
+                n_images, c, h_tiles * self.tile_size[0], w_tiles * self.tile_size[1]
+            )
+            x = x[:, :, : output_shape[2], : output_shape[3]]
 
         return x
