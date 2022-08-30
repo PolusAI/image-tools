@@ -5,16 +5,13 @@ from ._io import Version, DuplicateVersionFound
 from ._plugin_model import WIPPPluginManifest
 from ._utils import name_cleaner
 from ._plugin_methods import PluginMethods
-from .PolusComputeSchema import (
-    PluginUIInput,
-    PluginUIOutput
-)
+from .PolusComputeSchema import PluginUIInput, PluginUIOutput
 from .PolusComputeSchema import PluginSchema as NewSchema  # new schema
 from ._manifests import _load_manifest, validate_manifest
 from ._io import Version, DuplicateVersionFound, _in_old_to_new, _ui_old_to_new
 from ._cwl import CWL_BASE_DICT
 from pydantic import Extra
-import pathlib 
+import pathlib
 import json
 import uuid
 import logging
@@ -35,6 +32,8 @@ PLUGIN_DIR = pathlib.Path(__file__).parent.parent.joinpath("manifests")
 """
 Plugin Fetcher Class
 """
+
+
 class _Plugins:
     def __getattribute__(self, name):
         if name in PLUGINS:
@@ -94,7 +93,6 @@ class _Plugins:
                 setattr(pl, k, val)
         return pl
 
-
     @classmethod
     def refresh(cls):
         """Refresh the plugin list
@@ -125,6 +123,7 @@ class _Plugins:
                         )
                 PLUGINS[key][plugin.version] = file
 
+
 class Plugin(WIPPPluginManifest, PluginMethods):
     """Required until json schema is fixed"""
 
@@ -153,7 +152,7 @@ class Plugin(WIPPPluginManifest, PluginMethods):
             )
 
     @property
-    def version(plugin): # cannot be in PluginMethods because PLUGINS lives here
+    def versions(plugin):  # cannot be in PluginMethods because PLUGINS lives here
         """Return list of versions of a Plugin"""
         return list(PLUGINS[name_cleaner(plugin.name)])
 
@@ -223,7 +222,6 @@ class ComputePlugin(NewSchema, PluginMethods):
 
         if _from_old:
 
-
             def _convert_input(d: dict):
                 d["type"] = _in_old_to_new(d["type"])
                 return d
@@ -236,9 +234,11 @@ class ComputePlugin(NewSchema, PluginMethods):
                 # assuming format inputs. ___
                 inp = d["key"].split(".")[-1]  # e.g inpDir
                 try:
-                    tp = [x["type"] for x in data["inputs"] if x["name"] == inp][0] # get type from i/o
+                    tp = [x["type"] for x in data["inputs"] if x["name"] == inp][
+                        0
+                    ]  # get type from i/o
                 except IndexError:
-                    tp = "string" # default to string
+                    tp = "string"  # default to string
                 except BaseException:
                     raise
 
@@ -271,7 +271,7 @@ class ComputePlugin(NewSchema, PluginMethods):
             )
 
     @property
-    def version(plugin): # cannot be in PluginMethods because PLUGINS lives here
+    def versions(plugin):  # cannot be in PluginMethods because PLUGINS lives here
         """Return list of versions of a Plugin"""
         return list(PLUGINS[name_cleaner(plugin.name)])
 
@@ -299,6 +299,8 @@ class ComputePlugin(NewSchema, PluginMethods):
 
     def __repr__(self) -> str:
         return PluginMethods.__repr__(self)
+
+
 def load_plugin(
     manifest: typing.Union[str, dict, pathlib.Path]
 ) -> typing.Union[Plugin, ComputePlugin]:
@@ -311,6 +313,7 @@ def load_plugin(
         # Parse the manifest
         plugin = Plugin(**manifest)  # Old Schema
     return plugin
+
 
 def submit_plugin(
     manifest: typing.Union[str, dict, pathlib.Path],
@@ -329,9 +332,7 @@ def submit_plugin(
     Returns:
         A Plugin object populated with information from the plugin manifest.
     """
-    plugin = validate_manifest(
-        manifest
-    )
+    plugin = validate_manifest(manifest)
     plugin_name = name_cleaner(plugin.name)
 
     # Get Major/Minor/Patch versions
@@ -351,4 +352,4 @@ def submit_plugin(
     # Refresh plugins list if refresh = True
     if refresh:
         _Plugins.refresh()
-    return plugin 
+    return plugin
