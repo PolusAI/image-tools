@@ -1,9 +1,18 @@
-from bfio import BioReader, BioWriter
-import argparse, logging, typing, csv
-import numpy as np
+import argparse
+import logging
+import os
+import typing
 from pathlib import Path
-from filepattern import get_regex, FilePattern, VARIABLES
+
+from bfio import BioReader, BioWriter
+from filepattern import FilePattern
+import numpy as np
 from preadator import ProcessManager
+
+FILE_EXT = os.environ.get("POLUS_EXT", None)
+FILE_EXT = FILE_EXT if FILE_EXT is not None else ".ome.tif"
+
+assert FILE_EXT in [".ome.tif", ".ome.zarr"]
 
 
 def unshade_images(
@@ -41,8 +50,16 @@ def unshade_images(
     def save_output(fname, ind):
         with ProcessManager.thread() as active_threads:
             with BioReader(fname["file"], max_workers=active_threads.count) as br:
+
+                # replace the file name extension if needed
+                inp_image = fname["file"]
+                extension = "".join(
+                    [suffix for suffix in inp_image.suffixes[-2:] if len(suffix) < 6]
+                )
+                out_path = out_dir.joinpath(inp_image.name.replace(extension, FILE_EXT))
+
                 with BioWriter(
-                    out_dir.joinpath(fname["file"].name),
+                    out_path,
                     metadata=br.metadata,
                     max_workers=active_threads.count,
                 ) as bw:
@@ -228,6 +245,8 @@ if __name__ == "__main__":
     logger.info("photoPattern = {}".format(photoPattern))
     outDir = Path(args.outDir)
     logger.info("outDir = {}".format(outDir))
+
+    logger.info(f"Output file extension = {FILE_EXT}")
 
     main(
         imgDir=imgDir,
