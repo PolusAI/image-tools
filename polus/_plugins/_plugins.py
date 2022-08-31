@@ -347,7 +347,7 @@ def submit_plugin(
     org_path.mkdir(exist_ok=True, parents=True)
     if not org_path.joinpath(out_name).exists():
         with open(org_path.joinpath(out_name), "w") as fw:
-            json.dump(manifest, fw, indent=4)
+            json.dump(plugin.dict(), fw, indent=4)
 
     # Refresh plugins list if refresh = True
     if refresh:
