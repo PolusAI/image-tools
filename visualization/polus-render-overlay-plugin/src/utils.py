@@ -1,4 +1,5 @@
 import math, string
+from turtle import pos
 # TODO: add OpenCV to docker container 
 # import cv2 as cv
 import numpy as np
@@ -17,9 +18,22 @@ def to_camel(string: str) -> str:
 
 class TSClass(BaseModel):
     """Convert to Typescript camelCase from pythons snake_case."""
+    
     class Config:  # NOQA: D106
         allow_population_by_field_name = True
         alias_generator = to_camel
+        
+    def __lt__(self, other):        
+        return self.dict()['position'][::-1] < other.dict()['position'][::-1]
+
+    def __le__(self, other):
+        return self.dict()['position'][::-1] <= other.dict()['position'][::-1]
+
+    def __gt__(self, other):
+        return self.dict()['position'][::-1] > other.dict()['position'][::-1]
+
+    def __ge__(self, other):
+        return self.dict()['position'][::-1] >= other.dict()['position'][::-1]
         
         
 class GridCell(TSClass):
@@ -30,6 +44,11 @@ class GridCell(TSClass):
 class TextCell(TSClass):
     position: Tuple[int, int]
     text: str
+
+
+class ChemCell(TSClass):
+    position: Tuple[int, int]
+    smile: str
     
 
 class PolygonCell(TSClass):
@@ -55,24 +74,28 @@ class PolygonCell(TSClass):
         return data
     
 
+# TODO does it make sense to have cell_size here?
 class GridCellLayerSpec(TSClass):
     id: str
     range: Optional[Union[Tuple[int, int], Tuple[float, float]]]
     legend_text: Optional[str]
     width: int
     height: int
-    cell_size: int
+    cell_width: int
+    cell_height: int
     data: List[GridCell]
     @validator("data", pre=True)
     def convert_data(cls, v, values):
-        if not isinstance(v, list) or not isinstance(v[0], list):
+        if not isinstance(v, list):
             raise TypeError("data must be a List[List[GridCell]] or List[List[int]]")
+        if not isinstance(v[0], GridCell) and not isinstance(v[0], list):
+            raise TypeError("data must be a List[GridCell] or List[List[int]]")
+        if isinstance(v[0], GridCell):
+            return v
         assert len(v) == values["width"], "data list length must match width"
         assert (
             len(v[0]) == values["height"]
         ), "data list element length must match height"
-        if isinstance(v[0][0], GridCell):
-            return v
         if isinstance(v[0][0], int):
             output = []
             for ci, c in enumerate(v):
@@ -81,8 +104,8 @@ class GridCellLayerSpec(TSClass):
                     output.append(
                         GridCell(
                             position=(
-                                ci * values["cell_size"],
-                                ri * values["cell_size"],
+                                ci * values["cell_width"],
+                                ri * values["cell_height"],
                             ),
                             fill_color=(value, 0, 0, 255),
                         )
@@ -94,6 +117,16 @@ class GridCellLayerSpec(TSClass):
     
     
 class TextLayerSpec(GridCellLayerSpec):
+    """
+    A collection of TextCells, each collection is written to a seperate array.
+    
+    Args:
+        size (int): The text size.
+        color (tuple[int, int, int, int]): The text color.
+        background (tuple[int, int, int, int]): The background color.
+        data list(TextCell) | list(list(str)): A list of TextCells or a list of
+            strings.
+    """
     size: int = 12
     color: Tuple[int, int, int, int] = (255, 255, 255, 255)
     background: Tuple[int, int, int, int] = (0, 0, 0, 255)
@@ -117,8 +150,8 @@ class TextLayerSpec(GridCellLayerSpec):
                     output.append(
                         TextCell(
                             position=(
-                                ci * values["cell_size"],
-                                ri * values["cell_size"],
+                                ci * values["cell_width"],
+                                ri * values["cell_height"],
                             ),
                             text=r,
                         )
@@ -128,6 +161,42 @@ class TextLayerSpec(GridCellLayerSpec):
             raise TypeError("Data must be strings if not TextCell")
         return v
     
+
+class ChemLayerSpec(TextLayerSpec):
+    size: int = 12
+    color: Tuple[int, int, int, int] = (255, 255, 255, 255)
+    background: Tuple[int, int, int, int] = (0, 0, 0, 255)
+    data: List[ChemCell]
+    @validator("data", pre=True)
+    def convert_data(cls, v, values):
+        if not isinstance(v, list):
+            raise TypeError("data must be a List[ChemCell] or List[List[str]]")
+        if not isinstance(v[0], ChemCell) and not isinstance(v[0], list):
+            raise TypeError("data must be a List[ChemCell] or List[List[str]]")
+        if isinstance(v[0], ChemCell):
+            return v
+        if isinstance(v[0][0], str):
+            assert len(v) == values["width"], "data list length must match width"
+            assert (
+                len(v[0]) == values["height"]
+            ), "data list element length must match height"
+            output = []
+            for ci, c in enumerate(v):
+                for ri, r in enumerate(c):
+                    output.append(
+                        ChemCell(
+                            position=(
+                                ci * values["cell_width"],
+                                ri * values["cell_height"],
+                            ),
+                            smile=r,
+                        )
+                    )
+            v = output
+        else:
+            raise TypeError("Data must be strings if not TextCell")
+        return v
+
 
 class PolygonLayerSpec(TSClass):
     id: str
@@ -162,6 +231,7 @@ class OverlaySpec(TSClass):
     
     grid_cell_layers: Optional[List[GridCellLayerSpec]]
     text_layers: Optional[List[TextLayerSpec]]
+    chem_layers: Optional[List[ChemLayerSpec]]
     polygon_layers: Optional[List[PolygonLayerSpec]]
     
 
@@ -287,3 +357,27 @@ def to_bijective(value: int):
         result = keys[r] + result
 
     return result
+
+
+
+if __name__ == '__main__':
+    
+    g1 = GridCell(
+        position=(1,1),
+        fill_color=(1,1,1,1)
+    )
+    
+    g2 = GridCell(
+        position=(1,3),
+        fill_color=(1,1,1,1)
+    )
+    
+    g3 = GridCell(
+        position=(2,1),
+        fill_color=(1,1,1,1)
+    )
+    
+    grids = [g3,g2, g1]
+    print(grids)
+    grids = sorted(grids)
+    print(grids)
