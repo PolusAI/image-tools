@@ -13,7 +13,7 @@ from utils import Dataset, Tile, UnTile
 # TILE_SIZE must be a multiple of 1024
 TILE_SIZE = 2048
 MODEL_TILE_SIZE = 512
-BATCH_SIZE = 3
+BATCH_SIZE = 5
 
 
 def thread_loader(image_path, device):
