@@ -139,6 +139,7 @@ if __name__ == "__main__":
     logger.info("get_photobleach = {}".format(get_photobleach))
     logger.info("file_pattern = {}".format(file_pattern))
     logger.info("output_dir = {}".format(output_dir))
+    logger.info("FILE_EXT = {}".format(FILE_EXT))
 
     main(
         input_dir=input_dir,

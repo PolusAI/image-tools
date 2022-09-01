@@ -102,13 +102,16 @@ def basic(
         basic.fit(img_stk)
 
         # Resize images back to original image size
-        ProcessManager.log("Saving outputs...")
         flatfield = basic.flatfield
         if get_darkfield:
             darkfield = basic.darkfield
 
-        # Export the flatfield image as a tiled tiff
-        flatfield_out = base_output.replace(extension, "_flatfield" + extension)
+        # Export the flatfield image
+        suffix = "".join(
+            [suffix for suffix in Path(base_output).suffixes[-2:] if len(suffix) < 6]
+        )
+        flatfield_out = base_output.replace(suffix, "_flatfield" + extension)
+        ProcessManager.log(f"Saving flatfield: {flatfield_out}")
 
         with BioReader(files[0]["file"], max_workers=2) as br:
             metadata = br.metadata
@@ -121,7 +124,7 @@ def basic(
 
         # Export the darkfield image as a tiled tiff
         if get_darkfield:
-            darkfield_out = base_output.replace(extension, "_darkfield" + extension)
+            darkfield_out = base_output.replace(suffix, "_darkfield" + extension)
             with BioWriter(
                 out_dir.joinpath(darkfield_out), metadata=metadata, max_workers=2
             ) as bw:
