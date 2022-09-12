@@ -6,8 +6,9 @@ from __future__ import annotations
 
 from typing import Any, List, Optional, Union
 
-from pydantic import BaseModel, Field, constr
+from pydantic import BaseModel, Field, constr, validator
 from ._io import Input, Output, Version
+from ._utils import utils_cast_version
 
 
 class UiItem(BaseModel):
@@ -68,6 +69,6 @@ class WIPPPluginManifest(BaseModel):
     )
     ui: List[UiItem] = Field(..., title="Plugin form UI definition")
 
-    # @validator("version", pre=True)
-    # def cast_version(cls, value):
-    #     return utils_cast_version(value)
+    @validator("version", pre=True)
+    def cast_version(cls, value):
+        return utils_cast_version(value)

@@ -7,9 +7,10 @@ from __future__ import annotations
 from enum import Enum
 from typing import List, Optional, Union, Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 from ._io import IOBase, Version
+from ._utils import utils_cast_version
 
 
 class ConditionEntry(BaseModel):
@@ -142,6 +143,9 @@ class PluginSchema(BaseModel):
     version: Version
     website: Optional[str] = None
 
+    @validator("version", pre=True)
+    def cast_version(cls, value):
+        return utils_cast_version(value)
 
 
 class CLTSchema(PluginSchema):

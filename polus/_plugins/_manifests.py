@@ -8,8 +8,7 @@ from tqdm import tqdm
 import logging
 from pydantic import errors, ValidationError
 from ._plugins import WIPPPluginManifest
-from .PolusComputeSchema import PluginSchema as ComputeSchema  # new schema
-from ._utils import cast_version
+from .PolusComputeSchema import PluginSchema as NewSchema  # new schema
 
 logger = logging.getLogger("polus.plugins")
 
@@ -71,14 +70,14 @@ def _load_manifest(manifest: typing.Union[str, dict, pathlib.Path]) -> dict:
 
 def validate_manifest(
     manifest: typing.Union[str, dict, pathlib.Path]
-) -> typing.Union[WIPPPluginManifest, ComputeSchema]:
+) -> typing.Union[WIPPPluginManifest, NewSchema]:
     """Validates a plugin manifest against schema"""
     manifest = _load_manifest(manifest)
     manifest["version"] = cast_version(manifest["version"])
     if "pluginHardwareRequirements" in manifest:
         # Parse the manifest
         try:
-            plugin = ComputeSchema(**manifest)  # New Schema
+            plugin = NewSchema(**manifest)  # New Schema
         except ValidationError as err:
             raise err
         except BaseException as e:
