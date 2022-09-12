@@ -73,7 +73,6 @@ def validate_manifest(
 ) -> typing.Union[WIPPPluginManifest, NewSchema]:
     """Validates a plugin manifest against schema"""
     manifest = _load_manifest(manifest)
-    manifest["version"] = cast_version(manifest["version"])
     if "pluginHardwareRequirements" in manifest:
         # Parse the manifest
         try:

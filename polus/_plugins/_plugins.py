@@ -9,13 +9,11 @@ from .PolusComputeSchema import PluginUIInput, PluginUIOutput
 from .PolusComputeSchema import PluginSchema as NewSchema
 from ._manifests import _load_manifest, validate_manifest
 from ._io import Version, DuplicateVersionFound, _in_old_to_new, _ui_old_to_new
-from ._cwl import CWL_BASE_DICT
 from pydantic import Extra
 import pathlib
 import json
 import uuid
 import logging
-import yaml
 
 logger = logging.getLogger("polus.plugins")
 PLUGINS = {}
