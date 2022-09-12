@@ -1,12 +1,19 @@
 from copy import deepcopy
-from pprint import pprint, pformat
+from pprint import pformat
 import typing
 from ._io import Version, DuplicateVersionFound
 from ._plugin_model import WIPPPluginManifest
-from ._utils import name_cleaner
+from ._utils import (
+    name_cleaner,
+    input_to_cwl,
+    output_to_cwl,
+    outputs_cwl,
+    io_to_yml,
+    cast_version,
+)
 from ._plugin_methods import PluginMethods
 from .PolusComputeSchema import PluginUIInput, PluginUIOutput
-from .PolusComputeSchema import PluginSchema as NewSchema  # new schema
+from .PolusComputeSchema import PluginSchema as ComputeSchema
 from ._manifests import _load_manifest, validate_manifest
 from ._io import Version, DuplicateVersionFound, _in_old_to_new, _ui_old_to_new
 from ._cwl import CWL_BASE_DICT
@@ -15,6 +22,7 @@ import pathlib
 import json
 import uuid
 import logging
+import yaml
 
 logger = logging.getLogger("polus.plugins")
 PLUGINS = {}
@@ -89,7 +97,7 @@ class _Plugins:
             raise ValueError("Invalid value of class")
         for k, v in _io.items():
             val = v["value"]
-            if val:  # exclude those values not set
+            if val is not None:  # exclude those values not set
                 setattr(pl, k, val)
         return pl
 
@@ -139,6 +147,8 @@ class Plugin(WIPPPluginManifest, PluginMethods):
             data["id"] = uuid.uuid4()
         else:
             data["id"] = uuid.UUID(str(data["id"]))
+
+        data["version"] = cast_version(data["version"])  # cast version
 
         super().__init__(**data)
 
@@ -202,7 +212,7 @@ class Plugin(WIPPPluginManifest, PluginMethods):
         return PluginMethods.__repr__(self)
 
 
-class ComputePlugin(NewSchema, PluginMethods):
+class ComputePlugin(ComputeSchema, PluginMethods):
     class Config:
         extra = Extra.allow
         allow_mutation = False
@@ -219,6 +229,8 @@ class ComputePlugin(NewSchema, PluginMethods):
             data["id"] = uuid.uuid4()
         else:
             data["id"] = uuid.UUID(str(data["id"]))
+
+        data["version"] = cast_version(data["version"])  # cast version
 
         if _from_old:
 
@@ -293,9 +305,37 @@ class ComputePlugin(NewSchema, PluginMethods):
         with open(path, "w") as fw:
             json.dump(self.manifest, fw, indent=4)
         logger.debug("Saved manifest to %s" % (path))
-    
-    def _to_cwl(self):
 
+    def _to_cwl(self):
+        cwl_dict = CWL_BASE_DICT
+        cwl_dict["inputs"] = {}
+        cwl_dict["outputs"] = {}
+        inputs = [input_to_cwl(x) for x in self.inputs]
+        inputs = inputs + [output_to_cwl(x) for x in self.outputs]
+        for inp in inputs:
+            cwl_dict["inputs"].update(inp)
+        outputs = [outputs_cwl(x) for x in self.outputs]
+        for out in outputs:
+            cwl_dict["outputs"].update(out)
+        cwl_dict["hints"]["DockerRequirement"]["dockerPull"] = self.containerId
+        return cwl_dict
+
+    def save_cwl(self, path: typing.Union[str, pathlib.Path]):
+        assert str(path).split(".")[-1] == "cwl", "Path must end in .cwl"
+        with open(path, "w") as file:
+            yaml.dump(self._to_cwl(), file)
+        return path
+
+    def _cwl_io(self):
+        return {
+            x.name: io_to_yml(x) for x in self._io_keys.values() if x.value is not None
+        }
+
+    def save_cwl_io(self, path):
+        assert str(path).split(".")[-1] == "yml", "Path must end in .yml"
+        with open(path, "w") as file:
+            yaml.dump(self._cwl_io(), file)
+        return path
 
     def __repr__(self) -> str:
         return PluginMethods.__repr__(self)

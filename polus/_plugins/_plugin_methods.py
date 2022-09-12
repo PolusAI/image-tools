@@ -10,7 +10,7 @@ import pathlib
 import fsspec
 from python_on_whales import docker
 import logging
-from .PolusComputeSchema import PluginSchema as NewSchema  # new schema
+from .PolusComputeSchema import PluginSchema as ComputeSchema  # new schema
 
 logger = logging.getLogger("polus.plugins")
 

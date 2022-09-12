@@ -8,7 +8,8 @@ from tqdm import tqdm
 import logging
 from pydantic import errors, ValidationError
 from ._plugins import WIPPPluginManifest
-from .PolusComputeSchema import PluginSchema as NewSchema  # new schema
+from .PolusComputeSchema import PluginSchema as ComputeSchema  # new schema
+from ._utils import cast_version
 
 logger = logging.getLogger("polus.plugins")
 
@@ -23,6 +24,8 @@ REQUIRED_FIELDS = [
     "outputs",
     "ui",
 ]
+
+
 def is_valid_manifest(plugin: dict) -> bool:
     """Validates basic attributes of a plugin manifest.
 
@@ -65,15 +68,17 @@ def _load_manifest(manifest: typing.Union[str, dict, pathlib.Path]) -> dict:
         raise ValueError("invalid manifest")
     return manifest
 
+
 def validate_manifest(
     manifest: typing.Union[str, dict, pathlib.Path]
-) -> typing.Union[WIPPPluginManifest, NewSchema]:
+) -> typing.Union[WIPPPluginManifest, ComputeSchema]:
     """Validates a plugin manifest against schema"""
     manifest = _load_manifest(manifest)
+    manifest["version"] = cast_version(manifest["version"])
     if "pluginHardwareRequirements" in manifest:
         # Parse the manifest
         try:
-            plugin = NewSchema(**manifest)  # New Schema
+            plugin = ComputeSchema(**manifest)  # New Schema
         except ValidationError as err:
             raise err
         except BaseException as e:
@@ -83,10 +88,13 @@ def validate_manifest(
         try:
             plugin = WIPPPluginManifest(**manifest)  # New Schema
         except ValidationError as err:
+            logger.info(manifest)
             raise err
         except BaseException as e:
+            logger.info(manifest)
             raise e
     return plugin
+
 
 def _scrape_manifests(
     repo: typing.Union[str, github.Repository.Repository],
@@ -131,6 +139,7 @@ def _scrape_manifests(
         return valid_manifests, invalid_manifests
     else:
         return valid_manifests
+
 
 def _error_log(val_err, manifest, fct):
 
