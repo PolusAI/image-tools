@@ -103,7 +103,7 @@ class PluginMethods:
                     args.append(str(i.value))
 
         for o in self.outputs:
-            if o.value:  # do not include those with value=None
+            if o.value is not None:  # do not include those with value=None
                 o._validate()
                 args.append(f"--{o.name}")
 
