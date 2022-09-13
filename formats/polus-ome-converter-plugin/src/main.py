@@ -1,6 +1,9 @@
 from bfio.bfio import BioReader, BioWriter
 from preadator import ProcessManager
-from filepattern import FilePattern
+import filepattern
+from typing import Optional
+
+
 import argparse
 import logging
 from pathlib import Path
@@ -21,10 +24,12 @@ FILE_EXT =os.environ.get('POLUS_EXT','.ome.zarr')
 TILE_SIZE = 2 ** 13
 
 
+
 def image_converter(inp_image, fileExtension, out_dir):
 
-    FILE_EXT = FILE_EXT if fileExtension is None else fileExtension
+    assert fileExtension in ['.ome.zarr', '.ome.tif', '.ome.tiff'], "Invalid fileExtension !! it should be either .ome.tif or .ome.zarr"
 
+    FILE_EXT = FILE_EXT if fileExtension is None else fileExtension
     with ProcessManager.process():
 
         with BioReader(inp_image) as br:
@@ -86,17 +91,21 @@ def image_converter(inp_image, fileExtension, out_dir):
 
 def main(
     inpDir: Path,
-    filePattern: str,
-    fileExtension:str,
+    filePattern: Optional[str],
+    fileExtension:Optional[str],
     outDir: Path,
 ) -> None:
 
     ProcessManager.init_processes("main")
 
-    fp = FilePattern(inpDir, filePattern)
+    if filePattern is None:
+        filePattern = ".*"
+
+    fp = filepattern.FilePattern(inpDir, filePattern)
 
     for files in fp():
         for file in files:
+
             ProcessManager.submit_process(image_converter, file["file"], fileExtension, outDir)
 
     ProcessManager.join_processes()
