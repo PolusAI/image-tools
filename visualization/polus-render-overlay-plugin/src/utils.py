@@ -81,8 +81,9 @@ class GridCellLayerSpec(TSClass):
     legend_text: Optional[str]
     width: int
     height: int
-    cell_width: int
-    cell_height: int
+    cell_size: int
+    # cell_width: int
+    # cell_height: int
     data: List[GridCell]
     @validator("data", pre=True)
     def convert_data(cls, v, values):
