@@ -6,7 +6,7 @@ from ._plugin_model import WIPPPluginManifest
 from ._utils import name_cleaner
 from ._plugin_methods import PluginMethods
 from .PolusComputeSchema import PluginUIInput, PluginUIOutput
-from .PolusComputeSchema import PluginSchema as NewSchema
+from .PolusComputeSchema import PluginSchema as ComputeSchema
 from ._manifests import _load_manifest, validate_manifest
 from ._io import Version, DuplicateVersionFound, _in_old_to_new, _ui_old_to_new
 from pydantic import Extra
@@ -201,7 +201,7 @@ class Plugin(WIPPPluginManifest, PluginMethods):
         return PluginMethods.__repr__(self)
 
 
-class ComputePlugin(NewSchema, PluginMethods):
+class ComputePlugin(ComputeSchema, PluginMethods):
     class Config:
         extra = Extra.allow
         allow_mutation = False
