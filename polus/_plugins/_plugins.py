@@ -2,11 +2,11 @@ from copy import deepcopy
 from pprint import pprint, pformat
 import typing
 from ._io import Version, DuplicateVersionFound
-from ._plugin_model import WIPPPluginManifest
+from .models.WIPPPluginSchema import WIPPPluginManifest
 from ._utils import name_cleaner
 from ._plugin_methods import PluginMethods
-from .PolusComputeSchema import PluginUIInput, PluginUIOutput
-from .PolusComputeSchema import PluginSchema as ComputeSchema
+from .models.PolusComputeSchema import PluginUIInput, PluginUIOutput
+from .models.PolusComputeSchema import PluginSchema as ComputeSchema
 from ._manifests import _load_manifest, validate_manifest
 from ._io import Version, DuplicateVersionFound, _in_old_to_new, _ui_old_to_new
 from pydantic import Extra

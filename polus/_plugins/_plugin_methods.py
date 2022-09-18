@@ -5,12 +5,12 @@ import signal
 import typing
 import re
 from copy import deepcopy
-from polus._plugins.PolusComputeSchema import PluginUIInput, PluginUIOutput
+from .models.PolusComputeSchema import PluginUIInput, PluginUIOutput
 import pathlib
 import fsspec
 from python_on_whales import docker
 import logging
-from .PolusComputeSchema import PluginSchema as ComputeSchema
+from .models.PolusComputeSchema import PluginSchema as ComputeSchema
 
 logger = logging.getLogger("polus.plugins")
 

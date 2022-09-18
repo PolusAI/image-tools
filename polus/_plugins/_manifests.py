@@ -8,7 +8,7 @@ from tqdm import tqdm
 import logging
 from pydantic import errors, ValidationError
 from ._plugins import WIPPPluginManifest
-from .PolusComputeSchema import PluginSchema as ComputeSchema  # new schema
+from .models.PolusComputeSchema import PluginSchema as ComputeSchema  # new schema
 
 logger = logging.getLogger("polus.plugins")
 
