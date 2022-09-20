@@ -133,15 +133,26 @@ def main(
             raise ValueError(
                 "Each layout subgrid must have one or two variables assigned to it."
             )
-
-    for v in reversed(variables):  # Add supergrids if a variable is undefined in layout
+    
+    # Define variables not in layout as depth variables (z-axis in Cartesian)
+    depth_variables = ''
+    for v in variables:
         is_defined = False
-        for lt in layout:
-            if v in lt:
+        for group in layout:
+            if v in group:
                 is_defined = True
                 break
         if not is_defined:
-            layout.append(v)
+            depth_variables += v
+    
+    # for v in reversed(variables):  # Add supergrids if a variable is undefined in layout
+    #     is_defined = False
+    #     for lt in layout:
+    #         if v in lt:
+    #             is_defined = True
+    #             break
+    #     if not is_defined:
+    #         layout.append(v)
 
     # Layout dimensions, used to calculate positions later on
     layout_dimensions = {
@@ -204,7 +215,7 @@ def main(
         * layout_dimensions["tile_size"][len(layout) - 1][1],
     ]
     logger.info("Grid size for layer ({}): {}".format(layout[0], grid_size))
-
+    
     # Build the rest of the subgrid indices
     for i in range(1, len(layout)):
         # Get the largest size subgrid image in pixels
@@ -238,41 +249,48 @@ def main(
 
     logger.info(f"Final image size in pixels: {layout_dimensions['size'][0]}")
 
-    # Build stitching vector
-    logger.info("Building the stitching vector....")
-    fpath = str(pathlib.Path(outDir).joinpath("img-global-positions-1.txt").absolute())
-    max_dim = len(layout_dimensions["grid_size"]) - 1
-    with open(fpath, "w") as fw:
-        correlation = 0
-        for file in fp():
-            f = file[0]
-            file_name = pathlib.Path(f["file"]).name
+    # Group the images into 2-dimensional planes
+    planes = [p for p in fp(group_by=''.join(layout))]
+    
+    # Build each 2-Dimensional stitching vector plane
+    for plane in planes:
+        
+        output_name = fp.output_name(plane).split('.')[0] + '.txt'
+        logger.info("Building stitching vector {}".format(output_name))
+        fpath = str(pathlib.Path(outDir).joinpath(output_name).absolute())
+        max_dim = len(layout_dimensions["grid_size"]) - 1
+        with open(fpath, "w") as fw:
+            correlation = 0
+            for f in plane:
+                file_name = pathlib.Path(f["file"]).name
 
-            # Calculate the image position
-            gridX = 0
-            gridY = 0
-            posX = 0
-            posY = 0
-            for i in reversed(range(max_dim + 1)):
-                posX += f[str(i) + "_gridX"] * layout_dimensions["tile_size"][i][0]
-                posY += f[str(i) + "_gridY"] * layout_dimensions["tile_size"][i][1]
-                if i == max_dim:
-                    gridX += f[str(i) + "_gridX"]
-                    gridY += f[str(i) + "_gridY"]
-                else:
-                    gridX += (
-                        f[str(i) + "_gridX"] * layout_dimensions["grid_size"][i + 1][0]
-                    )
-                    gridY += (
-                        f[str(i) + "_gridY"] * layout_dimensions["grid_size"][i + 1][1]
-                    )
+                # Calculate the image position
+                gridX = 0
+                gridY = 0
+                posX = 0
+                posY = 0
+                for i in reversed(range(max_dim + 1)):
+                    posX += f[str(i) + "_gridX"] * layout_dimensions["tile_size"][i][0]
+                    posY += f[str(i) + "_gridY"] * layout_dimensions["tile_size"][i][1]
+                    
+                    if i == max_dim:
+                        gridX += f[str(i) + "_gridX"]
+                        gridY += f[str(i) + "_gridY"]
+                        
+                    else:
+                        gridX += (
+                            f[str(i) + "_gridX"] * layout_dimensions["grid_size"][i + 1][0]
+                        )
+                        gridY += (
+                            f[str(i) + "_gridY"] * layout_dimensions["grid_size"][i + 1][1]
+                        )
 
-            # Write the position to the stitching vector
-            fw.write(
-                "file: {}; corr: {}; position: ({}, {}); grid: ({}, {});\n".format(
-                    file_name, correlation, posX, posY, gridX, gridY
+                # Write the position to the stitching vector
+                fw.write(
+                    "file: {}; corr: {}; position: ({}, {}); grid: ({}, {});\n".format(
+                        file_name, correlation, posX, posY, gridX, gridY
+                    )
                 )
-            )
 
     logger.info("Done!")
 

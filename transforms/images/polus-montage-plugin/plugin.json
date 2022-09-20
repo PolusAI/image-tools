@@ -1,14 +1,14 @@
 {
   "name": "Montage",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "title": "Montage",
   "description": "Advanced montaging plugin.",
-  "author": "Nick Schaub (nick.schaub@nih.gov)",
+  "author": "Nick Schaub (nick.schaub@nih.gov), Benjamin Houghton (benjamin.houghton@axleinfo.com)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-  "repository": "https://github.com/labshare/polus-plugins",
+  "repository": "https://github.com/PolusAI/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "labshare/polus-montage-plugin:0.3.0",
+  "containerId": "polusai/montage-plugin:0.4.0",
   "inputs": [
     {
       "name": "filePattern",

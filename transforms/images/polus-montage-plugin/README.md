@@ -1,4 +1,4 @@
-# Montage (v0.3.0)
+# Montage (v0.4.0)
 
 This plugin generates a stitching vector that will montage images together. The
 inputs are an image collection, a file pattern, and a layout array that
@@ -52,6 +52,13 @@ indicating the x-position in the grid and the `y` variabled indicating the
 y-position. If the order of the variables was flipped (`yx`), then the positions
 of images would be transposed. There are no restrictions on which variables can
 be placed together, so it would be possible to have `xt,y` as a layout array.
+
+If a variable exists in the filePattern but not in the layout the plugin will
+treat the variable as a 3rd dimension. For example assume the variable `c`
+represents different channels. The variable is passed in the file pattern,
+`filename_{xxx}_{yyy}_{ttt}_c{ccc}.ome.tif` but not in the layout `xy,t`. Then
+this plugin will group the images into seperate channels and construct a 
+stitching vector for each channel. This represents a stack of images.
 
 ## To do
 
