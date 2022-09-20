@@ -144,15 +144,6 @@ def main(
                 break
         if not is_defined:
             depth_variables += v
-    
-    # for v in reversed(variables):  # Add supergrids if a variable is undefined in layout
-    #     is_defined = False
-    #     for lt in layout:
-    #         if v in lt:
-    #             is_defined = True
-    #             break
-    #     if not is_defined:
-    #         layout.append(v)
 
     # Layout dimensions, used to calculate positions later on
     layout_dimensions = {
