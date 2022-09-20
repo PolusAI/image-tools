@@ -362,5 +362,8 @@ if __name__ == "__main__":
         image_spacing = int(image_spacing)
     if grid_spacing is not None:
         grid_spacing = int(grid_spacing)
+    # Set flipAxis to empty list if None to avoid NoneType iteration exception
+    if not flipAxis:
+        flipAxis = []
 
     main(pattern, inpDir, layout, flipAxis, outDir, image_spacing, grid_spacing)
