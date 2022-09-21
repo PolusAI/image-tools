@@ -1,4 +1,4 @@
-FROM labshare/polus-bfio-util:2.1.9
+FROM labshare/polus-bfio-util:2.1.9-imagej
 
 # environment variables defined in labshare/polus-bfio-util
 # ENV EXEC_DIR="/opt/executables"
@@ -13,7 +13,7 @@ COPY VERSION ${EXEC_DIR}
 COPY src ${EXEC_DIR}/
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
+RUN mkdir /.jgo && chmod 777 /.jgo
 
-RUN python3 -c "import imageio; imageio.plugins.freeimage.download()"
-
-ENTRYPOINT [ "python3", "main.py" ]
+# Default command. Additional arguments are provided through the command line
+ENTRYPOINT ["python3", "main.py"]

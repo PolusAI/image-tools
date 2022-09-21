@@ -112,7 +112,8 @@ class Op:
         self._inputs = []
         self._output = []
         
-        # Check and update if any input titles
+        # Check and update input titles that will interfere with other variable
+        # names and/or python reserved words
         for input_index, input in enumerate(inputs):
             # Check if input title will interfere with reserved python keyword
             if input[1] == 'in':
@@ -1053,6 +1054,7 @@ class GeneratedParser:
             # Write the cookiecutter template file
             with open(cookiecutter_path,'w') as fw:
                 json.dump(template, fw,indent=4)
+            
 
 """This section of uses the above classes to generate cookiecutter templates"""
 
