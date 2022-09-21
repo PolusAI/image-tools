@@ -8,7 +8,7 @@ def name_cleaner(name: str) -> str:
     return name.title().replace(" ", "").replace("/", "_")
 
 
-def utils_cast_version(value):
+def cast_version(value):
     if isinstance(value, dict):  # if init from a Version object
         value = value["version"]
     return Version(version=value)

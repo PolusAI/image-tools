@@ -5,9 +5,9 @@
 /* Do not modify it by hand - just update the pydantic models and then re-run the script
 */
 
+export type GpuVendor = "none" | "amd" | "tpu" | "nvidia";
 export type PluginInputType = "path" | "string" | "number" | "array" | "boolean";
 export type PluginOutputType = "path";
-export type GpuVendor = "none" | "amd" | "tpu" | "nvidia";
 export type PluginUIType =
   | "checkbox"
   | "color"
@@ -20,43 +20,10 @@ export type PluginUIType =
   | "text"
   | "time";
 
-export interface CLTSchema {
-  author?: string;
-  baseCommand?: string[];
-  citation?: string;
-  containerId: string;
-  customInputs?: boolean;
-  description: string;
-  inputs: PluginInput[];
-  institution?: string;
-  name: string;
-  outputs: PluginOutput[];
-  pluginHardwareRequirements: PluginHardwareRequirements;
-  repository?: string;
-  title: string;
-  ui: (PluginUIInput | PluginUIOutput)[];
-  version: string;
-  website?: string;
-  cwlVersion: string;
-  id: string;
-  class_: string;
-  stderr: string;
-  stdout: string;
+export interface ConditionEntry {
+  expression: string;
 }
-export interface PluginInput {
-  format?: string;
-  label?: string;
-  name: string;
-  required: boolean;
-  type: PluginInputType;
-  default?: string | number | boolean;
-}
-export interface PluginOutput {
-  format?: string;
-  label?: string;
-  name: string;
-  type: PluginOutputType;
-}
+export interface Model {}
 export interface PluginHardwareRequirements {
   coresMax?: string | number;
   coresMin?: string | number;
@@ -73,6 +40,38 @@ export interface PluginHardwareRequirements {
   ramMin?: string | number;
   tmpDirMax?: string | number;
   tmpDirMin?: string | number;
+}
+export interface PluginInput {
+  format?: string;
+  label?: string;
+  name: string;
+  required: boolean;
+  type: PluginInputType;
+  default?: string | number | boolean;
+}
+export interface PluginOutput {
+  format?: string;
+  label?: string;
+  name: string;
+  type: PluginOutputType;
+}
+export interface PluginSchema {
+  author?: string;
+  baseCommand?: string[];
+  citation?: string;
+  containerId: string;
+  customInputs?: boolean;
+  description: string;
+  inputs: PluginInput[];
+  institution?: string;
+  name: string;
+  outputs: PluginOutput[];
+  pluginHardwareRequirements: PluginHardwareRequirements;
+  repository?: string;
+  title: string;
+  ui: (PluginUIInput | PluginUIOutput)[];
+  version: string;
+  website?: string;
 }
 export interface PluginUIInput {
   bind?: string;
@@ -94,31 +93,10 @@ export interface ThenEntry {
   input: string;
   value: string;
 }
-export interface ConditionEntry {
-  expression: string;
-}
 export interface PluginUIOutput {
   description: string;
   format?: string;
   name: string;
   type: PluginUIType;
-  website?: string;
-}
-export interface PluginSchema {
-  author?: string;
-  baseCommand?: string[];
-  citation?: string;
-  containerId: string;
-  customInputs?: boolean;
-  description: string;
-  inputs: PluginInput[];
-  institution?: string;
-  name: string;
-  outputs: PluginOutput[];
-  pluginHardwareRequirements: PluginHardwareRequirements;
-  repository?: string;
-  title: string;
-  ui: (PluginUIInput | PluginUIOutput)[];
-  version: string;
   website?: string;
 }

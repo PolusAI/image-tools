@@ -2,11 +2,11 @@ from copy import deepcopy
 from pprint import pprint, pformat
 import typing
 from ._io import Version, DuplicateVersionFound
-from .models.WIPPPluginSchema import WIPPPluginManifest
-from ._utils import name_cleaner
+from .models.wipp import WIPPPluginManifest
+from ._utils import name_cleaner, cast_version
 from ._plugin_methods import PluginMethods
-from .models.PolusComputeSchema import PluginUIInput, PluginUIOutput
-from .models.PolusComputeSchema import PluginSchema as ComputeSchema
+from .models.compute import PluginUIInput, PluginUIOutput
+from .models.compute import PluginSchema as ComputeSchema
 from ._manifests import _load_manifest, validate_manifest
 from ._io import Version, DuplicateVersionFound, _in_old_to_new, _ui_old_to_new
 from pydantic import Extra
@@ -139,6 +139,7 @@ class Plugin(WIPPPluginManifest, PluginMethods):
         else:
             data["id"] = uuid.UUID(str(data["id"]))
 
+        data["version"] = cast_version(data["version"])
         super().__init__(**data)
 
         self.Config.allow_mutation = True
@@ -254,15 +255,17 @@ class ComputePlugin(ComputeSchema, PluginMethods):
             data["outputs"] = [_convert_output(x) for x in data["outputs"]]
             data["pluginHardwareRequirements"] = {}
             data["ui"] = [_ui_in(x) for x in data["ui"]]  # inputs
-            data["ui"].extend([_ui_out(x) for x in data["outputs"]])  # outputs
+            data["ui"].extend([_ui_out(x) for x in data["outputs"]])  # type: ignore # outputs
 
         if hardware_requirements:
             for k, v in hardware_requirements.items():
                 data["pluginHardwareRequirements"][k] = v
+
+        data["version"] = cast_version(data["version"])
         super().__init__(**data)
         self.Config.allow_mutation = True
         self._io_keys = {i.name: i for i in self.inputs}
-        self._io_keys.update({o.name: o for o in self.outputs})
+        self._io_keys.update({o.name: o for o in self.outputs})  # type: ignore
 
         if self.author == "":
             logger.warning(

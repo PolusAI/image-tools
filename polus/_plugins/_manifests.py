@@ -8,7 +8,8 @@ from tqdm import tqdm
 import logging
 from pydantic import errors, ValidationError
 from ._plugins import WIPPPluginManifest
-from .models.PolusComputeSchema import PluginSchema as ComputeSchema  # new schema
+from .models.compute import PluginSchema as ComputeSchema  # new schema
+from ._utils import cast_version
 
 logger = logging.getLogger("polus.plugins")
 
@@ -46,23 +47,23 @@ def is_valid_manifest(plugin: dict) -> bool:
     return True
 
 
-def _load_manifest(manifest: typing.Union[str, dict, pathlib.Path]) -> dict:
+def _load_manifest(m: typing.Union[str, dict, pathlib.Path]) -> dict:
     """Convert to dictionary if pathlib.Path or str"""
-    if isinstance(manifest, dict):
-        return manifest
-    elif isinstance(manifest, pathlib.Path):
+    if isinstance(m, dict):
+        return m
+    elif isinstance(m, pathlib.Path):
         assert (
-            manifest.suffix == ".json"
+            m.suffix == ".json"
         ), "Plugin manifest must be a json file with .json extension."
 
-        with open(manifest, "r") as fr:
+        with open(m, "r") as fr:
             manifest = json.load(fr)
 
-    elif isinstance(manifest, str):
-        if urlparse(manifest).netloc == "":
-            manifest = json.loads(manifest)
+    elif isinstance(m, str):
+        if urlparse(m).netloc == "":
+            manifest = json.loads(m)
         else:
-            manifest = requests.get(manifest).json()
+            manifest = requests.get(m).json()
     else:
         raise ValueError("invalid manifest")
     return manifest
@@ -73,6 +74,9 @@ def validate_manifest(
 ) -> typing.Union[WIPPPluginManifest, ComputeSchema]:
     """Validates a plugin manifest against schema"""
     manifest = _load_manifest(manifest)
+    manifest["version"] = cast_version(
+        manifest["version"]
+    )  # cast version to semver object
     if "pluginHardwareRequirements" in manifest:
         # Parse the manifest
         try:
@@ -95,7 +99,7 @@ def validate_manifest(
 
 
 def _scrape_manifests(
-    repo: typing.Union[str, github.Repository.Repository],
+    repo: typing.Union[str, github.Repository.Repository],  # type: ignore
     gh: github.Github,
     min_depth: int = 1,
     max_depth: typing.Optional[int] = None,
@@ -111,7 +115,7 @@ def _scrape_manifests(
     if isinstance(repo, str):
         repo = gh.get_repo(repo)
 
-    contents = list(repo.get_contents(""))
+    contents = list(repo.get_contents(""))  # type: ignore
     next_contents = []
     valid_manifests = []
     invalid_manifests = []
@@ -121,7 +125,7 @@ def _scrape_manifests(
         for content in tqdm(contents, desc=f"{repo.full_name}: {d}"):
 
             if content.type == "dir":
-                next_contents.extend(repo.get_contents(content.path))
+                next_contents.extend(repo.get_contents(content.path))  # type: ignore
             elif content.name.endswith(".json"):
                 if d >= min_depth:
                     manifest = json.loads(content.decoded_content)
