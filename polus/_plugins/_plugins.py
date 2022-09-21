@@ -156,7 +156,7 @@ class Plugin(WIPPPluginManifest, PluginMethods):
         """Return list of versions of a Plugin"""
         return list(PLUGINS[name_cleaner(plugin.name)])
 
-    def new_schema(self, hardware_requirements: typing.Optional[dict] = None):
+    def to_compute(self, hardware_requirements: typing.Optional[dict] = None):
         data = deepcopy(self.manifest)
         return ComputePlugin(
             hardware_requirements=hardware_requirements, _from_old=True, **data
