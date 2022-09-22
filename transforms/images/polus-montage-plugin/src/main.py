@@ -3,7 +3,7 @@ import logging
 import math
 import typing
 import pathlib
-from filepattern import FilePattern, get_regex, VARIABLES
+from filepattern import FilePattern, VARIABLES
 from bfio import BioReader
 
 SPACING = 10
