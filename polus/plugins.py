@@ -14,6 +14,7 @@ import requests
 import xmltodict
 from urllib.parse import urlparse, urljoin
 from tqdm import tqdm
+import fsspec
 
 from typing import Union, Optional
 from python_on_whales import docker
@@ -39,7 +40,6 @@ from polus._plugins.PolusComputeSchema import (
     PluginHardwareRequirements,
 )
 from copy import deepcopy
-
 
 """
 Set up logging for the module
@@ -461,6 +461,10 @@ class PluginMethods:
             )
             print(d)
 
+    @property
+    def manifest(self):
+        return json.loads(self.json(exclude={"_io_keys"}))
+
     def __getattribute__(self, name):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
             if name in self._io_keys:
@@ -472,7 +476,17 @@ class PluginMethods:
         return super().__getattribute__(name)
 
     def __setattr__(self, name, value):
-        if name != "_io_keys" and hasattr(self, "_io_keys"):
+        if name == "_fs":
+            if not issubclass(type(value), fsspec.spec.AbstractFileSystem):
+                raise ValueError("_fs must be an fsspec FileSystem")
+            else:
+                for i in self.inputs:
+                    i._fs = value
+                for o in self.outputs:
+                    o._fs = value
+                return
+
+        elif name != "_io_keys" and hasattr(self, "_io_keys"):
             if name in self._io_keys:
                 logger.debug(
                     "Value of %s in %s set to %s"
@@ -527,10 +541,6 @@ class Plugin(WIPPPluginManifest, PluginMethods):
             logger.warning(
                 f"The plugin ({self.name}) is missing the author field. This field is not required but should be filled in."
             )
-
-    @property
-    def manifest(self):
-        return json.loads(self.json(exclude={"_io_keys"}))
 
     @validator("version", pre=True)
     def cast_version(cls, value):
@@ -682,10 +692,6 @@ class ComputePlugin(NewSchema, PluginMethods):
             x["value"] = None
         return m
 
-    @property
-    def manifest(self):
-        m = json.loads(self.json(exclude={"_io_keys"}))
-        return m
 
     def __setattr__(self, name, value):
         PluginMethods.__setattr__(self, name, value)
