@@ -117,7 +117,6 @@ def main(
 
     # Parse the layout
     logger.info("Parsing the layout...")
-    regex, variables = get_regex(pattern)
     layout = layout.replace(" ", "")
     layout = layout.split(",")
 
@@ -133,17 +132,6 @@ def main(
             raise ValueError(
                 "Each layout subgrid must have one or two variables assigned to it."
             )
-    
-    # Define variables not in layout as depth variables (z-axis in Cartesian)
-    depth_variables = ''
-    for v in variables:
-        is_defined = False
-        for group in layout:
-            if v in group:
-                is_defined = True
-                break
-        if not is_defined:
-            depth_variables += v
 
     # Layout dimensions, used to calculate positions later on
     layout_dimensions = {
@@ -244,11 +232,14 @@ def main(
     planes = [p for p in fp(group_by=''.join(layout))]
     
     # Build each 2-Dimensional stitching vector plane
-    for plane in planes:
+    for i, plane in enumerate(planes):
         
-        output_name = fp.output_name(plane).split('.')[0] + '.txt'
-        logger.info("Building stitching vector {}".format(output_name))
-        fpath = str(pathlib.Path(outDir).joinpath(output_name).absolute())
+        # TODO: Use filePattern output_name method for file names
+        # fname = fp.output_name(plane).split('.')[0] + '.txt'
+        fname = "img-global-positions-{}.txt".format(i+1)
+        fpath = str(pathlib.Path(outDir).joinpath("img-global-positions-1.txt").absolute())
+        logger.info("Building stitching vector {}".format(fname))
+        fpath = str(pathlib.Path(outDir).joinpath(fname).absolute())
         max_dim = len(layout_dimensions["grid_size"]) - 1
         with open(fpath, "w") as fw:
             correlation = 0
