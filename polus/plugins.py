@@ -31,12 +31,16 @@ from polus._plugins._registry import (
 from polus._plugins._io import IOBase, InputTypes, Version
 from requests.exceptions import HTTPError
 from polus._plugins.PolusComputeSchema import PluginSchema as NewSchema  # new schema
-from polus._plugins.PolusComputeSchema import (
-    PluginUIInput,
-    PluginUIOutput
+from polus._plugins.PolusComputeSchema import PluginUIInput, PluginUIOutput
+
+from polus._plugins._io import (
+    Version,
+    DuplicateVersionFound,
+    _in_old_to_new,
+    _ui_old_to_new,
 )
-from polus._plugins._io import Version, DuplicateVersionFound, _in_old_to_new, _ui_old_to_new
 from polus._plugins._utils import name_cleaner
+
 from copy import deepcopy
 
 """
@@ -152,7 +156,6 @@ class _Plugins:
             if val:  # exclude those values not set
                 setattr(pl, k, val)
         return pl
-
 
     def refresh(self, force: bool = False):
         """Refresh the plugin list
@@ -401,11 +404,10 @@ class PluginMethods:
             )
             print(d)
 
-
     @property
     def versions(self):
         return list(PLUGINS[name_cleaner(self.name)])
-    
+
     @property
     def _config(self):
         m = self.dict()
@@ -461,10 +463,8 @@ class PluginMethods:
 
         return other.version < self.version
 
-    
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name='{self.name}', version={self.version.version})"
-
 
 
 class Plugin(WIPPPluginManifest, PluginMethods):
@@ -560,7 +560,6 @@ class ComputePlugin(NewSchema, PluginMethods):
 
         if _from_old:
 
-
             def _convert_input(d: dict):
                 d["type"] = _in_old_to_new(d["type"])
                 return d
@@ -573,9 +572,11 @@ class ComputePlugin(NewSchema, PluginMethods):
                 # assuming format inputs. ___
                 inp = d["key"].split(".")[-1]  # e.g inpDir
                 try:
-                    tp = [x["type"] for x in data["inputs"] if x["name"] == inp][0] # get type from i/o
+                    tp = [x["type"] for x in data["inputs"] if x["name"] == inp][
+                        0
+                    ]  # get type from i/o
                 except IndexError:
-                    tp = "string" # default to string
+                    tp = "string"  # default to string
                 except BaseException:
                     raise
 
@@ -628,7 +629,6 @@ class ComputePlugin(NewSchema, PluginMethods):
 
     def __repr__(self) -> str:
         return PluginMethods.__repr__(self)
-
 
 
 def is_valid_manifest(plugin: dict) -> bool:
@@ -687,6 +687,7 @@ def load_plugin(
         plugin = Plugin(**manifest)  # Old Schema
     return plugin
 
+
 def validate_manifest(
     manifest: typing.Union[str, dict, pathlib.Path]
 ) -> Union[WIPPPluginManifest, NewSchema]:
@@ -728,9 +729,7 @@ def submit_plugin(
     Returns:
         A Plugin object populated with information from the plugin manifest.
     """
-    plugin = validate_manifest(
-        manifest
-    )
+    plugin = validate_manifest(manifest)
     plugin_name = name_cleaner(plugin.name)
 
     # Get Major/Minor/Patch versions
@@ -750,7 +749,7 @@ def submit_plugin(
     # Refresh plugins list if refresh = True
     if refresh:
         plugins.refresh()
-    return plugin 
+    return plugin
 
 
 def add_plugin(
