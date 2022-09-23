@@ -1,4 +1,5 @@
 from pydantic import BaseModel, validator, PrivateAttr, Field, constr
+
 import typing
 import enum
 import logging

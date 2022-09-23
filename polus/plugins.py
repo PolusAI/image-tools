@@ -22,8 +22,10 @@ logger.setLevel(logging.INFO)
 plugins = _Plugins()
 get_plugin = plugins.get_plugin
 load_config = plugins.load_config
+
 plugins.WippPluginRegistry = WippPluginRegistry
 plugins.refresh()  # calls the refresh method when library is imported
+
 
 def update_polus_plugins(
     gh_auth: typing.Optional[str] = None, min_depth: int = 2, max_depth: int = 3
