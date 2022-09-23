@@ -349,6 +349,7 @@ class PluginMethods:
                 else:
                     args.append(str(i.value))
 
+
         for o in self.outputs:
             if o.value:  # do not include those with value=None
                 o._validate()
@@ -362,6 +363,7 @@ class PluginMethods:
 
                 else:
                     args.append(str(o.value))
+
 
         container_name = f"polus{random.randint(10, 99)}"
 
@@ -418,6 +420,7 @@ class PluginMethods:
     @property
     def manifest(self):
         return json.loads(self.json(exclude={"_io_keys", "versions"}))
+
 
     def __getattribute__(self, name):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
@@ -613,6 +616,7 @@ class ComputePlugin(NewSchema, PluginMethods):
         m = self._config
         m["class"] = "NewPlugin"
         return m
+
 
     def __setattr__(self, name, value):
         PluginMethods.__setattr__(self, name, value)
