@@ -343,6 +343,7 @@ class PluginMethods:
                 else:
                     args.append(str(i.value))
 
+
         for o in self.outputs:
             if o.value:  # do not include those with value=None
                 o._validate()
@@ -356,6 +357,7 @@ class PluginMethods:
 
                 else:
                     args.append(str(o.value))
+
 
         container_name = f"polus{random.randint(10, 99)}"
 
@@ -406,6 +408,7 @@ class PluginMethods:
     @property
     def manifest(self):
         return json.loads(self.json(exclude={"_io_keys", "versions"}))
+
 
     def __getattribute__(self, name):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
@@ -483,6 +486,7 @@ class Plugin(WIPPPluginManifest, PluginMethods):
             logger.warning(
                 f"The plugin ({self.name}) is missing the author field. This field is not required but should be filled in."
             )
+
 
     def new_schema(self, hardware_requirements: Optional[dict] = None):
         data = deepcopy(self.manifest)
@@ -606,6 +610,7 @@ class ComputePlugin(NewSchema, PluginMethods):
         for x in m["inputs"]:
             x["value"] = None
         return m
+
 
     def __setattr__(self, name, value):
         PluginMethods.__setattr__(self, name, value)
