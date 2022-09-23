@@ -406,6 +406,7 @@ class PluginMethods:
                 else:
                     args.append(str(i.value))
 
+
         for o in self.outputs:
             if o.value:  # do not include those with value=None
                 o._validate()
@@ -419,6 +420,7 @@ class PluginMethods:
 
                 else:
                     args.append(str(o.value))
+
 
         container_name = f"polus{random.randint(10, 99)}"
 
