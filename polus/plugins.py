@@ -40,7 +40,6 @@ from polus._plugins._io import Version, DuplicateVersionFound
 from polus._plugins._utils import name_cleaner
 
 from copy import deepcopy
-
 """
 Set up logging for the module
 """
@@ -361,6 +360,7 @@ class PluginMethods:
                 else:
                     args.append(str(i.value))
 
+
         for o in self.outputs:
             if o.value:  # do not include those with value=None
                 o._validate()
@@ -374,6 +374,7 @@ class PluginMethods:
 
                 else:
                     args.append(str(o.value))
+
 
         container_name = f"polus{random.randint(10, 99)}"
 
@@ -415,7 +416,6 @@ class PluginMethods:
                 **kwargs,
             )
             print(d)
-
 
     @property
     def versions(self):
@@ -635,6 +635,7 @@ class ComputePlugin(NewSchema, PluginMethods):
         for x in m["inputs"]:
             x["value"] = None
         return m
+
 
     def __setattr__(self, name, value):
         PluginMethods.__setattr__(self, name, value)
