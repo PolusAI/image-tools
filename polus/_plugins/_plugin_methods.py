@@ -5,12 +5,12 @@ import signal
 import typing
 import re
 from copy import deepcopy
-from .models.PolusComputeSchema import PluginUIInput, PluginUIOutput
+from .models import PluginUIInput, PluginUIOutput
 import pathlib
 import fsspec
 from python_on_whales import docker
 import logging
-from .models.PolusComputeSchema import PluginSchema as ComputeSchema
+from .models import ComputeSchema
 
 logger = logging.getLogger("polus.plugins")
 
@@ -30,11 +30,6 @@ class PluginMethods:
         out = {x.name: str(x.value) for x in self.outputs}
         config = {"inputs": inp, "outputs": out}
         return config
-
-    def save_manifest(self, path: typing.Union[str, pathlib.Path], indent: int = 4):
-        with open(path, "w") as fw:
-            json.dump(self.manifest, fw, indent=indent)
-        logger.debug("Saved manifest to %s" % (path))
 
     def save_config(self, path: typing.Union[str, pathlib.Path]):
         with open(path, "w") as fw:

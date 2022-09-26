@@ -30,7 +30,7 @@ WIPP_TYPES = {
 }
 
 
-class InputTypes(str, enum.Enum): # old schema
+class InputTypes(str, enum.Enum):  # wipp schema
     """This is needed until the json schema is updated"""
 
     collection = "collection"
@@ -54,7 +54,7 @@ class InputTypes(str, enum.Enum): # old schema
         return list(map(lambda c: c.value, cls))
 
 
-class OutputTypes(str, enum.Enum): # old schema
+class OutputTypes(str, enum.Enum):  # wipp schema
     """This is needed until the json schema is updated"""
 
     collection = "collection"
@@ -72,21 +72,19 @@ class OutputTypes(str, enum.Enum): # old schema
         return list(map(lambda c: c.value, cls))
 
 
-def _in_old_to_new(old: str) -> str: # map old InputType to new schema's InputType
-    """Map an InputType from old schema to one of new schema"""
-    d = {
-        "integer": "number",
-        "enum": "string"
-    }
+def _in_old_to_new(old: str) -> str:  # map wipp InputType to compute schema's InputType
+    """Map an InputType from wipp schema to one of compute schema"""
+    d = {"integer": "number", "enum": "string"}
     if old in ["string", "array", "number", "boolean"]:
         return old
     elif old in d:
-        return d[old] # integer or enum
+        return d[old]  # integer or enum
     else:
-        return "path" # everything else
+        return "path"  # everything else
 
-def _ui_old_to_new(old: str) -> str: # map old InputType to new schema's UIType
-    """Map an InputType from old schema to a UIType of new schema"""
+
+def _ui_old_to_new(old: str) -> str:  # map wipp InputType to compute schema's UIType
+    """Map an InputType from wipp schema to a UIType of compute schema"""
     type_dict = {
         "string": "text",
         "boolean": "checkbox",
@@ -100,7 +98,6 @@ def _ui_old_to_new(old: str) -> str: # map old InputType to new schema's UIType
         return "text"
 
 
-
 class IOBase(BaseModel):
 
     type: typing.Any
@@ -110,7 +107,6 @@ class IOBase(BaseModel):
     _fs: typing.Optional[typing.Type[fsspec.spec.AbstractFileSystem]] = PrivateAttr(
         default=None
     )  # type checking is done at plugin level
-
 
     def _validate(self):
 
@@ -139,7 +135,12 @@ class IOBase(BaseModel):
                 )
                 raise
         else:
-            value = WIPP_TYPES[self.type](value)
+            if isinstance(self.type, (InputTypes, OutputTypes)):  # wipp
+                value = WIPP_TYPES[self.type](value)
+            else:
+                value = WIPP_TYPES[self.type.value](
+                    value
+                )  # compute, type does not inherit from str
 
             if isinstance(value, pathlib.Path):
                 value = value.absolute()
@@ -166,9 +167,13 @@ class IOBase(BaseModel):
         if name == "value":
             self._validate()
 
+
 """ Plugin and Input/Output Classes """
+
+
 class Output(IOBase):
     """Required until JSON schema is fixed"""
+
     name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(  # noqa: F722
         ..., examples=["outputCollection"], title="Output name"
     )
@@ -182,6 +187,7 @@ class Output(IOBase):
 
 class Input(IOBase):
     """Required until JSON schema is fixed"""
+
     name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(  # noqa: F722
         ...,
         description="Input name as expected by the plugin CLI",

@@ -5,8 +5,8 @@ from ._io import Version, DuplicateVersionFound
 from .models.wipp import WIPPPluginManifest
 from ._utils import name_cleaner, cast_version
 from ._plugin_methods import PluginMethods
-from .models.compute import PluginUIInput, PluginUIOutput
-from .models.compute import PluginSchema as ComputeSchema
+from .models import PluginUIInput, PluginUIOutput
+from .models import ComputeSchema
 from ._manifests import _load_manifest, validate_manifest
 from ._io import Version, DuplicateVersionFound, _in_old_to_new, _ui_old_to_new
 from pydantic import Extra
@@ -166,11 +166,11 @@ class Plugin(WIPPPluginManifest, PluginMethods):
         self,
         path: typing.Union[str, pathlib.Path],
         hardware_requirements: typing.Optional[dict] = None,
-        new: bool = False,
+        compute: bool = False,
     ):
-        if new:
+        if compute:
             with open(path, "w") as fw:
-                self.new_schema(
+                self.to_compute(
                     hardware_requirements=hardware_requirements
                 ).save_manifest(path)
         else:
