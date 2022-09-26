@@ -141,6 +141,7 @@ class _Plugins:
             m = config
         else:
             raise TypeError("config must be a dict or a path")
+
         _io = m["_io_keys"]
         # m.pop("_io_keys", None)
         cl = m["class"]
@@ -156,6 +157,7 @@ class _Plugins:
             if val:  # exclude those values not set
                 setattr(pl, k, val)
         return pl
+
 
     def refresh(self, force: bool = False):
         """Refresh the plugin list
@@ -405,6 +407,11 @@ class PluginMethods:
                 **kwargs,
             )
             print(d)
+
+
+    @property
+    def versions(self):
+        return list(PLUGINS[name_cleaner(self.name)])
 
     @property
     def versions(self):
@@ -691,7 +698,6 @@ def load_plugin(
         plugin = Plugin(**manifest)  # Old Schema
     return plugin
 
-
 def validate_manifest(
     manifest: typing.Union[str, dict, pathlib.Path]
 ) -> Union[WIPPPluginManifest, NewSchema]:
@@ -754,6 +760,7 @@ def submit_plugin(
     if refresh:
         plugins.refresh()
     return plugin
+
 
 
 def add_plugin(
