@@ -19,11 +19,8 @@ import fsspec
 from typing import Union, Optional
 from python_on_whales import docker
 
-from pydantic import BaseModel, Extra, errors, validator
-from pydantic.error_wrappers import ValidationError
+from pydantic import Extra, errors, ValidationError
 import github
-from polus._plugins._plugin_model import Input as WippInput
-from polus._plugins._plugin_model import Output as WippOutput
 from polus._plugins._plugin_model import WIPPPluginManifest
 from polus._plugins._registry import (
     _generate_query,
@@ -36,9 +33,12 @@ from requests.exceptions import HTTPError
 from polus._plugins.PolusComputeSchema import PluginSchema as NewSchema  # new schema
 from polus._plugins.PolusComputeSchema import (
     PluginUIInput,
-    PluginUIOutput,
-    PluginHardwareRequirements,
+    PluginUIOutput
 )
+
+from polus._plugins._io import Version, DuplicateVersionFound, _in_old_to_new, _ui_old_to_new
+from polus._plugins._utils import name_cleaner
+
 from copy import deepcopy
 
 """
@@ -90,14 +90,16 @@ def init_github(auth=None):
 Plugin Fetcher Class
 """
 PLUGINS = {}
-VERSIONS = {}
+# PLUGINS = {"BasicFlatfieldCorrectionPlugin":
+#               {Version('0.1.4'): Path(<...>), Version('0.1.5'): Path(<...>)}.
+#            "VectorToLabel": {Version(...)}}
 
 
-class _Plugins(object):
-    def __getattribute__(cls, name):
-        if name in PLUGINS.keys():
-            return PLUGINS[name].copy()
-        return object.__getattribute__(cls, name)
+class _Plugins:
+    def __getattribute__(self, name):
+        if name in PLUGINS:
+            return self.get_plugin(name)
+        return super().__getattribute__(name)
 
     def __len__(self):
         return len(self.list)
@@ -111,7 +113,8 @@ class _Plugins(object):
         output.sort()
         return output
 
-    def get_plugin(self, name: str, version: typing.Optional[str] = None):
+    @classmethod
+    def get_plugin(cls, name: str, version: typing.Optional[str] = None):
         """Returns a plugin object.
 
         Return a plugin object with the option to specify a version. The specified version's manifest must exist in manifests folder.
@@ -124,9 +127,9 @@ class _Plugins(object):
             Plugin object
         """
         if version is None:
-            return getattr(self, name)
+            return load_plugin(PLUGINS[name][max(PLUGINS[name])])
         else:
-            return submit_plugin(VERSIONS[name][version])
+            return load_plugin(PLUGINS[name][Version(**{"version": version})])
 
     def load_config(self, path: typing.Union[str, pathlib.Path]):
         with open(path, "r") as fr:
@@ -147,6 +150,7 @@ class _Plugins(object):
                 setattr(pl, k, val)
         return pl
 
+
     def refresh(self, force: bool = False):
         """Refresh the plugin list
 
@@ -163,43 +167,18 @@ class _Plugins(object):
 
             for file in org.iterdir():
 
-                with open(file, "r") as fr:
-                    plugin = submit_plugin(json.load(fr))
-
+                plugin = validate_manifest(pathlib.Path(file))
+                key = name_cleaner(plugin.name)
                 # Add version and path to VERSIONS
-                if plugin.__class__.__name__ not in VERSIONS.keys():
-                    VERSIONS[plugin.__class__.__name__] = {}
-
-                VERSIONS[plugin.__class__.__name__][plugin.version.version] = file
-
-                if not force:
-                    # Create the entry if it doesn't exist
-                    if plugin.__class__.__name__ not in PLUGINS.keys():
-                        PLUGINS[plugin.__class__.__name__] = plugin
-
-                    # If the entry exists, update it if the current version is newer
-                    elif PLUGINS[plugin.__class__.__name__] < plugin:
-                        PLUGINS[plugin.__class__.__name__] = plugin
-
-                    # Add the current version to the list of available versions
-                    if (
-                        plugin.version
-                        not in PLUGINS[plugin.__class__.__name__].versions
-                    ):
-                        PLUGINS[plugin.__class__.__name__].versions.append(
-                            plugin.version
+                if key not in PLUGINS:
+                    PLUGINS[key] = {}
+                if plugin.version in PLUGINS[key]:
+                    if not file == PLUGINS[key][plugin.version]:
+                        raise DuplicateVersionFound(
+                            "Found duplicate version of plugin %s in %s"
+                            % (plugin.name, PLUGIN_DIR)
                         )
-                else:  # if Force. All plugins are rewritten
-                    PLUGINS[plugin.__class__.__name__] = plugin
-
-                    # Add the current version to the list of available versions
-                    if (
-                        plugin.version
-                        not in PLUGINS[plugin.__class__.__name__].versions
-                    ):
-                        PLUGINS[plugin.__class__.__name__].versions.append(
-                            plugin.version
-                        )
+                PLUGINS[key][plugin.version] = file
 
 
 plugins = _Plugins()
@@ -223,48 +202,6 @@ REQUIRED_FIELDS = [
     "outputs",
     "ui",
 ]
-
-
-class OutputTypes(str, enum.Enum):
-    """This is needed until the json schema is updated"""
-
-    collection = "collection"
-    pyramid = "pyramid"
-    csvCollection = "csvCollection"
-    genericData = "genericData"
-    stitchingVector = "stitchingVector"
-    notebook = "notebook"
-    tensorflowModel = "tensorflowModel"
-    tensorboardLogs = "tensorboardLogs"
-    pyramidAnnotation = "pyramidAnnotation"
-
-    @classmethod
-    def list(cls):
-        return list(map(lambda c: c.value, cls))
-
-
-""" Plugin and Input/Output Classes """
-
-
-class Output(WippOutput, IOBase):
-    """Required until JSON schema is fixed"""
-
-    type: OutputTypes
-
-
-class Input(WippInput, IOBase):
-    """Required until JSON schema is fixed"""
-
-    type: InputTypes
-
-    def __init__(self, **data):
-
-        super().__init__(**data)
-
-        if self.description is None:
-            logger.warning(
-                f"The input ({self.name}) is missing the description field. This field is not required but should be filled in."
-            )
 
 
 # class RunSettings(object):
@@ -463,9 +400,15 @@ class PluginMethods:
             )
             print(d)
 
+
+    @property
+    def versions(self):
+        return list(PLUGINS[name_cleaner(self.name)])
+
     @property
     def manifest(self):
-        return json.loads(self.json(exclude={"_io_keys"}))
+        return json.loads(self.json(exclude={"_io_keys", "versions"}))
+
 
     def __getattribute__(self, name):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
@@ -505,21 +448,21 @@ class PluginMethods:
         super().__setattr__(name, value)
 
     def __lt__(self, other):
-
         return self.version < other.version
 
     def __gt__(self, other):
 
         return other.version < self.version
 
+    
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(name='{self.name}', version={self.version.version})"
+
+
 
 class Plugin(WIPPPluginManifest, PluginMethods):
     """Required until json schema is fixed"""
 
-    version: Version
-    inputs: typing.List[Input]
-    outputs: typing.List[Output]
-    versions: typing.List[Version] = []
     id: uuid.UUID
 
     class Config:
@@ -544,11 +487,6 @@ class Plugin(WIPPPluginManifest, PluginMethods):
                 f"The plugin ({self.name}) is missing the author field. This field is not required but should be filled in."
             )
 
-    @validator("version", pre=True)
-    def cast_version(cls, value):
-        if isinstance(value, dict):  # if init from a Version object
-            value = value["version"]
-        return Version(version=value)
 
     def new_schema(self, hardware_requirements: Optional[dict] = None):
         data = deepcopy(self.manifest)
@@ -560,25 +498,20 @@ class Plugin(WIPPPluginManifest, PluginMethods):
         self,
         path: typing.Union[str, pathlib.Path],
         hardware_requirements: Optional[dict] = None,
-        indent: int = 4,
-        old: bool = False,
+        new: bool = False,
     ):
-        if not old:
+        if new:
             with open(path, "w") as fw:
-                d = self.new_schema(hardware_requirements=hardware_requirements).json()
-                d = json.loads(d)
-                json.dump(
-                    d,
-                    fw,
-                    indent=indent,
-                )
+                self.new_schema(
+                    hardware_requirements=hardware_requirements
+                ).save_manifest(path)
         else:
             with open(path, "w") as fw:
                 d = self.manifest
                 json.dump(
                     d,
                     fw,
-                    indent=indent,
+                    indent=4,
                 )
 
         logger.debug("Saved manifest to %s" % (path))
@@ -599,18 +532,14 @@ class Plugin(WIPPPluginManifest, PluginMethods):
             json.dump(self._config_file, fw, indent=4)
         logger.debug("Saved config to %s" % (path))
 
+    def __repr__(self) -> str:
+        return PluginMethods.__repr__(self)
+
 
 class ComputePlugin(NewSchema, PluginMethods):
     class Config:
         extra = Extra.allow
         allow_mutation = False
-
-    @validator("version", pre=True)
-    def cast_version(cls, value):
-        if isinstance(value, dict):  # if init from a Version object
-            value = value["version"]
-
-        return Version(version=value)
 
     def __init__(
         self,
@@ -626,48 +555,37 @@ class ComputePlugin(NewSchema, PluginMethods):
             data["id"] = uuid.UUID(data["id"])
 
         if _from_old:
-            type_dict = {
-                "path": "text",
-                "string": "text",
-                "boolean": "checkbox",
-                "number": "number",
-                "array": "text",
-                "integer": "number",
-            }
 
-            def _clean(d: dict):
-                rg = re.compile("Dir")
-                if d["type"] == "collection":
-                    d["type"] = "path"
-                elif bool(rg.search(d["name"])):
-                    d["type"] = "path"
-                elif d["type"] == "enum":
-                    d["type"] = "string"
-                elif d["type"] == "integer":
-                    d["type"] = "number"
+
+            def _convert_input(d: dict):
+                d["type"] = _in_old_to_new(d["type"])
+                return d
+
+            def _convert_output(d: dict):
+                d["type"] = "path"
                 return d
 
             def _ui_in(d: dict):  # assuming old all ui input
                 # assuming format inputs. ___
                 inp = d["key"].split(".")[-1]  # e.g inpDir
                 try:
-                    tp = [x["type"] for x in data["inputs"] if x["name"] == inp][0]
+                    tp = [x["type"] for x in data["inputs"] if x["name"] == inp][0] # get type from i/o
                 except IndexError:
-                    tp = "string"
+                    tp = "string" # default to string
                 except BaseException:
                     raise
 
-                d["type"] = type_dict[tp]
+                d["type"] = _ui_old_to_new(tp)
                 return PluginUIInput(**d)
 
             def _ui_out(d: dict):
                 nd = deepcopy(d)
                 nd["name"] = "outputs." + nd["name"]
-                nd["type"] = type_dict[nd["type"]]
+                nd["type"] = _ui_old_to_new(nd["type"])
                 return PluginUIOutput(**nd)
 
-            data["inputs"] = [_clean(x) for x in data["inputs"]]
-            data["outputs"] = [_clean(x) for x in data["outputs"]]
+            data["inputs"] = [_convert_input(x) for x in data["inputs"]]
+            data["outputs"] = [_convert_output(x) for x in data["outputs"]]
             data["pluginHardwareRequirements"] = {}
             data["ui"] = [_ui_in(x) for x in data["ui"]]  # inputs
             data["ui"].extend([_ui_out(x) for x in data["outputs"]])  # outputs
@@ -675,7 +593,6 @@ class ComputePlugin(NewSchema, PluginMethods):
         if hardware_requirements:
             for k, v in hardware_requirements.items():
                 data["pluginHardwareRequirements"][k] = v
-
         super().__init__(**data)
         self.Config.allow_mutation = True
         self._io_keys = {i.name: i for i in self.inputs}
@@ -708,6 +625,10 @@ class ComputePlugin(NewSchema, PluginMethods):
             json.dump(self.manifest, fw, indent=4)
         logger.debug("Saved manifest to %s" % (path))
 
+    def __repr__(self) -> str:
+        return PluginMethods.__repr__(self)
+
+
 
 def is_valid_manifest(plugin: dict) -> bool:
     """Validates basic attributes of a plugin manifest.
@@ -730,26 +651,11 @@ def is_valid_manifest(plugin: dict) -> bool:
     return True
 
 
-def submit_plugin(
-    manifest: typing.Union[str, dict, pathlib.Path],
-    refresh: bool = False,
-) -> Union[Plugin, ComputePlugin]:
-    """Parses a plugin and returns a Plugin object.
-
-    This function accepts a plugin manifest as a string, a dictionary (parsed
-    json), or a pathlib.Path object pointed at a plugin manifest.
-
-    Args:
-        manifest:
-        A plugin manifest. It can be a url, a dictionary,
-        a path to a JSON file or a string that can be parsed as a dictionary
-
-    Returns:
-        A Plugin object populated with information from the plugin manifest.
-    """
-
-    """ Convert to dictionary if pathlib.Path or str, validate manifest """
-    if isinstance(manifest, pathlib.Path):
+def _load_manifest(manifest: typing.Union[str, dict, pathlib.Path]) -> dict:
+    """Convert to dictionary if pathlib.Path or str"""
+    if isinstance(manifest, dict):
+        return manifest
+    elif isinstance(manifest, pathlib.Path):
         assert (
             manifest.suffix == ".json"
         ), "Plugin manifest must be a json file with .json extension."
@@ -762,21 +668,69 @@ def submit_plugin(
             manifest = json.loads(manifest)
         else:
             manifest = requests.get(manifest).json()
-    if not isinstance(manifest, dict):
-        raise ValueError("invalid manifest")
-
-    """Create a Plugin subclass"""
-    replace_chars = "()<>-_"
-    plugin_name = manifest["name"]
-    for char in replace_chars:
-        plugin_name = plugin_name.replace(char, " ")
-    plugin_name = plugin_name.title().replace(" ", "").replace("/", "_")
-    if "pluginHardwareRequirements" in manifest:
-        plugin = ComputePlugin(**manifest)
     else:
-        plugin_class = type(plugin_name, (Plugin,), {})
+        raise ValueError("invalid manifest")
+    return manifest
+
+
+def load_plugin(
+    manifest: typing.Union[str, dict, pathlib.Path]
+) -> Union[Plugin, ComputePlugin]:
+    """Parses a manifest and returns one of Plugin or ComputePlugin"""
+    manifest = _load_manifest(manifest)
+    if "pluginHardwareRequirements" in manifest:
         # Parse the manifest
-        plugin = plugin_class(**manifest)
+        plugin = ComputePlugin(**manifest)  # New Schema
+    else:
+        # Parse the manifest
+        plugin = Plugin(**manifest)  # Old Schema
+    return plugin
+
+def validate_manifest(
+    manifest: typing.Union[str, dict, pathlib.Path]
+) -> Union[WIPPPluginManifest, NewSchema]:
+    """Validates a plugin manifest against schema"""
+    manifest = _load_manifest(manifest)
+    if "pluginHardwareRequirements" in manifest:
+        # Parse the manifest
+        try:
+            plugin = NewSchema(**manifest)  # New Schema
+        except ValidationError as err:
+            raise err
+        except BaseException as e:
+            raise e
+    else:
+        # Parse the manifest
+        try:
+            plugin = WIPPPluginManifest(**manifest)  # New Schema
+        except ValidationError as err:
+            raise err
+        except BaseException as e:
+            raise e
+    return plugin
+
+
+def submit_plugin(
+    manifest: typing.Union[str, dict, pathlib.Path],
+    refresh: bool = False,
+):
+    """Parses a plugin and creates a local copy of it.
+
+    This function accepts a plugin manifest as a string, a dictionary (parsed
+    json), or a pathlib.Path object pointed at a plugin manifest.
+
+    Args:
+        manifest:
+        A plugin manifest. It can be a url, a dictionary,
+        a path to a JSON file or a string that can be parsed as a dictionary
+
+    Returns:
+        A Plugin object populated with information from the plugin manifest.
+    """
+    plugin = validate_manifest(
+        manifest
+    )
+    plugin_name = name_cleaner(plugin.name)
 
     # Get Major/Minor/Patch versions
     out_name = (
@@ -785,7 +739,8 @@ def submit_plugin(
     )
 
     # Save the manifest if it doesn't already exist in the database
-    org_path = PLUGIN_DIR.joinpath(plugin.organization.lower())
+    organization = plugin.containerId.split("/")[0]
+    org_path = PLUGIN_DIR.joinpath(organization.lower())
     org_path.mkdir(exist_ok=True, parents=True)
     if not org_path.joinpath(out_name).exists():
         with open(org_path.joinpath(out_name), "w") as fw:
@@ -794,9 +749,7 @@ def submit_plugin(
     # Refresh plugins list if refresh = True
     if refresh:
         plugins.refresh()
-
-    # Return in case additional QA checks should be made
-    return plugin
+    return plugin 
 
 
 def add_plugin(
@@ -982,7 +935,14 @@ def update_polus_plugins(
                 raise ValidationError(error_list, plugin.__class__)
 
         except ValidationError as val_err:
-            _error_log(val_err, manifest, "update_polus_plugins")
+            try:
+                _error_log(val_err, manifest, "update_polus_plugins")
+            except BaseException as e:
+                # logger.debug(f"There was an error {e} in {plugin.name}")
+                logger.exception(f"In {plugin.name}: {e}")
+        except BaseException as e:
+            # logger.debug(f"There was an error {e} in {plugin.name}")
+            logger.exception(f"In {plugin.name}: {e}")
 
 
 def update_nist_plugins(gh_auth: typing.Optional[str] = None):

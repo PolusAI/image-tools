@@ -1,9 +1,13 @@
-from pydantic import BaseModel, validator, PrivateAttr
+from pydantic import BaseModel, validator, PrivateAttr, Field, constr
+
 import typing
 import enum
 import logging
 import pathlib
 import fsspec
+
+logger = logging.getLogger("polus.plugins")
+
 
 """
 Enums for validating plugin input, output, and ui components
@@ -28,7 +32,7 @@ WIPP_TYPES = {
 }
 
 
-class InputTypes(str, enum.Enum):
+class InputTypes(str, enum.Enum): # old schema
     """This is needed until the json schema is updated"""
 
     collection = "collection"
@@ -50,6 +54,53 @@ class InputTypes(str, enum.Enum):
     @classmethod
     def list(cls):
         return list(map(lambda c: c.value, cls))
+
+
+class OutputTypes(str, enum.Enum): # old schema
+    """This is needed until the json schema is updated"""
+
+    collection = "collection"
+    pyramid = "pyramid"
+    csvCollection = "csvCollection"
+    genericData = "genericData"
+    stitchingVector = "stitchingVector"
+    notebook = "notebook"
+    tensorflowModel = "tensorflowModel"
+    tensorboardLogs = "tensorboardLogs"
+    pyramidAnnotation = "pyramidAnnotation"
+
+    @classmethod
+    def list(cls):
+        return list(map(lambda c: c.value, cls))
+
+
+def _in_old_to_new(old: str) -> str: # map old InputType to new schema's InputType
+    """Map an InputType from old schema to one of new schema"""
+    d = {
+        "integer": "number",
+        "enum": "string"
+    }
+    if old in ["string", "array", "number", "boolean"]:
+        return old
+    elif old in d:
+        return d[old] # integer or enum
+    else:
+        return "path" # everything else
+
+def _ui_old_to_new(old: str) -> str: # map old InputType to new schema's UIType
+    """Map an InputType from old schema to a UIType of new schema"""
+    type_dict = {
+        "string": "text",
+        "boolean": "checkbox",
+        "number": "number",
+        "array": "text",
+        "integer": "number",
+    }
+    if old in type_dict:
+        return type_dict[old]
+    else:
+        return "text"
+
 
 
 class IOBase(BaseModel):
@@ -117,12 +168,53 @@ class IOBase(BaseModel):
         if name == "value":
             self._validate()
 
+""" Plugin and Input/Output Classes """
+class Output(IOBase):
+    """Required until JSON schema is fixed"""
+    name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(  # noqa: F722
+        ..., examples=["outputCollection"], title="Output name"
+    )
+    type: OutputTypes = Field(
+        ..., examples=["stitchingVector", "collection"], title="Output type"
+    )
+    description: constr(regex=r"^(.*)$") = Field(  # noqa: F722
+        ..., examples=["Output collection"], title="Output description"
+    )
+
+
+class Input(IOBase):
+    """Required until JSON schema is fixed"""
+    name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(  # noqa: F722
+        ...,
+        description="Input name as expected by the plugin CLI",
+        examples=["inputImages", "fileNamePattern", "thresholdValue"],
+        title="Input name",
+    )
+    type: InputTypes
+    description: constr(regex=r"^(.*)$") = Field(  # noqa: F722
+        ..., examples=["Input Images"], title="Input description"
+    )
+    required: typing.Optional[bool] = Field(
+        True,
+        description="Whether an input is required or not",
+        examples=[True],
+        title="Required input",
+    )
+
+    def __init__(self, **data):
+
+        super().__init__(**data)
+
+        if self.description is None:
+            logger.warning(
+                f"The input ({self.name}) is missing the description field. This field is not required but should be filled in."
+            )
+
 
 class Version(BaseModel):
     version: str
 
     def __init__(self, version):
-
         super().__init__(version=version)
 
     @validator("version")
@@ -178,3 +270,10 @@ class Version(BaseModel):
             and other.minor == self.minor
             and other.patch == self.patch
         )
+
+    def __hash__(self):
+        return hash(self.version)
+
+
+class DuplicateVersionFound(Exception):
+    pass

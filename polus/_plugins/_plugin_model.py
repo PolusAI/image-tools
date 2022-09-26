@@ -7,65 +7,9 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, List, Optional, Union
 
-from pydantic import BaseModel, Field, constr
-
-
-class Type(Enum):
-    collection = "collection"
-    stitchingVector = "stitchingVector"
-    tensorflowModel = "tensorflowModel"
-    csvCollection = "csvCollection"
-    pyramid = "pyramid"
-    notebook = "notebook"
-    string = "string"
-    number = "number"
-    integer = "integer"
-    enum = "enum"
-    array = "array"
-    boolean = "boolean"
-
-
-class Input(BaseModel):
-    name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(  # noqa: F722
-        ...,
-        description="Input name as expected by the plugin CLI",
-        examples=["inputImages", "fileNamePattern", "thresholdValue"],
-        title="Input name",
-    )
-    type: Type = Field(
-        ..., examples=["collection", "string", "number"], title="Input Type"
-    )
-    description: constr(regex=r"^(.*)$") = Field(  # noqa: F722
-        ..., examples=["Input Images"], title="Input description"
-    )
-    required: Optional[bool] = Field(
-        True,
-        description="Whether an input is required or not",
-        examples=[True],
-        title="Required input",
-    )
-
-
-class Type1(Enum):
-    collection = "collection"
-    stitchingVector = "stitchingVector"
-    tensorflowModel = "tensorflowModel"
-    tensorboardLogs = "tensorboardLogs"
-    csvCollection = "csvCollection"
-    pyramid = "pyramid"
-
-
-class Output(BaseModel):
-    name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(  # noqa: F722
-        ..., examples=["outputCollection"], title="Output name"
-    )
-    type: Type1 = Field(
-        ..., examples=["stitchingVector", "collection"], title="Output type"
-    )
-    description: constr(regex=r"^(.*)$") = Field(  # noqa: F722
-        ..., examples=["Output collection"], title="Output description"
-    )
-
+from pydantic import BaseModel, Field, constr, validator
+from ._io import Input, Output, Version
+from ._utils import utils_cast_version
 
 class UiItem(BaseModel):
     key: Union[Any, Any] = Field(
@@ -81,9 +25,7 @@ class WIPPPluginManifest(BaseModel):
     name: constr(regex=r"^(.*)$", min_length=1) = Field(  # noqa: F722
         ..., examples=["My Awesome Plugin"], title="Name of the plugin"
     )
-    version: constr(regex=r"^(.*)$", min_length=1) = Field(  # noqa: F722
-        ..., examples=["1.0.0"], title="Plugin version"
-    )
+    version: Version
     title: constr(regex=r"^(.*)$", min_length=1) = Field(  # noqa: F722
         ..., examples=["My really awesome plugin"], title="Plugin title"
     )
@@ -126,3 +68,7 @@ class WIPPPluginManifest(BaseModel):
         ..., description="Defines the outputs of the plugin", title="List of Outputs"
     )
     ui: List[UiItem] = Field(..., title="Plugin form UI definition")
+
+    @validator("version", pre=True)
+    def cast_version(cls, value):
+        return utils_cast_version(value)
