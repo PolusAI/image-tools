@@ -1,6 +1,9 @@
-from .PolusComputeSchema import PluginUIInput, PluginUIOutput
-from .PolusComputeSchema import PluginSchema as ComputeSchema
-from .WIPPPluginSchema import WIPPPluginManifest
+from .compute import (
+    PluginSchema as ComputeSchema,
+    PluginUIInput,
+    PluginUIOutput,
+)
+from .wipp import WIPPPluginManifest
 
 __all__ = [
     "WIPPPluginManifest",
