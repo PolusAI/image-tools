@@ -237,7 +237,6 @@ def main(
         # TODO: Use filePattern output_name method for file names
         # fname = fp.output_name(plane).split('.')[0] + '.txt'
         fname = "img-global-positions-{}.txt".format(i+1)
-        fpath = str(pathlib.Path(outDir).joinpath("img-global-positions-1.txt").absolute())
         logger.info("Building stitching vector {}".format(fname))
         fpath = str(pathlib.Path(outDir).joinpath(fname).absolute())
         max_dim = len(layout_dimensions["grid_size"]) - 1
