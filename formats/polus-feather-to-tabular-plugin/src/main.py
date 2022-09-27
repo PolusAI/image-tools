@@ -30,12 +30,12 @@ logger = logging.getLogger("main")
 logger.setLevel(POLUS_LOG)
 
 
-def feather_to_tabular(file: Path, file_format: str, outDir: Path) -> None:
+def feather_to_tabular(file: Path, fileFormat: str, outDir: Path) -> None:
     """Converts feather file into tabular file using pyarrow
 
     Args:
         file (Path): Path to input file.
-        file_format (str): Filepattern of desired tabular output file.
+        fileFormat (str): Filepattern of desired tabular output file.
         outDir (Path): Path to output directory.
     Returns:
         Tabular File
@@ -47,7 +47,7 @@ def feather_to_tabular(file: Path, file_format: str, outDir: Path) -> None:
     file_name = Path(filepath).stem
     logger.info("Feather CONVERSION: Copy ${file_name} into outDir for processing...")
 
-    output_file = os.path.join(outDir, (file_name + file_format))
+    output_file = os.path.join(outDir, (file_name + fileFormat))
 
     logger.info("Feather CONVERSION: Converting file into PyArrow Table")
 
@@ -59,12 +59,12 @@ def feather_to_tabular(file: Path, file_format: str, outDir: Path) -> None:
 
     logger.info("Feather CONVERSION: checking for file format")
 
-    if file_format == ".csv":
+    if fileFormat == ".csv":
         logger.info("Feather CONVERSION: converting PyArrow Table into .csv file")
         # Streaming contents of Arrow Table into csv
         return data.export_csv(output_file, chunksize=chunk_size)
         
-    elif file_format == ".parquet":
+    elif fileFormat == ".parquet":
         logger.info("Feather CONVERSION: converting PyArrow Table into .parquet file")
         return data.export_parquet(output_file)
     # If neither, log error
@@ -76,7 +76,7 @@ def feather_to_tabular(file: Path, file_format: str, outDir: Path) -> None:
 
 def main(
     inpDir: Path,
-    file_format: str,
+    fileFormat: str,
     outDir: Path,
 ) -> None:
     """Main execution function"""
@@ -91,7 +91,7 @@ def main(
         for files in fp:
             file = files[0]
             processes.append(
-                executor.submit(feather_to_tabular, file, file_format, outDir)
+                executor.submit(feather_to_tabular, file, fileFormat, outDir)
             )
 
         for process in tq.tqdm(
@@ -120,8 +120,8 @@ if __name__ == "__main__":
         required=True,
     )
     parser.add_argument(
-        "--file_format",
-        dest="file_format",
+        "--fileFormat",
+        dest="fileFormat",
         type=str,
         help="File Extension to convert into Feather file format",
         required=True,
@@ -134,8 +134,8 @@ if __name__ == "__main__":
     # Parse the arguments
     args = parser.parse_args()
 
-    file_format = args.file_format
-    logger.info("file_format = {}".format(file_format))
+    fileFormat = args.fileFormat
+    logger.info("fileFormat = {}".format(fileFormat))
 
     inpDir = Path(args.inpDir)
     logger.info("inpDir = {}".format(inpDir))
@@ -143,4 +143,4 @@ if __name__ == "__main__":
     outDir = Path(args.outDir)
     logger.info("outDir = {}".format(outDir))
 
-    main(inpDir=inpDir, file_format=file_format, outDir=outDir)
+    main(inpDir=inpDir, fileFormat=fileFormat, outDir=outDir)

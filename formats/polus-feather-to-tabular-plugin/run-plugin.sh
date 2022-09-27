@@ -2,7 +2,7 @@
 
 #!/bin/bash
 version=$(<VERSION)
-datapath='/Users/mezukn/Desktop/polus/s3/data/'
+datapath=''
 
 # Inputs
 inpDir=/data/feather
