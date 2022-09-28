@@ -1,0 +1,89 @@
+{
+    "name": "Image Calculator",
+    "version": "0.1.0",
+    "title": "Image Calculator",
+    "description": "Perform simple mathematical operations on images.",
+    "author": "Nick Schaub (nick.schaub@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "polusai/image-calculator-plugin:0.1.0",
+    "inputs": [
+      {
+        "name": "primaryDir",
+        "type": "collection",
+        "description": "The first set of images",
+        "required": true
+      },
+      {
+        "name": "primaryPattern",
+        "type": "string",
+        "description": "Filename pattern used to separate data",
+        "required": false
+      },
+      {
+        "name": "operator",
+        "type": "enum",
+        "description": "The operation to perform",
+        "required": true,
+        "options": {
+          "values": [
+                     "add",
+                     "subtract",
+                     "multiply",
+                     "divide",
+                     "and",
+                     "or",
+                     "xor"
+          ]
+        }
+      },
+      {
+        "name": "secondaryDir",
+        "type": "collection",
+        "description": "The second set of images",
+        "required": true
+      },
+      {
+        "name": "secondaryPattern",
+        "type": "string",
+        "description": "Filename pattern used to separate data",
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "collection",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.primaryDir",
+        "title": "First image collection",
+        "description": "The first set of images"
+      },
+      {
+        "key": "inputs.primaryPattern",
+        "title": "Filename pattern",
+        "description": "Filename pattern used to separate data"
+      },
+      {
+        "key": "inputs.operator",
+        "title": "Operation",
+        "description": "The operation to perform"
+      },
+      {
+        "key": "inputs.secondaryDir",
+        "title": "Second image collection",
+        "description": "The second set of images"
+      },
+      {
+        "key": "inputs.secondaryPattern",
+        "title": "Filename pattern",
+        "description": "Filename pattern used to separate data"
+      }
+    ]
+  }
