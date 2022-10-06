@@ -13,7 +13,7 @@ from utils import Dataset, Tile, UnTile
 # TILE_SIZE must be a multiple of 1024
 TILE_SIZE = 2048
 MODEL_TILE_SIZE = 512
-BATCH_SIZE = 5
+BATCH_SIZE = 1
 
 
 def thread_loader(image_path, device):
@@ -80,9 +80,9 @@ def run_inference(
             for image_path in batches[0]:
                 load_threads.append(executor.submit(thread_loader, image_path, device))
 
-            patch, shape = tile(patch)
-
             with torch.no_grad():
+
+                patch, shape = tile(patch)
                 prediction = model.forward(patch.to(device))
                 prediction = untile(prediction, shape)
 
@@ -104,7 +104,7 @@ def run_inference(
 
         with torch.no_grad():
             prediction = model.forward(patch.to(device))
-            prediction = untile(prediction, shape).cpu().numpy()[:, 0, :-1, :-1]
+            prediction = untile(prediction, shape)
 
         for t in save_threads:
             t.result()
