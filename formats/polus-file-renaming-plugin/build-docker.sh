@@ -1,3 +1,3 @@
 #!/bin/bash
 version=$(<VERSION)
-docker build . -t labshare/polus-file-renaming-plugin:${version}
+docker build . -t polusai/file-renaming:${version}

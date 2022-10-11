@@ -5,10 +5,10 @@
     "description": "Rename and store image collection files in a new image collection",
     "author": "Melanie Parham (melanie.parham@axleinfo.com)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-    "repository": "https://github.com/labshare/polus-plugins",
+    "repository": "https://github.com/PolusAI/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-file-renaming-plugin:0.1.17",
+    "containerId": "polusai/file-renaming:0.1.17",
     "inputs": [
       {
         "name": "filePattern",
