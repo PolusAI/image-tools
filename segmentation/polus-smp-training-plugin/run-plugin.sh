@@ -41,7 +41,7 @@ docker run --mount type=bind,source="${data_path}",target=/data \
             --rm \
             --gpus "all" \
             --privileged -v /dev:/dev \
-            labshare/polus-smp-training-plugin:"${version}" \
+            polusai/smp-training-plugin:"${version}" \
             --modelName ${modelName} \
             --encoderBase ${encoderBase} \
             --encoderVariant ${encoderVariant} \
