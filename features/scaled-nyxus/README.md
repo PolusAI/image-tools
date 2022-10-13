@@ -10,11 +10,11 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 # Note
 Currently filepattern Python package is not implemented yet in the plugin and will be added later. Use a simplified regular expression to extract image replicates. There are five replicate images in the following below example
-`p001_x01_y01_wx01_wy01_c01.ome.tif`
-`p002_x01_y01_wx01_wy01_c01.ome.tif`
-`p003_x01_y01_wx01_wy01_c01.ome.tif`
-`p004_x01_y01_wx01_wy01_c01.ome.tif`
-`p005_x01_y01_wx01_wy01_c01.ome.tif`
+**1** `p001_x01_y01_wx01_wy01_c01.ome.tif`
+**2** `p002_x01_y01_wx01_wy01_c01.ome.tif`
+**3** `p003_x01_y01_wx01_wy01_c01.ome.tif`
+**4** `p004_x01_y01_wx01_wy01_c01.ome.tif`
+**5** `p005_x01_y01_wx01_wy01_c01.ome.tif`
 
 Use `filePattern=p{p+}.*.ome.tif`
 
