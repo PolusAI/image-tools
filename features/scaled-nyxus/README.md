@@ -1,11 +1,22 @@
 # Scaled Nyxus
 
 
-Scaled Nyxus plugin use parallel processing to extract nyxus features from intensity-label image data. Especially useful when processing high throughput screens.
+Scaled Nyxus plugin uses parallel processing of [Nyxus python package](https://pypi.org/project/nyxus/) to extract nyxus features from intensity-label image data. Especially useful when processing high throughput screens.
 
 Contact [Hamdah Shafqat Abbasi](mailto: hamdah.abbasi@axleinfo.com) for more information.
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
+
+
+# Note
+Currently filepattern Python package is not implemented yet in the plugin and will be added later. Use a simplified regular expression to extract image replicates. There are five replicate images in the following below example
+`p001_x01_y01_wx01_wy01_c01.ome.tif`
+`p002_x01_y01_wx01_wy01_c01.ome.tif`
+`p003_x01_y01_wx01_wy01_c01.ome.tif`
+`p004_x01_y01_wx01_wy01_c01.ome.tif`
+`p005_x01_y01_wx01_wy01_c01.ome.tif`
+
+Use `filePattern=p{p+}.*.ome.tif`
 
 
 ## Building
@@ -27,7 +38,7 @@ This plugin takes six input arguments and one output argument:
 | `--inpDir`         | Input image directory                                         | Input  | collection    |
 | `--segDir`         | Input label image directory                                   | Input  | collection    |
 | `--filePattern`    | Filepattern to parse image replicates                         | Input  | string        |
-| `--features`       | [nyxus features]('https://pypi.org/project/nyxus/')           | Input  | string        |
+| `--features`       | [nyxus features](https://pypi.org/project/nyxus/)           | Input  | string        |
 | `--neighborDist`   | Distance between two neighbor objects                         | Input  | float         |
 | `--pixelPerMicron` | Pixel Size in micrometer                                      | Input  | float         |
 | `--outDir`         | Output collection                                             | Output | collection    |
