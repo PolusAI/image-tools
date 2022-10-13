@@ -38,11 +38,7 @@ This plugin takes six input arguments and one output argument:
 | `--inpDir`         | Input image directory                                         | Input  | collection    |
 | `--segDir`         | Input label image directory                                   | Input  | collection    |
 | `--filePattern`    | Filepattern to parse image replicates                         | Input  | string        |
-| `--features`       | [nyxus features](https://pypi.org/project/nyxus/)           | Input  | string        |
+| `--features`       | [nyxus features](https://pypi.org/project/nyxus/)             | Input  | string        |
 | `--neighborDist`   | Distance between two neighbor objects                         | Input  | float         |
 | `--pixelPerMicron` | Pixel Size in micrometer                                      | Input  | float         |
 | `--outDir`         | Output collection                                             | Output | collection    |
-
-
-
-
