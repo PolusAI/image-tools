@@ -1,7 +1,7 @@
 {
   "name": "Scaled Nyxus",
   "version": "0.1.0",
-  "containerId": "polusai/scaled-nyxus-plugin:0.1.0",
+  "containerId": "polusai/scaled-nyxus:0.1.0",
   "title": "Scaled Nyxus",
   "description": "Scaled nyxus plugin allows to make use of parallel pocessing for extracting nyxus features",
   "author": "Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com)",

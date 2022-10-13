@@ -1,24 +1,11 @@
-# Discard Border Objects
+# Scaled Nyxus
 
 
-Discard Border Objects plugin clear objects which touch image borders and squentially relabelling of image objects
+Scaled Nyxus plugin use parallel processing to extract nyxus features from intensity-label image data. Especially useful when processing high throughput screens.
 
 Contact [Hamdah Shafqat Abbasi](mailto: hamdah.abbasi@axleinfo.com) for more information.
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
-
-
-## Description
-
-<img src="./image.png">
-
-
-`a - ` Original image contains 67 unique label objects 
-
- `b - ` Image with 16 detected border objects
-
- `c - ` Removing Border objects and sequential relabelling
-
 
 
 ## Building
@@ -33,15 +20,17 @@ contents of `plugin.json` into the pop-up window and submit.
 
 ## Options
 
-This plugin takes three input arguments and
-1 output argument:
+This plugin takes six input arguments and one output argument:
 
-| Name          | Description                                                   | I/O    | Type          |
-|---------------|---------------------------------------------------------------|--------|---------------|
-| `--inpDir`    | Input image directory                                         | Input  | collection    |
-| `--pattern`   | Filepattern to parse image files                              | Input  | string        |
-| `--groupBy`   | Select a parameter to select image files in specific order    | Input  | string        |
-| `--outDir`    | Output collection                                             | Output | collection    |
+| Name               | Description                                                   | I/O    | Type          |
+|--------------------|---------------------------------------------------------------|--------|---------------|
+| `--inpDir`         | Input image directory                                         | Input  | collection    |
+| `--segDir`         | Input label image directory                                   | Input  | collection    |
+| `--filePattern`    | Filepattern to parse image replicates                         | Input  | string        |
+| `--features`       | [nyxus features]('https://pypi.org/project/nyxus/')           | Input  | string        |
+| `--neighborDist`   | Distance between two neighbor objects                         | Input  | float         |
+| `--pixelPerMicron` | Pixel Size in micrometer                                      | Input  | float         |
+| `--outDir`         | Output collection                                             | Output | collection    |
 
 
 

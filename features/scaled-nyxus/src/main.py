@@ -28,7 +28,7 @@ def nyxus_func(inpDir:str,
         segDir (str) : Path to label image directory
         outDir (Path) : Path to output directory
         features list[str] : List of nyxus features to be computed
-        filePattern (str): Pattern to parse image filenames
+        filePattern (str): Pattern to parse image replicates
         neighborDist (float) optional, default 5.0: Pixel distance between neighbor objects
         pixelPerMicron (float) optional, default 1.0: Pixel size in micrometer
         replicate (str) : replicate identified using filePattern and are processed in parallel
@@ -38,11 +38,10 @@ def nyxus_func(inpDir:str,
 
     """ 
 
-
-    filePattern = (re.sub(r'\(.*?\)', '{replicate}', filePattern)
+    filePattern = (re.sub(r'\(.*?\)',
+     '{replicate}', filePattern)
                     .format(replicate=replicate)
                     )
-
 
     nyx = Nyxus(features, 
                 neighbor_distance=neighborDist, 
@@ -59,7 +58,7 @@ def nyxus_func(inpDir:str,
     outname = f'{outname}{replicate}.csv'
     features.to_csv(pathlib.Path(outDir, outname), index = False)
 
-    return filePattern
+    return 
 
 
 def main(inpDir:str, 
@@ -67,21 +66,23 @@ def main(inpDir:str,
          outDir:pathlib.Path,
          filePattern:str,
          features:Optional[List[str]],
-         neighborDist:Optional[float],
-         pixelPerMicron:Optional[float]
+         neighborDist:Optional[float]=5.0,
+         pixelPerMicron:Optional[float]=1.0
          ):
 
     starttime = time.time()
 
     
     if '{' and '}' in filePattern:
-        filePattern = (filePattern.replace("{", "([0-9]{")
-                    .replace("}", "})")
-        )
+        filePattern  = re.sub(r"{.*}", '([0-9]+)', filePattern)
+
+        # filePattern = (filePattern.replace("{", "([0-9]{")
+        #             .replace("}", "})")
+        # )
     
     replicate = np.unique([re.search(filePattern, f).groups() for f in os.listdir(inpDir)])
 
-    assert len(replicate) is not None, f'Replicate plate images not found: {replicate}'
+    assert len(replicate) is not None, f'Replicate plate images not found! Please check the filepattern again: {replicate}'
     
     groupfeatures= ["ALL_INTENSITY",
               "ALL_MORPHOLOGY",
@@ -100,7 +101,7 @@ def main(inpDir:str,
     ft_only = [f'{x}' for x in features.split(',') if x not in groupfeatures]
     features = [*ft_only , *ft_gp]
 
-    num_workers = (multiprocessing.cpu_count() // 2)
+    num_workers = max(multiprocessing.cpu_count() // 2, 2)
 
     with multiprocessing.Pool(processes=num_workers) as executor:
       
@@ -135,7 +136,7 @@ logger.setLevel(POLUS_LOG)
 
 # ''' Argument parsing '''
 logger.info("Parsing arguments...")
-parser = argparse.ArgumentParser(prog='main', description='Scaled Nyxus plugin')    
+parser = argparse.ArgumentParser(prog='main', description='Scaled Nyxus')    
 #   # Input arguments
 
 parser.add_argument(
@@ -162,12 +163,12 @@ parser.add_argument(
         required=True
     )
 
-
 parser.add_argument(
         "--features",
         dest="features",
         type=str,
         help="Nyxus features to be extracted",
+        default="ALL",
         required=False
     )
 

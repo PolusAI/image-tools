@@ -5,23 +5,26 @@ datapath=$(readlink --canonicalize ../data)
 
 # Inputs
 inpDir=/data/path_to_images
+segDir=/data/path_to_label_images
+filePattern='p{p+}.*.ome.tif'
+features="BASIC_MORPHOLOGY","ALL_INTENSITY"
+# More details available at https://github.com/PolusAI/nyxus
+neighborDist=5.0
+pixelPerMicron=1.0
 outDir=/data/path_to_output
-pattern='p0{r}_x{x+}_y{y+}_wx{t}_wy{p}_c{c}.ome.tif'
-groupBy='c' 
-# or 
-# groupBy=None
-
 
 
 # Log level, must be one of ERROR, CRITICAL, WARNING, INFO, DEBUG
 LOGLEVEL=INFO
-
 docker run --mount type=bind,source=${datapath},target=/data/ \
             --user $(id -u):$(id -g) \
             --env POLUS_LOG=${LOGLEVEL} \
-            polusai/discard-border-objects-plugin:${version} \
+            polusai/scaled-nyxus:${version} \
             --inpDir ${inpDir} \
-            --pattern ${pattern} \
-            --groupBy ${groupBy} \
+            --segDir ${segDir} \
+            --filePattern ${filePattern} \
+            --features ${features} \
+            --neighborDist ${neighborDist} \
+            --pixelPerMicron ${pixelPerMicron} \
             --outDir ${outDir} 
             
