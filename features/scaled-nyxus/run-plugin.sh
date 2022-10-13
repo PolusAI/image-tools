@@ -22,9 +22,10 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             polusai/scaled-nyxus:${version} \
             --inpDir ${inpDir} \
             --segDir ${segDir} \
+            --outDir ${outDir} \
             --filePattern ${filePattern} \
             --features ${features} \
             --neighborDist ${neighborDist} \
             --pixelPerMicron ${pixelPerMicron} \
-            --outDir ${outDir} 
+           
             

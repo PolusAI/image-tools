@@ -76,9 +76,7 @@ def main(inpDir:str,
     if '{' and '}' in filePattern:
         filePattern  = re.sub(r"{.*}", '([0-9]+)', filePattern)
 
-        # filePattern = (filePattern.replace("{", "([0-9]{")
-        #             .replace("}", "})")
-        # )
+    ## Extracting unique image replicates using filepattern
     
     replicate = np.unique([re.search(filePattern, f).groups() for f in os.listdir(inpDir)])
 
