@@ -110,7 +110,7 @@ INPUTS = {
     },
     'maxEpochs': {
         'description': 'Maximum number of epochs for which to continue training the model.',
-        'type': 'number',
+        'type': 'integer',
     },
     'patience': {
         'description': 'Maximum number of epochs to wait for model to improve.',
