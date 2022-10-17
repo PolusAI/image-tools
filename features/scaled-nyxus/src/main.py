@@ -28,12 +28,96 @@ def main(inpDir:str,
 
     ## Extracting unique image replicates using filepattern
     
-    replicate = np.unique([re.search(filePattern, f).groups() for f in os.listdir(inpDir)])
+    replicate = np.unique([re.search(filePattern, f).groups() for f in os.listdir(inpDir) 
+                            if re.search(filePattern, f) is not None])
 
     logger.info(f"Total number of replicates found: {replicate}")
 
     assert len(replicate) is not None, f'Replicate plate images not found! Please check the filepattern again: {replicate}'
+
+    feature_list =["INTEGRATED_INTENSITY",
+                    "MEAN",
+                    "MAX",
+                    "MEDIAN",
+                    "STANDARD_DEVIATION",
+                    "MODE",
+                    "SKEWNESS",
+                    "KURTOSIS",
+                    "HYPERSKEWNESS",
+                    "HYPERFLATNESS",
+                    "MEAN_ABSOLUTE_DEVIATION",
+                    "ENERGY",
+                    "ROOT_MEAN_SQUARED",
+                    "ENTROPY",
+                    "UNIFORMITY",
+                    "UNIFORMITY_PIU",
+                    "P01",
+                    "P10",
+                    "P25",
+                    "P75",
+                    "P90",
+                    "P99",
+                    "INTERQUARTILE_RANGE",
+                    "ROBUST_MEAN_ABSOLUTE_DEVIATION",
+                    "MASS_DISPLACEMENT",
+                    "AREA_PIXELS_COUNT",
+                    "COMPACTNESS",
+                    "BBOX_YMIN",
+                    "BBOX_XMIN",
+                    "BBOX_HEIGHT",
+                    "BBOX_WIDTH",
+                    "MINOR_AXIS_LENGTH",
+                    "MAGOR_AXIS_LENGTH",
+                    "ECCENTRICITY",
+                    "ORIENTATION",
+                    "ROUNDNESS",
+                    "NUM_NEIGHBORS",
+                    "PERCENT_TOUCHING",
+                    "EXTENT",
+                    "CONVEX_HULL_AREA",
+                    "SOLIDITY",
+                    "PERIMETER",
+                    "EQUIVALENT_DIAMETER",
+                    "EDGE_MEAN",
+                    "EDGE_MAX",
+                    "EDGE_MIN",
+                    "EDGE_STDDEV_INTENSITY",
+                    "CIRCULARITY",
+                    "EROSIONS_2_VANISH",
+                    "EROSIONS_2_VANISH_COMPLEMENT",
+                    "FRACT_DIM_BOXCOUNT",
+                    "FRACT_DIM_PERIMETER",
+                    "GLCM",
+                    "GLRLM",
+                    "GLSZM",
+                    "GLDM",
+                    "NGTDM",
+                    "ZERNIKE2D",
+                    "FRAC_AT_D",
+                    "RADIAL_CV",
+                    "MEAN_FRAC",
+                    "GABOR",
+                    "ALL_INTENSITY",
+                    "ALL_MORPHOLOGY",
+                    "BASIC_MORPHOLOGY",
+                    "ALL_GLCM",
+                    "ALL_GLRLM",
+                    "ALL_GLSZM",
+                    "ALL_GLDM",
+                    "ALL_NGTDM",
+                    "ALL_EASY",
+                    "ALL"]
     
+    ## Validation of nyxus features
+    feat  = [f'{x}' for x in features.split(',')]
+    if len(feat) == 1 and feat[0] not in feature_list:
+        raise ValueError(logger.info('Feature Name is not Valid! Please check Nyxus Features again'))
+    else:
+        comp = [f for f in feat if f not in feature_list]
+        if comp:
+            raise ValueError(logger.info('Feature Name is not Valid! Please check Nyxus Features again'))
+
+
     groupfeatures= ["ALL_INTENSITY",
               "ALL_MORPHOLOGY",
               "BASIC_MORPHOLOGY",
