@@ -65,7 +65,7 @@ INPUTS = {
             'Size of each batch for training. '
             'If left unspecified, we use the maximum possible based on memory constraints.'
         ),
-        'type': 'number',
+        'type': 'integer',
     },
 
     'imagesTrainDir': {
@@ -100,7 +100,7 @@ INPUTS = {
     },
     'checkpointFrequency': {
         'description': 'How often to save model checkpoints',
-        'type': 'number',
+        'type': 'integer',
     },
 
     'lossName': {
@@ -114,7 +114,7 @@ INPUTS = {
     },
     'patience': {
         'description': 'Maximum number of epochs to wait for model to improve.',
-        'type': 'number',
+        'type': 'integer',
     },
     'minDelta': {
         'description': 'Minimum improvement in loss to reset patience.',

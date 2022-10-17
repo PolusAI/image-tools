@@ -1,6 +1,6 @@
 {
     "name": "Demo SMP Training/Inference",
-    "version": "0.5.8",
+    "version": "0.5.9",
     "title": "Segmentation Models Training and Inference",
     "description": "Segmentation models training and inference plugin.",
     "author": "Gauhar Bains (gauhar.bains@labshare.org), Najib Ishaq (najib.ishaq@axleinfo.com), Madhuri Vihani (madhuri.vihani@nih.gov), Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/PolusAI/polus-plugins/tree/dev/segmentation",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "polusai/smp-training-plugin:0.5.8",
+    "containerId": "polusai/smp-training-plugin:0.5.9",
     "inputs": [
         {
             "name": "inferenceMode",
@@ -252,7 +252,7 @@
         {
             "name": "batchSize",
             "description": "Size of each batch for training. If left unspecified, we use the maximum possible based on memory constraints.",
-            "type": "number",
+            "type": "integer",
             "required": false,
             "options": null
         },
@@ -308,7 +308,7 @@
         {
             "name": "checkpointFrequency",
             "description": "How often to save model checkpoints",
-            "type": "number",
+            "type": "integer",
             "required": false,
             "options": null
         },
@@ -340,7 +340,7 @@
         {
             "name": "patience",
             "description": "Maximum number of epochs to wait for model to improve.",
-            "type": "number",
+            "type": "integer",
             "required": false,
             "options": null
         },
