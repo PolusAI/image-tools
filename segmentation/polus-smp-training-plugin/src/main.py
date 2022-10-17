@@ -24,7 +24,8 @@ logger = logging.getLogger("main")
 logger.setLevel(utils.POLUS_LOG)
 
 if __name__ == "__main__":
-    os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:512'
+    #TODO: This should be an input parameter per Najib
+    os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
     parser = argparse.ArgumentParser(prog='main', description='Segmentation models training plugin')
 

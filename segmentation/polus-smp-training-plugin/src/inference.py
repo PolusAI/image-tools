@@ -50,7 +50,8 @@ def run_inference(
         model = torch.nn.DataParallel(model)
     tile = Tile(tile_size=(MODEL_TILE_SIZE, MODEL_TILE_SIZE))
     untile = UnTile(tile_size=(MODEL_TILE_SIZE, MODEL_TILE_SIZE))
-    batch_size = torch.cuda.device_count() * BATCH_SIZE
+    # Changed by Ben H. due to division by 0 error when running on cpu
+    batch_size = max(torch.cuda.device_count(), 1) * BATCH_SIZE
 
     model.eval()
 
