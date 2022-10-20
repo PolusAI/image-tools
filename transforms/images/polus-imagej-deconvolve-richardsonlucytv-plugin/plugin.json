@@ -1,0 +1,81 @@
+{
+  "name": "ImageJ deconvolve richardsonLucyTV",
+  "version": "0.4.0",
+  "title": "ImageJ deconvolve richardsonLucyTV",
+  "description": "PadAndRichardsonLucyTV",
+  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com), Anjali Taneja and Nick Schaub (nick.schaub@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-deconvolve-richardsonlucytv-plugin:0.4.0",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": ["PadAndRichardsonLucyTV"]
+      },
+      "description": "Op overloading method to perform",
+      "required": true
+    },
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "psf",
+      "type": "collection",
+      "description": "The point spread function mask to be used",
+      "required": true
+    },
+    {
+      "name": "maxIterations",
+      "type": "number",
+      "description": "The maximum number of algorithm iterations",
+      "required": true
+    },
+    {
+      "name": "regularizationFactor",
+      "type": "number",
+      "description": "The total variation regularization factor",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "opName",
+      "description": "Op overloading method to perform"
+    },
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.psf",
+      "title": "psf",
+      "description": "The point spread function mask to be used"
+    },
+    {
+      "key": "inputs.maxIterations",
+      "title": "maxIterations",
+      "description": "The maximum number of algorithm iterations"
+    },
+    {
+      "key": "inputs.regularizationFactor",
+      "title": "regularizationFactor",
+      "description": "The total variation regularization factor"
+    }
+  ]
+}
