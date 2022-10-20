@@ -1,0 +1,48 @@
+{
+  "name": "ImageJ threshold otsu",
+  "version": "0.4.0",
+  "title": "ImageJ threshold otsu",
+  "description": "Otsu's threshold clustering algorithm searches for the threshold that minimizes the intra-class variance, defined as a weighted sum of variances of the two classes.",
+  "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "Otsu, N. (1979). A Threshold Selection Method from Gray-Level Histograms. IEEE Transactions on Systems, Man, and Cybernetics, 9(1), 62-66. doi:10.1109/tsmc.1979.4310076",
+  "containerId": "polusai/imagej-threshold-otsu-plugin:0.4.0",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": ["ApplyThresholdMethod$Otsu"]
+      },
+      "description": "Op overloading method to perform",
+      "required": true
+    },
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Collection to be processed by this plugin",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "opName",
+      "description": "Op overloading method to perform"
+    },
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Collection to be processed by this plugin"
+    }
+  ]
+}

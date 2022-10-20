@@ -15,3 +15,5 @@ COPY src ${EXEC_DIR}/
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
 RUN python3 -c "import imageio; imageio.plugins.freeimage.download()"
+
+ENTRYPOINT [ "python3", "main.py" ]

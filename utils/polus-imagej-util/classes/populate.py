@@ -1,6 +1,7 @@
 import re
 import json
 import logging
+from matplotlib.font_manager import json_load
 from numpy import False_
 import scyjava
 import imagej
@@ -8,8 +9,8 @@ from pathlib import Path
 
 """
 This file provides classes to parse the imagej ops help and create cookiecutter 
-json templates. This file is not intended to be ran directly, instead the 
-classes contained here are instantiated with Generate.py.
+json templates. This file is should be run before generating ops with 
+generate.py or using the ImageJ UI. 
 """
 
 # Disable warning message
@@ -113,12 +114,23 @@ class Op:
         self._inputs = []
         self._output = []
         
-        # Check and update if any inputs are named "in" which conflict with 
-        # python's reserved key word
+        # Check and update input titles that will interfere with other variable
+        # names and/or python reserved words
         for input_index, input in enumerate(inputs):
+            # Check if input title will interfere with reserved python keyword
             if input[1] == 'in':
-                # Change the input name from "in" to "in1"
+                # Change the input name from "in" to "in1" 
                 inputs[input_index] = (input[0], 'in1')
+            
+            # Change the name of the out as input argument so it does not 
+            # interfere with output from op
+            elif input[1] == 'out':
+                # Change name from "out" to "out_input"
+                inputs[input_index] = (input[0], 'out_input')
+
+            elif input[1] == 'out?':
+                # Change name from "out" to "out_input"
+                inputs[input_index] = (input[0], 'out_input?')
                 
         # Check if the output is not titled 'out' and change to 'out' if 
         # neccessary
@@ -135,10 +147,10 @@ class Op:
         # Define required and optional inputs by testing last character in each 
         # input title
         self._required_inputs = [
-            _input for _input in self._inputs if _input[0][1][-1] != '?' and _input[0][1] not in ['out']
+            _input for _input in self._inputs if _input[0][1][-1] != '?'
         ]
         self._optional_inputs = [
-            _input for _input in self._inputs if _input[0][1][-1] == '?' or _input[0][1] in ['out']
+            _input for _input in self._inputs if _input[0][1][-1] == '?'
         ]
         
         # Determine if the op is currently supported and define member 
@@ -436,7 +448,7 @@ class Plugin:
                                               op.imagej_type_required_inputs, 
                                               op.wipp_type_required_inputs):
                 
-                # Check if variable exists in input dicitonary
+                # Check if variable exists in input dictionary
                 if title not in self._all_required_inputs:
                     self._all_required_inputs[title] = {
                         'type':wippType, 
@@ -516,12 +528,16 @@ class Populate:
             their overloading methods.
         json_dic: A dictionary with op names as keys and the cookiecutter json 
             dictionaries to be used for plugin generation.
+        scale (dict): Plugins represented as keys and scale type/class 
+            represented as values.
     
     """
     
-    def __init__(self,
-                 log_file='./utils/polus-imagej-util/full.log',
-                 log_template='./utils/polus-imagej-util/classes/logtemplates/mainlog.txt'):
+    def __init__(
+        self,
+        log_file='./utils/polus-imagej-util/full.log',
+        log_template='./utils/polus-imagej-util/classes/logtemplates/mainlog.txt'
+        ):
         
         """A method to instantiate a class Populate object
         
@@ -542,6 +558,10 @@ class Populate:
         # Store the log output file and log template file path
         self.log_file = log_file
         self.log_template = log_template
+        
+        # Load the scalability configuration file
+        with open(Path(__file__).parents[1].joinpath('scale.json'), 'r') as f:
+            self.scale = json.load(f)
         
         # Create dictionary to store all plugins
         self._plugins = {}
@@ -780,6 +800,7 @@ class Populate:
                     'project_name': 'ImageJ ' + name.replace('.', ' '),
                     'project_short_description': 
                         str([op for op in plugin.supported_ops.keys()]).replace("'", '')[1:-1],
+                    'citation': '',
                     'plugin_namespace':{
                         op.name: 
                             'out = ij.op().' + \
@@ -803,7 +824,8 @@ class Populate:
                     '_outputs':
                         plugin._all_outputs,
                     'project_slug': "polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin",
-                    'docker_repo' : "{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin"
+                    'docker_repo' : "{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin",
+                    'scalability': self.scale.get(name.replace('.', '-'), None)
                     }
                 
                 # Update the _inputs section dictionary with the inputs 
@@ -822,7 +844,192 @@ class Populate:
                     json.dump(self.json_dic[name], fw,indent=4)
 
 
+class GeneratedParser:
+    """A class to update cookiecutter templates with previously generated ImageJ
+    plugin manifests.
+    
+    The advantage to using this class is it allows the user to update
+    cookiecutter template files with plugin descriptions, input names and input
+    descriptions which have to be determined through manual research about the
+    ImageJ op. Before using this class's update method all ImageJ plugins which 
+    have erroneous manifests should be stashed or removed from polus-plugins
+    directory to avoid overwriting clean cookiecutter templates. Alternatively,
+    pass a list for which plugins to specifically target when updating 
+    templates. 
+    
+    Attributes:
+        polus_plugins (pathlib.Path): The sysytem file path to the polus-plugins
+            directory.
+        cookietin (pathlib.Path): The system file path to the cookiecutter 
+            template directory.
+        manifests (dict): The previously generated ImageJ plugin manifests with
+            short plugin names as keys (i.e. "filter-convolve").
+        cookiecutter (dict): The cookiecutter templates with short plugin names
+            as keys (i.e. "threshold-maxLikelihood").
+            
+    Methods:
+        update_templates(self, ops): A method to update the cookiecutter 
+            template files with the previously generated ImageJ plugin 
+            manifests.
+    """
+    
+    def __init__(
+        self, polus_plugins_directory=None, 
+        cookiecutter_directory=None
+        ):
+        """Instantiates a member of the GeneratedParser class and parses all of
+        the cookiecutter templates and plugin manifests from their respective
+        directories. 
+        
+        Arguments:
+            polus_plugins_directory (str): The sysytem file path to the 
+                polus-plugins directory. If passed as None it will automatically 
+                be defined assuming that populate.py is in standard location.
+                (polus-plugins/utils/polus-imagej-util/classes/populate.py)
+            cookiecutter_directory (str): The system file path to the 
+                cookiecutter template directory. If passed as None it will 
+                automatically be defined assuming that cookietin and populate.py
+                are in standard locations.
+                (polus-plugins/utils/polus-imagej-util/cookietin/).
+        
+        Raises:
+            None
+        """
+        
+        # Check if polus-plugins path passed by caller
+        if polus_plugins_directory is None:
+            
+            # Define the polus-plugins directory as member attribute
+            self.polus_plugins = Path(__file__).parents[3]
+        
+        else:
+            # Define the polus-plugins directory as member attribute
+            self.polus_plugins = Path(polus_plugins_directory)
+            
+        # Check if cookiecutter directory passed by caller
+        if cookiecutter_directory is None:
+            
+            # Define the cookiecutter template directory as member attribute
+            self.cookietin = Path(__file__).parents[1].joinpath('cookietin')
+            
+        # Get all ImageJ plugin manifests in polus-plugins
+        manifest_paths = [p for p in self.polus_plugins.rglob('polus-imagej*/plugin.json')]
+        
+        # Instantiate dictionary to store the plugin manifests
+        self.manifests = {}
+        
+        # Iterate over all the plugin manifest paths
+        for p in manifest_paths:
+            
+            # Define plugin name as would be defined in cookiecutter template
+            plugin_name = str(p.parent.name).replace('polus-imagej-', '').replace('-plugin', '')
+            
+            # Load the plugins manifest and save in the member attribute dict
+            self.manifests[plugin_name] = json_load(p)
+            
+        
+        # Define path to all cookiecutter template files
+        cookietin_paths = [p for p in self.cookietin.rglob('cookiecutter.json')]
+        
+        # Instantiate dictionary to store the cookiecutter templates
+        self.cookiecutter = {}
+        
+        # iterate over all cookiecutter paths
+        for p in cookietin_paths:
+            
+            # Define plugin name as would be defined in cookiecutter template
+            plugin_name = str(p.parent.name)
+            
+            # Load the cookiecutter template files
+            self.cookiecutter[plugin_name] = json_load(p)
 
+
+    def update_templates(self, ops):
+        """A method to update the cookiecutter template files with the 
+        previously generated ImageJ plugin manifests.
+        
+        This method will use the plugin manifests found in the polus-plugins
+        directory to update the cookiecutter template and update all of the 
+        fields which are typically manually entered when gerenating a plugin.
+        This method can be used to update all templates or just a selected list.
+        Indicates ops = 'all' to update all templates for which a manifest
+        exists.
+        
+        Arguments:
+            ops (list): A list of strings representing the plugin cookiecutter
+                templates to update in shortened form (i.e. filter-gauss)
+        
+        Returns:
+            None
+        
+        Raises:
+            AssertionError: Raised if the number of inputs in the cookiecutter
+                template file do no match the number of inputs in the plugin
+                manifest file. This accounts for ops which have a out input for 
+                memory allocation which does not appear in both files. 
+        """
+        
+        # Iterate over all cookiecutter template files
+        for plugin, template in self.cookiecutter.items():
+            
+            # Check if the current op should be updated
+            if plugin.lower() not in ops and ops != 'all':
+                continue
+            
+            else:
+                print('Updating {}'.format(plugin))
+            
+            # Check if a plugin manifest exists for the current plugin
+            if plugin.lower() not in self.manifests.keys():
+                print('{} has no manifest'.format(plugin))
+                continue
+            
+            # Define the manifest to be used to update cookiecutter template
+            manifest = self.manifests[plugin.lower()]
+            
+            # Determine if out_input is a cookiecutter template input
+            if 'out_input' in template['_inputs'].keys():
+                # Check the input lengths
+                if len(template['_inputs']) - 1 != len(manifest['inputs']):
+                    raise AssertionError('The {} template and manifest have a varying number of inputs'.format(plugin))
+            else:
+                # Check the input lengths for other case
+                if len(template['_inputs']) != len(manifest['inputs']):
+                    raise AssertionError('The {} template and manifest have a varying number of inputs'.format(plugin))
+                        
+            
+            # Update the plugins header information
+            template['author'] = manifest['author']
+            template['project_short_description'] = manifest['description']
+            template['citation'] = manifest['citation']
+            
+            # Start a manifest input index
+            i = 0
+            
+            # Iterate over the cookiecutter template inputs and thier data
+            for cinp, d in template['_inputs'].items():
+                
+                # Skip the memory allocaiton input "out_input"
+                if cinp == 'out_input':
+                    continue
+                
+                # Update the inputs data/description
+                d['title'] = manifest['inputs'][i]['name']
+                d['description'] = manifest['inputs'][i]['description']
+                
+                # Increment the manifest input index
+                i += 1
+            
+            # Create the  plugin's cookiecutter template directory
+            self.cookietin.joinpath(plugin).mkdir(exist_ok=True, parents=True)
+            
+            # Define path to plugin's cookiecutter template file
+            cookiecutter_path = self.cookietin.joinpath(plugin).joinpath('cookiecutter.json')
+            
+            # Write the cookiecutter template file
+            with open(cookiecutter_path,'w') as fw:
+                json.dump(template, fw,indent=4)
+            
 
 """This section of uses the above classes to generate cookiecutter templates"""
 
@@ -831,26 +1038,45 @@ if __name__ == '__main__':
     import jpype
     import os
     
-    print('Starting JVM and parsing ops help\n')
+    try:
+        print('Starting JVM and parsing ops help\n')
+        
+        # Populate ops by parsing the imagej operations help
+        populater = Populate()
+        
+        print('Building json templates\n')
+        
+        # Get the current working directory
+        cwd = Path(os.getcwd())
+        
+        # Save a directory for the cookietin json files
+        cookietin_path = cwd.joinpath('utils/polus-imagej-util/cookietin')
+        
+        # Get the pipeline VERSION
+        version_path = Path(__file__).parents[1].joinpath('VERSION')
+        with open(version_path, 'r') as fhand:
+            version = next(fhand)
+        
+        # Build the json dictionary to be passed to the cookiecutter module 
+        populater.build_json(
+            'Benjamin Houghton', 
+            'benjamin.houghton@axleinfo.com', 
+            'bthoughton', 
+            version, 
+            cookietin_path)
     
-    # Populate ops by parsing the imagej operations help
-    populater = Populate()
+    finally:
+        
+        print('Shutting down JVM\n')
+        
+        # Remove the imagej instance
+        del populater._ij
+        
+        # Shut down JVM
+        jpype.shutdownJVM()
     
-    print('Building json templates\n')
+    print('Updating templates with previously genreated ops')
     
-    # Get the current working directory
-    cwd = Path(os.getcwd())
-    
-    # Save a directory for the cookietin json files
-    cookietin_path = cwd.joinpath('utils/polus-imagej-util/cookietin')
-    
-    # Build the json dictionary to be passed to the cookiecutter module 
-    populater.build_json('Benjamin Houghton', 'benjamin.houghton@axleinfo.com', 'bthoughton', '0.3.0', cookietin_path)
-    
-    print('Shutting down JVM\n')
-    
-    # Remove the imagej instance
-    del populater._ij
-    
-    # Shut down JVM
-    jpype.shutdownJVM()
+    # Instantiate the generated ops parser and update templates with manifests
+    parser = GeneratedParser()
+    parser.update_templates(['all'])
