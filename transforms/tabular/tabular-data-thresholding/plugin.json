@@ -1,0 +1,108 @@
+{
+    "name": "tabular-data-thresholding",
+    "version": "0.1.0",
+    "containerId": "polusai/tabular-data-thresholding:0.1.0",
+    "title": "tabular-data-thresholding",
+    "description": "Scaled nyxus plugin allows to make use of parallel pocessing for extracting nyxus features",
+    "author": "Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/PolusAI/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "inputs": [
+      {
+        "name": "inpDir",
+        "description": "Collection containing intensity images",
+        "type": "collection",
+        "options": null,
+        "required": true
+      },
+      {
+        "name": "segDir",
+        "description": "Collection containing label images, i.e. groundtruth images",
+        "type": "collection",
+        "options": null,
+        "required": true
+      },
+      {
+        "name": "features",
+        "type": "array",
+        "description": "Features or feature groups to be extracted by nyxus plugin",
+        "required": false,
+        "options":{
+          "items": {
+            "type": "string",
+            "title": "Features or feature groups to be extracted by nyxus plugin",
+            "widget": "string"
+          }
+        }
+      },
+      {
+        "name": "filePattern",
+        "description": "Filepattern to parse image files",
+        "type": "string",
+        "options": null,
+        "required": false
+      },
+      {
+        "name": "neighborDist",
+        "description": "Pixel distance between neighboring cells",
+        "type": "number",
+        "options": null,
+        "required": false
+      }
+      ,
+      {
+        "name": "pixelPerMicron",
+        "description": "Pixel size in micrometer",
+        "type": "number",
+        "options": null,
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "description": "Output collection",
+        "type": "collection",
+        "options": null,
+        "required": true
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.inpDir",
+        "title": "inpDir",
+        "description": "Input image collection"
+      },
+      {
+        "key": "inputs.segDir",
+        "title": "segDir",
+        "description": "Label image collection"
+      },
+      {
+        "key": "inputs.features",
+        "title": "features",
+        "description": "Features to be extracted by nyxus",
+        "default": "ALL"
+      },
+      {
+        "key": "inputs.filePattern",
+        "title": "filePattern",
+        "description": "Filepattern to parse image files"
+      },
+      {
+        "key": "inputs.neighborDist",
+        "title": "neighborDist",
+        "description": "Pixel distance between neighboring cells",
+        "default": 5.0
+      },
+      {
+        "key": "inputs.pixelPerMicron",
+        "title": "pixelPerMicron",
+        "description": "Pixel size in micrometer",
+        "default": 1.0
+      }
+    ],
+    "validators": null
+  }
