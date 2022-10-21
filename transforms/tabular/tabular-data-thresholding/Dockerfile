@@ -5,6 +5,8 @@ COPY VERSION /
 ARG EXEC_DIR="/opt/executables"
 ARG DATA_DIR="/data"
 
+ENV POLUS_EXT="csv"
+
 RUN mkdir -p ${EXEC_DIR} \
     && mkdir -p ${DATA_DIR}/inputs \
     && mkdir ${DATA_DIR}/outputs

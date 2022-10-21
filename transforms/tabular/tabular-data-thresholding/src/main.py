@@ -10,11 +10,13 @@ from typing import Optional, List, Union
 from functools import partial
 from thresholding import custom_fpr, n_sigma, otsu
 import vaex
+import pyarrow.feather
+import pandas as pd
 
 
 # #Import environment variables
 POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
-POLUS_EXT = os.environ.get('POLUS_EXT','.ome.tif')
+FILE_EXT = os.environ.get('POLUS_EXT','csv')
 
 # Initialize the logger
 logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
@@ -72,7 +74,7 @@ parser.add_argument(
         "--variableName",
         dest="variableName",
         type=str,
-        help="Name of the Variable for which thresholds has to be computed",
+        help="Name of the Variable for computing thresholds",
         required=True
     )
 
@@ -80,7 +82,7 @@ parser.add_argument(
         "--thresholdType",
         dest="thresholdType",
         type=str,
-        help="Name of the Variable for which thresholds has to be computed",
+        help="Name of the threshold method",
         required=False
     )
 
@@ -110,6 +112,15 @@ parser.add_argument(
         help="Number of Standard deviation",
         required=False
     )
+
+parser.add_argument(
+        "--outFormat",
+        dest="outFormat",
+        type=str,
+        default='csv',
+        help="Output format",
+        required=False
+    )
                 
 #  # Output arguments
 parser.add_argument('--outDir',
@@ -130,9 +141,9 @@ def thresholding_func(csvfile:pathlib.Path,
                           plate:str,
                           falsePositiverate:Optional[float]=0.1,
                           numBins:Optional[int]=512,
-                          n:Optional[int]=4,
-                          
+                          n:Optional[int]=4,                         
                           ):
+
         if metafile:
             if mappingvariableName is None:
                 raise ValueError(logger.info(f'{mappingvariableName} Please define Variable Name to merge CSVs together'))
@@ -195,11 +206,7 @@ def thresholding_func(csvfile:pathlib.Path,
             df['nsigma'] = df.func.where(df[variableName] <= nsigma_thr, 0, 1)
   
 
-        return df
-
-
-
-        # return threshold_dict
+        return df, threshold_dict
 
 # # # Parse the arguments
 args = parser.parse_args()
@@ -229,18 +236,22 @@ def main(args):
     logger.info('numBins = {}'.format(numBins)) 
     n= int(args.n)
     logger.info('n = {}'.format(n)) 
+    outFormat= str(args.outFormat)
+    logger.info('outFormat = {}'.format(outFormat)) 
+
 
     csvlist = sorted([f for f in os.listdir(inpDir) if f.endswith('.csv')])
+    logger.info(f'Number of CSVs detected: {len(csvlist)}, filenames: {csvlist}')
     metalist = [f for f in os.listdir(metaDir) if f.endswith('.csv')]
+    logger.info(f'Number of CSVs detected: {len(metalist)}, filenames: {metalist}')
     if metaDir:
         assert len(metalist) > 0 and len(metalist) < 2, logger.info(f'There should be one metadata CSV used for merging: {metaDir}')
 
     for cv in csvlist:
-
         csvfile = inpDir.joinpath(cv)
         metafile = metaDir.joinpath(metalist[0])
         plate = re.match('\w+', cv).group(0)
-        df = thresholding_func(csvfile=csvfile,
+        df, threshold = thresholding_func(csvfile=csvfile,
                               metafile=metafile,
                               mappingvariableName=mappingvariableName,
                               negControl=negControl,
@@ -253,13 +264,15 @@ def main(args):
                               plate=plate
                               )
 
-        outname = outDir.joinpath(f'{plate}_binary.csv')
+        OUT_FORMAT = OUT_FORMAT if outFormat is None else outFormat
 
-        df.export_csv(path=outname, chunk_size=10_000)
+        if OUT_FORMAT == "feather":
+            outname = outDir.joinpath(f'{plate}_binary.feather')
+            df.export_feather(outname)
+        else:
+            outname = outDir.joinpath(f'{plate}_binary.csv')
+            df.export_csv(path=outname, chunk_size=10_000)
 
-
-
-    # logger.info(f'Number of CSVs detected: {len(csvlist)}, filenames: {csvlist}')
 
     endtime = round((time.time() - starttime)/60, 3)
     logger.info(f"Time taken to finish nyxus feature extraction: {endtime} minutes!!!")
