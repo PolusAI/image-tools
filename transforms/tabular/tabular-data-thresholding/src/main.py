@@ -49,7 +49,7 @@ parser.add_argument(
         "--mappingvariableName",
         dest="mappingvariableName",
         type=str,
-        help="Common variableName between two CSVs and use to merge metadata and tabular data",
+        help="Common featureName between two CSVs and use to merge metadata and tabular data",
         required=False
     )
 
@@ -277,7 +277,7 @@ def main(args):
         executor.close()
         executor.join()
     endtime = round((time.time() - starttime)/60, 3)
-    logger.info(f"Time taken to finish nyxus feature extraction: {endtime} minutes!!!")
+    logger.info(f"Time taken to process binary threhold CSVs: {endtime} minutes!!!")
     return
 
 if __name__=="__main__":
