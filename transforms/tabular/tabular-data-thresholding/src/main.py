@@ -10,6 +10,7 @@ from typing import Optional, List
 from functools import partial
 from thresholding import custom_fpr, n_sigma, otsu
 import vaex
+import json
 
 # #Import environment variables
 POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
@@ -205,8 +206,12 @@ def thresholding_func(csvfile:str,
             df['fpr'] = df.func.where(df[variableName] <= fpr_thr, 0, 1)
             df['otsu'] = df.func.where(df[variableName] <= otsu_thr, 0, 1)
             df['nsigma'] = df.func.where(df[variableName] <= nsigma_thr, 0, 1)
-   
-        
+
+        outjson = outDir.joinpath(f'{plate}_thresholds.json')
+        with open(outjson, "w") as outfile:
+            json.dump(threshold_dict, outfile)
+        logger.info(f"Saving Thresholds in JSON fileformat {outjson}")
+           
         OUT_FORMAT = OUT_FORMAT if outFormat is None else outFormat
         if OUT_FORMAT == "feather":
             outname = outDir.joinpath(f'{plate}_binary.feather')
