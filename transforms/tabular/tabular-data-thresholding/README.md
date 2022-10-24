@@ -1,7 +1,7 @@
 # tabular-data-thresholding
 
 
-This plugin uses three [threshold methods](https://github.com/nishaq503/thresholding.git) to compute threshold values on a user-defined variable and then apply thresholds on each label (ROI) and outputs binary format (0, 1). \
+This plugin uses three [threshold methods](https://github.com/nishaq503/thresholding.git) to compute threshold values on a user-defined variable and then determines if each label (ROI) is above or below the calculated threshold value. A new feature column will be computed for selected threshold method with the values in  binary format (0, 1) \
 *0* `negative or below threshold`\
 *1* `positive or above threshold`
 

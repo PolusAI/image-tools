@@ -1,5 +1,4 @@
 import argparse
-from importlib.resources import path
 import logging
 import os
 import pathlib 
@@ -7,11 +6,10 @@ import time
 import re
 import numpy as np
 import multiprocessing
-from typing import Optional, List, Union
+from typing import Optional, List
 from functools import partial
 from thresholding import custom_fpr, n_sigma, otsu
 import vaex
-import json
 
 # #Import environment variables
 POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
