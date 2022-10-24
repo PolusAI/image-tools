@@ -2,8 +2,8 @@
 
 # version=$(<VERSION)
 version=$(<VERSION)
-
-datapath=$(greadlink --canonicalize ../data)
+ln -s /usr/local/bin/greadlink /usr/local/bin/readlink
+datapath=$(readlink --canonicalize ../data)
 
 #Inputs
 inpDir=/data/inp
