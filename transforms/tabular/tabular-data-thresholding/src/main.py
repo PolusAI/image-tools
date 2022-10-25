@@ -160,6 +160,7 @@ def thresholding_func(csvfile:str,
                             right_on= mappingvariableName,
                             allow_duplication=False) 
 
+        assert df.shape[0] ==  data.shape[0], logger.info(f'Merging is not done properly! Please do check input files again: {csvfile} and {metafile}')
         collist = list(df.columns)
         collist2 = [negControl, posControl, variableName]
         columns = collist[:3] + collist2
@@ -210,8 +211,7 @@ def thresholding_func(csvfile:str,
         outjson = outDir.joinpath(f'{plate}_thresholds.json')
         with open(outjson, "w") as outfile:
             json.dump(threshold_dict, outfile)
-        logger.info(f"Saving Thresholds in JSON fileformat {outjson}")
-           
+        logger.info(f"Saving Thresholds in JSON fileformat {outjson}")           
         OUT_FORMAT = OUT_FORMAT if outFormat is None else outFormat
         if OUT_FORMAT == "feather":
             outname = outDir.joinpath(f'{plate}_binary.feather')
