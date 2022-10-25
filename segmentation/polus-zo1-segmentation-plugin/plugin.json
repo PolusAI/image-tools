@@ -1,6 +1,6 @@
 {
     "name": "ZO1 Border Segmentation",
-    "version": "0.1.7",
+    "version": "0.2.0",
     "title": "ZO1 Border Segmentation",
     "description": "Segment epithelial cell borders labeled for ZO1 tight junction protein.",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "https://www.jci.org/articles/view/131187",
-    "containerId": "labshare/polus-zo1-segmentation-plugin:0.1.7",
+    "containerId": "labshare/polus-zo1-segmentation-plugin:0.2.0",
     "inputs": [
       {
         "name": "inpDir",
