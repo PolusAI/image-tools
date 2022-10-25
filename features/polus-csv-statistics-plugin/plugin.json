@@ -1,6 +1,6 @@
 {
     "name": "CSV Statistics",
-    "version": "0.1.9",
+    "version": "0.2.0",
     "title": "CSV Statistics",
     "description": "Calculate simple statistics to groups of data in a csv file.",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-csv-statistics-plugin:0.1.9",
+    "containerId": "polusai/csv-statistics-plugin:0.2.0",
     "inputs": [
       {
         "name": "statistics",
@@ -99,6 +99,18 @@
         "type": "csvCollection",
         "description": "Input csv collection to be processed by this plugin",
         "required": true
+      },
+      {
+        "name": "filePattern",
+        "type": "string",
+        "description": "The filepattern of the images represented in the csv files",
+        "required": false
+      },
+      {
+        "name": "groupBy",
+        "type": "string",
+        "description": "The variable(s) to group the images by",
+        "required": false
       }
     ],
     "outputs": [
@@ -118,6 +130,16 @@
         "key": "inputs.inpDir",
         "title": "Input collection",
         "description": "Input csv collection to be processed by this plugin"
+      },
+      {
+        "key": "inputs.filePattern",
+        "title": "Filepattern",
+        "description": "The filepattern of the images represented in the csv files"
+      },
+      {
+        "key": "inputs.groupBy",
+        "title": "Groupby Variables(s)",
+        "description": "The variable(s) to group the images by"
       }
     ]
   }
