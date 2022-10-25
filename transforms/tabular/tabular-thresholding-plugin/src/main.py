@@ -11,7 +11,6 @@ from functools import partial
 from thresholding import custom_fpr, n_sigma, otsu
 import vaex
 import json
-import glob
 
 # #Import environment variables
 POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
@@ -129,9 +128,8 @@ parser.add_argument('--outDir',
     required=True
     )  
 
-  
-
-def thresholding_func(csvfile:str,
+def thresholding_func(
+                    csvfile:str,
                     inpDir:pathlib.Path,
                     outDir:pathlib.Path,                  
                     negControl:str,
@@ -245,7 +243,8 @@ def thresholding_func(csvfile:str,
             logger.info(f"Saving f'{plate}_binary.csv")
         return 
 
-# # # Parse the arguments
+
+# Parse the arguments
 args = parser.parse_args()
 def main(args):
     starttime = time.time()    
