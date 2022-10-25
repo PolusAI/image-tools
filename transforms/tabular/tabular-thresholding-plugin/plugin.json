@@ -1,0 +1,168 @@
+{
+    "name": "tabular-thresholding-plugin",
+    "version": "0.1.0",
+    "containerId": "polusai/tabular-thresholding-plugin:0.1.0",
+    "title": "tabular-data-thresholding",
+    "description": "This plugin computes thresholds using three methods and apply thresholds on each labelled data to produce binary outputs",
+    "author": "Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/PolusAI/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "inputs": [
+      {
+        "name": "inpDir",
+        "description": "Directory containing tabular data CSVs",
+        "type": "csvCollection",
+        "options": null,
+        "required": true
+      },
+      {
+        "name": "metaDir",
+        "description": "Directory containing metadata information of tabular data",
+        "type": "csvCollection",
+        "options": null,
+        "required": false
+      },
+      {
+        "name": "mappingvariableName",
+        "description": "FeatureName use to merge two CSVs",
+        "type": "string",
+        "options": null,
+        "required": false
+      },
+      {
+        "name": "negControl",
+        "description": "FeatureName containing information about the position of non treated wells",
+        "type": "string",
+        "options": null,
+        "required": true
+      },
+      {
+        "name": "posControl",
+        "description": "FeatureName containing information about the position of wells with known treatment outcome",
+        "type": "string",
+        "options": null,
+        "required": false
+      },
+      {
+        "name": "variableName",
+        "description": "Name of the Variable for computing thresholds",
+        "type": "string",
+        "options": null,
+        "required": true
+      },
+      {
+        "name": "thresholdType",
+        "description": "Name of the threshold method",
+        "type": "string",
+        "options": null,
+        "required": false
+      },
+      {
+        "name": "falsePositiverate",
+        "description": "False positive rate threshold value",
+        "type": "number",
+        "options": null,
+        "required": false
+      },
+      {
+        "name": "numBins",
+        "description": "Number of Bins for otsu threshold",
+        "type": "number",
+        "options": null,
+        "required": false
+      },
+      {
+        "name": "n",
+        "description": "Number of Standard deviation",
+        "type": "number",
+        "options": null,
+        "required": false
+      },
+      {
+        "name": "outFormat",
+        "description": "Output format",
+        "type": "number",
+        "options": null,
+        "required": false
+      }
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "description": "Output collection",
+        "type": "csvCollection",
+        "options": null,
+        "required": true
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.inpDir",
+        "title": "inpDir",
+        "description": "Input directory containing tabular data CSVs"
+      },
+      {
+        "key": "inputs.metaDir",
+        "title": "metaDir",
+        "description": "Input directory containing metadata CSV file for merging with tabular data CSVs"
+      },
+      {
+        "key": "inputs.mappingvariableName",
+        "title": "mappingvariableName",
+        "description": "FeatureName use to merge two CSVs"
+      },
+      {
+        "key": "inputs.negControl",
+        "title": "negControl",
+        "description": "FeatureName containing information about the position of non treated wells"
+      },
+      {
+        "key": "inputs.posControl",
+        "title": "posControl",
+        "description": "FeatureName containing information about the position of wells with known treatment outcome"
+      },
+      {
+        "key": "inputs.posControl",
+        "title": "posControl",
+        "description": "FeatureName containing information about the position of wells with known treatment outcome"
+      },
+      {
+        "key": "inputs.variableName",
+        "title": "variableName",
+        "description": "Name of the Variable for computing thresholds"
+      },
+      {
+        "key": "inputs.thresholdType",
+        "title": "thresholdType",
+        "description": "Name of the threshold method",
+        "default": "all"
+      },
+      {
+        "key": "inputs.falsePositiverate",
+        "title": "falsePositiverate",
+        "description": "False positive rate threshold value",
+        "default": 1.0
+      },
+      {
+        "key": "inputs.numBins",
+        "title": "numBins",
+        "description": "Number of Bins for otsu threshold",
+        "default": 512
+      },
+      {
+        "key": "inputs.n",
+        "title": "n",
+        "description": "Number of Standard deviation",
+        "default": 4
+      },
+      {
+        "key": "inputs.outFormat",
+        "title": "outFormat",
+        "description": "Output format",
+        "default": "csv"
+      }
+    ],
+    "validators": null
+  }
