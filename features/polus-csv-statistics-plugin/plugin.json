@@ -13,6 +13,7 @@
       {
         "name": "statistics",
         "type": "array",
+        "description": "The csv statistics to generate",
         "options": {
           "items": {
             "type": "string",
