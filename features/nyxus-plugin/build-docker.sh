@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t polusai/scaled-nyxus:${version}
+docker build . -t polusai/nyxus-plugin:${version}

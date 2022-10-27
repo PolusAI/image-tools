@@ -7,7 +7,7 @@ class VersionTest(unittest.TestCase):
     
     version_path = Path(__file__).parent.parent.joinpath("VERSION")
     json_path = Path(__file__).parent.parent.joinpath("plugin.json")
-    url = 'https://hub.docker.com/repository/docker/polusai/discard-border-objects-plugin/tags?page=1&ordering=last_updated'
+    url = 'https://hub.docker.com/repository/docker/polusai/nyxus-plugin/tags?page=1&ordering=last_updated'
     
     def test_plugin_manifest(self):
         """ Tests VERSION matches the version in the plugin manifest """

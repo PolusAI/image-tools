@@ -19,7 +19,7 @@ LOGLEVEL=INFO
 docker run --mount type=bind,source=${datapath},target=/data/ \
             --user $(id -u):$(id -g) \
             --env POLUS_LOG=${LOGLEVEL} \
-            polusai/scaled-nyxus:${version} \
+            polusai/nyxus-plugin:${version} \
             --inpDir ${inpDir} \
             --segDir ${segDir} \
             --outDir ${outDir} \
