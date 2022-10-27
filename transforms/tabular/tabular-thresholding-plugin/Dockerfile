@@ -17,6 +17,6 @@ WORKDIR ${EXEC_DIR}
 RUN apt-get -y update && \
     apt-get -y install git && \
     pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir --force && \
-    pip3 install git+https://github.com/nishaq503/thresholding.git
+    pip3 install git+https://github.com/nishaq503/thresholding.git@646f66f8c5f76317b8de7d16b918190eb7f3ec81
 
 ENTRYPOINT ["python3", "main.py"]
