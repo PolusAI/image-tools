@@ -8,7 +8,7 @@ inpDir=/data/path_to_images
 segDir=/data/path_to_label_images
 filePattern='p{p+}.*.ome.tif'
 #mapVar Choose the variable for channel  in intensity directory for extracting nyxus features
-mapVar=c2,c3 
+mapVar=c2 
 features="BASIC_MORPHOLOGY","ALL_INTENSITY"
 # More details available at https://github.com/PolusAI/nyxus
 neighborDist=5.0

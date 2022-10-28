@@ -6,6 +6,8 @@ from nyxus import Nyxus
 import logging
 import itertools
 
+from torch import is_deterministic_algorithms_warn_only_enabled
+
 logger = logging.getLogger("main")
 def nyxus_func(inpDir:str,
           segDir:str,
@@ -52,10 +54,19 @@ def nyxus_func(inpDir:str,
             mapVar = [f'{x}' for x in mapVar.split(',') if x in mapVar]
         else:
             mapVar = [mapVar]
-        intlist = [re.findall(filePattern, f) for f in sorted(os.listdir(inpDir))]
+        
+        var = mapVar[0]
+        var = re.match(r'\w', var).group(0)
         seglist = [re.findall(filePattern, f) for f in sorted(os.listdir(segDir))]
+
+        # Filepattern is modified to extract features from other intensity channel images
+        filePattern = re.sub(rf"{var}.*$", '.ome.tif', filePattern)
+        intlist = [re.findall(filePattern, f) for f in sorted(os.listdir(inpDir))]
+       
         intlist= list(itertools.chain(*intlist))
         seglist = list(itertools.chain(*seglist)) 
+
+        logger.info(f'{intlist}')
         flist = []
         for m in mapVar:
             intval=[os.path.join(inpDir, v) for v in intlist if m in v if v.endswith('.ome.tif')]
