@@ -15,6 +15,7 @@ def main(inpDir:str,
          segDir:str, 
          outDir:pathlib.Path,
          filePattern:str,
+         mapVar:Optional[List[str]],
          features:Optional[List[str]],
          neighborDist:Optional[float]=5.0,
          pixelPerMicron:Optional[float]=1.0
@@ -107,6 +108,8 @@ def main(inpDir:str,
                     "ALL_NGTDM",
                     "ALL_EASY",
                     "ALL"]
+
+    logger.info(f'mapVar: {mapVar}')
     
     ## Validation of nyxus features
     feat  = [f'{x}' for x in features.split(',')]
@@ -144,6 +147,7 @@ def main(inpDir:str,
                         segDir,
                         outDir,
                         filePattern,
+                        mapVar,
                         features,
                         neighborDist,
                         pixelPerMicron
@@ -196,6 +200,13 @@ parser.add_argument(
         help="Pattern use to parse image filenames",
         required=True
     )
+parser.add_argument(
+        "--mapVar",
+        dest="mapVar",
+        type=str,
+        help="Variable containing image channel information in intensity images for nyxus feature extraction",
+        required=False
+    )
 
 parser.add_argument(
         "--features",
@@ -239,6 +250,8 @@ logger.info('segDir = {}'.format(segDir))
 assert pathlib.Path(segDir).exists(), f'Path of Labelled images directory not found: {segDir}'
 filePattern = args.filePattern
 logger.info("filePattern = {}".format(filePattern))
+mapVar = args.mapVar
+logger.info("mapVar = {}".format(mapVar))
 features = args.features
 assert len(re.findall(r'{.*?}', filePattern)) == 1, f'Incorrect filePattern: {filePattern}'
 logger.info("features = {}".format(features))
@@ -256,6 +269,7 @@ if __name__=="__main__":
          segDir=segDir,
          outDir=outDir,
          filePattern=filePattern, 
+         mapVar=mapVar,
          features=features,
          neighborDist=neighborDist,
          pixelPerMicron=pixelPerMicron    

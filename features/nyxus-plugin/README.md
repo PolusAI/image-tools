@@ -31,14 +31,15 @@ contents of `plugin.json` into the pop-up window and submit.
 
 ## Options
 
-This plugin takes six input arguments and one output argument:
+This plugin takes seven input arguments and one output argument:
 
-| Name               | Description                                                   | I/O    | Type          |
-|--------------------|---------------------------------------------------------------|--------|---------------|
-| `--inpDir`         | Input image directory                                         | Input  | collection    |
-| `--segDir`         | Input label image directory                                   | Input  | collection    |
-| `--filePattern`    | Filepattern to parse image replicates                         | Input  | string        |
-| `--features`       | [nyxus features](https://pypi.org/project/nyxus/)             | Input  | string        |
-| `--neighborDist`   | Distance between two neighbor objects                         | Input  | float         |
-| `--pixelPerMicron` | Pixel Size in micrometer                                      | Input  | float         |
-| `--outDir`         | Output collection                                             | Output | collection    |
+| Name               | Description                                                        | I/O    | Type          |
+|--------------------|--------------------------------------------------------------------|--------|---------------|
+| `--inpDir`         | Input image directory                                              | Input  | collection    |
+| `--segDir`         | Input label image directory                                        | Input  | collection    |
+| `--filePattern`    | Filepattern to parse image replicates                              | Input  | string        |
+| `--mapVar`         | Select channel variable in intensity images for feature extraction | Input  | string        |
+| `--features`       | [nyxus features](https://pypi.org/project/nyxus/)                  | Input  | string        |
+| `--neighborDist`   | Distance between two neighbor objects                              | Input  | float         |
+| `--pixelPerMicron` | Pixel Size in micrometer                                           | Input  | float         |
+| `--outDir`         | Output collection                                                  | Output | collection    |
