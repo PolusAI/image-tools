@@ -9,6 +9,7 @@ from .plugin_classes import submit_plugin, _Plugins, load_plugin, Plugin, Comput
 from .manifest_utils import _scrape_manifests, _error_log
 from .gh import _init_github, add_plugin_from_gh
 from .registry import WippPluginRegistry
+from .utils import name_cleaner
 
 """
 Set up logging for the module
