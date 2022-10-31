@@ -1,4 +1,4 @@
-from .._io import IOBase, Version
+from ..io import IOBase, Version
 from typing import List
 from .PolusComputeSchema import (
     ConditionEntry,

@@ -1,5 +1,5 @@
 from .WIPPPluginSchema import WIPPPluginManifest, UiItem  # type: ignore
-from .._io import Input, Output, Version
+from ..io import Input, Output, Version
 from typing import List
 from pydantic import Field
 

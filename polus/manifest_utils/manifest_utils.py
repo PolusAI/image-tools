@@ -7,9 +7,8 @@ import github
 from tqdm import tqdm
 import logging
 from pydantic import errors, ValidationError
-from ._plugins import WIPPPluginManifest
-from .models.compute import PluginSchema as ComputeSchema  # new schema
-from ._utils import cast_version
+from ..models import WIPPPluginManifest, ComputeSchema
+from ..utils import cast_version
 
 logger = logging.getLogger("polus.plugins")
 

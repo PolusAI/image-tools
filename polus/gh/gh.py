@@ -2,13 +2,14 @@ import logging
 from urllib.parse import urljoin
 import github
 import os
-from ._plugins import submit_plugin
+from ..plugin_classes import submit_plugin
 
 logger = logging.getLogger("polus.plugins")
 
 """
 Initialize the Github interface
 """
+
 
 def _init_github(auth=None):
 
@@ -33,6 +34,7 @@ def _init_github(auth=None):
     )
 
     return gh
+
 
 def add_plugin_from_gh(
     user: str,

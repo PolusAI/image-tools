@@ -5,11 +5,12 @@ import requests
 import logging
 import json
 from tqdm import tqdm
-from ._plugins import _Plugins as plugins, submit_plugin, Plugin, ComputePlugin
-from ._registry_utils import _generate_query, _to_xml
+from ..plugin_classes import _Plugins as plugins, submit_plugin, Plugin, ComputePlugin
+from .registry_utils import _generate_query, _to_xml
 import typing
 
 logger = logging.getLogger("polus.plugins")
+
 
 class FailedToPublish(Exception):
     pass
@@ -33,7 +34,8 @@ class WippPluginRegistry:
         self.username = username
         self.password = password
 
-    def _parse_xml(xml: str):
+    @classmethod
+    def _parse_xml(cls, xml: str):
         """Returns dictionary of Plugin Manifest. If error, returns None."""
         d = xmltodict.parse(xml)["Resource"]["role"]["PluginManifest"][
             "PluginManifestContent"
@@ -257,8 +259,7 @@ class WippPluginRegistry:
         # Get current version of the resource
         data = self.get_resource_by_pid(pid, verify)
 
-        data.update(
-            {"version": version})
+        data.update({"version": version})
         response = requests.patch(
             urljoin(self.registry_url, "rest/data/" + data["id"]),
             data,

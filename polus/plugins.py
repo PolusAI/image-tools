@@ -4,11 +4,11 @@ import logging
 import re
 from tqdm import tqdm
 from pydantic import ValidationError
-from polus._plugins._io import Version
-from polus._plugins._plugins import submit_plugin, _Plugins, load_plugin
-from polus._plugins._manifests import _scrape_manifests, _error_log
-from polus._plugins._gh import _init_github, add_plugin_from_gh
-from polus._plugins._registry import WippPluginRegistry
+from .io import Version
+from .plugin_classes import submit_plugin, _Plugins, load_plugin, Plugin, ComputePlugin
+from .manifest_utils import _scrape_manifests, _error_log
+from .gh import _init_github, add_plugin_from_gh
+from .registry import WippPluginRegistry
 
 """
 Set up logging for the module
@@ -24,6 +24,7 @@ get_plugin = plugins.get_plugin
 load_config = plugins.load_config
 plugins.WippPluginRegistry = WippPluginRegistry
 plugins.refresh()  # calls the refresh method when library is imported
+
 
 def update_polus_plugins(
     gh_auth: typing.Optional[str] = None, min_depth: int = 2, max_depth: int = 3
@@ -120,5 +121,3 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
 
         except ValidationError as val_err:
             _error_log(val_err, manifest, "update_nist_plugins")
-
-

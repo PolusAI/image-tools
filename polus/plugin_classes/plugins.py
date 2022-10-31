@@ -1,14 +1,13 @@
 from copy import deepcopy
 from pprint import pprint, pformat
 import typing
-from ._io import Version, DuplicateVersionFound
-from .models.wipp import WIPPPluginManifest
-from ._utils import name_cleaner, cast_version
+from ..io import Version, DuplicateVersionFound, _in_old_to_new, _ui_old_to_new
+from ..models import WIPPPluginManifest
+from ..utils import name_cleaner, cast_version
 from ._plugin_methods import PluginMethods
-from .models import PluginUIInput, PluginUIOutput
-from .models import ComputeSchema
-from ._manifests import _load_manifest, validate_manifest
-from ._io import Version, DuplicateVersionFound, _in_old_to_new, _ui_old_to_new
+from ..models import PluginUIInput, PluginUIOutput
+from ..models import ComputeSchema
+from ..manifest_utils import _load_manifest, validate_manifest
 from pydantic import Extra
 import pathlib
 import json
