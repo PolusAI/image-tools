@@ -1,7 +1,7 @@
 {
   "name": "Nyxus plugin",
-  "version": "0.1.1",
-  "containerId": "polusai/nyxus-plugin:0.1.1",
+  "version": "0.1.2",
+  "containerId": "polusai/nyxus-plugin:0.1.2",
   "title": "Nyxus plugin",
   "description": "Nyxus plugin allows to make use of parallel pocessing for extracting nyxus features",
   "author": "Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com)",
@@ -97,6 +97,11 @@
       "key": "inputs.filePattern",
       "title": "filePattern",
       "description": "Filepattern to parse image files"
+    },
+    {
+      "key": "inputs.mapVar",
+      "title": "mapVar",
+      "description": "Channel variable for feature extraction"
     },
     {
       "key": "inputs.neighborDist",

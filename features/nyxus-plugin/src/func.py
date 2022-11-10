@@ -2,11 +2,11 @@ import os
 import pathlib 
 import re
 from typing import Optional, List
-from nyxus import Nyxus
 import logging
 import itertools
+from nyxus import Nyxus
 
-from torch import is_deterministic_algorithms_warn_only_enabled
+
 
 logger = logging.getLogger("main")
 def nyxus_func(inpDir:str,
@@ -75,9 +75,9 @@ def nyxus_func(inpDir:str,
         segval = sorted([os.path.join(segDir, v) for v in sorted(seglist)] * len(mapVar))
 
         assert len(flist) == len(segval), logger.info('Unequal length of intensity filenames {flist} & label image {segval}!')
-
-        features = nyx.featurize(int_fnames=flist,
-                                seg_fnames=segval                               )
+    
+        features = nyx.featurize(intensity_files=flist,
+                                mask_files=segval                               )
     else:
         features = nyx.featurize_directory(intensity_dir=inpDir,
                                 label_dir=segDir,

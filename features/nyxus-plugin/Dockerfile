@@ -12,6 +12,6 @@ RUN mkdir -p ${EXEC_DIR} \
 COPY src ${EXEC_DIR}/
 WORKDIR ${EXEC_DIR}
 
-RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir --force
+RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir --force 
 
 ENTRYPOINT ["python3", "main.py"]
