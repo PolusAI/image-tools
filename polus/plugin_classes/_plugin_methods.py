@@ -23,18 +23,6 @@ class PluginMethods:
     def organization(self):
         return self.containerId.split("/")[0]
 
-    @property
-    def _config_file(self):
-        inp = {x.name: str(x.value) for x in self.inputs}
-        out = {x.name: str(x.value) for x in self.outputs}
-        config = {"inputs": inp, "outputs": out}
-        return config
-
-    def save_config(self, path: typing.Union[str, pathlib.Path]):
-        with open(path, "w") as fw:
-            json.dump(self._config_file, fw)
-        logger.debug("Saved config to %s" % (path))
-
     def load_config(self, path: typing.Union[str, pathlib.Path]):
         with open(path, "r") as fw:
             config = json.load(fw)

@@ -79,9 +79,9 @@ class _Plugins:
         _io = m["_io_keys"]
         cl = m["class"]
         m.pop("class", None)
-        if cl == "NewPlugin":
+        if cl == "Compute":
             pl = ComputePlugin(_uuid=False, **m)
-        elif cl == "OldPlugin":
+        elif cl == "WIPP":
             pl = Plugin(_uuid=False, **m)
         else:
             raise ValueError("Invalid value of class")
@@ -189,12 +189,12 @@ class Plugin(WIPPPluginManifest, PluginMethods):
     @property
     def _config_file(self):
         m = self._config
-        m["class"] = "OldPlugin"
+        m["class"] = "WIPP"
         return m
 
     def save_config(self, path: typing.Union[str, pathlib.Path]):
         with open(path, "w") as fw:
-            json.dump(self._config_file, fw, indent=4)
+            json.dump(self._config_file, fw, indent=4, default=str)
         logger.debug("Saved config to %s" % (path))
 
     def __repr__(self) -> str:
@@ -279,7 +279,7 @@ class ComputePlugin(ComputeSchema, PluginMethods):
     @property
     def _config_file(self):
         m = self._config
-        m["class"] = "NewPlugin"
+        m["class"] = "Compute"
         return m
 
     def __setattr__(self, name, value):
