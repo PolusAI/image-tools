@@ -177,6 +177,8 @@ if __name__=="__main__":
     if groupBy:
         assert filePattern, 'filePattern must be specified when specifying groupBy variables'
 
+    file_column = 'intensity_image'
+
     # Open each csv files
     for feat_file in csv_files:
         fpath = str(feat_file.absolute())
@@ -185,11 +187,11 @@ if __name__=="__main__":
             with open(str(out),'w') as fw:
                 # Read the first line, which should contain headers
                 first_line = fr.readline()
-                headers = first_line.rstrip('\n').split(',')
+                headers = first_line.replace(file_column, 'file').rstrip('\n').split(',')
                 var_ind = {key:val for key,val in enumerate(headers)} # map headers to line positions
                 # If no column is labeled file, throw an error
                 if 'file' not in headers:
-                    ValueError('At least one column must have a header title file.')
+                    raise ValueError('At least one column must have a header title file.')
 
                 # Generate the output dictionary template and format string
                 line_dict = {'file': 'NaN'}
