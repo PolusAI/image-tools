@@ -1,0 +1,60 @@
+[
+    {
+        "b1": {
+            {%- for inp,val in cookiecutter._inputs.items() if inp != 'out_input' %}
+            "{{ val.title }}": null,{% endfor %}
+            {%- if cookiecutter.scalability == 'fft-filter' %}
+            "pattern": "",
+            "padding": 0,{% endif %}
+            {%- for out,val in cookiecutter._outputs.items() %}
+            "{{ val.title }}": "b1"{% if not loop.last %},{% endif %}{% endfor %}
+        },
+        "t1.1": {
+            {%- for inp,val in cookiecutter._inputs.items() if inp != 'out_input' %}
+            "{{ val.title }}": null,{% endfor %}
+            {%- if cookiecutter.scalability == 'fft-filter' %}
+            "pattern": "",
+            "padding": 0,{% endif %}
+            {%- for out,val in cookiecutter._outputs.items() %}
+            "{{ val.title }}": "t1.1"{% if not loop.last %},{% endif %}{% endfor %}
+        },
+        "t1.2": {
+            {%- for inp,val in cookiecutter._inputs.items() if inp != 'out_input' %}
+            "{{ val.title }}": null,{% endfor %}
+            {%- if cookiecutter.scalability == 'fft-filter' %}
+            "pattern": "",
+            "padding": 0,{% endif %}
+            {%- for out,val in cookiecutter._outputs.items() %}
+            "{{ val.title }}": "t1.2"{% if not loop.last %},{% endif %}{% endfor %}
+        }
+    },
+    {
+        "b2": {
+            {%- for inp,val in cookiecutter._inputs.items() if inp != 'out_input' %}
+            "{{ val.title }}": null,{% endfor %}
+            {%- if cookiecutter.scalability == 'fft-filter' %}
+            "pattern": "",
+            "padding": 0,{% endif %}
+            {%- for out,val in cookiecutter._outputs.items() %}
+            "{{ val.title }}": "b2"{% if not loop.last %},{% endif %}{% endfor %}
+        },
+        "t2.1": {
+            {%- for inp,val in cookiecutter._inputs.items() if inp != 'out_input' %}
+            "{{ val.title }}": null,{% endfor %}
+            {%- if cookiecutter.scalability == 'fft-filter' %}
+            "pattern": "",
+            "padding": 0,{% endif %}
+            {%- for out,val in cookiecutter._outputs.items() %}
+            "{{ val.title }}": "t2.1"{% if not loop.last %},{% endif %}{% endfor %}
+        },
+        "t2.2": {
+            {%- for inp,val in cookiecutter._inputs.items() if inp != 'out_input'%}
+            "{{ val.title }}": null,{% endfor %}
+            {%- if cookiecutter.scalability == 'fft-filter' %}
+            "pattern": "",
+            "padding": 0,{% endif %}
+            {%- for out,val in cookiecutter._outputs.items() %}
+            "{{ val.title }}": "t2.2"{% if not loop.last %},{% endif %}{% endfor %}
+        }
+    }
+]
