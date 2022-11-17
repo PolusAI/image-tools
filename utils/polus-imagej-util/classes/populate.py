@@ -1,8 +1,6 @@
 import re
 import json
 import logging
-from matplotlib.font_manager import json_load
-from numpy import False_
 import scyjava
 import imagej
 from pathlib import Path
@@ -825,9 +823,15 @@ class Populate:
                         plugin._all_outputs,
                     'project_slug': "polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin",
                     'docker_repo' : "{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin",
-                    'scalability': self.scale.get(name.replace('.', '-'), None)
+                    'scalability': self.scale.get(name.replace('.', '-'), "independent")
                     }
                 
+                
+                # If threhsolding op add compute threhsold call to template
+                if self.json_dic[name]['scalability'] == 'threshold':
+                    self.json_dic[name]['compute_threshold'] = 'threshold = ij.op().' \
+                        + name.replace('.', '().') + '(histogram)'
+              
                 # Update the _inputs section dictionary with the inputs 
                 # dictionary stored in the Library attribute
                 self.json_dic[name]['_inputs'].update(plugin._all_required_inputs)
@@ -925,7 +929,7 @@ class GeneratedParser:
             plugin_name = str(p.parent.name).replace('polus-imagej-', '').replace('-plugin', '')
             
             # Load the plugins manifest and save in the member attribute dict
-            self.manifests[plugin_name] = json_load(p)
+            self.manifests[plugin_name] = json.load(open(p))
             
         
         # Define path to all cookiecutter template files
@@ -941,10 +945,10 @@ class GeneratedParser:
             plugin_name = str(p.parent.name)
             
             # Load the cookiecutter template files
-            self.cookiecutter[plugin_name] = json_load(p)
-
-
-    def update_templates(self, ops):
+            self.cookiecutter[plugin_name] = json.load(open(p))
+    
+    
+    def update_templates(self, ops='all', skip=[]):
         """A method to update the cookiecutter template files with the 
         previously generated ImageJ plugin manifests.
         
@@ -958,6 +962,9 @@ class GeneratedParser:
         Arguments:
             ops (list): A list of strings representing the plugin cookiecutter
                 templates to update in shortened form (i.e. filter-gauss)
+            skip (list): A list of plugins to not update, can be used to skip
+                plugins with known varying number of inputs due to manual
+                updates to the plugin.
         
         Returns:
             None
@@ -968,7 +975,7 @@ class GeneratedParser:
                 manifest file. This accounts for ops which have a out input for 
                 memory allocation which does not appear in both files. 
         """
-        
+
         # Iterate over all cookiecutter template files
         for plugin, template in self.cookiecutter.items():
             
@@ -976,22 +983,27 @@ class GeneratedParser:
             if plugin.lower() not in ops and ops != 'all':
                 continue
             
-            else:
-                print('Updating {}'.format(plugin))
+            # Check if caller wants to skip plugin
+            elif plugin.lower() in skip:
+                continue
             
             # Check if a plugin manifest exists for the current plugin
-            if plugin.lower() not in self.manifests.keys():
+            elif plugin.lower() not in self.manifests.keys():
                 print('{} has no manifest'.format(plugin))
                 continue
+            
+            else:
+                print('Updating {}'.format(plugin))
             
             # Define the manifest to be used to update cookiecutter template
             manifest = self.manifests[plugin.lower()]
             
             # Determine if out_input is a cookiecutter template input
             if 'out_input' in template['_inputs'].keys():
-                # Check the input lengths
+                # Check if the input lengths match 
                 if len(template['_inputs']) - 1 != len(manifest['inputs']):
                     raise AssertionError('The {} template and manifest have a varying number of inputs'.format(plugin))
+                
             else:
                 # Check the input lengths for other case
                 if len(template['_inputs']) != len(manifest['inputs']):
@@ -1009,13 +1021,26 @@ class GeneratedParser:
             # Iterate over the cookiecutter template inputs and thier data
             for cinp, d in template['_inputs'].items():
                 
-                # Skip the memory allocaiton input "out_input"
+                # Skip the memory allocation input "out_input"
                 if cinp == 'out_input':
                     continue
                 
                 # Update the inputs data/description
                 d['title'] = manifest['inputs'][i]['name']
                 d['description'] = manifest['inputs'][i]['description']
+                
+                # Increment the manifest input index
+                i += 1
+            
+            # Start a manifest output index
+            i = 0
+            
+            # Iterate over the cookiecutter template outputs and thier data
+            for _, d in template['_outputs'].items():
+                
+                # Update the inputs data/description
+                d['title'] = manifest['outputs'][i]['name']
+                d['description'] = manifest['outputs'][i]['description']
                 
                 # Increment the manifest input index
                 i += 1
@@ -1079,4 +1104,4 @@ if __name__ == '__main__':
     
     # Instantiate the generated ops parser and update templates with manifests
     parser = GeneratedParser()
-    parser.update_templates(['all'])
+    parser.update_templates('all', ['threshold-apply'])
