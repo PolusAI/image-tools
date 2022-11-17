@@ -414,6 +414,77 @@ def main({#- Required inputs -#}
         jpype.shutdownJVM()
         logger.info('JVM shutdown complete')
     
+    try:
+        
+        logger.info('Computing threshold value...')
+        
+        # Create a tile count
+        tile_count = 0
+        
+        for {%- for inp,val in cookiecutter._inputs.items() -%}
+            {%- if val.type=='collection' and inp != 'out_input' %} {{ inp }}_path, in zip(*args):
+            
+            # Check if any tiles have been processed
+            if tile_count == 0:
+                
+                # Create the initial histogram
+                histogram = create_histogram({{ inp }}_path, ij)
+            
+            else:
+                
+                # Convert the image to an iterable interval
+                iterable_interval, fname, metadata = create_iterable({{ inp }}_path, ij)
+                
+                # Add the image tile to the histogram
+                histogram.addData(iterable_interval)
+            
+            tile_count += 1
+            {% endif -%}{%- endfor %}
+        
+        # Calculate the threshold value
+        {{ cookiecutter.compute_threshold }}
+        
+        # Check if array was returned
+        if isinstance(threshold, jpype.JClass('java.util.ArrayList')):
+            
+            # Get the threshold value, disregard the errMsg output
+            threshold = threshold[0]
+        
+        logger.info('The threshold value is {}'.format(threshold))
+        
+        for {%- for inp,val in cookiecutter._inputs.items() -%}
+        {%- if val.type=='collection' and inp != 'out_input' %} {{ inp }}_path, in zip(*args):
+        
+                    # Load the first plane of image in {{ inp }} collection
+                    logger.info('Processing image: {}'.format({{ inp }}_path))
+                    
+                    # Convert the image to an iterable interval
+                    iterable_interval, fname, metadata = create_iterable({{ inp }}_path, ij)
+                    
+                    # Apply the threshold
+                    out = ij.op().threshold().apply(iterable_interval, threshold)
+                    
+                    # Write image to file
+                    logger.info('Saving image {}'.format(fname))
+                    out_array = ij_converter.from_java(ij, out, 'Iterable')
+                    bw = BioWriter(_out.joinpath(fname), metadata=metadata)
+                    bw.Z = 1
+                    bw.dtype = out_array.dtype
+                    bw[:] = out_array.astype(bw.dtype)
+                    bw.close()     
+        {% endif -%}{%- endfor %}
+        
+    except:
+        logger.error('There was an error, shutting down jvm before raising...')
+        raise
+            
+    finally:
+        # Exit the program
+        logger.info('Shutting down jvm...')
+        del ij
+        jpype.shutdownJVM()
+        logger.info('JVM shutdown complete')
+    
     {% elif cookiecutter.scalability == 'fft-filter' %}
     
     # Attempt to convert inputs to java types and run the filter op
