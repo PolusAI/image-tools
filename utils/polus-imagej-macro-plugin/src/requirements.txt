@@ -1,0 +1,4 @@
+bfio[all]==2.1.9
+filepattern==1.4.7
+pyimagej==1.2.1
+xarray==2022.3.0
