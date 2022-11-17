@@ -1,7 +1,7 @@
 import argparse, logging, math
 from pathlib import Path
 from filepattern.functions import get_regex, parse_filename, output_name
-from pprint import pprint
+
 
 def get_vars(file, groupBy, regex, var):
     if isinstance(file, list):
@@ -245,7 +245,8 @@ if __name__=="__main__":
                         # Store the values in a feature list
                         for key,val in np_line.items():
                             if isinstance(val,str):
-                                p_line[key].append(get_number(val[0]))
+                                # p_line[key].append(get_number(val[0]))
+                                p_line[key].append(get_number(val))
                         
                         if filePattern:
                             # Add the file's groupBy variables to the output row label list
@@ -272,6 +273,7 @@ if __name__=="__main__":
 
                     # Get the mean of the feature list, save in the file dictionary
                     for key,val in p_line.items():
+                        
                         # Set the file name
                         if key=='file':
                             if filePattern:
