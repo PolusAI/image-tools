@@ -20,7 +20,7 @@ if __name__ == '__main__':
     
     # Define the logger format
     formatter = logging.Formatter(
-        format = '%(asctime)s - %(levelname)s - %(name)s - %(message)s',
+        fmt = '%(asctime)s - %(levelname)s - %(name)s - %(message)s',
         datefmt = '%d-%b-%y %H:%M:%S'
         )
     
