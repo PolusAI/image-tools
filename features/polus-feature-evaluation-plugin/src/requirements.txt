@@ -4,4 +4,5 @@ opencv_python==4.5.1.48
 scikit-learn==0.24.2
 pandas==1.2.4
 pyarrow==5.0.0
-filepattern==1.4.4
+filepattern==1.4.7
+scipy==1.6.2
