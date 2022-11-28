@@ -1,276 +1,267 @@
 import argparse
 import logging
 import os
-import pathlib 
-import time
-import re
-import numpy as np
-import multiprocessing
+import pathlib
 from typing import Optional, List
-from functools import partial
 from func import nyxus_func
 
+from filepattern import FilePattern
+from preadator import ProcessManager
 
-def main(inpDir:str, 
-         segDir:str, 
-         outDir:pathlib.Path,
-         filePattern:str,
-         mapVar:Optional[List[str]],
-         features:Optional[List[str]],
-         neighborDist:Optional[float]=5.0,
-         pixelPerMicron:Optional[float]=1.0
-         ):
+# #Import environment variables
+POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
+POLUS_EXT = os.environ.get("POLUS_EXT", ".ome.tif")
 
-    starttime = time.time()
+# Initialize the logger
+logging.basicConfig(
+    format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
+    datefmt="%d-%b-%y %H:%M:%S",
+)
+logger = logging.getLogger("main")
+logger.setLevel(POLUS_LOG)
 
-    
-    if '{' and '}' in filePattern:
-        filePattern  = re.sub(r"{.*}", '([0-9]+)', filePattern)
+FEATURE_GROUP = {
+    "ALL_INTENSITY",
+    "ALL_MORPHOLOGY",
+    "BASIC_MORPHOLOGY",
+    "ALL_GLCM",
+    "ALL_GLRLM",
+    "ALL_GLSZM",
+    "ALL_GLDM",
+    "ALL_NGTDM",
+    "ALL_EASY",
+    "ALL",
+}
 
-    ## Extracting unique image replicates using filepattern
-    
-    replicate = np.unique([re.search(filePattern, f).groups() for f in os.listdir(inpDir) 
-                            if re.search(filePattern, f) is not None])
-
-    logger.info(f"Total number of replicates found: {replicate}")
-
-    assert len(replicate) is not None, f'Replicate plate images not found! Please check the filepattern again: {replicate}'
-
-    feature_list =["INTEGRATED_INTENSITY",
-                    "MEAN",
-                    "MAX",
-                    "MEDIAN",
-                    "STANDARD_DEVIATION",
-                    "MODE",
-                    "SKEWNESS",
-                    "KURTOSIS",
-                    "HYPERSKEWNESS",
-                    "HYPERFLATNESS",
-                    "MEAN_ABSOLUTE_DEVIATION",
-                    "ENERGY",
-                    "ROOT_MEAN_SQUARED",
-                    "ENTROPY",
-                    "UNIFORMITY",
-                    "UNIFORMITY_PIU",
-                    "P01",
-                    "P10",
-                    "P25",
-                    "P75",
-                    "P90",
-                    "P99",
-                    "INTERQUARTILE_RANGE",
-                    "ROBUST_MEAN_ABSOLUTE_DEVIATION",
-                    "MASS_DISPLACEMENT",
-                    "AREA_PIXELS_COUNT",
-                    "COMPACTNESS",
-                    "BBOX_YMIN",
-                    "BBOX_XMIN",
-                    "BBOX_HEIGHT",
-                    "BBOX_WIDTH",
-                    "MINOR_AXIS_LENGTH",
-                    "MAGOR_AXIS_LENGTH",
-                    "ECCENTRICITY",
-                    "ORIENTATION",
-                    "ROUNDNESS",
-                    "NUM_NEIGHBORS",
-                    "PERCENT_TOUCHING",
-                    "EXTENT",
-                    "CONVEX_HULL_AREA",
-                    "SOLIDITY",
-                    "PERIMETER",
-                    "EQUIVALENT_DIAMETER",
-                    "EDGE_MEAN",
-                    "EDGE_MAX",
-                    "EDGE_MIN",
-                    "EDGE_STDDEV_INTENSITY",
-                    "CIRCULARITY",
-                    "EROSIONS_2_VANISH",
-                    "EROSIONS_2_VANISH_COMPLEMENT",
-                    "FRACT_DIM_BOXCOUNT",
-                    "FRACT_DIM_PERIMETER",
-                    "GLCM",
-                    "GLRLM",
-                    "GLSZM",
-                    "GLDM",
-                    "NGTDM",
-                    "ZERNIKE2D",
-                    "FRAC_AT_D",
-                    "RADIAL_CV",
-                    "MEAN_FRAC",
-                    "GABOR",
-                    "ALL_INTENSITY",
-                    "ALL_MORPHOLOGY",
-                    "BASIC_MORPHOLOGY",
-                    "ALL_GLCM",
-                    "ALL_GLRLM",
-                    "ALL_GLSZM",
-                    "ALL_GLDM",
-                    "ALL_NGTDM",
-                    "ALL_EASY",
-                    "ALL"]
-
-    logger.info(f'mapVar: {mapVar}')
-    
-    ## Validation of nyxus features
-    feat  = [f'{x}' for x in features.split(',')]
-    if len(feat) == 1 and feat[0] not in feature_list:
-        raise ValueError(logger.info('Feature Name is not Valid! Please check Nyxus Features again'))
-    else:
-        comp = [f for f in feat if f not in feature_list]
-        if comp:
-            raise ValueError(logger.info('Feature Name is not Valid! Please check Nyxus Features again'))
+FEATURE_LIST = {
+    "INTEGRATED_INTENSITY",
+    "MEAN",
+    "MAX",
+    "MEDIAN",
+    "STANDARD_DEVIATION",
+    "MODE",
+    "SKEWNESS",
+    "KURTOSIS",
+    "HYPERSKEWNESS",
+    "HYPERFLATNESS",
+    "MEAN_ABSOLUTE_DEVIATION",
+    "ENERGY",
+    "ROOT_MEAN_SQUARED",
+    "ENTROPY",
+    "UNIFORMITY",
+    "UNIFORMITY_PIU",
+    "P01",
+    "P10",
+    "P25",
+    "P75",
+    "P90",
+    "P99",
+    "INTERQUARTILE_RANGE",
+    "ROBUST_MEAN_ABSOLUTE_DEVIATION",
+    "MASS_DISPLACEMENT",
+    "AREA_PIXELS_COUNT",
+    "COMPACTNESS",
+    "BBOX_YMIN",
+    "BBOX_XMIN",
+    "BBOX_HEIGHT",
+    "BBOX_WIDTH",
+    "MINOR_AXIS_LENGTH",
+    "MAGOR_AXIS_LENGTH",
+    "ECCENTRICITY",
+    "ORIENTATION",
+    "ROUNDNESS",
+    "NUM_NEIGHBORS",
+    "PERCENT_TOUCHING",
+    "EXTENT",
+    "CONVEX_HULL_AREA",
+    "SOLIDITY",
+    "PERIMETER",
+    "EQUIVALENT_DIAMETER",
+    "EDGE_MEAN",
+    "EDGE_MAX",
+    "EDGE_MIN",
+    "EDGE_STDDEV_INTENSITY",
+    "CIRCULARITY",
+    "EROSIONS_2_VANISH",
+    "EROSIONS_2_VANISH_COMPLEMENT",
+    "FRACT_DIM_BOXCOUNT",
+    "FRACT_DIM_PERIMETER",
+    "GLCM",
+    "GLRLM",
+    "GLSZM",
+    "GLDM",
+    "NGTDM",
+    "ZERNIKE2D",
+    "FRAC_AT_D",
+    "RADIAL_CV",
+    "MEAN_FRAC",
+    "GABOR",
+    "ALL_INTENSITY",
+    "ALL_MORPHOLOGY",
+    "BASIC_MORPHOLOGY",
+    "ALL_GLCM",
+    "ALL_GLRLM",
+    "ALL_GLSZM",
+    "ALL_GLDM",
+    "ALL_NGTDM",
+    "ALL_EASY",
+    "ALL",
+}
 
 
-    groupfeatures= ["ALL_INTENSITY",
-              "ALL_MORPHOLOGY",
-              "BASIC_MORPHOLOGY",
-              "ALL_GLCM",
-              "ALL_GLRLM",
-              "ALL_GLSZM",
-              "ALL_GLDM",
-              "ALL_NGTDM",
-              "ALL_EASY",
-              "ALL"]
+def main(
+    inpDir: str,
+    segDir: str,
+    outDir: pathlib.Path,
+    intPattern: str = ".+",
+    segPattern: str = ".+",
+    features: List[str] = ["ALL"],
+    neighborDist: Optional[float] = 5.0,
+    pixelPerMicron: Optional[float] = 1.0,
+):
 
-    ## Adding * to the start and end of nyxus group features 
+    assert all(
+        f in FEATURE_GROUP.union(FEATURE_LIST) for f in features
+    ), "One or more feature selections were invalid"
 
-    ft_gp = [f'*{x}*' for x in features.split(',') if x in groupfeatures]
-    ft_only = [f'{x}' for x in features.split(',') if x not in groupfeatures]
-    features = [*ft_only , *ft_gp]
+    ## Adding * to the start and end of nyxus group features
+    features = [f"*{f}*" if f in FEATURE_GROUP else f for f in features]
 
-    num_workers = max(multiprocessing.cpu_count() // 2, 2)
+    ProcessManager.num_processes(num_threads)
+    ProcessManager.init_processes(name="Nyxus")
 
-    with multiprocessing.Pool(processes=num_workers) as executor:
-      
-        executor.map(partial(nyxus_func, 
-                        inpDir, 
-                        segDir,
-                        outDir,
-                        filePattern,
-                        mapVar,
-                        features,
-                        neighborDist,
-                        pixelPerMicron
-                        ), replicate)
+    int_images = FilePattern(inpDir, intPattern)
+    seg_images = FilePattern(segDir, segPattern)
 
-        executor.close()
-        executor.join()
-    endtime = round((time.time() - starttime)/60, 3)
-    logger.info(f"Time taken to finish nyxus feature extraction: {endtime} minutes!!!")
+    for s_image in seg_images:
+
+        i_image = int_images.get_matching(
+            **{k.upper(): v for k, v in s_image[0].items() if k != "file"}
+        )
+
+        ProcessManager.submit_process(
+            nyxus_func,
+            int_file=[i["file"] for i in i_image],
+            seg_file=s_image[0]["file"],
+            out_dir=outDir,
+            features=features,
+            pixels_per_micron=pixelPerMicron,
+            neighbor_dist=neighborDist,
+        )
+
+    ProcessManager.join_processes()
 
     return
 
 
-# #Import environment variables
-POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG','INFO'))
-POLUS_EXT = os.environ.get('POLUS_EXT','.ome.tif')
+if __name__ == "__main__":
 
-# Initialize the logger
-logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
-                    datefmt='%d-%b-%y %H:%M:%S')
-logger = logging.getLogger("main")
-logger.setLevel(POLUS_LOG)
+    """Argument parsing"""
+    logger.info("Parsing arguments...")
+    parser = argparse.ArgumentParser(prog="main", description="Scaled Nyxus")
 
-
-# ''' Argument parsing '''
-logger.info("Parsing arguments...")
-parser = argparse.ArgumentParser(prog='main', description='Scaled Nyxus')    
-#   # Input arguments
-
-parser.add_argument(
+    # Input arguments
+    parser.add_argument(
         "--inpDir",
         dest="inpDir",
         type=str,
         help="Input image collection to be processed by this plugin",
-        required=True
+        required=True,
     )
 
-parser.add_argument(
-        "--segDir",
-        dest="segDir",
-        type=str,
-        help="Input label images",
-        required=True
+    parser.add_argument(
+        "--segDir", dest="segDir", type=str, help="Input label images", required=True
     )
 
-parser.add_argument(
-        "--filePattern",
-        dest="filePattern",
+    parser.add_argument(
+        "--intPattern",
+        dest="intPattern",
         type=str,
-        help="Pattern use to parse image filenames",
-        required=True
-    )
-parser.add_argument(
-        "--mapVar",
-        dest="mapVar",
-        type=str,
-        help="Variable containing image channel information in intensity images for nyxus feature extraction",
-        required=False
+        help="Pattern use to parse intensity image filenames",
+        required=True,
     )
 
-parser.add_argument(
+    parser.add_argument(
+        "--segPattern",
+        dest="segPattern",
+        type=str,
+        help="Pattern use to parse segmentation image filenames",
+        required=True,
+    )
+
+    parser.add_argument(
         "--features",
         dest="features",
         type=str,
         help="Nyxus features to be extracted",
         default="ALL",
-        required=False
+        required=False,
     )
 
-parser.add_argument(
+    parser.add_argument(
         "--neighborDist",
         dest="neighborDist",
         type=float,
         help="Number of Pixels between Neighboring cells",
         default=5.0,
-        required=False
+        required=False,
     )
-parser.add_argument(
+    parser.add_argument(
         "--pixelPerMicron",
         dest="pixelPerMicron",
         type=float,
         help="Number of pixels per micrometer",
         default=1.0,
-        required=False
-    )                 
-#  # Output arguments
-parser.add_argument('--outDir',
-    dest='outDir',
-    type=str,
-    help='Output directory',
-    required=True
-    )   
-# # # Parse the arguments
-args = parser.parse_args()
-inpDir = args.inpDir
-logger.info('inpDir = {}'.format(inpDir))
-assert pathlib.Path(inpDir).exists(), f'Path of intensity images directory not found: {inpDir}'
-segDir = args.segDir
-logger.info('segDir = {}'.format(segDir))
-assert pathlib.Path(segDir).exists(), f'Path of Labelled images directory not found: {segDir}'
-filePattern = args.filePattern
-logger.info("filePattern = {}".format(filePattern))
-mapVar = args.mapVar
-logger.info("mapVar = {}".format(mapVar))
-features = args.features
-assert len(re.findall(r'{.*?}', filePattern)) == 1, f'Incorrect filePattern: {filePattern}'
-logger.info("features = {}".format(features))
-neighborDist = args.neighborDist
-logger.info("neighborDist = {}".format(neighborDist))
-pixelPerMicron = args.pixelPerMicron
-logger.info("pixelPerMicron = {}".format(pixelPerMicron))
+        required=False,
+    )
 
-outDir = pathlib.Path(args.outDir)
-logger.info('outDir = {}'.format(outDir))
+    # Output arguments
+    parser.add_argument(
+        "--outDir", dest="outDir", type=str, help="Output directory", required=True
+    )
 
-if __name__=="__main__":
+    # Parse the arguments
+    args = parser.parse_args()
 
-    main(inpDir=inpDir,
-         segDir=segDir,
-         outDir=outDir,
-         filePattern=filePattern, 
-         mapVar=mapVar,
-         features=features,
-         neighborDist=neighborDist,
-         pixelPerMicron=pixelPerMicron    
-         )
+    inpDir = args.inpDir
+    logger.info("inpDir = {}".format(inpDir))
+    assert pathlib.Path(
+        inpDir
+    ).exists(), f"Path of intensity images directory not found: {inpDir}"
+
+    segDir = args.segDir
+    logger.info("segDir = {}".format(segDir))
+    assert pathlib.Path(
+        segDir
+    ).exists(), f"Path of Labelled images directory not found: {segDir}"
+
+    intPattern = args.intPattern
+    logger.info("intPattern = {}".format(intPattern))
+
+    segPattern = args.segPattern
+    logger.info("segPattern = {}".format(segPattern))
+
+    features = args.features
+    logger.info("features = {}".format(features))
+    if isinstance(features, str):
+        features = features.split(",")
+
+    neighborDist = args.neighborDist
+    logger.info("neighborDist = {}".format(neighborDist))
+
+    pixelPerMicron = args.pixelPerMicron
+    logger.info("pixelPerMicron = {}".format(pixelPerMicron))
+
+    outDir = pathlib.Path(args.outDir)
+    logger.info("outDir = {}".format(outDir))
+
+    main(
+        inpDir=inpDir,
+        segDir=segDir,
+        outDir=outDir,
+        intPattern=intPattern,
+        segPattern=segPattern,
+        features=features,
+        neighborDist=neighborDist,
+        pixelPerMicron=pixelPerMicron,
+    )
