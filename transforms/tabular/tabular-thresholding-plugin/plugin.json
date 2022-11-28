@@ -163,6 +163,5 @@
         "description": "Output format",
         "default": "csv"
       }
-    ],
-    "validators": null
+    ]
   }
