@@ -115,6 +115,5 @@
       "description": "Pixel size in micrometer",
       "default": 1.0
     }
-  ],
-  "validators": null
+  ]
 }
