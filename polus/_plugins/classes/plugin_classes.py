@@ -4,7 +4,7 @@ import typing
 from ..io import Version, DuplicateVersionFound, _in_old_to_new, _ui_old_to_new
 from ..models import WIPPPluginManifest
 from ..utils import name_cleaner, cast_version
-from ._plugin_methods import PluginMethods
+from .plugin_methods import PluginMethods
 from ..models import PluginUIInput, PluginUIOutput
 from ..models import ComputeSchema
 from ..manifest_utils import _load_manifest, validate_manifest

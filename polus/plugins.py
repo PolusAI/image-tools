@@ -4,12 +4,18 @@ import logging
 import re
 from tqdm import tqdm
 from pydantic import ValidationError
-from .io import Version
-from .plugin_classes import submit_plugin, _Plugins, load_plugin, Plugin, ComputePlugin
-from .manifest_utils import _scrape_manifests, _error_log
-from .gh import _init_github, add_plugin_from_gh
-from .registry import WippPluginRegistry
-from .utils import name_cleaner
+from ._plugins.io import Version
+from ._plugins.classes import (
+    submit_plugin,
+    _Plugins,
+    load_plugin,
+    Plugin,
+    ComputePlugin,
+)
+from ._plugins.manifest_utils import _scrape_manifests, _error_log
+from ._plugins.gh import _init_github, add_plugin_from_gh
+from ._plugins.registry import WippPluginRegistry
+from ._plugins.utils import name_cleaner
 
 """
 Set up logging for the module
