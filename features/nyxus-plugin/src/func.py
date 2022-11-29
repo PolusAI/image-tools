@@ -1,90 +1,50 @@
-import os
-import pathlib 
-import re
-from typing import Optional, List
+import pathlib
+from typing import List, Optional, Union
 import logging
-import itertools
 from nyxus import Nyxus
+from preadator import ProcessManager
+
+logger = logging.getLogger("func")
 
 
+def nyxus_func(
+    int_file: Union[pathlib.Path, List[pathlib.Path]],
+    seg_file: pathlib.Path,
+    out_dir: pathlib.Path,
+    features: List[str],
+    pixels_per_micron: float,
+    neighbor_dist: Optional[float] = 5.0,
+) -> None:
+    """Scalable Extraction of Nyxus Features
 
-logger = logging.getLogger("main")
-def nyxus_func(inpDir:str,
-          segDir:str,
-          outDir:pathlib.Path,
-          filePattern:str,
-          mapVar:List[str],
-          features:List[str],
-          neighborDist:Optional[float],
-          pixelPerMicron:Optional[float],
-          replicate:str
-          ):
-
-    """Scalable Extraction of Nyxus Features 
     Args:
-        inpDir (str) : Path to intensity image directory
-        segDir (str) : Path to label image directory
-        outDir (Path) : Path to output directory
-        features list[str] : List of nyxus features to be computed
-        filePattern (str): Pattern to parse image replicates
-        mapVar list[str] : Variable containing image channel information in intensity images for feature extraction
-        neighborDist (float) optional, default 5.0: Pixel distance between neighbor objects
-        pixelPerMicron (float) optional, default 1.0: Pixel size in micrometer
-        replicate (str) : replicate identified using filePattern and are processed in parallel
-    Returns:
-        df : pd.DataFrame
-            Pandas DataFrame for each replicate containing extracted features for each object label
+        int_file (Union[pathlib.Path, List[pathlib.Path]]): Path to intensity image(s)
+        seg_file (pathlib.Path): Path to label image
+        out_file (pathlib.Path): Path to output directory
+        features (List[str]): Pattern to parse image replicates
+        pixels_per_micron (float): Number of pixels for every micrometer
+        neighbor_dist (Optional[float], optional): Pixel distance between neighbor
+            objects. Defaults to 5.0.
+    """
 
-    """ 
-    filePattern = (re.sub(r'\(.*?\)',
-     '{replicate}', filePattern)
-                    .format(replicate=replicate)
-                    )
+    with ProcessManager.process(seg_file.name):
 
-    logger.info(f'filepattern is {filePattern}')
+        if isinstance(int_file, pathlib.Path):
+            int_file = [int_file]
 
-    nyx = Nyxus(features, 
-                neighbor_distance=neighborDist, 
-                n_feature_calc_threads=4,
-                pixels_per_micron=pixelPerMicron
-                )
+        nyx = Nyxus(
+            features,
+            neighbor_distance=neighbor_dist,
+            n_feature_calc_threads=4,
+            pixels_per_micron=pixels_per_micron,
+        )
 
-    if mapVar:
-        if len(mapVar) >1:
-            mapVar = [f'{x}' for x in mapVar.split(',') if x in mapVar]
-        else:
-            mapVar = [mapVar]
-        
-        var = mapVar[0]
-        var = re.match(r'\w', var).group(0)
-        seglist = [re.findall(filePattern, f) for f in sorted(os.listdir(segDir))]
+        for i_file in int_file:
 
-        # Filepattern is modified to extract features from other intensity channel images
-        filePattern = re.sub(rf"{var}.*$", '.ome.tif', filePattern)
-        intlist = [re.findall(filePattern, f) for f in sorted(os.listdir(inpDir))]
-       
-        intlist= list(itertools.chain(*intlist))
-        seglist = list(itertools.chain(*seglist)) 
+            feats = nyx.featurize(
+                intensity_files=[str(i_file.absolute())],
+                mask_files=[str(seg_file.absolute())],
+            )
 
-        logger.info(f'{intlist}')
-        flist = []
-        for m in mapVar:
-            intval=[os.path.join(inpDir, v) for v in intlist if m in v if v.endswith('.ome.tif')]
-            flist.append(intval)
-        flist = sorted(list(itertools.chain(*flist)))
-        segval = sorted([os.path.join(segDir, v) for v in sorted(seglist)] * len(mapVar))
-
-        assert len(flist) == len(segval), logger.info('Unequal length of intensity filenames {flist} & label image {segval}!')
-    
-        features = nyx.featurize(intensity_files=flist,
-                                mask_files=segval                               )
-    else:
-        features = nyx.featurize_directory(intensity_dir=inpDir,
-                                label_dir=segDir,
-                                file_pattern=filePattern
-                                )
-    outname = re.search(r'^\w', filePattern).group()
-    outname = f'{outname}{replicate}.csv'
-    features.to_csv(pathlib.Path(outDir, outname), index = False)
-
-    return 
+            out_name = i_file.name.replace("".join(i_file.suffixes), ".csv")
+            feats.to_csv(out_dir.joinpath(out_name), index=False)
