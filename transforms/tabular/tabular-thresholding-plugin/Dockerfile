@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM labshare/polus-bfio-util:2.1.9
 
 COPY VERSION /
 		
