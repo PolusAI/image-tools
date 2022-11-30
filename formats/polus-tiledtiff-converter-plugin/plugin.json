@@ -9,7 +9,6 @@
   	"website": "https://ncats.nih.gov/preclinical/core/informatics",
   	"citation": "",
 	"containerId": "labshare/polus-tiledtiff-converter-plugin:1.1.0",
-
 	"inputs": [
 		{
 			"name": "input",
