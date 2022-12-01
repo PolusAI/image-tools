@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker push labshare/polus-smp-training-plugin:"${version}"
+docker push polusai/smp-training-plugin:"${version}"
