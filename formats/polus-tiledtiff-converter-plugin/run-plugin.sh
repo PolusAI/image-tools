@@ -1,7 +1,7 @@
 #!/bin/bash
 
 version=$(<VERSION)
-datapath=$(readlink --canonicalize ../data)
+datapath=$(readlink --canonicalize ../../data)
 
 # Inputs
 input=/data/input
