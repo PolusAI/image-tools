@@ -6,9 +6,8 @@ datapath=$(readlink --canonicalize ../data)
 # Inputs
 inpDir=/data/path_to_images
 segDir=/data/path_to_label_images
-filePattern='p{p+}.*.ome.tif'
-#mapVar Choose the variable for channel  in intensity directory for extracting nyxus features
-mapVar=c2 
+intPattern='p00{z}_x{x+}_y{y+}_wx{t}_wy{p}_c{c}.ome.tif' 
+segPattern='p00{z}_x{x+}_y{y+}_wx{t}_wy{p}_c1.ome.tif' 
 features="BASIC_MORPHOLOGY","ALL_INTENSITY"
 # More details available at https://github.com/PolusAI/nyxus
 neighborDist=5.0
@@ -25,10 +24,11 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --inpDir ${inpDir} \
             --segDir ${segDir} \
             --outDir ${outDir} \
-            --filePattern ${filePattern} \
-            --mapVar ${mapVar} \
+            --intPattern ${intPattern} \
+            --segPattern ${segPattern} \
             --features ${features} \
             --neighborDist ${neighborDist} \
             --pixelPerMicron ${pixelPerMicron} \
+
            
-            
+ 

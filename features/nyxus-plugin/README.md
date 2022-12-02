@@ -9,24 +9,11 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 
 # Note
-Currently filepattern Python package is not implemented yet in the plugin and will be added later. Use a simplified regular expression to extract image replicates. There are five replicate images in the following below example \
-*1-* `p001_x01_y01_wx01_wy01_c1.ome.tif`\
-*2-* `p001_x01_y01_wx01_wy01_c2.ome.tif`\
-*3-* `p002_x01_y01_wx01_wy01_c1.ome.tif`\
-*4-* `p002_x01_y01_wx01_wy01_c2.ome.tif`\
-*5-* `p003_x01_y01_wx01_wy01_c1.ome.tif`\
-*6-* `p003_x01_y01_wx01_wy01_c2.ome.tif`\
-*7-* `p004_x01_y01_wx01_wy01_c1.ome.tif`\
-*8-* `p004_x01_y01_wx01_wy01_c2.ome.tif`\
-*9-* `p005_x01_y01_wx01_wy01_c1.ome.tif`\
-*10-* `p005_x01_y01_wx01_wy01_c1.ome.tif`
-
-Use `filePattern=p{p+}.*.ome.tif` if label images from both channels are required
-Use `filePattern=p{p+}.*c1.ome.tif` or `filePattern=p{p+}.*c2.ome.tif` if label images from either of channels are used
-
-`mapVar` Select a reporter channel in intensity images which we want to extract features for label images
-
-
+Use two separate [filepatterns](https://filepattern.readthedocs.io/en/latest/) for intensity and label images.
+For example if you have label images of one channel `c1`\
+`segPattern='p00{z}_x{x+}_y{y+}_wx{t}_wy{p}_c1.ome.tif'`\
+Use filepattern if you require to extract features from intensity images of all other channels\
+`intPattern=p00{z}_x{x+}_y{y+}_wx{t}_wy{p}_c{c}.ome.tif`
 
 
 ## Building
@@ -47,8 +34,8 @@ This plugin takes seven input arguments and one output argument:
 |--------------------|--------------------------------------------------------------------|--------|---------------|
 | `--inpDir`         | Input image directory                                              | Input  | collection    |
 | `--segDir`         | Input label image directory                                        | Input  | collection    |
-| `--filePattern`    | Filepattern to parse image replicates                              | Input  | string        |
-| `--mapVar`         | Select channel variable in intensity images for feature extraction | Input  | string        |
+| `--intPattern`     | Filepattern to parse intensity images                              | Input  | string        |
+| `--segPattern`     | Filepattern to parse label images                                  | Input  | string        |
 | `--features`       | [nyxus features](https://pypi.org/project/nyxus/)                  | Input  | string        |
 | `--neighborDist`   | Distance between two neighbor objects                              | Input  | float         |
 | `--pixelPerMicron` | Pixel Size in micrometer                                           | Input  | float         |

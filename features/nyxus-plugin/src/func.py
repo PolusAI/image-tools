@@ -1,4 +1,5 @@
 import pathlib
+import os
 from typing import List, Optional, Union
 import logging
 from nyxus import Nyxus
@@ -47,4 +48,4 @@ def nyxus_func(
             )
 
             out_name = i_file.name.replace("".join(i_file.suffixes), ".csv")
-            feats.to_csv(out_dir.joinpath(out_name), index=False)
+            feats.to_csv(os.path.join(out_dir, out_name), index=False)

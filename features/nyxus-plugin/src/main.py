@@ -4,9 +4,9 @@ import os
 import pathlib
 from typing import Optional, List
 from func import nyxus_func
-
 from filepattern import FilePattern
 from preadator import ProcessManager
+from multiprocessing import cpu_count
 
 # #Import environment variables
 POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
@@ -126,6 +126,8 @@ def main(
 
     ## Adding * to the start and end of nyxus group features
     features = [f"*{f}*" if f in FEATURE_GROUP else f for f in features]
+
+    num_threads = max([cpu_count(), 2])
 
     ProcessManager.num_processes(num_threads)
     ProcessManager.init_processes(name="Nyxus")
