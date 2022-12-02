@@ -5,6 +5,6 @@ ARG DATA_DIR="/data"
 RUN mkdir -p ${EXEC_DIR} \
     && mkdir -p ${DATA_DIR}/inputs \
     && mkdir ${DATA_DIR}/outputs
-COPY ./target/polus-tiledtiff-converter-plugin-1.1.0-jar-with-dependencies.jar ${EXEC_DIR}/.
+COPY ./target/polus-tiledtiff-converter-plugin-1.1.1-jar-with-dependencies.jar ${EXEC_DIR}/.
 WORKDIR ${EXEC_DIR}
-ENTRYPOINT ["java", "-jar", "polus-tiledtiff-converter-plugin-1.1.0-jar-with-dependencies.jar"]
+ENTRYPOINT ["java", "-jar", "polus-tiledtiff-converter-plugin-1.1.1-jar-with-dependencies.jar"]
