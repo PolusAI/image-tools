@@ -1,7 +1,7 @@
-FROM labshare/polus-bfio-util:2.1.9
+FROM polusai/bfio:2.1.9
 
 COPY VERSION /
-		
+
 ARG EXEC_DIR="/opt/executables"
 ARG DATA_DIR="/data"
 
@@ -13,8 +13,6 @@ RUN mkdir -p ${EXEC_DIR} \
 COPY src ${EXEC_DIR}/
 WORKDIR ${EXEC_DIR}
 
-RUN apt-get -y update && \
-    apt-get -y install git && \
-    pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir --force
+RUN pip install -r ${EXEC_DIR}/requirements.txt --no-cache-dir --force
 
 ENTRYPOINT ["python3", "main.py"]

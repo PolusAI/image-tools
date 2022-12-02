@@ -42,7 +42,7 @@ This plugin takes 11 input arguments and one output argument:
 | `--negControl`          | FeatureName describing non treated wells/ROI        | Input  | string        |
 | `--posControl`          | FeatureName describing treated wells/ROI            | Input  | string        |
 | `--variableName`        | FeatureName for thresholding                        | Input  | string        |
-| `--thresholdType`       | See above in README                                 | Input  | string        |
+| `--thresholdType`       | See above in README                                 | Input  | enum          |
 | `--falsePositiverate`   | Area to the right of the threshold                  | Input  | float         |
 | `--numBins`             | Number of bins for histogram                        | Input  | number        |
 | `--n`                   | Number of standard deviation                        | Input  | number        |

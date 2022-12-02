@@ -5,7 +5,6 @@ import os
 import pathlib
 import time
 from functools import partial
-
 from func import thresholding_func
 
 # Import environment variables

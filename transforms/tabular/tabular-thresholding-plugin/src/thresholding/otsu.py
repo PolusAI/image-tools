@@ -2,11 +2,11 @@ import numpy
 
 
 def find_threshold(
-        values: numpy.ndarray,
-        num_bins: int = 256,
-        normalize_histogram: bool = False,
+    values: numpy.ndarray,
+    num_bins: int = 256,
+    normalize_histogram: bool = False,
 ) -> float:
-    """ Computes the otsu threshold for the given values.
+    """Computes the otsu threshold for the given values.
 
     Args:
         values: 1d array of values
@@ -26,7 +26,7 @@ def find_threshold(
         hist = numpy.divide(hist.ravel(), hist.max(initial=0))
 
     # Calculate centers of bins
-    bin_mids = (bin_edges[:-1] + bin_edges[1:]) / 2.
+    bin_mids = (bin_edges[:-1] + bin_edges[1:]) / 2.0
 
     # Iterate over all thresholds (indices) and get the probabilities w1(t), w2(t)
     weight1 = numpy.cumsum(hist)
