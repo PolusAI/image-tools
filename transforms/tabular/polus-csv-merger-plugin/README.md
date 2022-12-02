@@ -23,7 +23,7 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-This plugin takes two input argument and one output argument:
+This plugin takes five input argument and one output argument:
 
 | Name               | Description                                                | I/O    | Type          |
 |--------------------|------------------------------------------------------------|--------|---------------|
@@ -31,5 +31,6 @@ This plugin takes two input argument and one output argument:
 | `--stripExtension` | Should csv be removed from the filename in the output file | Input  | boolean       |
 | `--dim`            | Perform `rows` or `columns` merger                         | Input  | string        |
 | `--sameRows`       | Only merge csv files with the same number of rows?         | Input  | boolean       |
+| `--skipChecks      | If dim=="rows", skip column validation and directly copy   | Input  | boolean       |
 | `--outDir`         | Output csv file                                            | Output | csvCollection |
 

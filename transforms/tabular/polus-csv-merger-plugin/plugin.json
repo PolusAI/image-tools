@@ -1,6 +1,6 @@
 {
     "name": "CSV Merger",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "title": "CSV Merger",
     "description": "Merge all csv files in a csv collection into a single csv file.",
     "author": "Nicholas Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "polusai/polus-csv-merger-plugin:0.4.0",
+    "containerId": "polusai/polus-csv-merger-plugin:0.5.0",
     "inputs": [
       {
         "name": "inpDir",
@@ -38,6 +38,12 @@
         "name": "sameRows",
         "type": "boolean",
         "description": "Perform column merge on all files with the same number of rows?",
+        "required": true
+      },
+      {
+        "name": "skipChecks",
+        "type": "boolean",
+        "description": "Skip column matching check when merging along rows.",
         "required": true
       }
     ],
@@ -72,6 +78,13 @@
         "description": "Merge only csvs with matching number of rows?",
         "default": false,
         "condition": "model.inputs.dim=='columns'"
+      },
+      {
+        "key": "inputs.skipChecks",
+        "title": "Skip column checks:",
+        "description": "Ensure column matching when merging along rows.",
+        "default": false,
+        "condition": "model.inputs.dim=='rows'"
       }
     ]
   }
