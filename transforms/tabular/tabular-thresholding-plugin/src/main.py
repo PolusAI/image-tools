@@ -1,14 +1,14 @@
 import argparse
 import logging
+import multiprocessing
 import os
 import pathlib
 import time
-import multiprocessing
 from functools import partial
+
 from func import thresholding_func
 
-
-# #Import environment variables
+# Import environment variables
 POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
 OUT_FORMAT = os.environ.get("FILE_EXT", "csv")
 

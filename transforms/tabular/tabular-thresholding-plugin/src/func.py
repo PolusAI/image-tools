@@ -1,13 +1,15 @@
+import json
 import logging
 import os
 import pathlib
 import re
-import numpy as np
 from typing import Optional
-from thresholding import custom_fpr, n_sigma, otsu
+
+import numpy as np
 import vaex
-import json
-import logging
+from thresholding import custom_fpr
+from thresholding import n_sigma
+from thresholding import otsu
 
 logger = logging.getLogger("main")
 
