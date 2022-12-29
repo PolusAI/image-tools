@@ -1,6 +1,6 @@
 {
     "name": "Demo SMP Training/Inference",
-    "version": "0.5.9",
+    "version": "0.5.10",
     "title": "Segmentation Models Training and Inference",
     "description": "Segmentation models training and inference plugin.",
     "author": "Gauhar Bains (gauhar.bains@labshare.org), Najib Ishaq (najib.ishaq@axleinfo.com), Madhuri Vihani (madhuri.vihani@nih.gov), Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,7 +8,7 @@
     "repository": "https://github.com/PolusAI/polus-plugins/tree/dev/segmentation",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "polusai/smp-training-plugin:0.5.9",
+    "containerId": "polusai/smp-training-plugin:0.5.10",
     "inputs": [
         {
             "name": "inferenceMode",

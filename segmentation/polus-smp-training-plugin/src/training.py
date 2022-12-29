@@ -31,7 +31,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 import utils
 
-writer = SummaryWriter()
+# writer = SummaryWriter()
 sys.path.append(os.path.dirname(__file__))
 
 logging.basicConfig(
