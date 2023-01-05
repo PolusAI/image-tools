@@ -1,4 +1,4 @@
-# OME Zarr Converter
+# OME Zarr Converter (v0.2.0)
 
 This WIPP plugin converts BioFormats supported data types to the OME Zarr file
 format. This is not a complete implementation, rather it implements a file
@@ -26,8 +26,9 @@ contents of `plugin.json` into the pop-up window and submit.
 This plugin takes 1 input arguments and
 1 output argument:
 
-| Name       | Description                                                  | I/O    | Type        |
-|------------|--------------------------------------------------------------|--------|-------------|
-| `--inpDir` | Input generic data collection to be processed by this plugin | Input  | genericData |
-| `--outDir` | Output collection                                            | Output | genericData |
+| Name            | Description                                                  | I/O    | Type        |
+|-----------------|--------------------------------------------------------------|--------|-------------|
+| `--inpDir`      | Input generic data collection to be processed by this plugin | Input  | genericData |
+| `--filePattern` | A filepattern, used to select data for conversion            | Input  | genericData |
+| `--outDir`      | Output collection                                            | Output | genericData |
 

@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
 from pathlib import Path
 from typing import Any
+from typing import List
 from typing import Optional
 from typing import Tuple
 
@@ -49,6 +50,7 @@ def flow_thread(
     ndims = 2 if z is None else 3
     z = 0 if z is None else z
 
+    # Load the data
     with BioReader(file_name) as reader:
         x_shape, y_shape, z_shape = reader.X, reader.Y, reader.Z
 
@@ -62,9 +64,35 @@ def flow_thread(
         z_max = min(z_shape, z + utils.TILE_SIZE + utils.TILE_OVERLAP)
 
         masks = numpy.squeeze(reader[y_min:y_max, x_min:x_max, z_min:z_max, 0, 0])
-
+    
     masks = masks if ndims == 2 else numpy.transpose(masks, (2, 0, 1))
     masks_shape = masks.shape
+    
+    # Calculate index and offsets
+    x_overlap = x - x_min
+    x_min, x_max = x, min(x_shape, x + utils.TILE_SIZE)
+    cx_min, cx_max = x_overlap, x_max - x_min + x_overlap
+
+    y_overlap = y - y_min
+    y_min, y_max = y, min(y_shape, y + utils.TILE_SIZE)
+    cy_min, cy_max = y_overlap, y_max - y_min + y_overlap
+
+    z_overlap = z - z_min
+    z_min, z_max = z, min(z_shape, z + utils.TILE_SIZE)
+    cz_min, cz_max = z_overlap, z_max - z_min + z_overlap
+    
+    # Save the mask before transforming
+    if ndims == 2:
+        masks_original = masks[numpy.newaxis, numpy.newaxis, numpy.newaxis, :, :]
+    else:
+        masks_original = masks[numpy.newaxis, numpy.newaxis, :, :]
+    masks_original = masks_original[:, :, cz_min:cz_max, cy_min:cy_max, cx_min:cx_max]
+
+    # noinspection PyTypeChecker
+    zarr_root = zarr.open(str(zarr_path))[0]
+    zarr_root[0:1, 0:1, z_min:z_max, y_min:y_max, x_min:x_max] = numpy.asarray(masks_original != 0, dtype=numpy.float32)
+    zarr_root[0:1, ndims + 1:ndims + 2, z_min:z_max, y_min:y_max, x_min:x_max] = numpy.asarray(masks_original, dtype=numpy.float32)
+    
     if not numpy.any(masks):
         logger.debug(f'Tile (x, y, z) = {x, y, z} in file {file_name.name} has no objects. Setting flows to zero...')
         flows = numpy.zeros((ndims, *masks.shape), dtype=numpy.float32)
@@ -77,36 +105,18 @@ def flow_thread(
 
         masks = numpy.reshape(masks, newshape=masks_shape)
         flows = dynamics.masks_to_flows(masks, device=device)
+        
         logger.debug(f'Computed flows on tile (x, y, z) = {x, y, z} in file {file_name.name}')
 
     # Zarr axes ordering should be (t, c, z, y, x). Add missing t, c, and z axes
     if ndims == 2:
-        masks = masks[numpy.newaxis, numpy.newaxis, numpy.newaxis, :, :]
         flows = flows[numpy.newaxis, :, numpy.newaxis, :, :]
     else:
-        masks = masks[numpy.newaxis, numpy.newaxis, :, :]
         flows = flows[numpy.newaxis, :, :, :]
 
-    x_overlap = x - x_min
-    x_min, x_max = x, min(x_shape, x + utils.TILE_SIZE)
-    cx_min, cx_max = x_overlap, x_max - x_min + x_overlap
-
-    y_overlap = y - y_min
-    y_min, y_max = y, min(y_shape, y + utils.TILE_SIZE)
-    cy_min, cy_max = y_overlap, y_max - y_min + y_overlap
-
-    z_overlap = z - z_min
-    z_min, z_max = z, min(z_shape, z + utils.TILE_SIZE)
-    cz_min, cz_max = z_overlap, z_max - z_min + z_overlap
-
-    masks = masks[:, :, cz_min:cz_max, cy_min:cy_max, cx_min:cx_max]
     flows = flows[:, :, cz_min:cz_max, cy_min:cy_max, cx_min:cx_max]
-
-    # noinspection PyTypeChecker
-    zarr_root = zarr.open(str(zarr_path))[0]
-    zarr_root[0:1, 0:1, z_min:z_max, y_min:y_max, x_min:x_max] = numpy.asarray(masks != 0, dtype=numpy.float32)
+    
     zarr_root[0:1, 1:ndims + 1, z_min:z_max, y_min:y_max, x_min:x_max] = flows
-    zarr_root[0:1, ndims + 1:ndims + 2, z_min:z_max, y_min:y_max, x_min:x_max] = numpy.asarray(masks, dtype=numpy.float32)
 
     return True
 
@@ -124,7 +134,7 @@ def main(
     ))
 
     executor = (ThreadPoolExecutor if utils.USE_GPU else ProcessPoolExecutor)(utils.NUM_THREADS)
-    processes: list[Future[bool]] = list()
+    processes: List[Future[bool]] = list()
 
     for in_file in files:
         with BioReader(in_file) as reader:
@@ -204,9 +214,11 @@ if __name__ == "__main__":
     )
 
     # Parse the arguments
+    # noinspection DuplicatedCode
     _args = parser.parse_args()
 
     _input_dir = Path(_args.inpDir).resolve()
+    assert _input_dir.exists(), f'input directory {_input_dir} does not exist'
     if _input_dir.joinpath('images').is_dir():
         # switch to images folder if present
         _input_dir = _input_dir.joinpath('images')
@@ -216,6 +228,7 @@ if __name__ == "__main__":
     logger.info(f'filePattern = {_file_pattern}')
 
     _output_dir = Path(_args.outDir).resolve()
+    assert _output_dir.exists(), f'output directory {_output_dir} does not exist'
     logger.info(f'outDir = {_output_dir}')
 
     main(

@@ -1,0 +1,50 @@
+{
+  "name": "ImageJ image integral",
+  "version": "0.3.0",
+  "title": "ImageJ image integral",
+  "description": "This plugin applies the image integral algorithm to an input collection.",
+  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com), Nick Schaub (nick.schaub@nih.gov), Anjali Taneja",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-image-integral-plugin:0.3.0",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": ["DefaultIntegralImg",
+                    "WrappedIntegralImg"]
+      },
+      "description": "Op overloading method to perform",
+      "required": false
+    },
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Collection to be processed by this plugin",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "opName",
+      "description": "Op overloading method to perform"
+    },
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Collection to be processed by this plugin",
+      "condition": "model.inputs.opName==DefaultIntegralImg or model.inputs.opName==WrappedIntegralImg"
+    }
+  ]
+}
