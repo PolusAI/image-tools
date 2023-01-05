@@ -1,7 +1,7 @@
-FROM labshare/polus-bfio-util:1.3.3-tensorflow
+FROM polusai/bfio:2.1.9-tensorflow
 
 COPY VERSION /
-		
+
 ARG EXEC_DIR="/opt/executables"
 ARG DATA_DIR="/data"
 
