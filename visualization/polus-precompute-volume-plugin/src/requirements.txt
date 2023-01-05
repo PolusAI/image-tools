@@ -1,4 +1,4 @@
-wheel==0.36.2
+wheel==0.38.1
 filepattern==1.4.7
 numpy==1.20.3
 scikit_image==0.18.2
