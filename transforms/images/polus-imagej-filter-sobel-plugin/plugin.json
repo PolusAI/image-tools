@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-filter-sobel-plugin:0.3.0",
+  "containerId": "polusai/imagej-sobel-plugin:0.3.0",
   "inputs": [
     {
       "name": "opName",

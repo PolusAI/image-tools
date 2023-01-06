@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-imagej-filter-sobel-plugin:${version}
+docker build . -t polusai/imagej-sobel-plugin:${version}
