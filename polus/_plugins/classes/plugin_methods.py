@@ -148,7 +148,9 @@ class PluginMethods:
 
     @property
     def manifest(self):
-        return json.loads(self.json(exclude={"_io_keys", "versions"}))
+        m = json.loads(self.json(exclude={"_io_keys", "versions"}))
+        m["version"] = m["version"]["version"]
+        return m
 
     def __getattribute__(self, name):
         if name != "_io_keys" and hasattr(self, "_io_keys"):
