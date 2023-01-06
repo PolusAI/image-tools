@@ -57,7 +57,7 @@ def main(stitch_dir: Path, collection_dir: Path, output_dir: Path, pattern: str)
         vps[vector.name] = filepattern.VectorPattern(vector, pattern)
         for variable in vps[vector.name].variables:
             if variable not in singulars.keys():
-                if len(vps[vector.name].uniques[variable]) == 1:
+                if len(vps[vector.name].uniques[variable]) == 2:
                     singulars[variable] = vps[vector.name].uniques[variable]
                 else:
                     singulars[variable] = -1
@@ -92,41 +92,41 @@ def main(stitch_dir: Path, collection_dir: Path, output_dir: Path, pattern: str)
                 key.upper(): value for key, value in v[0].items() if key in group_by
             }
             variables.update(matching)
+            
+            fmatch = fp.get_matching(**variables)
 
-            for files in fp(**variables):
+            for f in fmatch:
+                # Get the file writer, create it if it doesn't exist
+                temp_dict = vector_dict
+                for key in vector_groups:
+                    if f[key] not in temp_dict.keys():
+                        if vector_groups[-1] != key:
+                            temp_dict[f[key]] = {}
+                        else:
+                            fname = "img-global-positions-{}.txt".format(
+                                vector_count
+                            )
+                            vector_count += 1
+                            logger.info("Creating vector: {}".format(fname))
+                            temp_dict[f[key]] = open(
+                                str(Path(output_dir).joinpath(fname).absolute()),
+                                "w",
+                            )
+                    temp_dict = temp_dict[f[key]]
 
-                for f in files:
-                    # Get the file writer, create it if it doesn't exist
-                    temp_dict = vector_dict
-                    for key in vector_groups:
-                        if f[key] not in temp_dict.keys():
-                            if vector_groups[-1] != key:
-                                temp_dict[f[key]] = {}
-                            else:
-                                fname = "img-global-positions-{}.txt".format(
-                                    vector_count
-                                )
-                                vector_count += 1
-                                logger.info("Creating vector: {}".format(fname))
-                                temp_dict[f[key]] = open(
-                                    str(Path(output_dir).joinpath(fname).absolute()),
-                                    "w",
-                                )
-                        temp_dict = temp_dict[f[key]]
+                # If the only grouping variables are positional (xyp), then create an output file
+                fw = temp_dict
 
-                    # If the only grouping variables are positional (xyp), then create an output file
-                    fw = temp_dict
-
-                    fw.write(
-                        "file: {}; corr: {}; position: ({}, {}); grid: ({}, {});\n".format(
-                            Path(f["file"]).name,
-                            v[0]["correlation"],
-                            v[0]["posX"],
-                            v[0]["posY"],
-                            v[0]["gridX"],
-                            v[0]["gridY"],
-                        )
+                fw.write(
+                    "file: {}; corr: {}; position: ({}, {}); grid: ({}, {});\n".format(
+                        Path(f["file"]).name,
+                        v[0]["correlation"],
+                        v[0]["posX"],
+                        v[0]["posY"],
+                        v[0]["gridX"],
+                        v[0]["gridY"],
                     )
+                )
 
         # Close all open stitching vectors
         close_vectors(vector_dict)
