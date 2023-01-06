@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker push polusai/polus-imagej-filter-sobel-plugin:${version}
+docker push polusai/imagej-sobel-plugin:${version}
