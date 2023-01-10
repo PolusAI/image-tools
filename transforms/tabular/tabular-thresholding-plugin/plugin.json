@@ -1,7 +1,7 @@
 {
   "name": "tabular-thresholding-plugin",
-  "version": "0.1.1",
-  "containerId": "polusai/tabular-thresholding-plugin:0.1.1",
+  "version": "0.1.2",
+  "containerId": "polusai/tabular-thresholding-plugin:0.1.2",
   "title": "tabular-thresholding-plugin",
   "description": "This plugin computes thresholds using three methods and apply thresholds on each labelled data to produce binary outputs",
   "author": "Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov), Najib Ishaq (najib.ishaq@nih.gov)",

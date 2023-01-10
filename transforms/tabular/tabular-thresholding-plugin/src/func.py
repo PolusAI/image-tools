@@ -9,6 +9,7 @@ import vaex
 from thresholding import custom_fpr
 from thresholding import n_sigma
 from thresholding import otsu
+import warnings
 
 logger = logging.getLogger("main")
 
@@ -90,60 +91,63 @@ def thresholding_func(
             f"Otsu threshold will not be computed as it requires information of both {negControl} & {posControl}"
         )
 
-    if posControl:
-        if df[posControl].unique() != [0.0, 1.0]:
-            raise ValueError(
-                logger.info(
-                    f"{posControl} Positive controls are missing. Please check the data again"
-                )
-            )
-
-        pos_controls = df[df[posControl] == 1][variableName].values
-
-    if df[negControl].unique() != [0.0, 1.0]:
-        raise ValueError(
-            logger.info(
-                f"{negControl} Negative controls are missing. Please check the data again"
-            )
-        )
-    neg_controls = df[df[negControl] == 1][variableName].values
-
     plate = re.match("\w+", csvfile).group(0)
     threshold_dict = {}
     threshold_dict["plate"] = plate
 
-    if thresholdType == "fpr":
-        threshold = custom_fpr.find_threshold(
-            neg_controls, false_positive_rate=falsePositiverate
-        )
-        threshold_dict[thresholdType] = threshold
-        df[thresholdType] = df.func.where(df[variableName] <= threshold, 0, 1)
-    elif thresholdType == "otsu":
-        combine_array = np.append(neg_controls, pos_controls, axis=0)
-        threshold = otsu.find_threshold(
-            combine_array, num_bins=numBins, normalize_histogram=False
-        )
-        threshold_dict[thresholdType] = threshold
-        df[thresholdType] = df.func.where(df[variableName] <= threshold, 0, 1)
-    elif thresholdType == "nsigma":
-        threshold = n_sigma.find_threshold(neg_controls, n=n)
-        threshold_dict[thresholdType] = threshold
-        df[thresholdType] = df.func.where(df[variableName] <= threshold, 0, 1)
-    elif thresholdType == "all":
-        fpr_thr = custom_fpr.find_threshold(
-            neg_controls, false_positive_rate=falsePositiverate
-        )
-        combine_array = np.append(neg_controls, pos_controls, axis=0)
-        otsu_thr = otsu.find_threshold(
-            combine_array, num_bins=numBins, normalize_histogram=False
-        )
-        nsigma_thr = n_sigma.find_threshold(neg_controls, n=n)
-        threshold_dict["fpr"] = fpr_thr
-        threshold_dict["otsu"] = otsu_thr
-        threshold_dict["nsigma"] = nsigma_thr
-        df["fpr"] = df.func.where(df[variableName] <= fpr_thr, 0, 1)
-        df["otsu"] = df.func.where(df[variableName] <= otsu_thr, 0, 1)
-        df["nsigma"] = df.func.where(df[variableName] <= nsigma_thr, 0, 1)
+    if df[negControl].unique() != [0.0, 1.0]:
+        warnings.warn(' f"{negControl} controls are missing. NaN value are computed for thresholds"')
+        nan_value = np.nan * np.arange(0, len(df[negControl].values), 1)
+        threshold_dict["fpr"] = np.nan
+        threshold_dict["otsu"] = np.nan
+        threshold_dict["nsigma"] = np.nan
+        df["fpr"] = nan_value
+        df["otsu"] =nan_value
+        df["nsigma"] =nan_value
+
+    else:
+        pos_controls = df[df[posControl] == 1][variableName].values
+        neg_controls = df[df[negControl] == 1][variableName].values
+
+        if thresholdType == "fpr":
+            threshold = custom_fpr.find_threshold(
+                neg_controls, false_positive_rate=falsePositiverate
+            )
+            threshold_dict[thresholdType] = threshold
+            df[thresholdType] = df.func.where(df[variableName] <= threshold, 0, 1)
+        elif thresholdType == "otsu":
+            combine_array = np.append(neg_controls, pos_controls, axis=0)
+            threshold = otsu.find_threshold(
+                combine_array, num_bins=numBins, normalize_histogram=False
+            )
+            threshold_dict[thresholdType] = threshold
+            df[thresholdType] = df.func.where(df[variableName] <= threshold, 0, 1)
+        elif thresholdType == "nsigma":
+            threshold = n_sigma.find_threshold(neg_controls, n=n)
+            threshold_dict[thresholdType] = threshold
+            df[thresholdType] = df.func.where(df[variableName] <= threshold, 0, 1)
+        elif thresholdType == "all":
+            fpr_thr = custom_fpr.find_threshold(
+                neg_controls, false_positive_rate=falsePositiverate
+            )
+            combine_array = np.append(neg_controls, pos_controls, axis=0)
+
+            if len(pos_controls) == 0:
+                warnings.warn(' f"{posControl} controls are missing. NaN value are computed for otsu thresholds"')
+                threshold_dict["otsu"] = np.nan
+                df["otsu"] = np.nan * np.arange(0, len(df[variableName].values), 1)       
+            else:
+                otsu_thr = otsu.find_threshold(
+                    combine_array, num_bins=numBins, normalize_histogram=False
+                )
+                threshold_dict["otsu"] = otsu_thr
+                df["otsu"] = df.func.where(df[variableName] <= otsu_thr, 0, 1)
+
+            nsigma_thr = n_sigma.find_threshold(neg_controls, n=n)
+            threshold_dict["fpr"] = fpr_thr  
+            threshold_dict["nsigma"] = nsigma_thr
+            df["fpr"] = df.func.where(df[variableName] <= fpr_thr, 0, 1)
+            df["nsigma"] = df.func.where(df[variableName] <= nsigma_thr, 0, 1)
 
     outjson = outDir.joinpath(f"{plate}_thresholds.json")
     with open(outjson, "w") as outfile:
