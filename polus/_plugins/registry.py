@@ -5,7 +5,12 @@ import requests
 import logging
 import json
 from tqdm import tqdm
-from ..plugin_classes import _Plugins as plugins, submit_plugin, Plugin, ComputePlugin
+from .classes.plugin_classes import (
+    _Plugins as plugins,
+    submit_plugin,
+    Plugin,
+    ComputePlugin,
+)
 from .registry_utils import _generate_query, _to_xml
 import typing
 
@@ -27,12 +32,14 @@ class WippPluginRegistry:
         self,
         username: typing.Optional[str] = None,
         password: typing.Optional[str] = None,
-        registry_url: str = "https://wipp-registry.ci.aws.labshare.org",
+        registry_url: str = "https://wipp-registry.ci.ncats.io/",
+        verify: bool = True,  # verify SSL?
     ):
 
         self.registry_url = registry_url
         self.username = username
         self.password = password
+        self.verify = verify
 
     @classmethod
     def _parse_xml(cls, xml: str):
@@ -55,10 +62,14 @@ class WippPluginRegistry:
         data = '{"query": {"$or":[{"Resource.role.type":"Plugin"},{"Resource.role.type.#text":"Plugin"}]}}'
         if self.username and self.password:
             r = requests.post(
-                url, headers=headers, data=data, auth=(self.username, self.password)
+                url,
+                headers=headers,
+                data=data,
+                auth=(self.username, self.password),
+                verify=self.verify,
             )  # authenticated request
         else:
-            r = requests.post(url, headers=headers, data=data)
+            r = requests.post(url, headers=headers, data=data, verify=self.verify)
         valid, invalid = 0, {}
 
         for r in tqdm(r.json()["results"], desc="Updating Plugins from WIPP"):
@@ -88,7 +99,6 @@ class WippPluginRegistry:
         query_all: bool = False,
         advanced: bool = False,
         query: typing.Optional[str] = None,
-        verify: bool = True,
     ):
         """Query Plugins in WIPP Registry.
 
@@ -113,8 +123,6 @@ class WippPluginRegistry:
                 `query` must be included
             query: query to execute. This query must be in MongoDB format
 
-            verify: SSL verification. Default is `True`
-
 
         Returns:
             An array of the manifests of the Plugins returned by the query.
@@ -134,25 +142,22 @@ class WippPluginRegistry:
                 headers=headers,
                 data=data,
                 auth=(self.username, self.password),
-                verify=verify,
+                verify=self.verify,
             )  # authenticated request
         else:
-            r = requests.post(url, headers=headers, data=data, verify=verify)
+            r = requests.post(url, headers=headers, data=data, verify=self.verify)
         return [
             WippPluginRegistry._parse_xml(x["xml_content"]) for x in r.json()["results"]
         ]
 
-    def get_current_schema(
-        self,
-        verify: bool = True,
-    ):
+    def get_current_schema(self):
         """Return current schema in WIPP"""
         r = requests.get(
             urljoin(
                 self.registry_url,
                 "rest/template-version-manager/global/?title=res-md.xsd",
             ),
-            verify=verify,
+            verify=self.verify,
         )
         if r.ok:
             return r.json()[0]["current"]
@@ -165,7 +170,6 @@ class WippPluginRegistry:
         author: typing.Optional[str] = None,
         email: typing.Optional[str] = None,
         publish: bool = True,
-        verify: bool = True,
     ):
         """Upload Plugin to WIPP Registry.
 
@@ -188,7 +192,6 @@ class WippPluginRegistry:
                 If `False`, Plugin will not be published to the public
                 workspace. It will be visible only to the user uploading
                 it. Default is `True`
-            verify: SSL verification. Default is `True`
 
         Returns:
             A message indicating a successful upload.
@@ -213,7 +216,7 @@ class WippPluginRegistry:
                 headers=headers,
                 data=json.dumps(data),
                 auth=(self.username, self.password),
-                verify=verify,
+                verify=self.verify,
             )  # authenticated request
         else:
             raise MissingUserInfo("The registry connection must be authenticated.")
@@ -233,7 +236,7 @@ class WippPluginRegistry:
                 _purl,
                 headers=headers,
                 auth=(self.username, self.password),
-                verify=verify,
+                verify=self.verify,
             )
             try:
                 r2.raise_for_status()
@@ -244,27 +247,29 @@ class WippPluginRegistry:
 
         return "Successfully uploaded %s" % data["title"]
 
-    def get_resource_by_pid(self, pid, verify: bool = True):
+    def get_resource_by_pid(self, pid):
         """Return current resource."""
-        response = requests.get(pid, verify=verify)
+        response = requests.get(pid, verify=self.verify)
         return response.json()
 
     def patch_resource(
         self,
         pid,
         version,
-        verify: bool = True,
     ):
+        if self.username is None or self.password is None:
+            raise MissingUserInfo("The registry connection must be authenticated.")
+
         """Patch resource."""
         # Get current version of the resource
-        data = self.get_resource_by_pid(pid, verify)
+        data = self.get_resource_by_pid(pid)
 
         data.update({"version": version})
         response = requests.patch(
             urljoin(self.registry_url, "rest/data/" + data["id"]),
             data,
             auth=(self.username, self.password),
-            verify=verify,
+            verify=self.verify,
         )
         response_code = response.status_code
 
