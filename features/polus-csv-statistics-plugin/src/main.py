@@ -1,5 +1,15 @@
 import argparse, logging, math
 from pathlib import Path
+from filepattern.functions import get_regex, parse_filename, output_name
+
+
+def get_vars(file, groupBy, regex, var):
+    if isinstance(file, list):
+        r = parse_filename(file[0], regex, var)
+    else:
+        r = parse_filename(file, regex, var)
+    vars = {var:value for var,value in r.items() if var in groupBy}
+    return vars
 
 def get_number(s):
     """ Check that s is number
@@ -128,6 +138,10 @@ if __name__=="__main__":
                         help='Types of statistics to calculate', required=True)
     parser.add_argument('--inpDir', dest='inpDir', type=str,
                         help='Input csv collection to be processed by this plugin', required=True)
+    parser.add_argument('--filePattern', dest='filePattern', type=str,
+                        help='The filepattern of the files in the file column', required=False)
+    parser.add_argument('--groupBy', dest='groupBy', type=str,
+                        help='The varaibles in the filepattern to groupby', required=False)
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
 
@@ -140,11 +154,30 @@ if __name__=="__main__":
     logger.info('statistics = {}'.format(statistics))
     inpDir = args.inpDir
     logger.info('inpDir = {}'.format(inpDir))
+
+    filePattern = args.filePattern
+    logger.info('filePattern = {}'.format(filePattern))
+    groupBy = args.groupBy
+    logger.info('groupBy = {}'.format(groupBy))
     outDir = args.outDir
     logger.info('outDir = {}'.format(outDir))
 
     # Get a list of all input files
     csv_files = [f for f in Path(inpDir).iterdir() if f.name.endswith('csv')]
+    
+    if filePattern:
+        assert groupBy, 'groupBy variables must be specified when grouping with a filePattern'
+        # Get the regex and variables of the filePattern
+        regex, variables = get_regex(filePattern)
+        ind = ''.join([v for v in variables if v not in groupBy])
+
+    else:
+        logger.info('Grouping by filenames')
+        
+    if groupBy:
+        assert filePattern, 'filePattern must be specified when specifying groupBy variables'
+
+    file_column = 'intensity_image'
 
     # Open each csv files
     for feat_file in csv_files:
@@ -154,11 +187,11 @@ if __name__=="__main__":
             with open(str(out),'w') as fw:
                 # Read the first line, which should contain headers
                 first_line = fr.readline()
-                headers = first_line.rstrip('\n').split(',')
+                headers = first_line.replace(file_column, 'file').rstrip('\n').split(',')
                 var_ind = {key:val for key,val in enumerate(headers)} # map headers to line positions
                 # If no column is labeled file, throw an error
                 if 'file' not in headers:
-                    ValueError('At least one column must have a header title file.')
+                    raise ValueError('At least one column must have a header title file.')
 
                 # Generate the output dictionary template and format string
                 line_dict = {'file': 'NaN'}
@@ -187,24 +220,71 @@ if __name__=="__main__":
                         v = get_number(val)
                         p_line[key] = [v]
 
-                    # Loop through rows until the filename changes
                     line = fr.readline()
                     np_line = {var_ind[ind]:val for ind,val in enumerate(line.rstrip('\n').split(','))}
-                    while line and p_line['file'][0] == np_line['file']:
+                    match = False
+                    
+                    if filePattern:
+                        # The groupBy variable values for current file
+                        group_list = [
+                            {k:v for k,v in parse_filename(p_line['file'][0], regex, variables).items() if k in groupBy}
+                            ]
+                        
+                        p_line_vars = get_vars(p_line['file'], ind, regex, variables)
+                        np_line_vars = get_vars(np_line['file'], ind, regex, variables)
+                        
+                        if p_line_vars == np_line_vars:
+                            match = True
+                    
+                    else:
+                        if p_line['file'][0] == np_line['file']:
+                            match = True
+                    
+                    # Loop through rows until the filename changes
+                    while line and match:
                         # Store the values in a feature list
                         for key,val in np_line.items():
                             if isinstance(val,str):
-                                p_line[key].append(get_number(val[0]))
+                                # p_line[key].append(get_number(val[0]))
+                                p_line[key].append(get_number(val))
+                        
+                        if filePattern:
+                            # Add the file's groupBy variables to the output row label list
+                            group_list.append(
+                                {k:v for k,v in parse_filename(np_line['file'], regex, variables).items() 
+                                 if k in groupBy}
+                                )
 
                         # Get the next line
                         line = fr.readline()
                         np_line = {var_ind[ind]:val for ind,val in enumerate(line.rstrip('\n').split(','))}
+                        
+                        match = False
+                        
+                        if filePattern and line:
+                            np_line_vars = get_vars(np_line['file'], ind, regex, variables)
+                            if p_line_vars == np_line_vars:
+                                match = True
+                                
+                    
+                        elif line:
+                            if p_line['file'][0] == np_line['file']:
+                                match = True
 
                     # Get the mean of the feature list, save in the file dictionary
                     for key,val in p_line.items():
+                        
                         # Set the file name
                         if key=='file':
-                            line_dict['file'] = val[0]
+                            if filePattern:
+                                ind_list = {
+                                    k:v for k,v in parse_filename(val[0], regex, variables).items() if k not in groupBy
+                                    }
+                                line_dict['file'] = output_name(filePattern, group_list, ind_list)
+                            
+                            else:
+                                line_dict['file'] = val[0]
+                                
                             continue
 
                         # Grab only float values

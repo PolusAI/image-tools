@@ -28,8 +28,10 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes two input argument and one output argument:
 
-| Name           | Description                                         | I/O    | Type          |
-|----------------|-----------------------------------------------------|--------|---------------|
-| `--statistics` | Types of statistics to calculate                    | Input  | array         |
-| `--inpDir`     | Input csv collection to be processed by this plugin | Input  | csvCollection |
-| `--outDir`     | Output collection                                   | Output | csvCollection |
+| Name            | Description                                         | I/O    | Type          |
+|-----------------|-----------------------------------------------------|--------|---------------|
+| `--statistics`  | Types of statistics to calculate                    | Input  | array         |
+| `--inpDir`      | Input csv collection to be processed by this plugin | Input  | csvCollection |
+| `--filePattern` | The filePattern of the images in represented in csv | Input  | string        |
+| `--groupBy`     | The variable(s) of how the images should be grouped | Input  | string        |
+| `--outDir`      | Output collection                                   | Output | csvCollection |
