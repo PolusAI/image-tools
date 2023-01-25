@@ -1,11 +1,11 @@
 from bfio.bfio import BioReader, BioWriter
 from preadator import ProcessManager
-import filepattern 
-import os
-from typing import Optional
+import filepattern
 import argparse
 import logging
 from pathlib import Path
+from typing import Optional
+import os
 
 # Initialize the logger
 logging.basicConfig(
@@ -13,18 +13,25 @@ logging.basicConfig(
     datefmt="%d-%b-%y %H:%M:%S",
 )
 logger = logging.getLogger("main")
-logger.setLevel(logging.INFO)
+FILE_EXT = os.environ.get("POLUS_EXT", ".ome.zarr")
 
 # TODO: In the future, uncomment this to convert files to the platform file type
 # FILE_EXT = os.environ.get('POLUS_EXT',None)
 # FILE_EXT = FILE_EXT if FILE_EXT is not None else '.ome.tif'
+FILE_EXT = ".ome.zarr"
 
-FILE_EXT =os.environ.get('POLUS_EXT','.ome.zarr')
-
-TILE_SIZE = 2 ** 13
+TILE_SIZE = 2**13
 
 
-def image_to_zarr(inp_image: Path, out_dir: Path) -> None:
+def image_converter(inp_image, fileExtension, out_dir) -> None:
+
+    assert fileExtension in [
+        ".ome.zarr",
+        ".ome.tif",
+        ".ome.tiff",
+    ], "Invalid fileExtension !! it should be either .ome.tif or .ome.zarr"
+
+    FILE_EXT = FILE_EXT if fileExtension is None else fileExtension
 
     with ProcessManager.process():
 
@@ -40,7 +47,7 @@ def image_to_zarr(inp_image: Path, out_dir: Path) -> None:
                         [
                             suffix
                             for suffix in inp_image.suffixes[-2:]
-                            if len(suffix) < 5
+                            if len(suffix) < 6
                         ]
                     )
 
@@ -88,26 +95,19 @@ def image_to_zarr(inp_image: Path, out_dir: Path) -> None:
 def main(
     inpDir: Path,
     filePattern: Optional[str],
+    fileExtension: Optional[str],
     outDir: Path,
 ) -> None:
 
-    ProcessManager.init_processes("main", "zarr")
-
-    if filePattern is None:
-        try:
-            filePattern = filepattern.infer_pattern([f.name for f in inpDir.iterdir()])
-        except ValueError:
-            logger.error(
-                "Could not infer a filepattern from the input files, "
-                + "and no filepattern was provided."
-            )
-            raise
+    ProcessManager.init_processes("main")
 
     fp = filepattern.FilePattern(inpDir, filePattern)
 
     for files in fp():
         for file in files:
-            ProcessManager.submit_process(image_to_zarr, file["file"], outDir)
+            ProcessManager.submit_process(
+                image_converter, file["file"], fileExtension, outDir
+            )
 
     ProcessManager.join_processes()
 
@@ -126,7 +126,7 @@ if __name__ == "__main__":
         dest="inpDir",
         type=str,
         help="Input generic data collection to be processed by this plugin",
-        required=True
+        required=True,
     )
 
     # Input arguments
@@ -135,7 +135,18 @@ if __name__ == "__main__":
         dest="filePattern",
         type=str,
         help="A filepattern defining the images to be converted.",
-        required=False
+        required=False,
+        default=".*",
+    )
+
+    # Input arguments
+    parser.add_argument(
+        "--fileExtension",
+        dest="fileExtension",
+        type=str,
+        help="Type of data conversion",
+        required=False,
+        default=FILE_EXT,
     )
 
     # Output arguments
@@ -149,7 +160,14 @@ if __name__ == "__main__":
     logger.info("inpDir = {}".format(inpDir))
     filePattern = args.filePattern
     logger.info("filePattern = {}".format(filePattern))
+    fileExtension = args.fileExtension
+    logger.info("fileExtension = {}".format(fileExtension))
     outDir = Path(args.outDir)
     logger.info("outDir = {}".format(outDir))
 
-    main(inpDir=inpDir, filePattern=filePattern, outDir=outDir)
+    main(
+        inpDir=inpDir,
+        filePattern=filePattern,
+        fileExtension=fileExtension,
+        outDir=outDir,
+    )
