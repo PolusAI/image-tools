@@ -1,4 +1,4 @@
-from bfio.bfio import BioReader, BioWriter
+from bfio import BioReader, BioWriter
 from preadator import ProcessManager
 import filepattern
 import argparse
@@ -16,9 +16,7 @@ logger = logging.getLogger("main")
 FILE_EXT = os.environ.get("POLUS_EXT", ".ome.zarr")
 
 # TODO: In the future, uncomment this to convert files to the platform file type
-# FILE_EXT = os.environ.get('POLUS_EXT',None)
-# FILE_EXT = FILE_EXT if FILE_EXT is not None else '.ome.tif'
-FILE_EXT = ".ome.zarr"
+FILE_EXT =os.environ.get('POLUS_EXT','.ome.zarr')
 
 TILE_SIZE = 2**13
 
@@ -100,6 +98,9 @@ def main(
 ) -> None:
 
     ProcessManager.init_processes("main")
+
+    if filePattern is None:
+        filePattern = ".*"
 
     fp = filepattern.FilePattern(inpDir, filePattern)
 

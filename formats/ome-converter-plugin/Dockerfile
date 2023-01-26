@@ -1,18 +1,19 @@
 
-FROM labshare/polus-bfio-util:2.1.9
+FROM polusai/bfio:2.1.9
 
-# environment variables defined in labshare/polus-bfio-util
-# ENV EXEC_DIR="/opt/executables"
-# ENV DATA_DIR="/data"
-# ENV POLUS_EXT=".ome.tif"
-# ENV POLUS_LOG="INFO" # Change to WARNING for fewer logs, and DEBUG for debugging
+COPY VERSION /
 
-# Work directory defined in the base container
-# WORKDIR ${EXEC_DIR}
+ARG EXEC_DIR="/opt/executables"
+ARG DATA_DIR="/data"
 
-COPY VERSION ${EXEC_DIR}
+ENV FILE_EXT=".ome.zarr"
+
+RUN mkdir -p ${EXEC_DIR} \
+    && mkdir -p ${DATA_DIR}/{inputs, outputs}
+
 COPY src ${EXEC_DIR}/
+WORKDIR ${EXEC_DIR}
 
-RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
+RUN pip install -r ${EXEC_DIR}/requirements.txt --no-cache-dir --force
 
 ENTRYPOINT ["python3", "main.py"]

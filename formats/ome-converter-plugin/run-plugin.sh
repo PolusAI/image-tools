@@ -12,7 +12,7 @@ fileExtension = ".ome.tif"
 outDir=/data/output
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
-            labshare/polus-ome-zarr-converter-plugin:${version} \
+            polusai/ome-converter-plugin:${version} \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
             --fileExtension ${fileExtension} \
