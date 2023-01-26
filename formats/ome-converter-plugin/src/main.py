@@ -26,7 +26,6 @@ def image_converter(inp_image, fileExtension, out_dir) -> None:
     assert fileExtension in [
         ".ome.zarr",
         ".ome.tif",
-        ".ome.tiff",
     ], "Invalid fileExtension !! it should be either .ome.tif or .ome.zarr"
 
     FILE_EXT = FILE_EXT if fileExtension is None else fileExtension

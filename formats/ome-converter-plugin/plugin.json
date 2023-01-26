@@ -2,7 +2,7 @@
   "name": "OME Converter",
   "version": "0.2.1",
   "title": "OME Converter",
-  "description": "Convert Bioformats supported format to OME Zarr, OME TIF, OME TIFF",
+  "description": "Convert Bioformats supported format to OME Zarr or OME TIF",
   "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/PolusAI/polus-plugins",

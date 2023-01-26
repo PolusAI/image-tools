@@ -6,7 +6,7 @@ COPY VERSION /
 ARG EXEC_DIR="/opt/executables"
 ARG DATA_DIR="/data"
 
-ENV FILE_EXT=".ome.zarr"
+ENV POLUS_EXT=".ome.zarr"
 
 RUN mkdir -p ${EXEC_DIR} \
     && mkdir -p ${DATA_DIR}/{inputs, outputs}
