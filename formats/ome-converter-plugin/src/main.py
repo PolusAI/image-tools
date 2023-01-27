@@ -13,10 +13,8 @@ logging.basicConfig(
     datefmt="%d-%b-%y %H:%M:%S",
 )
 logger = logging.getLogger("main")
-FILE_EXT = os.environ.get("POLUS_EXT", ".ome.zarr")
-
 # TODO: In the future, uncomment this to convert files to the platform file type
-FILE_EXT =os.environ.get('POLUS_EXT','.ome.zarr')
+FILE_EXT = os.environ.get("POLUS_EXT", ".ome.zarr")
 
 TILE_SIZE = 2**13
 
