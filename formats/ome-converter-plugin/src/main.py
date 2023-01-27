@@ -23,7 +23,7 @@ def image_converter(inp_image, fileExtension, out_dir) -> None:
 
     assert fileExtension in [
         ".ome.zarr",
-        ".ome.tif",
+        ".ome.tif"
     ], "Invalid fileExtension !! it should be either .ome.tif or .ome.zarr"
 
     FILE_EXT = FILE_EXT if fileExtension is None else fileExtension
@@ -94,7 +94,8 @@ def main(
     outDir: Path,
 ) -> None:
 
-    ProcessManager.init_processes("main")
+
+    ProcessManager.init_processes(name="OME Converter")
 
     if filePattern is None:
         filePattern = ".*"
