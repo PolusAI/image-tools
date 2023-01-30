@@ -32,7 +32,7 @@ class WippPluginRegistry:
         self,
         username: typing.Optional[str] = None,
         password: typing.Optional[str] = None,
-        registry_url: str = "https://wipp-registry.ci.ncats.io/",
+        registry_url: str = "https://wipp-registry.ci.ncats.io",
         verify: bool = True,  # verify SSL?
     ):
 
@@ -146,6 +146,7 @@ class WippPluginRegistry:
             )  # authenticated request
         else:
             r = requests.post(url, headers=headers, data=data, verify=self.verify)
+        logger.debug(f"r is {r.raise_for_status}")
         return [
             WippPluginRegistry._parse_xml(x["xml_content"]) for x in r.json()["results"]
         ]
