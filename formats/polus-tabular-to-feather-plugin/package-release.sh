@@ -10,7 +10,7 @@ bump2version --config-file bumpversion.cfg --new-version ${version} --allow-dirt
 ./build-docker.sh
 
 # Push to dockerhub
-docker push labshare/polus-tabular-to-feather-plugin:${version}
+docker push polusai/tabular-to-feather-plugin:${version}
 
 # Run unittests
 python -m unittest

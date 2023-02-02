@@ -19,10 +19,10 @@ The plugin takes 2 inputs as shown below :\
 (ii) Path to the output directory. The output is a binary mask highlighting the nuclei. 
 
 
-| Name       | Description             | I/O    | Type |
-|------------|-------------------------|--------|------|
-| `inpDir`   | Input image collection  | Input  | Path |
-| `outDir`   | Output image collection | Output | Path |
+| Name     | Description             | I/O    | Type |
+| -------- | ----------------------- | ------ | ---- |
+| `inpDir` | Input image collection  | Input  | Path |
+| `outDir` | Output image collection | Output | Path |
 
 ## Run the plugin
 

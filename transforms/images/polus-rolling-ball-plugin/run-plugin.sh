@@ -13,7 +13,7 @@ outputDir=/data/output
 
 docker run --mount type=bind,source="${datapath}",target=/data \
             --user "$(id -u)":"$(id -g)" \
-            labshare/polus-rolling-ball-plugin:"${version}" \
+            polusai/rolling-ball-plugin:"${version}" \
             --inputDir ${inputDir} \
             --ballRadius ${ballRadius} \
             --lightBackground ${lightBackground} \

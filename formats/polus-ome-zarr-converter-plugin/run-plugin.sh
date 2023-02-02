@@ -11,7 +11,7 @@ filePattern="S1_R1_C1-C11_A1_c0{c}0.ome.tif"
 outDir=/data/output
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
-            labshare/polus-ome-zarr-converter-plugin:${version} \
+            polusai/ome-zarr-converter-plugin:${version} \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
             --outDir ${outDir} 

@@ -1,6 +1,6 @@
-FROM labshare/polus-bfio-util:2.1.9-imagej
+FROM polusai/bfio:2.1.9-imagej
 
-# environment variables defined in labshare/polus-bfio-util
+# environment variables defined in polusai/bfio:2.1.9-imagej
 # ENV EXEC_DIR="/opt/executables"
 # ENV DATA_DIR="/data"
 # ENV POLUS_EXT=".ome.tif"
@@ -16,4 +16,4 @@ RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 RUN mkdir /.jgo && chmod 777 /.jgo
 
 # Default command. Additional arguments are provided through the command line
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3", "/opt/executables/main.py"]

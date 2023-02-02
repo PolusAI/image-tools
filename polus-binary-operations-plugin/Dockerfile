@@ -1,5 +1,5 @@
 # Get image containing bfio
-FROM labshare/polus-bfio-util:2.1.9
+FROM polusai/bfio:2.1.9
 
 # set environment variables
 ENV POLUS_LOG="INFO"

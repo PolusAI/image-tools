@@ -1,4 +1,4 @@
-# Image Calculator (v0.1.0)
+# Image Calculator (v0.1.1)
 
 This plugin performs pixelwise operations between two image collections. For
 example, images in one image collection are subtracted from images in another
@@ -37,4 +37,3 @@ This plugin takes 5 input arguments and
 | `--secondaryDir` | The second set of images | Input | collection |
 | `--secondaryPattern` | Filename pattern used to separate data | Input | string |
 | `--outDir` | Output collection | Output | collection |
-

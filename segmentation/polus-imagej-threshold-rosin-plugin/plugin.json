@@ -1,6 +1,6 @@
 {
   "name": "ImageJ threshold rosin",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "title": "ImageJ threshold rosin",
   "description": "Implements Rosin's thresholding method for unimodal distributions.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,13 +8,15 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "Rosin, Paul L. Unimodal thresholding. Pattern recognition 34.11 (2001): 2083-2096.",
-  "containerId": "polusai/imagej-threshold-rosin-plugin:0.4.0",
+  "containerId": "polusai/imagej-threshold-rosin-plugin:0.4.1",
   "inputs": [
     {
       "name": "opName",
       "type": "enum",
       "options": {
-        "values": ["ApplyThresholdMethod$Rosin"]
+        "values": [
+          "ApplyThresholdMethod$Rosin"
+        ]
       },
       "description": "Operation to perform",
       "required": true

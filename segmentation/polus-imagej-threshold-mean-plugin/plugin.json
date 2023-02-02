@@ -1,6 +1,6 @@
 {
   "name": "ImageJ threshold mean",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "title": "ImageJ threshold mean",
   "description": "Uses the mean of grey levels as the threshold. It is used by some other methods as a first guess threshold.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,13 +8,15 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-threshold-mean-plugin:0.4.0",
+  "containerId": "polusai/imagej-threshold-mean-plugin:0.4.1",
   "inputs": [
     {
       "name": "opName",
       "type": "enum",
       "options": {
-        "values": ["ApplyThresholdMethod$Mean"]
+        "values": [
+          "ApplyThresholdMethod$Mean"
+        ]
       },
       "description": "Operation to perform",
       "required": true

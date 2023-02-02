@@ -12,4 +12,4 @@ RUN mkdir -p ${EXEC_DIR} \
 COPY src ${EXEC_DIR}/
 WORKDIR ${EXEC_DIR}
 
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3", "/opt/executables/main.py"]

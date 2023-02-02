@@ -1,11 +1,10 @@
 {
-    "name": "Notebook executor (CSV->CSV)",
+	"name": "Notebook executor (CSV->CSV)",
 	"version": "0.4.0",
 	"title": "Jupyter Notebook executor",
 	"description": "Execute Jupyter notebook which take input of csv collection and outputs to csv collection.",
 	"author": "Konstantin taletskiy (konstantin.taletskiy@labshare.org),Gauhar Bains (gauhar.bains@labshare.org)",
 	"containerId": "labshare/polus-notebook-plugin:0.4.0",
-
 	"inputs": [
 		{
 			"name": "input-collection",
@@ -16,12 +15,12 @@
 			"name": "config-file",
 			"type": "collection",
 			"description": "Config file for the notebook"
-        },
-        {
-            "name": "input-notebook",
-            "type": "notebook",
-            "description": "Jupyter Notebook to execute"
-        }
+		},
+		{
+			"name": "input-notebook",
+			"type": "notebook",
+			"description": "Jupyter Notebook to execute"
+		}
 	],
 	"outputs": [
 		{
@@ -30,10 +29,10 @@
 			"description": "Output csv collection for the plugin"
 		},
 		{
-            "name": "output-notebook",
-            "type": "notebook",
-            "description": "Jupyter Notebook after execution"
-        }
+			"name": "output-notebook",
+			"type": "notebook",
+			"description": "Jupyter Notebook after execution"
+		}
 	],
 	"ui": [
 		{
@@ -45,11 +44,11 @@
 			"key": "inputs.config-file",
 			"title": "Config File (Optional): ",
 			"description": "Pick config file..."
-        },
-        {
-            "key": "inputs.input-notebook",
-            "title": "Notebook: ",
-            "description": "Pick a notebook to execute..."
-        }
+		},
+		{
+			"key": "inputs.input-notebook",
+			"title": "Notebook: ",
+			"description": "Pick a notebook to execute..."
+		}
 	]
 }

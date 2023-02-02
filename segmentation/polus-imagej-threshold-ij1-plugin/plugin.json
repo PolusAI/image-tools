@@ -1,6 +1,6 @@
 {
   "name": "ImageJ threshold ij1",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "title": "ImageJ threshold ij1",
   "description": "This plugin implements the default thresholding method from ImageJ 1.x",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,13 +8,15 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-threshold-ij1-plugin:0.4.0",
+  "containerId": "polusai/imagej-threshold-ij1-plugin:0.4.1",
   "inputs": [
     {
       "name": "opName",
       "type": "enum",
       "options": {
-        "values": ["ApplyThresholdMethod$IJ1"]
+        "values": [
+          "ApplyThresholdMethod$IJ1"
+        ]
       },
       "description": "Op overloading method to perform",
       "required": true

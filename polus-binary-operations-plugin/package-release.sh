@@ -10,7 +10,7 @@ bump2version --config-file bumpversion.cfg --new-version ${version} --allow-dirt
 ./build-docker.sh
 
 # Push to dockerhub
-docker push labshare/polus-binary-operations-plugin:${version}
+docker push polusai/binary-operations-plugin:${version}
 
 # Run unittests
 python3.9 tests/plugin_test.py

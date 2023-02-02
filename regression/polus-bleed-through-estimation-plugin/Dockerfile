@@ -1,4 +1,4 @@
-FROM python:3.9-slim-buster
+FROM polusai/bfio:2.1.9
 
 # Change to .ome.zarr to save output images as zarr files.
 ENV POLUS_EXT=".ome.tif"
@@ -20,4 +20,4 @@ COPY src ${EXEC_DIR}/
 
 WORKDIR ${EXEC_DIR}
 
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3", "/opt/executables/main.py"]

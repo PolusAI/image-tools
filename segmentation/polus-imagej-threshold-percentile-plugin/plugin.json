@@ -1,6 +1,6 @@
 {
   "name": "ImageJ threshold percentile",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "title": "ImageJ threshold percentile",
   "description": "This plugin assumes the fraction of foreground pixels to be 0.5.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,13 +8,15 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "Doyle, W. (1962). Operations Useful for Similarity-Invariant Pattern Recognition. Journal of the ACM, 9(2), 259-267. doi:10.1145/321119.321123",
-  "containerId": "polusai/imagej-threshold-percentile-plugin:0.4.0",
+  "containerId": "polusai/imagej-threshold-percentile-plugin:0.4.1",
   "inputs": [
     {
       "name": "opName",
       "type": "enum",
       "options": {
-        "values": ["ApplyThresholdMethod$Percentile"]
+        "values": [
+          "ApplyThresholdMethod$Percentile"
+        ]
       },
       "description": "Op overloading method to perform",
       "required": true

@@ -1,6 +1,6 @@
 {
   "name": "ImageJ threshold shanbhag",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "title": "ImageJ threshold shanbhag",
   "description": "Implements Shanbhag's extension of Kapur's Renyi Entropy method.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,13 +8,15 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "Shanbhag, A. G. (1994). Utilization of Information Measure as a Means of Image Thresholding. CVGIP: Graphical Models and Image Processing, 56(5), 414-419. doi:10.1006/cgip.1994.1037",
-  "containerId": "polusai/imagej-threshold-shanbhag-plugin:0.4.0",
+  "containerId": "polusai/imagej-threshold-shanbhag-plugin:0.4.1",
   "inputs": [
     {
       "name": "opName",
       "type": "enum",
       "options": {
-        "values": ["ApplyThresholdMethod$Shanbhag"]
+        "values": [
+          "ApplyThresholdMethod$Shanbhag"
+        ]
       },
       "description": "Operation to perform",
       "required": true

@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-imagej-deconvolve-richardsonlucytv-plugin:${version}
+docker build . -t polusai/imagej-deconvolve-richardsonlucytv-plugin:${version}

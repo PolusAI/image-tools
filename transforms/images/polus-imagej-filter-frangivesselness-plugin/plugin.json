@@ -1,6 +1,6 @@
 {
   "name": "ImageJ filter frangiVesselness",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "title": "ImageJ filter frangiVesselness",
   "description": "Applies the Frangi Vesselness filter to an input collection to highlight vessel-like structures",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,13 +8,15 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "Frangi, A. F., Niessen, W. J., Vincken, K. L., & Viergever, M. A. (1998). Multiscale vessel enhancement filtering. In Medical Image Computing and Computer-Assisted Intervention — MICCAI'98 (pp. 130-137). Springer Berlin Heidelberg. doi:10.1007/bfb0056195",
-  "containerId": "polusai/imagej-filter-frangivesselness-plugin:0.4.0",
+  "containerId": "polusai/imagej-filter-frangivesselness-plugin:0.4.1",
   "inputs": [
     {
       "name": "opName",
       "type": "enum",
       "options": {
-        "values": ["DefaultFrangi"]
+        "values": [
+          "DefaultFrangi"
+        ]
       },
       "description": "Operation to perform",
       "required": true
@@ -30,7 +32,7 @@
       "type": "array",
       "description": "The physical distance between data points in the  image, can vary for each dimension of the image.",
       "required": true,
-      "options":{
+      "options": {
         "items": {
           "type": "string",
           "title": "The physical distance between data points in the  image, can vary for each dimension of the image.",

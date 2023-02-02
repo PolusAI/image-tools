@@ -29,11 +29,11 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 This plugin takes four input argument if methods other than 'Manual' is selected else three input arguments and one output argument:
 
-| Name                   | Description             | I/O    | Type   |
-|------------------------|-------------------------|--------|--------|
-| `--imgdir` | Input image collection| Input | imageCollection |
-| `--csvdir` | Input csv collection| Input | csvCollection |
-| `--borderwidth` | Enter border width | Input | integer|
-| `--outdir` | Output collection | Output | imageCollection |
+| Name            | Description            | I/O    | Type            |
+| --------------- | ---------------------- | ------ | --------------- |
+| `--imgdir`      | Input image collection | Input  | imageCollection |
+| `--csvdir`      | Input csv collection   | Input  | csvCollection   |
+| `--borderwidth` | Enter border width     | Input  | integer         |
+| `--outdir`      | Output collection      | Output | imageCollection |
 
 

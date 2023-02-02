@@ -10,7 +10,7 @@ bump2version --config-file bumpversion.cfg --new-version ${version} --allow-dirt
 ./build-docker.sh
 
 # Push to dockerhub
-docker push labshare/polus-recycle-vector-plugin:${version}
+docker push polusai/recycle-vector-plugin:${version}
 
 # Run unittests
 # python -m unittest

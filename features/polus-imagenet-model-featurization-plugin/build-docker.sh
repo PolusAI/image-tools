@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-imagenet-model-featurization-plugin:${version}
+docker build . -t polusai/imagenet-model-featurization-plugin:${version}

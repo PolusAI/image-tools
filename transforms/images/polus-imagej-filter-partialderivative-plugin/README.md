@@ -26,10 +26,10 @@ Paste the contents of `plugin.json` into the pop-up window and submit.
 
 This plugin takes one input argument and one output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--dimension` | Dimension in which the partial derivative should be applied | Input | number |
-| `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--opName` | Op overloading method to perform. | Input | enum |
-| `--outDir` | Output collection | Output | collection |
+| Name          | Description                                                 | I/O    | Type       |
+| ------------- | ----------------------------------------------------------- | ------ | ---------- |
+| `--dimension` | Dimension in which the partial derivative should be applied | Input  | number     |
+| `--inpDir`    | Input image collection to be processed by this plugin       | Input  | collection |
+| `--opName`    | Op overloading method to perform.                           | Input  | enum       |
+| `--outDir`    | Output collection                                           | Output | collection |
 
