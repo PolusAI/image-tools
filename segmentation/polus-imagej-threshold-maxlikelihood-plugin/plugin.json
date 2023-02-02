@@ -1,6 +1,6 @@
 {
   "name": "ImageJ threshold maxLikelihood",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "title": "ImageJ threshold maxLikelihood",
   "description": "Implements a maximum likelihood threshold method by Dempster, Laird, Rubin and Glasbey.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-threshold-maxlikelihood-plugin:0.4.1",
+  "containerId": "polusai/imagej-threshold-maxlikelihood-plugin:0.4.2",
   "inputs": [
     {
       "name": "opName",

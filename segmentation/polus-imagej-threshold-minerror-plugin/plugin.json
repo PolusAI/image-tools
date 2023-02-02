@@ -1,6 +1,6 @@
 {
   "name": "ImageJ threshold minError",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "title": "ImageJ threshold minError",
   "description": "An iterative implementation of Kittler and Illingworth's Minimum Error thresholding.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-threshold-minerror-plugin:0.4.1",
+  "containerId": "polusai/imagej-threshold-minerror-plugin:0.4.2",
   "inputs": [
     {
       "name": "opName",

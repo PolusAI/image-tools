@@ -1,6 +1,6 @@
 {
   "name": "ImageJ filter partialDerivative",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "title": "ImageJ filter partialDerivative",
   "description": "ImageJ op that applies partial derivative filter to input collection. ",
   "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-filter-partialderivative-plugin:0.3.4",
+  "containerId": "polusai/imagej-filter-partialderivative-plugin:0.3.5",
   "inputs": [
     {
       "name": "opName",

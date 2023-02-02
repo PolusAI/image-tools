@@ -1,6 +1,6 @@
 {
   "name": "ImageJ image integral",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "title": "ImageJ image integral",
   "description": "This plugin applies the image integral algorithm to an input collection.",
   "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com), Nick Schaub (nick.schaub@nih.gov), Anjali Taneja",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-image-integral-plugin:0.3.1",
+  "containerId": "polusai/imagej-image-integral-plugin:0.3.2",
   "inputs": [
     {
       "name": "opName",

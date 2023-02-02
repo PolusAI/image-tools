@@ -1,6 +1,6 @@
 {
   "name": "ImageJ threshold intermodes",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "title": "ImageJ threshold intermodes",
   "description": "The plugin implements the Intermodes thresholding operation, where it is assumed the input image has bimodal distribution of pixel values",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-threshold-intermodes-plugin:0.4.1",
+  "containerId": "polusai/imagej-threshold-intermodes-plugin:0.4.2",
   "inputs": [
     {
       "name": "opName",

@@ -1,6 +1,6 @@
 {
   "name": "ImageJ filter tubeness",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "title": "ImageJ filter tubeness",
   "description": "This plugin filters a collection to produce a score for how tube-like each point in the image is.",
   "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-filter-tubeness-plugin:0.3.7",
+  "containerId": "polusai/imagej-filter-tubeness-plugin:0.3.8",
   "inputs": [
     {
       "name": "opName",

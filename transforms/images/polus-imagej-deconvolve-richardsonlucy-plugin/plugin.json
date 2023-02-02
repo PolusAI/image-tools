@@ -1,6 +1,6 @@
 {
   "name": "ImageJ deconvolve richardsonLucy",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "title": "ImageJ deconvolve richardsonLucy",
   "description": "This plugin applies the Richardson-Lucy Deconvolution to input collection.",
   "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-deconvolve-richardsonlucy-plugin:0.4.2",
+  "containerId": "polusai/imagej-deconvolve-richardsonlucy-plugin:0.4.3",
   "inputs": [
     {
       "name": "opName",

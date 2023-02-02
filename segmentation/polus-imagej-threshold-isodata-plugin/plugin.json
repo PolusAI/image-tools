@@ -1,14 +1,14 @@
 {
   "name": "ImageJ threshold isoData",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "title": "ImageJ threshold isoData",
-  "description": "Iterative procedure based on the isodata algorithm of:  Picture Thresholding Using an Iterative Selection Method. (1978). IEEE Transactions on Systems, Man, and Cybernetics, 8(8), 630–632. doi:10.1109/tsmc.1978.4310039",
+  "description": "Iterative procedure based on the isodata algorithm of:  Picture Thresholding Using an Iterative Selection Method. (1978). IEEE Transactions on Systems, Man, and Cybernetics, 8(8), 630\u2013632. doi:10.1109/tsmc.1978.4310039",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-threshold-isodata-plugin:0.4.1",
+  "containerId": "polusai/imagej-threshold-isodata-plugin:0.4.2",
   "inputs": [
     {
       "name": "opName",

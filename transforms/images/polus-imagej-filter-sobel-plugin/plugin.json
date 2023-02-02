@@ -1,6 +1,6 @@
 {
   "name": "ImageJ filter sobel",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "title": "ImageJ filter sobel",
   "description": "This plugin applies the Sobel operator to an input collection",
   "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-sobel-plugin:0.3.1",
+  "containerId": "polusai/imagej-sobel-plugin:0.3.2",
   "inputs": [
     {
       "name": "opName",

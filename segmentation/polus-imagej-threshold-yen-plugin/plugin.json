@@ -1,6 +1,6 @@
 {
   "name": "ImageJ threshold yen",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "title": "ImageJ threshold yen",
   "description": "Applies Yen's threshold method to an input collection.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-threshold-yen-plugin:0.4.1",
+  "containerId": "polusai/imagej-threshold-yen-plugin:0.4.2",
   "inputs": [
     {
       "name": "opName",
