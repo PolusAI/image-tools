@@ -1,6 +1,6 @@
 {
   "name": "ImageJ filter derivativeGauss",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "title": "ImageJ filter derivativeGauss",
   "description": "This plugin applies the nth derivative of a Gaussian to an input collection. ",
   "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com), Anjali Taneja, Nick Schaub (nick.schaub@nih.gov)",
@@ -8,13 +8,15 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-filter-derivativegauss-plugin:0.4.3",
+  "containerId": "polusai/imagej-filter-derivativegauss-plugin:0.4.4",
   "inputs": [
     {
       "name": "opName",
       "type": "enum",
       "options": {
-        "values": ["DefaultDerivativeGauss"]
+        "values": [
+          "DefaultDerivativeGauss"
+        ]
       },
       "description": "Op overloading method to perform",
       "required": true
@@ -30,7 +32,7 @@
       "type": "array",
       "description": "Array of nth derivatives of the Gaussians (x,y)",
       "required": false,
-      "options":{
+      "options": {
         "items": {
           "type": "string",
           "title": "Array of nth derivatives of the Gaussians (x,y)",
@@ -43,7 +45,7 @@
       "type": "array",
       "description": "The standard deviation of the Gaussians",
       "required": false,
-      "options":{
+      "options": {
         "items": {
           "type": "string",
           "title": "The standard deviation of the Gaussians",

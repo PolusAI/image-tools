@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-image-registration-plugin:0.3.5",
+    "containerId": "polusai/image-registration-plugin:0.3.5",
     "inputs": [
       {
         "name": "inpDir",

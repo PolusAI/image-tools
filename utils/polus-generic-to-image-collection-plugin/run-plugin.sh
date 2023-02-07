@@ -11,7 +11,6 @@ outDir=/data/output
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
             --user "$(id -u):$(id -g)" \
-            labshare/polus-generic-to-image-collection-plugin:${version} \
+            polusai/generic-to-image-collection-plugin:${version} \
             --inpDir ${inpDir} \
             --outDir ${outDir} 
-            

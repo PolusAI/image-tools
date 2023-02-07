@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-feature-extraction-plugin:${version}
+docker build . -t polusai/feature-extraction-plugin:${version}

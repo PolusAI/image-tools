@@ -1,3 +1,3 @@
 #!/bin/bash
 version=$(<VERSION)
-docker build . -t labshare/polus-basic-flatfield-correction-plugin:${version}
+docker build . -t polusai/basic-flatfield-correction-plugin:${version}

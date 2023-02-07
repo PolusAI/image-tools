@@ -1,3 +1,2 @@
 czifile==2019.7.2
 preadator==0.2.0
-bfio[all]==2.1.9

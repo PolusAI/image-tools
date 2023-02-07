@@ -25,11 +25,10 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes one input argument and one output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--inpDir` | Input image collection to be processed by this plugin. | Input | collection |
-| `--numFeatures` | The number of features to calculate. | Input | int |
-| `--ScaleInvariant` | Calculate scale invariant features. | Input | boolean |
-| `--limitMeshSize` | Maximum number of mesh faces. | Input | int |
-| `--outDir` | Output collection | Output | csvCollection |
-
+| Name               | Description                                            | I/O    | Type          |
+| ------------------ | ------------------------------------------------------ | ------ | ------------- |
+| `--inpDir`         | Input image collection to be processed by this plugin. | Input  | collection    |
+| `--numFeatures`    | The number of features to calculate.                   | Input  | int           |
+| `--ScaleInvariant` | Calculate scale invariant features.                    | Input  | boolean       |
+| `--limitMeshSize`  | Maximum number of mesh faces.                          | Input  | int           |
+| `--outDir`         | Output collection                                      | Output | csvCollection |

@@ -69,12 +69,12 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes five input arguments and has output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--outDir` | Output collection | Output | collection |
-| `--operation`| The Morphological Operation to be done on input images | Input | String |
-| `--structuringShape`| Shape of the structuring element can either be Elliptical, Rectangular, or Cross | Input | String |
-| `--kernelSize`| Size of the kernel for most operations | Input | String |
-| `--overrideInstances`| Specification for whether previously written instances can be overriden | Input | Boolean |
-| `--filePattern`| File pattern for images in the input directory | Input | String |
+| Name                  | Description                                                                      | I/O    | Type       |
+| --------------------- | -------------------------------------------------------------------------------- | ------ | ---------- |
+| `--inpDir`            | Input image collection to be processed by this plugin                            | Input  | collection |
+| `--outDir`            | Output collection                                                                | Output | collection |
+| `--operation`         | The Morphological Operation to be done on input images                           | Input  | String     |
+| `--structuringShape`  | Shape of the structuring element can either be Elliptical, Rectangular, or Cross | Input  | String     |
+| `--kernelSize`        | Size of the kernel for most operations                                           | Input  | String     |
+| `--overrideInstances` | Specification for whether previously written instances can be overriden          | Input  | Boolean    |
+| `--filePattern`       | File pattern for images in the input directory                                   | Input  | String     |

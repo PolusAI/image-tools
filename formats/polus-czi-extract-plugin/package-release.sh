@@ -10,4 +10,4 @@ bump2version --config-file bumpversion.cfg --new-version ${version} --allow-dirt
 ./build-docker.sh
 
 # Push to dockerhub
-docker push labshare/polus-czi-extract-plugin:${version}
+docker push polusai/czi-extract-plugin:${version}
