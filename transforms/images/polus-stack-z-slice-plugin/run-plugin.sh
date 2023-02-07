@@ -12,7 +12,7 @@ filePattern=r01c01f01p{z+}-ch1sk1fk1fl1.ome.tif
 outDir=/data/output
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
-            labshare/polus-stack-z-slice-plugin:${version} \
+            polusai/stack-z-slice-plugin:${version} \
             --filePattern ${filePattern} \
             --inpDir ${inpDir} \
             --outDir ${outDir} 

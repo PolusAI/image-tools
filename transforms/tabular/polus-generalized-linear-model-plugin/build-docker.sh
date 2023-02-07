@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-generalized-linear-model-plugin:${version}
+docker build . -t polusai/generalized-linear-model-plugin:${version}

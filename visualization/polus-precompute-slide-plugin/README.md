@@ -35,9 +35,9 @@ contents of `plugin.json` into the pop-up window and submit.
 This plugin can take four types of input argument and one output argument:
 
 | Name          | Description                                           | I/O    | Type    |
-|---------------|-------------------------------------------------------|--------|---------|
+| ------------- | ----------------------------------------------------- | ------ | ------- |
 | `inpDir`      | Input image collection (Single Image Planes/Z Stacks) | Input  | Path    |
-| `pyramidType` | DeepZoom/Neuroglancer/Zarr                                 | Input  | String  |
+| `pyramidType` | DeepZoom/Neuroglancer/Zarr                            | Input  | String  |
 | `filePattern` | Image pattern                                         | Input  | String  |
 | `imageType`   | Neuroglancer type (image/segmentation)                | Input  | String  |
 | `outDir`      | Output image pyramid                                  | Output | Pyramid |

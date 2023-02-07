@@ -1,20 +1,22 @@
 {
   "name": "ImageJ threshold li",
-  "version": "0.4.0",
+  "version": "0.4.2",
   "title": "ImageJ threshold li",
-  "description": "Implements Li’s Minimum Cross Entropy thresholding method based on the iterative version of the algorithm.",
+  "description": "Implements Li\u2019s Minimum Cross Entropy thresholding method based on the iterative version of the algorithm.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-threshold-li-plugin:0.4.0",
+  "containerId": "polusai/imagej-threshold-li-plugin:0.4.2",
   "inputs": [
     {
       "name": "opName",
       "type": "enum",
       "options": {
-        "values": ["ApplyThresholdMethod$Li"]
+        "values": [
+          "ApplyThresholdMethod$Li"
+        ]
       },
       "description": "Operation to perform",
       "required": true

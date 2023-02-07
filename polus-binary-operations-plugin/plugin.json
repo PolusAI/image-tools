@@ -1,12 +1,12 @@
 {
   "name": "Binary Operations Plugin",
-  "version": "0.4.0",
-  "containerId": "labshare/polus-binary-operations-plugin:0.4.0",
+  "version": "0.4.1",
+  "containerId": "polusai/binary-operations-plugin:0.4.1",
   "title": "Binary Operations Plugin",
   "description": "Everything you need to start a WIPP plugin.",
   "author": "Madhuri Vihani (Madhuri.Vihani@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-  "repository": "https://github.com/labshare/polus-plugins",
+  "repository": "https://github.com/polusai/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
   "inputs": [

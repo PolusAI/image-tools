@@ -19,4 +19,3 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --sigma ${sigma} \
             --calibration ${calibration} \
             --out ${out}
-            

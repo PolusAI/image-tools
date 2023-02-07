@@ -1,14 +1,14 @@
 {
-  "name": "OME Zarr Converter",
-  "version": "0.2.0",
-  "title": "OME Zarr Converter",
+  "name": "OME Converter",
+  "version": "0.2.2",
+  "title": "OME Converter",
   "description": "Convert Bioformats supported format to OME Zarr.",
   "author": "Nick Schaub (nick.schaub@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "labshare/polus-ome-zarr-converter-plugin:0.2.0",
+  "containerId": "polusai/ome-converter-plugin:0.2.2",
   "inputs": [
     {
       "name": "inpDir",

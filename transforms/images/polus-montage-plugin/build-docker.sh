@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-montage-plugin:${version}
+docker build . -t polusai/montage-plugin:${version}

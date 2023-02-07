@@ -1,6 +1,6 @@
 {
   "name": "ImageJ deconvolve richardsonLucyTV",
-  "version": "0.4.0",
+  "version": "0.4.2",
   "title": "ImageJ deconvolve richardsonLucyTV",
   "description": "PadAndRichardsonLucyTV",
   "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com), Anjali Taneja and Nick Schaub (nick.schaub@nih.gov)",
@@ -8,13 +8,15 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-deconvolve-richardsonlucytv-plugin:0.4.0",
+  "containerId": "polusai/imagej-deconvolve-richardsonlucytv-plugin:0.4.2",
   "inputs": [
     {
       "name": "opName",
       "type": "enum",
       "options": {
-        "values": ["PadAndRichardsonLucyTV"]
+        "values": [
+          "PadAndRichardsonLucyTV"
+        ]
       },
       "description": "Op overloading method to perform",
       "required": true

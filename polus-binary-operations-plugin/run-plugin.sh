@@ -20,7 +20,7 @@ outDir=/data/output/
 
 # Run Docker
 sudo docker run --mount type=bind,source=${datapath},target=/data/ \
-    labshare/polus-binary-operations-plugin:${version} \
+    polusai/binary-operations-plugin:${version} \
     --inpDir ${inpDir} \
     --structuringShape ${structuringShape} \
     --operation ${operation} \

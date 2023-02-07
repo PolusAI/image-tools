@@ -1,4 +1,4 @@
-# Polus Tiled Tiff Conversion Plugin
+# Tiled Tiff Conversion Plugin
 
 This WIPP plugin takes any image type supported by Bioformats and converts it 
 to an OME tiled tiff. The tiled storage format is helpful for loading and 
@@ -65,7 +65,7 @@ mkdir output
 wget -P images/ https://data.broadinstitute.org/bbbc/BBBC033/BBBC033_v1_dataset.zip
 unzip images/BBBC033_v1_dataset.zip
 basedir=$(basename ${PWD})
-docker run -v ${PWD}:/$basedir labshare/polus-tiledtiff-converter-plugin:1.1.0 \
+docker run -v ${PWD}:/$basedir polusai/tiledtiff-converter-plugin:1.1.1 \
 --input /$basedir/"images/" \
 --output /$basedir/"output/"
 ```

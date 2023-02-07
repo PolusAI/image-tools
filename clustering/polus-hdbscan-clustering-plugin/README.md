@@ -3,6 +3,7 @@
 The HDBSCAN Clustering plugin clusters the data using [HDBSCAN clustering](https://pypi.org/project/hdbscan/) library. The input and output for this plugin is a CSV file. Each observation (row) in the input CSV file is assigned to one of the clusters. The output CSV file contains the column `cluster` that identifies the cluster to which each observation belongs. A user can supply a regular expression with capture groups if they wish to cluster each group independently, or if they wish to average the numerical features across each group and treat them as a single observation.
 
 ## Inputs:
+
 ### Input CSV collection:
 The input file(s) that need to be clustered. The file should be in CSV format. This is a required parameter for the plugin.
 
@@ -36,14 +37,12 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 This plugin takes four input arguments and one output argument:
 
-| Name                   | Description             | I/O    | Type   |
-|------------------------|-------------------------|--------|--------|
-| `--inpDir` | Input csv collection. | Input | csvCollection |
-| `--groupingPattern` | Regular expression to group rows. Clustering will be applied across capture groups by default. | Input | string |
-| `--averageGroups` | If set to `true`, will average data across groups. Requires capture groups | Input | string |
-| `--labelCol` | Name of the column containing labels for grouping pattern. | Input | string |
-| `--minClusterSize` | Minimum cluster size. | Input | integer |
-| `--incrementOutlierId` | Increments outlier ID to 1. | Input | string |
-| `--outDir` | Output collection | Output | csvCollection |
-
-
+| Name                   | Description                                                                                    | I/O    | Type          |
+| ---------------------- | ---------------------------------------------------------------------------------------------- | ------ | ------------- |
+| `--inpDir`             | Input csv collection.                                                                          | Input  | csvCollection |
+| `--groupingPattern`    | Regular expression to group rows. Clustering will be applied across capture groups by default. | Input  | string        |
+| `--averageGroups`      | If set to `true`, will average data across groups. Requires capture groups                     | Input  | string        |
+| `--labelCol`           | Name of the column containing labels for grouping pattern.                                     | Input  | string        |
+| `--minClusterSize`     | Minimum cluster size.                                                                          | Input  | integer       |
+| `--incrementOutlierId` | Increments outlier ID to 1.                                                                    | Input  | string        |
+| `--outDir`             | Output collection                                                                              | Output | csvCollection |

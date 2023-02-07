@@ -1,7 +1,7 @@
 # ImageJ threshold ij1
 
 This plugin implements the [default thresholding method](https://imagej.net/plugins/auto-threshold#default) from ImageJ 1.x. The
-defualt method as explained by ImageJ is a variation of the IsoData algorithm.
+default method as explained by ImageJ is a variation of the IsoData algorithm.
 As explained by ImageJ the IsoData "procedure divides the image into object and 
 background by taking an initial threshold, then the averages of the pixels at or 
 below the threshold and pixels above are computed. The averages of those two 
@@ -19,9 +19,9 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 ## Building
 
-Bump the verison in the `VERSION` file.
+Bump the version in the `VERSION` file.
 
-Then oo build the Docker image for the conversion plugin, run
+Then to build the Docker image for the conversion plugin, run
 `./build-docker.sh`.
 
 ## Install WIPP Plugin
@@ -33,9 +33,9 @@ Paste the contents of `plugin.json` into the pop-up window and submit.
 
 This plugin takes one input argument and one output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--inpDir` | The collection to be processed by this plugin | Input | collection |
-| `--opName` | Op overloading method to perform | Input | enum |
-| `--outDir` | Output collection | Output | collection |
+| Name       | Description                                   | I/O    | Type       |
+| ---------- | --------------------------------------------- | ------ | ---------- |
+| `--inpDir` | The collection to be processed by this plugin | Input  | collection |
+| `--opName` | Op overloading method to perform              | Input  | enum       |
+| `--outDir` | Output collection                             | Output | collection |
 

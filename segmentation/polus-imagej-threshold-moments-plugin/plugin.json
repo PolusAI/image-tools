@@ -1,6 +1,6 @@
 {
   "name": "ImageJ threshold moments",
-  "version": "0.4.0",
+  "version": "0.4.2",
   "title": "ImageJ threshold moments",
   "description": "Tsai's method attempts to preserve the moments of the original image in the thresholded result.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,13 +8,15 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-threshold-moments-plugin:0.4.0",
+  "containerId": "polusai/imagej-threshold-moments-plugin:0.4.2",
   "inputs": [
     {
       "name": "opName",
       "type": "enum",
       "options": {
-        "values": ["ApplyThresholdMethod$Moments"]
+        "values": [
+          "ApplyThresholdMethod$Moments"
+        ]
       },
       "description": "Op overloading method to perform",
       "required": true
