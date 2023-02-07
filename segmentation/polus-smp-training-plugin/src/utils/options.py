@@ -220,7 +220,7 @@ LOSSES: Dict[str, Type[TorchLoss]] = {
     'LovaszLoss': smp.losses.LovaszLoss,
     'SoftBCEWithLogitsLoss': smp.losses.SoftBCEWithLogitsLoss,
     'SoftCrossEntropyLoss': smp.losses.SoftCrossEntropyLoss,
-    'MCCLoss': smp.losses.MCCLoss,
+    # 'MCCLoss': smp.losses.MCCLoss,
 }
 
 LOSS_NAMES: List[str] = list(LOSSES.keys())
