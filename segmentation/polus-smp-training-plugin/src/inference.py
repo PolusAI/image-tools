@@ -78,7 +78,7 @@ def run_inference(
 
             # Start loading the next data
             load_threads = []
-            for image_path in batches[0]:
+            for image_path in batch:
                 load_threads.append(executor.submit(thread_loader, image_path, device))
 
             with torch.no_grad():
