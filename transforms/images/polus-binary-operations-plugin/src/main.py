@@ -1,19 +1,46 @@
 
-import argparse, logging, traceback
-from multiprocessing import Process
+import argparse, logging
+from concurrent.futures import ThreadPoolExecutor
+
+import filepattern
+from filepattern import FilePattern as fp
+
+from typing import Any
 
 import numpy as np
 import cv2
 
-from pathlib import Path
 import os
 import utils
 
-Tile_Size = 256
+POLUS_LOG = getattr(logging,os.environ.get('POLUS_LOG', 'INFO'))
+# Initialize the logger
+logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
+                    datefmt='%d-%b-%y %H:%M:%S')
+logger = logging.getLogger("main")
+logger.setLevel(POLUS_LOG)
 
-def main():
+def main(inp_dir: str,
+         out_dir: str,
+         int_kernel: int,
+         threshold_area_rm_large: int,
+         threshold_area_rm_small: int,
+         iterations_dilation: int,
+         iterations_erosion: int,
+         operations: str,
+         file_pattern: str,
+         override_instances: bool,
+         structuring_shape: Any):
 
     try:
+
+        # Getting the relevant input images based on filepattern
+        input_images = [str(f[0]['file']) 
+                        for f in fp(inp_dir,file_pattern) 
+                            if os.path.exists(str(f[0]['file']))]
+        num_inputs = len(input_images)
+        logger.info(f"Number of Inputs = {num_inputs}")
+
         # A dictionary specifying the function that will be run based on user input. 
         dispatch = {
             'inversion': utils.invert_binary,
@@ -46,95 +73,109 @@ def main():
             'filter_area_remove_small_objects' : threshold_area_rm_small
         }
 
-        # Get all file names in inpDir image collection
-        inpDir_files = [f.name for f in Path(inpDir).iterdir()]
-        logger.info("Files in input directory: {}".format(inpDir_files))
-
         # Need extra padding when doing operations so it does not skew results
             # Initialize variables based on operation
-        if (threshold_area_rm_large != None) or (threshold_area_rm_small != None):
-            extra_padding = int(Tile_Size//2)
-            kernel = None
+        
+        if (threshold_area_rm_large == None) and (threshold_area_rm_small == None):
+            assert int_kernel != None, "Need to Specify a Kernel Size"
+            logger.info(f"Integer Kernel Size: {int_kernel}")
+            extra_padding = int_kernel
+            kernel = cv2.getStructuringElement(structuring_shape,(int_kernel,int_kernel))
         else:
-            extra_padding = intkernel
-            kernel = cv2.getStructuringElement(structshape,(intkernel,intkernel))
+            extra_padding = 512
+            kernel = None
         function = dispatch[operations]
         extra_arguments = dict_n_args[operations]
 
+        logger.info("\n Initializing key word arguments ...")
+
+        kwargs = {
+            "function"        : function,
+            "extra_arguments" : extra_arguments,
+            "extra_padding"   : extra_padding,
+            "kernel"          : kernel,
+            "override"        : override_instances,
+            "operation"       : operations
+        }
 
         # Loop through files in inpDir image collection and process
-        for image in inpDir_files:
+        # with ThreadPoolExecutor(max_workers = os.cpu_count()-1) as executor:
+        lambda_utilsBinaryOperation = lambda input_path: \
+                                             utils.binary_operation(input_path      = input_path, 
+                                                                    output_path     = os.path.join(out_dir, os.path.basename(input_path)),
+                                                                    **kwargs)
 
-            p = Process(target=utils.binary_operation, args=(os.path.join(inpDir, image), os.path.join(outDir, image), 
-                function, extra_arguments, extra_padding, kernel, Tile_Size))
-            p.start()
-            p.join()
+        counter = 1
+        with ThreadPoolExecutor(max_workers=os.cpu_count()-1) as executor:
+            for input_imagepath in input_images: # iterating through so user can keep track of progress (instead of executor map)
+                output_imagepath = executor.submit(lambda_utilsBinaryOperation, input_imagepath)
+                logger.info(f"Saving Output ({counter}/{num_inputs}) at {output_imagepath.result()}")
+                counter += 1
 
-
-    except:
-        traceback.print_exc()
-
-    # Always close the JavaBridge
-    finally:
-        logger.info('Closing the javabridge...')
+    except Exception as e:
+        raise ValueError(f"Something went wrong: {e}")
 
 
 if __name__=="__main__":
-    # Initialize the logger
-    logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
-                        datefmt='%d-%b-%y %H:%M:%S')
-    logger = logging.getLogger("main")
-    logger.setLevel(logging.INFO)
 
     # Setup the argument parsing
-    logger.info("Parsing arguments...")
+    logger.info("\n Parsing arguments...")
     parser = argparse.ArgumentParser(prog='main', description='Everything you need to start a WIPP plugin.')
 
     parser.add_argument('--inpDir', dest='inpDir', type=str,
                         help='Input image collection to be processed by this plugin', required=True)
     parser.add_argument('--outDir', dest='outDir', type=str,
                         help='Output collection', required=True)
-    parser.add_argument('--Operation', dest='operations', type=str,
+    parser.add_argument('--operation', dest='operations', type=str,
                         help='The types of operations done on image in order', required=True)
-    parser.add_argument('--structuringshape', dest='struct_shape', type=str,
+    parser.add_argument('--structuringShape', dest='structuringShape', type=str,
                         help='Shape of the structuring element can either be Elliptical, Rectangular, or Cross', required=True)
+    parser.add_argument('--filePattern', dest='filePattern', type=str,
+                        help='File Pattern for images in Input Directory', default=".*", required=False)
+    parser.add_argument('--overrideInstances', dest='overrideInstances', type=str,
+                        help='Boolean for whether instances are allowed to be overlapped or not')
 
     # Extra arguments based on operation
-    parser.add_argument('--kernelsize', dest='all_kernel', type=int, # not used for the area filtering
-                        help='Kernel size that should be used for all operations', required=False)
-    parser.add_argument('--ThresholdAreaRemoveLarge', dest='threshold_area_rm_large', type=int,
+    parser.add_argument('--kernelSize', dest='kernelSize', type=int,# not used for the area filtering
+                        help='Kernel size that should be used for all operations')
+    parser.add_argument('--thresholdAreaRemoveLarge', dest='thresholdAreaRemoveLarge', type=int,
                         help='Area threshold of objects in image', required=False)
-    parser.add_argument('--ThresholdAreaRemoveSmall', dest='threshold_area_rm_small', type=int,
+    parser.add_argument('--thresholdAreaRemoveSmall', dest='thresholdAreaRemoveSmall', type=int,
                         help='Area threshold of objects in image', required=False)
-    parser.add_argument('--IterationsDilation', dest='num_iterations_dilation', type=int,
+    parser.add_argument('--iterationsDilation', dest='iterationsDilation', type=int,
                         help='Number of Iterations to apply operation', required=False)
-    parser.add_argument('--IterationsErosion', dest='num_iterations_erosion', type=int,
+    parser.add_argument('--iterationsErosion', dest='iterationsErosion', type=int,
                         help='Number of Iterations to apply operation', required=False)
+
     # Input arguments
     args = parser.parse_args()
-    inpDir = args.inpDir
-    logger.info('inpDir = {}'.format(inpDir))
-    outDir = args.outDir
-    logger.info('outDir = {}'.format(outDir))
-    operations = args.operations
-    logger.info('Operation = {}'.format(operations))
+    inp_dir: str = args.inpDir
+    logger.info(f"inpDir = {inp_dir}")
+    out_dir: str = args.outDir
+    logger.info(f"outDir = {out_dir}")
+    operations: str = args.operations
+    logger.info(f"operation = {operations}")
+    file_pattern: str = args.filePattern
+    logger.info(f"filePattern = {file_pattern}")
+    override_instances: bool = args.overrideInstances
+    logger.info(f"overrideInstances = {override_instances}")
 
-    # structshape = cv2.MORPH_ELLIPSE
-    if args.struct_shape == 'Elliptical':
-        structshape = cv2.MORPH_ELLIPSE
-    elif args.struct_shape == 'Rectangular':
-        structshape = cv2.MORPH_RECT
-    elif args.struct_shape == 'Cross':
-        structshape = cv2.MORPH_CROSS
+
+    if args.structuringShape == 'Elliptical':
+        structuring_shape = cv2.MORPH_ELLIPSE # datatype is INT, but throws TypeError if specified
+    elif args.structuringShape == 'Rectangular':
+        structuring_shape = cv2.MORPH_RECT
+    elif args.structuringShape == 'Cross':
+        structuring_shape = cv2.MORPH_CROSS
     else:
         raise ValueError("Structuring Shape is not correct")
-    logger.info('Structuring Shape = {}'.format(args.struct_shape))
+    logger.info(f"Structuring Shape = {args.structuringShape}")
 
-    intkernel = args.all_kernel
-    threshold_area_rm_large = args.threshold_area_rm_large
-    threshold_area_rm_small = args.threshold_area_rm_small
-    iterations_dilation = args.num_iterations_dilation
-    iterations_erosion = args.num_iterations_erosion
+    int_kernel: int = args.kernelSize
+    threshold_area_rm_large: int = args.thresholdAreaRemoveLarge
+    threshold_area_rm_small: int = args.thresholdAreaRemoveSmall
+    iterations_dilation: int = args.iterationsDilation
+    iterations_erosion: int  = args.iterationsErosion
 
     if 'filter_area_remove_large_objects' in operations:
         if threshold_area_rm_large == None:
@@ -152,5 +193,15 @@ if __name__=="__main__":
         if iterations_erosion == None:
             raise ValueError("Need to specify the number of iterations to apply the operation")
 
-    main()
+    main(inp_dir    = inp_dir,
+         out_dir    = out_dir,
+         int_kernel = int_kernel,
+         threshold_area_rm_large = threshold_area_rm_large,
+         threshold_area_rm_small = threshold_area_rm_small,
+         iterations_dilation = iterations_dilation,
+         iterations_erosion  = iterations_erosion,
+         operations = operations,
+         structuring_shape = structuring_shape,
+         file_pattern = file_pattern,
+         override_instances = override_instances)
 
