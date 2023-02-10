@@ -4,6 +4,7 @@ import enum
 import logging
 import pathlib
 import fsspec
+import re
 
 logger = logging.getLogger("polus.plugins")
 
@@ -215,6 +216,17 @@ class Input(IOBase):
             )
 
 
+def _check_version_number(value: str | int) -> bool:
+    if isinstance(value, int):
+        value = str(value)
+    if "-" in value:
+        value = value.split("-")[0]
+    if len(value) > 1:
+        if value[0] == "0":
+            return False
+    return bool(re.match(r"^\d+$", value))
+
+
 class Version(BaseModel):
     version: str
 
@@ -228,8 +240,17 @@ class Version(BaseModel):
 
         assert (
             len(version) == 3
-        ), "Version must follow semantic versioning. See semver.org for more information."
+        ), f"Invalid version ({value}). Version must follow semantic versioning (see semver.org)"
+        if "-" in version[-1]:  # with hyphen
+            idn = version[-1].split("-")[-1]
+            id_reg = re.compile("[0-9A-Za-z-]+")
+            assert bool(
+                id_reg.match(idn)
+            ), f"Invalid version ({value}). Version must follow semantic versioning (see semver.org)"
 
+        assert all(
+            map(_check_version_number, version)
+        ), f"Invalid version ({value}). Version must follow semantic versioning (see semver.org)"
         return value
 
     @property
