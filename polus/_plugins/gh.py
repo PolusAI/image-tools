@@ -2,7 +2,7 @@ import logging
 from urllib.parse import urljoin
 import github
 import os
-from ..plugin_classes import submit_plugin
+from .classes.plugin_classes import submit_plugin
 
 logger = logging.getLogger("polus.plugins")
 
