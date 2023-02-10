@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-object-spectral-featurization-plugin:${version}
+docker build . -t polusai/object-spectral-featurization-plugin:${version}

@@ -1,4 +1,4 @@
-# Feather to Tabular (v0.1.0)
+# Feather to Tabular (v0.1.2)
 This WIPP plugin allows analysts to convert Arrow Feather File Format (V2) into the following file formats for researchers:
     - `.parquet`
     - `.csv`
@@ -21,8 +21,8 @@ contents of `plugin.json` into the pop-up window and submit.
 
 This plugin takes two input arguments and one output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--filePattern` | Filename pattern to convert | Input | string |
-| `--inpDir` | Input generic data collection to be processed by this plugin | Input | collection |
-| `--outDir` | Output collection | Output | collection |
+| Name            | Description                                                  | I/O    | Type       |
+| --------------- | ------------------------------------------------------------ | ------ | ---------- |
+| `--filePattern` | Filename pattern to convert                                  | Input  | string     |
+| `--inpDir`      | Input generic data collection to be processed by this plugin | Input  | collection |
+| `--outDir`      | Output collection                                            | Output | collection |

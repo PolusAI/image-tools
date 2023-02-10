@@ -20,6 +20,6 @@ docker run --mount type=bind,source="${data_path}",target=/data/ \
             --user "$(id -u)":"$(id -g)" \
             --env POLUS_LOG="${POLUS_LOG}" \
             --env POLUS_EXT="${POLUS_EXT}" \
-            labshare/polus-zo1-segmentation-plugin:"${version}" \
+            polusai/zo1-segmentation-plugin:"${version}" \
             --inpDir ${inpDir} \
             --outDir ${outDir}

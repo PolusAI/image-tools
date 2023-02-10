@@ -25,7 +25,7 @@ docker run --mount type=bind,source="${data_path}",target=/data/ \
             --gpus ${GPUS} \
             --env POLUS_LOG=${POLUS_LOG} \
             --env POLUS_EXT=${POLUS_EXT} \
-            labshare/polus-label-to-vector-plugin:"${version}" \
+            polusai/label-to-vector-plugin:"${version}" \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
             --outDir ${outDir}

@@ -1,6 +1,6 @@
 {
   "name": "Feather to Tabular",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "title": "Feather to Tabular",
   "description": "WIPP plugin to converts Feather file format to Tabular Data.",
   "author": "Kelechi Nina Mezu (nina.mezu@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/PolusAI/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/feather-to-tabular-plugin:0.1.1",
+  "containerId": "polusai/feather-to-tabular-plugin:0.1.2",
   "inputs": [
     {
       "name": "fileFormat",
@@ -19,7 +19,7 @@
           ".csv",
           ".parquet"
         ]
-              },
+      },
       "required": true
     },
     {

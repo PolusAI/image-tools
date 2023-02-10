@@ -35,10 +35,10 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes one input argument and one output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--model` | Pre-trained ImageNet model to use for featurization | Input | enum |
-| `--resolution` | Resolution to which the input images are scaled | Input | string |
-| `--outDir` | Output collection | Output | csvCollection |
+| Name           | Description                                           | I/O    | Type          |
+| -------------- | ----------------------------------------------------- | ------ | ------------- |
+| `--inpDir`     | Input image collection to be processed by this plugin | Input  | collection    |
+| `--model`      | Pre-trained ImageNet model to use for featurization   | Input  | enum          |
+| `--resolution` | Resolution to which the input images are scaled       | Input  | string        |
+| `--outDir`     | Output collection                                     | Output | csvCollection |
 

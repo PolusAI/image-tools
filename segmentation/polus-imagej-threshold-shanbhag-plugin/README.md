@@ -1,7 +1,7 @@
 # ImageJ threshold shanbhag
 
 Implements Shanbhag's extension of Kapur's Renyi Entropy method. This method
-includes a distance from the threshold in the entropy measure. More infomraiton 
+includes a distance from the threshold in the entropy measure. More information 
 about the op can be found from [ImageJ](https://imagej.net/plugins/auto-threshold#shanbhag)
 
 Shanbhag, A. G. (1994). Utilization of Information Measure as a Means of Image 
@@ -17,9 +17,9 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 ## Building
 
-Bump the verison in the `VERSION` file.
+Bump the version in the `VERSION` file.
 
-Then oo build the Docker image for the conversion plugin, run
+Then to build the Docker image for the conversion plugin, run
 `./build-docker.sh`.
 
 ## Install WIPP Plugin
@@ -31,9 +31,9 @@ Paste the contents of `plugin.json` into the pop-up window and submit.
 
 This plugin takes one input argument and one output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--inpDir` | Collection to be processed by this plugin | Input | collection |
-| `--opName` | Operation to perform | Input | enum |
-| `--outDir` | Output collection | Output | collection |
+| Name       | Description                               | I/O    | Type       |
+| ---------- | ----------------------------------------- | ------ | ---------- |
+| `--inpDir` | Collection to be processed by this plugin | Input  | collection |
+| `--opName` | Operation to perform                      | Input  | enum       |
+| `--outDir` | Output collection                         | Output | collection |
 

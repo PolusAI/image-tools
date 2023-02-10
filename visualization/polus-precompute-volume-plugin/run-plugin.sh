@@ -12,7 +12,7 @@ outDir=/data/output/
 
 # Run Docker
 sudo docker run --mount type=bind,source=${datapath},target=/data/ \
-    labshare/polus-precompute-volume-plugin:${version} \
+    polusai/precompute-volume-plugin:${version} \
     --inpDir ${inpDir} \
     --imageType ${imageType} \
     --mesh ${mesh} \

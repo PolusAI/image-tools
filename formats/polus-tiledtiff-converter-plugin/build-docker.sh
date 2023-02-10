@@ -1,3 +1,4 @@
 #!/bin/bash
+
 version=$(<VERSION)
-docker build . -t labshare/polus-tiledtiff-converter-plugin:${version}
+docker build . -t polusai/tiledtiff-converter-plugin:${version}

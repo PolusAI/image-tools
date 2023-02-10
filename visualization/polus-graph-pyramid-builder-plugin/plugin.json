@@ -8,9 +8,8 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "labshare/polus-graph-pyramid-builder-plugin:1.3.8",
+  "containerId": "polusai/graph-pyramid-builder-plugin:1.3.8",
   "inputs": [
-
     {
       "name": "inpDir",
       "type": "csvCollection",
@@ -33,7 +32,7 @@
       "required": true
     },
     {
-      "name":"scale",
+      "name": "scale",
       "type": "enum",
       "options": {
         "values": [
@@ -41,7 +40,7 @@
           "log",
           "both"
         ]
-      } 
+      }
     }
   ],
   "outputs": [

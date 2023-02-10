@@ -1,4 +1,4 @@
-FROM labshare/polus-bfio-util:1.0.7-slim-buster
+FROM polusai/bfio:2.1.9-tensorflow
 
 COPY VERSION /
 
@@ -12,4 +12,4 @@ COPY src ${EXEC_DIR}/
 
 RUN pip install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
-ENTRYPOINT [ "python3", "models.py" ]
+ENTRYPOINT [ "python3", "/opt/executables/models.py" ]

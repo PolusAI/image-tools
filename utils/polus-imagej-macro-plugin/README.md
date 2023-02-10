@@ -47,12 +47,12 @@ Paste the contents of `plugin.json` into the pop-up window and submit.
 
 This plugin takes one input argument and one output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--inpDir` | Collection to be processed by this plugin | Input | collection |
-| `--macroDir` | The macro to run | Input | generic |
-| `--outDir` | Output collection | Output | collection |
-| `--maxIterations` | Maximum number of macro attempts | Input | number |
+| Name              | Description                               | I/O    | Type       |
+| ----------------- | ----------------------------------------- | ------ | ---------- |
+| `--inpDir`        | Collection to be processed by this plugin | Input  | collection |
+| `--macroDir`      | The macro to run                          | Input  | generic    |
+| `--outDir`        | Output collection                         | Output | collection |
+| `--maxIterations` | Maximum number of macro attempts          | Input  | number     |
 
 > Note the `--macroDir` input should be a path to a directory containing a `.txt` file
 > e.g., `mymacro` might contain `awesome-macro.txt`.<br>

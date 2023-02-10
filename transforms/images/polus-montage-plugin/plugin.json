@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-montage-plugin:0.2.2",
+    "containerId": "polusai/montage-plugin:0.2.2",
     "inputs": [
       {
         "name": "filePattern",

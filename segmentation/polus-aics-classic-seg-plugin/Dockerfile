@@ -1,10 +1,8 @@
-
-FROM labshare/polus-bfio-util:1.3.6-slim-buster
+FROM polusai/bfio:2.1.9
 
 #RUN apk add --no-cache git
 RUN apt-get update && apt-get install build-essential -y \
     && apt-get -y install git
-
 
 COPY VERSION /
 		
@@ -20,4 +18,4 @@ WORKDIR ${EXEC_DIR}
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3", "/opt/executables/main.py"]

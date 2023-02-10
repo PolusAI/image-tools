@@ -40,17 +40,17 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes one input argument and one output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--csvDir` | CSV collection containing features | Input | csvCollection |
-| `--padding` | Number of images to capture outside the cutoff | Input | int |
-| `--feature` | Feature to use to subset data | Input | string |
-| `--filePattern` | Filename pattern used to separate data | Input | string |
-| `--groupVar` | variables to group by in a section | Input | string |
-| `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--percentile` | Percentile to remove | Input | int |
-| `--removeDirection` | remove direction above or below percentile | Input | string |
-| `--sectionVar` | variables to divide larger sections | Input | string |
-| `--writeOutput` | write output image collection or not | Input | boolean |
-| `--outDir` | Output collection | Output | collection |
+| Name                | Description                                           | I/O    | Type          |
+| ------------------- | ----------------------------------------------------- | ------ | ------------- |
+| `--csvDir`          | CSV collection containing features                    | Input  | csvCollection |
+| `--padding`         | Number of images to capture outside the cutoff        | Input  | int           |
+| `--feature`         | Feature to use to subset data                         | Input  | string        |
+| `--filePattern`     | Filename pattern used to separate data                | Input  | string        |
+| `--groupVar`        | variables to group by in a section                    | Input  | string        |
+| `--inpDir`          | Input image collection to be processed by this plugin | Input  | collection    |
+| `--percentile`      | Percentile to remove                                  | Input  | int           |
+| `--removeDirection` | remove direction above or below percentile            | Input  | string        |
+| `--sectionVar`      | variables to divide larger sections                   | Input  | string        |
+| `--writeOutput`     | write output image collection or not                  | Input  | boolean       |
+| `--outDir`          | Output collection                                     | Output | collection    |
 
