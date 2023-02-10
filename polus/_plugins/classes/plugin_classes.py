@@ -7,7 +7,7 @@ from ..utils import name_cleaner, cast_version
 from .plugin_methods import PluginMethods
 from ..models import PluginUIInput, PluginUIOutput
 from ..models import ComputeSchema
-from ..manifest_utils import _load_manifest, validate_manifest
+from ..manifests.manifest_utils import _load_manifest, validate_manifest
 from pydantic import Extra
 import pathlib
 import json
@@ -99,7 +99,9 @@ class _Plugins:
         there are many plugins.
         """
 
-        organizations = list(PLUGIN_DIR.iterdir())
+        organizations = [
+            x for x in PLUGIN_DIR.iterdir() if x.name != "__pycache__"
+        ]  # ignore __pycache__
 
         for org in organizations:
 
@@ -107,8 +109,10 @@ class _Plugins:
                 continue
 
             for file in org.iterdir():
+                if file.suffix == ".py":
+                    continue
 
-                plugin = validate_manifest(pathlib.Path(file))
+                plugin = validate_manifest(file)
                 key = name_cleaner(plugin.name)
                 # Add version and path to VERSIONS
                 if key not in PLUGINS:

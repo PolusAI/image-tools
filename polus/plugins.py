@@ -12,7 +12,7 @@ from ._plugins.classes import (
     Plugin,
     ComputePlugin,
 )
-from ._plugins.manifest_utils import _scrape_manifests, _error_log
+from ._plugins.manifests.manifest_utils import _scrape_manifests, _error_log
 from ._plugins.gh import _init_github, add_plugin_from_gh
 from ._plugins.registry import WippPluginRegistry
 from ._plugins.utils import name_cleaner

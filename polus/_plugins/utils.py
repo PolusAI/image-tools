@@ -1,4 +1,4 @@
-from ..io import Version
+from .io import Version
 
 
 def name_cleaner(name: str) -> str:
