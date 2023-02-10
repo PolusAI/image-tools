@@ -1,6 +1,7 @@
 #!/bin/bash
 
-version=$(grep -m 1 version pyproject.toml | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3)
+version=$(<VERSION)
+
 data_path=$(readlink --canonicalize ./data)
 
 # Change to .ome.zarr to save output images as zarr files.

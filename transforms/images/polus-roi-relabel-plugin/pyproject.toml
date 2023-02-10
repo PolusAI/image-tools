@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "roi_relabel"
-version = "0.1.1"
+version = "0.1.2"
 description = "Methods for relabeling and consolidating regions of interest (RoIs) in a segmented or hand-labeled image."
 authors = ["Najib Ishaq <najib.ishaq@nih.gov>"]
 license = "MIT"

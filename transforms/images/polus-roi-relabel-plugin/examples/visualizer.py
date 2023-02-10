@@ -1,3 +1,4 @@
+import os
 import pathlib
 import tempfile
 
@@ -8,7 +9,7 @@ from matplotlib import pyplot
 
 import roi_relabel.methods
 
-DATA_ROOT = pathlib.Path(__file__).resolve().parent.parent.joinpath('data', 'tissuenet')
+DATA_ROOT = os.environ.get("DATA_ROOT", pathlib.Path(__file__).resolve().parent.parent.joinpath('data', 'tissuenet', 'standard', 'val'))
 
 
 def read_image(path: pathlib.Path, *, num_channels: int) -> numpy.ndarray:
@@ -62,7 +63,7 @@ def main():
 
     st.title('RoI Relabeling')
 
-    input_dir = DATA_ROOT.joinpath('standard', 'val', 'labels').resolve()
+    input_dir = DATA_ROOT.joinpath('labels').resolve()
     assert input_dir.exists(), f'Path not found: {input_dir}'
 
     names = list(sorted(map(
