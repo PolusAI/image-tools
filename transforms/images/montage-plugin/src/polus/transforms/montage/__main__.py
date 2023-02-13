@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 import pathlib
 
 from polus.transforms.montage.main import main
@@ -11,7 +12,7 @@ logging.basicConfig(
     datefmt="%d-%b-%y %H:%M:%S",
 )
 logger = logging.getLogger("polus.transforms.montage")
-logger.setLevel(logging.INFO)
+logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 # Setup the argument parsing
 logger.info("Parsing arguments...")

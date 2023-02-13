@@ -96,9 +96,9 @@ def _get_xy_index(
 
 def main(
     pattern: str,
-    inpDir: pathlib.Path,
+    inp_dir: pathlib.Path,
     layout: typing.List[str],
-    flipAxis: str,
+    flip_axis: str,
     outDir: pathlib.Path,
     image_spacing: typing.Optional[int] = None,
     grid_spacing: typing.Optional[int] = None,
@@ -114,7 +114,7 @@ def main(
 
     # Set up the file pattern parser
     logger.info("Parsing the file pattern...")
-    fp = FilePattern(inpDir, pattern)
+    fp = FilePattern(inp_dir, pattern)
 
     # Parse the layout
     logger.info("Parsing the layout...")
@@ -150,7 +150,7 @@ def main(
 
     for files in fp(group_by=layout[0]):
         # Determine number of rows and columns in the smallest subgrid
-        grid_size = _get_xy_index(files, layout[0], layout, flipAxis)
+        grid_size = _get_xy_index(files, layout[0], layout, flip_axis)
         layout_dimensions["grid_size"][len(layout) - 1].append(grid_size)
 
         # Get the height and width of each image
