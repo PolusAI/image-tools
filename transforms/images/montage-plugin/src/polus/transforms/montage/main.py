@@ -6,6 +6,8 @@ import pathlib
 from filepattern import FilePattern, VARIABLES
 from bfio import BioReader
 
+logger = logging.getLogger(__name__)
+
 SPACING = 10
 MULTIPLIER = 4
 
@@ -98,18 +100,17 @@ def main(
     layout: typing.List[str],
     flipAxis: str,
     outDir: pathlib.Path,
-    imageSpacing: typing.Optional[int] = None,
-    gridSpacing: typing.Optional[int] = None,
+    image_spacing: typing.Optional[int] = None,
+    grid_spacing: typing.Optional[int] = None,
 ) -> None:
-
     global SPACING
     global MULTIPLIER
 
     # Set new image spacing and grid spacing arguments if present
     if image_spacing is not None:
-        SPACING = int(imageSpacing)
+        SPACING = int(image_spacing)
     if grid_spacing is not None:
-        MULTIPLIER = int(gridSpacing)
+        MULTIPLIER = int(grid_spacing)
 
     # Set up the file pattern parser
     logger.info("Parsing the file pattern...")
@@ -194,7 +195,7 @@ def main(
         * layout_dimensions["tile_size"][len(layout) - 1][1],
     ]
     logger.info("Grid size for layer ({}): {}".format(layout[0], grid_size))
-    
+
     # Build the rest of the subgrid indices
     for i in range(1, len(layout)):
         # Get the largest size subgrid image in pixels
@@ -215,8 +216,8 @@ def main(
                 grid_size[1] = g[1]
         layout_dimensions["grid_size"][index] = grid_size
         layout_dimensions["tile_size"][index] = [
-            layout_dimensions["tile_size"][index][0] + (MULTIPLIER ** i) * SPACING,
-            layout_dimensions["tile_size"][index][1] + (MULTIPLIER ** i) * SPACING,
+            layout_dimensions["tile_size"][index][0] + (MULTIPLIER**i) * SPACING,
+            layout_dimensions["tile_size"][index][1] + (MULTIPLIER**i) * SPACING,
         ]
         layout_dimensions["size"][index] = [
             layout_dimensions["grid_size"][index][0]
@@ -229,14 +230,13 @@ def main(
     logger.info(f"Final image size in pixels: {layout_dimensions['size'][0]}")
 
     # Group the images into 2-dimensional planes
-    planes = [p for p in fp(group_by=''.join(layout))]
-    
+    planes = [p for p in fp(group_by="".join(layout))]
+
     # Build each 2-Dimensional stitching vector plane
     for i, plane in enumerate(planes):
-        
         # TODO: Use filePattern output_name method for file names
         # fname = fp.output_name(plane).split('.')[0] + '.txt'
-        fname = "img-global-positions-{}.txt".format(i+1)
+        fname = "img-global-positions-{}.txt".format(i + 1)
         logger.info("Building stitching vector {}".format(fname))
         fpath = str(pathlib.Path(outDir).joinpath(fname).absolute())
         max_dim = len(layout_dimensions["grid_size"]) - 1
@@ -253,17 +253,19 @@ def main(
                 for i in reversed(range(max_dim + 1)):
                     posX += f[str(i) + "_gridX"] * layout_dimensions["tile_size"][i][0]
                     posY += f[str(i) + "_gridY"] * layout_dimensions["tile_size"][i][1]
-                    
+
                     if i == max_dim:
                         gridX += f[str(i) + "_gridX"]
                         gridY += f[str(i) + "_gridY"]
-                        
+
                     else:
                         gridX += (
-                            f[str(i) + "_gridX"] * layout_dimensions["grid_size"][i + 1][0]
+                            f[str(i) + "_gridX"]
+                            * layout_dimensions["grid_size"][i + 1][0]
                         )
                         gridY += (
-                            f[str(i) + "_gridY"] * layout_dimensions["grid_size"][i + 1][1]
+                            f[str(i) + "_gridY"]
+                            * layout_dimensions["grid_size"][i + 1][1]
                         )
 
                 # Write the position to the stitching vector
@@ -274,95 +276,3 @@ def main(
                 )
 
     logger.info("Done!")
-
-
-if __name__ == "__main__":
-    # Initialize the logger
-    logging.basicConfig(
-        format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
-        datefmt="%d-%b-%y %H:%M:%S",
-    )
-    logger = logging.getLogger("main")
-    logger.setLevel(logging.INFO)
-
-    # Setup the argument parsing
-    logger.info("Parsing arguments...")
-    parser = argparse.ArgumentParser(
-        prog="main", description="Advanced montaging plugin."
-    )
-    parser.add_argument(
-        "--filePattern",
-        dest="filePattern",
-        type=str,
-        help="Filename pattern used to parse data",
-        required=True,
-    )
-    parser.add_argument(
-        "--inpDir",
-        dest="inpDir",
-        type=str,
-        help="Input image collection to be processed by this plugin",
-        required=True,
-    )
-    parser.add_argument(
-        "--layout",
-        dest="layout",
-        type=str,
-        help="Specify montage organization",
-        required=True,
-    )
-    parser.add_argument(
-        "--outDir", dest="outDir", type=str, help="Output collection", required=True
-    )
-    parser.add_argument(
-        "--flipAxis",
-        dest="flipAxis",
-        type=str,
-        help="Axes to flip or reverse order",
-        required=False,
-    )
-    parser.add_argument(
-        "--imageSpacing",
-        dest="imageSpacing",
-        type=str,
-        help="Spacing between images in the smallest subgrid",
-        required=False,
-    )
-    parser.add_argument(
-        "--gridSpacing", dest="gridSpacing", type=str, help="Multiplier", required=False
-    )
-
-    # Parse the arguments
-    args = parser.parse_args()
-
-    pattern = args.filePattern
-    logger.info("filePattern = {}".format(pattern))
-
-    inpDir = pathlib.Path(args.inpDir)
-    logger.info("inpDir = {}".format(inpDir))
-
-    layout = args.layout
-    logger.info("layout = {}".format(layout))
-
-    flipAxis = args.flipAxis
-    logger.info("flipAxis = {}".format(flipAxis))
-
-    outDir = args.outDir
-    logger.info("outDir = {}".format(outDir))
-
-    image_spacing = args.imageSpacing
-    logger.info("image_spacing = {}".format(image_spacing))
-
-    grid_spacing = args.gridSpacing
-    logger.info("grid_spacing = {}".format(grid_spacing))
-
-    # Set new image spacing and grid spacing arguments if present
-    if image_spacing is not None:
-        image_spacing = int(image_spacing)
-    if grid_spacing is not None:
-        grid_spacing = int(grid_spacing)
-    # Set flipAxis to empty list if None to avoid NoneType iteration exception
-    if not flipAxis:
-        flipAxis = []
-
-    main(pattern, inpDir, layout, flipAxis, outDir, image_spacing, grid_spacing)
