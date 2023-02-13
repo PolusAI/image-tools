@@ -1,11 +1,12 @@
-# WIPP Widget
+# Binary Operations Plugin
 
-This WIPP plugin does Morphological Image Processing on binary images.  
+This WIPP plugin does Morphological Image Processing on binary and instance labelled images.  
 The operations available are: 
 
   * #### Invertion
   
-      This operation inverts the binary images.  The 0s get mapped to 1 and the 1s get mapped to 0.
+      This operation inverts binary images.  The 0s get mapped to 1 and the 1s get mapped to 0. 
+      Can only be applied to binary images.
       
   * #### Dilation
   
@@ -34,7 +35,7 @@ The operations available are:
       
   * #### Skeletonization
   
-      This operation reduces the foreground regions in a binary image to a skeletal remnant that largely preserves the extent and connectivity of the original region while throwing away most of the original foreground pixels.
+      This operation reduces the foreground regions to a skeletal remnant that largely preserves the extent and connectivity of the original region while throwing away most of the original foreground pixels.
       
   * #### Top Hat
   
@@ -68,12 +69,12 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes five input arguments and has output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--outDir` | Output collection | Output | collection |
-| `--Operation`| The Morphological Operation to be done on input images | Input | String |
-| `--structuringshape`| Shape of the structuring element can either be Elliptical, Rectangular, or Cross | Input | String |
-| `--kernelsize`| Size of the kernel for most operations | Input | String |
-
-
+| Name                  | Description                                                                      | I/O    | Type       |
+| --------------------- | -------------------------------------------------------------------------------- | ------ | ---------- |
+| `--inpDir`            | Input image collection to be processed by this plugin                            | Input  | collection |
+| `--outDir`            | Output collection                                                                | Output | collection |
+| `--operation`         | The Morphological Operation to be done on input images                           | Input  | String     |
+| `--structuringShape`  | Shape of the structuring element can either be Elliptical, Rectangular, or Cross | Input  | String     |
+| `--kernelSize`        | Size of the kernel for most operations                                           | Input  | String     |
+| `--overrideInstances` | Specification for whether previously written instances can be overriden          | Input  | Boolean    |
+| `--filePattern`       | File pattern for images in the input directory                                   | Input  | String     |

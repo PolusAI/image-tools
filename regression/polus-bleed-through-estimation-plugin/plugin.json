@@ -1,0 +1,143 @@
+{
+  "name": "Bleed-Through Estimation Plugin",
+  "version": "0.4.3",
+  "title": "BleedThroughEstimation",
+  "description": "Performs bleed-through estimation for images.",
+  "author": "Najib Ishaq (najib.ishaq@axleinfo.com), Nick Schaub (nick.schaub@nih.gov)",
+  "institution": "National Center for the Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/polusai/polus-plugins/tree/dev/regression",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "https://doi.org/10.1038/s41467-021-21735-x",
+  "containerId": "polusai/bleed-through-estimation-plugin:0.4.3",
+  "inputs": [
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Input image collection.",
+      "required": true
+    },
+    {
+      "name": "filePattern",
+      "type": "string",
+      "description": "File pattern to subset images.",
+      "required": true
+    },
+    {
+      "name": "groupBy",
+      "type": "string",
+      "description": "Variables to group together.",
+      "required": true
+    },
+    {
+      "name": "selectionCriterion",
+      "type": "enum",
+      "description": "Method to use for selecting tiles.",
+      "options": {
+        "values": [
+          "MeanIntensity",
+          "Entropy",
+          "MedianIntensity",
+          "IntensityRange"
+        ]
+      },
+      "required": false
+    },
+    {
+      "name": "model",
+      "type": "enum",
+      "description": "Model to train.",
+      "options": {
+        "values": [
+          "Lasso",
+          "ElasticNet",
+          "PoissonGLM"
+        ]
+      },
+      "required": false
+    },
+    {
+      "name": "channelOverlap",
+      "type": "number",
+      "description": "Number of adjacent channels to consider.",
+      "required": false
+    },
+    {
+      "name": "kernelSize",
+      "type": "enum",
+      "description": "Size of convolution kernels to learn.",
+      "options": {
+        "values": [
+          "1x1",
+          "3x3",
+          "5x5"
+        ]
+      },
+      "required": false
+    },
+    {
+      "name": "channelOrdering",
+      "type": "string",
+      "description": "Channel ordering by wavelength scale.",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Location for writing bleed-through components."
+    },
+    {
+      "name": "csvDir",
+      "type": "csvCollection",
+      "description": "Location for writing convolutional kernel coefficients."
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "Input image collection: ",
+      "description": "Image collection..."
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "Filename pattern: ",
+      "description": "File pattern to subset images."
+    },
+    {
+      "key": "inputs.groupBy",
+      "title": "Grouping Variables: ",
+      "description": "Variables to group together."
+    },
+    {
+      "key": "inputs.selectionCriterion",
+      "title": "Selection Criterion: ",
+      "description": "Method to use for selecting tiles.",
+      "default": "HighMeanIntensity"
+    },
+    {
+      "key": "inputs.model",
+      "title": "Model: ",
+      "description": "Model to train for estimating bleed-through.",
+      "default": "Lasso"
+    },
+    {
+      "key": "inputs.channelOverlap",
+      "title": "Channel Overlap: ",
+      "description": "Number of adjacent channels to consider.",
+      "default": 1
+    },
+    {
+      "key": "inputs.kernelSize",
+      "title": "Kernel Size: ",
+      "description": "Size of convolutional kernels to learn.",
+      "default": "3x3"
+    },
+    {
+      "key": "inputs.channelOrdering",
+      "title": "Channel Ordering: ",
+      "description": "Channel ordering by wavelength scale.",
+      "default": ""
+    }
+  ]
+}

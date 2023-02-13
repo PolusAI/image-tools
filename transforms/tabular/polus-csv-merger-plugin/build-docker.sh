@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-csv-merger-plugin:${version}
+docker build . -t polusai/csv-merger-plugin:${version}

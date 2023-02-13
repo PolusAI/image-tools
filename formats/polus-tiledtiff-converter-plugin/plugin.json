@@ -1,34 +1,33 @@
 {
-	"name": "OME Tiled Tiff Converter",
-	"version": "1.1.0",
-	"title": "OME Tiled Tiff Converter",
-	"description": "Convert any Bioformats image file type to tiled tiff.",
-	"author": "Nick Schaub (nick.schaub@nih.gov)",
-  	"institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-  	"repository": "https://github.com/labshare/polus-plugins",
-  	"website": "https://ncats.nih.gov/preclinical/core/informatics",
-  	"citation": "",
-	"containerId": "labshare/polus-tiledtiff-converter-plugin:1.1.0",
-
-	"inputs": [
-		{
-			"name": "input",
-			"type": "genericData",
-			"description": "Image inputs for the plugin."
-		}
-	],
-	"outputs": [
-		{
-			"name": "output",
-			"type": "collection",
-			"description": "Output data for the plugin"
-		}
-	],
-	"ui": [
-		{
-			"key": "inputs.input",
-			"title": "Image Collection: ",
-			"description": "Pick a collection..."
-		}
-	]
+  "name": "OME Tiled Tiff Converter",
+  "version": "1.1.2",
+  "title": "OME Tiled Tiff Converter",
+  "description": "Convert any Bioformats image file type to tiled tiff.",
+  "author": "Nick Schaub (nick.schaub@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/tiledtiff-converter-plugin:1.1.2",
+  "inputs": [
+    {
+      "name": "input",
+      "type": "genericData",
+      "description": "Image inputs for the plugin."
+    }
+  ],
+  "outputs": [
+    {
+      "name": "output",
+      "type": "collection",
+      "description": "Output data for the plugin"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.input",
+      "title": "Image Collection: ",
+      "description": "Pick a collection..."
+    }
+  ]
 }

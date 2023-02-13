@@ -1,5 +1,4 @@
-
-FROM python:3.8-alpine
+FROM polusai/bfio:2.1.9
 
 COPY VERSION /
 		
@@ -13,4 +12,6 @@ RUN mkdir -p ${EXEC_DIR} \
 COPY src ${EXEC_DIR}/
 WORKDIR ${EXEC_DIR}
 
-ENTRYPOINT ["python3", "main.py"]
+RUN pip3 install -r ${EXEC_DIR}/requirements.txt
+
+ENTRYPOINT ["python3", "/opt/executables/main.py"]

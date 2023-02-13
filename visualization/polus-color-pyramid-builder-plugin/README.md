@@ -69,11 +69,11 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes one input argument and one output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--filePattern` | Filename pattern used to separate data | Input | string |
-| `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--layout` | Color ordering (e.g. 1,11,,,,5,6) | Input | string |
-| `--bounds` | Set bounds (should be float-float, int-int, or blank, e.g. 0.01-0.99,0-16000,,,,,) | Input | string |
-| `--outDir` | Output pyramid path. | Output | pyramid |
+| Name            | Description                                                                        | I/O    | Type       |
+| --------------- | ---------------------------------------------------------------------------------- | ------ | ---------- |
+| `--filePattern` | Filename pattern used to separate data                                             | Input  | string     |
+| `--inpDir`      | Input image collection to be processed by this plugin                              | Input  | collection |
+| `--layout`      | Color ordering (e.g. 1,11,,,,5,6)                                                  | Input  | string     |
+| `--bounds`      | Set bounds (should be float-float, int-int, or blank, e.g. 0.01-0.99,0-16000,,,,,) | Input  | string     |
+| `--outDir`      | Output pyramid path.                                                               | Output | pyramid    |
 

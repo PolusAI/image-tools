@@ -1,19 +1,22 @@
-# Polus Tiled Tiff Conversion Plugin
+# Tiled Tiff Conversion Plugin
 
-This WIPP plugin takes any image type supported by Bioformats and converts it to
-an OME tiled tiff. For file formats that have a pyramid like structured with
-multiple resolutions (or series), this plugin only saves the first series to a
-tiff (usually the first series is the highest resolution).
+This WIPP plugin takes any image type supported by Bioformats and converts it 
+to an OME tiled tiff. The tiled storage format is helpful for loading and 
+displaying huge images efficiently by loading only the necessary tiles (rather 
+than loading a single, large image). For file formats with a pyramid-like 
+structure with multiple resolutions (or series), this plugin only saves the 
+first series to a tiff (usually, the first series is the highest resolution).
 
-The current need for this plugin is that WIPPs tiled tiff conversion process
+The current need for this plugin is that WIPP's tiled tiff conversion process
 only grabs the first image plane, while this plugin grabs all image planes in a
-series. Ultimately, this permits complete conversion of data (including all
-channels, z-positions, and time-points). Each image plane (defined as a single
-z-slice, channel, or timepoint) is saved as a separate image. If an image has
-multiple slices for a given dimension (z-slice, channel, or timepoint), then an
-indicator of which slice is appended to the file name. For example, an image
-named `Image.czi` that has two z-slices, two channels, and two timepoints will
-have the following files exported by this plugin:
+series. Ultimately, this permits complete data conversion (including all
+channels, z-positions, and time points). Each image plane (defined as a single
+z-slice, channel, or time point) gets saved as a separate image. Suppose an 
+image has multiple slices for a given dimension (z-slice, channel, or time 
+point). In that case, the file name will include an indicator for the 
+particular slice. For example, an image named `Image.czi` that has two 
+z-slices, two channels, and two time points will have the following files 
+exported by this plugin:
 
 ```bash
 Image_z0_c0_t0.ome.tif
@@ -50,12 +53,51 @@ This plugin takes one input argument and one output argument:
 | `input`       | Input image collection        | Input  | Path    | true     |
 | `output`      | Output image collection       | Output | Path    | true     |
 
-## Run the plugin
+## Example Code
 
-### Run the Docker Container
+Download an example dataset and convert the data to tiled tiff using the tiled 
+tiff converter plugin.
 
-```bash
-docker run -v /path/to/data:/data labshare/polus-tiledtiff-converter-plugin:1.1.0 \
-  --input /data/input \
-  --output /data/output
+```Linux
+mkdir examples
+cd examples
+mkdir output
+wget -P images/ https://data.broadinstitute.org/bbbc/BBBC033/BBBC033_v1_dataset.zip
+unzip images/BBBC033_v1_dataset.zip
+basedir=$(basename ${PWD})
+docker run -v ${PWD}:/$basedir polusai/tiledtiff-converter-plugin:1.1.1 \
+--input /$basedir/"images/" \
+--output /$basedir/"output/"
+```
+
+Navigate to the `examples/output/` directory to visualize the tiles using a 
+tool such as bfio.
+
+## Viewing the results using Python
+
+To run the code below, install the required dependencies by running 
+`pip install bfio` and `pip install matplotlib`. The following code was 
+tested with versions `bfio==2.1.9`, `matplotlib==3.5.1`, and `pathlib==1.0.1`.
+
+```Python
+from bfio import BioReader
+from pathlib import Path
+import matplotlib.pyplot as plt
+
+inpDir = Path("./images/")
+outDir = Path("./output/")
+
+input_files = [f for f in inpDir.iterdir() if f.is_file() and f.name.endswith('.tif')]
+output_files = [f for f in inpDir.iterdir() if f.is_file() and f.name.endswith('.ome.tif')]
+
+with BioReader(inpDir / input_files[0].name) as br_in:
+    img_in = br_in[:]
+
+with BioReader(outDir / output_files[0].name) as br_out:
+    img_out = br_out[:]
+
+fig, ax = plt.subplots(1, 2, figsize=(16,8))
+ax[0].imshow(img_in), ax[0].set_title(input_files[0].name)
+ax[1].imshow(img_out), ax[1].set_title(output_files[0].name)
+plt.show()
 ```

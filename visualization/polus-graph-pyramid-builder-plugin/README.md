@@ -24,10 +24,10 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes one input argument and one output argument:
 
-| Name       | Description             | I/O    | Type             |
-|------------|-------------------------|--------|------------------|
-| `inpDir`   | Input CSV   collection  | Input  | CSV   Collection |
-| `outDir`   | Output pyramid          | Output | Pyramid          |
+| Name     | Description            | I/O    | Type             |
+| -------- | ---------------------- | ------ | ---------------- |
+| `inpDir` | Input CSV   collection | Input  | CSV   Collection |
+| `outDir` | Output pyramid         | Output | Pyramid          |
 
 ## Run the plugin
 

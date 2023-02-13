@@ -23,3 +23,4 @@ __pycache__
 
 # data folder to ignore
 data
+polus/_plugins/manifests/*

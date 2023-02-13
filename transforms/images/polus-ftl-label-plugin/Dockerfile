@@ -4,8 +4,8 @@ ARG EXEC_DIR="/opt/executables"
 RUN mkdir -p ${EXEC_DIR}/executables
 COPY src ${EXEC_DIR}/.
 WORKDIR ${EXEC_DIR}
-RUN pip3 install --upgrade cython==3.0a6 \
-    && pip3 install numpy==1.20.0 --no-cache-dir \
+RUN pip3 install --upgrade cython==3.0.0a9 \
+    && pip3 install numpy==1.21.4 --no-cache-dir \
     && python3 setup.py build_ext --inplace
 RUN cp executables/* . && rm -rf executables
 
@@ -45,4 +45,4 @@ ENV POLUS_EXT=".ome.tif"
 # Change to WARNING for fewer logs, or DEBUG for debugging.
 ENV POLUS_LOG="INFO"
 
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3", "/opt/executables/src/main.py"]

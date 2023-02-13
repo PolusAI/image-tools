@@ -24,4 +24,4 @@ COPY src ${EXEC_DIR}/
 WORKDIR ${EXEC_DIR}
 
 # Default command. Additional arguments are provided through the command line
-ENTRYPOINT ["python3", "vector_to_label.py"]
+ENTRYPOINT ["python3", "/opt/executables/vector_to_label.py"]

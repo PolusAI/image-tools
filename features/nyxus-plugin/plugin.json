@@ -1,0 +1,112 @@
+{
+  "name": "Nyxus plugin",
+  "version": "0.1.3",
+  "containerId": "polusai/nyxus-plugin:0.1.3",
+  "title": "Nyxus plugin",
+  "description": "Nyxus plugin allows to make use of parallel pocessing for extracting nyxus features",
+  "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/PolusAI/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "inputs": [
+    {
+      "name": "inpDir",
+      "description": "Collection containing intensity images",
+      "type": "collection",
+      "options": null,
+      "required": true
+    },
+    {
+      "name": "segDir",
+      "description": "Collection containing label images, i.e. groundtruth images",
+      "type": "collection",
+      "options": null,
+      "required": true
+    },
+    {
+      "name": "intPattern",
+      "description": "Filepattern to parse intensity images",
+      "type": "string",
+      "options": null,
+      "required": true
+    },
+    {
+      "name": "segPattern",
+      "description": "Filepattern to parse label images",
+      "type": "string",
+      "options": null,
+      "required": true
+    },
+    {
+      "name": "features",
+      "type": "array",
+      "description": "Features or feature groups to be extracted by nyxus plugin",
+      "required": false,
+      "options": {
+        "items": {
+          "type": "string",
+          "title": "Features or feature groups to be extracted by nyxus plugin",
+          "widget": "string"
+        }
+      }
+    },
+    {
+      "name": "neighborDist",
+      "description": "Pixel distance between neighboring cells",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "pixelPerMicron",
+      "description": "Pixel size in micrometer",
+      "type": "number",
+      "options": null,
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "description": "Output collection",
+      "type": "collection",
+      "options": null,
+      "required": true
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Input image collection"
+    },
+    {
+      "key": "inputs.segDir",
+      "title": "segDir",
+      "description": "Label image collection"
+    },
+    {
+      "key": "inputs.intPattern",
+      "title": "intPattern",
+      "description": "Filepattern to parse intensity images"
+    },
+    {
+      "key": "inputs.segPattern",
+      "title": "segPattern",
+      "description": "Filepattern to parse label images"
+    },
+    {
+      "key": "inputs.neighborDist",
+      "title": "neighborDist",
+      "description": "Pixel distance between neighboring cells",
+      "default": 5.0
+    },
+    {
+      "key": "inputs.pixelPerMicron",
+      "title": "pixelPerMicron",
+      "description": "Pixel size in micrometer",
+      "default": 1.0
+    }
+  ]
+}

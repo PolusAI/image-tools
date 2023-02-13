@@ -1,3 +1,2 @@
-
 version=$(<VERSION)
-docker build . -t labshare/polus-generic-to-image-collection-plugin:${version}
+docker build . -t polusai/generic-to-image-collection-plugin:${version}

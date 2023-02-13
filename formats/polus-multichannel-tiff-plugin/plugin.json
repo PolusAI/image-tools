@@ -1,63 +1,63 @@
 {
-    "name": "Multichannel Tiff",
-    "version": "0.2.2",
-    "title": "Multichannel Tiff",
-    "description": "Create multichannel, ome-tif from an image collection.",
-    "author": "Nick Schaub (nick.schaub@nih.gov)",
-    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-    "repository": "https://github.com/labshare/polus-plugins",
-    "website": "https://ncats.nih.gov/preclinical/core/informatics",
-    "citation": "",
-    "containerId": "labshare/polus-multichannel-tiff-plugin:0.2.2",
-    "inputs": [
-      {
-        "name": "inpDir",
-        "type": "collection",
-        "description": "Input image collection to be processed by this plugin",
-        "required": true
-      },
-      {
-        "name": "filePattern",
-        "type": "string",
-        "description": "Filename pattern used to separate data",
-        "required": true
-      },
-      {
-        "name": "channelOrder",
-        "type": "array",
-        "description": "Channel order",
-        "required": true,
-        "options": {
-            "items": { 
-              "type": "string", 
-              "title": "Channel",
-              "widget": "string"
-          }
+  "name": "Multichannel Tiff",
+  "version": "0.2.3",
+  "title": "Multichannel Tiff",
+  "description": "Create multichannel, ome-tif from an image collection.",
+  "author": "Nick Schaub (nick.schaub@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/multichannel-tiff-plugin:0.2.3",
+  "inputs": [
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Input image collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "filePattern",
+      "type": "string",
+      "description": "Filename pattern used to separate data",
+      "required": true
+    },
+    {
+      "name": "channelOrder",
+      "type": "array",
+      "description": "Channel order",
+      "required": true,
+      "options": {
+        "items": {
+          "type": "string",
+          "title": "Channel",
+          "widget": "string"
         }
       }
-    ],
-    "outputs": [
-      {
-        "name": "outDir",
-        "type": "genericData",
-        "description": "Output collection"
-      }
-    ],
-    "ui": [
-      {
-        "key": "inputs.inpDir",
-        "title": "Input collection",
-        "description": "Input image collection to be processed by this plugin"
-      },
-      {
-        "key": "inputs.filePattern",
-        "title": "Filename pattern",
-        "description": "Filename pattern used to separate data"
-      },
-      {
-        "key": "inputs.channelOrder",
-        "title": "Channel Order",
-        "description": "Order to place images in"
-      }
-    ]
-  }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "genericData",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "Input collection",
+      "description": "Input image collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "Filename pattern",
+      "description": "Filename pattern used to separate data"
+    },
+    {
+      "key": "inputs.channelOrder",
+      "title": "Channel Order",
+      "description": "Order to place images in"
+    }
+  ]
+}
