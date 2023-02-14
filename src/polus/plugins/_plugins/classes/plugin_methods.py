@@ -1,15 +1,13 @@
 import enum
 import json
+import logging
+import pathlib
 import random
 import signal
 import typing
-import re
-from copy import deepcopy
-from ..models import PluginUIInput, PluginUIOutput, ComputeSchema
-import pathlib
+
 import fsspec
 from python_on_whales import docker
-import logging
 
 logger = logging.getLogger("polus.plugins")
 
@@ -24,7 +22,7 @@ class PluginMethods:
         return self.containerId.split("/")[0]
 
     def load_config(self, path: typing.Union[str, pathlib.Path]):
-        with open(path, "r") as fw:
+        with open(path) as fw:
             config = json.load(fw)
         inp = config["inputs"]
         out = config["outputs"]
@@ -41,7 +39,6 @@ class PluginMethods:
         gpus: typing.Union[None, str, int] = "all",
         **kwargs,
     ):
-
         inp_dirs = []
         out_dirs = []
 
@@ -193,7 +190,6 @@ class PluginMethods:
         return self.version < other.version
 
     def __gt__(self, other):
-
         return other.version < self.version
 
     def __repr__(self) -> str:

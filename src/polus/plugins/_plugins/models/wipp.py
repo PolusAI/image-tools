@@ -1,7 +1,9 @@
-from .WIPPPluginSchema import WippPluginManifest, UiItem  # type: ignore
+from typing import List, Literal, Optional, Union
+
+from pydantic import BaseModel, Field
+
 from ..io import Input, Output, Version
-from typing import List, Optional, Union, Literal
-from pydantic import Field, BaseModel
+from .WIPPPluginSchema import UiItem, WippPluginManifest  # type: ignore
 
 
 class ui1(BaseModel):
