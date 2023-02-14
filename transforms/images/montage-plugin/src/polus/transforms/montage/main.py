@@ -1,10 +1,11 @@
-import argparse
+"""The image montaging plugin."""
 import logging
 import math
-import typing
 import pathlib
-from filepattern import FilePattern, VARIABLES
+import typing
+
 from bfio import BioReader
+from filepattern import VARIABLES, FilePattern
 
 logger = logging.getLogger(__name__)
 
@@ -12,10 +13,8 @@ SPACING = 10
 MULTIPLIER = 4
 
 
-def _get_xy_index(
-    files: typing.List[typing.Dict], dims: str, layout: typing.List[str], flipAxis: str
-):
-    """Get the x and y indices from a list of filename dictionaries
+def _get_xy_index(files: list[dict], dims: str, layout: list[str], flipAxis: str):
+    """Get the x and y indices from a list of filename dictionaries.
 
     The FilePattern iterate function returns a list of dictionaries containing a
     filename and variable values parsed from a filename. This function uses that list of
@@ -40,7 +39,6 @@ def _get_xy_index(
     Outputs:
         grid_dims - Dimensions of the grid
     """
-
     grid_dims = []
 
     if len(dims) == 2:
@@ -97,12 +95,13 @@ def _get_xy_index(
 def main(
     pattern: str,
     inp_dir: pathlib.Path,
-    layout: typing.List[str],
+    layout: str,
     flip_axis: str,
     outDir: pathlib.Path,
     image_spacing: typing.Optional[int] = None,
     grid_spacing: typing.Optional[int] = None,
 ) -> None:
+    """Run the plugin."""
     global SPACING
     global MULTIPLIER
 
@@ -118,14 +117,13 @@ def main(
 
     # Parse the layout
     logger.info("Parsing the layout...")
-    layout = layout.replace(" ", "")
-    layout = layout.split(",")
+    layout_list: list[str] = layout.replace(" ", "").split(",")
 
-    for lt in layout:  # Error checking
+    for lt in layout_list:  # Error checking
         for v in lt:
             if v not in VARIABLES:
-                logger.error("Variables must be one of {}".format(VARIABLES))
-                raise ValueError("Variables must be one of {}".format(VARIABLES))
+                logger.error(f"Variables must be one of {VARIABLES}")
+                raise ValueError(f"Variables must be one of {VARIABLES}")
         if len(lt) > 2 or len(lt) < 1:
             logger.error(
                 "Each layout subgrid must have one or two variables assigned to it."
@@ -135,12 +133,14 @@ def main(
             )
 
     # Layout dimensions, used to calculate positions later on
-    layout_dimensions = {
+    layout_dimensions: dict[str, list] = {
         "grid_size": [
-            [] for r in range(len(layout))
+            [] for r in range(len(layout_list))
         ],  # number of tiles in each dimension in the subgrid
-        "size": [[] for r in range(len(layout))],  # total size of subgrid in pixels
-        "tile_size": [[] for r in range(len(layout))],
+        "size": [
+            [] for r in range(len(layout_list))
+        ],  # total size of subgrid in pixels
+        "tile_size": [[] for r in range(len(layout_list))],
     }  # dimensions of each tile in the grid
 
     # Get the size of each image
@@ -148,10 +148,10 @@ def main(
     grid_width = 0
     grid_height = 0
 
-    for files in fp(group_by=layout[0]):
+    for files in fp(group_by=layout_list[0]):
         # Determine number of rows and columns in the smallest subgrid
-        grid_size = _get_xy_index(files, layout[0], layout, flip_axis)
-        layout_dimensions["grid_size"][len(layout) - 1].append(grid_size)
+        grid_size = _get_xy_index(files, layout_list[0], layout_list, flip_axis)
+        layout_dimensions["grid_size"][len(layout_list) - 1].append(grid_size)
 
         # Get the height and width of each image
         for f in files:
@@ -163,48 +163,48 @@ def main(
                 grid_height = f["height"]
 
         # Set the pixel and tile dimensions
-        layout_dimensions["tile_size"][len(layout) - 1].append(
+        layout_dimensions["tile_size"][len(layout_list) - 1].append(
             [grid_width, grid_height]
         )
-        layout_dimensions["size"][len(layout) - 1].append(
+        layout_dimensions["size"][len(layout_list) - 1].append(
             [grid_width * grid_size[0], grid_height * grid_size[1]]
         )
 
     # Find the largest subgrid size for the lowest subgrid
     grid_size = [0, 0]
-    for g in layout_dimensions["grid_size"][len(layout) - 1]:
+    for g in layout_dimensions["grid_size"][len(layout_list) - 1]:
         if g[0] > grid_size[0]:
             grid_size[0] = g[0]
         if g[1] > grid_size[1]:
             grid_size[1] = g[1]
     tile_size = [0, 0]
-    for t in layout_dimensions["tile_size"][len(layout) - 1]:
+    for t in layout_dimensions["tile_size"][len(layout_list) - 1]:
         if t[0] > tile_size[0]:
             tile_size[0] = t[0]
         if t[1] > tile_size[1]:
             tile_size[1] = t[1]
-    layout_dimensions["grid_size"][len(layout) - 1] = grid_size
-    layout_dimensions["tile_size"][len(layout) - 1] = [
+    layout_dimensions["grid_size"][len(layout_list) - 1] = grid_size
+    layout_dimensions["tile_size"][len(layout_list) - 1] = [
         tile_size[0] + SPACING,
         tile_size[1] + SPACING,
     ]
-    layout_dimensions["size"][len(layout) - 1] = [
-        layout_dimensions["grid_size"][len(layout) - 1][0]
-        * layout_dimensions["tile_size"][len(layout) - 1][0],
-        layout_dimensions["grid_size"][len(layout) - 1][1]
-        * layout_dimensions["tile_size"][len(layout) - 1][1],
+    layout_dimensions["size"][len(layout_list) - 1] = [
+        layout_dimensions["grid_size"][len(layout_list) - 1][0]
+        * layout_dimensions["tile_size"][len(layout_list) - 1][0],
+        layout_dimensions["grid_size"][len(layout_list) - 1][1]
+        * layout_dimensions["tile_size"][len(layout_list) - 1][1],
     ]
-    logger.info("Grid size for layer ({}): {}".format(layout[0], grid_size))
+    logger.info(f"Grid size for layer ({layout_list[0]}): {grid_size}")
 
     # Build the rest of the subgrid indices
-    for i in range(1, len(layout)):
+    for i in range(1, len(layout_list)):
         # Get the largest size subgrid image in pixels
-        index = len(layout) - 1 - i
+        index = len(layout_list) - 1 - i
         layout_dimensions["tile_size"][index] = layout_dimensions["size"][index + 1]
 
-        for files in fp(group_by="".join(layout[: i + 1])):
+        for files in fp(group_by="".join(layout_list[: i + 1])):
             # determine number of rows and columns in the current subgrid
-            grid_size = _get_xy_index(files, layout[i], layout, flipAxis)
+            grid_size = _get_xy_index(files, layout_list[i], layout_list, flip_axis)
             layout_dimensions["grid_size"][index].append(grid_size)
 
         # Get the current subgrid size
@@ -225,19 +225,19 @@ def main(
             layout_dimensions["grid_size"][index][1]
             * layout_dimensions["tile_size"][index][1],
         ]
-        logger.info("Grid size for layer ({}): {}".format(layout[i], grid_size))
+        logger.info(f"Grid size for layer ({layout_list[i]}): {grid_size}")
 
     logger.info(f"Final image size in pixels: {layout_dimensions['size'][0]}")
 
     # Group the images into 2-dimensional planes
-    planes = [p for p in fp(group_by="".join(layout))]
+    planes = [p for p in fp(group_by="".join(layout_list))]
 
     # Build each 2-Dimensional stitching vector plane
     for i, plane in enumerate(planes):
         # TODO: Use filePattern output_name method for file names
         # fname = fp.output_name(plane).split('.')[0] + '.txt'
-        fname = "img-global-positions-{}.txt".format(i + 1)
-        logger.info("Building stitching vector {}".format(fname))
+        fname = f"img-global-positions-{i + 1}.txt"
+        logger.info(f"Building stitching vector {fname}")
         fpath = str(pathlib.Path(outDir).joinpath(fname).absolute())
         max_dim = len(layout_dimensions["grid_size"]) - 1
         with open(fpath, "w") as fw:
