@@ -1,13 +1,15 @@
 import json
-import pathlib
-from urllib.parse import urlparse
-import requests
-import typing
-import github
-from tqdm import tqdm
 import logging
-from pydantic import errors, ValidationError
-from ..models import WIPPPluginManifest, ComputeSchema
+import pathlib
+import typing
+from urllib.parse import urlparse
+
+import github
+import requests
+from pydantic import ValidationError, errors
+from tqdm import tqdm
+
+from ..models import ComputeSchema, WIPPPluginManifest
 from ..utils import cast_version
 
 logger = logging.getLogger("polus.plugins")
@@ -55,7 +57,7 @@ def _load_manifest(m: typing.Union[str, dict, pathlib.Path]) -> dict:
             m.suffix == ".json"
         ), "Plugin manifest must be a json file with .json extension."
 
-        with open(m, "r") as fr:
+        with open(m) as fr:
             manifest = json.load(fr)
 
     elif isinstance(m, str):
@@ -104,7 +106,6 @@ def _scrape_manifests(
     max_depth: typing.Optional[int] = None,
     return_invalid: bool = False,
 ) -> typing.Union[list, typing.Tuple[list, list]]:
-
     if max_depth is None:
         max_depth = min_depth
         min_depth = 0
@@ -120,9 +121,7 @@ def _scrape_manifests(
     invalid_manifests = []
 
     for d in range(0, max_depth):
-
         for content in tqdm(contents, desc=f"{repo.full_name}: {d}"):
-
             if content.type == "dir":
                 next_contents.extend(repo.get_contents(content.path))  # type: ignore
             elif content.name.endswith(".json"):
@@ -143,7 +142,6 @@ def _scrape_manifests(
 
 
 def _error_log(val_err, manifest, fct):
-
     report = []
 
     for err in val_err.args[0]:

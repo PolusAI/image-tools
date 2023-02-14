@@ -221,16 +221,16 @@
                 "properties": { "type": { "const": "enum" } }
               },
               "then": {
-                "properties": 
-                { 
-                    "options": 
+                "properties":
+                {
+                    "options":
                     {
                         "$id": "#/properties/inputs/items/properties/options",
                         "type": "object",
                         "title": "Input options",
                         "properties":
                         {
-                            "values": 
+                            "values":
                             {
                               "type": "array",
                               "description": "List of possible values",
@@ -241,7 +241,7 @@
                               "uniqueItems": true
                             }
                         }
-                    } 
+                    }
                 }
               }
             },
@@ -250,9 +250,9 @@
                 "properties": { "type": { "const": "array" } }
               },
               "then": {
-                "properties": 
-                { 
-                    "options": 
+                "properties":
+                {
+                    "options":
                     {
                         "$id": "#/properties/inputs/items/properties/options",
                         "type": "object",
@@ -421,7 +421,7 @@
                                 }
                             ]
                         }
-                    } 
+                    }
                     }
                 }
               }
@@ -491,7 +491,7 @@
       "$id": "#/properties/ui",
       "type": "array",
       "title": "Plugin form UI definition",
-      "items": 
+      "items":
         {
             "type": "object",
             "title": "List of UI definitions",
@@ -519,8 +519,8 @@
                 "properties": { "key": { "pattern": "^inputs\\.[a-zA-Z0-9][-a-zA-Z0-9]*$" } }
               },
               "then": {
-                "properties": 
-                  { 
+                "properties":
+                  {
                     "title": {
                         "$id": "#/properties/ui/items/properties/title",
                         "type": "string",
@@ -590,8 +590,8 @@
                 "properties": { "key": { "const": "fieldsets" } }
               },
               "then": {
-                "properties": 
-                  { 
+                "properties":
+                  {
                       "fieldsets":
                       {
                            "description": "A list of definitions representing sections of input fields.",
@@ -626,7 +626,7 @@
                             "required": [
                                 "title", "fields"
                             ]
-                          } 
+                          }
                       }
                 },
                 "required": [

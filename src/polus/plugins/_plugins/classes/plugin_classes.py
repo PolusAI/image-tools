@@ -1,18 +1,19 @@
-from copy import deepcopy
-from pprint import pprint, pformat
-import typing
-from ..io import Version, DuplicateVersionFound, _in_old_to_new, _ui_old_to_new
-from ..models import WIPPPluginManifest
-from ..utils import name_cleaner, cast_version
-from .plugin_methods import PluginMethods
-from ..models import PluginUIInput, PluginUIOutput
-from ..models import ComputeSchema
-from ..manifests.manifest_utils import _load_manifest, validate_manifest
-from pydantic import Extra
-import pathlib
 import json
-import uuid
 import logging
+import pathlib
+import typing
+import uuid
+from copy import deepcopy
+from pprint import pformat
+
+from pydantic import Extra
+
+from ..io import DuplicateVersionFound, Version, _in_old_to_new, _ui_old_to_new
+from ..manifests.manifest_utils import _load_manifest, validate_manifest
+from ..models import (ComputeSchema, PluginUIInput, PluginUIOutput,
+                      WIPPPluginManifest)
+from ..utils import cast_version, name_cleaner
+from .plugin_methods import PluginMethods
 
 logger = logging.getLogger("polus.plugins")
 PLUGINS = {}
@@ -70,7 +71,7 @@ class _Plugins:
 
     def load_config(self, config: typing.Union[dict, pathlib.Path]):
         if isinstance(config, pathlib.Path):
-            with open(config, "r") as fr:
+            with open(config) as fr:
                 m = json.load(fr)
         elif isinstance(config, dict):
             m = config
@@ -104,7 +105,6 @@ class _Plugins:
         ]  # ignore __pycache__
 
         for org in organizations:
-
             if org.is_file():
                 continue
 
@@ -136,7 +136,6 @@ class Plugin(WIPPPluginManifest, PluginMethods):
         allow_mutation = False
 
     def __init__(self, _uuid: bool = True, **data):
-
         if _uuid:
             data["id"] = uuid.uuid4()
         else:
@@ -217,7 +216,6 @@ class ComputePlugin(ComputeSchema, PluginMethods):
         _uuid: bool = True,
         **data,
     ):
-
         if _uuid:
             data["id"] = uuid.uuid4()
         else:
