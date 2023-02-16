@@ -1,21 +1,16 @@
 import json
-import typing
 import logging
 import re
-from tqdm import tqdm
+import typing
+
 from pydantic import ValidationError
+from tqdm import tqdm
+
+from ._plugins.classes import _Plugins, submit_plugin
+from ._plugins.gh import _init_github
 from ._plugins.io import Version
-from ._plugins.classes import (
-    submit_plugin,
-    _Plugins,
-    load_plugin,
-    Plugin,
-    ComputePlugin,
-)
-from ._plugins.manifests.manifest_utils import _scrape_manifests, _error_log
-from ._plugins.gh import _init_github, add_plugin_from_gh
+from ._plugins.manifests.manifest_utils import _error_log, _scrape_manifests
 from ._plugins.registry import WippPluginRegistry
-from ._plugins.utils import name_cleaner
 
 """
 Set up logging for the module
@@ -36,7 +31,6 @@ plugins.refresh()  # calls the refresh method when library is imported
 def update_polus_plugins(
     gh_auth: typing.Optional[str] = None, min_depth: int = 2, max_depth: int = 3
 ):
-
     logger.info("Updating polus plugins.")
     # Get all manifests
     valid, invalid = _scrape_manifests(
@@ -47,7 +41,6 @@ def update_polus_plugins(
     logger.info("Submitting %s plugins." % len(manifests))
 
     for manifest in manifests:
-
         try:
             plugin = submit_plugin(manifest)
 
@@ -105,7 +98,6 @@ def update_polus_plugins(
 
 
 def update_nist_plugins(gh_auth: typing.Optional[str] = None):
-
     # Parse README links
     gh = _init_github(gh_auth)
     repo = gh.get_repo("usnistgov/WIPP")
