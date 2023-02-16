@@ -1,18 +1,17 @@
+import json
+import logging
+import typing
 from urllib.error import HTTPError
 from urllib.parse import urljoin
-import xmltodict
+
 import requests
-import logging
-import json
+import xmltodict
 from tqdm import tqdm
-from .classes.plugin_classes import (
-    _Plugins as plugins,
-    submit_plugin,
-    Plugin,
-    ComputePlugin,
-)
+
+from .classes.plugin_classes import ComputePlugin, Plugin
+from .classes.plugin_classes import _Plugins as plugins
+from .classes.plugin_classes import submit_plugin
 from .registry_utils import _generate_query, _to_xml
-import typing
 
 logger = logging.getLogger("polus.plugins")
 
@@ -35,7 +34,6 @@ class WippPluginRegistry:
         registry_url: str = "https://wipp-registry.ci.ncats.io",
         verify: bool = True,  # verify SSL?
     ):
-
         self.registry_url = registry_url
         self.username = username
         self.password = password
@@ -243,7 +241,7 @@ class WippPluginRegistry:
                 r2.raise_for_status()
             except HTTPError as err:
                 raise FailedToPublish(
-                    "Failed to publish %s with id %s" % (data["title"], _id)
+                    "Failed to publish {} with id {}".format(data["title"], _id)
                 ) from err
 
         return "Successfully uploaded %s" % data["title"]

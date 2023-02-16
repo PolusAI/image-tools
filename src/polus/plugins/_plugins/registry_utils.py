@@ -1,10 +1,10 @@
 import re
 import typing
 
+
 def _generate_query(
     title, version, title_contains, contains, query_all, advanced, query
 ):
-
     if advanced:
         if not query:
             raise ValueError("query cannot be empty if advanced is True")
@@ -91,7 +91,6 @@ def _generate_query(
     return q
 
 
-
 def _get_email(author: str):
     regex = re.compile(r"[A-Za-z][A-Za-z0-9.]*@[A-Za-z0-9.]*")
     return regex.search(author).group()
@@ -101,7 +100,11 @@ def _get_author(author: str):
     return " ".join(author.split()[0:2])
 
 
-def _to_xml(manifest: dict, author: typing.Optional[str] = None, email: typing.Optional[str] = None):
+def _to_xml(
+    manifest: dict,
+    author: typing.Optional[str] = None,
+    email: typing.Optional[str] = None,
+):
     if email is None:
         email = _get_email(manifest["author"])
     if author is None:

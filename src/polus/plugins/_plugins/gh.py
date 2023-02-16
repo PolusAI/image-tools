@@ -1,7 +1,9 @@
 import logging
-from urllib.parse import urljoin
-import github
 import os
+from urllib.parse import urljoin
+
+import github
+
 from .classes.plugin_classes import submit_plugin
 
 logger = logging.getLogger("polus.plugins")
@@ -12,9 +14,7 @@ Initialize the Github interface
 
 
 def _init_github(auth=None):
-
     if auth is None:
-
         # Try to get an auth key from an environment variable
         auth = os.environ.get("GITHUB_AUTH", None)
 

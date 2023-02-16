@@ -1,10 +1,11 @@
-from pydantic import BaseModel, validator, PrivateAttr, Field, constr
-import typing
 import enum
 import logging
 import pathlib
-import fsspec
 import re
+import typing
+
+import fsspec
+from pydantic import BaseModel, Field, PrivateAttr, constr, validator
 
 logger = logging.getLogger("polus.plugins")
 
@@ -100,7 +101,6 @@ def _ui_old_to_new(old: str) -> str:  # map wipp InputType to compute schema's U
 
 
 class IOBase(BaseModel):
-
     type: typing.Any
     options: typing.Optional[dict] = None
     value: typing.Optional[typing.Any] = None
@@ -110,11 +110,9 @@ class IOBase(BaseModel):
     )  # type checking is done at plugin level
 
     def _validate(self):
-
         value = self.value
 
         if value is None:
-
             if self.required:
                 raise TypeError(
                     f"The input value ({self.name}) is required, but the value was not set."
@@ -207,7 +205,6 @@ class Input(IOBase):
     )
 
     def __init__(self, **data):
-
         super().__init__(**data)
 
         if self.description is None:
@@ -235,7 +232,6 @@ class Version(BaseModel):
 
     @validator("version")
     def semantic_version(cls, value):
-
         version = value.split(".")
 
         assert (
@@ -266,7 +262,6 @@ class Version(BaseModel):
         return self.version.split(".")[2]
 
     def __lt__(self, other):
-
         assert isinstance(other, Version), "Can only compare version objects."
 
         if other.major > self.major:
@@ -285,11 +280,9 @@ class Version(BaseModel):
             return False
 
     def __gt__(self, other):
-
         return other < self
 
     def __eq__(self, other):
-
         return (
             other.major == self.major
             and other.minor == self.minor
