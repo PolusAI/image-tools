@@ -113,7 +113,7 @@ files = [
 name = "click"
 version = "8.1.3"
 description = "Composable command line interface toolkit"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -128,7 +128,7 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 files = [
@@ -190,15 +190,48 @@ testing = ["covdefaults (>=2.2.2)", "coverage (>=7.0.1)", "pytest (>=7.2)", "pyt
 
 [[package]]
 name = "filepattern"
-version = "1.4.7"
-description = "Utilities for parsing files in a directory based on a file name pattern."
+version = "2.2.7"
+description = "Hybrid Python/C++ filepattern with external memory algorithms"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = "*"
 files = [
-    {file = "filepattern-1.4.7-py3-none-any.whl", hash = "sha256:e4afbc4af689252635c65c4c2d80402c04267ae16020f980b1efb99d5161bd6b"},
-    {file = "filepattern-1.4.7.tar.gz", hash = "sha256:2ab0a01d6e0a9a936cb0edf49945593a318f56adcb295bceee8d59b1047128d7"},
+    {file = "filepattern-2.2.7-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:128f15c73d78c33b3e8094935efd7e8251cfb4326d1653b2f7c982240fc0b616"},
+    {file = "filepattern-2.2.7-cp310-cp310-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:f9b6e811088a49ce7bff22aa5d78545854f971c8e80beefcb7a1106cde543c4c"},
+    {file = "filepattern-2.2.7-cp310-cp310-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:6a7c1de7e0b2878296fd251abe2c63d6d5ab8afb39bc5063921b66420cf37499"},
+    {file = "filepattern-2.2.7-cp310-cp310-musllinux_1_1_i686.whl", hash = "sha256:5c25820b96df7dfd316ebcb2ba856e76038330863077a8977f2b21a2b6e09e31"},
+    {file = "filepattern-2.2.7-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:fa620121b5504e0043d6661b4c07ecde8e910bf11844710e6a0390e2c9c2ec2f"},
+    {file = "filepattern-2.2.7-cp310-cp310-win_amd64.whl", hash = "sha256:599336b83f41e21d206ddac980f5ea525461d9d4e7269f2e69bc7c25daab6c1f"},
+    {file = "filepattern-2.2.7-cp36-cp36m-macosx_10_15_x86_64.whl", hash = "sha256:44ad909d29389fdd44557438288c3890e9cc566d80a030dcca12f9ca33587469"},
+    {file = "filepattern-2.2.7-cp36-cp36m-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:b3ae50f3a64d7b0d88543bdeed64877be6156b7d87382987b7602af1f6b4ccfe"},
+    {file = "filepattern-2.2.7-cp36-cp36m-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:b754b482c6a0090fb5fe4dc3653b95bd7191fa06839f99b40c36c96c4ae19a5c"},
+    {file = "filepattern-2.2.7-cp36-cp36m-musllinux_1_1_i686.whl", hash = "sha256:8ef1301cfe75dd2a7c2bf58f892db984beda32af3d832f656b4a4d94ca1e17f8"},
+    {file = "filepattern-2.2.7-cp36-cp36m-musllinux_1_1_x86_64.whl", hash = "sha256:9ed9124211e2b2ac3880364ad8aad6ddde1186dd46679060054ad07d49a77f63"},
+    {file = "filepattern-2.2.7-cp36-cp36m-win_amd64.whl", hash = "sha256:0e18958d3340a93f51d5d8826f3155fd57479a0ec7d0c4703f804538292ca372"},
+    {file = "filepattern-2.2.7-cp37-cp37m-macosx_10_15_x86_64.whl", hash = "sha256:391027345043cb0cbc0e499cbf4d93357d3f30af1250ae0a8d792715a73892ea"},
+    {file = "filepattern-2.2.7-cp37-cp37m-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:c8238c2f5994f85a4da47d602a3996abcd2d1fc7422db6f096ba16a49c2d55d8"},
+    {file = "filepattern-2.2.7-cp37-cp37m-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:197fbdccc014f610c1744b7cce1aba30a6f1a548bd760f8f585888dfb197aefa"},
+    {file = "filepattern-2.2.7-cp37-cp37m-musllinux_1_1_i686.whl", hash = "sha256:fae88642b63cb3677227ab9797c9798fad4be7866d79bf45a688d73f07b4558c"},
+    {file = "filepattern-2.2.7-cp37-cp37m-musllinux_1_1_x86_64.whl", hash = "sha256:ed08923b002574a3676e5f3e164ac9613bee829e71aac9d414d4a9ed1cdbae44"},
+    {file = "filepattern-2.2.7-cp37-cp37m-win_amd64.whl", hash = "sha256:9506e093ad45627f41b9afcf28a4a651abdd07787b2a36e88c28410b058fb08d"},
+    {file = "filepattern-2.2.7-cp38-cp38-macosx_10_15_x86_64.whl", hash = "sha256:3cc1b026186661042a9f1dc8dad11f4ff8ab79fb45ba0698164cd9e29550e134"},
+    {file = "filepattern-2.2.7-cp38-cp38-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:421062ee5084271fa8b6c1dcaa4761a2bc38fdb816eb64161de6bb127586c495"},
+    {file = "filepattern-2.2.7-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:c14ef7339f7adda4ef0b49ba61d71d17298ec1c5dfff3cf55fff5f87c2227c9c"},
+    {file = "filepattern-2.2.7-cp38-cp38-musllinux_1_1_i686.whl", hash = "sha256:a11b1a7b679f64307352e76e17ece62f5dc72b0c299a7af2484ea9610b42123f"},
+    {file = "filepattern-2.2.7-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:3347a43667d2fb682fdde35cdecb39841b441f05fb68c7a5012df35007c5d499"},
+    {file = "filepattern-2.2.7-cp38-cp38-win_amd64.whl", hash = "sha256:9189b3501ae0b9f9d4a662120f113874d5172a58052bcd849c65f154aa7649ef"},
+    {file = "filepattern-2.2.7-cp39-cp39-macosx_10_15_x86_64.whl", hash = "sha256:e876fda82ccb86e33f0f14cf64e9c7196d410bb3112f00f1448d044d73e25ea7"},
+    {file = "filepattern-2.2.7-cp39-cp39-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:d25bd6c14fce778aab10fc0919241ba827f1dddc5a78c94dc20946fbc70f78f7"},
+    {file = "filepattern-2.2.7-cp39-cp39-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:57301f6558a8d8413e41d921085ab81463f367b5dca7c4bbb4cb54c9a628ecd0"},
+    {file = "filepattern-2.2.7-cp39-cp39-musllinux_1_1_i686.whl", hash = "sha256:93276054d8e1c3f52d4f56cdfd23dad3eb8063d1b3071f2aa5f5dfc50314e828"},
+    {file = "filepattern-2.2.7-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:d09e953527d5d2b0d10d26b70400db2bff1e4f9c738eb87041aef01573e4e67b"},
+    {file = "filepattern-2.2.7-cp39-cp39-win_amd64.whl", hash = "sha256:f3b6ff3060e4911bc0339799f7df809c86970afb534b03876ccb8d4e817f4bb8"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://test.pypi.org/simple"
+reference = "test"
 
 [[package]]
 name = "flake8"
@@ -219,14 +252,14 @@ pyflakes = ">=3.0.0,<3.1.0"
 
 [[package]]
 name = "identify"
-version = "2.5.17"
+version = "2.5.18"
 description = "File identification library for Python"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "identify-2.5.17-py2.py3-none-any.whl", hash = "sha256:7d526dd1283555aafcc91539acc061d8f6f59adb0a7bba462735b0a318bff7ed"},
-    {file = "identify-2.5.17.tar.gz", hash = "sha256:93cc61a861052de9d4c541a7acb7e3dcc9c11b398a2144f6e52ae5285f5f4f06"},
+    {file = "identify-2.5.18-py2.py3-none-any.whl", hash = "sha256:93aac7ecf2f6abf879b8f29a8002d3c6de7086b8c28d88e1ad15045a15ab63f9"},
+    {file = "identify-2.5.18.tar.gz", hash = "sha256:89e144fa560cc4cffb6ef2ab5e9fb18ed9f9b3cb054384bab4b95c12f6c309fe"},
 ]
 
 [package.extras]
@@ -602,14 +635,14 @@ files = [
 
 [[package]]
 name = "setuptools"
-version = "67.2.0"
+version = "67.3.2"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "setuptools-67.2.0-py3-none-any.whl", hash = "sha256:16ccf598aab3b506593c17378473978908a2734d7336755a8769b480906bec1c"},
-    {file = "setuptools-67.2.0.tar.gz", hash = "sha256:b440ee5f7e607bb8c9de15259dba2583dd41a38879a7abc1d43a71c59524da48"},
+    {file = "setuptools-67.3.2-py3-none-any.whl", hash = "sha256:bb6d8e508de562768f2027902929f8523932fcd1fb784e6d573d2cafac995a48"},
+    {file = "setuptools-67.3.2.tar.gz", hash = "sha256:95f00380ef2ffa41d9bba85d95b27689d923c93dfbafed4aecd7cf988a25e012"},
 ]
 
 [package.extras]
@@ -648,15 +681,36 @@ files = [
 ]
 
 [[package]]
+name = "typer"
+version = "0.7.0"
+description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "typer-0.7.0-py3-none-any.whl", hash = "sha256:b5e704f4e48ec263de1c0b3a2387cd405a13767d2f907f44c1a08cbad96f606d"},
+    {file = "typer-0.7.0.tar.gz", hash = "sha256:ff797846578a9f2a201b53442aedeb543319466870fbe1c701eab66dd7681165"},
+]
+
+[package.dependencies]
+click = ">=7.1.1,<9.0.0"
+
+[package.extras]
+all = ["colorama (>=0.4.3,<0.5.0)", "rich (>=10.11.0,<13.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
+dev = ["autoflake (>=1.3.1,<2.0.0)", "flake8 (>=3.8.3,<4.0.0)", "pre-commit (>=2.17.0,<3.0.0)"]
+doc = ["cairosvg (>=2.5.2,<3.0.0)", "mdx-include (>=1.4.1,<2.0.0)", "mkdocs (>=1.1.2,<2.0.0)", "mkdocs-material (>=8.1.4,<9.0.0)", "pillow (>=9.3.0,<10.0.0)"]
+test = ["black (>=22.3.0,<23.0.0)", "coverage (>=6.2,<7.0)", "isort (>=5.0.6,<6.0.0)", "mypy (==0.910)", "pytest (>=4.4.0,<8.0.0)", "pytest-cov (>=2.10.0,<5.0.0)", "pytest-sugar (>=0.9.4,<0.10.0)", "pytest-xdist (>=1.32.0,<4.0.0)", "rich (>=10.11.0,<13.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
+
+[[package]]
 name = "typing-extensions"
-version = "4.4.0"
+version = "4.5.0"
 description = "Backported and Experimental Type Hints for Python 3.7+"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "typing_extensions-4.4.0-py3-none-any.whl", hash = "sha256:16fa4864408f655d35ec496218b85f79b3437c829e93320c7c9215ccfd92489e"},
-    {file = "typing_extensions-4.4.0.tar.gz", hash = "sha256:1511434bb92bf8dd198c12b1cc812e800d4181cfcb867674e0f8279cc93087aa"},
+    {file = "typing_extensions-4.5.0-py3-none-any.whl", hash = "sha256:fb33085c39dd998ac16d1431ebc293a8b3eedd00fd4a32de0ff79002c19511b4"},
+    {file = "typing_extensions-4.5.0.tar.gz", hash = "sha256:5cb5f4a79139d699607b3ef622a1dedafa84e115ab0024e0d9c044a9479ca7cb"},
 ]
 
 [[package]]
@@ -704,4 +758,4 @@ jupyter = ["ipytree (>=0.2.2)", "ipywidgets (>=8.0.0)", "notebook"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "b678251656659727449b263dacb057d4e736e8734593c613e0ab50770434b28a"
+content-hash = "15f5bdeb6048412180223473d579e98ed93c12cc63af5d1d3640f02bea5c075f"

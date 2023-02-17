@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "polus-transforms-montage"
+name = "polus-plugins-transforms-montage"
 version = "0.4.0"
 description = ""
 authors = ["nicholas-schaub <nick.schaub@nih.gov>"]
@@ -9,7 +9,8 @@ packages = [{include = "polus", from = "src"}]
 [tool.poetry.dependencies]
 python = "^3.9"
 bfio = {version = "2.1.9", extras = ["all"]}
-filepattern = "1.4.7"
+filepattern = "^2.2.6"
+typer = "^0.7.0"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
@@ -17,6 +18,11 @@ pre-commit = "^3.0.4"
 flake8 = "^6.0.0"
 black = "^23.1.0"
 mypy = "^1.0.0"
+
+[[tool.poetry.source]]
+name = "test"
+url = "https://test.pypi.org/simple/"
+secondary = true
 
 [build-system]
 requires = ["poetry-core"]

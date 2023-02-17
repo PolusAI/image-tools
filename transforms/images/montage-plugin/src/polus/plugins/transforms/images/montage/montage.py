@@ -2,10 +2,9 @@
 import logging
 import math
 import pathlib
-import typing
 
 from bfio import BioReader
-from filepattern import VARIABLES, FilePattern
+from filepattern import FilePattern
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +42,8 @@ def _get_xy_index(files: list[dict], dims: str, layout: list[str], flipAxis: str
 
     if len(dims) == 2:
         # get row and column vals
-        cols = [f[dims[0]] for f in files]
-        rows = [f[dims[1]] for f in files]
+        cols = [index[dims[0]] for index, _ in files[1]]
+        rows = [index[dims[1]] for index, _ in files[1]]
 
         # Get the grid dims
         col_min = min(cols)
@@ -60,7 +59,7 @@ def _get_xy_index(files: list[dict], dims: str, layout: list[str], flipAxis: str
             if dims[0] in lt or dims[1] in lt:
                 break
             index -= 1
-        for f in files:
+        for f, _ in files[1]:
             f[str(index) + "_gridX"] = (
                 col_max - f[dims[0]] if dims[0] in flipAxis else f[dims[0]] - col_min
             )
@@ -92,25 +91,16 @@ def _get_xy_index(files: list[dict], dims: str, layout: list[str], flipAxis: str
     return grid_dims
 
 
-def main(
+def montage(
     pattern: str,
     inp_dir: pathlib.Path,
     layout: str,
     flip_axis: str,
     outDir: pathlib.Path,
-    image_spacing: typing.Optional[int] = None,
-    grid_spacing: typing.Optional[int] = None,
+    image_spacing: int = SPACING,
+    grid_spacing: int = MULTIPLIER,
 ) -> None:
     """Run the plugin."""
-    global SPACING
-    global MULTIPLIER
-
-    # Set new image spacing and grid spacing arguments if present
-    if image_spacing is not None:
-        SPACING = int(image_spacing)
-    if grid_spacing is not None:
-        MULTIPLIER = int(grid_spacing)
-
     # Set up the file pattern parser
     logger.info("Parsing the file pattern...")
     fp = FilePattern(inp_dir, pattern)
@@ -119,11 +109,8 @@ def main(
     logger.info("Parsing the layout...")
     layout_list: list[str] = layout.replace(" ", "").split(",")
 
-    for lt in layout_list:  # Error checking
-        for v in lt:
-            if v not in VARIABLES:
-                logger.error(f"Variables must be one of {VARIABLES}")
-                raise ValueError(f"Variables must be one of {VARIABLES}")
+    # Make sure each grid layer has 1 or 2 values
+    for lt in layout_list:
         if len(lt) > 2 or len(lt) < 1:
             logger.error(
                 "Each layout subgrid must have one or two variables assigned to it."
@@ -131,6 +118,10 @@ def main(
             raise ValueError(
                 "Each layout subgrid must have one or two variables assigned to it."
             )
+
+    # Make sure the filepattern contains at least all the grid variables
+    for grid in layout_list:
+        assert all(d in fp.get_variables() for d in grid)
 
     # Layout dimensions, used to calculate positions later on
     layout_dimensions: dict[str, list] = {
@@ -144,23 +135,29 @@ def main(
     }  # dimensions of each tile in the grid
 
     # Get the size of each image
-    logger.info("Get the size of every image...")
     grid_width = 0
     grid_height = 0
 
-    for files in fp(group_by=layout_list[0]):
+    groups = set(fp.get_variables())
+    for d in layout_list[0]:
+        groups.remove(d)
+    logger.debug(f"groups={groups}")
+
+    planes = list(fp(group_by=list(groups)))
+
+    for files in planes:
         # Determine number of rows and columns in the smallest subgrid
         grid_size = _get_xy_index(files, layout_list[0], layout_list, flip_axis)
         layout_dimensions["grid_size"][len(layout_list) - 1].append(grid_size)
 
         # Get the height and width of each image
-        for f in files:
-            f["width"], f["height"] = BioReader.image_size(f["file"])
+        for index, file_ in files[1]:
+            index["width"], index["height"] = BioReader.image_size(file_[0])
 
-            if grid_width < f["width"]:
-                grid_width = f["width"]
-            if grid_height < f["height"]:
-                grid_height = f["height"]
+            if grid_width < index["width"]:
+                grid_width = index["width"]
+            if grid_height < index["height"]:
+                grid_height = index["height"]
 
         # Set the pixel and tile dimensions
         layout_dimensions["tile_size"][len(layout_list) - 1].append(
@@ -216,8 +213,10 @@ def main(
                 grid_size[1] = g[1]
         layout_dimensions["grid_size"][index] = grid_size
         layout_dimensions["tile_size"][index] = [
-            layout_dimensions["tile_size"][index][0] + (MULTIPLIER**i) * SPACING,
-            layout_dimensions["tile_size"][index][1] + (MULTIPLIER**i) * SPACING,
+            layout_dimensions["tile_size"][index][0]
+            + (grid_spacing**i) * image_spacing,
+            layout_dimensions["tile_size"][index][1]
+            + (grid_spacing**i) * image_spacing,
         ]
         layout_dimensions["size"][index] = [
             layout_dimensions["grid_size"][index][0]
@@ -229,21 +228,19 @@ def main(
 
     logger.info(f"Final image size in pixels: {layout_dimensions['size'][0]}")
 
-    # Group the images into 2-dimensional planes
-    planes = [p for p in fp(group_by="".join(layout_list))]
-
     # Build each 2-Dimensional stitching vector plane
-    for i, plane in enumerate(planes):
+    for i, (common, plane) in enumerate(planes):
         # TODO: Use filePattern output_name method for file names
         # fname = fp.output_name(plane).split('.')[0] + '.txt'
         fname = f"img-global-positions-{i + 1}.txt"
         logger.info(f"Building stitching vector {fname}")
         fpath = str(pathlib.Path(outDir).joinpath(fname).absolute())
         max_dim = len(layout_dimensions["grid_size"]) - 1
+
         with open(fpath, "w") as fw:
             correlation = 0
-            for f in plane:
-                file_name = pathlib.Path(f["file"]).name
+            for index, f in plane:
+                file_name = pathlib.Path(f[0]).name
 
                 # Calculate the image position
                 gridX = 0
@@ -251,20 +248,24 @@ def main(
                 posX = 0
                 posY = 0
                 for i in reversed(range(max_dim + 1)):
-                    posX += f[str(i) + "_gridX"] * layout_dimensions["tile_size"][i][0]
-                    posY += f[str(i) + "_gridY"] * layout_dimensions["tile_size"][i][1]
+                    posX += (
+                        index[str(i) + "_gridX"] * layout_dimensions["tile_size"][i][0]
+                    )
+                    posY += (
+                        index[str(i) + "_gridY"] * layout_dimensions["tile_size"][i][1]
+                    )
 
                     if i == max_dim:
-                        gridX += f[str(i) + "_gridX"]
-                        gridY += f[str(i) + "_gridY"]
+                        gridX += index[str(i) + "_gridX"]
+                        gridY += index[str(i) + "_gridY"]
 
                     else:
                         gridX += (
-                            f[str(i) + "_gridX"]
+                            index[str(i) + "_gridX"]
                             * layout_dimensions["grid_size"][i + 1][0]
                         )
                         gridY += (
-                            f[str(i) + "_gridY"]
+                            index[str(i) + "_gridY"]
                             * layout_dimensions["grid_size"][i + 1][1]
                         )
 

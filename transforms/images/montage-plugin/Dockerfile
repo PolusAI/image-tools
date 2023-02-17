@@ -5,6 +5,8 @@ FROM polusai/bfio:2.1.9
 # ENV DATA_DIR="/data"
 # ENV POLUS_EXT=".ome.tif"
 # ENV POLUS_LOG="INFO" # Change to WARNING for fewer logs, and DEBUG for debugging
+ENV POLUS_IMG_EXT=".ome.tif"
+ENV POLUS_TAB_EXT=".csv"
 
 # Work directory defined in the base container
 # WORKDIR ${EXEC_DIR}
