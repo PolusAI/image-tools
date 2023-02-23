@@ -2,11 +2,13 @@
 import logging
 import os
 import pathlib
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from multiprocessing import cpu_count
 from typing import Optional
 
 import filepattern as fp
 import typer
-from preadator import ProcessManager
+from tqdm import tqdm
 
 from polus.plugins.formats.ome_converter.image_converter import image_converter
 
@@ -45,20 +47,27 @@ def main(
 
     FILE_EXT = FILE_EXT if file_extension is None else file_extension
 
-    ProcessManager.init_processes(name="OME Converter")
-
+    numworkers = max(cpu_count(), 2)
     if pattern is None:
         pattern = ".*"
 
     fps = fp.FilePattern(inp_dir, pattern)
 
-    with ProcessManager.process():
+    numworkers = max(cpu_count(), 2)
+    with ThreadPoolExecutor(max_workers=numworkers) as executor:
+        threads = []
         for files in fps():
-            ProcessManager.submit_process(
-                image_converter, pathlib.Path(files[1][0]), FILE_EXT, out_dir
+            threads.append(
+                executor.submit(
+                    image_converter, pathlib.Path(files[1][0]), FILE_EXT, out_dir
+                )
             )
-
-    ProcessManager.join_processes()
+        for f in tqdm(
+            as_completed(threads),
+            desc=f"converting images to {FILE_EXT}",
+            total=len(threads),
+        ):
+            f.result()
 
 
 if __name__ == "__main__":

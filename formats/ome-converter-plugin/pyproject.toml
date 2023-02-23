@@ -6,17 +6,20 @@ authors = ["hamshkhawar <hamdahshafqat@hotmail.com>"]
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
-[tool.poetry.dependencies]
-python = "^3.9"
-bfio = {version = "2.1.9", extras = ["all"]}
-filepattern = "^2.2.6"
-preadator = "0.2.0"
-typer = "^0.7.0"
-
 [[tool.poetry.source]]
 name = "test"
 url = "https://test.pypi.org/simple/"
 secondary = true
+
+[tool.poetry.dependencies]
+python = "^3.9"
+bfio = {version = "2.1.9", extras = ["all"]}
+filepattern = "^2.2.6"
+typer = "^0.7.0"
+requests = "^2.28.2"
+tqdm = "^4.64.1"
+scikit-image = "^0.19.3"
+
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
@@ -25,7 +28,7 @@ black = "^23.1.0"
 flake8 = "^6.0.0"
 mypy = "^1.0.0"
 pytest = "^7.2.1"
-
+ipykernel = "^6.21.2"
 
 [build-system]
 requires = ["poetry-core"]
