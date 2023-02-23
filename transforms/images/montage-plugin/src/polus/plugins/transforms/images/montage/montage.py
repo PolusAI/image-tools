@@ -2,9 +2,16 @@
 import logging
 import math
 import pathlib
+from typing import Dict, List, Optional, Tuple, Union
 
 from bfio import BioReader
 from filepattern import FilePattern
+
+from polus.plugins.transforms.images.montage.utils import (
+    DictWriter,
+    VectorWriter,
+    subpattern,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +19,9 @@ SPACING = 10
 MULTIPLIER = 4
 
 
-def _get_xy_index(files: list[dict], dims: str, layout: list[str], flipAxis: str):
+def _get_xy_index(
+    files: list[dict], dims: str, layout: list[str], flip_axis: List[str]
+):
     """Get the x and y indices from a list of filename dictionaries.
 
     The FilePattern iterate function returns a list of dictionaries containing a
@@ -29,7 +38,7 @@ def _get_xy_index(files: list[dict], dims: str, layout: list[str], flipAxis: str
     notation from DeepZooms folder structure, the highest resolution values are stored
     with the largest index. So, if dims is the first element in the layout list and
     layout has 3 items in the list, then the grid positions will be stored in the file
-    dictionary as '2_gridX' and '2_gridY'.
+    dictionary as '2_grid_x' and '2_grid_y'.
 
     Inputs:
         files - a list of dictionaries containing file information
@@ -60,15 +69,15 @@ def _get_xy_index(files: list[dict], dims: str, layout: list[str], flipAxis: str
                 break
             index -= 1
         for f, _ in files[1]:
-            f[str(index) + "_gridX"] = (
-                col_max - f[dims[0]] if dims[0] in flipAxis else f[dims[0]] - col_min
+            f[str(index) + "_grid_x"] = (
+                col_max - f[dims[0]] if dims[0] in flip_axis else f[dims[0]] - col_min
             )
-            f[str(index) + "_gridY"] = (
-                row_max - f[dims[1]] if dims[1] in flipAxis else f[dims[1]] - row_min
+            f[str(index) + "_grid_y"] = (
+                row_max - f[dims[1]] if dims[1] in flip_axis else f[dims[1]] - row_min
             )
     else:
         # determine number of rows and columns
-        pos = [f[dims[0]] for f in files]
+        pos = [index[dims[0]] for index, _ in files[1]]
         pos = list(set(pos))
         pos_min = min(pos)
         pos_max = max(pos)
@@ -83,48 +92,86 @@ def _get_xy_index(files: list[dict], dims: str, layout: list[str], flipAxis: str
             if lt == dims:
                 break
             index -= 1
-        for f in files:
-            pos = pos_max - f[dims[0]] if dims[0] in flipAxis else f[dims[0]] - pos_min
-            f[str(index) + "_gridX"] = int(pos % col_max)
-            f[str(index) + "_gridY"] = int(pos // col_max)
+        for f, _ in files[1]:
+            pos = pos_max - f[dims[0]] if dims[0] in flip_axis else f[dims[0]] - pos_min
+            f[str(index) + "_grid_x"] = int(pos % col_max)
+            f[str(index) + "_grid_y"] = int(pos // col_max)
 
     return grid_dims
+
+
+def image_position(
+    index: Dict[str, int], layout_dimensions: Dict[str, List]
+) -> Tuple[int, int, int, int]:
+    """Calculate the image position in the montage from a set of dimensions.
+
+    Args:
+        index: A dictionary of grid positions (contain keys [`grid_x`, `grid_y`])
+        layout_dimensions: The size of each grid dimension. Each layer in the montage
+            layout has a specified size determined by the sizes of subgrids.
+
+    Returns:
+        A tuple for x position, y position, x grid location, and y grid location
+    """
+    # Calculate the image position
+    max_dim = len(layout_dimensions["grid_size"]) - 1
+    grid_x = 0
+    grid_y = 0
+    pos_x = 0
+    pos_y = 0
+    for i in reversed(range(max_dim + 1)):
+        pos_x += index[str(i) + "_grid_x"] * layout_dimensions["tile_size"][i][0]
+        pos_y += index[str(i) + "_grid_y"] * layout_dimensions["tile_size"][i][1]
+
+        if i == max_dim:
+            grid_x += index[str(i) + "_grid_x"]
+            grid_y += index[str(i) + "_grid_y"]
+
+        else:
+            grid_x += (
+                index[str(i) + "_grid_x"] * layout_dimensions["grid_size"][i + 1][0]
+            )
+            grid_y += (
+                index[str(i) + "_grid_y"] * layout_dimensions["grid_size"][i + 1][1]
+            )
+
+    return pos_x, pos_y, grid_x, grid_y
 
 
 def montage(
     pattern: str,
     inp_dir: pathlib.Path,
-    layout: str,
-    flip_axis: str,
-    outDir: pathlib.Path,
+    layout_list: List[str],
+    out_dir: pathlib.Path,
     image_spacing: int = SPACING,
     grid_spacing: int = MULTIPLIER,
-) -> None:
-    """Run the plugin."""
-    # Set up the file pattern parser
-    logger.info("Parsing the file pattern...")
-    fp = FilePattern(inp_dir, pattern)
+    flip_axis: List[str] = [],
+    file_index: int = -1,
+) -> Optional[Dict[str, Union[int, str]]]:
+    """Generate montage positions for a collection of images.
 
-    # Parse the layout
-    logger.info("Parsing the layout...")
-    layout_list: list[str] = layout.replace(" ", "").split(",")
+    This function generates a single stitching vector for a collection of images to
+    organize them into a single image montage.
 
-    # Make sure each grid layer has 1 or 2 values
-    for lt in layout_list:
-        if len(lt) > 2 or len(lt) < 1:
-            logger.error(
-                "Each layout subgrid must have one or two variables assigned to it."
-            )
-            raise ValueError(
-                "Each layout subgrid must have one or two variables assigned to it."
-            )
+    It is required that all variables in the FilePattern (`pattern`) are also in the
+    `layout_list`.
 
-    # Make sure the filepattern contains at least all the grid variables
-    for grid in layout_list:
-        assert all(d in fp.get_variables() for d in grid)
+    Args:
+        pattern: A filepattern.
+        inp_dir: Path to the input directory.
+        layout_list: A list of strings indicating the layout for the montage.
+        flip_axis: Axes where the coordinates should be reversed when positioning.
+        out_dir: The output directory
+        image_spacing: The spacing between images in the same subgrid.
+        grid_spacing: The exponential spacing applies to supergrids.
+        file_index: The index of the montage. This is used when saving files using an
+            index value. If set to -1, returns a list of dictionaries indicating file
+            positions instead. Defaults to -1.
+    """
+    fp = FilePattern(inp_dir, pattern, suppress_warnings=True)
 
     # Layout dimensions, used to calculate positions later on
-    layout_dimensions: dict[str, list] = {
+    layout_dimensions: Dict[str, list] = {
         "grid_size": [
             [] for r in range(len(layout_list))
         ],  # number of tiles in each dimension in the subgrid
@@ -143,7 +190,7 @@ def montage(
         groups.remove(d)
     logger.debug(f"groups={groups}")
 
-    planes = list(fp(group_by=list(groups)))
+    planes = list(fp(group_by=[]))
 
     for files in planes:
         # Determine number of rows and columns in the smallest subgrid
@@ -199,7 +246,7 @@ def montage(
         index = len(layout_list) - 1 - i
         layout_dimensions["tile_size"][index] = layout_dimensions["size"][index + 1]
 
-        for files in fp(group_by="".join(layout_list[: i + 1])):
+        for files in planes:
             # determine number of rows and columns in the current subgrid
             grid_size = _get_xy_index(files, layout_list[i], layout_list, flip_axis)
             layout_dimensions["grid_size"][index].append(grid_size)
@@ -229,51 +276,95 @@ def montage(
     logger.info(f"Final image size in pixels: {layout_dimensions['size'][0]}")
 
     # Build each 2-Dimensional stitching vector plane
-    for i, (common, plane) in enumerate(planes):
-        # TODO: Use filePattern output_name method for file names
-        # fname = fp.output_name(plane).split('.')[0] + '.txt'
-        fname = f"img-global-positions-{i + 1}.txt"
-        logger.info(f"Building stitching vector {fname}")
-        fpath = str(pathlib.Path(outDir).joinpath(fname).absolute())
-        max_dim = len(layout_dimensions["grid_size"]) - 1
+    fname = f"img-global-positions-{file_index}.txt"
+    logger.debug(f"Building stitching vector {fname}")
+    fpath = str(pathlib.Path(out_dir).joinpath(fname).absolute())
 
-        with open(fpath, "w") as fw:
-            correlation = 0
-            for index, f in plane:
+    if file_index == -1:
+        Writer = DictWriter
+        logger.debug("Using DictWriter for output")
+    else:
+        Writer = VectorWriter
+        logger.debug("Using VectorWriter for output")
+
+    # Use VectorWriter rather than a file object to prepare for using other formats
+    with Writer(fpath) as fw:
+        correlation = 0
+        for plane in planes:
+            for index, f in plane[1]:
                 file_name = pathlib.Path(f[0]).name
 
-                # Calculate the image position
-                gridX = 0
-                gridY = 0
-                posX = 0
-                posY = 0
-                for i in reversed(range(max_dim + 1)):
-                    posX += (
-                        index[str(i) + "_gridX"] * layout_dimensions["tile_size"][i][0]
-                    )
-                    posY += (
-                        index[str(i) + "_gridY"] * layout_dimensions["tile_size"][i][1]
-                    )
-
-                    if i == max_dim:
-                        gridX += index[str(i) + "_gridX"]
-                        gridY += index[str(i) + "_gridY"]
-
-                    else:
-                        gridX += (
-                            index[str(i) + "_gridX"]
-                            * layout_dimensions["grid_size"][i + 1][0]
-                        )
-                        gridY += (
-                            index[str(i) + "_gridY"]
-                            * layout_dimensions["grid_size"][i + 1][1]
-                        )
+                pos_x, pos_y, grid_x, grid_y = image_position(index, layout_dimensions)
 
                 # Write the position to the stitching vector
-                fw.write(
-                    "file: {}; corr: {}; position: ({}, {}); grid: ({}, {});\n".format(
-                        file_name, correlation, posX, posY, gridX, gridY
-                    )
-                )
+                fw.write(file_name, correlation, pos_x, pos_y, grid_x, grid_y)
 
-    logger.info("Done!")
+        if isinstance(fw, DictWriter):
+            logger.debug("Done")
+            return fw.fh
+
+    logger.debug("Done!")
+    return None
+
+
+def generate_montage_patterns(
+    pattern: str,
+    inp_dir: pathlib.Path,
+    layout_list: List[str],
+) -> List[str]:
+    """Generate filepatterns from an existing filepattern, one for each montage."""
+    # Set up the file pattern parser
+    fp = FilePattern(inp_dir, pattern)
+
+    # Make sure the filepattern contains at least all the grid variables
+    for grid in layout_list:
+        assert all(d in fp.get_variables() for d in grid)
+
+    groups = set(fp.get_variables())
+    for layout in layout_list:
+        for d in layout:
+            groups.remove(d)
+    logger.debug(f"groups={groups}")
+
+    planes = list(fp(group_by=list(groups)))
+
+    sp = []
+    for files in planes:
+        sp.append(subpattern(filepattern=pattern, values={k: v for k, v in files[0]}))
+
+    return sp
+
+
+def montage_all(
+    pattern: str,
+    inp_dir: pathlib.Path,
+    layout: List[str],
+    flip_axis: List[str],
+    out_dir: pathlib.Path,
+    image_spacing: int = SPACING,
+    grid_spacing: int = MULTIPLIER,
+) -> None:
+    """Montage all images."""
+    # Make sure each grid layer has 1 or 2 values
+    for lt in layout:
+        if len(lt) > 2 or len(lt) < 1:
+            logger.error(
+                "Each layout subgrid must have one or two variables assigned to it."
+            )
+            raise ValueError(
+                "Each layout subgrid must have one or two variables assigned to it."
+            )
+
+    patterns = generate_montage_patterns(pattern, inp_dir, layout)
+
+    for index, sp in enumerate(patterns):
+        montage(
+            pattern=sp,
+            inp_dir=inp_dir,
+            layout_list=layout,
+            flip_axis=flip_axis,
+            out_dir=out_dir,
+            image_spacing=image_spacing,
+            grid_spacing=grid_spacing,
+            file_index=index,
+        )
