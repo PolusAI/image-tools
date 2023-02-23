@@ -1,6 +1,6 @@
 """The image montaging tool."""
 
-__version__ = "0.4.0"
+__version__ = "0.5.0-dev0"
 
 
 from polus.plugins.transforms.images.montage.montage import (  # noqa
