@@ -32,6 +32,7 @@ if not zarrDir.exists():
 imagelist = {
     "0.tif": "https://osf.io/j6aer/download",
     "img_r001_c001.ome.tif": "https://github.com/usnistgov/WIPP/raw/master/data/PyramidBuilding/inputCollection/img_r001_c001.ome.tif",
+    "00001_01.ome.tiff": "https://downloads.openmicroscopy.org/images/OME-TIFF/2016-06/MitoCheck/00001_01.ome.tiff",
 }
 pattern = ".*"
 
@@ -99,6 +100,9 @@ def test_bfio_backend():
         fl = pathlib.Path(file[1][0])
         with BioReader(pathlib.Path(fl), max_workers=cpu_count()) as br:
             assert br._backend_name == "zarr"
+
+    br = BioReader(inpDir.joinpath(list(imagelist.keys())[2]))
+    assert br._backend_name != "python"
 
     generate_sythetic_images()
     br = BioReader(inpDir.joinpath("syn_image_1.png"))

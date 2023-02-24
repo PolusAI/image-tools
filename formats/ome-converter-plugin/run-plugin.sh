@@ -1,17 +1,23 @@
 #!/bin/bash
 
 version=$(<VERSION)
-datapath=$(readlink --canonicalize ../../data)
+datapath=$(readlink --canonicalize data)
 
 # Inputs
-inpDir=/data/images/MaricRatBrain2019/standard/intensity
-filePattern="S1_R1_C1-C11_A1_c0{c}0.ome.tif"
+inpDir=/data/input
+filePattern=".*"
+fileExtension=".ome.zarr"
 
 # Output paths
 outDir=/data/output
 
+# Show the help options
+docker run polusai/ome-converter-plugin:${version}
+
+# Run the plugin
 docker run --mount type=bind,source=${datapath},target=/data/ \
             polusai/ome-converter-plugin:${version} \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
+            --fileExtension ${fileExtension} \
             --outDir ${outDir}
