@@ -2,8 +2,8 @@
 name = "polus-plugins-formats-ome-converter"
 version = "0.1.0"
 description = ""
-authors = [{"author=Nick Schaub, email = "nick.schaub@nih.gov"},
-           {"author=hamshkhawar, email = "hamdahshafqat.abbasi@nih.gov"},
+authors = ["Nick Schaub <nick.schaub@nih.gov>",
+           "hamshkhawar <hamdahshafqat.abbasi@nih.gov>"
 
 ]
 readme = "README.md"
@@ -17,7 +17,7 @@ secondary = true
 [tool.poetry.dependencies]
 python = "^3.9"
 bfio = {version = "2.1.9", extras = ["all"]}
-filepattern = "^2.2.6"
+filepattern = "^2.2.7"
 typer = "^0.7.0"
 requests = "^2.28.2"
 tqdm = "^4.64.1"
