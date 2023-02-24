@@ -2,7 +2,10 @@
 name = "polus-plugins-formats-ome-converter"
 version = "0.1.0"
 description = ""
-authors = ["hamshkhawar <hamdahshafqat@hotmail.com>"]
+authors = [{"author=Nick Schaub, email = "nick.schaub@nih.gov"},
+           {"author=hamshkhawar, email = "hamdahshafqat.abbasi@nih.gov"},
+
+]
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
