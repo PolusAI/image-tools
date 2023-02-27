@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.9"
 bfio = {version = "2.1.9", extras = ["all"]}
 typer = "^0.7.0"
 filepattern = "^2.2.7"

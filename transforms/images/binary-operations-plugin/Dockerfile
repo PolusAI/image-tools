@@ -1,19 +1,23 @@
-# Get image containing bfio
 FROM polusai/bfio:2.1.9
 
-# set environment variables
-ENV POLUS_LOG="INFO"
-ENV EXEC_DIR="/opt/executables"
-ENV DATA_DIR="/data"
-# uses java backend
-# do not specify polus_ext because it can handle .tif images too, not just .ome.tif
+# environment variables defined in polusai/bfio
+# ENV EXEC_DIR="/opt/executables"
+# ENV DATA_DIR="/data"
+# ENV POLUS_EXT=".ome.tif"
+# ENV POLUS_LOG="INFO" # Change to WARNING for fewer logs, and DEBUG for debugging
+ENV POLUS_IMG_EXT=".ome.tif"
+ENV POLUS_TAB_EXT=".csv"
 
-COPY VERSION /
-COPY src ${EXEC_DIR}/
+# Work directory defined in the base container
+# WORKDIR ${EXEC_DIR}
 
-RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
+COPY pyproject.toml ${EXEC_DIR}
+COPY VERSION ${EXEC_DIR}
+COPY README.md ${EXEC_DIR}
+RUN pip3 install --index-url https://test.pypi.org/simple/ filepattern==2.2.7
+COPY src ${EXEC_DIR}/src
 
-WORKDIR ${EXEC_DIR}
+RUN pip3 install ${EXEC_DIR} --no-cache-dir
 
-# Default command. Additional arguments are provided through the command line
-ENTRYPOINT ["python3", "/opt/executables/main.py"]
+ENTRYPOINT ["python3", "-m", "polus.plugins.transforms.images.binary_operations"]
+CMD ["--help"]
