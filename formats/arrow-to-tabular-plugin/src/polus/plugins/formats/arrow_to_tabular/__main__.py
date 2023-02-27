@@ -8,13 +8,10 @@ from multiprocessing import cpu_count
 from typing import Any, Optional
 
 import filepattern as fp
-import pyarrow.feather as pf
 import typer
-import vaex
 from tqdm import tqdm
 
-# Import environment variables
-POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
+from polus.plugins.formats.arrow_to_tabular.arrow_to_tabular import arrow_to_tabular
 
 # Set number of processors for scalability
 max_workers = max(1, cpu_count() // 2)
@@ -25,51 +22,6 @@ logging.basicConfig(
     datefmt="%d-%b-%y %H:%M:%S",
 )
 logger = logging.getLogger("polus.plugins.formats.arrow_to_tabular")
-
-
-def feather_to_tabular(
-    file: pathlib.Path, file_format: str, out_dir: pathlib.Path
-) -> None:
-    """Convert Arrow file into tabular file using pyarrow.
-
-    Args:
-        file (Path): Path to input file.
-        file_format (str): Filepattern of desired tabular output file.
-        out_dir (Path): Path to output directory.
-    Returns:
-        Tabular File
-    """
-    # Copy file into output directory for WIPP Processing
-    file_name = pathlib.Path(file).stem
-    logger.info("Feather CONVERSION: Copy ${file_name} into outDir for processing...")
-
-    output_file = os.path.join(out_dir, (file_name + file_format))
-
-    print(file_name)
-    print(output_file)
-
-    logger.info("Feather CONVERSION: Converting file into PyArrow Table")
-
-    table = pf.read_table(file)
-    data = vaex.from_arrow_table(table)
-    logger.info("Feather CONVERSION: table converted")
-    ncols = len(data)
-    chunk_size = max([2**24 // ncols, 1])
-
-    logger.info("Feather CONVERSION: checking for file format")
-
-    if file_format == ".csv":
-        logger.info("Feather CONVERSION: converting PyArrow Table into .csv file")
-        # Streaming contents of Arrow Table into csv
-        return data.export_csv(output_file, chunksize=chunk_size)
-
-    elif file_format == ".parquet":
-        logger.info("Feather CONVERSION: converting PyArrow Table into .parquet file")
-        return data.export_parquet(output_file)
-    else:
-        logger.error(
-            "Feather CONVERSION Error: This format is not supported in this plugin"
-        )
 
 
 def main(
@@ -127,7 +79,7 @@ def main(
         for files in fps:
             file = files[1][0]
             processes.append(
-                executor.submit(feather_to_tabular, file, file_format, out_dir)
+                executor.submit(arrow_to_tabular, file, file_format, out_dir)
             )
 
         for process in tqdm(
