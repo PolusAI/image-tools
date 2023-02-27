@@ -18,9 +18,7 @@ LOGLEVEL=INFO
 
 docker run --mount type=bind,source=${datapath},target=/data/  \
             --env POLUS_LOG=${LOGLEVEL} \
-            polusai/feather-to-tabular-plugin:${version} \
+            polusai/arrow-to-tabular-plugin:${version} \
             --inpDir ${inpDir} \
             --file_format ${file_format} \
             --outDir ${outDir} \
-            
-            
