@@ -10,10 +10,9 @@ from pydantic import Extra
 
 from ..io import DuplicateVersionFound, Version, _in_old_to_new, _ui_old_to_new
 from ..manifests.manifest_utils import _load_manifest, validate_manifest
-from ..models import (ComputeSchema, PluginUIInput, PluginUIOutput,
-                      WIPPPluginManifest)
+from ..models import ComputeSchema, PluginUIInput, PluginUIOutput, WIPPPluginManifest
 from ..utils import cast_version, name_cleaner
-from .plugin_methods import PluginMethods
+from .plugin_methods import _PluginMethods
 
 logger = logging.getLogger("polus.plugins")
 PLUGINS = {}
@@ -53,7 +52,7 @@ class _Plugins:
 
     @classmethod
     def get_plugin(cls, name: str, version: typing.Optional[str] = None):
-        """Returns a plugin object.
+        """Get a plugin with option to specify version.
 
         Return a plugin object with the option to specify a version. The specified version's manifest must exist in manifests folder.
 
@@ -94,12 +93,11 @@ class _Plugins:
 
     @classmethod
     def refresh(cls):
-        """Refresh the plugin list
+        """Refresh the plugin list.
 
         This should be optimized, since it will become noticeably slow when
         there are many plugins.
         """
-
         organizations = [
             x for x in PLUGIN_DIR.iterdir() if x.name != "__pycache__"
         ]  # ignore __pycache__
@@ -126,16 +124,28 @@ class _Plugins:
                 PLUGINS[key][plugin.version] = file
 
 
-class Plugin(WIPPPluginManifest, PluginMethods):
-    """Required until json schema is fixed"""
+class Plugin(WIPPPluginManifest, _PluginMethods):
+    """WIPP Plugin Class.
+
+    Contains methods to configure, run, and save plugins.
+
+    Attributes:
+        versions: A list of local available versions for this plugin.
+
+    Methods:
+        save_manifest(path): save plugin manifest to specified path
+    """
 
     id: uuid.UUID
 
     class Config:
+        """Config class for Pydantic Model."""
+
         extra = Extra.allow
         allow_mutation = False
 
     def __init__(self, _uuid: bool = True, **data):
+        """Init a plugin object from manifest."""
         if _uuid:
             data["id"] = uuid.uuid4()
         else:
@@ -155,10 +165,11 @@ class Plugin(WIPPPluginManifest, PluginMethods):
 
     @property
     def versions(plugin):  # cannot be in PluginMethods because PLUGINS lives here
-        """Return list of versions of a Plugin"""
+        """Return list of local versions of a Plugin."""
         return list(PLUGINS[name_cleaner(plugin.name)])
 
     def to_compute(self, hardware_requirements: typing.Optional[dict] = None):
+        """Convert WIPP Plugin object to Compute Plugin object."""
         data = deepcopy(self.manifest)
         return ComputePlugin(
             hardware_requirements=hardware_requirements, _from_old=True, **data
@@ -170,6 +181,7 @@ class Plugin(WIPPPluginManifest, PluginMethods):
         hardware_requirements: typing.Optional[dict] = None,
         compute: bool = False,
     ):
+        """Save plugin manifest to specified path."""
         if compute:
             with open(path, "w") as fw:
                 self.to_compute(
@@ -187,7 +199,8 @@ class Plugin(WIPPPluginManifest, PluginMethods):
         logger.debug("Saved manifest to %s" % (path))
 
     def __setattr__(self, name, value):
-        PluginMethods.__setattr__(self, name, value)
+        """Set I/O parameters as attributes."""
+        _PluginMethods.__setattr__(self, name, value)
 
     @property
     def _config_file(self):
@@ -196,16 +209,31 @@ class Plugin(WIPPPluginManifest, PluginMethods):
         return m
 
     def save_config(self, path: typing.Union[str, pathlib.Path]):
+        """Save manifest with configured I/O parameters to specified path."""
         with open(path, "w") as fw:
             json.dump(self._config_file, fw, indent=4, default=str)
         logger.debug("Saved config to %s" % (path))
 
     def __repr__(self) -> str:
-        return PluginMethods.__repr__(self)
+        """Print plugin name and version."""
+        return _PluginMethods.__repr__(self)
 
 
-class ComputePlugin(ComputeSchema, PluginMethods):
+class ComputePlugin(ComputeSchema, _PluginMethods):
+    """Compute Plugin Class.
+
+    Contains methods to configure, run, and save plugins.
+
+    Attributes:
+        versions: A list of local available versions for this plugin.
+
+    Methods:
+        save_manifest(path): save plugin manifest to specified path
+    """
+
     class Config:
+        """Config class for Pydantic Model."""
+
         extra = Extra.allow
         allow_mutation = False
 
@@ -216,6 +244,7 @@ class ComputePlugin(ComputeSchema, PluginMethods):
         _uuid: bool = True,
         **data,
     ):
+        """Init a plugin object from manifest."""
         if _uuid:
             data["id"] = uuid.uuid4()
         else:
@@ -275,7 +304,7 @@ class ComputePlugin(ComputeSchema, PluginMethods):
 
     @property
     def versions(plugin):  # cannot be in PluginMethods because PLUGINS lives here
-        """Return list of versions of a Plugin"""
+        """Return list of local versions of a Plugin."""
         return list(PLUGINS[name_cleaner(plugin.name)])
 
     @property
@@ -285,26 +314,30 @@ class ComputePlugin(ComputeSchema, PluginMethods):
         return m
 
     def __setattr__(self, name, value):
-        PluginMethods.__setattr__(self, name, value)
+        """Set I/O parameters as attributes."""
+        _PluginMethods.__setattr__(self, name, value)
 
     def save_config(self, path: typing.Union[str, pathlib.Path]):
+        """Save configured manifest with I/O parameters to specified path."""
         with open(path, "w") as fw:
             json.dump(self._config_file, fw, indent=4)
         logger.debug("Saved config to %s" % (path))
 
     def save_manifest(self, path: typing.Union[str, pathlib.Path]):
+        """Save plugin manifest to specified path."""
         with open(path, "w") as fw:
             json.dump(self.manifest, fw, indent=4)
         logger.debug("Saved manifest to %s" % (path))
 
     def __repr__(self) -> str:
-        return PluginMethods.__repr__(self)
+        """Print plugin name and version."""
+        return _PluginMethods.__repr__(self)
 
 
 def load_plugin(
     manifest: typing.Union[str, dict, pathlib.Path]
 ) -> typing.Union[Plugin, ComputePlugin]:
-    """Parses a manifest and returns one of Plugin or ComputePlugin"""
+    """Parse a manifest and return one of Plugin or ComputePlugin."""
     manifest = _load_manifest(manifest)
     if "pluginHardwareRequirements" in manifest:
         # Parse the manifest
@@ -319,7 +352,7 @@ def submit_plugin(
     manifest: typing.Union[str, dict, pathlib.Path],
     refresh: bool = False,
 ):
-    """Parses a plugin and creates a local copy of it.
+    """Parse a plugin and create a local copy of it.
 
     This function accepts a plugin manifest as a string, a dictionary (parsed
     json), or a pathlib.Path object pointed at a plugin manifest.

@@ -6,25 +6,13 @@ import typing
 from pydantic import ValidationError
 from tqdm import tqdm
 
-from ._plugins.classes import _Plugins, submit_plugin
-from ._plugins.gh import _init_github
-from ._plugins.io import Version
-from ._plugins.manifests.manifest_utils import _error_log, _scrape_manifests
+from polus.plugins._plugins.classes import submit_plugin
+from polus.plugins._plugins.gh import _init_github
+from polus.plugins._plugins.io import Version
+from polus.plugins._plugins.manifests.manifest_utils import (_error_log,
+                                                             _scrape_manifests)
 
-"""
-Set up logging for the module
-"""
-logging.basicConfig(
-    format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
-    datefmt="%d-%b-%y %H:%M:%S",
-)
 logger = logging.getLogger("polus.plugins")
-logger.setLevel(logging.INFO)
-plugins = _Plugins()
-get_plugin = plugins.get_plugin
-load_config = plugins.load_config
-plugins.refresh()  # calls the refresh method when library is imported
-
 
 def update_polus_plugins(
     gh_auth: typing.Optional[str] = None, min_depth: int = 2, max_depth: int = 3

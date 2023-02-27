@@ -1,3 +1,4 @@
+"""Methods for all plugin objects."""
 import enum
 import json
 import logging
@@ -13,10 +14,12 @@ logger = logging.getLogger("polus.plugins")
 
 
 class IOKeyError(Exception):
+    """Raised when trying to set invalid I/O parameter."""
+
     pass
 
 
-class PluginMethods:
+class _PluginMethods:
     @property
     def organization(self):
         return self.containerId.split("/")[0]
