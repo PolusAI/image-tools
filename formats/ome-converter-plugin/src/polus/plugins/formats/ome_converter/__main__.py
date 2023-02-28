@@ -18,7 +18,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
     datefmt="%d-%b-%y %H:%M:%S",
 )
-logger = logging.getLogger("polus.formats.ome_converter")
+logger = logging.getLogger("polus.plugins.formats.ome_converter")
 
 
 def main(
