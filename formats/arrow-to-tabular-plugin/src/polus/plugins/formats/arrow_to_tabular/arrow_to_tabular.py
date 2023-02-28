@@ -8,9 +8,7 @@ import vaex
 logger = logging.getLogger(__name__)
 
 
-def arrow_to_tabular(
-    file: pathlib.Path, file_format: str, out_dir: pathlib.Path
-) -> None:
+def arrow_tabular(file: pathlib.Path, file_format: str, out_dir: pathlib.Path) -> None:
     """Convert Arrow file into tabular file using pyarrow.
 
     Args:

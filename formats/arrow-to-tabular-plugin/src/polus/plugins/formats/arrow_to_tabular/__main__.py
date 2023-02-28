@@ -11,7 +11,7 @@ import filepattern as fp
 import typer
 from tqdm import tqdm
 
-from polus.plugins.formats.arrow_to_tabular.arrow_to_tabular import arrow_to_tabular
+from polus.plugins.formats.arrow_to_tabular.arrow_to_tabular import arrow_tabular
 
 # Set number of processors for scalability
 max_workers = max(1, cpu_count() // 2)
@@ -59,7 +59,14 @@ def main(
         ".parquet",
     ], f"This tabular file format: {FILE_EXT} is not support supported by this plugin!! Choose either CSV or Parquet FileFormat"
 
-    featherPattern = ".*.arrow"
+    pattern_list = [".feather", ".arrow"]
+    pattern = [f.suffix for f in inp_dir.iterdir() if f.suffix in pattern_list][0]
+    assert (
+        pattern in pattern_list
+    ), f"This input file extension {pattern} is not support supported by this plugin!! It should be either .feather and .arrow files"
+    filepattern = {".feather": ".*.feather", ".arrow": ".*.arrow"}
+
+    featherPattern = filepattern[pattern]
 
     fps = fp.FilePattern(inp_dir, featherPattern)
 
@@ -78,9 +85,7 @@ def main(
         processes = []
         for files in fps:
             file = files[1][0]
-            processes.append(
-                executor.submit(arrow_to_tabular, file, file_format, out_dir)
-            )
+            processes.append(executor.submit(arrow_tabular, file, file_format, out_dir))
 
         for process in tqdm(
             as_completed(processes), desc="Feather --> Tabular", total=len(processes)
