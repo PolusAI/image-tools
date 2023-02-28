@@ -2,23 +2,24 @@
 
 #!/bin/bash
 version=$(<VERSION)
-datapath=''
+datapath=$(readlink --canonicalize data)
 
 # Inputs
-inpDir=/data/feather
+inpDir=/data/input
 
 # Output paths
 outDir=/data/output
 
-#
-file_format=csv
+# Output tabular file format
+fileFormat='.csv'
 
-# Log level, must be one of ERROR, CRITICAL, WARNING, INFO, DEBUG
-LOGLEVEL=INFO
+# Show the help options
+docker run polusai/ome-converter-plugin:${version}
 
+# Run the plugin
 docker run --mount type=bind,source=${datapath},target=/data/  \
             --env POLUS_LOG=${LOGLEVEL} \
             polusai/arrow-to-tabular-plugin:${version} \
             --inpDir ${inpDir} \
-            --file_format ${file_format} \
-            --outDir ${outDir} \
+            --fileFormat ${fileFormat} \
+            --outDir ${outDir}
