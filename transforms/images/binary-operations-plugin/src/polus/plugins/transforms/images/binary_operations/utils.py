@@ -241,21 +241,13 @@ def iterate_tiles(
 ) -> Generator[Tuple[TileTuple, TileTuple], None, None]:
     """Iterate through tiles of an image.
 
-    Arguments
-    ---------
-    shape : tuple
-        Shape of the input
-    window_size : int
-        Width and Height of the Tile
-    step_size : int
-        The size of steps that are iterated though the tiles
+    Args:
+        shape: Shape of the input
+        window_size: Width and Height of the Tile
+        step_size: The size of steps that are iterated though the tiles
 
-    Returns
-    -------
-    window_slice : slice
-        5 dimensional slice that specifies the indexes of the window tile
-    step_slice : slice
-        5 dimension slice that specifies the indexes of the step tile
+    Returns:
+        Two tuples of slices that represent the window size and step size in 5 dimenions
     """
     for y1 in range(0, shape[0], step_size):
         for x1 in range(0, shape[1], step_size):
@@ -287,148 +279,3 @@ def iterate_tiles(
             logger.debug(f"Step X: {step_slice[1]}")
 
             yield window_slice, step_slice
-
-
-# def binary_operation(
-#     input_path: str,
-#     output_path: str,
-#     function,
-#     extra_arguments: Any,
-#     override: bool,
-#     operation: str,
-#     extra_padding: int = 512,
-#     kernel: int = None,
-# ) -> str:
-#     """
-#     This function goes through the images and calls the appropriate binary operation
-
-#     Parameters
-#     ----------
-#     input_path : str
-#         Location of image
-#     output_path : str
-#         Location for BioWriter
-#     function: str
-#         The binary operation to dispatch on image
-#     operation: str
-#         The name of the binary operation to dispatch on image
-#     extra_arguments : int
-#         Extra argument(s) for the binary operation that is called
-#     override: bool
-#         Specifies whether previously saved instance labels in the
-#         output can be overriden.
-#     extra_padding : int
-#         The extra padding around each tile so that
-#         binary operations do not skewed around the edges.
-#     kernel : cv2 object
-#         The kernel used for most binary operations
-
-#     Returns
-#     -------
-#     output_path : str
-#         Location of BioWriter for logger in main.py
-
-#     """
-
-#     try:
-#         # Read the image and log its information
-#         logger.info(f"\n\n OPERATING ON {os.path.basename(input_path)}")
-#         logger.debug(f"Input Path: {input_path}")
-#         logger.debug(f"Output Path: {output_path}")
-
-#         with BioReader(input_path) as br:
-#             with BioWriter(output_path, metadata=br.metadata) as bw:
-#                 assert br.shape == bw.shape
-#                 bfio_shape: tuple = br.shape
-#                 logger.info(f"Shape of BioReader&BioWriter (YXZCT): {bfio_shape}")
-#                 logger.info(f"DataType of BioReader&BioWriter: {br.dtype}")
-
-#                 step_size: int = br._TILE_SIZE
-#                 window_size: int = step_size + (2 * extra_padding)
-
-#                 for window_slice, step_slice in iterate_tiles(
-#                     shape=bfio_shape, window_size=window_size, step_size=step_size
-#                 ):
-#                     # info on the Slices for debugging
-#                     logger.debug("\n SLICES...")
-#                     logger.debug(f"Window Y: {window_slice[0]}")
-#                     logger.debug(f"Window X: {window_slice[1]}")
-#                     logger.debug(f"Step Y: {step_slice[0]}")
-#                     logger.debug(f"Step X: {step_slice[1]}")
-
-#                     # read a tile of BioReader
-#                     tile_readarray = br[window_slice]
-
-#                     # get unique labels in the tile
-#                     tile_readlabels = np.unique(tile_readarray)
-#                     assert np.all(
-#                         tile_readlabels >= 0
-#                     ), f"There are negative numbers in the input tile: {tile_readlabels[tile_readlabels < 0]}"
-#                     tile_readlabels = tile_readlabels[
-#                         tile_readlabels > 0
-#                     ]  # not just [1:], because there might not be a background
-
-#                     if len(tile_readlabels) > 1:
-#                         assert (
-#                             operation != "inversion"
-#                         ), "Image has multiple labels, you cannot use inversion on this type of image!"
-
-#                     # BioWriter handles tiles of 1024, need to be able to manipulate output,
-#                     # therefore initialize output numpy array
-#                     tile_writearray = np.zeros(tile_readarray.shape).astype(br.dtype)
-
-#                     # iterate through labels in tile
-#                     for (
-#                         label
-#                     ) in (
-#                         tile_readlabels
-#                     ):  # do not want to include zero (the background)
-#                         tile_binaryarray = (tile_readarray == label).astype(
-#                             np.uint16
-#                         )  # get another image with just the one label
-
-#                         # if the operation is callable
-#                         if callable(function):
-#                             tile_binaryarray_modified = function(
-#                                 tile_binaryarray, kernel=kernel, n=extra_arguments
-#                             )  # outputs an image with just 0 and 1
-#                             tile_binaryarray_modified[
-#                                 tile_binaryarray_modified == 1
-#                             ] = label  # convert the 1 back to label value
-
-#                         if override == True:
-#                             # if completely overlapping another instance segmentation in output is okay
-#                             # take the difference between the binary and modified binary (in dilation it would be the borders that were added on)
-#                             # and the input label
-#                             idx = (tile_binaryarray != tile_binaryarray_modified) | (
-#                                 tile_readarray == label
-#                             )
-#                         else:
-#                             # otherwise if its not
-#                             # take the input label and the common background between the input and output arrays
-#                             idx = (
-#                                 (tile_readarray == label) | (tile_readarray == 0)
-#                             ) & (tile_writearray == 0)
-
-#                         # save the one label to the output
-#                         tile_writearray[idx] = tile_binaryarray_modified[idx].astype(
-#                             br.dtype
-#                         )
-
-#                     tile_writelabels = np.unique(tile_writearray)
-#                     tile_writelabels = tile_writelabels[tile_writelabels > 0]
-#                     # if override is set to False, make sure that these values equal each other
-#                     logger.debug(
-#                         f"Input Tile has {len(tile_writelabels)} labels & "
-#                         + f"Output Tile has {len(tile_readlabels)} labels"
-#                     )
-#                     logger.debug(f"INPUT TILE VALUES:  {tile_writelabels}")
-#                     logger.debug(f"OUTPUT TILE VALUES: {tile_readlabels}")
-
-#                     # finalize the output
-#                     bw[step_slice] = tile_writearray[0:step_size, 0:step_size]
-
-#         return output_path
-
-#     except Exception as e:
-#         raise ValueError(f"Something went wrong: {e}")
