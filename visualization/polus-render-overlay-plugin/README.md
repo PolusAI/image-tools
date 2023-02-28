@@ -50,14 +50,17 @@ This plugin can take three types of input argument and one output argument:
 | `stitchingVector` | Stitching vector(s) image collection                  | Input  | Path         |
 | `filePattern`     | Image pattern                                         | Input  | String       |
 | `concatenate`     | If all output files should be concatenated            | Input  | String       |
-| `outDir`          | Output image pyramid                                  | Output | Generic Data |
+| `heatmap`         | If heatmap overlay data should be generated           | Input  | String       |
+| `chem`            | If chemical overlay data should be generated          | Input  | String       |
+| `text`            | If text overlay data should be generated              | Input  | String       |
+| `outDir`          | Output directory for overlays                         | Output | String       |
 
 ## Run the plugin
 
 ### Run the Docker Container
 
 ```bash
-docker run -v /path/to/data:/data labshare/polus-precomputed-slide-plugin \
+docker run -v /path/to/data:/data polusai/polus-precomputed-slide-plugin \
   --inpDir /data/input \
   --outDir /data/output
 ```

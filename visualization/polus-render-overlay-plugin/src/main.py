@@ -446,6 +446,9 @@ def main(
     
     
     def build_grids(vp, layout):
+        """
+        Determine file groupings for every image and every montage grid level.
+        """
         
         grids = {}
         
@@ -624,7 +627,10 @@ def main(
         
 
     def normalize(value, data_range, desired_range):
-        
+        """
+        Normalizes data values, typically used for threshold values which are
+        not already in the 0 to 1 scale.
+        """
         m = value
         rmin = data_range['min']
         rmax = data_range['max']
@@ -637,7 +643,9 @@ def main(
 
    
     def generate_text(grids):
-        
+        """
+        Generates TextCells and TextLayerSpec for text overlays.
+        """
         text_layers = []
         
         for level_id, level in grids.items():
@@ -685,6 +693,9 @@ def main(
      
      
     def generate_heatmap(heatmap, layout, cell_size, vp, data_range, data_names=None):
+        """
+        Generate heatmap data using the GridCell and GridCellLayerSpec objects.
+        """
         
         missing_files_out = Path('/home/ec2-user/polus-plugins/data/eastman/heatmap_data/missing_files.txt')
         missing_records = Path('/home/ec2-user/polus-plugins/data/eastman/heatmap_data/missing_records.txt')
@@ -872,6 +883,9 @@ def main(
 
 
     def generate_chem_data(chem_dir, fill_holes=True):
+        """
+        Custom manipulate data frame to prepare chem data (smile data).
+        """
         # Open and combine parquet smile data
         # chem = Path(__file__).parents[3].joinpath('data/eastman/smile_data/')
         # df = vaex.open(parquet_dir)
@@ -1019,8 +1033,15 @@ def main(
 
 
     def generate_chem(df, plate_id):
-
+        """
+        Generate chemical layer overlay (smile data) using ChemLayerSpec and
+        TextLayerSpec.
+        """
         def generate_chem_cell(x, y, smile, virus, compound, concentration):
+            """
+            Generate the chem layer smile data using ChemCell and TextCell
+            objects.
+            """
             
             posX = (1081*3+20)*(x-1)
             posY = (1081*3+20)*(y-1)
@@ -1293,6 +1314,9 @@ def main(
     if concatenate:
         
         def combine_overlays(paths, output):
+            """
+            Combine all overlay files into single overlay json file.
+            """
             
             num_paths = len(paths)
             logger.info('Combining {} overlay files in {}'.format(num_paths, output))
