@@ -9,19 +9,18 @@ inpDir=/data/inputs
 
 
 # Output paths
-outDir=/data/feather
+outDir=/data/arrow
 
-#
-filePattern=.csv
+# Output Fileformat
+fileFormat=.csv
 
-# Log level, must be one of ERROR, CRITICAL, WARNING, INFO, DEBUG
-LOGLEVEL=INFO
+# Show the help options
+docker run polusai/tabular-to-arrow-plugin:${version}
 
+# Run the plugin
 docker run -v /--mount type=bind,source=${datapath},target=/data/ \
             --env POLUS_LOG=${LOGLEVEL} \
-            polusai/tabular-to-feather-plugin:${version} \
+            polusai/tabular-to-arrow-plugin:${version} \
             --inpDir ${inpDir} \
-            --filePattern ${filePattern} \
+            --fileFormat ${fileFormat} \
             --outDir ${outDir} \
-            
-            
