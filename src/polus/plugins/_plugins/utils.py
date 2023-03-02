@@ -1,4 +1,5 @@
-from .io import Version
+"""General utilities for polus-plugins."""
+from polus.plugins._plugins.io import Version
 
 
 def name_cleaner(name: str) -> str:

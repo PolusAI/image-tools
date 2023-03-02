@@ -1,3 +1,4 @@
+"""Methods to interact with REST API of WIPP Plugin Registry."""
 import json
 import logging
 import typing
@@ -8,10 +9,10 @@ import requests
 import xmltodict
 from tqdm import tqdm
 
-from .classes.plugin_classes import ComputePlugin, Plugin
-from .classes.plugin_classes import _Plugins as plugins
-from .classes.plugin_classes import submit_plugin
-from .registry_utils import _generate_query, _to_xml
+from polus.plugins._plugins.classes.plugin_classes import ComputePlugin, Plugin
+from polus.plugins._plugins.classes.plugin_classes import _Plugins as plugins
+from polus.plugins._plugins.classes.plugin_classes import submit_plugin
+from polus.plugins._plugins.registry_utils import _generate_query, _to_xml
 
 logger = logging.getLogger("polus.plugins")
 

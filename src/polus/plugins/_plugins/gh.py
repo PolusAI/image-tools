@@ -1,10 +1,11 @@
+"""GitHub utilties."""
 import logging
 import os
 from urllib.parse import urljoin
 
 import github
 
-from .classes.plugin_classes import submit_plugin
+from polus.plugins._plugins.classes import submit_plugin
 
 logger = logging.getLogger("polus.plugins")
 

@@ -1,3 +1,4 @@
+"""Classes for Plugin objects containing methods to configure, run, and save."""
 import json
 import logging
 import pathlib
@@ -8,12 +9,12 @@ from pprint import pformat
 
 from pydantic import Extra
 
-from ..io import DuplicateVersionFound, Version, _in_old_to_new, _ui_old_to_new
-from ..manifests.manifest_utils import _load_manifest, validate_manifest
-from ..models import (ComputeSchema, PluginUIInput, PluginUIOutput,
+from polus.plugins._plugins.io import DuplicateVersionFound, Version, _in_old_to_new, _ui_old_to_new
+from polus.plugins._plugins.manifests.manifest_utils import _load_manifest, validate_manifest
+from polus.plugins._plugins.models import (ComputeSchema, PluginUIInput, PluginUIOutput,
                       WIPPPluginManifest)
-from ..utils import cast_version, name_cleaner
-from .plugin_methods import PluginMethods
+from polus.plugins._plugins.utils import cast_version, name_cleaner
+from polus.plugins._plugins.classes.plugin_methods import PluginMethods
 
 logger = logging.getLogger("polus.plugins")
 PLUGINS = {}

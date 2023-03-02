@@ -1,3 +1,4 @@
+"""Utilities for manifest parsing and validation."""
 import json
 import logging
 import pathlib
@@ -9,8 +10,8 @@ import requests
 from pydantic import ValidationError, errors
 from tqdm import tqdm
 
-from ..models import ComputeSchema, WIPPPluginManifest
-from ..utils import cast_version
+from polus.plugins._plugins.models import ComputeSchema, WIPPPluginManifest
+from polus.plugins._plugins.utils import cast_version
 
 logger = logging.getLogger("polus.plugins")
 
