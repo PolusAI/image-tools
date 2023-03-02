@@ -8,7 +8,7 @@ This WIPP plugin allows analysts to convert various file formats received by res
 - `parquet`
 - `arrow`
 
-Contact [Kelechi Nina Mezu](mailto:nina.mezu@nih.gov),[Hamdah Shafqat Abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more information.
+Contact [Kelechi Nina Mezu](mailto:nina.mezu@nih.gov), [Hamdah Shafqat Abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more information.
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
