@@ -31,4 +31,4 @@ This plugin takes two input arguments and one output argument:
 | `--inpDir` | Input generic data collection to be processed by this plugin | Input | collection |
 | `--filePattern` | Filename pattern to convert | Input | string |
 | `--outDir` | Output collection | Output | collection |
-| `--preview` | JSON preview of outputs produced by this plugin |
+| `--preview` | JSON preview of outputs produced by this plugin | Output | collection |
