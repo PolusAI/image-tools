@@ -2,25 +2,24 @@
 
 #!/bin/bash
 version=$(<VERSION)
-datapath=$(readlink --canonicalize ../data)
+datapath=$(readlink --canonicalize ../../../data)
 
-# Inputs
-inpDir=/data/inputs
-
+#Inputs
+inpDir=/data/input
 
 # Output paths
-outDir=/data/outputs
+outDir=/data/output
 
 # Output Fileformat
-filePattern=".csv"
+filePattern=".fcs"
 
-# Show the help options
+#Show the help options
 docker run polusai/tabular-to-arrow-plugin:${version}
 
 # Run the plugin
-docker run -v /--mount type=bind,source=${datapath},target=/data/ \
+docker run --mount type=bind,source=${datapath},target=/data/ \
             --env POLUS_LOG=${LOGLEVEL} \
             polusai/tabular-to-arrow-plugin:${version} \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
-            --outDir ${outDir} \
+            --outDir ${outDir}
