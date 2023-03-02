@@ -1,9 +1,11 @@
-from setuptools import setup, find_packages
+"""polus-plugins setup.py."""
+
+from setuptools import find_packages, setup
 
 # with open("README.md", "r") as fh:
 #     long_description = fh.read()
 
-with open("./polus/_plugins/VERSION", "r") as fh:
+with open("./polus/_plugins/VERSION") as fh:
     version = fh.read()
     with open("./polus/_plugins/VERSION", "w") as fw:
         fw.write(version)
