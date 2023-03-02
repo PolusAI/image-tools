@@ -9,10 +9,10 @@ inpDir=/data/inputs
 
 
 # Output paths
-outDir=/data/arrow
+outDir=/data/outputs
 
 # Output Fileformat
-fileFormat=.csv
+filePattern=".csv"
 
 # Show the help options
 docker run polusai/tabular-to-arrow-plugin:${version}
@@ -22,5 +22,5 @@ docker run -v /--mount type=bind,source=${datapath},target=/data/ \
             --env POLUS_LOG=${LOGLEVEL} \
             polusai/tabular-to-arrow-plugin:${version} \
             --inpDir ${inpDir} \
-            --fileFormat ${fileFormat} \
+            --filePattern ${filePattern} \
             --outDir ${outDir} \
