@@ -16,8 +16,6 @@ logger = logging.getLogger("polus.plugins")
 class IOKeyError(Exception):
     """Raised when trying to set invalid I/O parameter."""
 
-    pass
-
 
 class _PluginMethods:
     @property

@@ -1,10 +1,17 @@
 """Plugin classes and functions."""
-from polus.plugins._plugins.classes.plugin_classes import (
-    ComputePlugin,
-    Plugin,
-    _Plugins,
-    load_plugin,
-    submit_plugin,
-)
+from polus.plugins._plugins.classes.plugin_classes import (ComputePlugin,
+                                                           Plugin, get_plugin,
+                                                           list_plugins,
+                                                           load_plugin,
+                                                           refresh,
+                                                           submit_plugin)
 
-__all__ = ["Plugin", "ComputePlugin", "load_plugin", "submit_plugin", "_Plugins"]
+__all__ = [
+    "Plugin",
+    "ComputePlugin",
+    "load_plugin",
+    "submit_plugin",
+    "get_plugin",
+    "refresh",
+    "list_plugins",
+]

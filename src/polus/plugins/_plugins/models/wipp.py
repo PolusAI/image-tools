@@ -9,10 +9,12 @@ from typing import List, Literal, Optional, Union
 from pydantic import BaseModel, Field
 
 from polus.plugins._plugins.io import Input, Output, Version
-from polus.plugins._plugins.models.WIPPPluginSchema import UiItem, WippPluginManifest  # type: ignore
+from polus.plugins._plugins.models.WIPPPluginSchema import WippPluginManifest
 
 
 class ui1(BaseModel):
+    """Base class for UI items."""
+
     key: str = Field(constr=r"^inputs.[a-zA-Z0-9][-a-zA-Z0-9]*$")
     title: str
     description: Optional[str]
@@ -23,16 +25,22 @@ class ui1(BaseModel):
 
 
 class FieldSet(BaseModel):
+    """Base class for FieldSet."""
+
     title: str
     fields: List[str] = Field(min_items=1, unique_items=True)
 
 
 class ui2(BaseModel):
+    """UI items class for fieldsets."""
+
     key: Literal["fieldsets"]
     fieldsets: List[FieldSet] = Field(min_items=1, unique_items=True)
 
 
 class WIPPPluginManifest(WippPluginManifest):
+    """Extended WIPP Plugin Schema."""
+
     inputs: List[Input] = Field(
         ..., description="Defines inputs to the plugin", title="List of Inputs"
     )

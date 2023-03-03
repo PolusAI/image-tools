@@ -5,18 +5,20 @@ import pathlib
 import typing
 import uuid
 from copy import deepcopy
-from pprint import pformat
 
 from pydantic import Extra
 
-from ..io import DuplicateVersionFound, Version, _in_old_to_new, _ui_old_to_new
-from ..manifests.manifest_utils import _load_manifest, validate_manifest
-from ..models import ComputeSchema, PluginUIInput, PluginUIOutput, WIPPPluginManifest
-from ..utils import cast_version, name_cleaner
-from .plugin_methods import _PluginMethods
+from polus.plugins._plugins.classes.plugin_methods import _PluginMethods
+from polus.plugins._plugins.io import (DuplicateVersionFound, Version,
+                                       _in_old_to_new, _ui_old_to_new)
+from polus.plugins._plugins.manifests.manifest_utils import (_load_manifest,
+                                                             validate_manifest)
+from polus.plugins._plugins.models import (ComputeSchema, PluginUIInput,
+                                           PluginUIOutput, WIPPPluginManifest)
+from polus.plugins._plugins.utils import cast_version, name_cleaner
 
 logger = logging.getLogger("polus.plugins")
-PLUGINS = {}
+PLUGINS: typing.Dict[str, typing.Dict] = {}
 # PLUGINS = {"BasicFlatfieldCorrectionPlugin":
 #               {Version('0.1.4'): Path(<...>), Version('0.1.5'): Path(<...>)}.
 #            "VectorToLabel": {Version(...)}}
@@ -28,101 +30,85 @@ Paths and Fields
 PLUGIN_DIR = pathlib.Path(__file__).parent.parent.joinpath("manifests")
 
 
-"""
-Plugin Fetcher Class
-"""
+def load_config(config: typing.Union[dict, pathlib.Path]):
+    """Load configured plugin from config file/dict."""
+    if isinstance(config, pathlib.Path):
+        with open(config) as fr:
+            m = json.load(fr)
+    elif isinstance(config, dict):
+        m = config
+    else:
+        raise TypeError("config must be a dict or a path")
+    _io = m["_io_keys"]
+    cl = m["class"]
+    m.pop("class", None)
+    if cl == "Compute":
+        pl = ComputePlugin(_uuid=False, **m)
+    elif cl == "WIPP":
+        pl = Plugin(_uuid=False, **m)
+    else:
+        raise ValueError("Invalid value of class")
+    for k, v in _io.items():
+        val = v["value"]
+        if val is not None:  # exclude those values not set
+            setattr(pl, k, val)
+    return pl
 
 
-class _Plugins:
-    def __getattribute__(self, name):
-        if name in PLUGINS:
-            return self.get_plugin(name)
-        return super().__getattribute__(name)
+def get_plugin(name: str, version: typing.Optional[str] = None):
+    """Get a plugin with option to specify version.
 
-    def __len__(self):
-        return len(self.list)
+    Return a plugin object with the option to specify a version. The specified version's manifest must exist in manifests folder.
 
-    def __repr__(self):
-        return pformat(self.list)
+    Args:
+        name: Name of the plugin.
+        version: Optional version of the plugin, must follow semver.
 
-    @property
-    def list(self):
-        output = list(PLUGINS.keys())
-        output.sort()
-        return output
+    Returns:
+        Plugin object
+    """
+    if version is None:
+        return load_plugin(PLUGINS[name][max(PLUGINS[name])])
+    else:
+        return load_plugin(PLUGINS[name][Version(**{"version": version})])
 
-    @classmethod
-    def get_plugin(cls, name: str, version: typing.Optional[str] = None):
-        """Get a plugin with option to specify version.
 
-        Return a plugin object with the option to specify a version. The specified version's manifest must exist in manifests folder.
+def refresh():
+    """Refresh the plugin list."""
+    organizations = [
+        x for x in PLUGIN_DIR.iterdir() if x.name != "__pycache__"
+    ]  # ignore __pycache__
 
-        Args:
-            name: Name of the plugin.
-            version: Optional version of the plugin, must follow semver.
+    for org in organizations:
+        if org.is_file():
+            continue
 
-        Returns:
-            Plugin object
-        """
-        if version is None:
-            return load_plugin(PLUGINS[name][max(PLUGINS[name])])
-        else:
-            return load_plugin(PLUGINS[name][Version(**{"version": version})])
-
-    def load_config(self, config: typing.Union[dict, pathlib.Path]):
-        if isinstance(config, pathlib.Path):
-            with open(config) as fr:
-                m = json.load(fr)
-        elif isinstance(config, dict):
-            m = config
-        else:
-            raise TypeError("config must be a dict or a path")
-        _io = m["_io_keys"]
-        cl = m["class"]
-        m.pop("class", None)
-        if cl == "Compute":
-            pl = ComputePlugin(_uuid=False, **m)
-        elif cl == "WIPP":
-            pl = Plugin(_uuid=False, **m)
-        else:
-            raise ValueError("Invalid value of class")
-        for k, v in _io.items():
-            val = v["value"]
-            if val is not None:  # exclude those values not set
-                setattr(pl, k, val)
-        return pl
-
-    @classmethod
-    def refresh(cls):
-        """Refresh the plugin list.
-
-        This should be optimized, since it will become noticeably slow when
-        there are many plugins.
-        """
-        organizations = [
-            x for x in PLUGIN_DIR.iterdir() if x.name != "__pycache__"
-        ]  # ignore __pycache__
-
-        for org in organizations:
-            if org.is_file():
+        for file in org.iterdir():
+            if file.suffix == ".py":
                 continue
 
-            for file in org.iterdir():
-                if file.suffix == ".py":
-                    continue
+            plugin = validate_manifest(file)
+            key = name_cleaner(plugin.name)
+            # Add version and path to VERSIONS
+            if key not in PLUGINS:
+                PLUGINS[key] = {}
+            if plugin.version in PLUGINS[key]:
+                if not file == PLUGINS[key][plugin.version]:
+                    raise DuplicateVersionFound(
+                        "Found duplicate version of plugin %s in %s"
+                        % (plugin.name, PLUGIN_DIR)
+                    )
+            PLUGINS[key][plugin.version] = file
 
-                plugin = validate_manifest(file)
-                key = name_cleaner(plugin.name)
-                # Add version and path to VERSIONS
-                if key not in PLUGINS:
-                    PLUGINS[key] = {}
-                if plugin.version in PLUGINS[key]:
-                    if not file == PLUGINS[key][plugin.version]:
-                        raise DuplicateVersionFound(
-                            "Found duplicate version of plugin %s in %s"
-                            % (plugin.name, PLUGIN_DIR)
-                        )
-                PLUGINS[key][plugin.version] = file
+
+_r = refresh
+
+
+def list_plugins():
+    """List all local plugins."""
+    output = list(PLUGINS.keys())
+    output.sort()
+    return output
 
 
 class Plugin(WIPPPluginManifest, _PluginMethods):
@@ -340,12 +326,12 @@ def load_plugin(
 ) -> typing.Union[Plugin, ComputePlugin]:
     """Parse a manifest and return one of Plugin or ComputePlugin."""
     manifest = _load_manifest(manifest)
-    if "pluginHardwareRequirements" in manifest:
+    if "pluginHardwareRequirements" in manifest: # type: ignore[operator]
         # Parse the manifest
-        plugin = ComputePlugin(**manifest)  # New Schema
+        plugin = ComputePlugin(**manifest)  # type: ignore[arg-type]
     else:
         # Parse the manifest
-        plugin = Plugin(**manifest)  # Old Schema
+        plugin = Plugin(**manifest)  # type: ignore[arg-type]
     return plugin
 
 
@@ -385,5 +371,5 @@ def submit_plugin(
 
     # Refresh plugins list if refresh = True
     if refresh:
-        _Plugins.refresh()
+        _r()
     return plugin
