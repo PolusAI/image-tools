@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-rolling-ball-plugin:"${version}"
+docker build . -t polusai/rolling-ball-plugin:"${version}"

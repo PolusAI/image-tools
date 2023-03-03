@@ -1,4 +1,4 @@
-FROM labshare/polus-bfio-util:2.1.9
+FROM polusai/bfio:2.1.9
 
 # environment variables defined in labshare/polus-bfio-util
 # ENV EXEC_DIR="/opt/executables"
@@ -16,4 +16,4 @@ RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
 RUN python3 -c "import imageio; imageio.plugins.freeimage.download()"
 
-ENTRYPOINT [ "python3", "main.py" ]
+ENTRYPOINT [ "python3", "/opt/executables/main.py" ]

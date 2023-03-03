@@ -19,4 +19,4 @@ WORKDIR ${EXEC_DIR}
 USER root
 
 # Default command. Additional arguments are provided through the command line
-ENTRYPOINT ["python", "execute_notebook.py"]
+ENTRYPOINT ["python", "/opt/executables/execute_notebook.py"]

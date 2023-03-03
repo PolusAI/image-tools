@@ -19,12 +19,11 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes one input argument and one output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--VectorCollection1` | 1st stitchingVector Collection | Input | stitchingVector |
-| `--VectorCollection2` | 2nd stitchingVector Collection | Input | stitchingVector |
-| `--VectorCollection3` | 3rd stitchingVector Collection | Input | stitchingVector |
-| `--VectorCollection4` | 4th stitchingVector Collection | Input | stitchingVector |
-| `--VectorCollection5` | 5th stitchingVector Collection | Input | stitchingVector |
-| `--outDir` | Output collection | Output | stitchingVector |
-
+| Name                  | Description                    | I/O    | Type            |
+| --------------------- | ------------------------------ | ------ | --------------- |
+| `--VectorCollection1` | 1st stitchingVector Collection | Input  | stitchingVector |
+| `--VectorCollection2` | 2nd stitchingVector Collection | Input  | stitchingVector |
+| `--VectorCollection3` | 3rd stitchingVector Collection | Input  | stitchingVector |
+| `--VectorCollection4` | 4th stitchingVector Collection | Input  | stitchingVector |
+| `--VectorCollection5` | 5th stitchingVector Collection | Input  | stitchingVector |
+| `--outDir`            | Output collection              | Output | stitchingVector |

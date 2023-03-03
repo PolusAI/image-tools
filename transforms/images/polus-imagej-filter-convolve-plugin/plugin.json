@@ -1,0 +1,64 @@
+{
+  "name": "ImageJ filter convolve",
+  "version": "0.4.2",
+  "title": "ImageJ filter convolve",
+  "description": "This plugin applies a user specified convolutional kernel to an input collection.",
+  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com), Anjali Taneja and Nick Schaub (nick.schaub@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-filter-convolve-plugin:0.4.2",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": [
+          "ConvolveNaiveF",
+          "PadAndConvolveFFTF",
+          "PadAndConvolveFFT",
+          "ConvolveFFTC"
+        ]
+      },
+      "description": "Op overloading method to perform",
+      "required": true
+    },
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "kernel",
+      "type": "collection",
+      "description": "The convolutional kernel to be applied to the collection",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "opName",
+      "description": "Op overloading method to perform"
+    },
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.kernel",
+      "title": "kernel",
+      "description": "The convolutional kernel to be applied to the collection"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "name": "ImageJ threshold maxEntropy",
-  "version": "0.4.0",
+  "version": "0.4.2",
   "title": "ImageJ threshold maxEntropy",
   "description": "Implements Kapur-Sahoo-Wong (Maximum Entropy) thresholding method.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,13 +8,15 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-threshold-maxentropy-plugin:0.4.0",
+  "containerId": "polusai/imagej-threshold-maxentropy-plugin:0.4.2",
   "inputs": [
     {
       "name": "opName",
       "type": "enum",
       "options": {
-        "values": ["ApplyThresholdMethod$MaxEntropy"]
+        "values": [
+          "ApplyThresholdMethod$MaxEntropy"
+        ]
       },
       "description": "Operation to perform",
       "required": true

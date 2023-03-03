@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM polusai/bfio:2.1.9
 
 COPY VERSION /
 		
@@ -12,4 +12,4 @@ WORKDIR ${EXEC_DIR}
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3", "/opt/executables/main.py"]

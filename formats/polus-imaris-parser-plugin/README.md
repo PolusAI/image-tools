@@ -27,9 +27,9 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes one input argument and one output argument:
 
-| Name              | Description                                           | I/O    | Type          |
-|-------------------|-------------------------------------------------------|--------|---------------|
-| `--inpdir`        | Input image collection to be processed by this plugin | Input  | collection    |
-| `--metaoutdir`    | Metadata directory that stores overall data           | Output | collection    |
-| `--outdir`        | Output collection                                     | Output | csvCollection |
+| Name           | Description                                           | I/O    | Type          |
+| -------------- | ----------------------------------------------------- | ------ | ------------- |
+| `--inpdir`     | Input image collection to be processed by this plugin | Input  | collection    |
+| `--metaoutdir` | Metadata directory that stores overall data           | Output | collection    |
+| `--outdir`     | Output collection                                     | Output | csvCollection |
 

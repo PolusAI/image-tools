@@ -34,4 +34,4 @@ COPY --from=0 /opt/executables ${EXEC_DIR}/
 WORKDIR ${EXEC_DIR}
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3", "/opt/executables/main.py"]

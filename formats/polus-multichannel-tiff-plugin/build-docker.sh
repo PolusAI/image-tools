@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-multichannel-tiff-plugin:${version}
+docker build . -t polusai/multichannel-tiff-plugin:${version}

@@ -19,11 +19,11 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes one input argument and one output argument:
 
-| Name       | Description             | I/O    | Type |
-|------------|-------------------------|--------|------|
-| `inpDir`   | Input image collection  | Input  | Path |
-| `outDir`   | Output image pyramid    | Output | Pyramid |
-| `imageType`   | Image/Segmentation  | Input  | String |
-| `mesh` | Generate Mesh for Labelled Data | Input | Boolean |
-| `imagepattern`   | Image pattern  | Input  | String |
+| Name           | Description                     | I/O    | Type    |
+| -------------- | ------------------------------- | ------ | ------- |
+| `inpDir`       | Input image collection          | Input  | Path    |
+| `outDir`       | Output image pyramid            | Output | Pyramid |
+| `imageType`    | Image/Segmentation              | Input  | String  |
+| `mesh`         | Generate Mesh for Labelled Data | Input  | Boolean |
+| `imagepattern` | Image pattern                   | Input  | String  |
 
