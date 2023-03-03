@@ -1,0 +1,4 @@
+numpy==1.23.4
+nyxus==0.4.0
+preadator==0.2.0
+filepattern==1.4.7

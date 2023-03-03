@@ -1,4 +1,4 @@
-FROM python:3.9-alpine
+FROM polusai/bfio:2.1.9
 
 COPY VERSION /
 
@@ -21,4 +21,4 @@ RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 WORKDIR ${EXEC_DIR}
 
 # Default command. Additional arguments are provided through the command line
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3", "/opt/executables/main.py"]

@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-zo1-segmentation-plugin:${version}
+docker build . -t polusai/zo1-segmentation-plugin:${version}

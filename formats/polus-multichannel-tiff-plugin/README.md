@@ -26,7 +26,7 @@ contents of `plugin.json` into the pop-up window and submit.
 This plugin takes three input argument and one output argument:
 
 | Name             | Description                            | I/O    | Type        |
-|------------------|----------------------------------------|--------|-------------|
+| ---------------- | -------------------------------------- | ------ | ----------- |
 | `--filePattern`  | Filename pattern used to separate data | Input  | string      |
 | `--inpDir`       | Input image collection                 | Input  | collection  |
 | `--channelOrder` | What channel to assign each image to   | Input  | array       |

@@ -51,7 +51,7 @@ of `plugin.json` into the pop-up window and submit.
 This plugin takes 4 input arguments and 1 output argument:
 
 | Name            | Description                                  | I/O    | Type    |
-|-----------------|----------------------------------------------|--------|---------|
+| --------------- | -------------------------------------------- | ------ | ------- |
 | `--inpDir`      | Path to input images                         | Input  | String  |
 | `--darkfield`   | If 'true', will calculate darkfield image    | Input  | Boolean |
 | `--photobleach` | If 'true', will calculate photobleach scalar | Input  | Boolean |

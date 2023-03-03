@@ -47,13 +47,13 @@ Paste the contents of `plugin.json` into the pop-up window and submit.
 
 This plugin takes the following arguments:
 
-| Name          | Description             | I/O    | Type   | Default |
-|---------------|-------------------------|--------|--------|---------|
-| `--inputDir` | Input collection. | Input | collection | N/A |
-| `--filePattern` | File pattern to use for grouping images. | Input | string | N/A |
-| `--groupBy` | Grouping variables for images. Each group is cropped to the same bounding-box. | Input | string | N/A |
-| `--cropX` | Whether to crop along the x-axis. | Input | boolean | true |
-| `--cropY` | Whether to crop along the y-axis. | Input | boolean | true |
-| `--cropZ` | Whether to crop along the z-axis. | Input | boolean | true |
-| `--smoothing` | Whether to use gaussian smoothing on images to add more tolerance to noise. | Input | boolean | true |
-| `--outputDir` | Output collection. | Output | collection | N/A |
+| Name            | Description                                                                    | I/O    | Type       | Default |
+| --------------- | ------------------------------------------------------------------------------ | ------ | ---------- | ------- |
+| `--inputDir`    | Input collection.                                                              | Input  | collection | N/A     |
+| `--filePattern` | File pattern to use for grouping images.                                       | Input  | string     | N/A     |
+| `--groupBy`     | Grouping variables for images. Each group is cropped to the same bounding-box. | Input  | string     | N/A     |
+| `--cropX`       | Whether to crop along the x-axis.                                              | Input  | boolean    | true    |
+| `--cropY`       | Whether to crop along the y-axis.                                              | Input  | boolean    | true    |
+| `--cropZ`       | Whether to crop along the z-axis.                                              | Input  | boolean    | true    |
+| `--smoothing`   | Whether to use gaussian smoothing on images to add more tolerance to noise.    | Input  | boolean    | true    |
+| `--outputDir`   | Output collection.                                                             | Output | collection | N/A     |

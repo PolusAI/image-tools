@@ -1,7 +1,7 @@
-FROM labshare/polus-bfio-util:1.3.3-tensorflow
+FROM polusai/bfio:2.1.9-tensorflow
 
 COPY VERSION /
-		
+
 ARG EXEC_DIR="/opt/executables"
 ARG DATA_DIR="/data"
 
@@ -12,4 +12,4 @@ RUN mkdir -p ${EXEC_DIR} \
 COPY src ${EXEC_DIR}/
 WORKDIR ${EXEC_DIR}
 
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3", "/opt/executables/main.py"]

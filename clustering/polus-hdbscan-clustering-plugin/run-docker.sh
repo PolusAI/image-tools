@@ -1,6 +1,6 @@
 #!/bin/bash
 
-version=0.4.6
+version=$(<VERSION)
 datapath=$(readlink --canonicalize .)
 echo ${datapath}
 
@@ -13,12 +13,13 @@ minClusterSize=10
 incrementOutlierId=true
 outDir=/data/output
 
-docker run --mount type=bind,source=${datapath},target=/data/ --gpus=all \
-            labshare/polus-hdbscan-clustering-plugin:${version} \
-            --inpDir ${inpDir} \
-	    --groupingPattern ${groupingPattern} \
-	    --labelCol ${labelCol} \
-            --averageGroups ${averageGroups} \
-            --minClusterSize ${minClusterSize} \
-            --incrementOutlierId ${incrementOutlierId} \
-            --outDir ${outDir}
+docker run --mount type=bind,source=${datapath},target=/data/ \
+           --gpus=all \
+           labshare/polus-hdbscan-clustering-plugin:${version} \
+           --inpDir ${inpDir} \
+	       --groupingPattern ${groupingPattern} \
+	       --labelCol ${labelCol} \
+           --averageGroups ${averageGroups} \
+           --minClusterSize ${minClusterSize} \
+           --incrementOutlierId ${incrementOutlierId} \
+           --outDir ${outDir}

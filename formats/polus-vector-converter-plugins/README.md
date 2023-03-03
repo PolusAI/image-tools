@@ -53,17 +53,17 @@ Paste the contents of either `label_to_vector_plugin.json` or `vector_to_label_p
 
 The `label-to-vector` plugin takes 2 input arguments and 1 output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--inpDir` | Input image collection to be processed by this plugin. | Input | collection |
-| `--filePattern` | Image-name pattern to use when selecting images to process. | Input | string |
-| `--outDir` | Output collection. | Output | collection |
+| Name            | Description                                                 | I/O    | Type       |
+| --------------- | ----------------------------------------------------------- | ------ | ---------- |
+| `--inpDir`      | Input image collection to be processed by this plugin.      | Input  | collection |
+| `--filePattern` | Image-name pattern to use when selecting images to process. | Input  | string     |
+| `--outDir`      | Output collection.                                          | Output | collection |
 
 The `vector-to-label` plugin takes 3 input arguments and 1 output argument:
 
-| Name          | Description             | I/O    | Type   | Defaults |
-|---------------|-------------------------|--------|--------|----------|
-| `--inpDir` | Input image collection to be processed by this plugin. | Input | collection | N/A |
-| `--filePattern` | Image-name pattern to use when selecting images to process. | Input | string | ".+" |
-| `--flowMagnitudeThreshold` | The minimum flow magnitude at a pixel for it to be considered part of a cell. | Input | number | 0.1 |
-| `--outDir` | Output collection. | Output | collection | N/A |
+| Name                       | Description                                                                   | I/O    | Type       | Defaults |
+| -------------------------- | ----------------------------------------------------------------------------- | ------ | ---------- | -------- |
+| `--inpDir`                 | Input image collection to be processed by this plugin.                        | Input  | collection | N/A      |
+| `--filePattern`            | Image-name pattern to use when selecting images to process.                   | Input  | string     | ".+"     |
+| `--flowMagnitudeThreshold` | The minimum flow magnitude at a pixel for it to be considered part of a cell. | Input  | number     | 0.1      |
+| `--outDir`                 | Output collection.                                                            | Output | collection | N/A      |

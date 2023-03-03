@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-autocropping-plugin:"${version}"
+docker build . -t polusai/autocropping-plugin:"${version}"

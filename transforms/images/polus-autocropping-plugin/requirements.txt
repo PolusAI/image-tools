@@ -1,3 +1,2 @@
-bfio[all]==2.1.9
 filepattern==1.4.7
-scipy==1.7.1
+scipy>=1.7.1

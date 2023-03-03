@@ -1,7 +1,7 @@
 {
   "name": "Filepattern Generator",
-  "version": "0.2.0",
-  "containerId": "polusai/filepattern-generator-plugin:0.2.0",
+  "version": "0.2.1",
+  "containerId": "polusai/filepattern-generator-plugin:0.2.1",
   "title": "Filepattern Generator",
   "description": "Filepattern Generator plugin creates a csv or feather file containing a number of new filepatterns, where each filepattern will subset the data in the directory",
   "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com), Kevin Hannon",

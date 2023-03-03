@@ -1,6 +1,6 @@
 {
   "name": "ImageJ threshold minimum",
-  "version": "0.4.0",
+  "version": "0.4.2",
   "title": "ImageJ threshold minimum",
   "description": "Similarly to the Intermodes method, this assumes a bimodal histogram. The histogram is iteratively smoothed using a running average of size 3, until there are only two local maxima.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,13 +8,15 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-threshold-minimum-plugin:0.4.0",
+  "containerId": "polusai/imagej-threshold-minimum-plugin:0.4.2",
   "inputs": [
     {
       "name": "opName",
       "type": "enum",
       "options": {
-        "values": ["ApplyThresholdMethod$Minimum"]
+        "values": [
+          "ApplyThresholdMethod$Minimum"
+        ]
       },
       "description": "Operation to perform",
       "required": true

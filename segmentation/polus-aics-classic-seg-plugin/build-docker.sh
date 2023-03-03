@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-aics-classic-seg-plugin:${version}
+docker build . -t polusai/aics-classic-seg-plugin:${version}

@@ -1,6 +1,6 @@
 {
   "name": "ImageJ filter gauss",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "title": "ImageJ filter gauss",
   "description": "This plugin applies a Gaussian Convolutional filter to an input collection.",
   "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,14 +8,16 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-filter-gauss-plugin:0.3.0",
+  "containerId": "polusai/imagej-filter-gauss-plugin:0.3.2",
   "inputs": [
     {
       "name": "opName",
       "type": "enum",
       "options": {
-        "values": ["GaussRAISingleSigma",
-                    "DefaultGaussRAI"]
+        "values": [
+          "GaussRAISingleSigma",
+          "DefaultGaussRAI"
+        ]
       },
       "description": "Operation overloading method to perform",
       "required": true
@@ -37,7 +39,7 @@
       "type": "array",
       "description": "The standard deviations of the Gaussian filters, (x,y)",
       "required": false,
-      "options":{
+      "options": {
         "items": {
           "type": "string",
           "title": "The standard deviations of the Gaussian filters, (x,y)",

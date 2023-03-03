@@ -17,7 +17,7 @@ outDir=/data/basic
 docker run --mount type=bind,source=${datapath},target=/data/ \
             --gpus=all \
             --user $(id -u):$(id -g) \
-            labshare/polus-basic-flatfield-correction-plugin:${version} \
+            polusai/basic-flatfield-correction-plugin:${version} \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
             --darkfield ${darkfield} \

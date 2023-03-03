@@ -1,16 +1,22 @@
+FROM labshare/polus-bfio-util:2.1.9
 
-FROM python:3.7-alpine
+# environment variables defined in labshare/polus-bfio-util
+# ENV EXEC_DIR="/opt/executables"
+# ENV DATA_DIR="/data"
 
-COPY VERSION /
-		
-ARG EXEC_DIR="/opt/executables"
-ARG DATA_DIR="/data"
+# Change to .feather to save output file as feather file format.
+# ENV POLUS_EXT=".feather"
 
-RUN mkdir -p ${EXEC_DIR} \
-    && mkdir -p ${DATA_DIR}/inputs \
-    && mkdir ${DATA_DIR}/outputs
+# Change to WARNING for fewer logs, or DEBUG for debugging.
+ENV POLUS_LOG="INFO"
 
+# Work directory defined in the base container
+# WORKDIR ${EXEC_DIR}
+
+COPY VERSION ${EXEC_DIR}
 COPY src ${EXEC_DIR}/
-WORKDIR ${EXEC_DIR}
 
-ENTRYPOINT ["python3", "main.py"]
+RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
+
+# Default command. Additional arguments are provided through the command line
+ENTRYPOINT ["python3", "/opt/executables/main.py"]
