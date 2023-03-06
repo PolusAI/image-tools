@@ -3,7 +3,8 @@ import json
 import logging
 import os
 import pathlib
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from multiprocessing import cpu_count
 from typing import Any, Optional
 
@@ -11,7 +12,9 @@ import filepattern as fp
 import typer
 from tqdm import tqdm
 
-from polus.plugins.formats.ome_converter.image_converter import image_converter
+from polus.plugins.formats.ome_converter.image_converter import Extension, convert_image
+
+app = typer.Typer()
 
 # Initialize the logger
 logging.basicConfig(
@@ -21,6 +24,7 @@ logging.basicConfig(
 logger = logging.getLogger("polus.plugins.formats.ome_converter")
 
 
+@app.command()
 def main(
     inp_dir: pathlib.Path = typer.Option(
         ...,
@@ -28,9 +32,9 @@ def main(
         help="Input generic data collection to be processed by this plugin",
     ),
     pattern: str = typer.Option(
-        None, "--filePattern", help="A filepattern defining the images to be converted"
+        ".+", "--filePattern", help="A filepattern defining the images to be converted"
     ),
-    file_extension: Optional[str] = typer.Option(
+    file_extension: Extension = typer.Option(
         None, "--fileExtension", help="Type of data conversion"
     ),
     out_dir: pathlib.Path = typer.Option(..., "--outDir", help="Output collection"),
@@ -54,41 +58,53 @@ def main(
 
     FILE_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
 
-    FILE_EXT = FILE_EXT if file_extension is None else file_extension
+    if file_extension == Extension.Default:
+        file_extension = FILE_EXT
+    elif file_extension == Extension.OMEZARR:
+        file_extension = ".ome.zarr"
+    elif file_extension == Extension.OMETIF:
+        file_extension = ".ome.tif"
+
+    assert file_extension in [
+        ".ome.zarr",
+        ".ome.tif",
+    ], "Invalid fileExtension !! it should be either .ome.tif or .ome.zarr"
 
     numworkers = max(cpu_count(), 2)
-    if pattern is None:
-        pattern = ".*"
 
     fps = fp.FilePattern(inp_dir, pattern)
 
-    numworkers = max(cpu_count(), 2)
     if preview:
         with open(pathlib.Path(out_dir, "preview.json"), "w") as jfile:
             out_json: dict[str, Any] = {
                 "filepattern": pattern,
                 "outDir": [],
             }
-            for file in fps():
-                out_name = str(file[1][0].name.split(".")[0]) + FILE_EXT
+            for file in fps:
+                out_name = str(file[1][0].name.split(".")[0]) + file_extension
                 out_json["outDir"].append(out_name)
             json.dump(out_json, jfile, indent=2)
 
-    with ThreadPoolExecutor(max_workers=numworkers) as executor:
+    with ProcessPoolExecutor(max_workers=numworkers) as executor:
         threads = []
         for files in fps():
+            file = files[1][0]
             threads.append(
-                executor.submit(
-                    image_converter, pathlib.Path(files[1][0]), FILE_EXT, out_dir
-                )
+                executor.submit(convert_image, file, file_extension, out_dir)
             )
+
         for f in tqdm(
             as_completed(threads),
-            desc=f"converting images to {FILE_EXT}",
             total=len(threads),
+            mininterval=5,
+            desc=f"converting images to {file_extension}",
+            initial=0,
+            unit_scale=True,
+            colour="cyan",
         ):
+            time.sleep(0.2)
             f.result()
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    app()

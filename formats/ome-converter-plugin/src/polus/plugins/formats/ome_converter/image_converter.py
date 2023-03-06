@@ -1,6 +1,7 @@
 """Ome Converter."""
 import logging
 import pathlib
+from enum import Enum
 from multiprocessing import cpu_count
 
 from bfio import BioReader, BioWriter
@@ -12,17 +13,26 @@ TILE_SIZE = 2**13
 num_threads = max([cpu_count() // 2, 2])
 
 
-def image_converter(
+class Extension(str, Enum):
+    """Extension types to be converted."""
+
+    OMETIF = ".ome.tif"
+    OMEZARR = ".ome.zarr"
+    Default = "default"
+
+
+def convert_image(
     inp_image: pathlib.Path, file_extension: str, out_dir: pathlib.Path
 ) -> None:
-    """Convert datatypes which are supported by BioFormats to ome.tif or ome.zarr file format.
+    """Convert bioformats supported datatypes to ome.tif or ome.zarr file format.
 
-    Args::
-        inpImage - Path of an input image
-        fileExtension - Type of data conversion
-        outDir - Path to output directory
+    Args:
+        inp_image: Path of an input image.
+        file_extension: Type of data conversion.
+        out_dir: Path to output directory.
+
     Returns:
-        None
+        Images with either ome.tif or ome.zarr file format.
     """
     assert file_extension in [
         ".ome.zarr",

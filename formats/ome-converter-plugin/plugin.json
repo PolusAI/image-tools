@@ -31,12 +31,15 @@
       "name": "fileExtension",
       "type": "enum",
       "description": "Type of data conversion",
+      "default": "default",
       "options": {
         "values": [
           ".ome.tif",
-          ".ome.zarr"
+          ".ome.zarr",
+          "default"
         ]
-      }
+      },
+      "required": true
     }
   ],
   "outputs": [
@@ -60,7 +63,8 @@
     {
       "key": "inputs.fileExtension",
       "title": "fileExtension",
-      "description": "Type of data conversion"
+      "description": "Type of data conversion",
+      "default": ".ome.tif"
     }
   ]
 }
