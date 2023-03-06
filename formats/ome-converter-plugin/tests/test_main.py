@@ -12,7 +12,10 @@ from bfio import BioReader, BioWriter
 from PIL import Image
 from skimage import io
 
-from polus.plugins.formats.ome_converter.image_converter import convert_image
+from polus.plugins.formats.ome_converter.image_converter import (
+    batch_convert,
+    convert_image,
+)
 
 dirpath = os.path.abspath(os.path.join(__file__, "../.."))
 sys.path.append(dirpath)
@@ -21,6 +24,7 @@ inpDir = pathlib.Path(dirpath, "data/input")
 outDir = pathlib.Path(dirpath, "data/out")
 omeDir = pathlib.Path(dirpath, "data/outome")
 zarrDir = pathlib.Path(dirpath, "data/outzarr")
+synDir = pathlib.Path(dirpath, "data/synDir")
 if not inpDir.exists():
     inpDir.mkdir(parents=True, exist_ok=True)
 if not outDir.exists():
@@ -29,6 +33,8 @@ if not omeDir.exists():
     omeDir.mkdir(exist_ok=True, parents=True)
 if not zarrDir.exists():
     zarrDir.mkdir(parents=True, exist_ok=True)
+if not synDir.exists():
+    synDir.mkdir(parents=True, exist_ok=True)
 
 
 @pytest.fixture
@@ -45,12 +51,6 @@ def dowload_images():
         with open(inpDir.joinpath(file), "wb") as fw:
             fw.write(r.content)
 
-    arr = np.arange(0, 1048576, 1, np.uint8)
-    arr = np.reshape(arr, (1024, 1024))
-    image = Image.fromarray(arr)
-    outname = "syn_image_1.png"
-    image.save(inpDir.joinpath(outname))
-    imagelist["syn_image_1.png"] = ""
     return imagelist
 
 
@@ -68,30 +68,55 @@ def omewrite_func():
     return _omewrite
 
 
+def test_batch_converter(omewrite_func):
+    """Create synthetic images."""
+    pattern = ".+"
+    arr = np.arange(0, 1048576, 1, np.uint8)
+    arr1 = np.arange(0, 262144, 1, np.uint8)
+    arr = np.reshape(arr, (1024, 1024))
+    arr1 = np.reshape(arr1, (512, 512))
+    image = Image.fromarray(arr)
+    image1 = Image.fromarray(arr1)
+    outname = "syn_image.png"
+    outname1 = "syn_image_1.png"
+    image.save(synDir.joinpath(outname))
+    image1.save(synDir.joinpath(outname1))
+    for f in synDir.iterdir():
+        image = BioReader(f).read()
+        print(synDir.joinpath(f.stem + ".ome.tif"))
+        omewrite_func(image, omeDir.joinpath(f.stem + ".ome.tif"))
+
+    for f in synDir.iterdir():
+        image = BioReader(f).read()
+        print(synDir.joinpath(f.stem + ".ome.zarr"))
+        omewrite_func(image, zarrDir.joinpath(f.stem + ".ome.zarr"))
+
+    batch_convert(omeDir, zarrDir, pattern, ".ome.zarr")
+    batch_convert(zarrDir, omeDir, pattern, ".ome.tif")
+    assert all([f for f in os.listdir(omeDir) if ".ome.tif" in f]) is True
+    assert all([f for f in os.listdir(zarrDir) if ".ome.zarr" in f]) is True
+
+
 def test_image_converter_omezarr(dowload_images, omewrite_func):
-    """Testing of bioformat supported image datatypes conversion to ome.zarr file format."""
+    """Testing of bioformat supported image datatypes conversion to ome.zarr and ome.tif file format."""
     fname = inpDir.joinpath(list(dowload_images.keys())[0])
     image = io.imread(fname)
     outfile = outDir.joinpath(fname.name.split(".")[0] + ".ome.tif")
     omewrite_func(image, outfile)
+    pattern = ".+"
     fileExtension = ".ome.zarr"
-    pattern = ".*"
     fps = fp.FilePattern(outDir, pattern)
     for file in fps():
         fl = file[1][0]
-        convert_image(pathlib.Path(fl), ".ome.zarr", zarrDir)
-    assert all([f for f in os.listdir(outDir) if fileExtension in f]) is True
+        convert_image(pathlib.Path(fl), fileExtension, zarrDir)
+    assert all([f for f in os.listdir(zarrDir) if fileExtension in f]) is True
 
-
-def test_image_converter_ometif():
-    """Test of bioformat supported image datatypes conversion to ome.tif file format."""
     fileExtension = ".ome.tif"
-    pattern = ".*"
-    fps = fp.FilePattern(outDir, pattern)
+    fps = fp.FilePattern(zarrDir, pattern)
     for file in fps():
         fl = file[1][0]
         convert_image(pathlib.Path(fl), fileExtension, omeDir)
-    assert all([f for f in os.listdir(outDir) if fileExtension in f]) is True
+    assert all([f for f in os.listdir(omeDir) if fileExtension in f]) is True
 
 
 def test_bfio_backend(dowload_images):
@@ -112,5 +137,5 @@ def test_bfio_backend(dowload_images):
     br = BioReader(inpDir.joinpath(list(dowload_images.keys())[2]))
     assert br._backend_name != "python"
 
-    br = BioReader(inpDir.joinpath(list(dowload_images.keys())[3]))
-    pytest.fail("bfio unable to recognize java as a backend")
+    br = BioReader(synDir.joinpath("syn_image_1.png"))
+    assert br._backend_name == "java"

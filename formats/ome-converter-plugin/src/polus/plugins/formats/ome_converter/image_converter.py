@@ -1,10 +1,15 @@
 """Ome Converter."""
 import logging
 import pathlib
+import time
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from enum import Enum
 from multiprocessing import cpu_count
+from typing import Optional
 
+import filepattern as fp
 from bfio import BioReader, BioWriter
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -86,3 +91,60 @@ def convert_image(
                                 ] = br[
                                     y:y_max, x:x_max, z : z + 1, c, t  # noqa: E203
                                 ]
+
+
+def batch_convert(
+    inp_dir: pathlib.Path,
+    out_dir: pathlib.Path,
+    file_pattern: Optional[str] = ".+",
+    file_extension: Optional[str] = ".ome.tif",
+) -> None:
+    """Convert bioformats supported datatypes in batches to ome.tif or ome.zarr file format.
+
+    Args:
+        inp_dir: Path of an input directory.
+        out_dir: Path to output directory.
+        file_extension: Type of data conversion.
+        file_pattern: A pattern to select image data.
+
+    Returns:
+        Images with either ome.tif or ome.zarr file format.
+    """
+    logger.info(f"inp_dir = {inp_dir}")
+    logger.info(f"out_dir = {out_dir}")
+    logger.info(f"file_pattern = {file_pattern}")
+    logger.info(f"file_extension = {file_extension}")
+
+    assert inp_dir.exists(), f"{inp_dir} doesnot exists!! Please check input path again"
+    assert (
+        out_dir.exists()
+    ), f"{out_dir} doesnot exists!! Please check output path again"
+
+    assert file_extension in [
+        ".ome.zarr",
+        ".ome.tif",
+    ], "Invalid fileExtension !! it should be either .ome.tif or .ome.zarr"
+
+    numworkers = max(cpu_count() // 2, 2)
+
+    fps = fp.FilePattern(inp_dir, file_pattern)
+
+    with ProcessPoolExecutor(max_workers=numworkers) as executor:
+        threads = []
+        for files in fps():
+            file = files[1][0]
+            threads.append(
+                executor.submit(convert_image, file, file_extension, out_dir)
+            )
+
+        for f in tqdm(
+            as_completed(threads),
+            total=len(threads),
+            mininterval=5,
+            desc=f"converting images to {file_extension}",
+            initial=0,
+            unit_scale=True,
+            colour="cyan",
+        ):
+            time.sleep(0.2)
+            f.result()

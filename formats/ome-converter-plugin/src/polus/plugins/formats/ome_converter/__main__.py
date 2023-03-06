@@ -70,7 +70,7 @@ def main(
         ".ome.tif",
     ], "Invalid fileExtension !! it should be either .ome.tif or .ome.zarr"
 
-    numworkers = max(cpu_count(), 2)
+    numworkers = max(cpu_count() // 2, 2)
 
     fps = fp.FilePattern(inp_dir, pattern)
 
