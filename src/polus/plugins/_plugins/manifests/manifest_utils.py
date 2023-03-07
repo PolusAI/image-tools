@@ -81,7 +81,7 @@ def validate_manifest(
     if "pluginHardwareRequirements" in manifest:
         # Parse the manifest
         try:
-            plugin = ComputeSchema(**manifest)  # New Schema
+            plugin = ComputeSchema(**manifest)
         except ValidationError as err:
             raise err
         except BaseException as e:
@@ -89,7 +89,7 @@ def validate_manifest(
     else:
         # Parse the manifest
         try:
-            plugin = WIPPPluginManifest(**manifest)  # New Schema
+            plugin = WIPPPluginManifest(**manifest)
         except ValidationError as err:
             logger.info(manifest)
             raise err
