@@ -25,12 +25,6 @@ logger = logging.getLogger("polus.plugins")
 refresh()  # calls the refresh method when library is imported
 __plugins = list_plugins()
 
-# for _p in __plugins:
-#     # make each plugin available as polus.plugins.PluginName
-#     globals()[_p] = get_plugin(_p)
-
-# plugin_list = list_plugins()
-
 
 def __getattr__(name):
     if name == "list":
