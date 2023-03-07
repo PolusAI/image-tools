@@ -9,8 +9,7 @@ import requests
 import xmltodict
 from tqdm import tqdm
 
-from polus.plugins._plugins.classes import (ComputePlugin, Plugin, refresh,
-                                            submit_plugin)
+from polus.plugins._plugins.classes import ComputePlugin, Plugin, refresh, submit_plugin
 from polus.plugins._plugins.registry_utils import _generate_query, _to_xml
 
 logger = logging.getLogger("polus.plugins")

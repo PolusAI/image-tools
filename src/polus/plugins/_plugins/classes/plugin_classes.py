@@ -9,12 +9,22 @@ from copy import deepcopy
 from pydantic import Extra
 
 from polus.plugins._plugins.classes.plugin_methods import _PluginMethods
-from polus.plugins._plugins.io import (DuplicateVersionFound, Version,
-                                       _in_old_to_new, _ui_old_to_new)
-from polus.plugins._plugins.manifests.manifest_utils import (_load_manifest,
-                                                             validate_manifest)
-from polus.plugins._plugins.models import (ComputeSchema, PluginUIInput,
-                                           PluginUIOutput, WIPPPluginManifest)
+from polus.plugins._plugins.io import (
+    DuplicateVersionFound,
+    Version,
+    _in_old_to_new,
+    _ui_old_to_new,
+)
+from polus.plugins._plugins.manifests.manifest_utils import (
+    _load_manifest,
+    validate_manifest,
+)
+from polus.plugins._plugins.models import (
+    ComputeSchema,
+    PluginUIInput,
+    PluginUIOutput,
+    WIPPPluginManifest,
+)
 from polus.plugins._plugins.utils import cast_version, name_cleaner
 
 logger = logging.getLogger("polus.plugins")
@@ -326,7 +336,7 @@ def load_plugin(
 ) -> typing.Union[Plugin, ComputePlugin]:
     """Parse a manifest and return one of Plugin or ComputePlugin."""
     manifest = _load_manifest(manifest)
-    if "pluginHardwareRequirements" in manifest: # type: ignore[operator]
+    if "pluginHardwareRequirements" in manifest:  # type: ignore[operator]
         # Parse the manifest
         plugin = ComputePlugin(**manifest)  # type: ignore[arg-type]
     else:

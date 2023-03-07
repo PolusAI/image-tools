@@ -9,8 +9,10 @@ from tqdm import tqdm
 from polus.plugins._plugins.classes import submit_plugin
 from polus.plugins._plugins.gh import _init_github
 from polus.plugins._plugins.io import Version
-from polus.plugins._plugins.manifests.manifest_utils import (_error_log,
-                                                             _scrape_manifests)
+from polus.plugins._plugins.manifests.manifest_utils import (
+    _error_log,
+    _scrape_manifests,
+)
 
 logger = logging.getLogger("polus.plugins")
 
