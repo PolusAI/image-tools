@@ -1,9 +1,9 @@
-# Arrow to Tabular (v0.1.2)
+# Arrow to Tabular (v0.2.0)
 This WIPP plugin allows analysts to convert Arrow Feather File Format (V2) into the following file formats for researchers:
     - `.parquet`
     - `.csv`
 
-Contact [Kelechi Nina Mezu](mailto:nina.mezu@nih.gov) [Hamdah Shafqat Abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more information.
+Contact [Kelechi Nina Mezu](mailto:nina.mezu@nih.gov), [Hamdah Shafqat Abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more information.
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
@@ -24,5 +24,6 @@ This plugin takes two input arguments and one output argument:
 | Name            | Description                                                  | I/O    | Type       |
 | --------------- | ------------------------------------------------------------ | ------ | ---------- |
 | `--inpDir`      | Input generic data collection to be processed by this plugin | Input  | collection |
-| `--fileFormat`  | Filename pattern to convert                                   | Input  | string    |
+| `--fileFormat`  | Filename pattern to convert                                  | Input  | string     |
 | `--outDir`      | Output collection                                            | Output | collection |
+| `--preview`     | Generate a JSON file with outputs                            | Output | JSON       |

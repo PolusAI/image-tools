@@ -19,10 +19,12 @@
       "name": "fileFormat",
       "type": "enum",
       "description": "Output file type to convert from feather file",
+      "default": "default",
       "options": {
         "values": [
           ".csv",
-          ".parquet"
+          ".parquet",
+          "default"
         ]
       },
       "required": true
@@ -45,7 +47,8 @@
     {
       "key": "inputs.fileFormat",
       "title": "Filename pattern",
-      "description": "Output file type to convert from feather file. ex: .parquet or .csv"
+      "description": "Output file type to convert from feather file. ex: .parquet or .csv",
+      "default": ".csv"
     },
     {
       "key": "inputs.inpDir",

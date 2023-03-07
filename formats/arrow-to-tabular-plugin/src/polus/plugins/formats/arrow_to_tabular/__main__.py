@@ -11,7 +11,10 @@ import filepattern as fp
 import typer
 from tqdm import tqdm
 
-from polus.plugins.formats.arrow_to_tabular.arrow_to_tabular import arrow_tabular
+from polus.plugins.formats.arrow_to_tabular.arrow_to_tabular import (
+    Format,
+    arrow_tabular,
+)
 
 # Set number of processors for scalability
 max_workers = max(1, cpu_count() // 2)
@@ -30,7 +33,7 @@ def main(
         "--inpDir",
         help="Path to the input data",
     ),
-    file_format: str = typer.Option(
+    file_format: Format = typer.Option(
         None, "--fileFormat", help="Filepattern of desired tabular output file"
     ),
     out_dir: pathlib.Path = typer.Option(..., "--outDir", help="Output collection"),
@@ -53,11 +56,20 @@ def main(
         out_dir.exists()
     ), f"{out_dir} doesnot exists!! Please check output path again"
     FILE_EXT = os.environ.get("POLUS_TAB_EXT", ".csv")
-    FILE_EXT = FILE_EXT if file_format is None else file_format
-    assert FILE_EXT in [
+
+    if file_format == Format.Default:
+        file_format = FILE_EXT
+    elif file_format == Format.CSV:
+        file_format = ".csv"
+    elif file_format == Format.PARQUET:
+        file_format = ".parquet"
+    elif file_format == None:
+        file_format = FILE_EXT
+
+    assert file_format in [
         ".csv",
         ".parquet",
-    ], f"This tabular file format: {FILE_EXT} is not support supported by this plugin!! Choose either CSV or Parquet FileFormat"
+    ], f"This tabular file format: {file_format} is not support supported by this plugin!! Choose either CSV or Parquet FileFormat"
 
     pattern_list = [".feather", ".arrow"]
     pattern = [f.suffix for f in inp_dir.iterdir() if f.suffix in pattern_list][0]
@@ -77,7 +89,7 @@ def main(
                 "outDir": [],
             }
             for file in fps():
-                out_name = str(file[1][0].stem) + FILE_EXT
+                out_name = str(file[1][0].stem) + file_format
                 out_json["outDir"].append(out_name)
             json.dump(out_json, jfile, indent=2)
 
@@ -88,7 +100,7 @@ def main(
             processes.append(executor.submit(arrow_tabular, file, file_format, out_dir))
 
         for process in tqdm(
-            as_completed(processes), desc="Feather --> Tabular", total=len(processes)
+            as_completed(processes), desc="Arrow --> Tabular", total=len(processes)
         ):
             process.result()
 

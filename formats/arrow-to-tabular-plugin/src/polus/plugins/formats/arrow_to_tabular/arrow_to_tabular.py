@@ -1,22 +1,29 @@
 """Arrow to Tabular."""
 import logging
 import pathlib
+from enum import Enum
 
-import pyarrow.feather as pf
 import vaex
 
 logger = logging.getLogger(__name__)
 
 
+class Format(str, Enum):
+    """Extension types to be converted."""
+
+    CSV = ".csv"
+    PARQUET = ".parquet"
+    Default = "default"
+
+
 def arrow_tabular(file: pathlib.Path, file_format: str, out_dir: pathlib.Path) -> None:
-    """Convert Arrow file into tabular file using pyarrow.
+    """Convert Arrow file into tabular file.
+    This plugin uses vaex to open an arrow file and converts into csv or parquet tabular data.
 
     Args:
-        file (Path): Path to input file.
-        file_format (str): Filepattern of desired tabular output file.
-        out_dir (Path): Path to output directory.
-    Returns:
-        Tabular File
+        file : Path to input file.
+        file_format : Filepattern of desired tabular output file.
+        out_dir: Path to output directory.
     """
     file_name = pathlib.Path(file).stem
     logger.info("Arrow Conversion: Copy ${file_name} into outDir for processing...")
@@ -25,8 +32,7 @@ def arrow_tabular(file: pathlib.Path, file_format: str, out_dir: pathlib.Path) -
 
     logger.info("Arrow Conversion: Converting file into PyArrow Table")
 
-    table = pf.read_table(file)
-    data = vaex.from_arrow_table(table)
+    data = vaex.open(file)
     logger.info("Arrow Conversion: table converted")
     ncols = len(data)
     chunk_size = max([2**24 // ncols, 1])
