@@ -1,19 +1,19 @@
 """Arrow to Tabular."""
 import logging
 import pathlib
-from enum import Enum
 
+from enum import Enum
 import vaex
 
 logger = logging.getLogger(__name__)
 
 
-class Format(str, Enum):
-    """Extension types to be converted."""
 
-    CSV = ".csv"
-    PARQUET = ".parquet"
-    Default = "default"
+class Format(str, Enum):
+     """Extension types to be converted."""
+     CSV = ".csv"
+     PARQUET = ".parquet"
+     Default = "default"
 
 
 def arrow_tabular(file: pathlib.Path, file_format: str, out_dir: pathlib.Path) -> None:
