@@ -171,3 +171,5 @@ data
 # hidden files
 .DS_Store
 .ds_store
+# flake8
+.flake8
