@@ -31,3 +31,4 @@ This plugin takes 3 input arguments and 1 output argument:
 | `--filePattern`  | A filepattern, used to select data for conversion            | Input  | string      |
 | `--fileExtension`| A desired file format for conversion                         | Input  | enum        |
 | `--outDir`       | Output collection                                            | Output | genericData |
+| `--preview`      | Generate a JSON file with outputs                            | Output | JSON        |
