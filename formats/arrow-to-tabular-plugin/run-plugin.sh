@@ -14,7 +14,7 @@ outDir=/data/output
 fileFormat='.csv'
 
 # Show the help options
-docker run polusai/ome-converter-plugin:${version}
+docker run polusai/arrow-to-tabular-plugin:${version}
 
 # Run the plugin
 docker run --mount type=bind,source=${datapath},target=/data/  \

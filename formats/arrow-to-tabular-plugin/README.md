@@ -1,6 +1,6 @@
 # Arrow to Tabular (v0.2.0)
-This WIPP plugin allows analysts to convert Arrow Feather File Format (V2) into the following file formats for researchers:
-    - `.parquet`
+This WIPP plugin allows analysts to convert Arrow Feather File Format (V2) into the following file formats for researchers: \
+    - `.parquet` \
     - `.csv`
 
 Contact [Kelechi Nina Mezu](mailto:nina.mezu@nih.gov), [Hamdah Shafqat Abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more information.
