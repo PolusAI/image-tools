@@ -2,7 +2,7 @@
 authors = ["Nicholas Schaub <nick.schaub@nih.gov>"]
 description = "Python API to configure and run Polus Plugins."
 license = "License :: OSI Approved :: MIT License"
-maintainers = ["Camilo Velez <camilo.velez@axleinfo.com"]
+maintainers = ["Camilo Velez <camilo.velez@axleinfo.com>"]
 name = "polus-plugins"
 packages = [{include = "polus", from = "src"}]
 readme = "README.md"
