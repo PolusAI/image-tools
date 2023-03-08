@@ -18,7 +18,6 @@ docker run polusai/tabular-to-arrow-plugin:${version}
 
 # Run the plugin
 docker run --mount type=bind,source=${datapath},target=/data/ \
-            --env POLUS_LOG=${LOGLEVEL} \
             polusai/tabular-to-arrow-plugin:${version} \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
