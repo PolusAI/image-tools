@@ -16,6 +16,7 @@ from polus.plugins._plugins.io import (
     _ui_old_to_new,
 )
 from polus.plugins._plugins.manifests.manifest_utils import (
+    InvalidManifest,
     _load_manifest,
     validate_manifest,
 )
@@ -89,6 +90,9 @@ def refresh():
         x for x in PLUGIN_DIR.iterdir() if x.name != "__pycache__"
     ]  # ignore __pycache__
 
+    global _invalid
+    _invalid = {}
+
     for org in organizations:
         if org.is_file():
             continue
@@ -97,18 +101,34 @@ def refresh():
             if file.suffix == ".py":
                 continue
 
-            plugin = validate_manifest(file)
-            key = name_cleaner(plugin.name)
-            # Add version and path to VERSIONS
-            if key not in PLUGINS:
-                PLUGINS[key] = {}
-            if plugin.version in PLUGINS[key]:
-                if not file == PLUGINS[key][plugin.version]:
-                    raise DuplicateVersionFound(
-                        "Found duplicate version of plugin %s in %s"
-                        % (plugin.name, PLUGIN_DIR)
-                    )
-            PLUGINS[key][plugin.version] = file
+            try:
+                plugin = validate_manifest(file)
+            except InvalidManifest as e:
+                _invalid[_load_manifest(file)["name"]] = str(e.__cause__)
+            else:
+                key = name_cleaner(plugin.name)
+                # Add version and path to VERSIONS
+                if key not in PLUGINS:
+                    PLUGINS[key] = {}
+                if plugin.version in PLUGINS[key]:
+                    if not file == PLUGINS[key][plugin.version]:
+                        raise DuplicateVersionFound(
+                            "Found duplicate version of plugin %s in %s"
+                            % (plugin.name, PLUGIN_DIR)
+                        )
+                PLUGINS[key][plugin.version] = file
+
+    if len(_invalid) > 0:
+        logger.warning(
+            f"local manifests {[str(x) for x in _invalid.keys()]} are invalid. Run polus.plugins.print_invalid() for more details."
+        )
+
+
+def print_invalid():
+    """Print invalid manifests with respective validation errors."""
+    for x, y in _invalid.items():
+        print(x)
+        print(y + "\n")
 
 
 _r = refresh

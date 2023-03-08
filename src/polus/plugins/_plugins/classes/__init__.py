@@ -5,6 +5,7 @@ from polus.plugins._plugins.classes.plugin_classes import (
     get_plugin,
     list_plugins,
     load_plugin,
+    print_invalid,
     refresh,
     submit_plugin,
 )
@@ -17,4 +18,5 @@ __all__ = [
     "get_plugin",
     "refresh",
     "list_plugins",
+    "print_invalid",
 ]

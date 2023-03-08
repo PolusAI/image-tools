@@ -6,6 +6,7 @@ from polus.plugins._plugins.classes import (  # noqa # pylint: disable=unused-im
     get_plugin,
     list_plugins,
     load_plugin,
+    print_invalid,
     refresh,
     submit_plugin,
 )
@@ -41,6 +42,7 @@ __all__ = [
     "get_plugin",
     "load_plugin",
     "list_plugins",
+    "print_invalid",
     "update_polus_plugins",
     "update_nist_plugins",
 ]
