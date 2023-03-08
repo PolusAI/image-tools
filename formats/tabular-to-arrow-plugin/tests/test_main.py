@@ -1,34 +1,43 @@
 """Testing of Tabular to Arrow plugin."""
 import os
 import pathlib
-import vaex
-import pandas as pd
-import numpy as np
-import string
 import random
-from astropy.table import Table
 import shutil
+import string
+
 import fcsparser
 import filepattern as fp
+import numpy as np
+import pandas as pd
+import pytest
+import vaex
+from astropy.table import Table
 
 from polus.plugins.formats.tabular_to_arrow import tabular_arrow_converter as tb
-
-dirpath = os.path.abspath(os.path.join(__file__, "../.."))
-inpDir = pathlib.Path(dirpath, "data/input")
-outDir = pathlib.Path(dirpath, "data/output")
-if not inpDir.exists():
-    inpDir.mkdir(parents=True, exist_ok=True)
-if not outDir.exists():
-    outDir.mkdir(exist_ok=True, parents=True)
 
 
 class Generatedata:
     """Generate tabular data with several different file format."""
 
-    def __init__(self, inp_dir, file_pattern):
-        self.inp_dir = inp_dir
+    def __init__(self, file_pattern):
+        """Define instance attributes."""
+        self.dirpath = os.path.abspath(os.path.join(__file__, "../.."))
+        self.inp_dir = pathlib.Path(self.dirpath, "data/input")
+        if not self.inp_dir.exists():
+            self.inp_dir.mkdir(exist_ok=True, parents=True)
+        self.out_dir = pathlib.Path(self.dirpath, "data/output")
+        if not self.out_dir.exists():
+            self.out_dir.mkdir(exist_ok=True, parents=True)
         self.file_pattern = file_pattern
         self.x = self.create_dataframe()
+
+    def get_inp_dir(self):
+        """Get input directory."""
+        return self.inp_dir
+
+    def get_out_dir(self):
+        """Get output directory."""
+        return self.out_dir
 
     def create_dataframe(self):
         """Create Pandas dataframe."""
@@ -48,6 +57,7 @@ class Generatedata:
         ft.write(pathlib.Path(self.inp_dir, "data.fits"))
 
     def fcs_func(self):
+        """Get the test example of fcs data."""
         fpath = fcsparser.test_sample_path
         shutil.copy(fpath, self.inp_dir)
 
@@ -71,7 +81,7 @@ class Generatedata:
         v_df.export(pathlib.Path(self.inp_dir, "data.hdf5"))
 
     def __call__(self):
-        """To make a class callable"""
+        """To make a class callable."""
         data_ext = {
             ".hdf5": self.hdf_func,
             ".csv": self.csv_func,
@@ -84,79 +94,49 @@ class Generatedata:
         return data_ext[self.file_pattern]()
 
 
-def test_parquet():
-    """Test of parquet to arrow file format."""
-    file_pattern = ".parquet"
-    d = Generatedata(inpDir, file_pattern)
-    d()
-    file_pattern = "".join([".*", file_pattern])
-    fps = fp.FilePattern(inpDir, file_pattern)
-    for file in fps:
-        tb.df_to_arrow(file[1][0], file_pattern, outDir)
-
-    assert all([file[1][0].suffix for file in fp.FilePattern(outDir, ".arrow")]) is True
+FILE_EXT = [[".hdf5", ".parquet", ".csv", ".feather", ".fits", ".fcs"]]
 
 
-def test_csv():
-    """Test of csv to arrow file format."""
-    file_pattern = ".csv"
-    d = Generatedata(inpDir, file_pattern)
-    d()
-    file_pattern = "".join([".*", file_pattern])
-    fps = fp.FilePattern(inpDir, file_pattern)
-    for file in fps:
-        tb.df_to_arrow(file[1][0], file_pattern, outDir)
-
-    assert all([file[1][0].suffix for file in fp.FilePattern(outDir, ".arrow")]) is True
+@pytest.fixture(params=FILE_EXT)
+def poly(request):
+    """To get the parameter of the fixture."""
+    return request.param
 
 
-def test_hdf5():
-    """Test of hdf5 to arrow file format."""
-    file_pattern = ".hdf5"
-    d = Generatedata(inpDir, file_pattern)
-    d()
-    file_pattern = "".join([".*", file_pattern])
-    fps = fp.FilePattern(inpDir, file_pattern)
-    for file in fps:
-        tb.df_to_arrow(file[1][0], file_pattern, outDir)
+def test_tabular_to_arrow(poly):
+    """Testing of tabular data conversion to arrow file format."""
+    for i in poly:
+        if i != ".fcs":
+            d = Generatedata(i)
+            d()
+            file_pattern = "".join([".*", i])
+            fps = fp.FilePattern(d.get_inp_dir(), file_pattern)
+            for file in fps:
+                tb.df_to_arrow(file[1][0], file_pattern, d.get_out_dir())
 
-    assert all([file[1][0].suffix for file in fp.FilePattern(outDir, ".arrow")]) is True
+            assert (
+                all(
+                    [
+                        file[1][0].suffix
+                        for file in fp.FilePattern(d.get_out_dir(), ".arrow")
+                    ]
+                )
+                is True
+            )
+        else:
+            d = Generatedata(".fcs")
+            d()
+            file_pattern = "".join([".*", ".fcs"])
+            fps = fp.FilePattern(d.get_out_dir(), file_pattern)
+            for file in fps:
+                tb.fcs_to_arrow(file[1][0], d.get_out_dir())
 
-
-def test_feather():
-    """Test of feather to arrow file format."""
-    file_pattern = ".feather"
-    d = Generatedata(inpDir, file_pattern)
-    d()
-    file_pattern = "".join([".*", file_pattern])
-    fps = fp.FilePattern(inpDir, file_pattern)
-    for file in fps:
-        tb.df_to_arrow(file[1][0], file_pattern, outDir)
-
-    assert all([file[1][0].suffix for file in fp.FilePattern(outDir, ".arrow")]) is True
-
-
-def test_fits():
-    """Test of fits to arrow file format."""
-    file_pattern = ".fits"
-    d = Generatedata(inpDir, file_pattern)
-    d()
-    file_pattern = "".join([".*", file_pattern])
-    fps = fp.FilePattern(inpDir, file_pattern)
-    for file in fps:
-        tb.df_to_arrow(file[1][0], file_pattern, outDir)
-
-    assert all([file[1][0].suffix for file in fp.FilePattern(outDir, ".arrow")]) is True
-
-
-def test_fcs():
-    """Test of fcs to arrow file format."""
-    file_pattern = ".fcs"
-    d = Generatedata(inpDir, file_pattern)
-    d()
-    file_pattern = "".join([".*", file_pattern])
-    fps = fp.FilePattern(inpDir, file_pattern)
-    for file in fps:
-        tb.fcs_to_arrow(file[1][0], outDir)
-
-    assert all([file[1][0].suffix for file in fp.FilePattern(outDir, ".arrow")]) is True
+            assert (
+                all(
+                    [
+                        file[1][0].suffix
+                        for file in fp.FilePattern(d.get_out_dir(), ".arrow")
+                    ]
+                )
+                is True
+            )

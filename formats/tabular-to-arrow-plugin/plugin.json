@@ -24,7 +24,7 @@
         "values": [
           ".fcs",
           ".csv",
-          ".arrow",
+          ".feather",
           ".parquet",
           ".hdf5",
           ".fits"

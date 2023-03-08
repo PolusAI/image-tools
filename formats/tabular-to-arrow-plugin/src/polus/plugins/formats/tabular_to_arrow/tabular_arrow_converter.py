@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 FILE_EXT = ".arrow"
 
 
-def csv_to_df(file: str, out_dir: pathlib.Path):
+def csv_to_df(file: pathlib.Path, out_dir: pathlib.Path):
     """Convert csv into datafram or hdf5 file.
 
     Args:
@@ -39,8 +39,8 @@ def csv_to_df(file: str, out_dir: pathlib.Path):
     return df
 
 
-def binary_to_df(file: str, file_pattern: str):
-    """Convert any binary formats into vaex dataframe
+def binary_to_df(file: pathlib.Path, file_pattern: str):
+    """Convert any binary formats into vaex dataframe.
 
     Args:
         file: Path to input file.
@@ -63,15 +63,12 @@ def binary_to_df(file: str, file_pattern: str):
         )
 
 
-def fcs_to_arrow(file: str, out_dir: pathlib.Path):
+def fcs_to_arrow(file: pathlib.Path, out_dir: pathlib.Path):
     """Convert fcs file to csv. Copied from polus-fcs-to-csv-converter plugin.
 
     Args:
         file: Path to the directory containing the fcs file.
         out_dir: Path to save the output csv file.
-
-    Returns:
-        Converted csv file.
 
     """
     file_name = file.stem
@@ -92,16 +89,13 @@ def fcs_to_arrow(file: str, out_dir: pathlib.Path):
     df.export_feather(outputfile)
 
 
-def df_to_arrow(file: str, file_pattern: str, out_dir: pathlib.Path):
+def df_to_arrow(file: pathlib.Path, file_pattern: str, out_dir: pathlib.Path):
     """Convert vaex dataframe to Arrow feather file.
 
     Args:
         file: Path to the directory to grab file.
         file_pattern: File extension.
         out_dir: Path to the directory to save feather file.
-
-    Returns:
-        Arrow format file.
     """
     file_name = file.stem
     outname = file_name + FILE_EXT
@@ -128,6 +122,8 @@ def remove_files(out_dir: pathlib.Path):
         out_dir: Path to the output directory.
 
     """
-    [os.remove(f) for f in out_dir.iterdir() if not f.suffix in [".arrow", ".json"]]
+    for f in out_dir.iterdir():
+        if f.suffix not in [".arrow", ".json"]:
+            os.remove(f)
 
     logger.info("Done")
