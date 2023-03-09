@@ -4,6 +4,7 @@ import pathlib
 import random
 import shutil
 import string
+import typing
 
 import fcsparser
 import filepattern as fp
@@ -19,7 +20,7 @@ from polus.plugins.formats.tabular_to_arrow import tabular_arrow_converter as tb
 class Generatedata:
     """Generate tabular data with several different file format."""
 
-    def __init__(self, file_pattern):
+    def __init__(self, file_pattern: str):
         """Define instance attributes."""
         self.dirpath = os.path.abspath(os.path.join(__file__, "../.."))
         self.inp_dir = pathlib.Path(self.dirpath, "data/input")
@@ -31,15 +32,15 @@ class Generatedata:
         self.file_pattern = file_pattern
         self.x = self.create_dataframe()
 
-    def get_inp_dir(self):
+    def get_inp_dir(self) -> typing.Union[str, os.PathLike]:
         """Get input directory."""
         return self.inp_dir
 
-    def get_out_dir(self):
+    def get_out_dir(self) -> typing.Union[str, os.PathLike]:
         """Get output directory."""
         return self.out_dir
 
-    def create_dataframe(self):
+    def create_dataframe(self) -> pd.core.frame.DataFrame:
         """Create Pandas dataframe."""
         df = pd.DataFrame(
             {
@@ -51,36 +52,36 @@ class Generatedata:
 
         return df
 
-    def fits_func(self):
+    def fits_func(self) -> None:
         """Convert pandas dataframe to fits file format."""
         ft = Table.from_pandas(self.x)
         ft.write(pathlib.Path(self.inp_dir, "data.fits"))
 
-    def fcs_func(self):
+    def fcs_func(self) -> None:
         """Get the test example of fcs data."""
         fpath = fcsparser.test_sample_path
         shutil.copy(fpath, self.inp_dir)
 
-    def csv_func(self):
+    def csv_func(self) -> None:
         """Convert pandas dataframe to csv file format."""
         self.x.to_csv(pathlib.Path(self.inp_dir, "data.csv"), index=False)
 
-    def parquet_func(self):
+    def parquet_func(self) -> None:
         """Convert pandas dataframe to parquet file format."""
         self.x.to_parquet(
             pathlib.Path(self.inp_dir, "data.parquet"), engine="auto", compression=None
         )
 
-    def feather_func(self):
+    def feather_func(self) -> None:
         """Convert pandas dataframe to feather file format."""
         self.x.to_feather(pathlib.Path(self.inp_dir, "data.feather"))
 
-    def hdf_func(self):
+    def hdf_func(self) -> None:
         """Convert pandas dataframe to hdf5 file format."""
         v_df = vaex.from_pandas(self.x, copy_index=False)
         v_df.export(pathlib.Path(self.inp_dir, "data.hdf5"))
 
-    def __call__(self):
+    def __call__(self) -> None:
         """To make a class callable."""
         data_ext = {
             ".hdf5": self.hdf_func,

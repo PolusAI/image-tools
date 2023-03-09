@@ -1,6 +1,7 @@
 """Tabular to Arrow."""
 import json
 import logging
+import os
 import pathlib
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from multiprocessing import cpu_count
@@ -22,8 +23,9 @@ logging.basicConfig(
     datefmt="%d-%b-%y %H:%M:%S",
 )
 logger = logging.getLogger("polus.plugins.formats.tabular_to_arrow")
+logger.setLevel(logging.INFO)
 
-FILE_EXT = ".arrow"
+POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".arrow")
 
 
 @app.command()
@@ -48,10 +50,8 @@ def main(
     logger.info(f"outDir = {out_dir}")
     logger.info(f"filePattern = {file_pattern}")
 
-    assert inp_dir.exists(), f"{inp_dir} doesnot exists!! Please check input path again"
-    assert (
-        out_dir.exists()
-    ), f"{out_dir} doesnot exists!! Please check output path again"
+    assert inp_dir.exists(), f"{inp_dir} doesnot exist!! Please check input path again"
+    assert out_dir.exists(), f"{out_dir} doesnot exist!! Please check output path again"
 
     if file_pattern is None:
         file_pattern = ".*"
@@ -67,7 +67,7 @@ def main(
                 "outDir": [],
             }
             for file in fps:
-                out_name = str(file[1][0].stem) + FILE_EXT
+                out_name = str(file[1][0].stem) + POLUS_TAB_EXT
                 out_json["outDir"].append(out_name)
             json.dump(out_json, jfile, indent=2)
 
@@ -84,7 +84,7 @@ def main(
 
         for f in tqdm(
             as_completed(processes),
-            desc=f"converting tabular data to {FILE_EXT}",
+            desc=f"converting tabular data to {POLUS_TAB_EXT}",
             total=len(processes),
         ):
             f.result()

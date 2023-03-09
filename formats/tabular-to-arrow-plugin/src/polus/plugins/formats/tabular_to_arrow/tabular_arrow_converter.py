@@ -8,10 +8,10 @@ import vaex
 
 logger = logging.getLogger(__name__)
 
-FILE_EXT = ".arrow"
+POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".arrow")
 
 
-def csv_to_df(file: pathlib.Path, out_dir: pathlib.Path):
+def csv_to_df(file: pathlib.Path, out_dir: pathlib.Path) -> vaex.DataFrame:
     """Convert csv into datafram or hdf5 file.
 
     Args:
@@ -39,7 +39,7 @@ def csv_to_df(file: pathlib.Path, out_dir: pathlib.Path):
     return df
 
 
-def binary_to_df(file: pathlib.Path, file_pattern: str):
+def binary_to_df(file: pathlib.Path, file_pattern: str) -> vaex.DataFrame:
     """Convert any binary formats into vaex dataframe.
 
     Args:
@@ -48,6 +48,8 @@ def binary_to_df(file: pathlib.Path, file_pattern: str):
 
     Returns:
         Vaex dataframe.
+    Raises:
+      FileNotFoundError: An error occurred if input directory contains file extensions which are not supported by this plugin.
 
     """
     binary_patterns = [".*.fits", ".*.feather", ".*.parquet", ".*.hdf5", ".*.h5"]
@@ -63,7 +65,7 @@ def binary_to_df(file: pathlib.Path, file_pattern: str):
         )
 
 
-def fcs_to_arrow(file: pathlib.Path, out_dir: pathlib.Path):
+def fcs_to_arrow(file: pathlib.Path, out_dir: pathlib.Path) -> None:
     """Convert fcs file to csv. Copied from polus-fcs-to-csv-converter plugin.
 
     Args:
@@ -72,7 +74,7 @@ def fcs_to_arrow(file: pathlib.Path, out_dir: pathlib.Path):
 
     """
     file_name = file.stem
-    outname = file_name + FILE_EXT
+    outname = file_name + POLUS_TAB_EXT
     outputfile = out_dir.joinpath(outname)
     logger.info("fcs_to_feather : Begin parsing data out of .fcs file" + file_name)
 
@@ -89,7 +91,7 @@ def fcs_to_arrow(file: pathlib.Path, out_dir: pathlib.Path):
     df.export_feather(outputfile)
 
 
-def df_to_arrow(file: pathlib.Path, file_pattern: str, out_dir: pathlib.Path):
+def df_to_arrow(file: pathlib.Path, file_pattern: str, out_dir: pathlib.Path) -> None:
     """Convert vaex dataframe to Arrow feather file.
 
     Args:
@@ -98,7 +100,7 @@ def df_to_arrow(file: pathlib.Path, file_pattern: str, out_dir: pathlib.Path):
         out_dir: Path to the directory to save feather file.
     """
     file_name = file.stem
-    outname = file_name + FILE_EXT
+    outname = file_name + POLUS_TAB_EXT
     outputfile = out_dir.joinpath(outname)
 
     logger.info("df_to_feather: Scanning input directory files... ")
@@ -115,7 +117,7 @@ def df_to_arrow(file: pathlib.Path, file_pattern: str, out_dir: pathlib.Path):
     df.export_feather(outputfile)
 
 
-def remove_files(out_dir: pathlib.Path):
+def remove_files(out_dir: pathlib.Path) -> None:
     """Delete intermediate files other than arrow and json files from output directory.
 
     Args:
