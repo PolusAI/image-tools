@@ -6,7 +6,7 @@ This WIPP plugin allows analysts to convert various file formats received by res
 - `hdf5`
 - `fits`
 - `parquet`
-- `arrow`
+- `feather`
 
 Contact [Kelechi Nina Mezu](mailto:nina.mezu@nih.gov), [Hamdah Shafqat Abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more information.
 
