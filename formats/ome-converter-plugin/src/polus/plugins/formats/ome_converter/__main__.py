@@ -1,7 +1,6 @@
 """Ome Converter."""
 import json
 import logging
-import os
 import pathlib
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -55,20 +54,6 @@ def main(
     assert (
         out_dir.exists()
     ), f"{out_dir} doesnot exists!! Please check output path again"
-
-    FILE_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
-
-    if file_extension == Extension.Default:
-        file_extension = FILE_EXT
-    elif file_extension == Extension.OMEZARR:
-        file_extension = ".ome.zarr"
-    elif file_extension == Extension.OMETIF:
-        file_extension = ".ome.tif"
-
-    assert file_extension in [
-        ".ome.zarr",
-        ".ome.tif",
-    ], "Invalid fileExtension !! it should be either .ome.tif or .ome.zarr"
 
     numworkers = max(cpu_count() // 2, 2)
 

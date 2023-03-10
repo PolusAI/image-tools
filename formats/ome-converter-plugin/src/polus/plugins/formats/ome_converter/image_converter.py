@@ -1,9 +1,10 @@
 """Ome Converter."""
+import os
 import logging
+import enum
 import pathlib
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from enum import Enum
 from multiprocessing import cpu_count
 from typing import Optional
 
@@ -16,9 +17,10 @@ logger = logging.getLogger(__name__)
 TILE_SIZE = 2**13
 
 num_threads = max([cpu_count() // 2, 2])
+POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
 
 
-class Extension(str, Enum):
+class Extension(str, enum.Enum):
     """Extension types to be converted."""
 
     OMETIF = ".ome.tif"
@@ -27,7 +29,7 @@ class Extension(str, Enum):
 
 
 def convert_image(
-    inp_image: pathlib.Path, file_extension: str, out_dir: pathlib.Path
+    inp_image: pathlib.Path, file_extension: Extension, out_dir: pathlib.Path
 ) -> None:
     """Convert bioformats supported datatypes to ome.tif or ome.zarr file format.
 
@@ -39,10 +41,13 @@ def convert_image(
     Returns:
         Images with either ome.tif or ome.zarr file format.
     """
-    assert file_extension in [
-        ".ome.zarr",
-        ".ome.tif",
-    ], "Invalid fileExtension !! it should be either .ome.tif or .ome.zarr"
+
+    if file_extension == Extension.Default:
+        file_extension = POLUS_IMG_EXT
+    elif file_extension == Extension.OMEZARR:
+        file_extension = ".ome.zarr"
+    elif file_extension == Extension.OMETIF:
+        file_extension = ".ome.tif"
 
     with BioReader(inp_image) as br:
         # Loop through timepoints
@@ -96,8 +101,8 @@ def convert_image(
 def batch_convert(
     inp_dir: pathlib.Path,
     out_dir: pathlib.Path,
-    file_pattern: Optional[str] = ".+",
-    file_extension: Optional[str] = ".ome.tif",
+    file_pattern: Optional[str],
+    file_extension: Extension,
 ) -> None:
     """Convert bioformats supported datatypes in batches to ome.tif or ome.zarr file format.
 
@@ -120,11 +125,14 @@ def batch_convert(
         out_dir.exists()
     ), f"{out_dir} doesnot exists!! Please check output path again"
 
-    assert file_extension in [
-        ".ome.zarr",
-        ".ome.tif",
-    ], "Invalid fileExtension !! it should be either .ome.tif or .ome.zarr"
+    if file_extension == Extension.Default:
+        file_extension = POLUS_IMG_EXT
+    elif file_extension == Extension.OMEZARR:
+        file_extension = ".ome.zarr"
+    elif file_extension == Extension.OMETIF:
+        file_extension = ".ome.tif"
 
+    file_pattern = ".+" if file_pattern is None else file_pattern
     numworkers = max(cpu_count() // 2, 2)
 
     fps = fp.FilePattern(inp_dir, file_pattern)

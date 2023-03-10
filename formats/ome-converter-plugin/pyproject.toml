@@ -2,8 +2,10 @@
 name = "polus-plugins-formats-ome-converter"
 version = "0.3.0"
 description = "Convert BioFormats datatypes to ome.tif or ome.zarr file format"
-authors = ["Nick Schaub <nick.schaub@nih.gov>",
-           "Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>"]
+authors = [
+           "Nick Schaub <nick.schaub@nih.gov>",
+           "Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>"
+           ]
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
