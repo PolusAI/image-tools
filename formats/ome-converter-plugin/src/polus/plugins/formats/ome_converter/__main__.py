@@ -1,10 +1,10 @@
 """Ome Converter."""
 import json
+import os
 import logging
 import pathlib
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from multiprocessing import cpu_count
 from typing import Any, Optional
 
 import filepattern as fp
@@ -55,7 +55,7 @@ def main(
         out_dir.exists()
     ), f"{out_dir} doesnot exists!! Please check output path again"
 
-    numworkers = max(cpu_count() // 2, 2)
+    numworkers =  max(os.cpu_count() // 2, 1)
 
     fps = fp.FilePattern(inp_dir, pattern)
 
