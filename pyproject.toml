@@ -1,5 +1,5 @@
 [tool.poetry]
-authors = ["Nicholas Schaub <nick.schaub@nih.gov>"]
+authors = ["Nicholas Schaub <nick.schaub@nih.gov>", "Camilo Velez <camilo.velez@axleinfo.com>"]
 description = "Python API to configure and run Polus Plugins."
 license = "License :: OSI Approved :: MIT License"
 maintainers = ["Camilo Velez <camilo.velez@axleinfo.com>"]
@@ -34,3 +34,8 @@ requires = ["poetry-core"]
 
 [tool.isort]
 profile = "black"
+
+[tool.pytest.ini_options]
+addopts = [
+  "--import-mode=importlib",
+]

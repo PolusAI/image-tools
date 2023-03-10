@@ -17,10 +17,6 @@ from polus.plugins._plugins.update import (  # noqa # pylint: disable=unused-imp
 """
 Set up logging for the module
 """
-logging.basicConfig(
-    format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
-    datefmt="%d-%b-%y %H:%M:%S",
-)
 logger = logging.getLogger("polus.plugins")
 refresh()  # calls the refresh method when library is imported
 __plugins = list_plugins()
