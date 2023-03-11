@@ -9,7 +9,7 @@ This plugin supports the following file extensions are convertable into Arrow Fe
 - `parquet`
 - `feather`
 
-However  Arrow Feather File Format (V2) is convertable to all other file extensions except `fcs` and `fits`. The supported for other file extensions will be added in future.
+However  Arrow Feather File Format (V2) is convertable to all other file extensions except `fcs` and `fits`. The support for other file extensions will be added in future.
 
 
 Contact [Kelechi Nina Mezu](mailto:nina.mezu@nih.gov), [Hamdah Shafqat Abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more information.
