@@ -1,12 +1,16 @@
 # Tabular Converter (v0.1.0)
 
-This WIPP plugin allows analysts to convert various file formats received by researchers into Arrow Feather File Format (V2). This plugin supports the following file extensions:
+This WIPP plugin allows researches to convert the tabular data to various vaex supported file formats. 
+This plugin supports the following file extensions are convertable into Arrow Feather File Format (V2):
 - `fcs`
 - `csv`
 - `hdf5`
 - `fits`
 - `parquet`
 - `feather`
+
+However  Arrow Feather File Format (V2) is convertable to all other file extensions except `fcs` and `fits`. The supported for other file extensions will be added in future.
+
 
 Contact [Kelechi Nina Mezu](mailto:nina.mezu@nih.gov), [Hamdah Shafqat Abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more information.
 
