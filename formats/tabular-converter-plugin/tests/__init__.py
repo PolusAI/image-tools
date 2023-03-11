@@ -1,1 +1,1 @@
-"""Tabular Converter."""
+"""Tabular Converter plugin."""

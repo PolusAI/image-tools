@@ -78,10 +78,10 @@ def main(
                     processes.append(executor.submit(tab.fcs_to_arrow))
                 elif files[1][0].suffix == ".arrow":
                     processes.append(executor.submit(tab.arrow_to_tabular))
-                # else:
-                #     processes.append(
-                #         executor.submit(tab.df_to_arrow)
-                #     )
+                else:
+                    processes.append(
+                        executor.submit(tab.df_to_arrow)
+                    )
 
             for f in tqdm(
                 as_completed(processes),
@@ -90,7 +90,7 @@ def main(
             ):
                 f.result()
 
-            # tab.remove_files()
+            tab.remove_files()
 
         logger.info("Finished all processes!")
 

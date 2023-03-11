@@ -1,4 +1,4 @@
-"""Testing of Tabular Converter."""
+"""Testing of Tabular Converter plugin."""
 import os
 import pathlib
 import random
@@ -14,8 +14,8 @@ import pytest
 import vaex
 from astropy.table import Table
 
-from polus.plugins.formats.tabular_converter import tabular_converter as tb
 
+from src.polus.plugins.formats.tabular_converter import tabular_converter as tb
 
 class Generatedata:
     """Generate tabular data with several different file format."""
@@ -75,11 +75,16 @@ class Generatedata:
     def feather_func(self) -> None:
         """Convert pandas dataframe to feather file format."""
         self.x.to_feather(pathlib.Path(self.inp_dir, "data.feather"))
+    
+    def arrow_func(self) -> None:
+        """Convert pandas dataframe to Arrow file format."""
+        self.x.to_feather(pathlib.Path(self.inp_dir, "data.arrow"))
 
     def hdf_func(self) -> None:
         """Convert pandas dataframe to hdf5 file format."""
         v_df = vaex.from_pandas(self.x, copy_index=False)
         v_df.export(pathlib.Path(self.inp_dir, "data.hdf5"))
+
 
     def __call__(self) -> None:
         """To make a class callable."""
@@ -90,12 +95,19 @@ class Generatedata:
             ".feather": self.feather_func,
             ".fits": self.fits_func,
             ".fcs": self.fcs_func,
+            ".arrow": self.arrow_func,
         }
 
         return data_ext[self.file_pattern]()
+    
+    def clean_directories(self):
+        for f in self.get_out_dir().iterdir():
+            os.remove(f)
+        for f in self.get_inp_dir().iterdir():
+            os.remove(f)
 
 
-FILE_EXT = [[".hdf5", ".parquet", ".csv", ".feather", ".fits", ".fcs"]]
+FILE_EXT = [[".hdf5", ".parquet", ".csv", ".feather", ".fits", ".fcs", ".arrow"]]
 
 
 @pytest.fixture(params=FILE_EXT)
@@ -104,18 +116,19 @@ def poly(request):
     return request.param
 
 
-def test_tabular_to_arrow(poly):
-    """Testing of tabular data conversion to arrow file format."""
+def test_tabular_coverter(poly):
+    """Testing of vaex supported inter conversion of tabular data."""
     for i in poly:
-        if i != ".fcs":
+        if not i in [".fcs", ".arrow"]:
             d = Generatedata(i)
             d()
-            file_pattern = "".join([".*", i])
-            fps = fp.FilePattern(d.get_inp_dir(), file_pattern)
+            pattern = "".join([".*", i])
+            fps = fp.FilePattern(d.get_inp_dir(), pattern)
             for file in fps:
-                tb.df_to_arrow(file[1][0], file_pattern, d.get_out_dir())
+                tab = tb.Convert_tabular(file[1][0], ".arrow", d.get_out_dir())
+                tab.df_to_arrow()
 
-            assert (
+                assert (
                 all(
                     [
                         file[1][0].suffix
@@ -124,13 +137,14 @@ def test_tabular_to_arrow(poly):
                 )
                 is True
             )
-        else:
+        elif i == ".fcs":
             d = Generatedata(".fcs")
             d()
-            file_pattern = "".join([".*", ".fcs"])
-            fps = fp.FilePattern(d.get_out_dir(), file_pattern)
+            pattern = "".join([".*", i])
+            fps = fp.FilePattern(d.get_inp_dir(), pattern)
             for file in fps:
-                tb.fcs_to_arrow(file[1][0], d.get_out_dir())
+                tab = tb.Convert_tabular(file[1][0], ".arrow", d.get_out_dir())
+                tab.fcs_to_arrow()
 
             assert (
                 all(
@@ -141,3 +155,32 @@ def test_tabular_to_arrow(poly):
                 )
                 is True
             )
+            d.clean_directories()
+
+        elif i == ".arrow":
+            d = Generatedata(".arrow")
+            d()
+            pattern = "".join([".*", i])
+            fps = fp.FilePattern(d.get_inp_dir(), pattern)
+            extension_list = [
+                ".feather",
+                ".csv",
+                ".hdf5",
+                ".parquet",
+            ]
+            for ext in extension_list:
+                for file in fps:
+                    tab = tb.Convert_tabular(file[1][0], ext, d.get_out_dir())
+                    tab.arrow_to_tabular()
+
+                assert (
+                    all(
+                        [
+                            file[1][0].suffix
+                            for file in fp.FilePattern(d.get_out_dir(), ext)
+                        ]
+                    )
+                    is True
+                )
+
+
