@@ -14,8 +14,8 @@ import pytest
 import vaex
 from astropy.table import Table
 
+from polus.plugins.formats.tabular_converter import tabular_converter as tb
 
-from src.polus.plugins.formats.tabular_converter import tabular_converter as tb
 
 class Generatedata:
     """Generate tabular data with several different file format."""
@@ -75,7 +75,7 @@ class Generatedata:
     def feather_func(self) -> None:
         """Convert pandas dataframe to feather file format."""
         self.x.to_feather(pathlib.Path(self.inp_dir, "data.feather"))
-    
+
     def arrow_func(self) -> None:
         """Convert pandas dataframe to Arrow file format."""
         self.x.to_feather(pathlib.Path(self.inp_dir, "data.arrow"))
@@ -84,7 +84,6 @@ class Generatedata:
         """Convert pandas dataframe to hdf5 file format."""
         v_df = vaex.from_pandas(self.x, copy_index=False)
         v_df.export(pathlib.Path(self.inp_dir, "data.hdf5"))
-
 
     def __call__(self) -> None:
         """To make a class callable."""
@@ -99,8 +98,9 @@ class Generatedata:
         }
 
         return data_ext[self.file_pattern]()
-    
+
     def clean_directories(self):
+        """Remove files."""
         for f in self.get_out_dir().iterdir():
             os.remove(f)
         for f in self.get_inp_dir().iterdir():
@@ -119,7 +119,7 @@ def poly(request):
 def test_tabular_coverter(poly):
     """Testing of vaex supported inter conversion of tabular data."""
     for i in poly:
-        if not i in [".fcs", ".arrow"]:
+        if i not in [".fcs", ".arrow"]:
             d = Generatedata(i)
             d()
             pattern = "".join([".*", i])
@@ -129,14 +129,14 @@ def test_tabular_coverter(poly):
                 tab.df_to_arrow()
 
                 assert (
-                all(
-                    [
-                        file[1][0].suffix
-                        for file in fp.FilePattern(d.get_out_dir(), ".arrow")
-                    ]
+                    all(
+                        [
+                            file[1][0].suffix
+                            for file in fp.FilePattern(d.get_out_dir(), ".arrow")
+                        ]
+                    )
+                    is True
                 )
-                is True
-            )
         elif i == ".fcs":
             d = Generatedata(".fcs")
             d()
@@ -182,5 +182,3 @@ def test_tabular_coverter(poly):
                     )
                     is True
                 )
-
-

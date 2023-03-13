@@ -11,6 +11,3 @@ bump2version --config-file bumpversion.cfg --new-version ${version} --allow-dirt
 
 # Push to dockerhub
 docker push polusai/tabular-converter-plugin:${version}
-
-# Run unittests
-python -m unittest
