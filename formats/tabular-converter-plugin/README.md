@@ -11,7 +11,8 @@ This plugin supports the following file formats which are convertable into `arro
 6. feather
 
 ```
-However  Arrow file format is convertable to all other file formats except `fcs` and `fits`. The support for additional file formats will be added in future.
+However  the `arrow` file format is convertable to all other file formats except `fcs` and `fits`. 
+The support for additional file formats will be added in future.
 
 
 Contact [Kelechi Nina Mezu](mailto:nina.mezu@nih.gov), [Hamdah Shafqat Abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more information.
