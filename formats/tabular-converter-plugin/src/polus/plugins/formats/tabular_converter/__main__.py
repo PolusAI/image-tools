@@ -33,7 +33,7 @@ def main(
         help="Path to the input data",
     ),
     file_pattern: tb.Extension = typer.Option(
-        None, "--filePattern", help="Desired File Format"
+        None, "--filePattern", help="Desired File format to convert"
     ),
     out_dir: pathlib.Path = typer.Option(..., "--outDir", help="Output collection"),
     preview: Optional[bool] = typer.Option(
