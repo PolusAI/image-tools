@@ -33,7 +33,7 @@ def main(
         help="Path to the input data",
     ),
     file_pattern: tb.Extension = typer.Option(
-        None, "--filePattern", help="File Extension to convert into Feather file format"
+        None, "--filePattern", help="Desired File Format"
     ),
     out_dir: pathlib.Path = typer.Option(..., "--outDir", help="Output collection"),
     preview: Optional[bool] = typer.Option(
@@ -79,9 +79,7 @@ def main(
                 elif files[1][0].suffix == ".arrow":
                     processes.append(executor.submit(tab.arrow_to_tabular))
                 else:
-                    processes.append(
-                        executor.submit(tab.df_to_arrow)
-                    )
+                    processes.append(executor.submit(tab.df_to_arrow))
 
             for f in tqdm(
                 as_completed(processes),
