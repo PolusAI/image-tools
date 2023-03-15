@@ -1,9 +1,11 @@
+# type: ignore
 """Plugins I/O utilities."""
 import enum
 import logging
 import pathlib
 import re
 import typing
+from functools import singledispatch
 
 import fsspec
 from pydantic import BaseModel, Field, PrivateAttr, constr, validator
@@ -34,7 +36,7 @@ WIPP_TYPES = {
 
 
 class InputTypes(str, enum.Enum):  # wipp schema
-    """Enum of Inpyt Types for WIPP schema."""
+    """Enum of Input Types for WIPP schema."""
 
     collection = "collection"
     pyramid = "pyramid"
@@ -313,3 +315,90 @@ class Version(BaseModel):
 
 class DuplicateVersionFound(Exception):
     """Raise when two equal versions found."""
+
+
+"""CWL"""
+
+cwl_input_types = {
+    "path": "Directory",  # always Dir? Yes
+    "string": "string",
+    "number": "double",
+    "boolean": "boolean",
+    "genericData": "Directory"
+    # not yet implemented: array
+}
+
+
+def _type_in(input: Input):
+    """Return appropriate value for `type` based on input type."""
+    val = input.type.value
+    req = "" if input.required else "?"
+    if val == "enum":
+        if input.required:
+            s = [{"type": "enum", "symbols": input.options["values"]}]
+        else:
+            s = ["null", {"type": "enum", "symbols": input.options["values"]}]
+
+    elif val in cwl_input_types:
+        s = cwl_input_types[val] + req
+    else:
+        s = "string" + req  # defaults to string
+    return s
+
+
+def input_to_cwl(input):
+    """Return dict of inputs for cwl."""
+    r = {
+        f"{input.name}": {
+            "type": _type_in(input),
+            "inputBinding": {"prefix": f"--{input.name}"},
+        }
+    }
+    return r
+
+
+def output_to_cwl(o):
+    """Return dict of output args for cwl for input section."""
+    r = {
+        f"{o.name}": {
+            "type": "Directory",
+            "inputBinding": {"prefix": f"--{o.name}"},
+        }
+    }
+    return r
+
+
+def outputs_cwl(o):
+    """Return dict of output for `outputs` in cwl."""
+    r = {
+        f"{o.name}": {
+            "type": {"type": "array", "items": ["File", "Directory"]},
+            "outputBinding": {"glob": f"$(inputs.{o.name}.basename)"},
+        }
+    }
+    return r
+
+
+# -- I/O as arguments in .yml
+
+
+@singledispatch
+def _io_value_to_yml(io) -> str | dict:
+    return str(io)
+
+
+@_io_value_to_yml.register
+def _(io: pathlib.Path):
+    r = {"class": "Directory", "location": str(io)}
+    return r
+
+
+@_io_value_to_yml.register
+def _(io: enum.Enum):
+    r = io.name
+    return r
+
+
+def io_to_yml(io):
+    """Return IO entry for yml file."""
+    return _io_value_to_yml(io.value)
