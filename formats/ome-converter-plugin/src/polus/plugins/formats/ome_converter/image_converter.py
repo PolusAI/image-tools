@@ -37,9 +37,6 @@ def convert_image(
         inp_image: Path of an input image.
         file_extension: Type of data conversion.
         out_dir: Path to output directory.
-
-    Returns:
-        Images with either ome.tif or ome.zarr file format.
     """
 
     if file_extension == Extension.Default:
@@ -111,9 +108,6 @@ def batch_convert(
         out_dir: Path to output directory.
         file_extension: Type of data conversion.
         file_pattern: A pattern to select image data.
-
-    Returns:
-        Images with either ome.tif or ome.zarr file format.
     """
     logger.info(f"inp_dir = {inp_dir}")
     logger.info(f"out_dir = {out_dir}")
