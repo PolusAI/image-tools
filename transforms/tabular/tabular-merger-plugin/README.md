@@ -1,8 +1,25 @@
-# CSV Row Merger
+# Tabular Merger
 
-This WIPP plugin merges all csv files in a csv collection into one or more csv files using either row or column merging.
+This WIPP plugin merges all tabular files with vaex supported file formats into a combined file using either row or column merging.
+```
+1. csv
+2. hdf5
+3. parquet
+4. feather
+5. arrow
+```
 
-**If row merging**, csv files are assumed to have headers (column titles) in the first row. If headers are not the same between all files, csv files that don't have a specific column header will have the column filled with 'NaN' values. A column titled `file` is created in the output file, and this contains the name of the original input csv file associated with the row of data. **This plugin creates a csvCollection with a single csv file.**
+**row merging with same headers**
+
+if in this case `dim = row` and `sameColumns`, files are assumed to have headers (column Names) in the first row. If headers are not the same between all files, It finds common headers among files and then performs row merging. An additional column naming  `file` is created in the output file, and this contains the name of the original file associated with the row of data.
+
+**row merging without same headers**
+```
+dim = row
+sameColumns
+```
+In this case files can be merged even when are headers are not exactly same between all files, files that don't have a specific column header will have the column filled with 'NaN' values. An additional column naming  `file` is created in the output file, and this contains the name of the original file associated with the row of data.
+
 
 **If column merging**, it is assumed that all files have a column titled `file` that is used to merge columns across csv files. If some files have a `file` column value that does not match another csv file, then a new row is generated with the specified value in `file` and missing column values are filled with `NaN` values. **This plugin creates a csvCollection with a single csv file.**
 
@@ -30,5 +47,6 @@ This plugin takes two input argument and one output argument:
 | `--inpDir`         | Input image collection to be processed by this plugin      | Input  | collection    |
 | `--stripExtension` | Should csv be removed from the filename in the output file | Input  | boolean       |
 | `--dim`            | Perform `rows` or `columns` merger                         | Input  | string        |
-| `--sameRows`       | Only merge csv files with the same number of rows?         | Input  | boolean       |
+| `--sameRows`       | Only merge tabular files with the same number of rows?         | Input  | boolean       |
+| `--sameColumns`    | Only merge tabular files with the same header (Column Names)                         | Input  | string        |
 | `--outDir`         | Output csv file                                            | Output | csvCollection |
