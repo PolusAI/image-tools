@@ -1,0 +1,127 @@
+{
+  "name": "Tabular Merger",
+  "version": "0.5.0",
+  "title": "Tabular Merger",
+  "description": "Merge vaex supported tabular file format into a single merged file.",
+  "author": "Nicholas Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/tabular-merger-plugin:0.5.0",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.plugins.transforms.tabular.tabular_merger"
+  ],
+  "inputs": [
+    {
+      "name": "inpDir",
+      "type": "csvCollection",
+      "description": "Input image collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "filePattern",
+      "type": "string",
+      "description": "Pattern to parse input files",
+      "default": ".+",
+      "required": false
+    },
+    {
+      "name": "stripExtension",
+      "type": "boolean",
+      "description": "Should file extension be removed for filenames in the merged file column",
+      "required": true
+    },
+    {
+      "name": "fileExtension",
+      "type": "enum",
+      "description": "File format of an output file",
+      "required": true,
+      "options": {
+        "values": [
+          ".fcs",
+          ".csv",
+          ".feather",
+          ".parquet",
+          ".hdf5",
+          ".fits",
+          ".arrow",
+          "default"
+        ]
+      }
+    },
+    {
+      "name": "dim",
+      "type": "enum",
+      "options": {
+        "values": [
+          "rows",
+          "columns",
+          "default"
+        ]
+      },
+      "description": "Merging dimension",
+      "required": true
+    },
+    {
+      "name": "sameRows",
+      "type": "boolean",
+      "description": "Perform column merge on all files with the same number of rows?",
+      "required": true
+    },
+    {
+      "name": "sameColumns",
+      "type": "boolean",
+      "description": "Perform row merge on all files with the same column names",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "csvCollection",
+      "description": "Output csv file"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "Input collection",
+      "description": "Input image collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "filePattern",
+      "description": "Pattern to parse input files",
+      "default": true
+    },
+    {
+      "key": "inputs.stripExtension",
+      "title": "Remove File Extension",
+      "description": "Should file extension be removed for filenames in the merged file column",
+      "default": true
+    },
+    {
+      "key": "inputs.dim",
+      "title": "Merging dimension",
+      "description": "Merge along rows or columns?",
+      "default": true
+    },
+    {
+      "key": "inputs.sameRows",
+      "title": "Merge files with equal rows:",
+      "description": "Merge only files with matching number of rows?",
+      "default": false,
+      "condition": "model.inputs.dim=='columns'"
+    },
+    {
+      "key": "inputs.sameColumns",
+      "title": "Merge CSVs with equal rows:",
+      "description": "Merge only csvs with matching number of rows?",
+      "default": false,
+      "condition": "model.inputs.dim=='rows'"
+    }
+  ]
+}
