@@ -1,6 +1,6 @@
 {
   "name": "Tabular Merger",
-  "version": "0.5.0",
+  "version": "0.1.0",
   "title": "Tabular Merger",
   "description": "Merge vaex supported tabular file format into a single merged file.",
   "author": "Nicholas Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/tabular-merger-plugin:0.5.0",
+  "containerId": "polusai/tabular-merger-plugin:0.1.0",
   "baseCommand": [
     "python3",
     "-m",
@@ -69,13 +69,19 @@
       "name": "sameRows",
       "type": "boolean",
       "description": "Perform column merge on all files with the same number of rows?",
-      "required": true
+      "required": false
     },
     {
       "name": "sameColumns",
       "type": "boolean",
       "description": "Perform row merge on all files with the same column names",
-      "required": true
+      "required": false
+    },
+    {
+      "name": "mapVar",
+      "type": "string",
+      "description": "Column name to join files column wise",
+      "required": false
     }
   ],
   "outputs": [
@@ -95,33 +101,32 @@
       "key": "inputs.filePattern",
       "title": "filePattern",
       "description": "Pattern to parse input files",
-      "default": true
+      "default": ".+"
     },
     {
       "key": "inputs.stripExtension",
       "title": "Remove File Extension",
-      "description": "Should file extension be removed for filenames in the merged file column",
-      "default": true
+      "description": "Remove file extension in the merged file column"
     },
     {
       "key": "inputs.dim",
       "title": "Merging dimension",
-      "description": "Merge along rows or columns?",
-      "default": true
+      "description": "Merge along rows or columns?"
     },
     {
       "key": "inputs.sameRows",
       "title": "Merge files with equal rows:",
-      "description": "Merge only files with matching number of rows?",
-      "default": false,
-      "condition": "model.inputs.dim=='columns'"
+      "description": "Merge only files with matching number of rows?"
     },
     {
       "key": "inputs.sameColumns",
-      "title": "Merge CSVs with equal rows:",
-      "description": "Merge only csvs with matching number of rows?",
-      "default": false,
-      "condition": "model.inputs.dim=='rows'"
+      "title": "Merge CSVs with same columns:",
+      "description": "Merge files with with common columns between files?"
+    },
+    {
+      "key": "inputs.mapVar",
+      "title": "Column name use to merge files",
+      "description": "Column name use to merge files"
     }
   ]
 }

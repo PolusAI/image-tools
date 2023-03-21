@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-transforms-tabular-tabular-merger"
-version = "0.5.0"
+version = "0.1.0"
 description = "Merge vaex supported tabular file format into a single merged file."
 authors = [
 "Nick Schaub <nick.schaub@nih.gov>",
@@ -19,10 +19,9 @@ python = ">=3.9"
 filepattern = "^2.2.7"
 typer = "^0.7.0"
 blake3 = "^0.3.3"
-fcsparser = "^0.2.4"
 llvmlite = "^0.39.1"
 fastapi = "^0.92.0"
-vaex = "^4.8.0"
+vaex = "4.8.0"
 tqdm = "^4.65.0"
 
 

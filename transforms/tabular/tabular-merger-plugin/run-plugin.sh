@@ -1,11 +1,11 @@
 #!/bin/bash
-
-#!/bin/bash
 version=$(<VERSION)
-datapath=''
+datapath=$(readlink --canonicalize data)
 
 # Inputs
-inpDir=/data/cytoplasm
+inpDir=/data/input
+filePattern=".*"
+fileExtension=".csv"
 
 # Output paths
 outDir=/data/output
@@ -13,15 +13,20 @@ outDir=/data/output
 #Other params
 stripExtension=false
 dim=rows
-sameRows= true
+mapVar = "mask_intensity"
 
 # Log level, must be one of ERROR, CRITICAL, WARNING, INFO, DEBUG
 LOGLEVEL=INFO
 
 docker run --mount type=bind,source=${datapath},target=/data/  \
             --env POLUS_LOG=${LOGLEVEL} \
-            polusai/polus-csv-merger-plugin:${version} \
+            polusai/tabular-merger-plugin:${version} \
             --inpDir ${inpDir} \
+            --filePattern ${filePattern} \
             --stripExtension ${stripExtension} \
+            --fileExtension ${fileExtension} \
             --dim ${dim} \
+            --sameRows \
+            --sameColumns \
+            --mapVar ${mapVar} \
             --outDir ${outDir}

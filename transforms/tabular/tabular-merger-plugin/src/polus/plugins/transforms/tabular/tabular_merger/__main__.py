@@ -36,7 +36,6 @@ def main(
     file_extension: tm.Extension = typer.Option(
         None, "--fileExtension", help="File format of an output combined file"
     ),
-    out_dir: pathlib.Path = typer.Option(..., "--outDir", help="Output collection"),
     dim: tm.Dimensions = typer.Option(
         ..., "--dim", help="Perform `rows` or `columns` merging"
     ),
@@ -46,6 +45,10 @@ def main(
     same_columns: bool = typer.Option(
         False, "--sameColumns", help="Merge files with common header"
     ),
+    map_var: str = typer.Option(
+        None, "--mapVar", help="Column name to join files column wise"
+    ),
+    out_dir: pathlib.Path = typer.Option(..., "--outDir", help="Output collection"),
     preview: Optional[bool] = typer.Option(
         False, "--preview", help="Output a JSON preview of files"
     ),
@@ -59,6 +62,7 @@ def main(
     logger.info(f"dim= {dim}")
     logger.info(f"sameRows= {same_rows}")
     logger.info(f"sameColumns= {same_columns}")
+    logger.info(f"mapVar= {map_var}")
 
     inp_dir = inp_dir.resolve()
     out_dir = out_dir.resolve()
@@ -90,10 +94,11 @@ def main(
         inp_dir_files,
         strip_extension,
         file_extension,
-        out_dir,
         dim,
         same_rows,
         same_columns,
+        map_var,
+        out_dir,
     )
 
     exec_time = time.time() - st_time

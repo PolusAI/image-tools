@@ -1,4 +1,4 @@
-# Tabular Merger
+# Tabular Merger (v0.1.0)
 
 This WIPP plugin merges all tabular files with vaex supported file formats into a combined file using either row or column merging.
 ```
@@ -8,24 +8,21 @@ This WIPP plugin merges all tabular files with vaex supported file formats into 
 4. feather
 5. arrow
 ```
-
 **row merging with same headers**
 
-if in this case `dim = row` and `sameColumns`, files are assumed to have headers (column Names) in the first row. If headers are not the same between all files, It finds common headers among files and then performs row merging. An additional column naming  `file` is created in the output file, and this contains the name of the original file associated with the row of data.
+If this is a case `dim = rows` and `sameColumns`, files are assumed to have headers (column Names) in the first row. If headers are not the same between all files, It finds common headers among files and then performs row merging. An additional column with name  `file` is created in the output file, and this contains the name of the original file associated with the row of data.
 
 **row merging without same headers**
-```
-dim = row
-sameColumns
-```
-In this case files can be merged even when are headers are not exactly same between all files, files that don't have a specific column header will have the column filled with 'NaN' values. An additional column naming  `file` is created in the output file, and this contains the name of the original file associated with the row of data.
 
+If this is a case `dim = rows`, In this case files can be merged even when are headers are not exactly same between all files, files that don't have a specific column header will have the column filled with 'NaN' values. An additional column with name  `file` is created in the output file, and this contains the name of the original file associated with the row of data.
 
-**If column merging**, it is assumed that all files have a column titled `file` that is used to merge columns across csv files. If some files have a `file` column value that does not match another csv file, then a new row is generated with the specified value in `file` and missing column values are filled with `NaN` values. **This plugin creates a csvCollection with a single csv file.**
+**column merging with same rows**
+If this is a case `dim = columns` and `sameRows`, it is assumed that all files have same number of rows. The filename is added as a prefix to each column name to avoid the duplication of column names on merging.
 
-**When column merging, if sameRows==true**, then no `file` column needs to be present. All files with the same number of columns will be merged into one csv file. **This plugin creates a csvCollection with as many csv files as there are unique numbers of rows in the csv collection.**
+**column merging with unequal rows**
+If this is a case `dim = columns`. The `map_var` should be defined to join tabular files with unequal rows. The `indexcolumn` column is created from `map_var` and indexing its values in each tabular file which allows the joining of tabular files without duplication of rows.
 
-If `stripExtension` is set to true, then the `.csv` file extension is removed from the file name in the `file` column.
+If `stripExtension` is set to true, then the file extensiton is removed from the file name in the `file` column.
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
@@ -40,13 +37,17 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-This plugin takes two input argument and one output argument:
+This plugin takes nine input argument and one output argument:
 
 | Name               | Description                                                | I/O    | Type          |
 |--------------------|------------------------------------------------------------|--------|---------------|
 | `--inpDir`         | Input image collection to be processed by this plugin      | Input  | collection    |
+| `--filePattern`    | Pattern to parse tabular files                             | Input  | string        |
 | `--stripExtension` | Should csv be removed from the filename in the output file | Input  | boolean       |
-| `--dim`            | Perform `rows` or `columns` merger                         | Input  | string        |
-| `--sameRows`       | Only merge tabular files with the same number of rows?         | Input  | boolean       |
-| `--sameColumns`    | Only merge tabular files with the same header (Column Names)                         | Input  | string        |
-| `--outDir`         | Output csv file                                            | Output | csvCollection |
+| `--fileExtension`  | File format of an output combined file                     | Input  | enum          |
+| `--dim`            | Perform `rows` or `columns` merger                         | Input  | enum          |
+| `--sameRows`       | Merge tabular files with the same number of rows?          | Input  | boolean       |
+| `--sameColumns`    | Merge tabular files with the same header(Column Names)     | Input  | boolean       |
+| `--mapVar`         | Column name use to merge files                             | Input  | string        |
+| `--outDir`         | Output csv file                                            | Output | collection    |
+| `--preview`        | Generate JSON file with outputs                            | Output | JSON          |
