@@ -1,3 +1,4 @@
+"""Tabular Thresholding."""
 import statistics
 
 import numpy
@@ -7,7 +8,7 @@ def find_threshold(
     values: numpy.ndarray,
     false_positive_rate: float,
 ) -> float:
-    """Computes a threshold value using a user-specified false positive rate.
+    """Compute a threshold value using a user-specified false positive rate.
 
     We assume that the `negative_values` follow a single gaussian distribution.
      We estimate the mean and standard deviation of this distribution and

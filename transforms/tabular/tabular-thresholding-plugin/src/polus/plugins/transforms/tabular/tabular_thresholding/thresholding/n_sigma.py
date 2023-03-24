@@ -1,8 +1,9 @@
+"""Tabular Thresholding."""
 import numpy
 
 
 def find_threshold(values: numpy.ndarray, n: int = 4) -> float:
-    """Computes the threshold as `mu + n * sigma`.
+    """Compute the threshold as `mu + n * sigma`.
 
     Args:
         values: 1d array of values over which tom compute the threshold.

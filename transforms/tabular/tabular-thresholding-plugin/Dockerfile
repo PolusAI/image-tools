@@ -1,18 +1,20 @@
 FROM polusai/bfio:2.1.9
 
-COPY VERSION /
+# environment variables defined in polusai/bfio
+ENV EXEC_DIR="/opt/executables"
+ENV POLUS_IMG_EXT=".ome.tif"
+ENV POLUS_TAB_EXT=".csv"
 
-ARG EXEC_DIR="/opt/executables"
-ARG DATA_DIR="/data"
-
-ENV FILE_EXT="csv"
-
-RUN mkdir -p ${EXEC_DIR} \
-    && mkdir -p ${DATA_DIR}/{inputs, outputs}
-
-COPY src ${EXEC_DIR}/
+# Work directory defined in the base container
 WORKDIR ${EXEC_DIR}
 
-RUN pip install -r ${EXEC_DIR}/requirements.txt --no-cache-dir --force
+COPY pyproject.toml ${EXEC_DIR}
+COPY VERSION ${EXEC_DIR}
+COPY README.md ${EXEC_DIR}
+RUN pip3 install --index-url https://test.pypi.org/simple/ filepattern==2.2.7
+COPY src ${EXEC_DIR}/src
 
-ENTRYPOINT ["python3", "main.py"]
+RUN pip3 install ${EXEC_DIR} --no-cache-dir
+
+ENTRYPOINT ["python3", "-m", "polus.plugins.transforms.tabular.tabular_thresholding"]
+CMD ["--help"]

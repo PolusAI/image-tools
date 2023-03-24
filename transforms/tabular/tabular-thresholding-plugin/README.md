@@ -1,6 +1,4 @@
-# Tabular Thresholding Plugin
-
-
+# Tabular Thresholding Plugin (v0.1.3)
 This plugin uses three [threshold methods](https://github.com/nishaq503/thresholding.git) to compute threshold values on a user-defined variable and then determines if each label (ROI) is above or below the calculated threshold value. A new feature column will be computed for selected threshold method with the values in  binary format (0, 1) \
 *0* `negative or below threshold`\
 *1* `positive or above threshold`
@@ -32,19 +30,18 @@ contents of `plugin.json` into the pop-up window and submit.
 
 ## Options
 
-This plugin takes 11 input arguments and one output argument:
+This plugin takes 10 input arguments and one output argument:
 
 | Name                    | Description                                         | I/O    | Type          |
 |-------------------------|-----------------------------------------------------|--------|---------------|
 | `--inpDir`              | Input directory containing tabular data CSVs        | Input  | csvCollection |
-| `--metaDir`             | Input directory containing metadata of tabular data | Input  | csvCollection |
-| `--mappingvariableName` | FeatureName use to merge CSVs                       | Input  | string        |
+| `--filePattern`         | Pattern to parse tabular files                      | Input  | string        |
 | `--negControl`          | FeatureName describing non treated wells/ROI        | Input  | string        |
 | `--posControl`          | FeatureName describing treated wells/ROI            | Input  | string        |
-| `--variableName`        | FeatureName for thresholding                        | Input  | string        |
+| `--varName`             | FeatureName for thresholding                        | Input  | string        |
 | `--thresholdType`       | See above in README                                 | Input  | enum          |
 | `--falsePositiverate`   | Area to the right of the threshold                  | Input  | float         |
 | `--numBins`             | Number of bins for histogram                        | Input  | number        |
 | `--n`                   | Number of standard deviation                        | Input  | number        |
-| `--outFormat`           | Output file format                                  | Input  | string        |
+| `--outFormat`           | Output file format                                  | Input  | enum          |
 | `--outDir`              | Output collection                                   | Output | csvCollection |

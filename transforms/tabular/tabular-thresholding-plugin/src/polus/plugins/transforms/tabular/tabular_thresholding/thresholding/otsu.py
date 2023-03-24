@@ -1,3 +1,4 @@
+"""Tabular Thresholding."""
 import numpy
 
 
@@ -6,18 +7,16 @@ def find_threshold(
     num_bins: int = 256,
     normalize_histogram: bool = False,
 ) -> float:
-    """Computes the otsu threshold for the given values.
+    """Compute the otsu threshold for the given values.
 
     Args:
         values: 1d array of values
         num_bins: to use for a histogram
         normalize_histogram: Whether to normalize the histogram by max
          frequency.
-
     Returns:
         The calculated threshold value.
     """
-
     # Get the image histogram
     hist, bin_edges = numpy.histogram(values, bins=num_bins)
 
