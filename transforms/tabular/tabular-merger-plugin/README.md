@@ -1,13 +1,13 @@
 # Tabular Merger (v0.1.0)
 
 This WIPP plugin merges all tabular files with vaex supported file formats into a combined file using either row or column merging.
-```
+
 1. csv
 2. hdf5
 3. parquet
 4. feather
 5. arrow
-```
+
 **row merging with same headers**
 
 If this is a case `dim = rows` and `sameColumns`, files are assumed to have headers (column Names) in the first row. If headers are not the same between all files, It finds common headers among files and then performs row merging. An additional column with name  `file` is created in the output file, and this contains the name of the original file associated with the row of data.

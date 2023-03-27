@@ -25,11 +25,11 @@ class Generatedata:
         truncColumns: typing.Optional[bool],
     ):
         """Define instance attributes."""
-        self.dirpath = os.path.abspath(os.path.join(__file__, "../.."))
-        self.inp_dir = pathlib.Path(self.dirpath, "data/input")
+        self.dirpath = pathlib.Path.cwd().parent.joinpath("data")
+        self.inp_dir = pathlib.Path(self.dirpath, "input")
         if not self.inp_dir.exists():
             self.inp_dir.mkdir(exist_ok=True, parents=True)
-        self.out_dir = pathlib.Path(self.dirpath, "data/output")
+        self.out_dir = pathlib.Path(self.dirpath, "output")
         if not self.out_dir.exists():
             self.out_dir.mkdir(exist_ok=True, parents=True)
         self.file_pattern = file_pattern

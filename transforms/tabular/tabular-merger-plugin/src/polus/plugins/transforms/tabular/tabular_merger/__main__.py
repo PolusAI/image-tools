@@ -33,11 +33,13 @@ def main(
         "--stripExtension",
         help="Should csv be removed from the filename when indicating which file a row in a csv file came from?",
     ),
-    file_extension: tm.Extension = typer.Option(
-        None, "--fileExtension", help="File format of an output combined file"
+    file_extension: tm.Extensions = typer.Option(
+        tm.Extensions.Default,
+        "--fileExtension",
+        help="File format of an output combined file",
     ),
     dim: tm.Dimensions = typer.Option(
-        ..., "--dim", help="Perform `rows` or `columns` merging"
+        tm.Dimensions.Default, "--dim", help="Perform `rows` or `columns` merging"
     ),
     same_rows: bool = typer.Option(
         False, "--sameRows", help="Only merge files with the same number of rows?"

@@ -5,7 +5,7 @@ import logging
 import os
 import pathlib
 from collections import Counter
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import numpy as np
 import vaex
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".csv")
 
 
-class Extension(str, enum.Enum):
+class Extensions(str, enum.Enum):
     """File format of an output combined file."""
 
     CSV = ".csv"
@@ -24,7 +24,7 @@ class Extension(str, enum.Enum):
     PARQUET = ".parquet"
     HDF = ".hdf5"
     FEATHER = ".feather"
-    Default = "default"
+    Default = POLUS_TAB_EXT
 
 
 class Dimensions(str, enum.Enum):
@@ -32,7 +32,7 @@ class Dimensions(str, enum.Enum):
 
     Rows = "rows"
     Columns = "columns"
-    Default = "default"
+    Default = "rows"
 
 
 def sorted_dataframe_list(
@@ -84,15 +84,16 @@ def remove_files(curr_dir: pathlib.Path) -> None:
 def merge_files(
     inp_dir_files: List,
     strip_extension: bool,
-    file_extension: Union[Extension, str],
-    dim: Union[Dimensions, str],
+    file_extension: Extensions,
+    dim: Dimensions,
     same_rows: Optional[bool],
     same_columns: Optional[bool],
     map_var: Optional[str],
     out_dir: str,
 ) -> None:
-    """Merge tabular files with vaex supported file formats into a single combined file using either row or column merging.The merge file can be save into any of the vaex supported file format.
+    """Merge tabular files with vaex supported file formats into a single combined file using either row or column merging.
 
+    The merged file can be saved into any of the vaex supported file format.
     Args:
         inp_dir_files: List of an input files.
         file_pattern : Pattern to parse input files.
@@ -104,31 +105,6 @@ def merge_files(
         map_var: Variable Name used to join file column wise.
         out_dir:Path to output directory
     """
-    if isinstance(file_extension, str):
-        file_extension = Extension(file_extension)
-    if isinstance(dim, str):
-        dim = Dimensions(dim)
-
-    if file_extension == Extension.Default:
-        file_extension = POLUS_TAB_EXT
-    elif file_extension == Extension.CSV:
-        file_extension = Extension.CSV.value
-    elif file_extension == Extension.ARROW:
-        file_extension = Extension.ARROW.value
-    elif file_extension == Extension.PARQUET:
-        file_extension = Extension.PARQUET.value
-    elif file_extension == Extension.HDF:
-        file_extension = Extension.HDF.value
-    elif file_extension == Extension.FEATHER:
-        file_extension = Extension.FEATHER.value
-
-    if dim == Dimensions.Default:
-        dim = Dimensions.Rows.value
-    elif dim == Dimensions.Rows:
-        dim = Dimensions.Rows.value
-    elif dim == Dimensions.Columns:
-        dim = Dimensions.Columns.value
-
     # Generate the path to the output file
     outPath = pathlib.Path(out_dir).joinpath(f"merged{file_extension}")
     curr_dir = pathlib.Path(".").cwd()
