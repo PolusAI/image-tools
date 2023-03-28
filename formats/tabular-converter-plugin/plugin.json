@@ -16,48 +16,60 @@
     ],
     "inputs": [
         {
+            "name": "inpDir",
+            "type": "genericData",
+            "description": "Input data collection to be processed by this plugin",
+            "required": true
+        },
+        {
             "name": "filePattern",
+            "type": "string",
+            "description": "Pattern to parse input files",
+            "required": false
+        },
+        {
+            "name": "fileExtension",
             "type": "enum",
-            "description": "Filename pattern used to separate data",
+            "description": "File format of an output file",
             "required": true,
             "options": {
                 "values": [
-                    ".fcs",
                     ".csv",
+                    ".fits",
+                    ".fcs",
                     ".feather",
                     ".parquet",
                     ".hdf5",
-                    ".fits",
                     ".arrow",
                     "default"
                 ]
             }
-        },
-        {
-            "name": "inpDir",
-            "type": "genericData",
-            "description": "Input image collection to be processed by this plugin",
-            "required": true
         }
     ],
     "outputs": [
         {
             "name": "outDir",
             "type": "genericData",
-            "description": "Output collection"
+            "description": "Output directory"
         }
     ],
     "ui": [
         {
-            "key": "inputs.filePattern",
-            "title": "Filename pattern",
-            "default": ".csv",
-            "description": "Filename pattern used to separate data"
-        },
-        {
             "key": "inputs.inpDir",
             "title": "Input collection",
-            "description": "Input generic data collection to be processed by this plugin"
+            "description": "Input data collection to be processed by this plugin"
+        },
+        {
+            "key": "inputs.filePattern",
+            "title": "FilePattern",
+            "description": "Pattern to parse input files",
+            "default": ".+"
+        },
+        {
+            "key": "inputs.fileExtension",
+            "title": "FileExtension",
+            "description": "Desired file format of an ouput file",
+            "default": ".arrow"
         }
     ]
 }
