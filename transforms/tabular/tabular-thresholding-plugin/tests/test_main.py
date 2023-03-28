@@ -1,10 +1,10 @@
 """Tabular Thresholding."""
 
-import os
 import pathlib
 import random
+import shutil
 import string
-import typing
+import tempfile
 
 import filepattern as fp
 import numpy as np
@@ -22,25 +22,21 @@ class Generatedata:
 
     def __init__(self, file_pattern: str, size: int, outname: str):
         """Define instance attributes."""
-        self.dirpath = os.path.abspath(os.path.join(__file__, "../.."))
-        self.inp_dir = pathlib.Path(self.dirpath, ".data/input")
-        if not self.inp_dir.exists():
-            self.inp_dir.mkdir(exist_ok=True, parents=True)
-        self.out_dir = pathlib.Path(self.dirpath, ".data/output")
-        if not self.out_dir.exists():
-            self.out_dir.mkdir(exist_ok=True, parents=True)
+        self.dirpath = pathlib.Path.cwd()
+        self.inp_dir = tempfile.mkdtemp(dir=self.dirpath)
+        self.out_dir = tempfile.mkdtemp(dir=self.dirpath)
         self.file_pattern = file_pattern
         self.size = size
         self.outname = outname
         self.x = self.create_dataframe()
 
-    def get_inp_dir(self) -> typing.Union[str, os.PathLike]:
+    def get_inp_dir(self) -> pathlib.Path:
         """Get input directory."""
-        return self.inp_dir
+        return pathlib.Path(self.inp_dir)
 
-    def get_out_dir(self) -> typing.Union[str, os.PathLike]:
+    def get_out_dir(self) -> pathlib.Path:
         """Get output directory."""
-        return self.out_dir
+        return pathlib.Path(self.out_dir)
 
     def create_dataframe(self) -> pd.core.frame.DataFrame:
         """Create Pandas dataframe."""
@@ -97,13 +93,12 @@ class Generatedata:
 
     def clean_directories(self):
         """Remove files."""
-        for f in self.get_out_dir().iterdir():
-            os.remove(f)
-        for f in self.get_inp_dir().iterdir():
-            os.remove(f)
+        for d in self.dirpath.iterdir():
+            if d.is_dir() and d.name.startswith("tmp"):
+                shutil.rmtree(d)
 
 
-EXT = [[".csv", ".feather", ".arrow", ".hdf5", ".parquet"]]
+EXT = [[".csv", ".feather", ".arrow", ".parquet", ".hdf5"]]
 
 
 @pytest.fixture(params=EXT)
@@ -135,11 +130,14 @@ def test_tabular_thresholding(poly):
 
             assert i in [f.suffix for f in d.get_out_dir().iterdir()]
 
-            df = vaex.open(d.get_out_dir().joinpath(file[1][0].stem + "_binary" + i))
+            df = vaex.open(
+                pathlib.Path(d.get_out_dir(), file[1][0].stem + "_binary" + i)
+            )
             threshold_methods = ["fpr", "otsu", "nsigma"]
             assert (all(item in list(df.columns) for item in threshold_methods)) is True
             assert np.allclose(np.unique(df[threshold_methods]), [0, 1]) is True
             assert file[1][0].stem + "_thresholds.json" in [
                 f.name for f in d.get_out_dir().iterdir()
             ]
-            d.clean_directories()
+
+        # d.clean_directories()

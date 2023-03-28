@@ -38,7 +38,7 @@ def main(
         help="Path to the input data",
     ),
     file_pattern: str = typer.Option(
-        ...,
+        ".+",
         "--filePattern",
         help="Patttern to parse file names",
     ),
@@ -53,7 +53,7 @@ def main(
         help="Column name containing information of the position of wells with known treatment outcome",
     ),
     var_name: str = typer.Option(
-        ..., "--varName", help="Column name for computing thresholds"
+        tt.Methods.Default, "--varName", help="Column name for computing thresholds"
     ),
     threshold_type: tt.Methods = typer.Option(
         ..., "--thresholdType", help="Name of the threshold method"
@@ -65,7 +65,9 @@ def main(
         512, "--numBins", help="Number of Bins for otsu threshold"
     ),
     n: int = typer.Option(4, "--n", help="Number of Standard deviation"),
-    out_format: tt.Extension = typer.Option(..., "--outFormat", help="Output format"),
+    out_format: tt.Extensions = typer.Option(
+        tt.Extensions.Default, "--outFormat", help="Output format"
+    ),
     out_dir: pathlib.Path = typer.Option(..., "--outDir", help="Output collection"),
     preview: Optional[bool] = typer.Option(
         False,
@@ -137,6 +139,16 @@ def main(
         )
         executor.close()
         executor.join()
+
+    # Deleting intermediate files from input directory
+    for f in inp_dir.iterdir():
+        if f.is_file() and file_pattern != ".*.hdf5":
+            if f.suffix in [".hdf5", ".yaml"]:
+                os.remove(f)
+        else:
+            if ".hdf5.hdf5" in f.name or f.suffix == ".yaml":
+                os.remove(f)
+
     endtime = round((time.time() - starttime) / 60, 3)
     logger.info(f"Time taken to process binary threhold CSVs: {endtime} minutes!!!")
     return

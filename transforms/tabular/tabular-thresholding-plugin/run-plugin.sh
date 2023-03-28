@@ -7,7 +7,6 @@ datapath=$(readlink --canonicalize ../data)
 
 #Inputs
 inpDir=/data/inp
-metaDir=/data/meta
 outDir=/data/out
 filePattern = '.*'
 # Name of the variable which has information of untreated cell labels in binary format for example (0,1)
@@ -20,7 +19,7 @@ thresholdType='all'
 numBins=512
 falsePositiverate=0.1
 n=4
-outFormat="feather"
+outFormat=".arrow"
 
 
 # Log level, must be one of ERROR, CRITICAL, WARNING, INFO, DEBUG

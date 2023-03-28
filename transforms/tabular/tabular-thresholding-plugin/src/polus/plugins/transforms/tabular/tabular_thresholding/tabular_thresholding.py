@@ -5,7 +5,7 @@ import logging
 import os
 import pathlib
 import warnings
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
 import vaex
@@ -21,12 +21,11 @@ from polus.plugins.transforms.tabular.tabular_thresholding.thresholding import (
 )
 
 logger = logging.getLogger(__name__)
-logger = logging.getLogger(__name__)
 
-POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".csv")
+POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".arrow")
 
 
-class Extension(str, enum.Enum):
+class Extensions(str, enum.Enum):
     """File format of an output file."""
 
     CSV = ".csv"
@@ -34,7 +33,7 @@ class Extension(str, enum.Enum):
     PARQUET = ".parquet"
     HDF = ".hdf5"
     FEATHER = ".feather"
-    Default = "default"
+    Default = POLUS_TAB_EXT
 
 
 class Methods(str, enum.Enum):
@@ -44,18 +43,18 @@ class Methods(str, enum.Enum):
     NSIGMA = "n_sigma"
     FPR = "fpr"
     ALL = "all"
-    Default = "default"
+    Default = "all"
 
 
 def thresholding_func(
     neg_control: str,
     pos_control: str,
     var_name: str,
-    threshold_type: Union[Methods, str],
+    threshold_type: Methods,
     false_positive_rate: Optional[float],
     num_bins: Optional[int],
     n: Optional[int],
-    out_format: Union[Extension, str],
+    out_format: Extensions,
     out_dir: pathlib.Path,
     file: pathlib.Path,
 ) -> None:
@@ -75,37 +74,11 @@ def thresholding_func(
         n: Number of standard deviation away from mean value.
 
     """
-    if isinstance(threshold_type, str):
-        threshold_type = Methods(threshold_type)
-    if isinstance(out_format, str):
-        out_format = Extension(out_format)
-
-    if threshold_type == Methods.Default:
-        threshold_type = Methods.OTSU.value
-    elif threshold_type == Methods.OTSU:
-        threshold_type = Methods.OTSU.value
-    elif threshold_type == Methods.NSIGMA:
-        threshold_type = Methods.NSIGMA.value
-    elif threshold_type == Methods.FPR:
-        threshold_type = Methods.FPR.value
-    elif threshold_type == Methods.ALL:
-        threshold_type = Methods.ALL.value
-
-    if out_format == Extension.Default:
-        out_format = POLUS_TAB_EXT
-    elif out_format == Extension.CSV:
-        out_format = Extension.CSV.value
-    elif out_format == Extension.ARROW:
-        out_format = Extension.ARROW.value
-    elif out_format == Extension.PARQUET:
-        out_format = Extension.PARQUET.value
-    elif out_format == Extension.HDF:
-        out_format = Extension.HDF.value
-    elif out_format == Extension.FEATHER:
-        out_format = Extension.FEATHER.value
-
     chunk_size = 100_000
-    df = vaex.open(file, convert=True, progress=True)
+    if file.suffix == ".csv":
+        df = vaex.from_csv(file, convert=True, chunk_size=chunk_size)
+    else:
+        df = vaex.open(file, convert=True, progress=True)
 
     assert any(
         item in [var_name, neg_control, pos_control] for item in list(df.columns)
@@ -182,20 +155,21 @@ def thresholding_func(
             df["fpr"] = df.func.where(df[var_name] <= fpr_thr, 0, 1)
             df["nsigma"] = df.func.where(df[var_name] <= nsigma_thr, 0, 1)
 
-    outjson = out_dir.joinpath(f"{plate}_thresholds.json")
+    outjson = pathlib.Path(out_dir).joinpath(f"{plate}_thresholds.json")
     with open(outjson, "w") as outfile:
         json.dump(threshold_dict, outfile)
     logger.info(f"Saving Thresholds in JSON fileformat {outjson}")
 
-    if out_format in [".feather", ".arrow"]:
-        outname = out_dir.joinpath(f"{plate}_binary{out_format}")
+    if f"{out_format}" in [".feather", ".arrow"]:
+        outname = pathlib.Path(out_dir, f"{plate}_binary{out_format}")
         df.export_feather(outname)
         logger.info(f"Saving f'{plate}_binary{out_format}")
-    elif out_format == ".csv":
-        outname = out_dir.joinpath(f"{plate}_binary{out_format}")
+    elif f"{out_format}" == ".csv":
+        outname = pathlib.Path(out_dir).joinpath(f"{plate}_binary{out_format}")
         df.export_csv(path=outname, chunk_size=chunk_size)
     else:
-        outname = out_dir.joinpath(f"{plate}_binary{out_format}")
+        outname = pathlib.Path(out_dir).joinpath(f"{plate}_binary{out_format}")
         df.export(outname, progress=True)
         logger.info(f"Saving f'{plate}_binary{out_format}")
+
     return

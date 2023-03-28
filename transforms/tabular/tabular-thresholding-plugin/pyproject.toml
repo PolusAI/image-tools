@@ -22,6 +22,7 @@ tqdm = "^4.64.1"
 blake3 = "^0.3.3"
 llvmlite = "^0.39.1"
 fastapi = "^0.92.0"
+astropy = "5.2.1"
 vaex = "^4.7.0"
 
 

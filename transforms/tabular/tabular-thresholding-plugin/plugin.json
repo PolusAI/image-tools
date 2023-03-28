@@ -17,8 +17,8 @@
   "inputs": [
     {
       "name": "inpDir",
-      "description": "Directory containing tabular data CSVs",
-      "type": "csvCollection",
+      "description": "Directory containing tabular data",
+      "type": "genericData",
       "options": null,
       "required": true
     },
@@ -106,7 +106,7 @@
     {
       "name": "outDir",
       "description": "Output collection",
-      "type": "csvCollection",
+      "type": "genericData",
       "options": null,
       "required": true
     }
@@ -115,12 +115,13 @@
     {
       "key": "inputs.inpDir",
       "title": "inpDir",
-      "description": "Input directory containing tabular data CSVs"
+      "description": "Input directory containing tabular data"
     },
     {
       "key": "inputs.filePattern",
       "title": "filePattern",
-      "description": "Pattern to parse input files"
+      "description": "Pattern to parse input files",
+      "default": ".+"
     },
     {
       "key": "inputs.negControl",
@@ -170,7 +171,7 @@
       "key": "inputs.outFormat",
       "title": "outFormat",
       "description": "Output format",
-      "default": "csv"
+      "default": ".arrow"
     }
   ]
 }

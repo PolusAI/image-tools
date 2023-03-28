@@ -34,7 +34,7 @@ This plugin takes 10 input arguments and one output argument:
 
 | Name                    | Description                                         | I/O    | Type          |
 |-------------------------|-----------------------------------------------------|--------|---------------|
-| `--inpDir`              | Input directory containing tabular data CSVs        | Input  | csvCollection |
+| `--inpDir`              | Input directory containing tabular data CSVs        | Input  | genericData   |
 | `--filePattern`         | Pattern to parse tabular files                      | Input  | string        |
 | `--negControl`          | FeatureName describing non treated wells/ROI        | Input  | string        |
 | `--posControl`          | FeatureName describing treated wells/ROI            | Input  | string        |
@@ -44,4 +44,4 @@ This plugin takes 10 input arguments and one output argument:
 | `--numBins`             | Number of bins for histogram                        | Input  | number        |
 | `--n`                   | Number of standard deviation                        | Input  | number        |
 | `--outFormat`           | Output file format                                  | Input  | enum          |
-| `--outDir`              | Output collection                                   | Output | csvCollection |
+| `--outDir`              | Output collection                                   | Output | genericData   |
