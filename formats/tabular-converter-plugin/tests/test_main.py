@@ -1,10 +1,9 @@
 """Testing of Tabular Converter plugin."""
-import os
 import pathlib
 import random
 import shutil
 import string
-import typing
+import tempfile
 
 import fcsparser
 import filepattern as fp
@@ -14,7 +13,7 @@ import pytest
 import vaex
 from astropy.table import Table
 
-from polus.plugins.formats.tabular_converter import tabular_converter as tb
+from polus.plugins.formats.tabular_converter import tabular_converter as tc
 
 
 class Generatedata:
@@ -22,21 +21,17 @@ class Generatedata:
 
     def __init__(self, file_pattern: str):
         """Define instance attributes."""
-        self.dirpath = os.path.abspath(os.path.join(__file__, "../.."))
-        self.inp_dir = pathlib.Path(self.dirpath, "data/input")
-        if not self.inp_dir.exists():
-            self.inp_dir.mkdir(exist_ok=True, parents=True)
-        self.out_dir = pathlib.Path(self.dirpath, "data/output")
-        if not self.out_dir.exists():
-            self.out_dir.mkdir(exist_ok=True, parents=True)
+        self.dirpath = pathlib.Path.cwd()
+        self.inp_dir = tempfile.mkdtemp(dir=self.dirpath)
+        self.out_dir = tempfile.mkdtemp(dir=self.dirpath)
         self.file_pattern = file_pattern
         self.x = self.create_dataframe()
 
-    def get_inp_dir(self) -> typing.Union[str, os.PathLike]:
+    def get_inp_dir(self) -> str:
         """Get input directory."""
         return self.inp_dir
 
-    def get_out_dir(self) -> typing.Union[str, os.PathLike]:
+    def get_out_dir(self) -> str:
         """Get output directory."""
         return self.out_dir
 
@@ -101,10 +96,9 @@ class Generatedata:
 
     def clean_directories(self):
         """Remove files."""
-        for f in self.get_out_dir().iterdir():
-            os.remove(f)
-        for f in self.get_inp_dir().iterdir():
-            os.remove(f)
+        for d in self.dirpath.iterdir():
+            if d.is_dir() and d.name.startswith("tmp"):
+                shutil.rmtree(d)
 
 
 FILE_EXT = [[".hdf5", ".parquet", ".csv", ".feather", ".fits", ".fcs", ".arrow"]]
@@ -125,7 +119,8 @@ def test_tabular_coverter(poly):
             pattern = "".join([".*", i])
             fps = fp.FilePattern(d.get_inp_dir(), pattern)
             for file in fps:
-                tab = tb.Convert_tabular(file[1][0], ".arrow", d.get_out_dir())
+                print(file)
+                tab = tc.ConvertTabular(file[1][0], ".arrow", d.get_out_dir())
                 tab.df_to_arrow()
 
                 assert (
@@ -143,7 +138,7 @@ def test_tabular_coverter(poly):
             pattern = "".join([".*", i])
             fps = fp.FilePattern(d.get_inp_dir(), pattern)
             for file in fps:
-                tab = tb.Convert_tabular(file[1][0], ".arrow", d.get_out_dir())
+                tab = tc.ConvertTabular(file[1][0], ".arrow", d.get_out_dir())
                 tab.fcs_to_arrow()
 
             assert (
@@ -155,7 +150,6 @@ def test_tabular_coverter(poly):
                 )
                 is True
             )
-            d.clean_directories()
 
         elif i == ".arrow":
             d = Generatedata(".arrow")
@@ -170,7 +164,7 @@ def test_tabular_coverter(poly):
             ]
             for ext in extension_list:
                 for file in fps:
-                    tab = tb.Convert_tabular(file[1][0], ext, d.get_out_dir())
+                    tab = tc.ConvertTabular(file[1][0], ext, d.get_out_dir())
                     tab.arrow_to_tabular()
 
                 assert (
@@ -182,3 +176,5 @@ def test_tabular_coverter(poly):
                     )
                     is True
                 )
+
+            d.clean_directories()

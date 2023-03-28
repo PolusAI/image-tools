@@ -8,8 +8,11 @@ inpDir=/data/input
 # Output paths
 outDir=/data/output
 
+# Input Fileformat
+filePattern=".csv"
+
 # Output Fileformat
-filePattern=".fcs"
+fileExtension =".arrow"
 
 #Show the help options
 docker run polusai/tabular-converter-plugin:${version}
@@ -19,4 +22,5 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             polusai/tabular-converter-plugin:${version} \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
+            --fileExtension ${fileExtension} \
             --outDir ${outDir}

@@ -10,7 +10,7 @@ import filepattern as fp
 import typer
 from tqdm import tqdm
 
-from polus.plugins.formats.tabular_converter import tabular_converter as tb
+from polus.plugins.formats.tabular_converter import tabular_converter as tc
 
 app = typer.Typer()
 # Set number of processors for scalability
@@ -21,7 +21,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
     datefmt="%d-%b-%y %H:%M:%S",
 )
-logger = logging.getLogger("polus.plugins.formats.tabular_to_arrow")
+logger = logging.getLogger("polus.plugins.formats.tabular_converter")
 logger.setLevel(logging.INFO)
 
 
@@ -32,8 +32,13 @@ def main(
         "--inpDir",
         help="Path to the input data",
     ),
-    file_pattern: tb.Extension = typer.Option(
-        None, "--filePattern", help="Desired File format to convert"
+    file_pattern: str = typer.Option(
+        ".+", "--filePattern", help="pattern to parse tabular files"
+    ),
+    file_extension: tc.Extensions = typer.Option(
+        tc.Extensions.Default,
+        "--fileExtension",
+        help="File format of a desired output file",
     ),
     out_dir: pathlib.Path = typer.Option(..., "--outDir", help="Output collection"),
     preview: Optional[bool] = typer.Option(
@@ -46,18 +51,19 @@ def main(
     logger.info(f"inpDir = {inp_dir}")
     logger.info(f"outDir = {out_dir}")
     logger.info(f"filePattern = {file_pattern}")
+    logger.info(f"fileExtension = {file_extension}")
 
     assert inp_dir.exists(), f"{inp_dir} doesnot exist!! Please check input path again"
     assert out_dir.exists(), f"{out_dir} doesnot exist!! Please check output path again"
 
-    fps = fp.FilePattern(inp_dir, ".*")
+    file_pattern = ".*" + file_pattern
 
-    check_file_extension = all([f[1][0].suffix for f in fps])
+    fps = fp.FilePattern(inp_dir, file_pattern)
 
     if preview:
         with open(pathlib.Path(out_dir, "preview.json"), "w") as jfile:
             out_json: dict[str, Any] = {
-                "filepattern": ".+",
+                "filepattern": file_pattern,
                 "outDir": [],
             }
             for file in fps:
@@ -65,37 +71,28 @@ def main(
                 out_json["outDir"].append(out_name)
             json.dump(out_json, jfile, indent=2)
 
-    if check_file_extension:
-        file_extension = [f[1][0].suffix for f in fps][0]
-        logger.info(f"Detected file extension : {file_extension}")
+    processes = []
+    with ProcessPoolExecutor(max_workers) as executor:
+        for files in fps:
+            file = files[1][0]
+            tab = tc.ConvertTabular(file, file_extension, out_dir)
+            if files[1][0].suffix == ".fcs":
+                processes.append(executor.submit(tab.fcs_to_arrow))
+            elif files[1][0].suffix == ".arrow":
+                processes.append(executor.submit(tab.arrow_to_tabular))
+            else:
+                processes.append(executor.submit(tab.df_to_arrow))
 
-        processes = []
-        with ProcessPoolExecutor(max_workers) as executor:
-            for files in fps:
-                file = files[1][0]
-                tab = tb.Convert_tabular(file, file_pattern, out_dir)
-                if files[1][0].suffix == ".fcs":
-                    processes.append(executor.submit(tab.fcs_to_arrow))
-                elif files[1][0].suffix == ".arrow":
-                    processes.append(executor.submit(tab.arrow_to_tabular))
-                else:
-                    processes.append(executor.submit(tab.df_to_arrow))
+        for f in tqdm(
+            as_completed(processes),
+            desc=f"converting tabular data to {file_pattern}",
+            total=len(processes),
+        ):
+            f.result()
 
-            for f in tqdm(
-                as_completed(processes),
-                desc=f"converting tabular data to {file_pattern}",
-                total=len(processes),
-            ):
-                f.result()
+    tab.remove_files()
 
-            tab.remove_files()
-
-        logger.info("Finished all processes!")
-
-    else:
-        logger.error(
-            f"{inp_dir} ---> Input directory contains files with different file extensions"
-        )
+    logger.info("Finished all processes!")
 
 
 if __name__ == "__main__":

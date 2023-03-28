@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".arrow")
 
 
-class Extension(str, enum.Enum):
+class Extensions(str, enum.Enum):
     """Extension types to be converted."""
 
     FITS = ".fits"
@@ -22,50 +22,28 @@ class Extension(str, enum.Enum):
     FCS = ".fcs"
     CSV = ".csv"
     ARROW = ".arrow"
-    Default = "default"
+    Default = POLUS_TAB_EXT
 
 
-class Convert_tabular:
+class ConvertTabular:
     """Convert vaex supported file formats into Arrow data format and vice versa.
 
     Args:
         file: Path to input file.
-        file_pattern : Desired ouput file extension.
+        file_extension : Desired ouput file extension.
         out_dir: Path to save the output csv file.
     """
 
-    def __init__(self, file: pathlib.Path, file_pattern: str, out_dir: pathlib.Path):
+    def __init__(
+        self, file: pathlib.Path, file_extension: Extensions, out_dir: pathlib.Path
+    ):
         """Define Instance attributes."""
         self.file = file
         self.out_dir = out_dir
-        self.file_pattern = file_pattern
-        self.file_pattern = self.get_file_pattern()
-        self.POLUS_TAB_EXT = (
-            POLUS_TAB_EXT if self.file_pattern is None else self.file_pattern
-        )
+        self.file_extension = file_extension
         self.output_file = pathlib.Path(
-            self.out_dir, (self.file.stem + self.POLUS_TAB_EXT)
+            self.out_dir, (self.file.stem + self.file_extension)
         )
-
-    def get_file_pattern(self) -> str:
-        """Define file_patterns."""
-        if self.file_pattern == Extension.Default:
-            file_pattern = POLUS_TAB_EXT
-        elif self.file_pattern == Extension.FITS:
-            file_pattern = ".fits"
-        elif self.file_pattern == Extension.FEATHER:
-            file_pattern = ".feather"
-        elif self.file_pattern == Extension.PARQUET:
-            file_pattern = ".parquet"
-        elif self.file_pattern == Extension.HDF:
-            file_pattern = ".hdf5"
-        elif self.file_pattern == Extension.FCS:
-            file_pattern = ".fcs"
-        elif self.file_pattern == Extension.CSV:
-            file_pattern = ".csv"
-        elif self.file_pattern == Extension.ARROW:
-            file_pattern = ".arrow"
-        return file_pattern
 
     def csv_to_df(self) -> vaex.DataFrame:
         """Convert csv into datafram or hdf5 file."""
@@ -85,7 +63,7 @@ class Convert_tabular:
         """Convert any binary formats into vaex dataframe."""
         binary_patterns = [".fits", ".feather", ".parquet", ".hdf5", ".arrow"]
         logger.info("binary_to_df: Scanning directory for binary file pattern... ")
-        if self.file_pattern in binary_patterns:
+        if self.file_extension in binary_patterns:
             # convert hdf5 to vaex df
             df = vaex.open(self.file)
             return df
@@ -115,7 +93,7 @@ class Convert_tabular:
     def df_to_arrow(self) -> None:
         """Convert vaex dataframe to Arrow feather file."""
         logger.info("df_to_feather: Scanning input directory files... ")
-        if self.file_pattern == ".csv":
+        if self.file_extension == ".csv":
             # convert csv to vaex df or hdf5
             df = self.csv_to_df()
         else:
@@ -158,19 +136,19 @@ class Convert_tabular:
         chunk_size = max([2**24 // ncols, 1])
         logger.info("Arrow Conversion: checking for file format")
 
-        if self.file_pattern == ".csv":
+        if self.file_extension == ".csv":
             logger.info("Arrow Conversion: Converting PyArrow Table into .csv file")
             # Streaming contents of Arrow Table into csv
             return data.export_csv(self.output_file, chunksize=chunk_size)
 
-        elif self.file_pattern == ".parquet":
+        elif self.file_extension == ".parquet":
             logger.info("Arrow Conversion: Converting PyArrow Table into .parquet file")
             return data.export_parquet(self.output_file)
 
-        elif self.file_pattern == ".hdf5":
+        elif self.file_extension == ".hdf5":
             logger.info("Arrow Conversion: Converting PyArrow Table into .hdf5")
             return data.export_hdf5(self.output_file)
-        elif self.file_pattern == ".feather":
+        elif self.file_extension == ".feather":
             logger.info("Arrow Conversion: Converting PyArrow Table into .hdf5")
             return data.export_feather(self.output_file)
 
