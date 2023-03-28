@@ -34,8 +34,8 @@ This plugin takes two input arguments and one output argument:
 
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
-| `--inpDir` | Input generic data collection to be processed by this plugin | Input | collection |
+| `--inpDir` | Input generic data collection to be processed by this plugin | Input | genericData |
 | `--filePattern` | Pattern to parse tabular files | Input | string |
 | `--fileExtension` | Desired pattern to convert | Input | string |
-| `--outDir` | Output collection | Output | collection |
+| `--outDir` | Output collection | Output | genericData |
 | `--preview` | Generate JSON file with outputs | Output | JSON |
