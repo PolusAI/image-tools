@@ -41,7 +41,7 @@ This plugin takes nine input argument and one output argument:
 
 | Name               | Description                                                | I/O    | Type          |
 |--------------------|------------------------------------------------------------|--------|---------------|
-| `--inpDir`         | Input image collection to be processed by this plugin      | Input  | collection    |
+| `--inpDir`         | Input data collection to be processed by this plugin       | Input  | genericData   |
 | `--filePattern`    | Pattern to parse tabular files                             | Input  | string        |
 | `--stripExtension` | Should csv be removed from the filename in the output file | Input  | boolean       |
 | `--fileExtension`  | File format of an output combined file                     | Input  | enum          |
@@ -49,5 +49,5 @@ This plugin takes nine input argument and one output argument:
 | `--sameRows`       | Merge tabular files with the same number of rows?          | Input  | boolean       |
 | `--sameColumns`    | Merge tabular files with the same header(Column Names)     | Input  | boolean       |
 | `--mapVar`         | Column name use to merge files                             | Input  | string        |
-| `--outDir`         | Output csv file                                            | Output | collection    |
+| `--outDir`         | Output file                                                | Output | genericData   |
 | `--preview`        | Generate JSON file with outputs                            | Output | JSON          |
