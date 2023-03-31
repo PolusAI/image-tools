@@ -1,13 +1,24 @@
 [tool.poetry]
+<<<<<<< HEAD
 name = "polus-plugins-transforms-images-image-assembler"
 version = "1.2.1-dev0"
 description = "A scalable image assembler plugin."
 authors = ["Nick Schaub <nick.schaub@nih.gov>", "Antoine Gerardin <antoine.gerardin@gmail.com>"]
+=======
+name = "polus-transforms-images-image-assembly-plugin"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+>>>>>>> 1b6aeb6 (update/image-assembler-plugin)
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
+<<<<<<< HEAD
 python = "^3.9.15"
+=======
+python = "^3.10"
+>>>>>>> 1b6aeb6 (update/image-assembler-plugin)
 bfio = {version = "2.1.9", extras = ["all"]}
 filepattern = {version = "2.2.7", source = "test"}
 preadator = "^0.2.0"
@@ -30,7 +41,10 @@ pre-commit = "^3.2.1"
 flake8-docstrings = "^1.7.0"
 black = "^23.3.0"
 mypy = "^1.1.1"
+<<<<<<< HEAD
 pytest = "^7.2.2"
+=======
+>>>>>>> 1b6aeb6 (update/image-assembler-plugin)
 
 [build-system]
 requires = ["poetry-core"]
