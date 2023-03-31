@@ -1,15 +1,26 @@
 {
     "name": "Image Assembler",
+<<<<<<< HEAD
     "version": "1.4.0-dev0",
     "title": "Image Assembler",
     "description": "A scalable image assembling plugin.",
     "author": "Nick Schaub (nick.schaub@nih.gov), Antoine Gerardin (antoine.gerardin@gmail.com)",
+=======
+    "version": "1.1.5",
+    "title": "Image Assembler",
+    "description": "A scalable image assembling plugin.",
+    "author": "Nick Schaub (nick.schaub@nih.gov)",
+>>>>>>> cbaf94c (update/image-assembler-plugin)
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
+<<<<<<< HEAD
     "containerId": "polusai/image-assembler-plugin:1.4.0-dev0",
     "baseCommand": ["python3", "-m", "polus.plugins.transforms.images.image_assembler"],
+=======
+    "containerId": "polusai/image-assembler-plugin:1.1.5",
+>>>>>>> cbaf94c (update/image-assembler-plugin)
     "inputs": [
       {
         "name": "stitchPath",
@@ -27,6 +38,7 @@
         "name": "timesliceNaming",
         "type": "boolean",
         "description": "Label images by timeslice rather than analyzing input image names",
+<<<<<<< HEAD
         "required": false
       },
       {
@@ -34,6 +46,9 @@
         "type": "boolean",
         "description": "Generate preview of outputs.",
         "required": false
+=======
+        "required": true
+>>>>>>> cbaf94c (update/image-assembler-plugin)
       }
     ],
     "outputs": [

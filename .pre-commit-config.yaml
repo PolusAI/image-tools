@@ -50,9 +50,5 @@ repos:
     rev: 'v1.4.0'
     hooks:
       - id: mypy
-        exclude: |
-          (?x)(
-            test_[a-zA-Z0-9]+.py$|
-            ^src\/polus\/plugins\/_plugins\/models\/\w*Schema.py$
-          )
-        additional_dependencies: [types-requests==2.31.0.1]
+        exclude: src/
+        additional_dependencies: [types-requests==2.28.11.8]
