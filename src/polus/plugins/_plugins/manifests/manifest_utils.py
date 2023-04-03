@@ -1,3 +1,4 @@
+"""Utilities for manifest parsing and validation."""
 import json
 import logging
 import pathlib
@@ -9,8 +10,8 @@ import requests
 from pydantic import ValidationError, errors
 from tqdm import tqdm
 
-from ..models import ComputeSchema, WIPPPluginManifest
-from ..utils import cast_version
+from polus.plugins._plugins.models import ComputeSchema, WIPPPluginManifest
+from polus.plugins._plugins.utils import cast_version
 
 logger = logging.getLogger("polus.plugins")
 
@@ -28,7 +29,7 @@ REQUIRED_FIELDS = [
 
 
 def is_valid_manifest(plugin: dict) -> bool:
-    """Validates basic attributes of a plugin manifest.
+    """Validate basic attributes of a plugin manifest.
 
     Args:
         plugin: A parsed plugin json file
@@ -36,7 +37,6 @@ def is_valid_manifest(plugin: dict) -> bool:
     Returns:
         True if the plugin has the minimal json fields
     """
-
     fields = list(plugin.keys())
 
     try:
@@ -49,7 +49,7 @@ def is_valid_manifest(plugin: dict) -> bool:
 
 
 def _load_manifest(m: typing.Union[str, dict, pathlib.Path]) -> dict:
-    """Convert to dictionary if pathlib.Path or str"""
+    """Convert to dictionary if pathlib.Path or str."""
     if isinstance(m, dict):
         return m
     elif isinstance(m, pathlib.Path):
@@ -73,7 +73,7 @@ def _load_manifest(m: typing.Union[str, dict, pathlib.Path]) -> dict:
 def validate_manifest(
     manifest: typing.Union[str, dict, pathlib.Path]
 ) -> typing.Union[WIPPPluginManifest, ComputeSchema]:
-    """Validates a plugin manifest against schema"""
+    """Validate a plugin manifest against schema."""
     manifest = _load_manifest(manifest)
     manifest["version"] = cast_version(
         manifest["version"]
@@ -81,7 +81,7 @@ def validate_manifest(
     if "pluginHardwareRequirements" in manifest:
         # Parse the manifest
         try:
-            plugin = ComputeSchema(**manifest)  # New Schema
+            plugin = ComputeSchema(**manifest)
         except ValidationError as err:
             raise err
         except BaseException as e:
@@ -89,7 +89,7 @@ def validate_manifest(
     else:
         # Parse the manifest
         try:
-            plugin = WIPPPluginManifest(**manifest)  # New Schema
+            plugin = WIPPPluginManifest(**manifest)
         except ValidationError as err:
             logger.info(manifest)
             raise err

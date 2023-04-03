@@ -1,3 +1,4 @@
+"""Utilities for WIPP Registry Module."""
 import re
 import typing
 

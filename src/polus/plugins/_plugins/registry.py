@@ -1,3 +1,4 @@
+"""Methods to interact with REST API of WIPP Plugin Registry."""
 import json
 import logging
 import typing
@@ -8,20 +9,18 @@ import requests
 import xmltodict
 from tqdm import tqdm
 
-from .classes.plugin_classes import ComputePlugin, Plugin
-from .classes.plugin_classes import _Plugins as plugins
-from .classes.plugin_classes import submit_plugin
-from .registry_utils import _generate_query, _to_xml
+from polus.plugins._plugins.classes import ComputePlugin, Plugin, refresh, submit_plugin
+from polus.plugins._plugins.registry_utils import _generate_query, _to_xml
 
 logger = logging.getLogger("polus.plugins")
 
 
 class FailedToPublish(Exception):
-    pass
+    """Raised when there is an error publishing a resource."""
 
 
 class MissingUserInfo(Exception):
-    pass
+    """Raised when necessary user info is not provided for authentication."""
 
 
 class WippPluginRegistry:
@@ -34,6 +33,7 @@ class WippPluginRegistry:
         registry_url: str = "https://wipp-registry.ci.ncats.io",
         verify: bool = True,  # verify SSL?
     ):
+        """Initialize WippPluginRegistry from username, password, registry url."""
         self.registry_url = registry_url
         self.username = username
         self.password = password
@@ -41,13 +41,13 @@ class WippPluginRegistry:
 
     @classmethod
     def _parse_xml(cls, xml: str):
-        """Returns dictionary of Plugin Manifest. If error, returns None."""
+        """Return dictionary of Plugin Manifest. If error, return None."""
         d = xmltodict.parse(xml)["Resource"]["role"]["PluginManifest"][
             "PluginManifestContent"
         ]["#text"]
         try:
             return json.loads(d)
-        except:
+        except BaseException:
             e = eval(d)
             if isinstance(e, dict):
                 return e
@@ -55,6 +55,7 @@ class WippPluginRegistry:
                 return None
 
     def update_plugins(self):
+        """Update plugins from WIPP Registry."""
         url = self.registry_url + "/rest/data/query/"
         headers = {"Content-type": "application/json"}
         data = '{"query": {"$or":[{"Resource.role.type":"Plugin"},{"Resource.role.type.#text":"Plugin"}]}}'
@@ -73,7 +74,7 @@ class WippPluginRegistry:
         for r in tqdm(r.json()["results"], desc="Updating Plugins from WIPP"):
             try:
                 manifest = WippPluginRegistry._parse_xml(r["xml_content"])
-                plugin = submit_plugin(manifest)
+                submit_plugin(manifest)
                 valid += 1
             except BaseException as err:
                 invalid.update({r["title"]: err.args[0]})
@@ -86,7 +87,7 @@ class WippPluginRegistry:
                         % (valid)
                     )
                 logger.debug("Submitted %s plugins successfully." % (valid))
-                plugins.refresh()
+                refresh()
 
     def query(
         self,
@@ -125,7 +126,6 @@ class WippPluginRegistry:
         Returns:
             An array of the manifests of the Plugins returned by the query.
         """
-
         url = self.registry_url + "/rest/data/query/"
         headers = {"Content-type": "application/json"}
         query = _generate_query(
@@ -150,7 +150,7 @@ class WippPluginRegistry:
         ]
 
     def get_current_schema(self):
-        """Return current schema in WIPP"""
+        """Return current schema in WIPP."""
         r = requests.get(
             urljoin(
                 self.registry_url,
@@ -256,10 +256,10 @@ class WippPluginRegistry:
         pid,
         version,
     ):
+        """Patch resource in registry."""
         if self.username is None or self.password is None:
             raise MissingUserInfo("The registry connection must be authenticated.")
 
-        """Patch resource."""
         # Get current version of the resource
         data = self.get_resource_by_pid(pid)
 

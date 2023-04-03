@@ -6,31 +6,21 @@ import typing
 from pydantic import ValidationError
 from tqdm import tqdm
 
-from ._plugins.classes import _Plugins, submit_plugin
-from ._plugins.gh import _init_github
-from ._plugins.io import Version
-from ._plugins.manifests.manifest_utils import _error_log, _scrape_manifests
-from ._plugins.registry import WippPluginRegistry
-
-"""
-Set up logging for the module
-"""
-logging.basicConfig(
-    format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
-    datefmt="%d-%b-%y %H:%M:%S",
+from polus.plugins._plugins.classes import submit_plugin
+from polus.plugins._plugins.gh import _init_github
+from polus.plugins._plugins.io import Version
+from polus.plugins._plugins.manifests.manifest_utils import (
+    _error_log,
+    _scrape_manifests,
 )
+
 logger = logging.getLogger("polus.plugins")
-logger.setLevel(logging.INFO)
-plugins = _Plugins()
-get_plugin = plugins.get_plugin
-load_config = plugins.load_config
-plugins.WippPluginRegistry = WippPluginRegistry
-plugins.refresh()  # calls the refresh method when library is imported
 
 
 def update_polus_plugins(
     gh_auth: typing.Optional[str] = None, min_depth: int = 2, max_depth: int = 3
 ):
+    """Scrape PolusAI GitHub repo and create local versions of Plugins."""
     logger.info("Updating polus plugins.")
     # Get all manifests
     valid, invalid = _scrape_manifests(
@@ -98,6 +88,7 @@ def update_polus_plugins(
 
 
 def update_nist_plugins(gh_auth: typing.Optional[str] = None):
+    """Scrape NIST GitHub repo and create local versions of Plugins."""
     # Parse README links
     gh = _init_github(gh_auth)
     repo = gh.get_repo("usnistgov/WIPP")
