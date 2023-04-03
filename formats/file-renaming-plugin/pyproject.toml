@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "polus-plugins-formats-file-renaming"
+version = "0.2.0"
+description = "Rename and store image collection files in a new image collection"
+authors = [
+"Melanie Parham <melanie.parham@axleinfo.com>",
+"Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>"
+]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[[tool.poetry.source]]
+name = "test"
+url = "https://test.pypi.org/simple/"
+secondary = true
+
+[tool.poetry.dependencies]
+python = ">=3.9"
+filepattern = "^2.2.7"
+typer = "^0.7.0"
+
+[tool.poetry.group.dev.dependencies]
+bump2version = "^1.0.1"
+pre-commit = "^3.1.0"
+black = "^23.1.0"
+flake8 = "^6.0.0"
+mypy = "^1.0.1"
+pytest = "^7.2.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

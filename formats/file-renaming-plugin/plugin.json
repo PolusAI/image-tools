@@ -1,56 +1,61 @@
 {
-    "name": "File Renaming",
-    "version": "0.1.17",
-    "title": "File Renaming",
-    "description": "Rename and store image collection files in a new image collection",
-    "author": "Melanie Parham (melanie.parham@axleinfo.com)",
-    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-    "repository": "https://github.com/PolusAI/polus-plugins",
-    "website": "https://ncats.nih.gov/preclinical/core/informatics",
-    "citation": "",
-    "containerId": "polusai/file-renaming-plugin:0.1.17",
-    "inputs": [
-      {
-        "name": "filePattern",
-        "type": "string",
-        "description": "Filename pattern used to separate data",
-        "required": true
-      },
-      {
-        "name": "inpDir",
-        "type": "collection",
-        "description": "Input image collection to be processed by this plugin",
-        "required": true
-      },
-      {
-        "name": "outFilePattern",
-        "type": "string",
-        "description": "Desired filename pattern used to rename and separate data",
-        "required": true
-      }
-    ],
-    "outputs": [
-      {
-        "name": "outDir",
-        "type": "collection",
-        "description": "Output collection"
-      }
-    ],
-    "ui": [
-      {
-        "key": "inputs.filePattern",
-        "title": "Filename pattern",
-        "description": "Filename pattern used to separate data"
-      },
-      {
-        "key": "inputs.inpDir",
-        "title": "Input collection",
-        "description": "Input image collection to be processed by this plugin"
-      },
-      {
-        "key": "inputs.outFilePattern",
-        "title": "Output filename pattern",
-        "description": "Desired filename pattern used to rename and separate data"
-      }
-    ]
-  }
+  "name": "File Renaming",
+  "version": "0.2.0",
+  "title": "File Renaming",
+  "description": "Rename and store image collection files in a new image collection",
+  "author": "Melanie Parham (melanie.parham@axleinfo.com), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/PolusAI/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/file-renaming-plugin:0.2.0",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.plugins.formats.file_renaming"
+  ],
+  "inputs": [
+    {
+      "name": "filePattern",
+      "type": "string",
+      "description": "Filename pattern used to separate data",
+      "required": true
+    },
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Input image collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "outFilePattern",
+      "type": "string",
+      "description": "Desired filename pattern used to rename and separate data",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.filePattern",
+      "title": "Filename pattern",
+      "description": "Filename pattern used to separate data"
+    },
+    {
+      "key": "inputs.inpDir",
+      "title": "Input collection",
+      "description": "Input image collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.outFilePattern",
+      "title": "Output filename pattern",
+      "description": "Desired filename pattern used to rename and separate data"
+    }
+  ]
+}
