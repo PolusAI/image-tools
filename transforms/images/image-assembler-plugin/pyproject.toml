@@ -6,14 +6,21 @@ description = "A scalable image assembler plugin."
 authors = ["Nick Schaub <nick.schaub@nih.gov>", "Antoine Gerardin <antoine.gerardin@gmail.com>"]
 =======
 name = "polus-transforms-images-image-assembly-plugin"
+<<<<<<< HEAD
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
 >>>>>>> cbaf94c (update/image-assembler-plugin)
+=======
+version = "1.2.0-dev0"
+description = "A scalable image assembling plugin."
+authors = ["Nick Schaub <nick.schaub@nih.gov>"]
+>>>>>>> f5f7212 (fix: update to version 1.2.0-dev0)
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
+<<<<<<< HEAD
 <<<<<<< HEAD
 python = "^3.9.15"
 bfio = {version = "2.1.9", extras = ["all"]}
@@ -21,6 +28,9 @@ filepattern = "^2.0.1"
 preadator = "0.3.0.dev1"
 =======
 python = "^3.10"
+=======
+python = "^3.9.15"
+>>>>>>> f5f7212 (fix: update to version 1.2.0-dev0)
 bfio = {version = "2.1.9", extras = ["all"]}
 filepattern = {version = "2.2.7", source = "test"}
 preadator = "^0.2.0"
