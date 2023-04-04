@@ -57,11 +57,12 @@ Paste the contents of `plugin.json` into the pop-up window and submit.
 
 ## Options
 
-This plugin takes one input argument and one output argument:
+This plugin takes three input argument and one output argument:
 
-| Name               | Description            | I/O    | Type       |
-|--------------------|------------------------|--------|------------|
-| `--inpDir`         | Input image collection | Input  | collection |
-| `--outDir`         | Output collection      | Output | collection |
-| `--filePattern`    | Input filename pattern | Input  | string     |
-| `--outFilePattern` | Output filename pattern| Input  | string     |
+| Name               | Description                       | I/O      | Type       |
+|--------------------|-----------------------------------|----------|------------|
+| `--inpDir`         | Input image collection            | Input    | collection |
+| `--filePattern`    | Input filename pattern            | Input    | string     |
+| `--outDir`         | Output collection                 | Output   | collection |
+| `--outFilePattern` | Output filename pattern           | Input    | string     |
+| `--preview`        | Generate a JSON file with outputs | Output   | JSON       |
