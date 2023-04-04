@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "polus-transforms-images-rolling-ball"
+version = "1.1.0-dev0"
+description = "A WIPP plugin to perform background subtraction using the rolling-ball algorithm."
+authors = ["Najib Ishaq <najib.ishaq@axleinfo.com>"]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9.15"
+bfio = "2.1.9"
+scikit-image = "^0.20.0"
+typer = "^0.7.0"
+
+
+[[tool.poetry.source]]
+name = "test"
+url = "https://test.pypi.org/simple/"
+default = false
+secondary = true
+
+
+[tool.poetry.group.dev.dependencies]
+bump2version = "^1.0.1"
+pre-commit = "^3.2.1"
+flake8 = "^6.0.0"
+flake8-docstrings = "^1.7.0"
+black = "^23.3.0"
+mypy = "^1.1.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

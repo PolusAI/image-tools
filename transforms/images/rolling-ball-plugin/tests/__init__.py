@@ -1,6 +1,9 @@
+"""Unit Tests."""
+
 from unittest import TestSuite
-from .version_test import VersionTest
+
 from .correctness_test import CorrectnessTest
+from .version_test import VersionTest
 
 test_cases = (
     VersionTest,
@@ -9,6 +12,7 @@ test_cases = (
 
 
 def load_tests(loader, tests, pattern):
+    """Load tests."""
     suite = TestSuite()
     for test_class in test_cases:
         tests = loader.loadTestsFromTestCase(test_class)
