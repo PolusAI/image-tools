@@ -1,10 +1,10 @@
-# File Renaming
-This WIPP plugin uses supplied file naming patterns to dynamically 
-rename and save files in an image collection to a new image collection. 
+# File Renaming(v0.1.18)
+This WIPP plugin uses supplied file naming patterns to dynamically
+rename and save files in an image collection to a new image collection.
 
 ## Example Usage
-* The user can upload an image collection where all files contain similar 
-naming conventions. 
+* The user can upload an image collection where all files contain similar
+naming conventions.
 
  * **Input collection:**
 `img_x01_y01_DAPI.tif`
@@ -22,27 +22,27 @@ naming conventions.
  * **User output pattern:**
 `newdata_x{row:ddd}_y{col:ddd}_c{channel:ddd}.ome.tif`
 
-* The user can format the output digit using the number of digits 
+* The user can format the output digit using the number of digits
 specified in the output format.
  * `d` represents *digit*
- * `c` represents *character*. 
+ * `c` represents *character*.
 
 * Note that c+ only matches letters in the alphabet, not symbols and numbers
 
-* If the output formats have plus signs (+), then the number of output 
+* If the output formats have plus signs (+), then the number of output
 digits/characters is not fixed.
 
-* Finally, the input and output pattern data types *must* agree with one 
+* Finally, the input and output pattern data types *must* agree with one
 exception:
- * If the input is a chracter and the output is digit, 
-then the script sorts the strings that match the character pattern and 
+ * If the input is a chracter and the output is digit,
+then the script sorts the strings that match the character pattern and
 assigns numbers 0+ to them.
 
 
-Contact [Melanie Parham](mailto:melanie.parham@axleinfo.com) for more 
+Contact [Melanie Parham](mailto:melanie.parham@axleinfo.com), [Hamdah Shafqat abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more
 information.
 
-For more information on WIPP, visit the 
+For more information on WIPP, visit the
 [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
 ## Building
@@ -52,7 +52,7 @@ To build the Docker image for the conversion plugin, run
 
 ## Install WIPP Plugin
 
-If WIPP is running, navigate to the plugins page and add a new plugin. 
+If WIPP is running, navigate to the plugins page and add a new plugin.
 Paste the contents of `plugin.json` into the pop-up window and submit.
 
 ## Options
