@@ -67,10 +67,12 @@ def main(
     inp_dir = inp_dir.resolve()
     out_dir = out_dir.resolve()
 
-    assert inp_dir.exists(), f"{inp_dir} doesnot exists!! Please check input path again"
+    assert (
+        inp_dir.exists()
+    ), f"{inp_dir} does not exists!! Please check input path again"
     assert (
         out_dir.exists()
-    ), f"{out_dir} doesnot exists!! Please check output path again"
+    ), f"{out_dir} does not exists!! Please check output path again"
 
     inp_files = [str(inp_file.name) for inp_file in inp_dir.iterdir()]
     chars_to_escape = ["(", ")", ".", "[", "]", "$"]
