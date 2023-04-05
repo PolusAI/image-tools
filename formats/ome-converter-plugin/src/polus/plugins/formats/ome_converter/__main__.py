@@ -1,9 +1,7 @@
 """Ome Converter."""
 import json
-import os
 import logging
 import pathlib
-import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Any, Optional
 
@@ -11,7 +9,11 @@ import filepattern as fp
 import typer
 from tqdm import tqdm
 
-from polus.plugins.formats.ome_converter.image_converter import Extension, convert_image
+from polus.plugins.formats.ome_converter.image_converter import (
+    NUM_THREADS,
+    Extension,
+    convert_image,
+)
 
 app = typer.Typer()
 
@@ -50,12 +52,10 @@ def main(
     inp_dir = inp_dir.resolve()
     out_dir = out_dir.resolve()
 
-    assert inp_dir.exists(), f"{inp_dir} doesnot exists!! Please check input path again"
+    assert inp_dir.exists(), f"{inp_dir} does not exist!! Please check input path again"
     assert (
         out_dir.exists()
-    ), f"{out_dir} doesnot exists!! Please check output path again"
-
-    numworkers =  max(os.cpu_count() // 2, 1)
+    ), f"{out_dir} does not exist!! Please check output path again"
 
     fps = fp.FilePattern(inp_dir, pattern)
 
@@ -70,7 +70,7 @@ def main(
                 out_json["outDir"].append(out_name)
             json.dump(out_json, jfile, indent=2)
 
-    with ProcessPoolExecutor(max_workers=numworkers) as executor:
+    with ProcessPoolExecutor(max_workers=NUM_THREADS) as executor:
         threads = []
         for files in fps():
             file = files[1][0]
@@ -87,7 +87,6 @@ def main(
             unit_scale=True,
             colour="cyan",
         ):
-            time.sleep(0.2)
             f.result()
 
 

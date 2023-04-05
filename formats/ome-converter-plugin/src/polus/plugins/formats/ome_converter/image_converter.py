@@ -1,11 +1,11 @@
 """Ome Converter."""
-import os
-import logging
 import enum
+import logging
+import os
 import pathlib
-import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from multiprocessing import cpu_count
+from sys import platform
 from typing import Optional
 
 import filepattern as fp
@@ -16,7 +16,12 @@ logger = logging.getLogger(__name__)
 
 TILE_SIZE = 2**13
 
-num_threads = max([cpu_count() // 2, 2])
+
+if platform == "linux" or platform == "linux2":
+    NUM_THREADS = len(os.sched_getaffinity(0))  # type: ignore
+else:
+    NUM_THREADS = max(cpu_count() // 2, 2)
+
 POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
 
 
@@ -25,7 +30,7 @@ class Extension(str, enum.Enum):
 
     OMETIF = ".ome.tif"
     OMEZARR = ".ome.zarr"
-    Default = "default"
+    Default = POLUS_IMG_EXT
 
 
 def convert_image(
@@ -38,14 +43,6 @@ def convert_image(
         file_extension: Type of data conversion.
         out_dir: Path to output directory.
     """
-
-    if file_extension == Extension.Default:
-        file_extension = POLUS_IMG_EXT
-    elif file_extension == Extension.OMEZARR:
-        file_extension = ".ome.zarr"
-    elif file_extension == Extension.OMETIF:
-        file_extension = ".ome.tif"
-
     with BioReader(inp_image) as br:
         # Loop through timepoints
         for t in range(br.T):
@@ -69,7 +66,7 @@ def convert_image(
 
                 with BioWriter(
                     out_path,
-                    max_workers=num_threads,
+                    max_workers=NUM_THREADS,
                     metadata=br.metadata,
                 ) as bw:
                     bw.C = 1
@@ -82,8 +79,8 @@ def convert_image(
                         for y in range(0, br.Y, TILE_SIZE):
                             y_max = min([br.Y, y + TILE_SIZE])
 
-                            bw.max_workers = num_threads
-                            br.max_workers = num_threads
+                            bw.max_workers = NUM_THREADS
+                            br.max_workers = NUM_THREADS
 
                             # Loop across the depth of the image
                             for x in range(0, br.X, TILE_SIZE):
@@ -114,24 +111,16 @@ def batch_convert(
     logger.info(f"file_pattern = {file_pattern}")
     logger.info(f"file_extension = {file_extension}")
 
-    assert inp_dir.exists(), f"{inp_dir} doesnot exists!! Please check input path again"
+    assert inp_dir.exists(), f"{inp_dir} does not exist!! Please check input path again"
     assert (
         out_dir.exists()
-    ), f"{out_dir} doesnot exists!! Please check output path again"
-
-    if file_extension == Extension.Default:
-        file_extension = POLUS_IMG_EXT
-    elif file_extension == Extension.OMEZARR:
-        file_extension = ".ome.zarr"
-    elif file_extension == Extension.OMETIF:
-        file_extension = ".ome.tif"
+    ), f"{out_dir} does not exist!! Please check output path again"
 
     file_pattern = ".+" if file_pattern is None else file_pattern
-    numworkers = max(cpu_count() // 2, 2)
 
     fps = fp.FilePattern(inp_dir, file_pattern)
 
-    with ProcessPoolExecutor(max_workers=numworkers) as executor:
+    with ProcessPoolExecutor(max_workers=NUM_THREADS) as executor:
         threads = []
         for files in fps():
             file = files[1][0]
@@ -148,5 +137,4 @@ def batch_convert(
             unit_scale=True,
             colour="cyan",
         ):
-            time.sleep(0.2)
             f.result()
