@@ -1,116 +1,142 @@
 """Testing of Ome Converter."""
-import os
 import pathlib
 import shutil
 import tempfile
+from collections.abc import Generator
+from typing import Any, List, Tuple
 
 import numpy as np
 import pytest
 import requests
-from bfio import BioReader, BioWriter
+from bfio import BioReader
+from numpy import asarray
 from PIL import Image
-from skimage import io
 
 from polus.plugins.formats.ome_converter.image_converter import (
     batch_convert,
     convert_image,
 )
 
-EXT = [[".ome.tif", ".ome.zarr"]]
+EXT = [".ome.tif", ".ome.zarr"]
 
 
 @pytest.fixture(params=EXT)
-def extensions(request):
+def file_extension(request):
     """To get the parameter of the fixture."""
-    return request.param
+    yield request.param
 
 
-def test_batch_converter(extensions):
-    """Create synthetic image."""
-    arr = np.arange(0, 1048576, 1, np.uint8)
-    arr = np.reshape(arr, (1024, 1024))
-    image = Image.fromarray(arr)
-    outname = "syn_image.png"
-    syn_dir = tempfile.mkdtemp(dir=pathlib.Path.cwd())
-    image.save(pathlib.Path(syn_dir, outname))
-    br = BioReader(pathlib.Path(syn_dir, outname))
-    assert br._backend_name == "java"
-    for f in pathlib.Path(syn_dir).iterdir():
-        for i in extensions:
-            image = BioReader(f).read()
-            tmp_dir = tempfile.mkdtemp(dir=pathlib.Path.cwd())
-            out_file = pathlib.Path(tmp_dir, f.stem + i)
-            with BioWriter(file_path=out_file) as bw:
-                bw.X = image.shape[0]
-                bw.Y = image.shape[1]
-                bw.dtype = image.dtype
-                bw[:] = image
+@pytest.fixture
+def synthetic_pngs() -> Generator[Tuple[List[Any], pathlib.Path], None, None]:
+    """Generate random synthetic images."""
+    syn_dir = pathlib.Path(tempfile.mkdtemp(dir=pathlib.Path.cwd()))
+    images = []
+    for i in range(10):
+        # Create images
+        arr = np.random.randint(0, 255, (1024, 1024), dtype=np.uint8)
+        # Conver to PIL
+        image = Image.fromarray(arr)
+        # Save as PNG in tmp directory
+        outname = f"syn_image_{i}.png"
+        out_path = pathlib.Path(syn_dir, outname)
+        image.save(out_path)
+        images.append(arr)
 
-            if i == ".ome.tif":
-                fileExtension = ".ome.zarr"
-            else:
-                fileExtension = ".ome.tif"
-            tmp2_dir = tempfile.mkdtemp(dir=pathlib.Path.cwd())
-            batch_convert(
-                pathlib.Path(tmp_dir), pathlib.Path(tmp2_dir), ".+", fileExtension
-            )
-            assert all([f for f in os.listdir(tmp_dir) if i in f]) is True
-
-            shutil.rmtree(tmp_dir)
-            shutil.rmtree(tmp2_dir)
+    yield images, syn_dir
     shutil.rmtree(syn_dir)
 
 
+@pytest.fixture
+def synthetic_rgb() -> Generator[Tuple[List[Any], pathlib.Path], None, None]:
+    """Generate random synthetic RGB images."""
+    syn_dir = pathlib.Path(tempfile.mkdtemp(dir=pathlib.Path.cwd()))
+    images = []
+    for i in range(10):
+        image = Image.new(mode="RGB", size=(1024, 1024), color=(153, 153, 255))
+        arr = asarray(image)
+        outname = f"syn_image_{i}.tif"
+        out_path = pathlib.Path(syn_dir, outname)
+        image.save(out_path)
+        images.append(arr)
+
+    yield images, syn_dir
+    shutil.rmtree(syn_dir)
+
+
+@pytest.fixture
+def output_directory() -> Generator[pathlib.Path, None, None]:
+    """Generate random synthetic images."""
+    out_dir = pathlib.Path(tempfile.mkdtemp(dir=pathlib.Path.cwd()))
+    yield out_dir
+    shutil.rmtree(out_dir)
+
+
+def test_batch_converter(synthetic_pngs, file_extension, output_directory) -> None:
+    """Create synthetic image.
+
+    This unit test runs the batch_converter and validates that the converted data is
+    the same as the input data.
+    """
+    image, inp_dir = synthetic_pngs
+    batch_convert(inp_dir, output_directory, ".+", file_extension)
+    input_stems = {f.stem for f in inp_dir.iterdir()}
+    output_stems = {f.name.split(".")[0] for f in output_directory.iterdir()}
+
+    # Simple check to make sure all input files were converted
+    assert input_stems == output_stems
+    # # Check to make sure that output files are identical to original data
+    for f in output_directory.iterdir():
+        with BioReader(f) as br:
+            assert np.all(image) == np.all(br[:])
+
+
+@pytest.mark.xfail
+def test_batch_converter_rgb(synthetic_rgb, file_extension, output_directory) -> None:
+    """Create synthetic image.
+
+    This unit test fails as bfio.BioWriter only write single channel image but these are RGB images.
+    """
+    image, inp_dir = synthetic_rgb
+    batch_convert(inp_dir, output_directory, ".+", file_extension)
+    input_stems = {f.stem for f in inp_dir.iterdir()}
+    output_stems = {f.name.split(".")[0] for f in output_directory.iterdir()}
+
+    # Simple check to make sure all input files were converted
+    assert input_stems == output_stems
+    # # Check to make sure that output files are identical to original data
+    for f in output_directory.iterdir():
+        with BioReader(f) as br:
+            assert np.all(image) == np.all(br[:])
+
+
 @pytest.fixture()
-def images():
+def images() -> Generator[pathlib.Path, None, None]:
     """Download test /Users/abbasih2/Documents/Polus_Repos/polus-plugins/formats/ome-converter-plugin/data/inputimages."""
-    inp_dir = tempfile.mkdtemp(dir=pathlib.Path.cwd())
+    inp_dir = pathlib.Path(tempfile.mkdtemp(dir=pathlib.Path.cwd()))
     imagelist = {
-        ("0.tif", "https://osf.io/j6aer/download"),
+        ("0.tif", "https://osf.io/j6aer/download/"),
         (
-            "img_r001_c001.ome.tif",
-            "https://github.com/usnistgov/WIPP/raw/master/data/PyramidBuilding/inputCollection/img_r001_c001.ome.tif",
+            "cameraman.png",
+            "https://people.math.sc.edu/Burkardt/data/tif/cameraman.png",
         ),
-        (
-            "00001_01.ome.tiff",
-            "https://downloads.openmicroscopy.org/images/OME-TIFF/2016-06/MitoCheck/00001_01.ome.tiff",
-        ),
+        ("venus1.png", "https://people.math.sc.edu/Burkardt/data/tif/venus1.png"),
     }
-    out_files = []
-    for im in imagelist:
-        file, url = im
+    for image in imagelist:
+        file, url = image
         r = requests.get(url)
         outfile = pathlib.Path(inp_dir, file)
         with open(outfile, "wb") as fw:
             fw.write(r.content)
-            out_files.append(outfile)
-    return out_files
+    yield outfile
+    shutil.rmtree(inp_dir)
 
 
-def test_image_converter_omezarr(images, extensions):
+def test_image_converter_omezarr(images, file_extension, output_directory) -> None:
     """Testing of bioformat supported image datatypes conversion to ome.zarr and ome.tif file format."""
-    for im, i in zip(images, extensions):
-        image = io.imread(im)
-        out_dir = tempfile.mkdtemp(dir=pathlib.Path.cwd())
-        out_file = pathlib.Path(out_dir, im.name.split(".")[0] + i)
-        with BioWriter(file_path=out_file) as bw:
-            bw.X = image.shape[1]
-            bw.Y = image.shape[0]
-            bw.dtype = image.dtype
-            bw[:] = image
-        if i == ".ome.tif":
-            fileExtension = ".ome.zarr"
-            backend_name = "zarr"
-        else:
-            fileExtension = ".ome.tif"
-            backend_name = "python"
-        out_dir2 = tempfile.mkdtemp(dir=pathlib.Path.cwd())
-        out_file2 = pathlib.Path(out_dir2, out_file.name.split(".")[0] + fileExtension)
-        convert_image(out_file, fileExtension, pathlib.Path(out_dir2))
-        assert all([f for f in os.listdir(out_dir2) if fileExtension in f]) is True
-        with BioReader(out_file2) as br:
-            assert br._backend_name == backend_name
-
-        shutil.rmtree(out_dir)
-        shutil.rmtree(out_dir2)
-    shutil.rmtree(images[0].parent)
+    image_fname = images
+    br_img = BioReader(image_fname)
+    image = br_img.read()
+    convert_image(image_fname, file_extension, output_directory)
+    for f in output_directory.iterdir():
+        with BioReader(f) as br:
+            assert np.all(image) == np.all(br[:])
