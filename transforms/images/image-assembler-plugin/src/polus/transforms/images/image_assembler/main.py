@@ -16,6 +16,12 @@ from preadator import ProcessManager
 chunk_size = 8192
 useful_threads = (chunk_size // BioReader._TILE_SIZE) ** 2
 
+class StitchingVector(typing.TypedDict):
+    width: int
+    height: int
+    name: str
+    filePos: list
+
 def make_tile(x_min: int,
               x_max: int,
               y_min: int,
@@ -110,7 +116,7 @@ def get_number(s: typing.Any) -> typing.Union[int,typing.Any]:
 def _parse_stitch(stitchPath: pathlib.Path,
                   pattern: str,
                   timepointName: bool = False
-                  ) -> dict:
+                  ) -> StitchingVector:
     """ Load and parse image stitching vectors
 
     This function parses the data from a stitching vector, then extracts the
@@ -125,16 +131,17 @@ def _parse_stitch(stitchPath: pathlib.Path,
     """
 
     # Initialize the output
-    out_dict = { 'width': int(0),
+    out_dict : StitchingVector = { 'width': int(0),
                  'height': int(0),
                  'name': '',
-                 'filePos': []}
+                 'filePos': []
+                }
 
     # Try to parse the stitching vector using the infered file pattern
     if pattern != '.*':
         vp = filepattern.FilePattern(stitchPath, pattern)
         unique_vals = {k: v for k,v in vp.get_unique_values().items() if len(v)==1}
-        files = fp.get_matching(**unique_vals) if unique_vals else list(fp())
+        files = fp.get_matching(**unique_vals) if unique_vals else list(fp()) # type: ignore[name-defined]
 
     else:
 
@@ -148,7 +155,7 @@ def _parse_stitch(stitchPath: pathlib.Path,
         except ValueError:
             vp = filepattern.FilePattern(stitchPath,'.*')
 
-        files = list(fp())
+        files = list(fp()) # type: ignore[name-defined]
 
     # file_names = [f['file'].name for f in files]
     file_names = [ filelist[0].name  for _,filelist in files]
@@ -177,7 +184,8 @@ def _parse_stitch(stitchPath: pathlib.Path,
     # Generate the output file name
     if timepointName:
         global_regex = ".*global-positions-([0-9]+).txt"
-        name = re.match(global_regex,pathlib.Path(stitchPath).name).groups()[0]
+        val = re.match(global_regex,pathlib.Path(stitchPath).name)
+        name = val.groups()[0] if val else vp.output_name() #TODO CHECK what to do if no match / stitching vector name is again hardcoded here
         if file_names[0].endswith('.ome.zarr'):
             name += '.ome.zarr'
         else:
@@ -274,12 +282,12 @@ def main(imgPath: pathlib.Path,
     try:
         pattern = filepattern.infer_pattern(imgPath)
         logger.info(f'Inferred file pattern: {pattern}')
-        fp = filepattern.FilePattern(imgPath,pattern)
+        fp = filepattern.FilePattern(imgPath,pattern) # type: ignore[name-defined]
 
     # Pattern inference didn't work, so just get a list of files
     except:
         logger.info(f'Unable to infer pattern, defaulting to: .*')
-        fp = filepattern.FilePattern(imgPath,pattern)
+        fp = filepattern.FilePattern(imgPath,pattern) # type: ignore[name-defined]
 
     # get z depth
     with BioReader(next(imgPath.iterdir())) as br:
