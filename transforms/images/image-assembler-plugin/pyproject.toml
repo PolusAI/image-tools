@@ -55,10 +55,14 @@ flake8-docstrings = "^1.7.0"
 black = "^23.3.0"
 mypy = "^1.1.1"
 <<<<<<< HEAD
+<<<<<<< HEAD
 pytest = "^7.2.2"
 ruff = "^0.0.270"
 =======
 >>>>>>> cbaf94c (update/image-assembler-plugin)
+=======
+pytest = "^7.2.2"
+>>>>>>> 36a8639 (feat: add unit tests)
 
 [build-system]
 requires = ["poetry-core"]
