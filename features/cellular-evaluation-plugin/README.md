@@ -1,6 +1,6 @@
-# Cellular Evaluation Plugin
+# Cellular Evaluation Plugin(v0.2.2)
 
-Plugin to generate evaluation metrics for region-level comparison of ground truth and predicted images. Contact [Vishakha Goyal](mailto:vishakha.goyal@nih.gov) for more information.
+Plugin to generate evaluation metrics for region-level comparison of ground truth and predicted images. Contact [Vishakha Goyal](mailto:vishakha.goyal@nih.gov) and [Hamdah Shafqat Abbasi](mailto: hamdahshafqat.abbasi@nih.gov) for more information.
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
@@ -15,7 +15,7 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-This plugin takes ten input arguments and one output argument:
+This plugin takes eleven input arguments and one output argument:
 
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
@@ -29,4 +29,5 @@ This plugin takes ten input arguments and one output argument:
 | `--radiusFactor` | Importance of radius/diameter to find centroid distance. Should be between (0,2]. Default is 0.5.| Input | string |
 | `--iouScore` | IoU theshold. Default is 0.| Input | string |
 | `--filePattern` | Filename pattern to filter data. | Input | string |
-| `--outDir` | Output collection | Output | csvCollection |
+| `--fileExtension`| A desired file format for tabular outputs | Input  | enum        |
+| `--preview`      | Generate a JSON file with outputs                            | Output | JSON        |
