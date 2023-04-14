@@ -372,7 +372,7 @@ def outputs_cwl(o):
     """Return dict of output for `outputs` in cwl."""
     r = {
         f"{o.name}": {
-            "type": {"type": "array", "items": ["File", "Directory"]},
+            "type": "directory",
             "outputBinding": {"glob": f"$(inputs.{o.name}.basename)"},
         }
     }
