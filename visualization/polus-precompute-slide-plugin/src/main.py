@@ -148,7 +148,7 @@ if __name__ == "__main__":
     if image_type == None:
         image_type = 'image'
     elif image_type == 'segmentation':
-        if pyramid_type != 'Neuroglancer':
+        if pyramid_type != 'Neuroglancer' and pyramid_type != 'Zarr':
             raise ValueError("Segmentation type can only be used for Neuroglancer pyramids.")
     else:
         assert image_type == 'image', 'imageType must be one of ["image","segmentation"]'
