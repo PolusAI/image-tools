@@ -1,6 +1,6 @@
 # Cellular Evaluation Plugin(v0.2.2)
 
-Plugin to generate evaluation metrics for region-level comparison of ground truth and predicted images. Contact [Vishakha Goyal](mailto:vishakha.goyal@nih.gov) and [Hamdah Shafqat Abbasi](mailto: hamdahshafqat.abbasi@nih.gov) for more information.
+Plugin to generate evaluation metrics for region-level comparison of ground truth and predicted images. Contact [Vishakha Goyal](mailto:vishakha.goyal@nih.gov) , [Hamdah Shafqat Abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more information.
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
