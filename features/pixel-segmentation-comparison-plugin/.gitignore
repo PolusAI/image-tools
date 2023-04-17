@@ -16,6 +16,7 @@ data
 .DS_Store
 .ds_store
 # flake8
+.flake8
 __pycache__
 .mypy_cache
 requirements.txt
