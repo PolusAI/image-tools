@@ -30,4 +30,5 @@ This plugin takes eleven input arguments and one output argument:
 | `--iouScore`          | IoU theshold. Default is 0.| Input | string |
 | `--filePattern`       | Filename pattern to filter data. | Input | string |
 | `--fileExtension`     | A desired file format for tabular outputs | Input  | enum        |
+| `--outDir`            | Output collection | Input  | genericData       |
 | `--preview`           | Generate a JSON file with outputs                            | Output | JSON        |
