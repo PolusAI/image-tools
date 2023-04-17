@@ -13,7 +13,7 @@ fileExtension=".arrow"
 outDir=/data/output
 
 # Show the help options
-docker run polusai/pixel-segmentation-comparison-plugin:${version}
+# docker run polusai/pixel-segmentation-comparison-plugin:${version}
 
 # Run the plugin
 docker run --mount type=bind,source=${datapath},target=/data/ \
