@@ -1,6 +1,6 @@
-# Pixelwise Evaluation Plugin
+# Pixel Segmentation Comparison Plugin (v0.1.9)
 
-Plugin to generate evaluation metrics for pixel-wise comparison of ground truth and predicted images. Contact [Vishakha Goyal](mailto:vishakha.goyal@nih.gov) for more information.
+Plugin to generate evaluation metrics for pixel-wise comparison of ground truth and predicted images. Contact [Vishakha Goyal](mailto:vishakha.goyal@nih.gov) , [Hamdah Shafqat Abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more information.
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
@@ -15,7 +15,7 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-This plugin takes six input arguments and one output argument:
+This plugin takes seven input arguments and one output argument:
 
 | Name          | Description             | I/O    | Type   |
 |---------------|-------------------------|--------|--------|
@@ -25,5 +25,6 @@ This plugin takes six input arguments and one output argument:
 | `--filePattern`  | File name pattern to filter data. | Input | string |
 | `--individualStats`  | Boolean to create separate result file per image. Default is false. | Input | boolean |
 | `--totalStats`  | Boolean to calculate overall statistics across all images. Default is false. | Input | boolean |
+| `--fileExtension`     | A desired file format for tabular outputs | Input  | enum        |
 | `--outDir` | Output collection | Output | csvCollection |
-
+| `--preview`           | Generate a JSON file with outputs                            | Output | JSON        |
