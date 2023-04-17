@@ -37,7 +37,8 @@
       "name": "filePattern",
       "type": "string",
       "description": "Filename pattern to filter data.",
-      "required": true
+      "required": false,
+      "default": ".+"
     },
     {
       "name": "individualStats",
@@ -93,7 +94,8 @@
     {
       "key": "inputs.filePattern",
       "title": "Input filename pattern",
-      "description": "Filename pattern to filter data."
+      "description": "Filename pattern to filter data.",
+      "default": ".+"
     },
     {
       "key": "inputs.individualStats",

@@ -1,5 +1,4 @@
 """Pixel Segmentation Comparison."""
-
 import os
 import pathlib
 import shutil
@@ -67,9 +66,9 @@ def synthetic_images(
 
 @pytest.fixture(
     params=[
-        (".csv", ".+", True, False),
-        (".arrow", ".+", True, True),
-        (".feather", ".+", False, False),
+        (".csv", ".+", 1, True, False),
+        (".arrow", ".+", 1, True, True),
+        (".feather", ".+", 1, False, False),
     ]
 )
 def get_params(request):
@@ -85,6 +84,7 @@ def test_evaluation(synthetic_images, output_directory, get_params) -> None:
     (
         fileext,
         pattern,
+        classes,
         indstat,
         totalstats,
     ) = get_params
@@ -93,7 +93,7 @@ def test_evaluation(synthetic_images, output_directory, get_params) -> None:
     evaluation(
         gt_dir=gt_dir,
         pred_dir=pred_dir,
-        input_classes=1,
+        input_classes=classes,
         file_pattern=pattern,
         individual_stats=indstat,
         total_stats=totalstats,
@@ -110,7 +110,7 @@ def test_evaluation(synthetic_images, output_directory, get_params) -> None:
 
 def test_cli(synthetic_images, output_directory, get_params) -> None:
     """Test Cli."""
-    fileext, pattern, _, _ = get_params
+    fileext, pattern, classes, _, _ = get_params
     gt_dir, pred_dir = synthetic_images
 
     result = runner.invoke(
@@ -121,7 +121,7 @@ def test_cli(synthetic_images, output_directory, get_params) -> None:
             "--predDir",
             pred_dir,
             "--inputClasses",
-            1,
+            classes,
             "--filePattern",
             pattern,
             "--individualStats",
