@@ -1,4 +1,4 @@
-"""Cellular Evaluation."""
+"""Region Segmentation Comparison."""
 import os
 import pathlib
 import shutil
@@ -9,8 +9,8 @@ from typing import Tuple
 import pytest
 import skimage
 import vaex
-from polus.plugins.features.cellular_evaluation.__main__ import app as app
-from polus.plugins.features.cellular_evaluation.evaluate import evaluation
+from polus.plugins.features.region_segmentation_comparison.__main__ import app as app
+from polus.plugins.features.region_segmentation_comparison.evaluate import evaluation
 from skimage import io
 from typer.testing import CliRunner
 

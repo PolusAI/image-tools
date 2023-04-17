@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "polus-plugins-features-cellular-evaluation-plugin"
+name = "polus-plugins-features-region-segmentation-comparison-plugin"
 version = "0.2.2"
 description = ""
 authors = [

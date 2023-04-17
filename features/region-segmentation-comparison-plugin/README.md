@@ -1,4 +1,4 @@
-# Cellular Evaluation Plugin(v0.2.2)
+# Region Segmentation Comparison Plugin(v0.2.2)
 
 Plugin to generate evaluation metrics for region-level comparison of ground truth and predicted images. Contact [Vishakha Goyal](mailto:vishakha.goyal@nih.gov) , [Hamdah Shafqat Abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more information.
 

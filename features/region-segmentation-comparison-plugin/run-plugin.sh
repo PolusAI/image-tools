@@ -15,11 +15,11 @@ fileExtension=".arrow"
 outDir=/data/output
 
 # Show the help options
-docker run polusai/cellular-eval-plugin:${version}
+docker run polusai/region-segmentation-comparison-plugin:${version}
 
 # Run the plugin
 docker run --mount type=bind,source=${datapath},target=/data/ \
-            polusai/cellular-eval-plugin:${version} \
+            polusai/region-segmentation-comparison-plugin:${version} \
             --gtDir ${gtDir} \
             --predDir ${predDir} \
             --inputClasses ${inputClasses} \

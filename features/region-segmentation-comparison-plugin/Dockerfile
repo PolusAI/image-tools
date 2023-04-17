@@ -16,5 +16,5 @@ COPY src ${EXEC_DIR}/src
 
 RUN pip3 install ${EXEC_DIR} --no-cache-dir
 
-ENTRYPOINT ["python3", "-m", "polus.plugins.features.cellular_evaluation"]
+ENTRYPOINT ["python3", "-m", "polus.plugins.features.region_segmentation_comparison"]
 CMD ["--help"]

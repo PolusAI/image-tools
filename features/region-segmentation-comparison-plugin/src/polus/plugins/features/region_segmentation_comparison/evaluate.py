@@ -1,11 +1,11 @@
-"""Cellular Evaluation."""
+"""Region Segmentation Comparison."""
 import enum
 import logging
 import math
 import os
 import pathlib
 from multiprocessing import cpu_count
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import cv2
 import filepattern
@@ -108,9 +108,7 @@ def ccl(img: np.ndarray) -> Tuple[np.ndarray, int, float, float]:
             stats: Other statistics.
             centroids: Centroids per label.
     """
-    (num_labels, labels, stats, centroids) = cv2.connectedComponentsWithStats(
-        img
-    )  # noqa
+    (num_labels, labels, stats, centroids) = cv2.connectedComponentsWithStats(img)
 
     return labels, num_labels, stats, centroids
 
@@ -118,7 +116,7 @@ def ccl(img: np.ndarray) -> Tuple[np.ndarray, int, float, float]:
 def get_image(
     im: np.ndarray, tile_size: int, X: int, Y: int, x_max: int, y_max: int
 ) -> np.ndarray:
-    """Get tiled images based on tile size and set all right and lower border cells to 0. # noqa
+    """Get tiled images based on tile size and set all right and lower border cells to 0.
 
     Args:
             img: Input image.
@@ -131,7 +129,9 @@ def get_image(
     Returns:
             tiled image
     """
+    # get all cell values on the bottom border (second last row)
     b1 = np.unique(im[im.shape[0] - 2, 0:tile_size])
+    # get all cell values on the right border (second last column)
     b3 = np.unique(im[0:tile_size, im.shape[1] - 2])
     if x_max < X and y_max < Y:
         val = np.concatenate([b1, b3])
@@ -153,9 +153,7 @@ def get_image(
     return im
 
 
-def metrics(
-    tp: Union[float, int], fp: int, fn: int
-) -> Tuple[float, float, float, float, float, float, float, float]:
+def metrics(tp: Union[float, int], fp: int, fn: int) -> Sequence[float]:
     """Calculate evaluation metrics.
 
     Args:
@@ -192,11 +190,11 @@ def find_over_under(
     """Find number of over and under segmented cells.
 
     Args:
-            dict_result: dictionary containing predicted labels for each ground truth cell. # noqa
+            dict_result: dictionary containing predicted labels for each ground truth cell.
             data: data to be saved to csv file.
 
     Returns:
-            data: updated csv data with "over" or "under" label assigned to over and under segmented cells. # noqa
+            data: updated csv data with "over" or "under" label assigned to over and under segmented cells.
             over_segmented: number of over segmented cells.
             under_segmented: number of under segmented cells.
     """
@@ -237,7 +235,7 @@ def evaluation(
     file_pattern: Optional[str],
     file_extension: Extension,
 ) -> None:
-    """Compute evaluation metrics of region-wise comparison of ground truth and predicted image. # noqa
+    """Compute evaluation metrics of region-wise comparison of ground truth and predicted image.
 
     Args:
             gt_dir: Ground truth images.
@@ -245,10 +243,10 @@ def evaluation(
             input_classes: Number of Classes.
             out_dir: Output directory.
             individual_data: Boolean to calculate individual image statistics.
-            individual_summary: Boolean to calculate summary of individual images. # noqa
-            total_stats: Boolean to calculate overall statistics across all images. # noqa
+            individual_summary: Boolean to calculate summary of individual images.
+            total_stats: Boolean to calculate overall statistics across all images.
             total_summary: Boolean to calculate summary across all images.
-            radius_factor: Importance of radius/diameter to find centroid distance. Should be between (0,2]. # noqa
+            radius_factor: Importance of radius/diameter to find centroid distance. Should be between (0,2].
             iou_score: Intersection over union.
             file_pattern: Filename pattern to filter data.
             file_extension: File format of outputs
@@ -263,9 +261,8 @@ def evaluation(
         else:
             radius_factor = 1
     else:
-        raise ValueError("radius_factor not provided")  # noqa
+        raise ValueError("radius_factor not provided")
 
-    radius_factor = radius_factor if 0 < radius_factor <= 2 else 1
     total_files = 0
     result = []
 
@@ -316,7 +313,7 @@ def evaluation(
                         # Loop across the length of the image
                         for y in range(0, br_gt.Y, tile_size):
                             y_max = min([br_gt.Y, y + tile_size])
-                            for x in range(0, br_gt.X, tile_size):
+                            for x in range(0, br_gt.X, tile_size):  # noqa
                                 x_max = min([br_gt.X, x + tile_size])
                                 im_gt = np.squeeze(
                                     br_gt[y:y_max, x:x_max, z : z + 1, 0, 0]  # noqa
@@ -331,11 +328,9 @@ def evaluation(
                                     classes = [1]
                                 for cl in classes:
                                     if len(classes) > 1:
-                                        im_pred = np.where(im_pred == cl, cl, 0)  # noqa
+                                        im_pred = np.where(im_pred == cl, cl, 0)
                                         im_gt = np.where(im_gt == cl, cl, 0)
-                                        im_pred, _, _, _ = ccl(
-                                            np.uint8(im_pred)
-                                        )  # noqa
+                                        im_pred, _, _, _ = ccl(np.uint8(im_pred))
                                         im_gt, _, _, _ = ccl(np.uint8(im_gt))
 
                                     im_gt = get_image(
@@ -354,16 +349,12 @@ def evaluation(
                                         x_max,
                                         y_max,
                                     ).astype(int)
-                                    props = skimage.measure.regionprops(im_pred)  # noqa
+                                    props = skimage.measure.regionprops(im_pred)
                                     numLabels_pred = np.unique(im_pred)
 
                                     if numLabels_pred[0] != 0:
-                                        numLabels_pred = np.insert(
-                                            numLabels_pred, 0, 0
-                                        )  # noqa
-                                    centroids_pred = np.zeros(
-                                        (len(numLabels_pred), 2)
-                                    )  # noqa
+                                        numLabels_pred = np.insert(numLabels_pred, 0, 0)
+                                    centroids_pred = np.zeros((len(numLabels_pred), 2))
                                     i = 1
                                     for prop in props:
                                         centroids_pred[i] = prop.centroid[::-1]
@@ -374,12 +365,8 @@ def evaluation(
                                     numLabels_gt = np.unique(im_gt)
 
                                     if numLabels_gt[0] != 0:
-                                        numLabels_gt = np.insert(
-                                            numLabels_gt, 0, 0
-                                        )  # noqa
-                                    centroids_gt = np.zeros(
-                                        (len(numLabels_gt), 2)
-                                    )  # noqa
+                                        numLabels_gt = np.insert(numLabels_gt, 0, 0)
+                                    centroids_gt = np.zeros((len(numLabels_gt), 2))
                                     diameters = np.zeros(len(numLabels_gt))
                                     i = 1
                                     for prop in props:
@@ -406,9 +393,7 @@ def evaluation(
                                         componentMask_gt = (
                                             im_gt == numLabels_gt[i]
                                         ).astype("uint8") * 1
-                                        dict_result.setdefault(
-                                            numLabels_gt[i], []
-                                        )  # noqa
+                                        dict_result.setdefault(numLabels_gt[i], [])
                                         for idx in index:
                                             componentMask_pred_ = (
                                                 im_pred == numLabels_pred[idx]
@@ -418,27 +403,17 @@ def evaluation(
                                             ).sum() > 2 and idx != 0:
                                                 if (
                                                     componentMask_gt[
-                                                        int(
-                                                            centroids_pred[idx][  # noqa
-                                                                1
-                                                            ]  # noqa
-                                                        ),  # noqa
-                                                        int(
-                                                            centroids_pred[idx][  # noqa
-                                                                0
-                                                            ]  # noqa
-                                                        ),  # noqa
+                                                        int(centroids_pred[idx][1]),
+                                                        int(centroids_pred[idx][0]),
                                                     ]
                                                     == 1
                                                     or componentMask_pred_[
-                                                        int(centroids_gt[i][1]),  # noqa
-                                                        int(centroids_gt[i][0]),  # noqa
+                                                        int(centroids_gt[i][1]),
+                                                        int(centroids_gt[i][0]),
                                                     ]
                                                     == 1
                                                 ):
-                                                    dict_result[
-                                                        numLabels_gt[i]
-                                                    ].append(  # noqa
+                                                    dict_result[numLabels_gt[i]].append(
                                                         numLabels_pred[idx]
                                                     )
 
@@ -457,19 +432,16 @@ def evaluation(
                                         ).astype("uint8") * 1
 
                                         intersection = np.logical_and(
-                                            componentMask_pred, componentMask_gt  # noqa
+                                            componentMask_pred, componentMask_gt
                                         )
                                         union = np.logical_or(
-                                            componentMask_pred, componentMask_gt  # noqa
+                                            componentMask_pred, componentMask_gt
                                         )
-                                        iou_score_cell = np.sum(
-                                            intersection
-                                        ) / np.sum(  # noqa
+                                        iou_score_cell = np.sum(intersection) / np.sum(
                                             union
                                         )
                                         if (
-                                            dis
-                                            < (diameters[i] / 2) * radius_factor  # noqa
+                                            dis < (diameters[i] / 2) * radius_factor
                                             and match not in list_matches
                                             and iou_score_cell > iou_score
                                         ):
@@ -482,10 +454,7 @@ def evaluation(
                                             fn[cl] += 1
                                             condition = "FN"
 
-                                        if (
-                                            condition == "TP"
-                                            and individual_summary  # noqa
-                                        ):  # noqa
+                                        if condition == "TP" and individual_summary:
                                             mean_centroid[cl] += dis
                                             mean_iou[cl] += iou_score_cell
 
@@ -511,46 +480,38 @@ def evaluation(
 
                                     if individual_data:
                                         ind_data: List[Any] = []
-                                        for i in range(
-                                            0, numLabels_gt.max() + 1
-                                        ):  # noqa
+                                        for i in range(0, numLabels_gt.max() + 1):
                                             if data[i] is not None:
                                                 ind_data.append(data[i])
                                         df_ind_data = pd.DataFrame(ind_data)
                                         if df_ind_data.shape[1] == 6:
                                             df_ind_data = pd.DataFrame(
                                                 ind_data,
-                                                columns=header_individual_data[
-                                                    :-1
-                                                ],  # noqa
+                                                columns=header_individual_data[:-1],
                                             )
                                         else:
                                             df_ind_data = pd.DataFrame(
                                                 ind_data,
-                                                columns=header_individual_data,  # noqa
+                                                columns=header_individual_data,
                                             )
 
-                                        vf_ind_data = vaex.from_pandas(
-                                            df_ind_data
-                                        )  # noqa
+                                        vf_ind_data = vaex.from_pandas(df_ind_data)
                                         outname_ind_data = pathlib.Path(
                                             out_dir,
-                                            f"cells_{file_name.name}{file_extension}",  # noqa
+                                            f"cells_{file_name.name}{file_extension}",
                                         )
                                         if f"{file_extension}" in [
                                             ".feather",
                                             ".arrow",
                                         ]:
-                                            vf_ind_data.export_feather(
-                                                outname_ind_data
-                                            )  # noqa
+                                            vf_ind_data.export_feather(outname_ind_data)
                                         else:
                                             vf_ind_data.export_csv(
                                                 path=outname_ind_data,
                                                 chunk_size=chunk_size,
                                             )
                                         logger.info(
-                                            f"cells_{file_name.name}{file_extension}"  # noqa
+                                            f"cells_{file_name.name}{file_extension}"
                                         )
 
                                     for i in range(1, len(centroids_pred)):
@@ -561,9 +522,7 @@ def evaluation(
                                             componentMask_pred = (
                                                 im_pred == numLabels_pred[i]
                                             ).astype("uint8") * 1
-                                            if (
-                                                componentMask_pred > 0
-                                            ).sum() > 2:  # noqa
+                                            if (componentMask_pred > 0).sum() > 2:
                                                 fp[cl] += 1
 
                     for cl in range(1, input_classes + 1):
@@ -610,15 +569,11 @@ def evaluation(
                         result.append(data_result)
                         df_result = pd.DataFrame(result, columns=header)
                         vf_result = vaex.from_pandas(df_result)
-                        filename = pathlib.Path(
-                            out_dir, f"result{file_extension}"
-                        )  # noqa
+                        filename = pathlib.Path(out_dir, f"result{file_extension}")
                         if f"{file_extension}" in [".feather", ".arrow"]:
                             vf_result.export_feather(filename)
                         else:
-                            vf_result.export_csv(
-                                path=filename, chunk_size=chunk_size
-                            )  # noqa
+                            vf_result.export_csv(path=filename, chunk_size=chunk_size)
                         logger.info(f"Saving result{file_extension}")
 
                         if total_summary:
@@ -646,12 +601,10 @@ def evaluation(
                                     cl,
                                     0,
                                     0,
-                                ]  # noqa
+                                ]
                                 ind_sum.append(data_individualSummary)
                             else:
-                                mean_centroid[cl] = (
-                                    mean_centroid[cl] / totalCells[cl]
-                                )  # noqa
+                                mean_centroid[cl] = mean_centroid[cl] / totalCells[cl]
                                 mean_iou[cl] = mean_iou[cl] / totalCells[cl]
                                 data_individualSummary = [
                                     file_name.name,
@@ -665,17 +618,17 @@ def evaluation(
                         )
                         vf_ind_sum = vaex.from_pandas(df_ind_sum)
                         outname_individualSummary = pathlib.Path(
-                            out_dir, f"individual_image_summary{file_extension}"  # noqa
+                            out_dir, f"individual_image_summary{file_extension}"
                         )
                         if f"{file_extension}" in [".feather", ".arrow"]:
-                            vf_ind_sum.export_feather(outname_individualSummary)  # noqa
+                            vf_ind_sum.export_feather(outname_individualSummary)
                             logger.info(
-                                f"Saving individual_image_summary{file_extension}"  # noqa
+                                f"Saving individual_image_summary{file_extension}"
                             )
                         else:
                             vf_ind_sum.export_csv(
                                 path=outname_individualSummary,
-                                chunk_size=chunk_size,  # noqa
+                                chunk_size=chunk_size,
                             )
 
         if total_summary and total_files != 0:
@@ -702,15 +655,11 @@ def evaluation(
                 df_totalSummary = pd.DataFrame(data_totalSummary).T
                 df_totalSummary.columns = header_total_summary
                 vf_totalSummary = vaex.from_pandas(df_totalSummary)
-                summary_file = pathlib.Path(
-                    out_dir, f"average_summary{file_extension}"
-                )  # noqa
+                summary_file = pathlib.Path(out_dir, f"average_summary{file_extension}")
                 if f"{file_extension}" in [".feather", ".arrow"]:
                     vf_totalSummary.export_feather(summary_file)
                 else:
-                    vf_totalSummary.export_csv(
-                        path=summary_file, chunk_size=chunk_size
-                    )  # noqa
+                    vf_totalSummary.export_csv(path=summary_file, chunk_size=chunk_size)
                 logger.info(f"Saving average_summary{file_extension}")
 
         if total_stats:
@@ -725,9 +674,7 @@ def evaluation(
                         fscore,
                         f1_score,
                         fmi,
-                    ) = metrics(  # noqa
-                        1e-20, FP[cl], FN[cl]
-                    )
+                    ) = metrics(1e-20, FP[cl], FN[cl])
                 else:
                     (
                         iou,
@@ -738,9 +685,7 @@ def evaluation(
                         fscore,
                         f1_score,
                         fmi,
-                    ) = metrics(  # noqa
-                        TP[cl], FP[cl], FN[cl]
-                    )
+                    ) = metrics(TP[cl], FP[cl], FN[cl])
                 data_total_stats = [
                     cl,
                     TP[cl],
@@ -767,9 +712,7 @@ def evaluation(
                 if f"{file_extension}" in [".feather", ".arrow"]:
                     vf_total_stats.export_feather(overall_file)
                 else:
-                    vf_total_stats.export_csv(
-                        path=overall_file, chunk_size=chunk_size
-                    )  # noqa
+                    vf_total_stats.export_csv(path=overall_file, chunk_size=chunk_size)
                 logger.info(f"Saving total_stats_result{file_extension}")
 
     finally:

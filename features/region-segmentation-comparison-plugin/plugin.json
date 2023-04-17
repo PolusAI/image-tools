@@ -1,14 +1,14 @@
 {
-  "name": "Cellular Evaluation Plugin",
+  "name": "Region Segmentation Comparison",
   "version": "0.2.2",
-  "title": "Cellular Evaluation Plugin",
+  "title": "Region Segmentation Comparison",
   "description": "Plugin to generate evaluation metrics for region-wise comparison of ground truth and predicted images.",
   "author": "Vishakha Goyal (vishakha.goyal@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov),",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-  "repository": "https://github.com/labshare/polus-plugins",
+  "repository": "https://github.com/polusai/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/cellular-eval-plugin:0.2.2",
+  "containerId": "polusai/region-segmentation-comparison-plugin:0.2.2",
   "baseCommand": [
     "python3",
     "-m",
@@ -73,7 +73,8 @@
       "name": "filePattern",
       "type": "string",
       "description": "Filename pattern to filter data.",
-      "required": true
+      "required": false,
+      "default": ".+"
     },
     {
       "name": "fileExtension",

@@ -1,4 +1,4 @@
-"""Cellular Evaluation."""
+"""Region Segmentation Comparison."""
 import json
 import logging
 import pathlib
@@ -6,14 +6,14 @@ from typing import Any, Optional
 
 import filepattern as fp
 import typer
-from polus.plugins.features.cellular_evaluation import evaluate as evaluate
+from polus.plugins.features.region_segmentation_comparison import evaluate as evaluate
 
 # Initialize the logger
 logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
     datefmt="%d-%b-%y %H:%M:%S",
 )
-logger = logging.getLogger("polus.plugins.features.cellular_evaluation")
+logger = logging.getLogger("polus.plugins.features.region_segmentation_comparison")
 
 app = typer.Typer()
 
@@ -27,15 +27,13 @@ def main(
     ),
     pred_dir: pathlib.Path = typer.Option(
         ...,
-        "--predDir",  # noqa
+        "--predDir",
         help="Predicted image collection.",
     ),
-    input_classes: int = typer.Option(
-        1, "--inputClasses", help="Number of Classes"
-    ),  # noqa
+    input_classes: int = typer.Option(1, "--inputClasses", help="Number of Classes"),
     individual_data: Optional[bool] = typer.Option(
         False,
-        "--individualData",  # noqa
+        "--individualData",
         help="Boolean to calculate individual image statistics.",
     ),
     individual_summary: Optional[bool] = typer.Option(
@@ -46,37 +44,33 @@ def main(
     total_stats: Optional[bool] = typer.Option(
         False,
         "--totalStats",
-        help="Boolean to calculate overall statistics across all images",  # noqa
+        help="Boolean to calculate overall statistics across all images",
     ),
     total_summary: Optional[bool] = typer.Option(
         False,
         "--totalSummary",
-        help="Boolean to calculate summary across all images",  # noqa
+        help="Boolean to calculate summary across all images",
     ),
     radius_factor: Optional[float] = typer.Option(
         0.5,
         "--radiusFactor",
         help="Importance of radius/diameter to find centroid distance.",
     ),
-    iou_score: Optional[float] = typer.Option(
-        0.0, "--iouScore", help="IoU theshold"
-    ),  # noqa
+    iou_score: Optional[float] = typer.Option(0.0, "--iouScore", help="IoU theshold"),
     file_pattern: Optional[str] = typer.Option(
         ".+", "--filePattern", help="Filename pattern to filter data."
     ),
     file_extension: evaluate.Extension = typer.Option(
         evaluate.Extension.Default,
         "--fileExtension",
-        help="File format of an output file.",  # noqa
+        help="File format of an output file.",
     ),
-    out_dir: pathlib.Path = typer.Option(
-        ..., "--outDir", help="Output collection"
-    ),  # noqa
+    out_dir: pathlib.Path = typer.Option(..., "--outDir", help="Output collection"),
     preview: Optional[bool] = typer.Option(
         False, "--preview", help="Output a JSON preview of files"
     ),
 ) -> None:
-    """Convert bioformat supported image datatypes conversion to ome.tif or ome.zarr file format."""  # noqa
+    """Convert bioformat supported image datatypes conversion to ome.tif or ome.zarr file format."""
     logger.info(f"gtDir = {gt_dir}")
     logger.info(f"predDir = {pred_dir}")
     logger.info(f"inputClasses = {input_classes}")
@@ -94,9 +88,7 @@ def main(
     pred_dir = pred_dir.resolve()
     out_dir = out_dir.resolve()
 
-    assert (
-        gt_dir.exists()
-    ), f"{gt_dir} does not exist!! Please check input path again"  # noqa
+    assert gt_dir.exists(), f"{gt_dir} does not exist!! Please check input path again"
     assert (
         pred_dir.exists()
     ), f"{pred_dir} does not exist!! Please check input path again"
