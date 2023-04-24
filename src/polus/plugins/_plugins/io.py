@@ -1,3 +1,4 @@
+# type: ignore
 """Plugins I/O utilities."""
 import enum
 import logging
@@ -220,7 +221,7 @@ class Input(IOBase):
             )
 
 
-def _check_version_number(value: str | int) -> bool:
+def _check_version_number(value: typing.Union[str, int]) -> bool:
     if isinstance(value, int):
         value = str(value)
     if "-" in value:
