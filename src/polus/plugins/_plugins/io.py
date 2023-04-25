@@ -325,7 +325,8 @@ cwl_input_types = {
     "number": "double",
     "boolean": "boolean",
     "genericData": "Directory",
-    "collection": "Directory"
+    "collection": "Directory",
+    "enum": "string"  # for compatibility with workflows
     # not yet implemented: array
 }
 
@@ -334,13 +335,15 @@ def _type_in(input: Input):
     """Return appropriate value for `type` based on input type."""
     val = input.type.value
     req = "" if input.required else "?"
-    if val == "enum":
-        if input.required:
-            s = [{"type": "enum", "symbols": input.options["values"]}]
-        else:
-            s = ["null", {"type": "enum", "symbols": input.options["values"]}]
 
-    elif val in cwl_input_types:
+    # NOT compatible with CWL workflows, ok in CLT
+    # if val == "enum":
+    #     if input.required:
+    #         s = [{"type": "enum", "symbols": input.options["values"]}]
+    #     else:
+    #         s = ["null", {"type": "enum", "symbols": input.options["values"]}]
+
+    if val in cwl_input_types:
         s = cwl_input_types[val] + req
     else:
         s = "string" + req  # defaults to string
