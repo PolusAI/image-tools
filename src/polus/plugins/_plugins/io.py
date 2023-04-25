@@ -324,7 +324,8 @@ cwl_input_types = {
     "string": "string",
     "number": "double",
     "boolean": "boolean",
-    "genericData": "Directory"
+    "genericData": "Directory",
+    "collection": "Directory"
     # not yet implemented: array
 }
 
