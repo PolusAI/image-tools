@@ -1,0 +1,82 @@
+{
+  "name": "ImageJ filter gauss",
+  "version": "0.3.2",
+  "title": "ImageJ filter gauss",
+  "description": "This plugin applies a Gaussian Convolutional filter to an input collection.",
+  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-filter-gauss-plugin:0.3.2",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": [
+          "GaussRAISingleSigma",
+          "DefaultGaussRAI"
+        ]
+      },
+      "description": "Operation overloading method to perform",
+      "required": true
+    },
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "sigma",
+      "type": "number",
+      "description": "The standard deviation of the Gaussian filter, same in both dimensions.",
+      "required": false
+    },
+    {
+      "name": "sigmas",
+      "type": "array",
+      "description": "The standard deviations of the Gaussian filters, (x,y)",
+      "required": false,
+      "options": {
+        "items": {
+          "type": "string",
+          "title": "The standard deviations of the Gaussian filters, (x,y)",
+          "widget": "string"
+        }
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "opName",
+      "description": "Operation overloading method to perform"
+    },
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.sigma",
+      "title": "sigma",
+      "description": "The standard deviation of the Gaussian filter, same in both dimensions.",
+      "condition": "model.inputs.opName==GaussRAISingleSigma"
+    },
+    {
+      "key": "inputs.sigmas",
+      "title": "sigmas",
+      "description": "The standard deviations of the Gaussian filters, (x,y)",
+      "condition": "model.inputs.opName==DefaultGaussRAI"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-fcs-to-csv-converter-plugin:${version}
+docker build . -t polusai/fcs-to-csv-converter-plugin:${version}

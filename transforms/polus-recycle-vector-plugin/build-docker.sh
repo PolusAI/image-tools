@@ -1,3 +1,3 @@
 #!/bin/bash
 version=$(<VERSION)
-docker build . -t labshare/polus-recycle-vector-plugin:${version}
+docker build . -t polusai/recycle-vector-plugin:${version}

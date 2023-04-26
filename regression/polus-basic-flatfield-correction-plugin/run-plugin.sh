@@ -1,22 +1,23 @@
 #!/bin/bash
 
 version=$(<VERSION)
-datapath=$(readlink --canonicalize ../data)
+datapath=$(readlink --canonicalize ../../data)
 echo ${datapath}
 
 # Inputs
-inpDir=/data/input
-filePattern=x{xxx}-y{yyy}-z{zzz}.ome.tif
+inpDir=/data/standard/intensity
+filePattern="p001_x{x+}_y{y+}_wx{r+}_wy{z+}_c{c}.ome.tif"
 darkfield=true
 photobleach=false
-groupBy='p'
+groupBy="xyrz"
 
 # Output paths
-outDir=/data/output
+outDir=/data/basic
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
+            --gpus=all \
             --user $(id -u):$(id -g) \
-            labshare/polus-basic-flatfield-correction-plugin:${version} \
+            polusai/basic-flatfield-correction-plugin:${version} \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
             --darkfield ${darkfield} \

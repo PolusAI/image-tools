@@ -1,12 +1,12 @@
 {
   "name": "Binary Operations Plugin",
-  "version": "0.3.9",
-  "containerId": "labshare/polus-binary-operations-plugin:0.3.9",
+  "version": "0.4.2",
+  "containerId": "polusai/binary-operations-plugin:0.4.2",
   "title": "Binary Operations Plugin",
   "description": "Everything you need to start a WIPP plugin.",
   "author": "Madhuri Vihani (Madhuri.Vihani@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-  "repository": "https://github.com/labshare/polus-plugins",
+  "repository": "https://github.com/polusai/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
   "inputs": [
@@ -18,14 +18,21 @@
       "required": true
     },
     {
-      "name": "kernelsize",
+      "name": "filePattern",
+      "description": "Pattern of the images in Input",
+      "type": "string",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "kernelSize",
       "description": "Kernel size that should be used for transformation",
       "type": "number",
       "options": null,
       "required": true
     },
     {
-      "name": "Operation",
+      "name": "operation",
       "description": "The Binary Operations that will be done on the image",
       "type": "enum",
       "options": {
@@ -47,7 +54,7 @@
       "required": true
     },
     {
-      "name": "structuringshape",
+      "name": "structuringShape",
       "description": "Structuring Shape (Default is Elliptical)",
       "type": "enum",
       "options": {
@@ -60,28 +67,35 @@
       "required": true
     },
     {
-      "name": "ThresholdAreaRemoveLarge",
-      "description": "Minimum Area of objects to keep.",
+      "name": "overrideInstances",
+      "description": "Specification for whether previously written instances can be overriden",
+      "type": "boolean",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "thresholdAreaRemoveLarge",
+      "description": "Minimum Area of objects to keep. (Kernel size is ignored.)",
       "type": "number",
       "options": null,
       "required": false
     },
     {
-      "name": "ThresholdAreaRemoveSmall",
-      "description": "Maximum Area of objects to keep.",
+      "name": "thresholdAreaRemoveSmall",
+      "description": "Maximum Area of objects to keep. (Kernel size is ignored.)",
       "type": "number",
       "options": null,
       "required": false
     },
     {
-      "name": "IterationsDilation",
+      "name": "iterationsDilation",
       "description": "Number of times to dilate an object",
       "type": "number",
       "options": null,
       "required": false
     },
     {
-      "name": "IterationsErosion",
+      "name": "iterationsErosion",
       "description": "Number of times to erode an object",
       "type": "number",
       "options": null,
@@ -99,9 +113,14 @@
   ],
   "ui": [
     {
-      "key": "inputs.Operation",
+      "key": "inputs.operation",
       "title": "Operations",
       "description": "Operations that will be used on image"
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "Image Pattern: ",
+      "description": "Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). "
     },
     {
       "key": "inputs.inpDir",
@@ -109,38 +128,44 @@
       "description": "Input image collection to be processed by this plugin"
     },
     {
-      "key": "inputs.kernelsize",
+      "key": "inputs.kernelSize",
       "title": "Default Kernel Size",
       "description": "Default Kernel Size to use for Operations"
     },
     {
-      "key": "inputs.structuringshape",
+      "key": "inputs.structuringShape",
       "title": "Structuring Shape (Default is Elliptical)",
-      "description": "Default Kernel Size to use for Operations"
+      "description": "Default Kernel Shape to use for Operations"
     },
     {
-      "key": "inputs.ThresholdAreaRemoveLarge",
+      "key": "inputs.overrideInstances",
+      "title": "Override Instances?",
+      "default": "false"
+    },
+    {
+      "key": "inputs.thresholdAreaRemoveLarge",
       "title": "Threshold of Area for objects in images",
       "description": "Default Kernel Size to use for Operations",
-      "condition": "inputs.Operation==filter_area_remove_large_objects"
+      "condition": "inputs.operation==filter_area_remove_large_objects"
     },
     {
-      "key": "inputs.ThresholdAreaRemoveSmall",
+      "key": "inputs.thresholdAreaRemoveSmall",
       "title": "Threshold of Area for objects in images",
       "description": "Default Kernel Size to use for Operations",
-      "condition": "inputs.Operation==filter_area_remove_small_objects"
+      "condition": "inputs.operation==filter_area_remove_small_objects"
     },
     {
-      "key": "inputs.IterationsDilation",
+      "key": "inputs.iterationsDilation",
       "title": "Iterate",
       "description": "Default Kernel Size to use for Operations",
-      "condition": "inputs.Operation==dilation"
+      "condition": "inputs.operation==dilation"
     },
     {
-      "key": "inputs.IterationsErosion",
+      "key": "inputs.iterationsErosion",
       "title": "Iterate",
       "description": "Default Kernel Size to use for Operations",
-      "condition": "inputs.Operation==erosion"
+      "condition": "inputs.operation==erosion"
     }
-  ]
+  ],
+  "validators": null
 }

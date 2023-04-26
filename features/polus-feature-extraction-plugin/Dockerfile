@@ -1,7 +1,6 @@
-FROM labshare/polus-bfio-util:2.0.4-slim-buster
+FROM polusai/bfio:2.1.9
 
 COPY VERSION /
-
 		
 ARG EXEC_DIR="/opt/executables"
 ARG DATA_DIR="/data"
@@ -18,4 +17,4 @@ RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
 WORKDIR ${EXEC_DIR}
 
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3", "/opt/executables/main.py"]

@@ -41,10 +41,10 @@ the contents of `plugin.json` into the pop-up window and submit.
 
 This plugin takes one input argument and one output argument:
 
-| Name       | Description             | I/O    | Type |
-|------------|-------------------------|--------|------|
-| `inpDir`   | Input image collection  | Input  | Path |
-| `outDir`   | Output image collection | Output | List |
+| Name     | Description             | I/O    | Type |
+| -------- | ----------------------- | ------ | ---- |
+| `inpDir` | Input image collection  | Input  | Path |
+| `outDir` | Output image collection | Output | List |
 
 ## Run the plugin
 

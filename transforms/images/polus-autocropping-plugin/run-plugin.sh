@@ -25,7 +25,7 @@ docker run --mount type=bind,source="${data_path}",target=/data \
             --user "$(id -u)":"$(id -g)" \
             --env POLUS_EXT=${POLUS_EXT} \
             --env POLUS_LOG=${POLUS_LOG} \
-            labshare/polus-autocropping-plugin:"${version}" \
+            polusai/autocropping-plugin:"${version}" \
             --inputDir ${inputDir} \
             --filePattern ${filePattern} \
             --groupBy ${groupBy} \

@@ -1,5 +1,11 @@
 
-FROM python:3.7-slim-buster
+FROM polusai/bfio:2.1.9
+
+# from bfio container
+# ENV POLUS_EXT=".ome.tif"
+# ENV POLUS_LOG="INFO"
+# ENV EXEC_DIR="/opt/executables"
+# ENV DATA_DIR="/data"
 
 COPY VERSION /
 		
@@ -15,4 +21,4 @@ WORKDIR ${EXEC_DIR}
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3", "/opt/executables/main.py"]

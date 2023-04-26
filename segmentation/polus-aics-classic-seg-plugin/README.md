@@ -44,9 +44,9 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes two input argument and one output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--configFile` | Configuration file for the workflow | Input | collection |
-| `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--outDir` | Output collection | Output | collection |
+| Name           | Description                                           | I/O    | Type       |
+| -------------- | ----------------------------------------------------- | ------ | ---------- |
+| `--configFile` | Configuration file for the workflow                   | Input  | collection |
+| `--inpDir`     | Input image collection to be processed by this plugin | Input  | collection |
+| `--outDir`     | Output collection                                     | Output | collection |
 

@@ -40,28 +40,12 @@ of `plugin.json` into the pop-up window and submit.
 
 ## Options
 
-This plugin takes 5 input arguments and 1 output argument:
+This plugin takes 3 input arguments and 1 output argument:
 
 | Name                | Description                                            | I/O    | Type            |
 |---------------------|--------------------------------------------------------|--------|-----------------|
 | `--stitchDir`       | Stitching vector                                       | Input  | stitchingVector |
 | `--collectionDir`   | Image collection                                       | Input  | collection      |
-| `--stitchRegex`     | `filepattern` for filenames in stitching vector        | Input  | String          |
-| `--collectionRegex` | `filepattern` for filenames in image collection        | Input  | String          |
-| `--groupBy`         | String of variables that vary within a stiching vector | Input  | String          |
+| `--filepattern`     | `filepattern` for filenames in image collection        | Input  | String          |
 | `--outDir`          | Output stitching vector                                | Output | stitchingVector |
 
-### stitchRegex and collectionRegex
-
-The `stitchRegex` and `collectionRegex` must contain either `x` and `y`
-variables, or a `p` variable. These variables are what the plugin use to match
-the location of corresponding files. If any other variables are provided, then
-a new stitching vector is created for each unique value extracted for that
-variable.
-
-### groupBy
-
-The `groupBy` variables permits grouping variables into the same stitching
-vector. This is useful when the filenames in the stitching vector do not match
-the files in the image collection and there may be more than one set of values
-in the filename that change.

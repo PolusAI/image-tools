@@ -1,4 +1,4 @@
-FROM labshare/polus-bfio-util:2.1.9
+FROM polusai/bfio:2.1.9
 
 COPY requirements.txt .
 
@@ -9,4 +9,4 @@ COPY src ${EXEC_DIR}/
 
 WORKDIR ${EXEC_DIR}
 
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3", "/opt/executables/main.py"]

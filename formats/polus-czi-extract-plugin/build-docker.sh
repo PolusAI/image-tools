@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-czi-extract-plugin:${version}
+docker build . -t polusai/czi-extract-plugin:${version}

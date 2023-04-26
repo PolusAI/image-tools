@@ -22,7 +22,7 @@ docker run --mount type=bind,source="${data_path}",target=/data/ \
             --user "$(id -u)":"$(id -g)" \
             --env POLUS_LOG=${POLUS_LOG} \
             --env POLUS_EXT=${POLUS_EXT} \
-            labshare/polus-vector-label-plugin:"${version}" \
+            polusai/vector-to-label-plugin:"${version}" \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
             --flowMagnitudeThreshold ${flowMagnitudeThreshold} \
