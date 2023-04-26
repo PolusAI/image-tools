@@ -17,7 +17,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
     datefmt="%d-%b-%y %H:%M:%S",
 )
-logger = logging.getLogger("polus.plugins.transforms.tabular.csv_merger")
+logger = logging.getLogger("polus.plugins.transforms.tabular_merger")
 
 
 @app.command()
