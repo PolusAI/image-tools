@@ -1,9 +1,9 @@
-# Image Assembler
+# Image Assembler (1.2.1-dev0)
 
 This WIPP plugin assembles images into a stitched image using an image stitching
 vector. It can assemble 2d and z-stacked images. When assembling z-stacked images,
 all images should have the same depth. Support for assembling images with different depth
-will be added in the future.  
+will be added in the future.
 The need for this plugin is due to limitations of the NIST
 [WIPP Image Assembling Plugin](https://github.com/usnistgov/WIPP-image-assembling-plugin)
 that limits image sizes to less than 2^32 pixels. The NIST plugin works faster
