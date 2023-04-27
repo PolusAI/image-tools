@@ -8,7 +8,7 @@ import tempfile
 import numpy as np
 import pytest
 from bfio import BioReader, BioWriter
-from src.polus.transforms.images.image_assembler.main import main
+from src.polus.transforms.images.image_assembler.image_assembler import assemble_image
 
 
 def get_temp_file(path, suffix):
@@ -134,7 +134,7 @@ def test_image_assembler_plugin(data):
     """Test correctness of image assembler plugin in a basic case."""
     ground_truth_path, img_path, stitch_path, out_dir = data
 
-    main(img_path, stitch_path, out_dir, False)
+    assemble_image(img_path, stitch_path, out_dir, False)
 
     assert len(os.listdir(ground_truth_path)) == 1
     assert len(os.listdir(out_dir)) == 1
