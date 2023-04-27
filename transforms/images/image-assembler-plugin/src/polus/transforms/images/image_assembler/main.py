@@ -107,7 +107,8 @@ def get_number(s: typing.Any) -> typing.Union[int,typing.Any]:
     except ValueError:
         return s
 
-def _parse_stitch(stitchPath: pathlib.Path,
+def _parse_stitch(img_path: pathlib.Path,
+                  stitchPath: pathlib.Path,
                   pattern: str,
                   timepointName: bool = False
                   ) -> dict:
@@ -202,11 +203,12 @@ def _parse_stitch(stitchPath: pathlib.Path,
 
     return out_dict
 
-def assemble_image(vector_path: pathlib.Path,
+def assemble_image(img_path: pathlib.Path,
+                   vector_path: pathlib.Path,
                    out_path: pathlib.Path,
                    depth: int,
-                   timesliceNaming: bool,
-                   pattern: str) -> None:
+                   timesliceNaming: bool
+                   ) -> None:
     """Assemble a 2d or 3d image
 
     This method assembles one image from one stitching vector. It can
@@ -227,7 +229,7 @@ def assemble_image(vector_path: pathlib.Path,
     with ProcessManager.process():
 
         # Parse the stitching vector
-        parsed_vector = _parse_stitch(vector_path, pattern, timesliceNaming)
+        parsed_vector = _parse_stitch(img_path, vector_path, timesliceNaming)
 
         # Initialize the output image
         with BioReader(parsed_vector['filePos'][0]['file']) as br:
@@ -259,8 +261,6 @@ def main(imgPath: pathlib.Path,
          outDir: pathlib.Path,
          timesliceNaming: typing.Optional[bool]
          ) -> None:
-
-    logger = logging.getLogger("main")
 
     '''Setup stitching variables/objects'''
     # Get a list of stitching vectors
@@ -295,6 +295,6 @@ def main(imgPath: pathlib.Path,
             continue
 
         # assemble_image(v,outDir, depth)
-        ProcessManager.submit_process(assemble_image,v,outDir, depth, timesliceNaming, pattern)
+        ProcessManager.submit_process(assemble_image, imgPath, v, outDir, depth, timesliceNaming)
 
     ProcessManager.join_processes()
