@@ -1,5 +1,9 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 1.4.0-dev0
 =======
 1.2.0-dev0
 >>>>>>> f5f7212 (fix: update to version 1.2.0-dev0)
+=======
+1.2.1-dev0
+>>>>>>> 83c08da (update: - refactor variables names to snake case)

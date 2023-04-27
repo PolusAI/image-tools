@@ -1,18 +1,26 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Image Assembler (1.4.0-dev0)
 =======
 # Image Assembler
 >>>>>>> cbaf94c (update/image-assembler-plugin)
+=======
+# Image Assembler (1.2.1-dev0)
+>>>>>>> 83c08da (update: - refactor variables names to snake case)
 
 This WIPP plugin assembles images into a stitched image using an image stitching
 vector. It can assemble 2d and z-stacked images. When assembling z-stacked images,
 all images should have the same depth. Support for assembling images with different depth
+<<<<<<< HEAD
 <<<<<<< HEAD
 will be added in the future.
 
 =======
 will be added in the future.  
 >>>>>>> cbaf94c (update/image-assembler-plugin)
+=======
+will be added in the future.
+>>>>>>> 83c08da (update: - refactor variables names to snake case)
 The need for this plugin is due to limitations of the NIST
 [WIPP Image Assembling Plugin](https://github.com/usnistgov/WIPP-image-assembling-plugin)
 that limits image sizes to less than 2^32 pixels. The NIST plugin works faster

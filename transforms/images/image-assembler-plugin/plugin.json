@@ -1,12 +1,16 @@
 {
     "name": "Image Assembler",
 <<<<<<< HEAD
+<<<<<<< HEAD
     "version": "1.4.0-dev0",
     "title": "Image Assembler",
     "description": "A scalable image assembling plugin.",
     "author": "Nick Schaub (nick.schaub@nih.gov), Antoine Gerardin (antoine.gerardin@gmail.com)",
 =======
     "version": "1.1.5",
+=======
+    "version": "1.2.1-dev0",
+>>>>>>> 83c08da (update: - refactor variables names to snake case)
     "title": "Image Assembler",
     "description": "A scalable image assembling plugin.",
     "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -16,11 +20,16 @@
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
 <<<<<<< HEAD
+<<<<<<< HEAD
     "containerId": "polusai/image-assembler-plugin:1.4.0-dev0",
     "baseCommand": ["python3", "-m", "polus.plugins.transforms.images.image_assembler"],
 =======
     "containerId": "polusai/image-assembler-plugin:1.1.5",
 >>>>>>> cbaf94c (update/image-assembler-plugin)
+=======
+    "containerId": "polusai/image-assembler-plugin:1.2.1-dev0",
+    "baseCommand": ["python3", "-m", "polus.transforms.images.image_assembler"],
+>>>>>>> 83c08da (update: - refactor variables names to snake case)
     "inputs": [
       {
         "name": "stitchPath",
