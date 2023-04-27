@@ -164,3 +164,5 @@ cython_debug/
 
 # test data directory
 data
+
+.DS_Store
