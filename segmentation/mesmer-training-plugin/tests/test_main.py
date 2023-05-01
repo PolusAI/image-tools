@@ -79,177 +79,142 @@ def synthetic_images(
 @pytest.fixture(
     params=[
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "efficientnetv2bs",
             2,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "efficientnetv2bm",
             5,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "efficientnetv2bl",
             2,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "efficientnetv2b3",
             5,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "efficientnetv2b2",
             2,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "efficientnetv2b1",
             5,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "efficientnetv2b0",
             2,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "efficientnetb7",
             5,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "efficientnetb6",
             2,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "efficientnetb5",
             5,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "efficientnetb4",
             2,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "efficientnetb3",
             5,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "efficientnetb2",
             2,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "efficientnetb1",
             5,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "efficientnetb0",
             2,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "mobilenet_v2",
             5,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "mobilenet_v2",
             2,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "mobilenetv2",
             5,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "mobilenet",
             2,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "nasnet_mobile",
             5,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "nasnet_large",
             2,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "vgg19",
             5,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "vgg16",
             2,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "resnet152v2",
             5,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "resnet101v2",
             2,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "resnet50v2",
             5,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "resnet152",
             2,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "resnet101",
             5,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "resnet50",
             2,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "densenet201",
             5,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "densenet169",
             2,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "densenet121",
             5,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "featurenet_3d",
             2,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "featurenet3d",
             5,
         ),
         (
-            "y{y:d+}_r{r:d+}_c0.tif",
             "featurenet",
             2,
         ),
@@ -262,8 +227,9 @@ def get_params(request):
 
 def test_cli(synthetic_images, output_directory, get_params) -> None:
     """Test Cli."""
-    pattern, model_backbone, batch_size = get_params
+    model_backbone, batch_size = get_params
     training_images, training_labels, test_images, test_labels = synthetic_images
+    pattern = "y{y:d+}_r{r:d+}_c0.tif"
 
     result = runner.invoke(
         app,
@@ -288,5 +254,6 @@ def test_cli(synthetic_images, output_directory, get_params) -> None:
             output_directory,
         ],
     )
+    pathlib.Path(pathlib.Path.cwd(), "model_weights.h5").unlink()
 
     assert result.exit_code == 0
