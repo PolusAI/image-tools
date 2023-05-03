@@ -152,13 +152,13 @@ def test_duplicate_channels_to_digit_non_spec_digit_len(poly):
     assert outputs.exit_code == 0
 
 
-@pytest.mark.xfail
 def test_invalid_input_raises_error(poly):
     """Testing of invalid input filepattern."""
     d = CreateData()
     inputs = d.load_json("duplicate_channels_to_digit")
-    (inp_pattern, out_pattern) = poly[2]
-    _ = d.runcommands(inputs, inp_pattern, out_pattern)
+    print(inputs)
+    (inp_pattern, out_pattern) = poly[0]
+    d.runcommands(inputs, inp_pattern, out_pattern)
 
 
 def test_non_alphanum_inputs_percentage_sign(poly):
@@ -396,7 +396,6 @@ def test_extract_named_grp_matches_valid_input():
         assert result == to_val
 
 
-@pytest.mark.xfail
 def test_extract_named_grp_matches_bad_pattern_invalid_input_fails():
     """Test of invalid input pattern."""
     test_cases = [
@@ -408,23 +407,8 @@ def test_extract_named_grp_matches_bad_pattern_invalid_input_fails():
     for test_case in test_cases:
         (from_val1, from_val2) = test_case
 
-        _ = fr.extract_named_grp_matches(from_val1, from_val2)
-
-
-@pytest.mark.xfail
-def test_extract_named_grp_matches_duplicate_namedgrp_invalid_input():
-    """Test of invalid input pattern."""
-    test_cases = [
-        (
-            (
-                "x(?P<row>[0-9][0-9])_y(?P<row>[0-9][0-9])_c(?P<channel>[a-zA-Z]+).ome.tif"
-            ),
-            (["img_x01_y01_DAPI.tif", "img_x01_y01_GFP.tif", "img_x01_y01_TXRED.tif"]),
-        )
-    ]
-    for test_case in test_cases:
-        (from_val1, from_val2) = test_case
-        fr.extract_named_grp_matches(from_val1, from_val2)
+        result = fr.extract_named_grp_matches(from_val1, from_val2)
+        assert len(result) == 0
 
 
 def test_str_to_int_valid_input():
@@ -504,6 +488,22 @@ def test_letters_to_int_returns_cat_index_dict_valid_input():
         (from_val1, from_val2, to_val) = test_case
         result = fr.letters_to_int(from_val1, from_val2)
         assert result == to_val
+
+
+@pytest.mark.xfail
+def test_extract_named_grp_matches_duplicate_namedgrp_invalid_input():
+    """Test of invalid input pattern."""
+    test_cases = [
+        (
+            (
+                "x(?P<row>[0-9][0-9])_y(?P<row>[0-9][0-9])_c(?P<channel>[a-zA-Z]+).ome.tif"
+            ),
+            (["img_x01_y01_DAPI.tif", "img_x01_y01_GFP.tif", "img_x01_y01_TXRED.tif"]),
+        )
+    ]
+    for test_case in test_cases:
+        (from_val1, from_val2) = test_case
+        fr.extract_named_grp_matches(from_val1, from_val2)
 
 
 @pytest.mark.xfail
