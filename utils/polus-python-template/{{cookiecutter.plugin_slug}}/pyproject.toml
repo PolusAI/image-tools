@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "{{cookiecutter.plugin_slug}}"
+version = "{{cookiecutter.plugin_version}}"
+description = "{{cookiecutter.plugin_description}}"
+authors = ["{{cookiecutter.author}} <{{cookiecutter.author_email}}>"]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9.15"
+typer = "^0.7.0"
+bfio = {version = "2.1.9", extras = ["all"]}
+filepattern = {version = "^2.2.7", source = "test"}
+preadator = "^0.2.0"
+
+[[tool.poetry.source]]
+name = "test"
+url = "https://test.pypi.org/simple/"
+default = false
+secondary = true
+
+[tool.poetry.group.dev.dependencies]
+bump2version = "^1.0.1"
+flake8 = "^6.0.0"
+pre-commit = "^3.2.1"
+flake8-docstrings = "^1.7.0"
+black = "^23.3.0"
+mypy = "^1.1.1"
+pytest = "^7.2.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
