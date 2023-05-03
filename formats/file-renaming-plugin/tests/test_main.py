@@ -156,7 +156,6 @@ def test_invalid_input_raises_error(poly):
     """Testing of invalid input filepattern."""
     d = CreateData()
     inputs = d.load_json("duplicate_channels_to_digit")
-    print(inputs)
     (inp_pattern, out_pattern) = poly[0]
     d.runcommands(inputs, inp_pattern, out_pattern)
 
