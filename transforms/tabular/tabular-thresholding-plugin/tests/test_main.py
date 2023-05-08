@@ -140,4 +140,4 @@ def test_tabular_thresholding(poly):
                 f.name for f in d.get_out_dir().iterdir()
             ]
 
-        # d.clean_directories()
+        d.clean_directories()

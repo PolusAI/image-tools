@@ -5,7 +5,7 @@ import logging
 import os
 import pathlib
 import warnings
-from typing import Optional
+from typing import Dict, Optional, Union
 
 import numpy as np
 import vaex
@@ -94,7 +94,7 @@ def thresholding_func(
             "Otsu threshold will not be computed as it requires information of both neg_control & pos_control"
         )
 
-    threshold_dict = {}
+    threshold_dict: Dict[str, Union[float, str]] = {}
     plate = file.stem
     threshold_dict["plate"] = plate
 
