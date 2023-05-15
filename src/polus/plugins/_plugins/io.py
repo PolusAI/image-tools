@@ -387,7 +387,7 @@ def outputs_cwl(o):
 
 
 @singledispatch
-def _io_value_to_yml(io) -> str | dict:
+def _io_value_to_yml(io) -> typing.Union[str, dict]:
     return str(io)
 
 
