@@ -6,7 +6,7 @@ import typing
 from pydantic import ValidationError
 from tqdm import tqdm
 
-from polus.plugins._plugins.classes import submit_plugin
+from polus.plugins._plugins.classes import refresh, submit_plugin
 from polus.plugins._plugins.gh import _init_github
 from polus.plugins._plugins.io import Version
 from polus.plugins._plugins.manifests.manifest_utils import (
@@ -85,6 +85,7 @@ def update_polus_plugins(
         except BaseException as e:
             # logger.debug(f"There was an error {e} in {plugin.name}")
             logger.exception(f"In {plugin.name}: {e}")
+    refresh()
 
 
 def update_nist_plugins(gh_auth: typing.Optional[str] = None):
@@ -111,3 +112,4 @@ def update_nist_plugins(gh_auth: typing.Optional[str] = None):
 
         except ValidationError as val_err:
             _error_log(val_err, manifest, "update_nist_plugins")
+    refresh()
