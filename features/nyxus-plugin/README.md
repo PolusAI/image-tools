@@ -1,4 +1,4 @@
-# Nyxus-Plugin
+# Nyxus-Plugin(v0.1.4)
 
 
 Nyxus plugin uses parallel processing of [Nyxus python package](https://pypi.org/project/nyxus/) to extract nyxus features from intensity-label image data. Especially useful when processing high throughput screens.
@@ -28,7 +28,7 @@ contents of `plugin.json` into the pop-up window and submit.
 
 ## Options
 
-This plugin takes seven input arguments and one output argument:
+This plugin takes nine input arguments and one output argument:
 
 | Name               | Description                                                        | I/O    | Type          |
 |--------------------|--------------------------------------------------------------------|--------|---------------|
@@ -37,6 +37,8 @@ This plugin takes seven input arguments and one output argument:
 | `--intPattern`     | Filepattern to parse intensity images                              | Input  | string        |
 | `--segPattern`     | Filepattern to parse label images                                  | Input  | string        |
 | `--features`       | [nyxus features](https://pypi.org/project/nyxus/)                  | Input  | string        |
+| `--fileExtension`  | A desired file format for nyxus features output                    | Input  | enum          |
 | `--neighborDist`   | Distance between two neighbor objects                              | Input  | float         |
 | `--pixelPerMicron` | Pixel Size in micrometer                                           | Input  | float         |
 | `--outDir`         | Output collection                                                  | Output | collection    |
+| `--preview`        | Generate a JSON file with outputs                                  | Output | JSON          |

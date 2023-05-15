@@ -1,7 +1,7 @@
 {
   "name": "Nyxus plugin",
-  "version": "0.1.3",
-  "containerId": "polusai/nyxus-plugin:0.1.3",
+  "version": "0.1.4",
+  "containerId": "polusai/nyxus-plugin:0.1.4",
   "title": "Nyxus plugin",
   "description": "Nyxus plugin allows to make use of parallel pocessing for extracting nyxus features",
   "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
@@ -9,6 +9,11 @@
   "repository": "https://github.com/PolusAI/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.plugins.features.nyxus_plugin"
+  ],
   "inputs": [
     {
       "name": "inpDir",
@@ -50,6 +55,21 @@
           "widget": "string"
         }
       }
+    },
+    {
+      "name": "fileExtension",
+      "type": "enum",
+      "description": "Output file format",
+      "default": "default",
+      "options": {
+        "values": [
+          ".arrow",
+          ".feather",
+          ".csv",
+          "default"
+        ]
+      },
+      "required": true
     },
     {
       "name": "neighborDist",
@@ -95,6 +115,18 @@
       "key": "inputs.segPattern",
       "title": "segPattern",
       "description": "Filepattern to parse label images"
+    },
+    {
+      "key": "inputs.features",
+      "title": "features",
+      "description": "Features or feature groups to be extracted by nyxus plugin",
+      "default": "ALL"
+    },
+    {
+      "key": "inputs.fileExtension",
+      "title": "fileExtension",
+      "description": "Ouput file format",
+      "default": ".csv"
     },
     {
       "key": "inputs.neighborDist",

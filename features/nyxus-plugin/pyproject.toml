@@ -1,0 +1,37 @@
+[tool.poetry]
+name = "polus-plugins-features-nyxus-plugin"
+version = "0.1.4"
+description = ""
+authors = [
+           "Nick Schaub <nick.schaub@nih.gov>",
+           "Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>"
+           ]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+bfio = {version = "2.1.9", extras = ["all"]}
+filepattern = "^2.0.0"
+typer = "^0.7.0"
+tqdm = "^4.64.1"
+nyxus = "^0.5.0"
+fastapi = "^0.92.0"
+astropy = "5.2.1"
+vaex = "^4.7.0"
+preadator="0.3.0.dev1"
+
+[tool.poetry.group.dev.dependencies]
+bump2version = "^1.0.1"
+pre-commit = "^3.0.4"
+black = "^23.1.0"
+flake8 = "^6.0.0"
+mypy = "^1.0.0"
+pytest = "^7.2.1"
+ipykernel = "^6.21.2"
+requests = "^2.28.2"
+scikit-image = "^0.20.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
