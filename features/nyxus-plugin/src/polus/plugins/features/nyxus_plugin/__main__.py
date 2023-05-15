@@ -5,7 +5,7 @@ import os
 import pathlib
 import re
 from multiprocessing import cpu_count
-from typing import Any, List, Optional, Union
+from typing import Any, Optional
 
 import filepattern as fp
 import typer
@@ -49,7 +49,7 @@ def main(
     seg_pattern: str = typer.Option(
         ".+", "--segPattern", help="Pattern use to parse segmentation image filenames"
     ),
-    features: List[Union[str, Any]] = typer.Option(
+    features: Optional[list[str]] = typer.Option(
         ["ALL"], "--features", help="Nyxus features to be extracted"
     ),
     file_extension: Extension = typer.Option(
@@ -92,14 +92,14 @@ def main(
         out_dir.exists()
     ), f"{out_dir} does not exist!! Please check output path again"
 
-    features = [re.split(",", f) for f in features][0]
+    features = [re.split(",", f) for f in features][0]  # type: ignore
 
     assert all(
-        f in FEATURE_GROUP.union(FEATURE_LIST) for f in features
+        f in FEATURE_GROUP.union(FEATURE_LIST) for f in features  # type: ignore
     ), "One or more feature selections were invalid"
 
     # Adding * to the start and end of nyxus group features
-    features = [(f"*{f}*") if f in FEATURE_GROUP else f for f in features]
+    features = [(f"*{f}*") if f in FEATURE_GROUP else f for f in features]  # type: ignore
 
     num_threads = max([cpu_count(), 2])
     ProcessManager.num_processes(num_threads)
