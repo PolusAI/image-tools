@@ -1,0 +1,113 @@
+{
+  "name": "ImageJ filter dog",
+  "version": "0.3.2",
+  "title": "ImageJ filter dog",
+  "description": "This plugin applies the Difference of Gaussians algorithm to an input collection.",
+  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-filter-dog-plugin:0.3.2",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": [
+          "DoGSingleSigmas",
+          "DoGVaryingSigmas"
+        ]
+      },
+      "description": "Operation to peform",
+      "required": true
+    },
+    {
+      "name": "inpDIr",
+      "type": "collection",
+      "description": "The collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "sigma1",
+      "type": "number",
+      "description": "The standard deviation of the first Gaussian filter",
+      "required": false
+    },
+    {
+      "name": "sigma2",
+      "type": "number",
+      "description": "The standard deviation of the second Gaussian filter",
+      "required": false
+    },
+    {
+      "name": "sigmas1",
+      "type": "array",
+      "description": "The standard deviations of the first Gaussian filter (x,y)",
+      "required": false,
+      "options": {
+        "items": {
+          "type": "string",
+          "title": "The standard deviations of the first Gaussian filter (x,y)",
+          "widget": "string"
+        }
+      }
+    },
+    {
+      "name": "sigmas2",
+      "type": "array",
+      "description": "The standard deviations of the second Gaussian filter (x,y)",
+      "required": false,
+      "options": {
+        "items": {
+          "type": "string",
+          "title": "The standard deviations of the second Gaussian filter (x,y)",
+          "widget": "string"
+        }
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "opName",
+      "description": "Operation to peform"
+    },
+    {
+      "key": "inputs.inpDIr",
+      "title": "inpDIr",
+      "description": "The collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.sigma1",
+      "title": "sigma1",
+      "description": "The standard deviation of the first Gaussian filter",
+      "condition": "model.inputs.opName==DoGSingleSigmas"
+    },
+    {
+      "key": "inputs.sigma2",
+      "title": "sigma2",
+      "description": "The standard deviation of the second Gaussian filter",
+      "condition": "model.inputs.opName==DoGSingleSigmas"
+    },
+    {
+      "key": "inputs.sigmas1",
+      "title": "sigmas1",
+      "description": "The standard deviations of the first Gaussian filter (x,y)",
+      "condition": "model.inputs.opName==DoGVaryingSigmas"
+    },
+    {
+      "key": "inputs.sigmas2",
+      "title": "sigmas2",
+      "description": "The standard deviations of the second Gaussian filter (x,y)",
+      "condition": "model.inputs.opName==DoGVaryingSigmas"
+    }
+  ]
+}

@@ -1,14 +1,14 @@
 #!/bin/bash
 
 version=$(<VERSION)
-data_path=$(readlink --canonicalize /data/axle/tests)
+data_path=$(readlink --canonicalize ../../data/vector_converters/label_to_vector)
 
 # Inputs
 inpDir=/data/input
 filePattern=".+"
 
 # Output paths
-outDir=/data/output_zarr
+outDir=/data/output
 
 # GPU configuration for testing GPU usage in the container
 GPUS=all
@@ -25,7 +25,7 @@ docker run --mount type=bind,source="${data_path}",target=/data/ \
             --gpus ${GPUS} \
             --env POLUS_LOG=${POLUS_LOG} \
             --env POLUS_EXT=${POLUS_EXT} \
-            labshare/polus-label-to-vector-plugin:"${version}" \
+            polusai/label-to-vector-plugin:"${version}" \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
             --outDir ${outDir}

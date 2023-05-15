@@ -1,4 +1,4 @@
-FROM labshare/polus-bfio-util:2.1.9
+FROM polusai/bfio:2.1.9
 
 # Change to .feather to save output images as feather files.
 ENV POLUS_TAB_EXT=".csv"
@@ -11,4 +11,4 @@ COPY src ${EXEC_DIR}/
 
 RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir
 
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3", "/opt/executables/main.py"]

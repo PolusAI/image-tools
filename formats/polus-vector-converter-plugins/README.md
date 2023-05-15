@@ -19,31 +19,24 @@ If no `filePattern` is provided, all images in the collection are processed.
 ### Vector to Label
 
 This plugin turns Cellpose flow fields into a labeled image.
-It works with either 2d or 3d flow fields.
 If no `filePattern` is provided, all images in the collection are processed.
 Most input parameters use, as defaults, the values recommended by the authors of Cellpose.
 The only ones that do not use the authors' recommend default are `flowThreshold` and `maskSizeThreshold`.
 
-For `flowThreshold`, this is because Cellpose inference will often produce a large number small sized flow-field wells.
-These each become a labelled object in an intermediate image.
-Cellpose then calculates a flow-field for each such object to compare against the flow-fields given by the user.
-Objects corresponding to flow-fields with large errors are discarded.
-However, because there are often a very large number of small objects in flow-fields produced by Cellpose inference, this step takes an inordinately long time.
-If you feel comfortable spending the extra time, the authors' recommended value is `0.4`.
+`flowMagnitudeThreshold` is used to help locate cell boundaries in an image.
+The label-to-vector plugin will produce flows whose magnitudes are 1 for pixels inside cells and 0 for pixels that form the background.
+The neural networks used in the cellpose-inference plugin are a bit more noisy.
+They will produce flow vectors with:
 
-For `maskSizeThreshold`, the functions for flow-field dynamics in Cellpose were developed under the assumption that they would get to process an entire image at once.
-Thus, if some object (recovered from the flow-fields) covered a large enough fraction of the image, the authors set this fraction to `0.4`, that object would be considered part of the background.
-With the more scalable implementation provided here, there is a decent chance that some objects will be large enough to cover most, if not all, of a tile.
-We would rather not label such objects as background.
-We use a tile-size of `1024x1024` for 2d images and `1024x1024x1024` for 3d images.
-If you are certain that none of the relevant objects in your images are large enough to cover a significant fraction of a tile, feel free to set `maskSizeThreshold` to a value of your choice.
+- high magnitudes, approx. 1, for pixels inside and near the boundaries of cells, and
+- low magnitudes, approx 0.005, for pixels in the background or inside cells but far from any cell boundary.
+
+The recommended default is `0.1`.
 
 ## TODO
 
-1. For now, interpolation of flow-fields for 3d images is only available on the GPU and not on the CPU.
-   Use equations from [this article](https://en.wikipedia.org/wiki/Trilinear_interpolation).
-2. Cellpose's method for merging nearby sinks when following flows consumes far too much memory and is the major bottleneck in the code for recovering masks from flow fields.
-   It might be better, for memory and time, to use a connected-component analysis of some variant of a neighborhood graph of the sinks.
+1. The new algorithm for mask reconstruction only works with 2d images for now.I need to work out the math for 3d images; then I'll extend it.
+2. Prove the choice to directly use cellpose's algorithms for both plugins.
 
 ## Building
 
@@ -60,22 +53,17 @@ Paste the contents of either `label_to_vector_plugin.json` or `vector_to_label_p
 
 The `label-to-vector` plugin takes 2 input arguments and 1 output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--inpDir` | Input image collection to be processed by this plugin. | Input | collection |
-| `--filePattern` | Image-name pattern to use when selecting images to process. | Input | string |
-| `--outDir` | Output collection. | Output | collection |
+| Name            | Description                                                 | I/O    | Type       |
+| --------------- | ----------------------------------------------------------- | ------ | ---------- |
+| `--inpDir`      | Input image collection to be processed by this plugin.      | Input  | collection |
+| `--filePattern` | Image-name pattern to use when selecting images to process. | Input  | string     |
+| `--outDir`      | Output collection.                                          | Output | collection |
 
-The `vector-to-label` plugin takes 8 input arguments and 1 output argument:
+The `vector-to-label` plugin takes 3 input arguments and 1 output argument:
 
-| Name          | Description             | I/O    | Type   | Defaults |
-|---------------|-------------------------|--------|--------|----------|
-| `--inpDir` | Input image collection to be processed by this plugin. | Input | collection | N/A |
-| `--filePattern` | Image-name pattern to use when selecting images to process. | Input | string | ".+" |
-| `--flowThreshold` | Flow-error Threshold. Margin between flow-fields computed from labelled masks against input flow-fields. | Input | number | 1.0 |
-| `--maskSizeThreshold` | Maximum fraction of a tile that a labelled object can cover. | Input | number | 1.0 |
-| `--interpolate` | Whether to use bilinear/trilinear interpolation on 2d/3d flow-fields respectively. | Input | boolean | true |
-| `--cellprobThreshold` | Cell Probability Threshold. | Input | number | 0.4 |
-| `--numIterations` | Number of iterations for which to follow flows. | Input | number | 200 |
-| `--minObjectSize` | Minimum number of pixels for an object to be valid. Object with fewer pixels are removed. | Input | number | 15 |
-| `--outDir` | Output collection. | Output | collection | N/A |
+| Name                       | Description                                                                   | I/O    | Type       | Defaults |
+| -------------------------- | ----------------------------------------------------------------------------- | ------ | ---------- | -------- |
+| `--inpDir`                 | Input image collection to be processed by this plugin.                        | Input  | collection | N/A      |
+| `--filePattern`            | Image-name pattern to use when selecting images to process.                   | Input  | string     | ".+"     |
+| `--flowMagnitudeThreshold` | The minimum flow magnitude at a pixel for it to be considered part of a cell. | Input  | number     | 0.1      |
+| `--outDir`                 | Output collection.                                                            | Output | collection | N/A      |

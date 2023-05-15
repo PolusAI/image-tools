@@ -1,104 +1,104 @@
 {
-    "name": "Autocropping",
-    "version": "1.0.1",
-    "title": "Autocropping",
-    "description": "Automatically remove noise and other useless sections from images.",
-    "author": "Najib Ishaq (najib.ishaq@axle.info)",
-    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-    "repository": "https://github.com/PolusAI/polus-plugins/transforms/images/polus-autocropping-plugin",
-    "website": "https://ncats.nih.gov/preclinical/core/informatics",
-    "citation": "",
-    "containerId": "labshare/polus-autocropping-plugin:1.0.1",
-    "inputs": [
-        {
-            "name": "inputDir",
-            "type": "collection",
-            "description": "Input image collection to be processed by this plugin.",
-            "required": true
-        },
-        {
-            "name": "filePattern",
-            "type": "string",
-            "description": "File pattern to use for grouping images.",
-            "required": true
-        },
-        {
-            "name": "groupBy",
-            "type": "string",
-            "description": "Grouping variables for images.",
-            "required": true
-        },
-        {
-            "name": "cropX",
-            "type": "boolean",
-            "description": "Whether to crop along the x-axis",
-            "required": false
-        },
-        {
-            "name": "cropY",
-            "type": "boolean",
-            "description": "Whether to crop along the y-axis",
-            "required": false
-        },
-        {
-            "name": "cropZ",
-            "type": "boolean",
-            "description": "Whether to crop along the z-axis",
-            "required": false
-        },
-        {
-            "name": "smoothing",
-            "type": "boolean",
-            "description": "Whether to use gaussian smoothing on images to add more tolerance to noise.",
-            "required": false
-        }
-    ],
-    "outputs": [
-        {
-            "name": "outputDir",
-            "type": "collection",
-            "description": "Output collection"
-        }
-    ],
-    "ui": [
-        {
-            "key": "inputs.inputDir",
-            "title": "Input collection",
-            "description": "Input image collection to be processed by this plugin."
-        },
-        {
-            "key": "inputs.filePattern",
-            "title": "File Pattern",
-            "description": "File pattern to use for grouping images."
-        },
-        {
-            "key": "inputs.groupBy",
-            "title": "Grouping Variables",
-            "description": "Variables to use for grouping images. Each group is cropped to the same bounding-box."
-        },
-        {
-            "name": "inputs.cropX",
-            "type": "boolean",
-            "description": "Whether to crop along the x-axis",
-            "default": "true"
-        },
-        {
-            "name": "inputs.cropY",
-            "type": "boolean",
-            "description": "Whether to crop along the y-axis",
-            "default": "true"
-        },
-        {
-            "name": "inputs.cropZ",
-            "type": "boolean",
-            "description": "Whether to crop along the z-axis",
-            "default": "true"
-        },
-        {
-            "key": "inputs.smoothing",
-            "title": "Smoothing",
-            "description": "Whether to use gaussian smoothing on images to add more tolerance to noise.",
-            "default": "true"
-        }
-    ]
+  "name": "Autocropping",
+  "version": "1.0.2",
+  "title": "Autocropping",
+  "description": "Automatically remove noise and other useless sections from images.",
+  "author": "Najib Ishaq (najib.ishaq@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/PolusAI/polus-plugins/transforms/images/polus-autocropping-plugin",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/autocropping-plugin:1.0.2",
+  "inputs": [
+    {
+      "name": "inputDir",
+      "type": "collection",
+      "description": "Input image collection to be processed by this plugin.",
+      "required": true
+    },
+    {
+      "name": "filePattern",
+      "type": "string",
+      "description": "File pattern to use for grouping images.",
+      "required": true
+    },
+    {
+      "name": "groupBy",
+      "type": "string",
+      "description": "Grouping variables for images.",
+      "required": true
+    },
+    {
+      "name": "cropX",
+      "type": "boolean",
+      "description": "Whether to crop along the x-axis",
+      "required": false
+    },
+    {
+      "name": "cropY",
+      "type": "boolean",
+      "description": "Whether to crop along the y-axis",
+      "required": false
+    },
+    {
+      "name": "cropZ",
+      "type": "boolean",
+      "description": "Whether to crop along the z-axis",
+      "required": false
+    },
+    {
+      "name": "smoothing",
+      "type": "boolean",
+      "description": "Whether to use gaussian smoothing on images to add more tolerance to noise.",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outputDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inputDir",
+      "title": "Input collection",
+      "description": "Input image collection to be processed by this plugin."
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "File Pattern",
+      "description": "File pattern to use for grouping images."
+    },
+    {
+      "key": "inputs.groupBy",
+      "title": "Grouping Variables",
+      "description": "Variables to use for grouping images. Each group is cropped to the same bounding-box."
+    },
+    {
+      "name": "inputs.cropX",
+      "type": "boolean",
+      "description": "Whether to crop along the x-axis",
+      "default": "true"
+    },
+    {
+      "name": "inputs.cropY",
+      "type": "boolean",
+      "description": "Whether to crop along the y-axis",
+      "default": "true"
+    },
+    {
+      "name": "inputs.cropZ",
+      "type": "boolean",
+      "description": "Whether to crop along the z-axis",
+      "default": "true"
+    },
+    {
+      "key": "inputs.smoothing",
+      "title": "Smoothing",
+      "description": "Whether to use gaussian smoothing on images to add more tolerance to noise.",
+      "default": "true"
+    }
+  ]
 }

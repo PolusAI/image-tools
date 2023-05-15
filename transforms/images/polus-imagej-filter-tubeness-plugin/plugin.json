@@ -1,0 +1,82 @@
+{
+  "name": "ImageJ filter tubeness",
+  "version": "0.3.8",
+  "title": "ImageJ filter tubeness",
+  "description": "This plugin filters a collection to produce a score for how tube-like each point in the image is.",
+  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-filter-tubeness-plugin:0.3.8",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": [
+          "DefaultTubeness"
+        ]
+      },
+      "description": "Op overloading method to perform",
+      "required": false
+    },
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Input collection to be processed by this plugin",
+      "required": false
+    },
+    {
+      "name": "sigma",
+      "type": "number",
+      "description": "Desired scale in physical units",
+      "required": false
+    },
+    {
+      "name": "calibration",
+      "type": "array",
+      "description": "Physical pixel sizes in all dimensions",
+      "required": false,
+      "options": {
+        "items": {
+          "type": "string",
+          "title": "Physical pixel sizes in all dimensions",
+          "widget": "string"
+        }
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output directory"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "opName",
+      "description": "Op overloading method to perform"
+    },
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Input collection to be processed by this plugin",
+      "condition": "model.inputs.opName==DefaultTubeness"
+    },
+    {
+      "key": "inputs.sigma",
+      "title": "sigma",
+      "description": "Desired scale in physical units",
+      "condition": "model.inputs.opName==DefaultTubeness"
+    },
+    {
+      "key": "inputs.calibration",
+      "title": "calibration",
+      "description": "Physical pixel sizes in all dimensions",
+      "condition": "model.inputs.opName==DefaultTubeness"
+    }
+  ]
+}

@@ -1,5 +1,4 @@
 cookietin
 utils/polus-imagej-util/imagej-testing.py
 full.log
-classes/__pycache__
-cookiecutter.json
+.ipynb_checkpoints

@@ -1,0 +1,74 @@
+{
+  "name": "Filepattern Generator",
+  "version": "0.2.1",
+  "containerId": "polusai/filepattern-generator-plugin:0.2.1",
+  "title": "Filepattern Generator",
+  "description": "Filepattern Generator plugin creates a csv or feather file containing a number of new filepatterns, where each filepattern will subset the data in the directory",
+  "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdah.abbasi@axleinfo.com), Kevin Hannon",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/PolusAI/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "inputs": [
+    {
+      "name": "inpDir",
+      "description": "Input image collection to be processed by this plugin",
+      "type": "collection",
+      "options": null,
+      "required": true
+    },
+    {
+      "name": "pattern",
+      "description": "Filepattern to parse image files",
+      "type": "string",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "chunkSize",
+      "description": "Number of images to generate collective filepattern",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "groupBy",
+      "description": "Select a parameter to generate filepatterns in specific order",
+      "type": "string",
+      "options": null,
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "description": "Output collection",
+      "type": "genericData",
+      "options": null,
+      "required": true
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "Input Image collection",
+      "description": "Input image collection"
+    },
+    {
+      "key": "inputs.pattern",
+      "title": "Pattern",
+      "description": "Filepattern to parse image files"
+    },
+    {
+      "key": "inputs.chunkSize",
+      "title": "chunkSize",
+      "description": "Number of images to generate collective filepattern"
+    },
+    {
+      "key": "inputs.groupBy",
+      "title": "groupBy",
+      "description": "Select a parameter to generate filepatterns in specific order"
+    }
+  ],
+  "validators": null
+}

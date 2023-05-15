@@ -1,67 +1,67 @@
 {
-    "name": "Object Spectral featurization",
-    "version": "0.1.1",
-    "title": "Object Spectral featurization",
-    "description": "Spectral feature generation for segmented objects.",
-    "author": "Hythem Sidky (hythem.sidky@axleinfo.com)",
-    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-    "repository": "https://github.com/labshare/polus-plugins",
-    "website": "https://ncats.nih.gov/preclinical/core/informatics",
-    "citation": "",
-    "containerId": "labshare/polus-object-spectral-featurization-plugin:0.1.1",
-    "inputs": [
-      {
-        "name": "inpDir",
-        "type": "collection",
-        "description": "Input image collection to be processed by this plugin.",
-        "required": true
-      },
-      {
-        "name" : "numFeatures",
-        "type" : "integer",
-        "description" : "Number of spectral features to compute.",
-        "required" : true
-      },
-      {
-        "name": "scaleInvariant",
-        "type": "boolean",
-        "description": "Calculate scale invariant features.",
-        "required": true
-      },
-      {
-        "name" : "limitMeshSize",
-        "type" : "integer",
-        "description" : "Maximum number of faces for generated meshes.",
-        "required" : false
-      }
-    ],
-    "outputs": [
-      {
-        "name": "outDir",
-        "type": "csvCollection",
-        "description": "Output collection"
-      }
-    ],
-    "ui": [
-      {
-        "key": "inputs.inpDir",
-        "title": "Input collection",
-        "description": "Input image collection to be processed by this plugin."
-      },
-      {
-        "key": "inputs.scaleInvariant",
-        "title": "Scale invariance",
-        "description": "Calculate scale invariant features."
-      },
-      {
-        "key" : "inputs.numFeatures",
-        "title" : "Number of features",
-        "description" : "Number of spectral features to calculate."
-      },
-      {
-        "key" : "inputs.limitMeshSize",
-        "title" : "Mesh size limit",
-        "description" : "Maximum number of faces for generated meshes."
-      }
-    ]
-  }
+  "name": "Object Spectral featurization",
+  "version": "0.1.2",
+  "title": "Object Spectral featurization",
+  "description": "Spectral feature generation for segmented objects.",
+  "author": "Hythem Sidky (hythem.sidky@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/object-spectral-featurization-plugin:0.1.2",
+  "inputs": [
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Input image collection to be processed by this plugin.",
+      "required": true
+    },
+    {
+      "name": "numFeatures",
+      "type": "integer",
+      "description": "Number of spectral features to compute.",
+      "required": true
+    },
+    {
+      "name": "scaleInvariant",
+      "type": "boolean",
+      "description": "Calculate scale invariant features.",
+      "required": true
+    },
+    {
+      "name": "limitMeshSize",
+      "type": "integer",
+      "description": "Maximum number of faces for generated meshes.",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "csvCollection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "Input collection",
+      "description": "Input image collection to be processed by this plugin."
+    },
+    {
+      "key": "inputs.scaleInvariant",
+      "title": "Scale invariance",
+      "description": "Calculate scale invariant features."
+    },
+    {
+      "key": "inputs.numFeatures",
+      "title": "Number of features",
+      "description": "Number of spectral features to calculate."
+    },
+    {
+      "key": "inputs.limitMeshSize",
+      "title": "Mesh size limit",
+      "description": "Maximum number of faces for generated meshes."
+    }
+  ]
+}

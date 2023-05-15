@@ -492,7 +492,7 @@ class ZarrWriter(PyramidWriter):
         self.writers = {}
         max_scale = int(self.scale_info(-1)['key'])
         compressor = Blosc(cname='zstd', clevel=3, shuffle=Blosc.BITSHUFFLE)
-        for S in range(10,len(self.info['scales'])):
+        for S in range(len(self.info['scales'])):
             scale_info = self.scale_info(S)
             key = str(max_scale - int(scale_info['key']))
             if key not in self.root.array_keys():
@@ -521,7 +521,7 @@ class ZarrWriter(PyramidWriter):
     
     def _write_slide(self):
     
-        _get_higher_res(10,self,Z=(self.image_depth,self.image_depth+1))
+        _get_higher_res(0,self,Z=(self.image_depth,self.image_depth+1))
             
     def write_info(self):
         """ This creates the multiscales metadata for zarr pyramids """
@@ -537,7 +537,7 @@ class ZarrWriter(PyramidWriter):
         
         pad = len(self.scale_info(-1)['key'])
         max_scale = int(self.scale_info(-1)['key'])
-        for S in reversed(range(10,len(self.info['scales']))):
+        for S in reversed(range(len(self.info['scales']))):
             scale_info = self.scale_info(S)
             key = str(max_scale - int(scale_info['key']))
             multiscales[0]["datasets"].append({"path": key})

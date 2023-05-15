@@ -1,6 +1,6 @@
 {
   "name": "Recycle Stitching Vector Plugin",
-  "version": "1.4.3",
+  "version": "1.5.0",
   "title": "Recycle Existing Stitching Vector",
   "description": "Apply existing stitching vector to an image collection.",
   "author": "Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "labshare/polus-recycle-vector-plugin:1.4.3",
+  "containerId": "polusai/recycle-vector-plugin:1.5.0",
   "inputs": [
 
     {
@@ -24,22 +24,10 @@
       "required": true
     },
     {
-      "name": "stitchRegex",
+      "name": "filepattern",
       "type": "string",
-      "description": "Regular expression for filenames in the stitching vector.",
+      "description": "Filepattern to select files for vector recycling.",
       "required": true
-    },
-    {
-      "name": "collectionRegex",
-      "type": "string",
-      "description": "Regular expression for filenames in the image collection.",
-      "required": true
-    },
-    {
-      "name": "groupBy",
-      "type": "string",
-      "description": "Variables contained within a single stitching vector.",
-      "required": false
     }
   ],
   "outputs": [
@@ -61,19 +49,9 @@
       "description": "Image collection to apply stitching vector against"
     },
     {
-      "key": "inputs.stitchRegex",
-      "title": "Stitch Regular Expression: ",
-      "description": "The regular expression that will be used on file names in the stitching vector."
-    },
-    {
-      "key": "inputs.collectionRegex",
-      "title": "Collection Regular Expression: ",
-      "description": "The regular expression that will be used on files in the image collection."
-    },
-    {
-      "key": "inputs.groupBy",
-      "title": "Group By: ",
-      "description": "Variables contained in one stitching vector."
+      "key": "inputs.filepattern",
+      "title": "Filepattern: ",
+      "description": "Filepattern to select files for vector recycling."
     }
   ]
 }

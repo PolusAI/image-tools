@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "roi_relabel"
+version = "0.1.1"
+description = "Methods for relabeling and consolidating regions of interest (RoIs) in a segmented or hand-labeled image."
+authors = ["Najib Ishaq <najib.ishaq@nih.gov>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+bfio = { version = "2.1.9", extras = ["all"] }
+numpy = "~1.23.5"
+scipy = "~1.9.3"
+networkx = "~2.8.8"
+
+toml = { version = "~0.10.2", optional = true }
+matplotlib = { version = "~3.6.2", optional = true }
+seaborn = { version = "~0.12.1", optional = true }
+streamlit = { version = "~1.15.2", optional = true }
+
+[tool.poetry.extras]
+dev = ["toml", "matplotlib", "seaborn", "streamlit"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

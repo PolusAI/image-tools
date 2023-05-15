@@ -1,5 +1,20 @@
-import argparse, logging, os, glob, copy
+import argparse
+import logging 
+import os
+import csv
+import numpy as np
+from io import StringIO
+import copy
 from pathlib import Path
+import logging
+import vaex
+import pandas as pd
+import shutil
+import functools as ft
+
+POLUS_LOG = getattr(logging, os.environ.get('POLUS_LOG', 'INFO'))
+
+FILE_EXT = os.environ.get('POLUS_EXT', '.csv')
 
 if __name__=="__main__":
     # Initialize the logger
@@ -7,6 +22,7 @@ if __name__=="__main__":
                         datefmt='%d-%b-%y %H:%M:%S')
     logger = logging.getLogger("main")
     logger.setLevel(logging.INFO)
+
 
     # Setup the argument parsing
     logger.info("Parsing arguments...")
@@ -22,6 +38,7 @@ if __name__=="__main__":
     parser.add_argument('--sameRows', dest='sameRows', type=str,
                         help='Only merge csvs if they contain the same number of rows', required=False)
     
+        
     # Parse the arguments
     args = parser.parse_args()
     inpDir = args.inpDir
@@ -40,6 +57,7 @@ if __name__=="__main__":
     inpDir_files.sort() # be a little fancy and merge alphabetically
     
     ''' If sameRows is set to true, nothing fancy to do. Just do the work and get out '''
+    # Case One: If merging by columns and have same rows:
     if dim=='columns' and same_rows:
         logger.info("Merging data with identical number of rows...")
             
@@ -57,16 +75,26 @@ if __name__=="__main__":
         for key in out_files.keys():
             
             outPath = str(Path(outDir).joinpath('merged_{}.csv'.format(count)).absolute())
+            
             count += 1
             
             inp_files = [open(f) for f in out_files[key]]
             
-            with open(outPath,'w') as fw:
-                logger.info("Generating file: {}".format(Path(outPath).name))
+            if FILE_EXT == ".feather":
+                dfs = list()
                 for l in range(key):
-                    fw.write(','.join([f.readline().rstrip('\n') for f in inp_files]))
-                    fw.write('\n')
-                    
+                    for f in inpDir_files:
+                        df = pd.read_csv(f)
+                        dfs.append(df)
+                        df_final = ft.reduce(lambda left, right: pd.merge(left, right), dfs)
+                        vaex_df = vaex.from_pandas(df_final)
+                        vaex_df.export(outPath)
+            else:
+                with open(outPath,'w') as fw:
+                    for l in range(key):
+                        fw.write(','.join([f.readline().rstrip('\n') for f in inp_files]))
+                        fw.write('\n')
+                        
     else:
         # Get the column headers
         logger.info("Getting all unique headers...")
@@ -84,20 +112,11 @@ if __name__=="__main__":
                 h = line.rstrip('\n').split(',')
                 headers.update(h)
                 
-                # Check to see if column identifiers exist in the 2nd row
+                # Check to see if column identifiers for Plots API exist in the 2nd row
                 line = fr.readline()
                 ident = line.rstrip('\n').split(',')
                 no_identifier = sum(1 for f in ident if f not in 'FC')
-                if not no_identifier:
-                    for ind,t in enumerate(h):
-                        if t in identifiers.keys() and identifiers[t] != ident[i]:
-                            logger.info('Header "{}" was previously identified as "{}", but was labeled in {} as "{}". Ignoring new identifier.'.format(t,
-                                                                                                                                                        identifiers[t],
-                                                                                                                                                        in_file,
-                                                                                                                                                        ident[i]))
-                        else:
-                            identifiers[t] = ident[ind]
-                
+                               
         if 'file' in headers:
             headers.remove('file')
         headers = list(headers)
@@ -114,9 +133,9 @@ if __name__=="__main__":
         line_dict = {key:'NaN' for key in headers}
         
         # Generate the path to the output file
-        outPath = str(Path(outDir).joinpath('merged.csv').absolute())
+        outPath = str(Path(outDir).joinpath('merged.feather').absolute()) if FILE_EXT == 'feather' else str(Path(outDir).joinpath('merged.csv').absolute())
         
-        # Merge data
+        # Case Two: Merger along rows only
         if dim=='rows':
             logger.info("Merging the data along rows...")
             with open(outPath,'w') as out_file:
@@ -151,6 +170,17 @@ if __name__=="__main__":
                             for el,val in enumerate(line.rstrip('\n').split(',')):
                                 file_dict[file_map[el]] = val
                             out_file.write(line_template.format(**file_dict))
+                            
+            
+            # Write Merged file
+            if FILE_EXT == '.feather':
+                logger.info("Merging the data along rows for feather file")
+                temp_df = pd.read_csv(outPath)
+                df = vaex.from_pandas(temp_df)
+                os.chdir(outDir)
+                df.export(outPath)
+            
+        # Case Three: Merger along columns only
         elif dim=='columns':
             logger.info("Merging the data along columns...")
             outPath = str(Path(outDir).joinpath('merged.csv').absolute())
@@ -177,7 +207,6 @@ if __name__=="__main__":
                 
                 with open(f,'r') as in_file:
                     file_dict = copy.deepcopy(line_dict)
-                    
                     file_map = in_file.readline().rstrip('\n')
                     file_map = file_map.split(',')
                     file_ind = [i for i,v in enumerate(file_map) if v == 'file'][0]
@@ -198,10 +227,16 @@ if __name__=="__main__":
                             else:
                                 out_dict[line_vals[file_ind]][file_map[el]] = val
                                 
-            # Write the output file
+            # Write the output file using ENV Variable
             with open(outPath,'w') as out_file:
-                # Write headers
+            # Write headers
                 out_file.write(','.join(headers) + '\n')
-                
+            
                 for val in out_dict.values():
                     out_file.write(line_template.format(**val))
+                    
+            # Write Merged Feather by reading lines into dataframe
+            if FILE_EXT == '.feather':
+                df = pd.DataFrame.from_dict(out_dict, orient='index')
+                vaex_df = vaex.from_pandas(df)
+                vaex_df.export(outPath)

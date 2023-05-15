@@ -13,7 +13,7 @@ outDir=/data/output
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
             --user $(id -u):$(id -g) \
-            labshare/polus-image-assembler-plugin:${version} \
+            polusai/image-assembler-plugin:${version} \
             --stitchPath ${stitchPath} \
             --imgPath ${imgPath} \
             --timesliceNaming ${timesliceNaming} \

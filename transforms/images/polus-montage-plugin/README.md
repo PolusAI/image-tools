@@ -1,4 +1,4 @@
-# Montage
+# Montage (v0.4.0)
 
 This plugin generates a stitching vector that will montage images together. The
 inputs are an image collection, a file pattern, and a layout array that
@@ -53,12 +53,14 @@ y-position. If the order of the variables was flipped (`yx`), then the positions
 of images would be transposed. There are no restrictions on which variables can
 be placed together, so it would be possible to have `xt,y` as a layout array.
 
-## To do
+If a variable exists in the filePattern but not in the layout the plugin will
+treat the variable as a 3rd dimension. For example assume the variable `c`
+represents different channels. The variable is passed in the file pattern,
+`filename_{xxx}_{yyy}_{ttt}_c{ccc}.ome.tif` but not in the layout `xy,t`. Then
+this plugin will group the images into seperate channels and construct a 
+stitching vector for each channel. This represents a stack of images.
 
-**User specified grid spacing.** Currently, images in the smallest subgrid are
-placed 10 pixels apart, and each larger subgrid has spacing 4 times that of the
-previous subgrid. So, the first subgrid has spacing of 10 pixels, the 2nd has
-40, the 4th will have 160.
+## To do
 
 **User defined grid shape.** Currently, grid dimensions are determined by the
 size of each dimension if two variable are present or the closest square that
@@ -85,6 +87,7 @@ There are three to five input arguments and one output argument:
 | `--filePattern`  | Filename pattern used to parse data                   | Input  | string          |
 | `--inpDir`       | Input image collection to be processed by this plugin | Input  | collection      |
 | `--layout`       | Specify montage organization                          | Input  | array           |
-| `--gridSpacing`  | Specify spacing between images in the lowest grid     | Input  | string          |
-| `--imageSpacing` | Specify spacing multiplier between grids              | Input  | string          |
+| `--gridSpacing`  | Specify spacing between images in the lowest grid     | Input  | integer         |
+| `--imageSpacing` | Specify spacing multiplier between grids              | Input  | integer         |
+| `--flipAxis`     | Axes to flip when laying out images                   | Input  | string          |
 | `--outDir`       | Output collection                                     | Output | stitchingVector |

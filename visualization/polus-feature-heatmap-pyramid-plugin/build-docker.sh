@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-feature-heatmap-pyramid-plugin:${version}
+docker build . -t polusai/feature-heatmap-pyramid-plugin:${version}

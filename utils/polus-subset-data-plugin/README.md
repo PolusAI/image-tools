@@ -23,9 +23,9 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes one input argument and one output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--filePattern` | Filename pattern used to separate data | Input | string |
-| `--inpDir` | Input image collection to be processed by this plugin | Input | collection |
-| `--outDir` | Output collection | Output | collection |
+| Name            | Description                                           | I/O    | Type       |
+| --------------- | ----------------------------------------------------- | ------ | ---------- |
+| `--filePattern` | Filename pattern used to separate data                | Input  | string     |
+| `--inpDir`      | Input image collection to be processed by this plugin | Input  | collection |
+| `--outDir`      | Output collection                                     | Output | collection |
 

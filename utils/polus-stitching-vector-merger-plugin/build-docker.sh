@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-stitching-vector-merger-plugin:${version}
+docker build . -t polusai/stitching-vector-merger-plugin:${version}

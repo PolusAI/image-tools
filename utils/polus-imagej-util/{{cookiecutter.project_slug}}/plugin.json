@@ -8,10 +8,10 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "labshare/{{ cookiecutter.project_slug }}:{{ cookiecutter.version }}",
-  "inputs": [{% for inp,val in cookiecutter._inputs.items() %}
+  "containerId": "polusai/{{ cookiecutter.docker_repo }}:{{ cookiecutter.version }}",
+  "inputs": [{% for inp,val in cookiecutter._inputs.items() if inp != 'out_input' %}
     {
-      "name": "{{ inp }}",
+      "name": "{{ val.title }}",
       "type": "{{ val.type }}",
     {%- if val.type=='enum' %}
       "options": {
@@ -20,23 +20,55 @@
       },
     {%- endif %}
       "description": "{{ val.description }}",
-      "required": {{ val.required.lower() }}
-    }{% if not loop.last %},{% endif %}{% endfor %}
+      "required": {{ val.required.lower() }}{%- if val.type=='array' %},
+      "options":{
+        "items": {
+          "type": "string",
+          "title": "{{ val.description }}",
+          "widget": "string"
+        }
+      }
+      {%- endif %}
+    }{% if not loop.last %},{% endif %}{% endfor %}{%- if cookiecutter.scalability == 'fft-filter' %},
+    {
+      "name": "pattern",
+      "type": "string",
+      "description": "The input collection file pattern",
+      "required": true
+    },
+    {
+      "name": "padding",
+      "type": "number",
+      "description": "The inter-tile padding size",
+      "required": false
+    }
+    {%- endif %}
   ],
   "outputs": [{% for out,val in cookiecutter._outputs.items() %}
     {
-      "name": "{{ out }}",
+      "name": "{{ val.title }}",
       "type": "{{ val.type }}",
       "description": "{{ val.description }}"
     }{% if not loop.last %},{% endif %}{% endfor %}
   ],
-  "ui": [{% for inp,val in cookiecutter._inputs.items() %}
+  "ui": [{% for inp,val in cookiecutter._inputs.items() if inp != 'out_input' %}
     {
-      "key": "inputs.{{ inp }}",
+      "key": "inputs.{{ val.title }}",
       "title": "{{ val.title }}",
       "description": "{{ val.description }}"{%- if inp!='opName' %},
-      "condition": "model.inputs.opName==[{% for v in val.call_types %}'{{v}}'{% if not loop.last %},{% endif %}{% endfor %}]"
+      "condition": "{% for v in val.call_types %}model.inputs.opName=={{v}}{% if not loop.last %} or {% endif %}{% endfor %}"
     {%- endif %}
-    }{% if not loop.last %},{% endif %}{% endfor %}
+    }{% if not loop.last %},{% endif %}{% endfor %}{%- if cookiecutter.scalability == 'fft-filter' %},
+    {
+      "key": "inputs.pattern",
+      "title": "pattern",
+      "description": "The input collection file pattern"
+    }
+    {
+      "key": "inputs.padding",
+      "title": "pattern",
+      "description": "The inter-tile padding size"
+    }
+    {%- endif %}
   ]
 }

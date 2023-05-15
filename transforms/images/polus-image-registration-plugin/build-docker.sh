@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-image-registration-plugin:${version}
+docker build . -t polusai/image-registration-plugin:${version}
