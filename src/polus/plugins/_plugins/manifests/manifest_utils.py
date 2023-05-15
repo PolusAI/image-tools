@@ -70,17 +70,18 @@ def _load_manifest(m: typing.Union[str, dict, pathlib.Path]) -> dict:
         else:
             manifest = requests.get(m).json()
     else:
-        raise ValueError("invalid manifest")
+        msg = "invalid manifest"
+        raise ValueError(msg)
     return manifest
 
 
 def validate_manifest(
-    manifest: typing.Union[str, dict, pathlib.Path]
+    manifest: typing.Union[str, dict, pathlib.Path],
 ) -> typing.Union[WIPPPluginManifest, ComputeSchema]:
     """Validate a plugin manifest against schema."""
     manifest = _load_manifest(manifest)
     manifest["version"] = cast_version(
-        manifest["version"]
+        manifest["version"],
     )  # cast version to semver object
     if "name" in manifest:
         name = manifest["name"]
@@ -114,7 +115,7 @@ def _scrape_manifests(
     min_depth: int = 1,
     max_depth: typing.Optional[int] = None,
     return_invalid: bool = False,
-) -> typing.Union[list, typing.Tuple[list, list]]:
+) -> typing.Union[list, tuple[list, list]]:
     if max_depth is None:
         max_depth = min_depth
         min_depth = 0
@@ -160,15 +161,17 @@ def _error_log(val_err, manifest, fct):
         if isinstance(err, AssertionError):
             report.append(
                 "The plugin ({}) failed an assertion check: {}".format(
-                    manifest["name"], err.args[0]
-                )
+                    manifest["name"],
+                    err.args[0],
+                ),
             )
             logger.critical(f"{fct}: {report[-1]}")
         elif isinstance(err.exc, errors.MissingError):
             report.append(
                 "The plugin ({}) is missing fields: {}".format(
-                    manifest["name"], err.loc_tuple()
-                )
+                    manifest["name"],
+                    err.loc_tuple(),
+                ),
             )
             logger.critical(f"{fct}: {report[-1]}")
         elif errors.ExtraError:
@@ -179,13 +182,14 @@ def _error_log(val_err, manifest, fct):
                         err.loc_tuple()[0],
                         manifest[err.loc_tuple()[0]][err.loc_tuple()[1]]["name"],
                         err.exc.args[0][0].loc_tuple(),
-                    )
+                    ),
                 )
             else:
                 report.append(
                     "The plugin ({}) had an error: {}".format(
-                        manifest["name"], err.exc.args[0][0]
-                    )
+                        manifest["name"],
+                        err.exc.args[0][0],
+                    ),
                 )
             logger.critical(f"{fct}: {report[-1]}")
         else:
@@ -194,5 +198,5 @@ def _error_log(val_err, manifest, fct):
                     fct,
                     manifest["name"],
                     str(val_err).replace("\n", ", ").replace("  ", " "),
-                )
+                ),
             )

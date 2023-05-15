@@ -1,7 +1,9 @@
 """Classes for Plugin objects containing methods to configure, run, and save."""
 import json
 import logging
+import os
 import pathlib
+import shutil
 import typing
 import uuid
 from copy import deepcopy
@@ -38,7 +40,7 @@ PLUGINS: typing.Dict[str, typing.Dict] = {}
 Paths and Fields
 """
 # Location to store any discovered plugin manifests
-PLUGIN_DIR = pathlib.Path(__file__).parent.parent.joinpath("manifests")
+_PLUGIN_DIR = pathlib.Path(__file__).parent.parent.joinpath("manifests")
 
 
 def load_config(config: typing.Union[dict, pathlib.Path]):
@@ -87,13 +89,12 @@ def get_plugin(name: str, version: typing.Optional[str] = None):
 def refresh():
     """Refresh the plugin list."""
     organizations = [
-        x for x in PLUGIN_DIR.iterdir() if x.name != "__pycache__"
+        x for x in _PLUGIN_DIR.iterdir() if x.name != "__pycache__" and x.is_dir()
     ]  # ignore __pycache__
 
-    for org in organizations:
-        if org.is_file():
-            continue
+    PLUGINS.clear()
 
+    for org in organizations:
         for file in org.iterdir():
             if file.suffix == ".py":
                 continue
@@ -113,12 +114,9 @@ def refresh():
                     if not file == PLUGINS[key][plugin.version]:
                         raise DuplicateVersionFound(
                             "Found duplicate version of plugin %s in %s"
-                            % (plugin.name, PLUGIN_DIR)
+                            % (plugin.name, _PLUGIN_DIR)
                         )
                 PLUGINS[key][plugin.version] = file
-
-
-_r = refresh  # to use in submit_plugin since refresh is a named arg
 
 
 def list_plugins():
@@ -354,7 +352,6 @@ def load_plugin(
 
 def submit_plugin(
     manifest: typing.Union[str, dict, pathlib.Path],
-    refresh: bool = False,
 ):
     """Parse a plugin and create a local copy of it.
 
@@ -380,13 +377,40 @@ def submit_plugin(
 
     # Save the manifest if it doesn't already exist in the database
     organization = plugin.containerId.split("/")[0]
-    org_path = PLUGIN_DIR.joinpath(organization.lower())
+    org_path = _PLUGIN_DIR.joinpath(organization.lower())
     org_path.mkdir(exist_ok=True, parents=True)
     if not org_path.joinpath(out_name).exists():
         with open(org_path.joinpath(out_name), "w") as fw:
-            json.dump(plugin.dict(), fw, indent=4)
+            m = plugin.dict()
+            m["version"] = m["version"]["version"]
+            json.dump(m, fw, indent=4)
 
-    # Refresh plugins list if refresh = True
-    if refresh:
-        _r()
+    # Refresh plugins list
+    refresh()
     return plugin
+
+
+def remove_plugin(plugin: str, version: typing.Optional[str] = None):
+    """Remove plugin from the local database."""
+    if not version:
+        for plugin_version in PLUGINS[plugin]:
+            remove_plugin(plugin, plugin_version)
+    else:
+        if not isinstance(version, Version):
+            version_ = cast_version(version)
+        else:
+            version_ = version
+        path = PLUGINS[plugin][version_]
+        os.remove(path)
+        refresh()
+
+
+def remove_all():
+    """Remove all plugins from the local database."""
+    organizations = [
+        x for x in _PLUGIN_DIR.iterdir() if x.name != "__pycache__" and x.is_dir()
+    ]  # ignore __pycache__
+    logger.warning("Removing all plugins from local database")
+    for org in organizations:
+        shutil.rmtree(org)
+    refresh()

@@ -7,6 +7,8 @@ from polus.plugins._plugins.classes import (  # noqa # pylint: disable=unused-im
     list_plugins,
     load_plugin,
     refresh,
+    remove_all,
+    remove_plugin,
     submit_plugin,
 )
 from polus.plugins._plugins.update import (  # noqa # pylint: disable=unused-import
@@ -21,13 +23,12 @@ logger = logging.getLogger("polus.plugins")
 
 
 refresh()  # calls the refresh method when library is imported
-__plugins = list_plugins()
 
 
 def __getattr__(name):
     if name == "list":
-        return __plugins
-    if name in __plugins:
+        return list_plugins()
+    if name in list_plugins():
         return get_plugin(name)
     else:
         raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
@@ -41,4 +42,6 @@ __all__ = [
     "list_plugins",
     "update_polus_plugins",
     "update_nist_plugins",
+    "remove_all",
+    "remove_plugin",
 ]

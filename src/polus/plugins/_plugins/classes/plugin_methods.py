@@ -172,7 +172,7 @@ class _PluginMethods:
 
     @property
     def manifest(self):
-        m = json.loads(self.json(exclude={"_io_keys", "versions"}))
+        m = json.loads(self.json(exclude={"_io_keys", "versions", "id"}))
         m["version"] = m["version"]["version"]
         return m
 
