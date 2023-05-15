@@ -90,9 +90,6 @@ def refresh():
         x for x in PLUGIN_DIR.iterdir() if x.name != "__pycache__"
     ]  # ignore __pycache__
 
-    global _invalid
-    _invalid = {}
-
     for org in organizations:
         if org.is_file():
             continue
@@ -103,8 +100,10 @@ def refresh():
 
             try:
                 plugin = validate_manifest(file)
-            except InvalidManifest as e:
-                _invalid[_load_manifest(file)["name"]] = str(e.__cause__)
+            except InvalidManifest:
+                logger.warning("Validation error in %s" % (str(file)))
+            except BaseException as e:
+                logger.warning(f"Unexpected error {e} with {str(file)}")
             else:
                 key = name_cleaner(plugin.name)
                 # Add version and path to VERSIONS
@@ -118,20 +117,8 @@ def refresh():
                         )
                 PLUGINS[key][plugin.version] = file
 
-    if len(_invalid) > 0:
-        logger.warning(
-            f"local manifests {[str(x) for x in _invalid.keys()]} are invalid. Run polus.plugins.print_invalid() for more details."
-        )
 
-
-def print_invalid():
-    """Print invalid manifests with respective validation errors."""
-    for x, y in _invalid.items():
-        print(x)
-        print(y + "\n")
-
-
-_r = refresh
+_r = refresh  # to use in submit_plugin since refresh is a named arg
 
 
 def list_plugins():
