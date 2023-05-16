@@ -172,3 +172,6 @@ src/polus/plugins/_plugins/manifests/*
 
 #macOS
 *.DS_Store
+
+#husky
+node_modules
