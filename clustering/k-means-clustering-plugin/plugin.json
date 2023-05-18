@@ -1,20 +1,31 @@
 {
   "name": "K-Means Clustering",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "title": "K-Means Clustering",
   "description": "Cluster the data using K-Means.",
-  "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov)",
+  "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov), Kelechi Nina Mezu (nina.mezu@nih.gov) Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-  "repository": "https://github.com/labshare/polus-plugins",
+  "repository": "https://github.com/polusai/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "labshare/polus-k-means-clustering-plugin:0.3.1",
+  "containerId": "polusai/k-means-clustering-plugin:0.3.2",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.plugins.clustering.k_means"
+  ],
   "inputs": [
     {
       "name": "inpdir",
       "type": "csvCollection",
       "description": "Input csv file collection",
       "required": "true"
+    },
+    {
+      "name": "filePattern",
+      "type": "string",
+      "description": "Pattern to parse input files",
+      "required": false
     },
     {
       "name": "methods",
@@ -25,7 +36,8 @@
           "Manual",
           "Elbow",
           "CalinskiHarabasz",
-          "DaviesBouldin"
+          "DaviesBouldin",
+          "default"
         ]
       },
       "required": "true"
@@ -47,6 +59,22 @@
       "type": "number",
       "description": "Number of clusters:",
       "required": "false"
+    },
+    {
+      "name": "fileExtension",
+      "type": "enum",
+      "description": "File format of an output file",
+      "required": true,
+      "options": {
+        "values": [
+          ".csv",
+          ".feather",
+          ".parquet",
+          ".hdf5",
+          ".arrow",
+          "default"
+        ]
+      }
     }
   ],
   "outputs": [
@@ -62,6 +90,12 @@
       "key": "inputs.inpdir",
       "title": "Input csv file",
       "description": "Input csv file for clustering"
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "FilePattern",
+      "description": "Pattern to parse input files",
+      "default": ".arrow"
     },
     {
       "key": "inputs.methods",
@@ -85,6 +119,12 @@
       "title": "Enter number of clusters",
       "description": "Number of clusters:",
       "condition": "model.inputs.methods==Manual"
+    },
+    {
+      "key": "inputs.fileExtension",
+      "title": "FileExtension",
+      "description": "Desired file format of an ouput file",
+      "default": ".arrow"
     }
   ]
 }

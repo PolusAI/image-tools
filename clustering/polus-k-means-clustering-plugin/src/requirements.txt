@@ -1,4 +1,0 @@
-scikit_learn==1.0.2
-vaex==4.7.0
-filepattern==1.4.7
-blake3==0.2.1

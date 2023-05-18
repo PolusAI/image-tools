@@ -1,4 +1,4 @@
-﻿# K-Means Clustering
+﻿# K-Means Clustering(v0.3.2)
 
 The K-Means Clustering plugin clusters the data using Scikit-learn K-Means clustering algorithm and outputs csv file. Each instance(row) in the input csv file is assigned to one of the clusters. The output csv file contains the column 'Cluster' that shows which cluster the instance belongs to. The input file should be in csv format.
 
@@ -51,13 +51,16 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 ## Options
 
-This plugin takes four input argument if methods other than 'Manual' is selected else three input arguments and one output argument:
+This plugin takes eight input arguments and one output argument:
 
 | Name             | Description                                                                 | I/O    | Type          |
 | ---------------- | --------------------------------------------------------------------------- | ------ | ------------- |
-| `--inpdir`       | Input csv collection                                                        | Input  | csvCollection |
+| `--inpdir`       | Input tabular data                                                          | Input  | genericData   |
 | `--methods`      | Select either Elbow or Calinski Harabasz or Davies Bouldin or Manual method | Input  | enum          |
+| `--filePattern`  | Pattern to parse tabular files                                              | Input  | string        |
 | `--minimumrange` | Enter minimum k-value                                                       | Input  | integer       |
 | `--maximumrange` | Enter maximum k-value                                                       | Input  | integer       |
 | `--numofclus`    | Enter number of clusters                                                    | Input  | integer       |
-| `--outdir`       | Output collection                                                           | Output | csvCollection |
+| `--fileExtension`| File Format of output tabular files                                         | Input  | string        |
+| `--outdir`       | Output collection                                                           | Output | genericData   |
+| `--preview`      | Generate JSON file with outputs                                             | Output | JSON          |
