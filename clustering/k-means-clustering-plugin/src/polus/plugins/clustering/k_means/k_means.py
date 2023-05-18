@@ -114,14 +114,6 @@ def calinski_davies(
     return label_data
 
 
-# Methods_DICT = {
-#     Methods.ELBOW: elbow,
-#     Methods.CALINSKIHARABASZ: calinski_davies,
-#     Methods.DAVIESBOULDIN: calinski_davies,
-#     Methods.Default: elbow,
-# }
-
-
 def clustering(
     file: pathlib.Path,
     file_pattern: str,
