@@ -32,16 +32,16 @@ def main(
     file_pattern: km.Extensions = typer.Option(
         km.Extensions.Default, "--filePattern", help="pattern to parse tabular files"
     ),
+    methods: km.Methods = typer.Option(
+        km.Methods.Default,
+        "--methods",
+        help="Select Manual or Elbow or Calinski Harabasz or Davies Bouldin method",
+    ),
     minimum_range: int = typer.Option(
         ..., "--minimumRange", help="Enter minimum k-value"
     ),
     maximum_range: int = typer.Option(
         ..., "--maximumRange", help="Enter maximum k-value"
-    ),
-    methods: km.Methods = typer.Option(
-        km.Methods.Default,
-        "--methods",
-        help="Select Manual or Elbow or Calinski Harabasz or Davies Bouldin method",
     ),
     num_of_clus: int = typer.Option(..., "--numOfClus", help="Number of clusters"),
     file_extension: km.Extensions = typer.Option(

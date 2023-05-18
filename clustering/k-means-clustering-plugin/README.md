@@ -56,8 +56,8 @@ This plugin takes eight input arguments and one output argument:
 | Name             | Description                                                                 | I/O    | Type          |
 | ---------------- | --------------------------------------------------------------------------- | ------ | ------------- |
 | `--inpdir`       | Input tabular data                                                          | Input  | genericData   |
-| `--methods`      | Select either Elbow or Calinski Harabasz or Davies Bouldin or Manual method | Input  | enum          |
 | `--filePattern`  | Pattern to parse tabular files                                              | Input  | string        |
+| `--methods`      | Select either Elbow or Calinski Harabasz or Davies Bouldin or Manual method | Input  | enum          |
 | `--minimumrange` | Enter minimum k-value                                                       | Input  | integer       |
 | `--maximumrange` | Enter maximum k-value                                                       | Input  | integer       |
 | `--numofclus`    | Enter number of clusters                                                    | Input  | integer       |
