@@ -4,8 +4,13 @@ The K-Means Clustering plugin clusters the data using Scikit-learn K-Means clust
 
 ## Inputs:
 
-### Input csv collection:
-The input file that need to be clustered. The file should be in csv format. This is a required parameter for the plugin.
+### Input data:
+The input tabular data that need to be clustered. This plugin supports vaex supported file formats
+1. csv
+2. hdf5
+3. arrow
+4. parquet
+5. feather
 
 ### Methods:
 Choose any one of the method mentioned to determine the k-value and cluster the data.
@@ -14,10 +19,10 @@ Choose any one of the method mentioned to determine the k-value and cluster the 
 The elbow method runs k-means clustering for a range of values of k and for each k value it calculates the within cluster sum of squared errors (WSS).  The idea behind this method is that SSE tends to decrease towards 0 as k-value increases. The goal here is to choose a k-value that has low WSS and the elbow represents where there is diminishing returns by increasing k.
 
 #### Calinski-Harabasz index
-The Calinski-Harabasz index is defined as measure between cluster sum of square and within cluster sum of square. To choose k, pick maximum number of clusters to be considered and then choose the value of k with the highest score.
+The Calinski-Harabasz index is defined as the ratio of the sum of between-cluster dispersion to the sum of within-cluster dispersion. To choose k, pick maximum number of clusters to be considered and then choose the value of k with the highest score.
 
 #### Davies-Bouldin index
-The Davies-Bouldin index is defined as the ratio of the sum of within cluster dispersion to the between cluster separation. To choose k value, pick maximum number of clusters to be considered and choose the value of k with lowest value for DB_index.
+The Davies-Bouldin index is defined as the average similarity measure of each cluster with its most similar one, where similarity is a ratio of within-cluster distances to between-cluster distances. To choose k value, pick maximum number of clusters to be considered and choose the value of k with lowest value for DB_index.
 
 ### Manual
 Select manual method only when you know the number of clusters required to cluster the data.
@@ -37,7 +42,7 @@ Enter k-value if you already know how many clusters are required. This parameter
 3. The 'minimumrange'value should be >1.
 
 ## Output:
-The output is a csv file containing the cluster data to which each instance in the data belongs to.
+The output is a tabular file containing the cluster data to which each instance in the data belongs to.
 
 ## Building
 
