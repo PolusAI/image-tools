@@ -55,7 +55,8 @@ class CreateData:
 
     def load_json(self, x) -> DefaultDict[Any, Any]:
         """Json file containing image filenames."""
-        data = json.load(open(self.jsonpath))
+        with open(self.jsonpath) as file:
+            data = json.load(file)
         return data[x]
 
     def clean_directories(self) -> None:
