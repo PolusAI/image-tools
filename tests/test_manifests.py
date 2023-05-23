@@ -1,3 +1,4 @@
+# pylint: disable=C0103
 """Test manifests utils."""
 from collections import OrderedDict
 from pathlib import Path
@@ -13,7 +14,7 @@ from polus.plugins._plugins.manifests.manifest_utils import (
 )
 from polus.plugins._plugins.models import ComputeSchema, WIPPPluginManifest
 
-path_resources = Path("./tests/resources")
+RSRC_PATH = Path(__file__).parent.joinpath("resources")
 
 d_val = {
     "name": "BaSiC Flatfield Correction Plugin",
@@ -174,16 +175,16 @@ test_dict_load = OrderedDict(
                 },
             ],
         },
-        "path": path_resources.joinpath("g1.json"),
+        "path": RSRC_PATH.joinpath("g1.json"),
     }
 )
 
-path = Path(".")
-local_manifests = list(path.rglob("*plugin.json"))
-local_manifests = [
-    x for x in local_manifests if "cookiecutter.project" not in str(x)
+REPO_PATH = RSRC_PATH.parent.parent
+LOCAL_MANIFESTS = list(REPO_PATH.rglob("*plugin.json"))
+LOCAL_MANIFESTS = [
+    x for x in LOCAL_MANIFESTS if "cookiecutter.project" not in str(x)
 ]  # filter cookiecutter templates
-local_manifest_names = [str(x) for x in local_manifests]
+LOCAL_MANIFEST_NAMES = [str(x) for x in LOCAL_MANIFESTS]
 
 
 def _get_path(manifest):
@@ -195,7 +196,7 @@ class TestManifests:
     """Test plugin manifests."""
 
     @pytest.mark.repo
-    @pytest.mark.parametrize("manifest", local_manifests, ids=local_manifest_names)
+    @pytest.mark.parametrize("manifest", LOCAL_MANIFESTS, ids=LOCAL_MANIFEST_NAMES)
     def test_manifests_local(self, manifest):
         """Test local (repo) manifests."""
         assert isinstance(
@@ -233,10 +234,10 @@ class TestManifests:
     def test_bad_manifest(self, manifest):
         """Test bad manifests raise InvalidManifest error."""
         with pytest.raises(InvalidManifest):
-            validate_manifest(path.joinpath("tests", "resources", manifest))
+            validate_manifest(REPO_PATH.joinpath("tests", "resources", manifest))
 
     @pytest.mark.parametrize("manifest", good, ids=good)
     def test_good_manifest(self, manifest):
         """Test different manifests that all should pass validation."""
-        p = path.joinpath("tests", "resources", manifest)
+        p = RSRC_PATH.joinpath(manifest)
         assert isinstance(validate_manifest(p), (WIPPPluginManifest, ComputeSchema))

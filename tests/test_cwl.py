@@ -9,8 +9,7 @@ import yaml
 import polus.plugins as pp
 from polus.plugins._plugins.classes.plugin_methods import MissingInputValues
 
-TEST_PATH = Path(__file__).parent
-RSRC_PATH = TEST_PATH.joinpath("resources")
+RSRC_PATH = Path(__file__).parent.joinpath("resources")
 
 OMECONVERTER = RSRC_PATH.joinpath("omeconverter030.json")
 
