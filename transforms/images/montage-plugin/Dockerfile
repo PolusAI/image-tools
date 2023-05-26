@@ -14,7 +14,6 @@ ENV POLUS_TAB_EXT=".csv"
 COPY pyproject.toml ${EXEC_DIR}
 COPY VERSION ${EXEC_DIR}
 COPY README.md ${EXEC_DIR}
-RUN pip3 install --index-url https://test.pypi.org/simple/ filepattern==2.2.7
 COPY src ${EXEC_DIR}/src
 
 RUN pip3 install ${EXEC_DIR} --no-cache-dir
