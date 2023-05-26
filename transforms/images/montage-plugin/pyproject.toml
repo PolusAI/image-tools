@@ -2,7 +2,7 @@
 name = "polus-plugins-transforms-images-montage"
 version = "0.5.0"
 description = ""
-authors = ["nicholas-schaub <nick.schaub@nih.gov>"]
+authors = ["Nicholas Schaub <nick.schaub@nih.gov>"]
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
