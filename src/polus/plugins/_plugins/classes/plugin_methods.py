@@ -6,12 +6,12 @@ import pathlib
 import random
 import signal
 import typing
-from os.path import relpath
 
 import fsspec
 import yaml  # type: ignore
 from cwltool.context import RuntimeContext
 from cwltool.factory import Factory
+from cwltool.utils import CWLObjectType
 from python_on_whales import docker
 
 from polus.plugins._plugins.cwl import CWL_BASE_DICT
@@ -24,6 +24,8 @@ from polus.plugins._plugins.io import (
 from polus.plugins._plugins.utils import name_cleaner
 
 logger = logging.getLogger("polus.plugins")
+
+StrPath = typing.TypeVar("StrPath", str, pathlib.Path)
 
 
 class IOKeyError(Exception):
@@ -47,7 +49,7 @@ class _PluginMethods:
     def organization(self):
         return self.containerId.split("/")[0]
 
-    def load_config(self, path: typing.Union[str, pathlib.Path]):
+    def load_config(self, path: StrPath):
         with open(path) as fw:
             config = json.load(fw)
         inp = config["inputs"]
@@ -228,7 +230,7 @@ class _PluginMethods:
         cwl_dict["requirements"]["DockerRequirement"]["dockerPull"] = self.containerId
         return cwl_dict
 
-    def save_cwl(self, path: typing.Union[str, pathlib.Path]):
+    def save_cwl(self, path: StrPath):
         """Save plugin as CWL command line tool."""
         assert str(path).split(".")[-1] == "cwl", "Path must end in .cwl"
         with open(path, "w") as file:
@@ -252,9 +254,9 @@ class _PluginMethods:
 
     def run_cwl(
         self,
-        cwl_path: typing.Optional[typing.Union[str, pathlib.Path]] = None,
-        io_path: typing.Optional[typing.Union[str, pathlib.Path]] = None,
-    ):
+        cwl_path: typing.Optional[StrPath] = None,
+        io_path: typing.Optional[StrPath] = None,
+    ) -> typing.Union[CWLObjectType, str, None]:
         """Run configured plugin in CWL.
 
         Run plugin as a CWL command line tool after setting I/O values.
@@ -284,8 +286,8 @@ class _PluginMethods:
         else:
             self.save_cwl_io(io_path)  # saves io to make it visible to user
 
-        outdir_path = relpath(self.outDir.parent)  # type: ignore
-        rc = RuntimeContext({"outdir": outdir_path})
+        outdir_path = self.outDir.parent.relative_to(pathlib.Path.cwd())
+        rc = RuntimeContext({"outdir": str(outdir_path)})
         fac = Factory(runtime_context=rc)
         cwl = fac.make(str(_cwl))
         return cwl(**self._cwl_io)  # object's io dict is used instead of .yml file

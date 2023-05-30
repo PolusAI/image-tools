@@ -319,7 +319,7 @@ class DuplicateVersionFound(Exception):
 
 """CWL"""
 
-cwl_input_types = {
+CWL_INPUT_TYPES = {
     "path": "Directory",  # always Dir? Yes
     "string": "string",
     "number": "double",
@@ -331,10 +331,10 @@ cwl_input_types = {
 }
 
 
-def _type_in(input: Input):
+def _type_in(inp: Input):
     """Return appropriate value for `type` based on input type."""
-    val = input.type.value
-    req = "" if input.required else "?"
+    val = inp.type.value
+    req = "" if inp.required else "?"
 
     # NOT compatible with CWL workflows, ok in CLT
     # if val == "enum":
@@ -343,41 +343,41 @@ def _type_in(input: Input):
     #     else:
     #         s = ["null", {"type": "enum", "symbols": input.options["values"]}]
 
-    if val in cwl_input_types:
-        s = cwl_input_types[val] + req
+    if val in CWL_INPUT_TYPES:
+        s = CWL_INPUT_TYPES[val] + req
     else:
         s = "string" + req  # defaults to string
     return s
 
 
-def input_to_cwl(input):
+def input_to_cwl(inp: Input):
     """Return dict of inputs for cwl."""
     r = {
-        f"{input.name}": {
-            "type": _type_in(input),
-            "inputBinding": {"prefix": f"--{input.name}"},
+        f"{inp.name}": {
+            "type": _type_in(inp),
+            "inputBinding": {"prefix": f"--{inp.name}"},
         }
     }
     return r
 
 
-def output_to_cwl(o):
+def output_to_cwl(out: Output):
     """Return dict of output args for cwl for input section."""
     r = {
-        f"{o.name}": {
+        f"{out.name}": {
             "type": "Directory",
-            "inputBinding": {"prefix": f"--{o.name}"},
+            "inputBinding": {"prefix": f"--{out.name}"},
         }
     }
     return r
 
 
-def outputs_cwl(o):
+def outputs_cwl(out: Output):
     """Return dict of output for `outputs` in cwl."""
     r = {
-        f"{o.name}": {
+        f"{out.name}": {
             "type": "Directory",
-            "outputBinding": {"glob": f"$(inputs.{o.name}.basename)"},
+            "outputBinding": {"glob": f"$(inputs.{out.name}.basename)"},
         }
     }
     return r
