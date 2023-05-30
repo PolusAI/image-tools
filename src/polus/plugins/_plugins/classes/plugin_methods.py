@@ -230,12 +230,12 @@ class _PluginMethods:
         cwl_dict["requirements"]["DockerRequirement"]["dockerPull"] = self.containerId
         return cwl_dict
 
-    def save_cwl(self, path: StrPath):
+    def save_cwl(self, path: StrPath) -> pathlib.Path:
         """Save plugin as CWL command line tool."""
         assert str(path).split(".")[-1] == "cwl", "Path must end in .cwl"
         with open(path, "w") as file:
             yaml.dump(self._to_cwl(), file)
-        return path
+        return pathlib.Path(path)
 
     @property
     def _cwl_io(self) -> dict:
