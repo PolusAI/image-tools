@@ -9,7 +9,7 @@ import polus.plugins as pp
 from polus.plugins._plugins.classes.plugin_classes import Plugin, load_plugin
 
 RSRC_PATH = Path(__file__).parent.joinpath("resources")
-OMECONVERTER = RSRC_PATH.joinpath("omeconverter.json")
+OMECONVERTER = RSRC_PATH.joinpath("omeconverter022.json")
 BASIC_131 = (
     "https://raw.githubusercontent.com/PolusAI/polus-plugins/master"
     "/regression/polus-basic-flatfield-correction-plugin/plugin.json"
