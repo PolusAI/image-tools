@@ -28,6 +28,10 @@ REQUIRED_FIELDS = [
 ]
 
 
+class InvalidManifest(Exception):
+    """Raised when manifest has validation errors."""
+
+
 def is_valid_manifest(plugin: dict) -> bool:
     """Validate basic attributes of a plugin manifest.
 
@@ -78,23 +82,28 @@ def validate_manifest(
     manifest["version"] = cast_version(
         manifest["version"]
     )  # cast version to semver object
+    if "name" in manifest:
+        name = manifest["name"]
+    else:
+        raise InvalidManifest(f"{manifest} has no value for name")
+
     if "pluginHardwareRequirements" in manifest:
         # Parse the manifest
         try:
             plugin = ComputeSchema(**manifest)
-        except ValidationError as err:
-            raise err
+        except ValidationError as e:
+            raise InvalidManifest(f"{name} does not conform to schema") from e
         except BaseException as e:
             raise e
     else:
         # Parse the manifest
         try:
             plugin = WIPPPluginManifest(**manifest)
-        except ValidationError as err:
-            logger.info(manifest)
-            raise err
+        except ValidationError as e:
+            raise InvalidManifest(
+                f"{manifest['name']} does not conform to schema"
+            ) from e
         except BaseException as e:
-            logger.info(manifest)
             raise e
     return plugin
 
