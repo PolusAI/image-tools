@@ -14,4 +14,5 @@ COPY src ${EXEC_DIR}/src
 RUN pip3 install ${EXEC_DIR} --no-cache-dir
 
 WORKDIR ${EXEC_DIR}
-ENTRYPOINT ["python3", "-m", "polus.transforms.images.rolling_ball"]
+ENTRYPOINT ["python3", "-m", "polus.plugins.transforms.images.rolling_ball"]
+CMD ["--help"]

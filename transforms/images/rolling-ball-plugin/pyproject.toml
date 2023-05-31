@@ -2,7 +2,7 @@
 name = "polus-transforms-images-rolling-ball"
 version = "1.1.0-dev0"
 description = "A WIPP plugin to perform background subtraction using the rolling-ball algorithm."
-authors = ["Najib Ishaq <najib.ishaq@axleinfo.com>"]
+authors = ["Najib Ishaq <najib.ishaq@axleinfo.com>", "Antoine Gerardin <antoine,gerardin@gmail.com>"]
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
@@ -27,6 +27,7 @@ flake8 = "^6.0.0"
 flake8-docstrings = "^1.7.0"
 black = "^23.3.0"
 mypy = "^1.1.1"
+pytest = "^7.3.1"
 
 [build-system]
 requires = ["poetry-core"]
