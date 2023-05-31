@@ -18,6 +18,8 @@ from polus.plugins._plugins.update import (  # noqa # pylint: disable=unused-imp
 Set up logging for the module
 """
 logger = logging.getLogger("polus.plugins")
+
+
 refresh()  # calls the refresh method when library is imported
 __plugins = list_plugins()
 
