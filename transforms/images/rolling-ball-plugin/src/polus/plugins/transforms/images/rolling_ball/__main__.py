@@ -1,13 +1,14 @@
 """Rolling Ball package entrypoint."""
 
+import json
 import logging
+import typing
 from multiprocessing import cpu_count
 from os import environ
 from pathlib import Path
-import typing
+
 import typer
 from bfio.bfio import BioReader, BioWriter
-import json
 
 from .rolling_ball import rolling_ball
 
@@ -22,7 +23,10 @@ logger = logging.getLogger("polus.plugins.transforms.images.rolling_ball")
 logger.setLevel(POLUS_LOG)
 logging.getLogger("bfio").setLevel(POLUS_LOG)
 
+POLUS_IMG_EXT = environ.get("POLUS_IMG_EXT", ".ome.tif")
+
 app = typer.Typer(help="Rolling Ball plugin")
+
 
 @app.command()
 def main(
@@ -75,22 +79,22 @@ def main(
 
     logger.info(f"preview = {preview}")
 
-    if(not input_dir.exists()) :
+    if not input_dir.exists():
         raise ValueError("inputDir does not exist", input_dir)
-    
-    if(not output_dir.exists()) :
-        raise ValueError("outputDir does not exist", output_dir)
 
+    if not output_dir.exists():
+        raise ValueError("outputDir does not exist", output_dir)
 
     if preview:
         generatePreview(input_dir, output_dir)
         return
 
     for in_path in input_dir.iterdir():
+        if in_path.is_dir():
+            logger.warning(f"{in_path} is a directory and will be ignored.")
+            continue
 
-        # TODO CHECK what if we have directories?
-        # TODO what if in_path is a file?
-        out_path = output_dir /in_path.name
+        out_path = output_dir / in_path.name
 
         # Load the input image
         with BioReader(in_path) as reader:
@@ -107,19 +111,22 @@ def main(
                     light_background=light_background,
                 )
 
-def generatePreview(input_dir, output_dir):
+
+def generatePreview(input_dir: Path, output_dir: Path):
     preview: typing.Dict[str, typing.Union[typing.List, str]] = {
-            "outputDir": [],
-        }
+        "outputDir": [],
+    }
 
     for in_path in input_dir.iterdir():
-        output_file = output_dir / in_path.name
-        preview["outputDir"].append(output_file.name) 
-    
-    with open( output_dir / "preview.json", "w") as fw:
+        if in_path.is_dir():
+            logger.warning(f"{in_path} is a directory and will be ignored.")
+            continue
+
+        preview["outputDir"].append(in_path.name)
+
+    with open(output_dir / "preview.json", "w") as fw:
         json.dump(preview, fw, indent=2)
+
 
 if __name__ == "__main__":
     app()
-
-

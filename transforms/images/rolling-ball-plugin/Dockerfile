@@ -3,6 +3,9 @@ FROM polusai/bfio:2.1.9
 ARG EXEC_DIR="/opt/executables"
 ARG DATA_DIR="/data"
 
+ENV POLUS_IMG_EXT=".ome.tif"
+ENV POLUS_TAB_EXT=".csv"
+
 RUN mkdir -p ${EXEC_DIR} && mkdir -p ${DATA_DIR}/{input, output}
 
 COPY pyproject.toml ${EXEC_DIR}

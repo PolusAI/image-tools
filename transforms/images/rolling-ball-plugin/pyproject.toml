@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "polus-transforms-images-rolling-ball"
+name = "polus-plugins-transforms-images-rolling-ball"
 version = "1.1.0-dev0"
 description = "A WIPP plugin to perform background subtraction using the rolling-ball algorithm."
-authors = ["Najib Ishaq <najib.ishaq@axleinfo.com>", "Antoine Gerardin <antoine,gerardin@gmail.com>"]
+authors = ["Najib Ishaq <najib.ishaq@nih.gov>", "Antoine Gerardin <antoine,gerardin@gmail.com>"]
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
