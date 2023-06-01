@@ -5,7 +5,7 @@ import re
 from typing import Any, Dict, List, Union
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 #: Import environment variables
 POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
