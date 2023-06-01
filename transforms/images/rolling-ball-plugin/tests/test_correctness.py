@@ -1,7 +1,5 @@
 """Test Correctness."""
 
-import tempfile
-import pytest
 
 import numpy
 from bfio import BioReader, BioWriter
@@ -9,13 +7,6 @@ from skimage import restoration
 
 from polus.plugins.transforms.images.rolling_ball.rolling_ball import rolling_ball
 
-from fixtures import (
-    paths,
-    image_data,
-    image_file,
-    output_file,
-    options
-)
 
 def test_correctness(paths, image_data, image_file, output_file, options):
     """Test correctness."""
@@ -26,22 +17,18 @@ def test_correctness(paths, image_data, image_file, output_file, options):
     # calculate the result with the plugin code
     with BioReader(image_file) as reader:
         with BioWriter(output_file, metadata=reader.metadata) as writer:
-            rolling_ball(
-                reader=reader,
-                writer=writer,
-                **options
-            )
+            rolling_ball(reader=reader, writer=writer, **options)
 
     # read the image we just wrote into a numpy array
     with BioReader(output_file) as reader:
         plugin_result = reader[:]
 
     # compute background with sci-kit implementation
-    ball_radius = options['ball_radius']
-    background = restoration.rolling_ball(
-        image_data, radius=ball_radius
-    )
+    ball_radius = options["ball_radius"]
+    background = restoration.rolling_ball(image_data, radius=ball_radius)
     reference_result = image_data - background
 
     # assert correctness
-    assert numpy.all(numpy.equal(reference_result, plugin_result)), "The plugin resulted in a different image"
+    assert numpy.all(
+        numpy.equal(reference_result, plugin_result)
+    ), "The plugin resulted in a different image"

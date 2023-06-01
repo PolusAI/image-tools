@@ -2,18 +2,13 @@
 
 import faulthandler
 import json
+
 from typer.testing import CliRunner
 
 from polus.plugins.transforms.images.rolling_ball.__main__ import app as app
 
-from fixtures import (
-    paths,
-    image_data,
-    image_file
-)
-
-
 faulthandler.enable()
+
 
 def test_cli(image_file, paths):  # noqa
     """Test the command line exit code with valid inputs."""
@@ -54,7 +49,7 @@ def test_cli_preview(image_file, paths):  # noqa
 
 
 def test_cli_bad_input(paths):  # noqa
-    """"Test bad inputs."""
+    """ "Test bad inputs."""
 
     runner = CliRunner()
 

@@ -1,8 +1,10 @@
 import tempfile
 from pathlib import Path
+
 import numpy
 import pytest
 from bfio import BioWriter
+
 
 def get_temp_file(path: Path, suffix: str):
     """Create path to a temp file."""
@@ -47,14 +49,13 @@ def image_file(image_data, paths):
 
     return infile
 
+
 @pytest.fixture()
 def output_file(paths):
     _, output_dir = paths
     return get_temp_file(output_dir, "ome.tiff")
 
+
 @pytest.fixture()
 def options():
-    return {
-        "ball_radius": 25,
-        "light_background": False
-    }
+    return {"ball_radius": 25, "light_background": False}
