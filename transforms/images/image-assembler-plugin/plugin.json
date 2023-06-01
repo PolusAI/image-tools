@@ -3,13 +3,13 @@
     "version": "1.2.1-dev0",
     "title": "Image Assembler",
     "description": "A scalable image assembling plugin.",
-    "author": "Nick Schaub (nick.schaub@nih.gov)",
+    "author": "Nick Schaub (nick.schaub@nih.gov), Antoine Gerardin (antoine.gerardin@gmail.com)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
     "containerId": "polusai/image-assembler-plugin:1.2.1-dev0",
-    "baseCommand": ["python3", "-m", "polus.transforms.images.image_assembler"],
+    "baseCommand": ["python3", "-m", "polus.plugins.transforms.images.image_assembler"],
     "inputs": [
       {
         "name": "stitchPath",
