@@ -1,50 +1,29 @@
+fail_fast: true
+
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
-    hooks:
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
-        exclude: .bumpversion.cfg
-      - id: check-yaml
-      - id: check-json
-        exclude: src/
-      - id: mixed-line-ending
-        args: ['--fix=lf']
-        description: Forces to replace line ending by the UNIX 'lf' character.
-      - id: pretty-format-json
-        exclude: src/
-        args: ['--no-sort-keys']
-      - id: check-added-large-files
-        args: ['--maxkb=500']
+
   - repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: '23.3.0'
     hooks:
       - id: black
-        exclude: src/
-  - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
+        language_version: python3.9
+        exclude: ^src\/polus\/plugins\/_plugins\/models\/\w*Schema.py$
+
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    # Ruff version.
+    rev: 'v0.0.265'
     hooks:
-      - id: flake8
-        exclude: src/
-        additional_dependencies: ["flake8-docstrings==1.7.0"]
-  - repo: https://github.com/myint/autoflake
-    rev: v2.0.1
-    hooks:
-      - id: autoflake
-        args: ["--in-place", "--remove-all-unused-imports"]
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
-        exclude: src
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
-    hooks:
-      - id: pyupgrade
-        args: [--py38-plus, --keep-runtime-typing]
+      - id: ruff
+        exclude: |
+          (?x)(
+            ^test_[a-zA-Z0-9]+.py$|
+            ^src\/polus\/plugins\/_plugins\/models\/\w*Schema.py$
+          )
+        args: [--fix]
+
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.1.1
+    rev: 'v1.2.0'
     hooks:
       - id: mypy
-        exclude: src/
+        exclude: ^src\/polus\/plugins\/_plugins\/models\/\w*Schema.py$
         additional_dependencies: [types-requests==2.28.11.8]

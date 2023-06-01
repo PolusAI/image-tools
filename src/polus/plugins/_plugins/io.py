@@ -1,3 +1,5 @@
+# type: ignore
+"""Plugins I/O utilities."""
 import enum
 import logging
 import pathlib
@@ -10,7 +12,7 @@ from pydantic import BaseModel, Field, PrivateAttr, constr, validator
 logger = logging.getLogger("polus.plugins")
 
 """
-Enums for validating plugin input, output, and ui components
+Enums for validating plugin input, output, and ui components.
 """
 WIPP_TYPES = {
     "collection": pathlib.Path,
@@ -33,7 +35,7 @@ WIPP_TYPES = {
 
 
 class InputTypes(str, enum.Enum):  # wipp schema
-    """This is needed until the json schema is updated"""
+    """Enum of Inpyt Types for WIPP schema."""
 
     collection = "collection"
     pyramid = "pyramid"
@@ -53,11 +55,12 @@ class InputTypes(str, enum.Enum):  # wipp schema
 
     @classmethod
     def list(cls):
+        """List Input Types."""
         return list(map(lambda c: c.value, cls))
 
 
 class OutputTypes(str, enum.Enum):  # wipp schema
-    """This is needed until the json schema is updated"""
+    """Enum for Output Types for WIPP schema."""
 
     collection = "collection"
     pyramid = "pyramid"
@@ -71,11 +74,12 @@ class OutputTypes(str, enum.Enum):  # wipp schema
 
     @classmethod
     def list(cls):
+        """List Output Types."""
         return list(map(lambda c: c.value, cls))
 
 
 def _in_old_to_new(old: str) -> str:  # map wipp InputType to compute schema's InputType
-    """Map an InputType from wipp schema to one of compute schema"""
+    """Map an InputType from wipp schema to one of compute schema."""
     d = {"integer": "number", "enum": "string"}
     if old in ["string", "array", "number", "boolean"]:
         return old
@@ -86,7 +90,7 @@ def _in_old_to_new(old: str) -> str:  # map wipp InputType to compute schema's I
 
 
 def _ui_old_to_new(old: str) -> str:  # map wipp InputType to compute schema's UIType
-    """Map an InputType from wipp schema to a UIType of compute schema"""
+    """Map an InputType from wipp schema to a UIType of compute schema."""
     type_dict = {
         "string": "text",
         "boolean": "checkbox",
@@ -101,6 +105,8 @@ def _ui_old_to_new(old: str) -> str:  # map wipp InputType to compute schema's U
 
 
 class IOBase(BaseModel):
+    """Base Class for I/O arguments."""
+
     type: typing.Any
     options: typing.Optional[dict] = None
     value: typing.Optional[typing.Any] = None
@@ -157,6 +163,7 @@ class IOBase(BaseModel):
         super().__setattr__("value", value)
 
     def __setattr__(self, name, value):
+        """Set I/O attributes."""
         if name not in ["value", "id", "_fs"]:
             # Don't permit any other values to be changed
             raise TypeError(f"Cannot set property: {name}")
@@ -171,7 +178,7 @@ class IOBase(BaseModel):
 
 
 class Output(IOBase):
-    """Required until JSON schema is fixed"""
+    """Required until JSON schema is fixed."""
 
     name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(  # noqa: F722
         ..., examples=["outputCollection"], title="Output name"
@@ -185,7 +192,7 @@ class Output(IOBase):
 
 
 class Input(IOBase):
-    """Required until JSON schema is fixed"""
+    """Required until JSON schema is fixed."""
 
     name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(  # noqa: F722
         ...,
@@ -205,6 +212,7 @@ class Input(IOBase):
     )
 
     def __init__(self, **data):
+        """Initialize input."""
         super().__init__(**data)
 
         if self.description is None:
@@ -213,7 +221,7 @@ class Input(IOBase):
             )
 
 
-def _check_version_number(value: str | int) -> bool:
+def _check_version_number(value: typing.Union[str, int]) -> bool:
     if isinstance(value, int):
         value = str(value)
     if "-" in value:
@@ -225,13 +233,17 @@ def _check_version_number(value: str | int) -> bool:
 
 
 class Version(BaseModel):
+    """SemVer object."""
+
     version: str
 
     def __init__(self, version):
+        """Initialize Version object."""
         super().__init__(version=version)
 
     @validator("version")
     def semantic_version(cls, value):
+        """Pydantic Validator to check semver."""
         version = value.split(".")
 
         assert (
@@ -251,17 +263,21 @@ class Version(BaseModel):
 
     @property
     def major(self):
+        """Return x from x.y.z ."""
         return self.version.split(".")[0]
 
     @property
     def minor(self):
+        """Return y from x.y.z ."""
         return self.version.split(".")[1]
 
     @property
     def patch(self):
+        """Return z from x.y.z ."""
         return self.version.split(".")[2]
 
     def __lt__(self, other):
+        """Compare if Version is less than other Version object."""
         assert isinstance(other, Version), "Can only compare version objects."
 
         if other.major > self.major:
@@ -280,9 +296,11 @@ class Version(BaseModel):
             return False
 
     def __gt__(self, other):
+        """Compare if Version is greater than other Version object."""
         return other < self
 
     def __eq__(self, other):
+        """Compare if two Version objects are equal."""
         return (
             other.major == self.major
             and other.minor == self.minor
@@ -290,8 +308,9 @@ class Version(BaseModel):
         )
 
     def __hash__(self):
+        """Needed to use Version objects as dict keys."""
         return hash(self.version)
 
 
 class DuplicateVersionFound(Exception):
-    pass
+    """Raise when two equal versions found."""

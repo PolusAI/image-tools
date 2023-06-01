@@ -1,10 +1,11 @@
+"""GitHub utilties."""
 import logging
 import os
 from urllib.parse import urljoin
 
 import github
 
-from .classes.plugin_classes import submit_plugin
+from polus.plugins._plugins.classes import submit_plugin
 
 logger = logging.getLogger("polus.plugins")
 
@@ -57,8 +58,8 @@ def add_plugin_from_gh(
     Returns:
         A Plugin object populated with information from the plugin manifest.
     """
-    l = [user, repo, branch, plugin, manifest_name]
-    u = "/".join(l)
+    l1 = [user, repo, branch, plugin, manifest_name]
+    u = "/".join(l1)
     url = urljoin("https://raw.githubusercontent.com", u)
     logger.info("Adding %s" % url)
     return submit_plugin(url, refresh=True)
