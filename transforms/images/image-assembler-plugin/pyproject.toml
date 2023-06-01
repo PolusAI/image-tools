@@ -1,5 +1,6 @@
 [tool.poetry]
 <<<<<<< HEAD
+<<<<<<< HEAD
 name = "polus-plugins-transforms-images-image-assembler"
 version = "1.4.0-dev0"
 description = "A scalable image assembler plugin."
@@ -18,8 +19,11 @@ description = "A scalable image assembling plugin."
 authors = ["Nick Schaub <nick.schaub@nih.gov>"]
 >>>>>>> f5f7212 (fix: update to version 1.2.0-dev0)
 =======
+=======
+name = "polus-plugins-transforms-images-image-assembler"
+>>>>>>> de6ea1d (Update: update to new plugin standard:)
 version = "1.2.1-dev0"
-description = "A scalable image assembling plugin."
+description = "A scalable image assembler plugin."
 authors = ["Nick Schaub <nick.schaub@nih.gov>", "Antoine Gerardin <antoine.gerardin@gmail.com>"]
 >>>>>>> 83c08da (update: - refactor variables names to snake case)
 readme = "README.md"

@@ -1,13 +1,19 @@
 """Test image assembler plugin."""
 
 import os
+<<<<<<< HEAD
 from pathlib import Path
 
 from bfio import BioReader
+=======
+from bfio import BioReader
+
+>>>>>>> de6ea1d (Update: update to new plugin standard:)
 from polus.plugins.transforms.images.image_assembler.image_assembler import (
     assemble_image,
 )
 
+<<<<<<< HEAD
 from tests.fixtures import data, plugin_dirs, ground_truth_dir
 
 def test_image_assembler(
@@ -15,6 +21,15 @@ def test_image_assembler(
     plugin_dirs: tuple[Path, Path, Path],
     ground_truth_dir: Path,
 ) -> None:
+=======
+from fixtures import (
+    data,
+    plugin_dirs,
+    ground_truth_dir
+)
+
+def test_image_assembler(data, plugin_dirs, ground_truth_dir):
+>>>>>>> de6ea1d (Update: update to new plugin standard:)
     """Test correctness of the image assembler plugin in a basic case."""
     ground_truth_path = ground_truth_dir
     img_path, stitch_path, out_dir = plugin_dirs
