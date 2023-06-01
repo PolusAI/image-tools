@@ -100,6 +100,7 @@ ipython_config.py
 #   commonly ignored for libraries.
 #   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
 poetry.lock
+../../poetry.lock
 
 # pdm
 #   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
@@ -164,8 +165,11 @@ cython_debug/
 
 # test data directory
 data
+# yaml file
+.pre-commit-config.yaml
 
-# local manifests
-src/polus/plugins/_plugins/manifests/*
-# allow python scripts insied manifests dir
-!src/polus/plugins/_plugins/manifests/*.py
+# hidden files
+.DS_Store
+.ds_store
+# flake8
+.flake8
