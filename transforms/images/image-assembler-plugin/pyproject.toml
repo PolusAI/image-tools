@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "polus-transforms-images-image-assembly-plugin"
+name = "polus-plugins-transforms-images-image-assembler"
 version = "1.2.1-dev0"
-description = "A scalable image assembling plugin."
+description = "A scalable image assembler plugin."
 authors = ["Nick Schaub <nick.schaub@nih.gov>", "Antoine Gerardin <antoine.gerardin@gmail.com>"]
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]

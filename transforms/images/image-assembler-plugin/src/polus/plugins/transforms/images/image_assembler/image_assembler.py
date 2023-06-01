@@ -129,7 +129,7 @@ def get_number(s: typing.Any) -> typing.Union[int, typing.Any]:
 
 def _parse_stitch(
     img_path: pathlib.Path,
-    stitch_path: pathlib.Path,
+    stitching_vector: pathlib.Path,
     timepoint_name: bool = False,
 ) -> StitchingVector:
     """Load and parse image stitching vectors.
@@ -139,11 +139,14 @@ def _parse_stitch(
     stitched image size. This function also infers an output file name.
 
     Args:
-        stitchPath: A path to a stitching vector
-        timepointName: Use the vector timeslice as the image name
+        img_path : path to the images
+        stitching_vector: the stitching vector uses to select the relevant images
+        timepoint_name: Use the vector timeslice as the image name
     Returns:
         Dictionary with keys (width, height, name, filePos)
     """
+    assert stitching_vector.is_file
+    
     # Initialize the output
     out_dict: StitchingVector = {
         "width": int(0),
@@ -170,20 +173,20 @@ def _parse_stitch(
 
     # Try to parse the stitching vector using the infered file pattern
     if pattern != ".*":
-        vp = filepattern.FilePattern(stitch_path, pattern)
+        vp = filepattern.FilePattern(stitching_vector, pattern)
         unique_vals = {k: v for k, v in vp.get_unique_values().items() if len(v) == 1}
         files = fp.get_matching(**unique_vals) if unique_vals else list(fp())  # type: ignore[name-defined]
 
     else:
         # Try to infer a pattern from the stitching vector
         try:
-            vector_files = filepattern.FilePattern(stitch_path, ".*")
+            vector_files = filepattern.FilePattern(stitching_vector, ".*")
             pattern = filepattern.infer_pattern([v[0]["file"] for v in vector_files()])
-            vp = filepattern.FilePattern(stitch_path, pattern)
+            vp = filepattern.FilePattern(stitching_vector, pattern)
 
         # Fall back to universal filepattern
         except ValueError:
-            vp = filepattern.FilePattern(stitch_path, ".*")
+            vp = filepattern.FilePattern(stitching_vector, ".*")
 
         files = list(fp())  # type: ignore[name-defined]
 
@@ -191,6 +194,9 @@ def _parse_stitch(
     file_names = [filelist[0].name for _, filelist in files]
 
     directory_path = files[0][1][0]
+
+    _files = list(vp())
+    print(f" {len(_files)} files : ", _files)
 
     for file in vp():
         filename = file[1][0].name
@@ -215,7 +221,7 @@ def _parse_stitch(
     # Generate the output file name
     if timepoint_name:
         global_regex = ".*global-positions-([0-9]+).txt"
-        val = re.match(global_regex, pathlib.Path(stitch_path).name)
+        val = re.match(global_regex, pathlib.Path(stitching_vector).name)
         name = (
             val.groups()[0] if val else vp.output_name()
         )  # TODO CHECK what to do if no match / stitching vector name is again hardcoded here
@@ -251,7 +257,7 @@ def _assemble_image(
     stitch_path: pathlib.Path,
     out_path: pathlib.Path,
     depth: int,
-    timesliceNaming: bool,
+    timeslice_naming: bool,
 ) -> None:
     """Assemble a 2d or 3d image.
 
@@ -271,7 +277,7 @@ def _assemble_image(
     # Grab a free process
     with ProcessManager.process():
         # Parse the stitching vector
-        parsed_vector = _parse_stitch(img_path, stitch_path, timesliceNaming)
+        parsed_vector = _parse_stitch(img_path, stitch_path, timeslice_naming)
 
         # Initialize the output image
         with BioReader(parsed_vector["filePos"][0]["file"]) as br:
@@ -307,6 +313,30 @@ def _assemble_image(
         bw.close()
 
 
+def generate_output_filenames(
+    img_path: pathlib.Path,
+    stitch_path: pathlib.Path,
+    timeslice_naming: typing.Optional[bool]
+    ):
+    """Generate all image filenames that would be created if we run assemble_image."""
+
+    stitching_vectors = list(stitch_path.iterdir())
+    stitching_vectors.sort()
+
+    output_filenames = [];
+
+    for stitching_vector in stitching_vectors:
+        # Check to see if the file is a valid stitching vector
+        if "img-global-positions" not in stitching_vector.name:
+            continue
+
+        parsed_vector = _parse_stitch(img_path, stitching_vector, timeslice_naming)
+        filepath = parsed_vector["name"]
+        output_filenames.append(filepath)
+
+    return output_filenames
+
+
 def assemble_image(
     img_path: pathlib.Path,
     stitch_path: pathlib.Path,
@@ -326,8 +356,8 @@ def assemble_image(
         depth: depth of the input images
     """
     # Get a list of stitching vectors
-    vectors = list(stitch_path.iterdir())
-    vectors.sort()
+    stitching_vectors = list(stitch_path.iterdir())
+    stitching_vectors.sort()
 
     # get z depth
     with BioReader(next(img_path.iterdir())) as br:
@@ -337,14 +367,16 @@ def assemble_image(
     # ProcessManager.init_threads()
     ProcessManager.init_processes("main", "asmbl")
 
-    for v in vectors:
+    for stitching_vector in stitching_vectors:
         # Check to see if the file is a valid stitching vector
-        if "img-global-positions" not in v.name:
+        # TODO CHECK that is tying the implementation to a non explicit convention. I believe this should be removed
+        # and a parsing error thrown in the code (or a log event) if the file is not a stitching vector
+        if "img-global-positions" not in stitching_vector.name:
             continue
 
         # assemble_image(v,outDir, depth)
         ProcessManager.submit_process(
-            _assemble_image, img_path, v, out_dir, depth, timeslice_naming
+            _assemble_image, img_path, stitching_vector, out_dir, depth, timeslice_naming
         )
 
     ProcessManager.join_processes()
