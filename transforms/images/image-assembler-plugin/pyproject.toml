@@ -43,8 +43,12 @@ black = "^23.3.0"
 mypy = "^1.1.1"
 <<<<<<< HEAD
 pytest = "^7.2.2"
+<<<<<<< HEAD
 =======
 >>>>>>> 1b6aeb6 (update/image-assembler-plugin)
+=======
+ruff = "^0.0.270"
+>>>>>>> 3529360 (Update : update plugin to new standard.)
 
 [build-system]
 requires = ["poetry-core"]
