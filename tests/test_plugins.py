@@ -57,19 +57,21 @@ def test_url2():
 
 def test_load_plugin():
     """Test load_plugin."""
-    assert isinstance(load_plugin(OMECONVERTER), Plugin)
+    assert load_plugin(OMECONVERTER).name == "OME Converter"
 
 
 def test_load_plugin2():
     """Test load_plugin."""
-    assert isinstance(load_plugin(BASIC_131), Plugin)
+    assert load_plugin(BASIC_131).name == "BaSiC Flatfield Correction Plugin"
 
 
 def test_attr1():
     """Test attributes."""
     p_attr = pp.OmeConverter
     p_get = pp.get_plugin("OmeConverter")
-    for attr in ["name", "version", "inputs", "outputs"]:
+    for attr in p_get.__dict__:
+        if attr == "id":
+            continue
         assert getattr(p_attr, attr) == getattr(p_get, attr)
 
 
@@ -77,7 +79,9 @@ def test_attr2():
     """Test attributes."""
     p_attr = pp.BasicFlatfieldCorrectionPlugin
     p_get = pp.get_plugin("BasicFlatfieldCorrectionPlugin")
-    for attr in ["name", "version", "inputs", "outputs"]:
+    for attr in p_get.__dict__:
+        if attr == "id":
+            continue
         assert getattr(p_attr, attr) == getattr(p_get, attr)
 
 

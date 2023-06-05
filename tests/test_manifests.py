@@ -192,52 +192,52 @@ def _get_path(manifest):
     return PLUGINS[manifest][max(PLUGINS[manifest])]
 
 
-class TestManifests:
-    """Test plugin manifests."""
+@pytest.mark.repo
+@pytest.mark.parametrize("manifest", LOCAL_MANIFESTS, ids=LOCAL_MANIFEST_NAMES)
+def test_manifests_local(manifest):
+    """Test local (repo) manifests."""
+    assert isinstance(validate_manifest(manifest), (WIPPPluginManifest, ComputeSchema))
 
-    @pytest.mark.repo
-    @pytest.mark.parametrize("manifest", LOCAL_MANIFESTS, ids=LOCAL_MANIFEST_NAMES)
-    def test_manifests_local(self, manifest):
-        """Test local (repo) manifests."""
-        assert isinstance(
-            validate_manifest(manifest), (WIPPPluginManifest, ComputeSchema)
-        )
 
-    def test_list_plugins(self):
-        """Test `list_plugins()`."""
-        o = list(PLUGINS.keys())
-        o.sort()
-        assert o == list_plugins()
+def test_list_plugins():
+    """Test `list_plugins()`."""
+    o = list(PLUGINS.keys())
+    o.sort()
+    assert o == list_plugins()
 
-    @pytest.mark.parametrize("manifest", list_plugins(), ids=list_plugins())
-    def test_manifests_plugindir(self, manifest):
-        """Test manifests available in polus-plugins installation dir."""
-        p = _get_path(manifest)
-        assert isinstance(validate_manifest(p), (WIPPPluginManifest, ComputeSchema))
 
-    @pytest.mark.parametrize(
-        "type_", test_dict_load.values(), ids=test_dict_load.keys()
-    )
-    def test_load_manifest(self, type_):  # test path and dict
-        """Test _load_manifest() for types path and dict."""
-        assert _load_manifest(type_) == d_val
+@pytest.mark.parametrize("manifest", list_plugins(), ids=list_plugins())
+def test_manifests_plugindir(manifest):
+    """Test manifests available in polus-plugins installation dir."""
+    p = _get_path(manifest)
+    assert isinstance(validate_manifest(p), (WIPPPluginManifest, ComputeSchema))
 
-    def test_load_manifest_str(self):
-        """Test _load_manifest() for str."""
-        st_ = """{"a": 2, "b": "Polus"}"""
-        assert _load_manifest(st_) == {"a": 2, "b": "Polus"}
 
-    bad = [f"b{x}.json" for x in [1, 2, 3]]
-    good = [f"g{x}.json" for x in [1, 2, 3]]
+@pytest.mark.parametrize("type_", test_dict_load.values(), ids=test_dict_load.keys())
+def test_load_manifest(type_):  # test path and dict
+    """Test _load_manifest() for types path and dict."""
+    assert _load_manifest(type_) == d_val
 
-    @pytest.mark.parametrize("manifest", bad, ids=bad)
-    def test_bad_manifest(self, manifest):
-        """Test bad manifests raise InvalidManifest error."""
-        with pytest.raises(InvalidManifest):
-            validate_manifest(REPO_PATH.joinpath("tests", "resources", manifest))
 
-    @pytest.mark.parametrize("manifest", good, ids=good)
-    def test_good_manifest(self, manifest):
-        """Test different manifests that all should pass validation."""
-        p = RSRC_PATH.joinpath(manifest)
-        assert isinstance(validate_manifest(p), (WIPPPluginManifest, ComputeSchema))
+def test_load_manifest_str():
+    """Test _load_manifest() for str."""
+    st_ = """{"a": 2, "b": "Polus"}"""
+    assert _load_manifest(st_) == {"a": 2, "b": "Polus"}
+
+
+bad = [f"b{x}.json" for x in [1, 2, 3]]
+good = [f"g{x}.json" for x in [1, 2, 3]]
+
+
+@pytest.mark.parametrize("manifest", bad, ids=bad)
+def test_bad_manifest(manifest):
+    """Test bad manifests raise InvalidManifest error."""
+    with pytest.raises(InvalidManifest):
+        validate_manifest(REPO_PATH.joinpath("tests", "resources", manifest))
+
+
+@pytest.mark.parametrize("manifest", good, ids=good)
+def test_good_manifest(manifest):
+    """Test different manifests that all should pass validation."""
+    p = RSRC_PATH.joinpath(manifest)
+    assert isinstance(validate_manifest(p), (WIPPPluginManifest, ComputeSchema))
