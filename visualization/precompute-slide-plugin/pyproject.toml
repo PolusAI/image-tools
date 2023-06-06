@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "polus-precompute-slide-plugin"
+version = "1.6.0-dev0"
+description = "Polus Precompute Slide Plugin."
+authors = ["Madhuri Vihani <Madhuri.Vihani@nih.gov>, Nick Schaub <Nick.Schaub@nih.gov>, Antoine Gerardin <antoine.gerardin@nih.gov>"]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9.15"
+typer = "^0.7.0"
+bfio = {version = "2.1.9", extras = ["all"]}
+filepattern = "1.4.7"
+preadator = "^0.2.0"
+imageio = "2.8.0"
+
+[tool.poetry.group.dev.dependencies]
+bump2version = "^1.0.1"
+flake8 = "^6.0.0"
+pre-commit = "^3.2.1"
+flake8-docstrings = "^1.7.0"
+black = "^23.3.0"
+mypy = "^1.1.1"
+pytest = "^7.2.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

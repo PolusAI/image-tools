@@ -2,3 +2,4 @@
 imageio==2.8.0
 filepattern==1.4.7
 preadator==0.2.0
+bfio=2.1.9
