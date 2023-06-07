@@ -11,7 +11,6 @@ packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9"
-filepattern = "^2.0.0"
 typer = "^0.7.0"
 
 [tool.poetry.group.dev.dependencies]

@@ -202,7 +202,9 @@ def test_parenthesis(poly):
     """Testing of filename with parenthesis."""
     d = CreateData()
     inputs = d.load_json("parenthesis")
+    print(inputs)
     (inp_pattern, out_pattern) = poly[7]
+    print(inp_pattern, out_pattern)
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
     assert outputs.exit_code == 0
 

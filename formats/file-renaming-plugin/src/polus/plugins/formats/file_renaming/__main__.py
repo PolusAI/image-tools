@@ -1,5 +1,6 @@
 """File Renaming."""
 import json
+import os
 import logging
 import pathlib
 import shutil
@@ -17,7 +18,7 @@ logging.basicConfig(
     datefmt="%d-%b-%y %H:%M:%S",
 )
 logger = logging.getLogger("polus.plugins.formats.file_renaming")
-
+logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 @app.command()
 def main(
@@ -73,25 +74,37 @@ def main(
     assert (
         out_dir.exists()
     ), f"{out_dir} does not exists!! Please check output path again"
+ 
+    inp_files = [str(inp_file.name) for inp_file in inp_dir.iterdir() if not inp_file.name.startswith(".")]
 
-    inp_files = [str(inp_file.name) for inp_file in inp_dir.iterdir()]
-    chars_to_escape = ["(", ")", ".", "[", "]", "$"]
+    assert len(inp_files) != 0, f"Please define {file_pattern} again!! As it is not parsing files correctly"
+
+    chars_to_escape = ["(", ")", "[", "]", "$", "."]
     for char in chars_to_escape:
         file_pattern = file_pattern.replace(char, ("\\" + char))
 
+    if "\.*" in file_pattern:
+        file_pattern = file_pattern.replace("\.*", (".*"))
+    if "\.+" in file_pattern:
+        file_pattern = file_pattern.replace("\.+", (".+"))
+
     groupname_regex_dict = fr.map_pattern_grps_to_regex(file_pattern)
 
-    #: Integrate regex from dictionary into original file pattern
+    # #: Integrate regex from dictionary into original file pattern
     inp_pattern_rgx = fr.convert_to_regex(file_pattern, groupname_regex_dict)
+    
 
-    #: Integrate format strings into outFilePattern to specify digit/char len
+    # #: Integrate format strings into outFilePattern to specify digit/char len
     out_pattern_fstring = fr.specify_len(out_file_pattern)
+    
 
     #: List named groups where input pattern=char & output pattern=digit
     char_to_digit_categories = fr.get_char_to_digit_grps(file_pattern, out_file_pattern)
+    print(out_pattern_fstring)
 
     #: List a dictionary (k=named grp, v=match) for each filename
     all_grp_matches = fr.extract_named_grp_matches(inp_pattern_rgx, inp_files)
+    
 
     #: Convert numbers from strings to integers, if applicable
     for i in range(0, len(all_grp_matches)):
