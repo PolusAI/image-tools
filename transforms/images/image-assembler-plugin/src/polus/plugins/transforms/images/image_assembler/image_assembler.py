@@ -151,8 +151,7 @@ def _parse_stitch(
     # altogether and select files in the directory using the stitching vector info.
     # Trade-offs are unclear until some benchmarked are performed.
 
-    # A fail parsing in a subprocess should stop further processing.
-    pattern = ".*"
+
     # Try to infer a filepattern from the files on disk for faster matching later
     try:
         pattern = filepattern.infer_pattern(img_path)

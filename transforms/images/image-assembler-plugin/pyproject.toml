@@ -9,7 +9,7 @@ packages = [{include = "polus", from = "src"}]
 [tool.poetry.dependencies]
 python = "^3.9.15"
 bfio = {version = "2.1.9", extras = ["all"]}
-filepattern = {version = "2.2.7", source = "test"}
+filepattern = "2.0.0"
 preadator = "^0.2.0"
 typer = "^0.7.0"
 pip = "^23.0.1"
