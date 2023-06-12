@@ -10,7 +10,7 @@ packages = [{include = "polus", from = "src"}]
 python = "^3.9.15"
 typer = "^0.7.0"
 bfio = {version = "2.1.9", extras = ["all"]}
-filepattern = {version = "^2.2.7", source = "test"}
+filepattern = "2.0.0"
 preadator = "^0.2.0"
 
 [[tool.poetry.source]]

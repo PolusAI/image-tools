@@ -1,7 +1,7 @@
 """Tests for {{cookiecutter.package_name}}."""
 
 import pytest
-from src.{{cookiecutter.plugin_package}} import awesome_function
+from {{cookiecutter.plugin_package}} import awesome_function
 
 
 @pytest.fixture
