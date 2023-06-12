@@ -31,7 +31,7 @@ root_dir = source_dir.parent  # default to polus-python-template
 
 package_dir = "{{cookiecutter.plugin_package}}"
 package_dir = package_dir.split(".")
-package_dir = package_dir[1:-1]  # remove polus from package's list
+package_dir = package_dir[2:-1]  # remove polus and plugins from package's list
 package_dir = os.path.join(*package_dir)
 
 # find the project's root
@@ -49,4 +49,5 @@ else:
 target_dir = root_dir / package_dir / plugin_dir
 
 """Move staged files to the the final target repo."""
+print(f"moving sources from {source_dir} to {target_dir}")
 shutil.move(source_dir, target_dir)
