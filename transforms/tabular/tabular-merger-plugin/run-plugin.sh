@@ -5,7 +5,6 @@ datapath=$(readlink --canonicalize data)
 # Inputs
 inpDir=/data/input
 filePattern=".*"
-fileExtension=".csv"
 
 # Output paths
 outDir=/data/output
@@ -24,7 +23,6 @@ docker run --mount type=bind,source=${datapath},target=/data/  \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
             --stripExtension ${stripExtension} \
-            --fileExtension ${fileExtension} \
             --dim ${dim} \
             --sameRows \
             --sameColumns \

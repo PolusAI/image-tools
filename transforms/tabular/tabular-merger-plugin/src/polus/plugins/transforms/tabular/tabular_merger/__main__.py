@@ -1,5 +1,6 @@
 """Tabular Merger."""
 import json
+import os
 import logging
 import pathlib
 import time
@@ -18,6 +19,8 @@ logging.basicConfig(
     datefmt="%d-%b-%y %H:%M:%S",
 )
 logger = logging.getLogger("polus.plugins.transforms.tabular_merger")
+logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
+POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".arrow")
 
 
 @app.command()
@@ -32,11 +35,6 @@ def main(
         False,
         "--stripExtension",
         help="Should csv be removed from the filename when indicating which file a row in a csv file came from?",
-    ),
-    file_extension: tm.Extensions = typer.Option(
-        tm.Extensions.Default,
-        "--fileExtension",
-        help="File format of an output combined file",
     ),
     dim: tm.Dimensions = typer.Option(
         tm.Dimensions.Default, "--dim", help="Perform `rows` or `columns` merging"
@@ -60,7 +58,6 @@ def main(
     logger.info(f"outDir = {out_dir}")
     logger.info(f"filePattern = {file_pattern}")
     logger.info(f"stripExtension = {strip_extension}")
-    logger.info(f"fileExtension = {file_extension}")
     logger.info(f"dim= {dim}")
     logger.info(f"sameRows= {same_rows}")
     logger.info(f"sameColumns= {same_columns}")
@@ -86,7 +83,7 @@ def main(
                 "outDir": [],
             }
             for file in fps:
-                out_name = str(file[1][0].name.split(".")[0]) + file_extension
+                out_name = str(file[1][0].name.split(".")[0]) + POLUS_TAB_EXT
                 out_json["outDir"].append(out_name)
             json.dump(out_json, jfile, indent=2)
 
@@ -95,7 +92,6 @@ def main(
     tm.merge_files(
         inp_dir_files,
         strip_extension,
-        file_extension,
         dim,
         same_rows,
         same_columns,

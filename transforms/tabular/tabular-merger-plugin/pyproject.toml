@@ -9,14 +9,9 @@ authors = [
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
-[[tool.poetry.source]]
-name = "test"
-url = "https://test.pypi.org/simple/"
-secondary = true
-
 [tool.poetry.dependencies]
 python = ">=3.9"
-filepattern = "^2.2.7"
+filepattern = "^2.0.0"
 typer = "^0.7.0"
 blake3 = "^0.3.3"
 llvmlite = "^0.39.1"

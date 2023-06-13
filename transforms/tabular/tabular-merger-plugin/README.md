@@ -37,14 +37,13 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-This plugin takes nine input argument and one output argument:
+This plugin takes eight input argument and one output argument:
 
 | Name               | Description                                                | I/O    | Type          |
 |--------------------|------------------------------------------------------------|--------|---------------|
 | `--inpDir`         | Input data collection to be processed by this plugin       | Input  | genericData   |
 | `--filePattern`    | Pattern to parse tabular files                             | Input  | string        |
 | `--stripExtension` | Should csv be removed from the filename in the output file | Input  | boolean       |
-| `--fileExtension`  | File format of an output combined file                     | Input  | enum          |
 | `--dim`            | Perform `rows` or `columns` merger                         | Input  | enum          |
 | `--sameRows`       | Merge tabular files with the same number of rows?          | Input  | boolean       |
 | `--sameColumns`    | Merge tabular files with the same header(Column Names)     | Input  | boolean       |

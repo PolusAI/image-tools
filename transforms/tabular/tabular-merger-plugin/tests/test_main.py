@@ -134,7 +134,7 @@ def test_mergingfiles_row_wise_samerows(poly):
         tm.merge_files(
             inp_dir_files,
             strip_extension=True,
-            file_extension=i,
+            # file_extension=i,
             dim="rows",
             same_rows=True,
             same_columns=False,
@@ -142,7 +142,7 @@ def test_mergingfiles_row_wise_samerows(poly):
             out_dir=d1.get_out_dir(),
         )
 
-        outfile = [f for f in d1.get_out_dir().iterdir() if f.suffix == i][0]
+        outfile = [f for f in d1.get_out_dir().iterdir() if f.suffix == ".arrow"][0]
         merged = vaex.open(outfile)
         assert len(merged["file"].unique()) == 3
         d1.clean_directories()
@@ -163,14 +163,13 @@ def test_mergingfiles_row_wise_unequalrows(poly):
         tm.merge_files(
             inp_dir_files,
             strip_extension=True,
-            file_extension=i,
             dim="rows",
             same_rows=True,
             same_columns=False,
             map_var="A",
             out_dir=d1.get_out_dir(),
         )
-        outfile = [f for f in d1.get_out_dir().iterdir() if f.suffix == i][0]
+        outfile = [f for f in d1.get_out_dir().iterdir() if f.suffix == ".arrow"][0]
         merged = vaex.open(outfile)
         assert len(merged["file"].unique()) == 3
         assert merged.shape[0] > 300
@@ -192,14 +191,13 @@ def test_mergingfiles_column_wise_equalrows(poly):
         tm.merge_files(
             inp_dir_files,
             strip_extension=True,
-            file_extension=i,
             dim="columns",
             same_rows=True,
             same_columns=False,
             map_var="A",
             out_dir=d1.get_out_dir(),
         )
-        outfile = [f for f in d1.get_out_dir().iterdir() if f.suffix == i][0]
+        outfile = [f for f in d1.get_out_dir().iterdir() if f.suffix == ".arrow"][0]
         merged = vaex.open(outfile)
         assert len(merged.get_column_names()) == 12
         assert merged.shape[0] == 100
@@ -221,14 +219,13 @@ def test_mergingfiles_column_wise_unequalrows(poly):
         tm.merge_files(
             inp_dir_files,
             strip_extension=True,
-            file_extension=i,
             dim="columns",
             same_rows=False,
             same_columns=False,
             map_var="A",
             out_dir=d1.get_out_dir(),
         )
-        outfile = [f for f in d1.get_out_dir().iterdir() if f.suffix == i][0]
+        outfile = [f for f in d1.get_out_dir().iterdir() if f.suffix == ".arrow"][0]
         merged = vaex.open(outfile)
         assert len(merged.get_column_names()) == 13
         assert "indexcolumn" in merged.get_column_names()

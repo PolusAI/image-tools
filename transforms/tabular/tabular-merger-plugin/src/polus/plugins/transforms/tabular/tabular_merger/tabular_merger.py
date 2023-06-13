@@ -12,19 +12,8 @@ import vaex
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
-
-POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".csv")
-
-
-class Extensions(str, enum.Enum):
-    """File format of an output combined file."""
-
-    CSV = ".csv"
-    ARROW = ".arrow"
-    PARQUET = ".parquet"
-    HDF = ".hdf5"
-    FEATHER = ".feather"
-    Default = POLUS_TAB_EXT
+logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
+POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".arrow")
 
 
 class Dimensions(str, enum.Enum):
@@ -84,7 +73,6 @@ def remove_files(curr_dir: pathlib.Path) -> None:
 def merge_files(
     inp_dir_files: List,
     strip_extension: bool,
-    file_extension: Extensions,
     dim: Dimensions,
     same_rows: Optional[bool],
     same_columns: Optional[bool],
@@ -98,7 +86,6 @@ def merge_files(
         inp_dir_files: List of an input files.
         file_pattern : Pattern to parse input files.
         strip_extension:  True to remove csv from the filename in the output file.
-        file_extension: File format of an output merged file
         dim: To perform merging either `rows` or `columns` wise
         same_rows:  Only merge csv files with the same number of rows.
         same_columns: Check for common header and then perform merging of files with common column names.
@@ -106,7 +93,7 @@ def merge_files(
         out_dir:Path to output directory
     """
     # Generate the path to the output file
-    outPath = pathlib.Path(out_dir).joinpath(f"merged{file_extension}")
+    outPath = pathlib.Path(out_dir).joinpath(f"merged{POLUS_TAB_EXT}")
     curr_dir = pathlib.Path(".").cwd()
 
     # Case One: If merging by columns and have same number of rows:
