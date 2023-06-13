@@ -17,7 +17,7 @@ from tensorflow.keras.optimizers import Adam
 
 seed = 0  # seed for random train-test split
 logger = logging.getLogger("training")
-logger.setLevel(logging.INFO)
+logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 
 class BACKBONES(str, enum.Enum):

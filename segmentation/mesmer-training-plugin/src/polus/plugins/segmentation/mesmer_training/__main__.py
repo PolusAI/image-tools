@@ -1,5 +1,6 @@
 """Mesmer Training."""
 import json
+import os
 import logging
 import pathlib
 from typing import Any, Optional
@@ -14,7 +15,7 @@ logging.basicConfig(
     datefmt="%d-%b-%y %H:%M:%S",
 )
 logger = logging.getLogger("polus.plugins.segmentation.mesmer_training")
-logger.setLevel(logging.INFO)
+logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 
 app = typer.Typer()
