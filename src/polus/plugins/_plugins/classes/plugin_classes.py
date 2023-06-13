@@ -16,6 +16,7 @@ from polus.plugins._plugins.io import (
     _ui_old_to_new,
 )
 from polus.plugins._plugins.manifests.manifest_utils import (
+    InvalidManifest,
     _load_manifest,
     validate_manifest,
 )
@@ -97,21 +98,27 @@ def refresh():
             if file.suffix == ".py":
                 continue
 
-            plugin = validate_manifest(file)
-            key = name_cleaner(plugin.name)
-            # Add version and path to VERSIONS
-            if key not in PLUGINS:
-                PLUGINS[key] = {}
-            if plugin.version in PLUGINS[key]:
-                if not file == PLUGINS[key][plugin.version]:
-                    raise DuplicateVersionFound(
-                        "Found duplicate version of plugin %s in %s"
-                        % (plugin.name, PLUGIN_DIR)
-                    )
-            PLUGINS[key][plugin.version] = file
+            try:
+                plugin = validate_manifest(file)
+            except InvalidManifest:
+                logger.warning("Validation error in %s" % (str(file)))
+            except BaseException as e:
+                logger.warning(f"Unexpected error {e} with {str(file)}")
+            else:
+                key = name_cleaner(plugin.name)
+                # Add version and path to VERSIONS
+                if key not in PLUGINS:
+                    PLUGINS[key] = {}
+                if plugin.version in PLUGINS[key]:
+                    if not file == PLUGINS[key][plugin.version]:
+                        raise DuplicateVersionFound(
+                            "Found duplicate version of plugin %s in %s"
+                            % (plugin.name, PLUGIN_DIR)
+                        )
+                PLUGINS[key][plugin.version] = file
 
 
-_r = refresh
+_r = refresh  # to use in submit_plugin since refresh is a named arg
 
 
 def list_plugins():
