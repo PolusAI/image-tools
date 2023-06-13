@@ -35,22 +35,6 @@
       "required": true
     },
     {
-      "name": "fileExtension",
-      "type": "enum",
-      "description": "File format of an output file",
-      "required": true,
-      "options": {
-        "values": [
-          ".csv",
-          ".feather",
-          ".parquet",
-          ".hdf5",
-          ".arrow",
-          "default"
-        ]
-      }
-    },
-    {
       "name": "dim",
       "type": "enum",
       "options": {
