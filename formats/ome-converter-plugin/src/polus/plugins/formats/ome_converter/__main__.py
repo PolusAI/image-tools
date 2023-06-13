@@ -1,5 +1,6 @@
 """Ome Converter."""
 import json
+import os
 import logging
 import pathlib
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -23,6 +24,7 @@ logging.basicConfig(
     datefmt="%d-%b-%y %H:%M:%S",
 )
 logger = logging.getLogger("polus.plugins.formats.ome_converter")
+logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 
 @app.command()

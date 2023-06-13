@@ -13,6 +13,7 @@ from bfio import BioReader, BioWriter
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
+logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 TILE_SIZE = 2**13
 

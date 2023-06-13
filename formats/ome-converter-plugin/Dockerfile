@@ -4,6 +4,7 @@ FROM polusai/bfio:2.1.9
 ENV EXEC_DIR="/opt/executables"
 ENV POLUS_IMG_EXT=".ome.tif"
 ENV POLUS_TAB_EXT=".csv"
+ENV POLUS_LOG="INFO"
 
 # Work directory defined in the base container
 WORKDIR ${EXEC_DIR}
