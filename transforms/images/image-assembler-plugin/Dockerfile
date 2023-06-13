@@ -32,6 +32,7 @@ COPY README.md ${EXEC_DIR}
 COPY CHANGELOG.md ${EXEC_DIR}
 COPY src ${EXEC_DIR}/src
 
+<<<<<<< HEAD
 RUN pip3 install ${EXEC_DIR} --no-cache-dir
 
 # Default command. Additional arguments are provided through the command line
@@ -47,6 +48,8 @@ COPY CHANGELOG.md ${EXEC_DIR}
 COPY src ${EXEC_DIR}/src
 
 RUN pip3 install --index-url https://test.pypi.org/simple/ filepattern==2.2.7
+=======
+>>>>>>> 254a68a (update : update to new standards.)
 RUN pip3 install ${EXEC_DIR} --no-cache-dir
 
 # Default command. Additional arguments are provided through the command line
