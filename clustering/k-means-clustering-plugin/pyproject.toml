@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-clustering-k-means"
-version = "0.3.2"
+version = "0.3.2-dev"
 description = ""
 authors = [
 "Jayapriya Nagarajan <jayapriya.nagarajan@nih.gov>",
@@ -15,8 +15,6 @@ python = "^3.9"
 filepattern = "^2.0.0"
 typer = "^0.7.0"
 nyxus = "^0.5.0"
-fastapi = "^0.92.0"
-astropy = "5.2.1"
 vaex = "^4.7.0"
 scikit_learn="^1.0.2"
 

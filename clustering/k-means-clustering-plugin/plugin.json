@@ -1,6 +1,6 @@
 {
   "name": "K-Means Clustering",
-  "version": "0.3.2",
+  "version": "0.3.2-dev",
   "title": "K-Means Clustering",
   "description": "Cluster the data using K-Means.",
   "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov), Kelechi Nina Mezu (nina.mezu@nih.gov) Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/polusai/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/k-means-clustering-plugin:0.3.2",
+  "containerId": "polusai/k-means-clustering-plugin:0.3.2-dev",
   "baseCommand": [
     "python3",
     "-m",
@@ -59,22 +59,6 @@
       "type": "number",
       "description": "Number of clusters:",
       "required": "false"
-    },
-    {
-      "name": "fileExtension",
-      "type": "enum",
-      "description": "File format of an output file",
-      "required": true,
-      "options": {
-        "values": [
-          ".csv",
-          ".feather",
-          ".parquet",
-          ".hdf5",
-          ".arrow",
-          "default"
-        ]
-      }
     }
   ],
   "outputs": [
@@ -95,7 +79,7 @@
       "key": "inputs.filePattern",
       "title": "FilePattern",
       "description": "Pattern to parse input files",
-      "default": ".arrow"
+      "default": ".+"
     },
     {
       "key": "inputs.methods",

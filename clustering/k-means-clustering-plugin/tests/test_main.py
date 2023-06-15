@@ -1,5 +1,6 @@
 """K_means clustering."""
 import pathlib
+import os
 import shutil
 import tempfile
 
@@ -55,32 +56,14 @@ class Generatedata:
         """Convert pandas dataframe to csv file format."""
         self.x.to_csv(pathlib.Path(self.inp_dir, self.outname), index=False)
 
-    def parquet_func(self) -> None:
-        """Convert pandas dataframe to parquet file format."""
-        self.x.to_parquet(
-            pathlib.Path(self.inp_dir, self.outname), engine="auto", compression=None
-        )
-
-    def feather_func(self) -> None:
-        """Convert pandas dataframe to feather file format."""
-        self.x.to_feather(pathlib.Path(self.inp_dir, self.outname))
-
     def arrow_func(self) -> None:
         """Convert pandas dataframe to Arrow file format."""
         self.x.to_feather(pathlib.Path(self.inp_dir, self.outname))
 
-    def hdf_func(self) -> None:
-        """Convert pandas dataframe to hdf5 file format."""
-        v_df = vaex.from_pandas(self.x, copy_index=False)
-        v_df.export(pathlib.Path(self.inp_dir, self.outname))
-
     def __call__(self) -> None:
         """To make a class callable."""
         data_ext = {
-            ".hdf5": self.hdf_func,
             ".csv": self.csv_func,
-            ".parquet": self.parquet_func,
-            ".feather": self.feather_func,
             ".arrow": self.arrow_func,
         }
 
@@ -93,23 +76,11 @@ class Generatedata:
                 shutil.rmtree(d)
 
 
-@pytest.fixture(
-    params=[
-        (".csv", 2, 5),
-        (".arrow", 2, 7),
-        (".feather", 2, 20),
-        (".hdf5", 2, 30),
-        (".parquet", 2, 10),
-    ]
+@pytest.mark.parametrize(
+    "ext, minrange, maxrange", [(".arrow", 2, 5), (".csv", 2, 7), (".arrow", 2, 20), (".arrow", 2, 30), (".csv",2, 10)]
 )
-def get_params(request):
-    """To get the parameter of the fixture."""
-    yield request.param
-
-
-def test_elbow(get_params):
+def test_elbow(ext, minrange, maxrange):
     """Testing elbow function."""
-    ext, minrange, maxrange = get_params
     d = Generatedata(ext, outname=f"data_1{ext}", size=10000)
     d()
     pattern = "".join([".*", ext])
@@ -130,24 +101,12 @@ def test_elbow(get_params):
     d.clean_directories()
 
 
-@pytest.fixture(
-    params=[
-        ("CalinskiHarabasz", 5000, ".csv", 2, 5),
-        ("DaviesBouldin", 10000, ".arrow", 2, 7),
-        ("CalinskiHarabasz", 50000, ".feather", 2, 20),
-        ("DaviesBouldin", 75000, ".hdf5", 2, 30),
-        ("CalinskiHarabasz", 100000, ".parquet", 2, 10),
-    ]
+@pytest.mark.parametrize(
+    "method, datasize, ext, minrange, maxrange", [("CalinskiHarabasz", 5000, ".arrow", 2, 5), ("DaviesBouldin", 10000, ".csv", 2, 7), ("CalinskiHarabasz", 50000,".arrow", 2, 20), ("DaviesBouldin", 75000,".arrow", 2, 30), ("CalinskiHarabasz", 100000,".csv",2, 10)]
 )
-def get_params2(request):
-    """To get the parameter of the fixture."""
-    yield request.param
-
-
-def test_calinski_davies(get_params2):
+def test_calinski_davies(method, datasize, ext, minrange, maxrange):
     """Testing calinski_davies and davies_bouldin methods."""
-    method, data_size, ext, minrange, maxrange = get_params2
-    d = Generatedata(ext, outname=f"data_1{ext}", size=data_size)
+    d = Generatedata(ext, outname=f"data_1{ext}", size=datasize)
     d()
     pattern = "".join([".*", ext])
     fps = fp.FilePattern(d.get_inp_dir(), pattern)
@@ -172,48 +131,44 @@ def test_calinski_davies(get_params2):
 
 @pytest.fixture(
     params=[
-        ("CalinskiHarabasz", 5000, ".csv", 2, 5, 3, ".arrow"),
-        ("DaviesBouldin", 10000, ".arrow", 2, 7, 4, ".feather"),
-        ("Elbow", 500, ".feather", 2, 20, 3, ".hdf5"),
-        ("CalinskiHarabasz", 75000, ".hdf5", 2, 30, 5, ".csv"),
-        ("Elbow", 10000, ".parquet", 2, 10, 10, ".csv"),
-        ("Manual", 20000, ".parquet", 2, 10, 20, ".arrow"),
+        ("CalinskiHarabasz", 5000, ".csv", 2, 5, 3),
+        ("DaviesBouldin", 10000, ".arrow", 2, 7, 4),
+        ("Elbow", 500, ".arrow", 2, 20, 3),
+        ("CalinskiHarabasz", 75000, ".csv", 2, 30, 5),
+        ("Elbow", 10000, ".csv", 2, 10, 10),
+        ("Manual", 20000, ".arrow", 2, 10, 20),
     ]
 )
-def get_params3(request):
+def get_params(request):
     """To get the parameter of the fixture."""
     yield request.param
 
-
-def test_clustering(get_params3) -> None:
+def test_clustering(get_params) -> None:
     """Test clustering function."""
-    method, data_size, inpext, minrange, maxrange, numclusters, outext = get_params3
-    d = Generatedata(inpext, outname=f"data_1{inpext}", size=data_size)
+    method, datasize, ext, minrange, maxrange, numclusters = get_params
+    d = Generatedata(ext, outname=f"data_1{ext}", size=datasize)
     d()
-    pattern = "".join([".*", inpext])
+    pattern = "".join([".*", ext])
     fps = fp.FilePattern(d.get_inp_dir(), pattern)
     for file in fps:
         km.clustering(
             file=file[1][0],
-            file_pattern=pattern,
+            file_pattern=ext,
             methods=method,
             minimum_range=minrange,
             maximum_range=maxrange,
             num_of_clus=numclusters,
-            file_extension=outext,
             out_dir=d.get_out_dir(),
         )
-
-    assert d.get_out_dir().joinpath(f"data_1{outext}")
-    df = vaex.open(d.get_out_dir().joinpath(f"data_1{outext}"))
+    assert d.get_out_dir().joinpath(f"data_1.arrow")
+    df = vaex.open(d.get_out_dir().joinpath(f"data_1.arrow"))
     assert "Cluster" in df.columns
-
     d.clean_directories()
 
 
-def test_cli(get_params3) -> None:
+def test_cli(get_params) -> None:
     """Test Cli."""
-    method, data_size, inpext, minrange, maxrange, numclusters, outext = get_params3
+    method, data_size, inpext, minrange, maxrange, numclusters = get_params
     d = Generatedata(inpext, outname=f"data_1{inpext}", size=data_size)
     d()
     shutil.copy(
@@ -236,8 +191,6 @@ def test_cli(get_params3) -> None:
             maxrange,
             "--numOfClus",
             numclusters,
-            "--fileExtension",
-            outext,
             "--outDir",
             d.get_out_dir(),
         ],

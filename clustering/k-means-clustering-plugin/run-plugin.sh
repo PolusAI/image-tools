@@ -15,7 +15,6 @@ methods=Elbow
 minimumrange=2
 maximumrange=10
 numofclus=3
-fileExtension=".arrow"
 
 # Show the help options
 # docker run polusai/k-means-clustering-plugin:${version}
@@ -27,5 +26,4 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --methods ${methods} \
             --minimumrange ${minimumrange} \
             --maximumrange ${maximumrange} \
-            --fileExtension ${fileExtension} \
             --outdir ${outDir} \

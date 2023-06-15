@@ -1,6 +1,8 @@
 """K_means clustering."""
 import logging
+import os
 import pathlib
+from typing import Optional
 
 import numpy
 import numpy as np
@@ -9,7 +11,8 @@ import vaex
 from sklearn.cluster import KMeans
 from sklearn.metrics import calinski_harabasz_score, davies_bouldin_score
 
-from polus.plugins.clustering.k_means.utils import Extensions, Methods
+
+from polus.plugins.clustering.k_means.utils import Methods
 
 # Initialize the logger
 logging.basicConfig(
@@ -17,7 +20,8 @@ logging.basicConfig(
     datefmt="%d-%b-%y %H:%M:%S",
 )
 logger = logging.getLogger("main")
-logger.setLevel(logging.INFO)
+logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
+POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".arrow")
 
 
 def elbow(data_array: np.array, minimum_range: int, maximum_range: int) -> np.array:
@@ -121,7 +125,6 @@ def clustering(
     minimum_range: int,
     maximum_range: int,
     num_of_clus: int,
-    file_extension: Extensions,
     out_dir: pathlib.Path,
 ):
     """K-means clustering methods to find clusters of similar or more related objects.
@@ -132,7 +135,6 @@ def clustering(
         methods: Select either Calinski Harabasz or Davies Bouldin method or Manual.
         minimum_range: Starting number of sequence in range function to determine k-value.
         maximum_range:Ending number of sequence in range function to determine k-value.
-        file_extension: Output file format
     """
     # Get file name
     filename = file.stem
@@ -140,6 +142,7 @@ def clustering(
     with open(file, encoding="utf-8", errors="ignore") as fr:
         ncols = len(fr.readline().split(","))
     chunk_size = max([2**24 // ncols, 1])
+
     if f"{file_pattern}" == ".csv":
         df = vaex.read_csv(file, convert=True, chunk_size=chunk_size)
     else:
@@ -205,14 +208,10 @@ def clustering(
             data[col] = cat_array[col].values
 
     # Save dataframe to feather file or to csv file
-    out_file = pathlib.Path(out_dir, (filename + file_extension))
+    out_file = pathlib.Path(out_dir, (filename + POLUS_TAB_EXT))
 
-    if f"{file_extension}" in [".feather", ".arrow"]:
+    if f"{POLUS_TAB_EXT}" in [".feather", ".arrow"]:
         data.export_feather(out_file)
-    elif f"{file_extension}" == ".parquet":
-        data.export_parquet(out_file)
-    elif f"{file_extension}" == ".hdf5":
-        data.export_hdf5(out_file)
     else:
         logger.info("Saving csv file")
         data.export_csv(out_file, chunk_size=chunk_size)

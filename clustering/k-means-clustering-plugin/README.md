@@ -1,16 +1,11 @@
-﻿# K-Means Clustering(v0.3.2)
+﻿# K-Means Clustering(v0.3.2-dev)
 
-The K-Means Clustering plugin clusters the data using Scikit-learn K-Means clustering algorithm and outputs csv file. Each instance(row) in the input csv file is assigned to one of the clusters. The output csv file contains the column 'Cluster' that shows which cluster the instance belongs to. The input file should be in csv format.
+The K-Means Clustering plugin clusters the data using Scikit-learn K-Means clustering algorithm and outputs csv file. Each instance(row) in the input csv file is assigned to one of the clusters. The output csv file contains the column 'Cluster' that shows which cluster the instance belongs to.
 
 ## Inputs:
 
 ### Input data:
-The input tabular data that need to be clustered. This plugin supports vaex supported file formats
-1. csv
-2. hdf5
-3. arrow
-4. parquet
-5. feather
+The input tabular data that need to be clustered. This plugin supports `.csv` and `.arrow` file formats
 
 ### Methods:
 Choose any one of the method mentioned to determine the k-value and cluster the data.
@@ -56,7 +51,7 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 ## Options
 
-This plugin takes eight input arguments and one output argument:
+This plugin takes seven input arguments and one output argument:
 
 | Name             | Description                                                                 | I/O    | Type          |
 | ---------------- | --------------------------------------------------------------------------- | ------ | ------------- |
@@ -66,6 +61,5 @@ This plugin takes eight input arguments and one output argument:
 | `--minimumrange` | Enter minimum k-value                                                       | Input  | integer       |
 | `--maximumrange` | Enter maximum k-value                                                       | Input  | integer       |
 | `--numofclus`    | Enter number of clusters                                                    | Input  | integer       |
-| `--fileExtension`| File Format of output tabular files                                         | Input  | string        |
 | `--outdir`       | Output collection                                                           | Output | genericData   |
 | `--preview`      | Generate JSON file with outputs                                             | Output | JSON          |

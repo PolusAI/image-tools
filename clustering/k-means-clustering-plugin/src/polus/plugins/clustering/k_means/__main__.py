@@ -1,5 +1,6 @@
 """K_means clustering."""
 import json
+import os
 import logging
 import multiprocessing
 import pathlib
@@ -18,8 +19,8 @@ logging.basicConfig(
     datefmt="%d-%b-%y %H:%M:%S",
 )
 logger = logging.getLogger("polus.plugins.clustering.k_means")
-logger.setLevel(logging.INFO)
-
+logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
+POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".arrow")
 
 app = typer.Typer()
 
@@ -29,8 +30,8 @@ def main(
     inp_dir: pathlib.Path = typer.Option(
         ..., "--inpDir", help="Input collection-Data need to be clustered"
     ),
-    file_pattern: km.Extensions = typer.Option(
-        km.Extensions.Default, "--filePattern", help="pattern to parse tabular files"
+    file_pattern: str = typer.Option(
+       ".+", "--filePattern", help="pattern to parse tabular files"
     ),
     methods: km.Methods = typer.Option(
         km.Methods.Default,
@@ -44,9 +45,6 @@ def main(
         ..., "--maximumRange", help="Enter maximum k-value"
     ),
     num_of_clus: int = typer.Option(..., "--numOfClus", help="Number of clusters"),
-    file_extension: km.Extensions = typer.Option(
-        km.Extensions.Default, "--fileExtension", help="Output file format"
-    ),
     out_dir: pathlib.Path = typer.Option(..., "--outDir", help="Output collection"),
     preview: Optional[bool] = typer.Option(
         False,
@@ -64,11 +62,13 @@ def main(
 
     assert inp_dir.exists(), f"{inp_dir} doesnot exist!! Please check input path again"
     assert out_dir.exists(), f"{out_dir} doesnot exist!! Please check output path again"
+    assert file_pattern in [".csv", ".arrow"], f"{file_pattern} tabular files are not supported by this plugin"
 
     num_threads = max([cpu_count(), 2])
 
     pattern = ".*" + file_pattern
     fps = fp.FilePattern(inp_dir, pattern)
+    print(pattern)
 
     if not fps:
         raise ValueError(f"No {file_pattern} files found.")
@@ -80,7 +80,7 @@ def main(
                 "outDir": [],
             }
             for file in fps:
-                out_name = str(file[1][0].stem) + pattern
+                out_name = str(file[1][0].stem) + POLUS_TAB_EXT
                 out_json["outDir"].append(out_name)
             json.dump(out_json, jfile, indent=2)
 
@@ -95,7 +95,6 @@ def main(
                 minimum_range=minimum_range,
                 maximum_range=maximum_range,
                 num_of_clus=num_of_clus,
-                file_extension=file_extension,
                 out_dir=out_dir,
             ),
             flist,
