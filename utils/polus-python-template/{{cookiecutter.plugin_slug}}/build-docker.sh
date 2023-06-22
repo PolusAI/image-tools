@@ -1,3 +1,4 @@
 #!/bin/bash
 
-docker build . -t {{cookiecutter.container_id}}
+version=$(<VERSION)
+docker build . -t {{cookiecutter.container_id}}:${version}

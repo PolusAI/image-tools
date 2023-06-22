@@ -19,4 +19,5 @@ This plugin takes 2 input arguments and 1 output argument:
 |---------------|-------------------------|--------|--------|
 | inpDir        | Input image collection to be processed by this plugin | Input | collection
 | filePattern   | Filename pattern used to separate data | Input | string
+| preview   | Generate an output preview | Input | boolean
 | outDir        | Output collection | Output | collection

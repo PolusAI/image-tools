@@ -3,16 +3,12 @@
 import pytest
 from {{cookiecutter.plugin_package}} import awesome_function
 
-
-@pytest.fixture
-def data():
-    """Create test fixture."""
-    return None
+from tests.fixtures import ground_truth
 
 
-def test_awesome_function(data):
+def test_awesome_function(ground_truth : None):
     """Test awesome_function."""
     inpDir = "/path/to/inputDir"
     filepattern = ".*"
     outDir = "path/to/outDir"
-    assert awesome_function(inpDir, filepattern, outDir) == data
+    assert awesome_function(inpDir, filepattern, outDir) == ground_truth

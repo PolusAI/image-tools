@@ -8,7 +8,7 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "{{cookiecutter.container_id}}",
+    "containerId": "{{cookiecutter.container_id}}:{{cookiecutter.container_version}}",
     "baseCommand": ["python3", "-m", "{{cookiecutter.plugin_package}}"],
     "inputs": {
       "inpDir": {
@@ -22,7 +22,13 @@
           "title": "Filename pattern",
           "description": "Filename pattern used to separate data.",
           "required": "False"
-      }
+      },
+      "preview": {
+        "type": "boolean",
+        "title": "Preview",
+        "description": "Generate an output preview.",
+        "required": "False"
+    }
   },
   "outputs": {
       "outDir": {
@@ -41,6 +47,12 @@
         "type": "string",
         "title": "Filename pattern",
         "description": "Filename pattern used to separate data.",
+        "required": "False"
+      },
+      "preview": {
+        "type": "boolean",
+        "title": "Filename pattern",
+        "description": "Generate an output preview.",
         "required": "False"
       }
   }

@@ -2,12 +2,13 @@
     "author": "Data Scientist",
     "author_email": "data.scientist@labshare.org",
     "plugin_name": "Awesome Function",
-    "plugin_package": "polus.package1.package2.awesome_function",
+    "plugin_package": "polus.plugins.package1.package2.awesome_function",
     "plugin_description": "An awesome function.",
     "plugin_version": "0.1.0",
 
     "package_name": "{% set packages = cookiecutter.plugin_package.split('.') %}{{ packages | last }}",
     "plugin_slug": "{% set packages = cookiecutter.plugin_package.split('.') %}polus-{{ packages | last |lower|replace('_', '-') }}-plugin",
     "container_name": "{%set container_name = ('-').join(cookiecutter.plugin_slug.split('-')[1:])%}{{ container_name }}",
-    "container_id": "polusai/{{cookiecutter.container_name}}:{{cookiecutter.plugin_version}}"
+    "container_id": "polusai/{{cookiecutter.container_name}}",
+    "container_version": "{{cookiecutter.plugin_version}}"
 }

@@ -1,5 +1,7 @@
-"""{{cookiecutter.package_name}} package."""
+"""{{cookiecutter.package_name}}."""
 
-from .{{cookiecutter.package_name}} import (  # noqa # pylint: disable=unused-import
+__version__ = "{{cookiecutter.plugin_version}}"
+
+from {{cookiecutter.plugin_package}} import (  # noqa # pylint: disable=unused-import
     awesome_function,
 )

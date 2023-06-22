@@ -11,7 +11,8 @@ python = "^3.9.15"
 typer = "^0.7.0"
 bfio = {version = "2.1.9", extras = ["all"]}
 filepattern = "2.0.0"
-preadator = "^0.2.0"
+preadator = "0.3.0.dev1"
+typer = "^0.7.0"
 
 [[tool.poetry.source]]
 name = "test"
@@ -27,6 +28,7 @@ flake8-docstrings = "^1.7.0"
 black = "^23.3.0"
 mypy = "^1.1.1"
 pytest = "^7.2.2"
+ruff = "^0.0.270"
 
 [build-system]
 requires = ["poetry-core"]
