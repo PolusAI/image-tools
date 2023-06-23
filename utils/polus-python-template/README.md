@@ -10,7 +10,7 @@ the basic skeleton of a plugin.
 2. `cd /utils/polus-python-template/`
 3. Install the requirements: `poetry update`
 4. Ignore changes to `cookiecutter.json` using: `git update-index --assume-unchanged ./utils/polus-python-template/cookiecutter.json`
-5. Modify `cookiecutter.json` to include author and plugin information.`plugin_package` should always start with `polus`.
+5. Modify `cookiecutter.json` to include author and plugin information.`plugin_package` should always start with `polus.plugins`.
 6. Create your plugin skeleton: ` python -m cookiecutter . --no-input`
 
 ** NOTE: ** Do not modify entries after `package_name`. Those are automatically generated from

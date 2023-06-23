@@ -7,7 +7,9 @@ from os import environ
 from pathlib import Path
 
 import typer
-from {{cookiecutter.plugin_package}} import awesome_function
+from {{cookiecutter.plugin_package}}.{{cookiecutter.package_name}} import (
+    {{cookiecutter.package_name}},
+)
 
 logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",

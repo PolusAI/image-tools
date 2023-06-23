@@ -9,7 +9,7 @@ from {{cookiecutter.plugin_package}}.__main__ import app
 
 faulthandler.enable()
 
-from tests.fixtures import ground_truth
+from tests.fixtures import plugin_dirs
 
 
 def test_cli(plugin_dirs: tuple[Path, Path]):  # noqa
@@ -21,15 +21,32 @@ def test_cli(plugin_dirs: tuple[Path, Path]):  # noqa
     result = runner.invoke(
         app,
         [
-            "--imgPath",
-            str(inp_dir),
+            "--inpDir",
+            inp_dir,
             "--outDir",
-            str(out_dir),
+            out_dir,
         ],
     )
 
     assert result.exit_code == 0
 
+def test_cli_short(plugin_dirs: tuple[Path, Path]):  # noqa
+    """Test the command line."""
+    runner = CliRunner()
+
+    inp_dir, out_dir = plugin_dirs
+
+    result = runner.invoke(
+        app,
+        [
+            "-i",
+            inp_dir,
+            "-o",
+            out_dir,
+        ],
+    )
+
+    assert result.exit_code == 0
 
 def test_cli_preview(plugin_dirs: tuple[Path, Path]):  # noqa
     """Test the preview option."""
@@ -40,10 +57,10 @@ def test_cli_preview(plugin_dirs: tuple[Path, Path]):  # noqa
     result = runner.invoke(
         app,
         [
-            "--imgPath",
-            str(inp_dir),
+            "--inpDir",
+            inp_dir,
             "--outDir",
-            str(out_dir),
+            out_dir,
             "--preview",
         ],
     )
@@ -67,10 +84,10 @@ def test_cli_bad_input(plugin_dirs: tuple[Path, Path]):  # noqa
     result = runner.invoke(
         app,
         [
-            "--imgPath",
-            str(inp_dir),
+            "--inpDir",
+            inp_dir,
             "--outDir",
-            str(out_dir),
+            out_dir,
         ],
     )
 

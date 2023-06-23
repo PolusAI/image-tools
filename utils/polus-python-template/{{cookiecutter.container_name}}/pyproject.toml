@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "{{cookiecutter.plugin_slug}}"
+name = "{{cookiecutter.project_name}}"
 version = "{{cookiecutter.plugin_version}}"
 description = "{{cookiecutter.plugin_description}}"
 authors = ["{{cookiecutter.author}} <{{cookiecutter.author_email}}>"]
@@ -12,7 +12,6 @@ typer = "^0.7.0"
 bfio = {version = "2.1.9", extras = ["all"]}
 filepattern = "2.0.0"
 preadator = "0.3.0.dev1"
-typer = "^0.7.0"
 
 [[tool.poetry.source]]
 name = "test"
