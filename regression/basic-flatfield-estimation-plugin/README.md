@@ -1,4 +1,4 @@
-# BaSiC Flatfield Correction
+# BaSiC Flatfield Correction (v2.0.0-dev19)
 
 This WIPP plugin will take a collection of images and use the BaSiC flatfield
 correction algorithm to generate a flatfield image, a darkfield image, and a
@@ -51,7 +51,7 @@ of `plugin.json` into the pop-up window and submit.
 This plugin takes 4 input arguments and 1 output argument:
 
 | Name            | Description                                  | I/O    | Type    |
-| --------------- | -------------------------------------------- | ------ | ------- |
+|-----------------|----------------------------------------------|--------|---------|
 | `--inpDir`      | Path to input images                         | Input  | String  |
 | `--darkfield`   | If 'true', will calculate darkfield image    | Input  | Boolean |
 | `--photobleach` | If 'true', will calculate photobleach scalar | Input  | Boolean |
