@@ -1,6 +1,16 @@
 import os
 import shutil
 from pathlib import Path
+import logging
+from os import environ
+
+logging.basicConfig(
+    format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
+    datefmt="%d-%b-%y %H:%M:%S",
+)
+POLUS_LOG = getattr(logging, environ.get("POLUS_LOG", "DEBUG"))
+logger = logging.getLogger("polus-python-template-post")
+logger.setLevel(POLUS_LOG)
 
 """Create the final plugin directory structure.
 (ex: polus/plugins/package1/package2/awesome_function)
@@ -12,6 +22,7 @@ os.rename("src", "src_template")
 package_dir = "{{ cookiecutter.plugin_package }}"
 package_dir = package_dir.split(".")
 package_dir = os.path.join(*package_dir)
+
 src = Path("src") / package_dir
 os.makedirs(src, exist_ok=False)
 # copy old source in new source structure
@@ -21,6 +32,8 @@ for file_name in files:
     shutil.move(src_template / file_name, src)
 # remove the original source directory
 os.rmdir(src_template)
+
+logger.debug(f"created source directories : {src}")
 
 """ Buid the correct directories inside polus-plugins.
 The directory structure must conforms to the plugin's spec :
@@ -41,18 +54,23 @@ for folder in Path(final_dir).parent.parents:
         final_dir = folder
         break
 
-# figure out the directories that need to be created at the root
+# by default we create a plugin directory at the root    
+target_dir = final_dir
+
+# figure out if additional directories need to be created at the root
 # make sure we replace underscores
-package_dir = "{{cookiecutter.plugin_package}}".replace("_", "-")
-package_dir = package_dir.split(".")
+new_dirs = "{{cookiecutter.plugin_package}}".replace("_", "-")
+new_dirs = new_dirs.split(".")
 # remove polus.plugins so we only keep intermediary directories
 # Ex: polus.plugins.package1.package2.awesome_function creates
 # package1/package2/
-package_dir = package_dir[2:-1]
-package_dir = os.path.join(*package_dir)
-target_dir = final_dir / package_dir
-os.makedirs(target_dir, exist_ok=False)
+new_dirs = new_dirs[2:-1]
+if len(new_dirs) != 0:
+    package_dir = os.path.join(*new_dirs)
+    target_dir = final_dir / package_dir
 
+# create the plugin directory
+os.makedirs(target_dir, exist_ok=True)
 """Move staged files to the the final target repo."""
 print(f"moving sources from {source_dir} to {target_dir}")
 shutil.move(source_dir, target_dir)

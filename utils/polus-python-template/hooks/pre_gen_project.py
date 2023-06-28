@@ -1,6 +1,16 @@
 """
 Validation of template variable
 """
+import logging
+from os import environ
+
+logging.basicConfig(
+    format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
+    datefmt="%d-%b-%y %H:%M:%S",
+)
+POLUS_LOG = getattr(logging, environ.get("POLUS_LOG", "DEBUG"))
+logger = logging.getLogger("polus-python-template-pre")
+logger.setLevel(POLUS_LOG)
 
 author = "{{ cookiecutter.author }}"
 # TODO check valid
@@ -37,3 +47,5 @@ assert container_id.startswith("polusai/")
 
 container_version = "{{ cookiecutter.container_version }}"
 assert container_version == plugin_version
+
+logger.debug(f"plugin_package: {plugin_package}" )
