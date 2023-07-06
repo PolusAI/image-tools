@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "polus-plugins-visualization-render-overlay"
+version = "0.1.0-dev1"
+description = ""
+authors = ["Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>"]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4.0"
+typer = "^0.7.0"
+microjson = {git = "git@github.com:bengtl/microjson.git"}
+
+[tool.poetry.group.dev.dependencies]
+bump2version = "^1.0.1"
+pre-commit = "^3.1.0"
+black = "^23.1.0"
+flake8 = "^6.0.0"
+mypy = "^1.0.1"
+pytest = "^7.2.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
