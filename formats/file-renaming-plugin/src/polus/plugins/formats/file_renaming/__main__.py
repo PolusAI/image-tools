@@ -3,8 +3,9 @@ import json
 import os
 import logging
 import pathlib
-import shutil
 from typing import Any, Optional
+import re
+
 
 import typer
 
@@ -20,6 +21,7 @@ logging.basicConfig(
 logger = logging.getLogger("polus.plugins.formats.file_renaming")
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
+
 @app.command()
 def main(
     inp_dir: pathlib.Path = typer.Option(
@@ -31,12 +33,19 @@ def main(
         ".+", "--filePattern", help="Filename pattern used to separate data"
     ),
     out_dir: pathlib.Path = typer.Option(
-        ..., "--outDir", help="Path to image collection storing copies of renamed files"
+        ...,
+        "--outDir",
+        help="Path to image collection storing copies of renamed files",
     ),
     out_file_pattern: str = typer.Option(
         ".+",
         "--outFilePattern",
         help="Desired filename pattern used to rename and separate data",
+    ),
+    map_directory: Optional[fr.MappingDirectory] = typer.Option(
+        fr.MappingDirectory.Default,
+        "--mapDirectory",
+        help="Get folder name",
     ),
     preview: Optional[bool] = typer.Option(
         False, "--preview", help="Output a JSON preview of files"
@@ -56,6 +65,8 @@ def main(
         filePattern: Input file pattern
         outDir: Path to image collection storing copies of renamed files
         outFilePattern: Output file pattern
+        mapDirectory: Include foldername to the renamed files
+
 
     Returns:
         output_dict: Dictionary of in to out file names, for testing
@@ -64,6 +75,7 @@ def main(
     logger.info(f"filePattern = {file_pattern}")
     logger.info(f"outDir = {out_dir}")
     logger.info(f"outFilePattern = {out_file_pattern}")
+    logger.info(f"mapDirectory = {map_directory}")
 
     inp_dir = inp_dir.resolve()
     out_dir = out_dir.resolve()
@@ -74,73 +86,26 @@ def main(
     assert (
         out_dir.exists()
     ), f"{out_dir} does not exists!! Please check output path again"
- 
-    inp_files = [str(inp_file.name) for inp_file in inp_dir.iterdir() if not inp_file.name.startswith(".")]
 
-    assert len(inp_files) != 0, f"Please define {file_pattern} again!! As it is not parsing files correctly"
-
-    chars_to_escape = ["(", ")", "[", "]", "$", "."]
-    for char in chars_to_escape:
-        file_pattern = file_pattern.replace(char, ("\\" + char))
-
-    if "\.*" in file_pattern:
-        file_pattern = file_pattern.replace("\.*", (".*"))
-    if "\.+" in file_pattern:
-        file_pattern = file_pattern.replace("\.+", (".+"))
-
-    groupname_regex_dict = fr.map_pattern_grps_to_regex(file_pattern)
-
-    # #: Integrate regex from dictionary into original file pattern
-    inp_pattern_rgx = fr.convert_to_regex(file_pattern, groupname_regex_dict)
-    
-
-    # #: Integrate format strings into outFilePattern to specify digit/char len
-    out_pattern_fstring = fr.specify_len(out_file_pattern)
-    
-
-    #: List named groups where input pattern=char & output pattern=digit
-    char_to_digit_categories = fr.get_char_to_digit_grps(file_pattern, out_file_pattern)
-    print(out_pattern_fstring)
-
-    #: List a dictionary (k=named grp, v=match) for each filename
-    all_grp_matches = fr.extract_named_grp_matches(inp_pattern_rgx, inp_files)
-    
-
-    #: Convert numbers from strings to integers, if applicable
-    for i in range(0, len(all_grp_matches)):
-        tmp_match = all_grp_matches[i]
-        all_grp_matches[i] = fr.str_to_int(tmp_match)
-
-    #: Populate dict if any matches need to be converted from char to digit
-    #: Key=named group, Value=Int representing matched chars
-    numbered_categories = {}
-    for named_grp in char_to_digit_categories:
-        numbered_categories[named_grp] = fr.letters_to_int(named_grp, all_grp_matches)
-    # Check named groups that need c->d conversion
-    for named_grp in char_to_digit_categories:
-        for i in range(0, len(all_grp_matches)):
-            if all_grp_matches[i].get(named_grp):
-                #: Replace original matched letter with new digit
-                all_grp_matches[i][named_grp] = numbered_categories[named_grp][
-                    all_grp_matches[i][named_grp]
-                ]
-
-    output_dict = {}
-    for match in all_grp_matches:
-        #: If running on WIPP
-        if out_dir != "":
-            #: Apply str formatting to change digit or char length
-            out_name = out_dir.resolve() / out_pattern_fstring.format(**match)
-            old_file_name = inp_dir / match["fname"]
-            shutil.copy2(old_file_name, out_name)
-        #: Enter outDir as an empty string for testing purposes
-        elif out_dir == "":
-            out_name = out_pattern_fstring.format(**match)
-            old_file_name = match["fname"]
-        logger.info(f"Old name {old_file_name} & new name {out_name}")
-        #: Copy renamed file to output directory
-        output_dict[old_file_name] = out_name
-    #: Save old and new file names to dict (used for testing)
+    if map_directory == "":
+        fr.rename(
+            inp_dir,
+            out_dir,
+            file_pattern,
+            out_file_pattern,
+        )
+    else:
+        subdirs = sorted([d for d in inp_dir.iterdir() if d.is_dir()])
+        for i, sub in enumerate(subdirs):
+            i += 1
+            dir_pattern = r"^[A-Za-z0-9_]+$"
+            # Iterate over the directories and check if they match the pattern
+            matching_directories = re.match(dir_pattern, sub.stem).group()
+            if f"{map_directory}" == "raw":
+                outfile_pattern = f"{matching_directories}_{out_file_pattern}"
+            else:
+                outfile_pattern = f"d{i}_{out_file_pattern}"
+            fr.rename(sub, out_dir, file_pattern, outfile_pattern)
 
     if preview:
         with open(pathlib.Path(out_dir, "preview.json"), "w") as jfile:

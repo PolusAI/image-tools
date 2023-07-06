@@ -2,13 +2,30 @@
 import logging
 import os
 import re
+import enum
+import shutil
+import pathlib
+from sys import platform
+from tqdm import tqdm
+from multiprocessing import cpu_count
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Any, Dict, List, Union
 
 logger = logging.getLogger(__name__)
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
-#: Import environment variables
-POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
+if platform == "linux" or platform == "linux2":
+    NUM_THREADS = len(os.sched_getaffinity(0))  # type: ignore
+else:
+    NUM_THREADS = max(cpu_count() // 2, 2)
+
+
+class MappingDirectory(str, enum.Enum):
+    """Map Directory information."""
+
+    RAW = "raw"
+    MAP = "map"
+    Default = ""
 
 
 def map_pattern_grps_to_regex(file_pattern: str) -> dict:
@@ -224,3 +241,107 @@ def letters_to_int(named_grp: str, all_matches: list) -> Dict:
         str_alphabetindex_dict[alphabetized_matches[i]] = i
     logger.debug(f"letters_to_int() returns {str_alphabetindex_dict}")
     return str_alphabetindex_dict
+
+
+def rename(
+    inp_dir: pathlib.Path,
+    out_dir: pathlib.Path,
+    file_pattern: str,
+    out_file_pattern: str,
+) -> None:
+    """Scalable Extraction of Nyxus Features.
+
+    Args:
+        inp_dir : Path to image collection.
+        out_dir : Path to image collection storing copies of renamed files.
+        file_pattern : Input file pattern.
+        out_file_pattern : Output file pattern.
+    """
+    logger.info(f"Start renaming files")
+    inp_files = [
+        str(inp_file.name)
+        for inp_file in inp_dir.iterdir()
+        if not inp_file.name.startswith(".")
+    ]
+
+    assert (
+        len(inp_files) != 0
+    ), f"Please check {inp_dir} again!! As it does not contain files"
+
+    chars_to_escape = ["(", ")", "[", "]", "$", "."]
+    for char in chars_to_escape:
+        file_pattern = file_pattern.replace(char, ("\\" + char))
+
+    if "\.*" in file_pattern:
+        file_pattern = file_pattern.replace("\.*", (".*"))
+    if "\.+" in file_pattern:
+        file_pattern = file_pattern.replace("\.+", (".+"))
+    groupname_regex_dict = map_pattern_grps_to_regex(file_pattern)
+
+    # #: Integrate regex from dictionary into original file pattern
+    inp_pattern_rgx = convert_to_regex(file_pattern, groupname_regex_dict)
+
+    # #: Integrate format strings into outFilePattern to specify digit/char len
+    out_pattern_fstring = specify_len(out_file_pattern)
+
+    #: List named groups where input pattern=char & output pattern=digit
+    char_to_digit_categories = get_char_to_digit_grps(file_pattern, out_file_pattern)
+
+    #: List a dictionary (k=named grp, v=match) for each filename
+
+    all_grp_matches = extract_named_grp_matches(inp_pattern_rgx, inp_files)
+
+    #: Convert numbers from strings to integers, if applicable
+    for i in range(0, len(all_grp_matches)):
+        tmp_match = all_grp_matches[i]
+        all_grp_matches[i] = str_to_int(tmp_match)
+
+    assert (
+        len(all_grp_matches) != 0
+    ), f"Please define filePattern: {file_pattern} again!! As it is not parsing files correctly"
+
+    #: Populate dict if any matches need to be converted from char to digit
+    #: Key=named group, Value=Int representing matched chars
+    numbered_categories = {}
+    for named_grp in char_to_digit_categories:
+        numbered_categories[named_grp] = letters_to_int(named_grp, all_grp_matches)
+    # Check named groups that need c->d conversion
+    for named_grp in char_to_digit_categories:
+        for i in range(0, len(all_grp_matches)):
+            if all_grp_matches[i].get(named_grp):
+                #: Replace original matched letter with new digit
+                all_grp_matches[i][named_grp] = numbered_categories[named_grp][
+                    all_grp_matches[i][named_grp]
+                ]
+
+    with ProcessPoolExecutor(max_workers=NUM_THREADS) as executor:
+        threads = []
+        for match in all_grp_matches:
+            # : If running on WIPP
+            if out_dir != inp_dir:
+                #: Apply str formatting to change digit or char length
+                out_name = out_dir.resolve() / out_pattern_fstring.format(**match)
+                old_file_name = inp_dir / match["fname"]
+                threads.append(executor.submit(shutil.copy2, old_file_name, out_name))
+            else:
+                out_name = out_pattern_fstring.format(**match)
+                old_file_name = match["fname"]
+                logger.info(f"Old name {old_file_name} & new name {out_name}")
+                threads.append(
+                    executor.submit(
+                        os.rename,
+                        pathlib.Path(inp_dir, old_file_name),
+                        pathlib.Path(out_dir, out_name),
+                    )
+                )
+
+        for f in tqdm(
+            as_completed(threads),
+            total=len(threads),
+            mininterval=5,
+            desc=f"converting images",
+            initial=0,
+            unit_scale=True,
+            colour="cyan",
+        ):
+            f.result()

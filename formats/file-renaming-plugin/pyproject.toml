@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-formats-file-renaming"
-version = "0.1.18"
+version = "0.1.18-dev1"
 description = "Rename and store image collection files in a new image collection"
 authors = [
 "Melanie Parham <melanie.parham@axleinfo.com>",

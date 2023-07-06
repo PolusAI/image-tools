@@ -1,4 +1,4 @@
-# File Renaming(v0.1.18)
+# File Renaming(0.1.18-dev1)
 This WIPP plugin uses supplied file naming patterns to dynamically
 rename and save files in an image collection to a new image collection.
 
@@ -38,6 +38,8 @@ exception:
 then the script sorts the strings that match the character pattern and
 assigns numbers 0+ to them.
 
+* New optional feature `mapDirectory` implemented to include directory name in renamed files. Orignal directory name is added  in renamed files if `raw` value passed, `map` for mapped subdirectories `d0, d1, d2, ... dn` and `` for not including directory name in renamed files.
+
 
 Contact [Melanie Parham](mailto:melanie.parham@axleinfo.com), [Hamdah Shafqat abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more
 information.
@@ -65,4 +67,5 @@ This plugin takes three input argument and one output argument:
 | `--filePattern`    | Input filename pattern            | Input    | string     |
 | `--outDir`         | Output collection                 | Output   | collection |
 | `--outFilePattern` | Output filename pattern           | Input    | string     |
+| `--mapDirectory`   | Directory name (`raw`, `map`, ``) | Input    | enum       |
 | `--preview`        | Generate a JSON file with outputs | Output   | JSON       |
