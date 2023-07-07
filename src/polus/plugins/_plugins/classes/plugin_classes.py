@@ -1,4 +1,5 @@
 """Classes for Plugin objects containing methods to configure, run, and save."""
+# pylint: disable=W1203, enable=W1201
 import json
 import logging
 import os
@@ -46,26 +47,26 @@ _PLUGIN_DIR = pathlib.Path(__file__).parent.parent.joinpath("manifests")
 def load_config(config: typing.Union[dict, pathlib.Path]):
     """Load configured plugin from config file/dict."""
     if isinstance(config, pathlib.Path):
-        with open(config) as fr:
-            m = json.load(fr)
+        with open(config, encoding="utf-8") as file:
+            manifest_ = json.load(file)
     elif isinstance(config, dict):
-        m = config
+        manifest_ = config
     else:
         raise TypeError("config must be a dict or a path")
-    _io = m["_io_keys"]
-    cl = m["class"]
-    m.pop("class", None)
-    if cl == "Compute":
-        pl = ComputePlugin(_uuid=False, **m)
-    elif cl == "WIPP":
-        pl = Plugin(_uuid=False, **m)
+    _io = manifest_["_io_keys"]
+    cl_ = manifest_["class"]
+    manifest_.pop("class", None)
+    if cl_ == "Compute":
+        pl_ = ComputePlugin(_uuid=False, **manifest_)
+    elif cl_ == "WIPP":
+        pl_ = Plugin(_uuid=False, **manifest_)
     else:
         raise ValueError("Invalid value of class")
-    for k, v in _io.items():
-        val = v["value"]
+    for k, value_ in _io.items():
+        val = value_["value"]
         if val is not None:  # exclude those values not set
-            setattr(pl, k, val)
-    return pl
+            setattr(pl_, k, val)
+    return pl_
 
 
 def get_plugin(name: str, version: typing.Optional[str] = None):
@@ -82,8 +83,7 @@ def get_plugin(name: str, version: typing.Optional[str] = None):
     """
     if version is None:
         return load_plugin(PLUGINS[name][max(PLUGINS[name])])
-    else:
-        return load_plugin(PLUGINS[name][Version(**{"version": version})])
+    return load_plugin(PLUGINS[name][Version(**{"version": version})])
 
 
 def refresh():
@@ -102,9 +102,9 @@ def refresh():
             try:
                 plugin = validate_manifest(file)
             except InvalidManifest:
-                logger.warning("Validation error in %s" % (str(file)))
-            except BaseException as e:
-                logger.warning(f"Unexpected error {e} with {str(file)}")
+                logger.warning(f"Validation error in {str(file)}")
+            except BaseException as exc:  # pylint: disable=W0718
+                logger.warning(f"Unexpected error {exc} with {str(file)}")
             else:
                 key = name_cleaner(plugin.name)
                 # Add version and path to VERSIONS
@@ -113,8 +113,7 @@ def refresh():
                 if plugin.version in PLUGINS[key]:
                     if not file == PLUGINS[key][plugin.version]:
                         raise DuplicateVersionFound(
-                            "Found duplicate version of plugin %s in %s"
-                            % (plugin.name, _PLUGIN_DIR)
+                            f"Found duplicate version of plugin {plugin.name} in {_PLUGIN_DIR}"
                         )
                 PLUGINS[key][plugin.version] = file
 
@@ -166,9 +165,9 @@ class Plugin(WIPPPluginManifest, _PluginMethods):
             )
 
     @property
-    def versions(plugin):  # cannot be in PluginMethods because PLUGINS lives here
+    def versions(self):  # cannot be in PluginMethods because PLUGINS lives here
         """Return list of local versions of a Plugin."""
-        return list(PLUGINS[name_cleaner(plugin.name)])
+        return list(PLUGINS[name_cleaner(self.name)])
 
     def to_compute(self, hardware_requirements: typing.Optional[dict] = None):
         """Convert WIPP Plugin object to Compute Plugin object."""
@@ -185,20 +184,20 @@ class Plugin(WIPPPluginManifest, _PluginMethods):
     ):
         """Save plugin manifest to specified path."""
         if compute:
-            with open(path, "w") as fw:
+            with open(path, "w", encoding="utf=8") as file:
                 self.to_compute(
                     hardware_requirements=hardware_requirements
                 ).save_manifest(path)
         else:
-            with open(path, "w") as fw:
+            with open(path, "w", encoding="utf=8") as file:
                 d = self.manifest
                 json.dump(
                     d,
-                    fw,
+                    file,
                     indent=4,
                 )
 
-        logger.debug("Saved manifest to %s" % (path))
+        logger.debug(f"Saved manifest to {path}")
 
     def __setattr__(self, name, value):
         """Set I/O parameters as attributes."""
@@ -212,9 +211,9 @@ class Plugin(WIPPPluginManifest, _PluginMethods):
 
     def save_config(self, path: typing.Union[str, pathlib.Path]):
         """Save manifest with configured I/O parameters to specified path."""
-        with open(path, "w") as fw:
-            json.dump(self._config_file, fw, indent=4, default=str)
-        logger.debug("Saved config to %s" % (path))
+        with open(path, "w", encoding="utf-8") as file:
+            json.dump(self._config_file, file, indent=4, default=str)
+        logger.debug(f"Saved config to {path}")
 
     def __repr__(self) -> str:
         """Print plugin name and version."""
@@ -271,8 +270,8 @@ class ComputePlugin(ComputeSchema, _PluginMethods):
                     ]  # get type from i/o
                 except IndexError:
                     tp = "string"  # default to string
-                except BaseException:
-                    raise
+                except BaseException as exc:
+                    raise exc
 
                 d["type"] = _ui_old_to_new(tp)
                 return PluginUIInput(**d)
@@ -305,9 +304,9 @@ class ComputePlugin(ComputeSchema, _PluginMethods):
             )
 
     @property
-    def versions(plugin):  # cannot be in PluginMethods because PLUGINS lives here
+    def versions(self):  # cannot be in PluginMethods because PLUGINS lives here
         """Return list of local versions of a Plugin."""
-        return list(PLUGINS[name_cleaner(plugin.name)])
+        return list(PLUGINS[name_cleaner(self.name)])
 
     @property
     def _config_file(self):
@@ -321,15 +320,15 @@ class ComputePlugin(ComputeSchema, _PluginMethods):
 
     def save_config(self, path: typing.Union[str, pathlib.Path]):
         """Save configured manifest with I/O parameters to specified path."""
-        with open(path, "w") as fw:
-            json.dump(self._config_file, fw, indent=4)
-        logger.debug("Saved config to %s" % (path))
+        with open(path, "w", encoding="utf-8") as file:
+            json.dump(self._config_file, file, indent=4)
+        logger.debug(f"Saved config to {path}")
 
     def save_manifest(self, path: typing.Union[str, pathlib.Path]):
         """Save plugin manifest to specified path."""
-        with open(path, "w") as fw:
-            json.dump(self.manifest, fw, indent=4)
-        logger.debug("Saved manifest to %s" % (path))
+        with open(path, "w", encoding="utf-8") as file:
+            json.dump(self.manifest, file, indent=4)
+        logger.debug(f"Saved manifest to {path}")
 
     def __repr__(self) -> str:
         """Print plugin name and version."""
@@ -380,10 +379,10 @@ def submit_plugin(
     org_path = _PLUGIN_DIR.joinpath(organization.lower())
     org_path.mkdir(exist_ok=True, parents=True)
     if not org_path.joinpath(out_name).exists():
-        with open(org_path.joinpath(out_name), "w") as fw:
-            m = plugin.dict()
-            m["version"] = m["version"]["version"]
-            json.dump(m, fw, indent=4)
+        with open(org_path.joinpath(out_name), "w", encoding="utf-8") as file:
+            manifest_ = plugin.dict()
+            manifest_["version"] = manifest_["version"]["version"]
+            json.dump(manifest_, file, indent=4)
 
     # Refresh plugins list
     refresh()
@@ -392,7 +391,7 @@ def submit_plugin(
 
 def remove_plugin(plugin: str, version: typing.Optional[str] = None):
     """Remove plugin from the local database."""
-    if not version:
+    if version is not None:
         for plugin_version in PLUGINS[plugin]:
             remove_plugin(plugin, plugin_version)
     else:
