@@ -105,6 +105,7 @@ def refresh():
                 logger.warning(f"Validation error in {str(file)}")
             except BaseException as exc:  # pylint: disable=W0718
                 logger.warning(f"Unexpected error {exc} with {str(file)}")
+
             else:
                 key = name_cleaner(plugin.name)
                 # Add version and path to VERSIONS
@@ -116,6 +117,7 @@ def refresh():
                             f"Found duplicate version of plugin {plugin.name} in {_PLUGIN_DIR}"
                         )
                 PLUGINS[key][plugin.version] = file
+
 
 
 def list_plugins():

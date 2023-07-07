@@ -4,9 +4,9 @@ version=$(<VERSION)
 datapath=$(readlink --canonicalize ../../../data)
 
 # Inputs
-filePattern=S1_R{r}_C1-C11_A1_y0{yy}_x0{xx}_c00{c}.ome.tif
-inpDir=/data/images/MaricRatBrain2019/subset/intensity
-layout=c,xy,r
+filePattern="r00{r}_z000_y0{yy}_x0{xx}_c0{cc}.ome.tif"
+inpDir=/data/input
+layout=xy,r
 
 # Optional Inputs
 imageSpacing=100
@@ -15,8 +15,11 @@ gridSpacing=10
 # Output paths
 outDir=/data/output
 
+# Show the help options
+docker run polusai/montage-plugin:${version}
+
+# Run the plugin
 docker run --mount type=bind,source=${datapath},target=/data/ \
-            --user $(id -u):$(id -g) \
             polusai/montage-plugin:${version} \
             --filePattern ${filePattern} \
             --inpDir ${inpDir} \
