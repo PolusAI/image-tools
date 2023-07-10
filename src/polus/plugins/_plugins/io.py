@@ -326,15 +326,16 @@ cwl_input_types = {
     "boolean": "boolean",
     "genericData": "Directory",
     "collection": "Directory",
-    "enum": "string"  # for compatibility with workflows
+    "enum": "string",  # for compatibility with workflows
+    "stitchingVector": "Directory"
     # not yet implemented: array
 }
 
 
-def _type_in(input: Input):
+def _type_in(inp: Input):
     """Return appropriate value for `type` based on input type."""
-    val = input.type.value
-    req = "" if input.required else "?"
+    val = inp.type.value
+    req = "" if inp.required else "?"
 
     # NOT compatible with CWL workflows, ok in CLT
     # if val == "enum":
@@ -350,34 +351,34 @@ def _type_in(input: Input):
     return s
 
 
-def input_to_cwl(input):
+def input_to_cwl(inp):
     """Return dict of inputs for cwl."""
     r = {
-        f"{input.name}": {
-            "type": _type_in(input),
-            "inputBinding": {"prefix": f"--{input.name}"},
+        f"{inp.name}": {
+            "type": _type_in(inp),
+            "inputBinding": {"prefix": f"--{inp.name}"},
         }
     }
     return r
 
 
-def output_to_cwl(o):
+def output_to_cwl(out):
     """Return dict of output args for cwl for input section."""
     r = {
-        f"{o.name}": {
+        f"{out.name}": {
             "type": "Directory",
-            "inputBinding": {"prefix": f"--{o.name}"},
+            "inputBinding": {"prefix": f"--{out.name}"},
         }
     }
     return r
 
 
-def outputs_cwl(o):
+def outputs_cwl(out):
     """Return dict of output for `outputs` in cwl."""
     r = {
-        f"{o.name}": {
+        f"{out.name}": {
             "type": "Directory",
-            "outputBinding": {"glob": f"$(inputs.{o.name}.basename)"},
+            "outputBinding": {"glob": f"$(inputs.{out.name}.basename)"},
         }
     }
     return r
