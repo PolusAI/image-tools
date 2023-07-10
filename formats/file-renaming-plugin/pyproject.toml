@@ -12,6 +12,7 @@ packages = [{include = "polus", from = "src"}]
 [tool.poetry.dependencies]
 python = ">=3.9"
 typer = "^0.7.0"
+tqdm = "^4.64.1"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
