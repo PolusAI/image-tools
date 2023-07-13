@@ -6,6 +6,7 @@ datapath=$(readlink --canonicalize data)
 inpDir=/data/inputs
 filePattern=".*_{row:c}{col:dd}_s{s:d}_w{channel:d}.*.tif"
 outFilePattern="r01_x{row:c}_y{col:dd}_p{s:d}_c{channel:d}.ome.tif"
+mapDirectory="raw"
 # Output paths
 outDir=/data/output
 
@@ -17,5 +18,6 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             polusai/file-renaming-plugin:${version} \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
-            --outDir ${outDir} \
-            --outFilePattern ${outFilePattern}
+            --outFilePattern ${outFilePattern} \
+            --mapDirectory ${outFilePattern} \
+            --outDir ${outDir}

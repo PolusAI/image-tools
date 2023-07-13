@@ -38,7 +38,7 @@ def main(
         help="Path to image collection storing copies of renamed files",
     ),
     out_file_pattern: str = typer.Option(
-        ".+",
+        ...,
         "--outFilePattern",
         help="Desired filename pattern used to rename and separate data",
     ),
@@ -87,16 +87,30 @@ def main(
         out_dir.exists()
     ), f"{out_dir} does not exists!! Please check output path again"
 
-    if map_directory == "":
+    subdirs = sorted([d for d in inp_dir.iterdir() if d.is_dir()])
+    subfiles = sorted([f for f in inp_dir.iterdir() if f.is_file()])
+    if subfiles:
+        assert len(subfiles) != 0, f"Files are missing in input directory!!!"
+
+    if subfiles and not map_directory:
         fr.rename(
             inp_dir,
             out_dir,
             file_pattern,
             out_file_pattern,
         )
-    else:
+    elif subfiles and map_directory:
+        if f"{map_directory}" == "raw":
+            outfile_pattern = f"{inp_dir.name}_{out_file_pattern}"
+            fr.rename(inp_dir, out_dir, file_pattern, outfile_pattern)
+        else:
+            outfile_pattern = f"d01_{out_file_pattern}"
+            fr.rename(inp_dir, out_dir, file_pattern, outfile_pattern)
+
+    elif map_directory and not subfiles:
         subdirs = sorted([d for d in inp_dir.iterdir() if d.is_dir()])
         for i, sub in enumerate(subdirs):
+            assert len([f for f in sub.iterdir() if f.is_file()]) != 0,  f"Files are missing in input directory!!!"
             i += 1
             dir_pattern = r"^[A-Za-z0-9_]+$"
             # Iterate over the directories and check if they match the pattern

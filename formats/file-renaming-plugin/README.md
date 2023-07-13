@@ -67,5 +67,5 @@ This plugin takes three input argument and one output argument:
 | `--filePattern`    | Input filename pattern            | Input    | string     |
 | `--outDir`         | Output collection                 | Output   | collection |
 | `--outFilePattern` | Output filename pattern           | Input    | string     |
-| `--mapDirectory`   | Directory name (`raw`, `map`, ``) | Input    | enum       |
+| `--mapDirectory`   | Directory name (`raw`, `map`)     | Input    | enum       |
 | `--preview`        | Generate a JSON file with outputs | Output   | JSON       |
