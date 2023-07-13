@@ -38,7 +38,7 @@ exception:
 then the script sorts the strings that match the character pattern and
 assigns numbers 0+ to them.
 
-* New optional feature `mapDirectory` implemented to include directory name in renamed files. Orignal directory name is added  in renamed files if `raw` value passed, `map` for mapped subdirectories `d0, d1, d2, ... dn` and `` for not including directory name in renamed files.
+* New optional feature `mapDirectory` implemented to include directory name in renamed files. Orignal directory name is added  in renamed files if `raw` value passed, `map` for mapped subdirectories `d0, d1, d2, ... dn` and if not passed then no directory name is added in renamed files.
 
 
 Contact [Melanie Parham](mailto:melanie.parham@axleinfo.com), [Hamdah Shafqat abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more
