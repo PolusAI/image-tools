@@ -72,7 +72,11 @@ def convert_image(
                 ) as bw:
                     bw.C = 1
                     bw.T = 1
-                    bw.channel_names = [br.channel_names[c]]
+
+                    # Handling of parsing channels when channels names are not provided.
+                    if not bw.channel_names == [None]:
+                        bw.channel_names = [br.channel_names[c]]
+
 
                     # Loop through z-slices
                     for z in range(br.Z):
