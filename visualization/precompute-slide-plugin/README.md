@@ -1,4 +1,4 @@
-# Polus Precompute Slide Plugin (v1.5.0)
+# Polus Precompute Slide Plugin (v1.6.0)
 
 This WIPP plugin generates image pyramids in multiple viewing formats. Each
 output has a special filepattern variable that will be used to combine images
