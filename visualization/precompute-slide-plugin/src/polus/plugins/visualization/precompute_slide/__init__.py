@@ -1,0 +1,6 @@
+"""Precompute slide plugin."""
+
+from . import utils
+from ._compute import precompute_slide
+
+__version__ = "1.5.0"

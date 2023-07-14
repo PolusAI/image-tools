@@ -1,14 +1,14 @@
 #!/bin/bash
 
 version=$(<VERSION)
-datapath=$(readlink --canonicalize ../../data)
+datapath=$(readlink --canonicalize ./data)
 echo ${datapath}
 
 # Inputs
 inpDir=/data/input
 pyramidType=Zarr
 imageType=image
-filePattern="p02_x(01-24)_y(01-16)_wx(0-2)_wy(0-2)_c{c}.ome.tif"
+filePattern="p02_x(01-24)_y(01-16)_wx(0-2)_wy(0-2)_c{c:d}.ome.tif"
 
 # Output paths
 outDir=/data/output

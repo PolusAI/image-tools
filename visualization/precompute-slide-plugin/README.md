@@ -1,21 +1,21 @@
-# Polus Precompute Slide Plugin
+# Polus Precompute Slide Plugin (v1.5.0)
 
 This WIPP plugin generates image pyramids in multiple viewing formats. Each
 output has a special filepattern variable that will be used to combine images
 for viewing in the output format.
 
-1) **DeepZoom** - This file format creates time-slices of the data for viewing
+1, **DeepZoom** - This file format creates time-slices of the data for viewing
 in the Web Deep Zoom Toolkit. *Timepoints are designated by the `t` variable.*
-2) **Neuroglancer** - This file format creates a 2D or 3D visualization for Neuroglancer. If images are already 3D, it will automatically create 3D image
+2. **Neuroglancer** - This file format creates a 2D or 3D visualization for Neuroglancer. If images are already 3D, it will automatically create 3D image
 stacks. *Depth layers are designated `z` variable.*
-3) **Zarr** - This file format will create color visualizations for Polus
+3. **Zarr** - This file format will create color visualizations for Polus
 Render. *Channels are designated by the `c` variable.*
 
 The file format can be specified in the filePattern input.
 More details on the format: https://pypi.org/project/filepattern/
 
 It assumes each image is a 2-dimensional plane, so it will not display an image
-in 3D. 
+in 3D.
 
 For more information on WIPP, visit the
 [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).

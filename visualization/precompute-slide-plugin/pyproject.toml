@@ -1,0 +1,42 @@
+[tool.poetry]
+name = "polus-plugins-visualization-precompute-slide"
+version = "1.5.0"
+description = ""
+authors = [
+    "Madhuri Vihani <Madhuri.Vihani@nih.gov>",
+    "Nick Schaub <Nick.Schaub@nih.gov>",
+    "Najib Ishaq <najib.ishaq@nih.gov>",
+]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+bfio = { version = "2.1.9", extras = ["all"] }
+filepattern = "1.4.7"
+# filepattern = [
+#   { version = "^2.0.0", platform = "linux" },
+#   { git = "https://github.com/PolusAI/filepattern", platform = "darwin" }
+# ]
+typer = { version = "^0.7.0", extras = ["all"] }
+tqdm = "^4.65.0"
+numcodecs = "^0.11.0"
+zarr = "^2.15.0"
+numpy = "^1.25.1"
+preadator = "0.2.0"
+imageio = "^2.31.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.1"
+pytest-cov = "^4.0.0"
+pytest-sugar = "^0.9.6"
+pytest-xdist = "^3.2.0"
+pytest-benchmark = "^4.0.0"
+bump2version = "^1.0.1"
+pre-commit = "^3.0.4"
+black = "^23.1.0"
+ruff = "^0.0.265"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
