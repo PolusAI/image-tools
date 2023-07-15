@@ -21,8 +21,8 @@ class CreateData:
 
     def __init__(self):
         """Define instance attributes."""
-        self.dirpath = pathlib.Path().cwd()
-        self.jsonpath = pathlib.Path(self.dirpath, "file_rename_test.json")
+        self.dirpath = pathlib.Path(__file__).parent
+        self.jsonpath = self.dirpath.joinpath("file_rename_test.json")
 
     def input_directory(self) -> pathlib.Path:
         """Create temporary input directory."""
