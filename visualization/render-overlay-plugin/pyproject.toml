@@ -9,7 +9,9 @@ packages = [{include = "polus", from = "src"}]
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0"
 typer = "^0.7.0"
-microjson = {git = "git@github.com:bengtl/microjson.git"}
+pydantic = "^1.8.2"
+filepattern = "^2.0.0"
+microjson = {git = "git@github.com:bengtl/microjson.git", branch="dev"}
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
