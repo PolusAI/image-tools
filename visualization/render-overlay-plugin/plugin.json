@@ -1,0 +1,61 @@
+{
+    "name": "Render Overlay Plugin",
+    "version": "0.1.0-dev1",
+    "containerId": "polusai/render-overlay-plugin:0.1.0-dev1",
+    "title": "Render Overlay",
+    "description": "Generates text overlay data for render.",
+    "author": "Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/PolusAI/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "baseCommand": [
+        "python3",
+        "-m",
+        "polus.plugins.visualization.render_overlay"
+    ],
+    "inputs": [
+        {
+            "name": "stitchingVector",
+            "description": "Path to the stitching vector directory",
+            "type": "stitchingVector",
+            "required": true
+        },
+        {
+            "name": "filePattern",
+            "description": "Path to the output directory",
+            "type": "string",
+            "required": false
+        },
+        {
+            "name": "concatenate",
+            "description": "If a concatenated file should be created",
+            "type": "boolean",
+            "required": false
+        }
+    ],
+    "outputs": [
+        {
+            "name": "outDir",
+            "description": "Path to the output directory",
+            "type": "genericData"
+        }
+    ],
+    "ui": [
+        {
+            "key": "inputs.stitchingVector",
+            "title": "Stitching Vectors: ",
+            "description": "Directory containing the stitching vectors"
+        },
+        {
+            "key": "inputs.filePattern",
+            "title": "Image Pattern: ",
+            "description": "Pattern of images in stitching vector (image_r{rrr}_c{ccc}_z{zzz}.ome.tif)"
+        },
+        {
+            "key": "inputs.concatenate",
+            "title": "Concatenate: ",
+            "description": "Should a concatenated file should be created?"
+        }
+    ]
+}
