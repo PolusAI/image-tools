@@ -38,7 +38,7 @@ This plugin takes nine input arguments and one output argument:
 | `--segPattern`     | Filepattern to parse label images                                  | Input  | string        |
 | `--features`       | [nyxus features](https://pypi.org/project/nyxus/)                  | Input  | string        |
 | `--fileExtension`  | A desired file format for nyxus features output                    | Input  | enum          |
-| `--neighborDist`   | Distance between two neighbor objects                              | Input  | float         |
+| `--neighborDist`   | Distance between two neighbor objects                              | Input  | integer       |
 | `--pixelPerMicron` | Pixel Size in micrometer                                           | Input  | float         |
 | `--outDir`         | Output collection                                                  | Output | collection    |
 | `--preview`        | Generate a JSON file with outputs                                  | Output | JSON          |

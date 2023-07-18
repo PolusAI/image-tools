@@ -6,6 +6,8 @@ import pathlib
 import re
 from multiprocessing import cpu_count
 from typing import Any, Optional
+from nyxus import Nyxus
+from bfio import BioReader
 
 import filepattern as fp
 import typer
@@ -57,8 +59,8 @@ def main(
         "--fileExtension",
         help="File format of an output file.",
     ),
-    neighbor_dist: Optional[float] = typer.Option(
-        5.0, "--neighborDist", help="Number of Pixels between Neighboring cells"
+    neighbor_dist: Optional[int] = typer.Option(
+        5, "--neighborDist", help="Number of Pixels between Neighboring cells"
     ),
     pixel_per_micron: Optional[float] = typer.Option(
         1.0, "--pixelPerMicron", help="Number of pixels per micrometer"
@@ -123,17 +125,18 @@ def main(
 
     for s_image in seg_images:
         i_image = int_images.get_matching(**{k: v for k, v in s_image[0].items()})
-        ProcessManager.submit_process(
-            nyxus_func,
-            int_file=i_image[0][1],
-            seg_file=s_image[1],
-            out_dir=out_dir,
-            features=features,
-            file_extension=file_extension,
-            pixels_per_micron=pixel_per_micron,
-            neighbor_dist=neighbor_dist,
-        )
-    ProcessManager.join_processes()
+        if i_image:
+            ProcessManager.submit_process(
+                nyxus_func,
+                int_file=i_image[0][1],
+                seg_file=s_image[1],
+                out_dir=out_dir,
+                features=features,
+                file_extension=file_extension,
+                pixels_per_micron=pixel_per_micron,
+                neighbor_dist=neighbor_dist,
+            )
+            ProcessManager.join_processes()
 
     return
 

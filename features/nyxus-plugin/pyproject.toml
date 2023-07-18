@@ -15,7 +15,7 @@ bfio = {version = "2.1.9", extras = ["all"]}
 filepattern = "^2.0.0"
 typer = "^0.7.0"
 tqdm = "^4.64.1"
-nyxus = "^0.5.0"
+nyxus = "^0.6.0"
 fastapi = "^0.92.0"
 astropy = "5.2.1"
 vaex = "^4.7.0"

@@ -1,7 +1,7 @@
 {
   "name": "Nyxus plugin",
-  "version": "0.1.4",
-  "containerId": "polusai/nyxus-plugin:0.1.4",
+  "version": "0.1.4-dev",
+  "containerId": "polusai/nyxus-plugin:0.1.4-dev",
   "title": "Nyxus plugin",
   "description": "Nyxus plugin allows to make use of parallel pocessing for extracting nyxus features",
   "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
@@ -132,7 +132,7 @@
       "key": "inputs.neighborDist",
       "title": "neighborDist",
       "description": "Pixel distance between neighboring cells",
-      "default": 5.0
+      "default": 5
     },
     {
       "key": "inputs.pixelPerMicron",

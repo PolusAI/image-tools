@@ -20,7 +20,7 @@ def nyxus_func(
     features: List[str],
     file_extension: Extension,
     pixels_per_micron: Optional[float] = 1.0,
-    neighbor_dist: Optional[float] = 5.0,
+    neighbor_dist: Optional[int] = 5,
 ) -> None:
     """Scalable Extraction of Nyxus Features.
 
@@ -36,12 +36,15 @@ def nyxus_func(
     if isinstance(int_file, pathlib.Path):
         int_file = [int_file]
 
-    nyx = Nyxus(
-        features,
-        neighbor_distance=neighbor_dist,
-        n_feature_calc_threads=4,
-        pixels_per_micron=pixels_per_micron,
-    )
+    nyx = Nyxus(features)
+
+    nyx_params = {
+        "neighbor_distance": neighbor_dist,
+        "pixels_per_micron": pixels_per_micron,
+        "n_feature_calc_threads": 4,
+    }
+
+    nyx.set_params(**nyx_params)
 
     for i_file in int_file:
         feats = nyx.featurize_files(
