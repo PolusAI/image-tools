@@ -1,0 +1,40 @@
+{
+    "name": "BBBC Download",
+    "version": "0.1.0-dev0",
+    "title": "BBBC Download",
+    "description": "Downloads the datasets on the BBBC website",
+    "author": "Saket Prem(saket.prem@axleinfo.com), Matthew",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/PolusAI/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "polusai/bbbc-download-plugin:0.1.0-dev0",
+    "baseCommand": [
+      "python3",
+      "-m",
+      "polus.plugins.utils.bbbc_download"
+    ],
+    "inputs": [
+      {
+        "name": "name",
+        "type": "string",
+        "description": "The name of the datasets to be downloaded(spereate the datasets with a comma. eg: BBBC001,BBBC002,BBBC003 )",
+        "required": true
+      }
+      
+    ],
+    "outputs": [
+      {
+        "name": "outDir",
+        "type": "genericData",
+        "description": "Output collection"
+      }
+    ],
+    "ui": [
+      {
+        "key": "inputs.name",
+        "title": "Input name of datasets as string",
+        "description": "Input the name of the datasets to be downloaded as a string"
+      }
+    ]
+  }
