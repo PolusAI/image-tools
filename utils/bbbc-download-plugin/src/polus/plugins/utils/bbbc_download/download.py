@@ -75,9 +75,8 @@ def get_url(url: str, save_location: Path, name: str) -> None:
 
     return
 
-def remove_macosx(name:str, save_location:Path)-> None:
-    images_path=save_location.joinpath("Images")
-    folders=[folders for folders in images_path.iterdir() if folders.is_dir()]
+def remove_macosx(name:str, location:Path)-> None:
+    folders=[folders for folders in location.iterdir() if folders.is_dir()]
     for f in folders:
         if f.name=="__MACOSX":
             shutil.rmtree(f)
@@ -139,6 +138,10 @@ def download(name: str,download_path:Path) -> None:
             get_url(url, file_path, "BBBC018")
 
     print(name + " has finished downloading")
-    remove_macosx(name,save_location)
+    images_path=save_location.joinpath("Images")
+    remove_macosx(name,images_path)
+    ground_path=save_location.joinpath("Ground Truth")
+    if ground_path.exists():
+        remove_macosx(name,ground_path)
 
     return

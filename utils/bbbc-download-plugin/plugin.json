@@ -3,7 +3,7 @@
     "version": "0.1.0-dev0",
     "title": "BBBC Download",
     "description": "Downloads the datasets on the BBBC website",
-    "author": "Saket Prem(saket.prem@axleinfo.com), Matthew",
+    "author": "Saket Prem(saket.prem@axleinfo.com), Matthew McIntyre(Matthew.McIntyre@axleinfo.com)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/PolusAI/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",

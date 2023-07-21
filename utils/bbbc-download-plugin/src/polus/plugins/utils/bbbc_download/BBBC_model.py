@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from zipfile import ZipFile
 
-from polus.plugins.utils.bbbc_download.download import download, get_url
+from polus.plugins.utils.bbbc_download.download import download, get_url, remove_macosx
 from polus.plugins.utils.bbbc_download.mapping import *
 
 import pydantic
@@ -139,6 +139,7 @@ class BBBCDataset(pydantic.BaseModel):
     images: Optional[Images] = None
     ground_truth: Optional[GroundTruth] = None
     metadata: Optional[Metadata] = None
+    output_path: Optional[Path]= None
 
     @pydantic.validator("name")
     @classmethod
@@ -210,7 +211,7 @@ class BBBCDataset(pydantic.BaseModel):
     def size(self) -> int:
         """Returns the size of the dataset in bytes."""
 
-        dataset_path = root.joinpath(self.name)
+        dataset_path = self.output_path.joinpath("BBBC",self.name)
 
         return sum(os.path.getsize(file) for file in dataset_path.rglob("*"))
 
@@ -268,6 +269,7 @@ class BBBCDataset(pydantic.BaseModel):
 
     def raw(self,download_path: Path) -> None:
         """Download the dataset's raw data."""
+        self.output_path=download_path
 
         download(self.name,download_path)
         self._init_data(download_path)
@@ -339,14 +341,14 @@ class BBBCDataset(pydantic.BaseModel):
 
 class BBBC019(BBBCDataset):
     def raw(self,download_path:Path) -> None:
-        download(self.name)
-        download_path=download_path.joinpath("BBBC")
+        download(self.name,download_path)
+        self.output_path=download_path
+        save_location=download_path.joinpath("BBBC")
 
         # Separate images from ground truth
-        save_location = download_path.joinpath("BBBC019")
+        save_location = save_location.joinpath("BBBC019")
         images_folder = save_location.joinpath("raw/Images")
         truth_folder = save_location.joinpath("raw/Ground Truth")
-
         for set in [
             x
             for x in images_folder.iterdir()
@@ -368,6 +370,7 @@ class BBBC019(BBBCDataset):
                 else:
                     shutil.move(src, dst)
 
+
         self._init_data(download_path)
 
         return
@@ -376,9 +379,10 @@ class BBBC019(BBBCDataset):
 class BBBC029(BBBCDataset):
     def raw(self,download_path:Path) -> None:
         print("Started downloading BBBC029")
-        download_path=download_path.joinpath("BBBC")
+        self.output_path=download_path
+        save_location=download_path.joinpath("BBBC")
 
-        save_location = download_path.joinpath("BBBC029", "raw")
+        save_location = save_location.joinpath("BBBC029", "raw")
 
         if not save_location.exists():
             save_location.mkdir(parents=True, exist_ok=True)
@@ -398,6 +402,21 @@ class BBBC029(BBBCDataset):
         )
 
         print("BBBC029 has finished downloading")
+        images_folder=save_location.joinpath("Images")
+        truth_folder=save_location.joinpath("Ground Truth")
+        remove_macosx("BBBC029",images_folder)
+        remove_macosx("BBBC029",truth_folder)
+        source_directory=images_folder.joinpath("images")
+        for source_file in source_directory.glob("*"):
+            destination_file = images_folder / source_file.name
+            shutil.move(source_file, destination_file)
+        shutil.rmtree(source_directory)   
+
+        source_directory=truth_folder.joinpath("ground_truth")
+        for source_file in source_directory.glob("*"):
+            destination_file = truth_folder / source_file.name
+            shutil.move(source_file, destination_file)
+        shutil.rmtree(source_directory)  
 
         self._init_data(download_path)
 
@@ -406,11 +425,12 @@ class BBBC029(BBBCDataset):
 
 class BBBC041(BBBCDataset):
     def raw(self,download_path:Path) -> None:
-        download(self.name)
-        download_path=download_path.joinpath("BBBC")
+        download(self.name,download_path)
+        self.output_path=download_path
+        save_location=download_path.joinpath("BBBC")
 
         # Separate images from ground truth
-        save_location = download_path.joinpath("BBBC041")
+        save_location = save_location.joinpath("BBBC041")
         file_names = ["test.json", "training.json"]
 
         if not save_location.joinpath("raw/Ground Truth").exists():
@@ -435,9 +455,10 @@ class BBBC041(BBBCDataset):
 class BBBC042(BBBCDataset):
     def raw(self,download_path:Path) -> None:
         print("Started downloading BBBC042")
-        download_path=download_path.joinpath("BBBC")
+        self.output_path=download_path
+        save_location=download_path.joinpath("BBBC")
 
-        save_location = download_path.joinpath("BBBC042", "raw")
+        save_location = save_location.joinpath("BBBC042", "raw")
 
         if not save_location.exists():
             save_location.mkdir(parents=True, exist_ok=True)
@@ -457,6 +478,10 @@ class BBBC042(BBBCDataset):
         )
 
         print("BBBC042 has finished downloading")
+        images_folder=save_location.joinpath("Images")
+        truth_folder=save_location.joinpath("Ground Truth")
+        remove_macosx("BBBC029",images_folder)
+        remove_macosx("BBBC029",truth_folder)
 
         self._init_data(download_path)
 
@@ -465,12 +490,13 @@ class BBBC042(BBBCDataset):
 
 class BBBC046(BBBCDataset):
     def raw(self, download_path: Path) -> None:
-        download(self.name)
-        download_path=download_path.joinpath("BBBC")
+        download(self.name,download_path)
+        self.output_path=download_path
+        save_location=download_path.joinpath("BBBC")
 
         # Separate images from ground truth
         try:
-            save_location = download_path.joinpath(self.name)
+            save_location = save_location.joinpath(self.name)
             images_folder = save_location.joinpath("raw/Images")
             truth_folder = save_location.joinpath("raw/Ground Truth")
 
@@ -514,11 +540,12 @@ class BBBC046(BBBCDataset):
 
 class BBBC054(BBBCDataset):
     def raw(self, download_path:Path) -> None:
-        download(self.name)
-        download_path=download_path.joinpath("BBBC")
+        download(self.name,download_path)
+        self.output_path=download_path
+        save_location=download_path.joinpath("BBBC")
 
         # Separate images from ground truth
-        save_location = download_path.joinpath(self.name)
+        save_location = save_location.joinpath(self.name)
         src = save_location.joinpath("raw/Images", "Replicate1annotation.csv")
         dst = save_location.joinpath("raw/Ground Truth", "Replicate1annotation.csv")
 

@@ -1,0 +1,1 @@
+"""bbbc download plugin."""

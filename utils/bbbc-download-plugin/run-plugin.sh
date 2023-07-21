@@ -10,7 +10,7 @@ name="BBBC001"
 outDir=/data/output
 
 # Show the help options
-docker run polusai/bbbc-download-plugin:${version}
+#docker run polusai/bbbc-download-plugin:${version}
 
 # Run the plugin
 docker run --mount type=bind,source=${datapath},target=/data/ \
