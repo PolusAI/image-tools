@@ -31,7 +31,7 @@ def nyxus_func(
         features : Pattern to parse image replicates.
         file_extension: Output file extension.
         pixels_per_micron : Number of pixels for every micrometer.
-        neighbor_dist : Pixel distance between neighbor objects. Defaults to 5.0.
+        neighbor_dist : Pixel distance between neighbor objects. Defaults to 5.
     """
     if isinstance(int_file, pathlib.Path):
         int_file = [int_file]
