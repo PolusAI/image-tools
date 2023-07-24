@@ -104,3 +104,13 @@ def main(  # noqa: PLR0913
 
 if __name__ == "__main__":
     app()
+
+
+"""
+python -m polus.plugins.visualization.precompute_slide \
+    --inpDir "./data/inp_dir" \
+    --outDir "./data/out_dir" \
+    --pyramidType "Neuroglancer" \
+    --filePattern ".*" \
+    --imageType "image"
+"""

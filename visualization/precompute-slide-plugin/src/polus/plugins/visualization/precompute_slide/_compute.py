@@ -12,6 +12,8 @@ from . import utils
 logger = logging.getLogger(__file__)
 logger.setLevel(utils.POLUS_LOG)
 
+MAX_WORKERS = max(1, int(multiprocessing.cpu_count() // 2))
+
 
 def precompute_slide(
     input_dir: pathlib.Path,
@@ -77,7 +79,7 @@ def precompute_slide(
                     "image_type": image_type,
                 }
 
-                pw = utils.PyramidType.create(**pyramid_args)
+                pw = pyramid_type.create(**pyramid_args)
 
                 ProcessManager.submit_process(pw.write_slide)
 
@@ -90,5 +92,3 @@ def precompute_slide(
             if image_type == "segmentation":
                 ProcessManager.join_processes()
             pw.write_info()
-
-    ProcessManager.join_processes()

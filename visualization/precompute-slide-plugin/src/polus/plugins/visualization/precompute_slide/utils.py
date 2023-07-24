@@ -13,7 +13,6 @@ import typing
 import bfio
 import imageio
 import numpy as np
-import tqdm
 import zarr
 from bfio.OmeXml import OMEXML
 from numcodecs import Blosc
@@ -227,7 +226,7 @@ class PyramidWriter:
         self.output_depth = output_depth
         self.max_output_depth = max_output_depth
         self.image_type = image_type.value
-        self.scale = image_type.scale
+        self.scale = image_type.scale()
 
         self.info = bfio_metadata_to_slide_info(
             self.image_path,
@@ -386,21 +385,23 @@ def _get_higher_res(
         y_range[1] = scale_info["size"][1]  # type: ignore
 
     if str(scale) == slide_writer.scale_info(-1)["key"]:
-        with ProcessManager.thread():
-            with bfio.BioReader(slide_writer.image_path, max_workers=1) as br:
-                image = br[
-                    y_range[0] : y_range[1],
-                    x_range[0] : x_range[1],
-                    z_range[0] : z_range[1],
-                    ...,
-                ].squeeze()
+        with (
+            ProcessManager.thread(),
+            bfio.BioReader(slide_writer.image_path, max_workers=1) as br,
+        ):
+            image = br[
+                y_range[0] : y_range[1],
+                x_range[0] : x_range[1],
+                z_range[0] : z_range[1],
+                ...,
+            ].squeeze()
 
-            # Write the chunk
-            slide_writer.store_chunk(
-                image,
-                str(scale),
-                (x_range[0], x_range[1], y_range[0], y_range[1]),
-            )
+        # Write the chunk
+        slide_writer.store_chunk(
+            image,
+            str(scale),
+            (x_range[0], x_range[1], y_range[0], y_range[1]),
+        )
 
         return image
 
@@ -423,9 +424,7 @@ def _get_higher_res(
         sub_image = _get_higher_res(**kwargs)
 
         with ProcessManager.thread():
-            image = args[0]
-            x_ind = args[1]
-            y_ind = args[2]
+            image, x_ind, y_ind = args[:3]
             image[y_ind[0] : y_ind[1], x_ind[0] : x_ind[1]] = kwargs[
                 "slide_writer"
             ].scale(sub_image)
@@ -450,18 +449,15 @@ def _get_higher_res(
                         image,
                         x_ind,
                         y_ind,  # args
-                        X=subgrid_dims[0][x : x + 2],  # kwargs
-                        Y=subgrid_dims[1][y : y + 2],
-                        Z=z_range,
-                        S=scale + 1,
+                        scale=scale + 1,
                         slide_writer=slide_writer,
+                        x_=subgrid_dims[0][x : x + 2],  # kwargs
+                        y_=subgrid_dims[1][y : y + 2],
+                        z_range=z_range,
                     ),
                 )
-        for f in tqdm.tqdm(
-            concurrent.futures.as_completed(futures),
-            total=len(futures),
-        ):
-            f.result()
+            for f in concurrent.futures.as_completed(futures):
+                f.result()
 
     # Write the chunk
     slide_writer.store_chunk(
