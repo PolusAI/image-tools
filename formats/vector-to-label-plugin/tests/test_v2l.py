@@ -2,6 +2,7 @@
 
 import pathlib
 import shutil
+import tempfile
 
 import bfio
 import numpy
@@ -19,17 +20,8 @@ fixture_params = [
         r"img_x{x}.ome.tif",
         list(range(4)),
         1080,
-        pathlib.Path(__file__).parent.parent.joinpath("data"),
     ),
 ]
-fixture_params.append(
-    pytest.param(
-        fixture_params[0],
-        marks=pytest.mark.xfail(
-            reason="Something went wrong with vector_to_label.",
-        ),
-    ),
-)
 
 
 def _generate_random_masks(out_path: pathlib.Path, size: int) -> None:
@@ -59,7 +51,8 @@ def gen_images(
 ) -> tuple[pathlib.Path, str, pathlib.Path]:
     """Generate some images with random blobs for testing the methods in the plugin."""
 
-    (pattern, variables, size, data_dir) = request.param
+    (pattern, variables, size) = request.param
+    data_dir = pathlib.Path(tempfile.mkdtemp())
 
     inp_dir = data_dir.joinpath("input")
     inp_dir.mkdir(exist_ok=True)
