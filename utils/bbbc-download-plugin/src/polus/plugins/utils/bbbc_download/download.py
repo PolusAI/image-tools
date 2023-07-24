@@ -76,6 +76,11 @@ def get_url(url: str, save_location: Path, name: str) -> None:
     return
 
 def remove_macosx(name:str, location:Path)-> None:
+    """ Remove the __MACOSX folder from the downlpoaded dataset.
+    Args:
+        name: The name of the dataset
+        location: The partent directory of the __MACOSX folder.
+    """
     folders=[folders for folders in location.iterdir() if folders.is_dir()]
     for f in folders:
         if f.name=="__MACOSX":

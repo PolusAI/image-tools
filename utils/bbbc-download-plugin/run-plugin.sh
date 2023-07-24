@@ -2,18 +2,18 @@
 
 version=$(<VERSION)
 datapath=$(readlink --canonicalize data)
-
+mkdir ${datapath}
 # Inputs
-name="BBBC001"
+name="BBBC002"
 
-# Output paths
-outDir=/data/output
+# # Output paths
+outDir=${datapath}
 
-# Show the help options
-#docker run polusai/bbbc-download-plugin:${version}
+# # Show the help options
+# docker run polusai/bbbc-download-plugin:${version}
 
-# Run the plugin
-docker run --mount type=bind,source=${datapath},target=/data/ \
+# # Run the plugin
+docker run -v ${datapath}:${datapath} \
             polusai/bbbc-download-plugin:${version} \
             --name ${name} \
             --outDir ${outDir}
