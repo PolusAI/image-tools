@@ -38,4 +38,4 @@ To download specific datasets from the website, give the name of each dataset in
 There may be some errors while running th plugin for BBBC046 dataset.   
 
 ## Sample docker command:
-docker run -v /home/ec2-user/polus-plugins/utils/bbbc-download-plugin/data/:/home/ec2-user/polus-plugins/utils/bbbc-download-plugin/data/ polusai/bbbc-download-plugin:0.1.0-dev0 --name="BBBC001" --outDir=/home/ec2-user/polus-plugins/utils/bbbc-download-plugin/data
+``` docker run -v /home/ec2-user/polus-plugins/utils/bbbc-download-plugin/data/:/home/ec2-user/polus-plugins/utils/bbbc-download-plugin/data/ polusai/bbbc-download-plugin:0.1.0-dev0 --name="BBBC001" --outDir=/home/ec2-user/polus-plugins/utils/bbbc-download-plugin/data ```
