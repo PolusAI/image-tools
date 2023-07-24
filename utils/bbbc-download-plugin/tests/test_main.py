@@ -10,7 +10,7 @@ from skimage import io
 from typer.testing import CliRunner
 
 from polus.plugins.utils.bbbc_download.__main__ import app as app
-from polus.plugins.utils.bbbc_download import BBBC_model,mapping,download
+from polus.plugins.utils.bbbc_download import BBBC_model,download
 
 runner = CliRunner()
 
@@ -47,7 +47,7 @@ def test_bbbc_datasets()->None:
     assert len(d_test)==50
 
 def test_raw(output_directory)->None:
-    d=BBBC_model.BBBCDataset.create_dataset("BBBC054")
+    d=BBBC_model.BBBCDataset.create_dataset("BBBC001")
     output_dir=pathlib.Path(output_directory)
     d.raw(output_dir)
     assert d.size >0
