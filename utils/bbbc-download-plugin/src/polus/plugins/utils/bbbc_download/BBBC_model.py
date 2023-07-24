@@ -7,7 +7,7 @@ from pathlib import Path
 from zipfile import ZipFile
 
 from polus.plugins.utils.bbbc_download.download import download, get_url, remove_macosx
-from polus.plugins.utils.bbbc_download.mapping import *
+
 
 import pydantic
 import requests

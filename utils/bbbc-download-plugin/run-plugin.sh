@@ -4,7 +4,7 @@ version=$(<VERSION)
 datapath=$(readlink --canonicalize data)
 mkdir ${datapath}
 # Inputs
-name="BBBC002"
+name="BBBC001"
 
 # # Output paths
 outDir=${datapath}

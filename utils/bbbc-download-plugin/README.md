@@ -35,7 +35,7 @@ The Following are valid names for datasets:
 To download specific datasets from the website, give the name of each dataset in the input argument seperated by a comma. eg: --name="BBBC001,BBBC002,BBBC003" 
 
 ### NOTE
-There may be some errors while running th plugin for BBBC046 dataset.   
+BBBC046 dataset download is not supported by this plugin   
 
 ## Sample docker command:
 ``` docker run -v /home/ec2-user/polus-plugins/utils/bbbc-download-plugin/data/:/home/ec2-user/polus-plugins/utils/bbbc-download-plugin/data/ polusai/bbbc-download-plugin:0.1.0-dev0 --name="BBBC001" --outDir=/home/ec2-user/polus-plugins/utils/bbbc-download-plugin/data ```
