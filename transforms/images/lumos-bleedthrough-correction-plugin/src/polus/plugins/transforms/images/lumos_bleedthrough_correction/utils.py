@@ -3,9 +3,11 @@
 import logging
 import multiprocessing
 import os
+import pathlib
 import typing
 
 import bfio
+import filepattern
 import numpy
 
 MAX_WORKERS = max(1, multiprocessing.cpu_count() // 2)
@@ -18,6 +20,27 @@ def replace_extension(name: str, new_extension: typing.Optional[str] = None) -> 
     """Replaces the extension in the name of an input image with `POLUS_IMG_EXT`."""
     new_extension = POLUS_IMG_EXT if new_extension is None else new_extension
     return name.replace(".ome.tif", new_extension).replace(".ome.zarr", new_extension)
+
+
+def get_output_name(
+    image_paths: list[pathlib.Path],
+    extension: typing.Optional[str] = None,
+) -> str:
+    """Try to infer a filename from a list of paths."""
+    # Try to infer a filename
+    try:
+        fp = filepattern.FilePattern(
+            path=str(image_paths[0].parent),
+            pattern=filepattern.infer_pattern(
+                files=[path.name for path in image_paths],
+            ),
+        )
+        base_output = fp.output_name()
+    # Fallback to the first filename
+    except ValueError:
+        base_output = image_paths[0].name
+
+    return replace_extension(base_output, extension)
 
 
 def tile_index_generator(

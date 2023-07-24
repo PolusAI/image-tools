@@ -5,7 +5,7 @@ import pathlib
 
 import bfio
 import numpy
-import scipy.cluster.vq.kmeans as scipy_kmeans
+from scipy.cluster.vq import kmeans as scipy_kmeans
 
 from . import utils
 
@@ -110,7 +110,25 @@ def kmeans(
     cluster_centers, _ = scipy_kmeans(spectral_signatures, num_clusters, max_iterations)
     cluster_centers = cluster_centers * std_dev
     norms = numpy.linalg.norm(cluster_centers, axis=1)
-    return cluster_centers[numpy.argsort(norms)]
+    cluster_centers = cluster_centers[numpy.argsort(norms)]
+
+    if cluster_centers.shape[0] < num_clusters:
+        msg = (
+            f"Found fewer clusters ({cluster_centers.shape[0]}) than requested "
+            f"({num_clusters})."
+        )
+        logger.warning(msg)
+        return cluster_centers
+
+    if cluster_centers.shape[0] > num_clusters:
+        msg = (
+            f"Found more clusters ({cluster_centers.shape[0]}) than requested "
+            f"({num_clusters})."
+        )
+        logger.warning(msg)
+        return cluster_centers[:num_clusters]
+
+    return cluster_centers
 
 
 def correct_tile(
@@ -140,12 +158,15 @@ def correct_tile(
     Returns:
         output tile.
     """
-    tile = tile.reshape(-1, tile.shape[2])
-    distances = numpy.linalg.norm(tile[:, None, :] - centers[None, :, :], axis=2)
+    reshaped_tile = tile.reshape(-1, tile.shape[2])
+    distances = numpy.linalg.norm(
+        reshaped_tile[:, None, :] - centers[None, :, :],
+        axis=2,
+    )
     assigned_columns = numpy.argmin(distances, axis=1)
-    output_pixels = numpy.linalg.norm(tile, axis=2)
-    output_tile = numpy.zeros((tile.shape[0], centers.shape[0]))
-    output_tile[numpy.arange(tile.shape[0]), assigned_columns] = output_pixels
+    output_pixels = numpy.linalg.norm(reshaped_tile, axis=1)
+    output_tile = numpy.zeros((reshaped_tile.shape[0], centers.shape[0]))
+    output_tile[numpy.arange(reshaped_tile.shape[0]), assigned_columns] = output_pixels
     return output_tile.reshape(tile.shape[0], tile.shape[1], centers.shape[0])
 
 
@@ -174,9 +195,15 @@ def correct(
     a single channel.
 
     The output images will be saved as multi-channel ".ome.zarr" files. The output
-    images will have as many channels as the number of fluorophores. The channels
-    will be ordered in non-decreasing order of their norms, leading to a high
-    chance that the first channel will be the background channel.
+    image will have, at most, as many channels as the number of fluorophores plus one
+    for the background. If, during the kmeans clustering, we find that there are fewer
+    than num_fluorophores + 1 clusters, then we will reduce the number of channels in
+    the output image to the number of clusters. If there are more than num_fluorophores
+    + 1 clusters, then we will only use the first num_fluorophores + 1 clusters, and
+    will raise a warning. The channels will be ordered in non-decreasing order of their
+    norms, leading to a high chance that the first channel will be the dimmest, and
+    therefore the background channel. However, we cannot guarantee that the first
+    channel will always be the background channel.
 
     Args:
         image_paths: paths to input image(s).
@@ -195,6 +222,7 @@ def correct(
     ]
     image_shape = bfio_readers[0].Y, bfio_readers[0].X
     num_channels = bfio_readers[0].C if len(image_paths) == 1 else len(image_paths)
+    metadata = bfio_readers[0].metadata
 
     logger.info("Sampling pixels from across tiles ...")
     sampled_pixels = numpy.zeros((0, num_channels), dtype=numpy.float32)
@@ -208,17 +236,23 @@ def correct(
         )
 
     logger.info("Performing k-means clustering ...")
-    centers = kmeans(sampled_pixels, num_fluorophores, 100)
+    centers = kmeans(
+        spectral_signatures=sampled_pixels,
+        num_clusters=num_fluorophores + 1,  # +1 for background
+        max_iterations=100,
+    )
 
     logger.info("Correcting tiles ...")
-    with bfio.BioWriter(output_path, metadata=bfio_readers[0].metadata) as writer:
+    with bfio.BioWriter(output_path, metadata=metadata) as writer:
+        writer.C = centers.shape[0]
+        logger.info(f"writer shape = {writer.shape}")
         for y_min, y_max, x_min, x_max in utils.tile_index_generator(
             image_shape,
             utils.TILE_SIZE,
         ):
             tile = tile_reader(bfio_readers, (y_min, y_max, x_min, x_max))
             output_tile = correct_tile(tile, centers)
-            writer[y_min:y_max, x_min:x_max, 0, :, 0] = output_tile[:]
+            writer[y_min:y_max, x_min:x_max, 0, :, 0] = output_tile[:, :, None, :, None]
 
     for bfio_reader in bfio_readers:
         bfio_reader.close()

@@ -33,6 +33,7 @@ def main(  # noqa: PLR0913
         exists=True,
         readable=True,
         file_okay=False,
+        resolve_path=True,
     ),
     out_dir: pathlib.Path = typer.Option(
         ...,
@@ -41,6 +42,7 @@ def main(  # noqa: PLR0913
         exists=True,
         writable=True,
         file_okay=False,
+        resolve_path=True,
     ),
     file_pattern: str = typer.Option(
         ...,
@@ -65,11 +67,8 @@ def main(  # noqa: PLR0913
 ) -> None:
     """Apply LUMoS bleedthrough correction to the input images and save the outputs."""
     # Checking if there is an `images` subdirectory
-    inp_dir = inp_dir.resolve()
     if inp_dir.joinpath("images").is_dir():
         inp_dir = inp_dir.joinpath("images")
-
-    out_dir = out_dir.resolve()
 
     logger.info(f"inpDir = {inp_dir}")
     logger.info(f"outDir = {out_dir}")
@@ -82,9 +81,7 @@ def main(  # noqa: PLR0913
     groups: list[tuple[list[pathlib.Path], pathlib.Path]] = []
     for _, files in fp(group_by=list(group_by)):
         paths = [p for _, [p] in files]
-        names = [p.name for p in paths]
-        output_name: str = filepattern.output_name(names)
-        output_name = utils.replace_extension(output_name, ".ome.zarr")
+        output_name = utils.get_output_name(paths, ".ome.zarr")
         output_path = out_dir.joinpath(output_name)
         groups.append((paths, output_path))
 
