@@ -1,6 +1,6 @@
 {
   "name": "BaSiC Flatfield Estimation Plugin",
-  "version": "2.0.0-dev19",
+  "version": "2.0.0-dev20",
   "title": "Flatfield Estimation using BaSiC algorithm.",
   "description": "Generates images used for flatfield correction using the BaSiC algorithm.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Najib Ishaq (najib.ishaq@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/polusai/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "Peng et al. \"A BaSiC tool for background and shading correction of optical microscopy images\" Nature Communications (2017)",
-  "containerId": "polusai/basic-flatfield-estimation-plugin:2.0.0-dev19",
+  "containerId": "polusai/basic-flatfield-estimation-plugin:2.0.0-dev20",
   "baseCommand": [
     "python3",
     "-m",
