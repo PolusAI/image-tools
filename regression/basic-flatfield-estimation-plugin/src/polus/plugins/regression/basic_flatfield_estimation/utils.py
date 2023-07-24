@@ -33,15 +33,14 @@ def get_image_stack(image_paths: list[pathlib.Path]) -> numpy.ndarray:
         random.shuffle(image_paths)
         image_paths = image_paths[:n]
 
-    futures = []
+    images = []
     with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor:
+        futures = []
         for i, path in enumerate(image_paths):
             futures.append(executor.submit(_load_img, path, i))
 
-        images = []
         for future in concurrent.futures.as_completed(futures):
             images.append(future.result())
-    # images = [_load_img(path, i) for i, path in enumerate(image_paths)]
 
     images = [img for _, img in sorted(images, key=lambda x: x[0])]
 
@@ -51,14 +50,16 @@ def get_image_stack(image_paths: list[pathlib.Path]) -> numpy.ndarray:
 def get_output_path(image_paths: list[pathlib.Path]) -> str:
     """Try to infer a filename from a list of paths."""
     # Try to infer a filename
-    # noinspection PyBroadException
     try:
-        pattern = filepattern.infer_pattern(files=[path.name for path in image_paths])
-        fp = filepattern.FilePattern(path=str(image_paths[0].parent), pattern=pattern)
+        fp = filepattern.FilePattern(
+            path=str(image_paths[0].parent),
+            pattern=filepattern.infer_pattern(
+                files=[path.name for path in image_paths],
+            ),
+        )
         base_output = fp.output_name()
-
     # Fallback to the first filename
-    except Exception:  # noqa: BLE001
+    except ValueError:
         base_output = image_paths[0].name
 
     return base_output
