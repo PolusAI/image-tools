@@ -6,14 +6,42 @@ from pydantic import validator, FilePath
 from typing import Tuple, List
 import pandas as pd
 import numpy as np
-import json
 import os
-import jsonlines
+import enum
+import vaex
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".csv")
+EXT = (".arrow", ".feather")
+
+
+class Dimensions(enum.Enum):
+    """Plate Dimensions."""
+
+    pl_384 = "384"
+    pl_96 = "96"
+    pl_24 = "24"
+    pl_6 = "6"
+    DEFAULT = "384"
+
+    def get_value(self) -> Tuple[int, int]:
+        """To get the number of columns and rows for a given plate dimension."""
+        if self == Dimensions.pl_384:
+            return (24, 16)
+        elif self == Dimensions.pl_96:
+            return (12, 8)
+        elif self == Dimensions.pl_24:
+            return (6, 4)
+        return (3, 3)
+
+
+def convert_vaex_dataframe(file_path: Path):
+    if file_path.name.endswith(".csv"):
+        return vaex.read_csv(Path(file_path), convert=True, chunk_size=5_000_000)
+    elif file_path.name.endswith(EXT):
+        return vaex.open(Path(file_path))
 
 
 def snake_camel_conversion(value: str) -> str:
@@ -52,7 +80,7 @@ class PolygonSpec(CustomOverlayModel):
     cell_height: int
 
     @property
-    def polygon_data(self):
+    def get_coordinates(self):
         coordinates = []
         for pos in self.positions:
             x, y = pos
@@ -63,6 +91,25 @@ class PolygonSpec(CustomOverlayModel):
             pos5 = [x, y]
             poly = [[pos1, pos2, pos3, pos4, pos5]]
             coordinates.append(poly)
+
+        return coordinates
+
+
+class PointSpec(CustomOverlayModel):
+    positions: List[Tuple[int, int]]
+    cell_height: int
+
+    @property
+    def get_coordinates(self):
+        coordinates = []
+        for pos in self.positions:
+            x, y = pos
+            x1 = x
+            y1 = y + self.cell_height
+            x2 = x + self.cell_height
+            y2 = y
+            position = ((x1 + x2) / 2, (y1 + y2) / 2)
+            coordinates.append(position)
 
         return coordinates
 
@@ -86,96 +133,111 @@ class RenderOverlayModel(CustomOverlayModel):
     def validate_file_path(cls, value):
         if not Path(value).exists():
             raise ValueError("File path does not exists!! Please do check path again")
-        elif Path(value).exists():
-            data = pd.read_csv(Path(value))
+        elif (
+            Path(value).exists()
+            and not Path(value).name.startswith(".")
+            and Path(value).name.endswith(".csv")
+        ):
+            data = vaex.read_csv(Path(value))
             if data.shape[0] | data.shape[1] == 0:
                 raise ValueError("data doesnot exists")
+
+        elif (
+            Path(value).exists()
+            and not Path(value).name.startswith(".")
+            and Path(value).name.endswith(EXT)
+        ):
+            data = vaex.open(Path(value))
+            if data.shape[0] | data.shape[1] == 0:
+                raise ValueError("data doesnot exists")
+
         return value
-    
+
     def microjson_overlay(self):
-        data = pd.read_csv(Path(self.file_path))
+        if self.file_path.name.endswith((".csv", ".feather", ".arrow")):
+            data = convert_vaex_dataframe(self.file_path)
+            des_columns = [
+                feature
+                for feature in data.get_column_names()
+                if data.data_type(feature) == str
+            ]
+            int_columns = [
+                feature
+                for feature in data.get_column_names()
+                if data.data_type(feature) == int or data.data_type(feature) == float
+            ]
 
-        int_columns = data.select_dtypes(include=np.number).columns.tolist()
-        des_columns = data.select_dtypes(exclude=[np.number]).columns.tolist()
+            if len(int_columns) == 0:
+                raise ValueError("Features with integer datatype do not exist")
 
+            if len(des_columns) == 0:
+                raise ValueError("Descriptive features do not exist")
 
-        if len(int_columns) == 0:
-            raise ValueError("Features with integer datatype do not exist")
+            data["geometry_type"] = np.repeat(self.type, data.shape[0])
+            data["type"] = np.repeat("Feature", data.shape[0])
 
-        if len(des_columns) == 0:
-            raise ValueError("Descriptive features do not exist")
+            excolumns = ["geometry_type", "type"]
 
-        data["geometry_type"] = self.type
-        # data["coordinatesystem_axes"] = "[x, y]"
-        # data["coordinatesystem_units"] = "[pixel, pixel]"
-        data["coordinates"] = self.coordinates
-        data["type"] = "Feature"
+            des_columns = [col for col in des_columns if not col in excolumns]
 
-        excolumns = ["geometry_type", "coordinates", "type"]
+            features: List[mj.Feature] = []
 
-        des_columns = [col for col in des_columns if not col in excolumns]
+            for d, cor in zip(data.iterrows(), self.coordinates):
+                _, row = d
+                desc = [{key: row[key]} for key in des_columns]
+                nume = [{key: row[key]} for key in int_columns]
 
-        features: List[mj.Feature] = []
+                descriptive_dict = {}
+                for sub_dict in desc:
+                    descriptive_dict.update(sub_dict)
 
-        for _, row in data.iterrows():
-            desc = [{key: row[key]} for key in des_columns]
-            nume = [{key: row[key]} for key in int_columns]
+                numeric_dict = {}
+                for sub_dict in nume:
+                    numeric_dict.update(sub_dict)
 
-            descriptive_dict = {}
-            for sub_dict in desc:
-                descriptive_dict.update(sub_dict)
+                GeometryClass = getattr(mj, row["geometry_type"])
+                geometry = GeometryClass(type=row["geometry_type"], coordinates=cor)
 
-            numeric_dict = {}
-            for sub_dict in nume:
-                numeric_dict.update(sub_dict)
+                # create a new properties object dynamically
+                properties = mj.Properties(
+                    descriptive=descriptive_dict,
+                    numerical=numeric_dict,
+                    # multi_numerical={'values': row['values']}
+                )
 
-            GeometryClass = getattr(mj, row["geometry_type"])
-            geometry = GeometryClass(
-                type=row["geometry_type"], coordinates=row["coordinates"]
+                # Create a new Feature object
+                feature = mj.MicroFeature(
+                    type=row["type"],
+                    geometry=geometry,
+                    properties=properties,
+                )
+                features.append(feature)
+
+            valrange = [
+                {i: {"min": data[i].min(), "max": data[i].max()}} for i in int_columns
+            ]
+            valrange_dict = {}
+            for sub_dict in valrange:
+                valrange_dict.update(sub_dict)
+
+            # Create a list of descriptive fields
+            descriptive_fields = des_columns
+
+            # Create a new FeatureCollection object
+            feature_collection = mj.MicroFeatureCollection(
+                type="FeatureCollection",
+                features=features,
+                value_range=valrange_dict,
+                descriptive_fields=descriptive_fields,
+                coordinatesystem=mj.Coordinatesystem(
+                    axes=["x", "y"], units=["pixel", "pixel"]
+                ),
             )
-
-            # create a new properties object dynamically
-            properties = mj.Properties(
-                descriptive=descriptive_dict,
-                numerical=numeric_dict,
-                # multi_numerical={'values': row['values']}
-            )
-
-            # Create a new Feature object
-            feature = mj.MicroFeature(
-                type=row["type"],
-                geometry=geometry,
-                properties=properties,
-            )
-            features.append(feature)
-
-        valrange = [
-            {i: {"min": data[i].min(), "max": data[i].max()}} for i in int_columns
-        ]
-        valrange_dict = {}
-        for sub_dict in valrange:
-            valrange_dict.update(sub_dict)
-
-        # Create a list of descriptive fields
-        descriptive_fields = des_columns
-
-        # Create a new FeatureCollection object
-        feature_collection = mj.MicroFeatureCollection(
-            type="FeatureCollection",
-            features=features,
-            value_range=valrange_dict,
-            descriptive_fields=descriptive_fields,
-            coordinatesystem=mj.Coordinatesystem(
-                axes=["x", "y"], units=["pixel", "pixel"]
-            ),
-        )
-        overlay_json = feature_collection.dict()
-        if len(overlay_json) == 0:
-            raise ValueError("JSON file is empty")
-        else:
-            out_name = Path(self.out_dir, f"{self.file_path.stem}_overlay.json")
-            with open(out_name, "w") as f:
-                json.dump(overlay_json, f, indent=2)
-                logger.info(f"Saving overlay json file: {out_name}")
-
+            if len(feature_collection.json()) == 0:
+                raise ValueError("JSON file is empty")
+            else:
+                out_name = Path(self.out_dir, f"{self.file_path.stem}_overlay.json")
+                with open(out_name, "w") as f:
+                    f.write(feature_collection.json(indent=2, exclude_unset=True))
+                    logger.info(f"Saving overlay json file: {out_name}")
         return

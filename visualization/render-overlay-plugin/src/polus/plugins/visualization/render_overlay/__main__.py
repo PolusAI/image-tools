@@ -1,13 +1,12 @@
 """File Renaming."""
-import json
 import os
 import logging
 import pathlib
 import filepattern as fp
-from typing import Any, Optional, Tuple, List
+from typing import Optional
 import typer
 from multiprocessing import cpu_count
-from concurrent.futures import ThreadPoolExecutor,as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 import shutil
 
@@ -34,8 +33,8 @@ def main(
     file_pattern: str = typer.Option(
         ".+", "--filePattern", help="Filename pattern used to separate data"
     ),
-    dimensions:Optional[Tuple[int, int]] = typer.Option(
-        (24, 16),
+    dimensions: Optional[mo.Dimensions] = typer.Option(
+        mo.Dimensions.DEFAULT,
         "--dimensions",
         help="Plate dimension (Columns, Rows)",
     ),
@@ -74,36 +73,45 @@ def main(
     inp_dir = inp_dir.resolve()
     out_dir = out_dir.resolve()
 
-    width, height = dimensions
+    width, height = dimensions.get_value()
 
     files = [file[1][0] for file in fp.FilePattern(inp_dir, file_pattern)]
 
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
-        for file in tqdm(files,
-                        desc=f'Creating overlays' ,
-                        total=len(files)):
-            
-            cells = mo.GridCell(width=width, height=height, cell_width=cell_width)
-            poly = mo.PolygonSpec(positions=cells.convert_data, cell_height=cell_height)
-            microjson = mo.RenderOverlayModel(
-                        file_path=file,
-                        coordinates=poly.polygon_data,
-                        type=type,
-                        out_dir=out_dir
-                    )
-            future = executor.submit( 
-                microjson.microjson_overlay
-             )
-            
-            try:
-                future.result()
-            except Exception:
-                logger.info('Unable to get the results')
+        threads = []
 
+        for file in tqdm(files, desc=f"Creating overlays", total=len(files)):
+            cells = mo.GridCell(width=width, height=height, cell_width=cell_width)
+            if type == "Polygon":
+                poly = mo.PolygonSpec(
+                    positions=cells.convert_data, cell_height=cell_height
+                )
+            else:
+                poly = mo.PointSpec(
+                    positions=cells.convert_data, cell_height=cell_height
+                )
+            microjson = mo.RenderOverlayModel(
+                file_path=file,
+                coordinates=poly.get_coordinates,
+                type=type,
+                out_dir=out_dir,
+            )
+            threads.append(executor.submit(microjson.microjson_overlay))
+        for f in tqdm(
+            as_completed(threads),
+            desc=f"Creating microjson overlays",
+            total=len(threads),
+        ):
+            f.result()
 
     if preview:
-        shutil.copy(pathlib.Path(__file__).parents[5].joinpath('examples/example_overlay.json'), out_dir)
- 
+        shutil.copy(
+            pathlib.Path(__file__)
+            .parents[5]
+            .joinpath(f"examples/example_overlay_{type}.json"),
+            out_dir,
+        )
+
 
 if __name__ == "__main__":
     app()
