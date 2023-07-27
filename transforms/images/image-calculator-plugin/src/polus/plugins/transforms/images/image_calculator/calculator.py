@@ -18,19 +18,6 @@ MAX_WORKERS = max(1, multiprocessing.cpu_count() // 2)
 CHUNK_SIZE = 4_096
 SUFFIX_LEN = 6
 
-OPERATIONS: dict[str, typing.Callable] = {
-    "multiply": numpy.multiply,
-    "divide": numpy.divide,
-    "add": numpy.add,
-    "subtract": numpy.subtract,
-    "and": numpy.bitwise_and,
-    "or": numpy.bitwise_or,
-    "xor": numpy.bitwise_xor,
-    "min": numpy.minimum,
-    "max": numpy.maximum,
-    "absdiff": lambda x, y: numpy.abs(numpy.subtract(x, y)),
-}
-
 
 class Operation(str, enum.Enum):
     """The operations that can be performed on the images."""
@@ -46,6 +33,49 @@ class Operation(str, enum.Enum):
     Max = "max"
     AbsDiff = "absdiff"
 
+    @classmethod
+    def variants(cls) -> list["Operation"]:
+        """Returns a list of all the variants of the operation."""
+        return [
+            cls.Multiply,
+            cls.Divide,
+            cls.Add,
+            cls.Subtract,
+            cls.And,
+            cls.Or,
+            cls.Xor,
+            cls.Min,
+            cls.Max,
+            cls.AbsDiff,
+        ]
+
+    def func(self) -> typing.Callable[[numpy.ndarray, numpy.ndarray], numpy.ndarray]:
+        """Returns the function associated with the operation."""
+        if self.value == "multiply":
+            f = numpy.multiply
+        elif self.value == "divide":
+            f = numpy.divide
+        elif self.value == "add":
+            f = numpy.add
+        elif self.value == "subtract":
+            f = numpy.subtract
+        elif self.value == "and":
+            f = numpy.bitwise_and
+        elif self.value == "or":
+            f = numpy.bitwise_or
+        elif self.value == "xor":
+            f = numpy.bitwise_xor
+        elif self.value == "min":
+            f = numpy.minimum
+        elif self.value == "max":
+            f = numpy.maximum
+        else:  # self.value == "absdiff":
+
+            def f(x: numpy.ndarray, y: numpy.ndarray) -> numpy.ndarray:
+                return numpy.abs(numpy.subtract(x, y))
+
+        return f
+
 
 def _process_chunk(  # noqa: PLR0913
     primary_reader: bfio.BioReader,
@@ -59,7 +89,7 @@ def _process_chunk(  # noqa: PLR0913
     operation: Operation,
 ) -> None:
     """Process on chunk of the images in a thread/process."""
-    writer[y:y_max, x:x_max, z] = OPERATIONS[operation.value](
+    writer[y:y_max, x:x_max, z] = operation.func()(
         primary_reader[y:y_max, x:x_max, z],
         secondary_reader[y:y_max, x:x_max, z],
     )

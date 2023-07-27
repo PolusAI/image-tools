@@ -1,7 +1,6 @@
 """Provides the Image Calculator plugin."""
 
 from .calculator import MAX_WORKERS
-from .calculator import OPERATIONS
 from .calculator import POLUS_IMG_EXT
 from .calculator import POLUS_LOG
 from .calculator import Operation

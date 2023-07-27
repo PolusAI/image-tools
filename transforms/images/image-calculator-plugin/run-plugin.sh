@@ -30,5 +30,4 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --operator ${operator} \
             --secondaryDir ${secondaryDir} \
             --secondaryPattern ${secondaryPattern} \
-            --outDir ${outDir} 
-            
+            --outDir ${outDir}
