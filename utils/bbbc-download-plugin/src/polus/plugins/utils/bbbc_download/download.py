@@ -119,7 +119,7 @@ def download(name: str,download_path:Path) -> None:
         elif heading.text.strip() == "Metadata":
             sub_folder = "Metadata"
         else:
-            sub_folder = "Ground Truth"
+            sub_folder = "Ground_Truth"
 
         # Iterate over every tag under the current heading and above the next heading
         for tag in get_lower_tags(heading):
@@ -145,7 +145,7 @@ def download(name: str,download_path:Path) -> None:
     print(name + " has finished downloading")
     images_path=save_location.joinpath("Images")
     remove_macosx(name,images_path)
-    ground_path=save_location.joinpath("Ground Truth")
+    ground_path=save_location.joinpath("Ground_Truth")
     if ground_path.exists():
         remove_macosx(name,ground_path)
 

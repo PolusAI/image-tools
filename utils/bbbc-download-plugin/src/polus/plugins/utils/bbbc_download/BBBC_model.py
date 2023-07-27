@@ -91,8 +91,8 @@ class GroundTruth(pydantic.BaseModel):
     def size(self) -> int:
         """Returns the size of the dataset's ground truth in bytes."""
 
-        raw_path = root.joinpath(self.name, "raw/Ground Truth")
-        standard_path = root.joinpath(self.name, "standard/Ground Truth")
+        raw_path = root.joinpath(self.name, "raw/Ground_Truth")
+        standard_path = root.joinpath(self.name, "standard/Ground_Truth")
         raw_sum = sum(os.path.getsize(file) for file in raw_path.rglob("*"))
         standard_sum = sum(os.path.getsize(file) for file in standard_path.rglob("*"))
 
@@ -241,7 +241,7 @@ class BBBCDataset(pydantic.BaseModel):
         download_path=download_path.joinpath("BBBC")
 
         images_path = download_path.joinpath(self.name, "raw/Images")
-        truth_path = download_path.joinpath(self.name, "raw/Ground Truth")
+        truth_path = download_path.joinpath(self.name, "raw/Ground_Truth")
         meta_path = download_path.joinpath(self.name, "raw/Metadata")
 
         try:
@@ -312,7 +312,7 @@ class BBBCDataset(pydantic.BaseModel):
             if row["Image Type"] == "Intensity":
                 sub_folder = "Images"
             elif row["Image Type"] == "Ground Truth":
-                sub_folder = "Ground Truth"
+                sub_folder = "Ground_Truth"
             elif row["Image Type"] == "Metadata":
                 sub_folder = "Metadata"
             else:
@@ -348,7 +348,7 @@ class BBBC019(BBBCDataset):
         # Separate images from ground truth
         save_location = save_location.joinpath("BBBC019")
         images_folder = save_location.joinpath("raw/Images")
-        truth_folder = save_location.joinpath("raw/Ground Truth")
+        truth_folder = save_location.joinpath("raw/Ground_Truth")
         for set in [
             x
             for x in images_folder.iterdir()
@@ -394,7 +394,7 @@ class BBBC029(BBBCDataset):
             "BBBC029",
         )
 
-        file_path = save_location.joinpath("Ground Truth")
+        file_path = save_location.joinpath("Ground_Truth")
         get_url(
             "https://data.broadinstitute.org/bbbc/BBBC029/ground_truth.zip",
             file_path,
@@ -403,7 +403,7 @@ class BBBC029(BBBCDataset):
 
         print("BBBC029 has finished downloading")
         images_folder=save_location.joinpath("Images")
-        truth_folder=save_location.joinpath("Ground Truth")
+        truth_folder=save_location.joinpath("Ground_Truth")
         remove_macosx("BBBC029",images_folder)
         remove_macosx("BBBC029",truth_folder)
         source_directory=images_folder.joinpath("images")
@@ -433,14 +433,14 @@ class BBBC041(BBBCDataset):
         save_location = save_location.joinpath("BBBC041")
         file_names = ["test.json", "training.json"]
 
-        if not save_location.joinpath("raw/Ground Truth").exists():
-            save_location.joinpath("raw/Ground Truth").mkdir(
+        if not save_location.joinpath("raw/Ground_Truth").exists():
+            save_location.joinpath("raw/Ground_Truth").mkdir(
                 parents=True, exist_ok=True
             )
 
         for file in file_names:
             src = save_location.joinpath("raw/Images/malaria", file)
-            dst = save_location.joinpath("raw/Ground Truth")
+            dst = save_location.joinpath("raw/Ground_Truth")
 
             if dst.joinpath(file).exists():
                 os.remove(src)
@@ -479,7 +479,7 @@ class BBBC042(BBBCDataset):
 
         print("BBBC042 has finished downloading")
         images_folder=save_location.joinpath("Images")
-        truth_folder=save_location.joinpath("Ground Truth")
+        truth_folder=save_location.joinpath("Ground_Truth")
         remove_macosx("BBBC029",images_folder)
         remove_macosx("BBBC029",truth_folder)
 
@@ -498,7 +498,7 @@ class BBBC046(BBBCDataset):
         try:
             save_location = save_location.joinpath(self.name)
             images_folder = save_location.joinpath("raw/Images")
-            truth_folder = save_location.joinpath("raw/Ground Truth")
+            truth_folder = save_location.joinpath("raw/Ground_Truth")
 
             # Extract these files because they do not extract automatically
             for file in ["OE-ID350-AR-1.zip", "OE-ID350-AR-2.zip", "OE-ID350-AR-4.zip", "OE-ID350-AR-8.zip"]:
@@ -547,7 +547,7 @@ class BBBC054(BBBCDataset):
         # Separate images from ground truth
         save_location = save_location.joinpath(self.name)
         src = save_location.joinpath("raw/Images", "Replicate1annotation.csv")
-        dst = save_location.joinpath("raw/Ground Truth", "Replicate1annotation.csv")
+        dst = save_location.joinpath("raw/Ground_Truth", "Replicate1annotation.csv")
 
         if not dst.exists():
             dst.mkdir(parents=True, exist_ok=True)
