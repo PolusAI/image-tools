@@ -27,7 +27,7 @@ This plugin takes 1 input arguments and
 | `--outDir`      | Directory to store the downloaded datasets                   | Output | genericData |
 
 The following are valid names for datasets:  
-`"all"`- To download all the datasets from the bbbc website  
+`"All"`- To download all the datasets from the bbbc website  
 `"IDAndSegmentation"`- To download the datasets from the Identification and segmentation table  
 `"PhenotypeClassification"`- To download the datasets from the Phenotype classification table  
 `"ImageBasedProfiling"`- To download the datasets from the Image-based Profiling table
