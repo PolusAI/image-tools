@@ -13,7 +13,7 @@ To build the Docker image for the download plugin, run
 
 ## Run the Docker image
 
-To execute the build docker image for the download plugin, run 
+To execute the built docker image for the download plugin, run 
 `bash run-plugin.sh`.
 
 ## Options
