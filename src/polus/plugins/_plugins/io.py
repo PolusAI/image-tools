@@ -1,14 +1,23 @@
 # type: ignore
+# ruff: noqa: S101, A003
+# pylint: disable=no-self-argument
 """Plugins I/O utilities."""
 import enum
 import logging
 import pathlib
 import re
-import typing
 from functools import singledispatch
+from functools import singledispatchmethod
+from typing import Any
+from typing import Optional
+from typing import Union
 
 import fsspec
-from pydantic import BaseModel, Field, PrivateAttr, constr, validator
+from pydantic import BaseModel
+from pydantic import Field
+from pydantic import PrivateAttr
+from pydantic import constr
+from pydantic import validator
 
 logger = logging.getLogger("polus.plugins")
 
@@ -38,45 +47,35 @@ WIPP_TYPES = {
 class InputTypes(str, enum.Enum):  # wipp schema
     """Enum of Input Types for WIPP schema."""
 
-    collection = "collection"
-    pyramid = "pyramid"
-    csvCollection = "csvCollection"
-    genericData = "genericData"
-    stitchingVector = "stitchingVector"
-    notebook = "notebook"
-    tensorflowModel = "tensorflowModel"
-    tensorboardLogs = "tensorboardLogs"
-    pyramidAnnotation = "pyramidAnnotation"
-    integer = "integer"
-    number = "number"
-    string = "string"
-    boolean = "boolean"
-    array = "array"
-    enum = "enum"
-
-    @classmethod
-    def list(cls):
-        """List Input Types."""
-        return list(map(lambda c: c.value, cls))
+    COLLECTION = "collection"
+    PYRAMID = "pyramid"
+    CSVCOLLECTION = "csvCollection"
+    GENERICDATA = "genericData"
+    STITCHINGVECTOR = "stitchingVector"
+    NOTEBOOK = "notebook"
+    TENSORFLOWMODEL = "tensorflowModel"
+    TENSORBOARDLOGS = "tensorboardLogs"
+    PYRAMIDANNOTATION = "pyramidAnnotation"
+    INTEGER = "integer"
+    NUMBER = "number"
+    STRING = "string"
+    BOOLEAN = "boolean"
+    ARRAY = "array"
+    ENUM = "enum"
 
 
 class OutputTypes(str, enum.Enum):  # wipp schema
     """Enum for Output Types for WIPP schema."""
 
-    collection = "collection"
-    pyramid = "pyramid"
-    csvCollection = "csvCollection"
-    genericData = "genericData"
-    stitchingVector = "stitchingVector"
-    notebook = "notebook"
-    tensorflowModel = "tensorflowModel"
-    tensorboardLogs = "tensorboardLogs"
-    pyramidAnnotation = "pyramidAnnotation"
-
-    @classmethod
-    def list(cls):
-        """List Output Types."""
-        return list(map(lambda c: c.value, cls))
+    COLLECTION = "collection"
+    PYRAMID = "pyramid"
+    CSVCOLLECTION = "csvCollection"
+    GENERICDATA = "genericData"
+    STITCHINGVECTOR = "stitchingVector"
+    NOTEBOOK = "notebook"
+    TENSORFLOWMODEL = "tensorflowModel"
+    TENSORBOARDLOGS = "tensorboardLogs"
+    PYRAMIDANNOTATION = "pyramidAnnotation"
 
 
 def _in_old_to_new(old: str) -> str:  # map wipp InputType to compute schema's InputType
@@ -84,10 +83,9 @@ def _in_old_to_new(old: str) -> str:  # map wipp InputType to compute schema's I
     d = {"integer": "number", "enum": "string"}
     if old in ["string", "array", "number", "boolean"]:
         return old
-    elif old in d:
+    if old in d:
         return d[old]  # integer or enum
-    else:
-        return "path"  # everything else
+    return "path"  # everything else
 
 
 def _ui_old_to_new(old: str) -> str:  # map wipp InputType to compute schema's UIType
@@ -101,34 +99,35 @@ def _ui_old_to_new(old: str) -> str:  # map wipp InputType to compute schema's U
     }
     if old in type_dict:
         return type_dict[old]
-    else:
-        return "text"
+    return "text"
 
 
-class IOBase(BaseModel):
+class IOBase(BaseModel):  # pylint: disable=R0903
     """Base Class for I/O arguments."""
 
-    type: typing.Any
-    options: typing.Optional[dict] = None
-    value: typing.Optional[typing.Any] = None
-    id: typing.Optional[typing.Any] = None
-    _fs: typing.Optional[typing.Type[fsspec.spec.AbstractFileSystem]] = PrivateAttr(
-        default=None
+    type: Any
+    options: Optional[dict] = None
+    value: Optional[Any] = None
+    id_: Optional[Any] = None
+    _fs: Optional[type[fsspec.spec.AbstractFileSystem]] = PrivateAttr(
+        default=None,
     )  # type checking is done at plugin level
 
-    def _validate(self):
+    def _validate(self) -> None:  # pylint: disable=R0912
         value = self.value
 
         if value is None:
             if self.required:
+                msg = f"""
+                The input value ({self.name}) is required,
+                but the value was not set."""
                 raise TypeError(
-                    f"The input value ({self.name}) is required, but the value was not set."
+                    msg,
                 )
 
-            else:
-                return
+            return
 
-        if self.type == InputTypes.enum:
+        if self.type == InputTypes.ENUM:
             try:
                 if isinstance(value, str):
                     value = enum.Enum(self.name, self.options["values"])[value]
@@ -137,7 +136,11 @@ class IOBase(BaseModel):
 
             except KeyError:
                 logging.error(
-                    f"Value ({value}) is not a valid value for the enum input ({self.name}). Must be one of {self.options['values']}."
+                    f"""
+                    Value ({value}) is not a valid value
+                    for the enum input ({self.name}).
+                    Must be one of {self.options['values']}.
+                    """,
                 )
                 raise
         else:
@@ -145,17 +148,17 @@ class IOBase(BaseModel):
                 value = WIPP_TYPES[self.type](value)
             else:
                 value = WIPP_TYPES[self.type.value](
-                    value
+                    value,
                 )  # compute, type does not inherit from str
 
             if isinstance(value, pathlib.Path):
                 value = value.absolute()
                 if self._fs:
                     assert self._fs.exists(
-                        str(value)
+                        str(value),
                     ), f"{value} is invalid or does not exist"
                     assert self._fs.isdir(
-                        str(value)
+                        str(value),
                     ), f"{value} is not a valid directory"
                 else:
                     assert value.exists(), f"{value} is invalid or does not exist"
@@ -163,11 +166,12 @@ class IOBase(BaseModel):
 
         super().__setattr__("value", value)
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any) -> None:  # ruff: noqa: ANN401
         """Set I/O attributes."""
         if name not in ["value", "id", "_fs"]:
             # Don't permit any other values to be changed
-            raise TypeError(f"Cannot set property: {name}")
+            msg = f"Cannot set property: {name}"
+            raise TypeError(msg)
 
         super().__setattr__(name, value)
 
@@ -175,61 +179,68 @@ class IOBase(BaseModel):
             self._validate()
 
 
-""" Plugin and Input/Output Classes """
-
-
-class Output(IOBase):
+class Output(IOBase):  # pylint: disable=R0903
     """Required until JSON schema is fixed."""
 
-    name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(  # noqa: F722
-        ..., examples=["outputCollection"], title="Output name"
+    name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(
+        ...,
+        examples=["outputCollection"],
+        title="Output name",
     )
     type: OutputTypes = Field(
-        ..., examples=["stitchingVector", "collection"], title="Output type"
+        ...,
+        examples=["stitchingVector", "collection"],
+        title="Output type",
     )
-    description: constr(regex=r"^(.*)$") = Field(  # noqa: F722
-        ..., examples=["Output collection"], title="Output description"
+    description: constr(regex=r"^(.*)$") = Field(
+        ...,
+        examples=["Output collection"],
+        title="Output description",
     )
 
 
-class Input(IOBase):
+class Input(IOBase):  # pylint: disable=R0903
     """Required until JSON schema is fixed."""
 
-    name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(  # noqa: F722
+    name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(
         ...,
         description="Input name as expected by the plugin CLI",
         examples=["inputImages", "fileNamePattern", "thresholdValue"],
         title="Input name",
     )
     type: InputTypes
-    description: constr(regex=r"^(.*)$") = Field(  # noqa: F722
-        ..., examples=["Input Images"], title="Input description"
+    description: constr(regex=r"^(.*)$") = Field(
+        ...,
+        examples=["Input Images"],
+        title="Input description",
     )
-    required: typing.Optional[bool] = Field(
+    required: Optional[bool] = Field(
         True,
         description="Whether an input is required or not",
         examples=[True],
         title="Required input",
     )
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:  # ruff: noqa: ANN003
         """Initialize input."""
         super().__init__(**data)
 
         if self.description is None:
             logger.warning(
-                f"The input ({self.name}) is missing the description field. This field is not required but should be filled in."
+                f"""
+                The input ({self.name}) is missing the description field.
+                This field is not required but should be filled in.
+                """,
             )
 
 
-def _check_version_number(value: typing.Union[str, int]) -> bool:
+def _check_version_number(value: Union[str, int]) -> bool:
     if isinstance(value, int):
         value = str(value)
     if "-" in value:
         value = value.split("-")[0]
-    if len(value) > 1:
-        if value[0] == "0":
-            return False
+    if len(value) > 1 and value[0] == "0":
+        return False
     return bool(re.match(r"^\d+$", value))
 
 
@@ -238,28 +249,35 @@ class Version(BaseModel):
 
     version: str
 
-    def __init__(self, version):
+    def __init__(self, version: str) -> None:
         """Initialize Version object."""
         super().__init__(version=version)
 
     @validator("version")
-    def semantic_version(cls, value):
+    def semantic_version(
+        cls,
+        value,
+    ):  # ruff: noqa: ANN202, N805, ANN001
         """Pydantic Validator to check semver."""
         version = value.split(".")
 
         assert (
-            len(version) == 3
-        ), f"Invalid version ({value}). Version must follow semantic versioning (see semver.org)"
+            len(version) == 3  # ruff: noqa: PLR2004
+        ), f"""
+        Invalid version ({value}). Version must follow
+        semantic versioning (see semver.org)"""
         if "-" in version[-1]:  # with hyphen
             idn = version[-1].split("-")[-1]
             id_reg = re.compile("[0-9A-Za-z-]+")
             assert bool(
-                id_reg.match(idn)
-            ), f"Invalid version ({value}). Version must follow semantic versioning (see semver.org)"
+                id_reg.match(idn),
+            ), f"""Invalid version ({value}).
+            Version must follow semantic versioning (see semver.org)"""
 
         assert all(
-            map(_check_version_number, version)
-        ), f"Invalid version ({value}). Version must follow semantic versioning (see semver.org)"
+            map(_check_version_number, version),
+        ), f"""Invalid version ({value}).
+        Version must follow semantic versioning (see semver.org)"""
         return value
 
     @property
@@ -277,47 +295,82 @@ class Version(BaseModel):
         """Return z from x.y.z ."""
         return self.version.split(".")[2]
 
-    def __lt__(self, other):
-        """Compare if Version is less than other Version object."""
-        assert isinstance(other, Version), "Can only compare version objects."
+    def __str__(self) -> str:
+        """Return string representation of Version object."""
+        return self.version
 
-        if other.major > self.major:
-            return True
-        elif other.major == self.major:
-            if other.minor > self.minor:
-                return True
-            elif other.minor == self.minor:
-                if other.patch > self.patch:
-                    return True
-                else:
-                    return False
-            else:
-                return False
-        else:
-            return False
+    @singledispatchmethod
+    def __lt__(self, other: Any) -> bool:
+        """Compare if Version is less than other object."""
+        msg = "invalid type for comparison."
+        raise TypeError(msg)
 
-    def __gt__(self, other):
-        """Compare if Version is greater than other Version object."""
-        return other < self
+    @singledispatchmethod
+    def __gt__(self, other: Any) -> bool:
+        """Compare if Version is less than other object."""
+        msg = "invalid type for comparison."
+        raise TypeError(msg)
 
-    def __eq__(self, other):
+    @singledispatchmethod
+    def __eq__(self, other: Any) -> bool:
         """Compare if two Version objects are equal."""
-        return (
-            other.major == self.major
-            and other.minor == self.minor
-            and other.patch == self.patch
-        )
+        msg = "invalid type for comparison."
+        raise TypeError(msg)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Needed to use Version objects as dict keys."""
         return hash(self.version)
 
 
-class DuplicateVersionFound(Exception):
+@Version.__eq__.register(Version)  # pylint: disable=no-member
+def _(self, other):
+    return (
+        other.major == self.major
+        and other.minor == self.minor
+        and other.patch == self.patch
+    )
+
+
+@Version.__eq__.register(str)  # pylint: disable=no-member
+def _(self, other):
+    return self == Version(**{"version": other})
+
+
+@Version.__lt__.register(Version)  # pylint: disable=no-member
+def _(self, other):
+    if other.major > self.major:
+        return True
+    if other.major == self.major:
+        if other.minor > self.minor:
+            return True
+        if other.minor == self.minor:
+            if other.patch > self.patch:
+                return True
+            return False
+        return False
+    return False
+
+
+@Version.__lt__.register(str)  # pylint: disable=no-member
+def _(self, other):
+    v = Version(**{"version": other})
+    return self < v
+
+
+@Version.__gt__.register(Version)  # pylint: disable=no-member
+def _(self, other):
+    return other < self
+
+
+@Version.__gt__.register(str)  # pylint: disable=no-member
+def _(self, other):
+    v = Version(**{"version": other})
+    return self > v
+
+
+class DuplicateVersionFoundError(Exception):
     """Raise when two equal versions found."""
 
-
-"""CWL"""
 
 CWL_INPUT_TYPES = {
     "path": "Directory",  # always Dir? Yes
@@ -340,68 +393,57 @@ def _type_in(inp: Input):
     # NOT compatible with CWL workflows, ok in CLT
     # if val == "enum":
     #     if input.required:
-    #         s = [{"type": "enum", "symbols": input.options["values"]}]
-    #     else:
-    #         s = ["null", {"type": "enum", "symbols": input.options["values"]}]
 
-    if val in CWL_INPUT_TYPES:
-        s = CWL_INPUT_TYPES[val] + req
-    else:
-        s = "string" + req  # defaults to string
-    return s
+    # if val in CWL_INPUT_TYPES:
+    return CWL_INPUT_TYPES[val] + req if val in CWL_INPUT_TYPES else "string" + req
 
 
 def input_to_cwl(inp: Input):
     """Return dict of inputs for cwl."""
-    r = {
+    return {
         f"{inp.name}": {
             "type": _type_in(inp),
             "inputBinding": {"prefix": f"--{inp.name}"},
-        }
+        },
     }
-    return r
 
 
 def output_to_cwl(out: Output):
     """Return dict of output args for cwl for input section."""
-    r = {
+    return {
         f"{out.name}": {
             "type": "Directory",
             "inputBinding": {"prefix": f"--{out.name}"},
-        }
+        },
     }
-    return r
 
 
 def outputs_cwl(out: Output):
     """Return dict of output for `outputs` in cwl."""
-    r = {
+    return {
         f"{out.name}": {
             "type": "Directory",
             "outputBinding": {"glob": f"$(inputs.{out.name}.basename)"},
-        }
+        },
     }
-    return r
 
 
 # -- I/O as arguments in .yml
 
 
 @singledispatch
-def _io_value_to_yml(io) -> typing.Union[str, dict]:
+def _io_value_to_yml(io) -> Union[str, dict]:
     return str(io)
 
 
 @_io_value_to_yml.register
 def _(io: pathlib.Path):
-    r = {"class": "Directory", "location": str(io)}
-    return r
+    return {"class": "Directory", "location": str(io)}
 
 
 @_io_value_to_yml.register
 def _(io: enum.Enum):
-    r = io.name
-    return r
+    return io.name
 
 
 def io_to_yml(io):
