@@ -3,8 +3,8 @@ name = "polus-plugins-visualization-precompute-slide"
 version = "1.6.0"
 description = ""
 authors = [
-    "Madhuri Vihani <Madhuri.Vihani@nih.gov>",
-    "Nick Schaub <Nick.Schaub@nih.gov>",
+    "Madhuri Vihani <madhuri.vihani@nih.gov>",
+    "Nick Schaub <nick.schaub@nih.gov>",
     "Najib Ishaq <najib.ishaq@nih.gov>",
 ]
 readme = "README.md"
@@ -23,7 +23,7 @@ tqdm = "^4.65.0"
 numcodecs = "^0.11.0"
 zarr = "^2.15.0"
 numpy = "^1.25.1"
-preadator = "0.2.0"
+preadator = "0.3.0.dev1"
 imageio = "^2.31.1"
 
 [tool.poetry.group.dev.dependencies]

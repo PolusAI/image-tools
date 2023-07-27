@@ -49,6 +49,11 @@ class ImageType(str, enum.Enum):
 
         return _mode2
 
+    @classmethod
+    def variants(cls) -> list["ImageType"]:
+        """Get a list of all image types."""
+        return [ImageType.Image, ImageType.Segmentation]
+
 
 class PyramidType(str, enum.Enum):
     """Pyramid type for precomputed format."""
@@ -66,6 +71,11 @@ class PyramidType(str, enum.Enum):
             return DeepZoomWriter(*args, **kwargs)
 
         return ZarrWriter(*args, **kwargs)  # type: ignore
+
+    @classmethod
+    def variants(cls) -> list["PyramidType"]:
+        """Get a list of all pyramid types."""
+        return [PyramidType.DeepZoom, PyramidType.Neuroglancer, PyramidType.Zarr]
 
 
 def _mode2(image: np.ndarray) -> np.ndarray:

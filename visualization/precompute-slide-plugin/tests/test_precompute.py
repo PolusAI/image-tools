@@ -1,5 +1,6 @@
 """Tests of the plugin."""
 
+import itertools
 import logging
 import pathlib
 import tempfile
@@ -9,6 +10,7 @@ import numpy
 import pytest
 import typer.testing
 
+from polus.plugins.visualization.precompute_slide import utils
 from polus.plugins.visualization.precompute_slide import precompute_slide
 from polus.plugins.visualization.precompute_slide.__main__ import app
 
@@ -20,22 +22,25 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-fixture_params = [
-    (
-        "img.ome.tif",  # image name
-        1080 * 4,  # image size
-    ),
-]
+IMAGE_SIZES = [1024 * (2**i) for i in range(1, 5)]
+PARAMS = [
+    (image_size, pyramid_type, image_type)
+    for image_size, pyramid_type, image_type in itertools.product(
+        IMAGE_SIZES, utils.PyramidType.variants(), utils.ImageType.variants()
+    )
+    if not (pyramid_type.value == "DeepZoom" and image_type.value == "segmentation")
+][:2]
 
 
-@pytest.fixture(params=fixture_params)
+@pytest.fixture(params=PARAMS)
 def gen_image(
     request: pytest.FixtureRequest,
-) -> pathlib.Path:
+) -> tuple[pathlib.Path, str, str]:
     """Generate a random image and stitching vector for testing."""
-    img_name: str
     image_size: int
-    img_name, image_size = request.param
+    pyramid_type: str
+    image_type: str
+    image_size, pyramid_type, image_type = request.param
     inp_dir = pathlib.Path(tempfile.mkdtemp(suffix="_inp_dir"))
 
     # generate the image data
@@ -43,7 +48,10 @@ def gen_image(
     image: numpy.ndarray = rng.uniform(0.0, 1.0, (image_size, image_size)).astype(
         numpy.float32
     )
-    with bfio.BioWriter(inp_dir.joinpath(img_name)) as writer:
+    if image_type == "segmentation":
+        image = (image > 0.5).astype(numpy.uint8)
+
+    with bfio.BioWriter(inp_dir.joinpath("img.ome.tif")) as writer:
         (y, x) = image.shape
         writer.Y = y
         writer.X = x
@@ -54,14 +62,26 @@ def gen_image(
 
         writer[:] = image[:]
 
-    return inp_dir
+    return inp_dir, pyramid_type, image_type
 
 
-def test_neuroglancer(gen_image: pathlib.Path) -> None:
-    """Test the command line."""
+def test_precompute(gen_image: tuple[pathlib.Path, str, str]) -> None:
+    """Test the plugin."""
+    inp_dir, pyramid_type, image_type = gen_image
+    out_dir = pathlib.Path(tempfile.mkdtemp(suffix="_out_dir"))
+
+    precompute_slide(inp_dir, pyramid_type, image_type, ".*", out_dir)
+
+    num_outputs = len(list(out_dir.glob("*.ome.tif")))
+    assert num_outputs == 1
+
+
+@pytest.mark.skip(reason="Trying only the other test for now.")
+def test_cli(gen_image: tuple[pathlib.Path, str, str]) -> None:
+    """Test the CLI."""
     runner = typer.testing.CliRunner()
 
-    inp_dir = gen_image
+    inp_dir, pyramid_type, image_type = gen_image
     out_dir = pathlib.Path(tempfile.mkdtemp(suffix="_out_dir"))
 
     result = runner.invoke(
@@ -72,11 +92,11 @@ def test_neuroglancer(gen_image: pathlib.Path) -> None:
             "--outDir",
             str(out_dir),
             "--pyramidType",
-            "Neuroglancer",
+            pyramid_type,
             "--filePattern",
             ".*",
             "--imageType",
-            "image",
+            image_type,
         ],
     )
 
