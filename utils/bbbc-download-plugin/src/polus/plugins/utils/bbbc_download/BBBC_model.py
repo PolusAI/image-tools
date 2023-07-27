@@ -470,7 +470,7 @@ class BBBC042(BBBCDataset):
             "BBBC042",
         )
 
-        file_path = save_location.joinpath("Ground Truth")
+        file_path = save_location.joinpath("Ground_Truth")
         get_url(
             "https://data.broadinstitute.org/bbbc/BBBC042/positions.zip",
             file_path,

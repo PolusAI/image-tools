@@ -49,7 +49,7 @@ def test_bbbc_datasets()->None:
 
 def test_raw(output_directory)->None:
     """A function to test the download functionality."""
-    d=BBBC_model.BBBCDataset.create_dataset("BBBC001")
+    d=BBBC_model.BBBCDataset.create_dataset("BBBC054") #change dataset name to test
     output_dir=pathlib.Path(output_directory)
     d.raw(output_dir)
     assert d.size >0

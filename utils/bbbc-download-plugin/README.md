@@ -11,10 +11,10 @@ The tables on this webpage classify datasets by their biological application. Ea
 To build the Docker image for the download plugin, run
 `bash build-docker.sh`.
 
-## Executing
+## Run the Docker image
 
 To execute the build docker image for the download plugin, run 
-'bash run-plugin.sh'
+`bash run-plugin.sh`.
 
 ## Options
 
@@ -23,19 +23,19 @@ This plugin takes 1 input arguments and
 
 | Name            | Description                                                  | I/O    | Type        |
 | --------------- | ------------------------------------------------------------ | ------ | ----------- |
-| `--name  `      | The name of the datasets to be downloaded                    | Input  | String |
+| `--name  `      | The name of the datasets to be downloaded                    | Input  | String      |
 | `--outDir`      | Directory to store the downloaded datasets                   | Output | genericData |
 
-The Following are valid names for datasets:
-"all"- To download all the datasets from the bbbc website
-"IDAndSegmentation"- To download the datasets from the Identification and segmentation table
-"PhenotypeClassification"- To download the datasets from the Phenotype classification table
-"ImageBasedProfiling"- To download the datasets from the Image-based Profiling table
+The following are valid names for datasets:  
+`"all"`- To download all the datasets from the bbbc website  
+`"IDAndSegmentation"`- To download the datasets from the Identification and segmentation table  
+`"PhenotypeClassification"`- To download the datasets from the Phenotype classification table  
+`"ImageBasedProfiling"`- To download the datasets from the Image-based Profiling table
 
-To download specific datasets from the website, give the name of each dataset in the input argument seperated by a comma. eg: --name="BBBC001,BBBC002,BBBC003" 
+To download specific datasets from the website, give the name of each dataset in the input argument seperated by a comma. example: `--name="BBBC001,BBBC002,BBBC003"` 
 
 ### NOTE
-BBBC046 dataset download is not supported by this plugin   
+BBBC046 dataset download is not supported by this plugin.  
 
 ## Sample docker command:
-``` docker run -v /home/ec2-user/polus-plugins/utils/bbbc-download-plugin/data/:/home/ec2-user/polus-plugins/utils/bbbc-download-plugin/data/ polusai/bbbc-download-plugin:0.1.0-dev0 --name="BBBC001" --outDir=/home/ec2-user/polus-plugins/utils/bbbc-download-plugin/data ```
+```docker run -v /home/ec2-user/data/:/home/ec2-user/data/ polusai/bbbc-download-plugin:0.1.0-dev0 --name="BBBC001" --outDir=/home/ec2-user/data/output```
