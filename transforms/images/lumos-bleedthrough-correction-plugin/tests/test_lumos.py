@@ -1,6 +1,8 @@
 """Tests for the plugin."""
 
+import itertools
 import pathlib
+import shutil
 import tempfile
 
 import bfio
@@ -12,14 +14,6 @@ from polus.plugins.transforms.images.lumos_bleedthrough_correction import lumos
 from polus.plugins.transforms.images.lumos_bleedthrough_correction import utils
 from polus.plugins.transforms.images.lumos_bleedthrough_correction.__main__ import app
 from skimage import data
-
-fixture_params = [
-    (
-        "blobs_c{c:d}.ome.tif",  # input image name
-        4,  # number of fluorophores
-        1024,  # number of rows and columns
-    ),
-]
 
 
 def _make_blobs(
@@ -57,31 +51,50 @@ def _make_blobs(
         writer[:] = image[:]
 
 
-@pytest.fixture(params=fixture_params)
-def gen_images(request: pytest.FixtureRequest) -> tuple[pathlib.Path, str, int]:
+def gen_once(
+    pattern: str = "blobs_c{c:d}.ome.tif",
+    num_fluorophores: int = 4,
+    length: int = 1_024,
+) -> tuple[pathlib.Path, pathlib.Path, str, int]:
     """Generate images for testing."""
-
-    pattern: str
-    num_fluorophores: int
-    length: int
-    pattern, num_fluorophores, length = request.param
 
     inp_dir = pathlib.Path(tempfile.mkdtemp(suffix="_inp_dir"))
     for c in range(1, num_fluorophores + 1):
         _make_blobs(inp_dir, length, pattern, c, num_fluorophores)
 
-    return inp_dir, pattern, num_fluorophores
+    out_dir = pathlib.Path(tempfile.mkdtemp(suffix="_out_dir"))
+    return inp_dir, out_dir, pattern, num_fluorophores
+
+
+NUM_FLUOROPHORES = [2, 3, 4]
+IMG_SIZES = [1_024 * i for i in range(1, 4)]
+PARAMS = list(itertools.product(NUM_FLUOROPHORES, IMG_SIZES))
+IDS = [f"{n}_{l}" for n, l in PARAMS]
+
+
+@pytest.fixture(
+    params=[("blobs_c{c:d}.ome.tif", n, l) for n, l in PARAMS],
+    ids=IDS,
+)
+def gen_images(request: pytest.FixtureRequest) -> tuple[pathlib.Path, str, int]:
+    """Generate images for testing."""
+
+    inp_dir, out_dir, pattern, num_fluorophores = gen_once(*request.param)
+
+    yield inp_dir, out_dir, pattern, num_fluorophores
+
+    shutil.rmtree(inp_dir)
+    shutil.rmtree(out_dir)
 
 
 def test_lumos(gen_images: tuple[pathlib.Path, str, int]) -> None:
     """Test the `correct` function."""
 
-    inp_dir, _, num_fluorophores = gen_images
+    inp_dir, out_dir, _, num_fluorophores = gen_images
 
     paths = list(filter(lambda p: p.name.endswith(".ome.tif"), inp_dir.iterdir()))
     output_name = utils.get_output_name(paths, ".ome.zarr")
 
-    out_dir = pathlib.Path(tempfile.mkdtemp(suffix="_out_dir"))
     out_path = out_dir.joinpath(output_name)
 
     lumos.correct(
@@ -99,16 +112,9 @@ def test_lumos(gen_images: tuple[pathlib.Path, str, int]) -> None:
         )
 
 
-def test_cli(gen_images: tuple[pathlib.Path, str, int]) -> None:
+def test_cli() -> None:
     """Test the CLI for the plugin."""
-
-    inp_dir, pattern, num_fluorophores = gen_images
-
-    paths = list(filter(lambda p: p.name.endswith(".ome.tif"), inp_dir.iterdir()))
-    output_name = utils.get_output_name(paths, ".ome.zarr")
-
-    out_dir = pathlib.Path(tempfile.mkdtemp(suffix="_out_dir"))
-    out_path = out_dir.joinpath(output_name)
+    inp_dir, out_dir, pattern, num_fluorophores = gen_once()
 
     runner = typer.testing.CliRunner()
     result = runner.invoke(
@@ -127,12 +133,22 @@ def test_cli(gen_images: tuple[pathlib.Path, str, int]) -> None:
         ],
     )
 
-    assert result.exit_code == 0, result.stdout
+    try:
+        assert result.exit_code == 0, result.stdout
 
-    assert out_path.exists(), f"{out_path.name} does not exist."
+        paths = list(filter(lambda p: p.name.endswith(".ome.tif"), inp_dir.iterdir()))
+        out_path = out_dir.joinpath(utils.get_output_name(paths, ".ome.zarr"))
+        assert out_path.exists(), f"{out_path.name} does not exist."
 
-    with bfio.BioReader(out_path) as reader:
-        assert 0 < reader.C <= num_fluorophores + 1, (
-            f"Expected between 1 and {num_fluorophores + 1} channels, "
-            f"but found {reader.C} channels."
-        )
+        with bfio.BioReader(out_path) as reader:
+            assert 0 < reader.C <= num_fluorophores + 1, (
+                f"Expected between 1 and {num_fluorophores + 1} channels, "
+                f"but found {reader.C} channels."
+            )
+
+    except AssertionError:
+        raise
+
+    finally:
+        shutil.rmtree(inp_dir)
+        shutil.rmtree(out_dir)
