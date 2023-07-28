@@ -1,13 +1,13 @@
-import microjson.model as mj
-from pathlib import Path
-import logging
-import pydantic
-from pydantic import validator, FilePath
-from typing import Tuple, List
-import pandas as pd
-import numpy as np
-import os
+"""Render Overlay."""
 import enum
+import logging
+import os
+from pathlib import Path
+from typing import Any
+
+import microjson.model as mj
+import numpy as np
+import pydantic
 import vaex
 
 logger = logging.getLogger(__name__)
@@ -26,27 +26,45 @@ class Dimensions(enum.Enum):
     pl_6 = "6"
     DEFAULT = "384"
 
-    def get_value(self) -> Tuple[int, int]:
+    def get_value(self) -> tuple[int, int]:
         """To get the number of columns and rows for a given plate dimension."""
         if self == Dimensions.pl_384:
             return (24, 16)
-        elif self == Dimensions.pl_96:
+        if self == Dimensions.pl_96:
             return (12, 8)
-        elif self == Dimensions.pl_24:
+        if self == Dimensions.pl_24:
             return (6, 4)
         return (3, 3)
 
 
-def convert_vaex_dataframe(file_path: Path):
+def convert_vaex_dataframe(file_path: Path) -> vaex.dataframe.DataFrame:
+    """The vaex reading of tabular data with (".csv", ".feather", ".arrow") format.
+
+    Args:
+        file_path: Path to tabular data.
+
+    Returns:
+        A vaex dataframe.
+    """
     if file_path.name.endswith(".csv"):
         return vaex.read_csv(Path(file_path), convert=True, chunk_size=5_000_000)
-    elif file_path.name.endswith(EXT):
+    if file_path.name.endswith(EXT):
         return vaex.open(Path(file_path))
+    return None
 
 
 def snake_camel_conversion(value: str) -> str:
+    """Convert snake_case to camelCase.
+
+    Args:
+        value: A string in snake case format.
+
+    Returns:
+        A string in camel case format.
+    """
     if not isinstance(value, str):
-        raise ValueError("Value must be string")
+        msg = "Value must be string"
+        raise ValueError(msg)
 
     prf = value.split("_")
     value = "".join(pf.title() for pf in prf if pf)
@@ -54,33 +72,64 @@ def snake_camel_conversion(value: str) -> str:
 
 
 class CustomOverlayModel(pydantic.BaseModel):
+    """Setting up configuration for pydantic base model."""
+
     class Config:
+        """Model configuration."""
+
         alias_generator = snake_camel_conversion
         extra = pydantic.Extra.forbid
         allow_population_by_field_name = True
 
 
 class GridCell(CustomOverlayModel):
+    """Generate list of all rows and columns position of a given microplate.
+
+    Args:
+        width: Number of columns.
+        height: Number of rows.
+        cell_width: Pixel distance between adjacent cells/wells in x dimension.
+
+    Returns:
+        A list of row and column positions of a given microplate.
+
+    """
+
     width: int
     height: int
     cell_width: int
 
     @property
-    def convert_data(self):
+    def convert_data(self) -> list[tuple[int, int]]:
+        """Getting row and column positions of a microplate."""
         output = []
-        for ri, r in enumerate(range(self.height)):
-            for ci, c in enumerate(range(self.width)):
+        for ri, _ in enumerate(range(self.height)):
+            for ci, _ in enumerate(range(self.width)):
                 output.append((ci * self.cell_width, ri * self.cell_width))
 
         return output
 
 
 class PolygonSpec(CustomOverlayModel):
-    positions: List[Tuple[int, int]]
+    """Polygon is a two-dimensional planar shape with straight sides.
+
+    This generates rectangular polygon coordinates from (x, y) coordinate positions.
+
+    Args:
+        positions: List of geometry (x, y) coordinates.
+        cell_height: Pixel distance of a cell/well in y dimension.
+
+    Returns:
+        A list of a list of tuples of rectangular polygon coordinates.
+
+    """
+
+    positions: list[tuple[int, int]]
     cell_height: int
 
     @property
-    def get_coordinates(self):
+    def get_coordinates(self) -> list[list[list[list[int]]]]:
+        """Generate rectangular polygon coordinates."""
         coordinates = []
         for pos in self.positions:
             x, y = pos
@@ -96,11 +145,23 @@ class PolygonSpec(CustomOverlayModel):
 
 
 class PointSpec(CustomOverlayModel):
-    positions: List[Tuple[int, int]]
+    """Calculate centroids of a rectangle polygon from position (x, y) coordinates.
+
+    Args:
+        positions: List of geometry (x, y) coordinates.
+        cell_height: Pixel distance of a cell/well in y dimension.
+
+    Returns:
+        A list of tuples of centroids of a rectangular polygon.
+
+    """
+
+    positions: list[tuple[int, int]]
     cell_height: int
 
     @property
-    def get_coordinates(self):
+    def get_coordinates(self) -> list[tuple[float, float]]:
+        """Generate centroids of rectangular polygon."""
         coordinates = []
         for pos in self.positions:
             x, y = pos
@@ -120,27 +181,30 @@ class RenderOverlayModel(CustomOverlayModel):
     Args:
         file_path: Path to input file.
         coordinates: List of geometry coordinates.
-        type: Type of geometry (Polygon, Points, bbbox).
+        geometry_type: Type of geometry (Polygon, Points, bbbox).
         out_dir: Path to output directory.
     """
 
     file_path: Path
-    coordinates: List = None
-    type: str
+    coordinates: list[Any]
+    geometry_type: str
     out_dir: Path
 
     @pydantic.validator("file_path", pre=True)
-    def validate_file_path(cls, value):
+    def validate_file_path(self, value: Path) -> Path:
+        """Validate file path."""
         if not Path(value).exists():
-            raise ValueError("File path does not exists!! Please do check path again")
-        elif (
+            msg = "File path does not exists!! Please do check path again"
+            raise ValueError(msg)
+        if (
             Path(value).exists()
             and not Path(value).name.startswith(".")
             and Path(value).name.endswith(".csv")
         ):
             data = vaex.read_csv(Path(value))
             if data.shape[0] | data.shape[1] == 0:
-                raise ValueError("data doesnot exists")
+                msg = "data doesnot exists"
+                raise ValueError(msg)
 
         elif (
             Path(value).exists()
@@ -149,11 +213,13 @@ class RenderOverlayModel(CustomOverlayModel):
         ):
             data = vaex.open(Path(value))
             if data.shape[0] | data.shape[1] == 0:
-                raise ValueError("data doesnot exists")
+                msg = "data doesnot exists"
+                raise ValueError(msg)
 
         return value
 
-    def microjson_overlay(self):
+    def microjson_overlay(self) -> None:
+        """Create microjson overlays in JSON Format."""
         if self.file_path.name.endswith((".csv", ".feather", ".arrow")):
             data = convert_vaex_dataframe(self.file_path)
             des_columns = [
@@ -168,19 +234,21 @@ class RenderOverlayModel(CustomOverlayModel):
             ]
 
             if len(int_columns) == 0:
-                raise ValueError("Features with integer datatype do not exist")
+                msg = "Features with integer datatype do not exist"
+                raise ValueError(msg)
 
             if len(des_columns) == 0:
-                raise ValueError("Descriptive features do not exist")
+                msg = "Descriptive features do not exist"
+                raise ValueError(msg)
 
-            data["geometry_type"] = np.repeat(self.type, data.shape[0])
+            data["geometry_type"] = np.repeat(self.geometry_type, data.shape[0])
             data["type"] = np.repeat("Feature", data.shape[0])
 
             excolumns = ["geometry_type", "type"]
 
-            des_columns = [col for col in des_columns if not col in excolumns]
+            des_columns = [col for col in des_columns if col not in excolumns]
 
-            features: List[mj.Feature] = []
+            features: list[mj.Feature] = []
 
             for d, cor in zip(data.iterrows(), self.coordinates):
                 _, row = d
@@ -195,14 +263,13 @@ class RenderOverlayModel(CustomOverlayModel):
                 for sub_dict in nume:
                     numeric_dict.update(sub_dict)
 
-                GeometryClass = getattr(mj, row["geometry_type"])
+                GeometryClass = getattr(mj, row["geometry_type"])  # noqa: N806
                 geometry = GeometryClass(type=row["geometry_type"], coordinates=cor)
 
                 # create a new properties object dynamically
                 properties = mj.Properties(
                     descriptive=descriptive_dict,
                     numerical=numeric_dict,
-                    # multi_numerical={'values': row['values']}
                 )
 
                 # Create a new Feature object
@@ -230,14 +297,15 @@ class RenderOverlayModel(CustomOverlayModel):
                 value_range=valrange_dict,
                 descriptive_fields=descriptive_fields,
                 coordinatesystem=mj.Coordinatesystem(
-                    axes=["x", "y"], units=["pixel", "pixel"]
+                    axes=["x", "y"],
+                    units=["pixel", "pixel"],
                 ),
             )
             if len(feature_collection.json()) == 0:
-                raise ValueError("JSON file is empty")
-            else:
+                msg = "JSON file is empty"
+                raise ValueError(msg)
+            if len(feature_collection.json()) > 0:
                 out_name = Path(self.out_dir, f"{self.file_path.stem}_overlay.json")
-                with open(out_name, "w") as f:
+                with Path.open(out_name, "w") as f:
                     f.write(feature_collection.json(indent=2, exclude_unset=True))
                     logger.info(f"Saving overlay json file: {out_name}")
-        return
