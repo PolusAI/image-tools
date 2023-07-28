@@ -12,6 +12,7 @@ outDir=${datapath}
 # # Show the help options
 # docker run polusai/bbbc-download-plugin:${version}
 
+
 # # Run the plugin
 docker run -v ${datapath}:${datapath} \
             polusai/bbbc-download-plugin:${version} \
