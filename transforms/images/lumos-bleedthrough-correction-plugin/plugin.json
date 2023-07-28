@@ -1,5 +1,5 @@
 {
-  "name": "LUMoS Bleedthrough Correction Plugin",
+  "name": "LUMoS Bleedthrough Correction",
   "version": "0.1.0-dev2",
   "title": "LUMoS Bleedthrough Correction Plugin",
   "description": "LUMoS Algorithm for bleedthrough correction.",
