@@ -1,5 +1,5 @@
 {
-  "name": "BaSiC Flatfield Estimation Plugin",
+  "name": "BaSiC Flatfield Estimation",
   "version": "2.0.0-dev20",
   "title": "Flatfield Estimation using BaSiC algorithm.",
   "description": "Generates images used for flatfield correction using the BaSiC algorithm.",
