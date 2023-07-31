@@ -18,13 +18,20 @@ This plugin specifically uses the formulation from [Peng et al](https://www.natu
 For more information on WIPP, visit the
 [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
-## To Do
+## TODO
+
+### Additional Flatfield Formulations
 
 Implement additional formulations of flatfield correction. Specifically, the formula specified by Young:
 
 ![Corrected = \frac{Original - Darkfield}{Brightfield - Darkfield} ](https://render.githubusercontent.com/render/math?math=Corrected%20%3D%20%5Cfrac%7BOriginal%20-%20Darkfield%7D%7BBrightfield%20-%20Darkfield%7D%20)
 
-Additional formulations may also include reference image free algorithms for  flatfield correction, such as the [rolling ball algorithm](https://www.computer.org/csdl/magazine/co/1983/01/01654163/13rRUwwJWBB).
+Additional formulations may also include reference image free algorithms for flatfield correction, such as the [rolling ball algorithm](https://www.computer.org/csdl/magazine/co/1983/01/01654163/13rRUwwJWBB).
+
+### Photobleach Correction
+
+Since the `basicpy` package and the `basic-flatfield-estimation` tool do not yet support photobleach estimation, this plugin does not yet support photobleach correction.
+Once they add support for photobleach estimation, this plugin should be updated to support it.
 
 ## Building
 
@@ -41,9 +48,10 @@ Command line options:
 
 | Name             | Description                                                           | I/O    | Type       |
 |------------------|-----------------------------------------------------------------------|--------|------------|
-| `--darkPattern`  | Filename pattern used to match darkfield files to image files         | Input  | string     |
-| `--ffDir`        | Image collection containing flatfield and/or darkfield images         | Input  | collection |
-| `--flatPattern`  | Filename pattern used to match flatfield files to image files         | Input  | string     |
 | `--imgDir`       | Input image collection to be processed by this plugin                 | Input  | collection |
 | `--imgPattern`   | Filename pattern used to separate data and match with flatfield files | Input  | string     |
+| `--ffDir`        | Image collection containing flatfield and/or darkfield images         | Input  | collection |
+| `--ffPattern`    | Filename pattern used to match flatfield files to image files         | Input  | string     |
+| `--dfPattern`    | Filename pattern used to match darkfield files to image files         | Input  | string     |
 | `--outDir`       | Output collection                                                     | Output | collection |
+| `--preview`      | preview tha output images' names without actually running computation | Input  | boolean    |

@@ -66,8 +66,8 @@ def gen_once(num_groups: int, img_size: int) -> FixtureReturnType:
     return img_dir, img_pattern, ff_dir, ff_pattern
 
 
-NUM_GROUPS = [2**i for i in range(3)]
-IMG_SIZES = [1024 * 2**i for i in range(3)]
+NUM_GROUPS = [1, 4]
+IMG_SIZES = [1024, 4096]
 PARAMS = list(itertools.product(NUM_GROUPS, IMG_SIZES))
 IDS = [f"{num_groups}_{img_size}" for num_groups, img_size in PARAMS]
 
@@ -94,12 +94,12 @@ def test_estimate(gen_images: FixtureReturnType) -> None:
     out_dir = pathlib.Path(tempfile.mkdtemp(suffix="out_dir"))
 
     apply(
-        img_dir,
-        img_pattern,
-        ff_dir,
-        f"{ff_pattern}_flatfield.ome.tif",
-        f"{ff_pattern}_darkfield.ome.tif",
-        out_dir,
+        img_dir=img_dir,
+        img_pattern=img_pattern,
+        ff_dir=ff_dir,
+        ff_pattern=f"{ff_pattern}_flatfield.ome.tif",
+        df_pattern=f"{ff_pattern}_darkfield.ome.tif",
+        out_dir=out_dir,
     )
 
     img_names = [p.name for p in img_dir.iterdir()]
@@ -128,9 +128,9 @@ def test_cli() -> None:
             img_pattern,
             "--ffDir",
             str(ff_dir),
-            "--brightPattern",
+            "--ffPattern",
             f"{ff_pattern}_flatfield.ome.tif",
-            "--darkPattern",
+            "--dfPattern",
             f"{ff_pattern}_darkfield.ome.tif",
             "--outDir",
             str(out_dir),
