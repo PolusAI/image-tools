@@ -14,6 +14,8 @@ from filepattern import FilePattern
 
 from . import utils
 
+__version__ = "2.0.0-dev8"
+
 logger = logging.getLogger(__name__)
 logger.setLevel(utils.POLUS_LOG)
 
