@@ -191,7 +191,7 @@ class RenderOverlayModel(CustomOverlayModel):
     out_dir: Path
 
     @pydantic.validator("file_path", pre=True)
-    def validate_file_path(self, value: Path) -> Path:
+    def validate_file_path(cls, value: Path) -> Path:  # noqa: N805
         """Validate file path."""
         if not Path(value).exists():
             msg = "File path does not exists!! Please do check path again"
@@ -218,10 +218,12 @@ class RenderOverlayModel(CustomOverlayModel):
 
         return value
 
+    @property
     def microjson_overlay(self) -> None:
         """Create microjson overlays in JSON Format."""
         if self.file_path.name.endswith((".csv", ".feather", ".arrow")):
             data = convert_vaex_dataframe(self.file_path)
+
             des_columns = [
                 feature
                 for feature in data.get_column_names()
@@ -296,11 +298,27 @@ class RenderOverlayModel(CustomOverlayModel):
                 features=features,
                 value_range=valrange_dict,
                 descriptive_fields=descriptive_fields,
-                coordinatesystem=mj.Coordinatesystem(
-                    axes=["x", "y"],
-                    units=["pixel", "pixel"],
-                ),
+                coordinatesystem={
+                    "axes": [
+                        {
+                            "name": "x",
+                            "unit": "micrometer",
+                            "type": "cartesian",
+                            "pixelsPerUnit": 1,
+                            "description": "x-axis",
+                        },
+                        {
+                            "name": "y",
+                            "unit": "micrometer",
+                            "type": "cartesian",
+                            "pixelsPerUnit": 1,
+                            "description": "y-axis",
+                        },
+                    ],
+                    "origo": "top-left",
+                },
             )
+
             if len(feature_collection.json()) == 0:
                 msg = "JSON file is empty"
                 raise ValueError(msg)

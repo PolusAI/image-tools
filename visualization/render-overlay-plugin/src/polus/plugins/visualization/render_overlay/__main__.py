@@ -4,7 +4,6 @@ import os
 import pathlib
 import shutil
 from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import as_completed
 from multiprocessing import cpu_count
 from typing import Optional
 
@@ -87,11 +86,9 @@ def main(  # noqa: PLR0913
     files = [file[1][0] for file in fp.FilePattern(inp_dir, file_pattern)]
 
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
-        threads = []
-
         for file in tqdm(files, desc="Creating overlays", total=len(files)):
             cells = mo.GridCell(width=width, height=height, cell_width=cell_width)
-            if type == "Polygon":
+            if geometry_type == "Polygon":
                 poly = mo.PolygonSpec(
                     positions=cells.convert_data,
                     cell_height=cell_height,
@@ -104,22 +101,16 @@ def main(  # noqa: PLR0913
             microjson = mo.RenderOverlayModel(
                 file_path=file,
                 coordinates=poly.get_coordinates,
-                type=geometry_type,
+                geometry_type=geometry_type,
                 out_dir=out_dir,
             )
-            threads.append(executor.submit(microjson.microjson_overlay))
-        for f in tqdm(
-            as_completed(threads),
-            desc="Creating microjson overlays",
-            total=len(threads),
-        ):
-            f.result()
+            executor.submit(microjson.microjson_overlay)
 
     if preview:
         shutil.copy(
             pathlib.Path(__file__)
             .parents[5]
-            .joinpath(f"examples/example_overlay_{type}.json"),
+            .joinpath(f"examples/example_overlay_{geometry_type}.json"),
             out_dir,
         )
 
