@@ -1,3 +1,4 @@
+#!/bin/bash
 FROM polusai/bfio:2.1.9
 
 # environment variables defined in polusai/bfio
@@ -13,10 +14,6 @@ COPY pyproject.toml ${EXEC_DIR}
 COPY VERSION ${EXEC_DIR}
 COPY README.md ${EXEC_DIR}
 COPY src ${EXEC_DIR}/src
-
-RUN python3 -m pip install --upgrade pip setuptools wheel
-
-
 RUN pip3 install ${EXEC_DIR} --no-cache-dir
 
 ENTRYPOINT ["python3", "-m", "polus.plugins.visualization.render_overlay"]

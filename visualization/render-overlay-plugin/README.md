@@ -4,8 +4,8 @@ This plugin uses [MICROJSON](https://github.com/bengtl/microjson/tree/dev) pytho
 [RENDER UI](https://render.ci.ncats.io/?imageUrl=https://files.scb-ncats.io/pyramids/Idr0033/precompute/41744/x(00-15)_y(01-24)_p0(1-9)_c(1-5)/)
 application for visualization of microscopy images.
 
-This plugin allows to calculate geometry coordinates based on the values passes for input arguments i-e `type`, `cellWidth`, `cellHeight` for each row
- and column positions of user-defined microplate `dimensions`.
+This plugin allows to calculate geometry coordinates based on the values passes for input arguments i-e `geometryType`, `cellWidth`, `cellHeight` for each row
+and column positions of user-defined microplate `dimensions`.
 Note: Currently this plugin supports two geometry types `Polygon` and `Point`.A future work requires addtional support of more geometry types in this plugin.
 
 Currently this plugins handles only three file formats supported by vaex.
@@ -37,7 +37,7 @@ This plugin can take six input arguments and one output argument:
 | `inpDir`          | Input directory                                       | Input  | string         |
 | `filePattern`     | Pattern to parse tabular filenames                    | Input  | string       |
 | `dimensions`      | Select microplate type i-e (384, 96, 24, 6) well plate  | Input  | string       |
-| `type`            | Geometry type (Polygon, Point)                        | Input  | string       |
+| `geometryType`            | Geometry type (Polygon, Point)                        | Input  | string       |
 | `cellWidth`       | Pixel distance between adjacent cells/wells in x-dimension | Input  | integer       |
 | `cellHeight`       | Pixel distance in y-dimension              | Input  | integer       |
 | `outDir`          | Output directory for overlays                         | Output | string       |
@@ -48,11 +48,11 @@ This plugin can take six input arguments and one output argument:
 ### Run the Docker Container
 
 ```bash
-docker run -v /path/to/data:/data polusai/render-overlay-plugin:0.1.0-dev1 \
+docker run -v /data:/data polusai/render-overlay-plugin:0.1.0-dev1 \
   --inpDir /data/input \
-  --filePattern ".*" \
-  --dimension 384 \
-  --type "Polygon" \
+  --filePattern ".*.csv" \
+  --dimensions 384 \
+  --geometryType "Polygon" \
   --cellWidth 2170 \
   --cellHeight 2180 \
   --outDir /data/output \
