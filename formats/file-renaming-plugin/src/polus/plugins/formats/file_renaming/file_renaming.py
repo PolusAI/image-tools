@@ -1,15 +1,18 @@
 """File Renaming."""
+import enum
 import logging
 import os
-import re
-import enum
-import shutil
 import pathlib
-from sys import platform
-from tqdm import tqdm
+import re
+import shutil
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import as_completed
 from multiprocessing import cpu_count
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from typing import Any, Dict, List, Union
+from sys import platform
+from typing import Any
+from typing import Union
+
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
@@ -33,6 +36,7 @@ def map_pattern_grps_to_regex(file_pattern: str) -> dict:
 
     Args:
         file_pattern: File pattern, with special characters escaped.
+
     Returns:
         rgx_patterns: The key is a named regex group. The value is regex.
     """
@@ -50,7 +54,7 @@ def map_pattern_grps_to_regex(file_pattern: str) -> dict:
     return rgx_patterns
 
 
-def convert_to_regex(file_pattern: str, extracted_rgx_patterns: Dict) -> str:
+def convert_to_regex(file_pattern: str, extracted_rgx_patterns: dict) -> str:
     """Integrate regex into original file pattern.
 
     The extracted_rgx_patterns helps replace simple patterns (ie. dd, c+)
@@ -59,6 +63,7 @@ def convert_to_regex(file_pattern: str, extracted_rgx_patterns: Dict) -> str:
     Args:
         file_pattern: file pattern provided by the user.
         extracted_rgx_patterns: named group and regex value dictionary.
+
     Returns:
         new_pattern: file pattern converted to regex.
     """
@@ -83,6 +88,7 @@ def specify_len(out_pattern: str) -> str:
 
     Args:
         out_pattern: output file pattern provided by the user.
+
     Returns:
         new_out_pattern: file pattern converted to format string.
     """
@@ -103,14 +109,16 @@ def specify_len(out_pattern: str) -> str:
     new_out_pattern = out_pattern
     for named_group, format_str in grp_rgx_dict.items():
         new_out_pattern = re.sub(
-            rf"\{{{named_group}:.*?\}}", format_str, new_out_pattern
+            rf"\{{{named_group}:.*?\}}",
+            format_str,
+            new_out_pattern,
         )
     logger.debug(f"specify_len() returns {new_out_pattern}")
 
     return new_out_pattern
 
 
-def get_char_to_digit_grps(inp_pattern: str, out_pattern: str) -> List[str]:
+def get_char_to_digit_grps(inp_pattern: str, out_pattern: str) -> list[str]:
     """Return group names where input and output datatypes differ.
 
     If the input pattern is a character and the output pattern is a
@@ -130,9 +138,9 @@ def get_char_to_digit_grps(inp_pattern: str, out_pattern: str) -> List[str]:
 
     #: Get group names where input pattern is c and output pattern is d
     special_categories = []
-    for out_grp_name in dict(outgrp_and_pattern_tuples).keys():
+    for out_grp_name in dict(outgrp_and_pattern_tuples):
         if dict(ingrp_and_pattern_tuples)[out_grp_name].startswith("c") and dict(
-            outgrp_and_pattern_tuples
+            outgrp_and_pattern_tuples,
         )[out_grp_name].startswith("d"):
             special_categories.append(out_grp_name)
     logger.debug(f"get_char_to_digit_grps() returns {special_categories}")
@@ -140,8 +148,9 @@ def get_char_to_digit_grps(inp_pattern: str, out_pattern: str) -> List[str]:
 
 
 def extract_named_grp_matches(
-    rgx_pattern: str, inp_files: List
-) -> List[Dict[str, Union[str, Any]]]:
+    rgx_pattern: str,
+    inp_files: list,
+) -> list[dict[str, Union[str, Any]]]:
     """Store matches from the substrings from each filename that vary.
 
     Loop through each file. Apply the regex pattern to each
@@ -172,28 +181,21 @@ def extract_named_grp_matches(
             logger.error(e)
             logger.error(
                 "File pattern does not match one or more files. "
-                "See README for pattern rules."
+                "See README for pattern rules.",
             )
-            raise AttributeError(
-                "File pattern does not match one or more files. "
-                "Check that each named group in your file pattern is unique. "
-                "See README for pattern rules."
-            )
-        except Exception as e:
+            msg = "File pattern does not match with files."
+            raise AttributeError(msg) from e
+        except AssertionError as e:
             if str(e).startswith("redefinition of group name"):
                 logger.error(
                     "Ensure that named groups in file patterns are unique. "
-                    "({})".format(e)
+                    "({})".format(e),
                 )
+                msg = f"Ensure that named groups in file patterns are unique. ({e})"
                 raise ValueError(
-                    "Ensure that named groups in file patterns are unique. "
-                    "({})".format(e)
-                )
-            else:
-                raise ValueError(
-                    "Something went wrong. See README for pattern rules. "
-                    "({})".format(e)
-                )
+                    msg,
+                ) from e
+
     logger.debug(f"extract_named_grp_matches() returns {grp_match_dict_list}")
 
     return grp_match_dict_list
@@ -208,18 +210,17 @@ def str_to_int(dictionary: dict) -> dict:
     Returns:
         fixed_dictionary: input dict, with numeric str values to int.
     """
-    logger.debug(f"str_to_int() inputs: {dictionary}")
     fixed_dictionary = {}
     for key, value in dictionary.items():
         try:
             fixed_dictionary[key] = int(value)
-        except Exception:
+        except Exception:  # noqa: BLE001
             fixed_dictionary[key] = value
     logger.debug(f"str_to_int() returns {fixed_dictionary}")
     return fixed_dictionary
 
 
-def letters_to_int(named_grp: str, all_matches: list) -> Dict:
+def letters_to_int(named_grp: str, all_matches: list) -> dict:
     """Alphabetically number matches for the given named group for all files.
 
     Make a dictionary where each key is a match for each filename and
@@ -228,13 +229,14 @@ def letters_to_int(named_grp: str, all_matches: list) -> Dict:
     Args:
         named_grp: Group with c in input pattern and d in out pattern.
         all_matches: list of dicts, k=grps, v=match, last item=file name.
+
     Returns:
         cat_index_dict: dict key=category name, value=index after sorting.
     """
     logger.debug(f"letters_to_int() inputs: {named_grp}, {all_matches}")
     #: Generate list of strings belonging to the given category (element).
     alphabetized_matches = sorted(
-        list({namedgrp_match_dict[named_grp] for namedgrp_match_dict in all_matches})
+        {namedgrp_match_dict[named_grp] for namedgrp_match_dict in all_matches},
     )
     str_alphabetindex_dict = {}
     for i in range(0, len(alphabetized_matches)):
@@ -243,7 +245,7 @@ def letters_to_int(named_grp: str, all_matches: list) -> Dict:
     return str_alphabetindex_dict
 
 
-def rename(
+def rename(  # noqa: C901, PLR0912
     inp_dir: pathlib.Path,
     out_dir: pathlib.Path,
     file_pattern: str,
@@ -257,25 +259,37 @@ def rename(
         file_pattern : Input file pattern.
         out_file_pattern : Output file pattern.
     """
-    logger.info(f"Start renaming files")
+    logger.info("Start renaming files")
+    file_ext = re.split("\\.", file_pattern)[-1]
+    empty_ext = ""
+    ext_length = 5
+    if file_ext == "*":
+        msg = "Please define filePattern including file extension!"
+        raise ValueError(msg)
+    if file_ext == empty_ext:
+        msg = "Please define filePattern including file extension!"
+        raise ValueError(msg)
+    if len(file_ext) > ext_length:
+        msg = "Please define filePattern including file extension!"
+        raise ValueError(msg)
+
     inp_files = [
         str(inp_file.name)
         for inp_file in inp_dir.iterdir()
-        if not inp_file.name.startswith(".")
+        if inp_file.suffix == f".{file_ext}"
     ]
-
-    assert (
-        len(inp_files) != 0
-    ), f"Please check {inp_dir} again!! As it does not contain files"
+    if len(inp_files) == 0:
+        msg = "Please check input directory again!! As it does not contain files"
+        raise ValueError(msg)
 
     chars_to_escape = ["(", ")", "[", "]", "$", "."]
     for char in chars_to_escape:
         file_pattern = file_pattern.replace(char, ("\\" + char))
 
-    if "\.*" in file_pattern:
-        file_pattern = file_pattern.replace("\.*", (".*"))
-    if "\.+" in file_pattern:
-        file_pattern = file_pattern.replace("\.+", (".+"))
+    if "\\.*" in file_pattern:
+        file_pattern = file_pattern.replace("\\.*", (".*"))
+    if "\\.+" in file_pattern:
+        file_pattern = file_pattern.replace("\\.+", (".+"))
     groupname_regex_dict = map_pattern_grps_to_regex(file_pattern)
 
     # #: Integrate regex from dictionary into original file pattern
@@ -296,9 +310,11 @@ def rename(
         tmp_match = all_grp_matches[i]
         all_grp_matches[i] = str_to_int(tmp_match)
 
-    assert (
-        len(all_grp_matches) != 0
-    ), f"Please define filePattern: {file_pattern} again!! As it is not parsing files correctly"
+    if len(all_grp_matches) == 0:
+        msg = f"Please define filePattern: {file_pattern} again!!"
+        raise ValueError(
+            msg,
+        )
 
     #: Populate dict if any matches need to be converted from char to digit
     #: Key=named group, Value=Int representing matched chars
@@ -320,26 +336,28 @@ def rename(
             # : If running on WIPP
             if out_dir != inp_dir:
                 #: Apply str formatting to change digit or char length
-                out_name = out_dir.resolve() / out_pattern_fstring.format(**match)
-                old_file_name = inp_dir / match["fname"]
+                out_name = out_dir.resolve() / out_pattern_fstring.format(
+                    **match,
+                )
+                old_file_name = pathlib.Path(inp_dir, match["fname"])
                 threads.append(executor.submit(shutil.copy2, old_file_name, out_name))
             else:
-                out_name = out_pattern_fstring.format(**match)
-                old_file_name = match["fname"]
+                out_name = out_pattern_fstring.format(**match)  # type: ignore
+                old_file_name = match["fname"]  # type: ignore
                 logger.info(f"Old name {old_file_name} & new name {out_name}")
                 threads.append(
                     executor.submit(
                         os.rename,
                         pathlib.Path(inp_dir, old_file_name),
                         pathlib.Path(out_dir, out_name),
-                    )
+                    ),
                 )
 
         for f in tqdm(
             as_completed(threads),
             total=len(threads),
             mininterval=5,
-            desc=f"converting images",
+            desc="converting images",
             initial=0,
             unit_scale=True,
             colour="cyan",

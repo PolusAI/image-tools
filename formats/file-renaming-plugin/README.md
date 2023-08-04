@@ -1,4 +1,4 @@
-# File Renaming(0.1.18-dev1)
+# File Renaming(0.2.0)
 This WIPP plugin uses supplied file naming patterns to dynamically
 rename and save files in an image collection to a new image collection.
 

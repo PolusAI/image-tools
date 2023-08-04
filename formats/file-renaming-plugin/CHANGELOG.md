@@ -1,4 +1,4 @@
-## File Renaming(v0.1.18-dev1)
+## File Renaming(v0.2.0)
 
 1. This plugin is updated only to the new plugin standards and no additional functionality is added.
 2. This plugin is now installable with pip.

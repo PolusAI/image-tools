@@ -1,14 +1,13 @@
 """File Renaming."""
 import json
-import os
 import logging
+import os
 import pathlib
-from typing import Any, Optional
 import re
-
+from typing import Any
+from typing import Optional
 
 import typer
-
 from polus.plugins.formats.file_renaming import file_renaming as fr
 
 app = typer.Typer()
@@ -23,14 +22,16 @@ logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 
 @app.command()
-def main(
+def main(  # noqa: PLR0913 D417
     inp_dir: pathlib.Path = typer.Option(
         ...,
         "--inpDir",
         help="Input image collections",
     ),
     file_pattern: str = typer.Option(
-        ".+", "--filePattern", help="Filename pattern used to separate data"
+        ".+",
+        "--filePattern",
+        help="Filename pattern used to separate data",
     ),
     out_dir: pathlib.Path = typer.Option(
         ...,
@@ -48,7 +49,9 @@ def main(
         help="Get folder name",
     ),
     preview: Optional[bool] = typer.Option(
-        False, "--preview", help="Output a JSON preview of files"
+        False,
+        "--preview",
+        help="Output a JSON preview of files",
     ),
 ) -> None:
     """Use parsed inputs to rename and copy files to a new directory.
@@ -88,9 +91,12 @@ def main(
     ), f"{out_dir} does not exists!! Please check output path again"
 
     subdirs = sorted([d for d in inp_dir.iterdir() if d.is_dir()])
-    subfiles = sorted([f for f in inp_dir.iterdir() if f.is_file()])
+    subfiles = sorted(
+        [f for f in inp_dir.iterdir() if f.is_file() if not f.name.startswith(".")],
+    )
+
     if subfiles:
-        assert len(subfiles) != 0, f"Files are missing in input directory!!!"
+        assert len(subfiles) != 0, "Files are missing in input directory!!!"
 
     if subfiles and not map_directory:
         fr.rename(
@@ -109,12 +115,16 @@ def main(
 
     elif map_directory and not subfiles:
         subdirs = sorted([d for d in inp_dir.iterdir() if d.is_dir()])
-        for i, sub in enumerate(subdirs):
-            assert len([f for f in sub.iterdir() if f.is_file()]) != 0,  f"Files are missing in input directory!!!"
-            i += 1
-            dir_pattern = r"^[A-Za-z0-9_]+$"
-            # Iterate over the directories and check if they match the pattern
-            matching_directories = re.match(dir_pattern, sub.stem).group()
+        for i, sub in enumerate(subdirs, 1):
+            assert (
+                len([f for f in sub.iterdir() if f.is_file()]) != 0
+            ), "Files are missing in input directory!!!"
+            # Splitting of directory name containing metacharacters
+            regexp = re.split("\\W|\\_", sub.stem)
+            empty_string = ""
+            exp = [reg for reg in regexp if reg != empty_string]
+            # Use underscore to join strings and integers of a directory name
+            matching_directories = "_".join(exp)
             if f"{map_directory}" == "raw":
                 outfile_pattern = f"{matching_directories}_{out_file_pattern}"
             else:
@@ -122,7 +132,7 @@ def main(
             fr.rename(sub, out_dir, file_pattern, outfile_pattern)
 
     if preview:
-        with open(pathlib.Path(out_dir, "preview.json"), "w") as jfile:
+        with pathlib.Path.open(pathlib.Path(out_dir, "preview.json"), "w") as jfile:
             out_json: dict[str, Any] = {
                 "filepattern": out_file_pattern,
                 "outDir": [],
