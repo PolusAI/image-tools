@@ -9,7 +9,7 @@ from typing import Optional
 
 import filepattern as fp
 import typer
-from polus.plugins.visualization.render_overlay import mircojson_overlay as mo
+from polus.plugins.visualization.render_overlay import microjson_overlay as mo
 from tqdm import tqdm
 
 app = typer.Typer()
