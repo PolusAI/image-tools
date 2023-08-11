@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import vaex
-from polus.plugins.visualization.render_overlay import mircojson_overlay as mo
+from polus.plugins.visualization.render_overlay import microjson_overlay as mo
 from polus.plugins.visualization.render_overlay.__main__ import app
 from typer.testing import CliRunner
 

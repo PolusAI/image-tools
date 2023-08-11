@@ -1,4 +1,4 @@
-# Rencer Overlay Plugin(v0.1.0-dev1)
+# Render Overlay Plugin(v0.1.0-dev1)
 
 This plugin uses [MICROJSON](https://github.com/bengtl/microjson/tree/dev) python library to generate overlays in JSON format which can be used in
 [RENDER UI](https://render.ci.ncats.io/?imageUrl=https://files.scb-ncats.io/pyramids/Idr0033/precompute/41744/x(00-15)_y(01-24)_p0(1-9)_c(1-5)/)
@@ -6,7 +6,7 @@ application for visualization of microscopy images.
 
 This plugin allows to calculate geometry coordinates based on the values passes for input arguments i-e `geometryType`, `cellWidth`, `cellHeight` for each row
 and column positions of user-defined microplate `dimensions`.
-Note: Currently this plugin supports two geometry types `Polygon` and `Point`.A future work requires addtional support of more geometry types in this plugin.
+Note: Currently this plugin supports two geometry types `Polygon` and `Point`.A future work requires additional support of more geometry types in this plugin.
 
 Currently this plugins handles only three file formats supported by vaex.
 1. csv
