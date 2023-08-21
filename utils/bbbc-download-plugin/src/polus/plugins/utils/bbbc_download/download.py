@@ -30,6 +30,29 @@ def get_lower_tags(tag: bs4.element.Tag) -> list:
 
     return tags
 
+def extract_nested_zips(name: str,zip_path:Path, extract_path:Path):
+    """Unzip nested zip files.
+    Args:
+        name: Name of the dataset
+        zip_path: Path to the zip file
+        extract_path: The path where the unzipped files will be saved
+    """
+
+    with ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall(extract_path)
+    zip_path.unlink()
+    print(zip_path)
+    print(zip_path.exists())
+    extracted_folder_name = zip_path.stem  # Name with .zip extension
+    extracted_folder_name = extract_path.joinpath(extracted_folder_name.replace('.zip',''))
+    remove_macosx(name,extract_path)
+    
+    nested_zip_files = list(extracted_folder_name.glob("*.zip"))
+    print(nested_zip_files)
+    for nested_zip_file in nested_zip_files:
+        nested_extract_path = nested_zip_file.parent
+        extract_nested_zips(nested_zip_file, nested_extract_path)
+        
 
 def get_url(url: str, save_location: Path, name: str) -> None:
     """Get the given url and save it.
@@ -60,6 +83,9 @@ def get_url(url: str, save_location: Path, name: str) -> None:
 
                 with ZipFile(zip_path, "r") as zfile:
                     zfile.extractall(save_location)
+                    
+                            
+                                
             except URLError as e:
                 if download_attempts == 9:
                     print("FAILED TO DOWNLOAD: " + url + " for " + name)
@@ -148,5 +174,12 @@ def download(name: str,download_path:Path) -> None:
     ground_path=save_location.joinpath("Ground_Truth")
     if ground_path.exists():
         remove_macosx(name,ground_path)
+    
+    # unzip nested zip files
+    zip_files = list(images_path.glob("**/*.zip"))
+    print(zip_files)
+    for zip_file in zip_files:
+        extract_path = zip_file.parent
+        extract_nested_zips(name,zip_file, extract_path)
 
     return

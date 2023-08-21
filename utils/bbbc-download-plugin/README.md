@@ -1,4 +1,4 @@
-# BBBC Download (0.1.0-dev0)
+# BBBC Download (0.1.0-dev1)
 
 This plugin is designed to download the necessary datasets from the Broad Bioimage Benchmark Collection(BBBC) website.
 

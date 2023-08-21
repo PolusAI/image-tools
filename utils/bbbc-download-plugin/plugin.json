@@ -1,6 +1,6 @@
 {
   "name": "BBBC Download",
-  "version": "0.1.0-dev0",
+  "version": "0.1.0-dev1",
   "title": "BBBC Download",
   "description": "Downloads the datasets on the Broad Bioimage Benchmark Collection website",
   "author": "Saket Prem(saket.prem@axleinfo.com), Matthew McIntyre(Matthew.McIntyre@axleinfo.com)",

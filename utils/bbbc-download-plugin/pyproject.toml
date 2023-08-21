@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-utils-bbbc-download-plugin"
-version = "0.1.0-dev0"
+version = "0.1.0-dev1"
 description = ""
 authors = [
     "Saket Prem <saket.prem@axleinfo.com>", 
