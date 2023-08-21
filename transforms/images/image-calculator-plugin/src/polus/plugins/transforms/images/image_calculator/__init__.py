@@ -6,4 +6,4 @@ from .calculator import POLUS_LOG
 from .calculator import Operation
 from .calculator import process_image
 
-__version__ = "0.2.0-dev16"
+__version__ = "0.2.0"
