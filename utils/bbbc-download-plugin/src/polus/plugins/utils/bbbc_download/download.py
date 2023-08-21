@@ -120,6 +120,7 @@ def download(name: str,download_path:Path) -> None:
     """Download a single dataset.
     Args:
         name: The name of the dataset to be downloaded
+        downlaod_path: Path to donwload the dataset
     """
 
     print("Started downloading " + name)
