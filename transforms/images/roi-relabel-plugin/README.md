@@ -1,4 +1,4 @@
-# ROI Relabel Plugin (v0.2.2-dev2)
+# ROI Relabel Plugin (v0.2.2)
 
 This WIPP plugin relabels and consolidates Regions of Interest (RoIs) in a segmented or hand-labeled image.
 
