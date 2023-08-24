@@ -8,7 +8,7 @@
   "repository": "https://github.com/PolusAI/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/bbbc-download-plugin:0.1.0-dev0",
+  "containerId": "polusai/bbbc-download-plugin:0.1.0-dev1",
   "baseCommand": [
     "python3",
     "-m",
