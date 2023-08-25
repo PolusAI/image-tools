@@ -20,7 +20,8 @@ import vaex
 from skimage import io
 import pyarrow as pa
 import pyarrow.parquet as pq
-
+import logging
+logger = logging.getLogger(__name__)
 
 
 BASE_URL = "https://bbbc.broadinstitute.org/"
@@ -180,7 +181,7 @@ class BBBCDataset(pydantic.BaseModel):
             else:
                 return BBBCDataset(name=name)
         except ValueError as e:
-            print(e)
+            logger.info(f"{e}")
 
             return None
 
@@ -260,10 +261,10 @@ class BBBCDataset(pydantic.BaseModel):
             pass
 
         if self.images == None:
-            print(self.name + " has no images.")
+            logger.info(f"{self.name} has no images")
 
         if self.ground_truth == None and self.metadata == None:
-            print(self.name + " has no ground truth or metadata.")
+            logger.info(f"{self.name} has no ground truth or metadata")
 
         return
 
@@ -284,13 +285,13 @@ class BBBCDataset(pydantic.BaseModel):
         """
 
         if extension not in [".ome.tif", ".ome.zarr"]:
-            print(
+            logger.info(
                 f"ERROR: {extension} is an invalid extension for standardization. Must be .ome.tif or .ome.zarr."
             )
             return
 
         if self.images == None:
-            print(
+            logger.info(
                 f"ERROR: Images for {self.name} have not been downloaded so they cannot be standardized."
             )
             return
@@ -316,7 +317,7 @@ class BBBCDataset(pydantic.BaseModel):
             elif row["Image Type"] == "Metadata":
                 sub_folder = "Metadata"
             else:
-                print("ERROR: Invalid value for attribute Image Type")
+                logger.info(f"ERROR: Invalid value for attribute Image Type")
                 return
 
             save_path = standard_folder.joinpath(sub_folder)
@@ -334,7 +335,7 @@ class BBBCDataset(pydantic.BaseModel):
                 bw.dtype = raw_image.dtype
                 bw[:] = raw_image
 
-        print(f"Finished standardizing {self.name}")
+        logger.info(f"Finished standardizing {self.name}")
 
         return
 
@@ -366,7 +367,7 @@ class BBBC019(BBBCDataset):
                     try:
                         shutil.rmtree(src)
                     except NotADirectoryError as e:
-                        print(e)
+                        logger.info(f"{e}")
                 else:
                     shutil.move(src, dst)
 
@@ -378,7 +379,7 @@ class BBBC019(BBBCDataset):
 
 class BBBC029(BBBCDataset):
     def raw(self,download_path:Path) -> None:
-        print("Started downloading BBBC029")
+        logger.info(f"Started downloading BBBC029")
         self.output_path=download_path
         save_location=download_path.joinpath("BBBC")
 
@@ -401,7 +402,7 @@ class BBBC029(BBBCDataset):
             "BBBC029",
         )
 
-        print("BBBC029 has finished downloading")
+        logger.info(f"BBBC029 has finished downloading")
         images_folder=save_location.joinpath("Images")
         truth_folder=save_location.joinpath("Ground_Truth")
         remove_macosx("BBBC029",images_folder)
@@ -454,7 +455,7 @@ class BBBC041(BBBCDataset):
 
 class BBBC042(BBBCDataset):
     def raw(self,download_path:Path) -> None:
-        print("Started downloading BBBC042")
+        logger.info(f"Started downloading BBBC042")
         self.output_path=download_path
         save_location=download_path.joinpath("BBBC")
 
@@ -477,7 +478,7 @@ class BBBC042(BBBCDataset):
             "BBBC042",
         )
 
-        print("BBBC042 has finished downloading")
+        logger.info(f"BBBC042 has finished downloading")
         images_folder=save_location.joinpath("Images")
         truth_folder=save_location.joinpath("Ground_Truth")
         remove_macosx("BBBC029",images_folder)
@@ -530,10 +531,10 @@ class BBBC046(BBBCDataset):
 
             self._init_data(download_path)
         except Exception as e:
-            print(
-                "BBBC046 downloaded successfully but an error occurred when organizing raw data."
+            logger.info(
+                f"BBBC046 downloaded successfully but an error occurred when organizing raw data."
             )
-            print("ERROR: " + str(e))
+            logger.info(f"ERROR: {str(e)}")
 
         return
 

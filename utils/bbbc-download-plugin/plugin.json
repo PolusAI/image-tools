@@ -33,7 +33,7 @@
     {
       "key": "inputs.name",
       "title": "Input name of datasets as string",
-      "description": "Input the name of the datasets to be downloaded as a string"
+      "description": "Input the name of the datasets to be downloaded."
     }
   ]
 }

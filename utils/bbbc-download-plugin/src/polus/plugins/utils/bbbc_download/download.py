@@ -3,6 +3,7 @@ import re
 from urllib.request import urlretrieve
 from urllib.error import URLError
 from zipfile import ZipFile
+import logging
 
 import bs4
 import shutil
@@ -12,7 +13,7 @@ match_str = (
     "Images|Ground truth|Ground Truth|Metadata|Hand-annotated Ground Truth Images"
 )
 endings = (".txt", ".csv", ".tif", ".xlsx", ".xls", ".lst")
-
+logger = logging.getLogger(__name__)
 
 def get_lower_tags(tag: bs4.element.Tag) -> list:
     """Get all tags between the tag argument and the next tag of the same type.
@@ -41,14 +42,12 @@ def extract_nested_zips(name: str,zip_path:Path, extract_path:Path):
     with ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(extract_path)
     zip_path.unlink()
-    print(zip_path)
-    print(zip_path.exists())
     extracted_folder_name = zip_path.stem  # Name with .zip extension
     extracted_folder_name = extract_path.joinpath(extracted_folder_name.replace('.zip',''))
     remove_macosx(name,extract_path)
     
     nested_zip_files = list(extracted_folder_name.glob("*.zip"))
-    print(nested_zip_files)
+
     for nested_zip_file in nested_zip_files:
         nested_extract_path = nested_zip_file.parent
         extract_nested_zips(nested_zip_file, nested_extract_path)
@@ -73,8 +72,8 @@ def get_url(url: str, save_location: Path, name: str) -> None:
                 urlretrieve(url, save_location.joinpath(file_name))
             except URLError as e:
                 if download_attempts == 9:
-                    print("FAILED TO DOWNLOAD: " + url + " for " + name)
-                    print("ERROR: " + str(e))
+                    logger.info(f"FAILED TO DOWNLOAD {url} for {name}")
+                    logger.info(f"ERROR {str(e)}")
 
                 continue
         elif url.endswith(".zip"):
@@ -88,12 +87,12 @@ def get_url(url: str, save_location: Path, name: str) -> None:
                                 
             except URLError as e:
                 if download_attempts == 9:
-                    print("FAILED TO DOWNLOAD: " + url + " for " + name)
-                    print("ERROR: " + str(e))
+                    logger.info(f"FAILED TO DOWNLOAD {url} for {name}")
+                    logger.info(f"ERROR {str(e)}")
 
                 continue
             except Exception as e:
-                print(e)
+                logger.info(f"{e}")
 
                 continue
 
@@ -111,10 +110,7 @@ def remove_macosx(name:str, location:Path)-> None:
     for f in folders:
         if f.name=="__MACOSX":
             shutil.rmtree(f)
-            print("Deleted the __MACOSX folder in " + name)
-
-
-
+            logger.info(f"Deleted the __MACOSX  folder in {name}")
 
 def download(name: str,download_path:Path) -> None:
     """Download a single dataset.
@@ -123,7 +119,7 @@ def download(name: str,download_path:Path) -> None:
         downlaod_path: Path to donwload the dataset
     """
 
-    print("Started downloading " + name)
+    logger.info(f"Started downloading {name}")
     download_path=download_path.joinpath("BBBC")
 
     save_location = download_path.joinpath(name, "raw")
@@ -169,7 +165,8 @@ def download(name: str,download_path:Path) -> None:
 
             get_url(url, file_path, "BBBC018")
 
-    print(name + " has finished downloading")
+    logger.info(f"{name} has finished downloading")
+    
     images_path=save_location.joinpath("Images")
     remove_macosx(name,images_path)
     ground_path=save_location.joinpath("Ground_Truth")
@@ -178,7 +175,6 @@ def download(name: str,download_path:Path) -> None:
     
     # unzip nested zip files
     zip_files = list(images_path.glob("**/*.zip"))
-    print(zip_files)
     for zip_file in zip_files:
         extract_path = zip_file.parent
         extract_nested_zips(name,zip_file, extract_path)
