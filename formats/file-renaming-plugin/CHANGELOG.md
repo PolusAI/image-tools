@@ -9,3 +9,4 @@
 7. Replaced `Unittest` with `pytest` package.
 8. Code is optimized for parallel execution of tasks
 9. New feature/input argument `mapDirectory` implemented to include directory name in renamed files. It is optional if `raw` selected then orignal directory name is added in renamed files and `map` for mapped values for subdirectories `d0, d1, d2, ... dn`. If no value is passed then it rename files only for the selected directory.
+10. Added a support of handling nested files in nested directories.

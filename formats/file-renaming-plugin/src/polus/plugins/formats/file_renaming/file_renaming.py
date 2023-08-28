@@ -31,6 +31,29 @@ class MappingDirectory(str, enum.Enum):
     Default = ""
 
 
+def get_data(inp_dir: pathlib.Path) -> tuple[list[str], list[str]]:
+    """Get group names from pattern. Convert patterns (c+ or dd) to regex.
+
+    Args:
+        inp_dir: Path to input directory.
+
+    Returns:
+        A tuple of list of subdirectories and files path.
+    """
+    filepath: list[str] = []
+    dirpaths: list[str] = []
+    for path in inp_dir.rglob("*"):
+        if path.is_dir():
+            if path.parent in dirpaths:
+                dirpaths.remove(f"{path.parent}")
+            dirpaths.append(f"{path}")
+        elif path.is_file() and not path.name.startswith("."):
+            fpath = f"{inp_dir.joinpath(path)}"
+            filepath.append(fpath)
+
+    return dirpaths, filepath
+
+
 def map_pattern_grps_to_regex(file_pattern: str) -> dict:
     """Get group names from pattern. Convert patterns (c+ or dd) to regex.
 
@@ -245,7 +268,7 @@ def letters_to_int(named_grp: str, all_matches: list) -> dict:
     return str_alphabetindex_dict
 
 
-def rename(  # noqa: C901, PLR0912
+def rename(  # noqa: C901, PLR0915, PLR0912
     inp_dir: pathlib.Path,
     out_dir: pathlib.Path,
     file_pattern: str,
@@ -273,11 +296,10 @@ def rename(  # noqa: C901, PLR0912
         msg = "Please define filePattern including file extension!"
         raise ValueError(msg)
 
-    inp_files = [
-        str(inp_file.name)
-        for inp_file in inp_dir.iterdir()
-        if inp_file.suffix == f".{file_ext}"
-    ]
+    _, inp_files = get_data(inp_dir)
+
+    inp_files = [f for f in inp_files if pathlib.Path(f).suffix == f".{file_ext}"]
+
     if len(inp_files) == 0:
         msg = "Please check input directory again!! As it does not contain files"
         raise ValueError(msg)

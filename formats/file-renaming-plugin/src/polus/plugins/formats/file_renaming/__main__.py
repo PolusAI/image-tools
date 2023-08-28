@@ -4,6 +4,7 @@ import logging
 import os
 import pathlib
 import re
+from re import Match
 from typing import Any
 from typing import Optional
 
@@ -90,41 +91,31 @@ def main(  # noqa: PLR0913 D417
         out_dir.exists()
     ), f"{out_dir} does not exists!! Please check output path again"
 
-    subdirs = sorted([d for d in inp_dir.iterdir() if d.is_dir()])
-    subfiles = sorted(
-        [f for f in inp_dir.iterdir() if f.is_file() if not f.name.startswith(".")],
-    )
-
+    subdirs, subfiles = fr.get_data(inp_dir)
     if subfiles:
         assert len(subfiles) != 0, "Files are missing in input directory!!!"
 
-    if subfiles and not map_directory:
+    if not map_directory:
         fr.rename(
             inp_dir,
             out_dir,
             file_pattern,
             out_file_pattern,
         )
-    elif subfiles and map_directory:
-        if f"{map_directory}" == "raw":
-            outfile_pattern = f"{inp_dir.name}_{out_file_pattern}"
-            fr.rename(inp_dir, out_dir, file_pattern, outfile_pattern)
-        else:
-            outfile_pattern = f"d01_{out_file_pattern}"
-            fr.rename(inp_dir, out_dir, file_pattern, outfile_pattern)
 
-    elif map_directory and not subfiles:
-        subdirs = sorted([d for d in inp_dir.iterdir() if d.is_dir()])
-        for i, sub in enumerate(subdirs, 1):
+    elif map_directory:
+        for i, sub in enumerate(subdirs):
             assert (
-                len([f for f in sub.iterdir() if f.is_file()]) != 0
+                len([f for f in pathlib.Path(sub).iterdir() if f.is_file()]) != 0
             ), "Files are missing in input directory!!!"
-            # Splitting of directory name containing metacharacters
-            regexp = re.split("\\W|\\_", sub.stem)
-            empty_string = ""
-            exp = [reg for reg in regexp if reg != empty_string]
-            # Use underscore to join strings and integers of a directory name
-            matching_directories = "_".join(exp)
+            dir_pattern = r"^[A-Za-z0-9_]+$"
+            # Iterate over the directories and check if they match the pattern
+            matching_directories: Optional[Match[Any]] = re.match(
+                dir_pattern,
+                pathlib.Path(sub).stem,
+            )
+            if matching_directories is not None:
+                matching_directories = matching_directories.group()
             if f"{map_directory}" == "raw":
                 outfile_pattern = f"{matching_directories}_{out_file_pattern}"
             else:
