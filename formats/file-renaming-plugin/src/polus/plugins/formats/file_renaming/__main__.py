@@ -104,6 +104,8 @@ def main(  # noqa: PLR0913 D417
         )
 
     elif map_directory:
+        subnames = [pathlib.Path(sb).name for sb in subdirs]
+        sub_check = all(name == subnames[0] for name in subnames)
         for i, sub in enumerate(subdirs):
             assert (
                 len([f for f in pathlib.Path(sub).iterdir() if f.is_file()]) != 0
@@ -116,8 +118,14 @@ def main(  # noqa: PLR0913 D417
             )
             if matching_directories is not None:
                 matching_directories = matching_directories.group()
-            if f"{map_directory}" == "raw":
+
+            if not sub_check and f"{map_directory}" == "raw":
                 outfile_pattern = f"{matching_directories}_{out_file_pattern}"
+            elif subnames and f"{map_directory}" == "raw":
+                logger.error(
+                    "Subdirectoy names are same, should be different.",
+                )
+                break
             else:
                 outfile_pattern = f"d{i}_{out_file_pattern}"
             fr.rename(sub, out_dir, file_pattern, outfile_pattern)

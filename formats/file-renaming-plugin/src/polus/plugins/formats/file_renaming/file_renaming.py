@@ -31,7 +31,7 @@ class MappingDirectory(str, enum.Enum):
     Default = ""
 
 
-def get_data(inp_dir: pathlib.Path) -> tuple[list[str], list[str]]:
+def get_data(inp_dir: pathlib.Path) -> tuple[list[pathlib.Path], list[pathlib.Path]]:
     """Get group names from pattern. Convert patterns (c+ or dd) to regex.
 
     Args:
@@ -40,15 +40,15 @@ def get_data(inp_dir: pathlib.Path) -> tuple[list[str], list[str]]:
     Returns:
         A tuple of list of subdirectories and files path.
     """
-    filepath: list[str] = []
-    dirpaths: list[str] = []
+    filepath: list[pathlib.Path] = []
+    dirpaths: list[pathlib.Path] = []
     for path in inp_dir.rglob("*"):
         if path.is_dir():
             if path.parent in dirpaths:
-                dirpaths.remove(f"{path.parent}")
-            dirpaths.append(f"{path}")
+                dirpaths.remove(path.parent)
+            dirpaths.append(path)
         elif path.is_file() and not path.name.startswith("."):
-            fpath = f"{inp_dir.joinpath(path)}"
+            fpath = inp_dir.joinpath(path)
             filepath.append(fpath)
 
     return dirpaths, filepath
