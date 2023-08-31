@@ -4,7 +4,7 @@ version = "1.1.0-dev0"
 description = ""
 authors = ["Nick Schaub <nick.schaub@nih.gov>", "Antoine Gerardin <antoine.gerardin@gmail.com>"]
 readme = "README.md"
-packages = [{include = "polus_python_template2"}]
+packages = [{include = "polus_python_template"}]
 
 [tool.poetry.dependencies]
 python = "^3.9.16"
