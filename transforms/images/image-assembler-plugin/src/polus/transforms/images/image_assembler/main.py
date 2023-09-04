@@ -113,7 +113,8 @@ def get_number(s: typing.Any) -> typing.Union[int,typing.Any]:
     except ValueError:
         return s
 
-def _parse_stitch(stitchPath: pathlib.Path,
+def _parse_stitch(img_path: pathlib.Path,
+                  stitchPath: pathlib.Path,
                   pattern: str,
                   timepointName: bool = False
                   ) -> StitchingVector:
@@ -136,6 +137,22 @@ def _parse_stitch(stitchPath: pathlib.Path,
                  'name': '',
                  'filePos': []
                 }
+    
+    # NOTE Originally, the filepattern was declared global and thus inherited by forked processes.
+    # This would break on non unix platform where forking process is unavailable (windows) or discouraged (osx)
+    # see [issue](https://github.com/python/cpython/issues/77906)
+    # Alternatively, we could initialized filepattern once and serialize it in each child process but benefits would be unclear.
+    # We could also remove it altogether and select files in the directory using the stitching vector info. Trade-offs are unclear
+    # until some benchmarked are performed. 
+
+    # A fail parsing in a subprocess should stop further processing.
+    pattern = ".*"
+    # Try to infer a filepattern from the files on disk for faster matching later
+    try:
+        pattern = filepattern.infer_pattern(img_path)
+    # Pattern inference didn't work, so just get a list of files
+    finally:
+        fp = filepattern.FilePattern(img_path,pattern) # type: ignore[name-defined]
 
     # Try to parse the stitching vector using the infered file pattern
     if pattern != '.*':
@@ -210,11 +227,12 @@ def _parse_stitch(stitchPath: pathlib.Path,
 
     return out_dict
 
-def assemble_image(vector_path: pathlib.Path,
+def assemble_image(img_path: pathlib.Path,
+                   vector_path: pathlib.Path,
                    out_path: pathlib.Path,
                    depth: int,
-                   timesliceNaming: bool,
-                   pattern: str) -> None:
+                   timesliceNaming: bool
+                   ) -> None:
     """Assemble a 2d or 3d image
 
     This method assembles one image from one stitching vector. It can
@@ -235,7 +253,7 @@ def assemble_image(vector_path: pathlib.Path,
     with ProcessManager.process():
 
         # Parse the stitching vector
-        parsed_vector = _parse_stitch(vector_path, pattern, timesliceNaming)
+        parsed_vector = _parse_stitch(img_path, vector_path, timesliceNaming)
 
         # Initialize the output image
         with BioReader(parsed_vector['filePos'][0]['file']) as br:
@@ -268,26 +286,10 @@ def main(imgPath: pathlib.Path,
          timesliceNaming: typing.Optional[bool]
          ) -> None:
 
-    logger = logging.getLogger("main")
-
     '''Setup stitching variables/objects'''
     # Get a list of stitching vectors
     vectors = list(stitchPath.iterdir())
     vectors.sort()
-
-    pattern = ".*"
-
-    # Try to infer a filepattern from the files on disk for faster matching later
-    global fp # make the filepattern global to share between processes
-    try:
-        pattern = filepattern.infer_pattern(imgPath)
-        logger.info(f'Inferred file pattern: {pattern}')
-        fp = filepattern.FilePattern(imgPath,pattern) # type: ignore[name-defined]
-
-    # Pattern inference didn't work, so just get a list of files
-    except:
-        logger.info(f'Unable to infer pattern, defaulting to: .*')
-        fp = filepattern.FilePattern(imgPath,pattern) # type: ignore[name-defined]
 
     # get z depth
     with BioReader(next(imgPath.iterdir())) as br:
@@ -303,6 +305,6 @@ def main(imgPath: pathlib.Path,
             continue
 
         # assemble_image(v,outDir, depth)
-        ProcessManager.submit_process(assemble_image,v,outDir, depth, timesliceNaming, pattern)
+        ProcessManager.submit_process(assemble_image, imgPath, v, outDir, depth, timesliceNaming)
 
     ProcessManager.join_processes()
