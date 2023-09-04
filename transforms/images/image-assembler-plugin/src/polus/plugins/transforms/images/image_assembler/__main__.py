@@ -7,7 +7,7 @@ from pathlib import Path
 
 import typer
 
-from .image_assembler import assemble_image
+from .image_assembler import assemble_images
 from .image_assembler import generate_output_filenames
 
 logging.basicConfig(
@@ -26,14 +26,15 @@ app = typer.Typer(help="Image Assembler plugin.")
 
 def generate_preview(
     img_path: Path,
-    out_dir: Path,
     stitch_path: Path,
+    out_dir: Path,
     timeslice_naming: bool,
 ) -> None:
     """Generate preview of the plugin outputs."""
     output_filenames = generate_output_filenames(
         img_path,
         stitch_path,
+        out_dir,
         timeslice_naming,
     )
 
@@ -92,7 +93,7 @@ def main(
         msg = "imgPath does not exist"
         raise ValueError(msg, img_path)
 
-    if not img_path.exists():
+    if not out_dir.exists():
         msg = "outDir does not exist"
         raise ValueError(msg, out_dir)
 
@@ -108,11 +109,11 @@ def main(
         logger.warning(f"imgPath : images subdirectory found so using that: {img_path}")
 
     if preview:
-        generate_preview(img_path, out_dir, stitch_path, timeslice_naming)
+        generate_preview(img_path, stitch_path, out_dir, timeslice_naming)
         logger.info(f"generating preview data in {out_dir}")
         return
 
-    assemble_image(img_path, stitch_path, out_dir, timeslice_naming)
+    assemble_images(img_path, stitch_path, out_dir, timeslice_naming)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-transforms-images-image-assembler"
-version = "1.3.0-dev0"
+version = "1.4.0-dev0"
 description = "A scalable image assembler plugin."
 authors = ["Nick Schaub <nick.schaub@nih.gov>", "Antoine Gerardin <antoine.gerardin@gmail.com>"]
 readme = "README.md"
@@ -9,7 +9,7 @@ packages = [{include = "polus", from = "src"}]
 [tool.poetry.dependencies]
 python = "^3.9.15"
 bfio = {version = "2.1.9", extras = ["all"]}
-filepattern = "1.4.7"
+filepattern = "^2.0.1"
 preadator = "0.3.0.dev1"
 typer = "^0.7.0"
 pip = "^23.0.1"

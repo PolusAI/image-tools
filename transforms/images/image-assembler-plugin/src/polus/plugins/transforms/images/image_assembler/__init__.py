@@ -1,8 +1,8 @@
 """Image Assembler Plugin."""
 
-__version__ = "1.3.0-dev0"
+__version__ = "1.4.0-dev0"
 
 from polus.plugins.transforms.images.image_assembler.image_assembler import (  # noqa
-    _assemble_image,
+    assemble_images,
     generate_output_filenames,
 )
