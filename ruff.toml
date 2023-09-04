@@ -15,24 +15,9 @@ select = [
   "COM",  # flake8-commas
   "C4",  # flake8-comprehensions
   "EM",  # flake8-errmsg
-<<<<<<< HEAD
-  "INP",  # flake8-no-pep420
-  "T20",  # flake8-print
-  "PYI",  # flake8-pyi, type-hinting stub files
-  "PT",  # flake8-pytest-style
-  "RSE",  # flake8-raise
-  "RET",  # flake8-return
-  "SIM",  # flake8-simplify
-  "ARG",  # flake8-unused-arguments
-  "ERA", # flake8-eradicate
-  "PTH",  # flake8-use-pathlib
-  "PL",  # pylint
-  "FLY",  # flynt
-=======
   "RET",  # flake8-return
   "PTH",  # flake8-use-pathlib
   "PL",  # pyline
->>>>>>> 254a68a (update : update to new standards.)
   "NPY",  # NumPy-specific rules
   "RUF",  # Ruff-specific rules
 ]
@@ -51,13 +36,6 @@ convention = "google"
 [per-file-ignores]
 "__init__.py" = ["F401"]
 "__main__.py" = ["B008", "S101"]
-<<<<<<< HEAD
-"./**/tests/*.py" = ["S101"]  # Use of assert detected.
 
 [isort]
 force-single-line = true
-=======
-
-[isort]
-force-single-line = true
->>>>>>> 254a68a (update : update to new standards.)
