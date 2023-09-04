@@ -1,13 +1,8 @@
-"""image Assembler."""
-
 # Base packages
-import pathlib
-import re
-import typing
+import argparse, logging, re, typing, pathlib
 
 # 3rd party packages
-import filepattern
-import numpy
+import filepattern, numpy
 
 # Class/function imports
 from bfio import BioReader, BioWriter
@@ -18,14 +13,14 @@ from preadator import ProcessManager
 chunk_size = 8192
 useful_threads = (chunk_size // BioReader._TILE_SIZE) ** 2
 
+logging.basicConfig(
+    format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
+    datefmt="%d-%b-%y %H:%M:%S",
+)
+logger = logging.getLogger("main")
+logger.setLevel(logging.INFO)
 
-class StitchingVector(typing.TypedDict):
-    """Class Representing a stitching vector."""
-
-    width: int
-    height: int
-    name: str
-    filePos: list
+logging.getLogger("bfio").setLevel(logging.CRITICAL)
 
 
 def make_tile(
@@ -37,7 +32,7 @@ def make_tile(
     parsed_vector: dict,
     bw: BioWriter,
 ) -> None:
-    """Create a supertile from images and save to file.
+    """Create a supertile from images and save to file
 
     This method builds a supertile, which is a section of the image defined by
     the global variable ``chunk_size`` and is composed of multiple smaller tiles
@@ -58,6 +53,7 @@ def make_tile(
         bw: The output file object
 
     """
+
     with ProcessManager.thread() as active_threads:
         # Get the data type
         with BioReader(parsed_vector["filePos"][0]["file"]) as br:
@@ -110,7 +106,7 @@ def make_tile(
 
 
 def get_number(s: typing.Any) -> typing.Union[int, typing.Any]:
-    """Check that s is number.
+    """Check that s is number
 
     This function checks to make sure an input value is able to be converted
     into an integer. If it cannot be converted to an integer, the original
@@ -128,83 +124,62 @@ def get_number(s: typing.Any) -> typing.Union[int, typing.Any]:
 
 
 def _parse_stitch(
-    img_path: pathlib.Path,
-    stitching_vector: pathlib.Path,
-    timepoint_name: bool = False,
-) -> StitchingVector:
-    """Load and parse image stitching vectors.
+    imgPath: pathlib.Path, stitchPath: pathlib.Path, timepointName: bool = False
+) -> dict:
+    """Load and parse image stitching vectors
 
     This function parses the data from a stitching vector, then extracts the
     relevant image sizes for each image in the stitching vector to obtain a
     stitched image size. This function also infers an output file name.
 
     Args:
-        img_path : path to the images
-        stitching_vector: the stitching vector uses to select the relevant images
-        timepoint_name: Use the vector timeslice as the image name
+        stitchPath: A path to stitching vectors
+        timepointName: Use the vector timeslice as the image name
     Returns:
         Dictionary with keys (width, height, name, filePos)
     """
-    assert stitching_vector.is_file
-    
+
     # Initialize the output
-    out_dict: StitchingVector = {
-        "width": int(0),
-        "height": int(0),
-        "name": "",
-        "filePos": [],
-    }
+    out_dict = {"width": int(0), "height": int(0), "name": "", "filePos": []}
 
-    # NOTE Originally, the filepattern was declared global and thus inherited by forked processes.
-    # This would break on non unix platform where forking process is unavailable (windows) or discouraged (osx)
-    # see [issue](https://github.com/python/cpython/issues/77906)
-    # Alternatively, we could initialized filepattern once and serialize it in each child process but benefits would be unclear.
-    # We could also remove it altogether and select files in the directory using the stitching vector info. Trade-offs are unclear
-    # until some benchmarked are performed.
-
-    # A fail parsing in a subprocess should stop further processing.
-    pattern = ".*"
     # Try to infer a filepattern from the files on disk for faster matching later
     try:
-        pattern = filepattern.infer_pattern(img_path)
+        pattern = filepattern.infer_pattern([f.name for f in imgPath.iterdir()])
+        logger.info(f"Inferred file pattern: {pattern}")
+        fp = filepattern.FilePattern(imgPath, pattern)
+
     # Pattern inference didn't work, so just get a list of files
-    finally:
-        fp = filepattern.FilePattern(img_path, pattern)  # type: ignore[name-defined]
+    except:
+        logger.info(f"Unable to infer pattern, defaulting to: .*")
+        fp = filepattern.FilePattern(imgPath, ".*")
 
     # Try to parse the stitching vector using the infered file pattern
-    if pattern != ".*":
-        vp = filepattern.FilePattern(stitching_vector, pattern)
-        unique_vals = {k: v for k, v in vp.get_unique_values().items() if len(v) == 1}
-        files = fp.get_matching(**unique_vals) if unique_vals else list(fp())  # type: ignore[name-defined]
+    if fp.pattern != ".*":
+        vp = filepattern.VectorPattern(stitchPath, fp.pattern)
+        unique_vals = {k.upper(): v for k, v in vp.uniques.items() if len(v) == 1}
+        files = fp.get_matching(**unique_vals)
 
     else:
         # Try to infer a pattern from the stitching vector
         try:
-            vector_files = filepattern.FilePattern(stitching_vector, ".*")
+            vector_files = filepattern.VectorPattern(stitchPath, ".*")
             pattern = filepattern.infer_pattern([v[0]["file"] for v in vector_files()])
-            vp = filepattern.FilePattern(stitching_vector, pattern)
+            vp = filepattern.VectorPattern(stitchPath, pattern)
 
         # Fall back to universal filepattern
         except ValueError:
-            vp = filepattern.FilePattern(stitching_vector, ".*")
+            vp = filepattern.VectorPattern(stitchPath, ".*")
 
-        files = list(fp())  # type: ignore[name-defined]
+        files = fp.files
 
-    # file_names = [f['file'].name for f in files]
-    file_names = [filelist[0].name for _, filelist in files]
-
-    directory_path = files[0][1][0]
-
-    _files = list(vp())
-    print(f" {len(_files)} files : ", _files)
+    file_names = [f["file"].name for f in files]
 
     for file in vp():
-        filename = file[1][0].name
-        if filename not in file_names:
+        if file[0]["file"] not in file_names:
             continue
 
         stitch_groups = {k: get_number(v) for k, v in file[0].items()}
-        stitch_groups["file"] = directory_path.with_name(filename)
+        stitch_groups["file"] = files[0]["file"].with_name(stitch_groups["file"])
 
         # Get the image size
         stitch_groups["width"], stitch_groups["height"] = BioReader.image_size(
@@ -219,31 +194,28 @@ def _parse_stitch(
     out_dict["height"] = max([f["height"] + f["posY"] for f in out_dict["filePos"]])
 
     # Generate the output file name
-    if timepoint_name:
+    if timepointName:
         global_regex = ".*global-positions-([0-9]+).txt"
-        val = re.match(global_regex, pathlib.Path(stitching_vector).name)
-        name = (
-            val.groups()[0] if val else vp.output_name()
-        )  # TODO CHECK what to do if no match / stitching vector name is again hardcoded here
+        name = re.match(global_regex, pathlib.Path(stitchPath).name).groups()[0]
         if file_names[0].endswith(".ome.zarr"):
             name += ".ome.zarr"
         else:
             name += ".ome.tif"
         out_dict["name"] = name
         ProcessManager.job_name(out_dict["name"])
-        ProcessManager.log("Setting output name to timepoint slice number.")
+        ProcessManager.log(f"Setting output name to timepoint slice number.")
     else:
         # Try to infer a good filename
         try:
             out_dict["name"] = vp.output_name()
             ProcessManager.job_name(out_dict["name"])
-            ProcessManager.log("Inferred output file name from vector.")
+            ProcessManager.log(f"Inferred output file name from vector.")
 
         # A file name couldn't be inferred, default to the first image name
-        except Exception:
+        except:
             ProcessManager.job_name(out_dict["name"])
             ProcessManager.log(
-                "Could not infer output file name from vector, using first file name in the stitching vector as an output file name."
+                f"Could not infer output file name from vector, using first file name in the stitching vector as an output file name."
             )
             for file in vp():
                 out_dict["name"] = file[0]["file"]
@@ -254,12 +226,11 @@ def _parse_stitch(
 
 def _assemble_image(
     img_path: pathlib.Path,
-    stitch_path: pathlib.Path,
+    vector_path: pathlib.Path,
     out_path: pathlib.Path,
     depth: int,
-    timeslice_naming: bool,
 ) -> None:
-    """Assemble a 2d or 3d image.
+    """Assemble a 2d or 3d image
 
     This method assembles one image from one stitching vector. It can
     assemble both 2d and z-stacked 3d images It is intended to run as
@@ -270,14 +241,15 @@ def _assemble_image(
     2. Generate a thread for each subsection (supertile) of an image.
 
     Args:
-        stitch_path: Path to the stitching vector
+        vector_path: Path to the stitching vector
         out_path: Path to the output directory
         depth: depth of the input images
     """
+
     # Grab a free process
     with ProcessManager.process():
         # Parse the stitching vector
-        parsed_vector = _parse_stitch(img_path, stitch_path, timeslice_naming)
+        parsed_vector = _parse_stitch(img_path, vector_path)
 
         # Initialize the output image
         with BioReader(parsed_vector["filePos"][0]["file"]) as br:
@@ -291,7 +263,7 @@ def _assemble_image(
             bw.z = depth
 
         # Assemble the images
-        ProcessManager.log("Begin assembly")
+        ProcessManager.log(f"Begin assembly")
 
         for z in range(depth):
             ProcessManager.log(f"Assembling Z position : {z}")
@@ -312,18 +284,16 @@ def _assemble_image(
 
         bw.close()
 
-
 def generate_output_filenames(
     img_path: pathlib.Path,
     stitch_path: pathlib.Path,
-    timeslice_naming: typing.Optional[bool]
-    ):
+    timeslice_naming: typing.Optional[bool],
+) -> None:
     """Generate all image filenames that would be created if we run assemble_image."""
-
     stitching_vectors = list(stitch_path.iterdir())
     stitching_vectors.sort()
 
-    output_filenames = [];
+    output_filenames = []
 
     for stitching_vector in stitching_vectors:
         # Check to see if the file is a valid stitching vector
@@ -336,47 +306,33 @@ def generate_output_filenames(
 
     return output_filenames
 
-
 def assemble_image(
-    img_path: pathlib.Path,
-    stitch_path: pathlib.Path,
-    out_dir: pathlib.Path,
-    timeslice_naming: typing.Optional[bool],
+    imgPath: pathlib.Path,
+    stitchPath: pathlib.Path,
+    outDir: pathlib.Path,
+    timesliceNaming: typing.Optional[bool],
 ) -> None:
-    """Assemble a 2d or 3d image.
-
-    This method assembles images from any number of stitching vectors. It can
-    assemble both 2d and z-stacked 3d images. Each image is assembled in a
-    separate process from a stitching vectors and the associated subset of partial images.
-
-    Args:
-        img_path: path to the partial images
-        stitch_path: Path to the stitching vector
-        out_path: Path to the output directory
-        depth: depth of the input images
-    """
+    """Setup stitching variables/objects"""
     # Get a list of stitching vectors
-    stitching_vectors = list(stitch_path.iterdir())
-    stitching_vectors.sort()
+    vectors = list(stitchPath.iterdir())
+    vectors.sort()
 
     # get z depth
-    with BioReader(next(img_path.iterdir())) as br:
+    with BioReader(next(imgPath.iterdir())) as br:
         depth = br.z
 
     """Run stitching jobs in separate processes"""
     # ProcessManager.init_threads()
     ProcessManager.init_processes("main", "asmbl")
 
-    for stitching_vector in stitching_vectors:
+    for v in vectors:
         # Check to see if the file is a valid stitching vector
-        # TODO CHECK that is tying the implementation to a non explicit convention. I believe this should be removed
-        # and a parsing error thrown in the code (or a log event) if the file is not a stitching vector
-        if "img-global-positions" not in stitching_vector.name:
+        if "img-global-positions" not in v.name:
             continue
 
         # assemble_image(v,outDir, depth)
-        ProcessManager.submit_process(
-            _assemble_image, img_path, stitching_vector, out_dir, depth, timeslice_naming
-        )
+        ProcessManager.submit_process(_assemble_image, imgPath, v, outDir, depth)
 
     ProcessManager.join_processes()
+
+

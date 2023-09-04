@@ -170,4 +170,11 @@ src/polus/plugins/_plugins/manifests/*
 # allow python scripts insied manifests dir
 !src/polus/plugins/_plugins/manifests/*.py
 
+<<<<<<< HEAD
 .DS_Store
+=======
+
+# ignore Apple files
+.DS_Store
+
+>>>>>>> 254a68a (update : update to new standards.)
