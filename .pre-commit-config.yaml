@@ -2,6 +2,31 @@ fail_fast: true
 
 repos:
 
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-json
+      - id: pretty-format-json
+        args:
+          - "--autofix"
+          - "--indent=2"
+          - "--no-sort-keys"
+      - id: check-toml
+      - id: check-xml
+      - id: check-yaml
+      - id: debug-statements
+      - id: detect-aws-credentials
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+        description: Forces to replace line ending by the UNIX 'lf' character.
+      - id: trailing-whitespace
+        exclude: '.bumpversion.cfg'
+      - id: check-merge-conflict
+
   - repo: https://github.com/psf/black
     rev: '23.3.0'
     hooks:
@@ -11,19 +36,23 @@ repos:
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     # Ruff version.
-    rev: 'v0.0.265'
+    rev: 'v0.0.274'
     hooks:
       - id: ruff
         exclude: |
           (?x)(
-            ^test_[a-zA-Z0-9]+.py$|
+            test_[a-zA-Z0-9]+.py$|
             ^src\/polus\/plugins\/_plugins\/models\/\w*Schema.py$
           )
         args: [--fix]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.2.0'
+    rev: 'v1.4.0'
     hooks:
       - id: mypy
-        exclude: ^src\/polus\/plugins\/_plugins\/models\/\w*Schema.py$
-        additional_dependencies: [types-requests==2.28.11.8]
+        exclude: |
+          (?x)(
+            test_[a-zA-Z0-9]+.py$|
+            ^src\/polus\/plugins\/_plugins\/models\/\w*Schema.py$
+          )
+        additional_dependencies: [types-requests==2.31.0.1]
