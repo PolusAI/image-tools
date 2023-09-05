@@ -8,7 +8,7 @@ from pathlib import Path
 import typer
 
 from .image_assembler import assemble_images
-from .image_assembler import generate_output_filenames
+from .image_assembler import generate_output_filepaths
 
 logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
@@ -31,19 +31,19 @@ def generate_preview(
     timeslice_naming: bool,
 ) -> None:
     """Generate preview of the plugin outputs."""
-    output_filenames = generate_output_filenames(
+    output_paths = generate_output_filepaths(
         img_path,
         stitch_path,
         out_dir,
-        timeslice_naming,
+        timeslice_naming
     )
 
     preview: dict[str, typing.Union[list, str]] = {
         "outputDir": [],
     }
 
-    for filename in output_filenames:
-        preview["outputDir"].append(filename)
+    for filepath in output_paths:
+        preview["outputDir"].append(str(filepath))
 
     with Path.open(out_dir / "preview.json", "w") as fw:
         json.dump(preview, fw, indent=2)

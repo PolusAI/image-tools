@@ -24,6 +24,8 @@ logger.setLevel(logging.DEBUG)
 chunk_size = 1024 * 8
 chunk_width, chunk_height = chunk_size, chunk_size
 
+BACKEND = "python"
+
 # UNUSED - PREADATOR USES ITS OWN HEURISTICS
 # # TODO CHECK those heuristics would require further investigation.
 # num_threads = (chunk_size // BioReader._TILE_SIZE) ** 2
@@ -33,24 +35,25 @@ chunk_width, chunk_height = chunk_size, chunk_size
 #     num_processes = multiprocessing.cpu_count() * 2
 
 
-def generate_output_filenames(
+def generate_output_filepaths(
     img_path: Path,
     stitch_path: Path,
     output_path: Path,
-    derive_name_from_vector_file: Optional[bool],
+    derive_name_from_vector_file: Optional[bool]
 ) -> None:
     """
-    Generate the output filenames that would be created if the assembler was called.
+    Generate the output filepaths that would be created if the assembler was called.
     """
-    output_filenames = []
+    output_filepaths = []
     vector_patterns = collect_stitching_vector_patterns(stitch_path)
     for (vector_file, pattern) in vector_patterns:
         fovs = fp.FilePattern(vector_file, pattern)
         first_image_name = fovs[0][1][0]
         first_image = img_path / first_image_name
         output_image_path = derive_output_image_path(fovs, derive_name_from_vector_file, vector_file, first_image, output_path)
-        output_filenames.append(output_image_path)
-    return output_filenames
+        output_filepaths.append(output_image_path)
+
+    return output_filepaths
 
 
 def assemble_images(
@@ -127,7 +130,7 @@ def assemble_image(vector_file, pattern, derive_name_from_vector_file, img_path,
     # We assume all images have the same size.
     first_image_name = fovs[0][1][0]
     first_image = img_path / first_image_name
-    with BioReader(first_image) as br:
+    with BioReader(first_image, backend=BACKEND) as br:
         full_image_metadata = br.metadata
         fov_width = br.x
         fov_height = br.y
@@ -201,7 +204,7 @@ def assemble_image(vector_file, pattern, derive_name_from_vector_file, img_path,
     # A single copy of of the writer is shared amongst all threads.
     with BioWriter(output_image_path, 
                    metadata=full_image_metadata, 
-                   backend="python") as bw:
+                   backend=BACKEND) as bw:
         bw.x =  full_image_width
         bw.y = full_image_height
         bw._CHUNK_SIZE = chunk_size
@@ -232,7 +235,7 @@ def assemble_chunk(row, col, regions_to_copy, bw, img_path):
         (chunk_start_x, chunk_start_y) = region_to_copy[2]
         (region_width, region_height) = region_to_copy[3]
 
-        with BioReader(filepath) as br:
+        with BioReader(filepath, backend=BACKEND) as br:
             # read data from region of fov
             data = br[fov_start_y: fov_start_y + region_height ,fov_start_x:fov_start_x + region_width]
             #copy data to chunk
