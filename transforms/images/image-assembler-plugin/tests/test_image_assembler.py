@@ -16,8 +16,9 @@ from pathlib import Path
 from bfio import BioReader
 >>>>>>> 254a68a (update : update to new standards.)
 from polus.plugins.transforms.images.image_assembler.image_assembler import (
-    assemble_image,
+    assemble_images,
 )
+BACKEND = "python"
 
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -50,7 +51,7 @@ def test_image_assembler(
     ground_truth_path = ground_truth_dir
     img_path, stitch_path, out_dir = plugin_dirs
 
-    assemble_image(img_path, stitch_path, out_dir, False)
+    assemble_images(img_path, stitch_path, out_dir, False)
 
     assert len(os.listdir(ground_truth_path)) == 1
     assert len(os.listdir(out_dir)) == 1
@@ -59,7 +60,7 @@ def test_image_assembler(
     assembled_image_file = out_dir / os.listdir(out_dir)[0]
 
     # check assembled image against ground truth
-    with BioReader(ground_truth_file) as ground_truth:
-        with BioReader(assembled_image_file) as image:
+    with BioReader(ground_truth_file, backend=BACKEND) as ground_truth:
+        with BioReader(assembled_image_file, backend=BACKEND) as image:
             assert ground_truth.shape == image.shape
             assert (ground_truth[:] == image[:]).all()
