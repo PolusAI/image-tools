@@ -17,6 +17,8 @@ import numpy as np
 import pytest
 from bfio import BioWriter
 
+BACKEND = "python"
+
 
 def get_temp_file(path: Path, suffix: str) -> Path:
 =======
@@ -179,7 +181,7 @@ def data(plugin_dirs: tuple[Path, Path, Path], ground_truth_dir: Path) -> None:
     # generate the ground truth image
     suffix = ".ome.tiff"
     ground_truth_file = get_temp_file(ground_truth_path, suffix)
-    with BioWriter(ground_truth_file) as writer:
+    with BioWriter(ground_truth_file, backend=BACKEND) as writer:
         writer.X = data.shape[0]
         writer.Y = data.shape[1]
         writer[:] = data[:]

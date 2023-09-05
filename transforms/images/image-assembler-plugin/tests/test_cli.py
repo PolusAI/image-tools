@@ -124,7 +124,7 @@ def test_cli_preview(data: None, plugin_dirs: tuple[Path, Path, Path]):  # noqa
     # verify we generate the preview file
     result = plugin_json["outputDir"]
     assert len(result) == 1
-    assert result[0] == "img_r00(1-2)_c00(1-2).ome.tif"
+    assert Path(result[0]).name == "img_r00(1-2)_c00(1-2).ome.tif"
 
 
 <<<<<<< HEAD
