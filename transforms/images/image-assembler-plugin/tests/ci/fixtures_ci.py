@@ -1,5 +1,5 @@
 """
-Download reference dataset from their original source
+Download reference datasets from their original source.
 """
 
 from pathlib import Path
@@ -35,7 +35,7 @@ def nist_mist_dataset():
 
 def create_nist_mist_dataset(img_path, stitch_path):
     """
-    Download the dataset
+    Download the dataset.
     """
 
     FOVS_URL = (
