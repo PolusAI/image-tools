@@ -14,10 +14,10 @@ logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
     datefmt="%d-%b-%y %H:%M:%S",
 )
+
+logger = logging.getLogger("polus.plugins.visualization.precompute_slide")
 POLUS_LOG = getattr(logging, environ.get("POLUS_LOG", "INFO"))
-logger = logging.getLogger("polus.plugins.visualization.precompute_slide.__main__")
 logger.setLevel(POLUS_LOG)
-logging.getLogger("bfio").setLevel(POLUS_LOG)
 
 # TODO CHECK Why do we need that
 POLUS_IMG_EXT = environ.get("POLUS_IMG_EXT", ".ome.tif")
@@ -38,29 +38,44 @@ def main(
         "--filePattern",
         "-f",
         help="Filepattern of the images in input.",
-        case_sensitive=False
+        case_sensitive=False,
+        exists=True,
+        readable=True,
+        file_okay=False,
+        resolve_path=True,
     ),
     out_dir: Path = typer.Option(
         ...,
         "--outDir",
         "-o",
         help="Output collection.",
-        case_sensitive=False
+        case_sensitive=False,
+        exists=True,
+        writable=True,
+        file_okay=False,
+        resolve_path=True,
     ),
     pyramid_type: PyramidType = typer.Option(
         PyramidType.zarr,
         "--pyramidType",
         "-p",
-        help="type of pyramid.",
+        help="type of pyramid. Must be one of ['Neuroglancer','DeepZoom', 'Zarr']",
         case_sensitive=False
         ),
     image_type: ImageType = typer.Option(
         ImageType.image,
         "--imageType",
         "-t",
-        help="type of image.",
+        help="type of image. Must be one of ['image','segmentation']",
         case_sensitive=False
-        )
+        ),
+    preview: bool = typer.Option(
+        False,
+        "--preview",
+        "-v", #TODO CHECK if we want to standardize to -p or -v 
+        help="Preview the output without running the plugin",
+        show_default=False,
+    )
 ):
     """Precompute slide plugin command line."""
 
@@ -79,14 +94,11 @@ def main(
 
     if not out_dir.exists():
         raise ValueError("outDir does not exist", out_dir)
-
-    # Validate the pyramid type
-    if pyramid_type not in ["Neuroglancer", "DeepZoom", "Zarr"]:
-        msg = "pyramidType must be one of ['Neuroglancer','DeepZoom', 'Zarr']. got :"
-        raise ValueError(
-            msg,
-            pyramid_type,
-        )
+    
+    if preview:
+        logger.info("Previewing the output without running the plugin")
+        msg = "Preview is not implemented yet."
+        raise NotImplementedError(msg)
 
     # TODO CHECK THAT
     if image_type == ImageType.segmentation and pyramid_type!= PyramidType.neuroglancer:

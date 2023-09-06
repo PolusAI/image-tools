@@ -9,21 +9,6 @@ import os
 import zarr
 from tests.fixtures import plugin_dirs, get_temp_file
 
-# def get_temp_file(path: Path, suffix: str):
-#     """Create path to a temp file."""
-#     temp_name = next(tempfile._get_candidate_names())
-#     return path / (temp_name + suffix)
-
-
-# @fixture
-# def plugin_dirs(tmp_path):
-#     """Create temporary directories"""
-#     input_dir = tmp_path / "input_dir"
-#     output_dir = tmp_path / "output_dir"
-#     input_dir.mkdir()
-#     output_dir.mkdir()
-#     return (input_dir, output_dir)
-
 @fixture
 def image_file(plugin_dirs):
     """
@@ -58,7 +43,7 @@ def image_file(plugin_dirs):
     return image_file
 
 
-def test_zarr_pyramid(plugin_dirs, image_file):
+def test_zarr_pyramid(plugin_dirs: tuple[Path, Path], image_file):
     """
     Test the creation of a zarr pyramid.
     The tests are mostly checking that the output zarr is a valid zarr pyramid.
