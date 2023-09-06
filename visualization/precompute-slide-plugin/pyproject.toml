@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "polus-precompute-slide-plugin"
+name = "polus-plugins-visualization-precompute-slide"
 version = "1.6.0-dev0"
 description = "Polus Precompute Slide Plugin."
 authors = ["Madhuri Vihani <Madhuri.Vihani@nih.gov>, Nick Schaub <Nick.Schaub@nih.gov>, Antoine Gerardin <antoine.gerardin@nih.gov>"]
@@ -12,7 +12,7 @@ typer = "^0.7.0"
 bfio = {version = "2.1.9", extras = ["all"]}
 filepattern = "1.4.7"
 preadator = "0.3.0.dev1"
-imageio = "^2.8.0"
+imageio = "2.8.0"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
