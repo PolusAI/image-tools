@@ -10,7 +10,7 @@ packages = [{include = "polus", from = "src"}]
 python = "^3.9.15"
 typer = "^0.7.0"
 bfio = {version = "2.1.9", extras = ["all"]}
-filepattern = "1.4.7"
+filepattern = ">=0 , <1"
 preadator = "0.3.0.dev1"
 imageio = "2.8.0"
 
