@@ -38,18 +38,19 @@ def precompute_slide(
     logger.info("max concurrent processes = %s", ProcessManager.num_processes())
 
     # Parse the input file directory
+    #TODO CHECK why only those combinations are they allowed?
     fp = filepattern.FilePattern(input_dir, file_pattern)
-    group_by = "" #TODO concatenating is misleading change to assignments
+    group_by = ""
     if "z" in fp.get_variables() and pyramid_type == utils.PyramidType.neuroglancer:
-        group_by += "z"
+        group_by = "z"
         logger.info(
             "Stacking images by z-dimension for Neuroglancer precomputed format.",
         )
     elif "c" in fp.get_variables() and pyramid_type == utils.PyramidType.zarr:
-        group_by += "c"
+        group_by = "c"
         logger.info("Stacking channels by c-dimension for Zarr format")
     elif "t" in fp.get_variables() and pyramid_type == utils.PyramidType.deepzoom:
-        group_by += "t"
+        group_by = "t"
         logger.info("Creating time slices by t-dimension for DeepZoom format.")
     else:
         logger.info(f"Creating one pyramid for each image in {pyramid_type} format.")
@@ -61,35 +62,33 @@ def precompute_slide(
     # group_by implementation has been reversed in Filepattern.v2
     # so former group_by is a bit convoluted
     vars = fp.get_variables()
-    print("vars : ", vars)
-    print("group_by", group_by)
     if(group_by != ""):
         vars.remove(group_by) # what we would group_by in Filepattern.v1
-    capture_groups = fp(group_by=vars)
+    capture_groups = fp(group_by=vars) 
 
     for capture_group in capture_groups:
+        group = capture_group[1]
         files = []
-        for _ , group_by_files in capture_group[1]:
+        for _ , group_by_files in group:
             # each value set in associated with a list of files
             # so we need to concat
-            files = files + group_by_files  
-
-        # TODO REMOVE
-        print(files)
+            files = files + group_by_files
 
         # Create the output name for Neuroglancer format
         if pyramid_type in [utils.PyramidType.neuroglancer,utils.PyramidType.zarr]:
             try:
-                image_dir = fp.output_name(files)
-            except:
-                pass
-            
-            if image_dir in ["", ".*"]:
-                image_dir = files[0].name
-
-            # Reset the depth
-            depth = 0
-            depth_max = 0
+                # TODO CHECK this should be moved out of the conditional block otherwise deepzoom does not use it
+                # output_name expects a capture group
+                image_dir = fp.output_name(group)
+            finally:
+                if image_dir in ["", ".*"]:
+                    image_dir = files[0].name
+                    logger.debug("could not found a good name. Default to :", image_dir)
+                else:
+                    logger.debug("output_name will be :", image_dir)
+                # Reset the depth
+                depth = 0
+                depth_max = 0
 
 
         for file in files:
@@ -123,6 +122,7 @@ def precompute_slide(
         if pyramid_type in [utils.PyramidType.neuroglancer,utils.PyramidType.zarr]:
             if image_type == utils.ImageType.segmentation:
                 ProcessManager.join_processes()
+            print("write pyramid info...")
             pw.write_info()
 
     ProcessManager.join_processes()
