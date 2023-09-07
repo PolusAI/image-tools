@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "polus-plugins-visualization-precompute-slide"
-version = "1.6.0-dev0"
+version = "1.7.0-dev0"
 description = "Polus Precompute Slide Plugin."
-authors = ["Madhuri Vihani <Madhuri.Vihani@nih.gov>, Nick Schaub <Nick.Schaub@nih.gov>, Antoine Gerardin <antoine.gerardin@nih.gov>"]
+authors = ["Madhuri Vihani <Madhuri.Vihani@nih.gov>, Nick Schaub <Nick.Schaub@nih.gov>, Antoine Gerardin <antoine.gerardin@nih.gov>, Najib Ishaq <najib.ishaq@nih.gov>"]
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
