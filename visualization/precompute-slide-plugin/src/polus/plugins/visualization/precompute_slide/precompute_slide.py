@@ -39,16 +39,16 @@ def precompute_slide(
 
     # Parse the input file directory
     fp = filepattern.FilePattern(input_dir, file_pattern)
-    group_by = ""
-    if "z" in fp.variables and pyramid_type == utils.PyramidType.neuroglancer:
+    group_by = "" #TODO concatenating is misleading change to assignments
+    if "z" in fp.get_variables() and pyramid_type == utils.PyramidType.neuroglancer:
         group_by += "z"
         logger.info(
             "Stacking images by z-dimension for Neuroglancer precomputed format.",
         )
-    elif "c" in fp.variables and pyramid_type == utils.PyramidType.zarr:
+    elif "c" in fp.get_variables() and pyramid_type == utils.PyramidType.zarr:
         group_by += "c"
         logger.info("Stacking channels by c-dimension for Zarr format")
-    elif "t" in fp.variables and pyramid_type == utils.PyramidType.deepzoom:
+    elif "t" in fp.get_variables() and pyramid_type == utils.PyramidType.deepzoom:
         group_by += "t"
         logger.info("Creating time slices by t-dimension for DeepZoom format.")
     else:
@@ -58,17 +58,34 @@ def precompute_slide(
     depth_max = 0
     image_dir = ""
 
+    # group_by implementation has been reversed in Filepattern.v2
+    # so former group_by is a bit convoluted
+    vars = fp.get_variables()
+    print("vars : ", vars)
+    print("group_by", group_by)
+    if(group_by != ""):
+        vars.remove(group_by) # what we would group_by in Filepattern.v1
+    capture_groups = fp(group_by=vars)
 
-    for files in fp(group_by=group_by):
+    for capture_group in capture_groups:
+        files = []
+        for _ , group_by_files in capture_group[1]:
+            # each value set in associated with a list of files
+            # so we need to concat
+            files = files + group_by_files  
+
+        # TODO REMOVE
+        print(files)
+
         # Create the output name for Neuroglancer format
         if pyramid_type in [utils.PyramidType.neuroglancer,utils.PyramidType.zarr]:
             try:
-                image_dir = fp.output_name(list(files))
+                image_dir = fp.output_name(files)
             except:
                 pass
-
+            
             if image_dir in ["", ".*"]:
-                image_dir = files[0]["file"].name
+                image_dir = files[0].name
 
             # Reset the depth
             depth = 0
@@ -76,7 +93,7 @@ def precompute_slide(
 
 
         for file in files:
-            with bfio.BioReader(file["file"], max_workers=1) as br:
+            with bfio.BioReader(file, max_workers=1) as br:
                 if  utils.PyramidType.zarr:
                     d_z = br.c
                 else:
@@ -87,7 +104,7 @@ def precompute_slide(
             for z in range(d_z):
                 pyramid_args = {
                     "base_dir": output_dir.joinpath(image_dir),
-                    "image_path": file["file"],
+                    "image_path": file,
                     "image_depth": z,
                     "output_depth": depth,
                     "max_output_depth": depth_max,
