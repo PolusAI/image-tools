@@ -9,7 +9,9 @@ packages = [{include = "polus", from = "src"}]
 [tool.poetry.dependencies]
 python = "^3.9.15"
 bfio = {version = "2.1.9", extras = ["all"]}
-filepattern = "^2.0.1"
+filepattern = "^2.0.1" # on linux and windows through package manager
+# filepattern = ">=0, <1" #for osx dev
+pydantic = "<2" # this is dependency of filepattern no declared in it
 preadator = "0.3.0.dev1"
 typer = "^0.7.0"
 pip = "^23.0.1"
