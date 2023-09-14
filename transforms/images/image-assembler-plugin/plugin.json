@@ -3,7 +3,7 @@
     "version": "1.4.0-dev0",
     "title": "Image Assembler",
     "description": "A scalable image assembling plugin.",
-    "author": "Nick Schaub (nick.schaub@nih.gov), Antoine Gerardin (antoine.gerardin@gmail.com)",
+    "author": "Nick Schaub (nick.schaub@nih.gov), Antoine Gerardin (antoine.gerardin@nih.gov)",
     "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
