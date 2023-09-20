@@ -10,8 +10,8 @@ file_pattern=".*.ome.tif"
 polygon_type='encoding'
 out_dir=${datapath}/output
 
-#Show the help options
-#docker run polusai/segmentations-micojson-plugin:${version}
+# #Show the help options
+# #docker run polusai/segmentations-micojson-plugin:${version}
 
 docker run -v ${datapath}:${datapath} \
             polusai/ome-to-microjson-plugin:${version} \
