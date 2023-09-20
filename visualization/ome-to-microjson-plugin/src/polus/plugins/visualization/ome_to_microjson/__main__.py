@@ -85,7 +85,7 @@ def main(
         msg = "outDir does not exist"
         raise ValueError(msg, out_dir)
 
-    inputs = sm.Loaddata(inpDir=inp_dir)
+    inputs = sm.Loaddata(inp_dir=inp_dir)
 
     dirpaths, filepath = inputs.data
 
