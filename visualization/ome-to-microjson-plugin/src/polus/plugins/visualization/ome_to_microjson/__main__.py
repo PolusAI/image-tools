@@ -87,33 +87,57 @@ def main(
 
     inputs = sm.Loaddata(inp_dir=inp_dir)
 
-    dirpaths, filepath = inputs.data
+    dirpaths, _ = inputs.data
 
     if not len(dirpaths) > 1:
-        dirpaths = filepath
+        files = fp.FilePattern(inp_dir, file_pattern)
 
-    files = [file[1][0] for file in fp.FilePattern(inp_dir, file_pattern)]
-    if not len(files) > 0:
-        msg = "No image files are detected. Please check filepattern again!"
-        raise ValueError(msg)
+        if not len(files) > 0:
+            msg = "No image files are detected. Please check filepattern again!"
+            raise ValueError(msg)
 
-    with ThreadPoolExecutor(max_workers=THREADS) as executor:
-        threads = []
-        for _, f in enumerate(tqdm(files)):
-            model = sm.OmeMicrojsonModel(
-                out_dir=out_dir,
-                file_path=f,
-                polygon_type=polygon_type,
-            )
-            future = executor.submit(model.polygons_to_microjson)
-            threads.append(future)
+        with ThreadPoolExecutor(max_workers=THREADS) as executor:
+            threads = []
+            for _, f in enumerate(tqdm(files())):
+                model = sm.OmeMicrojsonModel(
+                    out_dir=out_dir,
+                    file_path=str(f[1][0]),
+                    polygon_type=polygon_type,
+                )
+                future = executor.submit(model.polygons_to_microjson)
+                threads.append(future)
 
-        for f in tqdm(
-            list(as_completed(threads)),
-            desc="Creating segmentation's microjson",
-            total=len(threads),
-        ):
-            f.result()
+            for f in tqdm(
+                list(as_completed(threads)),
+                desc="Creating segmentation's microjson",
+                total=len(threads),
+            ):
+                f.result()
+    else:
+        for d in dirpaths:
+            files = fp.FilePattern(d, file_pattern)
+
+            if not len(files) > 0:
+                msg = "No image files are detected. Please check filepattern again!"
+                raise ValueError(msg)
+
+            with ThreadPoolExecutor(max_workers=THREADS) as executor:
+                threads = []
+                for _, f in enumerate(tqdm(files())):
+                    model = sm.OmeMicrojsonModel(
+                        out_dir=out_dir,
+                        file_path=str(f[1][0]),
+                        polygon_type=polygon_type,
+                    )
+                    future = executor.submit(model.polygons_to_microjson)
+                    threads.append(future)
+
+                for f in tqdm(
+                    list(as_completed(threads)),
+                    desc="Creating segmentation's microjson",
+                    total=len(threads),
+                ):
+                    f.result()
 
     if preview:
         generate_preview(out_dir)
