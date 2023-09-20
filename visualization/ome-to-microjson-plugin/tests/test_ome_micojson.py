@@ -7,6 +7,7 @@ from pathlib import Path
 from polus.plugins.visualization.ome_to_microjson.ome_microjson import OmeMicrojsonModel
 from polus.plugins.visualization.ome_to_microjson.ome_microjson import PolygonType
 
+from tests.fixture import *  # noqa: F403
 from tests.fixture import clean_directories
 
 
