@@ -1,5 +1,6 @@
 """Ome micojson package."""
 import ast
+import enum
 import logging
 from itertools import chain
 from pathlib import Path
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-class PolygonType:
+class PolygonType(enum.Enum):
     """Type of Polygons."""
 
     RECTANGLE = "rectangle"
@@ -208,7 +209,6 @@ class OmeMicrojsonModel:
     def polygons_to_microjson(self) -> None:
         """Create microjson overlays in JSON Format."""
         data, coordinates = self.get_method()
-
         varlist = [
             "Plate",
             "Image",

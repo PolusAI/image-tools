@@ -2,7 +2,6 @@
 
 Set up all data used in tests.
 """
-import enum
 import shutil
 import tempfile
 from pathlib import Path
@@ -46,15 +45,12 @@ def synthetic_images(
     image_sizes: pytest.FixtureRequest,
 ) -> Union[str, Path]:
     """Generate random synthetic images."""
-    for i in range(3):
+    for i in range(2):
         im = np.zeros((image_sizes, image_sizes))
         points = image_sizes * np.random.random((2, 10**2))
         im[(points[0]).astype(int), (points[1]).astype(int)] = 1
-
         im = filters.gaussian(im, sigma=image_sizes / (20.0 * 10))
-        blobs = im > im.mean()
-        im[blobs is False] = 0
-        im[blobs is True] = 1
+        im[im > 0] = 1
         binary_img = f"x01_y01_r{i}_c1.tif"
         binary_img = Path(inp_dir, binary_img)  # type: ignore
         io.imsave(binary_img, im)
@@ -68,6 +64,6 @@ def get_params(request: pytest.FixtureRequest) -> list[str]:
 
 
 @pytest.fixture(params=[PolygonType.RECTANGLE, PolygonType.ENCODING])
-def get_params_json(request: pytest.FixtureRequest) -> list[enum.Enum]:
+def get_params_json(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the ome to json."""
     return request.param

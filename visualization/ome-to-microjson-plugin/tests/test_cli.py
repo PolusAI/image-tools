@@ -3,8 +3,6 @@ from typer.testing import CliRunner
 from polus.plugins.visualization.ome_to_microjson.__main__ import app
 from tests.fixture import *
 
-# faulthandler.enable()
-
 
 def test_cli(synthetic_images, output_directory, get_params) -> None:
     """Test the command line."""
@@ -28,7 +26,7 @@ def test_cli(synthetic_images, output_directory, get_params) -> None:
     clean_directories()
 
 
-def test_cli_short(synthetic_images, output_directory, get_params):  # noqa
+def test_cli_short(synthetic_images, output_directory, get_params) -> None:
     """Test the command line."""
     runner = CliRunner()
 
