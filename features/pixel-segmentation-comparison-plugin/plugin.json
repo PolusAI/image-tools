@@ -37,8 +37,7 @@
       "name": "filePattern",
       "type": "string",
       "description": "Filename pattern to filter data.",
-      "required": false,
-      "default": ".+"
+      "required": false
     },
     {
       "name": "individualStats",
@@ -56,7 +55,6 @@
       "name": "fileExtension",
       "type": "enum",
       "description": "Output file format",
-      "default": "default",
       "options": {
         "values": [
           ".arrow",
