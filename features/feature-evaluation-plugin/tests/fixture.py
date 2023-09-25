@@ -77,10 +77,10 @@ def generate_data(
         "intensity_image": list(np.repeat("p0_y1_r01_c0.ome.tif", df_size)),
         "mask_image": list(np.repeat("p0_y1_r01_c0.ome.tif", df_size)),
         "label": list(range(1, df_size + 1)),
-        "INTEGRATED_INTENSITY": rng.uniform(0.0, 6480.0, size=df_size),
-        "MEAN": rng.uniform(0.0, 43108.5, size=df_size),
-        "UNIFORMITY": rng.normal(0.0, 1.0, size=df_size),
-        "P01": rng.integers(low=1, high=10, size=df_size),
+        "INTEGRATED_INTENSITY": rng.uniform(0.0, 8000.0, size=df_size),
+        "MEAN": rng.uniform(0.0, 6000.5, size=df_size),
+        "UNIFORMITY": rng.normal(0.0, 0.5, size=df_size),
+        "P01": rng.integers(low=1, high=20, size=df_size),
         "POLYGONALITY_AVE": list(np.repeat(0, df_size)),
     }
     df1 = pd.DataFrame(diction_1)
