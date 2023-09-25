@@ -363,7 +363,7 @@ def feature_evaluation(  # noqa C901
             z_pred = np.array(z_pred, dtype=float)
             z_gt = z_gt[~np.isnan(z_gt)]
             z_pred = z_pred[~np.isnan(z_pred)]
-            predsize = 3
+            predsize = 0
             if z_pred.size > predsize and z_gt.size > predsize:
                 logger.info(f"evaluating feature {feature} for {file_name}")
                 expected_array = z_gt
