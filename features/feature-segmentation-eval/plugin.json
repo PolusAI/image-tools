@@ -1,18 +1,18 @@
 {
-  "name": "Feature Evaluation Plugin",
-  "version": "0.2.2",
-  "title": "Feature Evaluation Plugin",
+  "name": "Feature segmentation eval",
+  "version": "0.2.3",
+  "title": "Feature segmentation eval",
   "description": "Plugin to generate evaluation metrics for feature comparison of ground truth and predicted images.",
   "author": "Vishakha Goyal (vishakha.goyal@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/feature-evaluation-plugin:0.2.2",
+  "containerId": "polusai/feature-segmentation-eval:0.2.3",
   "baseCommand": [
     "python3",
     "-m",
-    "polus.plugins.features.feature_evaluation"
+    "polus.plugins.features.feature_segmentation_eval"
   ],
   "inputs": {
     "GTDir": {

@@ -1,4 +1,4 @@
-"""Feature evaluation package."""
+"""Feature segmentation evaluation package."""
 import json
 import logging
 import time
@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import filepattern as fp
-import polus.plugins.features.feature_evaluation.features_single as fs
+import polus.plugins.features.feature_segmentation_eval.feature_evaluation as fs
 import typer
 
 logging.basicConfig(
@@ -15,7 +15,7 @@ logging.basicConfig(
     datefmt="%d-%b-%y %H:%M:%S",
 )
 POLUS_LOG = getattr(logging, environ.get("POLUS_LOG", "INFO"))
-logger = logging.getLogger("polus.plugins.features.feature_evaluation")
+logger = logging.getLogger("polus.plugins.features.feature_segmentation_eval")
 logger.setLevel(POLUS_LOG)
 logging.getLogger("bfio").setLevel(POLUS_LOG)
 # Set number of threads for scalability

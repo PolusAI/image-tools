@@ -1,4 +1,4 @@
-"""Feature evaluation package."""
+"""Feature segmentation evaluation package."""
 import logging
 import os
 from pathlib import Path
@@ -12,13 +12,13 @@ import numpy as np
 import pandas as pd
 import scipy.stats
 import vaex
-from polus.plugins.features.feature_evaluation.metrics import evaluate_all
+from polus.plugins.features.feature_segmentation_eval.metrics import evaluate_all
 from scipy.spatial import distance
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".csv")
+POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".arrow")
 EXT = (".arrow", ".feather")
 CHUNK_SIZE = 5_000_000
 

@@ -1,8 +1,8 @@
-"""Test Feature evaluation package."""
+"""Test feature segmentation evaluation package."""
 from pathlib import Path
 from typing import Union
 
-import polus.plugins.features.feature_evaluation.features_single as fs
+import polus.plugins.features.feature_segmentation_eval.feature_evaluation as fs
 import pytest
 import vaex
 

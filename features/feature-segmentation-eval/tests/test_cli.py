@@ -1,6 +1,6 @@
 """Test Command line Tool."""
 from typer.testing import CliRunner
-from polus.plugins.features.feature_evaluation.__main__ import app
+from polus.plugins.features.feature_segmentation_eval.__main__ import app
 from tests.fixture import *
 from tests.fixture import clean_directories
 from typing import Union, Tuple
