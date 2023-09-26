@@ -1,4 +1,4 @@
-"""Feature evaluation package."""
+"""Feature segmentation evaluation package."""
 ## Source: https://gist.github.com/bshishov/5dc237f59f019b26145648e2124ca1c9
 
 import logging
