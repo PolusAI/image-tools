@@ -1,0 +1,99 @@
+{
+  "name": "Feature segmentation eval",
+  "version": "0.2.3",
+  "title": "Feature segmentation eval",
+  "description": "Plugin to generate evaluation metrics for feature comparison of ground truth and predicted images.",
+  "author": "Vishakha Goyal (vishakha.goyal@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/feature-segmentation-eval:0.2.3",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.plugins.features.feature_segmentation_eval"
+  ],
+  "inputs": {
+    "GTDir": {
+      "type": "genericData",
+      "title": "GTDir",
+      "description": "Ground truth feature collection to be processed by this plugin.",
+      "required": "True"
+    },
+    "PredDir": {
+      "type": "genericData",
+      "title": "PredDir",
+      "description": "Predicted feature collection to be processed by this plugin.",
+      "required": "True"
+    },
+    "filePattern": {
+      "type": "string",
+      "title": "Filename pattern",
+      "description": "Filename pattern used to separate data.",
+      "required": "False"
+    },
+    "combineLabels": {
+      "type": "boolean",
+      "title": "combineLabels",
+      "description": "Boolean to calculate number of bins for histogram by combining GT and Predicted Labels.",
+      "required": "False"
+    },
+    "singleOutFile": {
+      "type": "boolean",
+      "title": "singleOutFile",
+      "description": "Boolean to save output file as a single file.",
+      "required": "False"
+    },
+    "preview": {
+      "type": "boolean",
+      "title": "Preview",
+      "description": "Generate an output preview.",
+      "required": "False"
+    }
+  },
+  "outputs": {
+    "outDir": {
+      "type": "genericData",
+      "description": "Output collection."
+    }
+  },
+  "ui": {
+    "GTDir": {
+      "type": "genericData",
+      "title": "GTDir",
+      "description": "Ground truth feature collection to be processed by this plugin.",
+      "required": "True"
+    },
+    "PredDir": {
+      "type": "genericData",
+      "title": "PredDir",
+      "description": "Predicted feature collection to be processed by this plugin.",
+      "required": "True"
+    },
+    "filePattern": {
+      "type": "string",
+      "title": "Filename pattern",
+      "description": "Filename pattern used to separate data.",
+      "required": "False"
+    },
+    "combineLabels": {
+      "type": "boolean",
+      "title": "combineLabels",
+      "description": "Filename pattern used to separate data.",
+      "required": "False"
+    },
+    "singleOutFile": {
+      "type": "boolean",
+      "title": "singleOutFile",
+      "description": "Boolean to save output file as a single file.",
+      "required": "False"
+    },
+    "preview": {
+      "type": "boolean",
+      "title": "Preview example output of this plugin",
+      "description": "Generate an output preview.",
+      "required": "False"
+    }
+  }
+}
