@@ -1,1 +1,0 @@
-"""Region Segmentation Comparison."""
