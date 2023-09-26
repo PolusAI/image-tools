@@ -18,7 +18,7 @@ from scipy.spatial import distance
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".arrow")
+POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".csv")
 EXT = (".arrow", ".feather")
 CHUNK_SIZE = 5_000_000
 
