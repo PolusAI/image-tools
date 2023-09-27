@@ -1,10 +1,6 @@
 class: CommandLineTool
 cwlVersion: v1.2
 inputs:
-  fileExtension:
-    inputBinding:
-      prefix: --fileExtension
-    type: string
   filePattern:
     inputBinding:
       prefix: --filePattern
