@@ -1,7 +1,7 @@
 {
-  "name": "Pixel segmentation eval",
+  "name": "Pixel Segmentation Eval",
   "version": "0.1.10",
-  "title": "Pixel segmentation eval",
+  "title": "Pixel Segmentation Eval",
   "description": "Plugin to generate evaluation metrics for pixel-wise comparison of ground truth and predicted images.",
   "author": "Vishakha Goyal (vishakha.goyal@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
