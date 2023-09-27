@@ -12,7 +12,7 @@
   "baseCommand": [
     "python3",
     "-m",
-    "polus.plugins.features.feature_evaluation"
+    "polus.plugins.features.feature_segmentation_eval"
   ],
   "inputs": [
     {
