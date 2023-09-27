@@ -1,7 +1,7 @@
 {
-  "name": "Region segmentation eval",
+  "name": "Region Segmentation Eval",
   "version": "0.2.3",
-  "title": "Region segmentation eval",
+  "title": "Region Segmentation Eval",
   "description": "Plugin to generate evaluation metrics for region-wise comparison of ground truth and predicted images.",
   "author": "Vishakha Goyal (vishakha.goyal@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov),",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
