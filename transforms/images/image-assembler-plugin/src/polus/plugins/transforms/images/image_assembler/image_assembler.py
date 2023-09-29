@@ -11,10 +11,6 @@ from typing import Tuple, Optional
 import re
 from preadator import ProcessManager
 
-# import concurrent.futures
-# import multiprocessing
-# import os
-
 logging.basicConfig(
     format="%(name)-8s - %(levelname)-8s - %(message)s"
 )
@@ -70,11 +66,16 @@ def assemble_images(
     vector_patterns = collect_stitching_vector_patterns(stitch_path)
     # max_workers = min(len(vector_patterns), cpu_count())
     # with concurrent.futures.ProcessPoolExecutor( max_workers=1) as executor:
-    ProcessManager.init_processes("main", "image-assembler")
-    for (vector_file, pattern) in vector_patterns:
-        # assemble_image(vector_file, pattern)
-        ProcessManager.submit_process(assemble_image, vector_file, pattern, derive_name_from_vector_file, img_path, output_path)
-    ProcessManager.join_processes()
+    with ProcessManager(
+        name="image-assembler",
+        log_level="INFO",
+        num_processes=4,
+        threads_per_process=2,
+        threads_per_request=2,
+    ) as pm:
+        for (vector_file, pattern) in vector_patterns:
+            pm.submit_process(assemble_image, vector_file, pattern, derive_name_from_vector_file, img_path, output_path)
+        pm.join_processes()
 
 def collect_stitching_vector_patterns(stitching_vector_path):
     """Collect all valid stitching vectors in the given directory.
@@ -117,7 +118,7 @@ def derive_output_image_path(fovs, derive_name_from_vector_file, vector_file, fi
             output_name = "".join([match] + Path(first_image).suffixes)
 
     output_image_path =  output_path / output_name
-    ProcessManager.job_name(output_name)
+    
     return output_image_path
     
 def assemble_image(vector_file, pattern, derive_name_from_vector_file, img_path, output_path):
@@ -215,10 +216,17 @@ def assemble_image(vector_file, pattern, derive_name_from_vector_file, img_path,
         # This requires multiple reads and copies and a final write.
         # This is a slow IObound process so it can benefit from multithreading
         # in order to overlap reads/writes.
-        for row in range(chunk_grid_row):
-            for col in range(chunk_grid_col):
-                ProcessManager.submit_thread(assemble_chunk, row, col, chunks[row][col], bw, img_path)
-        ProcessManager.join_threads()
+        with ProcessManager(
+            name="assemble_chunk",
+            log_level="INFO",
+            num_processes=4,
+            threads_per_process=2,
+            threads_per_request=2,
+        ) as pm:
+            for row in range(chunk_grid_row):
+                for col in range(chunk_grid_col):
+                    pm.submit_thread(assemble_chunk, row, col, chunks[row][col], bw, img_path)
+            pm.join_threads()
 
 def assemble_chunk(row, col, regions_to_copy, bw, img_path):
     """
@@ -229,6 +237,8 @@ def assemble_chunk(row, col, regions_to_copy, bw, img_path):
     # TODO we could allocate a smaller chunk on the edge of the image
     # as this is what BfioWriter expects
     # TODO remove if bfio supertile does this somehow
+    # TODO we could also allocated once and recycle at each call.
+    # this would probably be a bit more efficient.
     chunk = np.zeros((chunk_width, chunk_height), bw.dtype)
 
     for region_to_copy in regions_to_copy:
