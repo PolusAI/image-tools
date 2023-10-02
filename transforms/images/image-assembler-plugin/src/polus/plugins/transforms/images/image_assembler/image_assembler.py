@@ -68,10 +68,7 @@ def assemble_images(
     # with concurrent.futures.ProcessPoolExecutor( max_workers=1) as executor:
     with ProcessManager(
         name="image-assembler",
-        log_level="INFO",
-        num_processes=4,
-        threads_per_process=2,
-        threads_per_request=2,
+        log_level="INFO"
     ) as pm:
         for (vector_file, pattern) in vector_patterns:
             pm.submit_process(assemble_image, vector_file, pattern, derive_name_from_vector_file, img_path, output_path)
@@ -143,7 +140,7 @@ def assemble_image(vector_file, pattern, derive_name_from_vector_file, img_path,
         # TODO examples?
         assert br.z == 1
 
-    output_image_path = derive_output_image_path(fovs, derive_name_from_vector_file, vector_file, first_image, output_path)
+    output_image_path : Path = derive_output_image_path(fovs, derive_name_from_vector_file, vector_file, first_image, output_path)
 
     # compute final full image size (requires a full pass over the partial fovs)
     full_image_width, full_image_height = fov_width, fov_height
@@ -216,17 +213,15 @@ def assemble_image(vector_file, pattern, derive_name_from_vector_file, img_path,
         # This requires multiple reads and copies and a final write.
         # This is a slow IObound process so it can benefit from multithreading
         # in order to overlap reads/writes.
+        output_name = output_image_path.name
         with ProcessManager(
-            name="assemble_chunk",
-            log_level="INFO",
-            num_processes=4,
-            threads_per_process=2,
-            threads_per_request=2,
+            name="assemble_" + output_name,
+            log_level="INFO"
         ) as pm:
             for row in range(chunk_grid_row):
                 for col in range(chunk_grid_col):
                     pm.submit_thread(assemble_chunk, row, col, chunks[row][col], bw, img_path)
-            pm.join_threads()
+            # pm.join_threads()
 
 def assemble_chunk(row, col, regions_to_copy, bw, img_path):
     """
