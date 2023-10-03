@@ -33,7 +33,7 @@ COPY CHANGELOG.md ${EXEC_DIR}
 COPY src ${EXEC_DIR}/src
 
 # TODO temp modification for testing. Should be removed.
-COPY preadator_package /usr/local/lib/python3.9/dist-packages/
+# COPY preadator_package /usr/local/lib/python3.9/dist-packages/
 
 <<<<<<< HEAD
 RUN pip3 install ${EXEC_DIR} --no-cache-dir
