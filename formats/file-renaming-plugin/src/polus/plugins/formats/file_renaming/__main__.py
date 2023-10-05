@@ -102,51 +102,53 @@ def main(  # noqa: PLR0913 D417
             file_pattern,
             out_file_pattern,
         )
-    elif map_directory and len(subdirs) == 1:
-        logger.info(
-            "Renaming files in a single directory.",
-        )
-        dir_pattern = r"^[A-Za-z0-9_]+$"
-        # Iterate over the directories and check if they match the pattern
-        matching_directory: Optional[Match[Any]] = re.match(
-            dir_pattern,
-            pathlib.Path(subdirs[0]).stem,
-        )
-        if matching_directory is not None:
-            matching_directory = matching_directory.group()
-        if f"{map_directory}" == "raw":
-            outfile_pattern = f"{matching_directory}_{out_file_pattern}"
-        if f"{map_directory}" == "map":
-            outfile_pattern = f"d1_{out_file_pattern}"
 
-        fr.rename(subdirs[0], out_dir, file_pattern, outfile_pattern)
-    elif map_directory and len(subdirs) > 1:
-        subnames = [pathlib.Path(sb).name for sb in subdirs]
-        sub_check = all(name == subnames[0] for name in subnames)
-
-        for i, sub in enumerate(subdirs):
-            assert (
-                len([f for f in pathlib.Path(sub).iterdir() if f.is_file()]) != 0
-            ), "Files are missing in input directory!!!"
+    elif map_directory:
+        if len(subdirs) == 1:
+            logger.info(
+                "Renaming files in a single directory.",
+            )
             dir_pattern = r"^[A-Za-z0-9_]+$"
             # Iterate over the directories and check if they match the pattern
-            matching_directories: Optional[Match[Any]] = re.match(
+            matching_directory: Optional[Match[Any]] = re.match(
                 dir_pattern,
-                pathlib.Path(sub).stem,
+                pathlib.Path(subdirs[0]).stem,
             )
-            if matching_directories is not None:
-                matching_directories = matching_directories.group()
+            if matching_directory is not None:
+                matching_directory = matching_directory.group()
+            if f"{map_directory}" == "raw":
+                outfile_pattern = f"{matching_directory}_{out_file_pattern}"
+            if f"{map_directory}" == "map":
+                outfile_pattern = f"d1_{out_file_pattern}"
 
-            if not sub_check and f"{map_directory}" == "raw":
-                outfile_pattern = f"{matching_directories}_{out_file_pattern}"
-            elif subnames and f"{map_directory}" == "raw":
-                logger.error(
-                    "Subdirectoy names are same, should be different.",
+            fr.rename(subdirs[0], out_dir, file_pattern, outfile_pattern)
+        if len(subdirs) > 1:
+            subnames = [pathlib.Path(sb).name for sb in subdirs]
+            sub_check = all(name == subnames[0] for name in subnames)
+
+            for i, sub in enumerate(subdirs):
+                assert (
+                    len([f for f in pathlib.Path(sub).iterdir() if f.is_file()]) != 0
+                ), "Files are missing in input directory!!!"
+                dir_pattern = r"^[A-Za-z0-9_]+$"
+                # Iterate over the directories and check if they match the pattern
+                matching_directories: Optional[Match[Any]] = re.match(
+                    dir_pattern,
+                    pathlib.Path(sub).stem,
                 )
-                break
-            else:
-                outfile_pattern = f"d{i}_{out_file_pattern}"
-            fr.rename(sub, out_dir, file_pattern, outfile_pattern)
+                if matching_directories is not None:
+                    matching_directories = matching_directories.group()
+
+                if not sub_check and f"{map_directory}" == "raw":
+                    outfile_pattern = f"{matching_directories}_{out_file_pattern}"
+                elif subnames and f"{map_directory}" == "raw":
+                    logger.error(
+                        "Subdirectoy names are same, should be different.",
+                    )
+                    break
+                else:
+                    outfile_pattern = f"d{i}_{out_file_pattern}"
+                fr.rename(sub, out_dir, file_pattern, outfile_pattern)
 
     if preview:
         with pathlib.Path.open(pathlib.Path(out_dir, "preview.json"), "w") as jfile:
