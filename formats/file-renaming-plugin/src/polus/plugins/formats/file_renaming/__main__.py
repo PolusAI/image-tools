@@ -120,7 +120,6 @@ def main(  # noqa: PLR0913 D417
             outfile_pattern = f"d1_{out_file_pattern}"
 
         fr.rename(subdirs[0], out_dir, file_pattern, outfile_pattern)
-
     elif map_directory and len(subdirs) > 1:
         subnames = [pathlib.Path(sb).name for sb in subdirs]
         sub_check = all(name == subnames[0] for name in subnames)
