@@ -102,10 +102,29 @@ def main(  # noqa: PLR0913 D417
             file_pattern,
             out_file_pattern,
         )
+    elif map_directory and len(subdirs) == 1:
+        logger.info(
+            "Renaming files in a single directory.",
+        )
+        dir_pattern = r"^[A-Za-z0-9_]+$"
+        # Iterate over the directories and check if they match the pattern
+        matching_directory: Optional[Match[Any]] = re.match(
+            dir_pattern,
+            pathlib.Path(subdirs[0]).stem,
+        )
+        if matching_directory is not None:
+            matching_directory = matching_directory.group()
+        if f"{map_directory}" == "raw":
+            outfile_pattern = f"{matching_directory}_{out_file_pattern}"
+        if f"{map_directory}" == "map":
+            outfile_pattern = f"d1_{out_file_pattern}"
 
-    elif map_directory:
+        fr.rename(subdirs[0], out_dir, file_pattern, outfile_pattern)
+
+    elif map_directory and len(subdirs) > 1:
         subnames = [pathlib.Path(sb).name for sb in subdirs]
         sub_check = all(name == subnames[0] for name in subnames)
+
         for i, sub in enumerate(subdirs):
             assert (
                 len([f for f in pathlib.Path(sub).iterdir() if f.is_file()]) != 0
