@@ -18,14 +18,14 @@ logger = logging.getLogger("image-assembler")
 logger.setLevel(logging.DEBUG)
 
 # this parameter controls disk writes. Seem to plateau after 8192
-# TODO this should be benchmarked of more type of data, maybe made a param?
+# NOTE this should be backed up by a replicable benchmark
 chunk_size = 1024 * 8
 chunk_width, chunk_height = chunk_size, chunk_size
 
 BACKEND = "python"
 
 # UNUSED - PREADATOR USES ITS OWN HEURISTICS
-# # TODO CHECK those heuristics would require further investigation.
+# NOTE CHECK those heuristics would require further investigation.
 # num_threads = (chunk_size // BioReader._TILE_SIZE) ** 2
 # try:
 #     num_processes = len(os.sched_getaffinity(0)) * 2
@@ -98,7 +98,7 @@ def collect_stitching_vector_patterns(stitching_vector_path):
     return stitching_vector_pattern
 
 
-# TODO Remove possibility of deriving name from vector file?
+# NOTE Remove possibility of deriving name from vector file?
 # it ties us to a specific naming convention of ".*global-positions-([0-9]+).txt" for the stitching vector
 def derive_output_image_path(fovs, derive_name_from_vector_file, vector_file, first_image, output_path):
     """
@@ -136,8 +136,8 @@ def assemble_image(vector_file, pattern, derive_name_from_vector_file, img_path,
         fov_height = br.y
         # stitching is only performed on the (x,y) plane
         # z_stack images would need to be align beforehand
-        # TODO does it makes sense to consider z_stack images?
-        # TODO examples?
+        # NOTE does it makes sense to consider z_stack images?
+        # NOTE examples?
         assert br.z == 1
 
     output_image_path : Path = derive_output_image_path(fovs, derive_name_from_vector_file, vector_file, first_image, output_path)
@@ -229,10 +229,10 @@ def assemble_chunk(row, col, regions_to_copy, bw, img_path):
     We pass the BioWriter as an argument to the task because we cannot initialize 
     the process state with preadator.
     """
-    # TODO we could allocate a smaller chunk on the edge of the image
+    # NOTE we could allocate a smaller chunk on the edge of the image
     # as this is what BfioWriter expects
-    # TODO remove if bfio supertile does this somehow
-    # TODO we could also allocated once and recycle at each call.
+    # NOTE remove if bfio supertile does this somehow
+    # NOTE we could also allocated once and recycle at each call.
     # this would probably be a bit more efficient.
     chunk = np.zeros((chunk_width, chunk_height), bw.dtype)
 
