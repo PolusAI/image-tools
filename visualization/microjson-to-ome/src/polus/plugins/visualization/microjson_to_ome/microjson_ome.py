@@ -93,7 +93,7 @@ class MicrojsonOmeModel:
         for i, _ in enumerate(poly):
             pol = np.array(poly[i][0])
             mask = sk.draw.polygon2mask((x, y), pol)
-            image[mask is True] = 255
+            image[mask is True] = 1
             image[mask is False] = 0
             final_mask += image
         final_mask = np.rot90(final_mask)
