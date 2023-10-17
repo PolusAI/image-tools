@@ -1,4 +1,4 @@
-# Ome-to-microjson-plugin(0.1.0)
+# Ome-to-microjson-plugin(v0.1.1)
 
 This plugin generate a microjson of polygon coordinates of binary segmentations
 

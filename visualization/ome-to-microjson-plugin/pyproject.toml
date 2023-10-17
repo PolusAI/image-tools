@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-visualization-ome-to-microjson"
-version = "0.1.0"
+version = "0.1.1"
 description = "This plugin create a microjson of polygon coordinates of binary segmentations"
 authors = ["Hamdah Shafqat abbasi  <hamdahshafqat.abbasi@nih.gov>"]
 readme = "README.md"
@@ -14,7 +14,7 @@ xmlschema = "^2.3.1"
 scipy = ">=1.8,<1.9.2"
 filepattern = "^2.0.1"
 tqdm = "^4.65.0"
-microjson = "^0.1.7"
+microjson = "^0.1.9"
 fastapi = "^0.103.1"
 llvmlite = "^0.40.1"
 vaex = "^4.17.0"
