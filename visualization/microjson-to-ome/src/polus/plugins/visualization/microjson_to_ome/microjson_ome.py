@@ -80,15 +80,17 @@ class MicrojsonOmeModel:
             self.data["features"][i]["geometry"]["coordinates"]
             for i in range(len(self.data["features"]))
         ]
-        image_name = self.data["features"][0]["properties"]["string"]["Image"]
-        x = int(self.data["features"][0]["properties"]["numeric"]["X"])
-        y = int(self.data["features"][0]["properties"]["numeric"]["Y"])
+        image_name = self.data["properties"]["string"]["Image"]
+        x = int(self.data["properties"]["numeric"]["X"])
+        y = int(self.data["properties"]["numeric"]["Y"])
         return poly, image_name, x, y
 
     def convert_microjson_to_ome(self) -> None:
         """Convert polygon coordinates (points, rectangle) of objects to binary mask."""
         poly, image_name, x, y = self.parsing_microjson()
+
         final_mask = np.zeros((x, y), dtype=np.uint8)
+
         image = final_mask.copy()
         for i, _ in enumerate(poly):
             pol = np.array(poly[i][0])

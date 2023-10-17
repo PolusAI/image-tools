@@ -20,9 +20,6 @@ data = {
             "properties": {
                 "string": {"Plate": "ome", "Image": "x00_y01_p01_c1.ome.tif"},
                 "numeric": {
-                    "X": 512.0,
-                    "Y": 512.0,
-                    "Channel": 1.0,
                     "Label": 1.0,
                     "Encoding_length": 32.0,
                 },
@@ -51,6 +48,10 @@ data = {
         "Channel": {"min": 1.0, "max": 1.0},
         "Label": {"min": 1.0, "max": 35.0},
         "Encoding_length": {"min": 32.0, "max": 32.0},
+    },
+    "properties": {
+        "string": {"Plate": "label", "Image": "x00_y01_p01_c1.ome.tif"},
+        "numeric": {"Y": 512.0, "X": 512.0, "Channel": 1.0},
     },
     "descriptive_fields": ["Plate", "Image"],
 }
@@ -94,12 +95,10 @@ def generate_jsondata(
         polygon = random_polygon(num_points=points)
         image_name = f"x00_y01_p0{i}_c1.ome.tif"
         polygon = [[pol[0] * image_size, pol[1] * image_size] for pol in polygon]
-        data.get("features")[0].get("geometry")["coordinates"] = [
+        data.get("features")[0].get("geometry")["coordinates"] = [  # type: ignore
             polygon,
-        ]  # noqa :  E501  # type: ignore
-        data.get("features")[0]["properties"]["string"][
-            "Image"
-        ] = image_name  # noqa :  E501  # type: ignore
+        ]
+        data["properties"]["string"]["Image"] = image_name  # type: ignore
         out_json = f"{image_name.split('.')[0]}.json"
         with Path.open(Path(inp_dir, out_json), "w") as jfile:
             json.dump(data, jfile, indent=2)

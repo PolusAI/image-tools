@@ -9,10 +9,10 @@ file_pattern=".*.json"
 out_dir=${datapath}/output
 
 # #Show the help options
-# docker run polusai/microjson-to-ome:${version}
+# docker run polusai/microjson-to-ome-plugin:${version}
 
 docker run -v ${datapath}:${datapath} \
-            polusai/microjson-to-ome:${version} \
+            polusai/microjson-to-ome-plugin:${version} \
             --inpDir ${inp_dir} \
             --filePattern ${file_pattern} \
             --outDir ${out_dir}
