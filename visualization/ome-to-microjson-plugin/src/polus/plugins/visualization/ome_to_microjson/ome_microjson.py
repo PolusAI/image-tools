@@ -290,7 +290,7 @@ class OmeMicrojsonModel:
             valrange_dict.update(sub_dict)
 
         desc_meta = {key: f"{data[key].values[0]}" for key in varlist[:2]}
-        int_meta = {key: f"{data[key].values[0]}" for key in varlist[3:5]}
+        int_meta = {key: f"{data[key].values[0]}" for key in varlist[2:5]}
 
         # create a new properties for each image
         properties = mj.Properties(
