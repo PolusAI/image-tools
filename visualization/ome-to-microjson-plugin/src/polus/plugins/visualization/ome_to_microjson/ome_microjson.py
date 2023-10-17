@@ -97,13 +97,20 @@ class OmeMicrojsonModel:
         self.br = BioReader(self.file_path)
         self.image = self.br.read()
         self.image = self.image.squeeze()
+        self.min_label_length = 1
         self.min_unique_labels = 0
         self.max_unique_labels = 2
+        if len(np.unique(self.image)) == self.max_unique_labels:
+            msg = "Binary image detected!!"
+            logger.info(msg)
+            self.label_image = morphology.label(self.image)
         if len(np.unique(self.image)) > self.max_unique_labels:
-            msg = "Binary images are not detected!! Please do check images again"
+            msg = "Label image detected!!"
+            self.label_image = self.image
+        if len(np.unique(self.image)) == self.min_label_length:
+            msg = "Neither binary or label image detected!!"
             raise ValueError(msg)
-        self.binary_image = morphology.binary_erosion(self.image)
-        self.label_image = morphology.label(self.binary_image)
+
         self.mask = np.zeros((self.image.shape[0], self.image.shape[1]))
 
     def segmentations_encodings(
@@ -209,6 +216,7 @@ class OmeMicrojsonModel:
     def polygons_to_microjson(self) -> None:
         """Create microjson overlays in JSON Format."""
         data, coordinates = self.get_method()
+
         varlist = [
             "Plate",
             "Image",
@@ -229,20 +237,15 @@ class OmeMicrojsonModel:
             msg = "Invalid vaex dataframe!! Please do check path again"
             raise ValueError(msg)
 
-        des_columns = [
-            feature
-            for feature in data.get_column_names()
-            if data.data_type(feature) == str
-        ]
-        des_columns = list(
+        int_columns = list(
             filter(
-                lambda feature: feature not in ["geometry_type", "type"],
-                des_columns,
+                lambda feature: feature in ["Label", "Encoding_length"],
+                data.get_column_names(),
             ),
         )
         int_columns = [
             feature
-            for feature in data.get_column_names()
+            for feature in int_columns
             if data.data_type(feature) == int or data.data_type(feature) == float
         ]
 
@@ -250,18 +253,9 @@ class OmeMicrojsonModel:
             msg = "Features with integer datatype do not exist"
             raise ValueError(msg)
 
-        if len(des_columns) == 0:
-            msg = "Descriptive features do not exist"
-            raise ValueError(msg)
-
         features: list[mj.Feature] = []
         for (_, row), cor in zip(data.iterrows(), coordinates):  # type: ignore
-            desc = [{key: row[key]} for key in des_columns]
             numerical = [{key: row[key]} for key in int_columns]
-
-            descriptive_dict = {}
-            for sub_dict in desc:
-                descriptive_dict.update(sub_dict)
 
             numeric_dict = {}
             for sub_dict in numerical:
@@ -277,7 +271,6 @@ class OmeMicrojsonModel:
 
             # create a new properties object dynamically
             properties = mj.Properties(
-                string=descriptive_dict,
                 numeric=numeric_dict,
             )
 
@@ -296,15 +289,21 @@ class OmeMicrojsonModel:
         for sub_dict in valrange:
             valrange_dict.update(sub_dict)
 
-        # Create a list of descriptive fields
-        descriptive_fields = des_columns
+        desc_meta = {key: f"{data[key].values[0]}" for key in varlist[:2]}
+        int_meta = {key: f"{data[key].values[0]}" for key in varlist[3:5]}
+
+        # create a new properties for each image
+        properties = mj.Properties(
+            string=desc_meta,
+            numeric=int_meta,
+        )
 
         # Create a new FeatureCollection object
         feature_collection = mj.MicroFeatureCollection(
             type="FeatureCollection",
+            properties=properties,
             features=features,
             value_range=valrange_dict,
-            descriptive_fields=descriptive_fields,
             coordinatesystem={
                 "axes": [
                     {
@@ -326,12 +325,17 @@ class OmeMicrojsonModel:
             },
         )
 
-        outname = str(data["Image"].values[0]).split(".ome")[0] + "_segmentations.json"
+        outname = (
+            str(data["Image"].values[0]).split(".ome")[0]
+            + "_"
+            + str(self.polygon_type.value)
+            + ".json"
+        )
 
-        if len(feature_collection.json()) == 0:
+        if len(feature_collection.model_dump_json()) == 0:
             msg = "JSON file is empty"
             raise ValueError(msg)
-        if len(feature_collection.json()) > 0:
+        if len(feature_collection.model_dump_json()) > 0:
             out_name = Path(self.out_dir, outname)
             with Path.open(out_name, "w") as f:
                 f.write(

@@ -2,6 +2,7 @@
 import logging
 import shutil
 import time
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 from os import environ
@@ -11,6 +12,8 @@ import filepattern as fp
 import polus.plugins.visualization.ome_to_microjson.ome_microjson as sm
 import typer
 from tqdm import tqdm
+
+warnings.filterwarnings("ignore")
 
 logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
