@@ -4,4 +4,4 @@ from . import dynamics
 from . import utils
 from .dynamics.label_to_vector import convert
 
-__version__ = "0.7.0-dev26"
+__version__ = "0.7.0-dev29"
