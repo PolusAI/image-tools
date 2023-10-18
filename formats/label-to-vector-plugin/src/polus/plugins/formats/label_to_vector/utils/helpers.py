@@ -45,12 +45,15 @@ def replace_extension(
     input_extension = "".join(
         s for s in file.suffixes[-2:] if len(s) < constants.SUFFIX_LEN
     )
-    extension = constants.POLUS_EXT if extension is None else extension
+    extension = constants.POLUS_IMG_EXT if extension is None else extension
     file_name = file.name
+
+    # Remove '_flow' and '_tmp' from file name
     if "_flow" in file_name:
         file_name = "".join(file_name.split("_flow"))
     if "_tmp" in file_name:
         file_name = "".join(file_name.split("_tmp"))
+
     return file_name.replace(input_extension, extension)
 
 

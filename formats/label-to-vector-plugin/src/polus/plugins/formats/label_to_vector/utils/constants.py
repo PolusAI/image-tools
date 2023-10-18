@@ -7,7 +7,7 @@ import typing
 
 POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
 # TODO: Rename this to POLUS_IMG_EXT
-POLUS_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
+POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
 
 NUM_THREADS = max(1, int(multiprocessing.cpu_count() // 2))
 

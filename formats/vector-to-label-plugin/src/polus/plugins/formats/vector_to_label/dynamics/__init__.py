@@ -1,4 +1,4 @@
-"""Provides the vector-field dynamics."""
+"""Vector dynamics for converting vector fields to labels."""
 
-from . import common
-from . import vector_to_label
+from .vector_to_label import convert
+from .vector_to_label import reconcile_overlap

@@ -11,30 +11,21 @@ packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
-bfio = {version = "2.1.9", extras = ["all"]}
-filepattern = [
-    { version = "^2.0.0", platform = "linux" },
-    { version = "^2.0.0", platform = "win32" },
-    { git = "https://github.com/PolusAI/filepattern", rev = "c07bf543c435cbc4cf264effd5a178868e9eaf19", platform = "darwin" },
-]
-numpy = "^1.24.3"
-tqdm = "^4.65.0"
+numpy = "~1.24.4"
+bfio = { version = "2.1.9", extras = ["all"] }
 typer = "^0.7.0"
-zarr = "^2.15.0"
-scipy = "^1.9.1"
+# filepattern = "^2.0.1"
+tqdm = "^4.66.1"
+zarr = "^2.16.1"
+scipy = "~1.9.1"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
-pre-commit = "^3.0.4"
-black = "^23.1.0"
-ruff = "^0.0.275"
-mypy = "^1.0.0"
-pytest = "^7.2.1"
+pre-commit = "^3.5.0"
+pytest = "^7.4.2"
 pytest-sugar = "^0.9.7"
 pytest-xdist = "^3.3.1"
-pytest-benchmark = "^4.0.0"
-pytest-cov = "^4.1.0"
-scikit-image = "^0.20.0"
+scikit-image = "~0.20.0"
 
 [build-system]
 requires = ["poetry-core"]

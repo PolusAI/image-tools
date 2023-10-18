@@ -1,27 +1,15 @@
-"""Provides the functions necessary to convert a vector-field to a labeled image."""
+"""Functions for converting vector data to label images."""
 
-import concurrent.futures
-import pathlib
-import typing
 
-import bfio
+import itertools
+import warnings
+
 import numpy
-import tqdm
-import zarr
+import scipy.ndimage
+from polus.plugins.formats.label_to_vector.dynamics import common
+from polus.plugins.formats.label_to_vector.utils import helpers as l2v_helpers
 
-from ..utils import constants
-from ..utils import helpers
-from . import mask_reconstruction
-
-logger = helpers.make_logger(__name__)
-
-
-ThreadFuture = tuple[
-    typing.Optional[numpy.ndarray],
-    numpy.ndarray,
-    numpy.ndarray,
-    numpy.uint32,
-]
+logger = l2v_helpers.make_logger(__file__)
 
 
 def reconcile_overlap(
@@ -88,218 +76,215 @@ def reconcile_overlap(
     return tile, labels, indices
 
 
-def vector_thread(  # noqa: PLR0912, PLR0913, PLR0915, C901
-    *,
-    in_path: pathlib.Path,
-    zarr_path: pathlib.Path,
-    coordinates: tuple[int, int, int],
-    reader_shape: tuple[int, int, int],
-    flow_magnitude_threshold: float,
-    future_z: typing.Optional[concurrent.futures.Future[ThreadFuture]],
-    future_y: typing.Optional[concurrent.futures.Future[ThreadFuture]],
-    future_x: typing.Optional[concurrent.futures.Future[ThreadFuture]],
-) -> ThreadFuture:
-    """Convert a vector image to a label image.
+def relabel(
+    labels: numpy.ndarray,
+    original_index: numpy.ndarray,
+    flow_points: numpy.ndarray,
+) -> tuple[numpy.ndarray, numpy.ndarray]:
+    """Follow flows to objects.
+
+    This function follows flows back to objects. It is iterative, so that labels get
+    propagated backwards along vectors.
 
     Args:
-        in_path: Path to input file
-        zarr_path: Path to output zarr file
-        coordinates: Coordinates of the current tile
-        reader_shape: Shape of the input file
-        flow_magnitude_threshold: Threshold for flow magnitude
-        future_z: Future for the previous tile in the z dimension
-        future_y: Future for the previous tile in the y dimension
-        future_x: Future for the previous tile in the x dimension
+        labels (numpy.ndarray): An image of labeled ROIs.
+        original_index (numpy.ndarray): Original index of vectors
+        flow_points (numpy.ndarray): Current location of flows
+        device (str): Must be one of ["cpu","gpu"]
 
     Returns:
-        The last row of the current tile,
-        the last column of the current tile,
-        the last z-slice of the current tile, and
-        the maximum label value in the current tile.
+        Tuple[numpy.ndarray, numpy.ndarray]: Returns the subset of original_index and
+            flow_points that do not have labels after relabeling.
     """
-    x, y, z = coordinates
-    z_shape, y_shape, x_shape = reader_shape
-    ndims = 2 if z_shape == 1 else 3
+    flow_index = numpy.round(flow_points).astype(numpy.int32)
+    flow_index = tuple(flow_index[p] for p in range(flow_index.shape[0]))
 
-    # Get information from previous tiles/chunks (if there were any)
-    future_z = None if future_z is None else future_z.result()[0]
-    future_y = None if future_y is None else future_y.result()[1]
-    future_x = None if future_x is None else future_x.result()[2]
+    # Relabel original points if the flow hits an object
+    # Propagate the label along the flow
+    new_labels = labels[flow_index]
+    old_labels = numpy.full(new_labels.shape, -2)
+    resolved = new_labels > -1
 
-    # Get offset to make labels consistent between tiles
-    offset_z = 0 if future_z is None else numpy.max(future_z)
-    offset_y = 0 if future_y is None else numpy.max(future_y)
-    offset_x = 0 if future_x is None else numpy.max(future_x)
-    offset = max(offset_z, offset_y, offset_x)
+    while numpy.any(new_labels != old_labels):
+        old_labels = new_labels
+        resolved = new_labels > -1
+        orig_ind = tuple(p[resolved] for p in original_index)
+        flow_ind = tuple(p[resolved] for p in flow_index)
+        labels[orig_ind] = labels[flow_ind]
+        new_labels = labels[flow_index]
 
-    x_min, x_max = max(0, x - constants.TILE_OVERLAP), min(
-        x_shape,
-        x + constants.TILE_SIZE + constants.TILE_OVERLAP,
-    )
-    y_min, y_max = max(0, y - constants.TILE_OVERLAP), min(
-        y_shape,
-        y + constants.TILE_SIZE + constants.TILE_OVERLAP,
-    )
-    z_min, z_max = max(0, z - constants.TILE_OVERLAP), min(
-        z_shape,
-        z + constants.TILE_SIZE + constants.TILE_OVERLAP,
-    )
+    return tuple(o[~resolved] for o in original_index), flow_points[:, ~resolved]
 
-    with bfio.BioReader(in_path, max_workers=1) as reader:
-        flows = numpy.squeeze(
-            reader[y_min:y_max, x_min:x_max, z_min:z_max, 1 : ndims + 1, 0],
+
+def interpolate_flow(vectors: numpy.ndarray, points: numpy.ndarray) -> numpy.ndarray:
+    """Move a pixel to a new location based on the current vectors in the region.
+
+    This function takes a vector field and a set of points, and moves each point one
+    step along the vector field. Points exist in continuous space, and the value of the
+    vector field at a point is determined by interpolating local vector values at the
+    surrounding pixels.
+
+    This function works on n-dimensional tensor fields.
+
+    Args:
+        vectors (numpy.ndarray): n-dimensional tensor field
+        points (numpy.ndarray): An array of points
+
+    Returns:
+        numpy.ndarray: The points after following flows for one step
+    """
+    ndims = vectors.shape[0]
+
+    points_floor = points.astype(numpy.int32)
+    points_ceil = points_floor + 1
+    for d in range(ndims):
+        points_ceil[d, :] = numpy.clip(
+            points_ceil[d, :],
+            a_min=0,
+            a_max=vectors.shape[d + 1] - 1,
         )
 
-    # arrays are stored as (y, x, z, c, t) but need to be processed as (c, z, y, x)
-    if ndims == 2:  # noqa: PLR2004
-        flows = numpy.transpose(flows, (2, 0, 1))
-    else:
-        flows = numpy.transpose(flows, (3, 2, 0, 1))
+    points_norm = points - points_floor
+    points_norm_inv = numpy.clip(
+        points_ceil - points_floor - points_norm,
+        a_min=0,
+        a_max=None,
+    )
 
-    _, labels = mask_reconstruction.flows_to_labels(flows, flow_magnitude_threshold)
-
-    x_overlap, x_min, x_max = x - x_min, x, min(x_shape, x + constants.TILE_SIZE)
-    y_overlap, y_min, y_max = y - y_min, y, min(y_shape, y + constants.TILE_SIZE)
-    z_overlap, z_min, z_max = z - z_min, z, min(z_shape, z + constants.TILE_SIZE)
-
-    if ndims == 2:  # noqa: PLR2004
-        labels = labels[
-            y_overlap : y_max - y_min + y_overlap,
-            x_overlap : x_max - x_min + x_overlap,
+    # Shape of the local points should be:
+    # N x P x (2, ) * N
+    # where N is the number of dimensions and P is the number of points
+    shape = points.shape + (2,) * ndims
+    vector_field = numpy.zeros(shape)
+    for index in itertools.product(range(2), repeat=ndims):
+        vector_field[(slice(None), slice(None), *index)] = vectors[
+            (
+                slice(None),
+                *tuple(
+                    points_floor[d] if i == 0 else points_ceil[d]
+                    for d, i in enumerate(index)
+                ),
+            )
         ]
 
-        current_z = None
-        current_y = labels[0, :].squeeze()
-        current_x = labels[:, 0].squeeze()
-    else:
-        labels = labels[
-            z_overlap : z_max - z_min + z_overlap,
-            y_overlap : y_max - y_min + y_overlap,
-            x_overlap : x_max - x_min + x_overlap,
-        ]
+    # Run interpolation
+    for d in reversed(range(ndims)):
+        if vector_field.ndim == 3:  # noqa: PLR2004
+            p = numpy.zeros((*vector_field.shape, 1))
+            vector_field = numpy.expand_dims(vector_field, axis=2)
+        else:
+            p = numpy.zeros(vector_field.shape[:-1] + (1,))
 
-        current_z = labels[0, :, :].squeeze()
-        current_y = labels[:, 0, :].squeeze()
-        current_x = labels[:, :, 0].squeeze()
+        shape = (1, points_norm.shape[1]) + (1,) * (vector_field.ndim - 4)
+        p[..., 0, 0] = points_norm_inv[d : d + 1].reshape(shape)
+        p[..., 1, 0] = points_norm[d : d + 1].reshape(shape)
 
-    shape = labels.shape
-    labels = labels.reshape(-1)
-    if y > 0:
-        labels, labels_y, indices_y = reconcile_overlap(
-            future_y.squeeze(),  # type: ignore[union-attr]
-            current_y,
-            labels,
-        )
-    if x > 0:
-        labels, labels_x, indices_x = reconcile_overlap(
-            future_x.squeeze(),  # type: ignore[union-attr]
-            current_x,
-            labels,
-        )
-    if z > 0:
-        labels, labels_z, indices_z = reconcile_overlap(
-            future_z.squeeze(),  # type: ignore[union-attr]
-            current_z,
-            labels,
-        )
+        # Stacked matrix multiply
+        vector_field = vector_field @ p
 
-    uniques, labels = numpy.unique(labels, return_inverse=True)
-    labels = numpy.asarray(labels, numpy.uint32)
-    labels[labels > 0] = labels[labels > 0] + offset
-    max_label = numpy.max(uniques) + offset
+        vector_field = vector_field.squeeze(axis=-1)
 
-    if y > 0:
-        for label, index in zip(labels_y, indices_y):
-            if index.size == 0:
-                continue
-            labels[index] = label
-
-    if x > 0:
-        for label, index in zip(labels_x, indices_x):
-            if index.size == 0:
-                continue
-            labels[index] = label
-
-    if z > 0:
-        for label, index in zip(labels_z, indices_z):
-            if index.size == 0:
-                continue
-            labels[index] = label
-
-    # Zarr axes ordering should be (t, c, z, y, x). Add missing t, c, and z axes
-    labels = numpy.asarray(numpy.reshape(labels, shape), dtype=numpy.uint32)
-    if ndims == 2:  # noqa: PLR2004
-        labels = labels[numpy.newaxis, numpy.newaxis, numpy.newaxis, :, :]
-    else:
-        labels = labels[numpy.newaxis, numpy.newaxis, :, :, :]
-
-    # noinspection PyTypeChecker
-    zarr_root = zarr.open(str(zarr_path))[0]
-    zarr_root[0:1, 0:1, z_min:z_max, y_min:y_max, x_min:x_max] = labels
-
-    if ndims == 2:  # noqa: PLR2004
-        return None, labels[0, 0, 0, -1, :], labels[0, 0, 0, :, -1], max_label
-
-    return (
-        labels[0, 0, -1, :, :],
-        labels[0, 0, :, -1, :],
-        labels[0, 0, :, :, -1],
-        max_label,
-    )
+    return vector_field[..., 0] + points
 
 
 def convert(
-    in_path: pathlib.Path,
-    flow_magnitude_threshold: float,
-    output_dir: pathlib.Path,
-) -> None:
-    """Convert a vector image to a label image.
+    vectors: numpy.ndarray,
+    mask: numpy.ndarray,
+    window_radius: int,
+) -> numpy.ndarray:
+    """Converts vector data to labels.
 
     Args:
-        in_path: Path to input file
-        flow_magnitude_threshold: Threshold for flow magnitude
-        output_dir: Path to output directory
+        vectors: array of vector-data.
+        mask: binary mask of background and foreground.
+        window_radius: radius of convolutional windows
     """
-    with concurrent.futures.ProcessPoolExecutor(constants.NUM_THREADS) as executor:
-        with bfio.BioReader(in_path) as reader:
-            shape = (reader.Z, reader.Y, reader.X)
-            metadata = reader.metadata
+    # Step 1: Find object boundaries using local dot product
 
-        zarr_path = output_dir.joinpath(
-            helpers.replace_extension(in_path, extension="_tmp.ome.zarr"),
+    # Normalize the vector
+    v_norm = common.vector_norm(vectors, axis=0)
+
+    # Pad vectors for integral image calculations
+    pad = [(0, 0)] + [
+        [window_radius + 1, window_radius] for _ in range(1, vectors.ndim)
+    ]
+    vector_pad = numpy.pad(v_norm, pad)
+    mask_pad = numpy.pad(mask, pad)
+
+    # Get a local count of foreground pixels
+    box_filt = common.BoxFilterND(mask_pad.ndim, 2 * window_radius + 1)
+    counts = box_filt(mask_pad.astype(numpy.int32))
+    counts[~mask] = 0
+
+    # Get the local mean vector
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        v_mean = box_filt(vector_pad) / counts
+
+    # Compute the dot product between the local mean vector and the vector at a point
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        v_dot = (v_norm * v_mean).sum(axis=0)
+    v_div = sum(numpy.gradient(v_norm[i], axis=i) for i in range(v_norm.shape[0]))
+
+    # Step 2: Label internal objects
+
+    # Internal pixels
+    internal = ((v_div < 0.0) | (v_dot >= 0.8)) & mask.squeeze()  # noqa: PLR2004
+
+    # Boundary pixels
+    boundary = mask.squeeze() & ~internal
+    boundary_points = numpy.where(boundary)
+    cells, _ = scipy.ndimage.label(
+        internal & mask.squeeze(),
+        numpy.ones((3,) * v_dot.ndim),
+    )
+
+    # If no borders, just return the labeled images
+    if ~numpy.any(boundary):
+        return cells
+
+    # Step 3: Follow flows from borders to objects
+
+    # Get starting points for interpolation at border pixels
+    points_float = numpy.asarray(boundary_points).astype(numpy.float32)
+    cells[boundary_points] = -1
+
+    # Run the first iteration of flow dynamics using interpolation
+    points_float += v_norm[(slice(None), *boundary_points)]
+
+    # Propagate labels
+    boundary_points, points_float = relabel(cells, boundary_points, points_float)
+
+    # Run interpolation iterations
+    for _ in range(5):  # batch
+        # Nudge the current position with the local average in case it's stuck in a well
+        flow_index = numpy.round(points_float).astype(numpy.int32)
+        flow_index = tuple(flow_index[p] for p in range(flow_index.shape[0]))
+
+        # Follow flows for 5 steps
+        for _ in range(5):  # step
+            points_float = interpolate_flow(v_norm, points_float)
+
+        for d in range(points_float.ndim - 1):
+            points_float[d, :] = numpy.clip(
+                points_float[d, :],
+                a_min=0,
+                a_max=v_norm.shape[d + 1] - 1,
+            )
+
+        # Resolve labels
+        boundary_points, points_float = relabel(cells, boundary_points, points_float)
+
+        if points_float.shape[1] == 0:
+            break
+
+    if points_float.shape[1] != 0:
+        msg = (
+            f"{points_float.shape[1]} pixels in the mask were not assigned to an"
+            f"object. Check the output for label quality."
         )
-        helpers.init_zarr_file(zarr_path, metadata)
+        logger.warning(msg)
+        cells[cells == -1] = 0
 
-        threads: dict[
-            tuple[int, int, int],
-            concurrent.futures.Future[ThreadFuture],
-        ] = {}
-        kwargs: dict[str, typing.Any] = {
-            "in_path": in_path,
-            "zarr_path": zarr_path,
-            "coordinates": (0, 0, 0),
-            "reader_shape": shape,
-            "flow_magnitude_threshold": flow_magnitude_threshold,
-            "future_z": None,
-            "future_y": None,
-            "future_x": None,
-        }
-
-        for iz, z in enumerate(range(0, shape[0], constants.TILE_SIZE)):
-            for iu, y in enumerate(range(0, shape[1], constants.TILE_SIZE)):
-                for ix, x in enumerate(range(0, shape[2], constants.TILE_SIZE)):
-                    kwargs["coordinates"] = x, y, z
-                    kwargs["future_z"] = None if iz == 0 else threads[(iz - 1, iu, ix)]
-                    kwargs["future_y"] = None if iu == 0 else threads[(iz, iu - 1, ix)]
-                    kwargs["future_x"] = None if ix == 0 else threads[(iz, iu, ix - 1)]
-
-                    threads[(iz, iu, ix)] = executor.submit(vector_thread, **kwargs)
-
-        for future in tqdm.tqdm(
-            concurrent.futures.as_completed(threads.values()),
-            total=len(threads),
-        ):
-            future.result()
-
-    out_path = output_dir.joinpath(helpers.replace_extension(zarr_path))
-    helpers.zarr_to_tif(zarr_path, out_path)
+    return cells

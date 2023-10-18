@@ -32,14 +32,14 @@ class BoxFilterND:
     This base class simply calculates the local sum of pixel values.
     """
 
-    def __init__(self, ndims: int, w: int = 3) -> None:
+    def __init__(self, ndims: int, window_size: int = 3) -> None:
         """Initializes the box filter.
 
         Args:
             ndims: The number of dimensions of the input matrix. It is assumed the
             first index is used for different channels or images, and not included
             in the calculations.
-            w: The window size for the box filter. Defaults to 3.
+            window_size: The window size for the box filter. Defaults to 3.
         """
         self.index = []
         self.sign = []
@@ -57,9 +57,9 @@ class BoxFilterND:
 
             for i in d:
                 if i:
-                    index.append(slice(w, None))
+                    index.append(slice(window_size, None))
                 else:
-                    index.append(slice(None, -w))
+                    index.append(slice(None, -window_size))
 
             self.index.append(tuple(index))
 
