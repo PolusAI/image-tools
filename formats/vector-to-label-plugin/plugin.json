@@ -21,12 +21,6 @@
       "type": "string",
       "description": "Image-name pattern to use when selecting images for processing.",
       "required": false
-    },
-    {
-      "name": "flowMagnitudeThreshold",
-      "type": "number",
-      "description": "The minimum flow magnitude at a pixel for it to be considered part of a cell. Defaults to 0.1",
-      "required": false
     }
   ],
   "outputs": [
@@ -46,13 +40,7 @@
       "key": "inputs.filePattern",
       "title": "File Pattern",
       "description": "Image-name pattern to use when selecting images for processing.",
-      "default": ".+"
-    },
-    {
-      "key": "inputs.flowMagnitudeThreshold",
-      "title": "Flow Magnitude Threshold",
-      "description": "The minimum flow magnitude at a pixel for it to be considered part of a cell.",
-      "default": 0.1
+      "default": ".*"
     }
   ]
 }
