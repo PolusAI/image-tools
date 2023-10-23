@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "polus-plugins-transforms-images-image-assembler"
+version = "1.4.0-dev0"
+description = "A scalable image assembler plugin."
+authors = ["Nick Schaub <nick.schaub@nih.gov>", "Antoine Gerardin <antoine.gerardin@nih.gov>"]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+bfio = {version = "2.1.9", extras = ["all"]}
+# filepattern = "^2.0.1"
+# preadator = "0.4.0.dev1"
+preadator = { git = "https://github.com/nishaq503/preadator", branch = "docs" }
+typer = "^0.7.0"
+requests = "^2.31.0"
+
+[tool.poetry.group.dev.dependencies]
+bump2version = "^1.0.1"
+pre-commit = "^3.2.1"
+pytest = "^7.2.2"
+black = "^23.10.0"
+ruff = "^0.1.1"
+mypy = "^1.6.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
