@@ -2,13 +2,21 @@
 import ast
 import enum
 import logging
+import os
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import as_completed
+from concurrent.futures import Future
 from itertools import chain
+from itertools import product
+from multiprocessing import cpu_count
 from pathlib import Path
+from sys import platform
 from typing import Any
+from typing import Iterable
+
 
 import microjson.model as mj
 import numpy as np
-import pydantic
 import scipy
 import vaex
 from bfio import BioReader
@@ -19,60 +27,19 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
+TILE_SIZE = 1024
+if platform == "linux" or platform == "linux2":
+    NUM_THREADS = len(os.sched_getaffinity(0))  # type: ignore
+else:
+    NUM_THREADS = max(cpu_count() // 2, 2)
+
+
 class PolygonType(enum.Enum):
     """Type of Polygons."""
 
     RECTANGLE = "rectangle"
     ENCODING = "encoding"
     DEFAULT = "encoding"
-
-
-class CustomOverlayModel(pydantic.BaseModel):
-    """Setting up configuration for pydantic base model."""
-
-    class Config:
-        """Model configuration."""
-
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-
-
-class Loaddata(CustomOverlayModel):
-    """Detect subdirectories and filepaths.
-
-    Args:
-        inp_dir: Path to input directory.
-
-    Returns:
-        A tuple of list of subdirectories and files path.
-    """
-
-    inp_dir: Path
-
-    @pydantic.validator("inp_dir", pre=True)
-    def validate_file_path(cls, value: Path) -> Path:  # noqa: N805
-        """Validate file path."""
-        if not Path(value).exists():
-            msg = "File path does not exists!! Please do check path again"
-            raise ValueError(msg)
-
-        return value
-
-    @property
-    def data(self) -> tuple[list[Path], list[Path]]:
-        """Check subdirectories if present and image file paths."""
-        filepath: list[Path] = []
-        dirpaths: list[Path] = []
-        for path in Path(self.inp_dir).rglob("*"):
-            if path.is_dir():
-                if path.parent in dirpaths:
-                    dirpaths.remove(path.parent)
-                dirpaths.append(path)
-            elif path.is_file() and not path.name.startswith("."):
-                fpath = Path(self.inp_dir).joinpath(path)
-                filepath.append(fpath)
-
-        return dirpaths, filepath
 
 
 class OmeMicrojsonModel:
@@ -94,72 +61,93 @@ class OmeMicrojsonModel:
         self.out_dir = out_dir
         self.file_path = file_path
         self.polygon_type = polygon_type
-        self.br = BioReader(self.file_path)
-        self.image = self.br.read()
-        self.image = self.image.squeeze()
         self.min_label_length = 1
         self.min_unique_labels = 0
         self.max_unique_labels = 2
-        if len(np.unique(self.image)) == self.max_unique_labels:
-            msg = "Binary image detected!!"
-            logger.info(msg)
-            self.label_image = morphology.label(self.image)
-        if len(np.unique(self.image)) > self.max_unique_labels:
-            msg = "Label image detected!!"
-            self.label_image = self.image
-        if len(np.unique(self.image)) == self.min_label_length:
-            msg = "Neither binary or label image detected!!"
-            raise ValueError(msg)
+        self.br = BioReader(self.file_path)
 
-        self.mask = np.zeros((self.image.shape[0], self.image.shape[1]))
+    def _tile_read(self) -> tuple[list[Any], list[Any]]:
+        """Reading of Image in a tile and compute encodings for it."""
+        with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
+            final_labels = []
+            final_coordinates = []
+
+            for i, (z, y, x) in enumerate(
+                product(
+                    range(self.br.Z),
+                    range(0, self.br.Y, TILE_SIZE),
+                    range(0, self.br.X, TILE_SIZE),
+                ),
+            ):
+                y_max = min([self.br.Y, y + TILE_SIZE])
+                x_max = min([self.br.X, x + TILE_SIZE])
+                image = self.br[y:y_max, x:x_max, z : z + 1]
+
+                unique_labels = len(np.unique(image))
+
+                if unique_labels >= self.max_unique_labels:
+                    if unique_labels == self.max_unique_labels:
+                        msg = f"Binary image detected : tile {i}"
+                        logger.info(msg)
+                        label_image = morphology.label(image)
+                    else:
+                        msg = f"Label image detected : tile {i}"
+                        label_image = image
+                        logger.info(msg)
+
+                    if self.polygon_type != PolygonType.RECTANGLE:
+                        if i == 0:
+                            future = executor.submit(self.get_method, label_image)
+                            if as_completed(future):
+                                label, coordinates = future.result()
+                        else:
+                            future = executor.submit(self.get_method, label_image)
+                            if as_completed(future):
+                                label, coordinates = future.result()
+                                coordinates = [
+                                    [[x + t[0], y + t[1]] for t in coordinates[i]] # type: ignore
+                                    for i in range(len(coordinates))
+                                ]
+                    else:
+                        future = executor.submit(self.get_method, label_image)
+                        if as_completed(future):
+                            label, coordinates = future.result()
+
+                    final_labels.append(label)
+                    final_coordinates.append(coordinates)
+
+            return final_labels, final_coordinates
 
     def segmentations_encodings(
         self,
+        label_image: np.ndarray,
     ) -> tuple[Any, list[list[list[Any]]]]:
         """Calculate object boundries as series of vertices/points forming a polygon."""
         label, coordinates = [], []
-        for i in np.unique(self.label_image)[1:]:
-            self.mask = np.zeros((self.image.shape[0], self.image.shape[1]))
-            self.mask[(self.label_image == i)] = 1
+        for i in np.unique(label_image)[1:]:
+            mask = np.zeros((label_image.shape[0], label_image.shape[1]))
+            mask[(label_image == i)] = 1
             contour_thresh = 0.8
-            contour = measure.find_contours(self.mask, contour_thresh)
+            contour = measure.find_contours(mask, contour_thresh)
             if (
                 len(contour) > self.min_unique_labels
                 and len(contour) < self.max_unique_labels
+                and len(contour[0] > self.min_label_length)
             ):
                 contour = np.flip(contour, axis=1)
                 seg_encodings = contour.ravel().tolist()
                 poly = [[x, y] for x, y in zip(seg_encodings[1::2], seg_encodings[::2])]
                 label.append(i)
                 coordinates.append(poly)
-        x_dimension = np.repeat(self.br.X, len(label))
-        y_dimension = np.repeat(self.br.Y, len(label))
-        channel = np.repeat(self.br.C, len(label))
-        filename = Path(self.file_path)
-        image_name = np.repeat(filename.name, len(label))
-        plate_name = np.repeat(Path(filename.parent).name, len(label))
-        encodings = list(chain.from_iterable(coordinates))
-        encoding_length = np.repeat(len(encodings), len(label))
 
-        data = vaex.from_arrays(
-            Plate=plate_name,
-            Image=image_name,
-            X=x_dimension,
-            Y=y_dimension,
-            Channel=channel,
-            Label=label,
-            Encoding_length=encoding_length,
-        )
-        data["geometry_type"] = np.repeat("Polygon", data.shape[0])
-        data["type"] = np.repeat("Feature", data.shape[0])
-
-        return data, coordinates
+        return label, coordinates
 
     def rectangular_polygons(
         self,
-    ) -> tuple[Any, list[str]]:
+        label_image: np.ndarray,
+    ) -> tuple[list[int], list[str]]:
         """Calculate Rectangular polygon for each object."""
-        objects = scipy.ndimage.measurements.find_objects(self.label_image)
+        objects = scipy.ndimage.measurements.find_objects(label_image)
         label, coordinates = [], []
         for i, obj in enumerate(objects):
             if obj is not None:
@@ -181,11 +169,34 @@ class OmeMicrojsonModel:
             coordinates.append(poly)
             label.append(i + 1)
 
+        return label, coordinates
+
+    def get_method(self, label_image: np.ndarray) -> tuple[Any, object]:
+        """Get data and corrdinates based on polygon type."""
+        methods = {
+            PolygonType.ENCODING: self.segmentations_encodings,
+            PolygonType.RECTANGLE: self.rectangular_polygons,
+        }
+        label, coordinates = methods[self.polygon_type](
+            label_image,
+        )  # : 173 # type: ignore[index]
+
+        return label, coordinates
+
+    def polygons_to_microjson(self) -> None:  # noqa : 183
+        """Create microjson overlays in JSON Format."""
+        label, coordinates = self._tile_read()
+
+        coordinates = list(chain.from_iterable(coordinates))
+
+        label = list(range(1, len(list(chain.from_iterable(label))) + 1))
+
         x_dimension = np.repeat(self.br.X, len(label))
         y_dimension = np.repeat(self.br.Y, len(label))
         channel = np.repeat(self.br.C, len(label))
-        image_name = np.repeat(Path(self.file_path).name, len(label))
-        plate_name = np.repeat(Path(Path(self.file_path).parent).name, len(label))
+        filename = Path(self.file_path)
+        image_name = np.repeat(filename.name, len(label))
+        plate_name = np.repeat(Path(filename.parent).name, len(label))
         encodings = list(chain.from_iterable(coordinates))
         encoding_length = np.repeat(len(encodings), len(label))
 
@@ -200,22 +211,6 @@ class OmeMicrojsonModel:
         )
         data["geometry_type"] = np.repeat("Polygon", data.shape[0])
         data["type"] = np.repeat("Feature", data.shape[0])
-
-        return data, coordinates
-
-    def get_method(self) -> tuple[Any, object]:
-        """Get data and corrdinates based on polygon type."""
-        methods = {
-            PolygonType.ENCODING: self.segmentations_encodings,
-            PolygonType.RECTANGLE: self.rectangular_polygons,
-        }
-        data, coordinates = methods[self.polygon_type]()  # type: ignore[index]
-
-        return data, coordinates
-
-    def polygons_to_microjson(self) -> None:
-        """Create microjson overlays in JSON Format."""
-        data, coordinates = self.get_method()
 
         varlist = [
             "Plate",
@@ -270,9 +265,7 @@ class OmeMicrojsonModel:
             geometry = GeometryClass(type=row["geometry_type"], coordinates=[cor_value])
 
             # create a new properties object dynamically
-            properties = mj.Properties(
-                numeric=numeric_dict,
-            )
+            properties = mj.Properties(numeric=numeric_dict)
 
             # Create a new Feature object
             feature = mj.MicroFeature(
@@ -293,10 +286,7 @@ class OmeMicrojsonModel:
         int_meta = {key: f"{data[key].values[0]}" for key in varlist[2:5]}
 
         # create a new properties for each image
-        properties = mj.Properties(
-            string=desc_meta,
-            numeric=int_meta,
-        )
+        properties = mj.Properties(string=desc_meta, numeric=int_meta)
 
         # Create a new FeatureCollection object
         feature_collection = mj.MicroFeatureCollection(
@@ -331,7 +321,6 @@ class OmeMicrojsonModel:
             + str(self.polygon_type.value)
             + ".json"
         )
-
         if len(feature_collection.model_dump_json()) == 0:
             msg = "JSON file is empty"
             raise ValueError(msg)

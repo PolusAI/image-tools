@@ -18,8 +18,8 @@ microjson = "^0.1.9"
 fastapi = "^0.103.1"
 llvmlite = "^0.40.1"
 vaex = "^4.17.0"
-pydantic = "^2.3.0"
-scikit-image = "0.20.0"
+scikit-image = "^0.20.0"
+
 
 [[tool.poetry.source]]
 name = "test"

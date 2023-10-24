@@ -3,15 +3,15 @@ import logging
 import shutil
 import time
 import warnings
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import as_completed
+from concurrent.futures import ProcessPoolExecutor
 from os import environ
 from pathlib import Path
 
 import filepattern as fp
-import polus.plugins.visualization.ome_to_microjson.ome_microjson as sm
 import typer
 from tqdm import tqdm
+
+import src.polus.plugins.visualization.ome_to_microjson.ome_microjson as sm
 
 warnings.filterwarnings("ignore")
 
@@ -23,11 +23,9 @@ POLUS_LOG = getattr(logging, environ.get("POLUS_LOG", "INFO"))
 logger = logging.getLogger("polus.plugins.visualization.ome_to_micojson")
 logger.setLevel(POLUS_LOG)
 logging.getLogger("bfio").setLevel(POLUS_LOG)
-# Set number of threads for scalability
 
-THREADS = ThreadPoolExecutor()._max_workers
 
-app = typer.Typer(help="Convert binary segmentations to micojson plugin.")
+app = typer.Typer(help="Convert binary segmentations to micojson outputs.")
 
 
 def generate_preview(
@@ -88,59 +86,20 @@ def main(
         msg = "outDir does not exist"
         raise ValueError(msg, out_dir)
 
-    inputs = sm.Loaddata(inp_dir=inp_dir)
+    files = fp.FilePattern(inp_dir, file_pattern)
 
-    dirpaths, _ = inputs.data
+    if not len(files) > 0:
+        msg = "No image files are detected. Please check filepattern again!"
+        raise ValueError(msg)
 
-    if not len(dirpaths) > 1:
-        files = fp.FilePattern(inp_dir, file_pattern)
-
-        if not len(files) > 0:
-            msg = "No image files are detected. Please check filepattern again!"
-            raise ValueError(msg)
-
-        with ThreadPoolExecutor(max_workers=THREADS) as executor:
-            threads = []
-            for _, f in enumerate(tqdm(files())):
-                model = sm.OmeMicrojsonModel(
-                    out_dir=out_dir,
-                    file_path=str(f[1][0]),
-                    polygon_type=polygon_type,
-                )
-                future = executor.submit(model.polygons_to_microjson)
-                threads.append(future)
-
-            for f in tqdm(
-                list(as_completed(threads)),
-                desc="Creating segmentation's microjson",
-                total=len(threads),
-            ):
-                f.result()
-    else:
-        for d in dirpaths:
-            files = fp.FilePattern(d, file_pattern)
-
-            if not len(files) > 0:
-                msg = "No image files are detected. Please check filepattern again!"
-                raise ValueError(msg)
-
-            with ThreadPoolExecutor(max_workers=THREADS) as executor:
-                threads = []
-                for _, f in enumerate(tqdm(files())):
-                    model = sm.OmeMicrojsonModel(
-                        out_dir=out_dir,
-                        file_path=str(f[1][0]),
-                        polygon_type=polygon_type,
-                    )
-                    future = executor.submit(model.polygons_to_microjson)
-                    threads.append(future)
-
-                for f in tqdm(
-                    list(as_completed(threads)),
-                    desc="Creating segmentation's microjson",
-                    total=len(threads),
-                ):
-                    f.result()
+    with ProcessPoolExecutor(max_workers=sm.NUM_THREADS) as executor:
+        for _, f in enumerate(tqdm(files())):
+            model = sm.OmeMicrojsonModel(
+                out_dir=out_dir,
+                file_path=str(f[1][0]),
+                polygon_type=polygon_type,
+            )
+            executor.submit(model.polygons_to_microjson())
 
     if preview:
         generate_preview(out_dir)
