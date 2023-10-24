@@ -8,10 +8,9 @@ from os import environ
 from pathlib import Path
 
 import filepattern as fp
+import polus.plugins.visualization.ome_to_microjson.ome_microjson as sm
 import typer
 from tqdm import tqdm
-
-import src.polus.plugins.visualization.ome_to_microjson.ome_microjson as sm
 
 warnings.filterwarnings("ignore")
 
