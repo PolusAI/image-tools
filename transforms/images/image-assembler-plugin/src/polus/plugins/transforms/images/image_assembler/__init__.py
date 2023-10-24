@@ -6,3 +6,5 @@ from polus.plugins.transforms.images.image_assembler.image_assembler import (  #
     assemble_images,
     generate_output_filepaths,
 )
+
+__all__ = ["assemble_images", "generate_output_filepaths"]

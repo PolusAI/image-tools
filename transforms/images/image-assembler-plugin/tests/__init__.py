@@ -1,1 +1,1 @@
-"""Unit Tests."""
+"""Tests for the plugin."""

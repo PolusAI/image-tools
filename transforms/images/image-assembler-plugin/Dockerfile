@@ -6,7 +6,7 @@ FROM polusai/bfio:2.1.9
 # ENV POLUS_EXT=".ome.tif"
 
 #Change to WARNING for fewer logs, and DEBUG for debugging
-ENV POLUS_LOG="INFO" 
+ENV POLUS_LOG="INFO"
 
 ENV POLUS_IMG_EXT=".ome.tif"
 ENV POLUS_TAB_EXT=".csv"

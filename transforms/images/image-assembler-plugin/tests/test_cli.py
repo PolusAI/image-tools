@@ -11,6 +11,7 @@ faulthandler.enable()
 
 from tests.fixtures import data, plugin_dirs, ground_truth_dir
 
+
 def test_cli(data: None, plugin_dirs: tuple[Path, Path, Path]):  # noqa
     """Test the command line."""
     runner = CliRunner()
