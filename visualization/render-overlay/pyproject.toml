@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-visualization-render-overlay"
-version = "0.1.0-dev1"
+version = "0.1.0-dev2"
 description = ""
 authors = ["Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>"]
 readme = "README.md"
@@ -9,12 +9,12 @@ packages = [{include = "polus", from = "src"}]
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0"
 typer = "^0.7.0"
-pydantic = "^1.8.2"
-filepattern = "^2.0.0"
+filepattern = "^2.0.1"
 tqdm = "^4.65.0"
 pandas = "^2.0.3"
-microjson = "^0.1.4"
+microjson = "^0.1.9"
 vaex = "^4.17.0"
+pydantic = "^2.4.2"
 
 
 [tool.poetry.group.dev.dependencies]

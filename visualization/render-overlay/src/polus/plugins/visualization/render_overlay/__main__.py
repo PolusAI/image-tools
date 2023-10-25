@@ -3,6 +3,7 @@ import logging
 import os
 import pathlib
 import shutil
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import cpu_count
 from typing import Optional
@@ -14,6 +15,7 @@ from tqdm import tqdm
 
 app = typer.Typer()
 
+warnings.filterwarnings("ignore")
 # Initialize the logger
 logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
@@ -83,7 +85,9 @@ def main(  # noqa: PLR0913
     if dimensions is not None:
         width, height = dimensions.get_value()
 
-    files = [file[1][0] for file in fp.FilePattern(inp_dir, file_pattern)]
+    fps = fp.FilePattern(inp_dir, file_pattern)
+
+    files = [file[1][0] for file in fps()]
 
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
         for file in tqdm(files, desc="Creating overlays", total=len(files)):

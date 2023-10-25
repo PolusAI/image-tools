@@ -28,6 +28,13 @@ def input_directory() -> pathlib.Path:
     return pathlib.Path(tempfile.mkdtemp(dir=pathlib.Path.cwd()))
 
 
+def clean_directories() -> None:
+    """Remove all temporary directories."""
+    for d in pathlib.Path(".").cwd().iterdir():
+        if d.is_dir() and d.name.startswith("tmp"):
+            shutil.rmtree(d)
+
+
 @pytest.fixture(
     params=[
         (24, 16, 2170, 1080, "Polygon", 384, ".csv"),
@@ -174,8 +181,7 @@ def test_render_overlay_model(
     with pathlib.Path.open(out_file) as jfile:
         mjson = json.load(jfile)
         assert len(mjson) != 0
-    shutil.rmtree(generate_synthetic_data.parent)
-    shutil.rmtree(output_directory)
+    clean_directories()
 
 
 @pytest.fixture(
@@ -220,5 +226,4 @@ def test_cli(
         ],
     )
     assert result.exit_code == 0
-    shutil.rmtree(generate_synthetic_data.parent)
-    shutil.rmtree(output_directory)
+    clean_directories()
