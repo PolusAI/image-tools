@@ -53,32 +53,13 @@ def convert_vaex_dataframe(file_path: Path) -> vaex.dataframe.DataFrame:
     return None
 
 
-def snake_camel_conversion(value: str) -> str:
-    """Convert snake_case to camelCase.
-
-    Args:
-        value: A string in snake case format.
-
-    Returns:
-        A string in camel case format.
-    """
-    if not isinstance(value, str):
-        msg = "Value must be string"
-        raise ValueError(msg)
-
-    prf = value.split("_")
-    value = "".join(pf.title() for pf in prf if pf)
-    return f"{value[0].lower()}{value[1:]}"
-
-
 class CustomOverlayModel(pydantic.BaseModel):
     """Setting up configuration for pydantic base model."""
 
     class Config:
         """Model configuration."""
 
-        alias_generator = snake_camel_conversion
-        extra = pydantic.Extra.forbid
+        extra = "allow"
         allow_population_by_field_name = True
 
 
@@ -270,8 +251,8 @@ class RenderOverlayModel(CustomOverlayModel):
 
                 # create a new properties object dynamically
                 properties = mj.Properties(
-                    descriptive=descriptive_dict,
-                    numerical=numeric_dict,
+                    string=descriptive_dict,
+                    numeric=numeric_dict,
                 )
 
                 # Create a new Feature object
@@ -319,11 +300,16 @@ class RenderOverlayModel(CustomOverlayModel):
                 },
             )
 
-            if len(feature_collection.json()) == 0:
+            if len(feature_collection.model_dump_json()) == 0:
                 msg = "JSON file is empty"
                 raise ValueError(msg)
-            if len(feature_collection.json()) > 0:
+            if len(feature_collection.model_dump_json()) > 0:
                 out_name = Path(self.out_dir, f"{self.file_path.stem}_overlay.json")
                 with Path.open(out_name, "w") as f:
-                    f.write(feature_collection.json(indent=2, exclude_unset=True))
+                    f.write(
+                        feature_collection.model_dump_json(
+                            indent=2,
+                            exclude_unset=True,
+                        ),
+                    )
                     logger.info(f"Saving overlay json file: {out_name}")

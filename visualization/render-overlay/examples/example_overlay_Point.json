@@ -11,7 +11,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A1",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -19,7 +19,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18520.0,
           "maxVirusIntensity": 37463.0
         }
@@ -35,7 +35,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A2",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -43,7 +43,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20521.0,
           "maxVirusIntensity": 36333.0
         }
@@ -59,7 +59,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A3",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -67,7 +67,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19009.0,
           "maxVirusIntensity": 40291.0
         }
@@ -83,7 +83,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A4",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -91,7 +91,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20864.0,
           "maxVirusIntensity": 40464.0
         }
@@ -107,7 +107,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A5",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -115,7 +115,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19477.0,
           "maxVirusIntensity": 46785.0
         }
@@ -131,7 +131,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A6",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -139,7 +139,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19474.0,
           "maxVirusIntensity": 31972.0
         }
@@ -155,7 +155,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A7",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -163,7 +163,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19243.0,
           "maxVirusIntensity": 59572.0
         }
@@ -179,7 +179,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A8",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -187,7 +187,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21098.0,
           "maxVirusIntensity": 24242.0
         }
@@ -203,7 +203,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A9",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -211,7 +211,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20557.0,
           "maxVirusIntensity": 54847.0
         }
@@ -227,7 +227,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A10",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -235,7 +235,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18576.0,
           "maxVirusIntensity": 30355.0
         }
@@ -251,7 +251,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A11",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -259,7 +259,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17619.0,
           "maxVirusIntensity": 27997.0
         }
@@ -275,7 +275,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A12",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -283,7 +283,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 23254.0,
           "maxVirusIntensity": 26648.0
         }
@@ -299,7 +299,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A13",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -307,7 +307,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19443.0,
           "maxVirusIntensity": 12770.0
         }
@@ -323,7 +323,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A14",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -331,7 +331,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18618.0,
           "maxVirusIntensity": 22618.0
         }
@@ -347,7 +347,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A15",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -355,7 +355,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19435.0,
           "maxVirusIntensity": 18060.0
         }
@@ -371,7 +371,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A16",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -379,7 +379,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18000.0,
           "maxVirusIntensity": 19389.0
         }
@@ -395,7 +395,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A17",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -403,7 +403,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21766.0,
           "maxVirusIntensity": 19302.0
         }
@@ -419,7 +419,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A18",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -427,7 +427,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 27206.0,
           "maxVirusIntensity": 11523.0
         }
@@ -443,7 +443,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A19",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -451,7 +451,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 23479.0,
           "maxVirusIntensity": 12748.0
         }
@@ -467,7 +467,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A20",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -475,7 +475,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19539.0,
           "maxVirusIntensity": 11307.0
         }
@@ -491,7 +491,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A21",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -499,7 +499,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17525.0,
           "maxVirusIntensity": 17899.0
         }
@@ -515,7 +515,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A22",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -523,7 +523,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18801.0,
           "maxVirusIntensity": 12422.0
         }
@@ -539,7 +539,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A23",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -547,7 +547,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18029.0,
           "maxVirusIntensity": 18855.0
         }
@@ -563,7 +563,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "A24",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -571,7 +571,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18481.0,
           "maxVirusIntensity": 19199.0
         }
@@ -587,7 +587,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B1",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -595,7 +595,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18765.0,
           "maxVirusIntensity": 32912.0
         }
@@ -611,7 +611,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B2",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -619,7 +619,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 23171.0,
           "maxVirusIntensity": 29553.0
         }
@@ -635,7 +635,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B3",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -643,7 +643,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20985.0,
           "maxVirusIntensity": 42945.0
         }
@@ -659,7 +659,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B4",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -667,7 +667,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19064.0,
           "maxVirusIntensity": 45952.0
         }
@@ -683,7 +683,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B5",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -691,7 +691,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19367.0,
           "maxVirusIntensity": 41432.0
         }
@@ -707,7 +707,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B6",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -715,7 +715,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17833.0,
           "maxVirusIntensity": 32469.0
         }
@@ -731,7 +731,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B7",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -739,7 +739,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18481.0,
           "maxVirusIntensity": 26662.0
         }
@@ -755,7 +755,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B8",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -763,7 +763,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17703.0,
           "maxVirusIntensity": 27416.0
         }
@@ -779,7 +779,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B9",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -787,7 +787,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17938.0,
           "maxVirusIntensity": 38572.0
         }
@@ -803,7 +803,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B10",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -811,7 +811,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19279.0,
           "maxVirusIntensity": 35661.0
         }
@@ -827,7 +827,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B11",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -835,7 +835,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19717.0,
           "maxVirusIntensity": 34315.0
         }
@@ -851,7 +851,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B12",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -859,7 +859,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19672.0,
           "maxVirusIntensity": 29095.0
         }
@@ -875,7 +875,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B13",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -883,7 +883,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18105.0,
           "maxVirusIntensity": 22046.0
         }
@@ -899,7 +899,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B14",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -907,7 +907,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20297.0,
           "maxVirusIntensity": 23515.0
         }
@@ -923,7 +923,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B15",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -931,7 +931,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18098.0,
           "maxVirusIntensity": 15568.0
         }
@@ -947,7 +947,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B16",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -955,7 +955,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18186.0,
           "maxVirusIntensity": 38231.0
         }
@@ -971,7 +971,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B17",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -979,7 +979,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20709.0,
           "maxVirusIntensity": 18305.0
         }
@@ -995,7 +995,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B18",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1003,7 +1003,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 26519.0,
           "maxVirusIntensity": 11270.0
         }
@@ -1019,7 +1019,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B19",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1027,7 +1027,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18998.0,
           "maxVirusIntensity": 65535.0
         }
@@ -1043,7 +1043,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B20",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1051,7 +1051,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18405.0,
           "maxVirusIntensity": 22420.0
         }
@@ -1067,7 +1067,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B21",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1075,7 +1075,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17650.0,
           "maxVirusIntensity": 28688.0
         }
@@ -1091,7 +1091,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B22",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1099,7 +1099,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18839.0,
           "maxVirusIntensity": 26995.0
         }
@@ -1115,7 +1115,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B23",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1123,7 +1123,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20521.0,
           "maxVirusIntensity": 10626.0
         }
@@ -1139,7 +1139,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "B24",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1147,7 +1147,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18928.0,
           "maxVirusIntensity": 18188.0
         }
@@ -1163,7 +1163,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C1",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1171,7 +1171,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20415.0,
           "maxVirusIntensity": 32588.0
         }
@@ -1187,7 +1187,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C2",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1195,7 +1195,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19578.0,
           "maxVirusIntensity": 29582.0
         }
@@ -1211,7 +1211,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C3",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1219,7 +1219,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20101.0,
           "maxVirusIntensity": 42235.0
         }
@@ -1235,7 +1235,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C4",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1243,7 +1243,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18802.0,
           "maxVirusIntensity": 33418.0
         }
@@ -1259,7 +1259,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C5",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1267,7 +1267,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18914.0,
           "maxVirusIntensity": 28082.0
         }
@@ -1283,7 +1283,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C6",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1291,7 +1291,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17411.0,
           "maxVirusIntensity": 31151.0
         }
@@ -1307,7 +1307,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C7",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1315,7 +1315,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20641.0,
           "maxVirusIntensity": 31137.0
         }
@@ -1331,7 +1331,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C8",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1339,7 +1339,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 16802.0,
           "maxVirusIntensity": 32086.0
         }
@@ -1355,7 +1355,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C9",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1363,7 +1363,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17967.0,
           "maxVirusIntensity": 22580.0
         }
@@ -1379,7 +1379,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C10",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1387,7 +1387,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18248.0,
           "maxVirusIntensity": 33296.0
         }
@@ -1403,7 +1403,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C11",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1411,7 +1411,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19445.0,
           "maxVirusIntensity": 29369.0
         }
@@ -1427,7 +1427,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C12",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1435,7 +1435,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17801.0,
           "maxVirusIntensity": 39433.0
         }
@@ -1451,7 +1451,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C13",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1459,7 +1459,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20845.0,
           "maxVirusIntensity": 12855.0
         }
@@ -1475,7 +1475,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C14",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1483,7 +1483,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17402.0,
           "maxVirusIntensity": 18199.0
         }
@@ -1499,7 +1499,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C15",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1507,7 +1507,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20782.0,
           "maxVirusIntensity": 17675.0
         }
@@ -1523,7 +1523,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C16",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1531,7 +1531,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19288.0,
           "maxVirusIntensity": 27243.0
         }
@@ -1547,7 +1547,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C17",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1555,7 +1555,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17958.0,
           "maxVirusIntensity": 20669.0
         }
@@ -1571,7 +1571,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C18",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1579,7 +1579,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18859.0,
           "maxVirusIntensity": 23671.0
         }
@@ -1595,7 +1595,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C19",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1603,7 +1603,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22356.0,
           "maxVirusIntensity": 22668.0
         }
@@ -1619,7 +1619,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C20",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1627,7 +1627,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22018.0,
           "maxVirusIntensity": 12645.0
         }
@@ -1643,7 +1643,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C21",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1651,7 +1651,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22004.0,
           "maxVirusIntensity": 14112.0
         }
@@ -1667,7 +1667,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C22",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1675,7 +1675,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 23158.0,
           "maxVirusIntensity": 9100.0
         }
@@ -1691,7 +1691,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C23",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1699,7 +1699,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19529.0,
           "maxVirusIntensity": 26435.0
         }
@@ -1715,7 +1715,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "C24",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1723,7 +1723,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19233.0,
           "maxVirusIntensity": 23942.0
         }
@@ -1739,7 +1739,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D1",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1747,7 +1747,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17966.0,
           "maxVirusIntensity": 47768.0
         }
@@ -1763,7 +1763,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D2",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1771,7 +1771,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 26610.0,
           "maxVirusIntensity": 22330.0
         }
@@ -1787,7 +1787,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D3",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1795,7 +1795,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19082.0,
           "maxVirusIntensity": 26949.0
         }
@@ -1811,7 +1811,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D4",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1819,7 +1819,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 16728.0,
           "maxVirusIntensity": 35790.0
         }
@@ -1835,7 +1835,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D5",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1843,7 +1843,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18149.0,
           "maxVirusIntensity": 20125.0
         }
@@ -1859,7 +1859,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D6",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1867,7 +1867,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17451.0,
           "maxVirusIntensity": 47114.0
         }
@@ -1883,7 +1883,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D7",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1891,7 +1891,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 23695.0,
           "maxVirusIntensity": 17626.0
         }
@@ -1907,7 +1907,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D8",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1915,7 +1915,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21517.0,
           "maxVirusIntensity": 19537.0
         }
@@ -1931,7 +1931,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D9",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1939,7 +1939,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22295.0,
           "maxVirusIntensity": 52650.0
         }
@@ -1955,7 +1955,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D10",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1963,7 +1963,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19167.0,
           "maxVirusIntensity": 40573.0
         }
@@ -1979,7 +1979,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D11",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -1987,7 +1987,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17261.0,
           "maxVirusIntensity": 31364.0
         }
@@ -2003,7 +2003,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D12",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2011,7 +2011,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20482.0,
           "maxVirusIntensity": 45870.0
         }
@@ -2027,7 +2027,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D13",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2035,7 +2035,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 26844.0,
           "maxVirusIntensity": 10022.0
         }
@@ -2051,7 +2051,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D14",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2059,7 +2059,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17098.0,
           "maxVirusIntensity": 32880.0
         }
@@ -2075,7 +2075,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D15",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2083,7 +2083,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 16784.0,
           "maxVirusIntensity": 32784.0
         }
@@ -2099,7 +2099,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D16",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2107,7 +2107,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18387.0,
           "maxVirusIntensity": 16463.0
         }
@@ -2123,7 +2123,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D17",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2131,7 +2131,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18223.0,
           "maxVirusIntensity": 15681.0
         }
@@ -2147,7 +2147,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D18",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2155,7 +2155,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 24655.0,
           "maxVirusIntensity": 6233.0
         }
@@ -2171,7 +2171,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D19",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2179,7 +2179,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18246.0,
           "maxVirusIntensity": 23914.0
         }
@@ -2195,7 +2195,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D20",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2203,7 +2203,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19323.0,
           "maxVirusIntensity": 11440.0
         }
@@ -2219,7 +2219,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D21",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2227,7 +2227,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17830.0,
           "maxVirusIntensity": 16100.0
         }
@@ -2243,7 +2243,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D22",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2251,7 +2251,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 24833.0,
           "maxVirusIntensity": 12983.0
         }
@@ -2267,7 +2267,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D23",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2275,7 +2275,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18836.0,
           "maxVirusIntensity": 23624.0
         }
@@ -2291,7 +2291,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "D24",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2299,7 +2299,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18058.0,
           "maxVirusIntensity": 11963.0
         }
@@ -2315,7 +2315,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E1",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2323,7 +2323,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22768.0,
           "maxVirusIntensity": 27180.0
         }
@@ -2339,7 +2339,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E2",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2347,7 +2347,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 25602.0,
           "maxVirusIntensity": 27221.0
         }
@@ -2363,7 +2363,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E3",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2371,7 +2371,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19778.0,
           "maxVirusIntensity": 38135.0
         }
@@ -2387,7 +2387,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E4",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2395,7 +2395,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 28019.0,
           "maxVirusIntensity": 14314.0
         }
@@ -2411,7 +2411,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E5",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2419,7 +2419,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19907.0,
           "maxVirusIntensity": 42417.0
         }
@@ -2435,7 +2435,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E6",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2443,7 +2443,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17475.0,
           "maxVirusIntensity": 40567.0
         }
@@ -2459,7 +2459,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E7",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2467,7 +2467,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 23231.0,
           "maxVirusIntensity": 25004.0
         }
@@ -2483,7 +2483,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E8",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2491,7 +2491,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18141.0,
           "maxVirusIntensity": 32923.0
         }
@@ -2507,7 +2507,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E9",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2515,7 +2515,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19697.0,
           "maxVirusIntensity": 31026.0
         }
@@ -2531,7 +2531,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E10",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2539,7 +2539,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20394.0,
           "maxVirusIntensity": 30905.0
         }
@@ -2555,7 +2555,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E11",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2563,7 +2563,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18734.0,
           "maxVirusIntensity": 29563.0
         }
@@ -2579,7 +2579,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E12",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2587,7 +2587,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19936.0,
           "maxVirusIntensity": 38196.0
         }
@@ -2603,7 +2603,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E13",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2611,7 +2611,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17323.0,
           "maxVirusIntensity": 29131.0
         }
@@ -2627,7 +2627,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E14",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2635,7 +2635,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18987.0,
           "maxVirusIntensity": 42386.0
         }
@@ -2651,7 +2651,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E15",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2659,7 +2659,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19097.0,
           "maxVirusIntensity": 17348.0
         }
@@ -2675,7 +2675,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E16",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2683,7 +2683,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 24540.0,
           "maxVirusIntensity": 10575.0
         }
@@ -2699,7 +2699,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E17",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2707,7 +2707,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21645.0,
           "maxVirusIntensity": 11627.0
         }
@@ -2723,7 +2723,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E18",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2731,7 +2731,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18792.0,
           "maxVirusIntensity": 11278.0
         }
@@ -2747,7 +2747,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E19",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2755,7 +2755,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18658.0,
           "maxVirusIntensity": 24850.0
         }
@@ -2771,7 +2771,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E20",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2779,7 +2779,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17711.0,
           "maxVirusIntensity": 14878.0
         }
@@ -2795,7 +2795,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E21",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2803,7 +2803,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20479.0,
           "maxVirusIntensity": 7576.0
         }
@@ -2819,7 +2819,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E22",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2827,7 +2827,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19419.0,
           "maxVirusIntensity": 30397.0
         }
@@ -2843,7 +2843,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E23",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2851,7 +2851,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18012.0,
           "maxVirusIntensity": 12432.0
         }
@@ -2867,7 +2867,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "E24",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2875,7 +2875,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17658.0,
           "maxVirusIntensity": 23862.0
         }
@@ -2891,7 +2891,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F1",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2899,7 +2899,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17625.0,
           "maxVirusIntensity": 36956.0
         }
@@ -2915,7 +2915,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F2",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2923,7 +2923,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 24722.0,
           "maxVirusIntensity": 23637.0
         }
@@ -2939,7 +2939,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F3",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2947,7 +2947,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17700.0,
           "maxVirusIntensity": 31604.0
         }
@@ -2963,7 +2963,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F4",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2971,7 +2971,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 23267.0,
           "maxVirusIntensity": 29408.0
         }
@@ -2987,7 +2987,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F5",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -2995,7 +2995,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19588.0,
           "maxVirusIntensity": 28010.0
         }
@@ -3011,7 +3011,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F6",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3019,7 +3019,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 26390.0,
           "maxVirusIntensity": 29912.0
         }
@@ -3035,7 +3035,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F7",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3043,7 +3043,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19772.0,
           "maxVirusIntensity": 43914.0
         }
@@ -3059,7 +3059,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F8",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3067,7 +3067,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19190.0,
           "maxVirusIntensity": 41521.0
         }
@@ -3083,7 +3083,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F9",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3091,7 +3091,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20537.0,
           "maxVirusIntensity": 41607.0
         }
@@ -3107,7 +3107,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F10",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3115,7 +3115,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18598.0,
           "maxVirusIntensity": 53594.0
         }
@@ -3131,7 +3131,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F11",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3139,7 +3139,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19493.0,
           "maxVirusIntensity": 37674.0
         }
@@ -3155,7 +3155,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F12",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3163,7 +3163,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19566.0,
           "maxVirusIntensity": 24885.0
         }
@@ -3179,7 +3179,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F13",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3187,7 +3187,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19564.0,
           "maxVirusIntensity": 18579.0
         }
@@ -3203,7 +3203,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F14",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3211,7 +3211,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18256.0,
           "maxVirusIntensity": 25781.0
         }
@@ -3227,7 +3227,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F15",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3235,7 +3235,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18462.0,
           "maxVirusIntensity": 26621.0
         }
@@ -3251,7 +3251,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F16",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3259,7 +3259,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18342.0,
           "maxVirusIntensity": 21697.0
         }
@@ -3275,7 +3275,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F17",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3283,7 +3283,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 24716.0,
           "maxVirusIntensity": 31528.0
         }
@@ -3299,7 +3299,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F18",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3307,7 +3307,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18774.0,
           "maxVirusIntensity": 26291.0
         }
@@ -3323,7 +3323,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F19",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3331,7 +3331,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19375.0,
           "maxVirusIntensity": 29048.0
         }
@@ -3347,7 +3347,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F20",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3355,7 +3355,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19879.0,
           "maxVirusIntensity": 16936.0
         }
@@ -3371,7 +3371,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F21",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3379,7 +3379,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21745.0,
           "maxVirusIntensity": 22980.0
         }
@@ -3395,7 +3395,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F22",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3403,7 +3403,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20466.0,
           "maxVirusIntensity": 12686.0
         }
@@ -3419,7 +3419,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F23",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3427,7 +3427,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18115.0,
           "maxVirusIntensity": 23765.0
         }
@@ -3443,7 +3443,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "F24",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3451,7 +3451,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19555.0,
           "maxVirusIntensity": 9845.0
         }
@@ -3467,7 +3467,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G1",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3475,7 +3475,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21341.0,
           "maxVirusIntensity": 56674.0
         }
@@ -3491,7 +3491,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G2",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3499,7 +3499,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21437.0,
           "maxVirusIntensity": 31733.0
         }
@@ -3515,7 +3515,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G3",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3523,7 +3523,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21842.0,
           "maxVirusIntensity": 44989.0
         }
@@ -3539,7 +3539,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G4",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3547,7 +3547,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18120.0,
           "maxVirusIntensity": 26812.0
         }
@@ -3563,7 +3563,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G5",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3571,7 +3571,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18650.0,
           "maxVirusIntensity": 26044.0
         }
@@ -3587,7 +3587,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G6",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3595,7 +3595,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 28748.0,
           "maxVirusIntensity": 25178.0
         }
@@ -3611,7 +3611,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G7",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3619,7 +3619,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19377.0,
           "maxVirusIntensity": 30396.0
         }
@@ -3635,7 +3635,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G8",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3643,7 +3643,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18700.0,
           "maxVirusIntensity": 40228.0
         }
@@ -3659,7 +3659,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G9",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3667,7 +3667,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 24869.0,
           "maxVirusIntensity": 26824.0
         }
@@ -3683,7 +3683,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G10",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3691,7 +3691,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19273.0,
           "maxVirusIntensity": 27964.0
         }
@@ -3707,7 +3707,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G11",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3715,7 +3715,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19152.0,
           "maxVirusIntensity": 39660.0
         }
@@ -3731,7 +3731,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G12",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3739,7 +3739,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21971.0,
           "maxVirusIntensity": 29522.0
         }
@@ -3755,7 +3755,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G13",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3763,7 +3763,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 23397.0,
           "maxVirusIntensity": 22777.0
         }
@@ -3779,7 +3779,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G14",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3787,7 +3787,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20156.0,
           "maxVirusIntensity": 16766.0
         }
@@ -3803,7 +3803,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G15",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3811,7 +3811,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20490.0,
           "maxVirusIntensity": 13114.0
         }
@@ -3827,7 +3827,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G16",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3835,7 +3835,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19128.0,
           "maxVirusIntensity": 27754.0
         }
@@ -3851,7 +3851,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G17",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3859,7 +3859,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21899.0,
           "maxVirusIntensity": 16051.0
         }
@@ -3875,7 +3875,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G18",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3883,7 +3883,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20007.0,
           "maxVirusIntensity": 19587.0
         }
@@ -3899,7 +3899,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G19",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3907,7 +3907,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19247.0,
           "maxVirusIntensity": 17223.0
         }
@@ -3923,7 +3923,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G20",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3931,7 +3931,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17532.0,
           "maxVirusIntensity": 17723.0
         }
@@ -3947,7 +3947,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G21",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3955,7 +3955,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20396.0,
           "maxVirusIntensity": 29593.0
         }
@@ -3971,7 +3971,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G22",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -3979,7 +3979,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22200.0,
           "maxVirusIntensity": 19607.0
         }
@@ -3995,7 +3995,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G23",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4003,7 +4003,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 24116.0,
           "maxVirusIntensity": 15436.0
         }
@@ -4019,7 +4019,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "G24",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4027,7 +4027,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18015.0,
           "maxVirusIntensity": 40825.0
         }
@@ -4043,7 +4043,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H1",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4051,7 +4051,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 23278.0,
           "maxVirusIntensity": 40773.0
         }
@@ -4067,7 +4067,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H2",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4075,7 +4075,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 23133.0,
           "maxVirusIntensity": 26067.0
         }
@@ -4091,7 +4091,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H3",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4099,7 +4099,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 23020.0,
           "maxVirusIntensity": 30863.0
         }
@@ -4115,7 +4115,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H4",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4123,7 +4123,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22023.0,
           "maxVirusIntensity": 31664.0
         }
@@ -4139,7 +4139,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H5",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4147,7 +4147,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 25423.0,
           "maxVirusIntensity": 28653.0
         }
@@ -4163,7 +4163,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H6",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4171,7 +4171,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 25024.0,
           "maxVirusIntensity": 24936.0
         }
@@ -4187,7 +4187,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H7",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4195,7 +4195,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19590.0,
           "maxVirusIntensity": 38637.0
         }
@@ -4211,7 +4211,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H8",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4219,7 +4219,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19792.0,
           "maxVirusIntensity": 30450.0
         }
@@ -4235,7 +4235,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H9",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4243,7 +4243,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 26738.0,
           "maxVirusIntensity": 21262.0
         }
@@ -4259,7 +4259,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H10",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4267,7 +4267,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 23319.0,
           "maxVirusIntensity": 31544.0
         }
@@ -4283,7 +4283,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H11",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4291,7 +4291,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 24814.0,
           "maxVirusIntensity": 32255.0
         }
@@ -4307,7 +4307,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H12",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4315,7 +4315,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 25126.0,
           "maxVirusIntensity": 21326.0
         }
@@ -4331,7 +4331,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H13",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4339,7 +4339,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22968.0,
           "maxVirusIntensity": 10965.0
         }
@@ -4355,7 +4355,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H14",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4363,7 +4363,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18363.0,
           "maxVirusIntensity": 21304.0
         }
@@ -4379,7 +4379,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H15",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4387,7 +4387,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18103.0,
           "maxVirusIntensity": 19293.0
         }
@@ -4403,7 +4403,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H16",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4411,7 +4411,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20022.0,
           "maxVirusIntensity": 14762.0
         }
@@ -4427,7 +4427,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H17",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4435,7 +4435,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 24413.0,
           "maxVirusIntensity": 9870.0
         }
@@ -4451,7 +4451,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H18",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4459,7 +4459,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20889.0,
           "maxVirusIntensity": 35786.0
         }
@@ -4475,7 +4475,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H19",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4483,7 +4483,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21796.0,
           "maxVirusIntensity": 7291.0
         }
@@ -4499,7 +4499,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H20",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4507,7 +4507,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20660.0,
           "maxVirusIntensity": 19897.0
         }
@@ -4523,7 +4523,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H21",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4531,7 +4531,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19693.0,
           "maxVirusIntensity": 19753.0
         }
@@ -4547,7 +4547,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H22",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4555,7 +4555,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18600.0,
           "maxVirusIntensity": 27138.0
         }
@@ -4571,7 +4571,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H23",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4579,7 +4579,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18759.0,
           "maxVirusIntensity": 9680.0
         }
@@ -4595,7 +4595,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "H24",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4603,7 +4603,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18109.0,
           "maxVirusIntensity": 14577.0
         }
@@ -4619,7 +4619,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I1",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4627,7 +4627,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21514.0,
           "maxVirusIntensity": 33004.0
         }
@@ -4643,7 +4643,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I2",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4651,7 +4651,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18586.0,
           "maxVirusIntensity": 28196.0
         }
@@ -4667,7 +4667,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I3",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4675,7 +4675,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22420.0,
           "maxVirusIntensity": 26238.0
         }
@@ -4691,7 +4691,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I4",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4699,7 +4699,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 25718.0,
           "maxVirusIntensity": 22418.0
         }
@@ -4715,7 +4715,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I5",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4723,7 +4723,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20444.0,
           "maxVirusIntensity": 35553.0
         }
@@ -4739,7 +4739,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I6",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4747,7 +4747,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19207.0,
           "maxVirusIntensity": 22989.0
         }
@@ -4763,7 +4763,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I7",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4771,7 +4771,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22219.0,
           "maxVirusIntensity": 28677.0
         }
@@ -4787,7 +4787,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I8",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4795,7 +4795,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21122.0,
           "maxVirusIntensity": 35747.0
         }
@@ -4811,7 +4811,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I9",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4819,7 +4819,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20642.0,
           "maxVirusIntensity": 61812.0
         }
@@ -4835,7 +4835,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I10",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4843,7 +4843,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19575.0,
           "maxVirusIntensity": 36152.0
         }
@@ -4859,7 +4859,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I11",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4867,7 +4867,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20210.0,
           "maxVirusIntensity": 37334.0
         }
@@ -4883,7 +4883,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I12",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4891,7 +4891,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19144.0,
           "maxVirusIntensity": 21865.0
         }
@@ -4907,7 +4907,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I13",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4915,7 +4915,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21562.0,
           "maxVirusIntensity": 13595.0
         }
@@ -4931,7 +4931,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I14",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4939,7 +4939,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19159.0,
           "maxVirusIntensity": 22653.0
         }
@@ -4955,7 +4955,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I15",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4963,7 +4963,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17474.0,
           "maxVirusIntensity": 18854.0
         }
@@ -4979,7 +4979,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I16",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -4987,7 +4987,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18347.0,
           "maxVirusIntensity": 27056.0
         }
@@ -5003,7 +5003,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I17",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5011,7 +5011,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22511.0,
           "maxVirusIntensity": 8898.0
         }
@@ -5027,7 +5027,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I18",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5035,7 +5035,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 25567.0,
           "maxVirusIntensity": 18666.0
         }
@@ -5051,7 +5051,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I19",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5059,7 +5059,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21496.0,
           "maxVirusIntensity": 14079.0
         }
@@ -5075,7 +5075,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I20",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5083,7 +5083,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20768.0,
           "maxVirusIntensity": 10647.0
         }
@@ -5099,7 +5099,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I21",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5107,7 +5107,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19358.0,
           "maxVirusIntensity": 21047.0
         }
@@ -5123,7 +5123,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I22",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5131,7 +5131,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18621.0,
           "maxVirusIntensity": 14509.0
         }
@@ -5147,7 +5147,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I23",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5155,7 +5155,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17827.0,
           "maxVirusIntensity": 30736.0
         }
@@ -5171,7 +5171,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "I24",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5179,7 +5179,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18375.0,
           "maxVirusIntensity": 9068.0
         }
@@ -5195,7 +5195,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J1",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5203,7 +5203,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17782.0,
           "maxVirusIntensity": 34505.0
         }
@@ -5219,7 +5219,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J2",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5227,7 +5227,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21695.0,
           "maxVirusIntensity": 30800.0
         }
@@ -5243,7 +5243,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J3",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5251,7 +5251,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19257.0,
           "maxVirusIntensity": 51029.0
         }
@@ -5267,7 +5267,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J4",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5275,7 +5275,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20515.0,
           "maxVirusIntensity": 62175.0
         }
@@ -5291,7 +5291,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J5",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5299,7 +5299,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 23508.0,
           "maxVirusIntensity": 30038.0
         }
@@ -5315,7 +5315,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J6",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5323,7 +5323,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18729.0,
           "maxVirusIntensity": 54159.0
         }
@@ -5339,7 +5339,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J7",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5347,7 +5347,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20594.0,
           "maxVirusIntensity": 25583.0
         }
@@ -5363,7 +5363,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J8",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5371,7 +5371,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19325.0,
           "maxVirusIntensity": 26743.0
         }
@@ -5387,7 +5387,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J9",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5395,7 +5395,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20156.0,
           "maxVirusIntensity": 25301.0
         }
@@ -5411,7 +5411,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J10",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5419,7 +5419,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20039.0,
           "maxVirusIntensity": 25457.0
         }
@@ -5435,7 +5435,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J11",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5443,7 +5443,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19926.0,
           "maxVirusIntensity": 59010.0
         }
@@ -5459,7 +5459,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J12",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5467,7 +5467,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20012.0,
           "maxVirusIntensity": 65535.0
         }
@@ -5483,7 +5483,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J13",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5491,7 +5491,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18399.0,
           "maxVirusIntensity": 21591.0
         }
@@ -5507,7 +5507,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J14",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5515,7 +5515,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20523.0,
           "maxVirusIntensity": 38085.0
         }
@@ -5531,7 +5531,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J15",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5539,7 +5539,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18938.0,
           "maxVirusIntensity": 19870.0
         }
@@ -5555,7 +5555,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J16",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5563,7 +5563,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 26089.0,
           "maxVirusIntensity": 22237.0
         }
@@ -5579,7 +5579,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J17",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5587,7 +5587,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18933.0,
           "maxVirusIntensity": 14622.0
         }
@@ -5603,7 +5603,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J18",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5611,7 +5611,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21723.0,
           "maxVirusIntensity": 17946.0
         }
@@ -5627,7 +5627,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J19",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5635,7 +5635,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 23549.0,
           "maxVirusIntensity": 17907.0
         }
@@ -5651,7 +5651,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J20",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5659,7 +5659,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18213.0,
           "maxVirusIntensity": 19185.0
         }
@@ -5675,7 +5675,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J21",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5683,7 +5683,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18131.0,
           "maxVirusIntensity": 12874.0
         }
@@ -5699,7 +5699,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J22",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5707,7 +5707,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20475.0,
           "maxVirusIntensity": 15676.0
         }
@@ -5723,7 +5723,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J23",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5731,7 +5731,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17611.0,
           "maxVirusIntensity": 20494.0
         }
@@ -5747,7 +5747,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "J24",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5755,7 +5755,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18065.0,
           "maxVirusIntensity": 11677.0
         }
@@ -5771,7 +5771,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K1",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5779,7 +5779,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21065.0,
           "maxVirusIntensity": 31948.0
         }
@@ -5795,7 +5795,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K2",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5803,7 +5803,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20077.0,
           "maxVirusIntensity": 37699.0
         }
@@ -5819,7 +5819,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K3",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5827,7 +5827,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19190.0,
           "maxVirusIntensity": 38358.0
         }
@@ -5843,7 +5843,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K4",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5851,7 +5851,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20179.0,
           "maxVirusIntensity": 35107.0
         }
@@ -5867,7 +5867,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K5",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5875,7 +5875,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19098.0,
           "maxVirusIntensity": 28573.0
         }
@@ -5891,7 +5891,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K6",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5899,7 +5899,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 25647.0,
           "maxVirusIntensity": 19897.0
         }
@@ -5915,7 +5915,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K7",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5923,7 +5923,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21191.0,
           "maxVirusIntensity": 25056.0
         }
@@ -5939,7 +5939,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K8",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5947,7 +5947,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18922.0,
           "maxVirusIntensity": 26275.0
         }
@@ -5963,7 +5963,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K9",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5971,7 +5971,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22407.0,
           "maxVirusIntensity": 50344.0
         }
@@ -5987,7 +5987,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K10",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -5995,7 +5995,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18525.0,
           "maxVirusIntensity": 35102.0
         }
@@ -6011,7 +6011,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K11",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6019,7 +6019,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17935.0,
           "maxVirusIntensity": 31892.0
         }
@@ -6035,7 +6035,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K12",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6043,7 +6043,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18874.0,
           "maxVirusIntensity": 55698.0
         }
@@ -6059,7 +6059,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K13",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6067,7 +6067,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19291.0,
           "maxVirusIntensity": 17535.0
         }
@@ -6083,7 +6083,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K14",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6091,7 +6091,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18990.0,
           "maxVirusIntensity": 27075.0
         }
@@ -6107,7 +6107,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K15",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6115,7 +6115,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20099.0,
           "maxVirusIntensity": 15158.0
         }
@@ -6131,7 +6131,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K16",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6139,7 +6139,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 23159.0,
           "maxVirusIntensity": 17892.0
         }
@@ -6155,7 +6155,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K17",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6163,7 +6163,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19893.0,
           "maxVirusIntensity": 39743.0
         }
@@ -6179,7 +6179,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K18",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6187,7 +6187,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20642.0,
           "maxVirusIntensity": 25151.0
         }
@@ -6203,7 +6203,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K19",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6211,7 +6211,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 26608.0,
           "maxVirusIntensity": 20638.0
         }
@@ -6227,7 +6227,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K20",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6235,7 +6235,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17921.0,
           "maxVirusIntensity": 31183.0
         }
@@ -6251,7 +6251,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K21",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6259,7 +6259,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21493.0,
           "maxVirusIntensity": 17022.0
         }
@@ -6275,7 +6275,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K22",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6283,7 +6283,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18208.0,
           "maxVirusIntensity": 23017.0
         }
@@ -6299,7 +6299,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K23",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6307,7 +6307,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20505.0,
           "maxVirusIntensity": 18286.0
         }
@@ -6323,7 +6323,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "K24",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6331,7 +6331,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18158.0,
           "maxVirusIntensity": 19471.0
         }
@@ -6347,7 +6347,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L1",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6355,7 +6355,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19150.0,
           "maxVirusIntensity": 35340.0
         }
@@ -6371,7 +6371,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L2",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6379,7 +6379,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18515.0,
           "maxVirusIntensity": 30187.0
         }
@@ -6395,7 +6395,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L3",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6403,7 +6403,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19456.0,
           "maxVirusIntensity": 34443.0
         }
@@ -6419,7 +6419,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L4",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6427,7 +6427,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20782.0,
           "maxVirusIntensity": 23153.0
         }
@@ -6443,7 +6443,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L5",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6451,7 +6451,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21295.0,
           "maxVirusIntensity": 37282.0
         }
@@ -6467,7 +6467,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L6",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6475,7 +6475,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18567.0,
           "maxVirusIntensity": 31459.0
         }
@@ -6491,7 +6491,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L7",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6499,7 +6499,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20645.0,
           "maxVirusIntensity": 46238.0
         }
@@ -6515,7 +6515,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L8",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6523,7 +6523,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21134.0,
           "maxVirusIntensity": 25019.0
         }
@@ -6539,7 +6539,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L9",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6547,7 +6547,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18412.0,
           "maxVirusIntensity": 35262.0
         }
@@ -6563,7 +6563,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L10",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6571,7 +6571,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 25484.0,
           "maxVirusIntensity": 16640.0
         }
@@ -6587,7 +6587,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L11",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6595,7 +6595,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18744.0,
           "maxVirusIntensity": 30357.0
         }
@@ -6611,7 +6611,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L12",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6619,7 +6619,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22008.0,
           "maxVirusIntensity": 61326.0
         }
@@ -6635,7 +6635,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L13",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6643,7 +6643,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21669.0,
           "maxVirusIntensity": 16008.0
         }
@@ -6659,7 +6659,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L14",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6667,7 +6667,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20569.0,
           "maxVirusIntensity": 24825.0
         }
@@ -6683,7 +6683,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L15",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6691,7 +6691,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19884.0,
           "maxVirusIntensity": 14045.0
         }
@@ -6707,7 +6707,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L16",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6715,7 +6715,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19634.0,
           "maxVirusIntensity": 9747.0
         }
@@ -6731,7 +6731,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L17",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6739,7 +6739,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 28644.0,
           "maxVirusIntensity": 5615.0
         }
@@ -6755,7 +6755,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L18",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6763,7 +6763,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18658.0,
           "maxVirusIntensity": 26135.0
         }
@@ -6779,7 +6779,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L19",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6787,7 +6787,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19646.0,
           "maxVirusIntensity": 17548.0
         }
@@ -6803,7 +6803,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L20",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6811,7 +6811,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19568.0,
           "maxVirusIntensity": 20283.0
         }
@@ -6827,7 +6827,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L21",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6835,7 +6835,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18888.0,
           "maxVirusIntensity": 25321.0
         }
@@ -6851,7 +6851,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L22",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6859,7 +6859,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19052.0,
           "maxVirusIntensity": 32542.0
         }
@@ -6875,7 +6875,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L23",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6883,7 +6883,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17606.0,
           "maxVirusIntensity": 41785.0
         }
@@ -6899,7 +6899,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "L24",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6907,7 +6907,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18060.0,
           "maxVirusIntensity": 10800.0
         }
@@ -6923,7 +6923,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M1",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6931,7 +6931,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20334.0,
           "maxVirusIntensity": 26955.0
         }
@@ -6947,7 +6947,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M2",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6955,7 +6955,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21276.0,
           "maxVirusIntensity": 37630.0
         }
@@ -6971,7 +6971,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M3",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -6979,7 +6979,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20050.0,
           "maxVirusIntensity": 34600.0
         }
@@ -6995,7 +6995,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M4",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7003,7 +7003,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19047.0,
           "maxVirusIntensity": 27526.0
         }
@@ -7019,7 +7019,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M5",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7027,7 +7027,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18020.0,
           "maxVirusIntensity": 40481.0
         }
@@ -7043,7 +7043,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M6",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7051,7 +7051,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20431.0,
           "maxVirusIntensity": 32535.0
         }
@@ -7067,7 +7067,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M7",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7075,7 +7075,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19724.0,
           "maxVirusIntensity": 30375.0
         }
@@ -7091,7 +7091,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M8",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7099,7 +7099,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17839.0,
           "maxVirusIntensity": 21420.0
         }
@@ -7115,7 +7115,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M9",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7123,7 +7123,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22809.0,
           "maxVirusIntensity": 29446.0
         }
@@ -7139,7 +7139,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M10",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7147,7 +7147,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21715.0,
           "maxVirusIntensity": 47507.0
         }
@@ -7163,7 +7163,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M11",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7171,7 +7171,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18813.0,
           "maxVirusIntensity": 25731.0
         }
@@ -7187,7 +7187,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M12",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7195,7 +7195,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19767.0,
           "maxVirusIntensity": 27790.0
         }
@@ -7211,7 +7211,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M13",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7219,7 +7219,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20098.0,
           "maxVirusIntensity": 18032.0
         }
@@ -7235,7 +7235,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M14",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7243,7 +7243,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18232.0,
           "maxVirusIntensity": 49437.0
         }
@@ -7259,7 +7259,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M15",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7267,7 +7267,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19481.0,
           "maxVirusIntensity": 15772.0
         }
@@ -7283,7 +7283,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M16",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7291,7 +7291,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 16793.0,
           "maxVirusIntensity": 44654.0
         }
@@ -7307,7 +7307,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M17",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7315,7 +7315,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 26355.0,
           "maxVirusIntensity": 20901.0
         }
@@ -7331,7 +7331,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M18",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7339,7 +7339,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 25131.0,
           "maxVirusIntensity": 7445.0
         }
@@ -7355,7 +7355,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M19",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7363,7 +7363,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18905.0,
           "maxVirusIntensity": 20291.0
         }
@@ -7379,7 +7379,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M20",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7387,7 +7387,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18150.0,
           "maxVirusIntensity": 16728.0
         }
@@ -7403,7 +7403,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M21",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7411,7 +7411,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19271.0,
           "maxVirusIntensity": 23180.0
         }
@@ -7427,7 +7427,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M22",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7435,7 +7435,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20288.0,
           "maxVirusIntensity": 14940.0
         }
@@ -7451,7 +7451,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M23",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7459,7 +7459,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 16889.0,
           "maxVirusIntensity": 28497.0
         }
@@ -7475,7 +7475,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "M24",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7483,7 +7483,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21499.0,
           "maxVirusIntensity": 21582.0
         }
@@ -7499,7 +7499,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N1",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7507,7 +7507,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18153.0,
           "maxVirusIntensity": 31084.0
         }
@@ -7523,7 +7523,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N2",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7531,7 +7531,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 24076.0,
           "maxVirusIntensity": 23963.0
         }
@@ -7547,7 +7547,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N3",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7555,7 +7555,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22316.0,
           "maxVirusIntensity": 19317.0
         }
@@ -7571,7 +7571,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N4",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7579,7 +7579,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 23468.0,
           "maxVirusIntensity": 21870.0
         }
@@ -7595,7 +7595,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N5",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7603,7 +7603,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22199.0,
           "maxVirusIntensity": 21971.0
         }
@@ -7619,7 +7619,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N6",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7627,7 +7627,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17173.0,
           "maxVirusIntensity": 29873.0
         }
@@ -7643,7 +7643,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N7",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7651,7 +7651,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21497.0,
           "maxVirusIntensity": 31610.0
         }
@@ -7667,7 +7667,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N8",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7675,7 +7675,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20785.0,
           "maxVirusIntensity": 46052.0
         }
@@ -7691,7 +7691,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N9",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7699,7 +7699,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20088.0,
           "maxVirusIntensity": 27507.0
         }
@@ -7715,7 +7715,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N10",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7723,7 +7723,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18458.0,
           "maxVirusIntensity": 37311.0
         }
@@ -7739,7 +7739,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N11",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7747,7 +7747,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21089.0,
           "maxVirusIntensity": 22639.0
         }
@@ -7763,7 +7763,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N12",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7771,7 +7771,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19302.0,
           "maxVirusIntensity": 60019.0
         }
@@ -7787,7 +7787,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N13",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7795,7 +7795,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17606.0,
           "maxVirusIntensity": 13902.0
         }
@@ -7811,7 +7811,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N14",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7819,7 +7819,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18692.0,
           "maxVirusIntensity": 13448.0
         }
@@ -7835,7 +7835,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N15",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7843,7 +7843,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21416.0,
           "maxVirusIntensity": 21213.0
         }
@@ -7859,7 +7859,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N16",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7867,7 +7867,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18249.0,
           "maxVirusIntensity": 12469.0
         }
@@ -7883,7 +7883,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N17",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7891,7 +7891,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20599.0,
           "maxVirusIntensity": 7489.0
         }
@@ -7907,7 +7907,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N18",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7915,7 +7915,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20366.0,
           "maxVirusIntensity": 33075.0
         }
@@ -7931,7 +7931,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N19",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7939,7 +7939,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19569.0,
           "maxVirusIntensity": 28721.0
         }
@@ -7955,7 +7955,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N20",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7963,7 +7963,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 29288.0,
           "maxVirusIntensity": 8652.0
         }
@@ -7979,7 +7979,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N21",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -7987,7 +7987,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21909.0,
           "maxVirusIntensity": 8257.0
         }
@@ -8003,7 +8003,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N22",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8011,7 +8011,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20121.0,
           "maxVirusIntensity": 40847.0
         }
@@ -8027,7 +8027,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N23",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8035,7 +8035,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19233.0,
           "maxVirusIntensity": 12357.0
         }
@@ -8051,7 +8051,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "N24",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8059,7 +8059,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19378.0,
           "maxVirusIntensity": 15337.0
         }
@@ -8075,7 +8075,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O1",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8083,7 +8083,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20171.0,
           "maxVirusIntensity": 39686.0
         }
@@ -8099,7 +8099,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O2",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8107,7 +8107,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19234.0,
           "maxVirusIntensity": 30666.0
         }
@@ -8123,7 +8123,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O3",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8131,7 +8131,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19516.0,
           "maxVirusIntensity": 27749.0
         }
@@ -8147,7 +8147,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O4",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8155,7 +8155,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22931.0,
           "maxVirusIntensity": 26651.0
         }
@@ -8171,7 +8171,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O5",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8179,7 +8179,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21583.0,
           "maxVirusIntensity": 55571.0
         }
@@ -8195,7 +8195,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O6",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8203,7 +8203,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17810.0,
           "maxVirusIntensity": 27904.0
         }
@@ -8219,7 +8219,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O7",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8227,7 +8227,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18892.0,
           "maxVirusIntensity": 32897.0
         }
@@ -8243,7 +8243,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O8",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8251,7 +8251,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20590.0,
           "maxVirusIntensity": 24865.0
         }
@@ -8267,7 +8267,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O9",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8275,7 +8275,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19754.0,
           "maxVirusIntensity": 21459.0
         }
@@ -8291,7 +8291,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O10",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8299,7 +8299,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19572.0,
           "maxVirusIntensity": 24117.0
         }
@@ -8315,7 +8315,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O11",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8323,7 +8323,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 24862.0,
           "maxVirusIntensity": 24565.0
         }
@@ -8339,7 +8339,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O12",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8347,7 +8347,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 23679.0,
           "maxVirusIntensity": 19207.0
         }
@@ -8363,7 +8363,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O13",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8371,7 +8371,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22849.0,
           "maxVirusIntensity": 9345.0
         }
@@ -8387,7 +8387,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O14",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8395,7 +8395,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17798.0,
           "maxVirusIntensity": 8266.0
         }
@@ -8411,7 +8411,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O15",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8419,7 +8419,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17794.0,
           "maxVirusIntensity": 10534.0
         }
@@ -8435,7 +8435,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O16",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8443,7 +8443,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17455.0,
           "maxVirusIntensity": 25737.0
         }
@@ -8459,7 +8459,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O17",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8467,7 +8467,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19705.0,
           "maxVirusIntensity": 22941.0
         }
@@ -8483,7 +8483,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O18",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8491,7 +8491,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21765.0,
           "maxVirusIntensity": 7549.0
         }
@@ -8507,7 +8507,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O19",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8515,7 +8515,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19610.0,
           "maxVirusIntensity": 14025.0
         }
@@ -8531,7 +8531,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O20",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8539,7 +8539,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17711.0,
           "maxVirusIntensity": 25355.0
         }
@@ -8555,7 +8555,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O21",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8563,7 +8563,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18589.0,
           "maxVirusIntensity": 27209.0
         }
@@ -8579,7 +8579,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O22",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8587,7 +8587,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22254.0,
           "maxVirusIntensity": 9022.0
         }
@@ -8603,7 +8603,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O23",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8611,7 +8611,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17874.0,
           "maxVirusIntensity": 20802.0
         }
@@ -8627,7 +8627,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "O24",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8635,7 +8635,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17445.0,
           "maxVirusIntensity": 16828.0
         }
@@ -8651,7 +8651,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P1",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8659,7 +8659,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18872.0,
           "maxVirusIntensity": 28166.0
         }
@@ -8675,7 +8675,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P2",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8683,7 +8683,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22125.0,
           "maxVirusIntensity": 34318.0
         }
@@ -8699,7 +8699,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P3",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8707,7 +8707,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18543.0,
           "maxVirusIntensity": 42101.0
         }
@@ -8723,7 +8723,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P4",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8731,7 +8731,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17696.0,
           "maxVirusIntensity": 48459.0
         }
@@ -8747,7 +8747,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P5",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8755,7 +8755,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19172.0,
           "maxVirusIntensity": 47250.0
         }
@@ -8771,7 +8771,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P6",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8779,7 +8779,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19863.0,
           "maxVirusIntensity": 35667.0
         }
@@ -8795,7 +8795,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P7",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8803,7 +8803,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21872.0,
           "maxVirusIntensity": 29941.0
         }
@@ -8819,7 +8819,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P8",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8827,7 +8827,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19810.0,
           "maxVirusIntensity": 36283.0
         }
@@ -8843,7 +8843,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P9",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8851,7 +8851,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19691.0,
           "maxVirusIntensity": 44366.0
         }
@@ -8867,7 +8867,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P10",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8875,7 +8875,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21117.0,
           "maxVirusIntensity": 42846.0
         }
@@ -8891,7 +8891,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P11",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8899,7 +8899,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20251.0,
           "maxVirusIntensity": 34905.0
         }
@@ -8915,7 +8915,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P12",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8923,7 +8923,7 @@
           "Compound Name": "Dimethyl sulfoxide",
           "Control Type": "negative control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 19531.0,
           "maxVirusIntensity": 33728.0
         }
@@ -8939,7 +8939,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P13",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8947,7 +8947,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21075.0,
           "maxVirusIntensity": 19156.0
         }
@@ -8963,7 +8963,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P14",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8971,7 +8971,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18526.0,
           "maxVirusIntensity": 25031.0
         }
@@ -8987,7 +8987,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P15",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -8995,7 +8995,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20867.0,
           "maxVirusIntensity": 14361.0
         }
@@ -9011,7 +9011,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P16",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -9019,7 +9019,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 21680.0,
           "maxVirusIntensity": 8615.0
         }
@@ -9035,7 +9035,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P17",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -9043,7 +9043,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 20463.0,
           "maxVirusIntensity": 14900.0
         }
@@ -9059,7 +9059,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P18",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -9067,7 +9067,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17918.0,
           "maxVirusIntensity": 8334.0
         }
@@ -9083,7 +9083,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P19",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -9091,7 +9091,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18390.0,
           "maxVirusIntensity": 10395.0
         }
@@ -9107,7 +9107,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P20",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -9115,7 +9115,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 22646.0,
           "maxVirusIntensity": 17977.0
         }
@@ -9131,7 +9131,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P21",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -9139,7 +9139,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 17558.0,
           "maxVirusIntensity": 15061.0
         }
@@ -9155,7 +9155,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P22",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -9163,7 +9163,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18997.0,
           "maxVirusIntensity": 16450.0
         }
@@ -9179,7 +9179,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P23",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -9187,7 +9187,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18777.0,
           "maxVirusIntensity": 26002.0
         }
@@ -9203,7 +9203,7 @@
         ]
       },
       "properties": {
-        "descriptive": {
+        "string": {
           "Plate": "preZ",
           "Well": "P24",
           "Characteristics [Organism 2]": "Herpes simplex virus type 1",
@@ -9211,7 +9211,7 @@
           "Compound Name": "Ganciclovir",
           "Control Type": "positive control"
         },
-        "numerical": {
+        "numeric": {
           "numberOfNuclei": 18082.0,
           "maxVirusIntensity": 30486.0
         }

@@ -1,7 +1,7 @@
 {
   "name": "Render Overlay Plugin",
-  "version": "0.1.0-dev1",
-  "containerId": "polusai/render-overlay-plugin:0.1.0-dev1",
+  "version": "0.1.0-dev2",
+  "containerId": "polusai/render-overlay-plugin:0.1.0-dev2",
   "title": "Render Overlay",
   "description": "Generates text overlay data for render.",
   "author": "Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
