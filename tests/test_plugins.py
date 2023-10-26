@@ -6,13 +6,14 @@ from pathlib import Path
 import pytest
 
 import polus.plugins as pp
-from polus.plugins._plugins.classes.plugin_classes import Plugin, load_plugin
+from polus.plugins._plugins.classes.plugin_classes import Plugin, _load_plugin
 
 RSRC_PATH = Path(__file__).parent.joinpath("resources")
 OMECONVERTER = RSRC_PATH.joinpath("omeconverter022.json")
 BASIC_131 = (
-    "https://raw.githubusercontent.com/PolusAI/polus-plugins/master"
-    "/regression/polus-basic-flatfield-correction-plugin/plugin.json"
+    "https://raw.githubusercontent.com/PolusAI/polus-plugins/"
+    "e8f23a3661e3e5f7ad7dc92f4b0d9c31e7076589/regression/"
+    "polus-basic-flatfield-correction-plugin/plugin.json"
 )
 BASIC_127 = (
     "https://raw.githubusercontent.com/PolusAI/polus-plugins/"
@@ -32,40 +33,53 @@ def test_empty_list(remove_all):
     assert pp.list == []
 
 
-def test_submit_plugin():
+def test_submit_plugin(remove_all):
     """Test submit_plugin."""
     pp.submit_plugin(OMECONVERTER)
     assert pp.list == ["OmeConverter"]
 
 
-def test_get_plugin():
+@pytest.fixture
+def submit_omeconverter():
+    pp.submit_plugin(OMECONVERTER)
+
+
+@pytest.fixture
+def submit_basic131():
+    pp.submit_plugin(BASIC_131)
+
+
+@pytest.fixture
+def submit_basic127():
+    pp.submit_plugin(BASIC_127)
+
+
+def test_get_plugin(submit_omeconverter):
     """Test get_plugin."""
     assert isinstance(pp.get_plugin("OmeConverter"), Plugin)
 
 
-def test_url1():
+def test_url1(submit_omeconverter, submit_basic131):
     """Test url submit."""
-    pp.submit_plugin(BASIC_131)
     assert sorted(pp.list) == ["BasicFlatfieldCorrectionPlugin", "OmeConverter"]
 
 
-def test_url2():
+def test_url2(submit_omeconverter, submit_basic131, submit_basic127):
     """Test url submit."""
-    pp.submit_plugin(BASIC_127)
     assert sorted(pp.list) == ["BasicFlatfieldCorrectionPlugin", "OmeConverter"]
 
 
-def test_load_plugin():
+def test_load_plugin(submit_omeconverter):
     """Test load_plugin."""
-    assert load_plugin(OMECONVERTER).name == "OME Converter"
+    assert _load_plugin(OMECONVERTER).name == "OME Converter"
 
 
-def test_load_plugin2():
+def test_load_plugin2(submit_basic131):
     """Test load_plugin."""
-    assert load_plugin(BASIC_131).name == "BaSiC Flatfield Correction Plugin"
+    assert _load_plugin(BASIC_131).name == "BaSiC Flatfield Correction Plugin"
 
 
-def test_attr1():
+def test_attr1(submit_omeconverter):
     """Test attributes."""
     p_attr = pp.OmeConverter
     p_get = pp.get_plugin("OmeConverter")
@@ -75,7 +89,7 @@ def test_attr1():
         assert getattr(p_attr, attr) == getattr(p_get, attr)
 
 
-def test_attr2():
+def test_attr2(submit_basic131):
     """Test attributes."""
     p_attr = pp.BasicFlatfieldCorrectionPlugin
     p_get = pp.get_plugin("BasicFlatfieldCorrectionPlugin")
@@ -85,7 +99,7 @@ def test_attr2():
         assert getattr(p_attr, attr) == getattr(p_get, attr)
 
 
-def test_versions():
+def test_versions(submit_basic131, submit_basic127):
     """Test versions."""
     assert sorted(
         [x.version for x in pp.get_plugin("BasicFlatfieldCorrectionPlugin").versions]
@@ -95,56 +109,42 @@ def test_versions():
     ]
 
 
-def test_get_max_version1():
+def test_get_max_version1(submit_basic131, submit_basic127):
     """Test get max version."""
     plug = pp.get_plugin("BasicFlatfieldCorrectionPlugin")
     assert plug.version.version == "1.3.1"
 
 
-def test_get_max_version2():
+def test_get_max_version2(submit_basic131, submit_basic127):
     """Test get max version."""
     plug = pp.BasicFlatfieldCorrectionPlugin
     assert plug.version.version == "1.3.1"
 
 
-def test_get_specific_version():
+def test_get_specific_version(submit_basic131, submit_basic127):
     """Test get specific version."""
     plug = pp.get_plugin("BasicFlatfieldCorrectionPlugin", "1.2.7")
     assert plug.version.version == "1.2.7"
 
 
-def test_remove_version():
+def test_remove_version(submit_basic131, submit_basic127):
     """Test remove version."""
     pp.remove_plugin("BasicFlatfieldCorrectionPlugin", "1.2.7")
     assert [x.version for x in pp.BasicFlatfieldCorrectionPlugin.versions] == ["1.3.1"]
 
 
-def test_resubmit_plugin():
-    """Test resubmit plugin."""
-    pp.submit_plugin(BASIC_127)
-
-
-def test_remove_all_versions_plugin():
+def test_remove_all_versions_plugin(
+    submit_basic131, submit_basic127, submit_omeconverter
+):
     """Test remove all versions plugin."""
     pp.remove_plugin("BasicFlatfieldCorrectionPlugin")
     assert pp.list == ["OmeConverter"]
 
 
-def test_resubmit_plugin2():
-    """Test resubmit plugin."""
-    pp.submit_plugin(BASIC_131)
-
-
-@pytest.fixture(scope="session")
-def plug0():
-    """Fixture to submit plugin."""
-    if "BasicFlatfieldCorrectionPlugin" not in pp.list:
-        pp.submit_plugin(BASIC_131)
-
-
-@pytest.fixture(scope="session")
-def plug1(plug0):
+@pytest.fixture
+def plug1():
     """Configure the class."""
+    pp.submit_plugin(BASIC_131)
     plug1 = pp.BasicFlatfieldCorrectionPlugin
     plug1.inpDir = RSRC_PATH.absolute()
     plug1.outDir = RSRC_PATH.absolute()
@@ -160,14 +160,9 @@ def config_path(tmp_path_factory):
     return tmp_path_factory.mktemp("config") / "config1.json"
 
 
-def test_save_config(plug1, config_path):
-    """Test save_config file."""
+def test_save_load_config(plug1, config_path):
+    """Test save_config, load_config from config file."""
     plug1.save_config(config_path)
-    assert Path(config_path).exists()
-
-
-def test_load_config(plug1, config_path):
-    """Test load_config from config file."""
     plug2 = pp.load_config(config_path)
     for i_o in ["inpDir", "outDir", "filePattern"]:
         assert getattr(plug2, i_o) == getattr(plug1, i_o)
@@ -176,14 +171,16 @@ def test_load_config(plug1, config_path):
 
 def test_load_config_no_plugin(plug1, config_path):
     """Test load_config after removing plugin."""
+    plug1.save_config(config_path)
+    plug1_id = plug1.id
     pp.remove_plugin("BasicFlatfieldCorrectionPlugin")
     assert pp.list == ["OmeConverter"]
     plug2 = pp.load_config(config_path)
     assert isinstance(plug2, Plugin)
-    assert plug2.id == plug1.id
+    assert plug2.id == plug1_id
 
 
-def test_remove_all():
+def test_remove_all(submit_basic131, submit_basic127, submit_omeconverter):
     """Test remove_all."""
     pp.remove_all()
     assert pp.list == []

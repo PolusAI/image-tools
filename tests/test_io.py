@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from fsspec.implementations.local import LocalFileSystem
 
-from polus.plugins._plugins.classes import load_plugin
+from polus.plugins._plugins.classes.plugin_classes import _load_plugin
 from polus.plugins._plugins.classes.plugin_methods import IOKeyError
 from polus.plugins._plugins.io import Input, IOBase
 
@@ -21,7 +21,7 @@ io2 = {"type": "boolean", "name": "input2", "required": True, "description": "Te
 iob1 = {
     "type": "collection",
 }
-plugin = load_plugin(RSRC_PATH.joinpath("g1.json"))
+plugin = _load_plugin(RSRC_PATH.joinpath("g1.json"))
 
 
 def test_iobase():

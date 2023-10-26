@@ -42,22 +42,8 @@ def cwl_path(tmp_path_factory):
     return tmp_path_factory.mktemp("cwl") / "omeconverter.cwl"
 
 
-def test_save_cwl(plug, cwl_path):
-    """Test save_cwl."""
-    plug.save_cwl(cwl_path)
-    assert cwl_path.exists()
-
-
-def test_read_saved_cwl(cwl_path):
-    """Test saved cwl."""
-    with open(cwl_path, encoding="utf-8") as file:
-        src_cwl = file.read()
-    with open(RSRC_PATH.joinpath("target1.cwl"), encoding="utf-8") as file:
-        target_cwl = file.read()
-    assert src_cwl == target_cwl
-
-
-def test_save_cwl_io(plug, cwl_io_path):
+@pytest.fixture
+def cwl_io(plug, cwl_io_path):
     """Test save_cwl IO."""
     rs_path = RSRC_PATH.absolute()
     plug.inpDir = rs_path
@@ -65,6 +51,16 @@ def test_save_cwl_io(plug, cwl_io_path):
     plug.fileExtension = ".ome.zarr"
     plug.outDir = rs_path
     plug.save_cwl_io(cwl_io_path)
+
+
+def test_save_read_cwl(plug, cwl_path):
+    """Test save and read cwl."""
+    plug.save_cwl(cwl_path)
+    with open(cwl_path, encoding="utf-8") as file:
+        src_cwl = file.read()
+    with open(RSRC_PATH.joinpath("target1.cwl"), encoding="utf-8") as file:
+        target_cwl = file.read()
+    assert src_cwl == target_cwl
 
 
 def test_save_cwl_io_not_inp(plug, cwl_io_path):
@@ -91,7 +87,7 @@ def test_save_cwl_io_not_yml(plug, cwl_io_path):
         plug.save_cwl_io(cwl_io_path.with_suffix(".txt"))
 
 
-def test_read_cwl_io(cwl_io_path):
+def test_read_cwl_io(cwl_io, cwl_io_path):
     """Test read_cwl_io."""
     with open(cwl_io_path, encoding="utf-8") as file:
         src_io = yaml.safe_load(file)
