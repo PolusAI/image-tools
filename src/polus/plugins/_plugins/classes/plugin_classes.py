@@ -1,6 +1,5 @@
 """Classes for Plugin objects containing methods to configure, run, and save."""
 # pylint: disable=W1203, enable=W1201
-# ruff: noqa: BLE001, A003, PTH123
 import json
 import logging
 import shutil
@@ -12,7 +11,7 @@ from typing import Optional
 from typing import Union
 
 from polus.plugins._plugins.classes.plugin_methods import _PluginMethods
-from polus.plugins._plugins.io import DuplicateVersionFoundError
+from polus.plugins._plugins.io import DuplicateVersionFound
 from polus.plugins._plugins.io import Version
 from polus.plugins._plugins.io import _in_old_to_new
 from polus.plugins._plugins.io import _ui_old_to_new
@@ -439,51 +438,3 @@ def remove_all() -> None:
     for org in organizations:
         shutil.rmtree(org)
     refresh()
-
-
-def load_config(config: Union[dict, pathlib.Path]) -> Union[ComputePlugin, Plugin]:
-    """Load configured plugin from config file/dict."""
-    if isinstance(config, pathlib.Path):
-        with open(config, encoding="utf-8") as file:
-            manifest_ = json.load(file)
-    elif isinstance(config, dict):
-        manifest_ = config
-    else:
-        msg = "config must be a dict or a path"
-        raise TypeError(msg)
-    _io = manifest_["_io_keys"]
-    cl_ = manifest_["class"]
-    manifest_.pop("class", None)
-    if cl_ == "Compute":
-        pl_ = ComputePlugin(_uuid=False, **manifest_)
-    elif cl_ == "WIPP":
-        pl_ = Plugin(_uuid=False, **manifest_)
-    else:
-        msg = "Invalid value of class"
-        raise ValueError(msg)
-    for k, value_ in _io.items():
-        val = value_["value"]
-        if val is not None:  # exclude those values not set
-            setattr(pl_, k, val)
-    return pl_
-
-
-def get_plugin(
-    name: str,
-    version: Optional[str] = None,
-) -> Union[ComputePlugin, Plugin]:
-    """Get a plugin with option to specify version.
-
-    Return a plugin object with the option to specify a version.
-    The specified version's manifest must exist in manifests folder.
-
-    Args:
-        name: Name of the plugin.
-        version: Optional version of the plugin, must follow semver.
-
-    Returns:
-        Plugin object
-    """
-    if version is None:
-        return load_plugin(PLUGINS[name][max(PLUGINS[name])])
-    return load_plugin(PLUGINS[name][Version(**{"version": version})])
