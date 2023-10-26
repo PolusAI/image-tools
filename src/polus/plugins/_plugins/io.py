@@ -283,17 +283,21 @@ class Version(BaseModel):
     @property
     def major(self):
         """Return x from x.y.z ."""
-        return self.version.split(".")[0]
+        return int(self.version.split(".")[0])
 
     @property
     def minor(self):
         """Return y from x.y.z ."""
-        return self.version.split(".")[1]
+        return int(self.version.split(".")[1])
 
     @property
     def patch(self):
         """Return z from x.y.z ."""
-        return self.version.split(".")[2]
+        if not self.version.split(".")[2].isdigit():
+            msg = "Patch version is not a digit, comparison may not be accurate."
+            logger.warning(msg)
+            return self.version.split(".")[2]
+        return int(self.version.split(".")[2])
 
     def __str__(self) -> str:
         """Return string representation of Version object."""
@@ -380,7 +384,7 @@ CWL_INPUT_TYPES = {
     "genericData": "Directory",
     "collection": "Directory",
     "enum": "string",  # for compatibility with workflows
-    "stitchingVector": "Directory"
+    "stitchingVector": "Directory",
     # not yet implemented: array
 }
 
