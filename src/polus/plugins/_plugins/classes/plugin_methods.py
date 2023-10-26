@@ -7,6 +7,7 @@ import pathlib
 import random
 import signal
 import typing
+from os.path import relpath
 
 import fsspec
 import yaml  # type: ignore

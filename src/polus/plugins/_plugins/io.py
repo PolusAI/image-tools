@@ -326,7 +326,8 @@ CWL_INPUT_TYPES = {
     "boolean": "boolean",
     "genericData": "Directory",
     "collection": "Directory",
-    "enum": "string"  # for compatibility with workflows
+    "enum": "string",  # for compatibility with workflows
+    "stitchingVector": "Directory"
     # not yet implemented: array
 }
 
