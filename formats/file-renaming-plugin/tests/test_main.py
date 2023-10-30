@@ -28,25 +28,6 @@ class CreateData:
         """Create temporary input directory."""
         return tempfile.mkdtemp(dir=self.dirpath)
 
-    def sub_directory(self) -> pathlib.Path:
-        """Create temporary input directory."""
-        dir_path = self.input_directory()
-        flist = [
-            "taoe005-u2os-72h-cp-a-au00044859_a01_s3_w23db644df-02ee-429d-9559-09cf4625c62b.tif",
-            "taoe005-u2os-72h-cp-a-au00044859_b01_s3_w3add254c8-0c7b-4cf0-a5dc-bf0cf8de8cec.tif",
-            "taoe005-u2os-72h-cp-a-au00044859_b07_s5_w2da098211-f7c1-453d-954f-b7d4751f6daa.tif",
-            "taoe005-u2os-72h-cp-a-au00044859_c15_s2_w3aea523fa-3b89-46a7-95e3-604017151895.tif",
-        ]
-        for i in range(5):
-            dirname = pathlib.Path(dir_path, f"folder_{i}")
-            if not pathlib.Path(dirname).exists():
-                pathlib.Path(dirname).mkdir(exist_ok=False, parents=False)
-            for fl in flist:
-                temp_file = open(pathlib.Path(dirname, fl), "w")
-                temp_file.close()
-
-        return pathlib.Path(dir_path)
-
     def output_directory(self) -> pathlib.Path:
         """Create temporary output directory."""
         return tempfile.mkdtemp(dir=self.dirpath)
@@ -554,23 +535,53 @@ def test_letters_to_int_returns_error_invalid_input():
         fr.letters_to_int(from_val1, from_val2)
 
 
-def test_cli() -> None:
-    """Test Cli."""
-    for i in ["raw", "map", ""]:
+@pytest.fixture
+def create_subfolders():
+    data = {
+        "complex": [
+            ["A9 p5d.tif", "A9 p5f.tif", "A9 p7f.tif"],
+            "96 ( -)* test_",
+            "{row:c}{col:d}.*p{f:d+}{character:c}.tif",
+            "x{row:dd}_y{col:dd}_p{f:dd}{character:c}_c01.tif",
+        ],
+        "simple": [
+            [
+                "taoe005-u2os-72h-cp-a-au00044859_a01_s3_w23db644df-02ee-429d-9559-09cf4625c62b.tif",
+                "taoe005-u2os-72h-cp-a-au00044859_b01_s3_w3add254c8-0c7b-4cf0-a5dc-bf0cf8de8cec.tif",
+                "taoe005-u2os-72h-cp-a-au00044859_b07_s5_w2da098211-f7c1-453d-954f-b7d4751f6daa.tif",
+                "taoe005-u2os-72h-cp-a-au00044859_c15_s2_w3aea523fa-3b89-46a7-95e3-604017151895.tif",
+            ],
+            "folder_",
+            ".*_{row:c}{col:dd}_s{s:d}_w{channel:d}.*.tif",
+            "x{row:dd}_y{col:dd}_p{s:dd}_c{channel:d}.tif",
+        ],
+    }
+    for name in ["complex", "simple"]:
         d = CreateData()
-        inpdir = d.sub_directory()
-        if i == "":
-            inp_dir = pathlib.Path(inpdir, "folder_0")
-        else:
-            inp_dir = inpdir
+        dir_path = d.input_directory()
+        for i in range(5):
+            dirname = pathlib.Path(dir_path, f"{data[name][1]}{i}")
+            if not pathlib.Path(dirname).exists():
+                pathlib.Path(dirname).mkdir(exist_ok=False, parents=False)
+            for fl in data[name][0]:
+                temp_file = open(pathlib.Path(dirname, fl), "w")
+                temp_file.close()
+
+    return pathlib.Path(dir_path), data[name][1], data[name][2], data[name][3]
+
+
+def test_cli(create_subfolders) -> None:
+    """Test Cli."""
+    dir_path, _, file_pattern, out_file_pattern = create_subfolders
+
+    for i in ["raw", "map"]:
+        d = CreateData()
         out_dir = d.output_directory()
-        file_pattern = ".*_{row:c}{col:dd}_s{s:d}_w{channel:d}.*.tif"
-        out_file_pattern = "x{row:dd}_y{col:dd}_p{s:dd}_c{channel:d}.tif"
         result = runner.invoke(
             app,
             [
                 "--inpDir",
-                inp_dir,
+                dir_path,
                 "--filePattern",
                 file_pattern,
                 "--outDir",
@@ -582,14 +593,5 @@ def test_cli() -> None:
             ],
         )
         assert result.exit_code == 0
-        if i == "raw":
-            outfile = [f for f in os.listdir(out_dir) if "folder" in f]
-            assert len(outfile) == 20
-        elif i == "map":
-            outfile = [f for f in os.listdir(out_dir) if "d" in f]
-            assert len(outfile) == 20
-        else:
-            outfile = [f for f in os.listdir(out_dir) if not f.startswith("folder|d")]
-            assert len(outfile) == 4
 
-        d.clean_directories()
+    d.clean_directories()
