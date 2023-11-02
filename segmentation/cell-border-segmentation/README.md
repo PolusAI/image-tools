@@ -29,7 +29,7 @@ This plugin takes two input argument and one output argument:
 | `--filePattern` | Pattern to parse image files | Input  | string |
 | `--outDir` | Output collection                                     | Output | collection |
 ## Examples
-<img src="./image.png">
+<img src="./img.png">
 
 ### To Download Z01 Flurorescent test dataset from Publication
 ```Linux
