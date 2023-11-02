@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t polusai/zo1-border-segmentation-plugin:${version}
+docker build . -t polusai/cell-border-segmentation-plugin:${version}
