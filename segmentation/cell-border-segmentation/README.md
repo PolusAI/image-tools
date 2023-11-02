@@ -28,9 +28,7 @@ This plugin takes two input argument and one output argument:
 | `--inpDir` | Input image collection to be processed by this plugin | Input  | collection |
 | `--filePattern` | Pattern to parse image files | Input  | string |
 | `--outDir` | Output collection                                     | Output | collection |
-
 ## Examples
-
 <img src="./image.png">
 
 ### To Download Z01 Flurorescent test dataset from Publication
