@@ -1,4 +1,4 @@
-"""Render Overlay."""
+"""Tabular to microjson package."""
 import logging
 import os
 import pathlib
@@ -10,7 +10,7 @@ from typing import Optional
 
 import filepattern as fp
 import typer
-from polus.plugins.visualization.render_overlay import microjson_overlay as mo
+from polus.plugins.visualization.tabular_to_microjson import microjson_overlay as mo
 from tqdm import tqdm
 
 app = typer.Typer()
@@ -21,7 +21,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
     datefmt="%d-%b-%y %H:%M:%S",
 )
-logger = logging.getLogger("polus.plugins.visualization.render_overlay")
+logger = logging.getLogger("polus.plugins.visualization.tabular_to_microjson")
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 # Set number of processors for scalability
 num_workers = max(cpu_count() // 2, 2)

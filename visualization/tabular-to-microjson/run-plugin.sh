@@ -15,10 +15,10 @@ out_dir=${datapath}/output
 
 
 # # # Show the help options
-# # # docker run polusai/render-overlay-plugin:${version}
+# # # docker run polusai/tabular-to-microjson-plugin:${version}
 
 docker run -v ${datapath}:${datapath} \
-            polusai/render-overlay-plugin:${version} \
+            polusai/tabular-to-microjson-plugin:${version} \
             --inpDir ${inp_dir} \
             --filePattern ${file_pattern} \
             --dimensions ${dimensions} \

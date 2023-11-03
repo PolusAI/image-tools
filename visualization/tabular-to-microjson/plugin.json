@@ -1,9 +1,9 @@
 {
-  "name": "Render Overlay Plugin",
-  "version": "0.1.0-dev2",
-  "containerId": "polusai/render-overlay-plugin:0.1.0-dev2",
-  "title": "Render Overlay",
-  "description": "Generates text overlay data for render.",
+  "name": "Tabular To Microjson",
+  "version": "0.1.0",
+  "containerId": "polusai/tabular-to-microjson-plugin:0.1.0",
+  "title": "Tabular To Microjson",
+  "description": "Generates JSON from tabular data.",
   "author": "Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/PolusAI/polus-plugins",
@@ -12,7 +12,7 @@
   "baseCommand": [
     "python3",
     "-m",
-    "polus.plugins.visualization.render_overlay"
+    "polus.plugins.visualization.tabular_to_microjson"
   ],
   "inputs": [
     {

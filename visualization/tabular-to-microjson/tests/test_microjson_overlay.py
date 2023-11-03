@@ -1,4 +1,4 @@
-"""Test for Render Overlay."""
+"""Test for tabular to microjson package."""
 import json
 import pathlib
 import shutil
@@ -9,8 +9,8 @@ import numpy as np
 import pandas as pd
 import pytest
 import vaex
-from polus.plugins.visualization.render_overlay import microjson_overlay as mo
-from polus.plugins.visualization.render_overlay.__main__ import app
+from polus.plugins.visualization.tabular_to_microjson import microjson_overlay as mo
+from polus.plugins.visualization.tabular_to_microjson.__main__ import app
 from typer.testing import CliRunner
 
 runner = CliRunner()

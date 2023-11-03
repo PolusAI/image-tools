@@ -1,6 +1,6 @@
-# Render Overlay Plugin(v0.1.0-dev2)
+# Tabular To Microjson(v0.1.0)
 
-This plugin uses [MICROJSON](https://github.com/bengtl/microjson/tree/dev) python library to generate overlays in JSON format which can be used in
+This plugin uses [MICROJSON](https://github.com/bengtl/microjson/tree/dev) python library to generate JSON from tabular data which can be used in
 [RENDER UI](https://render.ci.ncats.io/?imageUrl=https://files.scb-ncats.io/pyramids/Idr0033/precompute/41744/x(00-15)_y(01-24)_p0(1-9)_c(1-5)/)
 application for visualization of microscopy images.
 
@@ -48,7 +48,7 @@ This plugin can take six input arguments and one output argument:
 ### Run the Docker Container
 
 ```bash
-docker run -v /data:/data polusai/render-overlay-plugin:0.1.0-dev2 \
+docker run -v /data:/data polusai/tabular-to-microjson-plugin:0.1.0 \
   --inpDir /data/input \
   --filePattern ".*.csv" \
   --dimensions 384 \

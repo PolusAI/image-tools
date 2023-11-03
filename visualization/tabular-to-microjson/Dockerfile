@@ -16,5 +16,5 @@ COPY README.md ${EXEC_DIR}
 COPY src ${EXEC_DIR}/src
 RUN pip3 install ${EXEC_DIR} --no-cache-dir
 
-ENTRYPOINT ["python3", "-m", "polus.plugins.visualization.render_overlay"]
+ENTRYPOINT ["python3", "-m", "polus.plugins.visualization.tabular_to_microjson"]
 CMD ["--help"]
