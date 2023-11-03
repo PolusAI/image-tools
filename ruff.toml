@@ -38,8 +38,4 @@ convention = "google"
 "__main__.py" = ["B008", "S101"]
 
 [isort]
-<<<<<<< HEAD
 force-single-line = true
-=======
-force-single-line = true
->>>>>>> 254a68a (update : update to new standards.)

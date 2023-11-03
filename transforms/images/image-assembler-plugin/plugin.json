@@ -1,113 +1,67 @@
 {
-    "name": "Image Assembler",
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    "version": "1.4.0-dev0",
-=======
-    "version": "1.3.0-dev0",
->>>>>>> 254a68a (update : update to new standards.)
-    "title": "Image Assembler",
-    "description": "A scalable image assembling plugin.",
-<<<<<<< HEAD
-    "author": "Nick Schaub (nick.schaub@nih.gov), Antoine Gerardin (antoine.gerardin@gmail.com)",
-=======
-    "version": "1.1.5",
-=======
-    "version": "1.2.1-dev0",
->>>>>>> 83c08da (update: - refactor variables names to snake case)
-    "title": "Image Assembler",
-    "description": "A scalable image assembling plugin.",
-<<<<<<< HEAD
-    "author": "Nick Schaub (nick.schaub@nih.gov)",
->>>>>>> cbaf94c (update/image-assembler-plugin)
-=======
-    "author": "Nick Schaub (nick.schaub@nih.gov), Antoine Gerardin (antoine.gerardin@gmail.com)",
->>>>>>> de6ea1d (Update: update to new plugin standard:)
-=======
-    "author": "Nick Schaub (nick.schaub@nih.gov), Antoine Gerardin (antoine.gerardin@nih.gov)",
->>>>>>> 99a0b93 (update attributions and removed test pypi.)
-    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-    "repository": "https://github.com/labshare/polus-plugins",
-    "website": "https://ncats.nih.gov/preclinical/core/informatics",
-    "citation": "",
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-    "containerId": "polusai/image-assembler-plugin:1.4.0-dev0",
-=======
-    "containerId": "polusai/image-assembler-plugin:1.3.0-dev0",
->>>>>>> 254a68a (update : update to new standards.)
-    "baseCommand": ["python3", "-m", "polus.plugins.transforms.images.image_assembler"],
-=======
-    "containerId": "polusai/image-assembler-plugin:1.1.5",
->>>>>>> cbaf94c (update/image-assembler-plugin)
-=======
-    "containerId": "polusai/image-assembler-plugin:1.2.1-dev0",
-<<<<<<< HEAD
-    "baseCommand": ["python3", "-m", "polus.transforms.images.image_assembler"],
->>>>>>> 83c08da (update: - refactor variables names to snake case)
-=======
-    "baseCommand": ["python3", "-m", "polus.plugins.transforms.images.image_assembler"],
->>>>>>> de6ea1d (Update: update to new plugin standard:)
-    "inputs": [
-      {
-        "name": "stitchPath",
-        "type": "stitchingVector",
-        "description": "Stitching vector for data",
-        "required": true
-      },
-      {
-        "name": "imgPath",
-        "type": "collection",
-        "description": "Input image collection to be processed by this plugin",
-        "required": true
-      },
-      {
-        "name": "timesliceNaming",
-        "type": "boolean",
-        "description": "Label images by timeslice rather than analyzing input image names",
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 254a68a (update : update to new standards.)
-        "required": false
-      },
-      {
-        "name": "preview",
-        "type": "boolean",
-        "description": "Generate preview of outputs.",
-        "required": false
-<<<<<<< HEAD
-=======
-        "required": true
->>>>>>> cbaf94c (update/image-assembler-plugin)
-=======
->>>>>>> 254a68a (update : update to new standards.)
-      }
-    ],
-    "outputs": [
-      {
-        "name": "outDir",
-        "type": "collection",
-        "description": "Output collection"
-      }
-    ],
-    "ui": [
-      {
-        "key": "inputs.imgPath",
-        "title": "Input collection",
-        "description": "Input image collection to be processed by this plugin"
-      },
-      {
-        "key": "inputs.stitchPath",
-        "title": "Stitching Vector",
-        "description": "Stitching vectors to use"
-      },
-      {
-        "key": "inputs.timesliceNaming",
-        "title": "Timeslice numbers for image names:",
-        "description": "Use stitching vector timeslice number as the image name"
-      }
-    ]
-  }
+  "name": "Image Assembler",
+  "version": "1.4.0-dev0",
+  "title": "Image Assembler",
+  "description": "A scalable image assembling plugin.",
+  "author": "Nick Schaub (nick.schaub@nih.gov), Antoine Gerardin (antoine.gerardin@gmail.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/image-assembler-plugin:1.4.0-dev0",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.plugins.transforms.images.image_assembler"
+  ],
+  "inputs": [
+    {
+      "name": "stitchPath",
+      "type": "stitchingVector",
+      "description": "Stitching vector for data",
+      "required": true
+    },
+    {
+      "name": "imgPath",
+      "type": "collection",
+      "description": "Input image collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "timesliceNaming",
+      "type": "boolean",
+      "description": "Label images by timeslice rather than analyzing input image names",
+      "required": false
+    },
+    {
+      "name": "preview",
+      "type": "boolean",
+      "description": "Generate preview of outputs.",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.imgPath",
+      "title": "Input collection",
+      "description": "Input image collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.stitchPath",
+      "title": "Stitching Vector",
+      "description": "Stitching vectors to use"
+    },
+    {
+      "key": "inputs.timesliceNaming",
+      "title": "Timeslice numbers for image names:",
+      "description": "Use stitching vector timeslice number as the image name"
+    }
+  ]
+}

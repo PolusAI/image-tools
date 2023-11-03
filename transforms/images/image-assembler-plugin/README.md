@@ -1,33 +1,10 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 # Image Assembler (1.4.0-dev0)
-=======
-# Image Assembler
->>>>>>> cbaf94c (update/image-assembler-plugin)
-=======
-# Image Assembler (1.2.1-dev0)
->>>>>>> 83c08da (update: - refactor variables names to snake case)
-=======
-# Image Assembler (1.3.0-dev0)
->>>>>>> 254a68a (update : update to new standards.)
 
 This WIPP plugin assembles images into a stitched image using an image stitching
 vector. It can assemble 2d and z-stacked images. When assembling z-stacked images,
 all images should have the same depth. Support for assembling images with different depth
-<<<<<<< HEAD
-<<<<<<< HEAD
 will be added in the future.
 
-<<<<<<< HEAD
-=======
-will be added in the future.  
->>>>>>> cbaf94c (update/image-assembler-plugin)
-=======
-will be added in the future.
->>>>>>> 83c08da (update: - refactor variables names to snake case)
-=======
->>>>>>> 254a68a (update : update to new standards.)
 The need for this plugin is due to limitations of the NIST
 [WIPP Image Assembling Plugin](https://github.com/usnistgov/WIPP-image-assembling-plugin)
 that limits image sizes to less than 2^32 pixels. The NIST plugin works faster
@@ -68,11 +45,4 @@ This plugin takes two input arguments and one output argument:
 | `--imgPath`         | Path to input image collection           | Input  | collection      |
 | `--timesliceNaming` | Output image names are timeslice numbers | Input  | boolean         |
 | `--outDir`          | Path to output image collection          | Output | collection      |
-<<<<<<< HEAD
-<<<<<<< HEAD
 | `--preview`          | Generate preview of outputs             | Output | json file       |
-=======
->>>>>>> cbaf94c (update/image-assembler-plugin)
-=======
-| `--preview`          | Generate preview of outputs             | Output | json file       |
->>>>>>> 254a68a (update : update to new standards.)
