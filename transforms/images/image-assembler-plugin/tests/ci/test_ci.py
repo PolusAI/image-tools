@@ -2,12 +2,14 @@ from pathlib import Path
 from typing import Tuple
 import polus.plugins as pp
 import os
+import pytest
 
 from polus.plugins.transforms.images.image_assembler.image_assembler import (
     assemble_images,
 )
 
 
+@pytest.mark.skip("Need to have polus plugins and subpackages properly installed.")
 def test_image_assembler(nist_mist_dataset_temp_folder: Tuple[Path, Path]) -> None:
     """
     The reference nist mist dataset is composed of stripped tiff and
