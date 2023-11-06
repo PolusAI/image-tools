@@ -23,14 +23,6 @@ chunk_width, chunk_height = chunk_size, chunk_size
 
 BACKEND = "python"
 
-# UNUSED - PREADATOR USES ITS OWN HEURISTICS
-# NOTE CHECK those heuristics would require further investigation.
-# num_threads = (chunk_size // BioReader._TILE_SIZE) ** 2
-# try:
-#     num_processes = len(os.sched_getaffinity(0)) * 2
-# except Exception:
-#     num_processes = multiprocessing.cpu_count() * 2
-
 
 def generate_output_filepaths(
     img_path: Path,
@@ -81,8 +73,7 @@ def assemble_images(
         image from the stitching vector.
     """
     vector_patterns = collect_stitching_vector_patterns(stitch_path)
-    # max_workers = min(len(vector_patterns), cpu_count())
-    # with concurrent.futures.ProcessPoolExecutor( max_workers=1) as executor:
+
     with ProcessManager(name="image-assembler", log_level="INFO") as pm:
         for vector_file, pattern in vector_patterns:
             pm.submit_process(
@@ -304,7 +295,6 @@ def assemble_image(
                         bw,
                         img_path,
                     )
-            # pm.join_threads()
 
 
 def assemble_chunk(

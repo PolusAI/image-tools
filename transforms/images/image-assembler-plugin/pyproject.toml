@@ -26,6 +26,8 @@ black = "^23.3.0"
 mypy = "^1.1.1"
 pytest = "^7.2.2"
 ruff = "^0.0.270"
+# TODO CHECK how we can use polus.plugins in a plugin tests without conflicts
+# polus-plugins = { git = "https://github.com/PolusAI/polus-plugins", branch = "master" }
 
 [build-system]
 requires = ["poetry-core"]

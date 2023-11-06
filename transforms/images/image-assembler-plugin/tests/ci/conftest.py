@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import requests
 
-TIMEOUT = 10
+HTTP_REQUEST_TIMEOUT = 10
 
 FOVS_URL = (
     "https://github.com/usnistgov/MIST/wiki/testdata/Small_Phase_Test_Dataset.zip"
@@ -50,7 +50,7 @@ def create_nist_mist_dataset(
     stitch_path: Path,
 ) -> tuple[Path, Path]:
     """Download the dataset."""
-    r = requests.get(FOVS_URL, timeout=TIMEOUT)
+    r = requests.get(FOVS_URL, timeout=HTTP_REQUEST_TIMEOUT)
     z = zipfile.ZipFile(io.BytesIO(r.content))
     z.extractall(img_path)
     z.close()
@@ -63,7 +63,7 @@ def create_nist_mist_dataset(
             msg,
         )
 
-    r = requests.get(STITCHING_VECTOR_URL, timeout=TIMEOUT)
+    r = requests.get(STITCHING_VECTOR_URL, timeout=HTTP_REQUEST_TIMEOUT)
     z = zipfile.ZipFile(io.BytesIO(r.content))
     print(z.namelist())
     z.extractall(stitch_path)
