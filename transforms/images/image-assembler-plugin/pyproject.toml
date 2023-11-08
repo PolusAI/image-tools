@@ -7,11 +7,9 @@ readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
-python = "^3.9.15"
+python = ">=3.9, <3.12"
 bfio = {version = "2.1.9", extras = ["all"]}
-# filepattern = "2.0.1"
-# for osx.
-filepattern = ">= 0 , <1"
+filepattern = "2.0.4"
 # TODO update. Cannot use git in docker image
 preadator = "0.4.0.dev2"
 # preadator = { git = "https://github.com/nishaq503/preadator", branch = "docs" }
