@@ -69,10 +69,7 @@ def create_nist_mist_dataset(
     z.extractall(stitch_path)
     z.close()
 
-    stitch_path = (
-        stitch_path
-        / "Small_Phase_Test_Dataset_Example_Results/img-global-positions-0.txt"
-    )
+    stitch_path = stitch_path / "Small_Phase_Test_Dataset_Example_Results/"
 
     if not stitch_path.exists():
         msg = "could not successfully download nist_mist_dataset stitching vector"
@@ -80,4 +77,4 @@ def create_nist_mist_dataset(
             msg,
         )
 
-    return img_path, stitch_path.parent
+    return img_path, stitch_path
