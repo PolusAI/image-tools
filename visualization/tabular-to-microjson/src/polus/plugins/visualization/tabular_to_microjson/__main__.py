@@ -34,30 +34,30 @@ def main(  # noqa: PLR0913
         "--inpDir",
         help="Path to input directory containing tabular data",
     ),
+    stitch_dir: pathlib.Path = typer.Option(
+        ...,
+        "--stitchDir",
+        help="Path to input directory containing stitching vector",
+    ),
     file_pattern: str = typer.Option(
         ".+",
         "--filePattern",
         help="Filename pattern used to separate data",
     ),
-    dimensions: Optional[mo.Dimensions] = typer.Option(
-        mo.Dimensions.DEFAULT,
-        "--dimensions",
-        help="Plate dimension (Columns, Rows)",
+    stitch_pattern: str = typer.Option(
+        ".+",
+        "--stitchPattern",
+        help="Pattern to parse filename in stitching vector",
+    ),
+    group_by: Optional[str] = typer.Option(
+        None,
+        "--groupBy",
+        help="Pattern to parse filename in stitching vector",
     ),
     geometry_type: Optional[str] = typer.Option(
         "Polygon",
         "--geometryType",
         help="Type of Geometry",
-    ),
-    cell_width: int = typer.Option(
-        ...,
-        "--cellWidth",
-        help="Pixel distance between adjacent cells/wells in x-dimension",
-    ),
-    cell_height: int = typer.Option(
-        ...,
-        "--cellHeight",
-        help="Pixel distance in y-dimension",
     ),
     out_dir: pathlib.Path = typer.Option(
         ...,
@@ -73,17 +73,14 @@ def main(  # noqa: PLR0913
     """Apply Render Overlay to input tabular data to create microjson overlays."""
     logger.info(f"inpDir = {inp_dir}")
     logger.info(f"filePattern = {file_pattern}")
-    logger.info(f"dimensions = {dimensions}")
+    logger.info(f"stitchDir = {stitch_dir}")
     logger.info(f"geometryType = {geometry_type}")
-    logger.info(f"cellWidth = {cell_width}")
-    logger.info(f"cellHeight = {cell_height}")
+    logger.info(f"stitchPattern = {stitch_pattern}")
+    logger.info(f"groupBy = {group_by}")
     logger.info(f"outDir = {out_dir}")
 
     inp_dir = inp_dir.resolve()
     out_dir = out_dir.resolve()
-
-    if dimensions is not None:
-        width, height = dimensions.get_value()
 
     fps = fp.FilePattern(inp_dir, file_pattern)
 
@@ -91,24 +88,28 @@ def main(  # noqa: PLR0913
 
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
         for file in tqdm(files, desc="Creating overlays", total=len(files)):
-            cells = mo.GridCell(width=width, height=height, cell_width=cell_width)
+            fname = pathlib.Path(file).stem
+            stitch_path = stitch_dir.joinpath(f"{fname}.txt")
             if geometry_type == "Polygon":
                 poly = mo.PolygonSpec(
-                    positions=cells.convert_data,
-                    cell_height=cell_height,
+                    stitch_path=stitch_path,
+                    stitch_pattern=stitch_pattern,
+                    group_by=group_by,
                 )
             else:
                 poly = mo.PointSpec(
-                    positions=cells.convert_data,
-                    cell_height=cell_height,
+                    stitch_path=stitch_path,
+                    stitch_pattern=stitch_pattern,
+                    group_by=group_by,
                 )
-            microjson = mo.RenderOverlayModel(
+
+            micro_model = mo.RenderOverlayModel(
                 file_path=file,
                 coordinates=poly.get_coordinates,
                 geometry_type=geometry_type,
                 out_dir=out_dir,
             )
-            executor.submit(microjson.microjson_overlay)
+            executor.submit(micro_model.microjson_overlay)
 
     if preview:
         shutil.copy(

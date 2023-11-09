@@ -1,11 +1,13 @@
-# Tabular To Microjson(v0.1.0)
+# Tabular To Microjson(v0.1.1)
 
 This plugin uses [MICROJSON](https://github.com/bengtl/microjson/tree/dev) python library to generate JSON from tabular data which can be used in
 [RENDER UI](https://render.ci.ncats.io/?imageUrl=https://files.scb-ncats.io/pyramids/Idr0033/precompute/41744/x(00-15)_y(01-24)_p0(1-9)_c(1-5)/)
 application for visualization of microscopy images.
 
-This plugin allows to calculate geometry coordinates based on the values passes for input arguments i-e `geometryType`, `cellWidth`, `cellHeight` for each row
-and column positions of user-defined microplate `dimensions`.
+This plugin allows to calculate geometry coordinates i-e `Polygon` and `Point` using image positions from corresponding stitching vector.
+Note: The filenames of tabular and stitching vector should be same
+`groupBy` is used when there are more than one image in each well then pass a `variable` used in `stitchPattern` to group filenames in a stitching vector to compute geometry coordinates.
+
 Note: Currently this plugin supports two geometry types `Polygon` and `Point`.A future work requires additional support of more geometry types in this plugin.
 
 Currently this plugins handles only three file formats supported by vaex.
@@ -30,16 +32,16 @@ contents of `plugin.json` into the pop-up window and submit.
 
 ## Options
 
-This plugin can take six input arguments and one output argument:
+This plugin can take seven input arguments and one output argument:
 
 | Name              | Description                                           | I/O    | Type         |
 |-------------------|-------------------------------------------------------|--------|--------------|
 | `inpDir`          | Input directory                                       | Input  | string         |
+| `stitchDir`       | Directory containing stitching vectors                | Input  | string         |
 | `filePattern`     | Pattern to parse tabular filenames                    | Input  | string       |
-| `dimensions`      | Select microplate type i-e (384, 96, 24, 6) well plate  | Input  | string       |
-| `geometryType`            | Geometry type (Polygon, Point)                        | Input  | string       |
-| `cellWidth`       | Pixel distance between adjacent cells/wells in x-dimension | Input  | integer       |
-| `cellHeight`       | Pixel distance in y-dimension              | Input  | integer       |
+| `stitchPattern`   | Pattern to parse filenames in stitching vector        | Input  | string       |
+| `groupBy`         | Variable to group filenames in  stitching vector | Input  | string       |
+| `geometryType`    | Geometry type (Polygon, Point)                        | Input  | string       |
 | `outDir`          | Output directory for overlays                         | Output | string       |
 | `--preview`      | Generate a JSON file with outputs                     | Output | JSON            |
 
@@ -48,13 +50,13 @@ This plugin can take six input arguments and one output argument:
 ### Run the Docker Container
 
 ```bash
-docker run -v /data:/data polusai/tabular-to-microjson-plugin:0.1.0 \
+docker run -v /data:/data polusai/tabular-to-microjson-plugin:0.1.1 \
   --inpDir /data/input \
+  --stitchDir /data/stitchvector \
   --filePattern ".*.csv" \
-  --dimensions 384 \
+  --stitchPattern "x{x:dd}_y{y:dd}_c{c:d}.ome.tif" \
+  --groupBy None \
   --geometryType "Polygon" \
-  --cellWidth 2170 \
-  --cellHeight 2180 \
   --outDir /data/output \
   --preview
 ```
