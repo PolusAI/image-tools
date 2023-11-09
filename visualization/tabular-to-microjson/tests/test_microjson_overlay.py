@@ -37,13 +37,13 @@ def clean_directories() -> None:
 
 @pytest.fixture(
     params=[
-        (24, 16, 2170, 1080, "Polygon", 384, ".csv"),
-        (12, 8, 1080, 3240, "Polygon", 96, ".arrow"),
-        (6, 4, 100, 3240, "Point", 24, ".feather"),
-        (3, 2, 50, 1080, "Point", 6, ".csv"),
+        (384, 2170, "Polygon", ".csv"),
+        (768, 1080, "Polygon", ".arrow"),
+        (1152, 3240, "Point", ".feather"),
+        (1536, 1080, "Point", ".csv"),
     ],
 )
-def get_params(request: pytest.FixtureRequest) -> tuple[int, int, int, int, int, str]:
+def get_params(request: pytest.FixtureRequest) -> tuple[int, int, str, str]:
     """To get the parameter of the fixture."""
     return request.param
 
@@ -51,128 +51,157 @@ def get_params(request: pytest.FixtureRequest) -> tuple[int, int, int, int, int,
 @pytest.fixture()
 def generate_synthetic_data(
     input_directory: pathlib.Path,
-    get_params: tuple[int, int, int, int, str, int, str],
-) -> pathlib.Path:
+    get_params: tuple[int, int, str, str],
+) -> tuple[pathlib.Path, pathlib.Path]:
     """Generate tabular data."""
-    width, height, _, _, _, dimension, file_extension = get_params
+    nrows, cell_width, geometry_type, file_extension = get_params
+    n = int(nrows / 384)
 
     rng = np.random.default_rng(42)
+
+    pathlib.Path.mkdir(pathlib.Path(input_directory, "data"))
+    pathlib.Path.mkdir(pathlib.Path(input_directory, "stvector"))
+
+    flist = []
+    for x in range(16):
+        for y in range(24):
+            for p in range(n):
+                fname = (
+                    f"x{x}".zfill(2)
+                    + f"_y{y}".zfill(2)
+                    + f"_p{p}".zfill(2)
+                    + "_c1.ome.tif"
+                )
+                flist.append(fname)
+                position = (y * cell_width, x * cell_width)
+                stvector = (
+                    f"file: {fname}; corr: 0; position: {position}; grid: {(y, x)};"
+                )
+                stitch_path = pathlib.Path(input_directory, "stvector/data.txt")
+                with pathlib.Path.open(stitch_path, "a") as file:
+                    file.write(f"{stvector}\n")
+                    file.close()
     diction_1 = {
-        "Plate": np.repeat("preZ", dimension).tolist(),
+        "intensity_image": flist,
+        "Plate": np.repeat("preZ", nrows).tolist(),
         "Well": [
             f"{s}{num}"
-            for s in string.ascii_letters.upper()[:height]
-            for num in range(width)
+            for s in string.ascii_letters.upper()[:16]
+            for num in range(24)
+            for p in range(n)
         ],
         "Characteristics [Organism 2]": np.repeat(
             "Herpes simplex virus type 1",
-            dimension,
+            nrows,
         ).tolist(),
-        "Characteristics [Cell Line]": np.repeat("A549", dimension).tolist(),
-        "Compound Name": [
-            rng.choice(["DMSO", "Ganciclovir"]) for i in range(dimension)
-        ],
+        "Characteristics [Cell Line]": np.repeat("A549", nrows).tolist(),
+        "Compound Name": [rng.choice(["DMSO", "Ganciclovir"]) for i in range(nrows)],
         "Control Type": [
-            rng.choice(["negative control", "positive control"])
-            for i in range(dimension)
+            rng.choice(["negative control", "positive control"]) for i in range(nrows)
         ],
         "numberOfNuclei": rng.integers(
             low=2500,
             high=100000,
-            size=dimension,
+            size=nrows,
         ),
         "maxVirusIntensity": rng.integers(
             low=500,
             high=30000,
-            size=dimension,
+            size=nrows,
         ),
     }
 
     df = pd.DataFrame(diction_1)
     if file_extension == ".csv":
-        outpath = pathlib.Path(input_directory, "data.csv")
+        outpath = pathlib.Path(input_directory, "data/data.csv")
         df.to_csv(outpath, index=False)
     if file_extension == ".feather":
-        outpath = pathlib.Path(input_directory, "data.feather")
+        outpath = pathlib.Path(input_directory, "data/data.feather")
         df.to_feather(outpath)
     if file_extension == ".arrow":
-        outpath = pathlib.Path(input_directory, "data.arrow")
+        outpath = pathlib.Path(input_directory, "data/data.arrow")
         df.to_feather(outpath)
 
-    return outpath
+    return outpath, stitch_path
 
 
-def test_convert_vaex_dataframe(generate_synthetic_data: pathlib.Path) -> None:
+def test_convert_vaex_dataframe(
+    generate_synthetic_data: tuple[pathlib.Path, pathlib.Path],
+) -> None:
     """Converting tabular data to vaex dataframe."""
-    vaex_df = mo.convert_vaex_dataframe(generate_synthetic_data)
+    outpath, _ = generate_synthetic_data
+    vaex_df = mo.convert_vaex_dataframe(outpath)
     assert type(vaex_df) == vaex.dataframe.DataFrameLocal
     assert len(list(vaex_df.columns)) != 0
     assert vaex_df.shape[0] > 0
-    shutil.rmtree(generate_synthetic_data.parent)
-
-
-def test_generate_gridcell(
-    get_params: tuple[int, int, int, int, str, int, str],
-) -> None:
-    """Test grid positons of microplate."""
-    width, height, cell_width, _, _, _, _ = get_params
-
-    cells = mo.GridCell(width=width, height=height, cell_width=cell_width)
-    gridcells = cells.convert_data
-    assert len(gridcells) == width * height
+    clean_directories()
 
 
 def test_generate_polygon_coordinates(
-    get_params: tuple[int, int, int, int, str, int, str],
+    generate_synthetic_data: tuple[pathlib.Path, pathlib.Path],
 ) -> None:
-    """Test generating polygon coordinates of a microplate."""
-    width, height, cell_width, cell_height, _, _, _ = get_params
-    cells = mo.GridCell(width=width, height=height, cell_width=cell_width)
-    poly = mo.PolygonSpec(
-        positions=cells.convert_data,
-        cell_height=cell_height,
+    """Test generating polygon coordinates using stitching vector."""
+    _, stitch_dir = generate_synthetic_data
+    stitch_pattern = "x{x:dd}_y{y:dd}_p{p:d}_c{c:d}.ome.tif"
+    group_by = None
+
+    model = mo.PolygonSpec(
+        stitch_path=stitch_dir,
+        stitch_pattern=stitch_pattern,
+        group_by=group_by,
     )
-    assert len(poly.get_coordinates) == width * height
-    assert all(len(i) for p in poly.get_coordinates for i in p) is True
+    poly = model.get_coordinates
+    assert all(len(i) for p in poly[0]["coordinates"] for i in p) is True
+    clean_directories()
 
 
 def test_generate_rectangular_polygon_centroids(
-    get_params: tuple[int, int, int, int, str, int, str],
+    generate_synthetic_data: tuple[pathlib.Path, pathlib.Path],
 ) -> None:
-    """Test generating centroid rectangular coordinates of a microplate."""
-    width, height, cell_width, cell_height, _, _, _ = get_params
-    cells = mo.GridCell(width=width, height=height, cell_width=cell_width)
-    poly = mo.PointSpec(
-        positions=cells.convert_data,
-        cell_height=cell_height,
+    """Test generating centroid rectangular coordinates using stitching vector."""
+    _, stitch_dir = generate_synthetic_data
+    stitch_pattern = "x{x:dd}_y{y:dd}_p{p:d}_c{c:d}.ome.tif"
+    group_by = None
+    model = mo.PointSpec(
+        stitch_path=stitch_dir,
+        stitch_pattern=stitch_pattern,
+        group_by=group_by,
     )
-    assert len(poly.get_coordinates) == width * height
-    assert all(len(p) for p in poly.get_coordinates) is True
+    poly = model.get_coordinates
+    expected_len = 2
+    assert len(poly[0]["coordinates"]) == expected_len
+    clean_directories()
 
 
 def test_render_overlay_model(
-    generate_synthetic_data: pathlib.Path,
+    generate_synthetic_data: tuple[pathlib.Path, pathlib.Path],
     output_directory: pathlib.Path,
-    get_params: tuple[int, int, int, int, str, int, str],
+    get_params: tuple[int, int, str, str],
 ) -> None:
     """Test render overlay model."""
-    width, height, cell_width, cell_height, geometry_type, _, _ = get_params
-    cells = mo.GridCell(width=width, height=height, cell_width=cell_width)
+    inp_dir, stitch_dir = generate_synthetic_data
+    stitch_pattern = "x{x:dd}_y{y:dd}_p{p:d}_c{c:d}.ome.tif"
+    _, _, geometry_type, _ = get_params
+    group_by = None
 
     if geometry_type == "Polygon":
-        poly = mo.PolygonSpec(
-            positions=cells.convert_data,
-            cell_height=cell_height,
-        )
-    if geometry_type == "Point":
-        poly = mo.PointSpec(
-            positions=cells.convert_data,
-            cell_height=cell_height,
+        model = mo.PolygonSpec(
+            stitch_path=stitch_dir,
+            stitch_pattern=stitch_pattern,
+            group_by=group_by,
         )
 
+    if geometry_type == "Point":
+        model = mo.PointSpec(
+            stitch_path=stitch_dir,
+            stitch_pattern=stitch_pattern,
+            group_by=group_by,
+        )
+    poly = model.get_coordinates
+
     microjson = mo.RenderOverlayModel(
-        file_path=pathlib.Path(generate_synthetic_data),
-        coordinates=poly.get_coordinates,
+        file_path=inp_dir,
+        coordinates=poly,
         geometry_type=geometry_type,
         out_dir=output_directory,
     )
@@ -184,43 +213,31 @@ def test_render_overlay_model(
     clean_directories()
 
 
-@pytest.fixture(
-    params=[
-        (2170, 1080, "Polygon", "384"),
-        (1080, 3240, "Polygon", "96"),
-        (100, 3240, "Point", "24"),
-        (50, 1080, "Point", "6"),
-    ],
-)
-def get_cli(request: pytest.FixtureRequest) -> tuple[int, int, str, str]:
-    """To get the parameter of the fixture."""
-    return request.param
-
-
 def test_cli(
-    generate_synthetic_data: pathlib.Path,
+    generate_synthetic_data: tuple[pathlib.Path, pathlib.Path],
     output_directory: pathlib.Path,
-    get_cli: tuple[int, int, str, str],
+    get_params: tuple[int, int, str, str],
 ) -> None:
     """Test Cli."""
-    inp_dir = generate_synthetic_data.parent
-    cell_width, cell_height, geometry_type, dimension = get_cli
+    inp_dir, stitch_dir = generate_synthetic_data
+    stitch_pattern = "x{x:dd}_y{y:dd}_p{p:d}_c{c:d}.ome.tif"
+    _, _, geometry_type, _ = get_params
 
     result = runner.invoke(
         app,
         [
             "--inpDir",
-            inp_dir,
+            inp_dir.parent,
+            "--stitchDir",
+            stitch_dir.parent,
             "--filePattern",
             ".+",
-            "--dimensions",
-            dimension,
+            "--stitchPattern",
+            stitch_pattern,
+            "--groupBy",
+            None,
             "--geometryType",
             geometry_type,
-            "--cellWidth",
-            cell_width,
-            "--cellHeight",
-            cell_height,
             "--outDir",
             pathlib.Path(output_directory),
         ],
