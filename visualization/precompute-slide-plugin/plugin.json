@@ -2,6 +2,7 @@
   "name": "Polus Precompute Slide Plugin",
   "version": "1.6.0-dev0",
   "containerId": "polusai/precompute-slide-plugin:1.6.0-dev0",
+  "baseCommand": ["python3", "-m", "polus.plugins.visualization.precompute_slide"],
   "title": "Precompute Slide Viewer",
   "description": "Precomputes a plane series in DeepZoom, Neuroglancer, or OME Zarr format.",
   "author": "Madhuri Vihani (Madhuri.Vihani@nih.gov), Nick Schaub (Nick.Schaub@nih.gov)",
