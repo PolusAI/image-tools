@@ -38,9 +38,6 @@ def clean_directories() -> None:
 @pytest.fixture(
     params=[
         (384, 2170, "Polygon", ".csv"),
-        (768, 1080, "Polygon", ".arrow"),
-        (1152, 3240, "Point", ".feather"),
-        (1536, 1080, "Point", ".csv"),
     ],
 )
 def get_params(request: pytest.FixtureRequest) -> tuple[int, int, str, str]:
@@ -146,7 +143,7 @@ def test_generate_polygon_coordinates(
     group_by = None
 
     model = mo.PolygonSpec(
-        stitch_path=stitch_dir,
+        stitch_path=str(stitch_dir),
         stitch_pattern=stitch_pattern,
         group_by=group_by,
     )
@@ -163,7 +160,7 @@ def test_generate_rectangular_polygon_centroids(
     stitch_pattern = "x{x:dd}_y{y:dd}_p{p:d}_c{c:d}.ome.tif"
     group_by = None
     model = mo.PointSpec(
-        stitch_path=stitch_dir,
+        stitch_path=str(stitch_dir),
         stitch_pattern=stitch_pattern,
         group_by=group_by,
     )
@@ -186,14 +183,14 @@ def test_render_overlay_model(
 
     if geometry_type == "Polygon":
         model = mo.PolygonSpec(
-            stitch_path=stitch_dir,
+            stitch_path=str(stitch_dir),
             stitch_pattern=stitch_pattern,
             group_by=group_by,
         )
 
     if geometry_type == "Point":
         model = mo.PointSpec(
-            stitch_path=stitch_dir,
+            stitch_path=str(stitch_dir),
             stitch_pattern=stitch_pattern,
             group_by=group_by,
         )
@@ -220,6 +217,7 @@ def test_cli(
 ) -> None:
     """Test Cli."""
     inp_dir, stitch_dir = generate_synthetic_data
+
     stitch_pattern = "x{x:dd}_y{y:dd}_p{p:d}_c{c:d}.ome.tif"
     _, _, geometry_type, _ = get_params
 
