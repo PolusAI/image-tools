@@ -68,18 +68,18 @@ class Validator(CustomOverlayModel):
         """Validate stitch path and stitch pattern."""
         stitch_path = values.get("stitch_path")
         stitch_pattern = values.get("stitch_pattern")
-        if stitch_path is not None and not stitch_path.exists():
+        if stitch_path is not None and not Path(stitch_path).exists():
             msg = "Stitching path does not exists!! Please do check path again"
             raise ValueError(msg)
-        if stitch_path is not None and stitch_path.exists():
-            with Path.open(stitch_path) as f:
+        if stitch_path is not None and Path(stitch_path).exists():
+            with Path.open(Path(stitch_path)) as f:
                 line = f.readlines()
                 if line is None:
                     msg = (
                         "Stitching vector is empty so grid positions cannot be defined"
                     )
                     raise ValueError(msg)
-        if stitch_path is not None and stitch_path.exists():
+        if stitch_path is not None and Path(stitch_path).exists():
             files = fp.FilePattern(stitch_path, stitch_pattern)
             if len(files) == 0:
                 msg = "Define stitch pattern again!!! as it is unable to parse file"

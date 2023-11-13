@@ -52,7 +52,7 @@ def main(  # noqa: PLR0913
     group_by: Optional[str] = typer.Option(
         None,
         "--groupBy",
-        help="Pattern to parse filename in stitching vector",
+        help="Variable to group filenames in stitching vector",
     ),
     geometry_type: Optional[str] = typer.Option(
         "Polygon",
@@ -92,13 +92,13 @@ def main(  # noqa: PLR0913
             stitch_path = stitch_dir.joinpath(f"{fname}.txt")
             if geometry_type == "Polygon":
                 poly = mo.PolygonSpec(
-                    stitch_path=stitch_path,
+                    stitch_path=str(stitch_path),
                     stitch_pattern=stitch_pattern,
                     group_by=group_by,
                 )
             else:
                 poly = mo.PointSpec(
-                    stitch_path=stitch_path,
+                    stitch_path=str(stitch_path),
                     stitch_pattern=stitch_pattern,
                     group_by=group_by,
                 )
