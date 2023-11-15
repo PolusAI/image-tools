@@ -16,11 +16,20 @@ Our underlying algorithm, however, is new and will soon be published under "Rhea
 The label-to-vector plugin uses the following steps to convert a labeled image to a vector field:
 
 1. Find the geometric-median of each cell in the image.
-2. Add heat to each cell's geometric-median.
-3. Diffuse the heat outward from each cell's geometric-median.
-4. Allow the heat to escape from cell to background, holding the background as a perfect heat sink.
-5. Loop from step 2 until the heat has reached a steady state.
-6. Every few iterations, add a heat shock to every pixel that has some heat.
+   - The geometric-median is the pixel that minimizes the sum of the distances to all other pixels in the cell.
+   - We will overload the term "center" to refer to the geometric-median of a cell.
+2. Loop:
+   1. Add heat to each cell's center.
+   2. Diffuse the heat outward from each cell's center.
+      - The heat diffusion is done using a convolution with a Gaussian kernel.
+   3. Allow the heat to escape from cell to background, holding the background as a perfect heat sink.
+   4. If the heat has reached a steady state, stop the loop.
+      - The heat has reached a steady state if the heat in every pixel is within some small threshold of the heat in the previous iteration.
+   5. Otherwise, every 10 iterations, add a heat shock to every pixel that has some heat.
+      - This is done to prevent the heat from getting stuck thinly connected regions.
+3. After the loop, the heat values in each cell form a "heat map".
+   - Heat will be high in the center of each cell and low at the edges of each cell.
+4. The vector field is the vector-gradient of the heat map.
 
 ## Usage
 
