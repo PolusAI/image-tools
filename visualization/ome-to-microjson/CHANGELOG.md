@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.1.1
+## 0.1.2-dev
 
 Initial release.
 This plugin uses binary images and convert object boundries to polygons using microjson package

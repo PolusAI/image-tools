@@ -3,6 +3,7 @@ import ast
 import enum
 import logging
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 from itertools import product
@@ -10,14 +11,12 @@ from multiprocessing import cpu_count
 from pathlib import Path
 from sys import platform
 from typing import Any
+
 import filepattern as fp
-
-
 import microjson.model as mj
 import numpy as np
 import scipy
 import vaex
-import re
 from bfio import BioReader
 from skimage import measure
 from skimage import morphology
@@ -94,7 +93,7 @@ class OmeMicrojsonModel:
 
                     if self.polygon_type != PolygonType.RECTANGLE:
                         future = executor.submit(
-                            self.segmentations_encodings, label_image, x, y
+                            self.segmentations_encodings, label_image, x, y,
                         )
                         if as_completed(future):
                             label, coordinates = future.result()
@@ -109,7 +108,7 @@ class OmeMicrojsonModel:
 
                     else:
                         future = executor.submit(
-                            self.rectangular_polygons, label_image, x, y
+                            self.rectangular_polygons, label_image, x, y,
                         )
                         if as_completed(future):
                             label, coordinates = future.result()
@@ -137,7 +136,7 @@ class OmeMicrojsonModel:
                     file = file[1][0]
                     outname = re.split(r"[_\.]+", file.name)[:-2]
                     outname = "_".join(outname) + ".json"
-                    df = open(Path(file), "r")
+                    df = open(Path(file))
                     data = df.readlines()
                     if i == 1:
                         endline = data[-36].rstrip() + ","
@@ -148,10 +147,9 @@ class OmeMicrojsonModel:
                     else:
                         sfdata = data[3:]
                     fw.writelines(sfdata)
-        return
 
     def segmentations_encodings(
-        self, label_image: np.ndarray, x: int, y: int
+        self, label_image: np.ndarray, x: int, y: int,
     ) -> tuple[Any, list[list[list[Any]]]]:
         """Calculate object boundries as series of vertices/points forming a polygon."""
         label, coordinates = [], []
@@ -177,7 +175,7 @@ class OmeMicrojsonModel:
         return label, coordinates
 
     def rectangular_polygons(
-        self, label_image: np.ndarray, x: int, y: int
+        self, label_image: np.ndarray, x: int, y: int,
     ) -> tuple[list[int], list[str]]:
         """Calculate Rectangular polygon for each object."""
         objects = scipy.ndimage.measurements.find_objects(label_image)
@@ -195,7 +193,7 @@ class OmeMicrojsonModel:
                         [x + xmin + width, y + ymin + height],
                         [x + xmin, y + ymin + height],
                         [x + xmin, y + ymin],
-                    ]
+                    ],
                 )
 
             else:
@@ -206,8 +204,8 @@ class OmeMicrojsonModel:
         return label, coordinates
 
     def polygons_to_microjson(
-        self, i: int, label: list[int], coordinates: list[Any]
-    ) -> None:  # noqa : 183
+        self, i: int, label: list[int], coordinates: list[Any],
+    ) -> None:  # : 183
         """Create microjson overlays in JSON Format."""
         x_dimension = np.repeat(self.br.X, len(label))
         y_dimension = np.repeat(self.br.Y, len(label))
@@ -346,4 +344,3 @@ class OmeMicrojsonModel:
                 )
                 logger.info(f"Saving overlay json file: {out_name}")
 
-        return
