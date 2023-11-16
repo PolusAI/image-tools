@@ -7,7 +7,6 @@ import re
 from multiprocessing import cpu_count
 from typing import Any, Optional
 from nyxus import Nyxus
-from bfio import BioReader
 
 import filepattern as fp
 import typer
