@@ -98,7 +98,7 @@ def main(
                 file_path=str(f[1][0]),
                 polygon_type=polygon_type,
             )
-            executor.submit(model.polygons_to_microjson())
+            executor.submit(model.write_single_json())
 
     if preview:
         generate_preview(out_dir)
