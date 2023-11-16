@@ -84,7 +84,7 @@ def test_nyxus_func(synthetic_images, output_directory, get_params) -> None:
     int_images = fp.FilePattern(inp_dir, int_pattern)
     seg_images = fp.FilePattern(seg_dir, seg_pattern)
     fileext, feat = get_params
-    for s_image in seg_images:
+    for s_image in seg_images():
         i_image = int_images.get_matching(**{k: v for k, v in s_image[0].items()})
         nyxus_func(
             int_file=i_image[0][1],
@@ -143,7 +143,7 @@ def test_scaled_nyxus_func(scaled_images, output_directory, get_scaled_params) -
     int_images = fp.FilePattern(inp_dir, int_pattern)
     seg_images = fp.FilePattern(seg_dir, seg_pattern)
     fileext, feat = get_scaled_params
-    for s_image in seg_images:
+    for s_image in seg_images():
         i_image = int_images.get_matching(**{k: v for k, v in s_image[0].items()})
         nyxus_func(
             int_file=i_image[0][1],

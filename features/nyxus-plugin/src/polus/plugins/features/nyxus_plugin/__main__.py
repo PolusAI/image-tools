@@ -116,14 +116,14 @@ def main(
                 "filepattern": int_pattern,
                 "outDir": [],
             }
-            for file in int_images:
+            for file in int_images():
                 out_name = file[1][0].name.replace(
                     "".join(file[1][0].suffixes), f"{file_extension}"
                 )
                 out_json["outDir"].append(out_name)
             json.dump(out_json, jfile, indent=2)
 
-    for s_image in seg_images:
+    for s_image in seg_images():
         i_image = int_images.get_matching(**{k: v for k, v in s_image[0].items()})
         if i_image:
             ProcessManager.submit_process(
