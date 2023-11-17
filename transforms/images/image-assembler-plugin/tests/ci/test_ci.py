@@ -10,6 +10,7 @@ from polus.plugins.transforms.images.image_assembler.image_assembler import (
 )
 
 
+@pytest.mark.skipif("not config.getoption('slow')")
 def test_image_assembler(nist_mist_dataset_temp_folder: Tuple[Path, Path]) -> None:
     """
     Assemble the NIST MIST reference dataset.
@@ -64,13 +65,10 @@ def name_cleaner(name: str) -> str:
 
 def recycle_stitching_vector(stitch_path: Path, out_dir: Path):
     """
-    Temporary method that rewrite the stitching vectors according to the modifications made by
+    Rewrite the stitching vectors according to the modifications made by
     the ome-converter/filerenaming workflow.
     """
     for vector in stitch_path.iterdir():
-        # TODO file issue with filepattern. It will segfault if encountering files that
-        # are not stitching vector.
-        # it should throw an exception instead.
         if vector.name == "img-global-positions-0.txt":
             with open(vector, "r") as file:
                 output_vector = out_dir / vector.name

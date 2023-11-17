@@ -14,6 +14,17 @@ from bfio import BioWriter
 BACKEND = "python"
 
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Add options to pytest."""
+    parser.addoption(
+        "--slow",
+        action="store_true",
+        dest="slow",
+        default=False,
+        help="run slow tests",
+    )
+
+
 def get_temp_file(path: Path, suffix: str) -> Path:
     """Create path to a temp file."""
     temp_name = next(tempfile._get_candidate_names())  # type: ignore
