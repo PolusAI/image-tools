@@ -20,7 +20,7 @@ def get_temp_file(path: Path, suffix: str) -> Path:
     return path / (temp_name + suffix)
 
 
-@pytest.fixture
+@pytest.fixture()
 def plugin_dirs(tmp_path: Path) -> tuple[Path, Path, Path]:
     """Create temporary directories."""
     input_dir = tmp_path / "inp_dir"
@@ -32,7 +32,7 @@ def plugin_dirs(tmp_path: Path) -> tuple[Path, Path, Path]:
     return (input_dir, stitch_dir, output_dir)
 
 
-@pytest.fixture
+@pytest.fixture()
 def ground_truth_dir(tmp_path: Path) -> Path:
     """Create temporary directories."""
     ground_truth_dir = tmp_path / "ground_truth_dir"
@@ -40,8 +40,11 @@ def ground_truth_dir(tmp_path: Path) -> Path:
     return ground_truth_dir
 
 
-@pytest.fixture
-def data(plugin_dirs: tuple[Path, Path, Path], ground_truth_dir: Path) -> None:
+@pytest.fixture()
+def data(
+    plugin_dirs: tuple[Path, Path, Path],
+    ground_truth_dir: Path,
+) -> tuple[tuple[Path, Path, Path], Path]:
     """Generate test data.
 
     Create a grounth truth image
@@ -123,8 +126,6 @@ def data(plugin_dirs: tuple[Path, Path, Path], ground_truth_dir: Path) -> None:
     # with open(filename, "w") as f:
     #     for row in offsets:
     #         for key, value in row.items():
-    #             f.write(f"{key}: {value}; ")
-    #         f.write("\n")
 
     # generate the partial images
     for offset in offsets:
@@ -139,3 +140,5 @@ def data(plugin_dirs: tuple[Path, Path, Path], ground_truth_dir: Path) -> None:
             writer.X = fov_width
             writer.Y = fov_height
             writer[:] = fov
+
+    return plugin_dirs, ground_truth_dir
