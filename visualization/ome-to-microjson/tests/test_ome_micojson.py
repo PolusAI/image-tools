@@ -11,8 +11,9 @@ from polus.plugins.visualization.ome_to_microjson.ome_microjson import PolygonTy
 from skimage import morphology
 
 from tests.fixture import *  # noqa: F403
-from tests.fixture import _memory_profile_func
 from tests.fixture import clean_directories
+
+logfile = Path(Path.cwd().joinpath("ome_microjson.log"))
 
 
 def test_rectangular_polygons(synthetic_images: Path, output_directory: Path) -> None:
@@ -129,8 +130,7 @@ def test_polygons_to_microjson(
     clean_directories()
 
 
-with Path.open(Path(Path.cwd().joinpath("ome_microjson.log")), "w+") as fp:
-    pass
+fp = open("ome_microjson.log", "w+")  # noqa: PTH123 SIM115
 
 
 @pytest.mark.slow()  # noqa: F405
@@ -142,13 +142,24 @@ def test_memory_profiling(
 ) -> None:
     """Test memory usage of creating microjsons of large images."""
     inp_dir, image_sizes = large_synthetic_images
-    _memory_profile_func(inp_dir, output_directory, get_params_json)
-    with Path.open(Path(Path.cwd().joinpath("ome_microjson.log"))) as file:
+
+    def memory_profile_func() -> None:
+        """To do memory profiling."""
+        for file in Path(inp_dir).iterdir():
+            model = OmeMicrojsonModel(
+                out_dir=output_directory,
+                file_path=file,
+                polygon_type=get_params_json,
+            )
+            model.write_single_json()
+
+    memory_profile_func()
+    logfile = Path(Path.cwd().joinpath("ome_microjson.log"))
+    with Path.open(logfile) as file:
         lines = file.readlines()
         for line in lines:
             if "MiB" in line:
                 value = line.split()[1]
                 value = int(float(value))  # type: ignore
                 assert value > int(image_sizes) is False  # type: ignore
-
     clean_directories()

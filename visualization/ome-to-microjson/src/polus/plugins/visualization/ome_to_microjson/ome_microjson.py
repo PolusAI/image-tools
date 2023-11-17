@@ -64,7 +64,7 @@ class OmeMicrojsonModel:
         self.max_unique_labels = 2
         self.br = BioReader(self.file_path)
 
-    def _tile_read(self) -> tuple[list[Any], list[Any]]:
+    def _tile_read(self) -> None:
         """Reading of Image in a tile and compute encodings for it."""
         with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
             idx = 0
@@ -93,9 +93,12 @@ class OmeMicrojsonModel:
 
                     if self.polygon_type != PolygonType.RECTANGLE:
                         future = executor.submit(
-                            self.segmentations_encodings, label_image, x, y,
+                            self.segmentations_encodings,
+                            label_image,
+                            x,
+                            y,
                         )
-                        if as_completed(future):
+                        if as_completed(future):  # type: ignore
                             label, coordinates = future.result()
                             if len(label) and len(coordinates) > 0:
                                 label = [i + idx for i in range(1, len(label) + 1)]
@@ -108,9 +111,12 @@ class OmeMicrojsonModel:
 
                     else:
                         future = executor.submit(
-                            self.rectangular_polygons, label_image, x, y,
+                            self.rectangular_polygons,  # type: ignore
+                            label_image,
+                            x,
+                            y,
                         )
-                        if as_completed(future):
+                        if as_completed(future):  # type: ignore
                             label, coordinates = future.result()
                             if len(label) and len(coordinates) > 0:
                                 label = [i + idx for i in range(1, len(label) + 1)]
@@ -121,9 +127,8 @@ class OmeMicrojsonModel:
                                     idx += label[-1]
                                 self.polygons_to_microjson(i, label, coordinates)
 
-        return
-
     def write_single_json(self) -> None:
+        """Combine microjsons from tiled images into combined json file."""
         self._tile_read()
         out_combined = Path(self.out_dir, "combined")
         out_file = Path(self.file_path).name.split(".")[0] + ".json"
@@ -131,12 +136,12 @@ class OmeMicrojsonModel:
             out_combined.mkdir(exist_ok=True)
         files = fp.FilePattern(self.out_dir, ".*json")
         if len(files) > 1:
-            with open(Path(out_combined, out_file), "w") as fw:
-                for i, file in zip(range(1, len(files) + 1), files()):
-                    file = file[1][0]
+            with Path.open(Path(out_combined, out_file), "w") as fw:
+                for i, fl in zip(range(1, len(files) + 1), files()):
+                    file = fl[1][0]
                     outname = re.split(r"[_\.]+", file.name)[:-2]
-                    outname = "_".join(outname) + ".json"
-                    df = open(Path(file))
+                    outname = "_".join(outname) + ".json"  # type: ignore
+                    df = Path.open(Path(file))
                     data = df.readlines()
                     if i == 1:
                         endline = data[-36].rstrip() + ","
@@ -149,7 +154,10 @@ class OmeMicrojsonModel:
                     fw.writelines(sfdata)
 
     def segmentations_encodings(
-        self, label_image: np.ndarray, x: int, y: int,
+        self,
+        label_image: np.ndarray,
+        x: int,
+        y: int,
     ) -> tuple[Any, list[list[list[Any]]]]:
         """Calculate object boundries as series of vertices/points forming a polygon."""
         label, coordinates = [], []
@@ -175,7 +183,10 @@ class OmeMicrojsonModel:
         return label, coordinates
 
     def rectangular_polygons(
-        self, label_image: np.ndarray, x: int, y: int,
+        self,
+        label_image: np.ndarray,
+        x: int,
+        y: int,
     ) -> tuple[list[int], list[str]]:
         """Calculate Rectangular polygon for each object."""
         objects = scipy.ndimage.measurements.find_objects(label_image)
@@ -203,8 +214,11 @@ class OmeMicrojsonModel:
 
         return label, coordinates
 
-    def polygons_to_microjson(
-        self, i: int, label: list[int], coordinates: list[Any],
+    def polygons_to_microjson(  # noqa: PLR0915
+        self,
+        i: int,
+        label: list[int],
+        coordinates: list[Any],
     ) -> None:  # : 183
         """Create microjson overlays in JSON Format."""
         x_dimension = np.repeat(self.br.X, len(label))
@@ -343,4 +357,3 @@ class OmeMicrojsonModel:
                     feature_collection.model_dump_json(indent=2, exclude_unset=True),
                 )
                 logger.info(f"Saving overlay json file: {out_name}")
-

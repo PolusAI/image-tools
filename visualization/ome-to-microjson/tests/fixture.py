@@ -2,7 +2,6 @@
 
 Set up all data used in tests.
 """
-import enum
 import shutil
 import tempfile
 from pathlib import Path
@@ -11,7 +10,6 @@ from typing import Union
 import numpy as np
 import pytest
 import skimage as sk
-from polus.plugins.visualization.ome_to_microjson.ome_microjson import OmeMicrojsonModel
 from polus.plugins.visualization.ome_to_microjson.ome_microjson import PolygonType
 from skimage import io
 
@@ -99,19 +97,3 @@ def large_synthetic_images(
 def get_params_json(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the ome to json."""
     return request.param
-
-
-@pytest.fixture()
-def _memory_profile_func(
-    inp_dir: Union[str, Path],
-    output_directory: Union[str, Path],
-    get_params_json: list[enum.Enum],
-) -> None:
-    """To do memory profiling."""
-    for file in Path(inp_dir).iterdir():
-        model = OmeMicrojsonModel(
-            out_dir=output_directory,
-            file_path=file,
-            polygon_type=get_params_json,
-        )
-        model.write_single_json()
