@@ -2,6 +2,7 @@
 
 Set up all data used in tests.
 """
+import enum
 import shutil
 import tempfile
 from pathlib import Path
@@ -9,9 +10,13 @@ from typing import Union
 
 import numpy as np
 import pytest
+import skimage as sk
+from polus.plugins.visualization.ome_to_microjson.ome_microjson import OmeMicrojsonModel
 from polus.plugins.visualization.ome_to_microjson.ome_microjson import PolygonType
-from skimage import filters
 from skimage import io
+
+TILE_SIZE = 1024
+max_unique_labels = 2
 
 
 def clean_directories() -> None:
@@ -47,10 +52,12 @@ def synthetic_images(
     """Generate random synthetic images."""
     for i in range(2):
         im = np.zeros((image_sizes, image_sizes))
-        points = image_sizes * np.random.random((2, 10**2))
-        im[(points[0]).astype(int), (points[1]).astype(int)] = 1
-        im = filters.gaussian(im, sigma=image_sizes / (20.0 * 10))
-        im[im > 0] = 1
+        blobs = sk.data.binary_blobs(
+            length=image_sizes,
+            volume_fraction=0.01,
+            blob_size_fraction=0.03,
+        )
+        im[blobs > 0] = 1
         binary_img = f"x01_y01_r{i}_c1.tif"
         binary_img = Path(inp_dir, binary_img)  # type: ignore
         io.imsave(binary_img, im)
@@ -63,7 +70,48 @@ def get_params(request: pytest.FixtureRequest) -> list[str]:
     return request.param
 
 
+@pytest.fixture(params=[10000, 20000, 30000])
+def large_image_sizes(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
+    """To get the parameter of the fixture."""
+    return request.param
+
+
+@pytest.fixture()
+def large_synthetic_images(
+    inp_dir: Union[str, Path],
+    large_image_sizes: pytest.FixtureRequest,
+) -> tuple[Union[str, Path], int]:
+    """Generate large random synthetic images."""
+    im = np.zeros((large_image_sizes, large_image_sizes))
+    blobs = sk.data.binary_blobs(
+        length=large_image_sizes,
+        volume_fraction=0.01,
+        blob_size_fraction=0.03,
+    )
+    im[blobs > 0] = 1
+    binary_img = "x01_y01_r1_c1.tif"
+    binary_img = Path(inp_dir, binary_img)  # type: ignore
+    io.imsave(binary_img, im)
+    return inp_dir, large_image_sizes
+
+
 @pytest.fixture(params=[PolygonType.RECTANGLE, PolygonType.ENCODING])
 def get_params_json(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the ome to json."""
     return request.param
+
+
+@pytest.fixture()
+def _memory_profile_func(
+    inp_dir: Union[str, Path],
+    output_directory: Union[str, Path],
+    get_params_json: list[enum.Enum],
+) -> None:
+    """To do memory profiling."""
+    for file in Path(inp_dir).iterdir():
+        model = OmeMicrojsonModel(
+            out_dir=output_directory,
+            file_path=file,
+            polygon_type=get_params_json,
+        )
+        model.write_single_json()
