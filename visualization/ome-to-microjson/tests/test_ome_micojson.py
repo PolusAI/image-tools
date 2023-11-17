@@ -147,7 +147,8 @@ def test_memory_profiling(
         lines = file.readlines()
         for line in lines:
             if "MiB" in line:
-                value = line.split()[1]  # type: ignore
+                value = line.split()[1]
+                value = int(float(value))  # type: ignore
                 assert value > int(image_sizes) is False  # type: ignore
 
     clean_directories()
