@@ -13,8 +13,6 @@ from skimage import morphology
 from tests.fixture import *  # noqa: F403
 from tests.fixture import clean_directories
 
-logfile = Path(Path.cwd().joinpath("ome_microjson.log"))
-
 
 def test_rectangular_polygons(synthetic_images: Path, output_directory: Path) -> None:
     """Testing of object boundries (rectangle vertices)."""
