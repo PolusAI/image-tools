@@ -2,28 +2,32 @@
 name = "polus-plugins-visualization-precompute-slide"
 version = "1.7.0-dev0"
 description = "Polus Precompute Slide Plugin."
-authors = ["Madhuri Vihani <Madhuri.Vihani@nih.gov>, Nick Schaub <Nick.Schaub@nih.gov>, Antoine Gerardin <antoine.gerardin@nih.gov>, Najib Ishaq <najib.ishaq@nih.gov>"]
+authors = [
+    "Madhuri Vihani <Madhuri.Vihani@nih.gov>",
+    "Nick Schaub <Nick.Schaub@nih.gov>",
+    "Antoine Gerardin <antoine.gerardin@nih.gov>",
+    "Najib Ishaq <najib.ishaq@nih.gov>"
+]
 readme = "README.md"
-packages = [{include = "polus", from = "src"}]
+packages = [ { include = "polus", from = "src" } ]
 
 [tool.poetry.dependencies]
-python = "^3.9.15"
+python = ">=3.9,<3.12"
 typer = "^0.7.0"
-bfio = {version = "2.1.9", extras = ["all"]}
-# filepattern = ">=0 , <1"
-filepattern = "2.0.1"
-pydantic = "<2"
-preadator = "0.4.0.dev1"
-imageio = "2.8.0"
+numpy = "~1.25.2"
+bfio = { version = "2.1.9", extras = ["all"] }
+preadator = "0.4.0.dev2"
+# preadator = { git = "https://github.com/nishaq503/preadator", branch = "docs" }
+imageio = "^2.31.5"
+zarr = "^2.16.1"
+numcodecs = "^0.12.0"
+pydantic = "^2.4.2"
+filepattern = "^2.0.4"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
-flake8 = "^6.0.0"
-pre-commit = "^3.2.1"
-flake8-docstrings = "^1.7.0"
-black = "^23.3.0"
-mypy = "^1.1.1"
-pytest = "^7.2.2"
+pre-commit = "^3.5.0"
+pytest = "^7.4.2"
 
 [build-system]
 requires = ["poetry-core"]

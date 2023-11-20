@@ -2,6 +2,8 @@
 
 __version__ = "1.6.0-dev0"
 
-from .precompute_slide import (  # noqa # pylint: disable=unused-import
-    precompute_slide,
-)
+from . import chunk_encoder  # noqa F401
+from . import pyramid_writer  # F401
+from . import utils  # F401
+
+from .precompute_slide import precompute_slide  # F401

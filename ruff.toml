@@ -41,11 +41,16 @@ max-complexity = 12
 [pydocstyle]
 convention = "google"
 
-# Ignore `F401` (unused import violations) in all `__init__.py` files.
 [per-file-ignores]
-"__init__.py" = ["F401"]
-"__main__.py" = ["B008", "S101"]
-"./**/tests/*.py" = ["S101"]  # Use of assert detected.
+"__init__.py" = ["F401"]  # Unused import.
+"__main__.py" = [
+  "B008",
+  "S101",  # Use of assert detected.
+]
+"./**/tests/*.py" = [
+  "S101",  # Use of assert detected.
+  "PLR2004",  # Use of magic values detected.
+]
 
 [isort]
 force-single-line = true
