@@ -9,6 +9,7 @@ from polus.plugins._plugins.classes import (
 from polus.plugins._plugins.classes import Plugin  # pylint: disable=unused-import
 from polus.plugins._plugins.classes import get_plugin  # pylint: disable=unused-import
 from polus.plugins._plugins.classes import list_plugins  # pylint: disable=unused-import
+from polus.plugins._plugins.classes import load_config  # pylint: disable=unused-import
 from polus.plugins._plugins.classes import refresh  # pylint: disable=unused-import
 from polus.plugins._plugins.classes import remove_all  # pylint: disable=unused-import
 from polus.plugins._plugins.classes import (  # pylint: disable=unused-import
@@ -46,6 +47,7 @@ __all__ = [
     "refresh",
     "submit_plugin",
     "get_plugin",
+    "load_config",
     "list_plugins",
     "update_polus_plugins",
     "update_nist_plugins",
