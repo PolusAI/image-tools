@@ -130,7 +130,7 @@ class OmeMicrojsonModel:
     def write_single_json(self) -> None:
         """Combine microjsons from tiled images into combined json file."""
         self._tile_read()
-        out_combined = Path(self.out_dir, "combined")
+        out_combined = Path(self.out_dir, "tmp")
         out_file = Path(self.file_path).name.split(".")[0] + ".json"
         if not out_combined.exists():
             out_combined.mkdir(exist_ok=True)
@@ -152,6 +152,7 @@ class OmeMicrojsonModel:
                     else:
                         sfdata = data[3:]
                     fw.writelines(sfdata)
+                    Path(file).unlink()
 
     def segmentations_encodings(
         self,

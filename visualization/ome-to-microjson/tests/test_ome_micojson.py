@@ -89,7 +89,7 @@ def test_write_single_json(
             polygon_type=PolygonType.ENCODING,
         )
         model.write_single_json()
-    for jpath in list(Path(output_directory, "combined").rglob("*.json")):
+    for jpath in list(Path(output_directory, "tmp").rglob("*.json")):
         with Path.open(jpath) as json_file:
             json_data = json.load(json_file)
             assert len(json_data) != 0
