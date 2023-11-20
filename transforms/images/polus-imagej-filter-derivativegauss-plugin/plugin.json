@@ -1,0 +1,89 @@
+{
+  "name": "ImageJ filter derivativeGauss",
+  "version": "0.4.4",
+  "title": "ImageJ filter derivativeGauss",
+  "description": "This plugin applies the nth derivative of a Gaussian to an input collection. ",
+  "author": "Benjamin Houghton (benjamin.houghton@axleinfo.com), Anjali Taneja, Nick Schaub (nick.schaub@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-filter-derivativegauss-plugin:0.4.4",
+  "inputs": [
+    {
+      "name": "opName",
+      "type": "enum",
+      "options": {
+        "values": [
+          "DefaultDerivativeGauss"
+        ]
+      },
+      "description": "Op overloading method to perform",
+      "required": true
+    },
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Collection to be processed by this plugin",
+      "required": false
+    },
+    {
+      "name": "derivatives",
+      "type": "array",
+      "description": "Array of nth derivatives of the Gaussians (x,y)",
+      "required": false,
+      "options": {
+        "items": {
+          "type": "string",
+          "title": "Array of nth derivatives of the Gaussians (x,y)",
+          "widget": "string"
+        }
+      }
+    },
+    {
+      "name": "sigma",
+      "type": "array",
+      "description": "The standard deviation of the Gaussians",
+      "required": false,
+      "options": {
+        "items": {
+          "type": "string",
+          "title": "The standard deviation of the Gaussians",
+          "widget": "string"
+        }
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.opName",
+      "title": "opName",
+      "description": "Op overloading method to perform"
+    },
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Collection to be processed by this plugin",
+      "condition": "model.inputs.opName==DefaultDerivativeGauss"
+    },
+    {
+      "key": "inputs.derivatives",
+      "title": "derivatives",
+      "description": "Array of nth derivatives of the Gaussians (x,y)",
+      "condition": "model.inputs.opName==DefaultDerivativeGauss"
+    },
+    {
+      "key": "inputs.sigma",
+      "title": "sigma",
+      "description": "The standard deviation of the Gaussians",
+      "condition": "model.inputs.opName==DefaultDerivativeGauss"
+    }
+  ]
+}

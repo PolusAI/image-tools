@@ -17,4 +17,4 @@ COPY src /{EXEC_DIR}/
 RUN Rscript /{EXEC_DIR}/Requirements.R
 WORKDIR /{EXEC_DIR}
 
-ENTRYPOINT ["Rscript", "main.R"]
+ENTRYPOINT ["Rscript", "/opt/executables/main.R"]

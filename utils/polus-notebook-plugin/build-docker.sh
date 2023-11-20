@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-notebook-plugin:${version}
+docker build . -t polusai/notebook-plugin:${version}

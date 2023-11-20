@@ -23,11 +23,11 @@ Paste the contents of `plugin.json` into the pop-up window and submit.
 
 This plugin takes one input argument and one output argument:
 
-| Name          | Description             | I/O    | Type   |
-|---------------|-------------------------|--------|--------|
-| `--inpDir` | Collection to be processed by this plugin | Input | collection |
-| `--opName` | Operation overloading method to perform | Input | enum |
-| `--sigma` | The standard deviation of the Gaussian filter, same in both dimensions. | Input | number |
-| `--sigmas` | The standard deviations of the Gaussian filters, (x,y) | Input | array |
-| `--outDir` | Output collection | Output | collection |
+| Name       | Description                                                             | I/O    | Type       |
+| ---------- | ----------------------------------------------------------------------- | ------ | ---------- |
+| `--inpDir` | Collection to be processed by this plugin                               | Input  | collection |
+| `--opName` | Operation overloading method to perform                                 | Input  | enum       |
+| `--sigma`  | The standard deviation of the Gaussian filter, same in both dimensions. | Input  | number     |
+| `--sigmas` | The standard deviations of the Gaussian filters, (x,y)                  | Input  | array      |
+| `--outDir` | Output collection                                                       | Output | collection |
 

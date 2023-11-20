@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-intensity-projection-plugin:${version}
+docker build . -t polusai/intensity-projection-plugin:${version}

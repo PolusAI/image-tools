@@ -23,9 +23,9 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes eight input argument and one output argument:
 
-| Name                   | Description             | I/O    | Type   |
-|------------------------|-------------------------|--------|--------|
-| `--inpDir` | Input fcs file collection | Input | collection |
-| `--outDir` | Output collection | Output | csvCollection |
+| Name       | Description               | I/O    | Type          |
+| ---------- | ------------------------- | ------ | ------------- |
+| `--inpDir` | Input fcs file collection | Input  | collection    |
+| `--outDir` | Output collection         | Output | csvCollection |
 
 

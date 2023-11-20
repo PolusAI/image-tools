@@ -61,6 +61,7 @@ These are the features that can be extracted from this plugin:
 The features are calculated using scikit-image (https://scikit-image.org/docs/dev/api/skimage.measure.html#skimage.measure.regionprops).
 
 ## Inputs:
+
 ### Label image collection:
 The input should be a labeled image in OME tiled tiff format. Extracting shape-based features, feret diameter, neighbors, hexagonality and polygonality scores requires only labeled image. This is an optional parameter. The input for this parameter is required only when shape-based features needs to be extracted.
 
@@ -97,7 +98,7 @@ Note:
 2.	If Embedded pixel size, Length of unit and Pixels per unit is not selected then the units will be in pixels.
 
 ## Output:
-   The output is a csv file containing the value of features required.
+The output is a csv file containing the value of features required.
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
@@ -114,17 +115,15 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes nine input arguments and one output argument:
 
-| Name                   | Description             | I/O    | Type   |
-|------------------------|-------------------------|--------|--------|
-| `--intDir` | Intensity image collection| Input | collection |
-| `--pixelDistance` | Pixel distance to calculate the neighbors touching cells | Input | integer |
-| `--filePattern` | To match intensity and labeled/segmented images | Input | string |
-| `--segDir` | Labeled image collection | Input | collection |
-| `--features` | Select intensity and shape features required | Input | array |
-| `--csvfile` | Save csv file as one csv file for all images or separate csv file for each image | Input | enum |
-| `--embeddedpixelsize` | Consider the unit embedded in metadata, if present| Input | boolean |
-| `--unitLength` | Enter the metric for unit conversion | Input | string |
-| `--pixelsPerunit` | Enter the number of pixels per unit of the metric | Input | number |
-| `--outDir` | Output collection | Output | csvCollection |
-
-
+| Name                  | Description                                                                      | I/O    | Type          |
+| --------------------- | -------------------------------------------------------------------------------- | ------ | ------------- |
+| `--intDir`            | Intensity image collection                                                       | Input  | collection    |
+| `--pixelDistance`     | Pixel distance to calculate the neighbors touching cells                         | Input  | integer       |
+| `--filePattern`       | To match intensity and labeled/segmented images                                  | Input  | string        |
+| `--segDir`            | Labeled image collection                                                         | Input  | collection    |
+| `--features`          | Select intensity and shape features required                                     | Input  | array         |
+| `--csvfile`           | Save csv file as one csv file for all images or separate csv file for each image | Input  | enum          |
+| `--embeddedpixelsize` | Consider the unit embedded in metadata, if present                               | Input  | boolean       |
+| `--unitLength`        | Enter the metric for unit conversion                                             | Input  | string        |
+| `--pixelsPerunit`     | Enter the number of pixels per unit of the metric                                | Input  | number        |
+| `--outDir`            | Output collection                                                                | Output | csvCollection |

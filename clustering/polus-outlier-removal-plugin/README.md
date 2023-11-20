@@ -39,9 +39,9 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 This plugin takes three input arguments and one output argument:
 
-| Name                   | Description             | I/O    | Type   |
-|------------------------|-------------------------|--------|--------|
-| `--inpdir` | Input csv collection| Input | csvCollection |
-| `--methods` | Select methods for outlier removal | Input | enum|
-| `--types` | Select type of outliers to be removed| Input | enum|
-| `--outdir` | Output collection | Output | csvCollection |
+| Name        | Description                           | I/O    | Type          |
+| ----------- | ------------------------------------- | ------ | ------------- |
+| `--inpdir`  | Input csv collection                  | Input  | csvCollection |
+| `--methods` | Select methods for outlier removal    | Input  | enum          |
+| `--types`   | Select type of outliers to be removed | Input  | enum          |
+| `--outdir`  | Output collection                     | Output | csvCollection |

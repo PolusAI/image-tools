@@ -9,7 +9,7 @@
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
   "containerId": "polusai/{{ cookiecutter.docker_repo }}:{{ cookiecutter.version }}",
-  "inputs": [{% for inp,val in cookiecutter._inputs.items() %}
+  "inputs": [{% for inp,val in cookiecutter._inputs.items() if inp != 'out_input' %}
     {
       "name": "{{ val.title }}",
       "type": "{{ val.type }}",
@@ -29,7 +29,20 @@
         }
       }
       {%- endif %}
-    }{% if not loop.last %},{% endif %}{% endfor %}
+    }{% if not loop.last %},{% endif %}{% endfor %}{%- if cookiecutter.scalability == 'fft-filter' %},
+    {
+      "name": "pattern",
+      "type": "string",
+      "description": "The input collection file pattern",
+      "required": true
+    },
+    {
+      "name": "padding",
+      "type": "number",
+      "description": "The inter-tile padding size",
+      "required": false
+    }
+    {%- endif %}
   ],
   "outputs": [{% for out,val in cookiecutter._outputs.items() %}
     {
@@ -38,13 +51,24 @@
       "description": "{{ val.description }}"
     }{% if not loop.last %},{% endif %}{% endfor %}
   ],
-  "ui": [{% for inp,val in cookiecutter._inputs.items() %}
+  "ui": [{% for inp,val in cookiecutter._inputs.items() if inp != 'out_input' %}
     {
       "key": "inputs.{{ val.title }}",
       "title": "{{ val.title }}",
       "description": "{{ val.description }}"{%- if inp!='opName' %},
       "condition": "{% for v in val.call_types %}model.inputs.opName=={{v}}{% if not loop.last %} or {% endif %}{% endfor %}"
     {%- endif %}
-    }{% if not loop.last %},{% endif %}{% endfor %}
+    }{% if not loop.last %},{% endif %}{% endfor %}{%- if cookiecutter.scalability == 'fft-filter' %},
+    {
+      "key": "inputs.pattern",
+      "title": "pattern",
+      "description": "The input collection file pattern"
+    }
+    {
+      "key": "inputs.padding",
+      "title": "pattern",
+      "description": "The inter-tile padding size"
+    }
+    {%- endif %}
   ]
 }

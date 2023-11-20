@@ -1,5 +1,5 @@
 # Get image containing bfio
-FROM python:3.7-slim
+FROM polusai/bfio:2.1.9
 
 COPY VERSION /
 		
@@ -21,4 +21,4 @@ RUN python3 ${EXEC_DIR}/dl_fi.py
 WORKDIR ${EXEC_DIR}
 
 # Default command. Additional arguments are provided through the command line
-ENTRYPOINT ["python3", "main.py"]
+ENTRYPOINT ["python3", "/opt/executables/main.py"]
