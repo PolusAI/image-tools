@@ -415,7 +415,6 @@ def remove_plugin(plugin: str, version: Optional[Union[str, list[str]]] = None) 
     if version is None:
         for plugin_version in PLUGINS[plugin]:
             remove_plugin(plugin, plugin_version)
-            return
     else:
         if isinstance(version, list):
             for version_ in version:
@@ -427,7 +426,7 @@ def remove_plugin(plugin: str, version: Optional[Union[str, list[str]]] = None) 
             version_ = version
         path = PLUGINS[plugin][version_]
         path.unlink()
-        refresh()
+    refresh()
 
 
 def remove_all() -> None:
