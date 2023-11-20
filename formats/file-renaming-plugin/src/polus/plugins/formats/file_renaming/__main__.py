@@ -1,14 +1,14 @@
 """File Renaming."""
 import json
-import os
 import logging
+import os
 import pathlib
-from typing import Any, Optional
 import re
-
+from re import Match
+from typing import Any
+from typing import Optional
 
 import typer
-
 from polus.plugins.formats.file_renaming import file_renaming as fr
 
 app = typer.Typer()
@@ -23,14 +23,16 @@ logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 
 @app.command()
-def main(
+def main(  # noqa: PLR0913 D417
     inp_dir: pathlib.Path = typer.Option(
         ...,
         "--inpDir",
         help="Input image collections",
     ),
     file_pattern: str = typer.Option(
-        ".+", "--filePattern", help="Filename pattern used to separate data"
+        ".+",
+        "--filePattern",
+        help="Filename pattern used to separate data",
     ),
     out_dir: pathlib.Path = typer.Option(
         ...,
@@ -48,7 +50,9 @@ def main(
         help="Get folder name",
     ),
     preview: Optional[bool] = typer.Option(
-        False, "--preview", help="Output a JSON preview of files"
+        False,
+        "--preview",
+        help="Output a JSON preview of files",
     ),
 ) -> None:
     """Use parsed inputs to rename and copy files to a new directory.
@@ -87,42 +91,67 @@ def main(
         out_dir.exists()
     ), f"{out_dir} does not exists!! Please check output path again"
 
-    subdirs = sorted([d for d in inp_dir.iterdir() if d.is_dir()])
-    subfiles = sorted([f for f in inp_dir.iterdir() if f.is_file()])
+    subdirs, subfiles = fr.get_data(inp_dir)
     if subfiles:
-        assert len(subfiles) != 0, f"Files are missing in input directory!!!"
+        assert len(subfiles) != 0, "Files are missing in input directory!!!"
 
-    if subfiles and not map_directory:
+    if not map_directory:
         fr.rename(
             inp_dir,
             out_dir,
             file_pattern,
             out_file_pattern,
         )
-    elif subfiles and map_directory:
-        if f"{map_directory}" == "raw":
-            outfile_pattern = f"{inp_dir.name}_{out_file_pattern}"
-            fr.rename(inp_dir, out_dir, file_pattern, outfile_pattern)
-        else:
-            outfile_pattern = f"d01_{out_file_pattern}"
-            fr.rename(inp_dir, out_dir, file_pattern, outfile_pattern)
 
-    elif map_directory and not subfiles:
-        subdirs = sorted([d for d in inp_dir.iterdir() if d.is_dir()])
-        for i, sub in enumerate(subdirs):
-            assert len([f for f in sub.iterdir() if f.is_file()]) != 0,  f"Files are missing in input directory!!!"
-            i += 1
+    elif map_directory:
+        if len(subdirs) == 1:
+            logger.info(
+                "Renaming files in a single directory.",
+            )
             dir_pattern = r"^[A-Za-z0-9_]+$"
             # Iterate over the directories and check if they match the pattern
-            matching_directories = re.match(dir_pattern, sub.stem).group()
+            matching_directory: Optional[Match[Any]] = re.match(
+                dir_pattern,
+                pathlib.Path(subdirs[0]).stem,
+            )
+            if matching_directory is not None:
+                matching_directory = matching_directory.group()
             if f"{map_directory}" == "raw":
-                outfile_pattern = f"{matching_directories}_{out_file_pattern}"
-            else:
-                outfile_pattern = f"d{i}_{out_file_pattern}"
-            fr.rename(sub, out_dir, file_pattern, outfile_pattern)
+                outfile_pattern = f"{matching_directory}_{out_file_pattern}"
+            if f"{map_directory}" == "map":
+                outfile_pattern = f"d1_{out_file_pattern}"
+
+            fr.rename(subdirs[0], out_dir, file_pattern, outfile_pattern)
+        if len(subdirs) > 1:
+            subnames = [pathlib.Path(sb).name for sb in subdirs]
+            sub_check = all(name == subnames[0] for name in subnames)
+
+            for i, sub in enumerate(subdirs):
+                assert (
+                    len([f for f in pathlib.Path(sub).iterdir() if f.is_file()]) != 0
+                ), "Files are missing in input directory!!!"
+                dir_pattern = r"^[A-Za-z0-9_]+$"
+                # Iterate over the directories and check if they match the pattern
+                matching_directories: Optional[Match[Any]] = re.match(
+                    dir_pattern,
+                    pathlib.Path(sub).stem,
+                )
+                if matching_directories is not None:
+                    matching_directories = matching_directories.group()
+
+                if not sub_check and f"{map_directory}" == "raw":
+                    outfile_pattern = f"{matching_directories}_{out_file_pattern}"
+                elif subnames and f"{map_directory}" == "raw":
+                    logger.error(
+                        "Subdirectoy names are same, should be different.",
+                    )
+                    break
+                else:
+                    outfile_pattern = f"d{i}_{out_file_pattern}"
+                fr.rename(sub, out_dir, file_pattern, outfile_pattern)
 
     if preview:
-        with open(pathlib.Path(out_dir, "preview.json"), "w") as jfile:
+        with pathlib.Path.open(pathlib.Path(out_dir, "preview.json"), "w") as jfile:
             out_json: dict[str, Any] = {
                 "filepattern": out_file_pattern,
                 "outDir": [],
