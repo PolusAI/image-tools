@@ -319,7 +319,7 @@ class DuplicateVersionFound(Exception):
 
 """CWL"""
 
-cwl_input_types = {
+CWL_INPUT_TYPES = {
     "path": "Directory",  # always Dir? Yes
     "string": "string",
     "number": "double",
@@ -344,14 +344,14 @@ def _type_in(inp: Input):
     #     else:
     #         s = ["null", {"type": "enum", "symbols": input.options["values"]}]
 
-    if val in cwl_input_types:
-        s = cwl_input_types[val] + req
+    if val in CWL_INPUT_TYPES:
+        s = CWL_INPUT_TYPES[val] + req
     else:
         s = "string" + req  # defaults to string
     return s
 
 
-def input_to_cwl(inp):
+def input_to_cwl(inp: Input):
     """Return dict of inputs for cwl."""
     r = {
         f"{inp.name}": {
@@ -362,7 +362,7 @@ def input_to_cwl(inp):
     return r
 
 
-def output_to_cwl(out):
+def output_to_cwl(out: Output):
     """Return dict of output args for cwl for input section."""
     r = {
         f"{out.name}": {
@@ -373,7 +373,7 @@ def output_to_cwl(out):
     return r
 
 
-def outputs_cwl(out):
+def outputs_cwl(out: Output):
     """Return dict of output for `outputs` in cwl."""
     r = {
         f"{out.name}": {
