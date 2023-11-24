@@ -30,6 +30,8 @@ Set up logging for the module
 """
 logger = logging.getLogger("polus.plugins")
 
+VERSION = "0.1.1"
+
 
 refresh()  # calls the refresh method when library is imported
 
@@ -39,6 +41,8 @@ def __getattr__(name: str) -> Union[Plugin, ComputePlugin, list]:
         return list_plugins()
     if name in list_plugins():
         return get_plugin(name)
+    if name == "__version__":
+        return VERSION
     msg = f"module '{__name__}' has no attribute '{name}'"
     raise AttributeError(msg)
 

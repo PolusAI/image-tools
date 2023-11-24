@@ -10,14 +10,14 @@ from typing import Any
 from typing import Optional
 from typing import Union
 
-from polus.plugins._plugins.classes.plugin_methods import _PluginMethods
-from polus.plugins._plugins.io import DuplicateVersionFoundError
-from polus.plugins._plugins.io import Version
-from polus.plugins._plugins.io import _in_old_to_new
-from polus.plugins._plugins.io import _ui_old_to_new
-from polus.plugins._plugins.manifests.manifest_utils import InvalidManifest
-from polus.plugins._plugins.manifests.manifest_utils import _load_manifest
-from polus.plugins._plugins.manifests.manifest_utils import validate_manifest
+from polus.plugins._plugins.classes.plugin_base import BasePlugin
+from polus.plugins._plugins.io.io_v1 import DuplicateVersionFoundError
+from polus.plugins._plugins.io.io_v1 import Version
+from polus.plugins._plugins.io.io_v1 import _in_old_to_new
+from polus.plugins._plugins.io.io_v1 import _ui_old_to_new
+from polus.plugins._plugins.manifests import InvalidManifestError
+from polus.plugins._plugins.manifests import _load_manifest
+from polus.plugins._plugins.manifests import validate_manifest
 from polus.plugins._plugins.models import ComputeSchema
 from polus.plugins._plugins.models import PluginUIInput
 from polus.plugins._plugins.models import PluginUIOutput
@@ -54,7 +54,7 @@ def refresh() -> None:
 
             try:
                 plugin = validate_manifest(file)
-            except InvalidManifest:
+            except InvalidManifestError:
                 logger.warning(f"Validation error in {file!s}")
             except BaseException as exc:  # pylint: disable=W0718 # noqa: BLE001
                 logger.warning(f"Unexpected error {exc} with {file!s}")
@@ -85,7 +85,7 @@ def list_plugins() -> list:
     return output
 
 
-class Plugin(WIPPPluginManifest, _PluginMethods):
+class Plugin(WIPPPluginManifest, BasePlugin):
     """WIPP Plugin Class.
 
     Contains methods to configure, run, and save plugins.
@@ -168,7 +168,7 @@ class Plugin(WIPPPluginManifest, _PluginMethods):
 
     def __setattr__(self, name: str, value: Any) -> None:  # noqa: ANN401
         """Set I/O parameters as attributes."""
-        _PluginMethods.__setattr__(self, name, value)
+        BasePlugin.__setattr__(self, name, value)
 
     @property
     def _config_file(self) -> dict:
@@ -184,10 +184,10 @@ class Plugin(WIPPPluginManifest, _PluginMethods):
 
     def __repr__(self) -> str:
         """Print plugin name and version."""
-        return _PluginMethods.__repr__(self)
+        return BasePlugin.__repr__(self)
 
 
-class ComputePlugin(ComputeSchema, _PluginMethods):
+class ComputePlugin(ComputeSchema, BasePlugin):
     """Compute Plugin Class.
 
     Contains methods to configure, run, and save plugins.
@@ -289,7 +289,7 @@ class ComputePlugin(ComputeSchema, _PluginMethods):
 
     def __setattr__(self, name: str, value: Any) -> None:  # noqa: ANN401
         """Set I/O parameters as attributes."""
-        _PluginMethods.__setattr__(self, name, value)
+        BasePlugin.__setattr__(self, name, value)
 
     def save_config(self, path: Union[str, Path]) -> None:
         """Save configured manifest with I/O parameters to specified path."""
@@ -305,7 +305,7 @@ class ComputePlugin(ComputeSchema, _PluginMethods):
 
     def __repr__(self) -> str:
         """Print plugin name and version."""
-        return _PluginMethods.__repr__(self)
+        return BasePlugin.__repr__(self)
 
 
 def _load_plugin(
