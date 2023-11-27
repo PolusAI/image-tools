@@ -4,7 +4,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Any
-from typing import Optional
+from typing import Optional, Union
 
 import filepattern as fp
 import microjson.model as mj
@@ -12,6 +12,7 @@ import numpy as np
 import pydantic
 import vaex
 from pydantic import root_validator
+from pydantic import validator
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -223,6 +224,30 @@ class PointSpec(Validator):
         return mapped_coordinates
 
 
+class ValidatedProperties(mj.Properties):
+    """Properties with validation."""
+
+    @validator("string", pre=True, each_item=True)
+    def validate_str(
+        cls,
+        v: str,
+    ) -> Union[str, None]:  # pylint: disable=no-self-argument
+        """Validate string."""
+        if v is None:
+            return ""
+        return v
+
+    @validator("numeric", pre=True, each_item=True)
+    def validate_num(
+        cls,
+        v: int,
+    ) -> Union[int, np.nan]:  # pylint: disable=no-self-argument
+        """Validate numeric."""
+        if v is None:
+            return np.nan
+        return v
+
+
 class RenderOverlayModel(CustomOverlayModel):
     """Generate JSON overlays using microjson python package.
 
@@ -322,7 +347,7 @@ class RenderOverlayModel(CustomOverlayModel):
                     )
 
                     # create a new properties object dynamically
-                    properties = mj.Properties(
+                    properties = ValidatedProperties(
                         string=descriptive_dict,
                         numeric=numeric_dict,
                     )

@@ -43,7 +43,7 @@ This plugin can take seven input arguments and one output argument:
 | `groupBy`         | Variable to group filenames in  stitching vector | Input  | string       |
 | `geometryType`    | Geometry type (Polygon, Point)                        | Input  | string       |
 | `outDir`          | Output directory for overlays                         | Output | string       |
-| `--preview`      | Generate a JSON file with outputs                     | Output | JSON            |
+| `preview`      | Generate a JSON file with outputs                     | Output | JSON            |
 
 ## Run the plugin
 
