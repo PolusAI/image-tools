@@ -1,0 +1,105 @@
+{
+  "name": "Tabular To Microjson",
+  "version": "0.1.0",
+  "containerId": "polusai/tabular-to-microjson-plugin:0.1.0",
+  "title": "Tabular To Microjson",
+  "description": "Generates JSON from tabular data.",
+  "author": "Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/PolusAI/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.plugins.visualization.tabular_to_microjson"
+  ],
+  "inputs": [
+    {
+      "name": "inpDir",
+      "description": "Path to the input directory containing tabular data",
+      "type": "genericData",
+      "required": true
+    },
+    {
+      "name": "filePattern",
+      "description": "A filepattern, used to select tabular data to be converted",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "dimensions",
+      "description": "Type of microplates for high content screening",
+      "type": "enum",
+      "options": {
+        "values": [
+          "384",
+          "96",
+          "24",
+          "6"
+        ]
+      },
+      "required": true
+    },
+    {
+      "name": "geometryType",
+      "description": "Type of geometry coordinates",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "cellWidth",
+      "description": "Pixel distance between two adjacent cells/wells in x-dimension",
+      "type": "integer",
+      "required": true
+    },
+    {
+      "name": "cellHeight",
+      "description": "Pixel distance of a cell or well in y-dimension",
+      "type": "integer",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "description": "Path to the output directory",
+      "type": "genericData"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "Input generic collection",
+      "description": "Input generic data collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "Filepattern",
+      "description": "A filepattern, used to select tabular data",
+      "default": ".+"
+    },
+    {
+      "key": "inputs.dimensions",
+      "title": "Dimensions",
+      "description": "Type of Microplate",
+      "default": "384"
+    },
+    {
+      "key": "inputs.geometryType",
+      "title": "geometryType",
+      "description": "Type of geometry coordinates",
+      "default": "Polygon"
+    },
+    {
+      "key": "inputs.cellWidth",
+      "title": "CellWidth",
+      "description": "Pixel distance between two adjacent cells/wells in x-dimension"
+    },
+    {
+      "key": "inputs.cellHeight",
+      "title": "CellHeight",
+      "description": "Pixel distance of a cell or well in y-dimension"
+    }
+  ]
+}

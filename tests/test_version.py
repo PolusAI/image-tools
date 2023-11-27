@@ -60,6 +60,7 @@ def test_patch(ver):
     assert cast_version(ver).patch == 7
 
 
+
 def test_gt1():
     """Test greater than operator."""
     assert cast_version("1.2.3") > cast_version("1.2.1")
@@ -114,3 +115,4 @@ def test_eq_no_str():
     """Test equality with non-string."""
     with pytest.raises(TypeError):
         assert Version(version="1.3.3") == 1.3
+
