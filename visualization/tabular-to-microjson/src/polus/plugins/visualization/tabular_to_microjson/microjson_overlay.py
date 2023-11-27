@@ -232,7 +232,7 @@ class ValidatedProperties(mj.Properties):
     def validate_str(
         cls,
         v: Union[str, None],
-    ) -> str:  # pylint: disable=no-self-argument
+    ) -> str:  # noqa: N805
         """Validate string."""
         if v is None:
             return ""
@@ -242,7 +242,7 @@ class ValidatedProperties(mj.Properties):
     def validate_num(
         cls,
         v: Union[int, None],
-    ) -> Union[int, None]:  # pylint: disable=no-self-argument
+    ) -> Union[int, None]:  # noqa: N805
         """Validate numeric."""
         if v is None:
             return np.nan
