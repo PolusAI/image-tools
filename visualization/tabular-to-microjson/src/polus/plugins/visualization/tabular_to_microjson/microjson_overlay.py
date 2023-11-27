@@ -4,7 +4,8 @@ import logging
 import os
 from pathlib import Path
 from typing import Any
-from typing import Optional, Union
+from typing import Optional
+from typing import Union
 
 import filepattern as fp
 import microjson.model as mj
@@ -230,8 +231,8 @@ class ValidatedProperties(mj.Properties):
     @validator("string", pre=True, each_item=True)
     def validate_str(
         cls,
-        v: str,
-    ) -> Union[str, None]:  # pylint: disable=no-self-argument
+        v: Union[str, None],
+    ) -> str:  # pylint: disable=no-self-argument
         """Validate string."""
         if v is None:
             return ""
@@ -240,8 +241,8 @@ class ValidatedProperties(mj.Properties):
     @validator("numeric", pre=True, each_item=True)
     def validate_num(
         cls,
-        v: int,
-    ) -> Union[int, np.nan]:  # pylint: disable=no-self-argument
+        v: Union[int, None],
+    ) -> Union[int, None]:  # pylint: disable=no-self-argument
         """Validate numeric."""
         if v is None:
             return np.nan
