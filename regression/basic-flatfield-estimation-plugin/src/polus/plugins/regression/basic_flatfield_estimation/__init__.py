@@ -40,12 +40,13 @@ def estimate(
     logger.info("Loading images ...")
     img_stack = utils.get_image_stack(image_paths)
 
+    # lambda_flatfield_coef: float, optional, default: 100
+
     # Run basic fit
     logger.info("Beginning flatfield estimation ...")
     model = basicpy.BaSiC(
         get_darkfield=get_darkfield,
-        lambda_flatfield_coef=500,
-        intensity=True,
+        sort_intensity=True,
         fitting_mode="approximate",
     )
     model.fit(img_stack)

@@ -1,11 +1,9 @@
 """CLI for the plugin."""
-import concurrent.futures
 import json
 import logging
 import pathlib
 
 import filepattern
-import tqdm
 import typer
 from polus.plugins.regression.basic_flatfield_estimation import estimate
 from polus.plugins.regression.basic_flatfield_estimation import utils
@@ -86,9 +84,8 @@ def main(  # noqa: PLR0913
     if preview:
         out_dict: dict[str, list[str]] = {"files": []}
         for _, files in fp(group_by=list(group_by)):
-            paths = [p for _, [p] in files]
-            image_paths = [pathlib.Path(p) for p in paths]
-            base_output = utils.get_output_path(image_paths)
+            paths = [pathlib.Path(p) for _, [p] in files]
+            base_output = utils.get_output_path(paths)
             suffix = utils.get_suffix(base_output)
             flatfield_out = base_output.replace(suffix, "_flatfield" + extension)
             out_dict["files"].append(flatfield_out)
@@ -100,29 +97,11 @@ def main(  # noqa: PLR0913
             json.dump(out_dict, writer, indent=4)
 
     else:
-        futures = []
-        with concurrent.futures.ProcessPoolExecutor(
-            max_workers=utils.MAX_WORKERS,
-        ) as executor:
-            for _, files in fp(group_by=list(group_by)):
-                paths = [p for _, [p] in files]
-                logger.info(f"Files: {[p.name for p in paths]} ...")
-
-                futures.append(
-                    executor.submit(
-                        estimate,
-                        paths,
-                        out_dir,
-                        get_darkfield,
-                        extension,
-                    ),
-                )
-
-            for future in tqdm.tqdm(
-                concurrent.futures.as_completed(futures),
-                total=len(futures),
-            ):
-                future.result()
+        # basicpy has its own multi-threading so we won't use preadator here.
+        for _, files in fp(group_by=list(group_by)):
+            paths = [pathlib.Path(p) for _, [p] in files]
+            logger.info(f"Files: {[p.name for p in paths]} ...")
+            estimate(paths, out_dir, get_darkfield, extension)
 
 
 if __name__ == "__main__":

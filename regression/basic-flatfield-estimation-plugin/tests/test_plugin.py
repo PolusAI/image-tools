@@ -7,6 +7,7 @@ should produce and save the two components as output images.
 """
 
 import pathlib
+import shutil
 import tempfile
 
 import bfio
@@ -19,9 +20,9 @@ from polus.plugins.regression.basic_flatfield_estimation.__main__ import app
 
 fixture_params = [
     (
-        "img_c{c:d}.ome.tif",
-        list(range(10)),
-        1080,
+        "img_c{c:d}.ome.tif",  # pattern
+        list(range(4)),  # variables
+        1080,  # image-size
     ),
 ]
 
@@ -42,14 +43,20 @@ def _make_random_image(
 @pytest.fixture(params=fixture_params)
 def gen_images(
     request: pytest.FixtureRequest,
-) -> tuple[str, pathlib.Path]:
+) -> tuple[str, pathlib.Path, pathlib.Path]:
     """Generate a set of random images for testing."""
     pattern: str
     variables: list[int]
     size: int
     pattern, variables, size = request.param
 
-    inp_dir = pathlib.Path(tempfile.mkdtemp(suffix="inp_dir"))
+    data_dir = pathlib.Path(tempfile.mkdtemp(suffix="data_dir"))
+
+    inp_dir = data_dir.joinpath("inp_dir")
+    inp_dir.mkdir()
+
+    out_dir = data_dir.joinpath("out_dir")
+    out_dir.mkdir()
 
     rng = numpy.random.default_rng(42)
 
@@ -59,14 +66,16 @@ def gen_images(
         path = inp_dir.joinpath(file)
         _make_random_image(path, rng, size)
 
-    return pattern, inp_dir
+    yield pattern, inp_dir, out_dir
+
+    # Cleanup
+    shutil.rmtree(data_dir)
 
 
-def test_estimate(gen_images: tuple[str, pathlib.Path]) -> None:
+def test_estimate(gen_images: tuple[str, pathlib.Path, pathlib.Path]) -> None:
     """Test the `estimate` function."""
 
-    _, inp_dir = gen_images  # type: ignore[misc]
-    out_dir = pathlib.Path(tempfile.mkdtemp(suffix="out_dir"))
+    _, inp_dir, out_dir = gen_images  # type: ignore[misc]
 
     paths = list(filter(lambda p: p.name.endswith(".ome.tif"), inp_dir.iterdir()))
     estimate(paths, out_dir, get_darkfield=True, extension=".ome.tif")
@@ -85,10 +94,9 @@ def test_estimate(gen_images: tuple[str, pathlib.Path]) -> None:
     ), f"{darkfield_out} not in {out_names}"  # noqa: S101
 
 
-def test_cli(gen_images: tuple[str, pathlib.Path]) -> None:
+def test_cli(gen_images: tuple[str, pathlib.Path, pathlib.Path]) -> None:
     """Test the CLI."""
-    pattern, inp_dir = gen_images  # type: ignore[misc]
-    out_dir = pathlib.Path(tempfile.mkdtemp(suffix="out_dir"))
+    pattern, inp_dir, out_dir = gen_images
 
     runner = typer.testing.CliRunner()
 
