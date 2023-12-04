@@ -100,12 +100,6 @@ def main(
             )
             executor.submit(model.write_single_json())
 
-    outjsons = fp.FilePattern(Path(out_dir, "tmp"), ".*.json")
-    for out in outjsons():
-        outjs = out[1][0]
-        shutil.move(outjs, out_dir.joinpath(outjs.name))
-    shutil.rmtree(Path(out_dir, "tmp"))
-
     if preview:
         generate_preview(out_dir)
         logger.info(f"generating preview data in {out_dir}")

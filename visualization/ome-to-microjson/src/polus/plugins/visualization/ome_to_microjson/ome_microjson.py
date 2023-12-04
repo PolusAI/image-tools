@@ -4,6 +4,7 @@ import enum
 import logging
 import os
 import re
+import shutil
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 from itertools import product
@@ -11,6 +12,7 @@ from multiprocessing import cpu_count
 from pathlib import Path
 from sys import platform
 from typing import Any
+from typing import Union
 
 import filepattern as fp
 import microjson.model as mj
@@ -127,32 +129,69 @@ class OmeMicrojsonModel:
                                     idx += label[-1]
                                 self.polygons_to_microjson(i, label, coordinates)
 
+    def get_line_number(self, filename: str, target_string: str) -> Union[int, None]:
+        """Parsing microjsons."""
+        line_number = 0
+        with Path.open(Path(filename)) as file:
+            for line in file:
+                line_number += 1
+                if target_string in line:
+                    return line_number
+        return None
+
+    def cleaning_directories(self) -> None:
+        """Remove a temporary directory."""
+        out_combined = Path(self.out_dir, "tmp")
+        for file in out_combined.iterdir():
+            if file.is_file():
+                shutil.move(file, out_combined.parent)
+        shutil.rmtree(out_combined)
+
     def write_single_json(self) -> None:
         """Combine microjsons from tiled images into combined json file."""
         self._tile_read()
         out_combined = Path(self.out_dir, "tmp")
-        out_file = Path(self.file_path).name.split(".")[0] + ".json"
+        out_file = (
+            Path(self.file_path).name.split(".")[0]
+            + "_"
+            + str(self.polygon_type.value)
+            + ".json"
+        )
         if not out_combined.exists():
             out_combined.mkdir(exist_ok=True)
-        files = fp.FilePattern(self.out_dir, ".*json")
+        fname = re.split(r"[\W']+", str(Path(self.file_path).name))[0]
+        files = fp.FilePattern(self.out_dir, f"{fname}.*json")
         if len(files) > 1:
             with Path.open(Path(out_combined, out_file), "w") as fw:
                 for i, fl in zip(range(1, len(files) + 1), files()):
                     file = fl[1][0]
-                    outname = re.split(r"[_\.]+", file.name)[:-2]
-                    outname = "_".join(outname) + ".json"  # type: ignore
-                    df = Path.open(Path(file))
-                    data = df.readlines()
-                    if i == 1:
-                        endline = data[-36].rstrip() + ","
-                        sfdata = data[:-36] + [endline]
-                    elif i > 1 and i < len(files):
-                        endline = data[-36].rstrip() + ","
-                        sfdata = data[3:-36] + [endline]
+                    line_number = self.get_line_number(file, "coordinatesystem")
+                    total_lines = 0
+                    with Path.open(Path(file)) as file:
+                        for _ in file:
+                            total_lines += 1
+                    if line_number is not None:
+                        index = (total_lines - line_number) + 3
+                        outname = re.split(r"[_\.]+", file.name)[:-2]
+                        outname = "_".join(outname) + ".json"  # type: ignore
+                        df = Path.open(Path(file))
+                        data = df.readlines()
+                        if i == 1:
+                            endline = data[-index].rstrip() + ","
+                            sfdata = data[:-index] + [endline]
+                        elif i > 1 and i < len(files):
+                            endline = data[-index].rstrip() + ","
+                            sfdata = data[3:-index] + [endline]
+                        else:
+                            sfdata = data[3:]
+                        fw.writelines(sfdata)
+                        Path(file).unlink()
                     else:
-                        sfdata = data[3:]
-                    fw.writelines(sfdata)
-                    Path(file).unlink()
+                        msg = "Invalid Microjson file!!! Please do check it again"
+                        raise ValueError(
+                            msg,
+                        )
+        self.cleaning_directories()
 
     def segmentations_encodings(
         self,
@@ -162,7 +201,8 @@ class OmeMicrojsonModel:
     ) -> tuple[Any, list[list[list[Any]]]]:
         """Calculate object boundries as series of vertices/points forming a polygon."""
         label, coordinates = [], []
-        for i in np.unique(label_image)[1:]:
+        objects = scipy.ndimage.measurements.find_objects(label_image)
+        for i in range(len(objects) + 1):
             mask = np.zeros((label_image.shape[0], label_image.shape[1]))
             mask[(label_image == i)] = 1
             contour_thresh = 0.8
@@ -227,10 +267,8 @@ class OmeMicrojsonModel:
         channel = np.repeat(self.br.C, len(label))
         filename = Path(self.file_path)
         image_name = np.repeat(filename.name, len(label))
-        plate_name = np.repeat(Path(filename.parent).name, len(label))
 
         data = vaex.from_arrays(
-            Plate=plate_name,
             Image=image_name,
             X=x_dimension,
             Y=y_dimension,
@@ -241,7 +279,6 @@ class OmeMicrojsonModel:
         data["type"] = np.repeat("Feature", data.shape[0])
 
         varlist = [
-            "Plate",
             "Image",
             "X",
             "Y",
@@ -259,17 +296,18 @@ class OmeMicrojsonModel:
             msg = "Invalid vaex dataframe!! Please do check path again"
             raise ValueError(msg)
 
-        int_columns = list(
+        str_columns = list(
             filter(
-                lambda feature: feature in ["Label", "Encoding_length"],
+                lambda feature: feature in ["Image", "X", "Y", "Channel"],
                 data.get_column_names(),
             ),
         )
-        int_columns = [
-            feature
-            for feature in int_columns
-            if data.data_type(feature) == int or data.data_type(feature) == float
-        ]
+        int_columns = list(
+            filter(
+                lambda feature: feature in ["Label"],
+                data.get_column_names(),
+            ),
+        )
 
         if len(int_columns) == 0:
             msg = "Features with integer datatype do not exist"
@@ -307,11 +345,10 @@ class OmeMicrojsonModel:
         for sub_dict in valrange:
             valrange_dict.update(sub_dict)
 
-        desc_meta = {key: f"{data[key].values[0]}" for key in varlist[:2]}
-        int_meta = {key: f"{data[key].values[0]}" for key in varlist[2:5]}
+        desc_meta = {key: f"{data[key].values[0]}" for key in str_columns}
 
         # create a new properties for each image
-        properties = mj.Properties(string=desc_meta, numeric=int_meta)
+        properties = mj.Properties(string=desc_meta)
 
         # Create a new FeatureCollection object
         feature_collection = mj.MicroFeatureCollection(
@@ -339,14 +376,10 @@ class OmeMicrojsonModel:
                 "origo": "top-left",
             },
         )
-
+        fname = re.split(r"[\W']+", str(Path(self.file_path).name))  # type: ignore
+        fname = "_".join(fname[:-2])  # type: ignore
         outname = (
-            str(data["Image"].values[0]).split(".ome")[0]
-            + "_"
-            + str(self.polygon_type.value)
-            + "_"
-            + str(i)
-            + ".json"
+            str(fname) + "_" + str(self.polygon_type.value) + "_" + str(i) + ".json"
         )
         if len(feature_collection.model_dump_json()) == 0:
             msg = "JSON file is empty"
