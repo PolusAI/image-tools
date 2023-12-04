@@ -334,6 +334,10 @@ class Version(RootModel):
         """Needed to use Version objects as dict keys."""
         return hash(self.root)
 
+    def __repr__(self) -> str:
+        """Return string representation of Version object."""
+        return self.root
+
 
 @Version.__eq__.register(Version)  # pylint: disable=no-member
 def _(self, other):
@@ -346,7 +350,7 @@ def _(self, other):
 
 @Version.__eq__.register(str)  # pylint: disable=no-member
 def _(self, other):
-    return self == Version(**{"version": other})
+    return self == Version(other)
 
 
 @Version.__lt__.register(Version)  # pylint: disable=no-member
@@ -366,7 +370,7 @@ def _(self, other):
 
 @Version.__lt__.register(str)  # pylint: disable=no-member
 def _(self, other):
-    v = Version(**{"version": other})
+    v = Version(other)
     return self < v
 
 
@@ -377,7 +381,7 @@ def _(self, other):
 
 @Version.__gt__.register(str)  # pylint: disable=no-member
 def _(self, other):
-    v = Version(**{"version": other})
+    v = Version(other)
     return self > v
 
 

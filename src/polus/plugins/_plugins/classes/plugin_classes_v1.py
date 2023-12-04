@@ -1,5 +1,5 @@
 """Classes for Plugin objects containing methods to configure, run, and save."""
-# pylint: disable=W1203, enable=W1201
+# pylint: disable=W1203, W0212, enable=W1201
 import json
 import logging
 import shutil
@@ -83,6 +83,20 @@ def list_plugins() -> list:
     output = list(PLUGINS.keys())
     output.sort()
     return output
+
+
+def _get_config(plugin: Union["Plugin", "ComputePlugin"], class_: str) -> dict:
+    model_ = plugin.dict()
+    # iterate over I/O to convert to dict
+    for io_name, io in model_["_io_keys"].items():
+        # overwrite val if enum
+        if io["type"] == "enum":
+            val_ = io["value"].name  # mapDirectory.raw
+            model_["_io_keys"][io_name]["value"] = val_.split(".")[-1]  # raw
+    for inp in model_["inputs"]:
+        inp["value"] = None
+    model_["class"] = class_
+    return model_
 
 
 class Plugin(WIPPPluginManifest, BasePlugin):
@@ -170,16 +184,10 @@ class Plugin(WIPPPluginManifest, BasePlugin):
         """Set I/O parameters as attributes."""
         BasePlugin.__setattr__(self, name, value)
 
-    @property
-    def _config_file(self) -> dict:
-        config_ = self._config
-        config_["class"] = "WIPP"
-        return config_
-
     def save_config(self, path: Union[str, Path]) -> None:
         """Save manifest with configured I/O parameters to specified path."""
         with Path(path).open("w", encoding="utf-8") as file:
-            json.dump(self._config_file, file, indent=4, default=str)
+            json.dump(_get_config(self, "WIPP"), file, indent=4, default=str)
         logger.debug(f"Saved config to {path}")
 
     def __repr__(self) -> str:
@@ -281,12 +289,6 @@ class ComputePlugin(ComputeSchema, BasePlugin):
         """Return list of local versions of a Plugin."""
         return list(PLUGINS[name_cleaner(self.name)])
 
-    @property
-    def _config_file(self) -> dict:
-        config_ = self._config
-        config_["class"] = "Compute"
-        return config_
-
     def __setattr__(self, name: str, value: Any) -> None:  # noqa: ANN401
         """Set I/O parameters as attributes."""
         BasePlugin.__setattr__(self, name, value)
@@ -294,7 +296,7 @@ class ComputePlugin(ComputeSchema, BasePlugin):
     def save_config(self, path: Union[str, Path]) -> None:
         """Save configured manifest with I/O parameters to specified path."""
         with Path(path).open("w", encoding="utf-8") as file:
-            json.dump(self._config_file, file, indent=4)
+            json.dump(_get_config(self, "Compute"), file, indent=4, default=str)
         logger.debug(f"Saved config to {path}")
 
     def save_manifest(self, path: Union[str, Path]) -> None:
@@ -383,15 +385,15 @@ def get_plugin(
     return _load_plugin(PLUGINS[name][Version(**{"version": version})])
 
 
-def load_config(config: Union[dict, Path]) -> Union[Plugin, ComputePlugin]:
+def load_config(config: Union[dict, Path, str]) -> Union[Plugin, ComputePlugin]:
     """Load configured plugin from config file/dict."""
-    if isinstance(config, Path):
-        with config.open("r", encoding="utf-8") as file:
+    if isinstance(config, (Path, str)):
+        with Path(config).open("r", encoding="utf-8") as file:
             manifest_ = json.load(file)
     elif isinstance(config, dict):
         manifest_ = config
     else:
-        msg = "config must be a dict or a path"
+        msg = "config must be a dict, str, or a path"
         raise TypeError(msg)
     io_keys_ = manifest_["_io_keys"]
     class_ = manifest_["class"]

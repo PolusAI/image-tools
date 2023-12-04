@@ -168,13 +168,6 @@ class BasePlugin:
             print(docker_)  # noqa
 
     @property
-    def _config(self) -> dict:
-        model_ = self.dict()
-        for inp in model_["inputs"]:
-            inp["value"] = None
-        return model_
-
-    @property
     def manifest(self) -> dict:
         """Plugin manifest."""
         manifest_ = json.loads(self.json(exclude={"_io_keys", "versions", "id"}))
