@@ -1,0 +1,82 @@
+{
+    "name": "Rxiv-Download",
+    "version": "0.1.0-dev",
+    "title": "Download Rxiv text data",
+    "description": "This plugin allows to download data from Rxiv website.",
+    "author": "Hamdah Shafqat abbasi  (hamdahshafqat.abbasi@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/labshare/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "polusai/rxiv-download-plugin:0.1.0-dev",
+    "baseCommand": [
+        "python3",
+        "-m",
+        "polus.plugins.visualization.rxiv_download"
+    ],
+    "inputs": {
+        "inpDir": {
+            "type": "collection",
+            "title": "Input collection",
+            "description": "Input image collection to be processed by this plugin.",
+            "required": "True"
+        },
+        "filePattern": {
+            "type": "string",
+            "title": "Filename pattern",
+            "description": "Filename pattern used to separate data.",
+            "required": "False"
+        },
+        "polygonType": {
+            "type": "enum",
+            "title": "Type of Polygon",
+            "description": "Select polygon type from [rectangle, encoding].",
+            "options": {
+                "values": [
+                    "rectangle",
+                    "encoding"
+                ]
+            },
+            "required": "True"
+        },
+        "preview": {
+            "type": "boolean",
+            "title": "Preview",
+            "description": "Generate an output preview.",
+            "required": "False"
+        }
+    },
+    "outputs": {
+        "outDir": {
+            "type": "collection",
+            "description": "Output collection."
+        }
+    },
+    "ui": {
+        "inpDir": {
+            "type": "collection",
+            "title": "Input collection",
+            "description": "Input image collection to be processed by this plugin.",
+            "required": "True"
+        },
+        "filePattern": {
+            "type": "string",
+            "title": "Filename pattern",
+            "description": "Filename pattern used to separate data.",
+            "required": "False"
+        },
+        "polygonType": {
+            "type": "enum",
+            "title": "Type of Polygon",
+            "description": "Select polygon type from [rectangle, encoding].",
+            "default": "encoding",
+            "required": "True"
+        },
+        "preview": {
+            "type": "boolean",
+            "title": "Preview example output of this plugin",
+            "description": "Generate an output preview.",
+            "required": "False"
+        }
+    }
+}
