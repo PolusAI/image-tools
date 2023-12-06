@@ -1,7 +1,7 @@
 {
   "name": "Nyxus plugin",
-  "version": "0.1.5",
-  "containerId": "polusai/nyxus-plugin:0.1.5",
+  "version": "0.1.5-dev",
+  "containerId": "polusai/nyxus-plugin:0.1.5-dev",
   "title": "Nyxus plugin",
   "description": "Nyxus plugin allows to make use of parallel pocessing for extracting nyxus features",
   "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
@@ -84,6 +84,13 @@
       "type": "number",
       "options": null,
       "required": false
+    },
+    {
+      "name": "singleRoi",
+      "description": "Consider intensity image as single roi and ignoring segmentation mask",
+      "type": "bool",
+      "options": null,
+      "required": false
     }
   ],
   "outputs": [
@@ -126,7 +133,7 @@
       "key": "inputs.fileExtension",
       "title": "fileExtension",
       "description": "Ouput file format",
-      "default": ".csv"
+      "default": "pandas"
     },
     {
       "key": "inputs.neighborDist",
@@ -139,6 +146,12 @@
       "title": "pixelPerMicron",
       "description": "Pixel size in micrometer",
       "default": 1.0
+    },
+    {
+      "key": "inputs.singleRoi",
+      "title": "singleRoi",
+      "description": "Consider intensity image as single roi and ignoring segmentation mask",
+      "default": false
     }
   ]
 }

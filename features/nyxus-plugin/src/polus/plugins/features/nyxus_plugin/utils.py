@@ -2,16 +2,16 @@
 import enum
 import os
 
-POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", "singlecsv")
+POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", "pandas")
 
 
 class Extension(str, enum.Enum):
-    """File format of an output file."""
+    """Enum of File Extension."""
 
-    CSV = "singlecsv"
+    PANDAS = "pandas"
     ARROW = "arrowipc"
-    FEATHER = "parquet"
-    Default = POLUS_TAB_EXT
+    PARQUET = "parquet"
+    DEFAULT = POLUS_TAB_EXT
 
 
 FEATURE_GROUP = {

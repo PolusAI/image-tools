@@ -9,10 +9,11 @@ seg_dir=/data/path_to_label_images
 int_pattern='p00{z}_x{x+}_y{y+}_wx{t}_wy{p}_c{c}.ome.tif'
 seg_pattern='p00{z}_x{x+}_y{y+}_wx{t}_wy{p}_c1.ome.tif'
 features="BASIC_MORPHOLOGY","ALL_INTENSITY"
-file_extension = ".csv"
+file_extension="pandas"
 # More details available at https://github.com/PolusAI/nyxus
 neighbor_dist=5
 pixel_per_micron=1.0
+single_roi=false
 out_dir=/data/path_to_output
 
 
@@ -30,3 +31,4 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --fileExtension ${file_extension} \
             --neighborDist ${neighbor_dist} \
             --pixelPerMicron ${pixel_per_micron} \
+            --singleRoi ${single_roi}

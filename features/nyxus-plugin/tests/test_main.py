@@ -1,14 +1,13 @@
 """Nyxus Plugin."""
-import pathlib
+from pathlib import Path
 import shutil
 import tempfile
-from collections.abc import Generator
-from typing import Tuple
 
 import filepattern as fp
 import numpy as np
 import pytest
 import vaex
+from typing import Union
 from skimage import filters, io, measure
 from typer.testing import CliRunner
 
@@ -18,38 +17,43 @@ from polus.plugins.features.nyxus_plugin.nyxus_func import nyxus_func
 runner = CliRunner()
 
 
-@pytest.fixture
-def inp_dir() -> Generator[str, None, None]:
+def clean_directories() -> None:
+    """Remove all temporary directories."""
+    for d in Path(".").cwd().iterdir():
+        if d.is_dir() and d.name.startswith("tmp"):
+            shutil.rmtree(d)
+
+
+@pytest.fixture()
+def inp_dir() -> Union[str, Path]:
     """Create directory for saving intensity images."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        yield tmpdir
+    return Path(tempfile.mkdtemp(dir=Path.cwd()))
 
 
-@pytest.fixture
-def seg_dir() -> Generator[str, None, None]:
+@pytest.fixture()
+def seg_dir() -> Union[str, Path]:
     """Create directory for saving groundtruth labelled images."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        yield tmpdir
+    return Path(tempfile.mkdtemp(dir=Path.cwd()))
 
 
-@pytest.fixture
-def output_directory() -> Generator[pathlib.Path, None, None]:
+@pytest.fixture()
+def output_directory() -> Union[str, Path]:
     """Create output directory."""
-    out_dir = pathlib.Path(tempfile.mkdtemp(dir=pathlib.Path.cwd()))
-    yield out_dir
-    shutil.rmtree(out_dir)
+    return Path(tempfile.mkdtemp(dir=Path.cwd()))
 
 
 @pytest.fixture(params=[256, 512, 1024, 2048])
-def image_sizes(request):
+def image_sizes(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the fixture."""
-    yield request.param
+    return request.param
 
 
 @pytest.fixture
 def synthetic_images(
-    inp_dir, seg_dir, image_sizes
-) -> Generator[Tuple[pathlib.Path, pathlib.Path], None, None]:
+    inp_dir: Union[str, Path],
+    seg_dir: Union[str, Path],
+    image_sizes: pytest.FixtureRequest,
+) -> tuple[Union[str, Path], Union[str, Path]]:
     """Generate random synthetic images."""
     for i in range(10):
         im = np.zeros((image_sizes, image_sizes))
@@ -60,56 +64,70 @@ def synthetic_images(
         lab_blobs = measure.label(blobs, background=0)
         intname = f"y04_r{i}_c1.ome.tif"
         segname = f"y04_r{i}_c0.ome.tif"
-        int_name = pathlib.Path(inp_dir, intname)
-        seg_name = pathlib.Path(seg_dir, segname)
+        int_name = Path(inp_dir, intname)
+        seg_name = Path(seg_dir, segname)
         io.imsave(int_name, im)
         io.imsave(seg_name, lab_blobs)
-    yield inp_dir, seg_dir
+    return inp_dir, seg_dir
 
 
-@pytest.fixture(params=[(".csv", "MEAN"), (".arrow", "MEDIAN"), (".feather", "MODE")])
-def get_params(request):
+@pytest.fixture(
+    params=[
+        ("pandas", ".csv", "MEAN"),
+        ("arrowipc", ".arrow", "MEDIAN"),
+        ("parquet", ".parquet", "MODE"),
+    ]
+)
+def get_params(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the fixture."""
     yield request.param
 
 
-def test_nyxus_func(synthetic_images, output_directory, get_params) -> None:
+def test_nyxus_func(
+    synthetic_images: tuple[Union[str, Path], Union[str, Path]],
+    output_directory: Union[str, Path],
+    get_params: pytest.FixtureRequest,
+) -> None:
     """Test Nyxus Function.
 
     This unit test runs the nyxus function and validates the outputs
     """
     inp_dir, seg_dir = synthetic_images
-    int_pattern = "y04_r{r:d}_c1.ome.tif"
+    int_pattern = "y04_r{r:d}_c{c:d}.ome.tif"
     seg_pattern = "y04_r{r:d}_c0.ome.tif"
     int_images = fp.FilePattern(inp_dir, int_pattern)
     seg_images = fp.FilePattern(seg_dir, seg_pattern)
-    fileext, feat = get_params
+    fileext, EXT, feat = get_params
     for s_image in seg_images():
         i_image = int_images.get_matching(**{k: v for k, v in s_image[0].items()})
-        nyxus_func(
-            int_file=i_image[0][1],
-            seg_file=s_image[1],
-            out_dir=output_directory,
-            features=[feat],
-            file_extension=fileext,
-        )
+        for i in i_image:
+            nyxus_func(
+                int_file=i[1],
+                seg_file=s_image[1],
+                out_dir=output_directory,
+                features=[feat],
+                file_extension=fileext,
+            )
 
     output_ext = [f.suffix for f in output_directory.iterdir()][0]
-    assert output_ext == fileext
+    assert output_ext == EXT
     vdf = vaex.open([f for f in output_directory.iterdir()][0])
     assert vdf.shape is not None
+    clean_directories()
 
 
-@pytest.fixture(params=[5000, 10000, 20000, 30000])
-def scaled_sizes(request):
+@pytest.fixture(params=[5000, 10000, 30000])
+def scaled_sizes(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the fixture."""
     yield request.param
 
 
 @pytest.fixture
 def scaled_images(
-    inp_dir, seg_dir, scaled_sizes
-) -> Generator[Tuple[pathlib.Path, pathlib.Path], None, None]:
+    inp_dir: Union[str, Path],
+    seg_dir: Union[str, Path],
+    scaled_sizes: pytest.FixtureRequest,
+) -> tuple[Union[str, Path], Union[str, Path]]:
     """Generate random synthetic images."""
     im = np.zeros((scaled_sizes, scaled_sizes))
     points = scaled_sizes * np.random.random((2, 1**2))
@@ -119,30 +137,35 @@ def scaled_images(
     lab_blobs = measure.label(blobs, background=0)
     intname = "y04_r1_c1.ome.tif"
     segname = "y04_r1_c0.ome.tif"
-    int_name = pathlib.Path(inp_dir, intname)
-    seg_name = pathlib.Path(seg_dir, segname)
+    int_name = Path(inp_dir, intname)
+    seg_name = Path(seg_dir, segname)
     io.imsave(int_name, im)
     io.imsave(seg_name, lab_blobs)
-    yield inp_dir, seg_dir
+    return inp_dir, seg_dir
 
 
-@pytest.fixture(params=[(".csv", "MEAN")])
-def get_scaled_params(request):
+@pytest.fixture(params=[("pandas", ".csv", "MEAN")])
+def get_scaled_params(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the fixture."""
     yield request.param
 
 
-def test_scaled_nyxus_func(scaled_images, output_directory, get_scaled_params) -> None:
+@pytest.mark.slow()
+def test_scaled_nyxus_func(
+    scaled_images: tuple[Union[str, Path], Union[str, Path]],
+    output_directory: Union[str, Path],
+    get_scaled_params: pytest.FixtureRequest,
+) -> None:
     """Test Nyxus Function.
 
     This unit test runs the nyxus function and validates the outputs
     """
     inp_dir, seg_dir = scaled_images
-    int_pattern = "y04_r{r:d}_c1.ome.tif"
+    int_pattern = "y04_r{r:d}_c{c:d}.ome.tif"
     seg_pattern = "y04_r{r:d}_c0.ome.tif"
     int_images = fp.FilePattern(inp_dir, int_pattern)
     seg_images = fp.FilePattern(seg_dir, seg_pattern)
-    fileext, feat = get_scaled_params
+    fileext, EXT, feat = get_scaled_params
     for s_image in seg_images():
         i_image = int_images.get_matching(**{k: v for k, v in s_image[0].items()})
         nyxus_func(
@@ -153,9 +176,10 @@ def test_scaled_nyxus_func(scaled_images, output_directory, get_scaled_params) -
             file_extension=fileext,
         )
     output_ext = [f.suffix for f in output_directory.iterdir()][0]
-    assert output_ext == fileext
+    assert output_ext == EXT
     vdf = vaex.open([f for f in output_directory.iterdir()][0])
     assert vdf.shape is not None
+    clean_directories()
 
 
 def test_cli(synthetic_images, output_directory, get_params) -> None:
@@ -163,7 +187,7 @@ def test_cli(synthetic_images, output_directory, get_params) -> None:
     inp_dir, seg_dir = synthetic_images
     int_pattern = "y04_r{r:d}_c1.ome.tif"
     seg_pattern = "y04_r{r:d}_c0.ome.tif"
-    fileext, feat = get_params
+    fileext, _, feat = get_params
 
     runner.invoke(
         app,
@@ -180,8 +204,11 @@ def test_cli(synthetic_images, output_directory, get_params) -> None:
             feat,
             "--fileExtension",
             fileext,
+            "--singleRoi",
+            False,
             "--outDir",
             output_directory,
         ],
     )
     assert output_directory.joinpath(f"y04_r1_c1{fileext}")
+    clean_directories()

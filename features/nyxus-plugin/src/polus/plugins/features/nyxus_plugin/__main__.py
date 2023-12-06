@@ -2,22 +2,21 @@
 import json
 import logging
 import os
-import pathlib
 import re
+from concurrent.futures import as_completed
 from multiprocessing import cpu_count
-from typing import Any, Optional
-from nyxus import Nyxus
+from pathlib import Path
+from typing import Any
+from typing import Optional
 
 import filepattern as fp
+import preadator
 import typer
-from preadator import ProcessManager
-
 from polus.plugins.features.nyxus_plugin.nyxus_func import nyxus_func
-from polus.plugins.features.nyxus_plugin.utils import (
-    FEATURE_GROUP,
-    FEATURE_LIST,
-    Extension,
-)
+from polus.plugins.features.nyxus_plugin.utils import FEATURE_GROUP
+from polus.plugins.features.nyxus_plugin.utils import FEATURE_LIST
+from polus.plugins.features.nyxus_plugin.utils import Extension
+from tqdm import tqdm
 
 # #Import environment variables
 POLUS_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
@@ -33,44 +32,61 @@ logger = logging.getLogger("polus.plugins.features.nyxus_plugin")
 
 
 @app.command()
-def main(
-    inp_dir: pathlib.Path = typer.Option(
+def main(  # noqa: PLR0913
+    inp_dir: Path = typer.Option(
         ...,
         "--inpDir",
         help="Input image data collection to be processed by this plugin",
     ),
-    seg_dir: pathlib.Path = typer.Option(
+    seg_dir: Path = typer.Option(
         ...,
         "--segDir",
         help="Input label images",
     ),
     int_pattern: str = typer.Option(
-        ".+", "--intPattern", help="Pattern use to parse intensity image filenames"
+        ".+",
+        "--intPattern",
+        help="Pattern use to parse intensity image filenames",
     ),
     seg_pattern: str = typer.Option(
-        ".+", "--segPattern", help="Pattern use to parse segmentation image filenames"
+        ".+",
+        "--segPattern",
+        help="Pattern use to parse segmentation image filenames",
     ),
     features: Optional[list[str]] = typer.Option(
-        ["ALL"], "--features", help="Nyxus features to be extracted"
+        ["ALL"],
+        "--features",
+        help="Nyxus features to be extracted",
     ),
     file_extension: Extension = typer.Option(
-        Extension.Default,
+        Extension.DEFAULT,
         "--fileExtension",
         help="File format of an output file.",
     ),
     neighbor_dist: Optional[int] = typer.Option(
-        5, "--neighborDist", help="Number of Pixels between Neighboring cells"
+        5,
+        "--neighborDist",
+        help="Number of Pixels between Neighboring cells",
     ),
     pixel_per_micron: Optional[float] = typer.Option(
-        1.0, "--pixelPerMicron", help="Number of pixels per micrometer"
+        1.0,
+        "--pixelPerMicron",
+        help="Number of pixels per micrometer",
     ),
-    out_dir: pathlib.Path = typer.Option(
+    single_roi: Optional[bool] = typer.Option(
+        False,
+        "--singleRoi",
+        help="Consider intensity image as single roi and ignoring segmentation mask",
+    ),
+    out_dir: Path = typer.Option(
         ...,
         "--outDir",
         help="Output directory",
     ),
     preview: Optional[bool] = typer.Option(
-        False, "--preview", help="Output a JSON preview of files"
+        False,
+        "--preview",
+        help="Output a JSON preview of files",
     ),
 ) -> None:
     """Scaled Nyxus plugin allows to extract features from labelled images."""
@@ -83,6 +99,7 @@ def main(
     logger.info(f"fileExtension = {file_extension}")
     logger.info(f"neighborDist = {neighbor_dist}")
     logger.info(f"pixelPerMicron = {pixel_per_micron}")
+    logger.info(f"singleRoi = {single_roi}")
 
     inp_dir = inp_dir.resolve()
     out_dir = out_dir.resolve()
@@ -100,44 +117,61 @@ def main(
     ), "One or more feature selections were invalid"
 
     # Adding * to the start and end of nyxus group features
-    features = [(f"*{f}*") if f in FEATURE_GROUP else f for f in features]  # type: ignore
+    features = [(f"*{f}*") if f in FEATURE_GROUP else f for f in features]
 
-    num_threads = max([cpu_count(), 2])
-    ProcessManager.num_processes(num_threads)
-    ProcessManager.init_processes(name="Nyxus")
+    num_workers = max([cpu_count(), 2])
 
     int_images = fp.FilePattern(inp_dir, int_pattern)
     seg_images = fp.FilePattern(seg_dir, seg_pattern)
 
     if preview:
-        with open(pathlib.Path(out_dir, "preview.json"), "w") as jfile:
+        with Path.open(Path(out_dir, "preview.json"), "w") as jfile:
             out_json: dict[str, Any] = {
                 "filepattern": int_pattern,
                 "outDir": [],
             }
             for file in int_images():
                 out_name = file[1][0].name.replace(
-                    "".join(file[1][0].suffixes), f"{file_extension}"
+                    "".join(file[1][0].suffixes),
+                    f"{file_extension}",
                 )
                 out_json["outDir"].append(out_name)
             json.dump(out_json, jfile, indent=2)
 
     for s_image in seg_images():
-        i_image = int_images.get_matching(**{k: v for k, v in s_image[0].items()})
-        if i_image:
-            ProcessManager.submit_process(
-                nyxus_func,
-                int_file=i_image[0][1],
-                seg_file=s_image[1],
-                out_dir=out_dir,
-                features=features,
-                file_extension=file_extension,
-                pixels_per_micron=pixel_per_micron,
-                neighbor_dist=neighbor_dist,
-            )
-            ProcessManager.join_processes()
+        i_image = int_images.get_matching(**dict(s_image[0].items()))
 
-    return
+        with preadator.ProcessManager(
+            name="compute nyxus feature",
+            num_processes=num_workers,
+            threads_per_process=2,
+        ) as pm:
+            threads = []
+            for fl in i_image:
+                file = fl[1]
+                logger.debug(f"Compute nyxus feature {file}")
+                thread = pm.submit_process(
+                    nyxus_func,
+                    file,
+                    s_image[1],
+                    out_dir,
+                    features,
+                    file_extension,
+                    pixel_per_micron,
+                    neighbor_dist,
+                )
+                threads.append(thread)
+            pm.join_processes()
+            for f in tqdm(
+                as_completed(threads),
+                total=len(threads),
+                mininterval=5,
+                desc=f"converting images to {file_extension}",
+                initial=0,
+                unit_scale=True,
+                colour="cyan",
+            ):
+                f.result()
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-## Nyxus Plugin(v0.1.5)
+## Nyxus Plugin(v0.1.5-dev)
 1. This plugin is updated only to the new plugin standards
 2. `csv` python packages is replaced with vaex for adding support for additional tabular file formats `.arrow`, `.feather`.
 3. Implemented latest updated filepattern package
