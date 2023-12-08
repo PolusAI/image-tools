@@ -1,6 +1,6 @@
 FROM tensorflow/tensorflow:2.12.0-gpu
 
-# cat /etc/os-release
+# Output from `cat /etc/os-release` in the base container
 #
 # NAME="Ubuntu"
 # VERSION="20.04.5 LTS (Focal Fossa)"
@@ -15,7 +15,7 @@ FROM tensorflow/tensorflow:2.12.0-gpu
 # VERSION_CODENAME=focal
 # UBUNTU_CODENAME=focal
 
-# Instal Python
+# Instal Python 3.9
 RUN apt update && \
     apt install software-properties-common -y && \
     add-apt-repository ppa:deadsnakes/ppa && \

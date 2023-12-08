@@ -11,35 +11,29 @@ packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12,!=3.9.7"
-bfio = { version = "2.1.9", extras = ["all"] }
-filepattern = [
-    { version = "^2.0.0", platform = "linux" },
-    { version = "^2.0.0", platform = "win32" },
-    { git = "https://github.com/PolusAI/filepattern", rev = "c07bf543c435cbc4cf264effd5a178868e9eaf19", platform = "darwin" },
-]
+bfio = { version = "^2.3.2", extras = ["all"] }
+filepattern = "^2.0.4"
 typer = { version = "^0.7.0", extras = ["all"] }
 tqdm = "^4.65.0"
-# TODO: Update this to a version number after the branch is merged.
-theia-py = {git = "https://github.com/nishaq503/theia.git", rev = "updates/docs"}
+theia-py = "0.1.1"
 scipy = "^1.9.0"
 numpy = "^1.23.2"
+tensorflow = "^2.13.0"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
 pre-commit = "^3.0.4"
-black = "^23.1.0"
-ruff = "^0.0.265"
 pytest = "^7.2.1"
 pytest-cov = "^4.0.0"
 pytest-sugar = "^0.9.6"
 pytest-xdist = "^3.2.0"
-pytest-benchmark = "^4.0.0"
+scikit-image = "^0.19.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-# scipy restricts us to the most recently released version of Python.
+# scipy restricts us to the most recently released version of Python, i.e. <3.12 as of 23rd August 2023.
 # See [here](https://github.com/scipy/scipy/blob/ace5787b8e5d28cc5e3ad7594d287ea47a249b46/pyproject.toml#L1-L4)
 # for more information.
 

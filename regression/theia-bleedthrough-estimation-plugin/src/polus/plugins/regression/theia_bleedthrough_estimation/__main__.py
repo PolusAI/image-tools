@@ -32,6 +32,7 @@ def main(  # noqa: PLR0913
         exists=True,
         file_okay=False,
         readable=True,
+        resolve_path=True,
     ),
     pattern: str = typer.Option(
         ".*",
@@ -75,6 +76,7 @@ def main(  # noqa: PLR0913
         exists=True,
         file_okay=False,
         writable=True,
+        resolve_path=True,
     ),
     preview: bool = typer.Option(
         False,
@@ -83,7 +85,6 @@ def main(  # noqa: PLR0913
     ),
 ) -> None:
     """CLI for estimating bleedthrough using Theia."""
-    inp_dir = inp_dir.resolve()
     if inp_dir.joinpath("images").exists():
         inp_dir = inp_dir.joinpath("images")
 
@@ -92,8 +93,6 @@ def main(  # noqa: PLR0913
     channel_order: typing.Optional[list[int]] = None
     if channel_ordering:
         channel_order = list(map(int, channel_ordering.split(",")))
-
-    out_dir = out_dir.resolve()
 
     logger.info(f"--inpDir = {inp_dir}")
     logger.info(f'--filePattern = "{pattern}"')
@@ -149,15 +148,3 @@ def main(  # noqa: PLR0913
 
 if __name__ == "__main__":
     app()
-
-"""
-python -m src.polus.plugins.regression.theia_bleedthrough_estimation \
-    --inpDir ./data/input \
-    --filePattern "S1_R{r:d}_C1-C11_A1_y009_x009_c{c:ddd}.ome.tif" \
-    --groupBy "r" \
-    --channelOrdering "1,0,3,2,4,5,7,6,8,9" \
-    --selectionCriterion MeanIntensity \
-    --channelOverlap 1 \
-    --kernelSize 3 \
-    --outDir ./data/output
-"""
