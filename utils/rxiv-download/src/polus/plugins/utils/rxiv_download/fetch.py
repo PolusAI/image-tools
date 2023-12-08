@@ -3,16 +3,15 @@ from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
-from typing import Optional, Tuple, Union
-from xsdata.models.datatype import XmlDate
+from typing import Optional
 
 import requests
+from rxiv_types import arxiv_records
 from rxiv_types.models.oai_pmh.org.openarchives.oai.pkg_2.resumption_token_type import (
     ResumptionTokenType,
 )
-from rxiv_types import arxiv_records
 from tqdm import tqdm
-
+from xsdata.models.datatype import XmlDate
 
 RXIVS = {
     "arXiv": {"url": "https://export.arxiv.org/oai2", "stride": 1000},
@@ -41,7 +40,7 @@ class ArxivDownload:
         rxiv: str,
         token: Optional[ResumptionTokenType] = None,
         start: Optional[datetime] = None,
-    ):
+    ) -> None:
         self.path = path
         self.rxiv = rxiv
         self.token = token
@@ -50,8 +49,9 @@ class ArxivDownload:
         self.fixed_date = datetime(1900, 1, 1)
 
         if self.rxiv not in RXIVS:
+            msg = f"{self.rxiv} is an invalid rxiv value. Must be one of {list(RXIVS)}"
             raise ValueError(
-                f"{self.rxiv} is an invalid rxiv value. Must be one of {list(RXIVS)}"
+                msg,
             )
 
         if self.start is None:
@@ -70,11 +70,12 @@ class ArxivDownload:
             file_path = self.path.joinpath(
                 f"{self.rxiv}_"
                 + f"{self.last.year}{str(self.last.month).zfill(2)}{str(self.last.day).zfill(0)}_"
-                + f"{int(self.token.cursor)}.xml"
+                + f"{int(self.token.cursor)}.xml",
             )
             file_path.parent.mkdir(exist_ok=True, parents=True)
 
             return file_path
+        return None
 
     def fetch_records(self):
         """Fetch OAI records from an API."""
@@ -86,7 +87,7 @@ class ArxivDownload:
                 + f"{str(self.last.month).zfill(2)}-"
                 + f"{str(self.last.day).zfill(2)}",
                 "metadataPrefix": "oai_dc",
-            }
+            },
         )
         response = requests.get(RXIVS[self.rxiv]["url"], params=self.params)
 
@@ -97,12 +98,15 @@ class ArxivDownload:
         fixed_date = datetime(1900, 1, 1)
         records = arxiv_records(str(file.absolute()))
         if records.list_records is None:
-            raise ValueError(f"Record list is empty!! Please download it again")
+            msg = "Record list is empty!! Please download it again"
+            raise ValueError(msg)
         for record in records.list_records.record:
             if record.header is None:
-                raise ValueError(f"Record header is empty!! Please download it again")
+                msg = "Record header is empty!! Please download it again"
+                raise ValueError(msg)
             if not isinstance(record.header.datestamp, XmlDate):
-                raise ValueError(f"Record date is missing!!")
+                msg = "Record date is missing!!"
+                raise ValueError(msg)
             record_date = record.header.datestamp.to_datetime()
             if record_date > fixed_date:
                 last = record_date
@@ -118,15 +122,13 @@ class ArxivDownload:
 
         with ProcessPoolExecutor() as executor:
             dates = list(executor.map(self._get_latest, files))
-            last_date = max(dates)
+            return max(dates)
 
-        return last_date
 
     @staticmethod
     def store_records(path: Path, record: bytes):
         with open(path, "wb") as fw:
             fw.write(record)
-        return
 
     def fetch_and_store(self) -> None:
         records = self.fetch_records()

@@ -1,19 +1,12 @@
 """Nyxus Plugin."""
-import json
 import logging
 import os
-from concurrent.futures import as_completed
-from multiprocessing import cpu_count
-from pathlib import Path
-from typing import Any
-from typing import Optional
-import typer
 from datetime import datetime
+from pathlib import Path
+from typing import Optional
+
+import typer
 from polus.plugins.utils.rxiv_download.fetch import ArxivDownload
-from rxiv_types.models.oai_pmh.org.openarchives.oai.pkg_2.resumption_token_type import (
-    ResumptionTokenType,
-)
-from tqdm import tqdm
 
 # #Import environment variables
 POLUS_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
@@ -29,7 +22,7 @@ logger = logging.getLogger("polus.plugins.utils.rxiv_download")
 
 
 @app.command()
-def main(  # noqa: PLR0913
+def main(
     path: Path = typer.Option(
         ...,
         "--path",
@@ -75,51 +68,22 @@ def main(  # noqa: PLR0913
     # if preview:
     #     with Path.open(Path(out_dir, "preview.json"), "w") as jfile:
     #         out_json: dict[str, Any] = {
-    #             "filepattern": int_pattern,
-    #             "outDir": [],
-    #         }
     #         for file in int_images():
-    #             out_name = file[1][0].name.replace(
-    #                 "".join(file[1][0].suffixes),
-    #                 f"{file_extension}",
-    #             )
-    #             out_json["outDir"].append(out_name)
-    #         json.dump(out_json, jfile, indent=2)
 
     # for s_image in seg_images():
-    #     i_image = int_images.get_matching(**dict(s_image[0].items()))
 
     #     with preadator.ProcessManager(
-    #         name="compute nyxus feature",
-    #         num_processes=num_workers,
-    #         threads_per_process=2,
     #     ) as pm:
-    #         threads = []
     #         for fl in i_image:
-    #             file = fl[1]
-    #             logger.debug(f"Compute nyxus feature {file}")
-    #             thread = pm.submit_process(
     #                 nyxus_func,
     #                 file,
-    #                 s_image[1],
     #                 out_dir,
     #                 features,
     #                 file_extension,
     #                 pixel_per_micron,
     #                 neighbor_dist,
-    #             )
-    #             threads.append(thread)
-    #         pm.join_processes()
     #         for f in tqdm(
-    #             as_completed(threads),
-    #             total=len(threads),
-    #             mininterval=5,
-    #             desc=f"converting images to {file_extension}",
-    #             initial=0,
-    #             unit_scale=True,
-    #             colour="cyan",
     #         ):
-    #             f.result()
 
 
 if __name__ == "__main__":
