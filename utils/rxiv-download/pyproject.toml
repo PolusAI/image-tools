@@ -17,6 +17,7 @@ filepattern = "^2.0.1"
 pydantic = "1.10.4"
 requests = "^2.31.0"
 rxiv-types = "^0.1.0"
+tqdm = "^4.66.1"
 
 [[tool.poetry.source]]
 name = "test"

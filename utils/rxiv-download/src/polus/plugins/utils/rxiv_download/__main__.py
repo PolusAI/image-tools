@@ -70,7 +70,7 @@ def main(  # noqa: PLR0913
     assert path.exists(), f"{path} does not exist!! Please check input path again"
 
     model = ArxivDownload(path=path, rxiv=rxiv, token=token, start=start)
-    model.resume_from()
+    model._resume_from()
 
     # if preview:
     #     with Path.open(Path(out_dir, "preview.json"), "w") as jfile:

@@ -57,7 +57,7 @@ class ArxivDownload:
         if self.start is None:
             self.last = datetime(1900, 1, 1)
         else:
-            self.last = self.resume_from()
+            self.last = self._resume_from()
 
         self.params = {"verb": "ListRecords"}
         if self.token is not None:
@@ -128,66 +128,36 @@ class ArxivDownload:
             fw.write(record)
         return
 
-        # def fetch_and_store(self) -> None:
-        #     parsed_records = None
-        #     try_count = 0
-        #     last = datetime(1900, 1, 1)
-        #     while parsed_records is None:
-        #         try:
-        #             records = self.fetch_records()
-        #             parsed_records = arxiv_records(BytesIO(records))
-        #             if parsed_records.list_records is None:
-        #                 raise ValueError(
-        #                     f"Record list is empty!! Please download it again"
-        #                 )
-        #             for pr in parsed_records.list_records.record:
-        #                 if pr.header is None:
-        #                     raise ValueError(
-        #                         f"Record header is empty!! Please download it again"
-        #                     )
-        #                 if not isinstance(pr.header.datestamp, XmlDate):
-        #                     raise ValueError(f"Record date is missing!!")
-        #                 record_date = pr.header.datestamp.to_datetime()
-        #                 if record_date > last:
-        #                     last = record_date
-        #         except Exception:
-        #             try_count += 1
-        #             print(
-        #                 f"Try {try_count}, {token.value}: "
-        #                 + "There was an error, waiting 5 seconds and trying again..."
-        #             )
-        #             time.sleep(5)
+    def fetch_and_store(self) -> None:
+        records = self.fetch_records()
+        path = self.path_from_token()
+        self.store_records(path, records)
+        time.sleep(7)
 
-        #     path = self.path_from_token()
-        #     ArxivDownload.store_records(path, records)
-        #     time.sleep(7)
+    def fetch_and_store_all(self):
+        token = None
 
-        # def fetch_and_store_all(self):
-        #     token = None
+        print("Getting token...")
+        records = arxiv_records(BytesIO(fetch_records(rxiv, start=self.last)))
 
-        #     print("Getting token...")
-        #     records = arxiv_records(BytesIO(fetch_records(rxiv, start=self.last)))
+        assert records.list_records is not None
+        for record in records.list_records.record:
+            assert record.header is not None
+            assert isinstance(record.header.datestamp, XmlDate)
+            record_date = record.header.datestamp.to_datetime()
+            if record_date >= last:
+                last = record_date
 
-        #     assert records.list_records is not None
-        #     for record in records.list_records.record:
-        #         assert record.header is not None
-        #         assert isinstance(record.header.datestamp, XmlDate)
-        #         record_date = record.header.datestamp.to_datetime()
-        #         if record_date >= last:
-        #             last = record_date
+        token = records.list_records.resumption_token
+        key, next_index = token.value.split("|")
+        index = token.cursor
+        assert token.complete_list_size is not None
 
-        #     token = records.list_records.resumption_token
-        #     key, next_index = token.value.split("|")
-        #     index = token.cursor
-        #     assert token.complete_list_size is not None
+        print(f"Resuming from date: {last}")
 
-        #     print(f"Resuming from date: {last}")
-
-        #     for i in tqdm(
-        #         range(int(index), token.complete_list_size, 1000),
-        #         total=((token.complete_list_size - int(index)) // 1000 + 1),
-        #     ):
-        #         thread_token = ResumptionTokenType(
-        #             value="|".join([key, str(i)]), cursor=i
-        #         )
-        #         fetch_and_store("arXiv", thread_token, path, now)
+        for i in tqdm(
+            range(int(index), token.complete_list_size, 1000),
+            total=((token.complete_list_size - int(index)) // 1000 + 1),
+        ):
+            thread_token = ResumptionTokenType(value="|".join([key, str(i)]), cursor=i)
+            fetch_and_store("arXiv", thread_token, path, now)
