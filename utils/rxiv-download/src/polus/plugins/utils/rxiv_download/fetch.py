@@ -1,17 +1,21 @@
-import time
+import logging
+import os
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from typing import Optional
+from typing import Union
 
 import requests
 from rxiv_types import arxiv_records
 from rxiv_types.models.oai_pmh.org.openarchives.oai.pkg_2.resumption_token_type import (
     ResumptionTokenType,
 )
-from tqdm import tqdm
 from xsdata.models.datatype import XmlDate
+
+logger = logging.getLogger(__name__)
+logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 RXIVS = {
     "arXiv": {"url": "https://export.arxiv.org/oai2", "stride": 1000},
@@ -46,7 +50,6 @@ class ArxivDownload:
         self.token = token
         self.start = start
         self.now = datetime.now()
-        self.fixed_date = datetime(1900, 1, 1)
 
         if self.rxiv not in RXIVS:
             msg = f"{self.rxiv} is an invalid rxiv value. Must be one of {list(RXIVS)}"
@@ -56,28 +59,34 @@ class ArxivDownload:
 
         if self.start is None:
             self.last = datetime(1900, 1, 1)
-        else:
-            self.last = self._resume_from()
+
+        if self.start:
+            if len([f for f in path.iterdir() if f.name.endswith(".xml")]) != 0:
+                self.last = self._resume_from()
+            else:
+                self.last = self.start
 
         self.params = {"verb": "ListRecords"}
         if self.token is not None:
             self.params.update({"resumptionToken": token.value})
-        self.file_path = self.path_from_token()
 
-    def path_from_token(self) -> Path:
+    @staticmethod
+    def path_from_token(
+        path: Path, rxiv: str, last: datetime, token: int,
+    ) -> Union[Path, None]:
         """Creating output directory for saving records."""
-        if self.token is not None:
-            file_path = self.path.joinpath(
-                f"{self.rxiv}_"
-                + f"{self.last.year}{str(self.last.month).zfill(2)}{str(self.last.day).zfill(0)}_"
-                + f"{int(self.token.cursor)}.xml",
+        if token is not None:
+            file_path = path.joinpath(
+                f"{rxiv}_"
+                + f"{last.year}{str(last.month).zfill(2)}{str(last.day).zfill(0)}_"
+                + f"{int(token.cursor)}.xml",
             )
             file_path.parent.mkdir(exist_ok=True, parents=True)
 
             return file_path
         return None
 
-    def fetch_records(self):
+    def fetch_records(self) -> requests.Session:
         """Fetch OAI records from an API."""
         # Configure endpoint parameters
 
@@ -94,7 +103,8 @@ class ArxivDownload:
         return response.content
 
     @staticmethod
-    def _get_latest(file: Path):
+    def _get_latest(file: Path) -> datetime:
+        """Find the latest date to resume download files."""
         fixed_date = datetime(1900, 1, 1)
         records = arxiv_records(str(file.absolute()))
         if records.list_records is None:
@@ -112,54 +122,63 @@ class ArxivDownload:
                 last = record_date
         return last
 
-    def _resume_from(self):
+    def _resume_from(self) -> datetime:
         """Find the previous cursor and create a resume token."""
-        files = [
-            f
-            for f in self.path.iterdir()
-            if f.is_file() and f.name.startswith(self.rxiv)
-        ]
+        if not self.path.exists():
+            return datetime(1900, 1, 1)
 
-        with ProcessPoolExecutor() as executor:
-            dates = list(executor.map(self._get_latest, files))
-            return max(dates)
+        else:
+            files = [
+                f
+                for f in self.path.iterdir()
+                if f.is_file() and f.name.startswith(self.rxiv)
+            ]
 
+            with ProcessPoolExecutor() as executor:
+                dates = list(executor.map(self._get_latest, files))
+                return max(dates)
 
     @staticmethod
-    def store_records(path: Path, record: bytes):
-        with open(path, "wb") as fw:
+    def store_records(path: Path, record: bytes) -> None:
+        """Writing response content as XML."""
+        with Path.open(path, "wb") as fw:
             fw.write(record)
 
-    def fetch_and_store(self) -> None:
-        records = self.fetch_records()
-        path = self.path_from_token()
-        self.store_records(path, records)
-        time.sleep(7)
+    def fetch_and_store_all(self) -> None:
+        """Writing response content as XML."""
+        logger.info("Getting token...")
 
-    def fetch_and_store_all(self):
-        token = None
+        response = self.fetch_records()
 
-        print("Getting token...")
-        records = arxiv_records(BytesIO(fetch_records(rxiv, start=self.last)))
+        records = arxiv_records(BytesIO(response))
 
-        assert records.list_records is not None
+        if records.list_records is None:
+            msg = "Unable to download a record"
+            raise ValueError(msg)
+
         for record in records.list_records.record:
-            assert record.header is not None
-            assert isinstance(record.header.datestamp, XmlDate)
-            record_date = record.header.datestamp.to_datetime()
-            if record_date >= last:
-                last = record_date
+            if record.header is not None:
+                if not isinstance(record.header.datestamp, XmlDate):
+                    msg = "Error with downloading a XML record"
+                    raise ValueError(msg)
+
+                record_date = record.header.datestamp.to_datetime()
+                if record_date >= self.last:
+                    self.last = record_date
 
         token = records.list_records.resumption_token
-        key, next_index = token.value.split("|")
-        index = token.cursor
-        assert token.complete_list_size is not None
+        key, _ = token.value.split("|")
+        if token.complete_list_size is None:
+            msg = "Error with downloading a XML record"
+            raise ValueError(msg)
 
-        print(f"Resuming from date: {last}")
+        logger.info(f"Resuming from date: {self.last}")
 
-        for i in tqdm(
-            range(int(index), token.complete_list_size, 1000),
-            total=((token.complete_list_size - int(index)) // 1000 + 1),
-        ):
-            thread_token = ResumptionTokenType(value="|".join([key, str(i)]), cursor=i)
-            fetch_and_store("arXiv", thread_token, path, now)
+        if token is not None:
+            file_path = self.path_from_token(
+                path=self.path, rxiv=self.rxiv, last=self.last, token=token,
+            )
+            self.store_records(path=file_path, record=response)
+
+        # for i in tqdm(
+        # ):

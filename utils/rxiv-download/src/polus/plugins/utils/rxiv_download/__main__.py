@@ -39,7 +39,7 @@ def main(
         help="A resumption token",
     ),
     start: Optional[datetime] = typer.Option(
-        None,
+        datetime.now(),
         "--start",
         help="Start date",
     ),
@@ -63,7 +63,7 @@ def main(
     assert path.exists(), f"{path} does not exist!! Please check input path again"
 
     model = ArxivDownload(path=path, rxiv=rxiv, token=token, start=start)
-    model._resume_from()
+    model.fetch_and_store_all()
 
     # if preview:
     #     with Path.open(Path(out_dir, "preview.json"), "w") as jfile:
