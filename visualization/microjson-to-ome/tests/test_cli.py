@@ -43,3 +43,6 @@ def test_cli_short(generate_jsondata: Path, output_directory: Path) -> None:
 
     assert result.exit_code == 0
     clean_directories()
+
+
+clean_directories()

@@ -81,7 +81,7 @@ def main(
                 out_dir=out_dir,
                 file_path=f[1][0],
             )
-            future = executor.submit(model.convert_microjson_to_ome)
+            future = executor.submit(model.microjson_to_ome)
             threads.append(future)
 
         for f in tqdm(

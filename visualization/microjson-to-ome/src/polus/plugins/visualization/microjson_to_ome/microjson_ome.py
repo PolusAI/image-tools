@@ -1,18 +1,73 @@
 """Micojson to Ome."""
+import errno
 import json
 import logging
+import os
 from pathlib import Path
-from typing import Any
+from typing import Union
 
 import numpy as np
+import pydantic
 import skimage as sk
 from bfio import BioWriter
+from microjson import MicroJSON
+from microjson.model import Feature
+from microjson.model import Properties
+from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-class MicrojsonOmeModel:
+class CustomValidation(pydantic.BaseModel):
+    """Properties with validation."""
+
+    out_dir: Union[str, Path]
+    file_path: Union[str, Path]
+
+    @pydantic.validator("out_dir", pre=True)
+    @classmethod
+    def validate_out_dir(cls, value: Union[str, Path]) -> Union[str, Path]:
+        """Validation of Paths."""
+        if not Path(value).exists():
+            msg = f"{value} do not exist! Please do check it again"
+            raise ValueError(msg)
+        if isinstance(value, str):
+            return Path(value)
+        return value
+
+    @pydantic.validator("file_path", pre=True)
+    @classmethod
+    def validate_file_path(cls, value: Union[str, Path]) -> Union[str, Path]:
+        """Validation of Microjson file path and data."""
+        if not Path(value).exists():
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), value)
+        if not MicroJSON.model_validate(json.load(Path.open(Path(value)))):
+            msg = f"Not a valid MicroJSON {Path(value).name}"
+            raise ValidationError(msg)
+
+        keyslist = [
+            "type",
+            "features",
+            "coordinatesystem",
+            "value_range",
+            "properties",
+        ]
+        with Path.open(Path(value)) as jf:
+            data = json.load(jf)
+        if not (
+            list(data.keys()) == keyslist
+            and data.get("features")[0].get("geometry")["type"] == "Polygon"
+        ):
+            msg = f"Not a valid MicroJSON {Path(value).name}"
+            raise ValidationError(msg)
+
+        if isinstance(value, str):
+            return Path(value)
+        return value
+
+
+class MicrojsonOmeModel(CustomValidation):
     """Reconstruct binary masks from polygons coordinates (rectangle, encoding).
 
     Args:
@@ -20,53 +75,11 @@ class MicrojsonOmeModel:
         file_path: Microjson file path
     """
 
-    def __init__(self, out_dir: Path, file_path: Path) -> None:
-        """Convert each object polygons (series of points, rectangle) to binary mask."""
-        self.out_dir = out_dir
-        if not self.out_dir.exists():
-            self.out_dir.mkdir(parents=True, exist_ok=True)
-        self.file_path = file_path
-        if not self.validate_json:  # type: ignore
-            msg = "Invalid json file"
-            raise ValueError(msg)
-        if not self.validate_data:  # type: ignore
-            msg = "Invalid json data"
-            raise ValueError(msg)
+    out_dir: Union[str, Path]
+    file_path: Union[str, Path]
 
-        self.data = json.load(Path.open(self.file_path))
-
-    def validate_json(self) -> bool:
-        """Validate json file."""
-        try:
-            json.load(Path.open(self.file_path))
-            return True
-        except ValueError as error:
-            logger.info(f"Invalid json file {error}")
-        return False
-
-    def validate_data(self) -> bool:
-        """Validate json data."""
-        try:
-            keyslist = [
-                "type",
-                "features",
-                "coordinatesystem",
-                "value_range",
-                "descriptive_fields",
-            ]
-            geometry = "Polygon"
-            data = json.load(Path.open(self.file_path))
-            if (
-                list(data.keys()) == keyslist
-                and data.get("features")[0].get("geometry")["type"] == geometry
-            ):
-                return True
-        except ValueError as error:
-            logger.info(f"Invalid json file {error}")
-
-        return False
-
-    def save_ometif(self, image: np.ndarray, out_file: Path) -> None:
+    @classmethod
+    def save_ometif(cls, image: np.ndarray, out_file: Path) -> None:
         """Write ome tif image."""
         with BioWriter(file_path=out_file) as bw:
             bw.X = image.shape[1]
@@ -74,33 +87,31 @@ class MicrojsonOmeModel:
             bw.dtype = image.dtype
             bw[:] = image
 
-    def parsing_microjson(self) -> tuple[list[Any], Any, int, int]:
-        """Parsing microjson to get polygon coordinates, image name and dimesions."""
-        poly = [
-            self.data["features"][i]["geometry"]["coordinates"]
-            for i in range(len(self.data["features"]))
-        ]
-        image_name = self.data["properties"]["string"]["Image"]
-        x = int(self.data["properties"]["numeric"]["X"])
-        y = int(self.data["properties"]["numeric"]["Y"])
-        return poly, image_name, x, y
-
-    def convert_microjson_to_ome(self) -> None:
+    def microjson_to_ome(self) -> None:
         """Convert polygon coordinates (points, rectangle) of objects to binary mask."""
-        poly, image_name, x, y = self.parsing_microjson()
-
-        final_mask = np.zeros((x, y), dtype=np.uint8)
-
-        image = final_mask.copy()
+        data = json.load(Path.open(Path(self.file_path)))
+        items = [Feature(**item) for item in data["features"]]
+        poly = [i.geometry.coordinates for i in items]
+        meta = Properties(**data["properties"])
+        image_name = meta.string.get("Image")
+        x = int(meta.string.get("X"))
+        y = int(meta.string.get("Y"))
+        fmask = np.zeros((x, y), dtype=np.uint8)
         for i, _ in enumerate(poly):
+            image = fmask.copy()
             pol = np.array(poly[i][0])
             mask = sk.draw.polygon2mask((x, y), pol)
-            image[mask is True] = 1
             image[mask is False] = 0
-            final_mask += image
-        final_mask = np.rot90(final_mask)
-        final_mask = np.flipud(final_mask)
-        out_file = Path(str(self.out_dir), str(image_name))
-        self.save_ometif(final_mask, out_file)
-
-        return final_mask
+            image[mask is True] = 1
+            fmask += image
+        fmask = np.rot90(fmask)
+        fmask = np.flipud(fmask)
+        out_name = Path(self.out_dir, image_name)
+        n_unique = 3
+        n = 2
+        if len(np.unique(fmask)) == n_unique:
+            tmp_mask = fmask.copy()
+            tmp_mask[fmask == n] = 1
+            self.save_ometif(image=tmp_mask, out_file=out_name)
+        else:
+            self.save_ometif(image=fmask, out_file=out_name)

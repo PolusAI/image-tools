@@ -17,7 +17,7 @@ def test_microjsonomemodel(generate_jsondata: Path, output_directory: Path) -> N
             out_dir=output_directory,
             file_path=file,
         )
-        model.convert_microjson_to_ome()
+        model.microjson_to_ome()
     for outfile in output_directory.iterdir():
         br = BioReader(outfile)
         image = br.read()

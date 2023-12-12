@@ -1,4 +1,4 @@
-# Microjson To Ome(v0.1.1)
+# Microjson To Ome(v0.1.2-dev)
 
 This plugin reconstructs binary image from polygon coordinates reserved in microjson file format
 
@@ -45,7 +45,7 @@ This plugin can take four input arguments and one output argument:
 ### Run the Docker Container
 
 ```bash
-docker run -v /data:/data polusai/microjson-to-ome-plugin:0.1.0 \
+docker run -v /data:/data polusai/microjson-to-ome-plugin:0.1.2-dev \
   --inpDir /data/input \
   --filePattern ".*.json" \
   --outDir /data/output \
