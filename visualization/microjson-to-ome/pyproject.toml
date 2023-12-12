@@ -15,7 +15,7 @@ typer = "^0.7.0"
 scipy = ">=1.8,<1.9.2"
 filepattern = "^2.0.4"
 tqdm = "^4.65.0"
-microjson = "0.1.7"
+microjson = "^0.1.9"
 scikit-image = "0.20.0"
 pydantic = "^2.5.2"
 
