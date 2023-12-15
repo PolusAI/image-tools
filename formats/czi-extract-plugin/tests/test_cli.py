@@ -20,3 +20,21 @@ def test_cli(download_czi, output_directory) -> None:
     )
 
     assert result.exit_code == 0
+
+
+def test_short_cli(download_czi, output_directory) -> None:
+    """Test the short cli command line."""
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "-i",
+            download_czi,
+            "-f",
+            ".*.czi",
+            "-o",
+            output_directory,
+        ],
+    )
+
+    assert result.exit_code == 0

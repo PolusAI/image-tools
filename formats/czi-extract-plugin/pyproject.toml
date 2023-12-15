@@ -15,7 +15,7 @@ filepattern = "^2.0.4"
 typer = "^0.7.0"
 tqdm = "^4.64.1"
 bfio = {version = "2.3.3", extras = ["all"]}
-preadator="0.3.0.dev1"
+preadator="0.4.0.dev2"
 czifile="^2019.7.2"
 
 [tool.poetry.group.dev.dependencies]

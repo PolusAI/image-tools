@@ -2,6 +2,7 @@
 import json
 import logging
 import os
+from concurrent.futures import as_completed
 from multiprocessing import cpu_count
 from pathlib import Path
 from typing import Any
@@ -9,8 +10,9 @@ from typing import Optional
 
 import filepattern as fp
 import polus.plugins.formats.czi_extract.czi as cz
+import preadator
 import typer
-from preadator import ProcessManager
+from tqdm import tqdm
 
 # Import environment variables
 POLUS_EXT = os.environ.get("POLUS_EXT", ".ome.tif")
@@ -64,10 +66,7 @@ def main(
         out_dir.exists()
     ), f"{out_dir} does not exist!! Please check output path again"
 
-    num_threads = max([cpu_count(), 2])
-
-    ProcessManager.num_processes(num_threads)
-    ProcessManager.init_processes(name="Czi Extraction")
+    num_workers = max([cpu_count(), 2])
 
     files = fp.FilePattern(inp_dir, file_pattern)
 
@@ -90,9 +89,27 @@ def main(
                 out_json["outDir"].append(out_name)
             json.dump(out_json, jfile, indent=2)
 
-    for file in files():
-        ProcessManager.submit_process(cz.extract_fovs, file[1][0], out_dir)
-        ProcessManager.join_processes()
+    with preadator.ProcessManager(
+        name="Convert czi to individual ome tif",
+        num_processes=num_workers,
+        threads_per_process=2,
+    ) as pm:
+        threads = []
+        for file in files():
+            thread = pm.submit_process(cz.extract_fovs, file[1][0], out_dir)
+            threads.append(thread)
+        pm.join_processes()
+
+        for f in tqdm(
+            as_completed(threads),
+            total=len(threads),
+            mininterval=5,
+            desc="Extract czi",
+            initial=0,
+            unit_scale=True,
+            colour="cyan",
+        ):
+            f.result()
 
 
 if __name__ == "__main__":
