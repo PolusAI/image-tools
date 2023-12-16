@@ -128,7 +128,7 @@ def precompute_slide(  # noqa: C901
             if pyramid_type in [utils.PyramidType.Neuroglancer, utils.PyramidType.Zarr]:
                 if image_type == utils.ImageType.Segmentation:
                     pm.join_processes()
-                logger.info("write pyramid info...")
+                logger.debug("write pyramid info...")
                 pyramid_writer.write_info()
 
         pm.join_processes()

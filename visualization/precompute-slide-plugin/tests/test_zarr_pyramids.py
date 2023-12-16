@@ -5,28 +5,20 @@ import math
 import pathlib
 import shutil
 import tempfile
-import numpy
+from collections.abc import Iterator
 
+import bfio
+import numpy
 import pytest
 import zarr
-import bfio
 from polus.plugins.visualization.precompute_slide import precompute_slide
 from polus.plugins.visualization.precompute_slide.utils import ImageType
 from polus.plugins.visualization.precompute_slide.utils import PyramidType
 
 from . import helpers
 
-
-FixtureReturnType = tuple[
-    pathlib.Path,  # input dir
-    pathlib.Path,  # output dir
-    pathlib.Path,  # input image path
-    ImageType,
-    PyramidType,
-]
-
-IMAGE_Y = [1024 * (2**i) for i in range(5)]
-IMAGE_X = [1024 * (2**i) for i in range(5)]
+IMAGE_Y = [1023, 1024, 2047, 2048]
+IMAGE_X = [911, 1024]
 PARAMS = [
     (image_y, image_x, image_type, pyramid_type)
     for image_y, image_x, image_type, pyramid_type in itertools.product(
@@ -44,57 +36,64 @@ IDS = [
 
 
 @pytest.fixture(params=PARAMS, ids=IDS)
-def gen_image(request: pytest.FixtureRequest) -> FixtureReturnType:
-    """Generate an image for combination of any user defined params.
-
-    Returns:
-        Path to the input directory.
-        Path to the output directory.
-        Path to the input image.
-        Image type.
-        Pyramid type.
-    """
-    image_y: int
-    image_x: int
-    image_type: ImageType
-    pyramid_type: PyramidType
-    (image_y, image_x, image_type, pyramid_type) = request.param
-
+def sample_images_small(
+    request: pytest.FixtureRequest,
+) -> Iterator[helpers.FixtureReturnType]:
+    """Generate small test images for acceptance tests."""
     # create a temporary directory for data
     data_dir = pathlib.Path(tempfile.mkdtemp(suffix="_data_dir"))
-
-    input_dir = data_dir.joinpath("inp_dir")
-    input_dir.mkdir()
-
-    output_dir = data_dir.joinpath("out_dir")
-    output_dir.mkdir()
-
-    # generate image data
-    image_name = "test_image"
-    if image_type == ImageType.Segmentation:
-        image_path = helpers.create_label_image(
-            input_dir=input_dir,
-            image_y=image_y,
-            image_x=image_x,
-            image_name=image_name,
-        )
-    else:  # image_type == ImageType.Intensity
-        image_path = helpers.create_intensity_image(
-            input_dir=input_dir,
-            image_y=image_y,
-            image_x=image_x,
-            image_name=image_name,
-        )
-
-    yield (input_dir, output_dir, image_path, image_type, pyramid_type)
-
+    _staging_data = helpers.gen_image(data_dir, request.param)
     # cleanup
+    yield _staging_data
     shutil.rmtree(data_dir)
 
 
-def test_zarr_pyramid(
-    gen_image: FixtureReturnType,
-) -> None:
+def test_zarr_pyramid_small(sample_images_small: helpers.FixtureReturnType) -> None:
+    """Test building zarr pyramids from small images."""
+    _test_zarr_pyramid(sample_images_small)
+
+
+IMAGE_Y = [1024 * (2**i) for i in range(3, 5)]
+IMAGE_X = [1024 * (2**i) for i in range(3, 5)]
+PARAMS = [
+    (image_y, image_x, image_type, pyramid_type)
+    for image_y, image_x, image_type, pyramid_type in itertools.product(
+        IMAGE_Y,
+        IMAGE_X,
+        list(ImageType),
+        list(PyramidType),
+    )
+    if pyramid_type == PyramidType.Zarr
+]
+IDS = [
+    f"{image_y}_{image_x}_{image_type}_{pyramid_type}"
+    for (image_y, image_x, image_type, pyramid_type) in PARAMS
+]
+
+
+@pytest.fixture(params=PARAMS, ids=IDS)
+def sample_images_large(
+    request: pytest.FixtureRequest,
+) -> Iterator[helpers.FixtureReturnType]:
+    """Create large images to test scalability."""
+    # create a temporary directory for data
+    data_dir = pathlib.Path(tempfile.mkdtemp(suffix="_data_dir"))
+    _staging_data = helpers.gen_image(data_dir, request.param)
+    # cleanup
+    yield _staging_data
+    shutil.rmtree(data_dir)
+
+
+@pytest.mark.skipif("not config.getoption('slow')")
+def test_zarr_pyramid_large(sample_images_large: helpers.FixtureReturnType) -> None:
+    """Create large images to test scalability.
+
+    Only run if pytest is run with the --slow flag.
+    """
+    _test_zarr_pyramid(sample_images_large)
+
+
+def _test_zarr_pyramid(sample_images: helpers.FixtureReturnType) -> None:
     """Test the creation of a zarr pyramid.
 
     The tests are mostly checking that the output zarr is a valid zarr pyramid.
@@ -102,7 +101,7 @@ def test_zarr_pyramid(
     TODO at this moment, I did not find an authoritative source for specifying
     the zarr pyramid format.
     """
-    input_dir, output_dir, image_path, image_type, pyramid_type = gen_image
+    input_dir, output_dir, image_path, image_type, pyramid_type = sample_images
 
     with bfio.BioReader(image_path) as reader:
         num_expected_levels = 1 + int(math.log2(max(reader.X, reader.Y)))
@@ -124,8 +123,11 @@ def test_zarr_pyramid(
     for suffix in image_path.suffixes:
         image_stem = image_stem.replace(suffix, "")
     assert zarr_dir.name.startswith(
-        image_stem
-    ), f"Top directory name does not match image name. Expected {image_stem}, got {zarr_dir.name}"
+        image_stem,
+    ), (
+        f"Top directory name does not match image name."
+        f"Expected {image_stem}, got {zarr_dir.name}"
+    )
 
     # check we have a first zarr group
     zarr_top_level_group: pathlib.Path
@@ -169,18 +171,18 @@ def test_zarr_pyramid(
     # need to do this loop to check each level.
     for level in range(num_levels):
         actual_array: numpy.ndarray = levels[str(level)][:]
-        assert (
-            actual_array.shape == expected_image.shape
-        ), f"Level {level} shape does not match expected shape. Expected {expected_image.shape}, got {actual_array.shape}"
+        assert actual_array.shape == expected_image.shape, (
+            f"Level {level} shape does not match expected shape."
+            f"Expected {expected_image.shape}, got {actual_array.shape}"
+        )
 
         assert numpy.all(
-            actual_array == expected_image
+            actual_array == expected_image,
         ), f"Level {level} image is incorrect\n{actual_array}\n{expected_image}"
 
         if actual_array.size > 1:
-            expected_shape = helpers.next_level_shape(expected_shape)
+            expected_shape = helpers.next_level_shape(expected_shape)  # type: ignore
             expected_image = downsample_image(expected_image)
-    else:
-        assert all(
-            l_ == 1 for l_ in expected_shape
-        ), f"Last level shape is not all 1s. Got {expected_shape}"
+    assert all(
+        l_ == 1 for l_ in expected_shape
+    ), f"Last level shape is not all 1s. Got {expected_shape}"

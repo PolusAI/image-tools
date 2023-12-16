@@ -1,9 +1,67 @@
 """Helper functions for tests."""
 
 import pathlib
+from typing import Optional
 
 import bfio
 import numpy
+import pytest
+from polus.plugins.visualization.precompute_slide.utils import ImageType
+from polus.plugins.visualization.precompute_slide.utils import PyramidType
+
+FixtureReturnType = tuple[
+    pathlib.Path,  # input dir
+    pathlib.Path,  # output dir
+    pathlib.Path,  # input image path
+    ImageType,
+    PyramidType,
+]
+
+
+def gen_image(
+    data_dir: pathlib.Path,
+    request: pytest.FixtureRequest,
+    name: Optional[str] = None,
+) -> FixtureReturnType:
+    """Generate an image for combination of any user defined params.
+
+    Returns:
+        Path to the input directory.
+        Path to the output directory.
+        Path to the input image.
+        Image type.
+        Pyramid type.
+    """
+    image_y: int
+    image_x: int
+    image_type: ImageType
+    pyramid_type: PyramidType
+    (image_y, image_x, image_type, pyramid_type) = request
+
+    input_dir = data_dir.joinpath("inp_dir")
+    input_dir.mkdir(exist_ok=True)
+
+    output_dir = data_dir.joinpath("out_dir")
+    output_dir.mkdir(exist_ok=True)
+
+    # generate image data
+    image_name = "test_image" if name is None else name
+    if image_type == ImageType.Segmentation:
+        image_path = create_label_image(
+            input_dir=input_dir,
+            image_y=image_y,
+            image_x=image_x,
+            image_name=image_name,
+        )
+    else:  # image_type == ImageType.Intensity
+        image_path = create_intensity_image(
+            input_dir=input_dir,
+            image_y=image_y,
+            image_x=image_x,
+            image_name=image_name,
+        )
+
+    return (input_dir, output_dir, image_path, image_type, pyramid_type)
 
 
 def _create_centered_square(image_y: int, image_x: int) -> numpy.ndarray:
