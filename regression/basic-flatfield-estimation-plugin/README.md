@@ -19,6 +19,7 @@ darkfield, and photobleaching offsets can be generated for each subset of
 images.
 
 ## Input Regular Expressions
+
 This plugin uses
 [filepatterns](https://filepattern.readthedocs.io/en/latest/Examples.html#what-is-filepattern)
 to select data in an input collection for .
@@ -46,15 +47,24 @@ To build the Docker image for the conversion plugin, run
 In WIPP, navigate to the plugins page and add a new plugin. Paste the contents
 of `plugin.json` into the pop-up window and submit.
 
+## Running tests
+
+To run the tests, the command is `python -m pytest tests/*`. This will run all tests in the `tests` directory.
+
+Since this plugin is only a thin wrapper around the `basicpy` package, the tests are limited to verifying that the plugin is able to run and that the output images are generated.
+The tests do not verify that the output images are correct.
+This check is performed by the `basicpy` package, which has its own tests.
+
 ## Options
 
 This plugin takes 4 input arguments and 1 output argument:
 
-| Name            | Description                                  | I/O    | Type    |
-|-----------------|----------------------------------------------|--------|---------|
-| `--inpDir`      | Path to input images                         | Input  | String  |
-| `--darkfield`   | If 'true', will calculate darkfield image    | Input  | Boolean |
-| `--photobleach` | If 'true', will calculate photobleach scalar | Input  | Boolean |
-| `--filePattern` | File pattern to subset data                  | Input  | String  |
-| `--groupBy`     | Variables to group together                  | Input  | String  |
-| `--outDir`      | Output image collection                      | Output | String  |
+| Name            | Description                                                 | I/O    | Type    |
+|-----------------|-------------------------------------------------------------|--------|---------|
+| `--inpDir`      | Path to input images                                        | Input  | String  |
+| `--darkfield`   | If 'true', will calculate darkfield image                   | Input  | Boolean |
+| `--photobleach` | If 'true', will calculate photobleach scalar                | Input  | Boolean |
+| `--filePattern` | File pattern to subset data                                 | Input  | String  |
+| `--groupBy`     | Variables to group together                                 | Input  | String  |
+| `--outDir`      | Output image collection                                     | Output | String  |
+| `--preview`     | Preview the names of output images without running any code | Input | Boolean |

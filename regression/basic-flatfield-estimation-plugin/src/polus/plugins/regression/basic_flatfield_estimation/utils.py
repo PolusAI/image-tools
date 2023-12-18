@@ -21,6 +21,20 @@ logger.setLevel(POLUS_LOG)
 
 
 def _load_img(path: pathlib.Path, i: int) -> tuple[int, numpy.ndarray]:
+    """Load an image from a path.
+
+    This method is meant to be used in a thread. The index is used to sort the
+    images after they are loaded and returned from the threads. This is to
+    ensure that the order of the images is preserved even though returning from
+    the threads is not guaranteed to be in order.
+
+    Args:
+        path: Path to an image.
+        i: Index of the image.
+
+    Returns:
+        Tuple of the image index and the image.
+    """
     with bfio.BioReader(path, max_workers=1) as reader_:
         img = numpy.squeeze(reader_[:, :, 0, 0, 0])
     return i, img
