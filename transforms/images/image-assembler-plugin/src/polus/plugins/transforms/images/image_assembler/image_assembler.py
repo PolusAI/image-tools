@@ -216,7 +216,6 @@ def assemble_image(
         # we are parsing a stitching vector, so we are always getting unique records.
         # NOTE : WHY NOT REMOVE ASSERT WHEN IN PRODUCTION, BUT NOTHING TO DO
         # WITH THE USER
-        # assert len(fov[1]) == 1
         filename = fov[1][0]
 
         # get global coordinates of fov in the final image
