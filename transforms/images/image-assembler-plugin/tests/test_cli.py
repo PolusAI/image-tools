@@ -10,11 +10,11 @@ from typer.testing import CliRunner
 faulthandler.enable()
 
 
-def test_cli(data: None, plugin_dirs: tuple[Path, Path, Path]):  # noqa
+def test_cli(local_data: tuple[Path, Path, Path, Path]):
     """Test the command line."""
     runner = CliRunner()
 
-    inp_dir, stitch_dir, out_dir = plugin_dirs
+    inp_dir, stitch_dir, out_dir, _ = local_data
 
     result = runner.invoke(
         app,
@@ -31,11 +31,11 @@ def test_cli(data: None, plugin_dirs: tuple[Path, Path, Path]):  # noqa
     assert result.exit_code == 0
 
 
-def test_cli_preview(data: None, plugin_dirs: tuple[Path, Path, Path]):  # noqa
+def test_cli_preview(local_data: tuple[Path, Path, Path, Path]):
     """Test the preview option."""
     runner = CliRunner()
 
-    inp_dir, stitch_dir, out_dir = plugin_dirs
+    inp_dir, stitch_dir, out_dir, _ = local_data
 
     result = runner.invoke(
         app,
@@ -63,12 +63,12 @@ def test_cli_preview(data: None, plugin_dirs: tuple[Path, Path, Path]):  # noqa
     assert Path(result[0]).name == "img_r00(1-2)_c00(1-2).ome.tif"
 
 
-def test_cli_bad_input(plugin_dirs: tuple[Path, Path, Path]):  # noqa
+def test_cli_bad_input(local_data: tuple[Path, Path, Path, Path]):
     """Test bad inputs."""
     runner = CliRunner()
 
-    inp_dir, stitch_dir, out_dir = plugin_dirs
-    inp_dir = Path("/does_not_exists")
+    inp_dir, stitch_dir, out_dir, _ = local_data
+    inp_dir = Path("does_not_exists")
 
     result = runner.invoke(
         app,
@@ -82,4 +82,4 @@ def test_cli_bad_input(plugin_dirs: tuple[Path, Path, Path]):  # noqa
         ],
     )
 
-    assert result.exc_info[0] is ValueError  # noqa: S101
+    assert result.exc_info[0] is ValueError
