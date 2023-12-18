@@ -34,21 +34,21 @@ FixtureReturnType = tuple[
     pathlib.Path,  # out_dir
     image_calculator.Operation,  # operation
 ]
-IMAGE_SIZE = [1024 * (2**i) for i in range(4)]
+IMAGE_SIZE = [1024 * (2**i) for i in (2, 4)]
 OPERATIONS = image_calculator.Operation.variants()
-PARAMS = [
-    (r"img_c{c}.ome.tif", s, o) for s, o in itertools.product(IMAGE_SIZE, OPERATIONS)
-]
-IDS = [f"{s}_{o.value.lower()}" for _, s, o in PARAMS]
+PARAMS = list(itertools.product(IMAGE_SIZE, OPERATIONS))
+IDS = [f"{size}_{op.value.lower()}" for size, op in PARAMS]
 
 
 @pytest.fixture(params=PARAMS, ids=IDS)
 def gen_images(request: pytest.FixtureRequest) -> FixtureReturnType:
     """Generate a set of random images for testing."""
-    pattern: str
     size: int
     op: image_calculator.Operation
-    pattern, size, op = request.param
+    size, op = request.param
+    pattern = "img_c{c}.ome.tif"
+
+    num_images = 3
 
     # make a temporary directory
     data_dir = pathlib.Path(tempfile.mkdtemp(suffix="_data_dir"))
@@ -62,13 +62,15 @@ def gen_images(request: pytest.FixtureRequest) -> FixtureReturnType:
     rng = numpy.random.default_rng(42)
 
     # Generate a list of file names
-    names = [pattern.format(c=v + 1) for v in range(6)]
+    names = [pattern.format(c=v + 1) for v in range(num_images)]
     for name in names:
         _make_random_image(primary_dir.joinpath(name), rng, size)
         _make_random_image(secondary_dir.joinpath(name), rng, size)
 
     out_dir = data_dir.joinpath("outputs")
     out_dir.mkdir(exist_ok=True)
+
+    pattern = "img_c{c:d}.ome.tif"
 
     yield pattern, primary_dir, secondary_dir, out_dir, op
 

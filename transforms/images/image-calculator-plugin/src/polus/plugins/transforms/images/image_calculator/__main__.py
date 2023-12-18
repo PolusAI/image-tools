@@ -89,35 +89,35 @@ def _main(  # noqa: PLR0913
     ) as executor:
         futures = []
 
-        for files in fp_primary():
-            # get the first file
-            file = files.pop()
+        group: dict[str, int]
+        files: list[pathlib.Path]
+        for group, files in fp_primary():
+            for file in files:
+                logger.info(f"Processing {file.name} ...")
 
-            logger.info(f'Processing image: {file["file"]}')
+                matches: list[pathlib.Path] = fp_secondary.get_matching(**group)[0][1]
 
-            matches = fp_secondary.get_matching(
-                **{k.upper(): v for k, v in file.items() if k != "file"},
-            )
-            if len(matches) > 1:
-                msg = "".join(
-                    [
-                        "Found multiple secondary images to match the primary image: ",
-                        f"{file['file'].name}. ",
-                        f"Matches: {matches}",
-                    ],
+                if len(matches) > 1:
+                    msg = "".join(
+                        [
+                            "Found multiple secondary images to match the ",
+                            f"primary image: {file.name}.\n",
+                            f"Matches: {matches}.\n",
+                            f"Using only the first match: {matches[0]}",
+                        ],
+                    )
+                    logger.warning(msg)
+                match = matches.pop()
+
+                futures.append(
+                    executor.submit(
+                        image_calculator.process_image,
+                        file,
+                        match,
+                        out_dir,
+                        operation,
+                    ),
                 )
-                logger.warning(msg)
-            sfile = matches.pop()
-
-            futures.append(
-                executor.submit(
-                    image_calculator.process_image,
-                    file["file"],
-                    sfile["file"],
-                    out_dir,
-                    operation,
-                ),
-            )
 
         for future in tqdm.tqdm(
             concurrent.futures.as_completed(futures),

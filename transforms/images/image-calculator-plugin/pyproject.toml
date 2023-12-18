@@ -11,20 +11,13 @@ packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-bfio = {version = "2.1.9", extras = ["all"]}
-# filepattern = [
-#     { version = "^2.0.0", platform = "linux" },
-#     { version = "^2.0.0", platform = "win32" },
-#     { git = "https://github.com/PolusAI/filepattern", rev = "c07bf543c435cbc4cf264effd5a178868e9eaf19", platform = "darwin" },
-# ]
+bfio = {version = "2.3.3", extras = ["all"]}
+# filepattern = "1.4.7"
+filepattern = "2.0.4"
 typer = "^0.7.0"
 tqdm = "^4.65.0"
-filepattern = "1.4.7"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.3.0"
-ruff = "^0.0.272"
-mypy = "^1.4.0"
 pre-commit = "^3.3.3"
 bump2version = "^1.0.1"
 pytest = "^7.3.2"
