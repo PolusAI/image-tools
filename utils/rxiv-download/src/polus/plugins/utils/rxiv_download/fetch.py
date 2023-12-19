@@ -101,32 +101,27 @@ class ArxivDownload:
         """Fetch OAI records from an API."""
         # Configure parameters
         if self.start is not None:
-            try:
-                self.params.update(
-                    {
-                        "from": f"{self.start.year}-"
-                        + f"{str(self.start.month).zfill(2)}-"
-                        + f"{str(self.start.day).zfill(2)}",
-                        "metadataPrefix": "oai_dc",
-                    },
+            self.params.update(
+                {
+                    "from": f"{self.start.year}-"
+                    + f"{str(self.start.month).zfill(2)}-"
+                    + f"{str(self.start.day).zfill(2)}",
+                    "metadataPrefix": "oai_dc",
+                },
+            )
+            response = requests.get(
+                RXIVS["arXiv"]["url"],  # type: ignore
+                params=self.params,
+                timeout=20,
+            )
+            if response.ok:
+                logger.info(
+                    f"Successfully hit url: {response.url}",
                 )
-                response = requests.get(
-                    RXIVS["arXiv"]["url"],  # type: ignore
-                    params=self.params,
-                    timeout=5,
+            else:
+                logger.info(
+                    f"Error pulling data: {response.url} status {response.status_code}",
                 )
-                if response.ok:
-                    logger.info(
-                        f"Successfully hit url: {response.url}",
-                    )
-
-                else:
-                    logger.info(
-                        f"Error: {response.url} status {response.status_code}",
-                    )
-
-            except requests.RequestException as error:
-                logger.info(f"Error pulling data from url {response.url}: {error}")
 
         return response.content
 
