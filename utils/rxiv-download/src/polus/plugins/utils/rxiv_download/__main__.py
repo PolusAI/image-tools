@@ -1,15 +1,12 @@
-"""Nyxus Plugin."""
+"""Rxiv Download Plugin."""
 import logging
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 import typer
 from polus.plugins.utils.rxiv_download.fetch import ArxivDownload
-
-# #Import environment variables
-POLUS_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
+from polus.plugins.utils.rxiv_download.fetch import generate_preview
 
 app = typer.Typer()
 
@@ -23,25 +20,23 @@ logger = logging.getLogger("polus.plugins.utils.rxiv_download")
 
 @app.command()
 def main(
-    path: Path = typer.Option(
-        ...,
-        "--path",
-        help="Path to download XML files",
-    ),
     rxiv: str = typer.Option(
         ...,
         "--rxiv",
+        "-r",
         help="Pull from open access archives",
     ),
-    token: Optional[str] = typer.Option(
+    start: Optional[str] = typer.Option(
         None,
-        "--token",
-        help="A resumption token",
-    ),
-    start: Optional[datetime] = typer.Option(
-        datetime.now(),
         "--start",
+        "-s",
         help="Start date",
+    ),
+    out_dir: Path = typer.Option(
+        ...,
+        "--outDir",
+        "-o",
+        help="Path to download XML files",
     ),
     preview: Optional[bool] = typer.Option(
         False,
@@ -50,40 +45,26 @@ def main(
     ),
 ) -> None:
     """Scaled Nyxus plugin allows to extract features from labelled images."""
-    logger.info(f"--path = {path}")
     logger.info(f"--rxiv = {rxiv}")
-    logger.info(f"--token = {token}")
     logger.info(f"--start = {start}")
+    logger.info(f"--outDir = {out_dir}")
 
-    path = path.resolve()
+    if start is not None:
+        start_date = datetime.strptime(start, "%Y-%m-%d").date()
 
-    if not path.exists():
-        path.mkdir(exist_ok=True)
+    out_dir = out_dir.resolve()
 
-    assert path.exists(), f"{path} does not exist!! Please check input path again"
+    if not out_dir.exists():
+        out_dir.mkdir(exist_ok=True)
 
-    model = ArxivDownload(path=path, rxiv=rxiv, token=token, start=start)
-    model.fetch_and_store_all()
+    assert out_dir.exists(), f"{out_dir} does not exist!! Please check input path again"
 
-    # if preview:
-    #     with Path.open(Path(out_dir, "preview.json"), "w") as jfile:
-    #         out_json: dict[str, Any] = {
-    #         for file in int_images():
+    model = ArxivDownload(path=out_dir, rxiv=rxiv, start=start_date)
+    model.fetch_and_save_records()
 
-    # for s_image in seg_images():
-
-    #     with preadator.ProcessManager(
-    #     ) as pm:
-    #         for fl in i_image:
-    #                 nyxus_func,
-    #                 file,
-    #                 out_dir,
-    #                 features,
-    #                 file_extension,
-    #                 pixel_per_micron,
-    #                 neighbor_dist,
-    #         for f in tqdm(
-    #         ):
+    if preview:
+        generate_preview(out_dir)
+        logger.info(f"generating preview data in {out_dir}")
 
 
 if __name__ == "__main__":

@@ -1,29 +1,42 @@
+"""Rxiv Download Plugin."""
+import json
 import logging
 import os
+import shutil
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from typing import Optional
-from typing import Union
 
 import requests
+import xmltodict
 from rxiv_types import arxiv_records
 from rxiv_types.models.oai_pmh.org.openarchives.oai.pkg_2.resumption_token_type import (
     ResumptionTokenType,
 )
+from tqdm import tqdm
 from xsdata.models.datatype import XmlDate
 
 logger = logging.getLogger(__name__)
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
+POLUS_EXT = os.environ.get("POLUS_EXT", ".xml")
+
 RXIVS = {
     "arXiv": {"url": "https://export.arxiv.org/oai2", "stride": 1000},
-    "medrXiv": {"url": "https://api.medrxiv.org/details/medrxiv"},
-    "biorXiv": {"url": "https://api.medrxiv.org/details/biorxiv"},
-    "chemrXiv": {"url": "https://chemrxiv.org/"},
-    "DOAJ.": {"url": "http://www.openarchives.org/OAI/2.0/oai_dc"},
 }
+
+
+def generate_preview(
+    path: Path,
+) -> None:
+    """Generate preview of the plugin outputs."""
+    prev_file = list(
+        Path().cwd().parents[4].joinpath("examples").rglob(f"*{POLUS_EXT}"),
+    )[0]
+
+    shutil.copy(prev_file, path)
 
 
 class ArxivDownload:
@@ -42,14 +55,12 @@ class ArxivDownload:
         self,
         path: Path,
         rxiv: str,
-        token: Optional[ResumptionTokenType] = None,
         start: Optional[datetime] = None,
     ) -> None:
+        """Create a ArxivDownload."""
         self.path = path
         self.rxiv = rxiv
-        self.token = token
         self.start = start
-        self.now = datetime.now()
 
         if self.rxiv not in RXIVS:
             msg = f"{self.rxiv} is an invalid rxiv value. Must be one of {list(RXIVS)}"
@@ -57,48 +68,65 @@ class ArxivDownload:
                 msg,
             )
 
-        if self.start is None:
-            self.last = datetime(1900, 1, 1)
+        if self.start is None and len(list(self.path.rglob(f"*{POLUS_EXT}"))) == 0:
+            self.start = datetime(1900, 1, 1)
 
-        if self.start:
-            if len([f for f in path.iterdir() if f.name.endswith(".xml")]) != 0:
-                self.last = self._resume_from()
-            else:
-                self.last = self.start
+        elif self.start is None and len(list(self.path.rglob(f"*{POLUS_EXT}"))) != 0:
+            self.start = self._resume_from()
+
+        self.start = self.start
 
         self.params = {"verb": "ListRecords"}
-        if self.token is not None:
-            self.params.update({"resumptionToken": token.value})
 
     @staticmethod
     def path_from_token(
-        path: Path, rxiv: str, last: datetime, token: int,
-    ) -> Union[Path, None]:
+        path: Path,
+        rxiv: str,
+        start: Optional[datetime] = None,
+        token: Optional[ResumptionTokenType] = None,
+    ) -> Path:
         """Creating output directory for saving records."""
-        if token is not None:
+        if start and token is not None:
             file_path = path.joinpath(
                 f"{rxiv}_"
-                + f"{last.year}{str(last.month).zfill(2)}{str(last.day).zfill(0)}_"
-                + f"{int(token.cursor)}.xml",
+                + f"{start.year}{str(start.month).zfill(2)}{str(start.day).zfill(0)}_"
+                + f"{int(token.cursor)}{POLUS_EXT}",
             )
+
             file_path.parent.mkdir(exist_ok=True, parents=True)
 
-            return file_path
-        return None
+        return file_path
 
-    def fetch_records(self) -> requests.Session:
+    def fetch_records(self) -> bytes:
         """Fetch OAI records from an API."""
-        # Configure endpoint parameters
+        # Configure parameters
+        if self.start is not None:
+            try:
+                self.params.update(
+                    {
+                        "from": f"{self.start.year}-"
+                        + f"{str(self.start.month).zfill(2)}-"
+                        + f"{str(self.start.day).zfill(2)}",
+                        "metadataPrefix": "oai_dc",
+                    },
+                )
+                response = requests.get(
+                    RXIVS["arXiv"]["url"],  # type: ignore
+                    params=self.params,
+                    timeout=5,
+                )
+                if response.ok:
+                    logger.info(
+                        f"Successfully hit url: {response.url}",
+                    )
 
-        self.params.update(
-            {
-                "from": f"{self.last.year}-"
-                + f"{str(self.last.month).zfill(2)}-"
-                + f"{str(self.last.day).zfill(2)}",
-                "metadataPrefix": "oai_dc",
-            },
-        )
-        response = requests.get(RXIVS[self.rxiv]["url"], params=self.params)
+                else:
+                    logger.info(
+                        f"Error: {response.url} status {response.status_code}",
+                    )
+
+            except requests.RequestException as error:
+                logger.info(f"Error pulling data from url {response.url}: {error}")
 
         return response.content
 
@@ -126,28 +154,32 @@ class ArxivDownload:
         """Find the previous cursor and create a resume token."""
         if not self.path.exists():
             return datetime(1900, 1, 1)
+        files = [
+            f
+            for f in self.path.iterdir()
+            if f.is_file() and f.name.startswith(self.rxiv)
+        ]
 
-        else:
-            files = [
-                f
-                for f in self.path.iterdir()
-                if f.is_file() and f.name.startswith(self.rxiv)
-            ]
-
-            with ProcessPoolExecutor() as executor:
-                dates = list(executor.map(self._get_latest, files))
-                return max(dates)
+        with ProcessPoolExecutor() as executor:
+            dates = list(executor.map(self._get_latest, files))
+            return max(dates)
 
     @staticmethod
-    def store_records(path: Path, record: bytes) -> None:
-        """Writing response content as XML."""
-        with Path.open(path, "wb") as fw:
-            fw.write(record)
+    def save_records(path: Path, record: bytes) -> None:
+        """Writing response content either in XML or JSON format."""
+        if POLUS_EXT == ".xml":
+            with Path.open(path, "wb") as fw:
+                fw.write(record)
+                fw.close()
+        elif POLUS_EXT == ".json":
+            parsed_data = xmltodict.parse(record, attr_prefix="")
+            json_data = json.dumps(parsed_data, indent=2)
+            with Path.open(path, "w") as fw:
+                fw.write(json_data)
+                fw.close()
 
-    def fetch_and_store_all(self) -> None:
-        """Writing response content as XML."""
-        logger.info("Getting token...")
-
+    def fetch_and_save_records(self) -> None:
+        """Fetch and save response contents."""
         response = self.fetch_records()
 
         records = arxiv_records(BytesIO(response))
@@ -157,28 +189,34 @@ class ArxivDownload:
             raise ValueError(msg)
 
         for record in records.list_records.record:
-            if record.header is not None:
-                if not isinstance(record.header.datestamp, XmlDate):
-                    msg = "Error with downloading a XML record"
-                    raise ValueError(msg)
+            if record.header is not None and not isinstance(
+                record.header.datestamp,
+                XmlDate,
+            ):
+                msg = "Error with downloading a XML record"
+                raise ValueError(msg)
 
-                record_date = record.header.datestamp.to_datetime()
-                if record_date >= self.last:
-                    self.last = record_date
-
+        logger.info("Getting token...")
         token = records.list_records.resumption_token
         key, _ = token.value.split("|")
+        index = token.cursor
+
         if token.complete_list_size is None:
             msg = "Error with downloading a XML record"
             raise ValueError(msg)
 
-        logger.info(f"Resuming from date: {self.last}")
+        logger.info(f"Resuming from date: {self.start}")
 
-        if token is not None:
+        for i in tqdm(
+            range(int(index), token.complete_list_size, 1000),
+            total=((token.complete_list_size - int(index)) // 1000 + 1),
+        ):
+            thread_token = ResumptionTokenType(value="|".join([key, str(i)]), cursor=i)
+
             file_path = self.path_from_token(
-                path=self.path, rxiv=self.rxiv, last=self.last, token=token,
+                path=self.path,
+                rxiv=self.rxiv,
+                start=self.start,
+                token=thread_token,
             )
-            self.store_records(path=file_path, record=response)
-
-        # for i in tqdm(
-        # ):
+            self.save_records(path=file_path, record=response)

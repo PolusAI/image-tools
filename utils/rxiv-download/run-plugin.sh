@@ -5,17 +5,15 @@ datapath=$(readlink --canonicalize data)
 echo ${datapath}
 
 # Inputs
-inp_dir=${datapath}/input
-file_pattern=".*.ome.tif"
-polygon_type='encoding'
-out_dir=${datapath}/output
+path=${datapath}/input
+rxiv="arXiv"
+start="2023-12-16"
 
 # #Show the help options
-# #docker run polusai/ome-to-microjson-plugin:${version}
+# #docker run polusai/rxiv-download-plugin:${version}
 
 docker run -v ${datapath}:${datapath} \
-            polusai/ome-to-microjson-plugin:${version} \
-            --inpDir ${inp_dir} \
-            --filePattern ${file_pattern} \
-            --polygonType ${polygon_type} \
-            --outDir ${out_dir}
+            polusai/rxiv-download-plugin:${version} \
+            --path ${path} \
+            --rxiv ${rxiv} \
+            --start ${start}
