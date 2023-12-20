@@ -10,7 +10,8 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-import numpy as np
+import bfio
+import numpy
 import pytest
 import requests
 from bfio import BioWriter
@@ -19,39 +20,17 @@ from bfio import BioWriter
 def pytest_addoption(parser: pytest.Parser) -> None:
     """Add options to pytest."""
     parser.addoption(
-        "--slow",
-        action="store_true",
-        dest="slow",
-        default=False,
-        help="run slow tests",
-    )
-    parser.addoption(
         "--downloads",
         action="store_true",
         dest="downloads",
         default=False,
         help="run tests that download large data files",
     )
-    parser.addoption(
-        "--all",
-        action="store_true",
-        dest="all",
-        default=False,
-        help="run all tests",
-    )
 
 
 @pytest.fixture()
-def gen_paths() -> tuple[Path, Path, Path, Path]:  # type: ignore[misc]
-    """Generate temporary paths for test data.
-
-    Returns:
-        Four paths to the:
-            - input directory
-            - output directory
-            - stitching directory
-            - ground truth directory
-    """
+def local_data() -> tuple[Path, Path, Path, Path]:  # type: ignore
+    """Generate test data for local testing."""
     # create temporary directory for all data
     data_dir = Path(tempfile.mkdtemp(suffix="test_data"))
 
@@ -67,19 +46,6 @@ def gen_paths() -> tuple[Path, Path, Path, Path]:  # type: ignore[misc]
     ground_truth_path = data_dir / "ground_truth_dir"
     ground_truth_path.mkdir()
 
-    yield (img_path, stitch_path, output_path, ground_truth_path)
-
-    # remove the temporary directory
-    shutil.rmtree(data_dir)
-
-
-@pytest.fixture()
-def local_data(
-    gen_paths: tuple[Path, Path, Path, Path],
-) -> tuple[Path, Path, Path, Path]:
-    """Generate test data for local testing."""
-    img_path, stitch_path, output_path, ground_truth_path = gen_paths
-
     # generate the image data
     tile_size = 1024
     fov_width = 1392
@@ -89,7 +55,7 @@ def local_data(
     image_width = 2 * tile_size
     image_height = 2 * tile_size
     image_shape = (image_width, image_height, 1, 1, 1)
-    data = np.zeros(image_shape, dtype=np.uint8)
+    data = numpy.zeros(image_shape, dtype=numpy.uint8)
 
     # max value for np.uint8 so we have a white square in the middle of the image
     fill_value = 127
@@ -165,46 +131,90 @@ def local_data(
             writer.Y = fov_height
             writer[:] = fov
 
-    return (img_path, stitch_path, output_path, ground_truth_path)
+    yield (img_path, stitch_path, output_path, ground_truth_path)
+
+    # remove the temporary directory
+    shutil.rmtree(data_dir)
 
 
 @pytest.fixture()
-def nist_data(
-    gen_paths: tuple[Path, Path, Path, Path],
-) -> tuple[Path, Path, Path, Path]:
+def nist_data() -> tuple[Path, Path, Path]:  # type: ignore
     """Download the NIST MIST dataset."""
-    img_path, stitch_path, output_path, ground_truth_path = gen_paths
-
     http_request_timeout = 10
 
-    fovs_url = (
-        "https://github.com/usnistgov/MIST/wiki/testdata/Small_Phase_Test_Dataset.zip"
-    )
-
-    stitching_vector_url = "https://github.com/usnistgov/MIST/wiki/testdata/Small_Phase_Test_Dataset_Example_Results.zip"
+    data_dir = Path(tempfile.mkdtemp(suffix="test_data"))
 
     # download the FOVs
-    r = requests.get(fovs_url, timeout=http_request_timeout)
-    z = zipfile.ZipFile(io.BytesIO(r.content))
-    z.extractall(img_path)
-    z.close()
+    nist_raw_dir = data_dir / "nist-raw-dir"
+    if not nist_raw_dir.exists():
+        r = requests.get(
+            url="https://github.com/usnistgov/MIST/wiki/testdata/Small_Phase_Test_Dataset.zip",
+            timeout=http_request_timeout,
+        )
+        with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+            z.extractall(nist_raw_dir)
 
-    img_path = img_path / "Small_Phase_Test_Dataset" / "image-tiles"
+    assert nist_raw_dir.exists(), "Could not download nist images"
 
-    if not img_path.exists():
-        msg = "could not successfully download nist_mist_dataset images"
-        raise FileNotFoundError(msg)
+    img_raw_dir = nist_raw_dir / "Small_Phase_Test_Dataset" / "image-tiles"
+    assert img_raw_dir.exists(), "downloaded images are malformed"
 
     # download the stitching vector
-    r = requests.get(stitching_vector_url, timeout=http_request_timeout)
-    z = zipfile.ZipFile(io.BytesIO(r.content))
-    z.extractall(stitch_path)
-    z.close()
+    stitch_raw_dir = data_dir / "stitch-raw-dir"
+    if not stitch_raw_dir.exists():
+        r = requests.get(
+            url="https://github.com/usnistgov/MIST/wiki/testdata/Small_Phase_Test_Dataset_Example_Results.zip",
+            timeout=http_request_timeout,
+        )
+        with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+            z.extractall(stitch_raw_dir)
 
-    stitch_path = stitch_path / "Small_Phase_Test_Dataset_Example_Results"
+    assert stitch_raw_dir.exists(), "Could not download stitching vector"
+
+    stitch_raw_dir = stitch_raw_dir / "Small_Phase_Test_Dataset_Example_Results"
+    assert stitch_raw_dir.exists(), "downloaded stitching vector is malformed"
+
+    img_dir = data_dir / "img-dir"
+    img_dir.mkdir(exist_ok=True)
+
+    # Convert the images into ome.tif
+    for img in img_raw_dir.iterdir():
+        if img.suffix == ".tif":
+            out_path = img_dir / f"{img.stem}.ome.tif"
+            with bfio.BioReader(img) as reader, bfio.BioWriter(
+                out_path,
+                metadata=reader.metadata,
+            ) as writer:
+                image = reader[:].squeeze().astype(numpy.float32)
+                writer.Y = image.shape[0]
+                writer.X = image.shape[1]
+                writer.dtype = image.dtype
+                writer[:] = image
+
+    stitch_path = data_dir / "stitch_dir"
+    stitch_path.mkdir(exist_ok=True)
+
+    # Update the names of image files in stitching vector
+    for vector in stitch_raw_dir.iterdir():
+        if vector.name == "img-global-positions-0.txt":
+            out_vec = stitch_path / vector.name
+            with vector.open("r") as reader, out_vec.open("w") as writer:
+                for line in reader.readlines():
+                    if ".tif" in line:
+                        writer.write(line.replace(".tif", ".ome.tif"))
+                    else:
+                        writer.write(line)
+
+    out_dir = data_dir / "out-dir"
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
+    out_dir.mkdir()
 
     if not stitch_path.exists():
         msg = "could not successfully download nist_mist_dataset stitching vector"
         raise FileNotFoundError(msg)
 
-    return (img_path, stitch_path, output_path, ground_truth_path)
+    yield (img_dir, stitch_path, out_dir)
+
+    # remove the temporary directory
+    shutil.rmtree(data_dir)
