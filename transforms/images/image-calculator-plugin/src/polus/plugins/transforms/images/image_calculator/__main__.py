@@ -1,12 +1,11 @@
 """Provides the CLI for the Image Calculator plugin."""
 
-import concurrent.futures
 import json
 import logging
 import pathlib
 
 import filepattern
-import tqdm
+import preadator
 import typer
 from polus.plugins.transforms.images import image_calculator
 
@@ -22,7 +21,7 @@ app = typer.Typer()
 
 
 @app.command()
-def _main(  # noqa: PLR0913
+def main(  # noqa: PLR0913
     primary_dir: pathlib.Path = typer.Option(
         ...,
         "--primaryDir",
@@ -78,17 +77,12 @@ def _main(  # noqa: PLR0913
     fp_primary = filepattern.FilePattern(primary_dir, primary_pattern)
     fp_secondary = filepattern.FilePattern(secondary_dir, secondary_pattern)
 
-    if preview:
-        output = {"files": [files.pop()["file"].name for files in fp_primary()]}
-        with out_dir.joinpath("preview.json").open("w") as writer:
-            json.dump(output, writer)
-        return
-
-    with concurrent.futures.ProcessPoolExecutor(
-        max_workers=image_calculator.MAX_WORKERS,
-    ) as executor:
-        futures = []
-
+    with preadator.ProcessManager(
+        name="Image Calculator",
+        num_processes=image_calculator.MAX_WORKERS,
+        threads_per_process=2,
+    ) as manager:
+        preview_files = []
         group: dict[str, int]
         files: list[pathlib.Path]
         for group, files in fp_primary():
@@ -97,34 +91,46 @@ def _main(  # noqa: PLR0913
 
                 matches: list[pathlib.Path] = fp_secondary.get_matching(**group)[0][1]
 
-                if len(matches) > 1:
+                if len(matches) == 0:
+                    # TODO: Should this raise an error?
                     msg = "".join(
                         [
-                            "Found multiple secondary images to match the ",
-                            f"primary image: {file.name}.\n",
-                            f"Matches: {matches}.\n",
-                            f"Using only the first match: {matches[0]}",
+                            "No secondary images found to match the ",
+                            f"primary image: {file.name}. Skipping ...",
                         ],
                     )
-                    logger.warning(msg)
-                match = matches.pop()
+                    logger.error(msg)
+                    continue
 
-                futures.append(
-                    executor.submit(
-                        image_calculator.process_image,
-                        file,
-                        match,
-                        out_dir,
-                        operation,
-                    ),
-                )
+                if preview:
+                    preview_files.append(file)
+                else:
+                    if len(matches) > 1:
+                        msg = "".join(
+                            [
+                                "Found multiple secondary images to match the ",
+                                f"primary image: {file.name}.\n",
+                                f"Matches: {matches}.\n",
+                                f"Using only the first match: {matches[0]}",
+                            ],
+                        )
+                        logger.warning(msg)
+                    match = matches.pop()
 
-        for future in tqdm.tqdm(
-            concurrent.futures.as_completed(futures),
-            total=len(futures),
-            desc="Processing images",
-        ):
-            future.result()
+                    if not preview:
+                        manager.submit_process(
+                            image_calculator.process_image,
+                            file,
+                            match,
+                            out_dir,
+                            operation,
+                        )
+
+        if preview:
+            with out_dir.joinpath("preview.json").open("w") as writer:
+                json.dump({"files": preview_files}, writer)
+        else:
+            manager.join_processes()
 
 
 if __name__ == "__main__":

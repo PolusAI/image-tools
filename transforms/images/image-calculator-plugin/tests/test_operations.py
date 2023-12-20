@@ -27,25 +27,16 @@ def _make_random_image(
         writer[:] = rng.integers(2**8, 2**16, size=(size, size), dtype=writer.dtype)
 
 
-FixtureReturnType = tuple[
+def gen_images(
+    size: int,
+) -> tuple[
     str,  # pattern
     pathlib.Path,  # primary_dir
     pathlib.Path,  # secondary_dir
     pathlib.Path,  # out_dir
-    image_calculator.Operation,  # operation
-]
-IMAGE_SIZE = [1024 * (2**i) for i in (2, 4)]
-OPERATIONS = image_calculator.Operation.variants()
-PARAMS = list(itertools.product(IMAGE_SIZE, OPERATIONS))
-IDS = [f"{size}_{op.value.lower()}" for size, op in PARAMS]
-
-
-@pytest.fixture(params=PARAMS, ids=IDS)
-def gen_images(request: pytest.FixtureRequest) -> FixtureReturnType:
+]:
     """Generate a set of random images for testing."""
-    size: int
-    op: image_calculator.Operation
-    size, op = request.param
+
     pattern = "img_c{c}.ome.tif"
 
     num_images = 3
@@ -72,14 +63,17 @@ def gen_images(request: pytest.FixtureRequest) -> FixtureReturnType:
 
     pattern = "img_c{c:d}.ome.tif"
 
-    yield pattern, primary_dir, secondary_dir, out_dir, op
-
-    shutil.rmtree(data_dir)
+    return pattern, primary_dir, secondary_dir, out_dir
 
 
-def test_cli(gen_images: FixtureReturnType) -> None:
+def _test_cli(
+    pattern: str,
+    primary_dir: pathlib.Path,
+    secondary_dir: pathlib.Path,
+    out_dir: pathlib.Path,
+    op: image_calculator.Operation,
+) -> None:
     """Test the CLI."""
-    pattern, primary_dir, secondary_dir, out_dir, op = gen_images
 
     args = [
         "--primaryDir",
@@ -107,3 +101,18 @@ def test_cli(gen_images: FixtureReturnType) -> None:
 
     for p in p_files:
         assert p in o_files, f"Missing {p} from {p_files} in {o_files}\n{args}"
+
+    shutil.rmtree(primary_dir.parent)
+
+
+@pytest.mark.parametrize("op", image_calculator.Operation.variants())
+def test_cli_small(op: image_calculator.Operation) -> None:
+    pattern, primary_dir, secondary_dir, out_dir = gen_images(1024)
+    _test_cli(pattern, primary_dir, secondary_dir, out_dir, op)
+
+
+@pytest.mark.skipif("not config.getoption('slow')")
+@pytest.mark.parametrize("op", image_calculator.Operation.variants())
+def test_cli_large(op: image_calculator.Operation) -> None:
+    pattern, primary_dir, secondary_dir, out_dir = gen_images(1024 * 16)
+    _test_cli(pattern, primary_dir, secondary_dir, out_dir, op)
