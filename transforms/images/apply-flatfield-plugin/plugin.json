@@ -16,24 +16,6 @@
   ],
   "inputs": [
     {
-      "name": "darkPattern",
-      "type": "string",
-      "description": "Filename pattern used to match darkfield files to image files",
-      "required": false
-    },
-    {
-      "name": "ffDir",
-      "type": "collection",
-      "description": "Image collection containing flatfield and/or darkfield images",
-      "required": true
-    },
-    {
-      "name": "brightPattern",
-      "type": "string",
-      "description": "Filename pattern used to match brightfield files to image files",
-      "required": true
-    },
-    {
       "name": "imgDir",
       "type": "collection",
       "description": "Input image collection to be processed by this plugin",
@@ -46,10 +28,28 @@
       "required": true
     },
     {
-      "name": "photoPattern",
-      "type": "string",
-      "description": "Filename pattern used to match photobleach files to image files",
+      "name": "ffDir",
+      "type": "collection",
+      "description": "Image collection containing flatfield and/or darkfield images",
       "required": true
+    },
+    {
+      "name": "ffPattern",
+      "type": "string",
+      "description": "Filename pattern used to match flatfield files to image files",
+      "required": true
+    },
+    {
+      "name": "dfPattern",
+      "type": "string",
+      "description": "Filename pattern used to match darkfield files to image files",
+      "required": false
+    },
+    {
+      "name": "preview",
+      "type": "boolean",
+      "description": "Preview the output images' names without actually running computation",
+      "required": false
     }
   ],
   "outputs": [
@@ -68,7 +68,7 @@
     {
       "key": "inputs.imgPattern",
       "title": "Image pattern",
-      "description": "Filename pattern used to separate data and match with flatfied files"
+      "description": "Filename pattern used to separate data and match with flatfield files"
     },
     {
       "key": "inputs.ffDir",
@@ -76,19 +76,19 @@
       "description": "Image collection containing flatfield and/or darkfield images"
     },
     {
-      "key": "inputs.brightPattern",
-      "title": "Brightfield file pattern",
-      "description": "Filename pattern used to match brightfield files to image files"
+      "key": "inputs.ffPattern",
+      "title": "Flatfield file pattern",
+      "description": "Filename pattern used to match flatfield files to image files"
     },
     {
-      "key": "inputs.darkPattern",
+      "key": "inputs.dfPattern",
       "title": "Darkfield file pattern",
       "description": "Filename pattern used to match darkfield files to image files"
     },
     {
-      "key": "inputs.photoPattern",
-      "title": "Photobleach file pattern",
-      "description": "Filename pattern used to match photobleach files to image files"
+      "key": "inputs.preview",
+      "title": "Preview Output",
+      "description": "Preview the output images' names without actually running computation"
     }
   ]
 }

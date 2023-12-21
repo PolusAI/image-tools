@@ -54,4 +54,4 @@ Command line options:
 | `--ffPattern`    | Filename pattern used to match flatfield files to image files         | Input  | string     |
 | `--dfPattern`    | Filename pattern used to match darkfield files to image files         | Input  | string     |
 | `--outDir`       | Output collection                                                     | Output | collection |
-| `--preview`      | preview tha output images' names without actually running computation | Input  | boolean    |
+| `--preview`      | Preview the output images' names without actually running computation | Input  | boolean    |
