@@ -104,7 +104,7 @@ def _test_zarr_pyramid(sample_images: helpers.FixtureReturnType) -> None:
     input_dir, output_dir, image_path, image_type, pyramid_type = sample_images
 
     with bfio.BioReader(image_path) as reader:
-        num_expected_levels = 1 + int(math.log2(max(reader.X, reader.Y)))
+        num_expected_levels = 1 + int(math.ceil(math.log2(max(reader.X, reader.Y))))
         base_shape = tuple(reversed(reader.shape))
         base_image: numpy.ndarray = reader[:].squeeze()
         base_image = base_image[numpy.newaxis, numpy.newaxis, numpy.newaxis, :, :]
