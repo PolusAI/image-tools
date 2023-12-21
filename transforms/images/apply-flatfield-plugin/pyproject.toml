@@ -16,6 +16,7 @@ filepattern = "^2.0.4"
 typer = { version = "^0.7.0", extras = ["all"] }
 numpy = "^1.24.3"
 tqdm = "^4.65.0"
+preadator = "0.4.0-dev2"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"

@@ -1,6 +1,5 @@
 """Provides the function to apply flatfield."""
 
-import concurrent.futures
 import logging
 import operator
 import pathlib
@@ -8,6 +7,7 @@ import typing
 
 import bfio
 import numpy
+import preadator
 import tqdm
 from filepattern import FilePattern
 
@@ -141,20 +141,19 @@ def _unshade_batch(
         df_image: component to be used for flatfield correction
     """
     # Load images
-    images = []
-    with concurrent.futures.ProcessPoolExecutor(
-        max_workers=utils.MAX_WORKERS,
+    with preadator.ProcessManager(
+        name="unshade_batch::load",
+        num_processes=utils.MAX_WORKERS,
+        threads_per_process=2,
     ) as load_executor:
         load_futures = []
         for i, inp_path in enumerate(batch_paths):
-            load_futures.append(load_executor.submit(utils.load_img, inp_path, i))
+            load_futures.append(
+                load_executor.submit_process(utils.load_img, inp_path, i),
+            )
 
-        for lf in tqdm.tqdm(
-            concurrent.futures.as_completed(load_futures),
-            total=len(load_futures),
-            desc="Loading batch",
-        ):
-            images.append(lf.result())
+        load_executor.join_processes()
+        images = [f.result() for f in load_futures]
 
     images = [img for _, img in sorted(images, key=operator.itemgetter(0))]
     img_stack = numpy.stack(images, axis=0)
@@ -166,18 +165,11 @@ def _unshade_batch(
     img_stack /= ff_image + 1e-8
 
     # Save outputs
-    with concurrent.futures.ProcessPoolExecutor(
-        max_workers=utils.MAX_WORKERS,
+    with preadator.ProcessManager(
+        name="unshade_batch::save",
+        num_processes=utils.MAX_WORKERS,
+        threads_per_process=2,
     ) as save_executor:
-        save_futures = []
         for inp_path, img in zip(batch_paths, img_stack):
-            save_futures.append(
-                save_executor.submit(utils.save_img, inp_path, img, out_dir),
-            )
-
-        for sf in tqdm.tqdm(
-            concurrent.futures.as_completed(save_futures),
-            total=len(save_futures),
-            desc="Saving batch",
-        ):
-            sf.result()
+            save_executor.submit_process(utils.save_img, inp_path, img, out_dir)
+        save_executor.join_processes()
