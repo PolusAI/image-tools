@@ -15,10 +15,10 @@ dfPattern="p{p:d+}_x\\(01-24\\)_y\(01-16\\)_wx\\(1-3\\)_wy\\(1-3\\)_c{c:d+}_dark
 # Output paths
 outDir=/data/outputs
 
-FILE_EXT=".ome.zarr"
+POLUS_IMG_EXT=".ome.zarr"
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
-            -e POLUS_EXT=${FILE_EXT} \
+            -e POLUS_IMG_EXT=${POLUS_IMG_EXT} \
             --user $(id -u):$(id -g) \
             polusai/apply-flatfield-plugin:${version} \
             --imgDir ${imgDir} \

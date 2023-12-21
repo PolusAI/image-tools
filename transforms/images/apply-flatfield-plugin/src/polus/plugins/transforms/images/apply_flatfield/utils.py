@@ -41,7 +41,11 @@ def save_img(
         image: image to be saved
         out_dir: directory to save image
     """
-    out_path = out_dir / inp_path.name
+    out_stem = inp_path.stem
+    if ".ome" in out_stem:
+        out_stem = out_stem.split(".ome")[0]
+
+    out_path = out_dir / f"{out_stem}{POLUS_IMG_EXT}"
     with bfio.BioReader(inp_path, MAX_WORKERS) as reader, bfio.BioWriter(
         out_path,
         MAX_WORKERS,
