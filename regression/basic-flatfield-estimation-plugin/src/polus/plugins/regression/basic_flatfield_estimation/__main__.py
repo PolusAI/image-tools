@@ -100,7 +100,8 @@ def main(  # noqa: PLR0913
         # basicpy has its own multi-threading so we won't use preadator here.
         for _, files in fp(group_by=list(group_by)):
             paths = [pathlib.Path(p) for _, [p] in files]
-            logger.info(f"Files: {[p.name for p in paths]} ...")
+            logger.info(f"Estimating flatfield with {len(paths)} images ...")
+            logger.debug(f"Files: {[p.name for p in paths]} ...")
             estimate(paths, out_dir, get_darkfield, extension)
 
 
