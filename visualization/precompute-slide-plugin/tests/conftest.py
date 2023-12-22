@@ -1,4 +1,5 @@
 """" Configure pytest."""
+
 import pytest
 
 

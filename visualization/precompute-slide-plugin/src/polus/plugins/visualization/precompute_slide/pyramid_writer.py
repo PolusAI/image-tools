@@ -540,12 +540,14 @@ class ZarrWriter(PyramidWriter):
         self.root.attrs["multiscales"] = multiscales
 
         with bfio.BioReader(self.image_path, max_workers=1) as bfio_reader:
-            metadata = bfio.OmeXml.OMEXML(str(bfio_reader.metadata))
-            metadata.image(0).Pixels.SizeC = self.max_output_depth
-            metadata.image(0).Pixels.channel_count = self.max_output_depth
+            # TODO: This code might need more thought. This is required to verify
+            # that the update of bfio from 2.1.9 to 2.3.3 was done successfully
+            metadata = bfio_reader.metadata
+            metadata.images[0].pixels.size_c = self.max_output_depth
 
             for c in range(self.max_output_depth):
-                metadata.image().Pixels.Channel(c).Name = f"Channel {c}"
+                metadata.images[0].pixels.channels[c].name = f"Channel {c}"
+            # END TODO
 
             try:
                 file = self.base_path.joinpath("METADATA.ome.xml").open("x")
