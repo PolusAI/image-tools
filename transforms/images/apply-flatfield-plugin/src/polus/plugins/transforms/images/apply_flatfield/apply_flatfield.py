@@ -101,6 +101,10 @@ def _unshade_images(
         ff_path: path to the flatfield image
         df_path: path to the darkfield image
     """
+    logger.info(f"Applying flatfield correction to {len(img_paths)} images ...")
+    logger.info(f"{ff_path.name = } ...")
+    logger.debug(f"Images: {img_paths}")
+
     with bfio.BioReader(ff_path, max_workers=2) as bf:
         ff_image = bf[:, :, :, 0, 0].squeeze()
 
