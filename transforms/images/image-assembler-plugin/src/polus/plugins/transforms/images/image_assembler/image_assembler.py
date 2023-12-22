@@ -16,8 +16,7 @@ logging.basicConfig(format="%(name)-8s - %(levelname)-8s - %(message)s")
 logger = logging.getLogger("image-assembler")
 logger.setLevel(logging.DEBUG)
 
-# this parameter controls disk writes. Seem to plateau after 8192
-# NOTE this should be backed up by a replicable benchmark
+# this parameter controls disk writes. Plateau after 8192
 chunk_size = 1024 * 8
 chunk_width, chunk_height = chunk_size, chunk_size
 
@@ -29,7 +28,7 @@ def generate_output_filepaths(
     stitch_path: Path,
     output_path: Path,
     derive_name_from_vector_file: Optional[bool],
-) -> None:
+) -> list[Path]:
     """Generate the output filepaths that would be created if the assembler was called.
 
     Args:
@@ -98,12 +97,14 @@ def collect_stitching_vector_patterns(
     # find all files
     if stitching_vector_path.is_dir():
         files = [
-            vector for vector in list(stitching_vector_path.iterdir()) if vector.is_file
+            vector
+            for vector in list(stitching_vector_path.iterdir())
+            if vector.is_file()
         ]
     else:
         files = [stitching_vector_path]
 
-    stitching_vector_pattern: tuple[Path, str] = []
+    stitching_vector_pattern: list[tuple[Path, str]] = []
 
     # make sure files are valid stitching vectors
     for v in files:
@@ -118,9 +119,6 @@ def collect_stitching_vector_patterns(
     return stitching_vector_pattern
 
 
-# NOTE Remove possibility of deriving name from vector file?
-# it ties us to a specific naming convention of ".*global-positions-([0-9]+).txt"
-# for the stitching vector
 def derive_output_image_path(
     fovs: fp.FilePattern,
     derive_name_from_vector_file: Optional[bool],
@@ -146,9 +144,9 @@ def derive_output_image_path(
 
     if derive_name_from_vector_file:
         global_regex = ".*global-positions-([0-9]+).txt"
-        match = re.match(global_regex, Path(vector_file).name).groups()[0]
-        if match:
-            output_name = "".join([match, *Path(first_image).suffixes])
+        match = re.match(global_regex, Path(vector_file).name)
+        if match and match.groups()[0]:
+            output_name = "".join([match.groups()[0], *Path(first_image).suffixes])
 
     return output_path / output_name
 
@@ -182,9 +180,6 @@ def assemble_image(
         fov_width = br.x
         fov_height = br.y
         # stitching is only performed on the (x,y) plane
-        # z_stack images would need to be align beforehand
-        # NOTE does it makes sense to consider z_stack images?
-        # NOTE examples?
         if br.z != 1:
             msg = f"this image has a z_stack of {br.z} and cannot be assembled"
             logger.critical(msg)
@@ -208,14 +203,14 @@ def assemble_image(
     # divide our image into chunks that can be processed separately
     chunk_grid_col = ceil(full_image_width / chunk_width)
     chunk_grid_row = ceil(full_image_height / chunk_height)
-    chunks = [[[] for _ in range(chunk_grid_col)] for _ in range(chunk_grid_row)]
+    chunks: list[list] = [
+        [[] for _ in range(chunk_grid_col)] for _ in range(chunk_grid_row)
+    ]
 
     # figure out regions of fovs that needs to be copied into each chunk.
     # This is fast so it can be done beforehand in a single process.
     for fov in fovs():
         # we are parsing a stitching vector, so we are always getting unique records.
-        # NOTE : WHY NOT REMOVE ASSERT WHEN IN PRODUCTION, BUT NOTHING TO DO
-        # WITH THE USER
         filename = fov[1][0]
 
         # get global coordinates of fov in the final image
@@ -322,11 +317,6 @@ def assemble_chunk(
         bw: BioWriter to write the assembled chunk to
         img_path: path to the image directory
     """
-    # NOTE we could allocate a smaller chunk on the edge of the image
-    # as this is what BfioWriter expects
-    # NOTE remove if bfio supertile does this somehow
-    # NOTE we could also allocated once and recycle at each call.
-    # this would probably be a bit more efficient.
     chunk = np.zeros((chunk_width, chunk_height), bw.dtype)
 
     for region_to_copy in regions_to_copy:
