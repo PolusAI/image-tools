@@ -58,14 +58,14 @@ def main(  # noqa: PLR0913
         resolve_path=True,
     ),
     pyramid_type: PyramidType = typer.Option(
-        PyramidType.Zarr,
+        ...,
         "--pyramidType",
         "-p",
         help="type of pyramid. Must be one of ['Neuroglancer','DeepZoom', 'Zarr']",
         case_sensitive=False,
     ),
     image_type: ImageType = typer.Option(
-        ImageType.Intensity,
+        ...,
         "--imageType",
         "-t",
         help="type of image. Must be one of ['image','segmentation']",
@@ -80,6 +80,12 @@ def main(  # noqa: PLR0913
     ),
 ) -> None:
     """Precompute slide plugin command line."""
+    if isinstance(pyramid_type, str):
+        pyramid_type = PyramidType[pyramid_type]
+
+    if isinstance(image_type, str):
+        image_type = ImageType[image_type]
+
     logger.info(f"inpDir: {inp_dir}")
     logger.info(f"filePattern: {filepattern}")
     logger.info(f"outDir: {out_dir}")
