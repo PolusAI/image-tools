@@ -156,7 +156,7 @@ def _unshade_batch(
         images = [f.result() for f in load_futures]
 
     images = [img for _, img in sorted(images, key=operator.itemgetter(0))]
-    img_stack = numpy.stack(images, axis=0)
+    img_stack = numpy.stack(images, axis=0).astype(numpy.float32)
 
     # Apply flatfield correction
     if df_image is not None:
