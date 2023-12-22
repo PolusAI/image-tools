@@ -93,8 +93,8 @@ def main(  # noqa: PLR0913
                 darkfield_out = base_output.replace(suffix, "_darkfield" + extension)
                 out_dict["files"].append(darkfield_out)
 
-        with out_dir.open("w") as writer:
-            json.dump(out_dict, writer, indent=4)
+        with out_dir.joinpath("preview.json").open("w") as writer:
+            json.dump(out_dict, writer, indent=2)
 
     else:
         # basicpy has its own multi-threading so we won't use preadator here.
