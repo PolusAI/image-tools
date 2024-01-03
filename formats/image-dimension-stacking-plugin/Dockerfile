@@ -18,5 +18,5 @@ COPY src ${EXEC_DIR}/src
 RUN pip3 install ${EXEC_DIR} --no-cache-dir
 
 # Default command. Additional arguments are provided through the command line
-ENTRYPOINT ["python3", "-m", "polus.plugins.formats.axis_stacking"]
+ENTRYPOINT ["python3", "-m", "polus.plugins.formats.image_dimension_stacking"]
 CMD ["--help"]
