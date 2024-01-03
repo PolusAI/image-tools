@@ -2,12 +2,12 @@
 
 This plugin leverages the [filepattern](https://filepattern2.readthedocs.io/en/latest/Home.html) library and employs the `groupBy` variable to enable the matching of image filenames, facilitating their stacking into multi-dimensional images.
 Currently, the plugin supports the following dimensions and user can choose the relevant variable for the `groupBy` input argument.
-1. multi-channel  `groupBy=c` \n
-   For example `filePattern=x01_y01_p01_c{c:d+}.ome.tif`
-2. multi-zplanes  `groupBy=z` \n
-   For example `filePattern=tubhiswt_C1-z{z:d+}.ome.tif`
-3. multi-timepoints  `groupBy=t` \n
-   For example `filePattern=img00001_t{t:d+}_ch0.ome.tif`
+1. <multi-channel  `groupBy=c` />
+   <example `filePattern=x01_y01_p01_c{c:d+}.ome.tif`/>
+2. <multi-zplanes  `groupBy=z` />
+   <example `filePattern=tubhiswt_C1-z{z:d+}.ome.tif`/>
+3. <multi-timepoints  `groupBy=t` />
+   <For example `filePattern=img00001_t{t:d+}_ch0.ome.tif`/>
 
 #### Note:
 Filename patterns may consist of any other filepattern variables, combined with other valid regular expression arguments, excluding the `groupBy` variable.
