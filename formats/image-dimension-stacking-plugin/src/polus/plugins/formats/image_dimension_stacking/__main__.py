@@ -57,7 +57,7 @@ def main(
         ...,
         "--groupBy",
         "-g",
-        help="Desired polygon type.",
+        help="String variable to group image filenames by.",
     ),
     out_dir: Path = typer.Option(
         ...,
