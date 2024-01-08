@@ -102,7 +102,7 @@ def test_attr2(submit_basic131):
 def test_versions(submit_basic131, submit_basic127):
     """Test versions."""
     assert sorted(
-        [x.version for x in pp.get_plugin("BasicFlatfieldCorrectionPlugin").versions]
+        [x for x in pp.get_plugin("BasicFlatfieldCorrectionPlugin").versions]
     ) == [
         "1.2.7",
         "1.3.1",
@@ -112,25 +112,25 @@ def test_versions(submit_basic131, submit_basic127):
 def test_get_max_version1(submit_basic131, submit_basic127):
     """Test get max version."""
     plug = pp.get_plugin("BasicFlatfieldCorrectionPlugin")
-    assert plug.version.version == "1.3.1"
+    assert plug.version == "1.3.1"
 
 
 def test_get_max_version2(submit_basic131, submit_basic127):
     """Test get max version."""
     plug = pp.BasicFlatfieldCorrectionPlugin
-    assert plug.version.version == "1.3.1"
+    assert plug.version == "1.3.1"
 
 
 def test_get_specific_version(submit_basic131, submit_basic127):
     """Test get specific version."""
     plug = pp.get_plugin("BasicFlatfieldCorrectionPlugin", "1.2.7")
-    assert plug.version.version == "1.2.7"
+    assert plug.version == "1.2.7"
 
 
 def test_remove_version(submit_basic131, submit_basic127):
     """Test remove version."""
     pp.remove_plugin("BasicFlatfieldCorrectionPlugin", "1.2.7")
-    assert [x.version for x in pp.BasicFlatfieldCorrectionPlugin.versions] == ["1.3.1"]
+    assert pp.BasicFlatfieldCorrectionPlugin.versions == ["1.3.1"]
 
 
 def test_remove_all_versions_plugin(

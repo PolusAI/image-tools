@@ -11,7 +11,7 @@ from typing import Optional
 from typing import Union
 
 from polus.plugins._plugins.classes.plugin_methods import _PluginMethods
-from polus.plugins._plugins.io import DuplicateVersionFound
+from polus.plugins._plugins.io import DuplicateVersionFoundError
 from polus.plugins._plugins.io import Version
 from polus.plugins._plugins.io import _in_old_to_new
 from polus.plugins._plugins.io import _ui_old_to_new
@@ -72,7 +72,7 @@ def refresh() -> None:
                         "Found duplicate version of plugin"
                         f"{plugin.name} in {_PLUGIN_DIR}"
                     )
-                    raise DuplicateVersionFound(
+                    raise DuplicateVersionFoundError(
                         msg,
                     )
                 PLUGINS[key][plugin.version] = file
