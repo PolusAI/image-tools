@@ -1,7 +1,7 @@
 {
   "name": "Tabular To Microjson",
-  "version": "0.1.0",
-  "containerId": "polusai/tabular-to-microjson-plugin:0.1.0",
+  "version": "0.1.1",
+  "containerId": "polusai/tabular-to-microjson-plugin:0.1.1",
   "title": "Tabular To Microjson",
   "description": "Generates JSON from tabular data.",
   "author": "Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
@@ -22,42 +22,34 @@
       "required": true
     },
     {
+      "name": "stitchDir",
+      "description": "Path to the input directory containing stitching vector",
+      "type": "genericData",
+      "required": true
+    },
+    {
       "name": "filePattern",
       "description": "A filepattern, used to select tabular data to be converted",
       "type": "string",
       "required": false
     },
     {
-      "name": "dimensions",
-      "description": "Type of microplates for high content screening",
-      "type": "enum",
-      "options": {
-        "values": [
-          "384",
-          "96",
-          "24",
-          "6"
-        ]
-      },
+      "name": "stitchPattern",
+      "description": "A filepattern, used to parse filenames in stitching vector",
+      "type": "string",
       "required": true
+    },
+    {
+      "name": "groupBy",
+      "description": "Variable to group filenames in stitching vector",
+      "type": "string",
+      "required": false
     },
     {
       "name": "geometryType",
       "description": "Type of geometry coordinates",
       "type": "string",
       "required": false
-    },
-    {
-      "name": "cellWidth",
-      "description": "Pixel distance between two adjacent cells/wells in x-dimension",
-      "type": "integer",
-      "required": true
-    },
-    {
-      "name": "cellHeight",
-      "description": "Pixel distance of a cell or well in y-dimension",
-      "type": "integer",
-      "required": true
     }
   ],
   "outputs": [
@@ -74,32 +66,31 @@
       "description": "Input generic data collection to be processed by this plugin"
     },
     {
+      "key": "inputs.stitchDir",
+      "title": "Input stitchDir",
+      "description": "Input directory containing stitching vector"
+    },
+    {
       "key": "inputs.filePattern",
       "title": "Filepattern",
       "description": "A filepattern, used to select tabular data",
       "default": ".+"
     },
     {
-      "key": "inputs.dimensions",
-      "title": "Dimensions",
-      "description": "Type of Microplate",
-      "default": "384"
+      "key": "inputs.stitchPattern",
+      "title": "stitchPattern",
+      "description": "A filepattern, used to parse filenames in stitching vector"
+    },
+    {
+      "key": "inputs.groupBy",
+      "title": "groupBy",
+      "description": "Variable to group filenames in stitching vector"
     },
     {
       "key": "inputs.geometryType",
       "title": "geometryType",
       "description": "Type of geometry coordinates",
       "default": "Polygon"
-    },
-    {
-      "key": "inputs.cellWidth",
-      "title": "CellWidth",
-      "description": "Pixel distance between two adjacent cells/wells in x-dimension"
-    },
-    {
-      "key": "inputs.cellHeight",
-      "title": "CellHeight",
-      "description": "Pixel distance of a cell or well in y-dimension"
     }
   ]
 }
