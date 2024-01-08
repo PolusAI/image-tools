@@ -1,0 +1,123 @@
+{
+  "name": "Hdbscan Clustering",
+  "version": "0.4.8-dev",
+  "title": "Hdbscan Clustering",
+  "description": "Cluster the data using HDBSCAN.",
+  "author": "Jayapriya Nagarajan (github.com/Priyaaxle), Hythem Sidky (hythem.sidky@nih.gov) and Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/PolusAI/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/hdbscan-clustering-plugin:0.4.8-dev",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.plugins.clustering.hdbscan_clustering"
+  ],
+  "inputs": {
+    "inpDir": {
+      "type": "genericData",
+      "title": "Input tabular data",
+      "description": "Input tabular data.",
+      "required": "True"
+    },
+    "filePattern": {
+      "type": "string",
+      "title": "Filename pattern",
+      "description": "Filename pattern used to separate data.",
+      "required": "False"
+    },
+    "groupingPattern": {
+      "type": "string",
+      "title": "Grouping pattern",
+      "description": "Regular expression for optional row grouping.",
+      "required": "False"
+    },
+    "averageGroups": {
+      "type": "boolean",
+      "title": "Average groups",
+      "description": "Whether to average data across groups. Requires grouping pattern to be defined.",
+      "required": "False"
+    },
+    "labelCol": {
+      "type": "string",
+      "title": "Label Column",
+      "description": "Name of column containing labels. Required for grouping pattern.",
+      "required": "False"
+    },
+    "minClusterSize": {
+      "type": "number",
+      "title": "Minimum cluster size",
+      "description": "Minimum cluster size.",
+      "required": "True"
+    },
+    "incrementOutlierId": {
+      "type": "number",
+      "title": "Increment Outlier ID",
+      "description": "Increments outlier ID to 1.",
+      "required": "True"
+    },
+    "preview": {
+      "type": "boolean",
+      "title": "Preview",
+      "description": "Generate an output preview.",
+      "required": "False"
+    }
+  },
+  "outputs": {
+    "outDir": {
+      "type": "genericData",
+      "description": "Output collection."
+    }
+  },
+  "ui": {
+    "inpDir": {
+      "type": "genericData",
+      "title": "Input tabular data",
+      "description": "Input tabular data to be processed by this plugin.",
+      "required": "True"
+    },
+    "filePattern": {
+      "type": "string",
+      "title": "Filename pattern",
+      "description": "Filename pattern used to separate data.",
+      "required": "False"
+    },
+    "groupingPattern": {
+      "type": "string",
+      "title": "Grouping pattern",
+      "description": "Regular expression for optional row grouping.",
+      "required": "False"
+    },
+    "averageGroups": {
+      "type": "boolean",
+      "title": "Average groups",
+      "description": "Whether to average data across groups. Requires grouping pattern to be defined.",
+      "required": "False"
+    },
+    "labelCol": {
+      "type": "string",
+      "title": "Label Column",
+      "description": "Name of column containing labels. Required for grouping pattern.",
+      "required": "False"
+    },
+    "minClusterSize": {
+      "type": "number",
+      "title": "Minimum cluster size",
+      "description": "Minimum cluster size.",
+      "required": "True"
+    },
+    "incrementOutlierId": {
+      "type": "number",
+      "title": "Increment Outlier ID",
+      "description": "Increments outlier ID to 1.",
+      "required": "True"
+    },
+    "preview": {
+      "type": "boolean",
+      "title": "Preview",
+      "description": "Generate an output preview.",
+      "required": "False"
+    }
+  }
+}

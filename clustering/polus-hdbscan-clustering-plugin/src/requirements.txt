@@ -1,2 +1,0 @@
-hdbscan==0.8.27
-pandas>=1.2.4

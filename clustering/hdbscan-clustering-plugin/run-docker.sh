@@ -6,7 +6,8 @@ echo ${datapath}
 
 # Inputs
 inpDir=/data/input
-groupingPattern="(\d+)-\d+-\d+"
+filePattern=".*.csv"
+groupingPattern="\w+$"
 labelCol=file
 averageGroups=true
 minClusterSize=10
@@ -15,8 +16,9 @@ outDir=/data/output
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
            --gpus=all \
-           labshare/polus-hdbscan-clustering-plugin:${version} \
+           polusai/hdbscan-clustering-plugin:${version} \
            --inpDir ${inpDir} \
+           --filePattern ${filePattern} \
 	       --groupingPattern ${groupingPattern} \
 	       --labelCol ${labelCol} \
            --averageGroups ${averageGroups} \
