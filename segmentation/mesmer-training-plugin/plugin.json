@@ -1,0 +1,162 @@
+{
+  "name": "MESMER Training",
+  "version": "0.0.5",
+  "title": "MESMER Training",
+  "description": "WIPP plugin to train PanopticNet model.",
+  "author": "Vishakha Goyal (vishakha.goyal@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/polusai/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/mesmer-training-plugin:0.0.5",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.plugins.segmentation.mesmer_training"
+  ],
+  "inputs": [
+    {
+      "name": "trainingImages",
+      "type": "collection",
+      "description": "Input training image collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "trainingLabels",
+      "type": "collection",
+      "description": "Input training label collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "testingImages",
+      "type": "collection",
+      "description": "Input testing image collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "testingLabels",
+      "type": "collection",
+      "description": "Input testing label collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "modelBackbone",
+      "type": "enum",
+      "description": "Keras models",
+      "required": true,
+      "options": {
+        "values": [
+          "featurenet",
+          "featurenet3d",
+          "featurenet_3d",
+          "densenet121",
+          "densenet169",
+          "densenet201",
+          "resnet50",
+          "resnet101",
+          "resnet152",
+          "resnet50v2",
+          "resnet101v2",
+          "resnet152v2",
+          "vgg16",
+          "vgg19",
+          "nasnet_large",
+          "nasnet_mobile",
+          "mobilenet",
+          "mobilenetv2",
+          "mobilenet_v2",
+          "efficientnetb0",
+          "efficientnetb1",
+          "efficientnetb2",
+          "efficientnetb3",
+          "efficientnetb4",
+          "efficientnetb5",
+          "efficientnetb6",
+          "efficientnetb7",
+          "efficientnetv2b0",
+          "efficientnetv2b1",
+          "efficientnetv2b2",
+          "efficientnetv2b3",
+          "efficientnetv2bl",
+          "efficientnetv2bm",
+          "efficientnetv2bs",
+          "default"
+        ]
+      }
+    },
+    {
+      "name": "filePattern",
+      "type": "string",
+      "description": "Pattern to parse file names.",
+      "required": false,
+      "default": ".+"
+    },
+    {
+      "name": "tilesize",
+      "type": "number",
+      "description": "tile size",
+      "required": false
+    },
+    {
+      "name": "iterations",
+      "type": "number",
+      "description": "Number of training iterations",
+      "required": false
+    },
+    {
+      "name": "batchSize",
+      "type": "number",
+      "description": "batch size for training",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "genericData",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.trainingImages",
+      "title": "trainingImages",
+      "description": "Input training image collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.trainingLabels",
+      "title": "trainingLabels",
+      "description": "Input training label collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.testingImages",
+      "title": "testingImages",
+      "description": "Input testing image collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.testingLabels",
+      "title": "testingLabels",
+      "description": "Input testing label collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "FilePattern",
+      "description": "Pattern to parse file names."
+    },
+    {
+      "key": "inputs.tilesize",
+      "title": "tile size",
+      "description": "tile size. Default is 256."
+    },
+    {
+      "key": "inputs.iterations",
+      "title": "training iterations",
+      "description": "Number of training iterations. Default is 10."
+    },
+    {
+      "key": "inputs.batchSize",
+      "title": "batch size",
+      "description": "batch size. Default is 1."
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Ome-to-microjson-plugin(v0.1.2-dev)
 
-This plugin generate a microjson of polygon coordinates of binary segmentations
+This plugin generate a microjson of polygon coordinates of binary or label segmentations
 
 This plugin uses [MICROJSON](https://github.com/bengtl/microjson/tree/dev) python library to generate polygon encodings for each object (Region of Interest) of binary segmented image in microjson format which can be used in [RENDER UI](https://render.ci.ncats.io/?imageUrl=https://files.scb-ncats.io/pyramids/Idr0033/precompute/41744/x(00-15)_y(01-24)_p0(1-9)_c(1-5)/)
 application for visualization of microscopy images overlay with segmentations encodings.
