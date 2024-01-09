@@ -1,0 +1,63 @@
+{
+    "name": "Tabular Converter",
+    "version": "0.1.0",
+    "title": "Tabular Converter",
+    "description": "WIPP plugin allows tabular data conversion into vaex supported file format.",
+    "author": "Kelechi Nina Mezu (nina.mezu@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
+    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+    "repository": "https://github.com/PolusAI/polus-plugins",
+    "website": "https://ncats.nih.gov/preclinical/core/informatics",
+    "citation": "",
+    "containerId": "polusai/tabular-converter-plugin:0.1.0",
+    "baseCommand": [
+        "python3",
+        "-m",
+        "polus.plugins.formats.tabular_converter"
+    ],
+    "inputs": [
+        {
+            "name": "filePattern",
+            "type": "enum",
+            "description": "Filename pattern used to separate data",
+            "required": true,
+            "options": {
+                "values": [
+                    ".fcs",
+                    ".csv",
+                    ".feather",
+                    ".parquet",
+                    ".hdf5",
+                    ".fits",
+                    ".arrow",
+                    "default"
+                ]
+            }
+        },
+        {
+            "name": "inpDir",
+            "type": "genericData",
+            "description": "Input image collection to be processed by this plugin",
+            "required": true
+        }
+    ],
+    "outputs": [
+        {
+            "name": "outDir",
+            "type": "genericData",
+            "description": "Output collection"
+        }
+    ],
+    "ui": [
+        {
+            "key": "inputs.filePattern",
+            "title": "Filename pattern",
+            "default": ".csv",
+            "description": "Filename pattern used to separate data"
+        },
+        {
+            "key": "inputs.inpDir",
+            "title": "Input collection",
+            "description": "Input generic data collection to be processed by this plugin"
+        }
+    ]
+}
