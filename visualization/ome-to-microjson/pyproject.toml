@@ -8,7 +8,7 @@ packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9.15,<3.12"
-bfio = {version = "2.3.2", extras = ["all"]}
+bfio = {version = "2.3.3", extras = ["all"]}
 typer = "^0.7.0"
 scipy = ">=1.8,<1.9.2"
 filepattern = "^2.0.1"

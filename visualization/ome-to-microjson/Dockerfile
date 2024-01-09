@@ -1,4 +1,4 @@
-FROM polusai/bfio:2.3.2
+FROM polusai/bfio:2.3.3
 
 # environment variables defined in polusai/bfio
 ENV EXEC_DIR="/opt/executables"
