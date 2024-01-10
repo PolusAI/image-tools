@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-transforms-images-image-calculator"
-version = "0.2.0"
+version = "0.2.1"
 description = ""
 authors = [
     "Nicholas Schaub <nick.schaub@nih.gov>",
@@ -10,21 +10,14 @@ readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-bfio = {version = "2.1.9", extras = ["all"]}
-# filepattern = [
-#     { version = "^2.0.0", platform = "linux" },
-#     { version = "^2.0.0", platform = "win32" },
-#     { git = "https://github.com/PolusAI/filepattern", rev = "c07bf543c435cbc4cf264effd5a178868e9eaf19", platform = "darwin" },
-# ]
+python = ">=3.9,<3.12"
+bfio = {version = "2.3.3", extras = ["all"]}
+filepattern = "2.0.4"
 typer = "^0.7.0"
 tqdm = "^4.65.0"
-filepattern = "1.4.7"
+preadator = "0.4.0.dev2"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.3.0"
-ruff = "^0.0.272"
-mypy = "^1.4.0"
 pre-commit = "^3.3.3"
 bump2version = "^1.0.1"
 pytest = "^7.3.2"
@@ -34,3 +27,8 @@ pytest-sugar = "^0.9.7"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]

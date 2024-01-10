@@ -27,28 +27,19 @@ def _make_random_image(
         writer[:] = rng.integers(2**8, 2**16, size=(size, size), dtype=writer.dtype)
 
 
-FixtureReturnType = tuple[
+def gen_images(
+    size: int,
+) -> tuple[
     str,  # pattern
     pathlib.Path,  # primary_dir
     pathlib.Path,  # secondary_dir
     pathlib.Path,  # out_dir
-    image_calculator.Operation,  # operation
-]
-IMAGE_SIZE = [1024 * (2**i) for i in range(4)]
-OPERATIONS = image_calculator.Operation.variants()
-PARAMS = [
-    (r"img_c{c}.ome.tif", s, o) for s, o in itertools.product(IMAGE_SIZE, OPERATIONS)
-]
-IDS = [f"{s}_{o.value.lower()}" for _, s, o in PARAMS]
-
-
-@pytest.fixture(params=PARAMS, ids=IDS)
-def gen_images(request: pytest.FixtureRequest) -> FixtureReturnType:
+]:
     """Generate a set of random images for testing."""
-    pattern: str
-    size: int
-    op: image_calculator.Operation
-    pattern, size, op = request.param
+
+    pattern = "img_c{c}.ome.tif"
+
+    num_images = 3
 
     # make a temporary directory
     data_dir = pathlib.Path(tempfile.mkdtemp(suffix="_data_dir"))
@@ -62,7 +53,7 @@ def gen_images(request: pytest.FixtureRequest) -> FixtureReturnType:
     rng = numpy.random.default_rng(42)
 
     # Generate a list of file names
-    names = [pattern.format(c=v + 1) for v in range(6)]
+    names = [pattern.format(c=v + 1) for v in range(num_images)]
     for name in names:
         _make_random_image(primary_dir.joinpath(name), rng, size)
         _make_random_image(secondary_dir.joinpath(name), rng, size)
@@ -70,14 +61,19 @@ def gen_images(request: pytest.FixtureRequest) -> FixtureReturnType:
     out_dir = data_dir.joinpath("outputs")
     out_dir.mkdir(exist_ok=True)
 
-    yield pattern, primary_dir, secondary_dir, out_dir, op
+    pattern = "img_c{c:d}.ome.tif"
 
-    shutil.rmtree(data_dir)
+    return pattern, primary_dir, secondary_dir, out_dir
 
 
-def test_cli(gen_images: FixtureReturnType) -> None:
+def _test_cli(
+    pattern: str,
+    primary_dir: pathlib.Path,
+    secondary_dir: pathlib.Path,
+    out_dir: pathlib.Path,
+    op: image_calculator.Operation,
+) -> None:
     """Test the CLI."""
-    pattern, primary_dir, secondary_dir, out_dir, op = gen_images
 
     args = [
         "--primaryDir",
@@ -105,3 +101,18 @@ def test_cli(gen_images: FixtureReturnType) -> None:
 
     for p in p_files:
         assert p in o_files, f"Missing {p} from {p_files} in {o_files}\n{args}"
+
+    shutil.rmtree(primary_dir.parent)
+
+
+@pytest.mark.parametrize("op", image_calculator.Operation.variants())
+def test_cli_small(op: image_calculator.Operation) -> None:
+    pattern, primary_dir, secondary_dir, out_dir = gen_images(1024)
+    _test_cli(pattern, primary_dir, secondary_dir, out_dir, op)
+
+
+@pytest.mark.skipif("not config.getoption('slow')")
+@pytest.mark.parametrize("op", image_calculator.Operation.variants())
+def test_cli_large(op: image_calculator.Operation) -> None:
+    pattern, primary_dir, secondary_dir, out_dir = gen_images(1024 * 16)
+    _test_cli(pattern, primary_dir, secondary_dir, out_dir, op)

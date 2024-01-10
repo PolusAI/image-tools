@@ -1,12 +1,11 @@
 """Provides the CLI for the Image Calculator plugin."""
 
-import concurrent.futures
 import json
 import logging
 import pathlib
 
 import filepattern
-import tqdm
+import preadator
 import typer
 from polus.plugins.transforms.images import image_calculator
 
@@ -22,7 +21,7 @@ app = typer.Typer()
 
 
 @app.command()
-def _main(  # noqa: PLR0913
+def main(  # noqa: PLR0913
     primary_dir: pathlib.Path = typer.Option(
         ...,
         "--primaryDir",
@@ -78,53 +77,60 @@ def _main(  # noqa: PLR0913
     fp_primary = filepattern.FilePattern(primary_dir, primary_pattern)
     fp_secondary = filepattern.FilePattern(secondary_dir, secondary_pattern)
 
-    if preview:
-        output = {"files": [files.pop()["file"].name for files in fp_primary()]}
-        with out_dir.joinpath("preview.json").open("w") as writer:
-            json.dump(output, writer)
-        return
+    with preadator.ProcessManager(
+        name="Image Calculator",
+        num_processes=image_calculator.MAX_WORKERS,
+        threads_per_process=2,
+    ) as manager:
+        preview_files = []
+        group: dict[str, int]
+        files: list[pathlib.Path]
+        for group, files in fp_primary():
+            for file in files:
+                logger.info(f"Processing {file.name} ...")
 
-    with concurrent.futures.ProcessPoolExecutor(
-        max_workers=image_calculator.MAX_WORKERS,
-    ) as executor:
-        futures = []
+                matches: list[pathlib.Path] = fp_secondary.get_matching(**group)[0][1]
 
-        for files in fp_primary():
-            # get the first file
-            file = files.pop()
+                if len(matches) == 0:
+                    # TODO: Should this raise an error?
+                    msg = "".join(
+                        [
+                            "No secondary images found to match the ",
+                            f"primary image: {file.name}. Skipping ...",
+                        ],
+                    )
+                    logger.error(msg)
+                    continue
 
-            logger.info(f'Processing image: {file["file"]}')
+                if preview:
+                    preview_files.append(file)
+                else:
+                    if len(matches) > 1:
+                        msg = "".join(
+                            [
+                                "Found multiple secondary images to match the ",
+                                f"primary image: {file.name}.\n",
+                                f"Matches: {matches}.\n",
+                                f"Using only the first match: {matches[0]}",
+                            ],
+                        )
+                        logger.warning(msg)
+                    match = matches.pop()
 
-            matches = fp_secondary.get_matching(
-                **{k.upper(): v for k, v in file.items() if k != "file"},
-            )
-            if len(matches) > 1:
-                msg = "".join(
-                    [
-                        "Found multiple secondary images to match the primary image: ",
-                        f"{file['file'].name}. ",
-                        f"Matches: {matches}",
-                    ],
-                )
-                logger.warning(msg)
-            sfile = matches.pop()
+                    if not preview:
+                        manager.submit_process(
+                            image_calculator.process_image,
+                            file,
+                            match,
+                            out_dir,
+                            operation,
+                        )
 
-            futures.append(
-                executor.submit(
-                    image_calculator.process_image,
-                    file["file"],
-                    sfile["file"],
-                    out_dir,
-                    operation,
-                ),
-            )
-
-        for future in tqdm.tqdm(
-            concurrent.futures.as_completed(futures),
-            total=len(futures),
-            desc="Processing images",
-        ):
-            future.result()
+        if preview:
+            with out_dir.joinpath("preview.json").open("w") as writer:
+                json.dump({"files": preview_files}, writer)
+        else:
+            manager.join_processes()
 
 
 if __name__ == "__main__":
