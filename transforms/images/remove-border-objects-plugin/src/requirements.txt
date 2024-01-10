@@ -1,0 +1,2 @@
+filepattern==1.4.7
+scikit-image>=0.17.2

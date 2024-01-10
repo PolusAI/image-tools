@@ -1,7 +1,7 @@
 {
   "name": "Nyxus plugin",
-  "version": "0.1.3",
-  "containerId": "polusai/nyxus-plugin:0.1.3",
+  "version": "0.1.5-dev",
+  "containerId": "polusai/nyxus-plugin:0.1.5-dev",
   "title": "Nyxus plugin",
   "description": "Nyxus plugin allows to make use of parallel pocessing for extracting nyxus features",
   "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
@@ -9,6 +9,11 @@
   "repository": "https://github.com/PolusAI/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.plugins.features.nyxus_plugin"
+  ],
   "inputs": [
     {
       "name": "inpDir",
@@ -52,6 +57,21 @@
       }
     },
     {
+      "name": "fileExtension",
+      "type": "enum",
+      "description": "Output file format",
+      "default": "default",
+      "options": {
+        "values": [
+          ".arrow",
+          ".feather",
+          ".csv",
+          "default"
+        ]
+      },
+      "required": true
+    },
+    {
       "name": "neighborDist",
       "description": "Pixel distance between neighboring cells",
       "type": "number",
@@ -62,6 +82,13 @@
       "name": "pixelPerMicron",
       "description": "Pixel size in micrometer",
       "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "singleRoi",
+      "description": "Consider intensity image as single roi and ignoring segmentation mask",
+      "type": "bool",
       "options": null,
       "required": false
     }
@@ -97,16 +124,34 @@
       "description": "Filepattern to parse label images"
     },
     {
+      "key": "inputs.features",
+      "title": "features",
+      "description": "Features or feature groups to be extracted by nyxus plugin",
+      "default": "ALL"
+    },
+    {
+      "key": "inputs.fileExtension",
+      "title": "fileExtension",
+      "description": "Ouput file format",
+      "default": "pandas"
+    },
+    {
       "key": "inputs.neighborDist",
       "title": "neighborDist",
       "description": "Pixel distance between neighboring cells",
-      "default": 5.0
+      "default": 5
     },
     {
       "key": "inputs.pixelPerMicron",
       "title": "pixelPerMicron",
       "description": "Pixel size in micrometer",
       "default": 1.0
+    },
+    {
+      "key": "inputs.singleRoi",
+      "title": "singleRoi",
+      "description": "Consider intensity image as single roi and ignoring segmentation mask",
+      "default": false
     }
   ]
 }

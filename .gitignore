@@ -164,3 +164,15 @@ cython_debug/
 
 # test data directory
 data
+
+# local manifests
+src/polus/plugins/_plugins/manifests/*
+# allow python scripts inside manifests dir
+!src/polus/plugins/_plugins/manifests/*.py
+
+#macOS
+*.DS_Store
+
+
+#husky
+node_modules

@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "polus-plugins-transforms-images-montage"
+version = "0.5.0"
+description = ""
+authors = ["Nicholas Schaub <nick.schaub@nih.gov>"]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+bfio = {version = "2.1.9", extras = ["all"]}
+filepattern = "^2.0.0"
+typer = "^0.7.0"
+
+[tool.poetry.group.dev.dependencies]
+bump2version = "^1.0.1"
+pre-commit = "^3.0.4"
+flake8 = "^6.0.0"
+black = "^23.1.0"
+mypy = "^1.0.0"
+pytest = "^7.2.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
