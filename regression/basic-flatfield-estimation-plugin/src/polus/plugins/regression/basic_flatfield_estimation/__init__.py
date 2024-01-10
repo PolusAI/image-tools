@@ -10,7 +10,7 @@ from . import utils
 
 __all__ = ["estimate", "__version__"]
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 # Set the basicpy logger to warning
 logging.getLogger("basicpy.basicpy").setLevel(logging.WARNING)
@@ -44,8 +44,7 @@ def estimate(
     logger.info("Beginning flatfield estimation ...")
     model = basicpy.BaSiC(
         get_darkfield=get_darkfield,
-        lambda_flatfield_coef=500,
-        intensity=True,
+        sort_intensity=True,
         fitting_mode="approximate",
     )
     model.fit(img_stack)
