@@ -1,6 +1,6 @@
 {
   "name": "File Renaming",
-  "version": "0.2.0",
+  "version": "0.2.1-dev0",
   "title": "File Renaming",
   "description": "Rename and store image collection files in a new image collection",
   "author": "Melanie Parham (melanie.parham@axleinfo.com), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/PolusAI/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/file-renaming-plugin:0.2.0",
+  "containerId": "polusai/file-renaming-plugin:0.2.1-dev0",
   "baseCommand": [
     "python3",
     "-m",
