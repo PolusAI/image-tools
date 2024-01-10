@@ -25,7 +25,7 @@ logger.setLevel(logging.INFO)
 
 
 @app.command()
-def main(
+def main(  # noqa: PLR0913
     inp_dir: Path = typer.Option(
         ...,
         "--inpDir",
@@ -42,10 +42,10 @@ def main(
         None,
         "--groupingPattern",
         "-g",
-        help="Regular expression to group rows. Clustering will be applied across capture groups.",
+        help="Regular expression to group rows to capture groups.",
     ),
     average_groups: Optional[bool] = typer.Option(
-       False,
+        False,
         "--averageGroups",
         "-a",
         help="Whether to average data across groups. Requires capture groups.",
@@ -108,7 +108,8 @@ def main(
     files = fp.FilePattern(inp_dir, file_pattern)
 
     if files is None:
-        raise ValueError(f'No tabular files found. Please check {file_pattern} again')
+        msg = f"No tabular files found. Please check {file_pattern} again"
+        raise ValueError(msg)
 
     if preview:
         with Path.open(Path(out_dir, "preview.json"), "w") as jfile:
@@ -129,21 +130,25 @@ def main(
             num_processes=num_workers,
             threads_per_process=2,
         ) as pm:
-            for file in tqdm(files(), 
-                            total=len(files()),
-                            desc="Clustering data",
-                            mininterval=5,
-                            initial=0, 
-                            unit_scale=True, 
-                            colour="cyan"):
-                pm.submit_process(hd.hdbscan_clustering,
-                                        file[1][0],
-                                        min_cluster_size,
-                                        grouping_pattern,
-                                        label_col,
-                                        average_groups,
-                                        increment_outlier_id,
-                                        out_dir)
+            for file in tqdm(
+                files(),
+                total=len(files()),
+                desc="Clustering data",
+                mininterval=5,
+                initial=0,
+                unit_scale=True,
+                colour="cyan",
+            ):
+                pm.submit_process(
+                    hd.hdbscan_clustering,
+                    file[1][0],
+                    min_cluster_size,
+                    out_dir,
+                    grouping_pattern,
+                    label_col,
+                    average_groups,
+                    increment_outlier_id,
+                )
             pm.join_processes()
 
 

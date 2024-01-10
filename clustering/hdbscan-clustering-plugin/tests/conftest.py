@@ -2,48 +2,40 @@
 
 Set up all data used in tests.
 """
-import shutil
 import tempfile
 from pathlib import Path
-from typing import Union
-import pandas as pd
 
-import pytest
 import numpy as np
+import pandas as pd
+import pytest
 
-
-# @pytest.fixture(
-#     params=[
-#         (500, ".csv"), (200, ".arrow")
-#     ],
-# )
 
 @pytest.fixture(
-    params=[
-        (500, ".csv")
-    ],
+    params=[(50000, ".csv"), (100000, ".arrow")],
 )
-
-
 def get_params(request: pytest.FixtureRequest) -> tuple[int, str]:
     """To get the parameter of the fixture."""
     return request.param
 
 
 @pytest.fixture()
-def generate_synthetic_data(get_params: tuple[int, str]) ->tuple[Path, Path, str]:
+def generate_synthetic_data(get_params: tuple[int, str]) -> tuple[Path, Path, str]:
     """Generate tabular data."""
-
     nrows, file_extension = get_params
-    
-    input_directory = Path(tempfile.mkdtemp(dir=Path.cwd(), prefix="inputs_"))
-    output_directory = Path(tempfile.mkdtemp(dir=Path.cwd(), prefix="out_"))
+
+    input_directory = Path(tempfile.mkdtemp(prefix="inputs_"))
+    output_directory = Path(tempfile.mkdtemp(prefix="out_"))
     tabular_data = {
-        "sepal_length": np.random.random_sample(nrows).tolist(),
-        "sepal_width": np.random.random_sample(nrows).tolist(),
-        "petal_length": np.random.random_sample(nrows).tolist(),
-        "petal_width":np.random.random_sample(nrows).tolist(),
-        "species": [np.random.choice(["Iris-setosa", "Iris-versicolor", "Iris-virginica"]) for i in range(nrows)],
+        "sepal_length": np.random.Generator.random(nrows).tolist(),
+        "sepal_width": np.random.Generator.random(nrows).tolist(),
+        "petal_length": np.random.Generator.random(nrows).tolist(),
+        "petal_width": np.random.Generator.random(nrows).tolist(),
+        "species": [
+            np.random.Generator.choice(
+                ["Iris-setosa", "Iris-versicolor", "Iris-virginica"],
+            )
+            for i in range(nrows)
+        ],
     }
 
     df = pd.DataFrame(tabular_data)
