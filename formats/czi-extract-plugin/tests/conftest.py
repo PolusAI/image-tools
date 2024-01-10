@@ -10,7 +10,6 @@ from typing import Union
 import pytest
 import requests
 
-
 def clean_directories() -> None:
     """Remove all temporary directories."""
     for d in Path(".").cwd().iterdir():
@@ -21,7 +20,7 @@ def clean_directories() -> None:
 @pytest.fixture()
 def output_directory() -> Union[str, Path]:
     """Create output directory."""
-    return Path(tempfile.mkdtemp(dir=Path.cwd()))
+    return Path(tempfile.mkdtemp())
 
 
 @pytest.fixture()

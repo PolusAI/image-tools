@@ -2,14 +2,17 @@
 import logging
 from pathlib import Path
 from typing import Optional
+from multiprocessing import cpu_count
 
 import czifile
 import numpy as np
 from bfio import BioReader
 from bfio import BioWriter
+import preadator
 
 logger = logging.getLogger(__name__)
 
+num_workers = max([cpu_count(), 2])
 
 def _get_image_dim(s: np.ndarray, dim: str) -> int:
     """Get czi image dimension."""
@@ -114,50 +117,64 @@ def extract_fovs(file_path: Path, out_path: Path) -> None:
             elif dim.dimension == "T":
                 ind["T"].append(dim.start)
 
+    unique_y = np.unique(ind["Y"])
+    unique_x = np.unique(ind["X"])
+
     row_conv = dict(
         zip(
-            np.unique(np.sort(ind["Y"])),
-            range(0, len(np.unique(ind["Y"]))),
+            np.sort(unique_y),
+            range(0, len(unique_y)),
         ),
     )
     col_conv = dict(
         zip(
-            np.unique(np.sort(ind["X"])),
-            range(0, len(np.unique(ind["X"]))),
+            np.sort(unique_x),
+            range(0, len(unique_x)),
         ),
     )
 
     ind["Row"] = [row_conv[y] for y in ind["Y"]]
     ind["Col"] = [col_conv[x] for x in ind["X"]]
 
-    with BioReader(file_path) as br:
-        metadata = br.metadata
-        chan_names = br.cnames
+    if ind.__len__() != 0:
+        with BioReader(file_path) as br:
+            metadata = br.metadata
+            chan_names = br.cnames
 
-    for s, i in zip(subblocks, range(0, len(subblocks))):
-        z = None if len(ind["Z"]) == 0 else ind["Z"][i]
-        c = None if len(ind["C"]) == 0 else ind["C"][i]
-        t = None if len(ind["T"]) == 0 else ind["T"][i]
+        with preadator.ProcessManager(
+                name="Convert czi to individual ome tif",
+                num_processes=num_workers,
+                threads_per_process=2,
+            ) as pm:
+                for s, i in zip(subblocks, range(0, len(subblocks))):
+                    z = None if len(ind["Z"]) == 0 else ind["Z"][i]
+                    c = None if len(ind["C"]) == 0 else ind["C"][i]
+                    t = None if len(ind["T"]) == 0 else ind["T"][i]
 
-        out_file_path = out_path.joinpath(
-            _get_image_name(
-                base_name,
-                row=ind["Row"][i],
-                col=ind["Col"][i],
-                z=z,
-                c=c,
-                t=t,
-            ),
-        )
+                    out_file_path = out_path.joinpath(
+                        _get_image_name(
+                            base_name,
+                            row=ind["Row"][i],
+                            col=ind["Col"][i],
+                            z=z,
+                            c=c,
+                            t=t,
+                        ),
+                    )
 
-        dims = [
-            _get_image_dim(s, "Y"),
-            _get_image_dim(s, "X"),
-            _get_image_dim(s, "Z"),
-            _get_image_dim(s, "C"),
-            _get_image_dim(s, "T"),
-        ]
+                    dims = [
+                        _get_image_dim(s, "Y"),
+                        _get_image_dim(s, "X"),
+                        _get_image_dim(s, "Z"),
+                        _get_image_dim(s, "C"),
+                        _get_image_dim(s, "T"),
+                    ]
 
-        data = s.data_segment().data().reshape(dims)
+                    data = s.data_segment().data().reshape(dims)
+                    pm.submit_process(write_thread, out_file_path, data, metadata, chan_names[c])
+                pm.join_processes()
 
-        write_thread(out_file_path, data, metadata, chan_names[c])
+    else:
+        msg = logger.info("Unable to extract individual fovs in czi file")
+        raise ValueError(msg)
+

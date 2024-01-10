@@ -1,7 +1,7 @@
 """Test Command line Tool."""
 from typer.testing import CliRunner
 from polus.plugins.formats.czi_extract.__main__ import app
-from tests.fixture import *
+
 
 
 def test_cli(download_czi, output_directory) -> None:

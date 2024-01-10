@@ -3,9 +3,8 @@ from pathlib import Path
 import czifile
 import skimage
 import polus.plugins.formats.czi_extract.czi as cz
+from tests.conftest import clean_directories
 
-from tests.fixture import *  # noqa: F403
-from tests.fixture import clean_directories
 
 
 def test_extract_fovs(download_czi: Path, output_directory: Path) -> None:
@@ -38,7 +37,7 @@ def test_get_image_dim(download_czi: Path) -> None:
             assert dim_numb != 0
 
 
-def test_write_thread(output_directory) -> None:
+def test_write_thread(output_directory: Path) -> None:
     """Test writing ome tif image."""
     for i in range(10):
         blobs = skimage.data.binary_blobs(
