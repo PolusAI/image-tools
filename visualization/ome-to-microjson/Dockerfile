@@ -1,17 +1,13 @@
-FROM polusai/bfio:2.1.9
+FROM polusai/bfio:2.3.3
 
 # environment variables defined in polusai/bfio
-# ENV EXEC_DIR="/opt/executables"
-# ENV DATA_DIR="/data"
-# ENV POLUS_EXT=".ome.tif"
-# Change to WARNING for fewer logs, and DEBUG for debugging
-ENV POLUS_LOG="INFO"
-
+ENV EXEC_DIR="/opt/executables"
 ENV POLUS_IMG_EXT=".ome.tif"
 ENV POLUS_TAB_EXT=".csv"
+ENV POLUS_LOG="INFO"
 
 # Work directory defined in the base container
-# WORKDIR ${EXEC_DIR}
+WORKDIR ${EXEC_DIR}
 
 COPY pyproject.toml ${EXEC_DIR}
 COPY VERSION ${EXEC_DIR}
