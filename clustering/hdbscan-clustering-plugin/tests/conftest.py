@@ -25,17 +25,16 @@ def generate_synthetic_data(get_params: tuple[int, str]) -> tuple[Path, Path, st
 
     input_directory = Path(tempfile.mkdtemp(prefix="inputs_"))
     output_directory = Path(tempfile.mkdtemp(prefix="out_"))
+    rng = np.random.default_rng()
     tabular_data = {
-        "sepal_length": np.random.Generator.random(nrows).tolist(),
-        "sepal_width": np.random.Generator.random(nrows).tolist(),
-        "petal_length": np.random.Generator.random(nrows).tolist(),
-        "petal_width": np.random.Generator.random(nrows).tolist(),
-        "species": [
-            np.random.Generator.choice(
-                ["Iris-setosa", "Iris-versicolor", "Iris-virginica"],
-            )
-            for i in range(nrows)
-        ],
+        "sepal_length": rng.random(nrows).tolist(),
+        "sepal_width": rng.random(nrows).tolist(),
+        "petal_length": rng.random(nrows).tolist(),
+        "petal_width": rng.random(nrows).tolist(),
+        "species": rng.choice(
+            ["Iris-setosa", "Iris-versicolor", "Iris-virginica"],
+            nrows,
+        ).tolist(),
     }
 
     df = pd.DataFrame(tabular_data)
