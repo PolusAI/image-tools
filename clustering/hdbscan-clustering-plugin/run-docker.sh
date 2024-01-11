@@ -1,27 +1,23 @@
 #!/bin/bash
 
 version=$(<VERSION)
-datapath=$(readlink --canonicalize .)
+datapath=$(readlink --canonicalize data)
 echo ${datapath}
 
 # Inputs
-inpDir=/data/input
+inpDir=${datapath}/input
 filePattern=".*.csv"
 groupingPattern="\w+$"
-labelCol=file
-averageGroups=true
-minClusterSize=10
-incrementOutlierId=true
-outDir=/data/output
+labelCol="species"
+minClusterSize=3
+outDir=${datapath}/output
 
-docker run --mount type=bind,source=${datapath},target=/data/ \
-           --gpus=all \
-           polusai/hdbscan-clustering-plugin:${version} \
-           --inpDir ${inpDir} \
-           --filePattern ${filePattern} \
-	       --groupingPattern ${groupingPattern} \
-	       --labelCol ${labelCol} \
-           --averageGroups ${averageGroups} \
-           --minClusterSize ${minClusterSize} \
-           --incrementOutlierId ${incrementOutlierId} \
-           --outDir ${outDir}
+docker run -v ${datapath}:${datapath} \
+            polusai/hdbscan-clustering-plugin:${version} \
+            --inpDir ${inpDir} \
+            --filePattern ${filePattern} \
+            --groupingPattern ${groupingPattern} \
+            --labelCol ${labelCol} \
+            --minClusterSize ${minClusterSize} \
+            --incrementOutlierId \
+            --outDir ${outDir} 

@@ -16,8 +16,8 @@ filepattern = "^2.0.4"
 typer = "^0.7.0"
 tqdm = "^4.64.1"
 preadator="0.4.0.dev2"
-hdbscan="^0.8.33"
 vaex = "^4.17.0"
+hdbscan = "0.8.33"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.3"
