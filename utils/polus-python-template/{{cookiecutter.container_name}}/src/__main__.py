@@ -78,7 +78,7 @@ def main(
         logger.info(f"generating preview data in {out_dir}")
         return
 
-    awesome_function(inp_dir, filepattern, out_dir)
+    {{cookiecutter.package_name}}(inp_dir, filepattern, out_dir)
 
 
 if __name__ == "__main__":
