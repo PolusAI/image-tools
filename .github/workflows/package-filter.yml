@@ -1,0 +1,47 @@
+name: Package Filter
+
+on:
+  workflow_call:
+    outputs:
+      package_dir:
+        description: "The directory containing the updated package"
+        value: ${{ jobs.package-filter.outputs.package_dir }}
+      package_name:
+        description: "The name of the updated package"
+        value: ${{ jobs.package-filter.outputs.package_name }}
+
+permissions:
+  contents: read
+
+jobs:
+  package-filter:
+    name: Filter for updated package
+    runs-on: ubuntu-latest
+    outputs:
+      package_dir: ${{ steps.package-filter.outputs.package_dir }}
+      package_name: ${{ steps.package-filter.outputs.package_name }}
+    steps:
+      - name: Get changed files
+        uses: jitterbit/get-changed-files@v1
+        id: files-changed
+        with:
+          format: space-delimited
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Find Updated Package
+        id: package-filter
+        run: |
+          FOUND_PACKAGE=false
+          for changed_file in ${{ steps.files-changed.outputs.added }} ${{ steps.files-changed.outputs.modified }} ${{ steps.files-changed.outputs.renamed }}
+          do
+            if [[ "$(basename ${changed_file})" == *"pyproject.toml"* ]]
+            then
+              echo "package_dir=$(dirname ${changed_file})" >> "$GITHUB_OUTPUT"
+              echo "package_name=$(basename $(dirname ${changed_file}))" >> "$GITHUB_OUTPUT"
+              FOUND_PACKAGE=true
+              break
+            fi
+          done
+          if [[ "$FOUND_PACKAGE" = false ]]
+          then
+            echo "::error::No pyproject.toml file found among changed files" && exit 1
+          fi
