@@ -13,8 +13,6 @@ COPY pyproject.toml ${EXEC_DIR}
 COPY VERSION ${EXEC_DIR}
 COPY README.md ${EXEC_DIR}
 
-COPY src ${EXEC_DIR}/src
-
 RUN apt --no-install-recommends -y autoremove --purge python3.9-minimal python3.9\
     && apt-get update && apt-get install --no-install-recommends -y build-essential python3.9-dev
 
