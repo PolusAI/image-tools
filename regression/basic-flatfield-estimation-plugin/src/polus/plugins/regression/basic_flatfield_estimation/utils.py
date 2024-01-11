@@ -1,0 +1,91 @@
+"""Helpers for basic flatfield estimation plugin."""
+import concurrent.futures
+import logging
+import multiprocessing
+import os
+import pathlib
+import random
+
+import bfio
+import filepattern
+import numpy
+
+__all__ = ["MAX_WORKERS", "POLUS_IMG_EXT", "POLUS_LOG", "get_image_stack"]
+
+MAX_WORKERS = max(1, multiprocessing.cpu_count() // 2)
+POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
+POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
+
+logger = logging.getLogger(__name__)
+logger.setLevel(POLUS_LOG)
+
+
+def _load_img(path: pathlib.Path, i: int) -> tuple[int, numpy.ndarray]:
+    """Load an image from a path.
+
+    This method is meant to be used in a thread. The index is used to sort the
+    images after they are loaded and returned from the threads. This is to
+    ensure that the order of the images is preserved even though returning from
+    the threads is not guaranteed to be in order.
+
+    Args:
+        path: Path to an image.
+        i: Index of the image.
+
+    Returns:
+        Tuple of the image index and the image.
+    """
+    with bfio.BioReader(path, max_workers=1) as reader_:
+        img = numpy.squeeze(reader_[:, :, 0, 0, 0])
+    return i, img
+
+
+def get_image_stack(image_paths: list[pathlib.Path]) -> numpy.ndarray:
+    """Load a list of images and stack them into a single numpy array."""
+    n = 1024
+    if len(image_paths) > n:
+        random.shuffle(image_paths)
+        image_paths = image_paths[:n]
+
+    images = []
+    with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor:
+        futures = []
+        for i, path in enumerate(image_paths):
+            futures.append(executor.submit(_load_img, path, i))
+
+        for future in concurrent.futures.as_completed(futures):
+            images.append(future.result())
+
+    images = [img for _, img in sorted(images, key=lambda x: x[0])]
+
+    return numpy.stack(images)
+
+
+def get_output_path(image_paths: list[pathlib.Path]) -> str:
+    """Try to infer a filename from a list of paths."""
+    # Try to infer a filename
+    try:
+        fp = filepattern.FilePattern(
+            path=str(image_paths[0].parent),
+            pattern=filepattern.infer_pattern(
+                files=[path.name for path in image_paths],
+            ),
+        )
+        base_output = fp.output_name()
+    # Fallback to the first filename
+    except ValueError:
+        base_output = image_paths[0].name
+
+    return base_output
+
+
+def get_suffix(base_output: str) -> str:
+    """Extract the suffix from a filename."""
+    suffix_len = 6
+    return "".join(
+        [
+            suffix
+            for suffix in pathlib.Path(base_output).suffixes[-2:]
+            if len(suffix) < suffix_len
+        ],
+    )

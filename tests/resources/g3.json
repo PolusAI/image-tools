@@ -1,0 +1,77 @@
+{
+  "name": "BaSiC Flatfield Correction Plugin",
+  "version": "1.2.7",
+  "title": "Flatfield correction using BaSiC algorithm.",
+  "description": "Generates images used for flatfield correction using the BaSiC algorithm.",
+  "institution": "National Center for the Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/polusai/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "Peng et al. \"A BaSiC tool for background and shading correction of optical microscopy images\" Nature Communications (2017)",
+  "containerId": "polusai/basic-flatfield-correction-plugin:1.2.7",
+  "inputs": [
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Input image collection.",
+      "required": true
+    },
+    {
+      "name": "filePattern",
+      "type": "string",
+      "description": "Filename pattern used to separate images by channel, timepoint, and replicate.",
+      "required": true
+    },
+    {
+      "name": "darkfield",
+      "type": "boolean",
+      "description": "Calculate darkfield image.",
+      "required": true
+    },
+    {
+      "name": "photobleach",
+      "type": "boolean",
+      "description": "Calculate photobleaching offsets.",
+      "required": true
+    },
+    {
+      "name": "groupBy",
+      "type": "string",
+      "description": "Group images together for flatfield by variable.",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output data for the plugin"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "Input image collection: ",
+      "description": "Image collection..."
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "Filename pattern: ",
+      "description": "Use a filename pattern to calculate flatfield information by subsets"
+    },
+    {
+      "key": "inputs.groupBy",
+      "title": "Grouping Variables: ",
+      "description": "Group data together with varying variable values."
+    },
+    {
+      "key": "inputs.darkfield",
+      "title": "Calculate darkfield: ",
+      "description": "If selected, will generate a darkfield image"
+    },
+    {
+      "key": "inputs.photobleach",
+      "title": "Calclate photobleaching offset: ",
+      "description": "If selected, will generate an offset scalar for each image"
+    }
+  ]
+}

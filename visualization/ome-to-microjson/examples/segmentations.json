@@ -1,0 +1,3865 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              822.0,
+              79.0
+            ],
+            [
+              866.0,
+              79.0
+            ],
+            [
+              866.0,
+              105.0
+            ],
+            [
+              822.0,
+              105.0
+            ],
+            [
+              822.0,
+              79.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 1.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              965.0,
+              97.0
+            ],
+            [
+              998.0,
+              97.0
+            ],
+            [
+              998.0,
+              118.0
+            ],
+            [
+              965.0,
+              118.0
+            ],
+            [
+              965.0,
+              97.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 2.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              749.0,
+              121.0
+            ],
+            [
+              772.0,
+              121.0
+            ],
+            [
+              772.0,
+              149.0
+            ],
+            [
+              749.0,
+              149.0
+            ],
+            [
+              749.0,
+              121.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 3.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1021.0,
+              176.0
+            ],
+            [
+              1049.0,
+              176.0
+            ],
+            [
+              1049.0,
+              214.0
+            ],
+            [
+              1021.0,
+              214.0
+            ],
+            [
+              1021.0,
+              176.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 4.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              753.0,
+              204.0
+            ],
+            [
+              805.0,
+              204.0
+            ],
+            [
+              805.0,
+              232.0
+            ],
+            [
+              753.0,
+              232.0
+            ],
+            [
+              753.0,
+              204.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 5.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              871.0,
+              255.0
+            ],
+            [
+              910.0,
+              255.0
+            ],
+            [
+              910.0,
+              287.0
+            ],
+            [
+              871.0,
+              287.0
+            ],
+            [
+              871.0,
+              255.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 6.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              338.0,
+              259.0
+            ],
+            [
+              350.0,
+              259.0
+            ],
+            [
+              350.0,
+              305.0
+            ],
+            [
+              338.0,
+              305.0
+            ],
+            [
+              338.0,
+              259.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 7.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              433.0,
+              262.0
+            ],
+            [
+              458.0,
+              262.0
+            ],
+            [
+              458.0,
+              295.0
+            ],
+            [
+              433.0,
+              295.0
+            ],
+            [
+              433.0,
+              262.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 8.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1025.0,
+              270.0
+            ],
+            [
+              1052.0,
+              270.0
+            ],
+            [
+              1052.0,
+              297.0
+            ],
+            [
+              1025.0,
+              297.0
+            ],
+            [
+              1025.0,
+              270.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 9.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1010.0,
+              288.0
+            ],
+            [
+              1025.0,
+              288.0
+            ],
+            [
+              1025.0,
+              307.0
+            ],
+            [
+              1010.0,
+              307.0
+            ],
+            [
+              1010.0,
+              288.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 10.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              142.0,
+              291.0
+            ],
+            [
+              170.0,
+              291.0
+            ],
+            [
+              170.0,
+              334.0
+            ],
+            [
+              142.0,
+              334.0
+            ],
+            [
+              142.0,
+              291.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 11.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              612.0,
+              305.0
+            ],
+            [
+              656.0,
+              305.0
+            ],
+            [
+              656.0,
+              332.0
+            ],
+            [
+              612.0,
+              332.0
+            ],
+            [
+              612.0,
+              305.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 12.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1034.0,
+              308.0
+            ],
+            [
+              1038.0,
+              308.0
+            ],
+            [
+              1038.0,
+              312.0
+            ],
+            [
+              1034.0,
+              312.0
+            ],
+            [
+              1034.0,
+              308.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 13.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              279.0,
+              320.0
+            ],
+            [
+              306.0,
+              320.0
+            ],
+            [
+              306.0,
+              345.0
+            ],
+            [
+              279.0,
+              345.0
+            ],
+            [
+              279.0,
+              320.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 14.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              822.0,
+              330.0
+            ],
+            [
+              851.0,
+              330.0
+            ],
+            [
+              851.0,
+              369.0
+            ],
+            [
+              822.0,
+              369.0
+            ],
+            [
+              822.0,
+              330.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 15.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              14.0,
+              336.0
+            ],
+            [
+              44.0,
+              336.0
+            ],
+            [
+              44.0,
+              372.0
+            ],
+            [
+              14.0,
+              372.0
+            ],
+            [
+              14.0,
+              336.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 16.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              452.0,
+              358.0
+            ],
+            [
+              488.0,
+              358.0
+            ],
+            [
+              488.0,
+              377.0
+            ],
+            [
+              452.0,
+              377.0
+            ],
+            [
+              452.0,
+              358.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 17.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              962.0,
+              361.0
+            ],
+            [
+              987.0,
+              361.0
+            ],
+            [
+              987.0,
+              397.0
+            ],
+            [
+              962.0,
+              397.0
+            ],
+            [
+              962.0,
+              361.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 18.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              796.0,
+              370.0
+            ],
+            [
+              819.0,
+              370.0
+            ],
+            [
+              819.0,
+              394.0
+            ],
+            [
+              796.0,
+              394.0
+            ],
+            [
+              796.0,
+              370.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 19.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              743.0,
+              376.0
+            ],
+            [
+              765.0,
+              376.0
+            ],
+            [
+              765.0,
+              396.0
+            ],
+            [
+              743.0,
+              396.0
+            ],
+            [
+              743.0,
+              376.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 20.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              592.0,
+              377.0
+            ],
+            [
+              623.0,
+              377.0
+            ],
+            [
+              623.0,
+              399.0
+            ],
+            [
+              592.0,
+              399.0
+            ],
+            [
+              592.0,
+              377.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 21.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              913.0,
+              377.0
+            ],
+            [
+              942.0,
+              377.0
+            ],
+            [
+              942.0,
+              405.0
+            ],
+            [
+              913.0,
+              405.0
+            ],
+            [
+              913.0,
+              377.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 22.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              581.0,
+              379.0
+            ],
+            [
+              593.0,
+              379.0
+            ],
+            [
+              593.0,
+              390.0
+            ],
+            [
+              581.0,
+              390.0
+            ],
+            [
+              581.0,
+              379.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 23.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              727.0,
+              380.0
+            ],
+            [
+              739.0,
+              380.0
+            ],
+            [
+              739.0,
+              395.0
+            ],
+            [
+              727.0,
+              395.0
+            ],
+            [
+              727.0,
+              380.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 24.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              897.0,
+              386.0
+            ],
+            [
+              900.0,
+              386.0
+            ],
+            [
+              900.0,
+              389.0
+            ],
+            [
+              897.0,
+              389.0
+            ],
+            [
+              897.0,
+              386.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 25.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1037.0,
+              394.0
+            ],
+            [
+              1072.0,
+              394.0
+            ],
+            [
+              1072.0,
+              429.0
+            ],
+            [
+              1037.0,
+              429.0
+            ],
+            [
+              1037.0,
+              394.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 26.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              571.0,
+              407.0
+            ],
+            [
+              604.0,
+              407.0
+            ],
+            [
+              604.0,
+              436.0
+            ],
+            [
+              571.0,
+              436.0
+            ],
+            [
+              571.0,
+              407.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 27.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              667.0,
+              409.0
+            ],
+            [
+              694.0,
+              409.0
+            ],
+            [
+              694.0,
+              446.0
+            ],
+            [
+              667.0,
+              446.0
+            ],
+            [
+              667.0,
+              409.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 28.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              144.0,
+              417.0
+            ],
+            [
+              171.0,
+              417.0
+            ],
+            [
+              171.0,
+              440.0
+            ],
+            [
+              144.0,
+              440.0
+            ],
+            [
+              144.0,
+              417.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 29.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              899.0,
+              426.0
+            ],
+            [
+              918.0,
+              426.0
+            ],
+            [
+              918.0,
+              441.0
+            ],
+            [
+              899.0,
+              441.0
+            ],
+            [
+              899.0,
+              426.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 30.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              921.0,
+              433.0
+            ],
+            [
+              935.0,
+              433.0
+            ],
+            [
+              935.0,
+              446.0
+            ],
+            [
+              921.0,
+              446.0
+            ],
+            [
+              921.0,
+              433.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 31.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              979.0,
+              438.0
+            ],
+            [
+              1008.0,
+              438.0
+            ],
+            [
+              1008.0,
+              457.0
+            ],
+            [
+              979.0,
+              457.0
+            ],
+            [
+              979.0,
+              438.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 32.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              960.0,
+              446.0
+            ],
+            [
+              979.0,
+              446.0
+            ],
+            [
+              979.0,
+              464.0
+            ],
+            [
+              960.0,
+              464.0
+            ],
+            [
+              960.0,
+              446.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 33.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              883.0,
+              463.0
+            ],
+            [
+              913.0,
+              463.0
+            ],
+            [
+              913.0,
+              491.0
+            ],
+            [
+              883.0,
+              491.0
+            ],
+            [
+              883.0,
+              463.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 34.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              535.0,
+              464.0
+            ],
+            [
+              572.0,
+              464.0
+            ],
+            [
+              572.0,
+              498.0
+            ],
+            [
+              535.0,
+              498.0
+            ],
+            [
+              535.0,
+              464.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 35.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1059.0,
+              469.0
+            ],
+            [
+              1078.0,
+              469.0
+            ],
+            [
+              1078.0,
+              510.0
+            ],
+            [
+              1059.0,
+              510.0
+            ],
+            [
+              1059.0,
+              469.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 36.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              261.0,
+              479.0
+            ],
+            [
+              273.0,
+              479.0
+            ],
+            [
+              273.0,
+              501.0
+            ],
+            [
+              261.0,
+              501.0
+            ],
+            [
+              261.0,
+              479.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 37.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              275.0,
+              480.0
+            ],
+            [
+              288.0,
+              480.0
+            ],
+            [
+              288.0,
+              501.0
+            ],
+            [
+              275.0,
+              501.0
+            ],
+            [
+              275.0,
+              480.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 38.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              155.0,
+              491.0
+            ],
+            [
+              178.0,
+              491.0
+            ],
+            [
+              178.0,
+              521.0
+            ],
+            [
+              155.0,
+              521.0
+            ],
+            [
+              155.0,
+              491.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 39.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              333.0,
+              503.0
+            ],
+            [
+              354.0,
+              503.0
+            ],
+            [
+              354.0,
+              535.0
+            ],
+            [
+              333.0,
+              535.0
+            ],
+            [
+              333.0,
+              503.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 40.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              813.0,
+              510.0
+            ],
+            [
+              844.0,
+              510.0
+            ],
+            [
+              844.0,
+              535.0
+            ],
+            [
+              813.0,
+              535.0
+            ],
+            [
+              813.0,
+              510.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 41.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              487.0,
+              528.0
+            ],
+            [
+              517.0,
+              528.0
+            ],
+            [
+              517.0,
+              556.0
+            ],
+            [
+              487.0,
+              556.0
+            ],
+            [
+              487.0,
+              528.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 42.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              385.0,
+              531.0
+            ],
+            [
+              410.0,
+              531.0
+            ],
+            [
+              410.0,
+              561.0
+            ],
+            [
+              385.0,
+              561.0
+            ],
+            [
+              385.0,
+              531.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 43.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              866.0,
+              533.0
+            ],
+            [
+              904.0,
+              533.0
+            ],
+            [
+              904.0,
+              564.0
+            ],
+            [
+              866.0,
+              564.0
+            ],
+            [
+              866.0,
+              533.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 44.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              979.0,
+              540.0
+            ],
+            [
+              1002.0,
+              540.0
+            ],
+            [
+              1002.0,
+              575.0
+            ],
+            [
+              979.0,
+              575.0
+            ],
+            [
+              979.0,
+              540.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 45.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              678.0,
+              572.0
+            ],
+            [
+              698.0,
+              572.0
+            ],
+            [
+              698.0,
+              614.0
+            ],
+            [
+              678.0,
+              614.0
+            ],
+            [
+              678.0,
+              572.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 46.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              617.0,
+              582.0
+            ],
+            [
+              641.0,
+              582.0
+            ],
+            [
+              641.0,
+              612.0
+            ],
+            [
+              617.0,
+              612.0
+            ],
+            [
+              617.0,
+              582.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 47.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0.0,
+              587.0
+            ],
+            [
+              11.0,
+              587.0
+            ],
+            [
+              11.0,
+              636.0
+            ],
+            [
+              0.0,
+              636.0
+            ],
+            [
+              0.0,
+              587.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 48.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              310.0,
+              595.0
+            ],
+            [
+              347.0,
+              595.0
+            ],
+            [
+              347.0,
+              616.0
+            ],
+            [
+              310.0,
+              616.0
+            ],
+            [
+              310.0,
+              595.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 49.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              213.0,
+              608.0
+            ],
+            [
+              241.0,
+              608.0
+            ],
+            [
+              241.0,
+              638.0
+            ],
+            [
+              213.0,
+              638.0
+            ],
+            [
+              213.0,
+              608.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 50.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              343.0,
+              614.0
+            ],
+            [
+              392.0,
+              614.0
+            ],
+            [
+              392.0,
+              645.0
+            ],
+            [
+              343.0,
+              645.0
+            ],
+            [
+              343.0,
+              614.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 51.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              145.0,
+              629.0
+            ],
+            [
+              180.0,
+              629.0
+            ],
+            [
+              180.0,
+              660.0
+            ],
+            [
+              145.0,
+              660.0
+            ],
+            [
+              145.0,
+              629.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 52.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              520.0,
+              679.0
+            ],
+            [
+              556.0,
+              679.0
+            ],
+            [
+              556.0,
+              708.0
+            ],
+            [
+              520.0,
+              708.0
+            ],
+            [
+              520.0,
+              679.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 53.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              298.0,
+              698.0
+            ],
+            [
+              319.0,
+              698.0
+            ],
+            [
+              319.0,
+              737.0
+            ],
+            [
+              298.0,
+              737.0
+            ],
+            [
+              298.0,
+              698.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 54.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              762.0,
+              702.0
+            ],
+            [
+              800.0,
+              702.0
+            ],
+            [
+              800.0,
+              740.0
+            ],
+            [
+              762.0,
+              740.0
+            ],
+            [
+              762.0,
+              702.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 55.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              36.0,
+              705.0
+            ],
+            [
+              69.0,
+              705.0
+            ],
+            [
+              69.0,
+              740.0
+            ],
+            [
+              36.0,
+              740.0
+            ],
+            [
+              36.0,
+              705.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 56.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              916.0,
+              711.0
+            ],
+            [
+              943.0,
+              711.0
+            ],
+            [
+              943.0,
+              751.0
+            ],
+            [
+              916.0,
+              751.0
+            ],
+            [
+              916.0,
+              711.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 57.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              436.0,
+              715.0
+            ],
+            [
+              469.0,
+              715.0
+            ],
+            [
+              469.0,
+              748.0
+            ],
+            [
+              436.0,
+              748.0
+            ],
+            [
+              436.0,
+              715.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 58.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              958.0,
+              731.0
+            ],
+            [
+              984.0,
+              731.0
+            ],
+            [
+              984.0,
+              773.0
+            ],
+            [
+              958.0,
+              773.0
+            ],
+            [
+              958.0,
+              731.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 59.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              761.0,
+              785.0
+            ],
+            [
+              804.0,
+              785.0
+            ],
+            [
+              804.0,
+              810.0
+            ],
+            [
+              761.0,
+              810.0
+            ],
+            [
+              761.0,
+              785.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 60.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              248.0,
+              794.0
+            ],
+            [
+              278.0,
+              794.0
+            ],
+            [
+              278.0,
+              828.0
+            ],
+            [
+              248.0,
+              828.0
+            ],
+            [
+              248.0,
+              794.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 61.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              632.0,
+              795.0
+            ],
+            [
+              664.0,
+              795.0
+            ],
+            [
+              664.0,
+              822.0
+            ],
+            [
+              632.0,
+              822.0
+            ],
+            [
+              632.0,
+              795.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 62.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              191.0,
+              796.0
+            ],
+            [
+              223.0,
+              796.0
+            ],
+            [
+              223.0,
+              823.0
+            ],
+            [
+              191.0,
+              823.0
+            ],
+            [
+              191.0,
+              796.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 63.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              106.0,
+              801.0
+            ],
+            [
+              126.0,
+              801.0
+            ],
+            [
+              126.0,
+              841.0
+            ],
+            [
+              106.0,
+              841.0
+            ],
+            [
+              106.0,
+              801.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 64.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1008.0,
+              807.0
+            ],
+            [
+              1043.0,
+              807.0
+            ],
+            [
+              1043.0,
+              830.0
+            ],
+            [
+              1008.0,
+              830.0
+            ],
+            [
+              1008.0,
+              807.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 65.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              899.0,
+              814.0
+            ],
+            [
+              933.0,
+              814.0
+            ],
+            [
+              933.0,
+              837.0
+            ],
+            [
+              899.0,
+              837.0
+            ],
+            [
+              899.0,
+              814.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 66.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              490.0,
+              821.0
+            ],
+            [
+              527.0,
+              821.0
+            ],
+            [
+              527.0,
+              858.0
+            ],
+            [
+              490.0,
+              858.0
+            ],
+            [
+              490.0,
+              821.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 67.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1048.0,
+              834.0
+            ],
+            [
+              1080.0,
+              834.0
+            ],
+            [
+              1080.0,
+              858.0
+            ],
+            [
+              1048.0,
+              858.0
+            ],
+            [
+              1048.0,
+              834.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 68.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              410.0,
+              842.0
+            ],
+            [
+              430.0,
+              842.0
+            ],
+            [
+              430.0,
+              872.0
+            ],
+            [
+              410.0,
+              872.0
+            ],
+            [
+              410.0,
+              842.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 69.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              45.0,
+              844.0
+            ],
+            [
+              71.0,
+              844.0
+            ],
+            [
+              71.0,
+              877.0
+            ],
+            [
+              45.0,
+              877.0
+            ],
+            [
+              45.0,
+              844.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 70.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              859.0,
+              849.0
+            ],
+            [
+              891.0,
+              849.0
+            ],
+            [
+              891.0,
+              886.0
+            ],
+            [
+              859.0,
+              886.0
+            ],
+            [
+              859.0,
+              849.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 71.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              897.0,
+              850.0
+            ],
+            [
+              948.0,
+              850.0
+            ],
+            [
+              948.0,
+              864.0
+            ],
+            [
+              897.0,
+              864.0
+            ],
+            [
+              897.0,
+              850.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 72.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              162.0,
+              852.0
+            ],
+            [
+              187.0,
+              852.0
+            ],
+            [
+              187.0,
+              888.0
+            ],
+            [
+              162.0,
+              888.0
+            ],
+            [
+              162.0,
+              852.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 73.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              823.0,
+              877.0
+            ],
+            [
+              848.0,
+              877.0
+            ],
+            [
+              848.0,
+              904.0
+            ],
+            [
+              823.0,
+              904.0
+            ],
+            [
+              823.0,
+              877.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 74.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              938.0,
+              881.0
+            ],
+            [
+              984.0,
+              881.0
+            ],
+            [
+              984.0,
+              909.0
+            ],
+            [
+              938.0,
+              909.0
+            ],
+            [
+              938.0,
+              881.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 75.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              6.0,
+              892.0
+            ],
+            [
+              42.0,
+              892.0
+            ],
+            [
+              42.0,
+              918.0
+            ],
+            [
+              6.0,
+              918.0
+            ],
+            [
+              6.0,
+              892.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 76.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              791.0,
+              900.0
+            ],
+            [
+              816.0,
+              900.0
+            ],
+            [
+              816.0,
+              930.0
+            ],
+            [
+              791.0,
+              930.0
+            ],
+            [
+              791.0,
+              900.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 77.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              701.0,
+              907.0
+            ],
+            [
+              736.0,
+              907.0
+            ],
+            [
+              736.0,
+              934.0
+            ],
+            [
+              701.0,
+              934.0
+            ],
+            [
+              701.0,
+              907.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 78.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1015.0,
+              921.0
+            ],
+            [
+              1037.0,
+              921.0
+            ],
+            [
+              1037.0,
+              960.0
+            ],
+            [
+              1015.0,
+              960.0
+            ],
+            [
+              1015.0,
+              921.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 79.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              129.0,
+              927.0
+            ],
+            [
+              157.0,
+              927.0
+            ],
+            [
+              157.0,
+              956.0
+            ],
+            [
+              129.0,
+              956.0
+            ],
+            [
+              129.0,
+              927.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 80.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              263.0,
+              938.0
+            ],
+            [
+              301.0,
+              938.0
+            ],
+            [
+              301.0,
+              958.0
+            ],
+            [
+              263.0,
+              958.0
+            ],
+            [
+              263.0,
+              938.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 81.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              393.0,
+              953.0
+            ],
+            [
+              438.0,
+              953.0
+            ],
+            [
+              438.0,
+              972.0
+            ],
+            [
+              393.0,
+              972.0
+            ],
+            [
+              393.0,
+              953.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 82.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1063.0,
+              966.0
+            ],
+            [
+              1080.0,
+              966.0
+            ],
+            [
+              1080.0,
+              995.0
+            ],
+            [
+              1063.0,
+              995.0
+            ],
+            [
+              1063.0,
+              966.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 83.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              497.0,
+              975.0
+            ],
+            [
+              534.0,
+              975.0
+            ],
+            [
+              534.0,
+              1007.0
+            ],
+            [
+              497.0,
+              1007.0
+            ],
+            [
+              497.0,
+              975.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 84.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              415.0,
+              991.0
+            ],
+            [
+              448.0,
+              991.0
+            ],
+            [
+              448.0,
+              1012.0
+            ],
+            [
+              415.0,
+              1012.0
+            ],
+            [
+              415.0,
+              991.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 85.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              232.0,
+              995.0
+            ],
+            [
+              264.0,
+              995.0
+            ],
+            [
+              264.0,
+              1025.0
+            ],
+            [
+              232.0,
+              1025.0
+            ],
+            [
+              232.0,
+              995.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 86.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              35.0,
+              1009.0
+            ],
+            [
+              62.0,
+              1009.0
+            ],
+            [
+              62.0,
+              1038.0
+            ],
+            [
+              35.0,
+              1038.0
+            ],
+            [
+              35.0,
+              1009.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 87.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              310.0,
+              1009.0
+            ],
+            [
+              348.0,
+              1009.0
+            ],
+            [
+              348.0,
+              1036.0
+            ],
+            [
+              310.0,
+              1036.0
+            ],
+            [
+              310.0,
+              1009.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 88.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              124.0,
+              1029.0
+            ],
+            [
+              151.0,
+              1029.0
+            ],
+            [
+              151.0,
+              1068.0
+            ],
+            [
+              124.0,
+              1068.0
+            ],
+            [
+              124.0,
+              1029.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 89.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              205.0,
+              1067.0
+            ],
+            [
+              229.0,
+              1067.0
+            ],
+            [
+              229.0,
+              1080.0
+            ],
+            [
+              205.0,
+              1080.0
+            ],
+            [
+              205.0,
+              1067.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 90.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              597.0,
+              1075.0
+            ],
+            [
+              607.0,
+              1075.0
+            ],
+            [
+              607.0,
+              1080.0
+            ],
+            [
+              597.0,
+              1080.0
+            ],
+            [
+              597.0,
+              1075.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "descriptive": {
+          "Plate": "41744",
+          "Image": "x00_y11_p07_c1.ome.tif"
+        },
+        "numerical": {
+          "X": 1080.0,
+          "Y": 1080.0,
+          "Channel": 1.0,
+          "Label": 91.0
+        }
+      }
+    }
+  ],
+  "coordinatesystem": {
+    "axes": [
+      {
+        "name": "x",
+        "type": "cartesian",
+        "unit": "micrometer",
+        "description": "x-axis"
+      },
+      {
+        "name": "y",
+        "type": "cartesian",
+        "unit": "micrometer",
+        "description": "y-axis"
+      }
+    ]
+  },
+  "value_range": {
+    "X": {
+      "min": 1080.0,
+      "max": 1080.0
+    },
+    "Y": {
+      "min": 1080.0,
+      "max": 1080.0
+    },
+    "Channel": {
+      "min": 1.0,
+      "max": 1.0
+    },
+    "Label": {
+      "min": 1.0,
+      "max": 91.0
+    }
+  },
+  "descriptive_fields": [
+    "Plate",
+    "Image"
+  ]
+}

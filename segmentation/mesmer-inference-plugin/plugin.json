@@ -1,0 +1,124 @@
+{
+  "name": "Mesmer Inference",
+  "version": "0.0.7",
+  "title": "Mesmer Inference",
+  "description": "WIPP plugin to run inference using MESMER.",
+  "author": "Vishakha Goyal (vishakha.goyal@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/polusai/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/mesmer-inference-plugin:0.0.7",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.plugins.segmentation.mesmer_inference"
+  ],
+  "inputs": [
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Input image collection to be processed by this plugin.",
+      "required": true
+    },
+    {
+      "name": "tilesize",
+      "type": "number",
+      "description": "Tile size for images. Default is 256.",
+      "required": false
+    },
+    {
+      "name": "modelPath",
+      "type": "genericData",
+      "description": "Model path",
+      "required": false
+    },
+    {
+      "name": "filePatternTest",
+      "type": "string",
+      "description": "Filename pattern to filter test data.",
+      "required": true
+    },
+    {
+      "name": "filePatternWholeCell",
+      "type": "string",
+      "description": "Filename pattern to filter nuclear data for whole cell segmentation.",
+      "required": false
+    },
+    {
+      "name": "fileExtension",
+      "type": "enum",
+      "description": "Format to save predictions",
+      "default": "default",
+      "options": {
+        "values": [
+          ".ome.tif",
+          ".ome.zarr",
+          "default"
+        ]
+      },
+      "required": true
+    },
+    {
+      "name": "model",
+      "type": "enum",
+      "options": {
+        "values": [
+          "mesmerNuclear",
+          "mesmerWholeCell",
+          "nuclear",
+          "cytoplasm",
+          "BYOM"
+        ]
+      },
+      "description": "Select which model to use. Default is mesmer.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "Test intensity images",
+      "description": "Input intesity image collection to be processed by this plugin."
+    },
+    {
+      "key": "inputs.tilesize",
+      "title": "Tile Size",
+      "description": "Tile size for input images."
+    },
+    {
+      "key": "inputs.modelPath",
+      "title": "Model Path",
+      "description": "Path for model file."
+    },
+    {
+      "key": "inputs.filePatternTest",
+      "title": "FilePattern Test",
+      "description": "Filename pattern to filter test data."
+    },
+    {
+      "key": "inputs.filePatternWholeCell",
+      "title": "FilePattern Whole Cell",
+      "description": "Filename pattern to filter nuclear data for whole cell segmentation."
+    },
+    {
+      "key": "inputs.fileExtension",
+      "title": "fileExtension",
+      "description": "Format to save predictions",
+      "default": ".ome.tif"
+    },
+    {
+      "key": "inputs.model",
+      "title": "Model Name",
+      "description": "Choose the model",
+      "default": true
+    }
+  ]
+}

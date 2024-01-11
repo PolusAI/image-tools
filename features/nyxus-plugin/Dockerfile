@@ -1,17 +1,19 @@
-FROM polusai/bfio:2.1.9
+FROM polusai/bfio:2.3.2
 
-COPY VERSION /
+# environment variables defined in polusai/bfio
+ENV EXEC_DIR="/opt/executables"
+ENV POLUS_IMG_EXT=".ome.tif"
+ENV POLUS_TAB_EXT=".csv"
 
-ARG EXEC_DIR="/opt/executables"
-ARG DATA_DIR="/data"
-
-RUN mkdir -p ${EXEC_DIR} \
-    && mkdir -p ${DATA_DIR}/inputs \
-    && mkdir ${DATA_DIR}/outputs
-
-COPY src ${EXEC_DIR}/
+# Work directory defined in the base container
 WORKDIR ${EXEC_DIR}
 
-RUN pip3 install -r ${EXEC_DIR}/requirements.txt --no-cache-dir --force 
+COPY pyproject.toml ${EXEC_DIR}
+COPY VERSION ${EXEC_DIR}
+COPY README.md ${EXEC_DIR}
+COPY src ${EXEC_DIR}/src
 
-ENTRYPOINT ["python3", "main.py"]
+RUN pip3 install ${EXEC_DIR} --no-cache-dir
+
+ENTRYPOINT ["python3", "-m", "polus.plugins.features.nyxus_plugin"]
+CMD ["--help"]
