@@ -59,4 +59,5 @@ def move_project_source_to_final_location():
     logger.debug(f"moving sources from {source_dir} to {target_dir}")
     shutil.move(source_dir, target_dir)
 
+# NOTE do not create folder structure with the repo at the moment.
 # move_project_source_to_final_location()
