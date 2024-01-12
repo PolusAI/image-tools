@@ -13,9 +13,9 @@ from polus.plugins.clustering.outlier_removal.outlier_removal import Methods
 
 @pytest.fixture(
     params=[
-        (50000, ".csv", Methods.ISOLATIONFOREST),
-        (100000, ".arrow", Methods.IFOREST),
-        (500000, ".csv", Methods.ISOLATIONFOREST),
+        (5000, ".csv", "IsolationForest"),
+        (100000, ".arrow", "IForest"),
+        (500000, ".csv", "IsolationForest"),
     ],
 )
 def get_params(request: pytest.FixtureRequest) -> tuple[int, str]:
@@ -25,7 +25,7 @@ def get_params(request: pytest.FixtureRequest) -> tuple[int, str]:
 
 @pytest.fixture()
 def generate_synthetic_data(
-    get_params: tuple[int, str, Methods],
+    get_params: tuple[int, str, str],
 ) -> tuple[Path, Path, str, Methods]:
     """Generate tabular data."""
     nrows, file_extension, method = get_params

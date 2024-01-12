@@ -37,11 +37,14 @@ def isolationforest(data_set: np.ndarray, method: Methods) -> np.ndarray:
         ndarray whether or not the data point should be considered as an inlier.
 
     """
-    if f"{method}" == "IsolationForest":
+    if method == Methods.ISOLATIONFOREST:
         clf = IsolationForest(random_state=19, n_estimators=200)
 
-    if f"{method}" == "IForest":
+    if method == Methods.IFOREST:
         clf = IForest(random_state=10, n_estimators=200)
+
+    if method == Methods.DEFAULT:
+        clf = IsolationForest(random_state=19, n_estimators=200)
 
     clf.fit(data_set)
     return clf.predict(data_set)
@@ -80,7 +83,7 @@ def outlier_detection(
     df = StandardScaler().fit_transform(data[int_columns])
 
     # Detect outliers
-    logger.info("Detecting outliers using " + method.value)
+    logger.info("Detecting outliers using " + method)
     rem_out = isolationforest(df, method)
 
     data["anomaly"] = rem_out

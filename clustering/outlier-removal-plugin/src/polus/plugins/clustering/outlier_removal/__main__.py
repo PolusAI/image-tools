@@ -112,7 +112,7 @@ def main(  # noqa: PLR0913
                 pm.submit_process(
                     rm.outlier_detection,
                     file[1][0],
-                    f"{method}",
+                    method,
                     out_dir,
                     method_type,
                 )

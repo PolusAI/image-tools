@@ -21,7 +21,7 @@ def test_outlier_detection(
     for file in files():
         rm.outlier_detection(
             file=file[1][0],
-            method=f"{method}",
+            method=method,
             out_dir=out_dir,
             method_type=method_type,
         )

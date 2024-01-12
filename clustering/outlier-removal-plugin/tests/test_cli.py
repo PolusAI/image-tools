@@ -21,7 +21,7 @@ def test_cli(generate_synthetic_data: tuple[Path, Path, str, Methods]) -> None:
             "--filePattern",
             file_pattern,
             "--method",
-            f"{method}",
+            method,
             "--methodType",
             method_type,
             "--outDir",
@@ -34,7 +34,7 @@ def test_cli(generate_synthetic_data: tuple[Path, Path, str, Methods]) -> None:
     shutil.rmtree(out_dir)
 
 
-def test_short_cli(generate_synthetic_data: tuple[Path, Path, str, Methods]) -> None:
+def test_short_cli(generate_synthetic_data: tuple[Path, Path, str]) -> None:
     """Test short command line."""
     inp_dir, out_dir, file_extension, method = generate_synthetic_data
     file_pattern = f".*{file_extension}"
@@ -49,7 +49,7 @@ def test_short_cli(generate_synthetic_data: tuple[Path, Path, str, Methods]) -> 
             "-f",
             file_pattern,
             "-m",
-            f"{method}",
+            method,
             "-t",
             method_type,
             "-o",
