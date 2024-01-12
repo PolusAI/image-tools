@@ -1,22 +1,23 @@
 """Binary operations and processing utilities."""
 
 import logging
-from typing import Any, Generator, Tuple
+from collections.abc import Generator
+from typing import Any
 
 import cv2
 import numpy as np
 
 logger = logging.getLogger("utils")
 
-TileTuple = Tuple[slice, slice, slice, slice, slice]
+TileTuple = tuple[slice, slice, slice, slice, slice]
 
 
-def invert(image: np.ndarray, **kwargs) -> np.ndarray:
+def invert(image: np.ndarray, **_: Any) -> np.ndarray:  # noqa: ANN401
     """Invert an image."""
-    return (~(image > 0.5)).astype(np.uint8)
+    return (~(image > 0.5)).astype(np.uint8)  # noqa: PLR2004
 
 
-def dilate(image: np.ndarray, kernel: Any, n: int = 1) -> np.ndarray:
+def dilate(image: np.ndarray, kernel: Any, n: int = 1) -> np.ndarray:  # noqa: ANN401
     """Perform a binary dilation.
 
     This function uses opencv's dilation function.
@@ -29,11 +30,10 @@ def dilate(image: np.ndarray, kernel: Any, n: int = 1) -> np.ndarray:
     Returns:
         The dilated image
     """
-    dilatedimg = cv2.dilate(image, kernel, iterations=n)
-    return dilatedimg
+    return cv2.dilate(image, kernel, iterations=n)
 
 
-def erode(image: np.ndarray, kernel: Any, n: int = 1) -> np.ndarray:
+def erode(image: np.ndarray, kernel: Any, n: int = 1) -> np.ndarray:  # noqa: ANN401
     """Performa  binary erosion.
 
     This function uses opencv's erosion function.
@@ -46,11 +46,10 @@ def erode(image: np.ndarray, kernel: Any, n: int = 1) -> np.ndarray:
     Returns:
         The eroded image.
     """
-    erodedimg = cv2.erode(image, kernel, iterations=n)
-    return erodedimg
+    return cv2.erode(image, kernel, iterations=n)
 
 
-def open_(image: np.ndarray, kernel: int, n: int = 1) -> np.ndarray:
+def open_(image: np.ndarray, kernel: int, _: int = 1) -> np.ndarray:
     """Perform a binary opening operation.
 
     The opening operation is similar to running an erosion followed by a dilation.
@@ -63,11 +62,10 @@ def open_(image: np.ndarray, kernel: int, n: int = 1) -> np.ndarray:
     Returns:
         The opened image.
     """
-    openimg = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
-    return openimg
+    return cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
 
 
-def close_(image: np.ndarray, kernel: int, n: Any = 1) -> np.ndarray:
+def close_(image: np.ndarray, kernel: int, _: int = 1) -> np.ndarray:
     """Perform a binary closing operation.
 
     The opening operation is similar to running a dilation followed by an erosion.
@@ -80,11 +78,14 @@ def close_(image: np.ndarray, kernel: int, n: Any = 1) -> np.ndarray:
     Returns:
         The closed image.
     """
-    closeimg = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
-    return closeimg
+    return cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
 
 
-def morphgradient(image: np.ndarray, kernel: Any, n: int = 1) -> np.ndarray:
+def morphgradient(
+    image: np.ndarray,
+    kernel: Any,  # noqa: ANN401
+    _: int = 1,
+) -> np.ndarray:
     """Calculate the morphological gradient.
 
     The morphological gradient is the difference between the dilated and eroded images.
@@ -98,11 +99,10 @@ def morphgradient(image: np.ndarray, kernel: Any, n: int = 1) -> np.ndarray:
     Returns:
         The morphological gradient of the input image.
     """
-    mg = cv2.morphologyEx(image, cv2.MORPH_GRADIENT, kernel)
-    return mg
+    return cv2.morphologyEx(image, cv2.MORPH_GRADIENT, kernel)
 
 
-def fill_holes(image: np.ndarray, kernel: Any = None, n: int = 0) -> np.ndarray:
+def fill_holes(image: np.ndarray, *_: Any) -> np.ndarray:  # noqa: ANN401
     """Fill holes in objects.
 
     This algorithm was modeled off this Stack Overflow answer.
@@ -119,18 +119,22 @@ def fill_holes(image: np.ndarray, kernel: Any = None, n: int = 0) -> np.ndarray:
     image_dtype = image.dtype
     image = cv2.convertScaleAbs(image)
     contour, _ = cv2.findContours(
-        image, mode=cv2.RETR_CCOMP, method=cv2.CHAIN_APPROX_SIMPLE
+        image,
+        mode=cv2.RETR_CCOMP,
+        method=cv2.CHAIN_APPROX_SIMPLE,
     )
 
     for cnt in contour:
         cv2.drawContours(image, [cnt], 0, 1, -1)
 
-    image = image.astype(image_dtype)
-
-    return image
+    return image.astype(image_dtype)
 
 
-def skeletonize(image: np.ndarray, kernel: Any, n: int = 0) -> np.ndarray:
+def skeletonize(
+    image: np.ndarray,
+    kernel: Any,  # noqa: ANN401
+    _: int = 0,
+) -> np.ndarray:
     """Skeletonize objects in an image.
 
     This algorithm was inspired by the algorithm described here:
@@ -161,7 +165,7 @@ def skeletonize(image: np.ndarray, kernel: Any, n: int = 0) -> np.ndarray:
     return skel
 
 
-def tophat(image: np.ndarray, kernel: Any, n: int = 0) -> np.ndarray:
+def tophat(image: np.ndarray, kernel: Any, _: int = 0) -> np.ndarray:  # noqa: ANN401
     """Difference between the input image and opening of the image.
 
     Args:
@@ -172,11 +176,14 @@ def tophat(image: np.ndarray, kernel: Any, n: int = 0) -> np.ndarray:
     Returns:
         An image with tophat operation performed on it.
     """
-    tophat = cv2.morphologyEx(image, cv2.MORPH_TOPHAT, kernel)
-    return tophat
+    return cv2.morphologyEx(image, cv2.MORPH_TOPHAT, kernel)
 
 
-def blackhat(image: np.ndarray, kernel: Any = None, n: int = 0) -> np.ndarray:
+def blackhat(
+    image: np.ndarray,
+    kernel: Any = None,  # noqa: ANN401
+    _: int = 0,
+) -> np.ndarray:
     """Difference between the closing of the input image and input image.
 
     Args:
@@ -187,11 +194,14 @@ def blackhat(image: np.ndarray, kernel: Any = None, n: int = 0) -> np.ndarray:
     Returns:
         An image with blackhat performed on it.
     """
-    blackhat = cv2.morphologyEx(image, cv2.MORPH_BLACKHAT, kernel)
-    return blackhat
+    return cv2.morphologyEx(image, cv2.MORPH_BLACKHAT, kernel)
 
 
-def remove_small(image: np.ndarray, kernel: Any = None, n: int = 2) -> np.ndarray:
+def remove_small(
+    image: np.ndarray,
+    _: Any = None,  # noqa: ANN401
+    n: int = 2,
+) -> np.ndarray:
     """Remove small objects from the image.
 
     Removes all objects in the image that have an area larger than the threshold.
@@ -208,12 +218,14 @@ def remove_small(image: np.ndarray, kernel: Any = None, n: int = 2) -> np.ndarra
 
     uniques[counts < n] = 0
 
-    image_out = uniques[inverse].reshape(image.shape)
-
-    return image_out
+    return uniques[inverse].reshape(image.shape)
 
 
-def remove_large(image: np.ndarray, kernel: Any = None, n: int = 0) -> np.ndarray:
+def remove_large(
+    image: np.ndarray,
+    _: Any = None,  # noqa: ANN401
+    n: int = 0,
+) -> np.ndarray:
     """Remove small objects from the image.
 
     Removes all objects in the image that have an area larger than the threshold.
@@ -226,19 +238,22 @@ def remove_large(image: np.ndarray, kernel: Any = None, n: int = 0) -> np.ndarra
     Returns:
         An image with small objects removed.
     """
-    assert n > 0, "n must be a positive, non-zero value"
+    if n <= 0:
+        msg = "n must be a positive, non-zero value"
+        logger.error(msg)
+        raise ValueError(msg)
     uniques, inverse, counts = np.unique(image, return_inverse=True, return_counts=True)
 
     uniques[counts > n] = 0
 
-    image_out = uniques[inverse].reshape(image.shape)
-
-    return image_out
+    return uniques[inverse].reshape(image.shape)
 
 
 def iterate_tiles(
-    shape: tuple, window_size: int, step_size: int
-) -> Generator[Tuple[TileTuple, TileTuple], None, None]:
+    shape: tuple,
+    window_size: int,
+    step_size: int,
+) -> Generator[tuple[TileTuple, TileTuple], None, None]:
     """Iterate through tiles of an image.
 
     Args:

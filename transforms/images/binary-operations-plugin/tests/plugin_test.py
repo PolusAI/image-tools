@@ -1,14 +1,15 @@
 # noqa
 
-import os
+import pathlib
 import tempfile
 import unittest
 
 import cv2
 import numpy as np
-import src.utils as utils
-from bfio import BioReader, BioWriter
-from src.utils import binary_operation
+from bfio import BioReader
+from bfio import BioWriter
+from polus.plugins.transforms.images.binary_operations import utils
+from polus.plugins.transforms.images.binary_operations.utils import binary_operation
 
 
 class PluginData:  # noqa
@@ -41,20 +42,21 @@ class PluginData:  # noqa
         ]
         self.kernel_size = 15
         self.kernel = cv2.getStructuringElement(
-            cv2.MORPH_ELLIPSE, (self.kernel_size, self.kernel_size)
+            cv2.MORPH_ELLIPSE,
+            (self.kernel_size, self.kernel_size),
         )
 
 
-class PluginTest(unittest.TestCase):  # noqa
+class PluginTest(unittest.TestCase):
     """Tests to ensure the plugin is operating correctly."""
 
     def test_skeletal(self):  # noqa
         data = PluginData()
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
+        with pathlib.Path(tempfile.TemporaryDirectory()) as tmpdirname:
             # initialize input and output
-            input_path = os.path.join(tmpdirname, "input.ome.tif")
-            output_path = os.path.join(tmpdirname, "output.ome.tif")
+            input_path = tmpdirname / "input.ome.tif"
+            output_path = tmpdirname / "output.ome.tif"
 
             # get some values into the input!
             with BioWriter(
@@ -87,20 +89,20 @@ class PluginTest(unittest.TestCase):  # noqa
         instance_output_labels = instance_output_labels[instance_output_labels > 0]
 
         for instance_output_label in instance_output_labels:
-            instance_outputSingle_instance = (
+            instance_output_single_instance = (
                 instance_output_label == instance_output_array
             ).astype(np.uint8)
-            instance_inputSingle_instance = (
+            instance_input_single_instance = (
                 instance_output_label == data.instance_array.squeeze()
             ).astype(np.uint8)
 
             contours_output, _ = cv2.findContours(
-                instance_outputSingle_instance,
+                instance_output_single_instance,
                 mode=cv2.RETR_TREE,
                 method=cv2.CHAIN_APPROX_NONE,
             )
             contours_input, _ = cv2.findContours(
-                instance_inputSingle_instance,
+                instance_input_single_instance,
                 mode=cv2.RETR_TREE,
                 method=cv2.CHAIN_APPROX_NONE,
             )
@@ -108,17 +110,17 @@ class PluginTest(unittest.TestCase):  # noqa
             for contour_output, contour_input in zip(contours_output, contours_input):
                 area_output = cv2.contourArea(contour_output)
                 area_input = cv2.contourArea(contour_input)
-                self.assertTrue(area_output < area_input)
+                assert area_output < area_input
 
     def test_dilation_erosion_morphologicalgradient(self):  # noqa
         data = PluginData()
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
+        with pathlib.Path(tempfile.TemporaryDirectory()) as tmpdirname:
             # initialize input and outputs
-            input_path = os.path.join(tmpdirname, "input.ome.tif")
-            output_dilation_path = os.path.join(tmpdirname, "output_dilation.ome.tif")
-            output_erosion_path = os.path.join(tmpdirname, "output_erosion.ome.tif")
-            output_morphgrad_path = os.path.join(tmpdirname, "output_morphgrad.ome.tif")
+            input_path = tmpdirname / "input.ome.tif"
+            output_dilation_path = tmpdirname / "output_dilation.ome.tif"
+            output_erosion_path = tmpdirname / "output_erosion.ome.tif"
+            output_morphgrad_path = tmpdirname / "output_morphgrad.ome.tif"
 
             with BioWriter(
                 input_path,
@@ -176,9 +178,7 @@ class PluginTest(unittest.TestCase):  # noqa
             instance_output_dilation_labels > 0
         ]
 
-        self.assertTrue(
-            np.all(data.input_instance_labels == instance_output_dilation_labels)
-        )
+        assert np.all(data.input_instance_labels == instance_output_dilation_labels)
 
         # test erosion
         instance_output_erosion_labels = np.unique(instance_output_erosion_array)
@@ -187,20 +187,20 @@ class PluginTest(unittest.TestCase):  # noqa
         ]
 
         for instance_output_erosion_label in instance_output_erosion_labels:
-            instance_output_erosionSingle_instance = (
+            instance_output_erosion_single_instance = (
                 instance_output_erosion_label == instance_output_erosion_array
             ).astype(np.uint8)
-            instance_input_erosionSingle_instance = (
+            instance_input_erosion_single_instance = (
                 instance_output_erosion_label == data.instance_array.squeeze()
             ).astype(np.uint8)
 
             contours_output, _ = cv2.findContours(
-                instance_output_erosionSingle_instance,
+                instance_output_erosion_single_instance,
                 mode=cv2.RETR_TREE,
                 method=cv2.CHAIN_APPROX_NONE,
             )
             contours_input, _ = cv2.findContours(
-                instance_input_erosionSingle_instance,
+                instance_input_erosion_single_instance,
                 mode=cv2.RETR_TREE,
                 method=cv2.CHAIN_APPROX_NONE,
             )
@@ -208,23 +208,22 @@ class PluginTest(unittest.TestCase):  # noqa
             for contour_output, contour_input in zip(contours_output, contours_input):
                 area_output = cv2.contourArea(contour_output)
                 area_input = cv2.contourArea(contour_input)
-                self.assertTrue(area_output < area_input)
+                assert area_output < area_input
 
         # test morphological gradient
         diff_dilation_erosion = np.subtract(
-            instance_output_dilation_array, instance_output_erosion_array
+            instance_output_dilation_array,
+            instance_output_erosion_array,
         )
-        self.assertTrue(
-            np.array_equal(diff_dilation_erosion, instance_output_morphgrad_array)
-        )
+        assert np.array_equal(diff_dilation_erosion, instance_output_morphgrad_array)
 
     def test_fillholes(self):  # noqa
         data = PluginData()
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
+        with pathlib.Path(tempfile.TemporaryDirectory()) as tmpdirname:
             # initialize input and output
-            input_path = os.path.join(tmpdirname, "input.ome.tif")
-            output_path = os.path.join(tmpdirname, "output.ome.tif")
+            input_path = tmpdirname / "input.ome.tif"
+            output_path = tmpdirname / "output.ome.tif"
 
             # get some values into the input!
             with BioWriter(
@@ -254,24 +253,24 @@ class PluginTest(unittest.TestCase):  # noqa
                 instance_output_array = br[:].squeeze()
 
         for input_instance_label in data.input_instance_labels:
-            instance_outputSingle_instance = (
+            instance_output_single_instance = (
                 input_instance_label == instance_output_array
             ).astype(np.uint8)
             _, hierarchies = cv2.findContours(
-                instance_outputSingle_instance,
+                instance_output_single_instance,
                 mode=cv2.RETR_TREE,
                 method=cv2.CHAIN_APPROX_NONE,
             )
-            self.assertTrue((hierarchies == -1).all())
+            assert (hierarchies == -1).all()
 
     def test_opening_and_tophat(self):  # noqa
         data = PluginData()
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
+        with pathlib.Path(tempfile.TemporaryDirectory()) as tmpdirname:
             # initialize input and output
-            input_path = os.path.join(tmpdirname, "input.ome.tif")
-            output_tophat_path = os.path.join(tmpdirname, "output_tophat.ome.tif")
-            output_opening_path = os.path.join(tmpdirname, "output_opening.ome.tif")
+            input_path = tmpdirname / "input.ome.tif"
+            output_tophat_path = tmpdirname / "output_tophat.ome.tif"
+            output_opening_path = tmpdirname / "output_opening.ome.tif"
 
             # get some values into the input!
             with BioWriter(
@@ -317,18 +316,16 @@ class PluginTest(unittest.TestCase):  # noqa
             instance_output_opening_array > 0
         ] = instance_output_opening_array[instance_output_opening_array > 0]
 
-        self.assertTrue(
-            np.array_equal(instance_output_array, data.instance_array.squeeze())
-        )
+        assert np.array_equal(instance_output_array, data.instance_array.squeeze())
 
     def test_closing_and_blackhat(self):  # noqa
         data = PluginData()
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
+        with pathlib.Path(tempfile.TemporaryDirectory()) as tmpdirname:
             # initialize input and output
-            input_path = os.path.join(tmpdirname, "input.ome.tif")
-            output_blackhat_path = os.path.join(tmpdirname, "output_blackhat.ome.tif")
-            output_closing_path = os.path.join(tmpdirname, "output_closing.ome.tif")
+            input_path = tmpdirname / "input.ome.tif"
+            output_blackhat_path = tmpdirname / "output_blackhat.ome.tif"
+            output_closing_path = tmpdirname / "output_closing.ome.tif"
 
             # get some values into the input!
             with BioWriter(
@@ -380,10 +377,10 @@ class PluginTest(unittest.TestCase):  # noqa
         data = PluginData()
         threshold = 80
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
+        with pathlib.Path(tempfile.TemporaryDirectory()) as tmpdirname:
             # initialize input and output
-            input_path = os.path.join(tmpdirname, "input.ome.tif")
-            output_path = os.path.join(tmpdirname, "output.ome.tif")
+            input_path = tmpdirname / "input.ome.tif"
+            output_path = tmpdirname / "output.ome.tif"
 
             # get some values into the input!
             with BioWriter(
@@ -415,29 +412,29 @@ class PluginTest(unittest.TestCase):  # noqa
         instance_output_labels = np.unique(instance_output_array)
         instance_output_labels = instance_output_labels[instance_output_labels > 0]
 
-        self.assertTrue(len(instance_output_labels) == 13)
+        assert len(instance_output_labels) == 13  # noqa: PLR2004
 
         for instance_output_label in instance_output_labels:
-            instance_outputSingle_instance = (
+            instance_output_single_instance = (
                 instance_output_label == instance_output_array
             ).astype(np.uint8)
             contours, _ = cv2.findContours(
-                instance_outputSingle_instance,
+                instance_output_single_instance,
                 mode=cv2.RETR_TREE,
                 method=cv2.CHAIN_APPROX_NONE,
             )
             for contour in contours:
                 area = cv2.contourArea(contour)
-                self.assertTrue(area <= threshold)
+                assert area <= threshold
 
     def test_instance_removesmallobjects(self):  # noqa
         data = PluginData()
         threshold = 80
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
+        with pathlib.Path(tempfile.TemporaryDirectory()) as tmpdirname:
             # initialize input and output
-            input_path = os.path.join(tmpdirname, "input.ome.tif")
-            output_path = os.path.join(tmpdirname, "output.ome.tif")
+            input_path = tmpdirname / "input.ome.tif"
+            output_path = tmpdirname / "output.ome.tif"
 
             # get some values into the input!
             with BioWriter(
@@ -469,20 +466,20 @@ class PluginTest(unittest.TestCase):  # noqa
         instance_output_labels = np.unique(instance_output_array)
         instance_output_labels = instance_output_labels[instance_output_labels > 0]
 
-        self.assertTrue(len(instance_output_labels) == 36)
+        assert len(instance_output_labels) == 36  # noqa: PLR2004
 
         for instance_output_label in instance_output_labels:
-            instance_outputSingle_instance = (
+            instance_output_single_instance = (
                 instance_output_label == instance_output_array
             ).astype(np.uint8)
             contours, _ = cv2.findContours(
-                instance_outputSingle_instance,
+                instance_output_single_instance,
                 mode=cv2.RETR_TREE,
                 method=cv2.CHAIN_APPROX_NONE,
             )
             for contour in contours:
                 area = cv2.contourArea(contour)
-                self.assertTrue(area >= threshold)
+                assert area >= threshold
 
 
 if __name__ == "__main__":

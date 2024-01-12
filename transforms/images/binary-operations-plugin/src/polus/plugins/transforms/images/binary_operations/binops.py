@@ -3,30 +3,29 @@
 import logging
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
+from typing import Union
 
 import cv2
 import numpy
-from bfio import BioReader, BioWriter
+from bfio import BioReader
+from bfio import BioWriter
 from filepattern import FilePattern
+from polus.plugins.transforms.images.binary_operations.utils import TileTuple
+from polus.plugins.transforms.images.binary_operations.utils import blackhat
+from polus.plugins.transforms.images.binary_operations.utils import close_
+from polus.plugins.transforms.images.binary_operations.utils import dilate
+from polus.plugins.transforms.images.binary_operations.utils import erode
+from polus.plugins.transforms.images.binary_operations.utils import fill_holes
+from polus.plugins.transforms.images.binary_operations.utils import invert
+from polus.plugins.transforms.images.binary_operations.utils import iterate_tiles
+from polus.plugins.transforms.images.binary_operations.utils import morphgradient
+from polus.plugins.transforms.images.binary_operations.utils import open_
+from polus.plugins.transforms.images.binary_operations.utils import remove_large
+from polus.plugins.transforms.images.binary_operations.utils import remove_small
+from polus.plugins.transforms.images.binary_operations.utils import skeletonize
+from polus.plugins.transforms.images.binary_operations.utils import tophat
 from preadator import ProcessManager
-
-from polus.plugins.transforms.images.binary_operations.utils import (
-    TileTuple,
-    blackhat,
-    close_,
-    dilate,
-    erode,
-    fill_holes,
-    invert,
-    iterate_tiles,
-    morphgradient,
-    open_,
-    remove_large,
-    remove_small,
-    skeletonize,
-    tophat,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +82,7 @@ OPERATION_DICT = {
 }
 
 
-def binary_op(
+def binary_op(  # noqa: PLR0913
     image: numpy.ndarray,
     operation: Union[Operation, str],
     structuring_shape: Union[str, StructuringShape] = StructuringShape.ELLIPSE,
@@ -132,12 +131,10 @@ def binary_op(
     else:
         extra_arguments = None
 
-    out_image = OPERATION_DICT[operation](image, kernel=se, n=extra_arguments)
-
-    return out_image
+    return OPERATION_DICT[operation](image, kernel=se, n=extra_arguments)
 
 
-def _tile_thread(
+def _tile_thread(  # noqa: PLR0913
     filepath: Path,
     window_slice: TileTuple,
     step_slice: TileTuple,
@@ -148,26 +145,25 @@ def _tile_thread(
     kernel: int = 3,
     iterations: int = 1,
     threshold: Optional[int] = None,
-):
-    with ProcessManager.thread():
-        with BioReader(filepath) as br:
-            # read a tile of BioReader
-            tile = br[window_slice]
+) -> None:
+    with ProcessManager.thread(), BioReader(filepath) as br:
+        # read a tile of BioReader
+        tile = br[window_slice]
 
-            out_tile = binary_op(
-                image=tile,
-                operation=operation,
-                structuring_shape=structuring_shape,
-                kernel=kernel,
-                iterations=iterations,
-                threshold=threshold,
-            )
+        out_tile = binary_op(
+            image=tile,
+            operation=operation,
+            structuring_shape=structuring_shape,
+            kernel=kernel,
+            iterations=iterations,
+            threshold=threshold,
+        )
 
-            # finalize the output
-            writer[step_slice] = out_tile[0:step_size, 0:step_size]
+        # finalize the output
+        writer[step_slice] = out_tile[0:step_size, 0:step_size]
 
 
-def scalable_binary_op(
+def scalable_binary_op(  # noqa: PLR0913
     filepath: Path,
     out_dir: Path,
     operation: Union[Operation, str],
@@ -175,7 +171,7 @@ def scalable_binary_op(
     kernel: int = 3,
     iterations: int = 1,
     threshold: Optional[int] = None,
-):
+) -> None:
     """Run a binary operation on an arbitrarily sized image.
 
     Use this to run a binary operation on an image that is too large to fit into RAM.
@@ -200,15 +196,21 @@ def scalable_binary_op(
         ProcessManager.init_threads()
 
     if threshold is None:
-        assert kernel is not None, "The kernel size must be a positive number."
+        if kernel is None:
+            msg = "The kernel size must be a positive number."
+            logger.error(msg)
+            raise ValueError(msg)
         extra_padding = kernel
     else:
         extra_padding = 512
 
-    if operation in [Operation.REMOVE_LARGE, Operation.REMOVE_SMALL]:
-        assert (
-            threshold is not None
-        ), "If removing large or small objects, the threshold value must be set."
+    if (
+        operation in [Operation.REMOVE_LARGE, Operation.REMOVE_SMALL]
+        and threshold is None
+    ):
+        msg = "If removing large or small objects, the threshold value must be set."  # noqa: E501
+        logger.error(msg)
+        raise ValueError(msg)
 
     # Create the output file path
     out_path = out_dir.joinpath(filepath.name)
@@ -217,14 +219,23 @@ def scalable_binary_op(
         metadata = br.metadata
 
     with BioWriter(out_path, metadata=metadata) as bw:
-        assert br.shape == bw.shape
+        if br.shape != bw.shape:
+            msg = (
+                "The input and output images must have the same shape. "
+                + f"Input shape: {br.shape}, Output shape: {bw.shape}"
+            )
+            logger.error(msg)
+            raise ValueError(msg)
+
         bfio_shape: tuple = br.shape
 
         step_size: int = 8 * br._TILE_SIZE
         window_size: int = step_size + (2 * extra_padding)
 
         for window_slice, step_slice in iterate_tiles(
-            shape=bfio_shape, window_size=window_size, step_size=step_size
+            shape=bfio_shape,
+            window_size=window_size,
+            step_size=step_size,
         ):
             # info on the Slices for debugging
             ProcessManager.submit_thread(
@@ -244,7 +255,7 @@ def scalable_binary_op(
         ProcessManager.join_threads()
 
 
-def _batch_process(
+def _batch_process(  # noqa: PLR0913
     filepath: Path,
     out_dir: Path,
     operation: Union[Operation, str],
@@ -252,7 +263,7 @@ def _batch_process(
     kernel: int = 3,
     iterations: int = 1,
     threshold: Optional[int] = None,
-):
+) -> None:
     with ProcessManager.process(filepath.name):
         scalable_binary_op(
             filepath=filepath,
@@ -265,7 +276,7 @@ def _batch_process(
         )
 
 
-def batch_binary_ops(
+def batch_binary_ops(  # noqa: PLR0913
     inp_dir: Path,
     out_dir: Path,
     operation: str,
@@ -274,7 +285,7 @@ def batch_binary_ops(
     structuring_shape: Union[StructuringShape, int] = StructuringShape.ELLIPSE,
     iterations: int = 1,
     threshold: Optional[int] = None,
-):
+) -> None:
     """Run binary operations on a batch of images.
 
     The inputs are mostly consistent with the `scalable_binary_op` function, except the
@@ -316,5 +327,5 @@ def batch_binary_ops(
     else:
         raise RuntimeError(
             "No data to process. Make sure the input directory is correct "
-            + "and that the filepattern matches files in the input directory."
+            + "and that the filepattern matches files in the input directory.",
         )
