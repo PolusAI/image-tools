@@ -48,10 +48,10 @@ def main(  # noqa: PLR0913
         "-m",
         help="Select methods for outlier detection",
     ),
-    method_type: Optional[str] = typer.Option(
-        None,
-        "--methodType",
-        "-t",
+    output_type: rm.Outputs = typer.Option(
+        rm.Outputs.DEFAULT,
+        "--outputType",
+        "-ot",
         help="Select type of outliers to detect",
     ),
     out_dir: Path = typer.Option(
@@ -70,7 +70,7 @@ def main(  # noqa: PLR0913
     logger.info(f"--inpDir = {inp_dir}")
     logger.info(f"--filePattern = {file_pattern}")
     logger.info(f"--method = {method}")
-    logger.info(f"--methodType = {method_type}")
+    logger.info(f"--outputType = {output_type}")
     logger.info(f"--outDir = {out_dir}")
 
     inp_dir = inp_dir.resolve()
@@ -113,8 +113,8 @@ def main(  # noqa: PLR0913
                     rm.outlier_detection,
                     file[1][0],
                     method,
-                    out_dir,
-                    method_type,
+                    output_type,
+                    out_dir
                 )
             pm.join_processes()
 
