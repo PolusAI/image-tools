@@ -3,7 +3,6 @@ import enum
 import logging
 import os
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import vaex
@@ -13,7 +12,7 @@ from sklearn.preprocessing import StandardScaler
 
 logger = logging.getLogger(__name__)
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
-POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".csv")
+POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".arrow")
 
 CHUNK_SIZE = 10000
 
@@ -25,13 +24,29 @@ class Methods(str, enum.Enum):
     IFOREST = "IForest"
     DEFAULT = "IsolationForest"
 
+
 class Outputs(str, enum.Enum):
     """Output Files."""
+
     INLIER = "inlier"
     OUTLIER = "outlier"
-    BOTH = "both"
     COMBINED = "combined"
-    DEFAULT = "both"
+    DEFAULT = "inlier"
+
+
+def write_outputs(data: vaex.DataFrame, outname: Path) -> None:
+    """Write outputs in either arrow or csv file formats.
+
+    Args:
+        data: vaex dataframe.
+        outname: Name of output file.
+    """
+    if POLUS_TAB_EXT == ".arrow":
+        data.export_feather(outname)
+        logger.info(f"Saving outputs: {outname}")
+    if POLUS_TAB_EXT == ".csv":
+        data.export_csv(outname, chunk_size=CHUNK_SIZE)
+        logger.info(f"Saving outputs: {outname}")
 
 
 def isolationforest(data_set: np.ndarray, method: Methods) -> np.ndarray:
@@ -61,7 +76,7 @@ def isolationforest(data_set: np.ndarray, method: Methods) -> np.ndarray:
 def outlier_detection(
     file: Path,
     method: Methods,
-    output_type : Outputs,
+    output_type: Outputs,
     out_dir: Path,
 ) -> None:
     """Detects outliers using Isolation Forest algorithm.
@@ -99,49 +114,22 @@ def outlier_detection(
     if method == Methods.ISOLATIONFOREST or method == Methods.DEFAULT:
         inliers = data[data["anomaly"] == 1]
         outliers = data[data["anomaly"] == -1]
-    
+
     if method == Methods.IFOREST:
         inliers = data[data["anomaly"] == 0]
         outliers = data[data["anomaly"] == 1]
-
 
     # Drop 'anomaly' column
     inliers = inliers.drop("anomaly", inplace=True)
     outliers = outliers.drop("anomaly", inplace=True)
 
-    inliers_outname = Path(out_dir, f"{Path(file.name).stem}_inliers{POLUS_TAB_EXT}")
-    outliers_outname = Path(out_dir, f"{Path(file.name).stem}_outliers{POLUS_TAB_EXT}")
-    combined_outname = Path(out_dir, f"{Path(file.name).stem}_combined{POLUS_TAB_EXT}")
+    outname = Path(out_dir, f"{Path(file.name).stem}_{output_type}{POLUS_TAB_EXT}")
 
-    if POLUS_TAB_EXT == ".arrow":
-        if output_type == Outputs.INLIER:
-            inliers.export_feather(inliers_outname)
-            logger.info(f"Saving outputs: {inliers_outname}")
-        if output_type == Outputs.OUTLIER:
-            outliers.export_feather(outliers_outname)
-            logger.info(f"Saving outputs: {outliers_outname}")
-        if output_type == Outputs.BOTH or output_type == Outputs.DEFAULT:
-            inliers.export_feather(inliers_outname)
-            logger.info(f"Saving outputs: {inliers_outname}")
-            outliers.export_feather(outliers_outname)
-            logger.info(f"Saving outputs: {outliers_outname}")
-        if output_type == Outputs.COMBINED:
-            data.export_feather(combined_outname)
-            logger.info(f"Saving outputs: {combined_outname}")
-
-
-    if POLUS_TAB_EXT == ".csv":
-        if output_type == Outputs.INLIER:
-            inliers.export_csv(inliers_outname, chunk_size=CHUNK_SIZE)
-            logger.info(f"Saving outputs: {inliers_outname}")
-        if output_type == Outputs.OUTLIER:
-            outliers.export_csv(outliers_outname, chunk_size=CHUNK_SIZE)
-            logger.info(f"Saving outputs: {outliers_outname}")
-        if output_type == Outputs.BOTH or output_type == Outputs.DEFAULT:
-            inliers.export_csv(inliers_outname, chunk_size=CHUNK_SIZE)
-            logger.info(f"Saving outputs: {inliers_outname}")
-            outliers.export_csv(outliers_outname, chunk_size=CHUNK_SIZE)
-            logger.info(f"Saving outputs: {outliers_outname}")
-        if output_type == Outputs.COMBINED:
-            data.export_csv(combined_outname, chunk_size=CHUNK_SIZE)
-            logger.info(f"Saving outputs: {combined_outname}")
+    if output_type == Outputs.INLIER:
+        write_outputs(inliers, outname)
+    if output_type == Outputs.OUTLIER:
+        write_outputs(outliers, outname)
+    if output_type == Outputs.COMBINED:
+        write_outputs(data, outname)
+    if output_type == Outputs.DEFAULT:
+        write_outputs(inliers, outname)

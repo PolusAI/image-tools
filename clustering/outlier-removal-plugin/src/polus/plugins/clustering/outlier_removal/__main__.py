@@ -2,7 +2,6 @@
 
 import json
 import logging
-import os
 from multiprocessing import cpu_count
 from pathlib import Path
 from typing import Any
@@ -12,9 +11,6 @@ import filepattern as fp
 import polus.plugins.clustering.outlier_removal.outlier_removal as rm
 import preadator
 import typer
-
-# Import environment variables
-POLUS_EXT = os.environ.get("POLUS_EXT", ".ome.tif")
 
 num_workers = max([cpu_count(), 2])
 
@@ -52,7 +48,7 @@ def main(  # noqa: PLR0913
         rm.Outputs.DEFAULT,
         "--outputType",
         "-ot",
-        help="Select type of outliers to detect",
+        help="Select type of output file",
     ),
     out_dir: Path = typer.Option(
         ...,
@@ -90,16 +86,12 @@ def main(  # noqa: PLR0913
                 "outDir": [],
             }
             for file in files():
-                out_name_inliers = file[1][0].name.replace(
+                outname = file[1][0].name.replace(
                     "".join(file[1][0].suffixes),
-                    f"_inliers{rm.POLUS_TAB_EXT}",
+                    f"_{output_type}{rm.POLUS_TAB_EXT}",
                 )
-                out_name_outliers = file[1][0].name.replace(
-                    "".join(file[1][0].suffixes),
-                    f"_outliers{rm.POLUS_TAB_EXT}",
-                )
-                out_json["outDir"].append(out_name_inliers)
-                out_json["outDir"].append(out_name_outliers)
+
+                out_json["outDir"].append(outname)
             json.dump(out_json, jfile, indent=2)
 
     else:
@@ -114,7 +106,7 @@ def main(  # noqa: PLR0913
                     file[1][0],
                     method,
                     output_type,
-                    out_dir
+                    out_dir,
                 )
             pm.join_processes()
 

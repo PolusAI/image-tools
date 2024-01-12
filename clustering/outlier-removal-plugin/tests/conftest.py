@@ -8,14 +8,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytest
-from polus.plugins.clustering.outlier_removal.outlier_removal import Methods
 
 
 @pytest.fixture(
     params=[
-        (5000, ".csv", "IsolationForest"),
-        (100000, ".arrow", "IForest"),
-        (500000, ".csv", "IsolationForest"),
+        (5000, ".csv", "IsolationForest", "combined"),
+        (100000, ".arrow", "IForest", "inlier"),
+        (500000, ".csv", "IsolationForest", "outlier"),
     ],
 )
 def get_params(request: pytest.FixtureRequest) -> tuple[int, str]:
@@ -25,10 +24,10 @@ def get_params(request: pytest.FixtureRequest) -> tuple[int, str]:
 
 @pytest.fixture()
 def generate_synthetic_data(
-    get_params: tuple[int, str, str],
-) -> tuple[Path, Path, str, Methods]:
+    get_params: tuple[int, str, str, str],
+) -> tuple[Path, Path, str, str, str]:
     """Generate tabular data."""
-    nrows, file_extension, method = get_params
+    nrows, file_extension, method, output_type = get_params
 
     input_directory = Path(tempfile.mkdtemp(prefix="inputs_"))
     output_directory = Path(tempfile.mkdtemp(prefix="out_"))
@@ -52,4 +51,4 @@ def generate_synthetic_data(
         outpath = Path(input_directory, "data.arrow")
         df.to_feather(outpath)
 
-    return input_directory, output_directory, file_extension, method
+    return input_directory, output_directory, file_extension, method, output_type

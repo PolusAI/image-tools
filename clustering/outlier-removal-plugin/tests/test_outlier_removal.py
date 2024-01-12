@@ -6,24 +6,22 @@ import filepattern as fp
 import numpy as np
 import polus.plugins.clustering.outlier_removal.outlier_removal as rm
 import vaex
-from polus.plugins.clustering.outlier_removal.outlier_removal import Methods
 
 
 def test_outlier_detection(
-    generate_synthetic_data: tuple[Path, Path, str, Methods],
+    generate_synthetic_data: tuple[Path, Path, str, str, str],
 ) -> None:
     """Test outlier detection of tabular data."""
-    inp_dir, out_dir, file_extension, method = generate_synthetic_data
+    inp_dir, out_dir, file_extension, method, output_type = generate_synthetic_data
 
-    method_type = "Global"
     file_pattern = f".*{file_extension}"
     files = fp.FilePattern(inp_dir, file_pattern)
     for file in files():
         rm.outlier_detection(
             file=file[1][0],
             method=method,
+            output_type=output_type,
             out_dir=out_dir,
-            method_type=method_type,
         )
     out_ext = [Path(f.name).suffix for f in out_dir.iterdir()]
     assert all(out_ext) is True
@@ -32,10 +30,10 @@ def test_outlier_detection(
 
 
 def test_isolationforest(
-    generate_synthetic_data: tuple[Path, Path, str, Methods],
+    generate_synthetic_data: tuple[Path, Path, str, str, str],
 ) -> None:
     """Test isolationforest method."""
-    inp_dir, out_dir, file_extension, method = generate_synthetic_data
+    inp_dir, out_dir, file_extension, method, output_type = generate_synthetic_data
     file_pattern = f".*{file_extension}"
     files = fp.FilePattern(inp_dir, file_pattern)
     for file in files():

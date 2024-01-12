@@ -1,16 +1,14 @@
 """Test Command line Tool."""
 from typer.testing import CliRunner
 from polus.plugins.clustering.outlier_removal.__main__ import app
-from polus.plugins.clustering.outlier_removal.outlier_removal import Methods
 import shutil
 from pathlib import Path
 
 
-def test_cli(generate_synthetic_data: tuple[Path, Path, str, Methods]) -> None:
+def test_cli(generate_synthetic_data: tuple[Path, Path, str, str, str]) -> None:
     """Test the command line."""
-    inp_dir, out_dir, file_extension, method = generate_synthetic_data
+    inp_dir, out_dir, file_extension, method, output_type = generate_synthetic_data
     file_pattern = f".*{file_extension}"
-    method_type = "Global"
 
     runner = CliRunner()
     result = runner.invoke(
@@ -22,8 +20,8 @@ def test_cli(generate_synthetic_data: tuple[Path, Path, str, Methods]) -> None:
             file_pattern,
             "--method",
             method,
-            "--methodType",
-            method_type,
+            "--outputType",
+            output_type,
             "--outDir",
             out_dir,
         ],
@@ -34,11 +32,10 @@ def test_cli(generate_synthetic_data: tuple[Path, Path, str, Methods]) -> None:
     shutil.rmtree(out_dir)
 
 
-def test_short_cli(generate_synthetic_data: tuple[Path, Path, str]) -> None:
+def test_short_cli(generate_synthetic_data: tuple[Path, Path, str, str, str]) -> None:
     """Test short command line."""
-    inp_dir, out_dir, file_extension, method = generate_synthetic_data
+    inp_dir, out_dir, file_extension, method, output_type = generate_synthetic_data
     file_pattern = f".*{file_extension}"
-    method_type = "Global"
 
     runner = CliRunner()
     result = runner.invoke(
@@ -50,8 +47,8 @@ def test_short_cli(generate_synthetic_data: tuple[Path, Path, str]) -> None:
             file_pattern,
             "-m",
             method,
-            "-t",
-            method_type,
+            "-ot",
+            output_type,
             "-o",
             out_dir,
         ],

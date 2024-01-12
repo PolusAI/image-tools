@@ -14,66 +14,92 @@
     "-m",
     "polus.plugins.clustering.outlier_removal"
   ],
-  "inputs": [
-    {
-      "name": "inpdir",
-      "type": "csvCollection",
-      "description": "Input csv file collection",
-      "required": "true"
+  "inputs": {
+    "inpDir": {
+      "type": "genericData",
+      "title": "Input tabular data",
+      "description": "Input tabular data.",
+      "required": "True"
     },
-    {
-      "name": "methods",
+    "filePattern": {
+      "type": "string",
+      "title": "Filename pattern",
+      "description": "Filename pattern used to separate data.",
+      "required": "False"
+    },
+    "method": {
       "type": "enum",
+      "title": "Methods",
       "description": "Select methods for outlier removal",
+      "default": "IsolationForest",
       "options": {
         "values": [
-          "IsolationForest"
+          "IsolationForest",
+          "IForest"
         ]
       },
-      "required": "true"
+      "required": "False"
     },
-    {
-      "name": "types",
+    "outputType": {
       "type": "enum",
-      "description": "Select type of outliers to be removed",
+      "title": "outputType",
+      "description": "Select type of output file",
+      "default": "inlier",
       "options": {
         "values": [
-          "Global",
-          "Local"
-        ],
-        "default": "Global"
+          "inlier",
+          "outlier",
+          "combined"
+        ]
       },
-      "required": "false"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "outdir",
-      "type": "csvCollection",
-      "description": "Output collection"
-    }
-  ],
-  "ui": [
-    {
-      "key": "inputs.inpdir",
-      "title": "Input csv file",
-      "description": "Input csv file for outlier removal"
+      "required": "False"
     },
-    {
-      "key": "inputs.methods",
-      "title": "Remove outliers based on the method selected",
-      "description": "Select methods"
-    },
-    {
-      "key": "inputs.types",
-      "title": "Find outliers based on the type selected",
-      "description": "Select types",
-      "condition": "model.inputs.methods==IsolationForest"
-    },
-    {
-      "key": "inputs.outdir",
-      "title": "Output csv file",
-      "description": "Save output csv file separately for inliers and outliers"
+    "preview": {
+      "type": "boolean",
+      "title": "Preview",
+      "description": "Generate an output preview.",
+      "required": "False"
     }
-  ]
+  },
+  "outputs": {
+    "outDir": {
+      "type": "genericData",
+      "description": "Output collection."
+    }
+  },
+  "ui": {
+    "inpDir": {
+      "type": "genericData",
+      "title": "Input tabular data",
+      "description": "Input tabular data to be processed by this plugin.",
+      "required": "True"
+    },
+    "filePattern": {
+      "type": "string",
+      "title": "Filename pattern",
+      "description": "Filename pattern used to separate data.",
+      "required": "False",
+      "default": ".*"
+    },
+    "method": {
+      "type": "enum",
+      "title": "method",
+      "description": "Select method for outlier removal.",
+      "required": "False",
+      "default": "IsolationForest"
+    },
+    "outputType": {
+      "type": "enum",
+      "title": "outputType",
+      "description": "Select output type.",
+      "required": "False",
+      "default": "inlier"
+    },
+    "preview": {
+      "type": "boolean",
+      "title": "Preview",
+      "description": "Generate an output preview.",
+      "required": "False"
+    }
+  }
 }
