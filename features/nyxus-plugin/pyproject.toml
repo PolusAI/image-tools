@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-features-nyxus-plugin"
-version = "0.1.5-dev1"
+version = "0.1.5"
 description = ""
 authors = [
            "Nick Schaub <nick.schaub@nih.gov>",
