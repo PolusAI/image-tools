@@ -1,4 +1,4 @@
-# Nyxus-Plugin(v0.1.5-dev)
+# Nyxus-Plugin(v0.1.5-dev1)
 
 
 Nyxus plugin uses parallel processing of [Nyxus python package](https://pypi.org/project/nyxus/) to extract nyxus features from intensity-label image data. Especially useful when processing high throughput screens.
