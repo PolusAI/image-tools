@@ -1,4 +1,4 @@
-## Nyxus Plugin(v0.1.5-dev)
+## Nyxus Plugin(v0.1.5-dev1)
 1. This plugin is updated only to the new plugin standards
 2. vaex package is included to handle large pandas dataframe and convert to `csv` ouputs by loading dataframe in chunks.
 3. Implemented latest updated filepattern package

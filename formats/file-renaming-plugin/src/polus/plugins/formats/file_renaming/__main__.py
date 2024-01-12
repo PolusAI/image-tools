@@ -23,7 +23,7 @@ logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 
 @app.command()
-def main(  # noqa: PLR0913 D417
+def main(  # noqa: PLR0913 D417 C901 PLR0912
     inp_dir: pathlib.Path = typer.Option(
         ...,
         "--inpDir",
