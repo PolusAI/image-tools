@@ -4,13 +4,11 @@ import pytest
 from {{cookiecutter.plugin_package}}.{{cookiecutter.package_name}} import (
     {{cookiecutter.package_name}},
 )
+from .conftest import FixtureReturnType
 
-from tests.fixtures import ground_truth
 
-
-def test_{{cookiecutter.package_name}}(ground_truth : None):
+def test_{{cookiecutter.package_name}}(generate_test_data : FixtureReturnType):
     """Test {{cookiecutter.package_name}}."""
-    inpDir = "/path/to/inputDir"
+    inp_dir, out_dir, ground_truth_dir, img_path, ground_truth_path = generate_test_data
     filepattern = ".*"
-    outDir = "path/to/outDir"
-    assert {{cookiecutter.package_name}}(inpDir, filepattern, outDir) == ground_truth
+    assert {{cookiecutter.package_name}}(inp_dir, filepattern, out_dir) == None

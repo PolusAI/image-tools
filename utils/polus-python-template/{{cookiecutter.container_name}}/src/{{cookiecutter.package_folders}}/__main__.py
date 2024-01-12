@@ -16,11 +16,12 @@ logging.basicConfig(
     datefmt="%d-%b-%y %H:%M:%S",
 )
 POLUS_LOG = getattr(logging, environ.get("POLUS_LOG", "INFO"))
-logger = logging.getLogger("{{cookiecutter.plugin_package}}")
+logger = logging.getLogger("polus.plugins.package1.package2.awesome_function")
 logger.setLevel(POLUS_LOG)
-logging.getLogger("bfio").setLevel(POLUS_LOG)
 
-app = typer.Typer(help="{{cookiecutter.plugin_name}} plugin.")
+POLUS_IMG_EXT = environ.get("POLUS_IMG_EXT", ".ome.tif")
+
+app = typer.Typer(help="{{cookiecutter.plugin_name}}.")
 
 def generate_preview(
     img_path: Path,
@@ -39,26 +40,35 @@ def main(
         ...,
         "--inpDir",
         "-i",
-        help="Input image collection to be processed by this plugin.",
+        help="Input directory to be processed.",
     ),
     filepattern: str = typer.Option(
         ".*",
         "--filePattern",
         "-f",
-        help="Filename pattern used to separate data.",
+        help="Filepattern used to filter inputs.",
+        exists=True,
+        readable=True,
+        file_okay=False,
+        resolve_path=True,
     ),
     out_dir: Path = typer.Option(
         ...,
         "--outDir",
         "-o",
-        help="Output collection.",
+        help="Output directory.",
+        exists=True,
+        writable=True,
+        file_okay=False,
+        resolve_path=True,
     ),
     preview: bool = typer.Option(
         False,
         "--preview",
-        "-p",
-        help="Generate preview of expected outputs.",
-    )
+        "-v",
+        help="Preview of expected outputs (dry-run)",
+        show_default=False,
+    ),
 ):
     """{{cookiecutter.plugin_name}}."""
     logger.info(f"inpDir: {inp_dir}")
@@ -66,16 +76,16 @@ def main(
     logger.info(f"outDir: {out_dir}")
 
     if not inp_dir.exists():
-        msg = "inpDir does not exist"
+        msg = f"inpDir {inp_dir} does not exist."
         raise ValueError(msg, inp_dir)
 
     if not out_dir.exists():
-        msg = "outDir does not exist"
+        msg = f"outDir {out_dir} does not exist."
         raise ValueError(msg, out_dir)
 
     if preview:
         generate_preview(inp_dir, out_dir)
-        logger.info(f"generating preview data in {out_dir}")
+        logger.info(f"generating preview data in : {out_dir}.")
         return
 
     {{cookiecutter.package_name}}(inp_dir, filepattern, out_dir)

@@ -1,5 +1,5 @@
 """
-Validation of template variable
+Validate of template variables before templating the project
 """
 import logging
 from os import environ
@@ -11,6 +11,9 @@ logging.basicConfig(
 POLUS_LOG = getattr(logging, environ.get("POLUS_LOG", "DEBUG"))
 logger = logging.getLogger("polus-python-template-pre")
 logger.setLevel(POLUS_LOG)
+
+# NOTE Those validation could be performed on a plugin.json
+# using polus plugins pydantic models.
 
 author = "{{ cookiecutter.author }}"
 # TODO check valid
@@ -28,6 +31,7 @@ if plugin_package.endswith("_plugin"):
     raise ValueError(
         f"plugin_package must not ends with _plugin. Got : {plugin_package}"
     )
+
 # TODO check we have a valid python package name
 
 plugin_version = "{{ cookiecutter.plugin_version }}"
