@@ -11,14 +11,14 @@ permissions:
   contents: write
 
 jobs:
-  package-filter:
+  package-tests:
     name: Filter for updated package
-    uses: ./.github/workflows/package-filter.yml
+    uses: ./.github/workflows/tests.yml
 
   package-release:
     name: Bump release version of updated package
     runs-on: ubuntu-latest
-    needs: package-filter
+    needs: package-tests
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -33,21 +33,21 @@ jobs:
       - name: Get Old Version
         id: old_version
         run: |
-          cd "${{ needs.package-filter.outputs.package_dir }}"
+          cd "${{ needs.package-tests.outputs.package_dir }}"
           if [[ "$(cat VERSION)" != *"dev"* ]]
           then
-            echo "::error::${{ needs.package-filter.outputs.package_name }} does not have a dev version" && exit 1
+            echo "::error::${{ needs.package-tests.outputs.package_name }} does not have a dev version" && exit 1
           fi
           echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
       - name: Bump Version
         id: bump_version
         run: |
-          cd "${{ needs.package-filter.outputs.package_dir }}"
+          cd "${{ needs.package-tests.outputs.package_dir }}"
           bump2version release --no-commit
           echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
       - name: Commit and push all changed files
         env:
-          CI_COMMIT_MESSAGE: Bumped version for "${{ needs.package-filter.outputs.package_name }}" from ${{ steps.old_version.outputs.version }} to ${{ steps.bump_version.outputs.version }}
+          CI_COMMIT_MESSAGE: Bumped version for "${{ needs.package-tests.outputs.package_name }}" from ${{ steps.old_version.outputs.version }} to ${{ steps.bump_version.outputs.version }}
           CI_COMMIT_AUTHOR: Continuous Integration
         run: |
           git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
