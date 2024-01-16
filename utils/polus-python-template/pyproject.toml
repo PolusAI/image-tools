@@ -9,10 +9,6 @@ packages = [{include = "polus_python_template"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
-bfio = {version = ">=2.3.2,<3.0", extras = ["all"]}
-filepattern = ">=2.0.4,<3.0"
-preadator = "^0.4.0.dev2"
-typer = "^0.7.0"
 
 [tool.poetry.group.dev.dependencies]
 cookiecutter = "1.7.2"

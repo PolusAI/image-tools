@@ -34,7 +34,7 @@ def test_cli_short(generate_test_data : FixtureReturnType):  # noqa
     """Test the command line."""
     runner = CliRunner()
 
-    inp_dir, out_dir, ground_truth_dir, img_path, ground_truth_path = generate_test_data #noqa
+    inp_dir, out_dir, _, _, _ = generate_test_data #noqa
 
     result = runner.invoke(
         app,
@@ -52,7 +52,7 @@ def test_cli_preview(generate_test_data : FixtureReturnType):  # noqa
     """Test the preview option."""
     runner = CliRunner()
 
-    inp_dir, out_dir, ground_truth_dir, img_path, ground_truth_path = generate_test_data #noqa
+    inp_dir, out_dir, _, _, _ = generate_test_data #noqa
 
 
     result = runner.invoke(
@@ -79,7 +79,7 @@ def test_cli_bad_input(generate_test_data : FixtureReturnType):  # noqa
     """Test bad inputs."""
     runner = CliRunner()
 
-    inp_dir, out_dir, ground_truth_dir, img_path, ground_truth_path = generate_test_data #noqa
+    inp_dir, out_dir, _, _, _ = generate_test_data #noqa
     # replace with a bad path
     inp_dir = "/does_not_exists"
 
@@ -93,4 +93,4 @@ def test_cli_bad_input(generate_test_data : FixtureReturnType):  # noqa
         ],
     )
 
-    assert result.exc_info[0] is ValueError
+    assert result.exc_info[0] is SystemExit

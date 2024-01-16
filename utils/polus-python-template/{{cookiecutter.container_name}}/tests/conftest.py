@@ -11,8 +11,28 @@ import itertools
 
 from bfio import BioWriter, BioReader
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Add options to pytest."""
+    parser.addoption(
+        "--downloads",
+        action="store_true",
+        dest="downloads",
+        default=False,
+        help="run tests that download large data files",
+    )
+    parser.addoption(
+        "--slow",
+        action="store_true",
+        dest="slow",
+        default=False,
+        help="run slow tests",
+    )
+
+
+
 
 IMAGE_SIZES = [(1024 * (2**i) ,1024 * (2**i)) for i in range(1, 2)]
+LARGE_IMAGE_SIZES = [(1024 * (2**i) ,1024 * (2**i)) for i in range(4, 5)]
 PIXEL_TYPES = [np.uint8, float]
 PARAMS = [
     (image_size, pixel_type)
@@ -20,6 +40,13 @@ PARAMS = [
         IMAGE_SIZES, PIXEL_TYPES
     )
 ]
+LARGE_DATASET_PARAMS = [
+    (image_size, pixel_type)
+    for image_size, pixel_type in itertools.product(
+        LARGE_IMAGE_SIZES, PIXEL_TYPES
+    )
+]
+
 
 FixtureReturnType = tuple[
     Path,  # input dir
@@ -29,12 +56,34 @@ FixtureReturnType = tuple[
     Path,  # ground truth path
 ]
 
+
 @pytest.fixture(params=PARAMS)
 def generate_test_data(request: pytest.FixtureRequest) -> FixtureReturnType:
     """Generate staging temporary directories with test data and ground truth."""
 
     # collect test params
     image_size, pixel_type = request.param
+    test_data =  _generate_test_data(image_size, pixel_type)
+    print(test_data)
+    yield from test_data
+
+
+@pytest.fixture(params=LARGE_DATASET_PARAMS)
+def generate_large_test_data(request: pytest.FixtureRequest) -> FixtureReturnType:
+    """Generate staging temporary directories with test data and ground truth."""
+
+    # collect test params
+    image_size, pixel_type = request.param
+    test_data =_generate_test_data(image_size, pixel_type)
+
+    print(test_data)
+
+    yield from test_data
+
+
+def _generate_test_data(image_size : tuple[int,int], pixel_type: int) -> FixtureReturnType:
+    """Generate staging temporary directories with test data and ground truth."""
+
     image_x, image_y = image_size
 
     # staging area
@@ -55,7 +104,6 @@ def generate_test_data(request: pytest.FixtureRequest) -> FixtureReturnType:
     yield inp_dir, out_dir, ground_truth_dir, img_path, ground_truth_path
 
     shutil.rmtree(data_dir)
-
 
 def gen_2D_image(
     img_path,

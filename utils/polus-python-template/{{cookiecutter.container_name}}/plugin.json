@@ -21,13 +21,15 @@
           "type": "string",
           "title": "Filename pattern",
           "description": "Filename pattern used to separate data.",
-          "required": "False"
+          "required": "False",
+          "default": ".*"
       },
       "preview": {
         "type": "boolean",
         "title": "Preview",
         "description": "Generate an output preview.",
-        "required": "False"
+        "required": "False",
+        "default": "False"
     }
   },
   "outputs": {
@@ -47,13 +49,15 @@
         "type": "string",
         "title": "Filename pattern",
         "description": "Filename pattern used to separate data.",
-        "required": "False"
+        "required": "False",
+        "default": "False"
       },
       "preview": {
         "type": "boolean",
         "title": "Filename pattern",
         "description": "Generate an output preview.",
-        "required": "False"
+        "required": "False",
+        "default": "False"
       }
   }
 }

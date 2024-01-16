@@ -41,16 +41,16 @@ def main(
         "--inpDir",
         "-i",
         help="Input directory to be processed.",
+        exists=True,
+        readable=True,
+        file_okay=False,
+        resolve_path=True,
     ),
     filepattern: str = typer.Option(
         ".*",
         "--filePattern",
         "-f",
         help="Filepattern used to filter inputs.",
-        exists=True,
-        readable=True,
-        file_okay=False,
-        resolve_path=True,
     ),
     out_dir: Path = typer.Option(
         ...,
@@ -74,14 +74,6 @@ def main(
     logger.info(f"inpDir: {inp_dir}")
     logger.info(f"filePattern: {filepattern}")
     logger.info(f"outDir: {out_dir}")
-
-    if not inp_dir.exists():
-        msg = f"inpDir {inp_dir} does not exist."
-        raise ValueError(msg, inp_dir)
-
-    if not out_dir.exists():
-        msg = f"outDir {out_dir} does not exist."
-        raise ValueError(msg, out_dir)
 
     if preview:
         generate_preview(inp_dir, out_dir)

@@ -40,7 +40,7 @@ To install the package :
 The skeleton code can be run this way :
 From the plugin's top directory (with the default values):
 
-`python -m polus.package1.package2.awesome_function -i /tmp/inp -o /tmp/out`
+`python -m polus.plugins1.package1.package2.awesome_function -i /tmp/inp -o /tmp/out`
 
 This should print some logs with the provided inputs and outputs and return.
 
