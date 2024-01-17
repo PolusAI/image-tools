@@ -3,4 +3,4 @@
 from . import utils
 from .apply_flatfield import apply
 
-__version__ = "2.0.0-dev9"
+__version__ = "2.0.0"
