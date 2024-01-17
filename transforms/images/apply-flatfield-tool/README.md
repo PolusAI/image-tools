@@ -1,4 +1,8 @@
+<<<<<<< HEAD:transforms/images/apply-flatfield-tool/README.md
 # Apply Flatfield Plugin (v2.0.1-dev0)
+=======
+# Apply Flatfield Plugin (v2.0.0)
+>>>>>>> 0172c986 (build: Bumped version for apply-flatfield-plugin from 2.0.0-dev9 to 2.0.0):transforms/images/apply-flatfield-plugin/README.md
 
 This WIPP plugin applies a flatfield operation on every image in a collection.
 The algorithm used to apply the flatfield is as follows:
