@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-transforms-images-apply-flatfield"
-version = "2.0.0-dev9"
+version = "2.0.0"
 description = ""
 authors = [
     "Nick Schaub <nicholas.schaub@nih.gov>",
