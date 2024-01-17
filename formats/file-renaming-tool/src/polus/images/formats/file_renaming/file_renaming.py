@@ -31,6 +31,20 @@ class MappingDirectory(str, enum.Enum):
     Default = ""
 
 
+def image_directory(dirpath: pathlib.Path) -> Union[bool, None]:
+    """Fetching image directory only.
+
+    Args:
+        dirpath: Path to directory.
+
+    Returns:
+        bool.
+    """
+    for file in dirpath.iterdir():
+        return bool(file.is_file() and file.suffix not in [".txt", ".csv"])
+    return None
+
+
 def get_data(inp_dir: str) -> tuple[list[pathlib.Path], list[pathlib.Path]]:
     """Get group names from pattern. Convert patterns (c+ or dd) to regex.
 
@@ -46,7 +60,8 @@ def get_data(inp_dir: str) -> tuple[list[pathlib.Path], list[pathlib.Path]]:
         if path.is_dir():
             if path.parent in dirpaths:
                 dirpaths.remove(path.parent)
-            dirpaths.append(path)
+            if image_directory(path):
+                dirpaths.append(path)
         elif path.is_file() and not path.name.startswith("."):
             fpath = pathlib.Path(inp_dir).joinpath(path)
             filepath.append(fpath)

@@ -1,6 +1,5 @@
 """Testing of File Renaming."""
 import json
-import os
 import pathlib
 import shutil
 import tempfile
@@ -8,6 +7,7 @@ from typing import Any, DefaultDict
 
 import click
 import pytest
+import numpy as np
 from typer.testing import CliRunner
 
 from polus.images.formats.file_renaming import file_renaming as fr
@@ -568,6 +568,60 @@ def create_subfolders():
                 temp_file.close()
 
     return pathlib.Path(dir_path), data[name][1], data[name][2], data[name][3]
+
+
+def test_recursive_searching_files() -> None:
+    """Test recursive searching of files nested directories."""
+
+    dir_path = tempfile.mkdtemp(dir=pathlib.Path.cwd())
+    out_dir = tempfile.mkdtemp(dir=pathlib.Path.cwd())
+    for i in range(2):
+        dirname1 = "image_folder_"
+        dirname2 = "groundtruth_folder_"
+        dirname1 = pathlib.Path(dir_path, f"BBBC/BBBC001/Images/{dirname1}{i}")
+        dirname2 = pathlib.Path(dir_path, f"BBBC/BBBC001/Groundtruth/{dirname2}{i}")
+        if not pathlib.Path(dirname1).exists():
+            pathlib.Path(dirname1).mkdir(exist_ok=False, parents=True)
+        if not pathlib.Path(dirname2).exists():
+            pathlib.Path(dirname2).mkdir(exist_ok=False, parents=True)
+
+        flist = [
+            "AS_09125_050118150001_A03f00d0.tif",
+            "AS_09125_050118150001_A03f01d0.tif",
+            "AS_09125_050118150001_A03f02d0.tif",
+            "AS_09125_050118150001_A03f03d0.tif",
+            "AS_09125_050118150001_A03f04d0.tif",
+            "AS_09125_050118150001_A03f05d0.tif",
+        ]
+
+        for fl in flist:
+            temp_file = open(pathlib.Path(dirname1, fl), "w")
+            temp_file = open(pathlib.Path(dirname2, fl), "w")
+            temp_file.close()
+    file_pattern = ".*_{row:c}{col:dd}f{f:dd}d{channel:d}.tif"
+    out_file_pattern = "x{row:dd}_y{col:dd}_p{f:dd}_c{channel:d}.tif"
+    map_directory = "raw"
+
+    runner.invoke(
+        app,
+        [
+            "--inpDir",
+            dir_path,
+            "--filePattern",
+            file_pattern,
+            "--outDir",
+            out_dir,
+            "--outFilePattern",
+            out_file_pattern,
+            "--mapDirectory",
+            map_directory,
+        ],
+    )
+    assert list(
+        np.unique([p.name.split("_")[0] for p in pathlib.Path(out_dir).iterdir()])
+    ) == ["groundtruth", "image"]
+    shutil.rmtree(dir_path)
+    shutil.rmtree(out_dir)
 
 
 def test_cli(create_subfolders) -> None:
