@@ -1,3 +1,4 @@
+"""Feature Subsetting Plugin."""
 import argparse, logging, subprocess, time, multiprocessing, sys
 import os
 import filepattern
