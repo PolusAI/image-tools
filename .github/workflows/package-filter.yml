@@ -3,45 +3,54 @@ name: Package Filter
 on:
   workflow_call:
     outputs:
-      package_dir:
-        description: "The directory containing the updated package"
-        value: ${{ jobs.package-filter.outputs.package_dir }}
-      package_name:
-        description: "The name of the updated package"
-        value: ${{ jobs.package-filter.outputs.package_name }}
+      package_dirs:
+        description: "The directories containing the updated packages"
+        value: ${{ jobs.package-filter.outputs.package_dirs }}
 
 permissions:
   contents: read
 
 jobs:
   package-filter:
-    name: Filter for updated package
+    name: Filter for updated packages
     runs-on: ubuntu-latest
     outputs:
-      package_dir: ${{ steps.package-filter.outputs.package_dir }}
-      package_name: ${{ steps.package-filter.outputs.package_name }}
+      package_dirs: ${{ steps.package-filter.outputs.package_dirs }}
     steps:
-      - name: Get changed files
-        uses: jitterbit/get-changed-files@v1
-        id: files-changed
-        with:
-          format: space-delimited
-          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Find Updated Package
         id: package-filter
         run: |
-          FOUND_PACKAGE=false
-          for changed_file in ${{ steps.files-changed.outputs.added }} ${{ steps.files-changed.outputs.modified }} ${{ steps.files-changed.outputs.renamed }}
+          CUR_DIR=$(pwd)
+          PACKAGE_DIRS=""
+
+          for changed_file in $(git diff --name-only ${{ github.base_ref }}...${{ github.head_ref }})
           do
+            # Check if the changed file is a pyproject.toml file
             if [[ "$(basename ${changed_file})" == *"pyproject.toml"* ]]
             then
-              echo "package_dir=$(dirname ${changed_file})" >> "$GITHUB_OUTPUT"
-              echo "package_name=$(basename $(dirname ${changed_file}))" >> "$GITHUB_OUTPUT"
-              FOUND_PACKAGE=true
-              break
+
+              # Check that the package has a VERSION file
+              if [[ ! -f "$(dirname ${changed_file})/VERSION" ]]
+              then
+                echo "::error::$(dirname ${changed_file}) does not have a VERSION file" && exit 1
+              fi
+
+              # Check that the version is a dev version
+              if [[ "$(cat $(dirname ${changed_file})/VERSION)" != *"dev"* ]]
+              then
+                echo "::error::$(dirname ${changed_file}) does not have a dev version" && exit 1
+              fi
+
+              PACKAGE_DIRS="$PACKAGE_DIRS $(dirname ${changed_file})"
             fi
           done
-          if [[ "$FOUND_PACKAGE" = false ]]
+
+          cd "$CUR_DIR"
+
+          # Check if any packages were found
+          if [[ -z "$PACKAGE_DIRS" ]]
           then
-            echo "::error::No pyproject.toml file found among changed files" && exit 1
+            echo "::error::No updated packages were found" && exit 1
           fi
+
+          echo "package_dirs=$(PACKAGE_DIRS)" >> "$GITHUB_OUTPUT"
