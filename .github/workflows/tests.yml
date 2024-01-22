@@ -48,9 +48,8 @@ jobs:
             then
               echo "::error::pre-commit hooks failed for $(basename ${package_dir})" && exit 1
             fi
+            cd $CUR_DIR
           done
-
-          cd $CUR_DIR
       - name: Run tests
         run: |
           CUR_DIR=$(pwd)
@@ -60,6 +59,5 @@ jobs:
             cd $package_dir
             poetry update && poetry install
             poetry run pytest -v
+            cd $CUR_DIR
           done
-
-          cd $CUR_DIR
