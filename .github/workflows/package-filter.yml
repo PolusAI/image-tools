@@ -19,13 +19,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Find Updated Package
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+      - name: Find Updated Packages
         id: package-filter
         run: |
           CUR_DIR=$(pwd)
           PACKAGE_DIRS=""
 
-          for changed_file in $(git diff --name-only ${{ github.base_ref }}...${{ github.head_ref }})
+          for changed_file in $(git diff --name-only origin/${{ github.base_ref }}...)
           do
             # Check if the changed file is a pyproject.toml file
             if [[ "$(basename ${changed_file})" == *"pyproject.toml"* ]]
@@ -55,4 +58,4 @@ jobs:
             echo "::error::No updated packages were found" && exit 1
           fi
 
-          echo "package_dirs=$(PACKAGE_DIRS)" >> "$GITHUB_OUTPUT"
+          echo "package_dirs=${PACKAGE_DIRS}" >> "$GITHUB_OUTPUT"
