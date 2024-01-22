@@ -17,6 +17,8 @@ jobs:
     outputs:
       package_dirs: ${{ steps.package-filter.outputs.package_dirs }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Find Updated Package
         id: package-filter
         run: |
