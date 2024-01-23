@@ -13,6 +13,7 @@ permissions:
 jobs:
   package-filter:
     name: Filter for updated package
+    if: github.repository == 'polusai/polus-plugins'
     uses: ./.github/workflows/package-filter.yml
 
   package-release:
@@ -48,6 +49,7 @@ jobs:
 
   docker:
     name: Build Docker images
+    if: github.repository == 'polusai/polus-plugins'
     needs: [package-filter, package-release]
     uses: ./.github/workflows/docker.yml
     with:
