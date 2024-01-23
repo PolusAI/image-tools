@@ -3,9 +3,9 @@ name: Package Filter
 on:
   workflow_call:
     outputs:
-      package_dirs:
+      matrix:
         description: "The directories containing the updated packages"
-        value: ${{ jobs.package-filter.outputs.package_dirs }}
+        value: ${{ jobs.package-filter.outputs.matrix }}
 
 permissions:
   contents: read
@@ -15,7 +15,7 @@ jobs:
     name: Filter for updated packages
     runs-on: ubuntu-latest
     outputs:
-      package_dirs: ${{ steps.package-filter.outputs.package_dirs }}
+      matrix: ${{ steps.package-filter.outputs.matrix }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,11 +25,18 @@ jobs:
       - name: Find Updated Packages
         id: package-filter
         run: |
-          CUR_DIR=$(pwd)
           PACKAGE_DIRS=""
 
           for changed_file in $(git diff --name-only origin/${{ github.base_ref }}...)
           do
+            pkg_dir=$(dirname ${changed_file})
+
+            # Exclude the root directory
+            if [[ "$pkg_dir" == "." ]]
+            then
+              continue
+            fi
+
             # Check if the changed file is a pyproject.toml file
             if [[ "$(basename ${changed_file})" == *"pyproject.toml"* ]]
             then
@@ -50,12 +57,31 @@ jobs:
             fi
           done
 
-          cd "$CUR_DIR"
-
           # Check if any packages were found
           if [[ -z "$PACKAGE_DIRS" ]]
           then
             echo "::error::No updated packages were found" && exit 1
           fi
 
-          echo "package_dirs=${PACKAGE_DIRS}" >> "$GITHUB_OUTPUT"
+          # Convert the package directories to JSON for the output matrix
+          JSON="{\"include\": ["
+          for package_dir in $PACKAGE_DIRS
+          do
+            package_name=$(basename $package_dir)
+            JSON_LINE="{\"package_dir\": \"${package_dir}\", \"package_name\": \"${package_name}\"},"
+            # Add the JSON line to the JSON string if it is not already included
+            if [[ ! "$JSON" == *"$JSON_LINE"* ]]
+            then
+              JSON="$JSON$JSON_LINE"
+            fi
+          done
+
+          # Remove trailing comma and add closing brackets
+          if [[ $JSON == *, ]]
+          then
+            JSON="${JSON%?}"
+          fi
+          JSON="$JSON]}"
+
+          # Set the output
+          echo "matrix=$( echo "$JSON" )" >> $GITHUB_OUTPUT
