@@ -16,7 +16,7 @@ jobs:
     uses: ./.github/workflows/package-filter.yml
 
   tests:
-    name: Run pre-commit and tests for "${{ matrix.package_name }}"
+    name: Test "${{ matrix.package_name }}"
     needs: package-filter
     strategy:
       matrix: ${{fromJson(needs.package-filter.outputs.matrix)}}
@@ -49,3 +49,14 @@ jobs:
 
           poetry install
           poetry run pytest -v
+
+  docker:
+    name: Build Docker images
+    needs: [package-filter, tests]
+    uses: ./.github/workflows/docker.yml
+    with:
+      matrix: ${{ needs.package-filter.outputs.matrix }}
+      push: false
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_TOKEN }}

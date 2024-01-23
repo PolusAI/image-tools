@@ -16,7 +16,7 @@ jobs:
     uses: ./.github/workflows/package-filter.yml
 
   package-release:
-    name: Bump release version of "${{ matrix.package_name }}"
+    name: Release "${{ matrix.package_name }}"
     if: github.repository == 'polusai/polus-plugins'
     needs: package-filter
     strategy:
@@ -45,3 +45,14 @@ jobs:
           git config --global user.email "username@users.noreply.github.com"
           git commit -a -m "build: Bumped release version for ${{ matrix.package_name }}"
           git push
+
+  docker:
+    name: Build Docker images
+    needs: [package-filter, package-release]
+    uses: ./.github/workflows/docker.yml
+    with:
+      matrix: ${{ needs.package-filter.outputs.matrix }}
+      push: true
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_TOKEN }}
