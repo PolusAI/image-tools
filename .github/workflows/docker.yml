@@ -49,8 +49,8 @@ jobs:
         run: |
           tag=${{ steps.docker_tag.outputs.tag }}
           docker pull ${tag} > /dev/null \
-              || echo "failed" \
-              && echo "::error::${tag} already exists on DockerHub" && exit 1
+              && $(echo "::error::${tag} already exists on DockerHub" && exit 1) \
+              || echo "success"
       - name: Publish | Docker Image
         uses: docker/build-push-action@v5
         with:
