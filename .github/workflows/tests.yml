@@ -8,12 +8,9 @@ on:
       - dev
   workflow_call:
     outputs:
-      package_dir:
-        description: "The directory containing the updated package"
-        value: ${{ jobs.package-filter.outputs.package_dir }}
-      package_name:
-        description: "The name of the updated package"
-        value: ${{ jobs.package-filter.outputs.package_name }}
+      package_dirs:
+        description: "The directories containing the updated packages"
+        value: ${{ jobs.package-filter.outputs.package_dirs }}
 
 permissions:
   contents: read
@@ -29,26 +26,38 @@ jobs:
     needs: package-filter
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
       - name: Install Poetry
         uses: abatilo/actions-poetry@v2
-      - name: Install package
+      - name: Install pre-commit
         run: |
-          cd ${{ needs.package-filter.outputs.package_dir }}
-          poetry install --no-interaction
-      - name: Run pre-commit hooks
+          pip install pre-commit
+      - name: Run pre-commit hooks and check for changes
         run: |
-          cd ${{ needs.package-filter.outputs.package_dir }}
-          poetry run pre-commit run --files ./**/**
-          if [[ $(git status --porcelain) ]]
-          then
-            echo "::error::pre-commit hooks failed" && exit 1
-          fi
+          CUR_DIR=$(pwd)
+
+          for package_dir in ${{ needs.package-filter.outputs.package_dirs }}
+          do
+            cd $package_dir
+            poetry run pre-commit run --files ./**/**
+            if [[ $(git status --porcelain) ]]
+            then
+              echo "::error::pre-commit hooks failed for $(basename ${package_dir})" && exit 1
+            fi
+            cd $CUR_DIR
+          done
       - name: Run tests
         run: |
-          cd ${{ needs.package-filter.outputs.package_dir }}
-          poetry run pytest -v
+          CUR_DIR=$(pwd)
+
+          for package_dir in ${{ needs.package-filter.outputs.package_dirs }}
+          do
+            cd $package_dir
+            poetry update && poetry install
+            poetry run pytest -v
+            cd $CUR_DIR
+          done
