@@ -1,0 +1,63 @@
+name: Package tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+      - dev
+  workflow_call:
+    outputs:
+      package_dirs:
+        description: "The directories containing the updated packages"
+        value: ${{ jobs.package-filter.outputs.package_dirs }}
+
+permissions:
+  contents: read
+
+jobs:
+  package-filter:
+    name: Filter for updated package
+    uses: ./.github/workflows/package-filter.yml
+
+  package-tests:
+    name: Run the tests for updated packages.
+    runs-on: ubuntu-latest
+    needs: package-filter
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v2
+      - name: Install pre-commit
+        run: |
+          pip install pre-commit
+      - name: Run pre-commit hooks and check for changes
+        run: |
+          CUR_DIR=$(pwd)
+
+          for package_dir in ${{ needs.package-filter.outputs.package_dirs }}
+          do
+            cd $package_dir
+            poetry run pre-commit run --files ./**/**
+            if [[ $(git status --porcelain) ]]
+            then
+              echo "::error::pre-commit hooks failed for $(basename ${package_dir})" && exit 1
+            fi
+            cd $CUR_DIR
+          done
+      - name: Run tests
+        run: |
+          CUR_DIR=$(pwd)
+
+          for package_dir in ${{ needs.package-filter.outputs.package_dirs }}
+          do
+            cd $package_dir
+            poetry update && poetry install
+            poetry run pytest -v
+            cd $CUR_DIR
+          done

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-features-nyxus-plugin"
-version = "0.1.5-dev"
+version = "0.1.6"
 description = ""
 authors = [
            "Nick Schaub <nick.schaub@nih.gov>",
@@ -19,6 +19,8 @@ fastapi = "^0.92.0"
 astropy = "5.2.1"
 vaex = "^4.17.0"
 preadator = "0.4.0.dev2"
+pytest-sugar = "^0.9.7"
+pytest-xdist = "^3.5.0"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
@@ -34,3 +36,8 @@ scikit-image = "^0.20.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]

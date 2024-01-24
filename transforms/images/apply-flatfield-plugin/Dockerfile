@@ -4,6 +4,7 @@ FROM polusai/bfio:2.3.3
 ENV EXEC_DIR="/opt/executables"
 ENV POLUS_IMG_EXT=".ome.tif"
 ENV POLUS_TAB_EXT=".csv"
+ENV POLUS_LOG="INFO"
 
 # Work directory defined in the base container
 WORKDIR ${EXEC_DIR}
@@ -15,5 +16,5 @@ COPY src ${EXEC_DIR}/src
 
 RUN pip3 install ${EXEC_DIR} --no-cache-dir
 
-ENTRYPOINT ["python3", "-m", "polus.plugins.features.nyxus_plugin"]
+ENTRYPOINT ["python3", "-m", "polus.plugins.transforms.images.apply_flatfield"]
 CMD ["--help"]

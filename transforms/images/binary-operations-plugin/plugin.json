@@ -1,0 +1,136 @@
+{
+  "name": "Binary Operations Plugin",
+  "version": "0.5.0-dev1",
+  "containerId": "polusai/binary-operations-plugin:0.5.0-dev1",
+  "title": "Binary Operations Plugin",
+  "description": "Everything you need to start a WIPP plugin.",
+  "authors": "nicholas-schaub (nick.schaub@nih.gov), Madhuri Vihani",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/polusai/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "runCommand": [
+    "python3",
+    "-m",
+    "polus.plugins.transforms.images.binary_operations"
+  ],
+  "inputs": [
+    {
+      "name": "inpDir",
+      "description": "Input image collection to be processed by this plugin",
+      "type": "collection",
+      "options": null,
+      "required": true
+    },
+    {
+      "name": "filePattern",
+      "description": "Pattern of the images in Input",
+      "type": "string",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "kernel",
+      "description": "Kernel size that should be used for transformation",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "operation",
+      "description": "The Binary Operations that will be done on the image",
+      "type": "enum",
+      "options": {
+        "values": [
+          "blackhat",
+          "close",
+          "dilate",
+          "erode",
+          "fillHoles",
+          "invert",
+          "morphologicalGradient",
+          "open",
+          "removeLarge",
+          "removeSmall",
+          "skeleton",
+          "tophat"
+        ]
+      },
+      "required": true
+    },
+    {
+      "name": "shape",
+      "description": "Structuring Shape (Default is Elliptical)",
+      "type": "enum",
+      "options": {
+        "values": [
+          "ellipse",
+          "rect",
+          "cross"
+        ]
+      },
+      "required": false
+    },
+    {
+      "name": "threshold",
+      "description": "Minimum Area of objects to keep.",
+      "type": "number",
+      "options": null,
+      "required": false
+    },
+    {
+      "name": "iterations",
+      "description": "Number of times to perform an operation (when applicable).",
+      "type": "number",
+      "options": null,
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "description": "Output collection",
+      "type": "collection",
+      "options": null,
+      "required": true
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.operation",
+      "title": "Operations",
+      "description": "Operations that will be used on image"
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "Image Pattern: ",
+      "description": "Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). "
+    },
+    {
+      "key": "inputs.inpDir",
+      "title": "Input collection",
+      "description": "Input image collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.kernel",
+      "title": "Kernel Size",
+      "description": "Kernel size to use for operations"
+    },
+    {
+      "key": "inputs.shape",
+      "title": "Structuring Shape (Default is Elliptical)",
+      "description": "Kernel shape to use for operations"
+    },
+    {
+      "key": "inputs.threshold",
+      "title": "Threshold of area for objects in images",
+      "description": "Threshold to use for operations"
+    },
+    {
+      "key": "inputs.iterations",
+      "title": "Iterations",
+      "description": "Number of iterations to perform"
+    }
+  ],
+  "validators": null
+}

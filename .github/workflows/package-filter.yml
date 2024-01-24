@@ -1,0 +1,61 @@
+name: Package Filter
+
+on:
+  workflow_call:
+    outputs:
+      package_dirs:
+        description: "The directories containing the updated packages"
+        value: ${{ jobs.package-filter.outputs.package_dirs }}
+
+permissions:
+  contents: read
+
+jobs:
+  package-filter:
+    name: Filter for updated packages
+    runs-on: ubuntu-latest
+    outputs:
+      package_dirs: ${{ steps.package-filter.outputs.package_dirs }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+      - name: Find Updated Packages
+        id: package-filter
+        run: |
+          CUR_DIR=$(pwd)
+          PACKAGE_DIRS=""
+
+          for changed_file in $(git diff --name-only origin/${{ github.base_ref }}...)
+          do
+            # Check if the changed file is a pyproject.toml file
+            if [[ "$(basename ${changed_file})" == *"pyproject.toml"* ]]
+            then
+
+              # Check that the package has a VERSION file
+              if [[ ! -f "$(dirname ${changed_file})/VERSION" ]]
+              then
+                echo "::error::$(dirname ${changed_file}) does not have a VERSION file" && exit 1
+              fi
+
+              # Check that the version is a dev version
+              if [[ "$(cat $(dirname ${changed_file})/VERSION)" != *"dev"* ]]
+              then
+                echo "::error::$(dirname ${changed_file}) does not have a dev version" && exit 1
+              fi
+
+              PACKAGE_DIRS="$PACKAGE_DIRS $(dirname ${changed_file})"
+            fi
+          done
+
+          cd "$CUR_DIR"
+
+          # Check if any packages were found
+          if [[ -z "$PACKAGE_DIRS" ]]
+          then
+            echo "::error::No updated packages were found" && exit 1
+          fi
+
+          echo "package_dirs=${PACKAGE_DIRS}" >> "$GITHUB_OUTPUT"
