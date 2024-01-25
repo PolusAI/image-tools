@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "{{cookiecutter.project_name}}"
+version = "{{cookiecutter.plugin_version}}"
+description = "{{cookiecutter.plugin_description}}"
+authors = ["{{cookiecutter.author}} <{{cookiecutter.author_email}}>"]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+bfio = {version = ">=2.3.3,<3.0", extras = ["all"]}
+filepattern = ">=2.0.4,<3.0"
+preadator = "^0.4.0.dev2"
+typer = "^0.7.0"
+
+[tool.poetry.group.dev.dependencies]
+bump2version = "^1.0.1"
+pytest = "^7.4"
+pytest-sugar = "^0.9.6"
+pre-commit = "^3.2.1"
+black = "^23.3.0"
+mypy = "^1.1.1"
+ruff = "^0.0.270"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]
