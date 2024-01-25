@@ -6,11 +6,6 @@ on:
       - main
       - master
       - dev
-  workflow_call:
-    outputs:
-      package_dirs:
-        description: "The directories containing the updated packages"
-        value: ${{ jobs.package-filter.outputs.package_dirs }}
 
 permissions:
   contents: read
@@ -20,10 +15,12 @@ jobs:
     name: Filter for updated package
     uses: ./.github/workflows/package-filter.yml
 
-  package-tests:
-    name: Run the tests for updated packages.
-    runs-on: ubuntu-latest
+  tests:
+    name: Test "${{ matrix.package_name }}"
     needs: package-filter
+    strategy:
+      matrix: ${{fromJson(needs.package-filter.outputs.matrix)}}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,26 +35,28 @@ jobs:
           pip install pre-commit
       - name: Run pre-commit hooks and check for changes
         run: |
-          CUR_DIR=$(pwd)
+          cd "${{ matrix.package_dir }}"
 
-          for package_dir in ${{ needs.package-filter.outputs.package_dirs }}
-          do
-            cd $package_dir
-            poetry run pre-commit run --files ./**/**
-            if [[ $(git status --porcelain) ]]
-            then
-              echo "::error::pre-commit hooks failed for $(basename ${package_dir})" && exit 1
-            fi
-            cd $CUR_DIR
-          done
+          poetry run pre-commit run --files ./**/**
+          if [[ $(git status --porcelain) ]]
+          then
+            echo "::error::pre-commit hooks failed for ${{ matrix.package_name }}" && exit 1
+          fi
       - name: Run tests
         run: |
-          CUR_DIR=$(pwd)
+          package_dir=${{ matrix.package_dir }}
+          cd $package_dir
 
-          for package_dir in ${{ needs.package-filter.outputs.package_dirs }}
-          do
-            cd $package_dir
-            poetry update && poetry install
-            poetry run pytest -v
-            cd $CUR_DIR
-          done
+          poetry install
+          poetry run pytest -v
+
+  docker:
+    name: Build Docker images
+    needs: [package-filter, tests]
+    uses: ./.github/workflows/docker.yml
+    with:
+      matrix: ${{ needs.package-filter.outputs.matrix }}
+      push: false
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_TOKEN }}
