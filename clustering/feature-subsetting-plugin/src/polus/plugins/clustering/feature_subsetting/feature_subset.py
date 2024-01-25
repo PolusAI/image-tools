@@ -277,8 +277,6 @@ def feature_subset(  # noqa : C901
                     {k: file[0][k] for k in section_variables},
                 ),
             )
-
-        # for k,v in rename_map.items():
         fm = file[1][0][0]
         fname = file[1][0][1][0].name
 
