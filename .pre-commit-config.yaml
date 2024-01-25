@@ -41,20 +41,12 @@ repos:
     rev: 'v0.0.274'
     hooks:
       - id: ruff
-        exclude: |
-          (?x)(
-            test_[a-zA-Z0-9]+.py$|
-            ^src\/polus\/plugins\/_plugins\/models\/\w*Schema.py$
-          )
+        exclude: ^src\/polus\/plugins\/_plugins\/models\/\w*Schema.py$
         args: [--fix]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: 'v1.4.0'
     hooks:
       - id: mypy
-        exclude: |
-          (?x)(
-            test_[a-zA-Z0-9]+.py$|
-            ^src\/polus\/plugins\/_plugins\/models\/\w*Schema.py$
-          )
+        exclude: ^src\/polus\/plugins\/_plugins\/models\/\w*Schema.py$
         additional_dependencies: [types-requests==2.31.0.1]
