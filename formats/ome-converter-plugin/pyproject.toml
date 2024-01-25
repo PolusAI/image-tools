@@ -3,30 +3,24 @@ name = "polus-plugins-formats-ome-converter"
 version = "0.3.0"
 description = "Convert BioFormats datatypes to ome.tif or ome.zarr file format"
 authors = [
-           "Nick Schaub <nick.schaub@nih.gov>",
-           "Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>"
-           ]
+    "Nick Schaub <nick.schaub@nih.gov>",
+    "Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>",
+    "Najib Ishaq <najib.ishaq@nih.gov>"
+]
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
-[[tool.poetry.source]]
-name = "test"
-url = "https://test.pypi.org/simple/"
-secondary = true
-
 [tool.poetry.dependencies]
-python = "^3.9"
-bfio = {version = "2.1.9", extras = ["all"]}
-filepattern = "^2.2.7"
+python = ">=3.9,<3.12"
+bfio = {version = "^2.3.3", extras = ["all"]}
+filepattern = "^2.0.4"
 typer = "^0.7.0"
 tqdm = "^4.64.1"
+preadator = "0.4.0-dev2"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
 pre-commit = "^3.0.4"
-black = "^23.1.0"
-flake8 = "^6.0.0"
-mypy = "^1.0.0"
 pytest = "^7.2.1"
 ipykernel = "^6.21.2"
 requests = "^2.28.2"
@@ -35,3 +29,8 @@ scikit-image = "^0.19.3"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]

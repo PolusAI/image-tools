@@ -3,13 +3,15 @@ import enum
 import logging
 import os
 import pathlib
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import as_completed
 from multiprocessing import cpu_count
 from sys import platform
 from typing import Optional
 
 import filepattern as fp
-from bfio import BioReader, BioWriter
+import preadator
+from bfio import BioReader
+from bfio import BioWriter
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -19,9 +21,9 @@ TILE_SIZE = 2**13
 
 
 if platform == "linux" or platform == "linux2":
-    NUM_THREADS = len(os.sched_getaffinity(0))  # type: ignore
+    NUM_THREADS = len(os.sched_getaffinity(0)) // 2  # type: ignore
 else:
-    NUM_THREADS = max(cpu_count() // 2, 2)
+    NUM_THREADS = max(cpu_count() // 2, 1)
 
 POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
 
@@ -35,7 +37,9 @@ class Extension(str, enum.Enum):
 
 
 def convert_image(
-    inp_image: pathlib.Path, file_extension: Extension, out_dir: pathlib.Path
+    inp_image: pathlib.Path,
+    file_extension: Extension,
+    out_dir: pathlib.Path,
 ) -> None:
     """Convert bioformats supported datatypes to ome.tif or ome.zarr file format.
 
@@ -44,39 +48,48 @@ def convert_image(
         file_extension: Type of data conversion.
         out_dir: Path to output directory.
     """
-    with BioReader(inp_image) as br:
+    with BioReader(inp_image, max_workers=2) as br:
         # Loop through timepoints
         for t in range(br.T):
             # Loop through channels
             for c in range(br.C):
                 extension = "".join(
-                    [suffix for suffix in inp_image.suffixes[-2:] if len(suffix) < 6]
+                    [
+                        suffix
+                        for suffix in inp_image.suffixes[-2:]
+                        if len(suffix) < 6  # noqa: PLR2004
+                    ],
                 )
 
                 out_path = out_dir.joinpath(
-                    inp_image.name.replace(extension, file_extension)
+                    inp_image.name.replace(extension, file_extension),
                 )
                 if br.C > 1:
                     out_path = out_dir.joinpath(
-                        out_path.name.replace(file_extension, f"_c{c}" + file_extension)
+                        out_path.name.replace(
+                            file_extension,
+                            f"_c{c}" + file_extension,
+                        ),
                     )
                 if br.T > 1:
                     out_path = out_dir.joinpath(
-                        out_path.name.replace(file_extension, f"_t{t}" + file_extension)
+                        out_path.name.replace(
+                            file_extension,
+                            f"_t{t}" + file_extension,
+                        ),
                     )
 
                 with BioWriter(
                     out_path,
-                    max_workers=NUM_THREADS,
+                    max_workers=2,
                     metadata=br.metadata,
                 ) as bw:
                     bw.C = 1
                     bw.T = 1
 
                     # Handling of parsing channels when channels names are not provided.
-                    if not bw.channel_names == [None]:
+                    if bw.channel_names != [None]:
                         bw.channel_names = [br.channel_names[c]]
-
 
                     # Loop through z-slices
                     for z in range(br.Z):
@@ -84,16 +97,21 @@ def convert_image(
                         for y in range(0, br.Y, TILE_SIZE):
                             y_max = min([br.Y, y + TILE_SIZE])
 
-                            bw.max_workers = NUM_THREADS
-                            br.max_workers = NUM_THREADS
-
                             # Loop across the depth of the image
                             for x in range(0, br.X, TILE_SIZE):
                                 x_max = min([br.X, x + TILE_SIZE])
                                 bw[
-                                    y:y_max, x:x_max, z : z + 1, 0, 0  # noqa: E203
+                                    y:y_max,
+                                    x:x_max,
+                                    z : z + 1,
+                                    0,
+                                    0,
                                 ] = br[
-                                    y:y_max, x:x_max, z : z + 1, c, t  # noqa: E203
+                                    y:y_max,
+                                    x:x_max,
+                                    z : z + 1,
+                                    c,
+                                    t,
                                 ]
 
 
@@ -103,7 +121,7 @@ def batch_convert(
     file_pattern: Optional[str],
     file_extension: Extension,
 ) -> None:
-    """Convert bioformats supported datatypes in batches to ome.tif or ome.zarr file format.
+    """Convert bioformats supported datatypes in batches to ome.tif or ome.zarr.
 
     Args:
         inp_dir: Path of an input directory.
@@ -116,21 +134,20 @@ def batch_convert(
     logger.info(f"file_pattern = {file_pattern}")
     logger.info(f"file_extension = {file_extension}")
 
-    assert inp_dir.exists(), f"{inp_dir} does not exist!! Please check input path again"
-    assert (
-        out_dir.exists()
-    ), f"{out_dir} does not exist!! Please check output path again"
-
     file_pattern = ".+" if file_pattern is None else file_pattern
 
     fps = fp.FilePattern(inp_dir, file_pattern)
 
-    with ProcessPoolExecutor(max_workers=NUM_THREADS) as executor:
+    with preadator.ProcessManager(
+        name="ome_converter",
+        num_processes=NUM_THREADS,
+        threads_per_process=2,
+    ) as executor:
         threads = []
         for files in fps():
             file = files[1][0]
             threads.append(
-                executor.submit(convert_image, file, file_extension, out_dir)
+                executor.submit(convert_image, file, file_extension, out_dir),
             )
 
         for f in tqdm(
