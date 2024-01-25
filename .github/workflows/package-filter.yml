@@ -28,7 +28,16 @@ jobs:
         run: |
           PACKAGE_DIRS=""
 
-          for changed_file in $(git diff --name-only origin/${{ github.base_ref }}...)
+          # echo the base ref
+          base_ref=${{ github.base_ref }}
+          if [[ -z "$base_ref" ]]
+          then
+            base_ref="master"
+            echo "::warning::Action not running on PR, defaulting to base branch to master"
+          fi
+          echo "The base ref is $base_ref"
+
+          for changed_file in $(git diff --name-only origin/${base_ref}...)
           do
             pkg_dir=$(dirname ${changed_file})
 
