@@ -6,6 +6,19 @@ on:
       - main
       - master
       - dev
+  push:
+    branches-ignore:
+      - main
+      - master
+      - dev
+  workflow_call:
+    secrets:
+      DOCKER_USERNAME:
+        description: 'Docker Hub username'
+        required: true
+      DOCKER_TOKEN:
+        description: 'Docker Hub password'
+        required: true
 
 permissions:
   contents: read
@@ -59,4 +72,4 @@ jobs:
       push: false
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+      DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
