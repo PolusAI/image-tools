@@ -1,17 +1,11 @@
-"""Hdbscan Clustering Plugin."""
-
-import json
+"""Feature Subsetting Plugin."""
 import logging
-from multiprocessing import cpu_count
+import shutil
 from pathlib import Path
-from typing import Any
 from typing import Optional
 
-import filepattern as fp
 import polus.plugins.clustering.feature_subsetting.feature_subset as fs
-import preadator
 import typer
-from tqdm import tqdm
 
 app = typer.Typer()
 
@@ -24,13 +18,29 @@ logger = logging.getLogger("polus.plugins.clustering.feature_subsetting")
 logger.setLevel(logging.INFO)
 
 
+def generate_preview(
+    out_dir: Path,
+) -> None:
+    """Generate preview of the plugin outputs."""
+    shutil.copy(
+        Path(__file__).parents[4].joinpath("example/summary.txt"),
+        out_dir,
+    )
+
+
 @app.command()
 def main(  # noqa: PLR0913
     inp_dir: Path = typer.Option(
         ...,
         "--inpDir",
         "-i",
-        help="Path to folder with tabular files",
+        help="Path to the collection of input images.",
+    ),
+    tabular_dir: Path = typer.Option(
+        ...,
+        "--tabularDir",
+        "-t",
+        help="Path to the collection of tabular files containing features.",
     ),
     file_pattern: Optional[str] = typer.Option(
         ".*",
@@ -38,35 +48,53 @@ def main(  # noqa: PLR0913
         "-f",
         help="Pattern use to parse filenames",
     ),
-    grouping_pattern: Optional[str] = typer.Option(
+    image_feature: str = typer.Option(
         None,
-        "--groupingPattern",
-        "-g",
-        help="Regular expression to group rows to capture groups.",
+        "--imageFeature",
+        "-if",
+        help="Image filenames feature in tabular data.",
     ),
-    average_groups: Optional[bool] = typer.Option(
-        False,
-        "--averageGroups",
-        "-a",
-        help="Whether to average data across groups. Requires capture groups.",
-    ),
-    label_col: Optional[str] = typer.Option(
+    tabular_feature: str = typer.Option(
         None,
-        "--labelCol",
-        "-l",
-        help="Name of column containing labels. Required only for grouping operations.",
+        "--tabularFeature",
+        "-tf",
+        help="Select tabular feature to subset data.",
     ),
-    min_cluster_size: int = typer.Option(
+    padding: Optional[int] = typer.Option(
+        0,
+        "--padding",
+        "-p",
+        help="Number of images to capture outside the cutoff.",
+    ),
+    group_var: str = typer.Option(
         ...,
-        "--minClusterSize",
-        "-m",
-        help="Minimum cluster size.",
+        "--groupVar",
+        "-g",
+        help="variables to group by in a section.",
     ),
-    increment_outlier_id: Optional[bool] = typer.Option(
+    percentile: float = typer.Option(
+        None,
+        "--percentile",
+        "-pc",
+        help="Percentile to remove.",
+    ),
+    remove_direction: Optional[str] = typer.Option(
+        "Below",
+        "--removeDirection",
+        "-r",
+        help="Remove direction above or below percentile.",
+    ),
+    section_var: Optional[str] = typer.Option(
+        None,
+        "--sectionVar",
+        "-s",
+        help="Variables to divide larger sections.",
+    ),
+    write_output: Optional[bool] = typer.Option(
         False,
-        "--incrementOutlierId",
-        "-io",
-        help="Increments outlier ID to 1.",
+        "--writeOutput",
+        "-w",
+        help="Write output image collection or not.",
     ),
     out_dir: Path = typer.Option(
         ...,
@@ -80,19 +108,18 @@ def main(  # noqa: PLR0913
         help="Output a JSON preview of files",
     ),
 ) -> None:
-    """Cluster data using HDBSCAN."""
+    """Subset data using a given feature."""
     logger.info(f"--inpDir = {inp_dir}")
+    logger.info(f"--tabularDir = {tabular_dir}")
+    logger.info(f"--imageFeature = {image_feature}")
+    logger.info(f"--tabularFeature = {tabular_feature}")
     logger.info(f"--filePattern = {file_pattern}")
-    # Regular expression for grouping.
-    logger.info(f"--groupingPattern = {grouping_pattern}")
-    # Whether to average data for each group.
-    logger.info(f"--averageGroups = {average_groups}")
-    # Name of column to use for grouping.
-    logger.info(f"--labelCol = {label_col}")
-    # Minimum cluster size for clustering using HDBSCAN.
-    logger.info(f"--minClusterSize = {min_cluster_size}")
-    # Set outlier cluster id as 1.
-    logger.info(f"--incrementOutlierId = {increment_outlier_id}")
+    logger.info(f"--padding = {padding}")
+    logger.info(f"--groupVar = {group_var}")
+    logger.info(f"--percentile = {percentile}")
+    logger.info(f"--removeDirection = {remove_direction}")
+    logger.info(f"--sectionVar = {section_var}")
+    logger.info(f"--writeOutput = {write_output}")
     logger.info(f"--outDir = {out_dir}")
 
     inp_dir = inp_dir.resolve()
@@ -103,53 +130,24 @@ def main(  # noqa: PLR0913
         out_dir.exists()
     ), f"{out_dir} does not exist!! Please check output path again"
 
-    num_workers = max([cpu_count(), 2])
-
-    files = fp.FilePattern(inp_dir, file_pattern)
-
-    if files is None:
-        msg = f"No tabular files found. Please check {file_pattern} again"
-        raise ValueError(msg)
-
     if preview:
-        with Path.open(Path(out_dir, "preview.json"), "w") as jfile:
-            out_json: dict[str, Any] = {
-                "filepattern": file_pattern,
-                "outDir": [],
-            }
-            for file in files():
-                out_name = file[1][0].name.replace(
-                    "".join(file[1][0].suffixes),
-                    f"_hdbscan{hd.POLUS_TAB_EXT}",
-                )
-                out_json["outDir"].append(out_name)
-            json.dump(out_json, jfile, indent=2)
+        generate_preview(out_dir)
+
     else:
-        with preadator.ProcessManager(
-            name="Cluster data using HDBSCAN",
-            num_processes=num_workers,
-            threads_per_process=2,
-        ) as pm:
-            for file in tqdm(
-                files(),
-                total=len(files()),
-                desc="Clustering data",
-                mininterval=5,
-                initial=0,
-                unit_scale=True,
-                colour="cyan",
-            ):
-                pm.submit_process(
-                    hd.hdbscan_clustering,
-                    file[1][0],
-                    min_cluster_size,
-                    out_dir,
-                    grouping_pattern,
-                    label_col,
-                    average_groups,
-                    increment_outlier_id,
-                )
-            pm.join_processes()
+        fs.feature_subset(
+            inp_dir,
+            tabular_dir,
+            out_dir,
+            file_pattern,
+            group_var,
+            percentile,
+            remove_direction,
+            section_var,
+            image_feature,
+            tabular_feature,
+            padding,
+            write_output,
+        )
 
 
 if __name__ == "__main__":
