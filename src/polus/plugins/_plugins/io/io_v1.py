@@ -10,6 +10,7 @@ from functools import singledispatch
 from functools import singledispatchmethod
 from typing import Any
 from typing import Optional
+from typing import TypeVar
 from typing import Union
 
 import fsspec
@@ -102,6 +103,9 @@ def _ui_old_to_new(old: str) -> str:  # map wipp InputType to compute schema's U
     return "text"
 
 
+FileSystem = TypeVar("FileSystem", bound=fsspec.spec.AbstractFileSystem)
+
+
 class IOBase(BaseModel):  # pylint: disable=R0903
     """Base Class for I/O arguments."""
 
@@ -109,7 +113,7 @@ class IOBase(BaseModel):  # pylint: disable=R0903
     options: Optional[dict] = None
     value: Optional[Any] = None
     id_: Optional[Any] = None
-    _fs: Optional[type[fsspec.spec.AbstractFileSystem]] = PrivateAttr(
+    _fs: Optional[FileSystem] = PrivateAttr(
         default=None,
     )  # type checking is done at plugin level
 

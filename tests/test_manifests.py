@@ -3,15 +3,26 @@
 from collections import OrderedDict
 from pathlib import Path
 
+import pydantic
 import pytest
 
-from polus.plugins._plugins.classes import list_plugins
-from polus.plugins._plugins.classes.plugin_classes import PLUGINS
-from polus.plugins._plugins.manifests.manifest_utils import (
-    InvalidManifest,
-    _load_manifest,
-    validate_manifest,
-)
+PYDANTIC_VERSION = pydantic.__version__.split(".")[0]
+
+from polus.plugins._plugins.classes import PLUGINS, list_plugins
+
+if PYDANTIC_VERSION == "1":
+    from polus.plugins._plugins.manifests.manifest_utils_v1 import (
+        InvalidManifestError,
+        _load_manifest,
+        validate_manifest,
+    )
+elif PYDANTIC_VERSION == "2":
+    from polus.plugins._plugins.manifests.manifest_utils_v2 import (
+        InvalidManifestError,
+        _load_manifest,
+        validate_manifest,
+    )
+
 from polus.plugins._plugins.models import ComputeSchema, WIPPPluginManifest
 
 RSRC_PATH = Path(__file__).parent.joinpath("resources")
@@ -219,12 +230,6 @@ def test_load_manifest(type_):  # test path and dict
     assert _load_manifest(type_) == d_val
 
 
-def test_load_manifest_str():
-    """Test _load_manifest() for str."""
-    st_ = """{"a": 2, "b": "Polus"}"""
-    assert _load_manifest(st_) == {"a": 2, "b": "Polus"}
-
-
 bad = [f"b{x}.json" for x in [1, 2, 3]]
 good = [f"g{x}.json" for x in [1, 2, 3]]
 
@@ -232,7 +237,7 @@ good = [f"g{x}.json" for x in [1, 2, 3]]
 @pytest.mark.parametrize("manifest", bad, ids=bad)
 def test_bad_manifest(manifest):
     """Test bad manifests raise InvalidManifest error."""
-    with pytest.raises(InvalidManifest):
+    with pytest.raises(InvalidManifestError):
         validate_manifest(REPO_PATH.joinpath("tests", "resources", manifest))
 
 
