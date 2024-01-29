@@ -1,5 +1,9 @@
 name: Package tests
 
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+
 on:
   pull_request:
     branches:

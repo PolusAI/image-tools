@@ -27,6 +27,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           persist-credentials: false
       - name: Find Updated Packages
@@ -51,6 +52,7 @@ jobs:
           else
             comparison_point="HEAD~${{ inputs.num-commits }}"
           fi
+          echo "The comparison point is ${comparison_point}"
 
           for changed_file in $(git diff --name-only ${comparison_point}...)
           do

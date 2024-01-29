@@ -1,5 +1,9 @@
 name: Package Release
 
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+
 on:
   workflow_dispatch:
     inputs:
@@ -8,6 +12,11 @@ on:
         required: true
         default: 1
         type: number
+      repo_name:
+        description: 'Name of the base repository. The user can ignore this input if the action is triggered from the base repository.'
+        required: true
+        type: string
+        default: 'image-tools'
   workflow_call:
     inputs:
       repo_name:
@@ -36,7 +45,7 @@ jobs:
     if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
     uses: ./.github/workflows/package-filter.yml
     with:
-      num-commits: ${{ github.event.inputs.num-commits }}
+      num-commits: ${{ fromJson(github.event.inputs.num-commits) }}
 
   package-release:
     name: Release "${{ matrix.package_name }}"
