@@ -2,6 +2,12 @@ name: Package Filter
 
 on:
   workflow_call:
+    inputs:
+      num-commits:
+        description: "The of commits to check for updated packages. If 0, the action will assume that it is running on a non-master branch and will check all commits on the current branch against the master branch. For any larger value, the action will check the last n commits for any updated packages."
+        required: true
+        default: 0
+        type: number
     outputs:
       matrix:
         description: "The directories containing the updated packages"
@@ -21,12 +27,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
+          persist-credentials: false
       - name: Find Updated Packages
         id: package-filter
         run: |
           PACKAGE_DIRS=""
+          COMPANION_FILES="VERSION Dockerfile .bumpversion.cfg plugin.json"
 
           # echo the base ref
           base_ref=${{ github.base_ref }}
@@ -37,7 +44,15 @@ jobs:
           fi
           echo "The base ref is $base_ref"
 
-          for changed_file in $(git diff --name-only origin/${base_ref}...)
+          # Get the comparison point in the repo
+          if [[ ${{ inputs.num-commits }} == 0 ]]
+          then
+            comparison_point="origin/${base_ref}"
+          else
+            comparison_point="HEAD~${{ inputs.num-commits }}"
+          fi
+
+          for changed_file in $(git diff --name-only ${comparison_point}...)
           do
             pkg_dir=$(dirname ${changed_file})
 
@@ -50,24 +65,29 @@ jobs:
             # Check if the changed file is a pyproject.toml file
             if [[ "$(basename ${changed_file})" == *"pyproject.toml"* ]]
             then
+              pkg_dir=$(dirname ${changed_file})
 
-              # Check that the package has a VERSION file
-              if [[ ! -f "$(dirname ${changed_file})/VERSION" ]]
-              then
-                echo "::error::$(dirname ${changed_file}) does not have a VERSION file" && exit 1
-              fi
+              # Check that the package has all the necessary companion files
+              for companion_file in $COMPANION_FILES
+              do
+                if [[ ! -f "$pkg_dir/$companion_file" ]]
+                then
+                  echo "::error::${pkg_dir} does not have a $companion_file file" && exit 1
+                fi
+              done
 
               # Check that the version is a dev version
-              if [[ "$(cat $(dirname ${changed_file})/VERSION)" != *"dev"* ]]
+              if [[ "$(cat ${pkg_dir}/VERSION)" != *"dev"* ]]
               then
-                echo "::error::$(dirname ${changed_file}) does not have a dev version" && exit 1
+                echo "::error::${pkg_dir} does not have a dev version" && exit 1
               fi
 
-              PACKAGE_DIRS="$PACKAGE_DIRS $(dirname ${changed_file})"
+              PACKAGE_DIRS="$PACKAGE_DIRS ${pkg_dir}"
             fi
           done
 
           # Check if any packages were found
+          echo "The updated packages are $PACKAGE_DIRS"
           if [[ -z "$PACKAGE_DIRS" ]]
           then
             echo "::error::No updated packages were found" && exit 1
