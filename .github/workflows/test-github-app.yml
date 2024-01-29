@@ -1,0 +1,41 @@
+
+name: Test Github App
+on:
+  workflow_dispatch:
+    
+jobs:
+  auto_publish_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+          persist-credentials : false
+      - name: Generate a token
+        id: generate_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Use the token
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+        run: |
+          gh api octocat
+      - name: Add test file
+        run: |
+          touch test.txt
+      - name: Commit files
+        run: |
+          git add .
+          git config --local user.email ${{ secrets.APP_ID }}+axle-auth-helper[bot]@users.noreply.github.com
+          git config --local user.name "axle-auth-helper[bot]"
+          git commit -a -m "Adding test file"
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          force: true
+          github_token: ${{ steps.generate_token.outputs.token }}
