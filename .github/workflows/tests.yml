@@ -12,12 +12,6 @@ on:
       - master
       - dev
   workflow_call:
-    inputs:
-      num-commits:
-        description: "The of commits to check for updated packages. If 0, the action will assume that it is running on a non-master branch and will check all commits on the current branch against the master branch. For any larger value, the action will check the last n commits for any updated packages."
-        required: true
-        default: 0
-        type: number
     secrets:
       DOCKER_USERNAME:
         description: 'Docker Hub username'
@@ -34,7 +28,7 @@ jobs:
     name: Filter for updated package
     uses: ./.github/workflows/package-filter.yml
     with:
-      num-commits: ${{ github.event.inputs.num-commits }}
+      num-commits: 0
 
   tests:
     name: Test "${{ matrix.package_name }}"
@@ -82,14 +76,3 @@ jobs:
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
-
-  # docker:
-  #   name: Docker "${{ matrix.package_name }}"
-  #   needs: [package-filter, tests]
-  #   uses: ./.github/workflows/docker.yml
-  #   with:
-  #     matrix: ${{ needs.package-filter.outputs.matrix }}
-  #     push: false
-  #   secrets:
-  #     DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-  #     DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
