@@ -1,11 +1,40 @@
 name: Package Release
 
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+
 on:
-  push:
-    branches:
-      - master
-      - main
-      - dev
+  workflow_dispatch:
+    inputs:
+      num-commits:
+        description: "The of commits to check for updated packages. If 0, the action will check all commits on the branch. For any larger value, the action will check the last n commits for any updated packages."
+        required: true
+        default: 1
+        type: number
+      repo_name:
+        description: 'Name of the base repository. The user can ignore this input if the action is triggered from the base repository.'
+        required: true
+        type: string
+        default: 'image-tools'
+  workflow_call:
+    inputs:
+      repo_name:
+        description: 'Name of the base repository'
+        required: true
+        type: string
+      num-commits:
+        description: "The of commits to check for updated packages. If 0, the action will check all commits on the master branch. For any larger value, the action will check the last n commits for any updated packages."
+        required: true
+        default: 1
+        type: number
+    secrets:
+      DOCKER_USERNAME:
+        description: 'Docker Hub username'
+        required: true
+      DOCKER_TOKEN:
+        description: 'Docker Hub password'
+        required: true
 
 permissions:
   contents: write
@@ -13,21 +42,39 @@ permissions:
 jobs:
   package-filter:
     name: Filter for updated package
-    if: github.repository == 'polusai/polus-plugins'
+    if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
     uses: ./.github/workflows/package-filter.yml
+    with:
+      num-commits: ${{ fromJson(github.event.inputs.num-commits) }}
 
   package-release:
     name: Release "${{ matrix.package_name }}"
-    if: github.repository == 'polusai/polus-plugins'
+    if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
     needs: package-filter
     strategy:
+      fail-fast: false
       matrix: ${{fromJson(needs.package-filter.outputs.matrix)}}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.branch }}
+          persist-credentials: false
+      - name: Generate a token
+        id: generate_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+      - name: Use the token
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+        run: |
+          gh api octocat
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
       - name: Install bump2version
@@ -38,22 +85,23 @@ jobs:
         run: |
           cd "${{ matrix.package_dir }}"
           bump2version release --no-commit
-      - name: Commit and push all changed files
+      - name: Commit all changed files
         env:
-          CI_COMMIT_AUTHOR: Continuous Integration
+          CI_COMMIT_AUTHOR: polusai-auth-helper[bot]
+          CI_COMMIT_EMAIL: ${{ secrets.APP_ID }}+polusai-auth-helper[bot]@users.noreply.github.com
         run: |
           git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
-          git config --global user.email "username@users.noreply.github.com"
+          git config --global user.email "${{ env.CI_COMMIT_EMAIL }}"
           git commit -a -m "build: Bumped release version for ${{ matrix.package_name }}"
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
-          github_token: ${{ secrets.CI_TOKEN }}
-          branch: ${{ github.ref }}
+          force: true
+          github_token: ${{ steps.generate_token.outputs.token }}
 
   docker:
     name: Build Docker images
-    if: github.repository == 'polusai/polus-plugins'
+    if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
     needs: [package-filter, package-release]
     uses: ./.github/workflows/docker.yml
     with:
@@ -61,4 +109,4 @@ jobs:
       push: true
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+      DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}

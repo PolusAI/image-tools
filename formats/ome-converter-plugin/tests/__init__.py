@@ -1,1 +1,1 @@
-"""ome converter plugin."""
+"""Tests for ome converter plugin."""
