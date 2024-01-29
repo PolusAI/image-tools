@@ -31,8 +31,8 @@ jobs:
       - name: Commit files
         run: |
           git add .
-          git config --local user.email ${{ secrets.APP_ID }}+axle-auth-helper[bot]@users.noreply.github.com
-          git config --local user.name "axle-auth-helper[bot]"
+          git config --local user.email ${{ secrets.APP_ID }}+polusai-auth-helper[bot]@users.noreply.github.com
+          git config --local user.name "polusai-auth-helper[bot]"
           git commit -a -m "Adding test file"
       - name: Push changes
         uses: ad-m/github-push-action@master
