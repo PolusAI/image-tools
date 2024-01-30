@@ -8,6 +8,11 @@ on:
         required: true
         default: 0
         type: number
+      ignore-missing-dev:
+        description: "If true, the action will ignore packages that do not have a dev version. Otherwise, the action will fail if any package does not have a dev version."
+        required: true
+        default: false
+        type: boolean
     outputs:
       matrix:
         description: "The directories containing the updated packages"
@@ -79,7 +84,7 @@ jobs:
               done
 
               # Check that the version is a dev version
-              if [[ "$(cat ${pkg_dir}/VERSION)" != *"dev"* ]]
+              if [[ "$(cat ${pkg_dir}/VERSION)" != *"dev"* ]] || [[ ${{ inputs.ignore-missing-dev }} ]]
               then
                 echo "::error::${pkg_dir} does not have a dev version" && exit 1
               fi
