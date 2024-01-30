@@ -24,15 +24,20 @@ on:
         default: 'image-tools'
   workflow_call:
     inputs:
-      repo_name:
-        description: 'Name of the base repository'
-        required: true
-        type: string
       num-commits:
         description: "The of commits to check for updated packages. If 0, the action will check all commits on the master branch. For any larger value, the action will check the last n commits for any updated packages."
         required: true
         default: 1
         type: number
+      ignore-missing-dev:
+        description: "If true, the action will ignore packages that do not have a dev version. Otherwise, the action will fail if any package does not have a dev version."
+        required: true
+        default: true
+        type: boolean
+      repo_name:
+        description: 'Name of the base repository'
+        required: true
+        type: string
     secrets:
       DOCKER_USERNAME:
         description: 'Docker Hub username'
@@ -88,10 +93,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install bump2version
       - name: Python | Bump Version Release
+        id: bump_version
         run: |
-          cd "${{ matrix.package_dir }}"
-          bump2version release --no-commit
+          pkg_dir=${{ matrix.package_dir }}
+          cd "${pkg_dir}"
+          # check if the package has a dev version
+          if [[ "$(cat VERSION)" != *dev* ]]
+          then
+            msg="${pkg_dir} does not have a dev version"
+            ${{ github.event.inputs.ignore-missing-dev }} && echo "::warning::${msg}" || $(echo "::error::${msg}" && exit 1)
+          else
+            bump2version release --no-commit
+          fi
+          echo "released=$(git status --porcelain)" >> $GITHUB_output
       - name: Git | Commit
+        if: steps.bump_version.outputs.released == 'true'
         env:
           CI_COMMIT_AUTHOR: polusai-auth-helper[bot]
           CI_COMMIT_EMAIL: ${{ secrets.APP_ID }}+polusai-auth-helper[bot]@users.noreply.github.com
@@ -100,6 +116,7 @@ jobs:
           git config --global user.email "${{ env.CI_COMMIT_EMAIL }}"
           git commit -a -m "build: Bumped release version for ${{ matrix.package_name }}"
       - name: Git | Push
+        if: steps.bump_version.outputs.released == 'true'
         uses: ad-m/github-push-action@master
         with:
           force: true

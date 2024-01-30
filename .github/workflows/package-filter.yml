@@ -84,9 +84,10 @@ jobs:
               done
 
               # Check that the version is a dev version
-              if [[ "$(cat ${pkg_dir}/VERSION)" != *"dev"* ]] || [[ ${{ inputs.ignore-missing-dev }} ]]
+              if [[ "$(cat ${pkg_dir}/VERSION)" != *"dev"* ]]
               then
-                echo "::error::${pkg_dir} does not have a dev version" && exit 1
+                msg="${pkg_dir} does not have a dev version"
+                ${{ inputs.ignore-missing-dev }} && echo "::warning::${msg}" || $(echo "::error::${msg}" && exit 1)
               fi
 
               PACKAGE_DIRS="$PACKAGE_DIRS ${pkg_dir}"
