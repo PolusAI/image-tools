@@ -3,26 +3,14 @@
 from collections import OrderedDict
 from pathlib import Path
 
-import pydantic
 import pytest
 
-PYDANTIC_VERSION = pydantic.__version__.split(".")[0]
-
 from polus.plugins._plugins.classes import PLUGINS, list_plugins
-
-if PYDANTIC_VERSION == "1":
-    from polus.plugins._plugins.manifests.manifest_utils_v1 import (
-        InvalidManifestError,
-        _load_manifest,
-        validate_manifest,
-    )
-elif PYDANTIC_VERSION == "2":
-    from polus.plugins._plugins.manifests.manifest_utils_v2 import (
-        InvalidManifestError,
-        _load_manifest,
-        validate_manifest,
-    )
-
+from polus.plugins._plugins.manifests import (
+    InvalidManifestError,
+    _load_manifest,
+    validate_manifest,
+)
 from polus.plugins._plugins.models import ComputeSchema, WIPPPluginManifest
 
 RSRC_PATH = Path(__file__).parent.joinpath("resources")

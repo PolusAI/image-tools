@@ -8,12 +8,15 @@ from typing import Union
 import github
 import requests
 import validators
+from polus.plugins._plugins._compat import PYDANTIC_V2
 from polus.plugins._plugins.models import ComputeSchema
 from polus.plugins._plugins.models import WIPPPluginManifest
-from polus.plugins._plugins.utils import cast_version
 from pydantic import ValidationError
 from pydantic import errors
 from tqdm import tqdm
+
+if not PYDANTIC_V2:
+    from polus.plugins._plugins.utils import cast_version
 
 logger = logging.getLogger("polus.plugins")
 
@@ -84,9 +87,10 @@ def validate_manifest(
 ) -> Union[WIPPPluginManifest, ComputeSchema]:
     """Validate a plugin manifest against schema."""
     manifest = _load_manifest(manifest)
-    manifest["version"] = cast_version(
-        manifest["version"],
-    )  # cast version to semver object
+    if not PYDANTIC_V2:  # Pydantic V1
+        manifest["version"] = cast_version(
+            manifest["version"],
+        )  # cast version to semver object
     if "name" in manifest:
         name = manifest["name"]
     else:

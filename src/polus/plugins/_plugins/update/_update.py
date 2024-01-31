@@ -4,6 +4,7 @@ import logging
 import re
 import typing
 
+from polus.plugins._plugins._compat import PYDANTIC_V2
 from polus.plugins._plugins.classes import refresh
 from polus.plugins._plugins.classes import submit_plugin
 from polus.plugins._plugins.gh import _init_github
@@ -44,7 +45,7 @@ def update_polus_plugins(
 
             # Check that plugin version matches container version tag
             container_name, version = tuple(plugin.containerId.split(":"))
-            version = Version(version)
+            version = Version(version) if PYDANTIC_V2 else Version(version=version)
             organization, container_name = tuple(container_name.split("/"))
             if plugin.version != version:
                 msg = (
