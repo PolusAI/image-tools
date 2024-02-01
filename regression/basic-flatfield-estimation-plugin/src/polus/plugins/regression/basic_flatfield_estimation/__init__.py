@@ -10,7 +10,7 @@ from . import utils
 
 __all__ = ["estimate", "__version__"]
 
-__version__ = "2.1.0"
+__version__ = "2.1.1-dev0"
 
 # Set the basicpy logger to warning
 logging.getLogger("basicpy.basicpy").setLevel(logging.WARNING)
