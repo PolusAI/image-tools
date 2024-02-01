@@ -40,8 +40,9 @@ def image_directory(dirpath: pathlib.Path) -> Union[bool, None]:
     Returns:
         bool.
     """
+    ext = (".csv", ".txt", ".cppipe", ".yml", ".yaml", ".xml", ".json")
     for file in dirpath.iterdir():
-        return bool(file.is_file() and file.suffix not in [".txt", ".csv"])
+        return bool(file.is_file() and file.suffix not in ext)
     return None
 
 
@@ -54,6 +55,7 @@ def get_data(inp_dir: str) -> tuple[list[pathlib.Path], list[pathlib.Path]]:
     Returns:
         A tuple of list of subdirectories and files path.
     """
+    ext = (".csv", ".txt", ".cppipe", ".yml", ".yaml", ".xml", ".json", ".DS_Store")
     filepath: list[pathlib.Path] = []
     dirpaths: list[pathlib.Path] = []
     for path in pathlib.Path(inp_dir).rglob("*"):
@@ -62,7 +64,7 @@ def get_data(inp_dir: str) -> tuple[list[pathlib.Path], list[pathlib.Path]]:
                 dirpaths.remove(path.parent)
             if image_directory(path):
                 dirpaths.append(path)
-        elif path.is_file() and not path.name.startswith("."):
+        elif path.is_file() and not path.name.endswith(tuple(ext)):
             fpath = pathlib.Path(inp_dir).joinpath(path)
             filepath.append(fpath)
 
@@ -313,9 +315,11 @@ def rename(  # noqa: C901, PLR0915, PLR0912
 
     _, inpfiles = get_data(inp_dir)
 
+
     inp_files: list[str] = [
         f"{f.name}" for f in inpfiles if pathlib.Path(f).suffix == f".{file_ext}"
     ]
+   
     if len(inp_files) == 0:
         msg = "Please check input directory again!! As it does not contain files"
         raise ValueError(msg)
