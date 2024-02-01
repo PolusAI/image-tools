@@ -105,7 +105,14 @@ jobs:
           else
             bump2version release --no-commit
           fi
-          echo "released=$(git status --porcelain)" >> $GITHUB_OUTPUT
+
+          # check if the package has been released and update the output
+          if [[ $(git status --porcelain) ]]
+          then
+            echo "released=true" >> $GITHUB_OUTPUT
+          else
+            echo "released=false" >> $GITHUB_OUTPUT
+          fi
       - name: Git | Commit
         if: steps.bump_version.outputs.released == 'true'
         env:
