@@ -105,7 +105,7 @@ jobs:
           else
             bump2version release --no-commit
           fi
-          echo "released=$(git status --porcelain)" >> $GITHUB_output
+          echo "released=$(git status --porcelain)" >> $GITHUB_OUTPUT
       - name: Git | Commit
         if: steps.bump_version.outputs.released == 'true'
         env:
