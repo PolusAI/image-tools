@@ -59,12 +59,9 @@ jobs:
       ignore-missing-dev: ${{ fromJson(github.event.inputs.ignore-missing-dev) }}
 
   package-release:
-    name: Release | ${{ matrix.package_name }}
+    name: Release Versions
     if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
     needs: package-filter
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.package-filter.outputs.matrix) }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -95,24 +92,41 @@ jobs:
       - name: Python | Bump Version Release
         id: bump_version
         run: |
-          pkg_dir=${{ matrix.package_dir }}
-          cd "${pkg_dir}"
-          # check if the package has a dev version
-          if [[ "$(cat VERSION)" != *dev* ]]
-          then
-            msg="${pkg_dir} does not have a dev version"
-            ${{ github.event.inputs.ignore-missing-dev }} && echo "::warning::${msg}" || $(echo "::error::${msg}" && exit 1)
-          else
-            bump2version release --no-commit
-          fi
+          cur_dir=$GITHUB_WORKSPACE
+          released_packages=""
 
-          # check if the package has been released and update the output
-          if [[ $(git status --porcelain) ]]
-          then
-            echo "released=true" >> $GITHUB_OUTPUT
-          else
-            echo "released=false" >> $GITHUB_OUTPUT
-          fi
+          for pkg_dir in ${{ needs.package-filter.outputs.list }}
+          do
+            echo "Bumping version for ${pkg_dir}"
+            echo "cd-ing to ${pkg_dir}"
+            cd "${pkg_dir}"
+            # check if the package has a dev version
+            if [[ "$(cat VERSION)" != *dev* ]]
+            then
+              msg="${pkg_dir} does not have a dev version"
+              if ${{ github.event.inputs.ignore-missing-dev }}
+              then
+                echo "::warning::${msg}"
+              else
+                echo "::error::${msg}" && exit 1
+              fi
+            else
+              bump2version release --no-commit
+            fi
+
+            # check if the package has been released and update the output
+            if [[ $(git status --porcelain) ]]
+            then
+              released_packages="${released_packages} ${pkg_dir}"
+            fi
+            cd ${cur_dir}
+          done
+
+          # Trim leading whitespace
+          released_packages=$(echo "${released_packages}" | xargs)
+
+          echo "Released packages: ${released_packages}"
+          echo "released_packages=${released_packages}" >> $GITHUB_OUTPUT
       - name: Git | Commit
         if: steps.bump_version.outputs.released == 'true'
         env:
@@ -121,13 +135,29 @@ jobs:
         run: |
           git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
           git config --global user.email "${{ env.CI_COMMIT_EMAIL }}"
-          git commit -a -m "build: Bumped release version for ${{ matrix.package_name }}"
+          git commit -a -m "build: Bumped release version for ${{ steps.bump_version.outputs.released_packages }}"
       - name: Git | Push
         if: steps.bump_version.outputs.released == 'true'
         uses: ad-m/github-push-action@master
         with:
           force: true
           github_token: ${{ steps.generate_token.outputs.token }}
+
+  docker:
+    name: Docker | ${{ matrix.package_name }}
+    if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
+    needs: [package-filter, package-release]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.package-filter.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.branch }}
+          persist-credentials: false
       - name: Docker | Tag
         id: docker_tag
         run: |
@@ -149,7 +179,7 @@ jobs:
           docker pull ${tag} > /dev/null \
               && $(echo "::error::${tag} already exists on DockerHub" && exit 1) \
               || echo "success"
-      - name: Docekr | Push Image
+      - name: Docker | Push Image
         uses: docker/build-push-action@v5
         with:
           context: "{{defaultContext}}:${{ matrix.package_dir }}"
