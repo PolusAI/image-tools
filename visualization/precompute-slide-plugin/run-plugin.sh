@@ -1,19 +1,16 @@
 #!/bin/bash
-
 version=$(<VERSION)
-datapath=$(readlink --canonicalize ../../data)
-echo ${datapath}
 
-# Inputs
-inpDir=/data/input
+inpDir=/tmp/path/to/input
 pyramidType=Zarr
-imageType=image
 filePattern="p02_x(01-24)_y(01-16)_wx(0-2)_wy(0-2)_c{c}.ome.tif"
+imageType=image
+outDir=/tmp/path/to/output
+container_input_dir="/inpDir"
+container_output_dir="/outDir"
 
-# Output paths
-outDir=/data/output
-
-docker run --mount type=bind,source=${datapath},target=/data/ \
+docker run  -v $inpDir:/${container_input_dir} \
+            -v $outDir:/${container_output_dir} \
             --user $(id -u):$(id -g) \
             polusai/precompute-slide-plugin:${version} \
             --inpDir ${inpDir} \
