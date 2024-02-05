@@ -1,0 +1,1 @@
+"""Test Outlier Removal Plugin."""
