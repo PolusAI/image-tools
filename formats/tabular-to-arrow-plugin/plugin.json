@@ -1,20 +1,35 @@
 {
-  "name": "Tabular to Feather",
-  "version": "0.1.4",
-  "title": "Tabular to Feather",
-  "description": "WIPP plugin to converts Tabular Data to Feather file format.",
-  "author": "Kelechi Nina Mezu (nina.mezu@nih.gov)",
+  "name": "Tabular to Arrow",
+  "version": "0.2.0",
+  "title": "Tabular to Arrow",
+  "description": "WIPP plugin to converts Tabular Data to Arrow file format.",
+  "author": "Kelechi Nina Mezu (nina.mezu@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/PolusAI/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/tabular-to-feather-plugin:0.1.4",
+  "containerId": "polusai/tabular-to-arrow-plugin:0.2.0",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.plugins.formats.tabular_to_arrow"
+  ],
   "inputs": [
     {
       "name": "filePattern",
-      "type": "string",
+      "type": "enum",
       "description": "Filename pattern used to separate data",
-      "required": true
+      "required": true,
+      "options": {
+        "values": [
+          ".fcs",
+          ".csv",
+          ".feather",
+          ".parquet",
+          ".hdf5",
+          ".fits"
+        ]
+      }
     },
     {
       "name": "inpDir",
