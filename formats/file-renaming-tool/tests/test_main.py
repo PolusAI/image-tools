@@ -3,7 +3,9 @@ import json
 import pathlib
 import shutil
 import tempfile
-from typing import Any, DefaultDict
+from typing import Any
+from typing import DefaultDict
+from typing import Tuple
 
 import click
 import pytest
@@ -536,7 +538,7 @@ def test_letters_to_int_returns_error_invalid_input():
 
 
 @pytest.fixture
-def create_subfolders() -> tuple(pathlib.Path, str, str, str):
+def create_subfolders() -> Tuple[pathlib.Path, str, str, str]:
     data = {
         "complex": [
             ["A9 p5d.tif", "A9 p5f.tif", "A9 p7f.tif"],

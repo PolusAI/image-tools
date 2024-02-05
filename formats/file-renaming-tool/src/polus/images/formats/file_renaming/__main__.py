@@ -106,14 +106,16 @@ def main(  # noqa: PLR0913 D417 C901 PLR0912 PLR0915
 
     elif map_directory:
         file_ext = re.split("\\.", file_pattern)[-1]
+
         subdirs = np.unique(
             [
                 sub
                 for sub in subdirs
                 for f in pathlib.Path(sub).rglob("*")
-                if f.suffix == f"{file_ext}"
+                if f.suffix == f".{file_ext}"
             ],
         )
+
         if len(subdirs) == 1:
             logger.info(
                 "Renaming files in a single directory.",
