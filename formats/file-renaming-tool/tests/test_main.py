@@ -536,7 +536,7 @@ def test_letters_to_int_returns_error_invalid_input():
 
 
 @pytest.fixture
-def create_subfolders():
+def create_subfolders() -> tuple(pathlib.Path, str, str, str):
     data = {
         "complex": [
             ["A9 p5d.tif", "A9 p5f.tif", "A9 p7f.tif"],
@@ -624,7 +624,7 @@ def test_recursive_searching_files() -> None:
     shutil.rmtree(out_dir)
 
 
-def test_cli(create_subfolders) -> None:
+def test_cli(create_subfolders: pytest.FixtureRequest) -> None:
     """Test Cli."""
     dir_path, _, file_pattern, out_file_pattern = create_subfolders
 
