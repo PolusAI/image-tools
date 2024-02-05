@@ -1,5 +1,5 @@
 """Binary operations tool."""
-__version__ = "0.5.0-dev1"
+__version__ = "0.5.1-dev0"
 
 from polus.plugins.transforms.images.binary_operations.binops import (  # noqa
     Operation,
@@ -8,7 +8,7 @@ from polus.plugins.transforms.images.binary_operations.binops import (  # noqa
     binary_op,
     scalable_binary_op,
 )
-from polus.plugins.transforms.images.binary_operations.utils import (  # noqa
+from polus.plugins.transforms.images.binary_operations.utils import (
     blackhat,
     close_,
     dilate,

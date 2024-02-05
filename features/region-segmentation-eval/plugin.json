@@ -1,6 +1,6 @@
 {
   "name": "Region Segmentation Eval",
-  "version": "0.2.3",
+  "version": "0.2.4-dev0",
   "title": "Region Segmentation Eval",
   "description": "Plugin to generate evaluation metrics for region-wise comparison of ground truth and predicted images.",
   "author": "Vishakha Goyal (vishakha.goyal@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov),",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/polusai/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/region-segmentation-eval:0.2.3",
+  "containerId": "polusai/region-segmentation-eval:0.2.4-dev0",
   "baseCommand": [
     "python3",
     "-m",

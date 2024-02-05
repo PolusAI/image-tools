@@ -1,19 +1,14 @@
 [tool.poetry]
 name = "polus-plugins-formats-arrow-to-tabular"
-version = "0.2.0"
+version = "0.2.1-dev0"
 description = "This package converts Arrow file format to Tabular csv or parquet data"
 authors = ["Kelechi Nina Mezu <nina.mezu@nih.gov>","Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>"]
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
-[[tool.poetry.source]]
-name = "test"
-url = "https://test.pypi.org/simple/"
-secondary = true
-
 [tool.poetry.dependencies]
-python = ">=3.9"
-filepattern = "^2.2.7"
+python = ">=3.9,<3.12"
+filepattern = "^2.0.4"
 typer = "^0.7.0"
 tqdm = "^4.64.1"
 blake3 = "^0.3.3"

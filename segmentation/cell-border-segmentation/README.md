@@ -1,4 +1,4 @@
-# Cell Border Segmentation(v0.2.1)
+# Cell Border Segmentation(v0.2.2-dev0)
 
 This plugin segments epithelial cell borders which are labeled with fluorescent proteins that highlight cell borders while leaving the cell body dark.
 This was orginally designed to segment retinal epithelial cells, fluorescently labeled with zonula occluden-1 (ZO1) tight junction protein. The magnifications this was trained on varied from 10x to 40x, so it should work well on a wide range of magnifications.
@@ -40,7 +40,7 @@ unzip fluorescentZ01.zip
 ### Run the Docker Container
 
 ```bash
-docker run -v /data:/data polusai/zo1-border-segmentation-plugin:0.2.1 \
+docker run -v /data:/data polusai/zo1-border-segmentation-plugin:0.2.2-dev0 \
   --inpDir /data/input \
   --filePattern ".*.ome.tif" \
   --outDir /data/output \

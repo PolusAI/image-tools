@@ -1,4 +1,4 @@
-# Ome-to-microjson-plugin(v0.1.2-dev)
+# Ome-to-microjson-plugin(v0.1.3-dev0)
 
 This plugin generate a microjson of polygon coordinates of binary or label segmentations
 
@@ -50,7 +50,7 @@ This plugin can take four input arguments and one output argument:
 ### Run the Docker Container
 
 ```bash
-docker run -v /data:/data polusai/ome-to-microjson-plugin:0.1.2-dev \
+docker run -v /data:/data polusai/ome-to-microjson-plugin:0.1.3-dev0-dev \
   --inpDir /data/input \
   --filePattern ".*.ome.tif" \
   --polygonType "encoding" \

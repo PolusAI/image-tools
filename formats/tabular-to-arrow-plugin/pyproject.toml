@@ -1,20 +1,15 @@
 
 [tool.poetry]
 name = "polus-plugins-formats-tabular-to-arrow"
-version = "0.2.0"
+version = "0.2.1-dev0"
 description = "This package converts Tabular to Arrow file format"
 authors = ["Kelechi Nina Mezu <nina.mezu@nih.gov>","hamshkhawar <hamdahshafqat@hotmail.com>"]
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
-[[tool.poetry.source]]
-name = "test"
-url = "https://test.pypi.org/simple/"
-secondary = true
-
 [tool.poetry.dependencies]
-python = ">=3.9"
-filepattern = "^2.2.7"
+python = ">=3.9,<3.12"
+filepattern = "^2.0.4"
 typer = "^0.7.0"
 tqdm = "^4.64.1"
 pyarrow = "^11.0.0"

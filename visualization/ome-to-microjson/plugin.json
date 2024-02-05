@@ -1,6 +1,6 @@
 {
   "name": "Ome_to_microjson",
-  "version": "0.1.2-dev",
+  "version": "0.1.3-dev0",
   "title": "Convert binary segmentations to micojson",
   "description": "This plugin create a microjson of polygon coordinates (rectangle, encodings) of binary segmentations.",
   "author": "Hamdah Shafqat abbasi  (hamdahshafqat.abbasi@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/ome-to-microjson-plugin:0.1.2-dev",
+  "containerId": "polusai/ome-to-microjson-plugin:0.1.3-dev0",
   "baseCommand": [
     "python3",
     "-m",

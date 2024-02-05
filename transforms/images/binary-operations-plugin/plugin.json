@@ -1,7 +1,7 @@
 {
   "name": "Binary Operations Plugin",
-  "version": "0.5.0-dev1",
-  "containerId": "polusai/binary-operations-plugin:0.5.0-dev1",
+  "version": "0.5.1-dev0",
+  "containerId": "polusai/binary-operations-plugin:0.5.1-dev0",
   "title": "Binary Operations Plugin",
   "description": "Everything you need to start a WIPP plugin.",
   "authors": "nicholas-schaub (nick.schaub@nih.gov), Madhuri Vihani",

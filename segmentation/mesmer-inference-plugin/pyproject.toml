@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-segmentation-mesmer-inference"
-version = "0.0.7"
+version = "0.0.8-dev0"
 description = ""
 authors = [
            "Vishakha Goyal <vishakha.goyal@nih.gov>",
@@ -9,14 +9,9 @@ authors = [
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
-[[tool.poetry.source]]
-name = "test"
-url = "https://test.pypi.org/simple/"
-secondary = true
-
 [tool.poetry.dependencies]
 python = ">=3.9,<3.10"
-filepattern = "2.2.7"
+filepattern = "^2.0.4"
 typer = "0.7.0"
 DeepCell="0.12.5"
 opencv-python-headless="4.7.0.72"

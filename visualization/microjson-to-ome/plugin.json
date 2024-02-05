@@ -1,6 +1,6 @@
 {
   "name": "Microjson To Ome",
-  "version": "0.1.2-dev",
+  "version": "0.1.3-dev0",
   "title": "Reconstruct binary image using polygon coordinates of objects",
   "description": "This plugin reconstruct binary images using polygon coordinates (rectangle, encodings) of objects from microjson file.",
   "author": "Hamdah Shafqat abbasi  (hamdahshafqat.abbasi@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/microjson-to-ome-plugin:0.1.2-dev",
+  "containerId": "polusai/microjson-to-ome-plugin:0.1.3-dev0",
   "baseCommand": [
     "python3",
     "-m",

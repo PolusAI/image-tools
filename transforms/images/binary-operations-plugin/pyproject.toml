@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-transforms-images-binary-operations"
-version = "0.5.0-dev1"
+version = "0.5.1-dev0"
 description = ""
 authors = ["nicholas-schaub <nick.schaub@nih.gov>", "Madhuri Vihani"]
 readme = "README.md"
@@ -10,7 +10,7 @@ packages = [{include = "polus", from = "src"}]
 python = "^3.9"
 bfio = {version = "2.1.9", extras = ["all"]}
 typer = "^0.7.0"
-filepattern = "^2.2.7"
+filepattern = "^2.0.4"
 opencv-python = "^4.7.0.72"
 preadator = "^0.2.0"
 
@@ -23,11 +23,6 @@ flake8 = "^6.0.0"
 pre-commit = "^3.1.0"
 bump2version = "^1.0.1"
 flake8-docstrings = "^1.7.0"
-
-[[tool.poetry.source]]
-name = "test"
-url = "https://test.pypi.org/simple/"
-secondary = true
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,6 +1,6 @@
 {
   "name": "RoI Relabel",
-  "version": "0.2.2",
+  "version": "0.2.3-dev0",
   "title": "RoI Relabel",
   "description": "Methods for relabeling and consolidating regions of interest (RoIs) in a segmented or hand-labeled image.",
   "author": "Najib Ishaq (najib.ishaq@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/PolusAI/polus-plugins/transforms/images/roi-relabeling-plugin",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/roi-relabel-plugin:0.2.2",
+  "containerId": "polusai/roi-relabel-plugin:0.2.3-dev0",
   "baseCommand": [
     "python3",
     "-m",

@@ -1,4 +1,4 @@
-# LUMoS Bleedthrough Correction Plugin (v0.1.0)
+# LUMoS Bleedthrough Correction Plugin (v0.1.1-dev0)
 
 This WIPP plugin will take a collection of images and use the LUMoS [1] bleedthrough correction algorithm to separate out the signal for each fluorophore.
 This is a reimplementation, in Python, of the authors' original [Java](https://github.com/tristan-mcrae-rochester/Multiphoton-Image-Analysis/blob/master/Spectral%20Unmixing/Code/ImageJ-FIJI/LUMoS_Spectral_Unmixing.java) and [Matlab](https://github.com/tristan-mcrae-rochester/Multiphoton-Image-Analysis/blob/master/Spectral%20Unmixing/Code/k_means_unmixing_circ/KMeansUnmixing.m) versions.

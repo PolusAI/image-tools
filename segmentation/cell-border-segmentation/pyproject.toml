@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-segmentation-cell-border-segmentation"
-version = "0.2.1"
+version = "0.2.2-dev0"
 description = "This plugin segments cell border of fluorescently labeled epithelial cells"
 authors = [
            "Nick Schaub <nick.schaub@nih.gov>",
@@ -17,13 +17,6 @@ typer = "^0.7.0"
 filepattern = "^2.0.1"
 scyjava = "^1.9.1"
 tqdm = "^4.65.0"
-
-
-[[tool.poetry.source]]
-name = "test"
-url = "https://test.pypi.org/simple/"
-default = false
-secondary = true
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"

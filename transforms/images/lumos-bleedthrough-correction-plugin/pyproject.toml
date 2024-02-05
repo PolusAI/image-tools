@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-transforms-images-lumos-bleedthrough-correction"
-version = "0.1.0"
+version = "0.1.1-dev0"
 description = ""
 authors = ["Najib Ishaq <najib.ishaq@nih.gov>"]
 readme = "README.md"
@@ -9,11 +9,7 @@ packages = [{include = "polus", from = "src"}]
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
 bfio = { version = "2.1.9", extras = ["all"] }
-filepattern = [
-  { version = "^2.0.0", platform = "linux" },
-  { version = "^2.0.0", platform = "win32" },
-  { git = "https://github.com/PolusAI/filepattern", platform = "darwin" }
-]
+filepattern = "^2.0.4"
 typer = { version = "^0.7.0", extras = ["all"] }
 tqdm = "^4.65.0"
 scipy = "^1.11.0"

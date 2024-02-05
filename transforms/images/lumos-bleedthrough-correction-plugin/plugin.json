@@ -1,6 +1,6 @@
 {
   "name": "LUMoS Bleedthrough Correction",
-  "version": "0.1.0",
+  "version": "0.1.1-dev0",
   "title": "LUMoS Bleedthrough Correction Plugin",
   "description": "LUMoS Algorithm for bleedthrough correction.",
   "author": "Najib Ishaq (najib.ishaq@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/PolusAI/polus-plugins/transforms/images/lumos-bleedthrough-correction-plugin",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/lumos-bleedthrough-correction-plugin:0.1.0",
+  "containerId": "polusai/lumos-bleedthrough-correction-plugin:0.1.1-dev0",
   "baseCommand": [
     "python3",
     "-m",

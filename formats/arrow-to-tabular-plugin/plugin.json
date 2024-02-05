@@ -1,6 +1,6 @@
 {
   "name": "Arrow to Tabular",
-  "version": "0.2.0",
+  "version": "0.2.1-dev0",
   "title": "Arrow to Tabular",
   "description": "WIPP plugin to converts Arrow file format to Tabular Data.",
   "author": "Kelechi Nina Mezu (nina.mezu@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/PolusAI/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/arrow-to-tabular-plugin:0.2.0",
+  "containerId": "polusai/arrow-to-tabular-plugin:0.2.1-dev0",
   "baseCommand": [
     "python3",
     "-m",
