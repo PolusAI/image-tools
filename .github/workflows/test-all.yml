@@ -23,10 +23,10 @@ jobs:
           current_dir=$(pwd)
           ignored_dirs="polus-python-template ftl-label .venv"
           tool_dirs=""
-          tool_names=""
 
           # Get all directories in the current directory
           dirs=$(find $current_dir -type d)
+
           # Get all directories that have a "pyproject.toml" file
           for dir in $dirs; do
             # Ignore the current directory
@@ -41,22 +41,15 @@ jobs:
             done
             # If the directory contains a "pyproject.toml" file, then add it to the list of tools
             if [ -f "$dir/pyproject.toml" ]; then
-            tool_dirs="$tool_dirs $dir"
+              tool_dirs="$tool_dirs $dir"
             fi
           done
           # Remove leading and trailing spaces
-          tool_dirs=$(echo $tools | xargs)
-
-          for tool in $tool_dirs; do
-            tool_name=$(basename $tool)
-            tool_names="$tool_names $tool_name"
-          done
-          # Remove leading and trailing spaces
-          tool_names=$(echo $tool_names | xargs)
+          tool_dirs=$(echo $tool_dirs | xargs)
 
           # Convert the list of tools to a JSON string
           tools_json="{\"include\": ["
-          for tool in $tool_names; do
+          for tool in $tool_dirs; do
             tool_name=$(basename $tool)
             json_line="{\"tool_dir\": \"$tool\", \"tool_name\": \"$tool_name\"},"
             if [ ! "$tools_json" == *"json_line"* ]; then
@@ -65,9 +58,12 @@ jobs:
           done
           # Remove the trailing comma
           if [ "$tools_json" == *"," ]; then
-            tools_json="${tools_json:?}"
+            tools_json="${tools_json%?}"
           fi
           tools_json="$tools_json]}"
+
+          echo "tools_json: $tools_json"
+          echo "tool_dirs: $tool_dirs"
 
           # Set the output
           echo "matrix=$( echo "$tools_json" )" >> $GITHUB_OUTPUT
@@ -78,6 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: find-tools
     strategy:
+      fail-fast: false
       matrix: ${{fromJson(needs.find-tools.outputs.matrix)}}
     steps:
       - name: Checkout
