@@ -1,0 +1,84 @@
+name: Package tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+      - dev
+  push:
+    branches-ignore:
+      - main
+      - master
+      - dev
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  package-filter:
+    name: Filter for updated package
+    uses: ./.github/workflows/package-filter.yml
+    with:
+      num-commits: 0
+      ignore-missing-dev: false
+
+  tests:
+    name: Test | ${{ matrix.package_name }}
+    needs: package-filter
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.package-filter.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v2
+      - name: Install pre-commit
+        run: |
+          pip install pre-commit
+      - name: Run pre-commit hooks and check for changes
+        run: |
+          cd "${{ matrix.package_dir }}"
+
+          poetry run pre-commit run --files ./**/**
+          if [[ $(git status --porcelain) ]]
+          then
+            echo "::error::pre-commit hooks failed for ${{ matrix.package_name }}" && exit 1
+          fi
+      - name: Run tests
+        run: |
+          package_dir=${{ matrix.package_dir }}
+          cd $package_dir
+
+          poetry install
+          poetry run pytest -v
+      - name: Docker | Tag
+        id: docker_tag
+        run: |
+          package_dir="${{ matrix.package_dir }}"
+          version=$(cat ${package_dir}/VERSION)
+          tag=polusai/${{ matrix.package_name }}:${version}
+          echo "tag will be ${tag}"
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+      - name: Docker | Setup Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Docker | Check if Image exists
+        run: |
+          tag=${{ steps.docker_tag.outputs.tag }}
+          docker pull ${tag} > /dev/null \
+              && $(echo "::error::${tag} already exists on DockerHub" && exit 1) \
+              || echo "success"
+      - name: Docker | Build Image
+        run: |
+          cp .gitignore ${{ matrix.package_dir }}/.dockerignore
+          cd "${{ matrix.package_dir }}"
+          tag=${{ steps.docker_tag.outputs.tag }}
+          docker build . -t ${tag}
+        # docker buildx build --platform linux/amd64,linux/arm64 -t ${tag} --push .

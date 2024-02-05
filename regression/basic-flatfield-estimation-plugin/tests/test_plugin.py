@@ -9,6 +9,7 @@ should produce and save the two components as output images.
 import pathlib
 import shutil
 import tempfile
+import typing
 
 import bfio
 import numpy
@@ -43,7 +44,7 @@ def _make_random_image(
 @pytest.fixture(params=fixture_params)
 def gen_images(
     request: pytest.FixtureRequest,
-) -> tuple[str, pathlib.Path, pathlib.Path]:
+) -> typing.Generator[tuple[str, pathlib.Path, pathlib.Path], None, None]:
     """Generate a set of random images for testing."""
     pattern: str
     variables: list[int]
@@ -74,7 +75,6 @@ def gen_images(
 
 def test_estimate(gen_images: tuple[str, pathlib.Path, pathlib.Path]) -> None:
     """Test the `estimate` function."""
-
     _, inp_dir, out_dir = gen_images  # type: ignore[misc]
 
     paths = list(filter(lambda p: p.name.endswith(".ome.tif"), inp_dir.iterdir()))
@@ -86,12 +86,8 @@ def test_estimate(gen_images: tuple[str, pathlib.Path, pathlib.Path]) -> None:
     darkfield_out = base_output.replace(suffix, "_darkfield.ome.tif")
 
     out_names = [p.name for p in out_dir.iterdir()]
-    assert (
-        flatfield_out in out_names
-    ), f"{flatfield_out} not in {out_names}"  # noqa: S101
-    assert (
-        darkfield_out in out_names
-    ), f"{darkfield_out} not in {out_names}"  # noqa: S101
+    assert flatfield_out in out_names, f"{flatfield_out} not in {out_names}"
+    assert darkfield_out in out_names, f"{darkfield_out} not in {out_names}"
 
 
 def test_cli(gen_images: tuple[str, pathlib.Path, pathlib.Path]) -> None:
@@ -115,7 +111,7 @@ def test_cli(gen_images: tuple[str, pathlib.Path, pathlib.Path]) -> None:
         ],
     )
 
-    assert result.exit_code == 0  # noqa: S101
+    assert result.exit_code == 0
 
     paths = list(filter(lambda p: p.name.endswith(".ome.tif"), inp_dir.iterdir()))
     base_output = utils.get_output_path(paths)
@@ -124,9 +120,5 @@ def test_cli(gen_images: tuple[str, pathlib.Path, pathlib.Path]) -> None:
     darkfield_out = base_output.replace(suffix, "_darkfield.ome.tif")
 
     out_names = [p.name for p in out_dir.iterdir()]
-    assert (
-        flatfield_out in out_names
-    ), f"{flatfield_out} not in {out_names}"  # noqa: S101
-    assert (
-        darkfield_out in out_names
-    ), f"{darkfield_out} not in {out_names}"  # noqa: S101
+    assert flatfield_out in out_names, f"{flatfield_out} not in {out_names}"
+    assert darkfield_out in out_names, f"{darkfield_out} not in {out_names}"

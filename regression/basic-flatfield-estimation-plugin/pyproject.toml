@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-regression-basic-flatfield-estimation"
-version = "2.1.0"
+version = "2.1.1"
 description = ""
 authors = [
     "Nick Schaub <nick.schaub@nih.gov>",

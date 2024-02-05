@@ -1,20 +1,19 @@
 """Ome Converter."""
 import json
-import os
 import logging
+import os
 import pathlib
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from typing import Any, Optional
+from concurrent.futures import as_completed
+from typing import Any
+from typing import Optional
 
 import filepattern as fp
+import preadator
 import typer
+from polus.plugins.formats.ome_converter.image_converter import NUM_THREADS
+from polus.plugins.formats.ome_converter.image_converter import Extension
+from polus.plugins.formats.ome_converter.image_converter import convert_image
 from tqdm import tqdm
-
-from polus.plugins.formats.ome_converter.image_converter import (
-    NUM_THREADS,
-    Extension,
-    convert_image,
-)
 
 app = typer.Typer()
 
@@ -33,51 +32,68 @@ def main(
         ...,
         "--inpDir",
         help="Input generic data collection to be processed by this plugin",
+        exists=True,
+        resolve_path=True,
+        readable=True,
+        file_okay=False,
+        dir_okay=True,
     ),
     pattern: str = typer.Option(
-        ".+", "--filePattern", help="A filepattern defining the images to be converted"
+        ".+",
+        "--filePattern",
+        help="A filepattern defining the images to be converted",
     ),
     file_extension: Extension = typer.Option(
-        None, "--fileExtension", help="Type of data conversion"
+        Extension,
+        "--fileExtension",
+        help="Type of data conversion",
     ),
-    out_dir: pathlib.Path = typer.Option(..., "--outDir", help="Output collection"),
+    out_dir: pathlib.Path = typer.Option(
+        ...,
+        "--outDir",
+        help="Output collection",
+        exists=True,
+        resolve_path=True,
+        writable=True,
+        file_okay=False,
+        dir_okay=True,
+    ),
     preview: Optional[bool] = typer.Option(
-        False, "--preview", help="Output a JSON preview of files"
+        False,
+        "--preview",
+        help="Output a JSON preview of files",
     ),
 ) -> None:
-    """Convert bioformat supported image datatypes conversion to ome.tif or ome.zarr file format."""
+    """Convert bioformat supported image datatypes conversion to ome.tif or ome.zarr."""
     logger.info(f"inpDir = {inp_dir}")
     logger.info(f"outDir = {out_dir}")
     logger.info(f"filePattern = {pattern}")
     logger.info(f"fileExtension = {file_extension}")
 
-    inp_dir = inp_dir.resolve()
-    out_dir = out_dir.resolve()
-
-    assert inp_dir.exists(), f"{inp_dir} does not exist!! Please check input path again"
-    assert (
-        out_dir.exists()
-    ), f"{out_dir} does not exist!! Please check output path again"
-
     fps = fp.FilePattern(inp_dir, pattern)
 
     if preview:
-        with open(pathlib.Path(out_dir, "preview.json"), "w") as jfile:
+        with out_dir.joinpath("preview.json").open("w") as jfile:
             out_json: dict[str, Any] = {
                 "filepattern": pattern,
                 "outDir": [],
             }
-            for file in fps:
+            for file in fps():
                 out_name = str(file[1][0].name.split(".")[0]) + file_extension
                 out_json["outDir"].append(out_name)
             json.dump(out_json, jfile, indent=2)
+        return
 
-    with ProcessPoolExecutor(max_workers=NUM_THREADS) as executor:
+    with preadator.ProcessManager(
+        name="ome_converter",
+        num_processes=NUM_THREADS,
+        threads_per_process=2,
+    ) as executor:
         threads = []
         for files in fps():
             file = files[1][0]
             threads.append(
-                executor.submit(convert_image, file, file_extension, out_dir)
+                executor.submit_process(convert_image, file, file_extension, out_dir),
             )
 
         for f in tqdm(

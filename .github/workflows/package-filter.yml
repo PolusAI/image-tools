@@ -2,10 +2,24 @@ name: Package Filter
 
 on:
   workflow_call:
+    inputs:
+      num-commits:
+        description: "The of commits to check for updated packages. If 0, the action will assume that it is running on a non-master branch and will check all commits on the current branch against the master branch. For any larger value, the action will check the last n commits for any updated packages."
+        required: true
+        default: 0
+        type: number
+      ignore-missing-dev:
+        description: "If true, the action will ignore packages that do not have a dev version. Otherwise, the action will fail if any package does not have a dev version."
+        required: true
+        default: false
+        type: boolean
     outputs:
       matrix:
         description: "The directories containing the updated packages"
         value: ${{ jobs.package-filter.outputs.matrix }}
+      list:
+        description: "The list of directories containing the updated packages"
+        value: ${{ jobs.package-filter.outputs.list }}
 
 permissions:
   contents: read
@@ -16,49 +30,85 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.package-filter.outputs.matrix }}
+      list: ${{ steps.package-filter.outputs.list }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          persist-credentials: false
       - name: Find Updated Packages
         id: package-filter
         run: |
           PACKAGE_DIRS=""
+          COMPANION_FILES="VERSION Dockerfile .bumpversion.cfg plugin.json"
 
-          for changed_file in $(git diff --name-only origin/${{ github.base_ref }}...)
+          # echo the base ref
+          base_ref=${{ github.base_ref }}
+          if [ -z "$base_ref" ]
+          then
+            base_ref="master"
+            echo "::warning::Action not running on PR, defaulting to base branch to master"
+          fi
+          echo "The base ref is $base_ref"
+
+          # Get the comparison point in the repo
+          if [ ${{ inputs.num-commits }} == 0 ]
+          then
+            comparison_point="origin/${base_ref}"
+          else
+            comparison_point="HEAD~${{ inputs.num-commits }}"
+          fi
+          echo "The comparison point is ${comparison_point}"
+
+          for changed_file in $(git diff --name-only ${comparison_point}...)
           do
             pkg_dir=$(dirname ${changed_file})
 
             # Exclude the root directory
-            if [[ "$pkg_dir" == "." ]]
+            if [ "$pkg_dir" == "." ]
             then
               continue
             fi
 
             # Check if the changed file is a pyproject.toml file
-            if [[ "$(basename ${changed_file})" == *"pyproject.toml"* ]]
+            if [ "$(basename ${changed_file})" == *"pyproject.toml"* ]
             then
-
-              # Check that the package has a VERSION file
-              if [[ ! -f "$(dirname ${changed_file})/VERSION" ]]
-              then
-                echo "::error::$(dirname ${changed_file}) does not have a VERSION file" && exit 1
-              fi
+              # Check that the package has all the necessary companion files
+              for companion_file in $COMPANION_FILES
+              do
+                echo "Checking for $companion_file in $pkg_dir"
+                if [ ! -f "${pkg_dir}/${companion_file}" ]
+                then
+                  echo "::error::${pkg_dir} does not have a $companion_file file" && exit 1
+                fi
+              done
 
               # Check that the version is a dev version
-              if [[ "$(cat $(dirname ${changed_file})/VERSION)" != *"dev"* ]]
+              echo "Checking for dev version in $pkg_dir"
+              if [ $(cat $pkg_dir/VERSION) != *"dev"* ]
               then
-                echo "::error::$(dirname ${changed_file}) does not have a dev version" && exit 1
+                msg="${pkg_dir} does not have a dev version"
+                if [ ${{ inputs.ignore-missing-dev }} ]
+                then
+                  echo "::warning::${msg}"
+                else
+                  echo "::error::${msg}" && exit 1
+                fi
               fi
 
-              PACKAGE_DIRS="$PACKAGE_DIRS $(dirname ${changed_file})"
+              PACKAGE_DIRS="$PACKAGE_DIRS ${pkg_dir}"
             fi
           done
 
+          # Trim leading whitespace
+          PACKAGE_DIRS=$(echo $PACKAGE_DIRS | xargs)
+
           # Check if any packages were found
-          if [[ -z "$PACKAGE_DIRS" ]]
+          echo "The updated packages are $PACKAGE_DIRS"
+          if [ -z "$PACKAGE_DIRS" ]
           then
             echo "::error::No updated packages were found" && exit 1
           fi
@@ -70,14 +120,14 @@ jobs:
             package_name=$(basename $package_dir)
             JSON_LINE="{\"package_dir\": \"${package_dir}\", \"package_name\": \"${package_name}\"},"
             # Add the JSON line to the JSON string if it is not already included
-            if [[ ! "$JSON" == *"$JSON_LINE"* ]]
+            if [ ! "$JSON" == *"$JSON_LINE"* ]
             then
               JSON="$JSON$JSON_LINE"
             fi
           done
 
           # Remove trailing comma and add closing brackets
-          if [[ $JSON == *, ]]
+          if [ "$JSON" == *"," ]
           then
             JSON="${JSON%?}"
           fi
@@ -85,3 +135,4 @@ jobs:
 
           # Set the output
           echo "matrix=$( echo "$JSON" )" >> $GITHUB_OUTPUT
+          echo "list=$( echo "$PACKAGE_DIRS" )" >> $GITHUB_OUTPUT

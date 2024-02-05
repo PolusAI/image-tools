@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "polus-plugins-formats-label-to-vector"
+version = "0.7.0"
+description = ""
+authors = [
+    "Najib Ishaq <najib.ishaq@nih.gov>",
+    "Nicholas Schaub <nick.schaub@nih.gov>"
+]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+numpy = "~1.24.4"
+bfio = { version = "2.1.9", extras = ["all"] }
+typer = "^0.7.0"
+filepattern = "^2.0.1"
+tqdm = "^4.66.1"
+zarr = "^2.16.1"
+scipy = "~1.9.1"
+pydantic = "^2.4.2"  # for filepattern, until the next release where deps are properly specified
+
+[tool.poetry.group.dev.dependencies]
+bump2version = "^1.0.1"
+pre-commit = "^3.5.0"
+pytest = "^7.4.2"
+pytest-sugar = "^0.9.7"
+pytest-xdist = "^3.3.1"
+scikit-image = "~0.20.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

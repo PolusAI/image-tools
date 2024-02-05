@@ -1,60 +1,187 @@
 name: Package Release
 
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+
 on:
-  push:
-    branches:
-      - master
-      - main
-      - dev
+  workflow_dispatch:
+    inputs:
+      num-commits:
+        description: "The of commits to check for updated packages. If 0, the action will check all commits on the branch. For any larger value, the action will check the last n commits for any updated packages."
+        required: true
+        default: 1
+        type: number
+      ignore-missing-dev:
+        description: "If true, the action will ignore packages that do not have a dev version. Otherwise, the action will fail if any package does not have a dev version."
+        required: true
+        default: true
+        type: boolean
+      repo_name:
+        description: 'Name of the base repository. The user can ignore this input if the action is triggered from the base repository.'
+        required: true
+        type: string
+        default: 'image-tools'
+  workflow_call:
+    inputs:
+      num-commits:
+        description: "The of commits to check for updated packages. If 0, the action will check all commits on the master branch. For any larger value, the action will check the last n commits for any updated packages."
+        required: true
+        default: 1
+        type: number
+      ignore-missing-dev:
+        description: "If true, the action will ignore packages that do not have a dev version. Otherwise, the action will fail if any package does not have a dev version."
+        required: true
+        default: true
+        type: boolean
+      repo_name:
+        description: 'Name of the base repository'
+        required: true
+        type: string
+    secrets:
+      DOCKER_USERNAME:
+        description: 'Docker Hub username'
+        required: true
+      DOCKER_TOKEN:
+        description: 'Docker Hub password'
+        required: true
 
 permissions:
   contents: write
 
 jobs:
   package-filter:
-    name: Filter for updated package
-    if: github.repository == 'polusai/polus-plugins'
+    name: Filter for updated packages
+    if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
     uses: ./.github/workflows/package-filter.yml
+    with:
+      num-commits: ${{ fromJson(github.event.inputs.num-commits) }}
+      ignore-missing-dev: ${{ fromJson(github.event.inputs.ignore-missing-dev) }}
 
   package-release:
-    name: Release "${{ matrix.package_name }}"
-    if: github.repository == 'polusai/polus-plugins'
+    name: Release Versions
+    if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
     needs: package-filter
-    strategy:
-      matrix: ${{fromJson(needs.package-filter.outputs.matrix)}}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.branch }}
+          persist-credentials: false
+      - name: Token | Generate
+        id: generate_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+      - name: Token | Use the token
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+        run: |
+          gh api octocat
+      - name: Python | Setup
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      - name: Install bump2version
+      - name: Python | Install bump2version
         run: |
           python -m pip install --upgrade pip
           pip install bump2version
-      - name: Bump Version
+      - name: Python | Bump Version Release
+        id: bump_version
         run: |
-          cd "${{ matrix.package_dir }}"
-          bump2version release --no-commit
-      - name: Commit and push all changed files
+          cur_dir=$GITHUB_WORKSPACE
+          released_packages=""
+
+          for pkg_dir in ${{ needs.package-filter.outputs.list }}
+          do
+            echo "Bumping version for ${pkg_dir}"
+            echo "cd-ing to ${pkg_dir}"
+            cd "${pkg_dir}"
+            # check if the package has a dev version
+            if [[ "$(cat VERSION)" != *dev* ]]
+            then
+              msg="${pkg_dir} does not have a dev version"
+              if ${{ github.event.inputs.ignore-missing-dev }}
+              then
+                echo "::warning::${msg}"
+              else
+                echo "::error::${msg}" && exit 1
+              fi
+            else
+              bump2version release --no-commit
+            fi
+
+            # check if the package has been released and update the output
+            if [[ $(git status --porcelain) ]]
+            then
+              released_packages="${released_packages} ${pkg_dir}"
+            fi
+            cd ${cur_dir}
+          done
+
+          # Trim leading whitespace
+          released_packages=$(echo "${released_packages}" | xargs)
+
+          echo "Released packages: ${released_packages}"
+          echo "released_packages=${released_packages}" >> $GITHUB_OUTPUT
+      - name: Git | Commit
+        if: steps.bump_version.outputs.released == 'true'
         env:
-          CI_COMMIT_AUTHOR: Continuous Integration
+          CI_COMMIT_AUTHOR: polusai-auth-helper[bot]
+          CI_COMMIT_EMAIL: ${{ secrets.APP_ID }}+polusai-auth-helper[bot]@users.noreply.github.com
         run: |
           git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
-          git config --global user.email "username@users.noreply.github.com"
-          git commit -a -m "build: Bumped release version for ${{ matrix.package_name }}"
-          git push
+          git config --global user.email "${{ env.CI_COMMIT_EMAIL }}"
+          git commit -a -m "build: Bumped release version for ${{ steps.bump_version.outputs.released_packages }}"
+      - name: Git | Push
+        if: steps.bump_version.outputs.released == 'true'
+        uses: ad-m/github-push-action@master
+        with:
+          force: true
+          github_token: ${{ steps.generate_token.outputs.token }}
 
   docker:
-    name: Build Docker images
-    if: github.repository == 'polusai/polus-plugins'
+    name: Docker | ${{ matrix.package_name }}
+    if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
     needs: [package-filter, package-release]
-    uses: ./.github/workflows/docker.yml
-    with:
-      matrix: ${{ needs.package-filter.outputs.matrix }}
-      push: true
-    secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_TOKEN }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.package-filter.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.branch }}
+          persist-credentials: false
+      - name: Docker | Tag
+        id: docker_tag
+        run: |
+          package_dir="${{ matrix.package_dir }}"
+          cp .gitignore ${package_dir}/.dockerignore
+          version=$(cat ${package_dir}/VERSION)
+          tag=polusai/${{ matrix.package_name }}:${version}
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+      - name: Docker | Setup Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Docker | Login DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+      - name: Docker | Check if Image exists
+        run: |
+          tag=${{ steps.docker_tag.outputs.tag }}
+          docker pull ${tag} > /dev/null \
+              && $(echo "::error::${tag} already exists on DockerHub" && exit 1) \
+              || echo "success"
+      - name: Docker | Push Image
+        uses: docker/build-push-action@v5
+        with:
+          context: "{{defaultContext}}:${{ matrix.package_dir }}"
+          push: true
+          tags: ${{ steps.docker_tag.outputs.tag }}
