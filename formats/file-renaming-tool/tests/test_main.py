@@ -633,7 +633,6 @@ def test_recursive_searching_files() -> None:
 def test_cli(create_subfolders: pytest.FixtureRequest) -> None:
     """Test Cli."""
     dir_path, _, file_pattern, out_file_pattern = create_subfolders
-
     for i in ["raw", "map"]:
         d = CreateData()
         out_dir = d.output_directory()
