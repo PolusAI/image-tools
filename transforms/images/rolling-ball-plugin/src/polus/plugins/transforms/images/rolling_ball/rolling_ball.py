@@ -1,15 +1,15 @@
+"""Rolling ball implementation."""
+
 import numpy
-from bfio.bfio import BioReader
-from bfio.bfio import BioWriter
-from skimage import restoration
-from skimage import util
+from bfio.bfio import BioReader, BioWriter
+from skimage import restoration, util
 
 # The number of pixels to be saved at a time must be a multiple of 1024.
 TILE_SIZE = 1024
 
 
 def _rolling_ball(tile, ball_radius: int, light_background: bool):
-    """ Applies the rolling-ball algorithm to a single tile.
+    """Applies the rolling-ball algorithm to a single tile.
 
     Args:
         tile: A tile, usually from an ome.tif file.
@@ -41,7 +41,7 @@ def _rolling_ball(tile, ball_radius: int, light_background: bool):
 
 
 def _bounds(x, x_max, ball_radius):
-    """ Calculates the indices for handling the edges of tiles.
+    """Calculates the indices for handling the edges of tiles.
 
     We pad each tile with 'ball_radius' pixels from the full image along the
      top, bottom, left, and right edges of each tile.
@@ -56,12 +56,12 @@ def _bounds(x, x_max, ball_radius):
 
 
 def rolling_ball(
-        reader: BioReader,
-        writer: BioWriter,
-        ball_radius: int,
-        light_background: bool,
+    reader: BioReader,
+    writer: BioWriter,
+    ball_radius: int,
+    light_background: bool,
 ):
-    """ Applies the rolling-ball algorithm from skimage to perform background subtraction.
+    """Applies the rolling-ball algorithm from skimage to perform background subtraction.
 
     This function processes the image in tiles and, therefore, scales to images of any size.
     It writes the resulting image to the given BioWriter object.
@@ -75,14 +75,19 @@ def rolling_ball(
 
     """
     for z in range(reader.Z):
-
         for y in range(0, reader.Y, TILE_SIZE):
-            y_max, pad_top, pad_bottom, tile_top, tile_bottom = _bounds(y, reader.Y, ball_radius)
+            y_max, pad_top, pad_bottom, tile_top, tile_bottom = _bounds(
+                y, reader.Y, ball_radius
+            )
 
             for x in range(0, reader.X, TILE_SIZE):
-                x_max, pad_left, pad_right, tile_left, tile_right = _bounds(x, reader.X, ball_radius)
+                x_max, pad_left, pad_right, tile_left, tile_right = _bounds(
+                    x, reader.X, ball_radius
+                )
 
-                tile = reader[pad_top:pad_bottom, pad_left:pad_right, z:z + 1, 0, 0]
+                tile = reader[pad_top:pad_bottom, pad_left:pad_right, z : z + 1, 0, 0]
                 result = _rolling_ball(tile, ball_radius, light_background)
-                writer[y:y_max, x:x_max, z:z + 1, 0, 0] = result[tile_top:tile_bottom, tile_left:tile_right]
+                writer[y:y_max, x:x_max, z : z + 1, 0, 0] = result[
+                    tile_top:tile_bottom, tile_left:tile_right
+                ]
     return
