@@ -14,16 +14,13 @@ for dir in $dirs; do
   if [ "$dir" == "$current_dir" ]; then
     continue
   fi
-  # # Ignore the directory if it contains the substring "polus-python-template"
-  # if [[ "$dir" == *"polus-python-template"* ]]; then
-  #   continue
-  # fi
   # Ignore the directory if it contains any of the substrings in "ignored_dirs"
   for ignored_dir in $ignored_dirs; do
     if [[ "$dir" == *"$ignored_dir"* ]]; then
       continue 2
     fi
   done
+  # If the directory contains a "pyproject.toml" file, then add it to the list of tools
   if [ -f "$dir/pyproject.toml" ]; then
     tools="$tools $dir"
   fi

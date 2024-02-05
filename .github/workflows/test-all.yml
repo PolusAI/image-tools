@@ -1,0 +1,104 @@
+name: Test All Tools
+
+on:
+  workflow_dispatch:
+  
+permissions:
+  contents: read
+
+jobs:
+  find-tools:
+    name: Find all tools
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      list: ${{ steps.set-matrix.outputs.list }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Find tools
+        id: set-matrix
+        run: |
+          # Initialize variables
+          current_dir=$(pwd)
+          ignored_dirs="polus-python-template ftl-label .venv"
+          tool_dirs=""
+          tool_names=""
+
+          # Get all directories in the current directory
+          dirs=$(find $current_dir -type d)
+          # Get all directories that have a "pyproject.toml" file
+          for dir in $dirs; do
+            # Ignore the current directory
+            if [ "$dir" == "$current_dir" ]; then
+              continue
+            fi
+            # Ignore the directory if it contains any of the substrings in "ignored_dirs"
+            for ignored_dir in $ignored_dirs; do
+              if [[ "$dir" == *"$ignored_dir"* ]]; then
+                continue 2
+              fi
+            done
+            # If the directory contains a "pyproject.toml" file, then add it to the list of tools
+            if [ -f "$dir/pyproject.toml" ]; then
+            tool_dirs="$tool_dirs $dir"
+            fi
+          done
+          # Remove leading and trailing spaces
+          tool_dirs=$(echo $tools | xargs)
+
+          for tool in $tool_dirs; do
+            tool_name=$(basename $tool)
+            tool_names="$tool_names $tool_name"
+          done
+          # Remove leading and trailing spaces
+          tool_names=$(echo $tool_names | xargs)
+
+          # Convert the list of tools to a JSON string
+          tools_json="{\"include\": ["
+          for tool in $tool_names; do
+            tool_name=$(basename $tool)
+            json_line="{\"tool_dir\": \"$tool\", \"tool_name\": \"$tool_name\"},"
+            if [ ! "$tools_json" == *"json_line"* ]; then
+              tools_json="$tools_json$json_line"
+            fi
+          done
+          # Remove the trailing comma
+          if [ "$tools_json" == *"," ]; then
+            tools_json="${tools_json:?}"
+          fi
+          tools_json="$tools_json]}"
+
+          # Set the output
+          echo "matrix=$( echo "$tools_json" )" >> $GITHUB_OUTPUT
+          echo "list=$( echo "$tool_dirs" )" >> $GITHUB_OUTPUT
+
+  pre-tests:
+    name: Tests | ${{ matrix.tool_name }}
+    runs-on: ubuntu-latest
+    needs: find-tools
+    strategy:
+      matrix: ${{fromJson(needs.find-tools.outputs.matrix)}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v2
+      - name: Pre-Update Test
+        run: |
+          cd ${{ matrix.tool_dir }}
+          poetry install
+          poetry run pytest -v
+      - name: Update filepattern
+        run: |
+          cd ${{ matrix.tool_dir }}
+          poetry add filepattern@latest
+      - name: Post-Update Test
+        run: |
+          cd ${{ matrix.tool_dir }}
+          poetry install
+          poetry run pytest -v
