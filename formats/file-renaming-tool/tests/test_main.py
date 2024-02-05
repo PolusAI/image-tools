@@ -60,7 +60,7 @@ class CreateData:
 
     def load_json(self, x: str) -> DefaultDict[Any, Any]:
         """Json file containing image filenames."""
-        with open(self.jsonpath) as file:
+        with pathlib.Path.open(self.jsonpath) as file:
             data = json.load(file)
         return data[x]
 
@@ -135,7 +135,7 @@ fixture_params = [
 
 
 @pytest.fixture(params=fixture_params)
-def poly(request) -> pytest.FixtureRequest:
+def poly(request: Tuple[str, str]) -> pytest.FixtureRequest:
     """To get the parameter of the fixture."""
     return request.param
 
@@ -543,6 +543,7 @@ def test_letters_to_int_returns_error_invalid_input() -> None:
 
 @pytest.fixture
 def create_subfolders() -> Tuple[pathlib.Path, str, str, str]:
+    """Creating directory and subdirectories."""
     data = {
         "complex": [
             ["A9 p5d.tif", "A9 p5f.tif", "A9 p7f.tif"],
@@ -567,10 +568,9 @@ def create_subfolders() -> Tuple[pathlib.Path, str, str, str]:
         dir_path = d.input_directory()
         for i in range(5):
             dirname = pathlib.Path(dir_path, f"{data[name][1]}{i}")
-            if not pathlib.Path(dirname).exists():
-                pathlib.Path(dirname).mkdir(exist_ok=False, parents=False)
+            pathlib.Path(dirname).mkdir(exist_ok=False, parents=False)
             for fl in data[name][0]:
-                temp_file = open(pathlib.Path(dirname, fl), "w")
+                temp_file = pathlib.Path.open(pathlib.Path(dirname, fl), "w")
                 temp_file.close()
 
     return pathlib.Path(dir_path), data[name][1], data[name][2], data[name][3]
@@ -586,10 +586,8 @@ def test_recursive_searching_files() -> None:
         dirname2 = "groundtruth_folder_"
         dirname1 = pathlib.Path(dir_path, f"BBBC/BBBC001/Images/{dirname1}{i}")
         dirname2 = pathlib.Path(dir_path, f"BBBC/BBBC001/Groundtruth/{dirname2}{i}")
-        if not pathlib.Path(dirname1).exists():
-            pathlib.Path(dirname1).mkdir(exist_ok=False, parents=True)
-        if not pathlib.Path(dirname2).exists():
-            pathlib.Path(dirname2).mkdir(exist_ok=False, parents=True)
+        pathlib.Path(dirname1).mkdir(exist_ok=False, parents=True)
+        pathlib.Path(dirname2).mkdir(exist_ok=False, parents=True)
 
         flist = [
             "AS_09125_050118150001_A03f00d0.tif",
@@ -601,8 +599,8 @@ def test_recursive_searching_files() -> None:
         ]
 
         for fl in flist:
-            temp_file = open(pathlib.Path(dirname1, fl), "w")
-            temp_file = open(pathlib.Path(dirname2, fl), "w")
+            temp_file = pathlib.Path.open(pathlib.Path(dirname1, fl), "w")
+            temp_file = pathlib.Path.open(pathlib.Path(dirname2, fl), "w")
             temp_file.close()
     file_pattern = ".*_{row:c}{col:dd}f{f:dd}d{channel:d}.tif"
     out_file_pattern = "x{row:dd}_y{col:dd}_p{f:dd}_c{channel:d}.tif"
