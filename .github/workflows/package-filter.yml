@@ -17,6 +17,9 @@ on:
       matrix:
         description: "The directories containing the updated packages"
         value: ${{ jobs.package-filter.outputs.matrix }}
+      list:
+        description: "The list of directories containing the updated packages"
+        value: ${{ jobs.package-filter.outputs.list }}
 
 permissions:
   contents: read
@@ -27,6 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.package-filter.outputs.matrix }}
+      list: ${{ steps.package-filter.outputs.list }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,7 +47,7 @@ jobs:
 
           # echo the base ref
           base_ref=${{ github.base_ref }}
-          if [[ -z "$base_ref" ]]
+          if [ -z "$base_ref" ]
           then
             base_ref="master"
             echo "::warning::Action not running on PR, defaulting to base branch to master"
@@ -51,7 +55,7 @@ jobs:
           echo "The base ref is $base_ref"
 
           # Get the comparison point in the repo
-          if [[ ${{ inputs.num-commits }} == 0 ]]
+          if [ ${{ inputs.num-commits }} == 0 ]
           then
             comparison_point="origin/${base_ref}"
           else
@@ -64,39 +68,47 @@ jobs:
             pkg_dir=$(dirname ${changed_file})
 
             # Exclude the root directory
-            if [[ "$pkg_dir" == "." ]]
+            if [ "$pkg_dir" == "." ]
             then
               continue
             fi
 
             # Check if the changed file is a pyproject.toml file
-            if [[ "$(basename ${changed_file})" == *"pyproject.toml"* ]]
+            if [ "$(basename ${changed_file})" == *"pyproject.toml"* ]
             then
-              pkg_dir=$(dirname ${changed_file})
-
               # Check that the package has all the necessary companion files
               for companion_file in $COMPANION_FILES
               do
-                if [[ ! -f "$pkg_dir/$companion_file" ]]
+                echo "Checking for $companion_file in $pkg_dir"
+                if [ ! -f "${pkg_dir}/${companion_file}" ]
                 then
                   echo "::error::${pkg_dir} does not have a $companion_file file" && exit 1
                 fi
               done
 
               # Check that the version is a dev version
-              if [[ "$(cat ${pkg_dir}/VERSION)" != *"dev"* ]]
+              echo "Checking for dev version in $pkg_dir"
+              if [ $(cat $pkg_dir/VERSION) != *"dev"* ]
               then
                 msg="${pkg_dir} does not have a dev version"
-                ${{ inputs.ignore-missing-dev }} && echo "::warning::${msg}" || $(echo "::error::${msg}" && exit 1)
+                if [ ${{ inputs.ignore-missing-dev }} ]
+                then
+                  echo "::warning::${msg}"
+                else
+                  echo "::error::${msg}" && exit 1
+                fi
               fi
 
               PACKAGE_DIRS="$PACKAGE_DIRS ${pkg_dir}"
             fi
           done
 
+          # Trim leading whitespace
+          PACKAGE_DIRS=$(echo $PACKAGE_DIRS | xargs)
+
           # Check if any packages were found
           echo "The updated packages are $PACKAGE_DIRS"
-          if [[ -z "$PACKAGE_DIRS" ]]
+          if [ -z "$PACKAGE_DIRS" ]
           then
             echo "::error::No updated packages were found" && exit 1
           fi
@@ -108,14 +120,14 @@ jobs:
             package_name=$(basename $package_dir)
             JSON_LINE="{\"package_dir\": \"${package_dir}\", \"package_name\": \"${package_name}\"},"
             # Add the JSON line to the JSON string if it is not already included
-            if [[ ! "$JSON" == *"$JSON_LINE"* ]]
+            if [ ! "$JSON" == *"$JSON_LINE"* ]
             then
               JSON="$JSON$JSON_LINE"
             fi
           done
 
           # Remove trailing comma and add closing brackets
-          if [[ $JSON == *, ]]
+          if [ "$JSON" == *"," ]
           then
             JSON="${JSON%?}"
           fi
@@ -123,3 +135,4 @@ jobs:
 
           # Set the output
           echo "matrix=$( echo "$JSON" )" >> $GITHUB_OUTPUT
+          echo "list=$( echo "$PACKAGE_DIRS" )" >> $GITHUB_OUTPUT
