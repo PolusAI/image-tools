@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-transforms-tabular-tabular-thresholding"
-version = "0.1.4-dev0"
+version = "0.1.5-dev0"
 description = "This plugin computes thresholds using three methods and apply thresholds on each labelled data to produce binary outputs."
 authors = [
 "Hamdah Shafqat Abbasi <hamdahshafqat.abbasi@nih.gov>",
@@ -18,7 +18,7 @@ blake3 = "^0.3.3"
 llvmlite = "^0.39.1"
 fastapi = "^0.92.0"
 astropy = "5.2.1"
-vaex = "^4.7.0"
+vaex = "^4.17.0"
 
 
 [tool.poetry.group.dev.dependencies]

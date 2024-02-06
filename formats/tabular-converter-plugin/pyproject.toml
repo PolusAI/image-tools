@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-formats-tabular-converter"
-version = "0.1.0"
+version = "0.1.1-dev0"
 description = "This plugins allows to convert tabular data conversion into arrow file format and vice versa."
 authors = [
 "Kelechi Nina Mezu <nina.mezu@nih.gov>",

@@ -11,32 +11,32 @@ import pytest
 import skimage
 from bfio import BioReader
 from deepcell.applications import Mesmer
+from polus.plugins.segmentation.mesmer_inference.__main__ import app
+from polus.plugins.segmentation.mesmer_inference.padded import get_data
+from polus.plugins.segmentation.mesmer_inference.padded import padding
+from polus.plugins.segmentation.mesmer_inference.padded import run
 from skimage import io
 from typer.testing import CliRunner
-
-from polus.plugins.segmentation.mesmer_inference.__main__ import app as app
-from polus.plugins.segmentation.mesmer_inference.padded import get_data, padding, run
 
 runner = CliRunner()
 mess_app = Mesmer()
 
 
-@pytest.fixture
+@pytest.fixture()
 def model_dir() -> Generator[pathlib.Path, None, None]:
     """Model directory for saving intensity images."""
     MODEL_DIR = os.path.expanduser(os.path.join("~", ".keras", "models"))
-    model_path = pathlib.Path(MODEL_DIR, "MultiplexSegmentation")
-    yield model_path
+    return pathlib.Path(MODEL_DIR, "MultiplexSegmentation")
 
 
-@pytest.fixture
+@pytest.fixture()
 def inp_dir() -> Generator[str, None, None]:
     """Create directory for saving intensity images."""
     with tempfile.TemporaryDirectory() as tmpdir:
         yield tmpdir
 
 
-@pytest.fixture
+@pytest.fixture()
 def output_directory() -> Generator[pathlib.Path, None, None]:
     """Create output directory."""
     out_dir = pathlib.Path(tempfile.mkdtemp(dir=pathlib.Path.cwd()))
@@ -44,7 +44,7 @@ def output_directory() -> Generator[pathlib.Path, None, None]:
     shutil.rmtree(out_dir)
 
 
-@pytest.fixture
+@pytest.fixture()
 def synthetic_images(inp_dir) -> Generator[pathlib.Path, None, None]:
     """Generate random synthetic images."""
     for i in range(5):
@@ -56,7 +56,7 @@ def synthetic_images(inp_dir) -> Generator[pathlib.Path, None, None]:
         io.imsave(gtch0, image)
         io.imsave(gtch1, image)
 
-    yield inp_dir
+    return inp_dir
 
 
 @pytest.fixture(
@@ -87,11 +87,11 @@ def synthetic_images(inp_dir) -> Generator[pathlib.Path, None, None]:
         ),
         ("y{y+}_r{r+}_c0.tif", None, 512, 1, "nuclear", ".ome.zarr"),
         ("y{y+}_r{r+}_c1.tif", None, 512, 1, "cytoplasm", ".ome.zarr"),
-    ]
+    ],
 )
 def get_params(request):
     """To get the parameter of the fixture."""
-    yield request.param
+    return request.param
 
 
 def test_get_data(synthetic_images, get_params) -> None:
@@ -123,7 +123,7 @@ def test_padding(synthetic_images) -> None:
     inp_dir = synthetic_images
     fp = filepattern.FilePattern(inp_dir, file_pattern_1)
     for pad_size in [512, 1024, 2048]:
-        for file in fp:
+        for file in fp():
             br = BioReader(file[1][0])
             image = br.read()
             y, x = image.shape

@@ -1,4 +1,5 @@
 """Test feature segmentation evaluation package."""
+import shutil
 from pathlib import Path
 from typing import Union
 
@@ -6,8 +7,12 @@ import polus.plugins.features.feature_segmentation_eval.feature_evaluation as fs
 import pytest
 import vaex
 
-from tests.fixture import *  # noqa: F403
-from tests.fixture import clean_directories
+
+def clean_directories() -> None:
+    """Remove all temporary directories."""
+    for d in Path(".").cwd().iterdir():
+        if d.is_dir() and d.name.startswith("tmp"):
+            shutil.rmtree(d)
 
 
 def test_feature_evaluation(

@@ -1,8 +1,16 @@
 """Test Command line Tool."""
-from typer.testing import CliRunner
+import shutil
 from pathlib import Path
+
 from polus.plugins.visualization.microjson_to_ome.__main__ import app
-from tests.fixture import *
+from typer.testing import CliRunner
+
+
+def clean_directories() -> None:
+    """Remove all temporary directories."""
+    for d in Path(".").cwd().iterdir():
+        if d.is_dir() and d.name.startswith("tmp"):
+            shutil.rmtree(d)
 
 
 def test_cli(generate_jsondata: Path, output_directory: Path) -> None:

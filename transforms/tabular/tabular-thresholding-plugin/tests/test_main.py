@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 import pytest
 import vaex
-
 from polus.plugins.transforms.tabular.tabular_thresholding import (
     tabular_thresholding as tt,
 )
@@ -20,7 +19,7 @@ from polus.plugins.transforms.tabular.tabular_thresholding import (
 class Generatedata:
     """Generate tabular data with several different file format."""
 
-    def __init__(self, file_pattern: str, size: int, outname: str):
+    def __init__(self, file_pattern: str, size: int, outname: str) -> None:
         """Define instance attributes."""
         self.dirpath = pathlib.Path.cwd()
         self.inp_dir = tempfile.mkdtemp(dir=self.dirpath)
@@ -41,7 +40,7 @@ class Generatedata:
     def create_dataframe(self) -> pd.core.frame.DataFrame:
         """Create Pandas dataframe."""
         diction_1 = {
-            "A": [i for i in range(self.size)],
+            "A": list(range(self.size)),
             "B": [random.choice(string.ascii_letters) for i in range(self.size)],
             "C": np.random.randint(low=1, high=100, size=self.size),
             "D": np.random.normal(0.0, 1.0, size=self.size),
@@ -63,7 +62,9 @@ class Generatedata:
     def parquet_func(self) -> None:
         """Convert pandas dataframe to parquet file format."""
         self.x.to_parquet(
-            pathlib.Path(self.inp_dir, self.outname), engine="auto", compression=None
+            pathlib.Path(self.inp_dir, self.outname),
+            engine="auto",
+            compression=None,
         )
 
     def feather_func(self) -> None:
@@ -112,9 +113,9 @@ def test_tabular_thresholding(poly):
     for i in poly:
         d = Generatedata(i, outname=f"data_1{i}", size=1000000)
         d()
-        pattern = "".join([".*", i])
+        pattern = f".*{i}"
         fps = fp.FilePattern(d.get_inp_dir(), pattern)
-        for file in fps:
+        for file in fps():
             tt.thresholding_func(
                 neg_control="neg_control",
                 pos_control="pos_neutral",
@@ -131,7 +132,7 @@ def test_tabular_thresholding(poly):
             assert i in [f.suffix for f in d.get_out_dir().iterdir()]
 
             df = vaex.open(
-                pathlib.Path(d.get_out_dir(), file[1][0].stem + "_binary" + i)
+                pathlib.Path(d.get_out_dir(), file[1][0].stem + "_binary" + i),
             )
             threshold_methods = ["fpr", "otsu", "nsigma"]
             assert (all(item in list(df.columns) for item in threshold_methods)) is True

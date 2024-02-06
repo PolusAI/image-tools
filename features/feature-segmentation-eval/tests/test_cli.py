@@ -1,14 +1,21 @@
 """Test Command line Tool."""
-from typer.testing import CliRunner
-from polus.plugins.features.feature_segmentation_eval.__main__ import app
-from tests.fixture import *
-from tests.fixture import clean_directories
-from typing import Union, Tuple
+import shutil
 from pathlib import Path
+from typing import Union
+
+from polus.plugins.features.feature_segmentation_eval.__main__ import app
+from typer.testing import CliRunner
+
+
+def clean_directories() -> None:
+    """Remove all temporary directories."""
+    for d in Path(".").cwd().iterdir():
+        if d.is_dir() and d.name.startswith("tmp"):
+            shutil.rmtree(d)
 
 
 def test_cli(
-    generate_data: Tuple[Union[Path, str], Union[Path, str]],
+    generate_data: tuple[Union[Path, str], Union[Path, str]],
     output_directory: Union[str, Path],
 ) -> None:
     """Test the command line."""

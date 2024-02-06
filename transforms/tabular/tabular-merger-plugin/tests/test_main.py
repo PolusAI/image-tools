@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 import pytest
 import vaex
-
 from polus.plugins.transforms.tabular.tabular_merger import tabular_merger as tm
 
 
@@ -23,7 +22,7 @@ class Generatedata:
         outname: str,
         sameRows: typing.Optional[bool],
         truncColumns: typing.Optional[bool],
-    ):
+    ) -> None:
         """Define instance attributes."""
         self.dirpath = pathlib.Path.cwd().parent.joinpath("data")
         self.inp_dir = pathlib.Path(self.dirpath, "input")
@@ -48,13 +47,10 @@ class Generatedata:
 
     def create_dataframe(self) -> pd.core.frame.DataFrame:
         """Create Pandas dataframe."""
-        if self.sameRows:
-            df_size = 100
-        else:
-            df_size = 200
+        df_size = 100 if self.sameRows else 200
 
         diction_1 = {
-            "A": [i for i in range(df_size)],
+            "A": list(range(df_size)),
             "B": [random.choice(string.ascii_letters) for i in range(df_size)],
             "C": np.random.randint(low=1, high=100, size=df_size),
             "D": np.random.normal(0.0, 1.0, size=df_size),
@@ -63,9 +59,7 @@ class Generatedata:
         if self.truncColumns:
             diction_1 = {k: v for k, v in diction_1.items() if k not in ["A", "B"]}
 
-        df = pd.DataFrame(diction_1)
-
-        return df
+        return pd.DataFrame(diction_1)
 
     def csv_func(self) -> None:
         """Convert pandas dataframe to csv file format."""
@@ -74,7 +68,9 @@ class Generatedata:
     def parquet_func(self) -> None:
         """Convert pandas dataframe to parquet file format."""
         self.x.to_parquet(
-            pathlib.Path(self.inp_dir, self.outname), engine="auto", compression=None
+            pathlib.Path(self.inp_dir, self.outname),
+            engine="auto",
+            compression=None,
         )
 
     def feather_func(self) -> None:
@@ -128,13 +124,12 @@ def test_mergingfiles_row_wise_samerows(poly):
         d1()
         d2()
         d3()
-        pattern = "".join([".*", i])
+        pattern = f".*{i}"
         fps = fp.FilePattern(d1.get_inp_dir(), pattern)
-        inp_dir_files = [f[1][0] for f in fps]
+        inp_dir_files = [f[1][0] for f in fps()]
         tm.merge_files(
             inp_dir_files,
             strip_extension=True,
-            # file_extension=i,
             dim="rows",
             same_rows=True,
             same_columns=False,
@@ -157,9 +152,9 @@ def test_mergingfiles_row_wise_unequalrows(poly):
         d1()
         d2()
         d3()
-        pattern = "".join([".*", i])
+        pattern = f".*{i}"
         fps = fp.FilePattern(d1.get_inp_dir(), pattern)
-        inp_dir_files = [f[1][0] for f in fps]
+        inp_dir_files = [f[1][0] for f in fps()]
         tm.merge_files(
             inp_dir_files,
             strip_extension=True,
@@ -185,9 +180,9 @@ def test_mergingfiles_column_wise_equalrows(poly):
         d1()
         d2()
         d3()
-        pattern = "".join([".*", i])
+        pattern = f".*{i}"
         fps = fp.FilePattern(d1.get_inp_dir(), pattern)
-        inp_dir_files = [f[1][0] for f in fps]
+        inp_dir_files = [f[1][0] for f in fps()]
         tm.merge_files(
             inp_dir_files,
             strip_extension=True,
@@ -213,9 +208,9 @@ def test_mergingfiles_column_wise_unequalrows(poly):
         d1()
         d2()
         d3()
-        pattern = "".join([".*", i])
+        pattern = f".*{i}"
         fps = fp.FilePattern(d1.get_inp_dir(), pattern)
-        inp_dir_files = [f[1][0] for f in fps]
+        inp_dir_files = [f[1][0] for f in fps()]
         tm.merge_files(
             inp_dir_files,
             strip_extension=True,

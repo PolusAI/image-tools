@@ -1,7 +1,16 @@
 """Test Command line Tool."""
-from typer.testing import CliRunner
+import shutil
+from pathlib import Path
+
 from polus.plugins.segmentation.cell_border_segmentation.__main__ import app
-from tests.fixture import *
+from typer.testing import CliRunner
+
+
+def clean_directories() -> None:
+    """Remove all temporary directories."""
+    for d in Path(".").cwd().iterdir():
+        if d.is_dir() and d.name.startswith("tmp"):
+            shutil.rmtree(d)
 
 
 def test_cli(download_data, output_directory) -> None:

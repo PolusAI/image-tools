@@ -1,6 +1,5 @@
 """K_means clustering."""
 import pathlib
-import os
 import shutil
 import tempfile
 
@@ -9,10 +8,9 @@ import numpy as np
 import pandas as pd
 import pytest
 import vaex
-from typer.testing import CliRunner
-
 from polus.plugins.clustering.k_means import k_means as km
-from polus.plugins.clustering.k_means.__main__ import app as app
+from polus.plugins.clustering.k_means.__main__ import app
+from typer.testing import CliRunner
 
 runner = CliRunner()
 
@@ -20,7 +18,7 @@ runner = CliRunner()
 class Generatedata:
     """Generate tabular data with several different file format."""
 
-    def __init__(self, file_pattern: str, size: int, outname: str):
+    def __init__(self, file_pattern: str, size: int, outname: str) -> None:
         """Define instance attributes."""
         self.dirpath = pathlib.Path.cwd()
         self.inp_dir = tempfile.mkdtemp(dir=self.dirpath)
@@ -48,9 +46,7 @@ class Generatedata:
             "label": np.random.randint(low=1, high=4, size=self.size),
         }
 
-        df = pd.DataFrame(diction_1)
-
-        return df
+        return pd.DataFrame(diction_1)
 
     def csv_func(self) -> None:
         """Convert pandas dataframe to csv file format."""
@@ -77,23 +73,32 @@ class Generatedata:
 
 
 @pytest.mark.parametrize(
-    "ext, minrange, maxrange", [(".arrow", 2, 5), (".csv", 2, 7), (".arrow", 2, 20), (".arrow", 2, 30), (".csv",2, 10)]
+    ("ext", "minrange", "maxrange"),
+    [
+        (".arrow", 2, 5),
+        (".csv", 2, 7),
+        (".arrow", 2, 20),
+        (".arrow", 2, 30),
+        (".csv", 2, 10),
+    ],
 )
 def test_elbow(ext, minrange, maxrange):
     """Testing elbow function."""
     d = Generatedata(ext, outname=f"data_1{ext}", size=10000)
     d()
-    pattern = "".join([".*", ext])
+    pattern = f".*{ext}"
     fps = fp.FilePattern(d.get_inp_dir(), pattern)
 
-    for file in fps:
+    for file in fps():
         if f"{pattern}" == ".csv":
             df = vaex.read_csv(file[1][0], convert=True)
         else:
             df = vaex.open(file[1][0])
 
         label_data = km.elbow(
-            data_array=df[:, :4].values, minimum_range=minrange, maximum_range=maxrange
+            data_array=df[:, :4].values,
+            minimum_range=minrange,
+            maximum_range=maxrange,
         )
 
         assert label_data is not None
@@ -102,16 +107,23 @@ def test_elbow(ext, minrange, maxrange):
 
 
 @pytest.mark.parametrize(
-    "method, datasize, ext, minrange, maxrange", [("CalinskiHarabasz", 5000, ".arrow", 2, 5), ("DaviesBouldin", 10000, ".csv", 2, 7), ("CalinskiHarabasz", 50000,".arrow", 2, 20), ("DaviesBouldin", 75000,".arrow", 2, 30), ("CalinskiHarabasz", 100000,".csv",2, 10)]
+    ("method", "datasize", "ext", "minrange", "maxrange"),
+    [
+        ("CalinskiHarabasz", 5000, ".arrow", 2, 5),
+        ("DaviesBouldin", 10000, ".csv", 2, 7),
+        ("CalinskiHarabasz", 50000, ".arrow", 2, 20),
+        ("DaviesBouldin", 75000, ".arrow", 2, 30),
+        ("CalinskiHarabasz", 100000, ".csv", 2, 10),
+    ],
 )
 def test_calinski_davies(method, datasize, ext, minrange, maxrange):
     """Testing calinski_davies and davies_bouldin methods."""
     d = Generatedata(ext, outname=f"data_1{ext}", size=datasize)
     d()
-    pattern = "".join([".*", ext])
+    pattern = f".*{ext}"
     fps = fp.FilePattern(d.get_inp_dir(), pattern)
 
-    for file in fps:
+    for file in fps():
         if f"{pattern}" == ".csv":
             df = vaex.read_csv(file[1][0], convert=True)
         else:
@@ -137,20 +149,21 @@ def test_calinski_davies(method, datasize, ext, minrange, maxrange):
         ("CalinskiHarabasz", 75000, ".csv", 2, 30, 5),
         ("Elbow", 10000, ".csv", 2, 10, 10),
         ("Manual", 20000, ".arrow", 2, 10, 20),
-    ]
+    ],
 )
 def get_params(request):
     """To get the parameter of the fixture."""
-    yield request.param
+    return request.param
+
 
 def test_clustering(get_params) -> None:
     """Test clustering function."""
     method, datasize, ext, minrange, maxrange, numclusters = get_params
     d = Generatedata(ext, outname=f"data_1{ext}", size=datasize)
     d()
-    pattern = "".join([".*", ext])
+    pattern = f".*{ext}"
     fps = fp.FilePattern(d.get_inp_dir(), pattern)
-    for file in fps:
+    for file in fps():
         km.clustering(
             file=file[1][0],
             file_pattern=ext,
@@ -160,8 +173,8 @@ def test_clustering(get_params) -> None:
             num_of_clus=numclusters,
             out_dir=d.get_out_dir(),
         )
-    assert d.get_out_dir().joinpath(f"data_1.arrow")
-    df = vaex.open(d.get_out_dir().joinpath(f"data_1.arrow"))
+    assert d.get_out_dir().joinpath("data_1.arrow")
+    df = vaex.open(d.get_out_dir().joinpath("data_1.arrow"))
     assert "Cluster" in df.columns
     d.clean_directories()
 

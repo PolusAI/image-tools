@@ -8,7 +8,6 @@ import filepattern as fp
 import numpy as np
 import pandas as pd
 import pytest
-
 from polus.plugins.formats.arrow_to_tabular.arrow_to_tabular import arrow_tabular
 
 
@@ -28,7 +27,7 @@ def generate_arrow():
             "A": [random.choice(string.ascii_letters) for i in range(100)],
             "B": np.random.randint(low=1, high=100, size=100),
             "C": np.random.normal(0.0, 1.0, size=100),
-        }
+        },
     )
     df.to_feather(pathlib.Path(inpDir, "data.arrow"))
     df.to_feather(pathlib.Path(inpDir, "data1.arrow"))
@@ -43,15 +42,13 @@ def test_arrow_tabular(generate_arrow):
     out_pattern = filePattern[pattern]
     in_pattern = ".*.arrow"
     fps = fp.FilePattern(generate_arrow[0], in_pattern)
-    for file in fps:
+    for file in fps():
         arrow_tabular(file[1][0], pattern, generate_arrow[1])
 
     assert (
         all(
-            [
-                file[1][0].suffix
-                for file in fp.FilePattern(generate_arrow[1], out_pattern)
-            ]
+            file[1][0].suffix
+            for file in fp.FilePattern(generate_arrow[1], out_pattern)()
         )
         is True
     )
@@ -60,15 +57,13 @@ def test_arrow_tabular(generate_arrow):
     pattern = ".csv"
     out_pattern = filePattern[pattern]
     fps = fp.FilePattern(generate_arrow[0], in_pattern)
-    for file in fps:
+    for file in fps():
         arrow_tabular(file[1][0], pattern, generate_arrow[1])
 
     assert (
         all(
-            [
-                file[1][0].suffix
-                for file in fp.FilePattern(generate_arrow[1], out_pattern)
-            ]
+            file[1][0].suffix
+            for file in fp.FilePattern(generate_arrow[1], out_pattern)()
         )
         is True
     )
