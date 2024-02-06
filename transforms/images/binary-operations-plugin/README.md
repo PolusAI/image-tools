@@ -1,4 +1,4 @@
-# Binary Operations Plugin (v0.5.1-dev0)
+# Binary Operations Plugin (v0.5.2-dev0)
 
 This WIPP plugin does Morphological Image Processing on binary and instance labelled images.
 The operations available are:

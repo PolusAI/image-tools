@@ -6,9 +6,12 @@ import unittest
 
 import cv2
 import numpy as np
-import src.utils as utils
-from bfio import BioReader, BioWriter
-from src.utils import binary_operation
+from bfio import BioReader
+from bfio import BioWriter
+from polus.plugins.transforms.images.binary_operations import (
+    binary_op as binary_operation,
+)
+from polus.plugins.transforms.images.binary_operations import utils
 
 
 class PluginData:  # noqa
@@ -41,11 +44,12 @@ class PluginData:  # noqa
         ]
         self.kernel_size = 15
         self.kernel = cv2.getStructuringElement(
-            cv2.MORPH_ELLIPSE, (self.kernel_size, self.kernel_size)
+            cv2.MORPH_ELLIPSE,
+            (self.kernel_size, self.kernel_size),
         )
 
 
-class PluginTest(unittest.TestCase):  # noqa
+class PluginTest(unittest.TestCase):
     """Tests to ensure the plugin is operating correctly."""
 
     def test_skeletal(self):  # noqa
@@ -108,7 +112,7 @@ class PluginTest(unittest.TestCase):  # noqa
             for contour_output, contour_input in zip(contours_output, contours_input):
                 area_output = cv2.contourArea(contour_output)
                 area_input = cv2.contourArea(contour_input)
-                self.assertTrue(area_output < area_input)
+                assert area_output < area_input
 
     def test_dilation_erosion_morphologicalgradient(self):  # noqa
         data = PluginData()
@@ -176,9 +180,7 @@ class PluginTest(unittest.TestCase):  # noqa
             instance_output_dilation_labels > 0
         ]
 
-        self.assertTrue(
-            np.all(data.input_instance_labels == instance_output_dilation_labels)
-        )
+        assert np.all(data.input_instance_labels == instance_output_dilation_labels)
 
         # test erosion
         instance_output_erosion_labels = np.unique(instance_output_erosion_array)
@@ -208,15 +210,14 @@ class PluginTest(unittest.TestCase):  # noqa
             for contour_output, contour_input in zip(contours_output, contours_input):
                 area_output = cv2.contourArea(contour_output)
                 area_input = cv2.contourArea(contour_input)
-                self.assertTrue(area_output < area_input)
+                assert area_output < area_input
 
         # test morphological gradient
         diff_dilation_erosion = np.subtract(
-            instance_output_dilation_array, instance_output_erosion_array
+            instance_output_dilation_array,
+            instance_output_erosion_array,
         )
-        self.assertTrue(
-            np.array_equal(diff_dilation_erosion, instance_output_morphgrad_array)
-        )
+        assert np.array_equal(diff_dilation_erosion, instance_output_morphgrad_array)
 
     def test_fillholes(self):  # noqa
         data = PluginData()
@@ -262,7 +263,7 @@ class PluginTest(unittest.TestCase):  # noqa
                 mode=cv2.RETR_TREE,
                 method=cv2.CHAIN_APPROX_NONE,
             )
-            self.assertTrue((hierarchies == -1).all())
+            assert (hierarchies == -1).all()
 
     def test_opening_and_tophat(self):  # noqa
         data = PluginData()
@@ -317,9 +318,7 @@ class PluginTest(unittest.TestCase):  # noqa
             instance_output_opening_array > 0
         ] = instance_output_opening_array[instance_output_opening_array > 0]
 
-        self.assertTrue(
-            np.array_equal(instance_output_array, data.instance_array.squeeze())
-        )
+        assert np.array_equal(instance_output_array, data.instance_array.squeeze())
 
     def test_closing_and_blackhat(self):  # noqa
         data = PluginData()
@@ -415,7 +414,7 @@ class PluginTest(unittest.TestCase):  # noqa
         instance_output_labels = np.unique(instance_output_array)
         instance_output_labels = instance_output_labels[instance_output_labels > 0]
 
-        self.assertTrue(len(instance_output_labels) == 13)
+        assert len(instance_output_labels) == 13
 
         for instance_output_label in instance_output_labels:
             instance_outputSingle_instance = (
@@ -428,7 +427,7 @@ class PluginTest(unittest.TestCase):  # noqa
             )
             for contour in contours:
                 area = cv2.contourArea(contour)
-                self.assertTrue(area <= threshold)
+                assert area <= threshold
 
     def test_instance_removesmallobjects(self):  # noqa
         data = PluginData()
@@ -469,7 +468,7 @@ class PluginTest(unittest.TestCase):  # noqa
         instance_output_labels = np.unique(instance_output_array)
         instance_output_labels = instance_output_labels[instance_output_labels > 0]
 
-        self.assertTrue(len(instance_output_labels) == 36)
+        assert len(instance_output_labels) == 36
 
         for instance_output_label in instance_output_labels:
             instance_outputSingle_instance = (
@@ -482,7 +481,7 @@ class PluginTest(unittest.TestCase):  # noqa
             )
             for contour in contours:
                 area = cv2.contourArea(contour)
-                self.assertTrue(area >= threshold)
+                assert area >= threshold
 
 
 if __name__ == "__main__":
