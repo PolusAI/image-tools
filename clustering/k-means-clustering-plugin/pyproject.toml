@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-clustering-k-means"
-version = "0.3.3-dev0"
+version = "0.3.3-dev1"
 description = ""
 authors = [
 "Jayapriya Nagarajan <jayapriya.nagarajan@nih.gov>",

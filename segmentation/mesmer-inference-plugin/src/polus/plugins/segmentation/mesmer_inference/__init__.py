@@ -1,2 +1,2 @@
 """Mesmer Inference."""
-__version__ = "0.0.9-dev0"
+__version__ = "0.0.9-dev1"

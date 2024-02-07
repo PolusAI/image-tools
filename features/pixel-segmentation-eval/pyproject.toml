@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-features-pixel-segmentation-eval"
-version = "0.1.11-dev0"
+version = "0.1.11-dev1"
 description = ""
 authors = [
            "Vishakha Goyal <vishakha.goyal@nih.gov>",

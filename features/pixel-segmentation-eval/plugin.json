@@ -1,6 +1,6 @@
 {
   "name": "Pixel Segmentation Eval",
-  "version": "0.1.11-dev0",
+  "version": "0.1.11-dev1",
   "title": "Pixel Segmentation Eval",
   "description": "Plugin to generate evaluation metrics for pixel-wise comparison of ground truth and predicted images.",
   "author": "Vishakha Goyal (vishakha.goyal@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/polusai/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/pixel-segmentation-eval:0.1.11-dev0",
+  "containerId": "polusai/pixel-segmentation-eval:0.1.11-dev1",
   "baseCommand": [
     "python3",
     "-m",

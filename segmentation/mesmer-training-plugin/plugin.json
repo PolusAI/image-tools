@@ -1,6 +1,6 @@
 {
   "name": "MESMER Training",
-  "version": "0.0.5",
+  "version": "0.0.6-dev0",
   "title": "MESMER Training",
   "description": "WIPP plugin to train PanopticNet model.",
   "author": "Vishakha Goyal (vishakha.goyal@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/polusai/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/mesmer-training-plugin:0.0.5",
+  "containerId": "polusai/mesmer-training-plugin:0.0.6-dev0",
   "baseCommand": [
     "python3",
     "-m",
