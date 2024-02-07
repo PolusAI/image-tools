@@ -52,7 +52,7 @@ class Generatedata:
     def fits_func(self) -> None:
         """Convert pandas dataframe to fits file format."""
         ft = Table.from_pandas(self.x)
-        ft.write(pathlib.Path(self.inp_dir, "data.fits"))
+        ft.write(pathlib.Path(self.inp_dir, "data.fits"), overwrite=True)
 
     def fcs_func(self) -> None:
         """Get the test example of fcs data."""
