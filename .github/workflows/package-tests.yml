@@ -88,11 +88,12 @@ jobs:
       matrix: ${{ fromJson(needs.package-filter.outputs.matrix) }}
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Docker | Tag
         id: docker_tag
         run: |
-          package_dir="${{ matrix.package_dir }}"
-          version=$(cat ${package_dir}/VERSION)
+          version=$(cat ${{ matrix.package_dir }}/VERSION)
           tag=polusai/${{ matrix.package_name }}:${version}
           echo "tag will be ${tag}"
           echo "tag=${tag}" >> $GITHUB_OUTPUT
@@ -108,6 +109,5 @@ jobs:
         run: |
           cp .gitignore ${{ matrix.package_dir }}/.dockerignore
           cd "${{ matrix.package_dir }}"
-          tag=${{ steps.docker_tag.outputs.tag }}
-          docker build . -t ${tag}
+          docker build . -t ${{ steps.docker_tag.outputs.tag }}
         # docker buildx build --platform linux/amd64,linux/arm64 -t ${tag} --push .
