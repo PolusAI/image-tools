@@ -4,7 +4,6 @@ import concurrent.futures
 import json
 import logging
 import pathlib
-import typing
 
 import filepattern
 import tqdm
@@ -45,7 +44,7 @@ def main(  # noqa: PLR0913
         help="Group files by these file pattern keys.",
     ),
     channel_ordering: str = typer.Option(
-        "",
+        ...,
         "--channelOrdering",
         help="Order of channels in the input images.",
     ),
@@ -69,6 +68,11 @@ def main(  # noqa: PLR0913
         "--removeInteractions",
         help="Whether to remove interactions between channels.",
     ),
+    verbose: int = typer.Option(
+        1,
+        "--verbose",
+        help="Level of verbosity of network",
+    ),
     out_dir: pathlib.Path = typer.Option(
         ...,
         "--outDir",
@@ -89,19 +93,17 @@ def main(  # noqa: PLR0913
         inp_dir = inp_dir.joinpath("images")
 
     grouping_variables = list(group_by)
-
-    channel_order: typing.Optional[list[int]] = None
-    if channel_ordering:
-        channel_order = list(map(int, channel_ordering.split(",")))
+    channel_order: list[int] = list(map(int, channel_ordering.split(",")))
 
     logger.info(f"--inpDir = {inp_dir}")
     logger.info(f'--filePattern = "{pattern}"')
     logger.info(f"--groupBy = \"{''.join(grouping_variables)}\"")
-    logger.info(f'--channelOrdering = "{channel_ordering}"')
+    logger.info(f'--channelOrdering = "{channel_order}"')
     logger.info(f'--selectionCriterion = "{selection_criterion.value}"')
     logger.info(f"--channelOverlap = {channel_overlap}")
     logger.info(f"--kernelSize = {kernel_size}")
     logger.info(f"--removeInteractions = {remove_interactions}")
+    logger.info(f"--verbose = {verbose}")
     logger.info(f"--outDir = {out_dir}")
     logger.info(f"--preview = {preview}")
 
@@ -136,6 +138,7 @@ def main(  # noqa: PLR0913
                     channel_overlap,
                     kernel_size,
                     remove_interactions,
+                    verbose,
                     out_dir,
                 ),
             )

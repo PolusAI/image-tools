@@ -1,4 +1,4 @@
-# Theia Bleedthrough Estimation (v0.5.0-dev1)
+# Theia Bleedthrough Estimation (v0.5.1-dev0)
 
 This WIPP plugin estimates the bleed-through in a collection of 2d images.
 It uses the Theia algorithm from [this repo](https://github.com/PolusAI/theia).

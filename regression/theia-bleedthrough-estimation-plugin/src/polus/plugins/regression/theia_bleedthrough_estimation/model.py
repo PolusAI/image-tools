@@ -2,7 +2,6 @@
 
 
 import pathlib
-import typing
 
 import bfio
 import numpy
@@ -17,11 +16,12 @@ logger = helpers.make_logger(__name__)
 
 def estimate_bleedthrough(  # noqa: PLR0913
     image_paths: list[pathlib.Path],
-    channel_order: typing.Optional[list[int]],
+    channel_order: list[int],
     selection_criterion: tile_selectors.Selectors,
     channel_overlap: int,
     kernel_size: int,
     remove_interactions: bool,
+    verbose: int,
     out_dir: pathlib.Path,
 ) -> None:
     """Estimate bleedthrough using Theia.
@@ -33,6 +33,7 @@ def estimate_bleedthrough(  # noqa: PLR0913
         channel_overlap: Number of adjacent channels to consider.
         kernel_size: Size of the kernel to use for the convolution.
         remove_interactions: Whether to remove interactions between channels.
+        verbose: level of verbosity of the network.
         out_dir: Path to the output directory.
     """
     components_dir = out_dir.joinpath("images")
@@ -42,7 +43,6 @@ def estimate_bleedthrough(  # noqa: PLR0913
     metadata_dir.mkdir(exist_ok=True)
 
     with bfio.BioReader(image_paths[0], max_workers=1) as br:
-        num_channels: int = br.C
         num_tiles = helpers.count_tiles_2d(br)
 
         if num_tiles > constants.MAX_2D_TILES:
@@ -52,17 +52,7 @@ def estimate_bleedthrough(  # noqa: PLR0913
             )
             num_tiles = constants.MAX_2D_TILES
 
-    if channel_order is not None:
-        if len(channel_order) != num_channels:
-            msg = (
-                f"Number of channels in the channel ordering "
-                f"({','.join(map(str, channel_order))}) does not match the number "
-                f"of channels in the image ({num_channels})."
-            )
-            logger.critical(msg)
-            raise ValueError(msg)
-
-        image_paths = [image_paths[i] for i in channel_order]
+    image_paths = [image_paths[i] for i in channel_order]
 
     selector = selection_criterion()(
         files=image_paths,
@@ -96,7 +86,7 @@ def estimate_bleedthrough(  # noqa: PLR0913
         valid_generator = None
 
     model = theia.models.Neural(
-        num_channels=num_channels,
+        num_channels=len(channel_order),
         channel_overlap=channel_overlap,
         kernel_size=kernel_size,
         alpha=1,
@@ -106,7 +96,7 @@ def estimate_bleedthrough(  # noqa: PLR0913
     model.early_stopping(
         min_delta=1e-3,
         patience=4,
-        verbose=1,
+        verbose=verbose,
         restore_best_weights=True,
     )
     model.compile(optimizer="adam")
@@ -114,7 +104,7 @@ def estimate_bleedthrough(  # noqa: PLR0913
         train_gen=train_generator,
         valid_gen=valid_generator,
         epochs=128,
-        verbose=1,
+        verbose=verbose,
     )
 
     readers = [bfio.BioReader(image_path, max_workers=1) for image_path in image_paths]
@@ -124,8 +114,10 @@ def estimate_bleedthrough(  # noqa: PLR0913
         bfio.BioWriter(out_path, metadata=reader.metadata)
         for out_path, reader in zip(out_paths, readers)
     ]
+    for writer in writers:
+        writer.C = len(channel_order)
 
-    transformer = model.transformer
+    transformer: theia.Transformer = model.transformer
 
     for tile_index in helpers.tile_indices_2d(readers[0]):
         z, y_min, y_max, x_min, x_max = tile_index
@@ -134,9 +126,9 @@ def estimate_bleedthrough(  # noqa: PLR0913
             channel_tiles.append(
                 numpy.squeeze(
                     reader[
-                        z,
                         y_min:y_max,
                         x_min:x_max,
+                        z,
                         :,
                         :,
                     ],
@@ -148,8 +140,9 @@ def estimate_bleedthrough(  # noqa: PLR0913
         if remove_interactions:
             component += transformer.total_interactions(component)
 
+        component = numpy.squeeze(component)[:, :, numpy.newaxis, :, numpy.newaxis]
         for writer in writers:
-            writer[z, y_min:y_max, x_min:x_max, :, :] = component
+            writer[y_min:y_max, x_min:x_max, z, :, :] = component
 
     for writer in writers:
         writer.close()
@@ -180,20 +173,26 @@ def load_tiles(
     readers = [bfio.BioReader(image_path, max_workers=1) for image_path in image_paths]
 
     for tile_index in tile_indices:
-        z_min, z_max, y_min, y_max, x_min, x_max = tile_index
+        (
+            z_min,
+            z_max,
+            y_min,
+            y_max,
+            x_min,
+            x_max,
+        ) = tile_index
         channel_tiles = []
         for reader in readers:
-            channel_tiles.append(
-                numpy.squeeze(
-                    reader[
-                        z_min:z_max,
-                        y_min:y_max,
-                        x_min:x_max,
-                        :,
-                        :,
-                    ],
-                ),
+            tile = numpy.squeeze(
+                reader[
+                    y_min:y_max,
+                    x_min:x_max,
+                    z_min:z_max,
+                    :,
+                    :,
+                ],
             )
+            channel_tiles.append(tile)
 
         channel = numpy.stack(channel_tiles, axis=-1)
         tiles.append(channel)
