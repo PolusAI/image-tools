@@ -1,4 +1,5 @@
 """Cell border segmentation package."""
+
 import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
