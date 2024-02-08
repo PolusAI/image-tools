@@ -2,7 +2,30 @@ name: Test All Tools
 
 on:
   workflow_dispatch:
-  
+    inputs:
+      pr-number:
+        description: 'PR Number'
+        required: true
+        default: 61
+        type: number
+      repo:
+        description: 'Repository'
+        required: true
+        default: 'polusai/filepattern'
+        type: string
+  workflow_call:
+    inputs:
+      pr-number:
+        description: 'PR Number'
+        required: true
+        default: 61
+        type: number
+      repo:
+        description: 'Repository'
+        required: true
+        default: 'polusai/filepattern'
+        type: string
+
 permissions:
   contents: read
 
@@ -47,6 +70,9 @@ jobs:
           # Remove leading and trailing spaces
           tool_dirs=$(echo $tool_dirs | xargs)
 
+          # TODO: Remove this line after debugging
+          tool_dirs="montage-plugin image-assembler-plugin"
+
           # Convert the list of tools to a JSON string
           tools_json="{\"include\": ["
           for tool in $tool_dirs; do
@@ -70,7 +96,7 @@ jobs:
           echo "list=$( echo "$tool_dirs" )" >> $GITHUB_OUTPUT
 
   pre-tests:
-    name: Tests | ${{ matrix.tool_name }}
+    name: Pre-update Tests | ${{ matrix.tool_name }}
     runs-on: ubuntu-latest
     needs: find-tools
     strategy:
@@ -90,12 +116,50 @@ jobs:
           cd ${{ matrix.tool_dir }}
           poetry install
           poetry run pytest -v
-      - name: Update filepattern
+
+  download-wheel:
+    name: Download Wheel | Filepattern
+    runs-on: ubuntu-latest
+    needs: [find-tools, pre-tests]
+    steps:
+      - name: Download Wheel | PR Number
+        id: download-wheel
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          repo: ${{ github.event.inputs.repo }}
+          pr: ${{ github.event.inputs.pr-number }}
+          workflow: 'build_wheels.yml'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          path: 'dist'
+      - name:
         run: |
-          cd ${{ matrix.tool_dir }}
-          poetry add filepattern@latest
-      - name: Post-Update Test
-        run: |
-          cd ${{ matrix.tool_dir }}
-          poetry install
-          poetry run pytest -v
+          ls -la dist
+          echo "Hello 1"
+          ls -la dist/**.*
+          echo "Hello 2"
+
+  # post-tests:
+  #   name: Post-Update Tests | ${{ matrix.tool_name }}
+  #   runs-on: ubuntu-latest
+  #   needs: [find-tools, download-wheel]
+  #   strategy:
+  #     fail-fast: false
+  #     matrix: ${{fromJson(needs.find-tools.outputs.matrix)}}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.9'
+  #     - name: Install Poetry
+  #       uses: abatilo/actions-poetry@v2
+  #     - name: Update filepattern
+  #       run: |
+  #         cd ${{ matrix.tool_dir }}
+  #         poetry add filepattern@latest
+  #     - name: Post-Update Test
+  #       run: |
+  #         cd ${{ matrix.tool_dir }}
+  #         poetry install
+  #         poetry run pytest -v
