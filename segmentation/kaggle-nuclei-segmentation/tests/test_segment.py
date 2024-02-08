@@ -15,7 +15,7 @@ def test_segment(generate_test_data: FixtureReturnType) -> None:
     """Test segment."""
     inp_dir, out_dir = generate_test_data
 
-    fps = fp.FilePattern(inp_dir, ".*")
+    fps = fp.FilePattern(inp_dir, ".*.tif")
     files = [str(file[1][0]) for file in fps()]
     for ind in range(0, len(files), 1):
         batch = ",".join(files[ind : min([ind + 1, len(files)])])
@@ -34,7 +34,7 @@ def test_padding(generate_test_data: FixtureReturnType) -> None:
     """Test padding."""
     inp_dir, _ = generate_test_data
 
-    fps = fp.FilePattern(inp_dir, ".*")
+    fps = fp.FilePattern(inp_dir, ".*.tif")
     files = [str(file[1][0]) for file in fps()]
 
     for file in files:
