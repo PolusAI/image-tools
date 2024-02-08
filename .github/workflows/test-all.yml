@@ -39,21 +39,33 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          repository: 'nishaq503/image-tools'
+          ref: 'master'
       - name: Find tools
         id: set-matrix
         run: |
           # Initialize variables
-          current_dir=$(pwd)
+
+          # List of directories to ignore
           ignored_dirs="polus-python-template ftl-label .venv"
+          # List of tools that are too slow to test
+          slow_tools="k-means-clustering pixel-segmentation-eval mesmer-inference mesmer-training theia"
+          # List of tools that are broken for known reasons
+          broken_tools="binary-operations basic-flatfield-estimation theia"
+          # List of tools that are broken for unknown reasons
+          unknown_broken_tools="image-calculator apply-flatfield precompute-slide"
+
+          ignored_dirs="$ignored_dirs $slow_tools $broken_tools $unknown_broken_tools"
           tool_dirs=""
 
           # Get all directories in the current directory
-          dirs=$(find $current_dir -type d)
+          dirs=$(find $(pwd) -type d)
 
           # Get all directories that have a "pyproject.toml" file
           for dir in $dirs; do
             # Ignore the current directory
-            if [ "$dir" == "$current_dir" ]; then
+            if [ "$dir" == "$(pwd)" ]; then
               continue
             fi
             # Ignore the directory if it contains any of the substrings in "ignored_dirs"
@@ -69,9 +81,6 @@ jobs:
           done
           # Remove leading and trailing spaces
           tool_dirs=$(echo $tool_dirs | xargs)
-
-          # TODO: Remove this line after debugging
-          tool_dirs="montage-plugin image-assembler-plugin"
 
           # Convert the list of tools to a JSON string
           tools_json="{\"include\": ["
@@ -105,61 +114,59 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          repository: 'nishaq503/image-tools'
+          ref: 'master'
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
       - name: Install Poetry
         uses: abatilo/actions-poetry@v2
-      - name: Pre-Update Test
+      - name: Install | ${{ matrix.tool_name }}
         run: |
           cd ${{ matrix.tool_dir }}
           poetry install
+      - name: Pre-Update Test
+        run: |
+          cd ${{ matrix.tool_dir }}
           poetry run pytest -v
 
-  download-wheel:
-    name: Download Wheel | Filepattern
+  post-tests:
+    name: Post-Update Tests | ${{ matrix.tool_name }}
     runs-on: ubuntu-latest
-    needs: [find-tools, pre-tests]
+    needs: find-tools
+    strategy:
+      fail-fast: false
+      matrix: ${{fromJson(needs.find-tools.outputs.matrix)}}
     steps:
-      - name: Download Wheel | PR Number
-        id: download-wheel
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: 'nishaq503/image-tools'
+          ref: 'master'
+      - name: Install | Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Install | Poetry
+        uses: abatilo/actions-poetry@v2
+      - name: Download | Filepattern PR ${{ inputs.pr-number }}
         uses: dawidd6/action-download-artifact@v3
         with:
-          repo: ${{ github.event.inputs.repo }}
-          pr: ${{ github.event.inputs.pr-number }}
+          repo: ${{ inputs.repo }}
+          pr: ${{ inputs.pr-number }}
           workflow: 'build_wheels.yml'
           github_token: ${{ secrets.GITHUB_TOKEN }}
           path: 'dist'
-      - name:
+          workflow_conclusion: ''
+      - name: Install | ${{ matrix.tool_name }}
         run: |
-          ls -la dist
-          echo "Hello 1"
-          ls -la dist/**.*
-          echo "Hello 2"
-
-  # post-tests:
-  #   name: Post-Update Tests | ${{ matrix.tool_name }}
-  #   runs-on: ubuntu-latest
-  #   needs: [find-tools, download-wheel]
-  #   strategy:
-  #     fail-fast: false
-  #     matrix: ${{fromJson(needs.find-tools.outputs.matrix)}}
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: '3.9'
-  #     - name: Install Poetry
-  #       uses: abatilo/actions-poetry@v2
-  #     - name: Update filepattern
-  #       run: |
-  #         cd ${{ matrix.tool_dir }}
-  #         poetry add filepattern@latest
-  #     - name: Post-Update Test
-  #       run: |
-  #         cd ${{ matrix.tool_dir }}
-  #         poetry install
-  #         poetry run pytest -v
+          root_dir=$(pwd)
+          cd ${{ matrix.tool_dir }}
+          poetry install
+          pip install --find-links=${root_dir}/dist/filepattern-wheels filepattern
+      - name: Post-Update Test
+        run: |
+          cd ${{ matrix.tool_dir }}
+          poetry run pytest -v
