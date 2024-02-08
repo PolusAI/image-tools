@@ -1,7 +1,5 @@
 """Test for Kaggle Nuclei Segmentation."""
 
-import shutil
-
 import filepattern as fp
 import numpy as np
 from bfio import BioReader
@@ -9,6 +7,7 @@ from polus.plugins.segmentation.kaggle_nuclei_segmentation.segment import paddin
 from polus.plugins.segmentation.kaggle_nuclei_segmentation.segment import segment
 
 from .conftest import FixtureReturnType
+from .conftest import clean_directories
 
 
 def test_segment(generate_test_data: FixtureReturnType) -> None:
@@ -47,4 +46,4 @@ def test_padding(generate_test_data: FixtureReturnType) -> None:
         assert pad_dimensions == (78, 78, 0, 0)
         assert final_image.shape == (256, 256, 3)
 
-    shutil.rmtree(inp_dir)
+    clean_directories()

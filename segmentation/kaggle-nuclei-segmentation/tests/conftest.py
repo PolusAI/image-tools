@@ -34,12 +34,19 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 FixtureReturnType = tuple[Path, Path]  # input dir  # output dir
 
 
+def clean_directories() -> None:
+    """Remove all temporary directories."""
+    for d in Path(".").cwd().iterdir():
+        if d.is_dir() and d.name.startswith("data_dir"):
+            shutil.rmtree(d)
+
+
 @pytest.fixture()
 def generate_test_data() -> FixtureReturnType:  # type: ignore
     """Generate staging temporary directories with test data."""
     # staging area
     data_dir = Path.cwd().joinpath("data_dir")
-    out_dir = Path(tempfile.mkdtemp(prefix="out_dir", dir=Path.cwd()))
+    out_dir = Path(tempfile.mkdtemp(prefix="out_dir"))
     out_dir.mkdir(exist_ok=True)
     if not data_dir.exists():
         Path(data_dir).mkdir(parents=True)
