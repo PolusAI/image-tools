@@ -25,6 +25,9 @@ on:
         required: true
         default: 'polusai/filepattern'
         type: string
+    secrets:
+      GITHUB_TOKEN:
+        required: true
 
 permissions:
   contents: read
