@@ -1,4 +1,4 @@
-# Pixel segmentation eval (v0.1.10)
+# Pixel segmentation eval (v0.1.11-dev)
 
 Plugin to generate evaluation metrics for pixel-wise comparison of ground truth and predicted images. Contact [Vishakha Goyal](mailto:vishakha.goyal@nih.gov) , [Hamdah Shafqat Abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more information.
 

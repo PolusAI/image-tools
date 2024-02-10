@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-features-pixel-segmentation-eval"
-version = "0.1.11-dev1"
+version = "0.1.11-dev"
 description = ""
 authors = [
            "Vishakha Goyal <vishakha.goyal@nih.gov>",
@@ -16,9 +16,6 @@ filepattern = "^2.0.1"
 typer = "^0.7.0"
 tqdm = "^4.64.1"
 tifffile="^2020.10.1"
-blake3 = "^0.3.3"
-llvmlite = "^0.39.1"
-fastapi = "^0.92.0"
 vaex = "^4.7.0"
 scipy = "1.9.3"
 

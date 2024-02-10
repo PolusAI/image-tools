@@ -8,7 +8,7 @@
   "repository": "https://github.com/polusai/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/k-means-clustering-plugin:0.3.3-dev1",
+  "containerId": "polusai/k-means-clustering-plugin:0.3.4-dev",
   "baseCommand": [
     "python3",
     "-m",

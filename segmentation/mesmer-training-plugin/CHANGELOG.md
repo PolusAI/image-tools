@@ -1,4 +1,4 @@
-## mesmer-training-plugin(v0.0.5)
+## mesmer-training-plugin(v0.0.6-dev)
 2. This plugin is updated only to the new plugin standards
 3. `--filePattern` is added as an input argument to parse image files.
 4. `--modelBackbone` is added as input argument to allow user to use Keras model as a backbone for Deep models.

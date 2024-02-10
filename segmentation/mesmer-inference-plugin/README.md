@@ -1,4 +1,4 @@
-# MESMER Inference(v0.0.7)
+# MESMER Inference(v0.0.8-dev)
 
 This WIPP plugin segments images using PanopticNet model.
 

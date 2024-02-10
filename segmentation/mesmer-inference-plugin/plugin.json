@@ -1,6 +1,6 @@
 {
   "name": "Mesmer Inference",
-  "version": "0.0.9-dev1",
+  "version": "0.0.8-dev",
   "title": "Mesmer Inference",
   "description": "WIPP plugin to run inference using MESMER.",
   "author": "Vishakha Goyal (vishakha.goyal@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/polusai/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/mesmer-inference-plugin:0.0.9-dev1",
+  "containerId": "polusai/mesmer-inference-plugin:0.0.8-dev",
   "baseCommand": [
     "python3",
     "-m",

@@ -6,8 +6,8 @@ datapath=$(readlink --canonicalize data)
 inpDir=/data/intensity
 tileSize=512
 modelPath="path/to/model"
-filePatternTest="y{y+}_r{r+}_c0.ome.tif"
-filePatternWholeCell = "y{y+}_r{r+}_c1.ome.tif"
+filePatternTest="y{y:d+}_r{r:d+}_c0.ome.tif"
+filePatternWholeCell = "y{y:d+}_r{r:d+}_c1.ome.tif"
 model="mesmerNuclear"
 fileExtension=".ome.tif"
 

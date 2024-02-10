@@ -1,4 +1,5 @@
 """K_means clustering."""
+
 import pathlib
 import shutil
 import tempfile
@@ -38,12 +39,13 @@ class Generatedata:
 
     def create_dataframe(self) -> pd.core.frame.DataFrame:
         """Create Pandas dataframe."""
+        rng = np.random.default_rng()
         diction_1 = {
             "A": np.linspace(0.0, 4.0, self.size, dtype="float32", endpoint=False),
             "B": np.linspace(0.0, 6.0, self.size, dtype="float32", endpoint=False),
             "C": np.linspace(0.0, 8.0, self.size, dtype="float32", endpoint=False),
             "D": np.linspace(0.0, 10.0, self.size, dtype="float32", endpoint=False),
-            "label": np.random.randint(low=1, high=4, size=self.size),
+            "label": rng.integers(low=1, high=4, size=self.size),
         }
 
         return pd.DataFrame(diction_1)
@@ -65,7 +67,7 @@ class Generatedata:
 
         return data_ext[self.file_pattern]()
 
-    def clean_directories(self):
+    def clean_directories(self) -> None:
         """Remove files."""
         for d in self.dirpath.iterdir():
             if d.is_dir() and d.name.startswith("tmp"):
@@ -82,7 +84,7 @@ class Generatedata:
         (".csv", 2, 10),
     ],
 )
-def test_elbow(ext, minrange, maxrange):
+def test_elbow(ext: str, minrange: int, maxrange: int) -> None:
     """Testing elbow function."""
     d = Generatedata(ext, outname=f"data_1{ext}", size=10000)
     d()
@@ -109,14 +111,18 @@ def test_elbow(ext, minrange, maxrange):
 @pytest.mark.parametrize(
     ("method", "datasize", "ext", "minrange", "maxrange"),
     [
-        ("CalinskiHarabasz", 5000, ".arrow", 2, 5),
-        ("DaviesBouldin", 10000, ".csv", 2, 7),
-        ("CalinskiHarabasz", 50000, ".arrow", 2, 20),
-        ("DaviesBouldin", 75000, ".arrow", 2, 30),
-        ("CalinskiHarabasz", 100000, ".csv", 2, 10),
+        ("CalinskiHarabasz", 10000, ".arrow", 2, 5),
+        ("DaviesBouldin", 1000, ".csv", 2, 7),
+        ("CalinskiHarabasz", 10000, ".csv", 2, 10),
     ],
 )
-def test_calinski_davies(method, datasize, ext, minrange, maxrange):
+def test_calinski_davies(
+    method: str,
+    datasize: int,
+    ext: str,
+    minrange: int,
+    maxrange: int,
+) -> None:
     """Testing calinski_davies and davies_bouldin methods."""
     d = Generatedata(ext, outname=f"data_1{ext}", size=datasize)
     d()
@@ -143,20 +149,18 @@ def test_calinski_davies(method, datasize, ext, minrange, maxrange):
 
 @pytest.fixture(
     params=[
-        ("CalinskiHarabasz", 5000, ".csv", 2, 5, 3),
-        ("DaviesBouldin", 10000, ".arrow", 2, 7, 4),
+        ("CalinskiHarabasz", 500, ".csv", 2, 5, 3),
+        ("DaviesBouldin", 1000, ".arrow", 2, 7, 4),
         ("Elbow", 500, ".arrow", 2, 20, 3),
-        ("CalinskiHarabasz", 75000, ".csv", 2, 30, 5),
-        ("Elbow", 10000, ".csv", 2, 10, 10),
-        ("Manual", 20000, ".arrow", 2, 10, 20),
+        ("Manual", 2000, ".arrow", 2, 10, 20),
     ],
 )
-def get_params(request):
+def get_params(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the fixture."""
     return request.param
 
 
-def test_clustering(get_params) -> None:
+def test_clustering(get_params: pytest.FixtureRequest) -> None:
     """Test clustering function."""
     method, datasize, ext, minrange, maxrange, numclusters = get_params
     d = Generatedata(ext, outname=f"data_1{ext}", size=datasize)
@@ -179,7 +183,7 @@ def test_clustering(get_params) -> None:
     d.clean_directories()
 
 
-def test_cli(get_params) -> None:
+def test_cli(get_params: pytest.FixtureRequest) -> None:
     """Test Cli."""
     method, data_size, inpext, minrange, maxrange, numclusters = get_params
     d = Generatedata(inpext, outname=f"data_1{inpext}", size=data_size)

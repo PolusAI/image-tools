@@ -36,7 +36,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/pixel-segmentation-eval:0.1.10
+    dockerPull: polusai/pixel-segmentation-eval:0.1.11-dev
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)

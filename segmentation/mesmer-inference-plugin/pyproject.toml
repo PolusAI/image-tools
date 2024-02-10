@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-segmentation-mesmer-inference"
-version = "0.0.9-dev1"
+version = "0.0.8-dev"
 description = ""
 authors = [
            "Vishakha Goyal <vishakha.goyal@nih.gov>",
@@ -10,7 +10,7 @@ readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.10"
+python = ">=3.9,<3.11"
 filepattern = "^2.0.4"
 typer = "0.7.0"
 DeepCell="0.12.5"

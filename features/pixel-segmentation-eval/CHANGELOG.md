@@ -1,4 +1,4 @@
-## pixel-segmentation-eval(v0.1.10)
+## pixel-segmentation-eval(v0.1.11-dev)
 
 1. This plugin is updated only to the new plugin standards
 2. `csv` python packages is replaced with vaex for adding support for additional tabular file formats `.arrow`, `.feather`.
