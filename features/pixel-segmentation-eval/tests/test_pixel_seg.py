@@ -17,17 +17,6 @@ from typer.testing import CliRunner
 runner = CliRunner()
 
 
-def pytest_addoption(parser: pytest.Parser) -> None:
-    """Add options to pytest."""
-    parser.addoption(
-        "--slow",
-        action="store_true",
-        dest="slow",
-        default=False,
-        help="run slow tests",
-    )
-
-
 @pytest.fixture()
 def gt_dir() -> Generator[str, None, None]:
     """Create directory for saving groundtruth images."""
