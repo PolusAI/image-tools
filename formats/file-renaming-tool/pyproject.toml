@@ -10,7 +10,7 @@ readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
-python = ">=3.9"
+python = ">=3.9,<3.12"
 typer = "^0.7.0"
 tqdm = "^4.64.1"
 numpy = "^1.26.3"
