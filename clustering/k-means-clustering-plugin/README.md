@@ -1,4 +1,4 @@
-﻿# K-Means Clustering(0.3.4-dev)
+﻿# K-Means Clustering(v0.3.4-dev0)
 
 The K-Means Clustering plugin clusters the data using Scikit-learn K-Means clustering algorithm and outputs csv file. Each instance(row) in the input csv file is assigned to one of the clusters. The output csv file contains the column 'Cluster' that shows which cluster the instance belongs to.
 
