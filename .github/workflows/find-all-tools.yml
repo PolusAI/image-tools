@@ -27,15 +27,11 @@ jobs:
         run: |
           # List of directories to ignore
           ignored_dirs="polus-python-template ftl-label .venv"
-          # List of tools that are too slow to test
-          slow_tools="k-means-clustering"
           # List of tools that are broken for known reasons
           broken_tools="binary-operations basic-flatfield-estimation"
-          # List of tools that are broken for unknown reasons
-          unknown_broken_tools=""
 
           # Initialize variables
-          ignored_dirs="$ignored_dirs $slow_tools $broken_tools $unknown_broken_tools"
+          ignored_dirs="$ignored_dirs $broken_tools"
           ignored_dirs=$(echo $ignored_dirs | xargs)
           tool_dirs=""
 
