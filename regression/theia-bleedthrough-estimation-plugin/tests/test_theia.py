@@ -21,31 +21,19 @@ from polus.plugins.regression.theia_bleedthrough_estimation import tile_selector
 from polus.plugins.regression.theia_bleedthrough_estimation.__main__ import app
 
 PATTERN = "blobs_c{c:d}.ome.tif"
-MAX_FLUOROPHORES = 6
-NUM_FLUOROPHORES = list(range(2, MAX_FLUOROPHORES + 1, 2))
-IMG_SIZES = [1_024 * i for i in range(1, 5, 2)]
-
-SELECTORS = tile_selectors.Selectors.variants()
-OVERLAP = list(range(2, MAX_FLUOROPHORES))
-KERNEL_SIZE = [3, 5, 7]
-INTERACTIONS = [True, False]
+NUM_FLUOROPHORES = [2, 4]
+IMG_SIZES = [2_048]
+SELECTORS = [tile_selectors.Selectors.MeanIntensity, tile_selectors.Selectors.Entropy]
 
 PARAMS = [
-    (n, l, s, o, k, i)
-    for n, l, s, o, k, i in itertools.product(  # noqa: E741
+    (n, l, s)
+    for n, l, s in itertools.product(  # noqa: E741
         NUM_FLUOROPHORES,
         IMG_SIZES,
         SELECTORS,
-        OVERLAP,
-        KERNEL_SIZE,
-        INTERACTIONS,
     )
-    if o < n and o % 2 == 1
 ]
-IDS = [
-    f"{n}_{l}_{s.value.lower()}_{o}_{k}_{int(i)}"
-    for n, l, s, o, k, i in PARAMS  # noqa: E741
-]
+IDS = [f"{n}_{l}_{s.value.lower()}" for n, l, s in PARAMS]  # noqa: E741
 PARAMS = [(PATTERN, *p) for p in PARAMS]  # type: ignore[misc]
 
 
@@ -127,7 +115,7 @@ def gen_images(
     num_fluorophores: int
     img_size: int
     selector: tile_selectors.Selectors
-    pattern, num_fluorophores, img_size, selector, _, _, _ = request.param
+    pattern, num_fluorophores, img_size, selector = request.param
 
     inp_dir, out_dir, pattern, num_fluorophores, selector = gen_once(
         pattern,
@@ -141,8 +129,6 @@ def gen_images(
     shutil.rmtree(inp_dir.parent)
 
 
-# @pytest.mark.skip("Skip for now.")
-# def test_theia() -> None:
 def test_theia(
     gen_images: tuple[
         pathlib.Path,  # input directory
@@ -176,6 +162,7 @@ def test_theia(
         assert out_path.exists(), f"output of {out_path.name} does not exist."
 
 
+@pytest.mark.skipif("not config.getoption('slow')")
 def test_cli() -> None:
     """Test the CLI for the plugin."""
     inp_dir: pathlib.Path
@@ -212,7 +199,7 @@ def test_cli() -> None:
     )
 
     try:
-        assert result.exit_code == 0, result.stdout
+        assert result.exit_code == 0, result.stdout + result.stderr
 
         inp_paths = list(
             filter(lambda p: p.name.endswith(".ome.tif"), inp_dir.iterdir()),

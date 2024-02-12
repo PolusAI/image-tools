@@ -25,18 +25,18 @@ jobs:
       - name: Find tools
         id: set-matrix
         run: |
-          # Initialize variables
-
           # List of directories to ignore
           ignored_dirs="polus-python-template ftl-label .venv"
           # List of tools that are too slow to test
-          slow_tools="k-means-clustering pixel-segmentation-eval mesmer-inference mesmer-training theia"
+          slow_tools="k-means-clustering"
           # List of tools that are broken for known reasons
-          broken_tools="binary-operations basic-flatfield-estimation theia"
+          broken_tools="binary-operations basic-flatfield-estimation"
           # List of tools that are broken for unknown reasons
-          unknown_broken_tools="image-calculator apply-flatfield precompute-slide"
+          unknown_broken_tools=""
 
+          # Initialize variables
           ignored_dirs="$ignored_dirs $slow_tools $broken_tools $unknown_broken_tools"
+          ignored_dirs=$(echo $ignored_dirs | xargs)
           tool_dirs=""
 
           # Get all directories in the current directory
@@ -81,70 +81,3 @@ jobs:
 
           # Set the output
           echo "matrix=$( echo "$tools_json" )" >> $GITHUB_OUTPUT
-
-  # pre-tests:
-  #   name: Pre-update Tests | ${{ matrix.tool_name }}
-  #   runs-on: ubuntu-latest
-  #   needs: find-tools
-  #   strategy:
-  #     fail-fast: false
-  #     matrix: ${{fromJson(needs.find-tools.outputs.matrix)}}
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #       with:
-  #         repository: 'nishaq503/image-tools'
-  #         ref: 'master'
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: '3.9'
-  #     - name: Install Poetry
-  #       uses: abatilo/actions-poetry@v2
-  #     - name: Install | ${{ matrix.tool_name }}
-  #       run: |
-  #         cd ${{ matrix.tool_dir }}
-  #         poetry install
-  #     - name: Pre-Update Test
-  #       run: |
-  #         cd ${{ matrix.tool_dir }}
-  #         poetry run pytest -v
-
-  # post-tests:
-  #   name: Post-Update Tests | ${{ matrix.tool_name }}
-  #   runs-on: ubuntu-latest
-  #   needs: find-tools
-  #   strategy:
-  #     fail-fast: false
-  #     matrix: ${{fromJson(needs.find-tools.outputs.matrix)}}
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #       with:
-  #         repository: 'nishaq503/image-tools'
-  #         ref: 'master'
-  #     - name: Install | Python
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: '3.9'
-  #     - name: Install | Poetry
-  #       uses: abatilo/actions-poetry@v2
-  #     - name: Download | Filepattern PR ${{ inputs.pr-number }}
-  #       uses: dawidd6/action-download-artifact@v3
-  #       with:
-  #         repo: ${{ inputs.repo }}
-  #         pr: ${{ inputs.pr-number }}
-  #         workflow: 'build_wheels.yml'
-  #         github_token: ${{ secrets.GITHUB_TOKEN }}
-  #         path: 'dist'
-  #         workflow_conclusion: ''
-  #     - name: Install | ${{ matrix.tool_name }}
-  #       run: |
-  #         root_dir=$(pwd)
-  #         cd ${{ matrix.tool_dir }}
-  #         poetry install
-  #         pip install --find-links=${root_dir}/dist/filepattern-wheels filepattern
-  #     - name: Post-Update Test
-  #       run: |
-  #         cd ${{ matrix.tool_dir }}
-  #         poetry run pytest -v
