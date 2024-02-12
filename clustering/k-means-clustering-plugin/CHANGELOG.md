@@ -1,4 +1,4 @@
-# K-Means Clustering(0.3.4-dev0)
+# K-Means Clustering(0.3.4-dev1)
 
 1. This plugin is updated only to the new plugin standards
 2. Before plugin support only `.csv` as an input files supported  `.csv` and `.feather` file formats. Now this plugin support other vaex supported file formats both as inputs and outputs.
