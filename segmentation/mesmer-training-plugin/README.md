@@ -1,4 +1,4 @@
-# MESMER Training(v0.0.6-dev)
+# MESMER Training(v0.0.6-dev0)
 
 This WIPP Plugin trains PanopticNet using MESMER Pipeline.
 
