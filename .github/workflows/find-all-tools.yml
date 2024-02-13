@@ -20,7 +20,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          repository: 'nishaq503/image-tools'
+          repository: 'polusai/image-tools'
           ref: 'master'
       - name: Find tools
         id: set-matrix
