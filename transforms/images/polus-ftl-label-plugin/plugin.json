@@ -1,6 +1,6 @@
 {
     "name": "FTL Label",
-    "version": "0.3.12-dev0",
+    "version": "0.3.12-dev1",
     "title": "FTL Label",
     "description": "Label objects in a 2d or 3d binary image.",
     "author": "Nick Schaub (nick.schaub@nih.gov), Najib Ishaq (najib.ishaq@axleinfo.com)",
@@ -8,11 +8,10 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "polusai/ftl-label-plugin:0.3.12-dev0",
+    "containerId": "polusai/ftl-label-plugin:0.3.12-dev1",
     "baseCommand": [
       "python3",
-      "-m",
-      "polus.plugins.transforms.images.montage"
+      "main.py"
     ],
     "inputs": [
         {
