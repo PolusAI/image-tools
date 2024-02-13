@@ -19,7 +19,7 @@ FROM tensorflow/tensorflow:2.12.0-gpu
 RUN apt update && \
     apt install software-properties-common -y && \
     add-apt-repository ppa:deadsnakes/ppa && \
-    apt install python3.9 python3.9-distutils curl -y && \
+    apt install python3.9 python3.9-distutils curl git maven openjdk-8-jre -y && \
     curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
     python3.9 get-pip.py && \
     apt autoremove -y && \

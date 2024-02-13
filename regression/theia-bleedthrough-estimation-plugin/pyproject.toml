@@ -11,7 +11,7 @@ packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12,!=3.9.7"
-bfio = {version = "^2.3.5", extras = ["all"]}
+bfio = {version = "^2.3.6", extras = ["all"]}
 numpy = "^1.23.2"
 theia-py = {git = "https://github.com/nishaq503/theia.git"}
 # theia-py = "0.1.3"
