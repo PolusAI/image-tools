@@ -45,5 +45,5 @@ ENV POLUS_LOG="INFO"
 
 RUN ls -la ${EXEC_DIR}
 
-ENTRYPOINT [ "python3", "main.py", "--help" ]
+ENTRYPOINT ["python3", "main.py"]
 CMD ["--help"]
