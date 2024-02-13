@@ -69,9 +69,6 @@ jobs:
           python-version: '3.9'
       - name: Install Poetry
         uses: abatilo/actions-poetry@v2
-      - name: Install pre-commit
-        run: |
-          pip install pre-commit
       - name: Run tests
         run: |
           package_dir=${{ matrix.package_dir }}
