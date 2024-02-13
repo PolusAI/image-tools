@@ -1,4 +1,4 @@
-# Apply Flatfield Plugin (2.0.0-dev9)
+# Apply Flatfield Plugin (v2.0.0-dev9)
 
 This WIPP plugin applies a flatfield operation on every image in a collection.
 The algorithm used to apply the flatfield is as follows:
