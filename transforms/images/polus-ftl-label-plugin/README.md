@@ -1,4 +1,4 @@
-# FTL Label
+# FTL Label (v0.3.12-dev0)
 
 This plugin performs a transformation on binary images which, in a certain limiting case, can be thought of as segmentation.
 
@@ -24,9 +24,10 @@ However, most of the bottleneck is in the interface between `Python` and `Rust`.
 The Rust implementation works with 2d and 3d images.
 
 To see detailed documentation for the `Rust` implementation you need to:
- * Install [Rust](https://doc.rust-lang.org/stable/book/ch01-01-installation.html),
- * add Cargo to your `PATH`, and
- * run from the terminal (in this directory): `cargo doc --open`.
+
+* Install [Rust](https://doc.rust-lang.org/stable/book/ch01-01-installation.html),
+* add Cargo to your `PATH`, and
+* run from the terminal (in this directory): `cargo doc --open`.
 
 That last command will generate documentation and open a new tab in your default web browser.
 
@@ -39,6 +40,7 @@ For more information on WIPP, visit the
 ## To do
 
 The following optimizations should be added to increase the speed or decrease the memory used by the plugin.
+
 1. Implement existing specialized C++ methods that accelerate the run length encoding operation by a factor of 5-10
 
 ## Building
@@ -54,13 +56,15 @@ Paste the contents of `plugin.json` into the pop-up window and submit.
 
 This plugin takes one input argument and one output argument:
 
-| Name             | Description                                           | I/O    | Type       |
-|------------------|-------------------------------------------------------|--------|------------|
-| `--inpDir`       | Input image collection to be processed by this plugin | Input  | collection |
-| `--connectivity` | City block connectivity                               | Input  | number     |
-| `--outDir`       | Output collection                                     | Output | collection |
+| Name                      | Description                                                          | I/O    | Type       |
+| ------------------------- | -------------------------------------------------------------------- | ------ | ---------- |
+| `--inpDir`                | Input image collection to be processed by this plugin                | Input  | collection |
+| `--connectivity`          | City block connectivity                                              | Input  | number     |
+| `--binarizationThreshold` | For images containing probability values. Must be between 0 and 1.0. | Input  | number     |
+| `--outDir`                | Output collection                                                    | Output | collection |
 
 ## Example Code
+
 ```Linux
 # Download some example *.tif files
 wget https://github.com/stardist/stardist/releases/download/0.1.0/dsb2018.zip
@@ -95,7 +99,8 @@ Each new jump must be orthogonal to all previous jumps.
 This means that `connectivity` should have a minimum value of `1` and a maximum value equal to the dimensionality of the images.
 
 SciKit's documentation has a good illustration for 2D:
-```
+
+```text
 1-connectivity     2-connectivity     diagonal connection close-up
 
      [ ]           [ ]  [ ]  [ ]             [ ]

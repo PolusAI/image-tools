@@ -1,6 +1,6 @@
 {
     "name": "FTL Label",
-    "version": "0.3.9",
+    "version": "0.3.12-dev0",
     "title": "FTL Label",
     "description": "Label objects in a 2d or 3d binary image.",
     "author": "Nick Schaub (nick.schaub@nih.gov), Najib Ishaq (najib.ishaq@axleinfo.com)",
@@ -8,7 +8,12 @@
     "repository": "https://github.com/labshare/polus-plugins",
     "website": "https://ncats.nih.gov/preclinical/core/informatics",
     "citation": "",
-    "containerId": "labshare/polus-ftl-label-plugin:0.3.8",
+    "containerId": "polusai/ftl-label-plugin:0.3.12-dev0",
+    "baseCommand": [
+      "python3",
+      "-m",
+      "polus.plugins.transforms.images.montage"
+    ],
     "inputs": [
         {
             "name": "inpDir",
@@ -20,6 +25,12 @@
             "name": "connectivity",
             "type": "number",
             "description": "City block connectivity",
+            "required": true
+        },
+        {
+            "name": "binarizationThreshold",
+            "type": "number",
+            "description": "For images containing probability values. Must be between 0 and 1.0.",
             "required": true
         }
     ],
@@ -40,6 +51,11 @@
             "key": "inputs.connectivity",
             "title": "Connectivity",
             "description": "City block connectivity"
+        },
+        {
+            "key": "inputs.binarizationThreshold",
+            "title": "Binarization Threshold",
+            "description": "For images containing probability values. Must be between 0 and 1.0."
         }
     ]
 }
