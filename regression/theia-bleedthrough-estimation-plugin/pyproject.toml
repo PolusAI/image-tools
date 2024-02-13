@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-regression-theia-bleedthrough-estimation"
-version = "0.5.1-dev0"
+version = "0.5.1-dev1"
 description = ""
 authors = [
     "Nick Schaub <nick.schaub@nih.gov>",
