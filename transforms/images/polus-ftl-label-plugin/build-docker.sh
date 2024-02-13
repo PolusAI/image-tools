@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t labshare/polus-ftl-label-plugin:"${version}"
+docker build . -t polusai/ftl-label-plugin:"${version}"

@@ -39,10 +39,11 @@ RUN pip3 install -r ${EXEC_DIR}/src/requirements.txt --no-cache-dir \
 
 WORKDIR ${EXEC_DIR}/src
 
-# Change to .ome.zarr to save output images as zarr files.
-ENV POLUS_EXT=".ome.tif"
-
-# Change to WARNING for fewer logs, or DEBUG for debugging.
+ENV POLUS_IMG_EXT=".ome.tif"
+ENV POLUS_TAB_EXT=".csv"
 ENV POLUS_LOG="INFO"
 
-ENTRYPOINT ["python3", "/opt/executables/src/main.py"]
+RUN ls -la ${EXEC_DIR}
+
+ENTRYPOINT [ "python3", "main.py", "--help" ]
+CMD ["--help"]

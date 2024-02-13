@@ -22,18 +22,20 @@ logger.setLevel(logging.INFO)
 class PolygonSet:
     """ Uses the Rust implementation to build polygons representing objects and to label them.
     """
-    def __init__(self, connectivity: int):
+    def __init__(self, connectivity: int, bin_thresh: float):
         """ Creates a PolygonSet object to provide a minimal interface with the Rust implementation.
 
         Args:
             connectivity: Determines neighbors among pixels. Must be 1, 2 or 3.
-                          See the README for more details.
+            See the README for more details.
+            bin_thresh: The threshold to use for binarizing the input image.
         """
         if not (1 <= connectivity <= 3):
             raise ValueError(f'connectivity must be 1, 2 or 3. Got {connectivity} instead')
 
         self.__polygon_set: RustPolygonSet = RustPolygonSet(connectivity)
         self.connectivity: int = connectivity
+        self.bin_thresh: float = bin_thresh
         self.metadata = None
         self.num_polygons = 0
 
@@ -89,7 +91,14 @@ class PolygonSet:
                         x_max = min(reader.X, x + tile_size)
 
                         tile = numpy.squeeze(reader[y:y_max, x:x_max, z::z_max, 0, 0])
+                        
+                        # If the image has float values, binarize it using the threshold
+                        if tile.dtype == numpy.float32 or tile.dtype == numpy.float64:
+                            tile = (tile > self.bin_thresh).astype(numpy.uint8)
+
+                        # If the image is not binary, make it binary
                         tile = (tile != 0).astype(numpy.uint8)
+
                         if tile.ndim == 2:
                             tile = tile[numpy.newaxis, :, :]
                         else:

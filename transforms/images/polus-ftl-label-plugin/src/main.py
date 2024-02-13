@@ -52,7 +52,7 @@ def filter_by_size(file_paths: List[Path], size_threshold: int) -> Tuple[List[Pa
             pixel_bytes = 8
         elif dtype == numpy.uint16:
             pixel_bytes = 16
-        elif dtype == numpy.uint32:
+        elif dtype == numpy.uint32 or dtype == numpy.float32:
             pixel_bytes = 32
         else:
             pixel_bytes = 64
@@ -63,13 +63,14 @@ def filter_by_size(file_paths: List[Path], size_threshold: int) -> Tuple[List[Pa
     return small_files, large_files
 
 
-def label_cython(input_path: Path, output_path: Path, connectivity: int):
+def label_cython(input_path: Path, output_path: Path, connectivity: int, bin_thresh: float):
     """ Label the input image and writes labels back out.
 
     Args:
         input_path: Path to input image.
         output_path: Path for output image.
         connectivity: Connectivity kind.
+        bin_thresh: Binarization threshold.
     """
     with ProcessManager.thread() as active_threads:
         with BioReader(
@@ -84,6 +85,10 @@ def label_cython(input_path: Path, output_path: Path, connectivity: int):
             ) as writer:
                 # Load an image and convert to binary
                 image = numpy.squeeze(reader[..., 0, 0])
+
+                # If the image has float values, binarize it using the threshold
+                if image.dtype == numpy.float32 or image.dtype == numpy.float64:
+                    image = (image > bin_thresh).astype(numpy.uint8)
 
                 if not numpy.any(image):
                     writer.dtype = numpy.uint8
@@ -126,6 +131,11 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        '--binarizationThreshold', dest='bin_thresh', type=str, required=True,
+        help='For images containing probability values. Must be between 0 and 1.0.',
+    )
+
+    parser.add_argument(
         '--outDir', dest='outDir', type=str, required=True,
         help='Output collection',
     )
@@ -135,6 +145,10 @@ if __name__ == "__main__":
 
     _connectivity = int(args.connectivity)
     logger.info(f'connectivity = {_connectivity}')
+
+    _bin_thresh = float(args.bin_thresh)
+    assert 0 <= _bin_thresh <= 1, 'bin_thresh must be between 0 and 1'
+    logger.info(f'bin_thresh = {_bin_thresh:.2f}')
 
     _input_dir = Path(args.inpDir).resolve()
     assert _input_dir.exists(), f'{_input_dir } does not exist.'
@@ -174,4 +188,4 @@ if __name__ == "__main__":
     if _large_files:
         for _infile in _large_files:
             _outfile = _output_dir.joinpath(get_output_name(_infile.name))
-            PolygonSet(_connectivity).read_from(_infile).write_to(_outfile)
+            PolygonSet(_connectivity, _bin_thresh).read_from(_infile).write_to(_outfile)
