@@ -136,7 +136,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--connectivity",
         dest="connectivity",
-        type=str,
+        type=int,
         required=True,
         help="City block connectivity, must be less than or equal to the number of dimensions",
     )
@@ -144,7 +144,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--binarizationThreshold",
         dest="bin_thresh",
-        type=str,
+        type=float,
         required=True,
         help="For images containing probability values. Must be between 0 and 1.0.",
     )
