@@ -1,4 +1,4 @@
-# FTL Label (v0.3.12-dev2)
+# FTL Label (v0.3.12-dev3)
 
 This plugin performs a transformation on binary images which, in a certain limiting case, can be thought of as segmentation.
 
