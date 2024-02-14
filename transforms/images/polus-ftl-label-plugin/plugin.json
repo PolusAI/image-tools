@@ -1,60 +1,60 @@
 {
-    "name": "FTL Label",
-    "version": "0.3.12-dev1",
-    "title": "FTL Label",
-    "description": "Label objects in a 2d or 3d binary image.",
-    "author": "Nick Schaub (nick.schaub@nih.gov), Najib Ishaq (najib.ishaq@axleinfo.com)",
-    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-    "repository": "https://github.com/labshare/polus-plugins",
-    "website": "https://ncats.nih.gov/preclinical/core/informatics",
-    "citation": "",
-    "containerId": "polusai/ftl-label-plugin:0.3.12-dev1",
-    "baseCommand": [
-      "python3",
-      "main.py"
-    ],
-    "inputs": [
-        {
-            "name": "inpDir",
-            "type": "collection",
-            "description": "Input image collection to be processed by this plugin",
-            "required": true
-        },
-        {
-            "name": "connectivity",
-            "type": "number",
-            "description": "City block connectivity",
-            "required": true
-        },
-        {
-            "name": "binarizationThreshold",
-            "type": "number",
-            "description": "For images containing probability values. Must be between 0 and 1.0.",
-            "required": true
-        }
-    ],
-    "outputs": [
-        {
-            "name": "outDir",
-            "type": "collection",
-            "description": "Output collection"
-        }
-    ],
-    "ui": [
-        {
-            "key": "inputs.inpDir",
-            "title": "Input collection",
-            "description": "Input image collection to be processed by this plugin"
-        },
-        {
-            "key": "inputs.connectivity",
-            "title": "Connectivity",
-            "description": "City block connectivity"
-        },
-        {
-            "key": "inputs.binarizationThreshold",
-            "title": "Binarization Threshold",
-            "description": "For images containing probability values. Must be between 0 and 1.0."
-        }
-    ]
+  "name": "FTL Label",
+  "version": "0.3.12-dev1",
+  "title": "FTL Label",
+  "description": "Label objects in a 2d or 3d binary image.",
+  "author": "Nick Schaub (nick.schaub@nih.gov), Najib Ishaq (najib.ishaq@axleinfo.com)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/ftl-label-plugin:0.3.12-dev1",
+  "baseCommand": [
+    "python3",
+    "main.py"
+  ],
+  "inputs": [
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Input image collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "connectivity",
+      "type": "number",
+      "description": "City block connectivity",
+      "required": true
+    },
+    {
+      "name": "binarizationThreshold",
+      "type": "number",
+      "description": "For images containing probability values. Must be between 0 and 1.0.",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "Input collection",
+      "description": "Input image collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.connectivity",
+      "title": "Connectivity",
+      "description": "City block connectivity"
+    },
+    {
+      "key": "inputs.binarizationThreshold",
+      "title": "Binarization Threshold",
+      "description": "For images containing probability values. Must be between 0 and 1.0."
+    }
+  ]
 }
