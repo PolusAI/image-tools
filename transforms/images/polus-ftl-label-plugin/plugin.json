@@ -22,13 +22,13 @@
     },
     {
       "name": "connectivity",
-      "type": "number",
+      "type": "integer",
       "description": "City block connectivity",
       "required": true
     },
     {
       "name": "binarizationThreshold",
-      "type": "number",
+      "type": "float",
       "description": "For images containing probability values. Must be between 0 and 1.0.",
       "required": true
     }
