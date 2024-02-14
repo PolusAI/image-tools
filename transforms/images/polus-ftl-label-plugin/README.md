@@ -1,4 +1,4 @@
-# FTL Label (v0.3.12-dev1)
+# FTL Label (v0.3.12-dev2)
 
 This plugin performs a transformation on binary images which, in a certain limiting case, can be thought of as segmentation.
 
@@ -32,7 +32,7 @@ To see detailed documentation for the `Rust` implementation you need to:
 That last command will generate documentation and open a new tab in your default web browser.
 
 We determine whether to use the `Cython` or `Rust` implementation on a per-image basis depending on the size of that image.
-If we expect the image to occupy less than `500MB` of memory, we use the `Cython` implementation otherwise we use the `Rust` implementation. 
+If we expect the image to occupy less than `500MB` of memory, we use the `Cython` implementation otherwise we use the `Rust` implementation.
 
 For more information on WIPP, visit the
 [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
