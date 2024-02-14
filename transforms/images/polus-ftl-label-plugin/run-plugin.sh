@@ -11,8 +11,8 @@ POLUS_IMG_EXT=".ome.tif"
 
 # Inputs
 inpDir=/data/input-2d
-connectivity="1"
-binarizationThreshold="0.5"
+connectivity=1
+binarizationThreshold=0.5
 
 # Output paths
 outDir=/data/output
