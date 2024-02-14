@@ -12,8 +12,9 @@ import numpy as np
 import pandas as pd
 import scipy.stats
 import vaex
-from polus.plugins.features.feature_segmentation_eval.metrics import evaluate_all
 from scipy.spatial import distance
+
+from .metrics import evaluate_all
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

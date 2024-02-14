@@ -6,8 +6,8 @@ import warnings
 
 import numpy
 import scipy.ndimage
-from polus.plugins.formats.label_to_vector.dynamics import common
-from polus.plugins.formats.label_to_vector.utils import helpers as l2v_helpers
+from polus.images.formats.label_to_vector.dynamics import common
+from polus.images.formats.label_to_vector.utils import helpers as l2v_helpers
 
 logger = l2v_helpers.make_logger(__file__)
 

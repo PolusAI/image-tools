@@ -11,7 +11,7 @@ from bfio import BioReader, BioWriter
 from filepattern import FilePattern
 from preadator import ProcessManager
 
-from polus.plugins.transforms.images.binary_operations.utils import (
+from .utils import (
     TileTuple,
     blackhat,
     close_,

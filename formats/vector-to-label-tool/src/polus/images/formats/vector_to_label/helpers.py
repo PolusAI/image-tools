@@ -6,7 +6,7 @@ import typing
 
 import bfio
 import numpy
-from polus.plugins.formats.label_to_vector.utils import constants
+from polus.images.formats.label_to_vector.utils import constants
 
 
 def init_zarr_file(

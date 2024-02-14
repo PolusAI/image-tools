@@ -7,7 +7,8 @@ from typing import Union
 
 import vaex
 from nyxus import Nyxus
-from polus.plugins.features.nyxus_plugin.utils import Extension
+
+from .utils import Extension
 
 logger = logging.getLogger(__name__)
 

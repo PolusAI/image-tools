@@ -11,8 +11,7 @@ import vaex
 from sklearn.cluster import KMeans
 from sklearn.metrics import calinski_harabasz_score, davies_bouldin_score
 
-
-from polus.plugins.clustering.k_means.utils import Methods
+from .utils import Methods
 
 # Initialize the logger
 logging.basicConfig(
