@@ -10,15 +10,9 @@ from typing import Dict, Optional, Union
 import numpy as np
 import vaex
 
-from polus.plugins.transforms.tabular.tabular_thresholding.thresholding import (  # noqa
-    custom_fpr as custom_fpr,
-)
-from polus.plugins.transforms.tabular.tabular_thresholding.thresholding import (  # noqa
-    n_sigma as n_sigma,
-)
-from polus.plugins.transforms.tabular.tabular_thresholding.thresholding import (  # noqa
-    otsu as otsu,
-)
+from .thresholding import custom_fpr
+from.thresholding import n_sigma
+from .thresholding import otsu
 
 logger = logging.getLogger(__name__)
 

@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Tuple, Union
 from bfio import BioReader
 from filepattern import FilePattern
 
-from polus.plugins.transforms.images.montage.utils import (
+from .utils import (
     DictWriter,
     VectorWriter,
     subpattern,
