@@ -1,0 +1,96 @@
+{
+  "name": "Tabular To Microjson",
+  "version": "0.1.2-dev0",
+  "containerId": "polusai/tabular-to-microjson-tool:0.1.2-dev0",
+  "title": "Tabular To Microjson",
+  "description": "Generates JSON from tabular data.",
+  "author": "Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/PolusAI/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.images.visualization.tabular_to_microjson"
+  ],
+  "inputs": [
+    {
+      "name": "inpDir",
+      "description": "Path to the input directory containing tabular data",
+      "type": "genericData",
+      "required": true
+    },
+    {
+      "name": "stitchDir",
+      "description": "Path to the input directory containing stitching vector",
+      "type": "genericData",
+      "required": true
+    },
+    {
+      "name": "filePattern",
+      "description": "A filepattern, used to select tabular data to be converted",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "stitchPattern",
+      "description": "A filepattern, used to parse filenames in stitching vector",
+      "type": "string",
+      "required": true
+    },
+    {
+      "name": "groupBy",
+      "description": "Variable to group filenames in stitching vector",
+      "type": "string",
+      "required": false
+    },
+    {
+      "name": "geometryType",
+      "description": "Type of geometry coordinates",
+      "type": "string",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "description": "Path to the output directory",
+      "type": "genericData"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "Input generic collection",
+      "description": "Input generic data collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.stitchDir",
+      "title": "Input stitchDir",
+      "description": "Input directory containing stitching vector"
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "Filepattern",
+      "description": "A filepattern, used to select tabular data",
+      "default": ".+"
+    },
+    {
+      "key": "inputs.stitchPattern",
+      "title": "stitchPattern",
+      "description": "A filepattern, used to parse filenames in stitching vector"
+    },
+    {
+      "key": "inputs.groupBy",
+      "title": "groupBy",
+      "description": "Variable to group filenames in stitching vector"
+    },
+    {
+      "key": "inputs.geometryType",
+      "title": "geometryType",
+      "description": "Type of geometry coordinates",
+      "default": "Polygon"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "polus-images-regression-theia-bleedthrough-estimation"
+version = "0.5.2-dev0"
+description = ""
+authors = [
+    "Nick Schaub <nick.schaub@nih.gov>",
+    "Najib Ishaq <najib.ishaq@nih.gov>",
+]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12,!=3.9.7"
+bfio = {version = "^2.3.6", extras = ["all"]}
+numpy = "^1.23.2"
+theia-py = {git = "https://github.com/nishaq503/theia.git"}
+# theia-py = "0.1.3"
+filepattern = "^2.0.4"
+tqdm = "^4.65.0"
+typer = { version = "^0.7.0", extras = ["all"] }
+scipy = "^1.9.0"
+preadator = {version = "^0.4.0.dev2", allow-prereleases = true}
+
+[tool.poetry.group.dev.dependencies]
+bump2version = "^1.0.1"
+pre-commit = "^3.0.4"
+pytest = "^7.2.1"
+pytest-cov = "^4.0.0"
+pytest-sugar = "^0.9.6"
+pytest-xdist = "^3.2.0"
+scikit-image = "^0.19.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# scipy restricts us to the most recently released version of Python, i.e. <3.12 as of 23rd August 2023.
+# See [here](https://github.com/scipy/scipy/blob/ace5787b8e5d28cc5e3ad7594d287ea47a249b46/pyproject.toml#L1-L4)
+# for more information.
+
+# streamlit is not compatible with Python 3.9.7. See [here](https://github.com/streamlit/streamlit/blob/c0378a39b1ded984b7668a4a58fbe0fba04a2c20/lib/setup.py#L147-L150)

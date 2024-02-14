@@ -1,0 +1,34 @@
+[tool.poetry]
+name = "polus-images-transforms-tabular-tabular-merger"
+version = "0.1.2-dev0"
+description = "Merge vaex supported tabular file format into a single merged file."
+authors = [
+"Nick Schaub <nick.schaub@nih.gov>",
+"Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>"
+]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9"
+filepattern = "^2.0.0"
+typer = "^0.7.0"
+blake3 = "^0.3.3"
+llvmlite = "^0.39.1"
+fastapi = "^0.92.0"
+astropy = "5.2.1"
+vaex = "^4.17.0"
+tqdm = "^4.65.0"
+
+
+[tool.poetry.group.dev.dependencies]
+bump2version = "^1.0.1"
+pre-commit = "^3.1.0"
+black = "^23.1.0"
+flake8 = "^6.0.0"
+mypy = "^1.0.1"
+pytest = "^7.2.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
