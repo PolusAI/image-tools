@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-clustering-outlier-removal"
-version = "0.2.6-dev"
+version = "0.2.6-dev0"
 description = "Remove outliers from the data."
 authors = [
            "Jayapriya Nagarajan <jayapriya.nagarajan@axleinfo.com>",
