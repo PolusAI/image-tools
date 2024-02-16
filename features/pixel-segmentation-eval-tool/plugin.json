@@ -8,7 +8,7 @@
   "repository": "https://github.com/polusai/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/pixel-segmentation-eval:0.1.12-dev0",
+  "containerId": "polusai/pixel-segmentation-eval-tool:0.1.12-dev0",
   "baseCommand": [
     "python3",
     "-m",

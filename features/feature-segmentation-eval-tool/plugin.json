@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/feature-segmentation-eval:0.2.6-dev0",
+  "containerId": "polusai/feature-segmentation-eval-tool:0.2.6-dev0",
   "baseCommand": [
     "python3",
     "-m",

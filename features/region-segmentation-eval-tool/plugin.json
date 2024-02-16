@@ -8,7 +8,7 @@
   "repository": "https://github.com/polusai/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/region-segmentation-eval:0.2.5-dev0",
+  "containerId": "polusai/region-segmentation-eval-tool:0.2.5-dev0",
   "baseCommand": [
     "python3",
     "-m",
