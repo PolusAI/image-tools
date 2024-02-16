@@ -1,16 +1,16 @@
 """K_means clustering."""
 import json
-import os
 import logging
 import multiprocessing
+import os
 import pathlib
 from functools import partial
 from multiprocessing import cpu_count
-from typing import Any, Optional
+from typing import Any
+from typing import Optional
 
 import filepattern as fp
 import typer
-
 from polus.plugins.clustering.k_means import k_means as km
 
 # Initialize the logger
@@ -28,10 +28,14 @@ app = typer.Typer()
 @app.command()
 def main(
     inp_dir: pathlib.Path = typer.Option(
-        ..., "--inpDir", help="Input collection-Data need to be clustered"
+        ...,
+        "--inpDir",
+        help="Input collection-Data need to be clustered",
     ),
     file_pattern: str = typer.Option(
-       ".+", "--filePattern", help="pattern to parse tabular files"
+        ".+",
+        "--filePattern",
+        help="pattern to parse tabular files",
     ),
     methods: km.Methods = typer.Option(
         km.Methods.Default,
@@ -39,10 +43,14 @@ def main(
         help="Select Manual or Elbow or Calinski Harabasz or Davies Bouldin method",
     ),
     minimum_range: int = typer.Option(
-        ..., "--minimumRange", help="Enter minimum k-value"
+        ...,
+        "--minimumRange",
+        help="Enter minimum k-value",
     ),
     maximum_range: int = typer.Option(
-        ..., "--maximumRange", help="Enter maximum k-value"
+        ...,
+        "--maximumRange",
+        help="Enter maximum k-value",
     ),
     num_of_clus: int = typer.Option(..., "--numOfClus", help="Number of clusters"),
     out_dir: pathlib.Path = typer.Option(..., "--outDir", help="Output collection"),
@@ -62,7 +70,10 @@ def main(
 
     assert inp_dir.exists(), f"{inp_dir} doesnot exist!! Please check input path again"
     assert out_dir.exists(), f"{out_dir} doesnot exist!! Please check output path again"
-    assert file_pattern in [".csv", ".arrow"], f"{file_pattern} tabular files are not supported by this plugin"
+    assert file_pattern in [
+        ".csv",
+        ".arrow",
+    ], f"{file_pattern} tabular files are not supported by this plugin"
 
     num_threads = max([cpu_count(), 2])
 
@@ -71,7 +82,8 @@ def main(
     print(pattern)
 
     if not fps:
-        raise ValueError(f"No {file_pattern} files found.")
+        msg = f"No {file_pattern} files found."
+        raise ValueError(msg)
 
     if preview:
         with open(pathlib.Path(out_dir, "preview.json"), "w") as jfile:
@@ -79,12 +91,12 @@ def main(
                 "filepattern": pattern,
                 "outDir": [],
             }
-            for file in fps:
+            for file in fps():
                 out_name = str(file[1][0].stem) + POLUS_TAB_EXT
                 out_json["outDir"].append(out_name)
             json.dump(out_json, jfile, indent=2)
 
-    flist = [f[1][0] for f in fps]
+    flist = [f[1][0] for f in fps()]
 
     with multiprocessing.Pool(processes=num_threads) as executor:
         executor.map(

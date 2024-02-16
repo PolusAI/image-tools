@@ -1,7 +1,6 @@
 """Selector base class for Theia Bleedthrough Estimation plugin."""
 
 import abc
-import concurrent.futures
 import operator
 import pathlib
 
@@ -68,18 +67,19 @@ class Selector(abc.ABC):
 
         This method must be called before using the `selected_tiles` property.
         """
-        with concurrent.futures.ProcessPoolExecutor(
-            max_workers=constants.NUM_THREADS,
-        ) as executor:
-            futures: list[concurrent.futures.Future[tuple[ScoresDict, int, int]]] = [
-                executor.submit(self._score_tiles_thread, file_path)
-                for file_path in self.__files
-            ]
-            for future in futures:
-                score, image_min, image_max = future.result()
-                self.__scores.append(score)
-                self.__image_mins.append(image_min)
-                self.__image_maxs.append(image_max)
+        # with preadator.ProcessManager(
+        # ) as executor:
+        #     futures: list[concurrent.futures.Future[tuple[ScoresDict, int, int]]] = [
+        #         for i, file_path in enumerate(self.__files)
+        #     for future in concurrent.futures.as_completed(futures):
+
+        # for _, (score, image_min, image_max) in results:
+
+        for file_path in self.__files:
+            score, image_min, image_max, _ = self._score_tiles_thread(file_path, 0)
+            self.__scores.append(score)
+            self.__image_mins.append(image_min)
+            self.__image_maxs.append(image_max)
 
         self.__selected_tiles = self._select_best_tiles()
 
@@ -105,27 +105,30 @@ class Selector(abc.ABC):
     def _score_tiles_thread(
         self,
         file_path: pathlib.Path,
-    ) -> tuple[ScoresDict, int, int]:
+        index: int,
+    ) -> tuple[ScoresDict, int, int, int]:
         """This method runs in a single thread and scores all tiles for a single file.
 
         Args:
             file_path: Path to image for which the tiles need to be scored.
+            index: Index of the file in the list of files. This is used to keep track
+            of the thread's return order.
 
         Returns:
             A Dictionary of tile-scores.
         """
         with bfio.BioReader(file_path, max_workers=constants.NUM_THREADS) as reader:
             scores_dict: ScoresDict = {}
-            logger.info(f"Ranking tiles in {file_path.name}...")
+            logger.debug(f"Ranking tiles in {file_path.name}...")
             num_tiles = helpers.count_tiles_2d(reader)
-            image_min = numpy.iinfo(reader.dtype).max
-            image_max = -numpy.iinfo(reader.dtype).min
+            image_min = numpy.Infinity
+            image_max = numpy.NINF
 
             for i, (_, y_min, y_max, x_min, x_max) in enumerate(
                 helpers.tile_indices_2d(reader),
             ):
                 if i % 10 == 0:
-                    logger.info(
+                    logger.debug(
                         f"Ranking tiles in {file_path.name}. "
                         f"Progress {100 * i / num_tiles:6.2f} %",
                     )
@@ -145,7 +148,7 @@ class Selector(abc.ABC):
                 image_min = numpy.min(tile[tile > 0], initial=image_min)
                 image_max = numpy.max(tile, initial=image_max)
 
-        return scores_dict, image_min, image_max
+        return scores_dict, image_min, image_max, index
 
     def _select_best_tiles(self) -> TileIndices:
         """Sort the tiles by their scores and select the best few from each channel.

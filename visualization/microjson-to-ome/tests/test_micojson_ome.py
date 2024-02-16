@@ -1,12 +1,17 @@
 """Test Micojson to Ome."""
+import shutil
 from pathlib import Path
 
 import numpy as np
 from bfio import BioReader
 from polus.plugins.visualization.microjson_to_ome.microjson_ome import MicrojsonOmeModel
 
-from tests.fixture import *  # noqa: F403
-from tests.fixture import clean_directories
+
+def clean_directories() -> None:
+    """Remove all temporary directories."""
+    for d in Path(".").cwd().iterdir():
+        if d.is_dir() and d.name.startswith("tmp"):
+            shutil.rmtree(d)
 
 
 def test_microjsonomemodel(generate_jsondata: Path, output_directory: Path) -> None:

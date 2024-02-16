@@ -12,14 +12,13 @@ import pandas as pd
 import pytest
 import vaex
 from astropy.table import Table
-
 from polus.plugins.formats.tabular_converter import tabular_converter as tc
 
 
 class Generatedata:
     """Generate tabular data with several different file format."""
 
-    def __init__(self, file_pattern: str):
+    def __init__(self, file_pattern: str) -> None:
         """Define instance attributes."""
         self.dirpath = pathlib.Path.cwd()
         self.inp_dir = tempfile.mkdtemp(dir=self.dirpath)
@@ -37,15 +36,13 @@ class Generatedata:
 
     def create_dataframe(self) -> pd.core.frame.DataFrame:
         """Create Pandas dataframe."""
-        df = pd.DataFrame(
+        return pd.DataFrame(
             {
                 "A": [random.choice(string.ascii_letters) for i in range(100)],
                 "B": np.random.randint(low=1, high=100, size=100),
                 "C": np.random.normal(0.0, 1.0, size=100),
-            }
+            },
         )
-
-        return df
 
     def fits_func(self) -> None:
         """Convert pandas dataframe to fits file format."""
@@ -64,7 +61,9 @@ class Generatedata:
     def parquet_func(self) -> None:
         """Convert pandas dataframe to parquet file format."""
         self.x.to_parquet(
-            pathlib.Path(self.inp_dir, "data.parquet"), engine="auto", compression=None
+            pathlib.Path(self.inp_dir, "data.parquet"),
+            engine="auto",
+            compression=None,
         )
 
     def feather_func(self) -> None:
@@ -116,37 +115,33 @@ def test_tabular_coverter(poly):
         if i not in [".fcs", ".arrow"]:
             d = Generatedata(i)
             d()
-            pattern = "".join([".*", i])
+            pattern = f".*{i}"
             fps = fp.FilePattern(d.get_inp_dir(), pattern)
-            for file in fps:
+            for file in fps():
                 print(file)
                 tab = tc.ConvertTabular(file[1][0], ".arrow", d.get_out_dir())
                 tab.df_to_arrow()
 
                 assert (
                     all(
-                        [
-                            file[1][0].suffix
-                            for file in fp.FilePattern(d.get_out_dir(), ".arrow")
-                        ]
+                        file[1][0].suffix
+                        for file in fp.FilePattern(d.get_out_dir(), ".arrow")
                     )
                     is True
                 )
         elif i == ".fcs":
             d = Generatedata(".fcs")
             d()
-            pattern = "".join([".*", i])
+            pattern = f".*{i}"
             fps = fp.FilePattern(d.get_inp_dir(), pattern)
-            for file in fps:
+            for file in fps():
                 tab = tc.ConvertTabular(file[1][0], ".arrow", d.get_out_dir())
                 tab.fcs_to_arrow()
 
             assert (
                 all(
-                    [
-                        file[1][0].suffix
-                        for file in fp.FilePattern(d.get_out_dir(), ".arrow")
-                    ]
+                    file[1][0].suffix
+                    for file in fp.FilePattern(d.get_out_dir(), ".arrow")
                 )
                 is True
             )
@@ -154,7 +149,7 @@ def test_tabular_coverter(poly):
         elif i == ".arrow":
             d = Generatedata(".arrow")
             d()
-            pattern = "".join([".*", i])
+            pattern = f".*{i}"
             fps = fp.FilePattern(d.get_inp_dir(), pattern)
             extension_list = [
                 ".feather",
@@ -163,16 +158,14 @@ def test_tabular_coverter(poly):
                 ".parquet",
             ]
             for ext in extension_list:
-                for file in fps:
+                for file in fps():
                     tab = tc.ConvertTabular(file[1][0], ext, d.get_out_dir())
                     tab.arrow_to_tabular()
 
                 assert (
                     all(
-                        [
-                            file[1][0].suffix
-                            for file in fp.FilePattern(d.get_out_dir(), ext)
-                        ]
+                        file[1][0].suffix
+                        for file in fp.FilePattern(d.get_out_dir(), ext)
                     )
                     is True
                 )

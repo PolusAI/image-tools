@@ -2,16 +2,22 @@
 import ast
 import enum
 import json
+import shutil
 from pathlib import Path
 
+import pytest
 from bfio import BioReader
 from memory_profiler import profile
 from polus.plugins.visualization.ome_to_microjson.ome_microjson import OmeMicrojsonModel
 from polus.plugins.visualization.ome_to_microjson.ome_microjson import PolygonType
 from skimage import morphology
 
-from tests.fixture import *  # noqa: F403
-from tests.fixture import clean_directories
+
+def clean_directories() -> None:
+    """Remove all temporary directories."""
+    for d in Path(".").cwd().iterdir():
+        if d.is_dir() and d.name.startswith("tmp"):
+            shutil.rmtree(d)
 
 
 def test_rectangular_polygons(synthetic_images: Path, output_directory: Path) -> None:
@@ -131,7 +137,7 @@ def test_polygons_to_microjson(
 fp = open("ome_microjson.log", "w+")  # noqa: PTH123 SIM115
 
 
-@pytest.mark.slow()  # noqa: F405
+@pytest.mark.skipif("not config.getoption('slow')")
 @profile(stream=fp)
 def test_memory_profiling(
     large_synthetic_images: tuple[Path, int],

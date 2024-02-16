@@ -2,7 +2,6 @@
 
 Set up all data used in tests.
 """
-import shutil
 import tempfile
 from pathlib import Path
 from typing import Union
@@ -17,11 +16,15 @@ TILE_SIZE = 1024
 max_unique_labels = 2
 
 
-def clean_directories() -> None:
-    """Remove all temporary directories."""
-    for d in Path(".").cwd().iterdir():
-        if d.is_dir() and d.name.startswith("tmp"):
-            shutil.rmtree(d)
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Add options to pytest."""
+    parser.addoption(
+        "--slow",
+        action="store_true",
+        dest="slow",
+        default=False,
+        help="run slow tests",
+    )
 
 
 @pytest.fixture()

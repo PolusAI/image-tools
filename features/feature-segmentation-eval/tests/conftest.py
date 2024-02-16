@@ -2,7 +2,6 @@
 
 Set up all data used in tests.
 """
-import shutil
 import tempfile
 from pathlib import Path
 from typing import Union
@@ -10,13 +9,6 @@ from typing import Union
 import numpy as np
 import pandas as pd
 import pytest
-
-
-def clean_directories() -> None:
-    """Remove all temporary directories."""
-    for d in Path(".").cwd().iterdir():
-        if d.is_dir() and d.name.startswith("tmp"):
-            shutil.rmtree(d)
 
 
 @pytest.fixture()

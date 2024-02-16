@@ -13,14 +13,13 @@ import pandas as pd
 import pytest
 import vaex
 from astropy.table import Table
-
 from polus.plugins.formats.tabular_to_arrow import tabular_arrow_converter as tb
 
 
 class Generatedata:
     """Generate tabular data with several different file format."""
 
-    def __init__(self, file_pattern: str):
+    def __init__(self, file_pattern: str) -> None:
         """Define instance attributes."""
         self.dirpath = os.path.abspath(os.path.join(__file__, "../.."))
         self.inp_dir = pathlib.Path(self.dirpath, "data/input")
@@ -42,20 +41,18 @@ class Generatedata:
 
     def create_dataframe(self) -> pd.core.frame.DataFrame:
         """Create Pandas dataframe."""
-        df = pd.DataFrame(
+        return pd.DataFrame(
             {
                 "A": [random.choice(string.ascii_letters) for i in range(100)],
                 "B": np.random.randint(low=1, high=100, size=100),
                 "C": np.random.normal(0.0, 1.0, size=100),
-            }
+            },
         )
-
-        return df
 
     def fits_func(self) -> None:
         """Convert pandas dataframe to fits file format."""
         ft = Table.from_pandas(self.x)
-        ft.write(pathlib.Path(self.inp_dir, "data.fits"))
+        ft.write(pathlib.Path(self.inp_dir, "data.fits"), overwrite=True)
 
     def fcs_func(self) -> None:
         """Get the test example of fcs data."""
@@ -69,7 +66,9 @@ class Generatedata:
     def parquet_func(self) -> None:
         """Convert pandas dataframe to parquet file format."""
         self.x.to_parquet(
-            pathlib.Path(self.inp_dir, "data.parquet"), engine="auto", compression=None
+            pathlib.Path(self.inp_dir, "data.parquet"),
+            engine="auto",
+            compression=None,
         )
 
     def feather_func(self) -> None:
@@ -110,34 +109,30 @@ def test_tabular_to_arrow(poly):
         if i != ".fcs":
             d = Generatedata(i)
             d()
-            file_pattern = "".join([".*", i])
+            file_pattern = f".*{i}"
             fps = fp.FilePattern(d.get_inp_dir(), file_pattern)
-            for file in fps:
+            for file in fps():
                 tb.df_to_arrow(file[1][0], file_pattern, d.get_out_dir())
 
             assert (
                 all(
-                    [
-                        file[1][0].suffix
-                        for file in fp.FilePattern(d.get_out_dir(), ".arrow")
-                    ]
+                    file[1][0].suffix
+                    for file in fp.FilePattern(d.get_out_dir(), ".arrow")
                 )
                 is True
             )
         else:
             d = Generatedata(".fcs")
             d()
-            file_pattern = "".join([".*", ".fcs"])
+            file_pattern = ".*.fcs"
             fps = fp.FilePattern(d.get_out_dir(), file_pattern)
-            for file in fps:
+            for file in fps():
                 tb.fcs_to_arrow(file[1][0], d.get_out_dir())
 
             assert (
                 all(
-                    [
-                        file[1][0].suffix
-                        for file in fp.FilePattern(d.get_out_dir(), ".arrow")
-                    ]
+                    file[1][0].suffix
+                    for file in fp.FilePattern(d.get_out_dir(), ".arrow")
                 )
                 is True
             )

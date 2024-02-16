@@ -1,4 +1,4 @@
 #!/bin/bash
 
 version=$(<VERSION)
-docker build . -t polusai/pixel-segmentation-eval:${version}
+docker build . -t polusai/pixel-segmentation-eval-tool:${version}

@@ -1,12 +1,21 @@
 """Cell border segmentation package."""
-from pathlib import Path
-import numpy as np
-from bfio import BioReader, BioWriter
+import shutil
 from itertools import product
+from pathlib import Path
+
+import numpy as np
 import polus.plugins.segmentation.cell_border_segmentation.segment as zs
+from bfio import BioReader
+from bfio import BioWriter
 from tensorflow import keras
-from tests.fixture import *  # noqa: F403
-from tests.fixture import clean_directories
+
+
+def clean_directories() -> None:
+    """Remove all temporary directories."""
+    for d in Path(".").cwd().iterdir():
+        if d.is_dir() and d.name.startswith("tmp"):
+            shutil.rmtree(d)
+
 
 modelpath = next(Path(__file__).parent.parent.joinpath("src").rglob("cnn"))
 model = keras.models.load_model(modelpath)
@@ -24,13 +33,13 @@ def test_segment_image(download_data: Path, output_directory: Path) -> None:
 
 def test_segment_patch(download_data: Path, output_directory: Path) -> None:
     for im in download_data.iterdir():
-        with BioReader(im) as br:
-            with BioWriter(
-                output_directory.joinpath(Path(im).name), metadata=br.metadata
-            ) as bw:
-                bw.dtype = np.uint8
-                for xt, yt in product(range(0, br.X, 1024), range(0, br.Y, 1024)):
-                    zs.segment_patch(model, xt, yt, br, bw)
+        with BioReader(im) as br, BioWriter(
+            output_directory.joinpath(Path(im).name),
+            metadata=br.metadata,
+        ) as bw:
+            bw.dtype = np.uint8
+            for xt, yt in product(range(0, br.X, 1024), range(0, br.Y, 1024)):
+                zs.segment_patch(model, xt, yt, br, bw)
     for file in Path(output_directory).iterdir():
         br = BioReader(file)
         seg_image = br.read()

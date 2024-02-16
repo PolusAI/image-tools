@@ -1,6 +1,4 @@
 """Tabular Merger."""
-__version__ = "0.1.0"
+__version__ = "0.1.1-dev0"
 
-from polus.plugins.transforms.tabular.tabular_merger import (  # noqa
-    tabular_merger as tabular_merger,
-)
+from polus.plugins.transforms.tabular.tabular_merger import tabular_merger

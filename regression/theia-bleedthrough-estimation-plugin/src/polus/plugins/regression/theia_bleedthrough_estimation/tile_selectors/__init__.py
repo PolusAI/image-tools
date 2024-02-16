@@ -2,7 +2,6 @@
 
 import enum
 import pathlib
-import typing
 
 import numpy
 import scipy.stats

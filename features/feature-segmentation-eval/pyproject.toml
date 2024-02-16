@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-plugins-features-feature-segmentation-eval"
-version = "0.2.3"
+version = "0.2.5-dev0"
 description = "Feature segmentation eval"
 authors = [
            "Vishakha Goyal <vishakha.goyal@nih.gov>",
@@ -13,7 +13,7 @@ packages = [{include = "polus", from = "src"}]
 python = "^3.9"
 filepattern = "^2.0.1"
 opencv_python = "^4.5.1.48"
-scikit-learn="^0.24.2"
+scikit-learn="^1.4.0"
 pandas = "^1.2.4"
 scipy = "^1.6.2"
 typer = "^0.7.0"

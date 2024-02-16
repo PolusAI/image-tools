@@ -1,6 +1,6 @@
 {
   "name": "Bleed-Through Estimation Plugin",
-  "version": "0.5.0-dev1",
+  "version": "0.5.1-dev1",
   "title": "BleedThroughEstimation",
   "description": "Performs bleed-through estimation for images.",
   "author": "Najib Ishaq (najib.ishaq@nih.gov), Nick Schaub (nick.schaub@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/polusai/polus-plugins/tree/dev/regression",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "https://doi.org/10.1038/s41467-021-21735-x",
-  "containerId": "polusai/bleed-through-estimation-plugin:0.5.0-dev1",
+  "containerId": "polusai/bleed-through-estimation-plugin:0.5.1-dev1",
   "baseCommand": [
     "python3",
     "-m",

@@ -2,7 +2,6 @@
 
 Set up all data used in tests.
 """
-import shutil
 import tempfile
 from io import BytesIO
 from pathlib import Path
@@ -11,13 +10,6 @@ from urllib.request import urlopen
 from zipfile import ZipFile
 
 import pytest
-
-
-def clean_directories() -> None:
-    """Remove all temporary directories."""
-    for d in Path(".").cwd().iterdir():
-        if d.is_dir() and d.name.startswith("tmp"):
-            shutil.rmtree(d)
 
 
 @pytest.fixture()
