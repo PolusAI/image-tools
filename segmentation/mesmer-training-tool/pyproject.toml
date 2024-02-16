@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "polus-images-segmentation-mesmer-training"
+version = "0.0.7-dev0"
+description = ""
+authors = [
+           "Vishakha Goyal <vishakha.goyal@nih.gov>",
+           "Hamdah Shafqat Abbasi <hamdahshafqat.abbasi@nih.gov>"
+           ]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.11"
+filepattern = "2.0.0"
+typer = "0.7.0"
+DeepCell="0.12.5"
+opencv-python-headless="4.7.0.72"
+bfio = {version = "2.1.9", extras = ["all"]}
+tifffile = "2020.10.1"
+
+[tool.poetry.group.dev.dependencies]
+bump2version = "1.0.1"
+pre-commit = "3.0.4"
+flake8 = "6.0.0"
+pytest = "7.2.1"
+scikit-image = "0.19.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

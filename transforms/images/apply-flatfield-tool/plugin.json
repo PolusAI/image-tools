@@ -1,0 +1,94 @@
+{
+  "name": "Apply Flatfield",
+  "version": "2.0.1-dev0",
+  "title": "Apply Flatfield",
+  "description": "Apply a flatfield algorithm to a collection of images.",
+  "author": "Nick Schaub (Nick.Schaub@nih.gov), Najib Ishaq (najib.ishaq@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/labshare/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/apply-flatfield-tool:2.0.1-dev0",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.images.transforms.images.apply_flatfield"
+  ],
+  "inputs": [
+    {
+      "name": "imgDir",
+      "type": "collection",
+      "description": "Input image collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "imgPattern",
+      "type": "string",
+      "description": "Filename pattern used to separate data and match with flatfied files",
+      "required": true
+    },
+    {
+      "name": "ffDir",
+      "type": "collection",
+      "description": "Image collection containing flatfield and/or darkfield images",
+      "required": true
+    },
+    {
+      "name": "ffPattern",
+      "type": "string",
+      "description": "Filename pattern used to match flatfield files to image files",
+      "required": true
+    },
+    {
+      "name": "dfPattern",
+      "type": "string",
+      "description": "Filename pattern used to match darkfield files to image files",
+      "required": false
+    },
+    {
+      "name": "preview",
+      "type": "boolean",
+      "description": "Preview the output images' names without actually running computation",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.imgDir",
+      "title": "Images to correct",
+      "description": "Input image collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.imgPattern",
+      "title": "Image pattern",
+      "description": "Filename pattern used to separate data and match with flatfield files"
+    },
+    {
+      "key": "inputs.ffDir",
+      "title": "Background images (flatfield/darkfield)",
+      "description": "Image collection containing flatfield and/or darkfield images"
+    },
+    {
+      "key": "inputs.ffPattern",
+      "title": "Flatfield file pattern",
+      "description": "Filename pattern used to match flatfield files to image files"
+    },
+    {
+      "key": "inputs.dfPattern",
+      "title": "Darkfield file pattern",
+      "description": "Filename pattern used to match darkfield files to image files"
+    },
+    {
+      "key": "inputs.preview",
+      "title": "Preview Output",
+      "description": "Preview the output images' names without actually running computation"
+    }
+  ]
+}

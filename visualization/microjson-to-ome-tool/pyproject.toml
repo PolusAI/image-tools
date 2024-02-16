@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "polus-images-visualization-microjson-to-ome"
+version = "0.1.5-dev0"
+description = "This plugin reconstructs binary images from polygon coordinates"
+authors = ["Hamdah Shafqat abbasi  <hamdahshafqat.abbasi@nih.gov>"]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9.15,<3.12"
+bfio = {version = "2.3.3", extras = ["all"]}
+ome-types="0.4.2"
+xmlschema = "^2.4.0"
+typer = "^0.7.0"
+scipy = ">=1.8,<1.9.2"
+filepattern = "^2.0.4"
+tqdm = "^4.65.0"
+microjson = "^0.1.9"
+scikit-image = "0.20.0"
+pydantic = "^2.5.2"
+
+[tool.poetry.group.dev.dependencies]
+bump2version = "^1.0.1"
+flake8 = "^6.0.0"
+pre-commit = "^3.2.1"
+flake8-docstrings = "^1.7.0"
+black = "^23.3.0"
+mypy = "^1.1.1"
+pytest = "^7.2.2"
+ruff = "^0.0.270"
+polygenerator = "^0.2.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

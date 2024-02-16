@@ -1,0 +1,95 @@
+{
+  "name": "Pixel Segmentation Eval",
+  "version": "0.1.12-dev0",
+  "title": "Pixel Segmentation Eval",
+  "description": "Plugin to generate evaluation metrics for pixel-wise comparison of ground truth and predicted images.",
+  "author": "Vishakha Goyal (vishakha.goyal@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/polusai/polus-plugins",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/pixel-segmentation-eval-tool:0.1.12-dev0",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.images.features.pixel_segmentation_eval"
+  ],
+  "inputs": [
+    {
+      "name": "GTDir",
+      "type": "collection",
+      "description": "Ground truth input image collection to be processed by this plugin.",
+      "required": true
+    },
+    {
+      "name": "PredDir",
+      "type": "collection",
+      "description": "Predicted input image collection to be processed by this plugin.",
+      "required": true
+    },
+    {
+      "name": "inputClasses",
+      "type": "number",
+      "description": "Number of classes.",
+      "required": true
+    },
+    {
+      "name": "filePattern",
+      "type": "string",
+      "description": "Filename pattern to filter data.",
+      "required": false
+    },
+    {
+      "name": "individualStats",
+      "type": "boolean",
+      "description": "Boolean to create separate result file per image. Default is false.",
+      "required": false
+    },
+    {
+      "name": "totalStats",
+      "type": "boolean",
+      "description": "Boolean to calculate overall statistics across all images. Default is false.",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "genericData",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.GTDir",
+      "title": "Ground Truth Images",
+      "description": "Ground truth input image collection to be processed by this plugin."
+    },
+    {
+      "key": "inputs.PredDir",
+      "title": "Predicted Images",
+      "description": "Predicted input image collection to be processed by this plugin."
+    },
+    {
+      "key": "inputs.inputClasses",
+      "title": "Number of Classes",
+      "description": "Number of classes."
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "Input filename pattern",
+      "description": "Filename pattern to filter data.",
+      "default": ".+"
+    },
+    {
+      "key": "inputs.individualStats",
+      "title": "Individual statistics",
+      "description": "Boolean to create separate result file per image. Default is false."
+    },
+    {
+      "key": "inputs.totalStats",
+      "title": "Total statistics",
+      "description": "Boolean to calculate overall statistics across all images. Default is false."
+    }
+  ]
+}
