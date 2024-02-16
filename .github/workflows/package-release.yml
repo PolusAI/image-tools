@@ -98,7 +98,6 @@ jobs:
           for pkg_dir in ${{ needs.package-filter.outputs.list }}
           do
             echo "Bumping version for ${pkg_dir}"
-            echo "cd-ing to ${pkg_dir}"
             cd "${pkg_dir}"
             # check if the package has a dev version
             if [[ "$(cat VERSION)" != *dev* ]]
@@ -111,12 +110,7 @@ jobs:
                 echo "::error::${msg}" && exit 1
               fi
             else
-              bump2version release --no-commit
-            fi
-
-            # check if the package has been released and update the output
-            if [[ $(git status --porcelain) ]]
-            then
+              bump2version release --no-commit --allow-dirty
               released_packages="${released_packages} ${pkg_dir}"
             fi
             cd ${cur_dir}
