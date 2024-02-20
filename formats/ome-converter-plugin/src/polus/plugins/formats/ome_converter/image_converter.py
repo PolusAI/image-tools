@@ -1,4 +1,5 @@
 """Ome Converter."""
+
 import enum
 import logging
 import os
@@ -9,6 +10,7 @@ from sys import platform
 from typing import Optional
 
 import filepattern as fp
+import numpy as np
 import preadator
 from bfio import BioReader
 from bfio import BioWriter
@@ -53,66 +55,75 @@ def convert_image(
         for t in range(br.T):
             # Loop through channels
             for c in range(br.C):
-                extension = "".join(
-                    [
-                        suffix
-                        for suffix in inp_image.suffixes[-2:]
-                        if len(suffix) < 6  # noqa: PLR2004
-                    ],
-                )
-
-                out_path = out_dir.joinpath(
-                    inp_image.name.replace(extension, file_extension),
-                )
-                if br.C > 1:
-                    out_path = out_dir.joinpath(
-                        out_path.name.replace(
-                            file_extension,
-                            f"_c{c}" + file_extension,
-                        ),
-                    )
-                if br.T > 1:
-                    out_path = out_dir.joinpath(
-                        out_path.name.replace(
-                            file_extension,
-                            f"_t{t}" + file_extension,
-                        ),
+                # Loop through z-slices
+                for z in range(br.Z):
+                    extension = "".join(
+                        [
+                            suffix
+                            for suffix in inp_image.suffixes[-2:]
+                            if len(suffix) < 6  # noqa: PLR2004
+                        ],
                     )
 
-                with BioWriter(
-                    out_path,
-                    max_workers=2,
-                    metadata=br.metadata,
-                ) as bw:
-                    bw.C = 1
-                    bw.T = 1
+                    out_path = out_dir.joinpath(
+                        inp_image.name.replace(extension, file_extension),
+                    )
+                    if br.C > 1:
+                        out_path = out_dir.joinpath(
+                            out_path.name.replace(
+                                file_extension,
+                                f"_c{c}" + file_extension,
+                            ),
+                        )
+                    if br.T > 1:
+                        out_path = out_dir.joinpath(
+                            out_path.name.replace(
+                                file_extension,
+                                f"_t{t}" + file_extension,
+                            ),
+                        )
 
-                    # Handling of parsing channels when channels names are not provided.
-                    if bw.channel_names != [None]:
-                        bw.channel_names = [br.channel_names[c]]
+                    if br.Z > 1:
+                        out_path = out_dir.joinpath(
+                            out_path.name.replace(
+                                file_extension,
+                                f"_z{z}" + file_extension,
+                            ),
+                        )
 
-                    # Loop through z-slices
-                    for z in range(br.Z):
-                        # Loop across the length of the image
+                    with BioWriter(
+                        out_path,
+                        max_workers=2,
+                        metadata=br.metadata,
+                    ) as bw:
+                        bw.C = 1
+                        bw.T = 1
+
+                        # Handling of parsing channels if names not provided.
+                        if bw.channel_names != [None]:
+                            bw.channel_names = [br.channel_names[c]]
+
                         for y in range(0, br.Y, TILE_SIZE):
                             y_max = min([br.Y, y + TILE_SIZE])
 
                             # Loop across the depth of the image
                             for x in range(0, br.X, TILE_SIZE):
                                 x_max = min([br.X, x + TILE_SIZE])
-                                bw[
-                                    y:y_max,
-                                    x:x_max,
-                                    z : z + 1,
-                                    0,
-                                    0,
-                                ] = br[
+                                image = br[
                                     y:y_max,
                                     x:x_max,
                                     z : z + 1,
                                     c,
                                     t,
                                 ]
+                                image = image[:, :, np.newaxis, np.newaxis, np.newaxis]
+                                bw[
+                                    y:y_max,
+                                    x:x_max,
+                                    0,
+                                    0,
+                                    0,
+                                ] = image
 
 
 def batch_convert(
