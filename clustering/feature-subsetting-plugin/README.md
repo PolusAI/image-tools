@@ -39,7 +39,7 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 ## Options
 
-This plugin takes twelve input arguments and one output argument:
+This plugin takes eleven input arguments and one output argument:
 
 | Name                | Description                                           | I/O    | Type          |
 | ------------------- | ----------------------------------------------------- | ------ | ------------- |
