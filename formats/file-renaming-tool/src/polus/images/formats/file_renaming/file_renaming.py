@@ -14,6 +14,8 @@ from typing import Union
 
 from tqdm import tqdm
 
+EXT = (".csv", ".txt", ".cppipe", ".yml", ".yaml", ".xml", ".json")
+
 logger = logging.getLogger(__name__)
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
@@ -31,6 +33,20 @@ class MappingDirectory(str, enum.Enum):
     Default = ""
 
 
+def image_directory(dirpath: pathlib.Path) -> Union[bool, None]:
+    """Fetching image directory only.
+
+    Args:
+        dirpath: Path to directory.
+
+    Returns:
+        bool.
+    """
+    for file in dirpath.iterdir():
+        return bool(file.is_file() and file.suffix not in EXT)
+    return None
+
+
 def get_data(inp_dir: str) -> tuple[list[pathlib.Path], list[pathlib.Path]]:
     """Get group names from pattern. Convert patterns (c+ or dd) to regex.
 
@@ -46,8 +62,9 @@ def get_data(inp_dir: str) -> tuple[list[pathlib.Path], list[pathlib.Path]]:
         if path.is_dir():
             if path.parent in dirpaths:
                 dirpaths.remove(path.parent)
-            dirpaths.append(path)
-        elif path.is_file() and not path.name.startswith("."):
+            if image_directory(path):
+                dirpaths.append(path)
+        elif path.is_file() and not path.name.endswith(tuple(EXT)):
             fpath = pathlib.Path(inp_dir).joinpath(path)
             filepath.append(fpath)
 
@@ -301,6 +318,7 @@ def rename(  # noqa: C901, PLR0915, PLR0912
     inp_files: list[str] = [
         f"{f.name}" for f in inpfiles if pathlib.Path(f).suffix == f".{file_ext}"
     ]
+
     if len(inp_files) == 0:
         msg = "Please check input directory again!! As it does not contain files"
         raise ValueError(msg)

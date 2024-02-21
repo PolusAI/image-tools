@@ -1,13 +1,15 @@
 """Testing of File Renaming."""
+
 import json
-import os
 import pathlib
 import shutil
 import tempfile
-from typing import Any, DefaultDict
-
+from typing import Any
+from typing import DefaultDict
+from typing import Tuple
 import click
 import pytest
+import numpy as np
 from typer.testing import CliRunner
 
 from polus.images.formats.file_renaming import file_renaming as fr
@@ -32,12 +34,14 @@ class CreateData:
         """Create temporary output directory."""
         return tempfile.mkdtemp(dir=self.dirpath)
 
-    def runcommands(self, inputs, inp_pattern, out_pattern) -> click.testing.Result:
+    def runcommands(
+        self, inputs: pathlib.Path, inp_pattern: str, out_pattern: str
+    ) -> click.testing.Result:
         """Run command line arguments."""
         inp_dir = self.input_directory()
         out_dir = self.output_directory()
         for inp in inputs:
-            open(pathlib.Path(inp_dir, inp), "w").close()
+            pathlib.Path.open(pathlib.Path(inp_dir, inp), "w").close()
 
         outputs = runner.invoke(
             app,
@@ -54,9 +58,9 @@ class CreateData:
         )
         return outputs
 
-    def load_json(self, x) -> DefaultDict[Any, Any]:
+    def load_json(self, x: str) -> DefaultDict[Any, Any]:
         """Json file containing image filenames."""
-        with open(self.jsonpath) as file:
+        with pathlib.Path.open(self.jsonpath) as file:
             data = json.load(file)
         return data[x]
 
@@ -131,12 +135,12 @@ fixture_params = [
 
 
 @pytest.fixture(params=fixture_params)
-def poly(request):
+def poly(request: Tuple[str, str]) -> pytest.FixtureRequest:
     """To get the parameter of the fixture."""
     return request.param
 
 
-def test_duplicate_channels_to_digit(poly):
+def test_duplicate_channels_to_digit(poly: pytest.FixtureRequest) -> None:
     """Testing of duplicate channels to digits."""
     d = CreateData()
     inputs = d.load_json("duplicate_channels_to_digit")
@@ -145,7 +149,9 @@ def test_duplicate_channels_to_digit(poly):
     assert outputs.exit_code == 0
 
 
-def test_duplicate_channels_to_digit_non_spec_digit_len(poly):
+def test_duplicate_channels_to_digit_non_spec_digit_len(
+    poly: pytest.FixtureRequest,
+) -> None:
     """Testing of duplicate channels to digits with non specified length of digits."""
     d = CreateData()
     inputs = d.load_json("duplicate_channels_to_digit")
@@ -154,7 +160,7 @@ def test_duplicate_channels_to_digit_non_spec_digit_len(poly):
     assert outputs.exit_code == 0
 
 
-def test_invalid_input_raises_error(poly):
+def test_invalid_input_raises_error(poly: pytest.FixtureRequest) -> None:
     """Testing of invalid input filepattern."""
     d = CreateData()
     inputs = d.load_json("duplicate_channels_to_digit")
@@ -162,7 +168,7 @@ def test_invalid_input_raises_error(poly):
     d.runcommands(inputs, inp_pattern, out_pattern)
 
 
-def test_non_alphanum_inputs_percentage_sign(poly):
+def test_non_alphanum_inputs_percentage_sign(poly: pytest.FixtureRequest) -> None:
     """Testing of filename with non alphanumeric inputs such as percentage sign."""
     d = CreateData()
     inputs = d.load_json("percentage_file")
@@ -171,7 +177,7 @@ def test_non_alphanum_inputs_percentage_sign(poly):
     assert outputs.exit_code == 0
 
 
-def test_numeric_fixed_width(poly):
+def test_numeric_fixed_width(poly: pytest.FixtureRequest) -> None:
     """Testing of filename with numeric fixed length."""
     d = CreateData()
     inputs = d.load_json("robot")
@@ -180,7 +186,7 @@ def test_numeric_fixed_width(poly):
     assert outputs.exit_code == 0
 
 
-def test_alphanumeric_fixed_width(poly):
+def test_alphanumeric_fixed_width(poly: pytest.FixtureRequest) -> None:
     """Testing of filename with alphanumeric fixed length."""
     d = CreateData()
     inputs = d.load_json("brain")
@@ -189,7 +195,7 @@ def test_alphanumeric_fixed_width(poly):
     assert outputs.exit_code == 0
 
 
-def test_alphanumeric_variable_width(poly):
+def test_alphanumeric_variable_width(poly: pytest.FixtureRequest) -> None:
     """Testing of filename with alphanumeric variable width."""
     d = CreateData()
     inputs = d.load_json("variable")
@@ -199,7 +205,7 @@ def test_alphanumeric_variable_width(poly):
     d.clean_directories()
 
 
-def test_parenthesis(poly):
+def test_parenthesis(poly: pytest.FixtureRequest) -> None:
     """Testing of filename with parenthesis."""
     d = CreateData()
     inputs = d.load_json("parenthesis")
@@ -208,7 +214,7 @@ def test_parenthesis(poly):
     assert outputs.exit_code == 0
 
 
-def test_two_chan_to_digit(poly):
+def test_two_chan_to_digit(poly: pytest.FixtureRequest) -> None:
     """Testing conversion of two channels to digits."""
     d = CreateData()
     inputs = d.load_json("two_chan")
@@ -217,7 +223,7 @@ def test_two_chan_to_digit(poly):
     assert outputs.exit_code == 0
 
 
-def test_three_chan_to_digit(poly):
+def test_three_chan_to_digit(poly: pytest.FixtureRequest) -> None:
     """Test conversion of three channels to digits."""
     d = CreateData()
     inputs = d.load_json("three_chan")
@@ -226,7 +232,7 @@ def test_three_chan_to_digit(poly):
     assert outputs.exit_code == 0
 
 
-def test_three_char_chan(poly):
+def test_three_char_chan(poly: pytest.FixtureRequest) -> None:
     """Test conversion of three character channels to digits."""
     d = CreateData()
     inputs = d.load_json("three_char_chan")
@@ -235,7 +241,7 @@ def test_three_char_chan(poly):
     assert outputs.exit_code == 0
 
 
-def test_varied_digits(poly):
+def test_varied_digits(poly: pytest.FixtureRequest) -> None:
     """Test varied digits."""
     d = CreateData()
     inputs = d.load_json("tissuenet-val-labels-45-C")
@@ -245,7 +251,7 @@ def test_varied_digits(poly):
     d.clean_directories()
 
 
-def test_spaces(poly):
+def test_spaces(poly: pytest.FixtureRequest) -> None:
     """Test non-alphanumeric chars such as spaces."""
     d = CreateData()
     inputs = d.load_json("non_alphanum_int")
@@ -254,7 +260,7 @@ def test_spaces(poly):
     assert outputs.exit_code == 0
 
 
-def test_non_alphanum_float(poly):
+def test_non_alphanum_float(poly: pytest.FixtureRequest) -> None:
     """Test non-alphanumeric chars such as spaces, periods, commas, brackets."""
     d = CreateData()
     inputs = d.load_json("non_alphanum_float")
@@ -264,7 +270,7 @@ def test_non_alphanum_float(poly):
     d.clean_directories()
 
 
-def test_dashes_parentheses(poly):
+def test_dashes_parentheses(poly: pytest.FixtureRequest) -> None:
     """Test non-alphanumeric chars are handled properly such as dashes, parenthesis."""
     d = CreateData()
     inputs = d.load_json("kph-kirill")
@@ -274,7 +280,7 @@ def test_dashes_parentheses(poly):
     d.clean_directories()
 
 
-def test_map_pattern_grps_to_regex_valid_input():
+def test_map_pattern_grps_to_regex_valid_input() -> None:
     """Test of mapping input pattern."""
     test_cases = [
         (
@@ -296,7 +302,7 @@ def test_map_pattern_grps_to_regex_valid_input():
         assert result == to_val
 
 
-def test_convert_to_regex_valid_input():
+def test_convert_to_regex_valid_input() -> None:
     """Test of converting to regular expression pattern."""
     test_cases = [
         (
@@ -325,7 +331,7 @@ def test_convert_to_regex_valid_input():
         assert result == to_val
 
 
-def test_specify_len_valid_input():
+def test_specify_len_valid_input() -> None:
     """Test of sepcifying length."""
     test_cases = [
         (
@@ -341,7 +347,7 @@ def test_specify_len_valid_input():
         assert result == to_val
 
 
-def test_get_char_to_digit_grps_returns_unique_keys_valid_input():
+def test_get_char_to_digit_grps_returns_unique_keys_valid_input() -> None:
     """Test of getting characters to digit groups."""
     test_cases = [
         (
@@ -358,7 +364,7 @@ def test_get_char_to_digit_grps_returns_unique_keys_valid_input():
         assert result == to_val
 
 
-def test_extract_named_grp_matches_valid_input():
+def test_extract_named_grp_matches_valid_input() -> None:
     """Test of extracting group names."""
     test_cases = [
         (
@@ -397,7 +403,7 @@ def test_extract_named_grp_matches_valid_input():
         assert result == to_val
 
 
-def test_extract_named_grp_matches_bad_pattern_invalid_input_fails():
+def test_extract_named_grp_matches_bad_pattern_invalid_input_fails() -> None:
     """Test of invalid input pattern."""
     test_cases = [
         (
@@ -412,7 +418,7 @@ def test_extract_named_grp_matches_bad_pattern_invalid_input_fails():
         assert len(result) == 0
 
 
-def test_str_to_int_valid_input():
+def test_str_to_int_valid_input() -> None:
     """Test of string to integer."""
     test_cases = [
         (
@@ -462,7 +468,7 @@ def test_str_to_int_valid_input():
         assert result == to_val
 
 
-def test_letters_to_int_returns_cat_index_dict_valid_input():
+def test_letters_to_int_returns_cat_index_dict_valid_input() -> None:
     """Test of letter to integers."""
     test_cases = [
         (
@@ -492,7 +498,7 @@ def test_letters_to_int_returns_cat_index_dict_valid_input():
 
 
 @pytest.mark.xfail
-def test_extract_named_grp_matches_duplicate_namedgrp_invalid_input():
+def test_extract_named_grp_matches_duplicate_namedgrp_invalid_input() -> None:
     """Test of invalid input pattern."""
     test_cases = [
         (
@@ -508,7 +514,7 @@ def test_extract_named_grp_matches_duplicate_namedgrp_invalid_input():
 
 
 @pytest.mark.xfail
-def test_letters_to_int_returns_error_invalid_input():
+def test_letters_to_int_returns_error_invalid_input() -> None:
     """Test of invalid inputs."""
     test_cases = [
         (
@@ -536,7 +542,8 @@ def test_letters_to_int_returns_error_invalid_input():
 
 
 @pytest.fixture
-def create_subfolders():
+def create_subfolders() -> Tuple[pathlib.Path, str, str, str]:
+    """Creating directory and subdirectories."""
     data = {
         "complex": [
             ["A9 p5d.tif", "A9 p5f.tif", "A9 p7f.tif"],
@@ -561,19 +568,69 @@ def create_subfolders():
         dir_path = d.input_directory()
         for i in range(5):
             dirname = pathlib.Path(dir_path, f"{data[name][1]}{i}")
-            if not pathlib.Path(dirname).exists():
-                pathlib.Path(dirname).mkdir(exist_ok=False, parents=False)
+            pathlib.Path(dirname).mkdir(exist_ok=False, parents=False)
             for fl in data[name][0]:
-                temp_file = open(pathlib.Path(dirname, fl), "w")
+                temp_file = pathlib.Path.open(pathlib.Path(dirname, fl), "w")
                 temp_file.close()
 
     return pathlib.Path(dir_path), data[name][1], data[name][2], data[name][3]
 
 
-def test_cli(create_subfolders) -> None:
+def test_recursive_searching_files() -> None:
+    """Test recursive searching of files nested directories."""
+
+    dir_path = tempfile.mkdtemp(dir=pathlib.Path.cwd())
+    out_dir = tempfile.mkdtemp(dir=pathlib.Path.cwd())
+    for i in range(2):
+        dirname1 = "image_folder_"
+        dirname2 = "groundtruth_folder_"
+        dirname1 = pathlib.Path(dir_path, f"BBBC/BBBC001/Images/{dirname1}{i}")
+        dirname2 = pathlib.Path(dir_path, f"BBBC/BBBC001/Groundtruth/{dirname2}{i}")
+        pathlib.Path(dirname1).mkdir(exist_ok=False, parents=True)
+        pathlib.Path(dirname2).mkdir(exist_ok=False, parents=True)
+
+        flist = [
+            "AS_09125_050118150001_A03f00d0.tif",
+            "AS_09125_050118150001_A03f01d0.tif",
+            "AS_09125_050118150001_A03f02d0.tif",
+            "AS_09125_050118150001_A03f03d0.tif",
+            "AS_09125_050118150001_A03f04d0.tif",
+            "AS_09125_050118150001_A03f05d0.tif",
+        ]
+
+        for fl in flist:
+            temp_file = pathlib.Path.open(pathlib.Path(dirname1, fl), "w")
+            temp_file = pathlib.Path.open(pathlib.Path(dirname2, fl), "w")
+            temp_file.close()
+    file_pattern = ".*_{row:c}{col:dd}f{f:dd}d{channel:d}.tif"
+    out_file_pattern = "x{row:dd}_y{col:dd}_p{f:dd}_c{channel:d}.tif"
+    map_directory = "raw"
+
+    runner.invoke(
+        app,
+        [
+            "--inpDir",
+            dir_path,
+            "--filePattern",
+            file_pattern,
+            "--outDir",
+            out_dir,
+            "--outFilePattern",
+            out_file_pattern,
+            "--mapDirectory",
+            map_directory,
+        ],
+    )
+    assert list(
+        np.unique([p.name.split("_")[0] for p in pathlib.Path(out_dir).iterdir()])
+    ) == ["groundtruth", "image"]
+    shutil.rmtree(dir_path)
+    shutil.rmtree(out_dir)
+
+
+def test_cli(create_subfolders: pytest.FixtureRequest) -> None:
     """Test Cli."""
     dir_path, _, file_pattern, out_file_pattern = create_subfolders
-
     for i in ["raw", "map"]:
         d = CreateData()
         out_dir = d.output_directory()
