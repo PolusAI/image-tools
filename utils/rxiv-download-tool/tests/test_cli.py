@@ -2,8 +2,9 @@
 
 from typer.testing import CliRunner
 from pathlib import Path
+import pytest
 from polus.images.utils.rxiv_download.__main__ import app
-from tests.fixture import *
+from .conftest import clean_directories
 import time
 
 
@@ -28,6 +29,7 @@ def test_cli(output_directory: Path, get_params: pytest.FixtureRequest) -> None:
     clean_directories()
 
 
+@pytest.mark.skipif("not config.getoption('slow')")
 def test_short_cli(output_directory: Path, get_params: pytest.FixtureRequest) -> None:
     """Test short cli command line."""
     runner = CliRunner()

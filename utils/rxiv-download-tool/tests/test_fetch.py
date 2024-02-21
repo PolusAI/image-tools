@@ -2,8 +2,9 @@
 
 from pathlib import Path
 import polus.images.utils.rxiv_download.fetch as ft
-from tests.fixture import *
+from .conftest import clean_directories
 import time
+import pytest
 from datetime import datetime
 
 
