@@ -8,7 +8,7 @@ from typing import Any
 from typing import Optional
 
 import filepattern as fp
-import polus.plugins.clustering.hdbscan_clustering.hdbscan_clustering as hd
+import polus.images.clustering.hdbscan_clustering.hdbscan_clustering as hd
 import preadator
 import typer
 from tqdm import tqdm

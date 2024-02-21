@@ -1,9 +1,10 @@
 """Test Hdbscan Clustering Plugin."""
+
 import shutil
 from pathlib import Path
 
 import filepattern as fp
-import polus.plugins.clustering.hdbscan_clustering.hdbscan_clustering as hd
+import polus.images.clustering.hdbscan_clustering.hdbscan_clustering as hd
 import vaex
 
 

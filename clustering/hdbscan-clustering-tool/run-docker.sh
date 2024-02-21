@@ -20,4 +20,4 @@ docker run -v ${datapath}:${datapath} \
             --labelCol ${labelCol} \
             --minClusterSize ${minClusterSize} \
             --incrementOutlierId \
-            --outDir ${outDir} 
+            --outDir ${outDir}

@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "polus-plugins-clustering-hdbscan-clustering"
-version = "0.4.8-dev"
+name = "polus-images-clustering-hdbscan-clustering"
+version = "0.4.8-dev0"
 description = "Cluster the data using HDBSCAN."
 authors = [
            "Jayapriya Nagarajan <jayapriya.nagarajan@axleinfo.com>",

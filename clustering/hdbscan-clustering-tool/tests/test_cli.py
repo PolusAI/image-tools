@@ -1,6 +1,7 @@
 """Test Command line Tool."""
+
 from typer.testing import CliRunner
-from polus.plugins.clustering.hdbscan_clustering.__main__ import app
+from polus.images.clustering.hdbscan_clustering.__main__ import app
 import shutil
 from pathlib import Path
 
