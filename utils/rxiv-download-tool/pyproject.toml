@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "polus-plugins-utils-rxiv-download"
-version = "0.1.0-dev"
+name = "polus-images-utils-rxiv-download"
+version = "0.1.0-dev0"
 description = "Fetch text data from rxiv"
 authors = [
            "Nick Schaub <nick.schaub@nih.gov>",

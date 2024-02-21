@@ -1,12 +1,13 @@
 """Rxiv Download Plugin."""
+
 import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
 import typer
-from polus.plugins.utils.rxiv_download.fetch import ArxivDownload
-from polus.plugins.utils.rxiv_download.fetch import generate_preview
+from polus.images.utils.rxiv_download.fetch import ArxivDownload
+from polus.images.utils.rxiv_download.fetch import generate_preview
 
 app = typer.Typer()
 

@@ -1,4 +1,4 @@
-FROM polusai/bfio:2.3.3
+FROM polusai/bfio:2.3.6
 
 # environment variables defined in polusai/bfio
 ENV EXEC_DIR="/opt/executables"
@@ -16,5 +16,5 @@ COPY src ${EXEC_DIR}/src
 
 RUN pip3 install ${EXEC_DIR} --no-cache-dir
 
-ENTRYPOINT ["python3", "-m", "polus.plugins.utils.rxiv_download"]
+ENTRYPOINT ["python3", "-m", "polus.images.utils.rxiv_download"]
 CMD ["--help"]

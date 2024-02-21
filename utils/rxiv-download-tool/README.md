@@ -1,4 +1,4 @@
-# Rxiv Download (0.1.0-dev)
+# Rxiv Download (v0.1.0-dev0)
 
 This plugin allows to download data from open access archives. Currently this plugin supports downloading data from  [arxiv](https://www.openarchives.org/). Later additional support for other archives will be added.
 
@@ -27,4 +27,4 @@ This plugin takes 2 input arguments and
 
 
 ## Sample docker command:
-```docker run -v /home/ec2-user/data/:/home/ec2-user/data/ polusai/rxiv-download-plugin:0.1.0-dev --rxiv="arXiv" --start='2023-2-16' --outDir=/home/ec2-user/data/output```
+```docker run -v /home/ec2-user/data/:/home/ec2-user/data/ polusai/rxiv-download-tool:0.1.0-dev0 --rxiv="arXiv" --start='2023-2-16' --outDir=/home/ec2-user/data/output```

@@ -1,7 +1,8 @@
 """Test Command line Tool."""
+
 from typer.testing import CliRunner
 from pathlib import Path
-from polus.plugins.utils.rxiv_download.__main__ import app
+from polus.images.utils.rxiv_download.__main__ import app
 from tests.fixture import *
 import time
 

@@ -1,6 +1,7 @@
 """Test Command line Tool."""
+
 from pathlib import Path
-import polus.plugins.utils.rxiv_download.fetch as ft
+import polus.images.utils.rxiv_download.fetch as ft
 from tests.fixture import *
 import time
 from datetime import datetime
