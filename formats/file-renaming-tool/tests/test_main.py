@@ -7,7 +7,6 @@ import tempfile
 from typing import Any
 from typing import DefaultDict
 from typing import Tuple
-
 import click
 import pytest
 import numpy as np
