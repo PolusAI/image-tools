@@ -12,7 +12,7 @@
   "baseCommand": [
     "python3",
     "-m",
-    "polus.plugins.transforms.images.apply_flatfield"
+    "polus.images.transforms.images.apply_flatfield"
   ],
   "inputs": [
     {
