@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 from fsspec.implementations.local import LocalFileSystem
 
-from polus.plugins._plugins.classes.plugin_classes import _load_plugin
-from polus.plugins._plugins.classes.plugin_methods import IOKeyError
+from polus.plugins._plugins.classes import _load_plugin
+from polus.plugins._plugins.classes.plugin_base import IOKeyError
 from polus.plugins._plugins.io import Input, IOBase
 
 RSRC_PATH = Path(__file__).parent.joinpath("resources")

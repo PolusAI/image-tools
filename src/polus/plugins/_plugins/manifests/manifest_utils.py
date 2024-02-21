@@ -2,16 +2,21 @@
 import json
 import logging
 import pathlib
-import typing
-from urllib.parse import urlparse
+from typing import Optional
+from typing import Union
 
 import github
 import requests
-from pydantic import ValidationError, errors
+import validators
+from polus.plugins._plugins._compat import PYDANTIC_V2
+from polus.plugins._plugins.models import ComputeSchema
+from polus.plugins._plugins.models import WIPPPluginManifest
+from pydantic import ValidationError
+from pydantic import errors
 from tqdm import tqdm
 
-from polus.plugins._plugins.models import ComputeSchema, WIPPPluginManifest
-from polus.plugins._plugins.utils import cast_version
+if not PYDANTIC_V2:
+    from polus.plugins._plugins.utils import cast_version
 
 logger = logging.getLogger("polus.plugins")
 
@@ -28,7 +33,7 @@ REQUIRED_FIELDS = [
 ]
 
 
-class InvalidManifest(Exception):
+class InvalidManifestError(Exception):
     """Raised when manifest has validation errors."""
 
 
@@ -43,57 +48,62 @@ def is_valid_manifest(plugin: dict) -> bool:
     """
     fields = list(plugin.keys())
 
-    try:
-        for field in REQUIRED_FIELDS:
-            assert field in fields, f"Missing json field, {field}, in plugin manifest."
-    except AssertionError:
-        return False
-
+    for field in REQUIRED_FIELDS:
+        if field not in fields:
+            msg = f"Missing json field, {field}, in plugin manifest."
+            logger.error(msg)
+            return False
     return True
 
 
-def _load_manifest(m: typing.Union[str, dict, pathlib.Path]) -> dict:
-    """Convert to dictionary if pathlib.Path or str."""
-    if isinstance(m, dict):
-        return m
-    elif isinstance(m, pathlib.Path):
-        assert (
-            m.suffix == ".json"
-        ), "Plugin manifest must be a json file with .json extension."
+def _load_manifest(manifest: Union[str, dict, pathlib.Path]) -> dict:
+    """Return manifest as dict from str (url or path) or pathlib.Path."""
+    if isinstance(manifest, dict):  # is dict
+        return manifest
+    if isinstance(manifest, pathlib.Path):  # is path
+        if manifest.suffix != ".json":
+            msg = "plugin manifest must be a json file with .json extension."
+            raise ValueError(msg)
 
-        with open(m) as fr:
-            manifest = json.load(fr)
-
-    elif isinstance(m, str):
-        if urlparse(m).netloc == "":
-            manifest = json.loads(m)
-        else:
-            manifest = requests.get(m).json()
-    else:
-        msg = "invalid manifest"
+        with manifest.open("r", encoding="utf-8") as manifest_json:
+            manifest_ = json.load(manifest_json)
+    elif isinstance(manifest, str):  # is str
+        if validators.url(manifest):  # is url
+            manifest_ = requests.get(manifest, timeout=10).json()
+        else:  # could (and should) be path
+            try:
+                manifest_ = _load_manifest(pathlib.Path(manifest))
+            except Exception as exc:  # was not a Path? # noqa
+                msg = "invalid manifest"
+                raise ValueError(msg) from exc
+    else:  # is not str, dict, or path
+        msg = f"invalid manifest type {type(manifest)}"
         raise ValueError(msg)
-    return manifest
+    return manifest_
 
 
 def validate_manifest(
-    manifest: typing.Union[str, dict, pathlib.Path],
-) -> typing.Union[WIPPPluginManifest, ComputeSchema]:
+    manifest: Union[str, dict, pathlib.Path],
+) -> Union[WIPPPluginManifest, ComputeSchema]:
     """Validate a plugin manifest against schema."""
     manifest = _load_manifest(manifest)
-    manifest["version"] = cast_version(
-        manifest["version"],
-    )  # cast version to semver object
+    if not PYDANTIC_V2:  # Pydantic V1
+        manifest["version"] = cast_version(
+            manifest["version"],
+        )  # cast version to semver object
     if "name" in manifest:
         name = manifest["name"]
     else:
-        raise InvalidManifest(f"{manifest} has no value for name")
+        msg = f"{manifest} has no value for name"
+        raise InvalidManifestError(msg)
 
     if "pluginHardwareRequirements" in manifest:
         # Parse the manifest
         try:
             plugin = ComputeSchema(**manifest)
         except ValidationError as e:
-            raise InvalidManifest(f"{name} does not conform to schema") from e
+            msg = f"{name} does not conform to schema"
+            raise InvalidManifestError(msg) from e
         except BaseException as e:
             raise e
     else:
@@ -101,8 +111,9 @@ def validate_manifest(
         try:
             plugin = WIPPPluginManifest(**manifest)
         except ValidationError as e:
-            raise InvalidManifest(
-                f"{manifest['name']} does not conform to schema"
+            msg = f"{manifest['name']} does not conform to schema"
+            raise InvalidManifestError(
+                msg,
             ) from e
         except BaseException as e:
             raise e
@@ -110,93 +121,90 @@ def validate_manifest(
 
 
 def _scrape_manifests(
-    repo: typing.Union[str, github.Repository.Repository],  # type: ignore
+    repo: Union[str, github.Repository.Repository],  # type: ignore
     gh: github.Github,
     min_depth: int = 1,
-    max_depth: typing.Optional[int] = None,
+    max_depth: Optional[int] = None,
     return_invalid: bool = False,
-) -> typing.Union[list, tuple[list, list]]:
+) -> Union[list, tuple[list, list]]:
     if max_depth is None:
         max_depth = min_depth
         min_depth = 0
 
-    assert max_depth >= min_depth, "max_depth is smaller than min_depth"
+    if not max_depth >= min_depth:
+        msg = "max_depth is smaller than min_depth"
+        raise ValueError(msg)
 
     if isinstance(repo, str):
         repo = gh.get_repo(repo)
 
     contents = list(repo.get_contents(""))  # type: ignore
-    next_contents = []
-    valid_manifests = []
-    invalid_manifests = []
+    next_contents: list = []
+    valid_manifests: list = []
+    invalid_manifests: list = []
 
     for d in range(0, max_depth):
         for content in tqdm(contents, desc=f"{repo.full_name}: {d}"):
             if content.type == "dir":
                 next_contents.extend(repo.get_contents(content.path))  # type: ignore
-            elif content.name.endswith(".json"):
-                if d >= min_depth:
-                    manifest = json.loads(content.decoded_content)
-                    if is_valid_manifest(manifest):
-                        valid_manifests.append(manifest)
-                    else:
-                        invalid_manifests.append(manifest)
+            elif content.name.endswith(".json") and d >= min_depth:
+                manifest = json.loads(content.decoded_content)
+                if is_valid_manifest(manifest):
+                    valid_manifests.append(manifest)
+                else:
+                    invalid_manifests.append(manifest)
 
         contents = next_contents.copy()
         next_contents = []
 
     if return_invalid:
         return valid_manifests, invalid_manifests
-    else:
-        return valid_manifests
+    return valid_manifests
 
 
-def _error_log(val_err, manifest, fct):
+def _error_log(val_err: ValidationError, manifest: dict, fct: str) -> None:
     report = []
 
-    for err in val_err.args[0]:
-        if isinstance(err, list):
-            err = err[0]
+    for error in val_err.args[0]:
+        if isinstance(error, list):
+            error = error[0]  # noqa
 
-        if isinstance(err, AssertionError):
-            report.append(
-                "The plugin ({}) failed an assertion check: {}".format(
-                    manifest["name"],
-                    err.args[0],
-                ),
+        if isinstance(error, AssertionError):
+            msg = (
+                f"The plugin ({manifest['name']}) "
+                "failed an assertion check: {err.args[0]}"
             )
-            logger.critical(f"{fct}: {report[-1]}")
-        elif isinstance(err.exc, errors.MissingError):
-            report.append(
-                "The plugin ({}) is missing fields: {}".format(
-                    manifest["name"],
-                    err.loc_tuple(),
-                ),
+            report.append(msg)
+            logger.critical(f"{fct}: {report[-1]}")  # pylint: disable=W1203
+        elif isinstance(error.exc, errors.MissingError):
+            msg = (
+                f"The plugin ({manifest['name']}) "
+                "is missing fields: {err.loc_tuple()}"
             )
-            logger.critical(f"{fct}: {report[-1]}")
+            report.append(msg)
+            logger.critical(f"{fct}: {report[-1]}")  # pylint: disable=W1203
         elif errors.ExtraError:
-            if err.loc_tuple()[0] in ["inputs", "outputs", "ui"]:
-                report.append(
-                    "The plugin ({}) had unexpected values in the {} ({}): {}".format(
-                        manifest["name"],
-                        err.loc_tuple()[0],
-                        manifest[err.loc_tuple()[0]][err.loc_tuple()[1]]["name"],
-                        err.exc.args[0][0].loc_tuple(),
-                    ),
+            if error.loc_tuple()[0] in ["inputs", "outputs", "ui"]:
+                manifest_ = manifest[error.loc_tuple()[0]][error.loc_tuple()[1]]["name"]
+                msg = (
+                    f"The plugin ({manifest['name']}) "
+                    "had unexpected values in the "
+                    f"{error.loc_tuple()[0]} "
+                    f"({manifest_}): "
+                    f"{error.exc.args[0][0].loc_tuple()}"
                 )
+                report.append(msg)
             else:
-                report.append(
-                    "The plugin ({}) had an error: {}".format(
-                        manifest["name"],
-                        err.exc.args[0][0],
-                    ),
+                msg = (
+                    f"The plugin ({manifest['name']}) "
+                    "had an error: {err.exc.args[0][0]}"
                 )
-            logger.critical(f"{fct}: {report[-1]}")
+                report.append(msg)
+            logger.critical(f"{fct}: {report[-1]}")  # pylint: disable=W1203
         else:
-            logger.warning(
-                "{}: Uncaught manifest Error in ({}): {}".format(
-                    fct,
-                    manifest["name"],
-                    str(val_err).replace("\n", ", ").replace("  ", " "),
-                ),
+            str_val_err = str(val_err).replace("\n", ", ").replace("  ", " ")
+            msg = (
+                f"{fct}: Uncaught manifest error in ({manifest['name']}): "
+                f"{str_val_err}"
             )
+            logger.warning(msg)

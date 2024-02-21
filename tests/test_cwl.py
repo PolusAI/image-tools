@@ -3,12 +3,14 @@
 """Tests for CWL utils."""
 from pathlib import Path
 
+import pydantic
 import pytest
 import yaml
 
 import polus.plugins as pp
-from polus.plugins._plugins.classes.plugin_methods import MissingInputValues
+from polus.plugins._plugins.classes.plugin_base import MissingInputValuesError
 
+PYDANTIC_VERSION = pydantic.__version__.split(".")[0]
 RSRC_PATH = Path(__file__).parent.joinpath("resources")
 
 OMECONVERTER = RSRC_PATH.joinpath("omeconverter030.json")
@@ -20,7 +22,7 @@ def submit_plugin():
     if "OmeConverter" not in pp.list:
         pp.submit_plugin(OMECONVERTER)
     else:
-        if "0.3.0" not in [x.version for x in pp.OmeConverter.versions]:
+        if "0.3.0" not in pp.OmeConverter.versions:
             pp.submit_plugin(OMECONVERTER)
 
 
@@ -65,7 +67,7 @@ def test_save_read_cwl(plug, cwl_path):
 
 def test_save_cwl_io_not_inp(plug, cwl_io_path):
     """Test save_cwl IO."""
-    with pytest.raises(MissingInputValues):
+    with pytest.raises(MissingInputValuesError):
         plug.save_cwl_io(cwl_io_path)
 
 
@@ -73,7 +75,7 @@ def test_save_cwl_io_not_inp2(plug, cwl_io_path):
     """Test save_cwl IO."""
     plug.inpDir = RSRC_PATH.absolute()
     plug.filePattern = "img_r{rrr}_c{ccc}.tif"
-    with pytest.raises(MissingInputValues):
+    with pytest.raises(MissingInputValuesError):
         plug.save_cwl_io(cwl_io_path)
 
 
@@ -83,7 +85,7 @@ def test_save_cwl_io_not_yml(plug, cwl_io_path):
     plug.filePattern = "img_r{rrr}_c{ccc}.tif"
     plug.fileExtension = ".ome.zarr"
     plug.outDir = RSRC_PATH.absolute()
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         plug.save_cwl_io(cwl_io_path.with_suffix(".txt"))
 
 

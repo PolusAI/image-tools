@@ -1,5 +1,5 @@
 """Classes for Plugin objects containing methods to configure, run, and save."""
-# pylint: disable=W1203, enable=W1201
+# pylint: disable=W1203, W0212, enable=W1201
 import json
 import logging
 import shutil
@@ -10,21 +10,22 @@ from typing import Any
 from typing import Optional
 from typing import Union
 
-from polus.plugins._plugins.classes.plugin_methods import _PluginMethods
-from polus.plugins._plugins.io import DuplicateVersionFoundError
-from polus.plugins._plugins.io import Version
-from polus.plugins._plugins.io import _in_old_to_new
-from polus.plugins._plugins.io import _ui_old_to_new
-from polus.plugins._plugins.manifests.manifest_utils import InvalidManifest
-from polus.plugins._plugins.manifests.manifest_utils import _load_manifest
-from polus.plugins._plugins.manifests.manifest_utils import validate_manifest
+from polus.plugins._plugins._compat import PYDANTIC_V2
+from polus.plugins._plugins.classes.plugin_base import BasePlugin
+from polus.plugins._plugins.io._io import DuplicateVersionFoundError
+from polus.plugins._plugins.io._io import Version
+from polus.plugins._plugins.io._io import _in_old_to_new
+from polus.plugins._plugins.io._io import _ui_old_to_new
+from polus.plugins._plugins.manifests import InvalidManifestError
+from polus.plugins._plugins.manifests import _load_manifest
+from polus.plugins._plugins.manifests import validate_manifest
 from polus.plugins._plugins.models import ComputeSchema
 from polus.plugins._plugins.models import PluginUIInput
 from polus.plugins._plugins.models import PluginUIOutput
 from polus.plugins._plugins.models import WIPPPluginManifest
 from polus.plugins._plugins.utils import cast_version
 from polus.plugins._plugins.utils import name_cleaner
-from pydantic import Extra
+from pydantic import ConfigDict
 
 logger = logging.getLogger("polus.plugins")
 PLUGINS: dict[str, dict] = {}
@@ -54,10 +55,11 @@ def refresh() -> None:
 
             try:
                 plugin = validate_manifest(file)
-            except InvalidManifest:
+            except InvalidManifestError:
                 logger.warning(f"Validation error in {file!s}")
-            except BaseException as exc:  # pylint: disable=W0718 # noqa: BLE001
+            except BaseException as exc:  # pylint: disable=W0718
                 logger.warning(f"Unexpected error {exc} with {file!s}")
+                raise exc
 
             else:
                 key = name_cleaner(plugin.name)
@@ -85,7 +87,30 @@ def list_plugins() -> list:
     return output
 
 
-class Plugin(WIPPPluginManifest, _PluginMethods):
+def _get_config(plugin: Union["Plugin", "ComputePlugin"], class_: str) -> dict:
+    if PYDANTIC_V2:
+        model_ = json.loads(plugin.model_dump_json())
+        model_["_io_keys"] = deepcopy(plugin._io_keys)  # type: ignore
+    else:
+        # ignore mypy if pydantic < 2.0.0
+        model_ = plugin.dict()  # type: ignore
+    # iterate over I/O to convert to dict
+    for io_name, io in model_["_io_keys"].items():
+        if PYDANTIC_V2:
+            model_["_io_keys"][io_name] = json.loads(io.model_dump_json())
+            # overwrite val if enum
+            if io.type.value == "enum":
+                model_["_io_keys"][io_name]["value"] = io.value.name  # str
+        elif io["type"] == "enum":  # pydantic V1
+            val_ = io["value"].name  # mapDirectory.raw
+            model_["_io_keys"][io_name]["value"] = val_.split(".")[-1]  # raw
+    for inp in model_["inputs"]:
+        inp["value"] = None
+    model_["class"] = class_
+    return model_
+
+
+class Plugin(WIPPPluginManifest, BasePlugin):
     """WIPP Plugin Class.
 
     Contains methods to configure, run, and save plugins.
@@ -98,12 +123,15 @@ class Plugin(WIPPPluginManifest, _PluginMethods):
     """
 
     id: uuid.UUID  # noqa: A003
+    if PYDANTIC_V2:
+        model_config = ConfigDict(extra="allow", frozen=True)
+    else:
 
-    class Config:
-        """Config class for Pydantic Model."""
+        class Config:  # pylint: disable=R0903
+            """Config."""
 
-        extra = Extra.allow
-        allow_mutation = False
+            extra = "allow"
+            allow_mutation = False
 
     def __init__(self, _uuid: bool = True, **data: dict) -> None:
         """Init a plugin object from manifest."""
@@ -112,10 +140,14 @@ class Plugin(WIPPPluginManifest, _PluginMethods):
         else:
             data["id"] = uuid.UUID(str(data["id"]))  # type: ignore
 
-        data["version"] = cast_version(data["version"])
+        if not PYDANTIC_V2:  # pydantic V1
+            data["version"] = cast_version(data["version"])
+
         super().__init__(**data)
 
-        self.Config.allow_mutation = True
+        if not PYDANTIC_V2:  # pydantic V1
+            self.Config.allow_mutation = True
+
         self._io_keys = {i.name: i for i in self.inputs}
         self._io_keys.update({o.name: o for o in self.outputs})
 
@@ -168,26 +200,20 @@ class Plugin(WIPPPluginManifest, _PluginMethods):
 
     def __setattr__(self, name: str, value: Any) -> None:  # noqa: ANN401
         """Set I/O parameters as attributes."""
-        _PluginMethods.__setattr__(self, name, value)
-
-    @property
-    def _config_file(self) -> dict:
-        config_ = self._config
-        config_["class"] = "WIPP"
-        return config_
+        BasePlugin.__setattr__(self, name, value)
 
     def save_config(self, path: Union[str, Path]) -> None:
         """Save manifest with configured I/O parameters to specified path."""
         with Path(path).open("w", encoding="utf-8") as file:
-            json.dump(self._config_file, file, indent=4, default=str)
+            json.dump(_get_config(self, "WIPP"), file, indent=4, default=str)
         logger.debug(f"Saved config to {path}")
 
     def __repr__(self) -> str:
         """Print plugin name and version."""
-        return _PluginMethods.__repr__(self)
+        return BasePlugin.__repr__(self)
 
 
-class ComputePlugin(ComputeSchema, _PluginMethods):
+class ComputePlugin(ComputeSchema, BasePlugin):
     """Compute Plugin Class.
 
     Contains methods to configure, run, and save plugins.
@@ -199,11 +225,15 @@ class ComputePlugin(ComputeSchema, _PluginMethods):
         save_manifest(path): save plugin manifest to specified path
     """
 
-    class Config:
-        """Config class for Pydantic Model."""
+    if PYDANTIC_V2:
+        model_config = ConfigDict(extra="allow", frozen=True)
+    else:  # pydantic V1
 
-        extra = Extra.allow
-        allow_mutation = False
+        class Config:  # pylint: disable=R0903
+            """Config."""
+
+            extra = "allow"
+            allow_mutation = False
 
     def __init__(
         self,
@@ -281,20 +311,14 @@ class ComputePlugin(ComputeSchema, _PluginMethods):
         """Return list of local versions of a Plugin."""
         return list(PLUGINS[name_cleaner(self.name)])
 
-    @property
-    def _config_file(self) -> dict:
-        config_ = self._config
-        config_["class"] = "Compute"
-        return config_
-
     def __setattr__(self, name: str, value: Any) -> None:  # noqa: ANN401
         """Set I/O parameters as attributes."""
-        _PluginMethods.__setattr__(self, name, value)
+        BasePlugin.__setattr__(self, name, value)
 
     def save_config(self, path: Union[str, Path]) -> None:
         """Save configured manifest with I/O parameters to specified path."""
         with Path(path).open("w", encoding="utf-8") as file:
-            json.dump(self._config_file, file, indent=4)
+            json.dump(_get_config(self, "Compute"), file, indent=4, default=str)
         logger.debug(f"Saved config to {path}")
 
     def save_manifest(self, path: Union[str, Path]) -> None:
@@ -305,7 +329,7 @@ class ComputePlugin(ComputeSchema, _PluginMethods):
 
     def __repr__(self) -> str:
         """Print plugin name and version."""
-        return _PluginMethods.__repr__(self)
+        return BasePlugin.__repr__(self)
 
 
 def _load_plugin(
@@ -353,8 +377,11 @@ def submit_plugin(
     org_path.mkdir(exist_ok=True, parents=True)
     if not org_path.joinpath(out_name).exists():
         with org_path.joinpath(out_name).open("w", encoding="utf-8") as file:
-            manifest_ = plugin.dict()
-            manifest_["version"] = manifest_["version"]["version"]
+            if not PYDANTIC_V2:  # pydantic V1
+                manifest_ = plugin.dict()  # type: ignore
+                manifest_["version"] = manifest_["version"]["version"]
+            else:  # PYDANTIC V2
+                manifest_ = json.loads(plugin.model_dump_json())
             json.dump(manifest_, file, indent=4)
 
     # Refresh plugins list
@@ -380,18 +407,20 @@ def get_plugin(
     """
     if version is None:
         return _load_plugin(PLUGINS[name][max(PLUGINS[name])])
-    return _load_plugin(PLUGINS[name][Version(**{"version": version})])
+    if PYDANTIC_V2:
+        return _load_plugin(PLUGINS[name][Version(version)])
+    return _load_plugin(PLUGINS[name][Version(**{"version": version})])  # Pydantic V1
 
 
-def load_config(config: Union[dict, Path]) -> Union[Plugin, ComputePlugin]:
+def load_config(config: Union[dict, Path, str]) -> Union[Plugin, ComputePlugin]:
     """Load configured plugin from config file/dict."""
-    if isinstance(config, Path):
-        with config.open("r", encoding="utf-8") as file:
+    if isinstance(config, (Path, str)):
+        with Path(config).open("r", encoding="utf-8") as file:
             manifest_ = json.load(file)
     elif isinstance(config, dict):
         manifest_ = config
     else:
-        msg = "config must be a dict or a path"
+        msg = "config must be a dict, str, or a path"
         raise TypeError(msg)
     io_keys_ = manifest_["_io_keys"]
     class_ = manifest_["class"]
@@ -420,10 +449,13 @@ def remove_plugin(plugin: str, version: Optional[Union[str, list[str]]] = None) 
             for version_ in version:
                 remove_plugin(plugin, version_)
             return
-        if not isinstance(version, Version):
-            version_ = cast_version(version)
-        else:
-            version_ = version
+        if not PYDANTIC_V2:  # pydantic V1
+            if not isinstance(version, Version):
+                version_ = cast_version(version)
+            else:
+                version_ = version
+        else:  # pydanitc V2
+            version_ = Version(version) if not isinstance(version, Version) else version
         path = PLUGINS[plugin][version_]
         path.unlink()
     refresh()

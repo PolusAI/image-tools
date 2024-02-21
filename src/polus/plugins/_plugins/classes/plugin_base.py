@@ -3,58 +3,60 @@
 import enum
 import json
 import logging
-import pathlib
 import random
 import signal
-import typing
-from os.path import relpath
+from pathlib import Path
+from typing import Any
+from typing import Optional
+from typing import TypeVar
+from typing import Union
 
 import fsspec
 import yaml  # type: ignore
 from cwltool.context import RuntimeContext
 from cwltool.factory import Factory
 from cwltool.utils import CWLObjectType
-from python_on_whales import docker
-
 from polus.plugins._plugins.cwl import CWL_BASE_DICT
-from polus.plugins._plugins.io import (
-    input_to_cwl,
-    io_to_yml,
-    output_to_cwl,
-    outputs_cwl,
-)
+from polus.plugins._plugins.io import input_to_cwl
+from polus.plugins._plugins.io import io_to_yml
+from polus.plugins._plugins.io import output_to_cwl
+from polus.plugins._plugins.io import outputs_cwl
 from polus.plugins._plugins.utils import name_cleaner
+from python_on_whales import docker
 
 logger = logging.getLogger("polus.plugins")
 
-StrPath = typing.TypeVar("StrPath", str, pathlib.Path)
+StrPath = TypeVar("StrPath", str, Path)
 
 
 class IOKeyError(Exception):
     """Raised when trying to set invalid I/O parameter."""
 
 
-class MissingInputValues(Exception):
+class MissingInputValuesError(Exception):
     """Raised when there are required input values that have not been set."""
 
 
-class _PluginMethods:
-    def _check_inputs(self):
+class BasePlugin:
+    """Base Class for Plugins."""
+
+    def _check_inputs(self) -> None:
         """Check if all required inputs have been set."""
         _in = [x for x in self.inputs if x.required and not x.value]  # type: ignore
         if len(_in) > 0:
-            raise MissingInputValues(
-                f"{[x.name for x in _in]} are required inputs but have not been set"  # type: ignore
+            msg = f"{[x.name for x in _in]} are required inputs but have not been set"
+            raise MissingInputValuesError(
+                msg,  # type: ignore
             )
 
     @property
-    def organization(self):
+    def organization(self) -> str:
         """Plugin container's organization."""
         return self.containerId.split("/")[0]
 
-    def load_config(self, path: StrPath):
+    def load_config(self, path: StrPath) -> None:
         """Load configured plugin from file."""
-        with open(path, encoding="utf=8") as fw:
+        with Path(path).open(encoding="utf=8") as fw:
             config = json.load(fw)
         inp = config["inputs"]
         out = config["outputs"]
@@ -68,20 +70,13 @@ class _PluginMethods:
 
     def run(
         self,
-        gpus: typing.Union[None, str, int] = "all",
-        **kwargs,
-    ):
+        gpus: Union[None, str, int] = "all",
+        **kwargs: Union[None, str, int],
+    ) -> None:
+        """Run plugin in Docker container."""
         self._check_inputs()
-        inp_dirs = []
-        out_dirs = []
-
-        for i in self.inputs:
-            if isinstance(i.value, pathlib.Path):
-                inp_dirs.append(str(i.value))
-
-        for o in self.outputs:
-            if isinstance(o.value, pathlib.Path):
-                out_dirs.append(str(o.value))
+        inp_dirs = [x for x in self.inputs if isinstance(x.value, Path)]
+        out_dirs = [x for x in self.outputs if isinstance(x.value, Path)]
 
         inp_dirs_dict = {x: f"/data/inputs/input{n}" for (n, x) in enumerate(inp_dirs)}
         out_dirs_dict = {
@@ -105,7 +100,7 @@ class _PluginMethods:
                 i._validate()
                 args.append(f"--{i.name}")
 
-                if isinstance(i.value, pathlib.Path):
+                if isinstance(i.value, Path):
                     args.append(inp_dirs_dict[str(i.value)])
 
                 elif isinstance(i.value, enum.Enum):
@@ -119,7 +114,7 @@ class _PluginMethods:
                 o._validate()
                 args.append(f"--{o.name}")
 
-                if isinstance(o.value, pathlib.Path):
+                if isinstance(o.value, Path):
                     args.append(out_dirs_dict[str(o.value)])
 
                 elif isinstance(o.value, enum.Enum):
@@ -128,20 +123,24 @@ class _PluginMethods:
                 else:
                     args.append(str(o.value))
 
-        container_name = f"polus{random.randint(10, 99)}"
+        random_int = random.randint(10, 99)  # noqa: S311 # only for naming
+        container_name = f"polus{random_int}"
 
         def sig(
-            signal, frame  # pylint: disable=W0613, W0621
-        ):  # signal handler to kill container when KeyboardInterrupt
-            print(f"Exiting container {container_name}")
+            signal,  # noqa # pylint: disable=W0613, W0621
+            frame,  # noqa # pylint: disable=W0613, W0621
+        ) -> None:  # signal handler to kill container when KeyboardInterrupt
+            logger.info(f"Exiting container {container_name}")
             docker.kill(container_name)
 
         signal.signal(
-            signal.SIGINT, sig
+            signal.SIGINT,
+            sig,
         )  # make of sig the handler for KeyboardInterrupt
         if gpus is None:
             logger.info(
-                f"Running container without GPU. {self.__class__.__name__} version {self.version.version}"
+                f"""Running container without GPU. {self.__class__.__name__}
+                version {self.version!s}""",
             )
             docker_ = docker.run(
                 self.containerId,
@@ -151,10 +150,11 @@ class _PluginMethods:
                 mounts=mnts,
                 **kwargs,
             )
-            print(docker_)
+            print(docker_)  # noqa
         else:
             logger.info(
-                f"Running container with GPU: --gpus {gpus}. {self.__class__.__name__} version {self.version.version}"
+                f"""Running container with GPU: --gpus {gpus}.
+                {self.__class__.__name__} version {self.version!s}""",
             )
             docker_ = docker.run(
                 self.containerId,
@@ -165,36 +165,31 @@ class _PluginMethods:
                 mounts=mnts,
                 **kwargs,
             )
-            print(docker_)
+            print(docker_)  # noqa
 
     @property
-    def _config(self):
-        model_ = self.dict()
-        for inp in model_["inputs"]:
-            inp["value"] = None
-        return model_
-
-    @property
-    def manifest(self):
+    def manifest(self) -> dict:
         """Plugin manifest."""
         manifest_ = json.loads(self.json(exclude={"_io_keys", "versions", "id"}))
         manifest_["version"] = manifest_["version"]["version"]
         return manifest_
 
-    def __getattribute__(self, name):
-        if name != "_io_keys" and hasattr(self, "_io_keys"):
-            if name in self._io_keys:
-                value = self._io_keys[name].value
-                if isinstance(value, enum.Enum):
-                    value = value.name
-                return value
+    def __getattribute__(self, name: str) -> Any:  # noqa
+        if name == "__class__":  # pydantic v2 change
+            return super().__getattribute__(name)
+        if name != "_io_keys" and hasattr(self, "_io_keys") and name in self._io_keys:
+            value = self._io_keys[name].value
+            if isinstance(value, enum.Enum):
+                value = value.name
+            return value
 
         return super().__getattribute__(name)
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any) -> None:  # noqa
         if name == "_fs":
             if not issubclass(type(value), fsspec.spec.AbstractFileSystem):
-                raise ValueError("_fs must be an fsspec FileSystem")
+                msg = "_fs must be an fsspec FileSystem"
+                raise ValueError(msg)
             for i in self.inputs:
                 i._fs = value
             for o in self.outputs:
@@ -204,18 +199,22 @@ class _PluginMethods:
         if name != "_io_keys" and hasattr(self, "_io_keys"):
             if name in self._io_keys:
                 logger.debug(
-                    f"Value of {name} in {self.__class__.__name__} set to {value}"
+                    f"Value of {name} in {self.__class__.__name__} set to {value}",
                 )
                 self._io_keys[name].value = value
                 return
+            msg = (
+                f"Attempting to set {name} in "
+                "{self.__class__.__name__} but "
+                "{{name}} is not a valid I/O parameter"
+            )
             raise IOKeyError(
-                f"Attempting to set {name} in {self.__class__.__name__} but"
-                "{name} is not a valid I/O parameter"
+                msg,
             )
 
         super().__setattr__(name, value)
 
-    def _to_cwl(self):
+    def _to_cwl(self) -> dict:
         """Return CWL yml as dict."""
         cwl_dict = CWL_BASE_DICT
         cwl_dict["inputs"] = {}
@@ -230,12 +229,14 @@ class _PluginMethods:
         cwl_dict["requirements"]["DockerRequirement"]["dockerPull"] = self.containerId
         return cwl_dict
 
-    def save_cwl(self, path: StrPath) -> pathlib.Path:
+    def save_cwl(self, path: StrPath) -> Path:
         """Save plugin as CWL command line tool."""
-        assert str(path).rsplit(".", maxsplit=1)[-1] == "cwl", "Path must end in .cwl"
-        with open(path, "w", encoding="utf-8") as file:
+        if str(path).rsplit(".", maxsplit=1)[-1] != "cwl":
+            msg = "path must end in .cwl"
+            raise ValueError(msg)
+        with Path(path).open("w", encoding="utf-8") as file:
             yaml.dump(self._to_cwl(), file)
-        return pathlib.Path(path)
+        return Path(path)
 
     @property
     def _cwl_io(self) -> dict:
@@ -244,19 +245,24 @@ class _PluginMethods:
             x.name: io_to_yml(x) for x in self._io_keys.values() if x.value is not None
         }
 
-    def save_cwl_io(self, path) -> pathlib.Path:
-        """Save plugin's I/O values to yml file to be used with CWL command line tool."""
+    def save_cwl_io(self, path: StrPath) -> Path:
+        """Save plugin's I/O values to yml file.
+
+        To be used with CWL Command Line Tool.
+        """
         self._check_inputs()
-        assert str(path).rsplit(".", maxsplit=1)[-1] == "yml", "Path must end in .yml"
-        with open(path, "w", encoding="utf-8") as file:
+        if str(path).rsplit(".", maxsplit=1)[-1] != "yml":
+            msg = "path must end in .yml"
+            raise ValueError(msg)
+        with Path(path).open("w", encoding="utf-8") as file:
             yaml.dump(self._cwl_io, file)
-        return pathlib.Path(path)
+        return Path(path)
 
     def run_cwl(
         self,
-        cwl_path: typing.Optional[StrPath] = None,
-        io_path: typing.Optional[StrPath] = None,
-    ) -> typing.Union[CWLObjectType, str, None]:
+        cwl_path: Optional[StrPath] = None,
+        io_path: Optional[StrPath] = None,
+    ) -> Union[CWLObjectType, str, None]:
         """Run configured plugin in CWL.
 
         Run plugin as a CWL command line tool after setting I/O values.
@@ -272,31 +278,34 @@ class _PluginMethods:
 
         """
         if not self.outDir:
-            raise ValueError("")
+            msg = ""
+            raise ValueError(msg)
 
         if not cwl_path:
-            _p = pathlib.Path.cwd().joinpath(name_cleaner(self.name) + ".cwl")
+            _p = Path.cwd().joinpath(name_cleaner(self.name) + ".cwl")
             _cwl = self.save_cwl(_p)
         else:
             _cwl = self.save_cwl(cwl_path)
 
         if not io_path:
-            _p = pathlib.Path.cwd().joinpath(name_cleaner(self.name) + ".yml")
+            _p = Path.cwd().joinpath(name_cleaner(self.name) + ".yml")
             self.save_cwl_io(_p)  # saves io to make it visible to user
         else:
             self.save_cwl_io(io_path)  # saves io to make it visible to user
 
-        outdir_path = self.outDir.parent.relative_to(pathlib.Path.cwd())
+        outdir_path = self.outDir.parent.relative_to(Path.cwd())
         r_c = RuntimeContext({"outdir": str(outdir_path)})
         fac = Factory(runtime_context=r_c)
         cwl = fac.make(str(_cwl))
         return cwl(**self._cwl_io)  # object's io dict is used instead of .yml file
 
-    def __lt__(self, other):
+    def __lt__(self, other: "BasePlugin") -> bool:
         return self.version < other.version
 
-    def __gt__(self, other):
+    def __gt__(self, other: "BasePlugin") -> bool:
         return other.version < self.version
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(name='{self.name}', version={self.version.version})"
+        return (
+            f"{self.__class__.__name__}(name='{self.name}', version={self.version!s})"
+        )

@@ -1,6 +1,9 @@
 """Plugin classes and functions."""
+
+from polus.plugins._plugins.classes.plugin_classes import PLUGINS
 from polus.plugins._plugins.classes.plugin_classes import ComputePlugin
 from polus.plugins._plugins.classes.plugin_classes import Plugin
+from polus.plugins._plugins.classes.plugin_classes import _load_plugin
 from polus.plugins._plugins.classes.plugin_classes import get_plugin
 from polus.plugins._plugins.classes.plugin_classes import list_plugins
 from polus.plugins._plugins.classes.plugin_classes import load_config
@@ -19,4 +22,6 @@ __all__ = [
     "remove_plugin",
     "remove_all",
     "load_config",
+    "_load_plugin",
+    "PLUGINS",
 ]

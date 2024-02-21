@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 import polus.plugins as pp
-from polus.plugins._plugins.classes.plugin_classes import Plugin, _load_plugin
+from polus.plugins._plugins.classes import Plugin, _load_plugin
 
 RSRC_PATH = Path(__file__).parent.joinpath("resources")
 OMECONVERTER = RSRC_PATH.joinpath("omeconverter022.json")
@@ -101,9 +101,7 @@ def test_attr2(submit_basic131):
 
 def test_versions(submit_basic131, submit_basic127):
     """Test versions."""
-    assert sorted(
-        [x for x in pp.get_plugin("BasicFlatfieldCorrectionPlugin").versions]
-    ) == [
+    assert sorted(pp.get_plugin("BasicFlatfieldCorrectionPlugin").versions) == [
         "1.2.7",
         "1.3.1",
     ]
@@ -138,6 +136,20 @@ def test_remove_all_versions_plugin(
 ):
     """Test remove all versions plugin."""
     pp.remove_plugin("BasicFlatfieldCorrectionPlugin")
+    assert pp.list == ["OmeConverter"]
+
+
+def test_submit_str_1():
+    """Test submit_plugin with string."""
+    pp.remove_all()
+    pp.submit_plugin(str(OMECONVERTER))
+    assert pp.list == ["OmeConverter"]
+
+
+def test_submit_str_2():
+    """Test submit_plugin with string."""
+    pp.remove_all()
+    pp.submit_plugin(str(OMECONVERTER.absolute()))
     assert pp.list == ["OmeConverter"]
 
 

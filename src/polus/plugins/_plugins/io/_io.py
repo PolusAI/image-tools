@@ -1,6 +1,6 @@
 # type: ignore
 # ruff: noqa: S101, A003
-# pylint: disable=no-self-argument
+# pylint: disable=no-self-argument, C0412
 """Plugins I/O utilities."""
 import enum
 import logging
@@ -10,14 +10,24 @@ from functools import singledispatch
 from functools import singledispatchmethod
 from typing import Any
 from typing import Optional
+from typing import TypeVar
 from typing import Union
 
 import fsspec
+from polus.plugins._plugins._compat import PYDANTIC_V2
 from pydantic import BaseModel
 from pydantic import Field
 from pydantic import PrivateAttr
-from pydantic import constr
-from pydantic import validator
+
+if PYDANTIC_V2:
+    from typing import Annotated
+
+    from pydantic import RootModel
+    from pydantic import StringConstraints
+    from pydantic import field_validator
+else:
+    from pydantic import constr
+    from pydantic import validator
 
 logger = logging.getLogger("polus.plugins")
 
@@ -102,14 +112,17 @@ def _ui_old_to_new(old: str) -> str:  # map wipp InputType to compute schema's U
     return "text"
 
 
+FileSystem = TypeVar("FileSystem", bound=fsspec.spec.AbstractFileSystem)
+
+
 class IOBase(BaseModel):  # pylint: disable=R0903
     """Base Class for I/O arguments."""
 
-    type: Any
+    type: Any = None
     options: Optional[dict] = None
     value: Optional[Any] = None
     id_: Optional[Any] = None
-    _fs: Optional[type[fsspec.spec.AbstractFileSystem]] = PrivateAttr(
+    _fs: Optional[FileSystem] = PrivateAttr(
         default=None,
     )  # type checking is done at plugin level
 
@@ -182,38 +195,69 @@ class IOBase(BaseModel):  # pylint: disable=R0903
 class Output(IOBase):  # pylint: disable=R0903
     """Required until JSON schema is fixed."""
 
-    name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(
-        ...,
-        examples=["outputCollection"],
-        title="Output name",
-    )
+    if PYDANTIC_V2:
+        name: Annotated[
+            str,
+            StringConstraints(pattern=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$"),
+        ] = Field(
+            ...,
+            examples=["outputCollection"],
+            title="Output name",
+        )
+        description: Annotated[str, StringConstraints(pattern=r"^(.*)$")] = Field(
+            ...,
+            examples=["Output collection"],
+            title="Output description",
+        )
+    else:
+        name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(
+            ...,
+            examples=["outputCollection"],
+            title="Output name",
+        )
+        description: constr(regex=r"^(.*)$") = Field(
+            ...,
+            examples=["Output collection"],
+            title="Output description",
+        )
     type: OutputTypes = Field(
         ...,
         examples=["stitchingVector", "collection"],
         title="Output type",
-    )
-    description: constr(regex=r"^(.*)$") = Field(
-        ...,
-        examples=["Output collection"],
-        title="Output description",
     )
 
 
 class Input(IOBase):  # pylint: disable=R0903
     """Required until JSON schema is fixed."""
 
-    name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(
-        ...,
-        description="Input name as expected by the plugin CLI",
-        examples=["inputImages", "fileNamePattern", "thresholdValue"],
-        title="Input name",
-    )
+    if PYDANTIC_V2:
+        name: Annotated[
+            str,
+            StringConstraints(pattern=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$"),
+        ] = Field(
+            ...,
+            description="Input name as expected by the plugin CLI",
+            examples=["inputImages", "fileNamePattern", "thresholdValue"],
+            title="Input name",
+        )
+        description: Annotated[str, StringConstraints(pattern=r"^(.*)$")] = Field(
+            ...,
+            examples=["Input Images"],
+            title="Input description",
+        )
+    else:
+        name: constr(regex=r"^[a-zA-Z0-9][-a-zA-Z0-9]*$") = Field(
+            ...,
+            description="Input name as expected by the plugin CLI",
+            examples=["inputImages", "fileNamePattern", "thresholdValue"],
+            title="Input name",
+        )
+        description: constr(regex=r"^(.*)$") = Field(
+            ...,
+            examples=["Input Images"],
+            title="Input description",
+        )
     type: InputTypes
-    description: constr(regex=r"^(.*)$") = Field(
-        ...,
-        examples=["Input Images"],
-        title="Input description",
-    )
     required: Optional[bool] = Field(
         True,
         description="Whether an input is required or not",
@@ -244,86 +288,200 @@ def _check_version_number(value: Union[str, int]) -> bool:
     return bool(re.match(r"^\d+$", value))
 
 
-class Version(BaseModel):
-    """SemVer object."""
+if PYDANTIC_V2:
 
-    version: str
+    class Version(RootModel):
+        """SemVer object."""
 
-    def __init__(self, version: str) -> None:
-        """Initialize Version object."""
-        super().__init__(version=version)
+        root: str
 
-    @validator("version")
-    def semantic_version(
-        cls,
-        value,
-    ):  # ruff: noqa: ANN202, N805, ANN001
-        """Pydantic Validator to check semver."""
-        version = value.split(".")
+        @field_validator("root")
+        @classmethod
+        def semantic_version(
+            cls,
+            value,
+        ) -> Any:  # ruff: noqa: ANN202, N805, ANN001
+            """Pydantic Validator to check semver."""
+            version = value.split(".")
 
-        assert (
-            len(version) == 3  # ruff: noqa: PLR2004
-        ), f"""
-        Invalid version ({value}). Version must follow
-        semantic versioning (see semver.org)"""
-        if "-" in version[-1]:  # with hyphen
-            idn = version[-1].split("-")[-1]
-            id_reg = re.compile("[0-9A-Za-z-]+")
-            assert bool(
-                id_reg.match(idn),
+            assert (
+                len(version) == 3  # ruff: noqa: PLR2004
+            ), f"""
+            Invalid version ({value}). Version must follow
+            semantic versioning (see semver.org)"""
+            if "-" in version[-1]:  # with hyphen
+                idn = version[-1].split("-")[-1]
+                id_reg = re.compile("[0-9A-Za-z-]+")
+                assert bool(
+                    id_reg.match(idn),
+                ), f"""Invalid version ({value}).
+                Version must follow semantic versioning (see semver.org)"""
+
+            assert all(
+                map(_check_version_number, version),
             ), f"""Invalid version ({value}).
             Version must follow semantic versioning (see semver.org)"""
+            return value
 
-        assert all(
-            map(_check_version_number, version),
-        ), f"""Invalid version ({value}).
-        Version must follow semantic versioning (see semver.org)"""
-        return value
+        @property
+        def major(self):
+            """Return x from x.y.z ."""
+            return int(self.root.split(".")[0])
 
-    @property
-    def major(self):
-        """Return x from x.y.z ."""
-        return int(self.version.split(".")[0])
+        @property
+        def minor(self):
+            """Return y from x.y.z ."""
+            return int(self.root.split(".")[1])
 
-    @property
-    def minor(self):
-        """Return y from x.y.z ."""
-        return int(self.version.split(".")[1])
+        @property
+        def patch(self):
+            """Return z from x.y.z ."""
+            if not self.root.split(".")[2].isdigit():
+                msg = "Patch version is not a digit, comparison may not be accurate."
+                logger.warning(msg)
+                return self.root.split(".")[2]
+            return int(self.root.split(".")[2])
 
-    @property
-    def patch(self):
-        """Return z from x.y.z ."""
-        if not self.version.split(".")[2].isdigit():
-            msg = "Patch version is not a digit, comparison may not be accurate."
-            logger.warning(msg)
-            return self.version.split(".")[2]
-        return int(self.version.split(".")[2])
+        def __str__(self) -> str:
+            """Return string representation of Version object."""
+            return self.root
 
-    def __str__(self) -> str:
-        """Return string representation of Version object."""
-        return self.version
+        @singledispatchmethod
+        def __lt__(self, other: Any) -> bool:
+            """Compare if Version is less than other object."""
+            msg = "invalid type for comparison."
+            raise TypeError(msg)
 
-    @singledispatchmethod
-    def __lt__(self, other: Any) -> bool:
-        """Compare if Version is less than other object."""
-        msg = "invalid type for comparison."
-        raise TypeError(msg)
+        @singledispatchmethod
+        def __gt__(self, other: Any) -> bool:
+            """Compare if Version is less than other object."""
+            msg = "invalid type for comparison."
+            raise TypeError(msg)
 
-    @singledispatchmethod
-    def __gt__(self, other: Any) -> bool:
-        """Compare if Version is less than other object."""
-        msg = "invalid type for comparison."
-        raise TypeError(msg)
+        @singledispatchmethod
+        def __eq__(self, other: Any) -> bool:
+            """Compare if two Version objects are equal."""
+            msg = "invalid type for comparison."
+            raise TypeError(msg)
 
-    @singledispatchmethod
-    def __eq__(self, other: Any) -> bool:
-        """Compare if two Version objects are equal."""
-        msg = "invalid type for comparison."
-        raise TypeError(msg)
+        def __hash__(self) -> int:
+            """Needed to use Version objects as dict keys."""
+            return hash(self.root)
 
-    def __hash__(self) -> int:
-        """Needed to use Version objects as dict keys."""
-        return hash(self.version)
+        def __repr__(self) -> str:
+            """Return string representation of Version object."""
+            return self.root
+
+    @Version.__eq__.register(str)  # pylint: disable=no-member
+    def _(self, other):
+        return self == Version(other)
+
+    @Version.__lt__.register(str)  # pylint: disable=no-member
+    def _(self, other):
+        v = Version(other)
+        return self < v
+
+    @Version.__gt__.register(str)  # pylint: disable=no-member
+    def _(self, other):
+        v = Version(other)
+        return self > v
+
+else:  # PYDANTIC_V1
+
+    class Version(BaseModel):
+        """SemVer object."""
+
+        version: str
+
+        def __init__(self, version: str) -> None:
+            """Initialize Version object."""
+            super().__init__(version=version)
+
+        @validator("version")
+        def semantic_version(
+            cls,
+            value,
+        ):  # ruff: noqa: ANN202, N805, ANN001
+            """Pydantic Validator to check semver."""
+            version = value.split(".")
+
+            assert (
+                len(version) == 3  # ruff: noqa: PLR2004
+            ), f"""
+            Invalid version ({value}). Version must follow
+            semantic versioning (see semver.org)"""
+            if "-" in version[-1]:  # with hyphen
+                idn = version[-1].split("-")[-1]
+                id_reg = re.compile("[0-9A-Za-z-]+")
+                assert bool(
+                    id_reg.match(idn),
+                ), f"""Invalid version ({value}).
+                Version must follow semantic versioning (see semver.org)"""
+
+            assert all(
+                map(_check_version_number, version),
+            ), f"""Invalid version ({value}).
+            Version must follow semantic versioning (see semver.org)"""
+            return value
+
+        @property
+        def major(self):
+            """Return x from x.y.z ."""
+            return int(self.version.split(".")[0])
+
+        @property
+        def minor(self):
+            """Return y from x.y.z ."""
+            return int(self.version.split(".")[1])
+
+        @property
+        def patch(self):
+            """Return z from x.y.z ."""
+            if not self.version.split(".")[2].isdigit():
+                msg = "Patch version is not a digit, comparison may not be accurate."
+                logger.warning(msg)
+                return self.version.split(".")[2]
+            return int(self.version.split(".")[2])
+
+        def __str__(self) -> str:
+            """Return string representation of Version object."""
+            return self.version
+
+        @singledispatchmethod
+        def __lt__(self, other: Any) -> bool:
+            """Compare if Version is less than other object."""
+            msg = "invalid type for comparison."
+            raise TypeError(msg)
+
+        @singledispatchmethod
+        def __gt__(self, other: Any) -> bool:
+            """Compare if Version is less than other object."""
+            msg = "invalid type for comparison."
+            raise TypeError(msg)
+
+        @singledispatchmethod
+        def __eq__(self, other: Any) -> bool:
+            """Compare if two Version objects are equal."""
+            msg = "invalid type for comparison."
+            raise TypeError(msg)
+
+        def __hash__(self) -> int:
+            """Needed to use Version objects as dict keys."""
+            return hash(self.version)
+
+    @Version.__eq__.register(str)  # pylint: disable=no-member
+    def _(self, other):
+        return self == Version(**{"version": other})
+
+    @Version.__lt__.register(str)  # pylint: disable=no-member
+    def _(self, other):
+        v = Version(**{"version": other})
+        return self < v
+
+    @Version.__gt__.register(str)  # pylint: disable=no-member
+    def _(self, other):
+        v = Version(**{"version": other})
+        return self > v
 
 
 @Version.__eq__.register(Version)  # pylint: disable=no-member
@@ -333,11 +491,6 @@ def _(self, other):
         and other.minor == self.minor
         and other.patch == self.patch
     )
-
-
-@Version.__eq__.register(str)  # pylint: disable=no-member
-def _(self, other):
-    return self == Version(**{"version": other})
 
 
 @Version.__lt__.register(Version)  # pylint: disable=no-member
@@ -355,21 +508,9 @@ def _(self, other):
     return False
 
 
-@Version.__lt__.register(str)  # pylint: disable=no-member
-def _(self, other):
-    v = Version(**{"version": other})
-    return self < v
-
-
 @Version.__gt__.register(Version)  # pylint: disable=no-member
 def _(self, other):
     return other < self
-
-
-@Version.__gt__.register(str)  # pylint: disable=no-member
-def _(self, other):
-    v = Version(**{"version": other})
-    return self > v
 
 
 class DuplicateVersionFoundError(Exception):
