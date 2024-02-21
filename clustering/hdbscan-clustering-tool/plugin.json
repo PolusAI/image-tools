@@ -8,7 +8,7 @@
   "repository": "https://github.com/PolusAI/image-tools",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/hdbscan-clustering-plugin:0.4.8-dev0",
+  "containerId": "polusai/hdbscan-clustering-tool:0.4.8-dev0",
   "baseCommand": [
     "python3",
     "-m",
