@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       num-commits:
-        description: "The of commits to check for updated packages. If 0, the action will assume that it is running on a non-master branch and will check all commits on the current branch against the master branch. For any larger value, the action will check the last n commits for any updated packages."
+        description: "The of commits to check for updated packages. If 0, the action will assume that it is running on a non-default branch and will check all commits on the current branch against the default branch. For any larger value, the action will check the last n commits for any updated packages."
         required: true
         default: 0
         type: number
@@ -49,8 +49,8 @@ jobs:
           base_ref=${{ github.base_ref }}
           if [ -z "$base_ref" ]
           then
-            base_ref="master"
-            echo "::warning::Action not running on PR, defaulting to base branch to master"
+            base_ref="${{ github.event.repository.default_branch }}"
+            echo "::warning::Action not running on PR, defaulting to base branch to $base_ref"
           fi
           echo "The base ref is $base_ref"
 
