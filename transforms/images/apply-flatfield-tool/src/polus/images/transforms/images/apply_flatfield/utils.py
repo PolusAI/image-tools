@@ -4,6 +4,8 @@ import logging
 import multiprocessing
 import os
 import pathlib
+import re
+import typing
 
 import bfio
 import numpy
@@ -33,6 +35,7 @@ def save_img(
     inp_path: pathlib.Path,
     image: numpy.ndarray,
     out_dir: pathlib.Path,
+    data_type: typing.Optional[bool] = False,
 ) -> None:
     """Save image to disk.
 
@@ -40,16 +43,29 @@ def save_img(
         inp_path: path to input image
         image: image to be saved
         out_dir: directory to save image
+        data_type: Save images in original dtype
     """
-    out_stem = inp_path.stem
-    if ".ome" in out_stem:
-        out_stem = out_stem.split(".ome")[0]
-
-    out_path = out_dir / f"{out_stem}{POLUS_IMG_EXT}"
+    match = re.search(r"^(.*?)\.", inp_path.name)
+    if match is not None:
+        name = match.group(1)
+    else:
+        ValueError("Unable to detect files in a directory")
+    out_path = out_dir / f"{name}{POLUS_IMG_EXT}"
     with bfio.BioReader(inp_path, MAX_WORKERS) as reader, bfio.BioWriter(
         out_path,
         MAX_WORKERS,
         metadata=reader.metadata,
     ) as writer:
-        writer.dtype = image.dtype
-        writer[:] = image
+        if data_type:
+            info_uint_type = numpy.iinfo(reader.dtype)
+            scaled_image = (
+                (image - numpy.min(image))
+                / (numpy.max(image) - numpy.min(image))
+                * int(info_uint_type.max)
+            )
+            uint_image = scaled_image.astype(reader.dtype)
+            writer.dtype = reader.dtype
+            writer[:] = uint_image
+        else:
+            writer.dtype = image.dtype
+            writer[:] = image
