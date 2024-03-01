@@ -6,7 +6,7 @@ datapath=$(readlink --canonicalize data)
 inpDir=/data/inputs
 filePattern=".*_{row:c}{col:dd}_s{s:d}_w{channel:d}.*.tif"
 outFilePattern="r01_x{row:c}_y{col:dd}_p{s:d}_c{channel:d}.ome.tif"
-mapDirectory="raw"
+mapDirectory=true
 # Output paths
 outDir=/data/output
 
@@ -19,5 +19,5 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
             --outFilePattern ${outFilePattern} \
-            --mapDirectory ${outFilePattern} \
+            --mapDirectory
             --outDir ${outDir}

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-formats-file-renaming"
-version = "0.2.4-dev0"
+version = "0.2.4-dev1"
 description = "Rename and store image collection files in a new image collection"
 authors = [
 "Melanie Parham <melanie.parham@axleinfo.com>",
@@ -13,6 +13,7 @@ packages = [{include = "polus", from = "src"}]
 python = ">=3.9"
 typer = "^0.7.0"
 tqdm = "^4.64.1"
+filepattern = "^2.0.5"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"

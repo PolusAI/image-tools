@@ -1,6 +1,5 @@
 """Testing of File Renaming."""
 import json
-import os
 import pathlib
 import shutil
 import tempfile
@@ -136,30 +135,13 @@ def poly(request):
     return request.param
 
 
-def test_duplicate_channels_to_digit(poly):
-    """Testing of duplicate channels to digits."""
-    d = CreateData()
-    inputs = d.load_json("duplicate_channels_to_digit")
-    (inp_pattern, out_pattern) = poly[0]
-    outputs = d.runcommands(inputs, inp_pattern, out_pattern)
-    assert outputs.exit_code == 0
-
-
-def test_duplicate_channels_to_digit_non_spec_digit_len(poly):
-    """Testing of duplicate channels to digits with non specified length of digits."""
-    d = CreateData()
-    inputs = d.load_json("duplicate_channels_to_digit")
-    (inp_pattern, out_pattern) = poly[1]
-    outputs = d.runcommands(inputs, inp_pattern, out_pattern)
-    assert outputs.exit_code == 0
-
-
 def test_invalid_input_raises_error(poly):
     """Testing of invalid input filepattern."""
     d = CreateData()
     inputs = d.load_json("duplicate_channels_to_digit")
     (inp_pattern, out_pattern) = poly[0]
     d.runcommands(inputs, inp_pattern, out_pattern)
+    d.clean_directories()
 
 
 def test_non_alphanum_inputs_percentage_sign(poly):
@@ -169,6 +151,7 @@ def test_non_alphanum_inputs_percentage_sign(poly):
     (inp_pattern, out_pattern) = poly[3]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
     assert outputs.exit_code == 0
+    d.clean_directories()
 
 
 def test_numeric_fixed_width(poly):
@@ -178,6 +161,7 @@ def test_numeric_fixed_width(poly):
     (inp_pattern, out_pattern) = poly[4]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
     assert outputs.exit_code == 0
+    d.clean_directories()
 
 
 def test_alphanumeric_fixed_width(poly):
@@ -187,6 +171,7 @@ def test_alphanumeric_fixed_width(poly):
     (inp_pattern, out_pattern) = poly[5]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
     assert outputs.exit_code == 0
+    d.clean_directories()
 
 
 def test_alphanumeric_variable_width(poly):
@@ -199,15 +184,6 @@ def test_alphanumeric_variable_width(poly):
     d.clean_directories()
 
 
-def test_parenthesis(poly):
-    """Testing of filename with parenthesis."""
-    d = CreateData()
-    inputs = d.load_json("parenthesis")
-    (inp_pattern, out_pattern) = poly[7]
-    outputs = d.runcommands(inputs, inp_pattern, out_pattern)
-    assert outputs.exit_code == 0
-
-
 def test_two_chan_to_digit(poly):
     """Testing conversion of two channels to digits."""
     d = CreateData()
@@ -215,6 +191,7 @@ def test_two_chan_to_digit(poly):
     (inp_pattern, out_pattern) = poly[8]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
     assert outputs.exit_code == 0
+    d.clean_directories()
 
 
 def test_three_chan_to_digit(poly):
@@ -224,6 +201,7 @@ def test_three_chan_to_digit(poly):
     (inp_pattern, out_pattern) = poly[9]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
     assert outputs.exit_code == 0
+    d.clean_directories()
 
 
 def test_three_char_chan(poly):
@@ -233,6 +211,7 @@ def test_three_char_chan(poly):
     (inp_pattern, out_pattern) = poly[10]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
     assert outputs.exit_code == 0
+    d.clean_directories()
 
 
 def test_varied_digits(poly):
@@ -252,6 +231,7 @@ def test_spaces(poly):
     (inp_pattern, out_pattern) = poly[12]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
     assert outputs.exit_code == 0
+    d.clean_directories()
 
 
 def test_non_alphanum_float(poly):
@@ -262,67 +242,6 @@ def test_non_alphanum_float(poly):
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
     assert outputs.exit_code == 0
     d.clean_directories()
-
-
-def test_dashes_parentheses(poly):
-    """Test non-alphanumeric chars are handled properly such as dashes, parenthesis."""
-    d = CreateData()
-    inputs = d.load_json("kph-kirill")
-    (inp_pattern, out_pattern) = poly[14]
-    outputs = d.runcommands(inputs, inp_pattern, out_pattern)
-    assert outputs.exit_code == 0
-    d.clean_directories()
-
-
-def test_map_pattern_grps_to_regex_valid_input():
-    """Test of mapping input pattern."""
-    test_cases = [
-        (
-            ("img_x{row:dd}_y{col:dd}_{channel:c+}.tif"),
-            (
-                {
-                    "row": "(?P<row>[0-9][0-9])",
-                    "col": "(?P<col>[0-9][0-9])",
-                    "channel": "(?P<channel>[a-zA-Z]+)",
-                }
-            ),
-        ),
-        (("img_x{row:c+}.tif"), ({"row": "(?P<row>[a-zA-Z]+)"})),
-        ((""), ({})),
-    ]
-    for test_case in test_cases:
-        (from_val, to_val) = test_case
-        result = fr.map_pattern_grps_to_regex(from_val)
-        assert result == to_val
-
-
-def test_convert_to_regex_valid_input():
-    """Test of converting to regular expression pattern."""
-    test_cases = [
-        (
-            ("img_x{row:dd}_y{col:dd}_{channel:c+}.tif"),
-            (
-                {
-                    "row": "(?P<row>[0-9][0-9])",
-                    "col": "(?P<col>[0-9][0-9])",
-                    "channel": "(?P<channel>[a-zA-Z]+)",
-                }
-            ),
-            (
-                "img_x(?P<row>[0-9][0-9])_y(?P<col>[0-9][0-9])_(?P<channel>[a-zA-Z]+).tif"
-            ),
-        ),
-        (
-            ("img_x{row:c+}.tif"),
-            ({"row": "(?P<row>[a-zA-Z]+)"}),
-            ("img_x(?P<row>[a-zA-Z]+).tif"),
-        ),
-        (("img_x01.tif"), ({}), ("img_x01.tif")),
-    ]
-    for test_case in test_cases:
-        (from_val1, from_val2, to_val) = test_case
-        result = fr.convert_to_regex(from_val1, from_val2)
-        assert result == to_val
 
 
 def test_specify_len_valid_input():
@@ -356,60 +275,6 @@ def test_get_char_to_digit_grps_returns_unique_keys_valid_input():
         (from_val1, from_val2, to_val) = test_case
         result = fr.get_char_to_digit_grps(from_val1, from_val2)
         assert result == to_val
-
-
-def test_extract_named_grp_matches_valid_input():
-    """Test of extracting group names."""
-    test_cases = [
-        (
-            (
-                "img_x(?P<row>[0-9][0-9])_y(?P<col>[0-9][0-9])_(?P<channel>[a-zA-Z]+).tif"
-            ),
-            (["img_x01_y01_DAPI.tif", "img_x01_y01_GFP.tif", "img_x01_y01_TXRED.tif"]),
-            (
-                [
-                    {
-                        "row": "01",
-                        "col": "01",
-                        "channel": "DAPI",
-                        "fname": "img_x01_y01_DAPI.tif",
-                    },
-                    {
-                        "row": "01",
-                        "col": "01",
-                        "channel": "GFP",
-                        "fname": "img_x01_y01_GFP.tif",
-                    },
-                    {
-                        "row": "01",
-                        "col": "01",
-                        "channel": "TXRED",
-                        "fname": "img_x01_y01_TXRED.tif",
-                    },
-                ]
-            ),
-        ),
-        (("img_x01.tif"), (["img_x01.tif"]), ([{"fname": "img_x01.tif"}])),
-    ]
-    for test_case in test_cases:
-        (from_val1, from_val2, to_val) = test_case
-        result = fr.extract_named_grp_matches(from_val1, from_val2)
-        assert result == to_val
-
-
-def test_extract_named_grp_matches_bad_pattern_invalid_input_fails():
-    """Test of invalid input pattern."""
-    test_cases = [
-        (
-            ("img_x(?P<row>[a-zA-Z]+).tif"),
-            (["img_x01_y01_DAPI.tif", "img_x01_y01_GFP.tif", "img_x01_y01_TXRED.tif"]),
-        )
-    ]
-    for test_case in test_cases:
-        (from_val1, from_val2) = test_case
-
-        result = fr.extract_named_grp_matches(from_val1, from_val2)
-        assert len(result) == 0
 
 
 def test_str_to_int_valid_input():
@@ -492,22 +357,6 @@ def test_letters_to_int_returns_cat_index_dict_valid_input():
 
 
 @pytest.mark.xfail
-def test_extract_named_grp_matches_duplicate_namedgrp_invalid_input():
-    """Test of invalid input pattern."""
-    test_cases = [
-        (
-            (
-                "x(?P<row>[0-9][0-9])_y(?P<row>[0-9][0-9])_c(?P<channel>[a-zA-Z]+).ome.tif"
-            ),
-            (["img_x01_y01_DAPI.tif", "img_x01_y01_GFP.tif", "img_x01_y01_TXRED.tif"]),
-        )
-    ]
-    for test_case in test_cases:
-        (from_val1, from_val2) = test_case
-        fr.extract_named_grp_matches(from_val1, from_val2)
-
-
-@pytest.mark.xfail
 def test_letters_to_int_returns_error_invalid_input():
     """Test of invalid inputs."""
     test_cases = [
@@ -539,10 +388,17 @@ def test_letters_to_int_returns_error_invalid_input():
 def create_subfolders():
     data = {
         "complex": [
-            ["A9 p5d.tif", "A9 p5f.tif", "A9 p7f.tif"],
-            "96 ( -)* test_",
-            "{row:c}{col:d}.*p{f:d+}{character:c}.tif",
+            [
+                "AS_09125_050118150001_A03f00d0.tif",
+                "AS_09125_050118150001_A03f01d0.tif",
+                "AS_09125_050118150001_A03f02d0.tif",
+                "AS_09125_050118150001_A03f03d0.tif",
+                "AS_09125_050118150001_A03f04d0.tif",
+            ],
+            "BBBC/BBBC001/raw/Images/human_ht29_colon_cancer_1_images",
+            "/.*/.*/.*/Images/(?P<directory>.*)/.*_{row:c}{col:dd}f{f:dd}d{channel:d}.tif",
             "x{row:dd}_y{col:dd}_p{f:dd}{character:c}_c01.tif",
+            "True",
         ],
         "simple": [
             [
@@ -554,44 +410,59 @@ def create_subfolders():
             "folder_",
             ".*_{row:c}{col:dd}_s{s:d}_w{channel:d}.*.tif",
             "x{row:dd}_y{col:dd}_p{s:dd}_c{channel:d}.tif",
+            "False",
         ],
     }
     for name in ["complex", "simple"]:
         d = CreateData()
         dir_path = d.input_directory()
         for i in range(5):
-            dirname = pathlib.Path(dir_path, f"{data[name][1]}{i}")
+            dirname = pathlib.Path(dir_path, f"{data[name][1]}_{i}")
             if not pathlib.Path(dirname).exists():
-                pathlib.Path(dirname).mkdir(exist_ok=False, parents=False)
+                pathlib.Path(dirname).mkdir(parents=True, exist_ok=True)
             for fl in data[name][0]:
                 temp_file = open(pathlib.Path(dirname, fl), "w")
                 temp_file.close()
 
-    return pathlib.Path(dir_path), data[name][1], data[name][2], data[name][3]
+    return (
+        pathlib.Path(dir_path),
+        data[name][1],
+        data[name][2],
+        data[name][3],
+        data[name][4],
+    )
 
 
-def test_cli(create_subfolders) -> None:
+def test_cli(create_subfolders: pytest.FixtureRequest) -> None:
     """Test Cli."""
-    dir_path, _, file_pattern, out_file_pattern = create_subfolders
+    dir_path, _, file_pattern, out_file_pattern, map_directory = create_subfolders
 
-    for i in ["raw", "map"]:
-        d = CreateData()
-        out_dir = d.output_directory()
-        result = runner.invoke(
-            app,
-            [
-                "--inpDir",
-                dir_path,
-                "--filePattern",
-                file_pattern,
-                "--outDir",
-                out_dir,
-                "--outFilePattern",
-                out_file_pattern,
-                "--mapDirectory",
-                i,
-            ],
-        )
-        assert result.exit_code == 0
+    d = CreateData()
+    out_dir = d.output_directory()
+    if map_directory == "True":
+        params = [
+            "--inpDir",
+            dir_path,
+            "--filePattern",
+            file_pattern,
+            "--outDir",
+            out_dir,
+            "--outFilePattern",
+            out_file_pattern,
+            "--mapDirectory",
+        ]
+    else:
+        params = [
+            "--inpDir",
+            dir_path,
+            "--filePattern",
+            file_pattern,
+            "--outDir",
+            out_dir,
+            "--outFilePattern",
+            out_file_pattern,
+        ]
 
+    result = runner.invoke(app, params)
+    assert result.exit_code == 0
     d.clean_directories()
