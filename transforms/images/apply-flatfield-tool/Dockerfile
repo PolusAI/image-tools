@@ -16,5 +16,5 @@ COPY src ${EXEC_DIR}/src
 
 RUN pip3 install ${EXEC_DIR} --no-cache-dir
 
-ENTRYPOINT ["python3", "-m", "polus.plugins.transforms.images.apply_flatfield"]
+ENTRYPOINT ["python3", "-m", "polus.images.transforms.images.apply_flatfield"]
 CMD ["--help"]

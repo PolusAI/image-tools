@@ -10,8 +10,8 @@ import bfio
 import numpy
 import pytest
 import typer.testing
-from polus.plugins.transforms.images.apply_flatfield import apply
-from polus.plugins.transforms.images.apply_flatfield.__main__ import app
+from polus.images.transforms.images.apply_flatfield import apply
+from polus.images.transforms.images.apply_flatfield.__main__ import app
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

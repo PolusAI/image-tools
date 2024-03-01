@@ -6,15 +6,15 @@ import pathlib
 import typing
 
 import typer
-from polus.plugins.transforms.images.apply_flatfield import apply
-from polus.plugins.transforms.images.apply_flatfield import utils
+from polus.images.transforms.images.apply_flatfield import apply
+from polus.images.transforms.images.apply_flatfield import utils
 
 # Initialize the logger
 logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
     datefmt="%d-%b-%y %H:%M:%S",
 )
-logger = logging.getLogger("polus.plugins.transforms.images.apply_flatfield")
+logger = logging.getLogger("polus.images.transforms.images.apply_flatfield")
 logger.setLevel(utils.POLUS_LOG)
 
 app = typer.Typer()
