@@ -125,7 +125,6 @@ def padding(image: np.ndarray) -> tuple[np.ndarray, tuple[int, int, int, int]]:
        padded image and dimensions for padding
     """
     row, col, _ = image.shape
-
     # Determine the desired height and width after padding the input image
     m, n = math.ceil(row / 256), math.ceil(col / 256)
     required_rows = m * 256
