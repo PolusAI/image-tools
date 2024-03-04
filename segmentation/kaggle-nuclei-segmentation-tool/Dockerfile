@@ -19,5 +19,5 @@ RUN pip3 install ${EXEC_DIR} --no-cache-dir
 
 
 # Default command. Additional arguments are provided through the command line
-ENTRYPOINT ["python3", "-m", "polus.plugins.segmentation.kaggle_nuclei_segmentation"]
+ENTRYPOINT ["python3", "-m", "polus.images.segmentation.kaggle_nuclei_segmentation"]
 CMD ["--help"]

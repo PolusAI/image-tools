@@ -16,11 +16,11 @@ logging.basicConfig(
     datefmt="%d-%b-%y %H:%M:%S",
 )
 POLUS_LOG = getattr(logging, environ.get("POLUS_LOG", "INFO"))
-logger = logging.getLogger("polus.plugins.segmentation.cell_nuclei_segmentation")
+logger = logging.getLogger("polus.images.segmentation.kaggle_nuclei_segmentation")
 logger.setLevel(POLUS_LOG)
 POLUS_IMG_EXT = environ.get("POLUS_IMG_EXT", ".ome.tif")
 BATCH_SIZE = 20
-app = typer.Typer(help="Cell Nuclei Segmentation.")
+app = typer.Typer(help="Kaggle Nuclei Segmentation.")
 
 
 def generate_preview(
