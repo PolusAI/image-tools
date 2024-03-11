@@ -38,7 +38,6 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
-          persist-credentials: false
       - name: Find Updated Packages
         id: package-filter
         run: |
@@ -63,19 +62,27 @@ jobs:
           fi
           echo "The comparison point is ${comparison_point}"
 
-          for changed_file in $(git diff --name-only ${comparison_point}...)
+          # Get the changed files
+          changed_files=$(git diff --name-only ${comparison_point}...)
+          # echo the changed files
+          echo "The changed files are $changed_files"
+
+          for changed_file in $changed_files
           do
             pkg_dir=$(dirname ${changed_file})
+            echo "The file is $changed_file"
 
             # Exclude the root directory
-            if [ "$pkg_dir" == "." ]
+            if [[ "$pkg_dir" = "." ]]
             then
               continue
             fi
 
             # Check if the changed file is a pyproject.toml file
-            if [ "$(basename ${changed_file})" == *"pyproject.toml"* ]
+            if [[ "$(basename ${changed_file})" = *"pyproject"* ]]
             then
+              echo "Found a pyproject.toml file in $pkg_dir"
+
               # Check that the package has all the necessary companion files
               for companion_file in $COMPANION_FILES
               do
@@ -88,7 +95,7 @@ jobs:
 
               # Check that the version is a dev version
               echo "Checking for dev version in $pkg_dir"
-              if [ $(cat $pkg_dir/VERSION) != *"dev"* ]
+              if [[ $(cat $pkg_dir/VERSION) != *"dev"* ]]
               then
                 msg="${pkg_dir} does not have a dev version"
                 if [ ${{ inputs.ignore-missing-dev }} ]
