@@ -8,7 +8,10 @@ packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
-bfio = {version = ">=2.3.3,<3.0", extras = ["all"]}
+gen3 = "^4.22.4"
+PyYAML = "^6.0.1"
+pandas = "^2.2.1"
+pydicom = "^2.4.4"
 filepattern = ">=2.0.4,<3.0"
 preadator = "^0.4.0.dev2"
 typer = "^0.7.0"
