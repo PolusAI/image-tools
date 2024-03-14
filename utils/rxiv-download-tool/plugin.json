@@ -14,51 +14,57 @@
     "-m",
     "polus.images.utils.rxiv_download"
   ],
-  "inputs": {
-    "rxiv": {
+  "inputs": [
+    {
+      "name": "rxiv",
       "type": "string",
       "title": "rxiv",
       "description": "Pull records from open access archives.",
       "required": "True"
     },
-    "start": {
+    {
+      "name": "start",
       "type": "string",
       "title": "start",
       "description": "Start date.",
       "required": "False"
     },
-    "preview": {
+    {
+      "name": "preview",
       "type": "boolean",
       "title": "Preview",
       "description": "Generate an output preview.",
       "required": "False"
     }
-  },
-  "outputs": {
-    "outDir": {
+  ],
+  "outputs": [
+    {
       "name": "outDir",
       "type": "genericData",
       "description": "Output collection."
     }
-  },
-  "ui": {
-    "rxiv": {
+  ],
+  "ui": [
+    {
+      "key": "inputs.rxiv",
       "type": "string",
       "title": "rxiv",
       "description": "Pull records from open access archives.",
       "required": "True"
     },
-    "start": {
+    {
+      "key": "inputs.start",
       "type": "string",
       "title": "start",
       "description": "Start date.",
       "required": "False"
     },
-    "preview": {
+    {
+      "key": "inputs.preview",
       "type": "boolean",
       "title": "Preview example output of this plugin",
       "description": "Generate an output preview.",
       "required": "False"
     }
-  }
+  ]
 }
