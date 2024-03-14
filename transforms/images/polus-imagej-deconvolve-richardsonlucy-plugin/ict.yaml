@@ -1,0 +1,80 @@
+author:
+- Benjamin Houghton
+citation: null
+contact: benjamin.houghton@axleinfo.com
+container: polusai/imagej-deconvolve-richardsonlucy-plugin:0.4.3
+description: This plugin applies the Richardson-Lucy Deconvolution to input collection.
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Op overloading method to perform
+  io_format:
+  - opName
+  io_type: string
+  name: opName
+  required: false
+- description: Input collection to be processed by this plugin
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: false
+- description: The point spread function mask to be used
+  io_format:
+  - psf
+  io_type: path
+  name: psf
+  required: false
+- description: The maximum number of algorithm iterations
+  io_format:
+  - maxIterations
+  io_type: number
+  name: maxIterations
+  required: false
+name: polusai/ImageJdeconvolverichardsonLucy
+outputs:
+- description: The output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: ImageJ deconvolve richardsonLucy
+ui:
+- condition: null
+  customType: null
+  description: Op overloading method to perform
+  fields:
+  - PadAndRichardsonLucy
+  - RichardsonLucyC
+  key: inputs.opName
+  optional: null
+  title: opName
+  ui_type: select
+- condition: inputs.opName==RichardsonLucyC
+  customType: null
+  description: Input collection to be processed by this plugin
+  ext: null
+  key: inputs.inpDir
+  title: inpDir
+  ui_type: path
+- condition: inputs.opName==RichardsonLucyC
+  customType: null
+  description: The point spread function mask to be used
+  ext: null
+  key: inputs.psf
+  title: psf
+  ui_type: path
+- condition: inputs.opName==RichardsonLucyC
+  customType: null
+  default: null
+  description: The maximum number of algorithm iterations
+  integer: null
+  key: inputs.maxIterations
+  number_range: null
+  title: maxIterations
+  ui_type: number
+version: 0.4.3

@@ -1,0 +1,79 @@
+author:
+- Hythem Sidky
+citation: null
+contact: hythem.sidky@axleinfo.com
+container: polusai/object-spectral-featurization-plugin:0.1.2
+description: Spectral feature generation for segmented objects.
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Input image collection to be processed by this plugin.
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+- description: Number of spectral features to compute.
+  io_format:
+  - numFeatures
+  io_type: number
+  name: numFeatures
+  required: true
+- description: Calculate scale invariant features.
+  io_format:
+  - scaleInvariant
+  io_type: boolean
+  name: scaleInvariant
+  required: true
+- description: Maximum number of faces for generated meshes.
+  io_format:
+  - limitMeshSize
+  io_type: number
+  name: limitMeshSize
+  required: false
+name: polusai/ObjectSpectralfeaturization
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Object Spectral featurization
+ui:
+- condition: null
+  customType: null
+  description: Input image collection to be processed by this plugin.
+  ext: null
+  key: inputs.inpDir
+  title: Input collection
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Calculate scale invariant features.
+  key: inputs.scaleInvariant
+  title: Scale invariance
+  ui_type: checkbox
+- condition: null
+  customType: null
+  default: null
+  description: Number of spectral features to calculate.
+  integer: null
+  key: inputs.numFeatures
+  number_range: null
+  title: Number of features
+  ui_type: number
+- condition: null
+  customType: null
+  default: null
+  description: Maximum number of faces for generated meshes.
+  integer: null
+  key: inputs.limitMeshSize
+  number_range: null
+  title: Mesh size limit
+  ui_type: number
+version: 0.1.2

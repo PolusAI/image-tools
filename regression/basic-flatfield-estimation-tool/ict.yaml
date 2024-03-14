@@ -1,0 +1,81 @@
+author:
+- Nick Schaub
+- Najib Ishaq
+citation: null
+contact: nick.schaub@nih.gov
+container: polusai/basic-flatfield-estimation-tool:2.1.2-dev0
+description: Generates images used for flatfield correction using the BaSiC algorithm.
+documentation: null
+entrypoint: python3 -m polus.images.regression.basic_flatfield_estimation
+hardware: null
+inputs:
+- description: Input image collection.
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+- description: Filename pattern used to separate images by channel, timepoint, and
+    replicate.
+  io_format:
+  - filePattern
+  io_type: string
+  name: filePattern
+  required: true
+- description: Group images together for flatfield by variable.
+  io_format:
+  - groupBy
+  io_type: string
+  name: groupBy
+  required: false
+- description: Calculate darkfield image.
+  io_format:
+  - getDarkfield
+  io_type: boolean
+  name: getDarkfield
+  required: true
+name: polusai/FlatfieldEstimationusingBaSiCalgorithm.
+outputs:
+- description: Output data for the plugin
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/polusai/polus-plugins
+specVersion: 1.0.0
+title: Flatfield Estimation using BaSiC algorithm.
+ui:
+- condition: null
+  customType: null
+  description: Image collection...
+  ext: null
+  key: inputs.inpDir
+  title: 'Input image collection: '
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Use a filename pattern to calculate flatfield information by subsets
+  key: inputs.filePattern
+  regex: null
+  title: 'Filename pattern: '
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: Group data together with varying variable values.
+  key: inputs.groupBy
+  regex: null
+  title: 'Grouping Variables: '
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: If selected, will generate a darkfield image
+  key: inputs.getDarkfield
+  title: 'Calculate darkfield: '
+  ui_type: checkbox
+version: 2.1.2-dev0

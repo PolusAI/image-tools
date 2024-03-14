@@ -1,0 +1,142 @@
+author:
+- Vishakha Goyal
+- Hamdah Shafqat
+citation: null
+contact: vishakha.goyal@nih.gov
+container: polusai/mesmer-training-tool:0.0.7-dev0
+description: WIPP plugin to train PanopticNet model.
+documentation: null
+entrypoint: python3 -m polus.images.segmentation.mesmer_training
+hardware: null
+inputs:
+- description: Input training image collection to be processed by this plugin
+  io_format:
+  - trainingImages
+  io_type: path
+  name: trainingImages
+  required: true
+- description: Input training label collection to be processed by this plugin
+  io_format:
+  - trainingLabels
+  io_type: path
+  name: trainingLabels
+  required: true
+- description: Input testing image collection to be processed by this plugin
+  io_format:
+  - testingImages
+  io_type: path
+  name: testingImages
+  required: true
+- description: Input testing label collection to be processed by this plugin
+  io_format:
+  - testingLabels
+  io_type: path
+  name: testingLabels
+  required: true
+- description: Keras models
+  io_format:
+  - modelBackbone
+  io_type: string
+  name: modelBackbone
+  required: true
+- description: Pattern to parse file names.
+  io_format:
+  - filePattern
+  io_type: string
+  name: filePattern
+  required: false
+- description: tile size
+  io_format:
+  - tilesize
+  io_type: number
+  name: tilesize
+  required: false
+- description: Number of training iterations
+  io_format:
+  - iterations
+  io_type: number
+  name: iterations
+  required: false
+- description: batch size for training
+  io_format:
+  - batchSize
+  io_type: number
+  name: batchSize
+  required: false
+name: polusai/MESMERTraining
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/polusai/polus-plugins
+specVersion: 1.0.0
+title: MESMER Training
+ui:
+- condition: null
+  customType: null
+  description: Input training image collection to be processed by this plugin
+  ext: null
+  key: inputs.trainingImages
+  title: trainingImages
+  ui_type: path
+- condition: null
+  customType: null
+  description: Input training label collection to be processed by this plugin
+  ext: null
+  key: inputs.trainingLabels
+  title: trainingLabels
+  ui_type: path
+- condition: null
+  customType: null
+  description: Input testing image collection to be processed by this plugin
+  ext: null
+  key: inputs.testingImages
+  title: testingImages
+  ui_type: path
+- condition: null
+  customType: null
+  description: Input testing label collection to be processed by this plugin
+  ext: null
+  key: inputs.testingLabels
+  title: testingLabels
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Pattern to parse file names.
+  key: inputs.filePattern
+  regex: null
+  title: FilePattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: tile size. Default is 256.
+  integer: null
+  key: inputs.tilesize
+  number_range: null
+  title: tile size
+  ui_type: number
+- condition: null
+  customType: null
+  default: null
+  description: Number of training iterations. Default is 10.
+  integer: null
+  key: inputs.iterations
+  number_range: null
+  title: training iterations
+  ui_type: number
+- condition: null
+  customType: null
+  default: null
+  description: batch size. Default is 1.
+  integer: null
+  key: inputs.batchSize
+  number_range: null
+  title: batch size
+  ui_type: number
+version: 0.0.7-dev0

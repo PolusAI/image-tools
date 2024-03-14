@@ -1,0 +1,112 @@
+author:
+- Nick Schaub
+- Benjamin Houghton
+citation: null
+contact: nick.schaub@nih.gov
+container: polusai/montage-tool:0.5.1-dev0
+description: Advanced montaging plugin.
+documentation: null
+entrypoint: python3 -m polus.images.transforms.images.montage
+hardware: null
+inputs:
+- description: Filename pattern used to parse data
+  io_format:
+  - filePattern
+  io_type: string
+  name: filePattern
+  required: true
+- description: Input image collection to be processed by this plugin
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+- description: Specify montage organization
+  io_format:
+  - layout
+  io_type: array
+  name: layout
+  required: false
+- description: Spacing between images at the lowest subgrid
+  io_format:
+  - imageSpacing
+  io_type: number
+  name: imageSpacing
+  required: false
+- description: Input image collection to be processed by this plugin
+  io_format:
+  - gridSpacing
+  io_type: number
+  name: gridSpacing
+  required: false
+- description: Axes to flip when creating the montage
+  io_format:
+  - flipAxis
+  io_type: string
+  name: flipAxis
+  required: false
+name: polusai/Montage
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/PolusAI/polus-plugins
+specVersion: 1.0.0
+title: Montage
+ui:
+- condition: null
+  customType: null
+  default: null
+  description: Filename pattern used to parse data
+  key: inputs.filePattern
+  regex: null
+  title: Filename pattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  description: Input image collection to be processed by this plugin
+  ext: null
+  key: inputs.inpDir
+  title: Input collection
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Specify montage organization
+  key: inputs.layout
+  regex: null
+  title: Grid layout
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: Space between images
+  integer: null
+  key: inputs.imageSpacing
+  number_range: null
+  title: Image spacing
+  ui_type: number
+- condition: null
+  customType: null
+  default: null
+  description: Spacing between subgrids
+  integer: null
+  key: inputs.gridSpacing
+  number_range: null
+  title: Grid spacing multiplier
+  ui_type: number
+- condition: null
+  customType: null
+  default: null
+  description: Axes to flip when laying out images.
+  key: inputs.flipAxis
+  regex: null
+  title: Flip Axis
+  toolbar: null
+  ui_type: text
+version: 0.5.1-dev0

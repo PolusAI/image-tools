@@ -1,0 +1,84 @@
+author:
+- Melanie Parham
+- Hamdah Shafqat
+citation: null
+contact: melanie.parham@axleinfo.com
+container: polusai/file-renaming-tool:0.2.4-dev0
+description: Rename and store image collection files in a new image collection
+documentation: null
+entrypoint: python3 -m polus.images.formats.file_renaming
+hardware: null
+inputs:
+- description: Filename pattern used to separate data
+  io_format:
+  - filePattern
+  io_type: string
+  name: filePattern
+  required: true
+- description: Input image collection to be processed by this plugin
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+- description: Desired filename pattern used to rename and separate data
+  io_format:
+  - outFilePattern
+  io_type: string
+  name: outFilePattern
+  required: true
+- description: Get directory name incorporated in renamed files
+  io_format:
+  - mapDirectory
+  io_type: string
+  name: mapDirectory
+  required: false
+name: polusai/FileRenaming
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/PolusAI/polus-plugins
+specVersion: 1.0.0
+title: File Renaming
+ui:
+- condition: null
+  customType: null
+  default: null
+  description: Filename pattern used to separate data
+  key: inputs.filePattern
+  regex: null
+  title: Filename pattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  description: Input image collection to be processed by this plugin
+  ext: null
+  key: inputs.inpDir
+  title: Input collection
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Desired filename pattern used to rename and separate data
+  key: inputs.outFilePattern
+  regex: null
+  title: Output filename pattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  description: Get directory name incorporated in renamed files
+  fields:
+  - raw
+  - map
+  - default
+  key: inputs.mapDirectory
+  optional: null
+  title: mapDirectory
+  ui_type: select
+version: 0.2.4-dev0

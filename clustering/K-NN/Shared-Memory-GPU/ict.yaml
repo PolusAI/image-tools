@@ -1,0 +1,83 @@
+author:
+- Mahdi Maghrebi
+citation: null
+contact: author@ict.com
+container: labshare/polus-knn-plugin:cuda-0.1.0
+description: K-Nearest Neighbors CUDA Code
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Input csv file containing the raw data
+  io_format:
+  - inputPath
+  io_type: path
+  name: inputPath
+  required: true
+- description: The desired number of Nearest Neighbors (NN) to be computed
+  io_format:
+  - K
+  io_type: number
+  name: K
+  required: true
+- description: The rate at which the sampling is conducted. The values closer to 1
+    provides more accurate results but the execution takes longer.
+  io_format:
+  - sampleRate
+  io_type: number
+  name: sampleRate
+  required: true
+- description: The threshold for the convergence
+  io_format:
+  - convThreshold
+  io_type: number
+  name: convThreshold
+  required: true
+name: labshare/K-NN(CUDA)
+outputs:
+- description: The full path to the output csv collections containing indices and
+    distances of K-NNs
+  io_format:
+  - outputPath
+  io_type: path
+  name: outputPath
+  required: true
+repository: https://github.com/polusai/image-tools
+specVersion: 1.0.0
+title: K-NN (CUDA)
+ui:
+- condition: null
+  customType: null
+  description: Name of the input CSV collection
+  ext: null
+  key: inputs.inputPath
+  title: The path to the input csv collection
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Insert an integer
+  integer: null
+  key: inputs.K
+  number_range: null
+  title: The desired number of Nearest Neighbors (NN) to be computed
+  ui_type: number
+- condition: null
+  customType: null
+  default: null
+  description: Insert a value between 0 and 1
+  integer: null
+  key: inputs.sampleRate
+  number_range: null
+  title: 'The sampling rate '
+  ui_type: number
+- condition: null
+  customType: null
+  default: null
+  description: Insert an integer. Smaller values result in more accurate solutions.
+  integer: null
+  key: inputs.convThreshold
+  number_range: null
+  title: The threshold for the convergence
+  ui_type: number
+version: 0.1.0

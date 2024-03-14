@@ -1,0 +1,157 @@
+author:
+- Nick Schaub
+- Hamdah Shafqat
+citation: null
+contact: nick.schaub@nih.gov
+container: polusai/nyxus-tool:0.1.7-dev0
+description: Nyxus plugin allows to make use of parallel pocessing for extracting
+  nyxus features
+documentation: null
+entrypoint: python3 -m polus.images.features.nyxus_plugin
+hardware: null
+inputs:
+- description: Collection containing intensity images
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+- description: Collection containing label images, i.e. groundtruth images
+  io_format:
+  - segDir
+  io_type: path
+  name: segDir
+  required: true
+- description: Filepattern to parse intensity images
+  io_format:
+  - intPattern
+  io_type: string
+  name: intPattern
+  required: true
+- description: Filepattern to parse label images
+  io_format:
+  - segPattern
+  io_type: string
+  name: segPattern
+  required: true
+- description: Features or feature groups to be extracted by nyxus plugin
+  io_format:
+  - features
+  io_type: array
+  name: features
+  required: false
+- description: Output file format
+  io_format:
+  - fileExtension
+  io_type: string
+  name: fileExtension
+  required: true
+- description: Pixel distance between neighboring cells
+  io_format:
+  - neighborDist
+  io_type: number
+  name: neighborDist
+  required: false
+- description: Pixel size in micrometer
+  io_format:
+  - pixelPerMicron
+  io_type: number
+  name: pixelPerMicron
+  required: false
+- description: Consider intensity image as single roi and ignoring segmentation mask
+  io_format:
+  - singleRoi
+  io_type: boolean
+  name: singleRoi
+  required: false
+name: polusai/Nyxusplugin
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/PolusAI/polus-plugins
+specVersion: 1.0.0
+title: Nyxus plugin
+ui:
+- condition: null
+  customType: null
+  description: Input image collection
+  ext: null
+  key: inputs.inpDir
+  title: inpDir
+  ui_type: path
+- condition: null
+  customType: null
+  description: Label image collection
+  ext: null
+  key: inputs.segDir
+  title: segDir
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Filepattern to parse intensity images
+  key: inputs.intPattern
+  regex: null
+  title: intPattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: Filepattern to parse label images
+  key: inputs.segPattern
+  regex: null
+  title: segPattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: Features or feature groups to be extracted by nyxus plugin
+  key: inputs.features
+  regex: null
+  title: features
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  description: Ouput file format
+  fields:
+  - .arrow
+  - .feather
+  - .csv
+  - default
+  key: inputs.fileExtension
+  optional: null
+  title: fileExtension
+  ui_type: select
+- condition: null
+  customType: null
+  default: 5
+  description: Pixel distance between neighboring cells
+  integer: null
+  key: inputs.neighborDist
+  number_range: null
+  title: neighborDist
+  ui_type: number
+- condition: null
+  customType: null
+  default: 1.0
+  description: Pixel size in micrometer
+  integer: null
+  key: inputs.pixelPerMicron
+  number_range: null
+  title: pixelPerMicron
+  ui_type: number
+- condition: null
+  customType: null
+  default: false
+  description: Consider intensity image as single roi and ignoring segmentation mask
+  key: inputs.singleRoi
+  title: singleRoi
+  ui_type: checkbox
+version: 0.1.7-dev0

@@ -1,0 +1,85 @@
+author:
+- Nick Schaub
+- Hamdah Shafqat
+- Kevin Hannon
+citation: null
+contact: nick.schaub@nih.gov
+container: polusai/filepattern-generator-plugin:0.2.1
+description: Filepattern Generator plugin creates a csv or feather file containing
+  a number of new filepatterns, where each filepattern will subset the data in the
+  directory
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Input image collection to be processed by this plugin
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+- description: Filepattern to parse image files
+  io_format:
+  - pattern
+  io_type: string
+  name: pattern
+  required: false
+- description: Number of images to generate collective filepattern
+  io_format:
+  - chunkSize
+  io_type: number
+  name: chunkSize
+  required: false
+- description: Select a parameter to generate filepatterns in specific order
+  io_format:
+  - groupBy
+  io_type: string
+  name: groupBy
+  required: false
+name: polusai/FilepatternGenerator
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/PolusAI/polus-plugins
+specVersion: 1.0.0
+title: Filepattern Generator
+ui:
+- condition: null
+  customType: null
+  description: Input image collection
+  ext: null
+  key: inputs.inpDir
+  title: Input Image collection
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Filepattern to parse image files
+  key: inputs.pattern
+  regex: null
+  title: Pattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: Number of images to generate collective filepattern
+  integer: null
+  key: inputs.chunkSize
+  number_range: null
+  title: chunkSize
+  ui_type: number
+- condition: null
+  customType: null
+  default: null
+  description: Select a parameter to generate filepatterns in specific order
+  key: inputs.groupBy
+  regex: null
+  title: groupBy
+  toolbar: null
+  ui_type: text
+version: 0.2.1

@@ -1,0 +1,86 @@
+author:
+- Nick Schaub
+- Anjali Taneja
+- Benjamin Houghton
+citation: null
+contact: nick.schaub@nih.gov
+container: polusai/imagej-filter-frangivesselness-plugin:0.4.2
+description: Applies the Frangi Vesselness filter to an input collection to highlight
+  vessel-like structures
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Operation to perform
+  io_format:
+  - opName
+  io_type: string
+  name: opName
+  required: true
+- description: Collection to be processed by this plugin
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+- description: The physical distance between data points in the  image, can vary for
+    each dimension of the image.
+  io_format:
+  - spacing
+  io_type: array
+  name: spacing
+  required: true
+- description: The Frangi scale parameter
+  io_format:
+  - scale
+  io_type: number
+  name: scale
+  required: true
+name: polusai/ImageJfilterfrangiVesselness
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: ImageJ filter frangiVesselness
+ui:
+- condition: null
+  customType: null
+  description: Operation to perform
+  fields:
+  - DefaultFrangi
+  key: inputs.opName
+  optional: null
+  title: opName
+  ui_type: select
+- condition: null
+  customType: null
+  description: Collection to be processed by this plugin
+  ext: null
+  key: inputs.inpDir
+  title: inpDir
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: The physical distance between data points in the  image, can vary for
+    each dimension of the image.
+  key: inputs.spacing
+  regex: null
+  title: spacing
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: The Frangi scale parameter
+  integer: null
+  key: inputs.scale
+  number_range: null
+  title: scale
+  ui_type: number
+version: 0.4.2

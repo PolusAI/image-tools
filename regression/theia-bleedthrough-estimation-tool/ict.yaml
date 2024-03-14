@@ -1,0 +1,130 @@
+author:
+- Najib Ishaq
+- Nick Schaub
+citation: null
+contact: najib.ishaq@nih.gov
+container: polusai/theia-bleedthrough-estimation-tool:0.5.2-dev0
+description: Performs bleed-through estimation for images.
+documentation: null
+entrypoint: python3 -m polus.images.regression.theia_bleedthrough_estimation
+hardware: null
+inputs:
+- description: Input image collection.
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+- description: File pattern to subset images.
+  io_format:
+  - filePattern
+  io_type: string
+  name: filePattern
+  required: false
+- description: Variables to group together.
+  io_format:
+  - groupBy
+  io_type: string
+  name: groupBy
+  required: false
+- description: Channel ordering by wavelength scale.
+  io_format:
+  - channelOrdering
+  io_type: string
+  name: channelOrdering
+  required: false
+- description: Method to use for selecting tiles.
+  io_format:
+  - selectionCriterion
+  io_type: string
+  name: selectionCriterion
+  required: false
+- description: Number of adjacent channels to consider.
+  io_format:
+  - channelOverlap
+  io_type: number
+  name: channelOverlap
+  required: false
+- description: Size of convolution kernels to learn.
+  io_format:
+  - kernelSize
+  io_type: number
+  name: kernelSize
+  required: false
+name: polusai/BleedThroughEstimation
+outputs:
+- description: Location for writing bleed-through components.
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/polusai/polus-plugins/tree/dev/regression
+specVersion: 1.0.0
+title: BleedThroughEstimation
+ui:
+- condition: null
+  customType: null
+  description: Image collection...
+  ext: null
+  key: inputs.inpDir
+  title: 'Input image collection: '
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: File pattern to subset images.
+  key: inputs.filePattern
+  regex: null
+  title: 'Filename pattern: '
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: Variables to group together.
+  key: inputs.groupBy
+  regex: null
+  title: 'Grouping Variables: '
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: Channel ordering by wavelength scale.
+  key: inputs.channelOrdering
+  regex: null
+  title: 'Channel Ordering: '
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  description: Method to use for selecting tiles.
+  fields:
+  - MeanIntensity
+  - Entropy
+  - MedianIntensity
+  - IntensityRange
+  key: inputs.selectionCriterion
+  optional: null
+  title: 'Selection Criterion: '
+  ui_type: select
+- condition: null
+  customType: null
+  default: 1
+  description: Number of adjacent channels to consider.
+  integer: null
+  key: inputs.channelOverlap
+  number_range: null
+  title: 'Channel Overlap: '
+  ui_type: number
+- condition: null
+  customType: null
+  default: 3
+  description: Size of convolutional kernels to learn.
+  integer: null
+  key: inputs.kernelSize
+  number_range: null
+  title: 'Kernel Size: '
+  ui_type: number
+version: 0.5.2-dev0

@@ -1,0 +1,65 @@
+author:
+- Benjamin Houghton
+citation: null
+contact: benjamin.houghton@axleinfo.com
+container: polusai/imagej-macro-plugin:0.1.3
+description: This plugin runs any ImageJ macro which inputs an image and outputs an
+  image.
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Collection to be processed by this plugin
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+- description: The macro directory to run on the input collection
+  io_format:
+  - macroDir
+  io_type: path
+  name: macroDir
+  required: true
+- description: The maximum number of macro attempts
+  io_format:
+  - maxIterations
+  io_type: number
+  name: maxIterations
+  required: false
+name: polusai/ImageJMacroPlugin
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/PolusAI/polus-plugins
+specVersion: 1.0.0
+title: ImageJ Macro Plugin
+ui:
+- condition: null
+  customType: null
+  description: Collection to be processed by this plugin
+  ext: null
+  key: inputs.inpDir
+  title: inpDir
+  ui_type: path
+- condition: null
+  customType: null
+  description: The macro to run on the input collection
+  ext: null
+  key: inputs.macroDir
+  title: macro
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: The maximum number of macro attempts
+  integer: null
+  key: inputs.maxIterations
+  number_range: null
+  title: maxIterations
+  ui_type: number
+version: 0.1.3

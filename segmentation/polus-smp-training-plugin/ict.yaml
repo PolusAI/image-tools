@@ -1,0 +1,516 @@
+author:
+- Gauhar Bains
+- Najib Ishaq
+- Madhuri Vihani
+- Benjamin Houghton
+citation: null
+contact: gauhar.bains@labshare.org
+container: polusai/smp-training-plugin:0.5.11
+description: Segmentation models training and inference plugin.
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: '''active'' or ''inactive'' for whether to run in inference mode.'
+  io_format:
+  - inferenceMode
+  io_type: string
+  name: inferenceMode
+  required: true
+- description: Collection containing images on which to run inference.
+  io_format:
+  - imagesInferenceDir
+  io_type: path
+  name: imagesInferenceDir
+  required: false
+- description: Filename pattern for images on which to run inference.
+  io_format:
+  - inferencePattern
+  io_type: string
+  name: inferencePattern
+  required: false
+- description: 'Path to a model that was previously trained with this plugin. If starting
+    fresh, you must instead provide: ''modelName'', ''encoderBase'', ''encoderVariant'',
+    ''encoderWeights'', and ''optimizerName''. See the README for available options.'
+  io_format:
+  - pretrainedModel
+  io_type: path
+  name: pretrainedModel
+  required: false
+- description: Model architecture to use. Required if starting fresh.
+  io_format:
+  - modelName
+  io_type: string
+  name: modelName
+  required: false
+- description: The name of the base encoder to use.
+  io_format:
+  - encoderBase
+  io_type: string
+  name: encoderBase
+  required: false
+- description: The name of the specific variant to use.
+  io_format:
+  - encoderVariant
+  io_type: string
+  name: encoderVariant
+  required: false
+- description: The name of the pretrained weights to use.
+  io_format:
+  - encoderWeights
+  io_type: string
+  name: encoderWeights
+  required: false
+- description: Name of optimization algorithm to use for training the model. Required
+    if starting fresh.
+  io_format:
+  - optimizerName
+  io_type: string
+  name: optimizerName
+  required: false
+- description: Size of each batch for training. If left unspecified, we use the maximum
+    possible based on memory constraints.
+  io_format:
+  - batchSize
+  io_type: number
+  name: batchSize
+  required: false
+- description: Collection containing images to use for training.
+  io_format:
+  - imagesTrainDir
+  io_type: path
+  name: imagesTrainDir
+  required: false
+- description: Collection containing labels, i.e. the ground-truth, for the training
+    images.
+  io_format:
+  - labelsTrainDir
+  io_type: path
+  name: labelsTrainDir
+  required: false
+- description: Filename pattern for training images and labels.
+  io_format:
+  - trainPattern
+  io_type: string
+  name: trainPattern
+  required: false
+- description: Collection containing images to use for validation.
+  io_format:
+  - imagesValidDir
+  io_type: path
+  name: imagesValidDir
+  required: false
+- description: Collection containing labels, i.e. the ground-truth, for the validation
+    images.
+  io_format:
+  - labelsValidDir
+  io_type: path
+  name: labelsValidDir
+  required: false
+- description: Filename pattern for validation images and labels.
+  io_format:
+  - validPattern
+  io_type: string
+  name: validPattern
+  required: false
+- description: Which device to use for the model
+  io_format:
+  - device
+  io_type: string
+  name: device
+  required: false
+- description: How often to save model checkpoints
+  io_format:
+  - checkpointFrequency
+  io_type: number
+  name: checkpointFrequency
+  required: false
+- description: Name of loss function to use.
+  io_format:
+  - lossName
+  io_type: string
+  name: lossName
+  required: false
+- description: Maximum number of epochs for which to continue training the model.
+  io_format:
+  - maxEpochs
+  io_type: number
+  name: maxEpochs
+  required: false
+- description: Maximum number of epochs to wait for model to improve.
+  io_format:
+  - patience
+  io_type: number
+  name: patience
+  required: false
+- description: Minimum improvement in loss to reset patience.
+  io_format:
+  - minDelta
+  io_type: number
+  name: minDelta
+  required: false
+name: polusai/SegmentationModelsTrainingandInference
+outputs:
+- description: In training mode, this contains the trained model and checkpoints.
+    In inference mode, this contains the output labels.
+  io_format:
+  - outputDir
+  io_type: path
+  name: outputDir
+  required: true
+repository: https://github.com/PolusAI/polus-plugins/tree/dev/segmentation
+specVersion: 1.0.0
+title: Segmentation Models Training and Inference
+ui:
+- condition: null
+  customType: null
+  description: '''active'' or ''inactive'' for whether to run in inference mode.'
+  fields:
+  - active
+  - inactive
+  key: inputs.inferenceMode
+  optional: null
+  title: inferenceMode
+  ui_type: select
+- condition: inputs.inferenceMode==active
+  customType: null
+  description: Collection containing images on which to run inference.
+  ext: null
+  key: inputs.imagesInferenceDir
+  title: imagesInferenceDir
+  ui_type: path
+- condition: inputs.inferenceMode==active
+  customType: null
+  default: null
+  description: Filename pattern for images on which to run inference.
+  key: inputs.inferencePattern
+  regex: null
+  title: inferencePattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  description: 'Path to a model that was previously trained with this plugin. If starting
+    fresh, you must instead provide: ''modelName'', ''encoderBase'', ''encoderVariant'',
+    ''encoderWeights'', and ''optimizerName''. See the README for available options.'
+  ext: null
+  key: inputs.pretrainedModel
+  title: pretrainedModel
+  ui_type: path
+- condition: null
+  customType: null
+  description: Model architecture to use. Required if starting fresh.
+  fields:
+  - Unet
+  - UnetPlusPlus
+  - MAnet
+  - Linknet
+  - FPN
+  - PSPNet
+  - PAN
+  - DeepLabV3
+  - DeepLabV3Plus
+  key: inputs.modelName
+  optional: null
+  title: modelName
+  ui_type: select
+- condition: null
+  customType: null
+  description: The name of the base encoder to use.
+  fields:
+  - ResNet
+  - ResNeXt
+  - ResNeSt
+  - Res2Ne(X)t
+  - RegNet(x/y)
+  - GERNet
+  - SE-Net
+  - SK-ResNe(X)t
+  - DenseNet
+  - Inception
+  - EfficientNet
+  - MobileNet
+  - DPN
+  - VGG
+  key: inputs.encoderBase
+  optional: null
+  title: encoderBase
+  ui_type: select
+- condition: null
+  customType: null
+  description: The name of the specific variant to use.
+  fields:
+  - resnet18
+  - resnet34
+  - resnet50
+  - resnet101
+  - resnet152
+  - resnext50_32x4d
+  - resnext101_32x4d
+  - resnext101_32x8d
+  - resnext101_32x16d
+  - resnext101_32x32d
+  - resnext101_32x48d
+  - timm-resnest14d
+  - timm-resnest26d
+  - timm-resnest50d
+  - timm-resnest101e
+  - timm-resnest200e
+  - timm-resnest269e
+  - timm-resnest50d_4s2x40d
+  - timm-resnest50d_1s4x24d
+  - timm-res2net50_26w_4s
+  - timm-res2net101_26w_4s
+  - timm-res2net50_26w_6s
+  - timm-res2net50_26w_8s
+  - timm-res2net50_48w_2s
+  - timm-res2net50_14w_8s
+  - timm-res2next50
+  - timm-regnetx_002
+  - timm-regnetx_004
+  - timm-regnetx_006
+  - timm-regnetx_008
+  - timm-regnetx_016
+  - timm-regnetx_032
+  - timm-regnetx_040
+  - timm-regnetx_064
+  - timm-regnetx_080
+  - timm-regnetx_120
+  - timm-regnetx_160
+  - timm-regnetx_320
+  - timm-regnety_002
+  - timm-regnety_004
+  - timm-regnety_006
+  - timm-regnety_008
+  - timm-regnety_016
+  - timm-regnety_032
+  - timm-regnety_040
+  - timm-regnety_064
+  - timm-regnety_080
+  - timm-regnety_120
+  - timm-regnety_160
+  - timm-regnety_320
+  - timm-gernet_s
+  - timm-gernet_m
+  - timm-gernet_l
+  - senet154
+  - se_resnet50
+  - se_resnet101
+  - se_resnet152
+  - se_resnext50_32x4d
+  - se_resnext101_32x4d
+  - timm-skresnet18
+  - timm-skresnet34
+  - timm-skresnext50_32x4d
+  - densenet121
+  - densenet169
+  - densenet201
+  - densenet161
+  - inceptionresnetv2
+  - inceptionv4
+  - xception
+  - efficientnet-b0
+  - efficientnet-b1
+  - efficientnet-b2
+  - efficientnet-b3
+  - efficientnet-b4
+  - efficientnet-b5
+  - efficientnet-b6
+  - efficientnet-b7
+  - timm-efficientnet-b0
+  - timm-efficientnet-b1
+  - timm-efficientnet-b2
+  - timm-efficientnet-b3
+  - timm-efficientnet-b4
+  - timm-efficientnet-b5
+  - timm-efficientnet-b6
+  - timm-efficientnet-b7
+  - timm-efficientnet-b8
+  - timm-efficientnet-l2
+  - timm-efficientnet-lite0
+  - timm-efficientnet-lite1
+  - timm-efficientnet-lite2
+  - timm-efficientnet-lite3
+  - timm-efficientnet-lite4
+  - mobilenet_v2
+  - timm-mobilenetv3_large_075
+  - timm-mobilenetv3_large_100
+  - timm-mobilenetv3_large_minimal_100
+  - timm-mobilenetv3_small_075
+  - timm-mobilenetv3_small_100
+  - timm-mobilenetv3_small_minimal_100
+  - dpn68
+  - dpn68b
+  - dpn92
+  - dpn98
+  - dpn107
+  - dpn131
+  - vgg11
+  - vgg11_bn
+  - vgg13
+  - vgg13_bn
+  - vgg16
+  - vgg16_bn
+  - vgg19
+  - vgg19_bn
+  key: inputs.encoderVariant
+  optional: null
+  title: encoderVariant
+  ui_type: select
+- condition: null
+  customType: null
+  description: The name of the pretrained weights to use.
+  fields:
+  - advprop
+  - imagenet
+  - imagenet+5k
+  - imagenet+background
+  - instagram
+  - noisy-student
+  - random
+  - ssl
+  - swsl
+  key: inputs.encoderWeights
+  optional: null
+  title: encoderWeights
+  ui_type: select
+- condition: inputs.inferenceMode==inactive
+  customType: null
+  description: Name of optimization algorithm to use for training the model. Required
+    if starting fresh.
+  fields:
+  - Adadelta
+  - Adagrad
+  - Adam
+  - AdamW
+  - SparseAdam
+  - Adamax
+  - ASGD
+  - LBFGS
+  - RMSprop
+  - Rprop
+  - SGD
+  key: inputs.optimizerName
+  optional: null
+  title: optimizerName
+  ui_type: select
+- condition: inputs.inferenceMode==inactive
+  customType: null
+  default: null
+  description: Size of each batch for training. If left unspecified, we use the maximum
+    possible based on memory constraints.
+  integer: null
+  key: inputs.batchSize
+  number_range: null
+  title: batchSize
+  ui_type: number
+- condition: inputs.inferenceMode==inactive
+  customType: null
+  description: Collection containing images to use for training.
+  ext: null
+  key: inputs.imagesTrainDir
+  title: imagesTrainDir
+  ui_type: path
+- condition: inputs.inferenceMode==inactive
+  customType: null
+  description: Collection containing labels, i.e. the ground-truth, for the training
+    images.
+  ext: null
+  key: inputs.labelsTrainDir
+  title: labelsTrainDir
+  ui_type: path
+- condition: inputs.inferenceMode==inactive
+  customType: null
+  default: null
+  description: Filename pattern for training images and labels.
+  key: inputs.trainPattern
+  regex: null
+  title: trainPattern
+  toolbar: null
+  ui_type: text
+- condition: inputs.inferenceMode==inactive
+  customType: null
+  description: Collection containing images to use for validation.
+  ext: null
+  key: inputs.imagesValidDir
+  title: imagesValidDir
+  ui_type: path
+- condition: inputs.inferenceMode==inactive
+  customType: null
+  description: Collection containing labels, i.e. the ground-truth, for the validation
+    images.
+  ext: null
+  key: inputs.labelsValidDir
+  title: labelsValidDir
+  ui_type: path
+- condition: inputs.inferenceMode==inactive
+  customType: null
+  default: null
+  description: Filename pattern for validation images and labels.
+  key: inputs.validPattern
+  regex: null
+  title: validPattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: Which device to use for the model
+  key: inputs.device
+  regex: null
+  title: device
+  toolbar: null
+  ui_type: text
+- condition: inputs.inferenceMode==inactive
+  customType: null
+  default: null
+  description: How often to save model checkpoints
+  integer: null
+  key: inputs.checkpointFrequency
+  number_range: null
+  title: checkpointFrequency
+  ui_type: number
+- condition: inputs.inferenceMode==inactive
+  customType: null
+  description: Name of loss function to use.
+  fields:
+  - JaccardLoss
+  - DiceLoss
+  - TverskyLoss
+  - FocalLoss
+  - LovaszLoss
+  - SoftBCEWithLogitsLoss
+  - SoftCrossEntropyLoss
+  - MCCLoss
+  key: inputs.lossName
+  optional: null
+  title: lossName
+  ui_type: select
+- condition: inputs.inferenceMode==inactive
+  customType: null
+  default: 100
+  description: Maximum number of epochs for which to continue training the model.
+  integer: null
+  key: inputs.maxEpochs
+  number_range: null
+  title: maxEpochs
+  ui_type: number
+- condition: inputs.inferenceMode==inactive
+  customType: null
+  default: 10
+  description: Maximum number of epochs to wait for model to improve.
+  integer: null
+  key: inputs.patience
+  number_range: null
+  title: patience
+  ui_type: number
+- condition: inputs.inferenceMode==inactive
+  customType: null
+  default: 0.0001
+  description: Minimum improvement in loss to reset patience.
+  integer: null
+  key: inputs.minDelta
+  number_range: null
+  title: minDelta
+  ui_type: number
+version: 0.5.11

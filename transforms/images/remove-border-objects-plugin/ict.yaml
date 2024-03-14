@@ -1,0 +1,52 @@
+author:
+- Hamdah Shafqat
+citation: null
+contact: hamdah.abbasi@axleinfo.com
+container: polusai/remove-border-objects-plugin:0.1.1
+description: Remove border objects plugin clear objects which touch image borders
+  and squentially relabelling of image objects
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Input image collection to be processed by this plugin
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+- description: Filepattern to parse image files
+  io_format:
+  - pattern
+  io_type: string
+  name: pattern
+  required: false
+name: polusai/Removeborderobjects
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/PolusAI/polus-plugins
+specVersion: 1.0.0
+title: Remove border objects
+ui:
+- condition: null
+  customType: null
+  description: Input image collection
+  ext: null
+  key: inputs.inpDir
+  title: Input Image collection
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Filepattern to parse image files
+  key: inputs.pattern
+  regex: null
+  title: Pattern
+  toolbar: null
+  ui_type: text
+version: 0.1.1

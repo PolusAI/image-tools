@@ -1,0 +1,154 @@
+author:
+- Jayapriya Nagarajan
+citation: null
+contact: jayapriya.nagarajan@nih.gov
+container: polusai/feature-extraction-plugin:0.12.2
+description: Extract shape and intensity features from images.
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Labeled image collection
+  io_format:
+  - segDir
+  io_type: path
+  name: segDir
+  required: false
+- description: Intensity image collection
+  io_format:
+  - intDir
+  io_type: path
+  name: intDir
+  required: false
+- description: To match intensity and labeled/segmented image
+  io_format:
+  - filePattern
+  io_type: string
+  name: filePattern
+  required: true
+- description: Pixel distance to calculate the neighbors touching cells
+  io_format:
+  - pixelDistance
+  io_type: number
+  name: pixelDistance
+  required: false
+- description: Select features for extraction
+  io_format:
+  - features
+  io_type: array
+  name: features
+  required: true
+- description: 'csvfile : singlecsv for saving values in one csv file and separate
+    csv to save values for each image in separate csv file'
+  io_format:
+  - csvfile
+  io_type: string
+  name: csvfile
+  required: true
+- description: Use embedded pixel size
+  io_format:
+  - embeddedpixelsize
+  io_type: boolean
+  name: embeddedpixelsize
+  required: false
+- description: Unit name
+  io_format:
+  - unitLength
+  io_type: string
+  name: unitLength
+  required: false
+- description: Enter the number of pixels per unit of the metric
+  io_format:
+  - pixelsPerunit
+  io_type: number
+  name: pixelsPerunit
+  required: false
+name: polusai/FeatureExtraction
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Feature Extraction
+ui:
+- condition: null
+  customType: null
+  description: Labeled image collection
+  ext: null
+  key: inputs.segDir
+  title: Label image collection
+  ui_type: path
+- condition: null
+  customType: null
+  description: Intensity image collection
+  ext: null
+  key: inputs.intDir
+  title: Intensity image collection
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: To match intensity and labeled/segmented images
+  key: inputs.filePattern
+  regex: null
+  title: File pattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: Pixel distance to calculate the neighbors touching cells
+  integer: null
+  key: inputs.pixelDistance
+  number_range: null
+  title: Pixel Distance
+  ui_type: number
+- condition: null
+  customType: null
+  default: null
+  description: Select features
+  key: inputs.features
+  regex: null
+  title: Features
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  description: Save csv file separately for each image or one csv for all images
+  fields:
+  - singlecsv
+  - separatecsv
+  key: inputs.csvfile
+  optional: null
+  title: Output csv file
+  ui_type: select
+- condition: null
+  customType: null
+  default: true
+  description: Use embedded pixel size
+  key: inputs.embeddedpixelsize
+  title: Embedded pixel size
+  ui_type: checkbox
+- condition: inputs.embeddedpixelsize==false
+  customType: null
+  default: null
+  description: Unit name
+  key: inputs.unitLength
+  regex: null
+  title: Length of unit
+  toolbar: null
+  ui_type: text
+- condition: inputs.embeddedpixelsize==false
+  customType: null
+  default: null
+  description: Enter the number of pixels per unit of the metric
+  integer: null
+  key: inputs.pixelsPerunit
+  number_range: null
+  title: Pixels per unit
+  ui_type: number
+version: 0.12.2

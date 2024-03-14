@@ -1,0 +1,51 @@
+author:
+- Nick Schaub
+citation: null
+contact: nick.schaub@nih.gov
+container: polusai/stack-z-slice-plugin:1.2.4
+description: Use a file name pattern to stack individual z-slices into a single image.
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Input collection
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+- description: File pattern for stacking slices...
+  io_format:
+  - filePattern
+  io_type: string
+  name: filePattern
+  required: true
+name: polusai/StackZ-slicesintoasingletiledtifffile
+outputs:
+- description: Output data for the plugin
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Stack Z-slices into a single tiled tiff file
+ui:
+- condition: null
+  customType: null
+  description: Collection name...
+  ext: null
+  key: inputs.inpDir
+  title: 'Input collection: '
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: File pattern for stacking slices.
+  key: inputs.filePattern
+  regex: null
+  title: 'File pattern: '
+  toolbar: null
+  ui_type: text
+version: 1.2.4

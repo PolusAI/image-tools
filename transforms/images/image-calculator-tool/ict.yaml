@@ -1,0 +1,103 @@
+author:
+- Nick Schaub
+citation: null
+contact: nick.schaub@nih.gov
+container: polusai/image-calculator-tool:0.2.2-dev0
+description: Perform simple mathematical operations on images.
+documentation: null
+entrypoint: python3 -m polus.images.transforms.images.image_calculator
+hardware: null
+inputs:
+- description: The first set of images
+  io_format:
+  - primaryDir
+  io_type: path
+  name: primaryDir
+  required: true
+- description: Filename pattern used to separate data
+  io_format:
+  - primaryPattern
+  io_type: string
+  name: primaryPattern
+  required: false
+- description: The operation to perform
+  io_format:
+  - operator
+  io_type: string
+  name: operator
+  required: true
+- description: The second set of images
+  io_format:
+  - secondaryDir
+  io_type: path
+  name: secondaryDir
+  required: true
+- description: Filename pattern used to separate data
+  io_format:
+  - secondaryPattern
+  io_type: string
+  name: secondaryPattern
+  required: false
+name: polusai/ImageCalculator
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Image Calculator
+ui:
+- condition: null
+  customType: null
+  description: The first set of images
+  ext: null
+  key: inputs.primaryDir
+  title: First image collection
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Filename pattern used to separate data
+  key: inputs.primaryPattern
+  regex: null
+  title: Filename pattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  description: The operation to perform
+  fields:
+  - add
+  - subtract
+  - multiply
+  - divide
+  - and
+  - or
+  - xor
+  - min
+  - max
+  - absdiff
+  key: inputs.operator
+  optional: null
+  title: Operation
+  ui_type: select
+- condition: null
+  customType: null
+  description: The second set of images
+  ext: null
+  key: inputs.secondaryDir
+  title: Second image collection
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Filename pattern used to separate data
+  key: inputs.secondaryPattern
+  regex: null
+  title: Filename pattern
+  toolbar: null
+  ui_type: text
+version: 0.2.2-dev0

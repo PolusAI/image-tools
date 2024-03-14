@@ -1,0 +1,69 @@
+author:
+- Benjamin Houghton
+- Anjali Taneja
+citation: null
+contact: benjamin.houghton@axleinfo.com
+container: polusai/imagej-filter-convolve-plugin:0.4.2
+description: This plugin applies a user specified convolutional kernel to an input
+  collection.
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Op overloading method to perform
+  io_format:
+  - opName
+  io_type: string
+  name: opName
+  required: true
+- description: Collection to be processed by this plugin
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+- description: The convolutional kernel to be applied to the collection
+  io_format:
+  - kernel
+  io_type: path
+  name: kernel
+  required: true
+name: polusai/ImageJfilterconvolve
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: ImageJ filter convolve
+ui:
+- condition: null
+  customType: null
+  description: Op overloading method to perform
+  fields:
+  - ConvolveNaiveF
+  - PadAndConvolveFFTF
+  - PadAndConvolveFFT
+  - ConvolveFFTC
+  key: inputs.opName
+  optional: null
+  title: opName
+  ui_type: select
+- condition: null
+  customType: null
+  description: Collection to be processed by this plugin
+  ext: null
+  key: inputs.inpDir
+  title: inpDir
+  ui_type: path
+- condition: null
+  customType: null
+  description: The convolutional kernel to be applied to the collection
+  ext: null
+  key: inputs.kernel
+  title: kernel
+  ui_type: path
+version: 0.4.2

@@ -1,0 +1,109 @@
+author:
+- Hamdah Shafqat
+citation: null
+contact: hamdahshafqat.abbasi@nih.gov
+container: polusai/tabular-to-microjson-tool:0.1.2-dev0
+description: Generates JSON from tabular data.
+documentation: null
+entrypoint: python3 -m polus.images.visualization.tabular_to_microjson
+hardware: null
+inputs:
+- description: Path to the input directory containing tabular data
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+- description: Path to the input directory containing stitching vector
+  io_format:
+  - stitchDir
+  io_type: path
+  name: stitchDir
+  required: true
+- description: A filepattern, used to select tabular data to be converted
+  io_format:
+  - filePattern
+  io_type: string
+  name: filePattern
+  required: false
+- description: A filepattern, used to parse filenames in stitching vector
+  io_format:
+  - stitchPattern
+  io_type: string
+  name: stitchPattern
+  required: true
+- description: Variable to group filenames in stitching vector
+  io_format:
+  - groupBy
+  io_type: string
+  name: groupBy
+  required: false
+- description: Type of geometry coordinates
+  io_format:
+  - geometryType
+  io_type: string
+  name: geometryType
+  required: false
+name: polusai/TabularToMicrojson
+outputs:
+- description: Path to the output directory
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/PolusAI/polus-plugins
+specVersion: 1.0.0
+title: Tabular To Microjson
+ui:
+- condition: null
+  customType: null
+  description: Input generic data collection to be processed by this plugin
+  ext: null
+  key: inputs.inpDir
+  title: Input generic collection
+  ui_type: path
+- condition: null
+  customType: null
+  description: Input directory containing stitching vector
+  ext: null
+  key: inputs.stitchDir
+  title: Input stitchDir
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: A filepattern, used to select tabular data
+  key: inputs.filePattern
+  regex: null
+  title: Filepattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: A filepattern, used to parse filenames in stitching vector
+  key: inputs.stitchPattern
+  regex: null
+  title: stitchPattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: Variable to group filenames in stitching vector
+  key: inputs.groupBy
+  regex: null
+  title: groupBy
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: Type of geometry coordinates
+  key: inputs.geometryType
+  regex: null
+  title: geometryType
+  toolbar: null
+  ui_type: text
+version: 0.1.2-dev0

@@ -1,0 +1,76 @@
+author:
+- Konstantin taletskiy
+citation: null
+contact: konstantin.taletskiy@labshare.org
+container: polusai/csv-collection-merger:0.1.2
+description: Merge two csv collections. You have an option to prepend collection name
+  to avoid name conflicts.
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Input csv collection A.
+  io_format:
+  - input-collection-a
+  io_type: path
+  name: input-collection-a
+  required: true
+- description: Append collection name to collection A.
+  io_format:
+  - append-a
+  io_type: boolean
+  name: append-a
+  required: false
+- description: Input csv collection B.
+  io_format:
+  - input-collection-b
+  io_type: path
+  name: input-collection-b
+  required: true
+- description: Append collection name to collection B.
+  io_format:
+  - append-b
+  io_type: boolean
+  name: append-b
+  required: false
+name: polusai/CSVcollectionsmerger
+outputs:
+- description: Output csv collection for the plugin
+  io_format:
+  - output
+  io_type: path
+  name: output
+  required: true
+repository: https://github.com/polusai/image-tools
+specVersion: 1.0.0
+title: CSV collections merger
+ui:
+- condition: null
+  customType: null
+  description: Pick a collection...
+  ext: null
+  key: inputs.input-collection-a
+  title: 'CSV Collection A: '
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Pick an option...
+  key: inputs.append-a
+  title: 'Append collection name to filenames in A: '
+  ui_type: checkbox
+- condition: null
+  customType: null
+  description: Pick a collection...
+  ext: null
+  key: inputs.input-collection-b
+  title: 'CSV Collection B: '
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Pick an option...
+  key: inputs.append-b
+  title: 'Append collection name to filenames in B: '
+  ui_type: checkbox
+version: 0.1.2

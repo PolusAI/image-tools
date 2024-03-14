@@ -1,0 +1,121 @@
+author:
+- Najib Ishaq
+citation: null
+contact: najib.ishaq@axleinfo.com
+container: polusai/autocropping-plugin:1.0.2
+description: Automatically remove noise and other useless sections from images.
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Input image collection to be processed by this plugin.
+  io_format:
+  - inputDir
+  io_type: path
+  name: inputDir
+  required: true
+- description: File pattern to use for grouping images.
+  io_format:
+  - filePattern
+  io_type: string
+  name: filePattern
+  required: true
+- description: Grouping variables for images.
+  io_format:
+  - groupBy
+  io_type: string
+  name: groupBy
+  required: true
+- description: Whether to crop along the x-axis
+  io_format:
+  - cropX
+  io_type: boolean
+  name: cropX
+  required: false
+- description: Whether to crop along the y-axis
+  io_format:
+  - cropY
+  io_type: boolean
+  name: cropY
+  required: false
+- description: Whether to crop along the z-axis
+  io_format:
+  - cropZ
+  io_type: boolean
+  name: cropZ
+  required: false
+- description: Whether to use gaussian smoothing on images to add more tolerance to
+    noise.
+  io_format:
+  - smoothing
+  io_type: boolean
+  name: smoothing
+  required: false
+name: polusai/Autocropping
+outputs:
+- description: Output collection
+  io_format:
+  - outputDir
+  io_type: path
+  name: outputDir
+  required: true
+repository: https://github.com/PolusAI/polus-plugins/transforms/images/polus-autocropping-plugin
+specVersion: 1.0.0
+title: Autocropping
+ui:
+- condition: null
+  customType: null
+  description: Input image collection to be processed by this plugin.
+  ext: null
+  key: inputs.inputDir
+  title: Input collection
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: File pattern to use for grouping images.
+  key: inputs.filePattern
+  regex: null
+  title: File Pattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: Variables to use for grouping images. Each group is cropped to the
+    same bounding-box.
+  key: inputs.groupBy
+  regex: null
+  title: Grouping Variables
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: true
+  description: Whether to crop along the x-axis
+  key: inputs.cropX
+  title: Crop X
+  ui_type: checkbox
+- condition: null
+  customType: null
+  default: true
+  description: Whether to crop along the y-axis
+  key: inputs.cropY
+  title: Crop Y
+  ui_type: checkbox
+- condition: null
+  customType: null
+  default: true
+  description: Whether to crop along the z-axis
+  key: inputs.cropZ
+  title: Crop Z
+  ui_type: checkbox
+- condition: null
+  customType: null
+  default: true
+  description: Whether to use gaussian smoothing on images to add more tolerance to
+    noise.
+  key: inputs.smoothing
+  title: Smoothing
+  ui_type: checkbox
+version: 1.0.2

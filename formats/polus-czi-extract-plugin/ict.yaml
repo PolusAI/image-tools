@@ -1,0 +1,36 @@
+author:
+- Nick Schaub
+citation: null
+contact: nick.schaub@nih.gov
+container: polusai/czi-extract-plugin:1.1.1
+description: Extracts individual fields of view from a CZI file. Saves as OME TIFF.
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Input collection
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+name: polusai/ExtractTIFFsFromCZI
+outputs:
+- description: Output data for the plugin
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/polusai/image-tools
+specVersion: 1.0.0
+title: Extract TIFFs From CZI
+ui:
+- condition: null
+  customType: null
+  description: Collection name...
+  ext: null
+  key: inputs.inpDir
+  title: 'Input collection: '
+  ui_type: path
+version: 1.1.1

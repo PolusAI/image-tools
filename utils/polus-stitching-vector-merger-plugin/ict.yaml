@@ -1,0 +1,88 @@
+author:
+- Gauhar Bains
+citation: null
+contact: gauhar.bains@labshare.org
+container: polusai/stitching-vector-merger-plugin:0.1.8
+description: This plugin merges stitching vector collections
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: 1st stitchingVector Collection
+  io_format:
+  - VectorCollection1
+  io_type: path
+  name: VectorCollection1
+  required: true
+- description: 2nd stitchingVector Collection
+  io_format:
+  - VectorCollection2
+  io_type: path
+  name: VectorCollection2
+  required: true
+- description: 3rd stitchingVector Collection
+  io_format:
+  - VectorCollection3
+  io_type: path
+  name: VectorCollection3
+  required: false
+- description: 4th stitchingVector Collection
+  io_format:
+  - VectorCollection4
+  io_type: path
+  name: VectorCollection4
+  required: false
+- description: 5th stitchingVector Collection
+  io_format:
+  - VectorCollection5
+  io_type: path
+  name: VectorCollection5
+  required: false
+name: polusai/MergeStitchingVector
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Merge StitchingVector
+ui:
+- condition: null
+  customType: null
+  description: 1st stitchingVector Collection
+  ext: null
+  key: inputs.VectorCollection1
+  title: Stitching Vector Collection 1
+  ui_type: path
+- condition: null
+  customType: null
+  description: 2nd stitchingVector Collection
+  ext: null
+  key: inputs.VectorCollection2
+  title: Stitching Vector Collection 2
+  ui_type: path
+- condition: null
+  customType: null
+  description: 3rd stitchingVector Collection
+  ext: null
+  key: inputs.VectorCollection3
+  title: Stitching Vector Collection 3
+  ui_type: path
+- condition: null
+  customType: null
+  description: 4th stitchingVector Collection
+  ext: null
+  key: inputs.VectorCollection4
+  title: Stitching Vector Collection 4
+  ui_type: path
+- condition: null
+  customType: null
+  description: 5th stitchingVector Collection
+  ext: null
+  key: inputs.VectorCollection5
+  title: Stitching Vector Collection 5
+  ui_type: path
+version: 0.1.8

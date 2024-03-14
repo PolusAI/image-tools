@@ -1,0 +1,37 @@
+author:
+- Nick Schaub
+citation: null
+contact: nick.schaub@nih.gov
+container: polusai/generic-to-image-collection-plugin:0.1.1
+description: Copies .ome.tif files with proper tile format from a generic data type
+  to an image collection.
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Input image collection to be processed by this plugin
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+name: polusai/GenerictoImageCollection
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Generic to Image Collection
+ui:
+- condition: null
+  customType: null
+  description: Input image collection to be processed by this plugin
+  ext: null
+  key: inputs.inpDir
+  title: Input collection
+  ui_type: path
+version: 0.1.1

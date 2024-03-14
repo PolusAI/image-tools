@@ -1,0 +1,36 @@
+author:
+- Jayapriya Nagarajan
+citation: null
+contact: jayapriya.nagarajan@nih.gov
+container: polusai/fcs-to-csv-converter-plugin:0.2.5
+description: Converts fcs file to csv file
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Fcs file collection
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+name: polusai/FcstoCsvfileconverter
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Fcs to Csv file converter
+ui:
+- condition: null
+  customType: null
+  description: Fcs file collection
+  ext: null
+  key: inputs.inpDir
+  title: Fcs file collection
+  ui_type: path
+version: 0.2.5

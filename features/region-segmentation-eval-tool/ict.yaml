@@ -1,0 +1,167 @@
+author:
+- Vishakha Goyal
+- Hamdah Shafqat
+citation: null
+contact: vishakha.goyal@nih.gov
+container: polusai/region-segmentation-eval-tool:0.2.5-dev0
+description: Plugin to generate evaluation metrics for region-wise comparison of ground
+  truth and predicted images.
+documentation: null
+entrypoint: python3 -m polus.images.features.region_segmentation_eval
+hardware: null
+inputs:
+- description: Ground truth input image collection to be processed by this plugin.
+  io_format:
+  - gtDir
+  io_type: path
+  name: gtDir
+  required: true
+- description: Predicted input image collection to be processed by this plugin.
+  io_format:
+  - predDir
+  io_type: path
+  name: predDir
+  required: true
+- description: Number of classes.
+  io_format:
+  - inputClasses
+  io_type: number
+  name: inputClasses
+  required: true
+- description: Boolean to calculate individual image statistics.Default is false.
+  io_format:
+  - individualData
+  io_type: boolean
+  name: individualData
+  required: false
+- description: Boolean to calculate summary of individual images.Default is false.
+  io_format:
+  - individualSummary
+  io_type: boolean
+  name: individualSummary
+  required: false
+- description: Boolean to calculate overall statistics across all images.Default is
+    false.
+  io_format:
+  - totalStats
+  io_type: boolean
+  name: totalStats
+  required: false
+- description: Boolean to calculate summary across all images.Default is false.
+  io_format:
+  - totalSummary
+  io_type: boolean
+  name: totalSummary
+  required: false
+- description: Importance of radius/diameter to find centroid distance. Should be
+    between (0,2]. Default is 0.5.
+  io_format:
+  - radiusFactor
+  io_type: string
+  name: radiusFactor
+  required: false
+- description: IoU theshold. Default is 0.
+  io_format:
+  - iouScore
+  io_type: string
+  name: iouScore
+  required: false
+- description: Filename pattern to filter data.
+  io_format:
+  - filePattern
+  io_type: string
+  name: filePattern
+  required: false
+name: polusai/RegionSegmentationEval
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/polusai/polus-plugins
+specVersion: 1.0.0
+title: Region Segmentation Eval
+ui:
+- condition: null
+  customType: null
+  description: Ground truth input image collection to be processed by this plugin.
+  ext: null
+  key: inputs.gtDir
+  title: Ground Truth Images
+  ui_type: path
+- condition: null
+  customType: null
+  description: Predicted input image collection to be processed by this plugin.
+  ext: null
+  key: inputs.predDir
+  title: Predicted Images
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Number of classes.
+  integer: null
+  key: inputs.inputClasses
+  number_range: null
+  title: Number of Classes
+  ui_type: number
+- condition: null
+  customType: null
+  default: null
+  description: Boolean to calculate individual image statistics.Default is false.
+  key: inputs.individualData
+  title: Individual Image Data
+  ui_type: checkbox
+- condition: null
+  customType: null
+  default: null
+  description: Boolean to calculate summary of individual images.Default is false.
+  key: inputs.individualSummary
+  title: Individual Image Summary
+  ui_type: checkbox
+- condition: null
+  customType: null
+  default: null
+  description: Boolean to calculate overall statistics across all images.Default is
+    false.
+  key: inputs.totalStats
+  title: Total Statistics
+  ui_type: checkbox
+- condition: null
+  customType: null
+  default: null
+  description: Boolean to calculate summary across all images.Default is false.
+  key: inputs.totalSummary
+  title: Summary for all Images
+  ui_type: checkbox
+- condition: null
+  customType: null
+  default: null
+  description: Importance of radius/diameter to find centroid distance. Should be
+    between (0,2]. Default is 0.5.
+  key: inputs.radiusFactor
+  regex: null
+  title: Radius Factor
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: IoU theshold. Default is 0.
+  key: inputs.iouScore
+  regex: null
+  title: IoU Score
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: Filename pattern to filter data.
+  key: inputs.filePattern
+  regex: null
+  title: FilePattern
+  toolbar: null
+  ui_type: text
+version: 0.2.5-dev0

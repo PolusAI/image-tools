@@ -1,0 +1,57 @@
+author:
+- Kelechi Nina
+- Hamdah Shafqat
+citation: null
+contact: nina.mezu@nih.gov
+container: polusai/tabular-to-arrow-tool:0.2.3-dev0
+description: WIPP plugin to converts Tabular Data to Arrow file format.
+documentation: null
+entrypoint: python3 -m polus.images.formats.tabular_to_arrow
+hardware: null
+inputs:
+- description: Filename pattern used to separate data
+  io_format:
+  - filePattern
+  io_type: string
+  name: filePattern
+  required: true
+- description: Input image collection to be processed by this plugin
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+name: polusai/TabulartoArrow
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/PolusAI/polus-plugins
+specVersion: 1.0.0
+title: Tabular to Arrow
+ui:
+- condition: null
+  customType: null
+  description: Filename pattern used to separate data
+  fields:
+  - .fcs
+  - .csv
+  - .feather
+  - .parquet
+  - .hdf5
+  - .fits
+  key: inputs.filePattern
+  optional: null
+  title: Filename pattern
+  ui_type: select
+- condition: null
+  customType: null
+  description: Input generic data collection to be processed by this plugin
+  ext: null
+  key: inputs.inpDir
+  title: Input collection
+  ui_type: path
+version: 0.2.3-dev0

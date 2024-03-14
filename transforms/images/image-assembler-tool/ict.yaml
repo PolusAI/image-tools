@@ -1,0 +1,69 @@
+author:
+- Nick Schaub
+- Antoine Gerardin
+citation: null
+contact: nick.schaub@nih.gov
+container: polusai/image-assembler-tool:1.4.1-dev0
+description: A scalable image assembling plugin.
+documentation: null
+entrypoint: python3 -m polus.images.transforms.images.image_assembler
+hardware: null
+inputs:
+- description: Stitching vector for data
+  io_format:
+  - stitchPath
+  io_type: path
+  name: stitchPath
+  required: true
+- description: Input image collection to be processed by this plugin
+  io_format:
+  - imgPath
+  io_type: path
+  name: imgPath
+  required: true
+- description: Label images by timeslice rather than analyzing input image names
+  io_format:
+  - timesliceNaming
+  io_type: boolean
+  name: timesliceNaming
+  required: false
+- description: Generate preview of outputs.
+  io_format:
+  - preview
+  io_type: boolean
+  name: preview
+  required: false
+name: polusai/ImageAssembler
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Image Assembler
+ui:
+- condition: null
+  customType: null
+  description: Input image collection to be processed by this plugin
+  ext: null
+  key: inputs.imgPath
+  title: Input collection
+  ui_type: path
+- condition: null
+  customType: null
+  description: Stitching vectors to use
+  ext: null
+  key: inputs.stitchPath
+  title: Stitching Vector
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Use stitching vector timeslice number as the image name
+  key: inputs.timesliceNaming
+  title: 'Timeslice numbers for image names:'
+  ui_type: checkbox
+version: 1.4.1-dev0

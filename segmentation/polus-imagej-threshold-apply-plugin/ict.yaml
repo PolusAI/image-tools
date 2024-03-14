@@ -1,0 +1,68 @@
+author:
+- Nick Schaub
+- Anjali Taneja
+- Benjamin Houghton
+citation: null
+contact: nick.schaub@nih.gov
+container: polusai/imagej-threshold-apply-plugin:0.4.2
+description: This plugin applies a constant or manual threshold to an input collection.
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Op overloading method to perform
+  io_format:
+  - opName
+  io_type: string
+  name: opName
+  required: true
+- description: Collection to be processed by this plugin
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+- description: The threshold value to be applied to the input
+  io_format:
+  - threshold
+  io_type: number
+  name: threshold
+  required: true
+name: polusai/ImageJthresholdapply
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: ImageJ threshold apply
+ui:
+- condition: null
+  customType: null
+  description: Op overloading method to perform
+  fields:
+  - ApplyManualThreshold
+  key: inputs.opName
+  optional: null
+  title: opName
+  ui_type: select
+- condition: null
+  customType: null
+  description: Collection to be processed by this plugin
+  ext: null
+  key: inputs.inpDir
+  title: inpDir
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: The threshold value to be applied to the input
+  integer: null
+  key: inputs.threshold
+  number_range: null
+  title: threshold
+  ui_type: number
+version: 0.4.2

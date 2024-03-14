@@ -1,0 +1,90 @@
+author:
+- Nick Schaub
+citation: null
+contact: nick.schaub@nih.gov
+container: polusai/feature-heatmap-pyramid-plugin:0.2.0
+description: Build a heatmap pyramid for features values in a csv as an overlay for
+  another pyramid.
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: CSV collection containing features
+  io_format:
+  - features
+  io_type: path
+  name: features
+  required: true
+- description: Input image collection used to build a pyramid that this plugin will
+    make an overlay for
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+- description: Stitching vector used to buld the image pyramid.
+  io_format:
+  - vector
+  io_type: path
+  name: vector
+  required: true
+- description: Method used to create the heatmap
+  io_format:
+  - method
+  io_type: string
+  name: method
+  required: true
+- description: Store stitching vector in metadata instead of a stitching collection.
+  io_format:
+  - vectorInMetadata
+  io_type: boolean
+  name: vectorInMetadata
+  required: true
+name: polusai/FeatureHeatmapPyramid
+outputs:
+- description: Heatmap images
+  io_format:
+  - outImages
+  io_type: path
+  name: outImages
+  required: true
+- description: Heatmap vectors
+  io_format:
+  - outVectors
+  io_type: path
+  name: outVectors
+  required: true
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Feature Heatmap Pyramid
+ui:
+- condition: null
+  customType: null
+  description: CSV collection containing features
+  ext: null
+  key: inputs.features
+  title: Features
+  ui_type: path
+- condition: null
+  customType: null
+  description: Input image collection used to build a pyramid that this plugin will
+    make an overlay for
+  ext: null
+  key: inputs.inpDir
+  title: Input collection
+  ui_type: path
+- condition: null
+  customType: null
+  description: Stitching vector used to buld the image pyramid.
+  ext: null
+  key: inputs.vector
+  title: Stitching Vector
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Store stitching vectors in metadata of the output image collection.
+  key: inputs.vectorInMetadata
+  title: Store stitching vector in collection metadata
+  ui_type: checkbox
+version: 0.2.0

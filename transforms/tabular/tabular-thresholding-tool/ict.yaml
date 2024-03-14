@@ -1,0 +1,195 @@
+author:
+- Hamdah Shafqat
+- Najib Ishaq
+citation: null
+contact: hamdahshafqat.abbasi@nih.gov
+container: polusai/tabular-thresholding-tool:0.1.6-dev0
+description: This plugin computes thresholds using three methods and apply thresholds
+  on each labelled data to produce binary outputs
+documentation: null
+entrypoint: python3 -m polus.images.transforms.tabular.tabular_thresholding
+hardware: null
+inputs:
+- description: Directory containing tabular data
+  io_format:
+  - inpDir
+  io_type: path
+  name: inpDir
+  required: true
+- description: Pattern to parse input files
+  io_format:
+  - filePattern
+  io_type: string
+  name: filePattern
+  required: false
+- description: FeatureName containing information about the position of non treated
+    wells
+  io_format:
+  - negControl
+  io_type: string
+  name: negControl
+  required: true
+- description: FeatureName containing information about the position of wells with
+    known treatment outcome
+  io_format:
+  - posControl
+  io_type: string
+  name: posControl
+  required: false
+- description: Name of the Variable for computing thresholds
+  io_format:
+  - varName
+  io_type: string
+  name: varName
+  required: true
+- description: Name of the threshold method
+  io_format:
+  - thresholdType
+  io_type: string
+  name: thresholdType
+  required: true
+- description: False positive rate threshold value
+  io_format:
+  - falsePositiverate
+  io_type: number
+  name: falsePositiverate
+  required: false
+- description: Number of Bins for otsu threshold
+  io_format:
+  - numBins
+  io_type: number
+  name: numBins
+  required: false
+- description: Number of Standard deviation
+  io_format:
+  - n
+  io_type: number
+  name: n
+  required: false
+- description: Output format
+  io_format:
+  - outFormat
+  io_type: string
+  name: outFormat
+  required: true
+name: polusai/tabular-thresholding-plugin
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/PolusAI/polus-plugins
+specVersion: 1.0.0
+title: tabular-thresholding-plugin
+ui:
+- condition: null
+  customType: null
+  description: Input directory containing tabular data
+  ext: null
+  key: inputs.inpDir
+  title: inpDir
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Pattern to parse input files
+  key: inputs.filePattern
+  regex: null
+  title: filePattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: FeatureName containing information about the position of non treated
+    wells
+  key: inputs.negControl
+  regex: null
+  title: negControl
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: FeatureName containing information about the position of wells with
+    known treatment outcome
+  key: inputs.posControl
+  regex: null
+  title: posControl
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: FeatureName containing information about the position of wells with
+    known treatment outcome
+  key: inputs.posControl
+  regex: null
+  title: posControl
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: Name of the Variable for computing thresholds
+  key: inputs.varName
+  regex: null
+  title: varName
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  description: Name of the threshold method
+  fields:
+  - fpr
+  - otsu
+  - nsigma
+  - all
+  key: inputs.thresholdType
+  optional: null
+  title: thresholdType
+  ui_type: select
+- condition: null
+  customType: null
+  default: 1.0
+  description: False positive rate threshold value
+  integer: null
+  key: inputs.falsePositiverate
+  number_range: null
+  title: falsePositiverate
+  ui_type: number
+- condition: null
+  customType: null
+  default: 512
+  description: Number of Bins for otsu threshold
+  integer: null
+  key: inputs.numBins
+  number_range: null
+  title: numBins
+  ui_type: number
+- condition: null
+  customType: null
+  default: 4
+  description: Number of Standard deviation
+  integer: null
+  key: inputs.n
+  number_range: null
+  title: n
+  ui_type: number
+- condition: null
+  customType: null
+  description: Output format
+  fields:
+  - .csv
+  - .feather
+  - .parquet
+  - .hdf5
+  - .arrow
+  - default
+  key: inputs.outFormat
+  optional: null
+  title: outFormat
+  ui_type: select
+version: 0.1.6-dev0

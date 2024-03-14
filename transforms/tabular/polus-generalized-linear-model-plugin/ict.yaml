@@ -1,0 +1,108 @@
+author:
+- Jayapriya Nagarajan
+citation: null
+contact: jayapriya.nagarajan@nih.gov
+container: polusai/generalized-linear-model-plugin:0.2.5
+description: Modeling the data using Generalized linear model.
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Input csv file collection
+  io_format:
+  - inpdir
+  io_type: path
+  name: inpdir
+  required: true
+- description: Enter the column to be predicted
+  io_format:
+  - predictcolumn
+  io_type: string
+  name: predictcolumn
+  required: true
+- description: Columns to be excluded from the dataset
+  io_format:
+  - exclude
+  io_type: string
+  name: exclude
+  required: false
+- description: Select either primary or interaction or second order effects for modeling
+  io_format:
+  - glmmethod
+  io_type: string
+  name: glmmethod
+  required: true
+- description: Select the family to be considered for modeling
+  io_format:
+  - modeltype
+  io_type: string
+  name: modeltype
+  required: true
+name: polusai/GeneralizedLinearModel
+outputs:
+- description: Output collection
+  io_format:
+  - outdir
+  io_type: path
+  name: outdir
+  required: true
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Generalized Linear Model
+ui:
+- condition: null
+  customType: null
+  description: Input csv file for modeling
+  ext: null
+  key: inputs.inpdir
+  title: Input csv file
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Enter the column name that needs to be predicted
+  key: inputs.predictcolumn
+  regex: null
+  title: Column to be predicted
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: Enter columns that need to be excluded
+  key: inputs.exclude
+  regex: null
+  title: Columns to be removed
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  description: Analyse either primaryfactors or interaction or second order effects
+    for modeling
+  fields:
+  - PrimaryFactors
+  - Interaction
+  - SecondOrder
+  key: inputs.glmmethod
+  optional: null
+  title: 'Select method type for modeling '
+  ui_type: select
+- condition: null
+  customType: null
+  description: Select either binomial or gaussian or Gamma or poisson or quasi or
+    quasibinomial or quasipoisson or negativebinomial or multinomial
+  fields:
+  - Binomial
+  - Gaussian
+  - Gamma
+  - Poisson
+  - NegativeBinomial
+  - Quasi
+  - Quasibinomial
+  - Quasipoisson
+  - Multinomial
+  key: inputs.modeltype
+  optional: null
+  title: Select the distribution to be considered for modeling
+  ui_type: select
+version: 0.2.5

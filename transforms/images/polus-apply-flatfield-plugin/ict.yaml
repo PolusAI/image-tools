@@ -1,0 +1,109 @@
+author:
+- Nick Schaub
+citation: null
+contact: Nick.Schaub@nih.gov
+container: polusai/apply-flatfield-plugin:1.2.0
+description: Apply a flatfield algorithm to a collection of images.
+documentation: null
+entrypoint: '[python3, main.py]'
+hardware: null
+inputs:
+- description: Filename pattern used to match darkfield files to image files
+  io_format:
+  - darkPattern
+  io_type: string
+  name: darkPattern
+  required: false
+- description: Image collection containing flatfield and/or darkfield images
+  io_format:
+  - ffDir
+  io_type: path
+  name: ffDir
+  required: true
+- description: Filename pattern used to match brightfield files to image files
+  io_format:
+  - brightPattern
+  io_type: string
+  name: brightPattern
+  required: true
+- description: Input image collection to be processed by this plugin
+  io_format:
+  - imgDir
+  io_type: path
+  name: imgDir
+  required: true
+- description: Filename pattern used to separate data and match with flatfied files
+  io_format:
+  - imgPattern
+  io_type: string
+  name: imgPattern
+  required: true
+- description: Filename pattern used to match photobleach files to image files
+  io_format:
+  - photoPattern
+  io_type: string
+  name: photoPattern
+  required: true
+name: polusai/ApplyFlatfield
+outputs:
+- description: Output collection
+  io_format:
+  - outDir
+  io_type: path
+  name: outDir
+  required: true
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Apply Flatfield
+ui:
+- condition: null
+  customType: null
+  description: Input image collection to be processed by this plugin
+  ext: null
+  key: inputs.imgDir
+  title: Images to correct
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Filename pattern used to separate data and match with flatfied files
+  key: inputs.imgPattern
+  regex: null
+  title: Image pattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  description: Image collection containing flatfield and/or darkfield images
+  ext: null
+  key: inputs.ffDir
+  title: Background images (flatfield/darkfield)
+  ui_type: path
+- condition: null
+  customType: null
+  default: null
+  description: Filename pattern used to match brightfield files to image files
+  key: inputs.brightPattern
+  regex: null
+  title: Brightfield file pattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: Filename pattern used to match darkfield files to image files
+  key: inputs.darkPattern
+  regex: null
+  title: Darkfield file pattern
+  toolbar: null
+  ui_type: text
+- condition: null
+  customType: null
+  default: null
+  description: Filename pattern used to match photobleach files to image files
+  key: inputs.photoPattern
+  regex: null
+  title: Photobleach file pattern
+  toolbar: null
+  ui_type: text
+version: 1.2.0
