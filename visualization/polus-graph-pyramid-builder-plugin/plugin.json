@@ -40,7 +40,9 @@
           "log",
           "both"
         ]
-      }
+      },
+      "description": "The scale used to generate the graphs",
+      "required": false
     }
   ],
   "outputs": [
