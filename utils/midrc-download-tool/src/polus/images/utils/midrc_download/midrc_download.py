@@ -14,6 +14,7 @@ import subprocess
 import itertools
 import preadator
 from multiprocessing import cpu_count
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
@@ -147,7 +148,7 @@ class MIDRIC_download(CustomValidation):
             ) as pm:
                 count= 0
                 total = len(data)
-                for object_id in object_ids:
+                for object_id in tqdm(object_ids, desc="Progress", total=len(data)):
                     count+=1
                     cmd = f"gen3 --auth {self.credentials} --endpoint data.midrc.org drs-pull object {object_id} --output-dir {self.out_dir}"
                     pm.submit_process(subprocess.run, cmd, shell=True, capture_output=True)
@@ -180,3 +181,7 @@ class MIDRIC_download(CustomValidation):
         return     
 
     
+
+
+
+
