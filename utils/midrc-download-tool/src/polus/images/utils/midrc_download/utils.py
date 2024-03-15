@@ -1,9 +1,76 @@
-import os
 import enum
-
+from typing import Union
+from pydantic import BaseModel as V2BaseModel
+from pydantic import model_validator
+from typing import Any
 #The URL of the data commons
 ENDPOINT = "https://data.midrc.org" 
+from typing import Optional, List, Dict
+from pathlib import Path
+import json
 
+
+
+class dataType(str, enum.Enum):
+    IMAGINGSTUDY = "imaging_study"
+    CASE = "case"
+    DATAFILE = "data_file"
+    ANNOTATION = "annotation"
+    MEASUREMENT = "measurement"
+
+DATATYPE = ["imaging_study", "case", "data_file", "annotation",  "measurement"]
+SEX = ["Female", "Male", "no data", "Not Reported"]    
+RACE = ["White", "Black or African American", "no data", "Not Reported", "Asian"] 
+ETHNICITY = ["Not Hispanic or Latino", "Hispanic or Latino", "no data", "Not Reported"] 
+COVID19_POSITIVE = ["Yes", "No", "no data", "Not Reported"] 
+STUDY_MODALITY = ["CR", "DX", "CT", "MR", "CTPT", "RF"  "CRDX", "MG", "NM", "PT", "DR", "OT", "SR", "PR", "US", "XA"]
+LOINC_CONTRAST = ['W', 'WO', 'WO & W', "no data"]
+LOINC_METHOD = ['XR.portable', 'XR', 'CT', 'CT.angio', 'CT && CT.angio', 'MR', 'PT+CT','RF',  'MG', 'US', 'no data']
+BODY_PART_EXAMINED =['CHEST', 'no data', 'PORT CHEST', 'ABDOMEN',  'HEAD', 'PORT ABDOMEN', 'SKULL', 
+                   'Chest', 'SPINE', 'AORTA', 'KIDNEY', 'CHESTABDOMEN', 'HEART', 'CHEST_TO_PELVIS', 'UNKNOWN', 'PELVIS',
+                   'FOOT', 'KNEE', 'SERVICE', 'PE CHEST', 'BRAIN', 'NECK', 'RIB', 'DEFAULT', 'LSPINE', 'SHOULDER', 'CHEST ABD PELVIS',
+                   'HAND', 'HIP', 'RIBS', 'ANKLE', 'CAP', 'CHESTABDPELVIS', 'ABDOMENPELVIS', 'CHEST_ABDOMEN', 'ABD PEL', 'BODY', 'CHEST ABD PELVIS',
+                   'L SPINE', 'Ankle', 'Knee', 'LUMBAR_SPINE', 'C SPINE', 'C_A_P', 'ELBOW', 'EXTREMITY', 'THORAX', 'TSPINE', 'WRIST',
+                   'BLADDER', 'CERVICAL_SPINE', 'CHEST AB PEL', 'CHEST LUNG', 'FACIAL', 'FEMUR', 'FOREARM', 'Hip', 
+                   'KIDNEY_URETER_BL', 'LEG', 'LUNG', 'PEDIATRIC CHEST', 'PORTABLE CHEST', 'SHOULDER_SCAPULA', 'ABD', 'ABDOMEN_PELVIS',
+                   'BABYGRAM', 'BREAST', 'CARDIO', 'CHEST LATERAL', 'CHEST PA X-WISE', 'CHEST LAT', 'CHEST PE', 'CHEST_LOW EXT',
+                   'CHES_ABD_PEL', 'CHSTABDPELV', 'CLAVICLE', 'CSPINE', 'CTA CHEST', 'CXR', 'FOOT LAT', 'FOOT_ANKLE', 'Finger', 'Foot',
+                   'HEAD AND NECK', 'LOWER EXTREMITY', 'LOW_EXM', 'NECK CHEST', 'ORBIT', 'ORBITS', 'PE',  'PORT C SPINE', 'Ribs',
+                   'SSPINE', 'TBFB_CALF', 'THORAXABD', 'TIBIA FIBULA']
+
+
+LOINC_SYSTEM = ['Chest', 'Unspecified', 'no data', 'Chest+Abdomen+Pelvis', 'Head', 'Abdomen', 'Abdomen+Pelvis',
+                'Chest>Chest vessels', 'Chest+Abdomen', 'Chest>Ribs', 'Head>Head vessels & Neck>Neck vessels',
+                'Chest>Chest vessels & Abdomen>Abdominal vessels & Pelvis>Pelvis vessels', 'Whole body', 
+                'Chest>Heart+Coronary arteries', 'Chest && Abdomen', 'Head>Facial bones', 'Chest>Heart', 'Neck>Neck vessels',
+                'Chest>Chest vessels & Abdomen>Abdominal vessels', 'Chest+Abdomen+Pelvis && Chest>Aorta.thoracic & Abdomen>Aorta.abdominal',
+                'Pelvis', 'Abdomen>Abdominal vessels & Pelvis>Pelvis vessels',  'Chest>Esophagus', 'Abdomen && Chest+Abdomen+Pelvis',
+                'Chest>Ribs && Chest', 'Breast', 'Chest>Spine.thoracic & Abdomen>Spine.lumbar']
+
+
+PROJECT_ID = ['TCIA-COVID-19-NY-SBU', 'Open-R1', 'Open-A1', 'Open-A1_SCCM_VIRUS', 'Open-A1_PETAL_BLUECORAL', 
+             'Open-A1_PETAL_REDCORAL', 'TCIA-COVID-19_CT_Images', 'TCIA-COVID-19-AR',  'TCIA-RICORD']
+
+PROJECT_ID = ['TCIA-COVID-19-NY-SBU', 'Open-R1', 'Open-A1', 'Open-A1_SCCM_VIRUS', 'Open-A1_PETAL_BLUECORAL', 
+             'Open-A1_PETAL_REDCORAL', 'TCIA-COVID-19_CT_Images', 'TCIA-COVID-19-AR',  'TCIA-RICORD']
+
+SOURCE_NODE = ["ct_series_file", "cr_series_file", "dx_series_file", "dicom_annotation_file",
+               "annotation_file", "mr_series_file", "supplementary_file", "nm_series_file",
+               "pt_series_file", "rf_series_file"]
+
+
+
+KEYS = ["credentials", "study_modality", "loinc_method", "data_type",
+                   "loinc_system","study_year", "project_id", "sex", "race", "ethnicity", "min_age", 
+                   "max_age", "loinc_contrast", "body_part_examined","covid19Positive", 
+                   "first", "offset", "out_dir"]
+
+DATA_FORMAT = ["DCM", "JSON", "CSV", "nii.gz", "TSV","Clinical Metadata", "XLSX"]
+
+DATA_CATEGORY = ["CT", "CR", "DX", "DICOM Annotation Series File", "annotation_file", "MR",
+                "Clinical Supplement", "NM", "PT", "RF", "Image Annotations"]
+DATA_TYPE = ["DICOM", "MIDRC Annotation", "NIfTI", "Clinical Metadata", "TSV",
+              "Clinical Data", "Image Annotations"]
 
 # fields to return.  
 fields = [
@@ -15,209 +82,209 @@ fields = [
     "file_size"
 ]
 
+def split_str(x:list[str]) -> list[str]:
+    x = [i.split(',') for i in x][0]
+    return x
 
-class StudyModality(str, enum.Enum):
-    """Enum of Study Modality."""
-    CR = "CR"
-    DX = "DX"
-    CT = "CT"
-    MR = "MR"
-    CTPT = "CTPT"
-    RF = "RF"
-    MG = "MG"
-    NM = "NM"
-    PT = "PT"
-    DR = "DR"
-    OT = "OT"
-    SR = "SR"
-    PR = "PR"
-    US = "US"
-    XA = "XA"
+def check_str(x:Union[str, list[str]]) -> Union[str, list[str]]:
+    if isinstance(x, list) and len(x) !=0:
+        x = [i.split(',') for i in x][0]
+        if len(x) > 1:
+            return x
+        else:
+            return x[0]
+    else:
+        return x
+    
+def get_params(values:Union[str, int, list[str]]):
+    """
 
-class ProjectId(str, enum.Enum):
-    """Enum of Project Ids."""
-    TCIA_COVID_19_NY_SBU = 'TCIA-COVID-19-NY-SBU'
-    Open_R1 = 'Open-R1'
-    Open_A1 = 'Open-A1'
-    Open_A1_SCCM_VIRUS = 'Open-A1_SCCM_VIRUS',
-    Open_A1_PETAL_BLUECORAL = 'Open-A1_PETAL_BLUECORAL'
-    Open_A1_PETAL_REDCORAL = 'Open-A1_PETAL_REDCORAL'
-    TCIA_COVID_19_CT_Images = 'TCIA-COVID-19_CT_Images'
-    TCIA_COVID_19_AR = 'TCIA-COVID-19-AR'
-    TCIA_RICORD = 'TCIA-RICORD'
+    """
 
-class BodyPartExamined(str, enum.Enum):
-    """Enum of Body Parts."""
-    ABD = 'ABD'
-    ABD_PEL = 'ABD PEL'
-    ABDOMEN = 'ABDOMEN'
-    ABDOMENPELVIS = 'ABDOMENPELVIS'
-    ABDOMEN_PELVIS = 'ABDOMEN_PELVIS'
-    ANKLE = 'ANKLE'
-    AORTA = 'AORTA'
-    Ankle = 'Ankle'
-    BABYGRAM = 'BABYGRAM'
-    BLADDER = 'BLADDER'
-    BODY = 'BODY'
-    BRAIN = 'BRAIN'
-    BREAST = 'BREAST'
-    C_SPINE = 'C SPINE'
-    CAP = 'CAP'
-    CARDIO = 'CARDIO'
-    CHEST = 'CHEST'
-    CHEST_LATERAL = 'CHEST  LATERAL'
-    CHEST_PA_X_WISE = 'CHEST  PA X-WISE'
-    CHEST_AB_PEL = 'CHEST AB PEL'
-    CERVICAL_SPINE = 'CERVICAL_SPINE'
-    CHEST_ABD_PELV = 'CHEST ABD PELV'
-    CHEST_ABD_PELVIS = 'CHEST ABD PELVIS'
-    CHEST_LAT = 'CHEST LAT'
-    CHEST_LUNG = 'CHEST LUNG'
-    CHEST_PE = 'CHEST PE',
-    CHESTABDOMEN = 'CHESTABDOMEN'
-    CHESTABDPELVIS = 'CHESTABDPELVIS'
-    CHEST_ABDOMEN = 'CHEST_ABDOMEN'
-    CHEST_LOW_EXT = 'CHEST_LOW EXT'
-    CHEST_TO_PELVIS = 'CHEST_TO_PELVIS'
-    CHES_ABD_PEL = 'CHES_ABD_PEL'
-    CHSTABDPELV = 'CHSTABDPELV'
-    CLAVICLE = 'CLAVICLE'
-    CSPINE = 'CSPINE'
-    CTA_CHEST = 'CTA CHEST'
-    CXR = 'CXR'
-    C_A_P = 'C_A_P'
-    Chest = 'Chest',
-    DEFAULT = 'DEFAULT'
-    ELBOW = 'ELBOW'
-    EXTREMITY = 'EXTREMITY'
-    FACIAL = 'FACIAL'
-    FEMUR = 'FEMUR'
-    FOOT = 'FOOT'
-    FOOT_LAT = 'FOOT LAT'
-    FOOT_ANKLE = 'FOOT_ANKLE'
-    FOREARM = 'FOREARM'
-    Finger = 'Finger'
-    Foot = 'Foot'
-    HAND = 'HAND'
-    HEAD = 'HEAD'
-    HEAD_AND_NECK = 'HEAD AND NECK'
-    HEART = 'HEART'
-    HIP = 'HIP'
-    Hip = 'Hip'
-    KIDNEY = 'KIDNEY'
-    KIDNEY_URETER_BL = 'KIDNEY_URETER_BL'
-    KNEE = 'KNEE'
-    Knee = 'Knee'
-    L_SPINE = 'L SPINE'
-    LEG = 'LEG'
-    LOWER_EXTREMITY = 'LOWER EXTREMITY'
-    LOW_EXM = 'LOW_EXM'
-    LSPINE = 'LSPINE'
-    LUMBAR_SPINE = 'LUMBAR_SPINE'
-    LUNG = 'LUNG',
-    NECK = 'NECK',
-    NECK_CHEST = 'NECK CHEST'
-    ORBIT = 'ORBIT'
-    ORBITS = 'ORBITS'
-    PE = 'PE'
-    PE_CHEST = 'PE CHEST'
-    PEDIATRIC_CHEST = 'PEDIATRIC CHEST'
-    PELVIS = 'PELVIS'
-    PORT_ABDOMEN = 'PORT ABDOMEN'
-    PORT_C_SPINE = 'PORT C SPINE'
-    PORT_CHEST = 'PORT CHEST'
-    PORTABLE_CHEST = 'PORTABLE CHEST'
-    RIB = 'RIB'
-    RIBS = 'RIBS'
-    Ribs = 'Ribs'
-    SERVICE = 'SERVICE'
-    SHOULDER='SHOULDER'
-    SHOULDER_SCAPULA = 'SHOULDER_SCAPULA'
-    SKULL = 'SKULL'
-    SPINE = 'SPINE'
-    SSPINE = 'SSPINE'
-    TBFB_CALF = 'TBFB_CALF'
-    THORAX = 'THORAX'
-    THORAXABD = 'THORAXABD'
-    TIBIA_FIBULA = 'TIBIA FIBULA'
-    TSPINE = 'TSPINE'
-    UNKNOWN = 'UNKNOWN'
-    WRIST = 'WRIST'
-    nodata = 'nan'
+    my_dict = {key: value for key, value in zip(KEYS, values)}
 
-class LOINCContrast(str, enum.Enum):
-    nodata = 'nan'
-    W = 'W'
-    WO = 'WO'
-    WO_W = 'WO & W'
+    for k, v in my_dict.items():
+        my_dict[k] = check_str(v)
 
-class LOINCMethod(str, enum.Enum):
-    nodata= 'nan'
-    XR_portable = 'XR.portable'
-    XR = 'XR'
-    CT = 'CT'
-    CT_angio = 'CT.angio'
-    CT_CT_angio = 'CT && CT.angio'
-    MR = 'MR'
-    PT_Plus_CT = 'PT+CT'
-    RF = 'RF'
-    MG = 'MG'
-    US = 'US'
+    my_dict = {k: v for k, v in my_dict.items() if v}
+    return my_dict
 
-# class LOINCSystem(str, enum.Enum):
-#     nodata = 'nan'
-#     Chest = 'Chest'
-#     Unspecified = 'Unspecified'
-#     ChestPlusAbdomenPlusPelvis = 'Chest+Abdomen+Pelvis'
-#     Head = 'Head'
-#     ChestGChest_vessels = 'Chest>Chest vessels'
-#     Abdomen = 'Abdomen'
-#     AbdomenPlusPelvis = 'Abdomen+Pelvis'
-#     ChestPlusAbdomenPlusPelvis_ChestGAorta_thoracic_AbdomenGAorta_Abdominal = 'Chest+Abdomen+Pelvis && Chest>Aorta.thoracic & Abdomen>Aorta.abdominal'
-#     ChestGChest_vessels_AbdomenGAbdominal_vessels_PelvisGPelvis_vessels = 'Chest>Chest vessels & Abdomen>Abdominal vessels & Pelvis>Pelvis vessels'
-#     ChestGRibs = 'Chest>Ribs'
-#     ChestPlusAbdomen = 'Chest+Abdomen' 
-#     HeadGHead_vessels_NeckGNect_vessels = 'Head>Head vessels & Neck>Neck vessels'
-#     ChestGHeartPlusCoronary_arteries = 'Chest>Heart+Coronary arteries' 
-#     Whole_body = 'Whole body'
-#     ChestGHeart = 'Chest>Heart'
-#     HeadGFacial_bones = 'Head>Facial bones'
-#     ChestGEsophagus = 'Chest>Esophagus'
-#     Chest_Abdomen = 'Chest && Abdomen'
-#     NeckGNeck_vessels = 'Neck>Neck vessels'
-#     ChestGChest_vessels_AbdomenGAbdominal_vessels = 'Chest>Chest vessels & Abdomen>Abdominal vessels'
-#     Pelvis = 'Pelvis'
-#     AbdominalGAbdominal_vessels_PelvisGPelvis_vessels = 'Abdomen>Abdominal vessels & Pelvis>Pelvis vessels'
-#     Breast = 'Breast'
-#     Abdomen_ChestPlusAbdomenPlusPelvis = 'Abdomen && Chest+Abdomen+Pelvis'
-#     ChestGRibs_Chest = 'Chest>Ribs && Chest'
-#     ChestGSpine_thoracic_AbdomenGSpine_lumbar = 'Chest>Spine.thoracic & Abdomen>Spine.lumbar'
 
-class LOINCSystem(str, enum.Enum):
-    nodata = 'nan'
-    A = 'Chest'
-    B = 'Unspecified'
-    C = 'Chest+Abdomen+Pelvis'
-    D = 'Head'
-    E = 'Chest>Chest vessels'
-    F = 'Abdomen'
-    J = 'Abdomen+Pelvis'
-    K = 'Chest+Abdomen+Pelvis && Chest>Aorta.thoracic & Abdomen>Aorta.abdominal'
-    L = 'Chest>Chest vessels & Abdomen>Abdominal vessels & Pelvis>Pelvis vessels'
-    M = 'Chest>Ribs'
-    N = 'Chest+Abdomen' 
-    O = 'Head>Head vessels & Neck>Neck vessels'
-    P = 'Chest>Heart+Coronary arteries' 
-    Q = 'Whole body'
-    R = 'Chest>Heart'
-    S = 'Head>Facial bones'
-    T = 'Chest>Esophagus'
-    U = 'Chest && Abdomen'
-    V = 'Neck>Neck vessels'
-    W = 'Chest>Chest vessels & Abdomen>Abdominal vessels'
-    X = 'Pelvis'
-    Y = 'Abdomen>Abdominal vessels & Pelvis>Pelvis vessels'
-    Z = 'Breast'
-    Aa = 'Abdomen && Chest+Abdomen+Pelvis'
-    Bb = 'Chest>Ribs && Chest'
-    Cc= 'Chest>Spine.thoracic & Abdomen>Spine.lumbar'
+
+    
+class CustomValidation(V2BaseModel):
+    """Pydantic class for representing the sex type
+
+    Args:
+        sex: Sex type.
+
+    """
+    credentials:str
+    data_type:str
+    project_id: Optional[Any] = None
+    sex:Optional[Any] = None
+    race:Optional[Any]= None
+    ethnicity:Optional[Any] = None
+    min_age:Optional[int] = 0
+    max_age:Optional[int] = 89
+    study_modality:Optional[Any] = None
+    body_part_examined:Optional[Any]= None
+    loinc_contrast:Optional[Any] = None
+    loinc_method:Optional[Any]= None
+    loinc_system:Optional[Any] = None
+    study_year:Optional[Any] = None
+    covid19_positive:Optional[Any]=  None
+    first:Optional[Any] = None
+    offset:Optional[Any]=  None
+    out_dir:Path
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_fields(cls, data:Any):
+        """ """
+        credentials = data.get('credentials')
+        data_type = data.get('data_type')
+        project_id = data.get('project_id')
+        sex = data.get('sex')
+        race = data.get('race')
+        ethnicity = data.get('ethnicity')
+        study_modality = data.get('study_modality')
+        body_part_examined = data.get('body_part_examined')
+        loinc_contrast = data.get('loinc_contrast')
+        loinc_method = data.get('loinc_method')
+        loinc_system = data.get('loinc_system')
+        study_year = data.get('study_year')
+        covid19_positive = data.get('covid19_positive')
+        min_age = data.get('min_age')
+        max_age = data.get('max_age')
+        first = data.get('first')
+        offset = data.get('offset')
+        out_dir = data.get('out_dir')
+      
+    
+        if not Path(credentials).exists():
+            msg = f"{credentials} do not exist! Please do check it again"
+            raise ValueError(msg)
+        
+        if Path(credentials).exists():
+            with open(credentials, "r") as json_file:
+                cred = json.load(json_file)
+                if len(list(cred.values())) == 0 or list(cred.keys()) != ["api_key", "key_id"]:
+                    raise ValueError('Invalid API key')
+                
+        if isinstance(data_type, str):
+            if not data_type in DATATYPE:
+                msg = f"data_type: {data_type} do not exist! Please do check it again"
+                raise ValueError(msg)
+
+        if isinstance(project_id, list):
+            if not (set(project_id).issubset(set(PROJECT_ID))):
+                msg = f"Project_Id: {project_id} do not exist! Please do check it again"
+                raise ValueError(msg)
+        if isinstance(project_id, str):
+            if not (set([project_id]).issubset(set(PROJECT_ID))):
+                msg = f"Project_Id: {project_id} do not exist! Please do check it again"
+                raise ValueError(msg)
+                
+        if isinstance(sex, list):
+            if not (set(sex).issubset(set(SEX))):
+                msg = f"Sex type: {sex} do not exist! Please do check it again"
+                raise ValueError(msg)
+        if isinstance(sex, str):
+            if not (set([sex]).issubset(set(SEX))):
+                msg = f"Sex type: {sex} do not exist! Please do check it again"
+                raise ValueError(msg)
+     
+        if isinstance(race, list):
+            if not (set(race).issubset(set(RACE))):
+                msg = f"Race type: {race} do not exist! Please do check it again"
+                raise ValueError(msg)
+        if isinstance(race, str):
+            if not (set([race]).issubset(set(RACE))):
+                msg = f"Race type: {race} do not exist! Please do check it again"
+                raise ValueError(msg)          
+   
+        if isinstance(ethnicity, list):
+            if not (set(ethnicity).issubset(set(ETHNICITY))):
+                msg = f"Ethinicity type: {ethnicity} do not exist! Please do check it again"
+                raise ValueError(msg)
+        if isinstance(ethnicity, str):
+            if not (set([ethnicity]).issubset(set(ETHNICITY))):
+                msg = f"Ethinicity type: {ethnicity} do not exist! Please do check it again"
+                raise ValueError(msg)
+                
+  
+        if isinstance(study_modality, list):
+            if not (set(study_modality).issubset(set(STUDY_MODALITY))):
+                msg = f"study_modality: {study_modality} do not exist! Please do check it again"
+                raise ValueError(msg)
+        if isinstance(study_modality, str):
+            if not (set([study_modality]).issubset(set(STUDY_MODALITY))):
+                msg = f"study_modality: {study_modality} do not exist! Please do check it again"
+                raise ValueError(msg)
+                  
+        if isinstance(body_part_examined, list):
+            if not (set(body_part_examined).issubset(set(BODY_PART_EXAMINED))):
+                msg = f"body_part_examined: {body_part_examined} do not exist! Please do check it again"
+                raise ValueError(msg)
+        if isinstance(body_part_examined, str):
+            if not (set([body_part_examined]).issubset(set(BODY_PART_EXAMINED))):
+                msg = f"body_part_examined: {body_part_examined} do not exist! Please do check it again"
+                raise ValueError(msg)
+                
+        if isinstance(loinc_contrast, list):
+            if not (set(loinc_contrast).issubset(set(LOINC_CONTRAST))):
+                msg = f"loinc_contrast: {loinc_contrast} do not exist! Please do check it again"
+                raise ValueError(msg)
+        if isinstance(loinc_contrast, str):
+            if not (set([loinc_contrast]).issubset(set(LOINC_CONTRAST))):
+                msg = f"loinc_contrast: {loinc_contrast} do not exist! Please do check it again"
+                raise ValueError(msg)     
+   
+        if isinstance(loinc_method, list):
+            if not (set(loinc_method).issubset(set(LOINC_METHOD))):
+                msg = f"loinc_method: {loinc_method} do not exist! Please do check it again"
+                raise ValueError(msg)
+        if isinstance(loinc_method, str):
+            if not (set([loinc_method]).issubset(set(LOINC_METHOD))):
+                msg = f"loinc_method: {loinc_method} do not exist! Please do check it again"
+                raise ValueError(msg)
+                
+        if isinstance(loinc_system, list):
+            if not (set(loinc_system).issubset(set(LOINC_SYSTEM))):
+                msg = f"loinc_system: {loinc_system} do not exist! Please do check it again"
+                raise ValueError(msg)
+        if isinstance(loinc_system, str):
+            if not (set([loinc_system]).issubset(set(LOINC_SYSTEM))):
+                msg = f"loinc_system: {loinc_system} do not exist! Please do check it again"
+                raise ValueError(msg)
+                
+        if isinstance(covid19_positive, list):
+            if not (set(covid19_positive).issubset(set(COVID19_POSITIVE))):
+                msg = f"covid19_positive: {covid19_positive} do not exist! Please do check it again"
+                raise ValueError(msg)
+        if isinstance(covid19_positive, str):
+            if not (set([loinc_method]).issubset(set(COVID19_POSITIVE))):
+                msg = f"covid19_positive: {covid19_positive} do not exist! Please do check it again"
+                raise ValueError(msg)
+                
+        if isinstance(min_age, int) or isinstance(max_age, int):
+            if min_age < 0 or max_age > 89:
+                raise ValueError(f"Invalid age values:{min_age} or {max_age}. Values should be between 0-89")
+            
+        if isinstance(first, int) and not first > 0:
+                raise ValueError(f"Invalid first:{first} value. Value should be integer and greater than 0")
+        
+        if isinstance(offset, int) and not offset > 0:
+                raise ValueError(f"Invalid offset:{offset} value. Value should be integer and greater than 0")
+        
+        if not Path(out_dir).exists:
+                raise ValueError(f"OutDir:{out_dir} do not exist. Define output directory")
+
+
+        return data
+    
+
+               
+
+    

@@ -1,22 +1,19 @@
 """Midrc Download."""
 
 from pathlib import Path
-from pydantic import BaseModel as V2BaseModel
 import os
 import logging
-import json
-from typing import Union
-import pydantic
 import os
-import gen3
 import requests
-from pandas.errors import EmptyDataError
-
+from typing import Optional
 from gen3.auth import Gen3Auth
-from gen3.query import Gen3Query
-from gen3.submission import Gen3Submission
 import pandas as pd
-from polus.images.utils.midrc_download.utils import ENDPOINT
+from typing import Any
+from polus.images.utils.midrc_download.utils import ENDPOINT, CustomValidation
+import subprocess
+import itertools
+import preadator
+from multiprocessing import cpu_count
 
 logger = logging.getLogger(__name__)
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
@@ -24,27 +21,32 @@ logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 cred = os.environ.get("MIDRC_API_KEY")
 
+num_workers = max([cpu_count(), 2])
 
-class MIDRIC_download(V2BaseModel):
+class MIDRIC_download(CustomValidation):
     """Advanced scripts for interacting with the Gen3 submission, query and index APIs
 
     Args:
         credentials: A Gen3Auth class instance.
 
     """
-    credentials:str 
 
-    @pydantic.field_validator("credentials")
-    def validate_credentials(cls, value: Union[Path, str]) -> Union[Path, str]:
-        if not Path(value).exists():
-            msg = f"{value} do not exist! Please do check it again"
-            raise ValueError(msg)
-        with open(value, "r") as json_file:
-            cred = json.load(json_file)
-            if len(list(cred.values())) == 0 or list(cred.keys()) != ["api_key", "key_id"]:
-                raise ValueError('Invalid API key')
-        return value
-
+    credentials:str
+    data_type:str
+    project_id: Optional[Any] = None
+    sex:Optional[Any] = None
+    race:Optional[Any]= None
+    ethnicity:Optional[Any] = None
+    min_age:Optional[int] = 0
+    max_age:Optional[int] = 89
+    study_modality:Optional[Any] = None
+    body_part_examined:Optional[Any]= None
+    loinc_contrast:Optional[Any] = None
+    loinc_method:Optional[Any]= None
+    loinc_system:Optional[Any] = None
+    covid19_positive:Optional[Any]=  None
+    out_dir:Path
+ 
     def _authentication(self) -> object:
         auth = Gen3Auth(ENDPOINT, refresh_file=self.credentials)
         return auth
@@ -64,11 +66,36 @@ class MIDRIC_download(V2BaseModel):
         x[feature] = feature_values
         return x
     
+    def get_query(self, x):
+        my_dict = {k: v for k, v in x.items() if not k in ["credentials", "data_type"]}
+        fn = []
+        for k, v in  my_dict.items():
+            if (k == "min_age") and isinstance(v, int):
+                k = "age_at_index"
+                fn_dict = {">=": {k:v}}
+            if (k == "max_age") and isinstance(v, int):
+                k = "age_at_index"
+                fn_dict = {"<=": {k:v}}  
+            if (k == "study_year") and isinstance(v, int):
+                fn_dict = {">=": {k:v}}
     
+            if not k in ["age_at_index", "study_year"]  and isinstance(v, str):
+                fn_dict = {"=": {k:v}}
+            if not k in ["age_at_index", "study_year"] and isinstance(v, list) and len(v) > 1:
+                fn_dict = {"IN": {k:v}}  
+            fn.append(fn_dict)
+        my_dict = {"AND": fn}
+
+        return my_dict
+     
     def download_request(self,
                         data_type,
                         fields,
-                        accessibility=None):
+                        filter_object=None,
+                        sort_fields=None,
+                        accessibility=None,
+                        first=None,
+                        offset=None):
         """Get a list of project_ids you have access to in a data commons.
         """
         url = f"{ENDPOINT}/guppy/download"
@@ -78,7 +105,11 @@ class MIDRIC_download(V2BaseModel):
         if not fields:
             fields = None
         try:
-            body = {"type": data_type, "fields": fields, "accessibility":  "accessible"}
+            body = {"type": data_type, "fields": fields, "accessibility":  accessibility}
+            if filter_object:
+                body["filter"] = filter_object
+            if sort_fields:
+                body["sort"] = sort_fields
             response = requests.post(url,
                         json=body,
                         auth=self._authentication())
@@ -90,57 +121,62 @@ class MIDRIC_download(V2BaseModel):
         except requests.exceptions.RequestException as e:
             return f"Error: {e}"
         
-        return data
+        if offset:
+            data = data[offset:]
+        if first:
+            data = data[:first]
+
+
+        if len(data) > 0:
+            logger.info(f"Successfully fetched records!!")
+            return data
+        else:
+            raise ValueError(f"Unable to fetch records!! Please query again")
+     
     
-    def quering_data(self, data_type, fields):
-        """Get a list of project_ids you have access to in a data commons.
-        """
-        data = self.download_request(data_type, fields=None)
-        data = pd.DataFrame(data)
-        for col in list(data.columns):
-            data = self.convert_float_to_str(data, col)  
+    def download_data(self, data):
+        ## Simple loop to download all files and keep track of success and failures
+        if len(data ) > 0:
+            object_ids = [i['object_id'] for i in data]
+            object_ids= list(itertools.chain.from_iterable(object_ids))
+
+            with preadator.ProcessManager(
+                name="Downloading Midrc data",
+                num_processes=num_workers,
+                threads_per_process=2,
+            ) as pm:
+                count= 0
+                total = len(data)
+                for object_id in object_ids:
+                    count+=1
+                    cmd = f"gen3 --auth {self.credentials} --endpoint data.midrc.org drs-pull object {object_id} --output-dir {self.out_dir}"
+                    pm.submit_process(subprocess.run, cmd, shell=True, capture_output=True)
+                    logger.info("Progress ({}/{})".format(count,total))
+
+                pm.join_processes()
 
 
-        params = {"loinc_method":'CT',
-          'loinc_system':'Chest',
-          "body_part_examined":'CHEST', 
-          "loinc_contrast":'W', 
-          "study_modality":None}  
-        
-        params = {k:v for k, v in params.items() if v is not None}
+                
+        # else:
+        #     print("Your query returned no data! Please, check that query parameters are valid.") 
 
-        try:
-            data.loc[data[list(params.keys())].isin(list(params.values())).all(axis=1), :]
-            if data.empty:
-                raise EmptyDataError
-        except EmptyDataError:
-            logger.error('dataframe query is empty!! Please search again')
+        # success=[]
+        # fail_queries=[]
+        # other=[]
+        # count,total = 0,len(data)
+        # for object_id in object_ids:
+        #     count+=1
+        #     cmd = f"gen3 --auth {self.credentials} --endpoint data.midrc.org drs-pull object {object_id} --output-dir {self.out_dir}"
+        #     os.system(cmd) 
+        #     stout = subprocess.run(cmd, shell=True, capture_output=True)
+        #     print("Progress ({}/{}): {}".format(count,total,stout.stdout))
+        #     if "failed" in str(stout.stdout):
+        #         fail_queries.append(object_id)
+        #     elif "successfully" in str(stout.stdout):
+        #         success.append(object_id)
+        #     else:
+        #         other.append(object_id)
 
+        return     
 
-        return data
     
-
-    
-
-        
-
-
-
-
-        
-    
-
-        
-
-
-
-model = MIDRIC_download(credentials=cred) 
-data = model.download_request(data_type="imaging_study", fields=None)
-
-print(data)
- 
-    
-
-
-
-
