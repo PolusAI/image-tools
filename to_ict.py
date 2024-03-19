@@ -82,7 +82,8 @@ def main(
         for manifest in [x for x in LOCAL_MANIFESTS if name in str(x)]:
             try:
                 ict_ = ICT.from_wipp(manifest)
-                ict_.save_yaml(manifest.with_name("ict.yaml"))
+                yaml_path = ict_.save_yaml(manifest.with_name("ict.yaml"))
+                validate(yaml_path)
                 converted += 1
 
             except BaseException as e:
