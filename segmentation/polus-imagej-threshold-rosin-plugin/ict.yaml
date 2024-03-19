@@ -2,52 +2,43 @@ author:
 - Nick Schaub
 - Anjali Taneja
 - Benjamin Houghton
-citation: null
 contact: nick.schaub@nih.gov
 container: polusai/imagej-threshold-rosin-plugin:0.4.2
 description: Implements Rosin's thresholding method for unimodal distributions.
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: Operation to perform
-  io_format:
+  format:
   - opName
-  io_type: string
   name: opName
   required: true
+  type: string
 - description: Collection to be processed by this plugin
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 name: polusai/ImageJthresholdrosin
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/labshare/polus-plugins
 specVersion: 1.0.0
 title: ImageJ threshold rosin
 ui:
-- condition: null
-  customType: null
-  description: Operation to perform
+- description: Operation to perform
   fields:
   - ApplyThresholdMethod$Rosin
   key: inputs.opName
-  optional: null
   title: opName
-  ui_type: select
-- condition: null
-  customType: null
-  description: Collection to be processed by this plugin
-  ext: null
+  type: select
+- description: Collection to be processed by this plugin
   key: inputs.inpDir
   title: inpDir
-  ui_type: path
+  type: path
 version: 0.4.2

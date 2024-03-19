@@ -1,81 +1,60 @@
 author:
 - Nick Schaub
-citation: null
 contact: nick.schaub@nih.gov
 container: polusai/csv-statistics-plugin:0.2.1
 description: Calculate simple statistics to groups of data in a csv file.
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: The csv statistics to generate
-  io_format:
+  format:
   - statistics
-  io_type: array
   name: statistics
   required: true
+  type: array
 - description: Input csv collection to be processed by this plugin
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 - description: The filepattern of the images represented in the csv files
-  io_format:
+  format:
   - filePattern
-  io_type: string
   name: filePattern
   required: false
+  type: string
 - description: The variable(s) to group the images by
-  io_format:
+  format:
   - groupBy
-  io_type: string
   name: groupBy
   required: false
+  type: string
 name: polusai/CSVStatistics
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/labshare/polus-plugins
 specVersion: 1.0.0
 title: CSV Statistics
 ui:
-- condition: null
-  customType: null
-  default: null
-  description: Types of statistics to calculate
+- description: Types of statistics to calculate
   key: inputs.statistics
-  regex: null
   title: Statistics
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  description: Input csv collection to be processed by this plugin
-  ext: null
+  type: text
+- description: Input csv collection to be processed by this plugin
   key: inputs.inpDir
   title: Input collection
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: The filepattern of the images represented in the csv files
+  type: path
+- description: The filepattern of the images represented in the csv files
   key: inputs.filePattern
-  regex: null
   title: Filepattern
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: The variable(s) to group the images by
+  type: text
+- description: The variable(s) to group the images by
   key: inputs.groupBy
-  regex: null
   title: Groupby Variables(s)
-  toolbar: null
-  ui_type: text
+  type: text
 version: 0.2.1

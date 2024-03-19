@@ -1,71 +1,66 @@
 author:
 - Nick Schaub
 - Madhuri Vihani
-citation: null
 contact: nick.schaub@nih.gov
 container: polusai/binary-operations-tool:0.5.3-dev0
 description: Everything you need to start a WIPP plugin.
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: Input image collection to be processed by this plugin
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 - description: Pattern of the images in Input
-  io_format:
+  format:
   - filePattern
-  io_type: string
   name: filePattern
   required: false
+  type: string
 - description: Kernel size that should be used for transformation
-  io_format:
+  format:
   - kernel
-  io_type: number
   name: kernel
   required: false
+  type: number
 - description: The Binary Operations that will be done on the image
-  io_format:
+  format:
   - operation
-  io_type: string
   name: operation
   required: true
+  type: string
 - description: Structuring Shape (Default is Elliptical)
-  io_format:
+  format:
   - shape
-  io_type: string
   name: shape
   required: false
+  type: string
 - description: Minimum Area of objects to keep.
-  io_format:
+  format:
   - threshold
-  io_type: number
   name: threshold
   required: false
+  type: number
 - description: Number of times to perform an operation (when applicable).
-  io_format:
+  format:
   - iterations
-  io_type: number
   name: iterations
   required: false
+  type: number
 name: polusai/BinaryOperationsPlugin
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/polusai/polus-plugins
 specVersion: 1.0.0
 title: Binary Operations Plugin
 ui:
-- condition: null
-  customType: null
-  description: Operations that will be used on image
+- description: Operations that will be used on image
   fields:
   - blackhat
   - close
@@ -80,61 +75,34 @@ ui:
   - skeleton
   - tophat
   key: inputs.operation
-  optional: null
   title: Operations
-  ui_type: select
-- condition: null
-  customType: null
-  default: null
-  description: 'Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). '
+  type: select
+- description: 'Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). '
   key: inputs.filePattern
-  regex: null
   title: 'Image Pattern: '
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  description: Input image collection to be processed by this plugin
-  ext: null
+  type: text
+- description: Input image collection to be processed by this plugin
   key: inputs.inpDir
   title: Input collection
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Kernel size to use for operations
-  integer: null
+  type: path
+- description: Kernel size to use for operations
   key: inputs.kernel
-  number_range: null
   title: Kernel Size
-  ui_type: number
-- condition: null
-  customType: null
-  description: Kernel shape to use for operations
+  type: number
+- description: Kernel shape to use for operations
   fields:
   - ellipse
   - rect
   - cross
   key: inputs.shape
-  optional: null
   title: Structuring Shape (Default is Elliptical)
-  ui_type: select
-- condition: null
-  customType: null
-  default: null
-  description: Threshold to use for operations
-  integer: null
+  type: select
+- description: Threshold to use for operations
   key: inputs.threshold
-  number_range: null
   title: Threshold of area for objects in images
-  ui_type: number
-- condition: null
-  customType: null
-  default: null
-  description: Number of iterations to perform
-  integer: null
+  type: number
+- description: Number of iterations to perform
   key: inputs.iterations
-  number_range: null
   title: Iterations
-  ui_type: number
+  type: number
 version: 0.5.3-dev0

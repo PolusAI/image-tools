@@ -1,154 +1,117 @@
 author:
 - Jayapriya Nagarajan
-citation: null
 contact: jayapriya.nagarajan@nih.gov
 container: polusai/feature-extraction-plugin:0.12.2
 description: Extract shape and intensity features from images.
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: Labeled image collection
-  io_format:
+  format:
   - segDir
-  io_type: path
   name: segDir
   required: false
+  type: path
 - description: Intensity image collection
-  io_format:
+  format:
   - intDir
-  io_type: path
   name: intDir
   required: false
+  type: path
 - description: To match intensity and labeled/segmented image
-  io_format:
+  format:
   - filePattern
-  io_type: string
   name: filePattern
   required: true
+  type: string
 - description: Pixel distance to calculate the neighbors touching cells
-  io_format:
+  format:
   - pixelDistance
-  io_type: number
   name: pixelDistance
   required: false
+  type: number
 - description: Select features for extraction
-  io_format:
+  format:
   - features
-  io_type: array
   name: features
   required: true
+  type: array
 - description: 'csvfile : singlecsv for saving values in one csv file and separate
     csv to save values for each image in separate csv file'
-  io_format:
+  format:
   - csvfile
-  io_type: string
   name: csvfile
   required: true
+  type: string
 - description: Use embedded pixel size
-  io_format:
+  format:
   - embeddedpixelsize
-  io_type: boolean
   name: embeddedpixelsize
   required: false
+  type: boolean
 - description: Unit name
-  io_format:
+  format:
   - unitLength
-  io_type: string
   name: unitLength
   required: false
+  type: string
 - description: Enter the number of pixels per unit of the metric
-  io_format:
+  format:
   - pixelsPerunit
-  io_type: number
   name: pixelsPerunit
   required: false
+  type: number
 name: polusai/FeatureExtraction
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/labshare/polus-plugins
 specVersion: 1.0.0
 title: Feature Extraction
 ui:
-- condition: null
-  customType: null
-  description: Labeled image collection
-  ext: null
+- description: Labeled image collection
   key: inputs.segDir
   title: Label image collection
-  ui_type: path
-- condition: null
-  customType: null
-  description: Intensity image collection
-  ext: null
+  type: path
+- description: Intensity image collection
   key: inputs.intDir
   title: Intensity image collection
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: To match intensity and labeled/segmented images
+  type: path
+- description: To match intensity and labeled/segmented images
   key: inputs.filePattern
-  regex: null
   title: File pattern
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: Pixel distance to calculate the neighbors touching cells
-  integer: null
+  type: text
+- description: Pixel distance to calculate the neighbors touching cells
   key: inputs.pixelDistance
-  number_range: null
   title: Pixel Distance
-  ui_type: number
-- condition: null
-  customType: null
-  default: null
-  description: Select features
+  type: number
+- description: Select features
   key: inputs.features
-  regex: null
   title: Features
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  description: Save csv file separately for each image or one csv for all images
+  type: text
+- description: Save csv file separately for each image or one csv for all images
   fields:
   - singlecsv
   - separatecsv
   key: inputs.csvfile
-  optional: null
   title: Output csv file
-  ui_type: select
-- condition: null
-  customType: null
-  default: true
+  type: select
+- default: true
   description: Use embedded pixel size
   key: inputs.embeddedpixelsize
   title: Embedded pixel size
-  ui_type: checkbox
+  type: checkbox
 - condition: inputs.embeddedpixelsize==false
-  customType: null
-  default: null
   description: Unit name
   key: inputs.unitLength
-  regex: null
   title: Length of unit
-  toolbar: null
-  ui_type: text
+  type: text
 - condition: inputs.embeddedpixelsize==false
-  customType: null
-  default: null
   description: Enter the number of pixels per unit of the metric
-  integer: null
   key: inputs.pixelsPerunit
-  number_range: null
   title: Pixels per unit
-  ui_type: number
+  type: number
 version: 0.12.2

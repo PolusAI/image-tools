@@ -2,82 +2,66 @@ author:
 - Madhuri Vihani
 - Nicholas Schaub
 - Hythem Sidky
-citation: null
 contact: Madhuri.Vihani@nih.gov
 container: polusai/precompute-volume-plugin:0.4.8
 description: This plugin generates precomputed volumes and meshes for labelled data
   to view in Neuroglancer
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: Input collection
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 - description: Image or Segmentation
-  io_format:
+  format:
   - imageType
-  io_type: string
   name: imageType
   required: true
+  type: string
 - description: Pattern of the images in Input
-  io_format:
+  format:
   - filePattern
-  io_type: string
   name: filePattern
   required: false
+  type: string
 - description: Create meshes
-  io_format:
+  format:
   - mesh
-  io_type: boolean
   name: mesh
   required: false
+  type: boolean
 name: polusai/WIPPWidget
 outputs:
 - description: Precomputed output
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/labshare/polus-plugins
 specVersion: 1.0.0
 title: WIPP Widget
 ui:
-- condition: null
-  customType: null
-  description: Collection name...
-  ext: null
+- description: Collection name...
   key: inputs.inpDir
   title: 'Input collection: '
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: 'Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). '
+  type: path
+- description: 'Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). '
   key: inputs.filePattern
-  regex: null
   title: 'Image Pattern: '
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  description: Image or Segmentation?
+  type: text
+- description: Image or Segmentation?
   fields:
   - image
   - segmentation
   key: inputs.imageType
-  optional: null
   title: 'Image Type: '
-  ui_type: select
+  type: select
 - condition: inputs.imageType==segmentation
-  customType: null
   default: false
-  description: null
   key: inputs.mesh
   title: 'Create meshes: '
-  ui_type: checkbox
+  type: checkbox
 version: 0.4.8

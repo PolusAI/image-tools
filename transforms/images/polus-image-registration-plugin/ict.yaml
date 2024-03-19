@@ -1,118 +1,89 @@
 author:
 - Gauhar Bains
 - Nick Schaub
-citation: null
 contact: gauhar.bains@labshare.org
 container: polusai/image-registration-plugin:0.3.5
 description: This plugin registers an image collection
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: Input image collection to be processed by this plugin
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 - description: Filename pattern used to separate data
-  io_format:
+  format:
   - filePattern
-  io_type: string
   name: filePattern
   required: true
+  type: string
 - description: Template image to be used for image registration
-  io_format:
+  format:
   - template
-  io_type: string
   name: template
   required: true
+  type: string
 - description: variable to help identify which images need to be registered to each
     other
-  io_format:
+  format:
   - registrationVariable
-  io_type: string
   name: registrationVariable
   required: true
+  type: string
 - description: variable to help identify which images have similar transformation
-  io_format:
+  format:
   - TransformationVariable
-  io_type: string
   name: TransformationVariable
   required: true
+  type: string
 - description: Projective (8 degrees of freedom), Affine (6 degrees of freedom), Partial
     Affine (4 degrees of freedom)
-  io_format:
+  format:
   - method
-  io_type: string
   name: method
   required: true
+  type: string
 name: polusai/ImageRegistration
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/labshare/polus-plugins
 specVersion: 1.0.0
 title: Image Registration
 ui:
-- condition: null
-  customType: null
-  description: Input image collection to be processed by this plugin
-  ext: null
+- description: Input image collection to be processed by this plugin
   key: inputs.inpDir
   title: Input collection
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Filename pattern used to separate data
+  type: path
+- description: Filename pattern used to separate data
   key: inputs.filePattern
-  regex: null
   title: Filename pattern
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: Template image to be used for image registration
+  type: text
+- description: Template image to be used for image registration
   key: inputs.template
-  regex: null
   title: Template Image
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: variable to help identify which images need to be registered to each
+  type: text
+- description: variable to help identify which images need to be registered to each
     other
   key: inputs.registrationVariable
-  regex: null
   title: Registration Variable
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: variable to help identify which images have similar transformation
+  type: text
+- description: variable to help identify which images have similar transformation
   key: inputs.TransformationVariable
-  regex: null
   title: Similar Transformation Variable
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  description: Projective (8 degrees of freedom), Affine (6 degrees of freedom), Partial
+  type: text
+- description: Projective (8 degrees of freedom), Affine (6 degrees of freedom), Partial
     Affine (4 degrees of freedom)
   fields:
   - Projective
   - Affine
   - PartialAffine
   key: inputs.method
-  optional: null
   title: Deformation method
-  ui_type: select
+  type: select
 version: 0.3.5

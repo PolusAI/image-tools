@@ -1,113 +1,88 @@
 author:
 - Benjamin Houghton
-citation: null
 contact: benjamin.houghton@axleinfo.com
 container: polusai/imagej-filter-dog-plugin:0.3.2
 description: This plugin applies the Difference of Gaussians algorithm to an input
   collection.
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: Operation to peform
-  io_format:
+  format:
   - opName
-  io_type: string
   name: opName
   required: true
+  type: string
 - description: The collection to be processed by this plugin
-  io_format:
+  format:
   - inpDIr
-  io_type: path
   name: inpDIr
   required: true
+  type: path
 - description: The standard deviation of the first Gaussian filter
-  io_format:
+  format:
   - sigma1
-  io_type: number
   name: sigma1
   required: false
+  type: number
 - description: The standard deviation of the second Gaussian filter
-  io_format:
+  format:
   - sigma2
-  io_type: number
   name: sigma2
   required: false
+  type: number
 - description: The standard deviations of the first Gaussian filter (x,y)
-  io_format:
+  format:
   - sigmas1
-  io_type: array
   name: sigmas1
   required: false
+  type: array
 - description: The standard deviations of the second Gaussian filter (x,y)
-  io_format:
+  format:
   - sigmas2
-  io_type: array
   name: sigmas2
   required: false
+  type: array
 name: polusai/ImageJfilterdog
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/labshare/polus-plugins
 specVersion: 1.0.0
 title: ImageJ filter dog
 ui:
-- condition: null
-  customType: null
-  description: Operation to peform
+- description: Operation to peform
   fields:
   - DoGSingleSigmas
   - DoGVaryingSigmas
   key: inputs.opName
-  optional: null
   title: opName
-  ui_type: select
-- condition: null
-  customType: null
-  description: The collection to be processed by this plugin
-  ext: null
+  type: select
+- description: The collection to be processed by this plugin
   key: inputs.inpDIr
   title: inpDIr
-  ui_type: path
+  type: path
 - condition: inputs.opName==DoGSingleSigmas
-  customType: null
-  default: null
   description: The standard deviation of the first Gaussian filter
-  integer: null
   key: inputs.sigma1
-  number_range: null
   title: sigma1
-  ui_type: number
+  type: number
 - condition: inputs.opName==DoGSingleSigmas
-  customType: null
-  default: null
   description: The standard deviation of the second Gaussian filter
-  integer: null
   key: inputs.sigma2
-  number_range: null
   title: sigma2
-  ui_type: number
+  type: number
 - condition: inputs.opName==DoGVaryingSigmas
-  customType: null
-  default: null
   description: The standard deviations of the first Gaussian filter (x,y)
   key: inputs.sigmas1
-  regex: null
   title: sigmas1
-  toolbar: null
-  ui_type: text
+  type: text
 - condition: inputs.opName==DoGVaryingSigmas
-  customType: null
-  default: null
   description: The standard deviations of the second Gaussian filter (x,y)
   key: inputs.sigmas2
-  regex: null
   title: sigmas2
-  toolbar: null
-  ui_type: text
+  type: text
 version: 0.3.2

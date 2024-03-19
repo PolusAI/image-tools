@@ -3,85 +3,69 @@ author:
 - Nick Schaub
 - Antoine Gerardin
 - Najib Ishaq
-citation: null
 contact: Madhuri.Vihani@nih.gov
 container: polusai/precompute-slide-tool:1.7.1-dev0
 description: Precomputes a plane series in DeepZoom, Neuroglancer, or OME Zarr format.
-documentation: null
 entrypoint: python3 -m polus.images.visualization.precompute_slide
-hardware: null
 inputs:
 - description: Input collection
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 - description: Build a DeepZoom, Neuroglancer, Zarr pyramid
-  io_format:
+  format:
   - pyramidType
-  io_type: string
   name: pyramidType
   required: true
+  type: string
 - description: Image is either Segmentation or Image
-  io_format:
+  format:
   - imageType
-  io_type: string
   name: imageType
   required: false
+  type: string
 - description: Pattern of the images in Input
-  io_format:
+  format:
   - filePattern
-  io_type: string
   name: filePattern
   required: false
+  type: string
 name: polusai/PrecomputeSlideViewer
 outputs:
 - description: Precomputed output
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/LabShare/polus-plugins
 specVersion: 1.0.0
 title: Precompute Slide Viewer
 ui:
-- condition: null
-  customType: null
-  description: Collection name...
-  ext: null
+- description: Collection name...
   key: inputs.inpDir
   title: 'Input collection: '
-  ui_type: path
-- condition: null
-  customType: null
-  description: Build a DeepZoom, Neuroglancer, or Zarr pyramid?
+  type: path
+- description: Build a DeepZoom, Neuroglancer, or Zarr pyramid?
   fields:
   - DeepZoom
   - Neuroglancer
   - Zarr
   key: inputs.pyramidType
-  optional: null
   title: 'Pyramid Type: '
-  ui_type: select
+  type: select
 - condition: inputs.pyramidType==Neuroglancer
-  customType: null
   description: Image or Segmentation?
   fields:
   - image
   - segmentation
   key: inputs.imageType
-  optional: null
   title: 'Image Type: '
-  ui_type: select
-- condition: null
-  customType: null
-  default: null
-  description: 'Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). '
+  type: select
+- description: 'Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). '
   key: inputs.filePattern
-  regex: null
   title: 'Image Pattern: '
-  toolbar: null
-  ui_type: text
+  type: text
 version: 1.7.1-dev0

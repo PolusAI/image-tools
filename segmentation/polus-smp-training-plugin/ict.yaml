@@ -3,203 +3,186 @@ author:
 - Najib Ishaq
 - Madhuri Vihani
 - Benjamin Houghton
-citation: null
 contact: gauhar.bains@labshare.org
 container: polusai/smp-training-plugin:0.5.11
 description: Segmentation models training and inference plugin.
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: '''active'' or ''inactive'' for whether to run in inference mode.'
-  io_format:
+  format:
   - inferenceMode
-  io_type: string
   name: inferenceMode
   required: true
+  type: string
 - description: Collection containing images on which to run inference.
-  io_format:
+  format:
   - imagesInferenceDir
-  io_type: path
   name: imagesInferenceDir
   required: false
+  type: path
 - description: Filename pattern for images on which to run inference.
-  io_format:
+  format:
   - inferencePattern
-  io_type: string
   name: inferencePattern
   required: false
+  type: string
 - description: 'Path to a model that was previously trained with this plugin. If starting
     fresh, you must instead provide: ''modelName'', ''encoderBase'', ''encoderVariant'',
     ''encoderWeights'', and ''optimizerName''. See the README for available options.'
-  io_format:
+  format:
   - pretrainedModel
-  io_type: path
   name: pretrainedModel
   required: false
+  type: path
 - description: Model architecture to use. Required if starting fresh.
-  io_format:
+  format:
   - modelName
-  io_type: string
   name: modelName
   required: false
+  type: string
 - description: The name of the base encoder to use.
-  io_format:
+  format:
   - encoderBase
-  io_type: string
   name: encoderBase
   required: false
+  type: string
 - description: The name of the specific variant to use.
-  io_format:
+  format:
   - encoderVariant
-  io_type: string
   name: encoderVariant
   required: false
+  type: string
 - description: The name of the pretrained weights to use.
-  io_format:
+  format:
   - encoderWeights
-  io_type: string
   name: encoderWeights
   required: false
+  type: string
 - description: Name of optimization algorithm to use for training the model. Required
     if starting fresh.
-  io_format:
+  format:
   - optimizerName
-  io_type: string
   name: optimizerName
   required: false
+  type: string
 - description: Size of each batch for training. If left unspecified, we use the maximum
     possible based on memory constraints.
-  io_format:
+  format:
   - batchSize
-  io_type: number
   name: batchSize
   required: false
+  type: number
 - description: Collection containing images to use for training.
-  io_format:
+  format:
   - imagesTrainDir
-  io_type: path
   name: imagesTrainDir
   required: false
+  type: path
 - description: Collection containing labels, i.e. the ground-truth, for the training
     images.
-  io_format:
+  format:
   - labelsTrainDir
-  io_type: path
   name: labelsTrainDir
   required: false
+  type: path
 - description: Filename pattern for training images and labels.
-  io_format:
+  format:
   - trainPattern
-  io_type: string
   name: trainPattern
   required: false
+  type: string
 - description: Collection containing images to use for validation.
-  io_format:
+  format:
   - imagesValidDir
-  io_type: path
   name: imagesValidDir
   required: false
+  type: path
 - description: Collection containing labels, i.e. the ground-truth, for the validation
     images.
-  io_format:
+  format:
   - labelsValidDir
-  io_type: path
   name: labelsValidDir
   required: false
+  type: path
 - description: Filename pattern for validation images and labels.
-  io_format:
+  format:
   - validPattern
-  io_type: string
   name: validPattern
   required: false
+  type: string
 - description: Which device to use for the model
-  io_format:
+  format:
   - device
-  io_type: string
   name: device
   required: false
+  type: string
 - description: How often to save model checkpoints
-  io_format:
+  format:
   - checkpointFrequency
-  io_type: number
   name: checkpointFrequency
   required: false
+  type: number
 - description: Name of loss function to use.
-  io_format:
+  format:
   - lossName
-  io_type: string
   name: lossName
   required: false
+  type: string
 - description: Maximum number of epochs for which to continue training the model.
-  io_format:
+  format:
   - maxEpochs
-  io_type: number
   name: maxEpochs
   required: false
+  type: number
 - description: Maximum number of epochs to wait for model to improve.
-  io_format:
+  format:
   - patience
-  io_type: number
   name: patience
   required: false
+  type: number
 - description: Minimum improvement in loss to reset patience.
-  io_format:
+  format:
   - minDelta
-  io_type: number
   name: minDelta
   required: false
+  type: number
 name: polusai/SegmentationModelsTrainingandInference
 outputs:
 - description: In training mode, this contains the trained model and checkpoints.
     In inference mode, this contains the output labels.
-  io_format:
+  format:
   - outputDir
-  io_type: path
   name: outputDir
   required: true
+  type: path
 repository: https://github.com/PolusAI/polus-plugins/tree/dev/segmentation
 specVersion: 1.0.0
 title: Segmentation Models Training and Inference
 ui:
-- condition: null
-  customType: null
-  description: '''active'' or ''inactive'' for whether to run in inference mode.'
+- description: '''active'' or ''inactive'' for whether to run in inference mode.'
   fields:
   - active
   - inactive
   key: inputs.inferenceMode
-  optional: null
   title: inferenceMode
-  ui_type: select
+  type: select
 - condition: inputs.inferenceMode==active
-  customType: null
   description: Collection containing images on which to run inference.
-  ext: null
   key: inputs.imagesInferenceDir
   title: imagesInferenceDir
-  ui_type: path
+  type: path
 - condition: inputs.inferenceMode==active
-  customType: null
-  default: null
   description: Filename pattern for images on which to run inference.
   key: inputs.inferencePattern
-  regex: null
   title: inferencePattern
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  description: 'Path to a model that was previously trained with this plugin. If starting
+  type: text
+- description: 'Path to a model that was previously trained with this plugin. If starting
     fresh, you must instead provide: ''modelName'', ''encoderBase'', ''encoderVariant'',
     ''encoderWeights'', and ''optimizerName''. See the README for available options.'
-  ext: null
   key: inputs.pretrainedModel
   title: pretrainedModel
-  ui_type: path
-- condition: null
-  customType: null
-  description: Model architecture to use. Required if starting fresh.
+  type: path
+- description: Model architecture to use. Required if starting fresh.
   fields:
   - Unet
   - UnetPlusPlus
@@ -211,12 +194,9 @@ ui:
   - DeepLabV3
   - DeepLabV3Plus
   key: inputs.modelName
-  optional: null
   title: modelName
-  ui_type: select
-- condition: null
-  customType: null
-  description: The name of the base encoder to use.
+  type: select
+- description: The name of the base encoder to use.
   fields:
   - ResNet
   - ResNeXt
@@ -233,12 +213,9 @@ ui:
   - DPN
   - VGG
   key: inputs.encoderBase
-  optional: null
   title: encoderBase
-  ui_type: select
-- condition: null
-  customType: null
-  description: The name of the specific variant to use.
+  type: select
+- description: The name of the specific variant to use.
   fields:
   - resnet18
   - resnet34
@@ -354,12 +331,9 @@ ui:
   - vgg19
   - vgg19_bn
   key: inputs.encoderVariant
-  optional: null
   title: encoderVariant
-  ui_type: select
-- condition: null
-  customType: null
-  description: The name of the pretrained weights to use.
+  type: select
+- description: The name of the pretrained weights to use.
   fields:
   - advprop
   - imagenet
@@ -371,11 +345,9 @@ ui:
   - ssl
   - swsl
   key: inputs.encoderWeights
-  optional: null
   title: encoderWeights
-  ui_type: select
+  type: select
 - condition: inputs.inferenceMode==inactive
-  customType: null
   description: Name of optimization algorithm to use for training the model. Required
     if starting fresh.
   fields:
@@ -391,87 +363,56 @@ ui:
   - Rprop
   - SGD
   key: inputs.optimizerName
-  optional: null
   title: optimizerName
-  ui_type: select
+  type: select
 - condition: inputs.inferenceMode==inactive
-  customType: null
-  default: null
   description: Size of each batch for training. If left unspecified, we use the maximum
     possible based on memory constraints.
-  integer: null
   key: inputs.batchSize
-  number_range: null
   title: batchSize
-  ui_type: number
+  type: number
 - condition: inputs.inferenceMode==inactive
-  customType: null
   description: Collection containing images to use for training.
-  ext: null
   key: inputs.imagesTrainDir
   title: imagesTrainDir
-  ui_type: path
+  type: path
 - condition: inputs.inferenceMode==inactive
-  customType: null
   description: Collection containing labels, i.e. the ground-truth, for the training
     images.
-  ext: null
   key: inputs.labelsTrainDir
   title: labelsTrainDir
-  ui_type: path
+  type: path
 - condition: inputs.inferenceMode==inactive
-  customType: null
-  default: null
   description: Filename pattern for training images and labels.
   key: inputs.trainPattern
-  regex: null
   title: trainPattern
-  toolbar: null
-  ui_type: text
+  type: text
 - condition: inputs.inferenceMode==inactive
-  customType: null
   description: Collection containing images to use for validation.
-  ext: null
   key: inputs.imagesValidDir
   title: imagesValidDir
-  ui_type: path
+  type: path
 - condition: inputs.inferenceMode==inactive
-  customType: null
   description: Collection containing labels, i.e. the ground-truth, for the validation
     images.
-  ext: null
   key: inputs.labelsValidDir
   title: labelsValidDir
-  ui_type: path
+  type: path
 - condition: inputs.inferenceMode==inactive
-  customType: null
-  default: null
   description: Filename pattern for validation images and labels.
   key: inputs.validPattern
-  regex: null
   title: validPattern
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: Which device to use for the model
+  type: text
+- description: Which device to use for the model
   key: inputs.device
-  regex: null
   title: device
-  toolbar: null
-  ui_type: text
+  type: text
 - condition: inputs.inferenceMode==inactive
-  customType: null
-  default: null
   description: How often to save model checkpoints
-  integer: null
   key: inputs.checkpointFrequency
-  number_range: null
   title: checkpointFrequency
-  ui_type: number
+  type: number
 - condition: inputs.inferenceMode==inactive
-  customType: null
   description: Name of loss function to use.
   fields:
   - JaccardLoss
@@ -483,34 +424,24 @@ ui:
   - SoftCrossEntropyLoss
   - MCCLoss
   key: inputs.lossName
-  optional: null
   title: lossName
-  ui_type: select
+  type: select
 - condition: inputs.inferenceMode==inactive
-  customType: null
   default: 100
   description: Maximum number of epochs for which to continue training the model.
-  integer: null
   key: inputs.maxEpochs
-  number_range: null
   title: maxEpochs
-  ui_type: number
+  type: number
 - condition: inputs.inferenceMode==inactive
-  customType: null
   default: 10
   description: Maximum number of epochs to wait for model to improve.
-  integer: null
   key: inputs.patience
-  number_range: null
   title: patience
-  ui_type: number
+  type: number
 - condition: inputs.inferenceMode==inactive
-  customType: null
   default: 0.0001
   description: Minimum improvement in loss to reset patience.
-  integer: null
   key: inputs.minDelta
-  number_range: null
   title: minDelta
-  ui_type: number
+  type: number
 version: 0.5.11

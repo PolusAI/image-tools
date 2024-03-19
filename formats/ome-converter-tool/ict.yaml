@@ -1,69 +1,55 @@
 author:
 - Nick Schaub
 - Hamdah Shafqat
-citation: null
 contact: nick.schaub@nih.gov
 container: polusai/ome-converter-tool:0.3.2-dev0
 description: Convert Bioformats supported format to OME Zarr or OME TIF
-documentation: null
 entrypoint: python3 -m polus.images.formats.ome_converter
-hardware: null
 inputs:
 - description: Input generic data collection to be processed by this plugin
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 - description: A filepattern, used to select data to be converted
-  io_format:
+  format:
   - filePattern
-  io_type: string
   name: filePattern
   required: true
+  type: string
 - description: Type of data conversion
-  io_format:
+  format:
   - fileExtension
-  io_type: string
   name: fileExtension
   required: true
+  type: string
 name: polusai/OMEConverter
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/PolusAI/polus-plugins
 specVersion: 1.0.0
 title: OME Converter
 ui:
-- condition: null
-  customType: null
-  description: Input generic data collection to be processed by this plugin
-  ext: null
+- description: Input generic data collection to be processed by this plugin
   key: inputs.inpDir
   title: Input generic collection
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: A filepattern, used to select data for conversion
+  type: path
+- description: A filepattern, used to select data for conversion
   key: inputs.filePattern
-  regex: null
   title: Filepattern
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  description: Type of data conversion
+  type: text
+- description: Type of data conversion
   fields:
   - .ome.tif
   - .ome.zarr
   - default
   key: inputs.fileExtension
-  optional: null
   title: fileExtension
-  ui_type: select
+  type: select
 version: 0.3.2-dev0

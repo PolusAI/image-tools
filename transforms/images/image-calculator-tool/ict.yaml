@@ -1,74 +1,61 @@
 author:
 - Nick Schaub
-citation: null
 contact: nick.schaub@nih.gov
 container: polusai/image-calculator-tool:0.2.2-dev0
 description: Perform simple mathematical operations on images.
-documentation: null
 entrypoint: python3 -m polus.images.transforms.images.image_calculator
-hardware: null
 inputs:
 - description: The first set of images
-  io_format:
+  format:
   - primaryDir
-  io_type: path
   name: primaryDir
   required: true
+  type: path
 - description: Filename pattern used to separate data
-  io_format:
+  format:
   - primaryPattern
-  io_type: string
   name: primaryPattern
   required: false
+  type: string
 - description: The operation to perform
-  io_format:
+  format:
   - operator
-  io_type: string
   name: operator
   required: true
+  type: string
 - description: The second set of images
-  io_format:
+  format:
   - secondaryDir
-  io_type: path
   name: secondaryDir
   required: true
+  type: path
 - description: Filename pattern used to separate data
-  io_format:
+  format:
   - secondaryPattern
-  io_type: string
   name: secondaryPattern
   required: false
+  type: string
 name: polusai/ImageCalculator
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/labshare/polus-plugins
 specVersion: 1.0.0
 title: Image Calculator
 ui:
-- condition: null
-  customType: null
-  description: The first set of images
-  ext: null
+- description: The first set of images
   key: inputs.primaryDir
   title: First image collection
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Filename pattern used to separate data
+  type: path
+- description: Filename pattern used to separate data
   key: inputs.primaryPattern
-  regex: null
   title: Filename pattern
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  description: The operation to perform
+  type: text
+- description: The operation to perform
   fields:
   - add
   - subtract
@@ -81,23 +68,14 @@ ui:
   - max
   - absdiff
   key: inputs.operator
-  optional: null
   title: Operation
-  ui_type: select
-- condition: null
-  customType: null
-  description: The second set of images
-  ext: null
+  type: select
+- description: The second set of images
   key: inputs.secondaryDir
   title: Second image collection
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Filename pattern used to separate data
+  type: path
+- description: Filename pattern used to separate data
   key: inputs.secondaryPattern
-  regex: null
   title: Filename pattern
-  toolbar: null
-  ui_type: text
+  type: text
 version: 0.2.2-dev0

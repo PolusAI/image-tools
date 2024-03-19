@@ -1,48 +1,40 @@
 author:
 - Najib Ishaq
-citation: null
 contact: najib.ishaq@nih.gov
 container: polusai/roi-relabel-tool:0.2.5-dev0
 description: Methods for relabeling and consolidating regions of interest (RoIs) in
   a segmented or hand-labeled image.
-documentation: null
 entrypoint: python3 -m polus.images.transforms.images.roi_relabel
-hardware: null
 inputs:
 - description: Input image collection to be processed by this plugin.
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 - description: What operation to perform on the images.
-  io_format:
+  format:
   - method
-  io_type: string
   name: method
   required: false
+  type: string
 name: polusai/RoIRelabel
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/PolusAI/polus-plugins/transforms/images/roi-relabeling-plugin
 specVersion: 1.0.0
 title: RoI Relabel
 ui:
-- condition: null
-  customType: null
-  description: Input image collection to be processed by this plugin.
-  ext: null
+- description: Input image collection to be processed by this plugin.
   key: inputs.inpDir
   title: Input collection
-  ui_type: path
-- condition: null
-  customType: null
-  description: What operation to perform on the images.
+  type: path
+- description: What operation to perform on the images.
   fields:
   - contiguous
   - randomize
@@ -50,7 +42,6 @@ ui:
   - graphColoring
   - optimizedGraphColoring
   key: inputs.method
-  optional: null
   title: Method
-  ui_type: select
+  type: select
 version: 0.2.5-dev0

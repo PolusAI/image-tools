@@ -1,123 +1,94 @@
 author:
 - Vishakha Goyal
 - Hamdah Shafqat
-citation: null
 contact: vishakha.goyal@nih.gov
 container: polusai/mesmer-inference-tool:0.0.9-dev0
 description: WIPP plugin to run inference using MESMER.
-documentation: null
 entrypoint: python3 -m polus.images.segmentation.mesmer_inference
-hardware: null
 inputs:
 - description: Input image collection to be processed by this plugin.
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 - description: Tile size for images. Default is 256.
-  io_format:
+  format:
   - tilesize
-  io_type: number
   name: tilesize
   required: false
+  type: number
 - description: Model path
-  io_format:
+  format:
   - modelPath
-  io_type: path
   name: modelPath
   required: false
+  type: path
 - description: Filename pattern to filter test data.
-  io_format:
+  format:
   - filePatternTest
-  io_type: string
   name: filePatternTest
   required: true
+  type: string
 - description: Filename pattern to filter nuclear data for whole cell segmentation.
-  io_format:
+  format:
   - filePatternWholeCell
-  io_type: string
   name: filePatternWholeCell
   required: false
+  type: string
 - description: Format to save predictions
-  io_format:
+  format:
   - fileExtension
-  io_type: string
   name: fileExtension
   required: true
+  type: string
 - description: Select which model to use. Default is mesmer.
-  io_format:
+  format:
   - model
-  io_type: string
   name: model
   required: true
+  type: string
 name: polusai/MesmerInference
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/polusai/polus-plugins
 specVersion: 1.0.0
 title: Mesmer Inference
 ui:
-- condition: null
-  customType: null
-  description: Input intesity image collection to be processed by this plugin.
-  ext: null
+- description: Input intesity image collection to be processed by this plugin.
   key: inputs.inpDir
   title: Test intensity images
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Tile size for input images.
-  integer: null
+  type: path
+- description: Tile size for input images.
   key: inputs.tilesize
-  number_range: null
   title: Tile Size
-  ui_type: number
-- condition: null
-  customType: null
-  description: Path for model file.
-  ext: null
+  type: number
+- description: Path for model file.
   key: inputs.modelPath
   title: Model Path
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Filename pattern to filter test data.
+  type: path
+- description: Filename pattern to filter test data.
   key: inputs.filePatternTest
-  regex: null
   title: FilePattern Test
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: Filename pattern to filter nuclear data for whole cell segmentation.
+  type: text
+- description: Filename pattern to filter nuclear data for whole cell segmentation.
   key: inputs.filePatternWholeCell
-  regex: null
   title: FilePattern Whole Cell
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  description: Format to save predictions
+  type: text
+- description: Format to save predictions
   fields:
   - .ome.tif
   - .ome.zarr
   - default
   key: inputs.fileExtension
-  optional: null
   title: fileExtension
-  ui_type: select
-- condition: null
-  customType: null
-  description: Choose the model
+  type: select
+- description: Choose the model
   fields:
   - mesmerNuclear
   - mesmerWholeCell
@@ -125,7 +96,6 @@ ui:
   - cytoplasm
   - BYOM
   key: inputs.model
-  optional: null
   title: Model Name
-  ui_type: select
+  type: select
 version: 0.0.9-dev0

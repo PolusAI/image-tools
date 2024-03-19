@@ -1,64 +1,51 @@
 author:
 - Kelechi Nina
 - Hamdah Shafqat
-citation: null
 contact: nina.mezu@nih.gov
 container: polusai/tabular-converter-tool:0.1.2-dev0
 description: WIPP plugin allows tabular data conversion arrow file format and vice
   versa.
-documentation: null
 entrypoint: python3 -m polus.images.formats.tabular_converter
-hardware: null
 inputs:
 - description: Input data collection to be processed by this plugin
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 - description: Pattern to parse input files
-  io_format:
+  format:
   - filePattern
-  io_type: string
   name: filePattern
   required: false
+  type: string
 - description: File format of an output file
-  io_format:
+  format:
   - fileExtension
-  io_type: string
   name: fileExtension
   required: true
+  type: string
 name: polusai/TabularConverter
 outputs:
 - description: Output directory
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/PolusAI/polus-plugins
 specVersion: 1.0.0
 title: Tabular Converter
 ui:
-- condition: null
-  customType: null
-  description: Input data collection to be processed by this plugin
-  ext: null
+- description: Input data collection to be processed by this plugin
   key: inputs.inpDir
   title: Input collection
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Pattern to parse input files
+  type: path
+- description: Pattern to parse input files
   key: inputs.filePattern
-  regex: null
   title: FilePattern
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  description: Desired file format of an ouput file
+  type: text
+- description: Desired file format of an ouput file
   fields:
   - .csv
   - .fits
@@ -69,7 +56,6 @@ ui:
   - .arrow
   - default
   key: inputs.fileExtension
-  optional: null
   title: FileExtension
-  ui_type: select
+  type: select
 version: 0.1.2-dev0

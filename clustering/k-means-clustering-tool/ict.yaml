@@ -2,87 +2,74 @@ author:
 - Jayapriya Nagarajan
 - Kelechi Nina
 - Hamdah Shafqat
-citation: null
 contact: jayapriya.nagarajan@nih.gov
 container: polusai/k-means-clustering-tool:0.3.5-dev0
 description: Cluster the data using K-Means.
-documentation: null
 entrypoint: python3 -m polus.images.clustering.k_means
-hardware: null
 inputs:
 - description: Input tabular data
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 - description: Pattern to parse input files
-  io_format:
+  format:
   - filePattern
-  io_type: string
   name: filePattern
   required: false
+  type: string
 - description: Select Manual or Elbow or Calinski Harabasz or Davies Bouldin methods
-  io_format:
+  format:
   - methods
-  io_type: string
   name: methods
   required: true
+  type: string
 - description: 'Enter minimum k-value:'
-  io_format:
+  format:
   - minimumRange
-  io_type: number
   name: minimumRange
   required: false
+  type: number
 - description: 'Enter maximum k-value:'
-  io_format:
+  format:
   - maximumRange
-  io_type: number
   name: maximumRange
   required: false
+  type: number
 - description: 'Number of clusters:'
-  io_format:
+  format:
   - numOfClus
-  io_type: number
   name: numOfClus
   required: false
+  type: number
 - description: Output a JSON preview of outputs produced by this plugin
-  io_format:
+  format:
   - preview
-  io_type: boolean
   name: preview
   required: false
+  type: boolean
 name: polusai/K-MeansClustering
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/polusai/polus-plugins
 specVersion: 1.0.0
 title: K-Means Clustering
 ui:
-- condition: null
-  customType: null
-  description: Input tabular data for clustering
-  ext: null
+- description: Input tabular data for clustering
   key: inputs.inpDir
   title: Input tabular data
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Pattern to parse input files
+  type: path
+- description: Pattern to parse input files
   key: inputs.filePattern
-  regex: null
   title: FilePattern
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  description: Select Manual or Elbow or Calinski Harabasz or Davies Bouldin methods
+  type: text
+- description: Select Manual or Elbow or Calinski Harabasz or Davies Bouldin methods
   fields:
   - Manual
   - Elbow
@@ -90,34 +77,21 @@ ui:
   - DaviesBouldin
   - default
   key: inputs.methods
-  optional: null
   title: Cluster data based on the methods selected to determine k-value
-  ui_type: select
+  type: select
 - condition: inputs.methods==DaviesBouldin
-  customType: null
-  default: null
   description: 'Enter minimum k-value:'
-  integer: null
   key: inputs.minimumRange
-  number_range: null
   title: Enter minimum range
-  ui_type: number
+  type: number
 - condition: inputs.methods==DaviesBouldin
-  customType: null
-  default: null
   description: 'Enter maximum k-value:'
-  integer: null
   key: inputs.maximumRange
-  number_range: null
   title: Enter maximum range
-  ui_type: number
+  type: number
 - condition: inputs.methods==Manual
-  customType: null
-  default: null
   description: 'Number of clusters:'
-  integer: null
   key: inputs.numOfClus
-  number_range: null
   title: Enter number of clusters
-  ui_type: number
+  type: number
 version: 0.3.5-dev0

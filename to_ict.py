@@ -6,11 +6,19 @@ import logging
 from pathlib import Path
 
 import typer
-from ict import ICT
+from ict import ICT, validate
 from tqdm import tqdm
 
 app = typer.Typer(help="Convert WIPP manifests to ICT.")
 ict_logger = logging.getLogger("ict")
+fhandler = logging.FileHandler("ict_conversion.log")
+fformat = logging.Formatter(
+    "%(asctime)s - %(levelname)s - %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p"
+)
+fhandler.setFormatter(fformat)
+fhandler.setLevel("INFO")
+ict_logger.setLevel("INFO")
+ict_logger.addHandler(fhandler)
 ict_logger.setLevel(logging.INFO)
 logging.basicConfig(
     level=logging.INFO,
@@ -18,6 +26,7 @@ logging.basicConfig(
     datefmt="%m/%d/%Y %I:%M:%S %p",
 )
 logger = logging.getLogger("wipp_to_ict")
+logger.addHandler(fhandler)
 
 REPO_PATH = Path(__file__).parent
 LOCAL_MANIFESTS = list(REPO_PATH.rglob("*plugin.json"))
@@ -62,7 +71,9 @@ def main(
         for manifest in tqdm(LOCAL_MANIFESTS):
             try:
                 ict_ = ICT.from_wipp(manifest)
-                ict_.save_yaml(manifest.with_name("ict.yaml"))
+                yaml_path = ict_.save_yaml(manifest.with_name("ict.yaml"))
+                validate(yaml_path)
+                # TODO remove null
                 converted += 1
 
             except BaseException as e:
@@ -81,6 +92,7 @@ def main(
     logger.info(f"Converted {converted}/{n} plugins")
     if len(problems) > 0:
         logger.error(f"Problems: {problems}")
+        logger.info(f"There were {len(problems)} problems in {n} manifests.")
 
 
 if __name__ == "__main__":

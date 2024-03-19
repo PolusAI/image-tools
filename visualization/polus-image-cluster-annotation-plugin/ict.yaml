@@ -1,65 +1,51 @@
 author:
 - Jayapriya Nagarajan
-citation: null
 contact: jayapriya.nagarajan@nih.gov
 container: polusai/image-cluster-annotation-plugin:0.1.7
 description: Converts the original image as all zeros except at the borders which
   contains the cluster id.
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: Input image file collection
-  io_format:
+  format:
   - imgdir
-  io_type: path
   name: imgdir
   required: true
+  type: path
 - description: Input csv file collection
-  io_format:
+  format:
   - csvdir
-  io_type: path
   name: csvdir
   required: true
+  type: path
 - description: 'Enter border width:'
-  io_format:
+  format:
   - borderwidth
-  io_type: number
   name: borderwidth
   required: false
+  type: number
 name: polusai/Imageclusterannotation
 outputs:
 - description: Output image collection
-  io_format:
+  format:
   - outdir
-  io_type: path
   name: outdir
   required: true
+  type: path
 repository: https://github.com/labshare/polus-plugins
 specVersion: 1.0.0
 title: Image cluster annotation
 ui:
-- condition: null
-  customType: null
-  description: Input image file collection
-  ext: null
+- description: Input image file collection
   key: inputs.imgdir
   title: Input image file
-  ui_type: path
-- condition: null
-  customType: null
-  description: Input csv file collection
-  ext: null
+  type: path
+- description: Input csv file collection
   key: inputs.csvdir
   title: Input csv file
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: 'Enter border width:'
-  integer: null
+  type: path
+- description: 'Enter border width:'
   key: inputs.borderwidth
-  number_range: null
   title: Enter border width
-  ui_type: number
+  type: number
 version: 0.1.7

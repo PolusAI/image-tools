@@ -1,108 +1,83 @@
 author:
 - Vishakha Goyal
-citation: null
 contact: vishakha.goyal@nih.gov
 container: polusai/pixel-segmentation-eval-tool:0.1.12-dev0
 description: Plugin to generate evaluation metrics for pixel-wise comparison of ground
   truth and predicted images.
-documentation: null
 entrypoint: python3 -m polus.images.features.pixel_segmentation_eval
-hardware: null
 inputs:
 - description: Ground truth input image collection to be processed by this plugin.
-  io_format:
+  format:
   - GTDir
-  io_type: path
   name: GTDir
   required: true
+  type: path
 - description: Predicted input image collection to be processed by this plugin.
-  io_format:
+  format:
   - PredDir
-  io_type: path
   name: PredDir
   required: true
+  type: path
 - description: Number of classes.
-  io_format:
+  format:
   - inputClasses
-  io_type: number
   name: inputClasses
   required: true
+  type: number
 - description: Filename pattern to filter data.
-  io_format:
+  format:
   - filePattern
-  io_type: string
   name: filePattern
   required: false
+  type: string
 - description: Boolean to create separate result file per image. Default is false.
-  io_format:
+  format:
   - individualStats
-  io_type: boolean
   name: individualStats
   required: false
+  type: boolean
 - description: Boolean to calculate overall statistics across all images. Default
     is false.
-  io_format:
+  format:
   - totalStats
-  io_type: boolean
   name: totalStats
   required: false
+  type: boolean
 name: polusai/PixelSegmentationEval
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/polusai/polus-plugins
 specVersion: 1.0.0
 title: Pixel Segmentation Eval
 ui:
-- condition: null
-  customType: null
-  description: Ground truth input image collection to be processed by this plugin.
-  ext: null
+- description: Ground truth input image collection to be processed by this plugin.
   key: inputs.GTDir
   title: Ground Truth Images
-  ui_type: path
-- condition: null
-  customType: null
-  description: Predicted input image collection to be processed by this plugin.
-  ext: null
+  type: path
+- description: Predicted input image collection to be processed by this plugin.
   key: inputs.PredDir
   title: Predicted Images
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Number of classes.
-  integer: null
+  type: path
+- description: Number of classes.
   key: inputs.inputClasses
-  number_range: null
   title: Number of Classes
-  ui_type: number
-- condition: null
-  customType: null
-  default: null
-  description: Filename pattern to filter data.
+  type: number
+- description: Filename pattern to filter data.
   key: inputs.filePattern
-  regex: null
   title: Input filename pattern
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: Boolean to create separate result file per image. Default is false.
+  type: text
+- description: Boolean to create separate result file per image. Default is false.
   key: inputs.individualStats
   title: Individual statistics
-  ui_type: checkbox
-- condition: null
-  customType: null
-  default: null
-  description: Boolean to calculate overall statistics across all images. Default
+  type: checkbox
+- description: Boolean to calculate overall statistics across all images. Default
     is false.
   key: inputs.totalStats
   title: Total statistics
-  ui_type: checkbox
+  type: checkbox
 version: 0.1.12-dev0

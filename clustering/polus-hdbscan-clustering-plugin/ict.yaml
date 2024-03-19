@@ -1,109 +1,82 @@
 author:
 - Jayapriya Nagarajan
-citation: null
 contact: hythem.sidky@nih.gov
 container: polusai/hdbscan-clustering-plugin:0.4.7
 description: Cluster the data using HDBSCAN.
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: Input CSV file collection
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 - description: Regular expression for optional row grouping.
-  io_format:
+  format:
   - groupingPattern
-  io_type: string
   name: groupingPattern
   required: false
+  type: string
 - description: Whether to average data across groups. Requires grouping pattern to
     be defined.
-  io_format:
+  format:
   - averageGroups
-  io_type: boolean
   name: averageGroups
   required: false
+  type: boolean
 - description: Name of column containing labels. Required for grouping pattern.
-  io_format:
+  format:
   - labelCol
-  io_type: string
   name: labelCol
   required: false
+  type: string
 - description: Minimum cluster size
-  io_format:
+  format:
   - minClusterSize
-  io_type: number
   name: minClusterSize
   required: true
+  type: number
 - description: Increments outlier ID to 1
-  io_format:
+  format:
   - incrementOutlierId
-  io_type: boolean
   name: incrementOutlierId
   required: false
+  type: boolean
 name: polusai/HDBSCANClustering
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/PolusAI/polus-plugins
 specVersion: 1.0.0
 title: HDBSCAN Clustering
 ui:
-- condition: null
-  customType: null
-  description: Input csv file collection for clustering.
-  ext: null
+- description: Input csv file collection for clustering.
   key: inputs.inpDir
   title: Input CSV file
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Regular expression for optional row grouping.
+  type: path
+- description: Regular expression for optional row grouping.
   key: inputs.groupingPattern
-  regex: null
   title: Grouping pattern
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: Whether to average data across groups. Requires grouping pattern to
+  type: text
+- description: Whether to average data across groups. Requires grouping pattern to
     be defined.
   key: inputs.averageGroups
   title: Group averaging
-  ui_type: checkbox
-- condition: null
-  customType: null
-  default: null
-  description: Name of column containing labels. Required for grouping pattern.
+  type: checkbox
+- description: Name of column containing labels. Required for grouping pattern.
   key: inputs.labelCol
-  regex: null
   title: Label column
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: Minimum number of points in a cluster.
-  integer: null
+  type: text
+- description: Minimum number of points in a cluster.
   key: inputs.minClusterSize
-  number_range: null
   title: Minimum cluster size
-  ui_type: number
-- condition: null
-  customType: null
-  default: null
-  description: Set outlier ID to unity.
+  type: number
+- description: Set outlier ID to unity.
   key: inputs.incrementOutlierId
   title: Increment outlier ID
-  ui_type: checkbox
+  type: checkbox
 version: 0.4.7

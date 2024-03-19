@@ -1,108 +1,81 @@
 author:
 - Nick Schaub
 - Najib Ishaq
-citation: null
 contact: Nick.Schaub@nih.gov
 container: polusai/apply-flatfield-tool:2.0.1-dev0
 description: Apply a flatfield algorithm to a collection of images.
-documentation: null
 entrypoint: python3 -m polus.images.transforms.images.apply_flatfield
-hardware: null
 inputs:
 - description: Input image collection to be processed by this plugin
-  io_format:
+  format:
   - imgDir
-  io_type: path
   name: imgDir
   required: true
+  type: path
 - description: Filename pattern used to separate data and match with flatfied files
-  io_format:
+  format:
   - imgPattern
-  io_type: string
   name: imgPattern
   required: true
+  type: string
 - description: Image collection containing flatfield and/or darkfield images
-  io_format:
+  format:
   - ffDir
-  io_type: path
   name: ffDir
   required: true
+  type: path
 - description: Filename pattern used to match flatfield files to image files
-  io_format:
+  format:
   - ffPattern
-  io_type: string
   name: ffPattern
   required: true
+  type: string
 - description: Filename pattern used to match darkfield files to image files
-  io_format:
+  format:
   - dfPattern
-  io_type: string
   name: dfPattern
   required: false
+  type: string
 - description: Preview the output images' names without actually running computation
-  io_format:
+  format:
   - preview
-  io_type: boolean
   name: preview
   required: false
+  type: boolean
 name: polusai/ApplyFlatfield
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/labshare/polus-plugins
 specVersion: 1.0.0
 title: Apply Flatfield
 ui:
-- condition: null
-  customType: null
-  description: Input image collection to be processed by this plugin
-  ext: null
+- description: Input image collection to be processed by this plugin
   key: inputs.imgDir
   title: Images to correct
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Filename pattern used to separate data and match with flatfield files
+  type: path
+- description: Filename pattern used to separate data and match with flatfield files
   key: inputs.imgPattern
-  regex: null
   title: Image pattern
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  description: Image collection containing flatfield and/or darkfield images
-  ext: null
+  type: text
+- description: Image collection containing flatfield and/or darkfield images
   key: inputs.ffDir
   title: Background images (flatfield/darkfield)
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Filename pattern used to match flatfield files to image files
+  type: path
+- description: Filename pattern used to match flatfield files to image files
   key: inputs.ffPattern
-  regex: null
   title: Flatfield file pattern
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: Filename pattern used to match darkfield files to image files
+  type: text
+- description: Filename pattern used to match darkfield files to image files
   key: inputs.dfPattern
-  regex: null
   title: Darkfield file pattern
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: Preview the output images' names without actually running computation
+  type: text
+- description: Preview the output images' names without actually running computation
   key: inputs.preview
   title: Preview Output
-  ui_type: checkbox
+  type: checkbox
 version: 2.0.1-dev0

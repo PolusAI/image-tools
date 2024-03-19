@@ -2,52 +2,43 @@ author:
 - Nick Schaub
 - Anjali Taneja
 - Benjamin Houghton
-citation: null
 contact: nick.schaub@nih.gov
 container: polusai/imagej-threshold-huang-plugin:0.4.2
 description: This plugin implements Huang's threshold method by Huang Wang.
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: Op overloading method to perform
-  io_format:
+  format:
   - opName
-  io_type: string
   name: opName
   required: true
+  type: string
 - description: The collection to be processed by this plugin
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 name: polusai/ImageJthresholdhuang
 outputs:
 - description: The output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/labshare/polus-plugins
 specVersion: 1.0.0
 title: ImageJ threshold huang
 ui:
-- condition: null
-  customType: null
-  description: Op overloading method to perform
+- description: Op overloading method to perform
   fields:
   - ApplyThresholdMethod$Huang
   key: inputs.opName
-  optional: null
   title: opName
-  ui_type: select
-- condition: null
-  customType: null
-  description: The collection to be processed by this plugin
-  ext: null
+  type: select
+- description: The collection to be processed by this plugin
   key: inputs.inpDir
   title: inpDir
-  ui_type: path
+  type: path
 version: 0.4.2

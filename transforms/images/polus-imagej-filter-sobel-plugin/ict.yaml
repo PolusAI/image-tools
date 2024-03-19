@@ -1,51 +1,43 @@
 author:
 - Benjamin Houghton
-citation: null
 contact: benjamin.houghton@axleinfo.com
 container: polusai/imagej-sobel-plugin:0.3.2
 description: This plugin applies the Sobel operator to an input collection
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: Op overloading method to perform
-  io_format:
+  format:
   - opName
-  io_type: string
   name: opName
   required: false
+  type: string
 - description: Collection to be processed by this plugin
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: false
+  type: path
 name: polusai/ImageJfiltersobel
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/labshare/polus-plugins
 specVersion: 1.0.0
 title: ImageJ filter sobel
 ui:
-- condition: null
-  customType: null
-  description: Op overloading method to perform
+- description: Op overloading method to perform
   fields:
   - SobelRAI
   key: inputs.opName
-  optional: null
   title: opName
-  ui_type: select
+  type: select
 - condition: inputs.opName==SobelRAI
-  customType: null
   description: Collection to be processed by this plugin
-  ext: null
   key: inputs.inpDir
   title: inpDir
-  ui_type: path
+  type: path
 version: 0.3.2

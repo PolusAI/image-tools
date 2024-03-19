@@ -1,81 +1,60 @@
 author:
 - Najib Ishaq
-citation: null
 contact: najib.ishaq@nih.gov
 container: polusai/lumos-bleedthrough-correction-tool:0.1.2-dev0
 description: LUMoS Algorithm for bleedthrough correction.
-documentation: null
 entrypoint: python3 -m polus.images.transforms.images.lumos_bleedthrough_correction
-hardware: null
 inputs:
 - description: Input image collection to be processed by this plugin.
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 - description: Filepattern for the images.
-  io_format:
+  format:
   - filePattern
-  io_type: string
   name: filePattern
   required: true
+  type: string
 - description: Grouping variables for images.
-  io_format:
+  format:
   - groupBy
-  io_type: string
   name: groupBy
   required: true
+  type: string
 - description: Number of fluorophores in the images.
-  io_format:
+  format:
   - numFluorophores
-  io_type: number
   name: numFluorophores
   required: true
+  type: number
 name: polusai/LUMoSBleedthroughCorrectionPlugin
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/PolusAI/polus-plugins/transforms/images/lumos-bleedthrough-correction-plugin
 specVersion: 1.0.0
 title: LUMoS Bleedthrough Correction Plugin
 ui:
-- condition: null
-  customType: null
-  description: Input image collection to be processed by this plugin.
-  ext: null
+- description: Input image collection to be processed by this plugin.
   key: inputs.inpDir
   title: Input collection
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Filepattern for the images.
+  type: path
+- description: Filepattern for the images.
   key: inputs.filePattern
-  regex: null
   title: filePattern
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: Grouping variables for images.
+  type: text
+- description: Grouping variables for images.
   key: inputs.groupBy
-  regex: null
   title: groupBy
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: Number of fluorophores in the images.
-  integer: null
+  type: text
+- description: Number of fluorophores in the images.
   key: inputs.numFluorophores
-  number_range: null
   title: numFluorophores
-  ui_type: number
+  type: number
 version: 0.1.2-dev0

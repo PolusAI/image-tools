@@ -1,82 +1,66 @@
 author:
 - Benjamin Houghton
-citation: null
 contact: benjamin.houghton@axleinfo.com
 container: polusai/imagej-filter-tubeness-plugin:0.3.8
 description: This plugin filters a collection to produce a score for how tube-like
   each point in the image is.
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: Op overloading method to perform
-  io_format:
+  format:
   - opName
-  io_type: string
   name: opName
   required: false
+  type: string
 - description: Input collection to be processed by this plugin
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: false
+  type: path
 - description: Desired scale in physical units
-  io_format:
+  format:
   - sigma
-  io_type: number
   name: sigma
   required: false
+  type: number
 - description: Physical pixel sizes in all dimensions
-  io_format:
+  format:
   - calibration
-  io_type: array
   name: calibration
   required: false
+  type: array
 name: polusai/ImageJfiltertubeness
 outputs:
 - description: Output directory
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/labshare/polus-plugins
 specVersion: 1.0.0
 title: ImageJ filter tubeness
 ui:
-- condition: null
-  customType: null
-  description: Op overloading method to perform
+- description: Op overloading method to perform
   fields:
   - DefaultTubeness
   key: inputs.opName
-  optional: null
   title: opName
-  ui_type: select
+  type: select
 - condition: inputs.opName==DefaultTubeness
-  customType: null
   description: Input collection to be processed by this plugin
-  ext: null
   key: inputs.inpDir
   title: inpDir
-  ui_type: path
+  type: path
 - condition: inputs.opName==DefaultTubeness
-  customType: null
-  default: null
   description: Desired scale in physical units
-  integer: null
   key: inputs.sigma
-  number_range: null
   title: sigma
-  ui_type: number
+  type: number
 - condition: inputs.opName==DefaultTubeness
-  customType: null
-  default: null
   description: Physical pixel sizes in all dimensions
   key: inputs.calibration
-  regex: null
   title: calibration
-  toolbar: null
-  ui_type: text
+  type: text
 version: 0.3.8

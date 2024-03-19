@@ -1,69 +1,57 @@
 author:
 - Nick Schaub
 - Antoine Gerardin
-citation: null
 contact: nick.schaub@nih.gov
 container: polusai/image-assembler-tool:1.4.1-dev0
 description: A scalable image assembling plugin.
-documentation: null
 entrypoint: python3 -m polus.images.transforms.images.image_assembler
-hardware: null
 inputs:
 - description: Stitching vector for data
-  io_format:
+  format:
   - stitchPath
-  io_type: path
   name: stitchPath
   required: true
+  type: path
 - description: Input image collection to be processed by this plugin
-  io_format:
+  format:
   - imgPath
-  io_type: path
   name: imgPath
   required: true
+  type: path
 - description: Label images by timeslice rather than analyzing input image names
-  io_format:
+  format:
   - timesliceNaming
-  io_type: boolean
   name: timesliceNaming
   required: false
+  type: boolean
 - description: Generate preview of outputs.
-  io_format:
+  format:
   - preview
-  io_type: boolean
   name: preview
   required: false
+  type: boolean
 name: polusai/ImageAssembler
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/labshare/polus-plugins
 specVersion: 1.0.0
 title: Image Assembler
 ui:
-- condition: null
-  customType: null
-  description: Input image collection to be processed by this plugin
-  ext: null
+- description: Input image collection to be processed by this plugin
   key: inputs.imgPath
   title: Input collection
-  ui_type: path
-- condition: null
-  customType: null
-  description: Stitching vectors to use
-  ext: null
+  type: path
+- description: Stitching vectors to use
   key: inputs.stitchPath
   title: Stitching Vector
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Use stitching vector timeslice number as the image name
+  type: path
+- description: Use stitching vector timeslice number as the image name
   key: inputs.timesliceNaming
   title: 'Timeslice numbers for image names:'
-  ui_type: checkbox
+  type: checkbox
 version: 1.4.1-dev0

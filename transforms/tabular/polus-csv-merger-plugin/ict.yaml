@@ -1,80 +1,68 @@
 author:
 - Nicholas Schaub
-citation: null
 contact: nick.schaub@nih.gov
 container: polusai/csv-merger-plugin:0.4.0
 description: Merge all csv files in a csv collection into a single csv file.
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: Input image collection to be processed by this plugin
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 - description: Should csv be removed from the filename when indicating which file
     a row in a csv file came from?
-  io_format:
+  format:
   - stripExtension
-  io_type: boolean
   name: stripExtension
   required: true
+  type: boolean
 - description: Merging dimension
-  io_format:
+  format:
   - dim
-  io_type: string
   name: dim
   required: true
+  type: string
 - description: Perform column merge on all files with the same number of rows?
-  io_format:
+  format:
   - sameRows
-  io_type: boolean
   name: sameRows
   required: true
+  type: boolean
 name: polusai/CSVMerger
 outputs:
 - description: Output csv file
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/labshare/polus-plugins
 specVersion: 1.0.0
 title: CSV Merger
 ui:
-- condition: null
-  customType: null
-  description: Input image collection to be processed by this plugin
-  ext: null
+- description: Input image collection to be processed by this plugin
   key: inputs.inpDir
   title: Input collection
-  ui_type: path
-- condition: null
-  customType: null
-  default: true
+  type: path
+- default: true
   description: Should csv be removed from the filename when indicating which file
     a row in a csv file came from?
   key: inputs.stripExtension
   title: Remove CSV Extension
-  ui_type: checkbox
-- condition: null
-  customType: null
-  description: Merge along rows or columns?
+  type: checkbox
+- description: Merge along rows or columns?
   fields:
   - rows
   - columns
   key: inputs.dim
-  optional: null
   title: Merging dimension
-  ui_type: select
+  type: select
 - condition: inputs.dim=='columns'
-  customType: null
   default: false
   description: Merge only csvs with matching number of rows?
   key: inputs.sameRows
   title: 'Merge CSVs with equal rows:'
-  ui_type: checkbox
+  type: checkbox
 version: 0.4.0

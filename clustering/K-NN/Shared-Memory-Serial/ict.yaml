@@ -1,83 +1,62 @@
 author:
 - Mahdi Maghrebi
-citation: null
 contact: author@ict.com
 container: labshare/polus-knn-plugin:serial-0.1.0
 description: K-Nearest Neighbors Serial Code
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: Input csv file containing the raw data
-  io_format:
+  format:
   - inputPath
-  io_type: path
   name: inputPath
   required: true
+  type: path
 - description: The desired number of Nearest Neighbors (NN) to be computed
-  io_format:
+  format:
   - K
-  io_type: number
   name: K
   required: true
+  type: number
 - description: The rate at which the sampling is conducted. The values closer to 1
     provides more accurate results but the execution takes longer.
-  io_format:
+  format:
   - sampleRate
-  io_type: number
   name: sampleRate
   required: true
+  type: number
 - description: The threshold for the convergence
-  io_format:
+  format:
   - convThreshold
-  io_type: number
   name: convThreshold
   required: true
+  type: number
 name: labshare/K-NN(Serial)
 outputs:
 - description: The full path to the output csv collections containing indices and
     distances of K-NNs
-  io_format:
+  format:
   - outputPath
-  io_type: path
   name: outputPath
   required: true
+  type: path
 repository: https://github.com/polusai/image-tools
 specVersion: 1.0.0
 title: K-NN (Serial)
 ui:
-- condition: null
-  customType: null
-  description: Name of the input CSV collection
-  ext: null
+- description: Name of the input CSV collection
   key: inputs.inputPath
   title: The path to the input csv collection
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Insert an integer
-  integer: null
+  type: path
+- description: Insert an integer
   key: inputs.K
-  number_range: null
   title: The desired number of Nearest Neighbors (NN) to be computed
-  ui_type: number
-- condition: null
-  customType: null
-  default: null
-  description: Insert a value between 0 and 1
-  integer: null
+  type: number
+- description: Insert a value between 0 and 1
   key: inputs.sampleRate
-  number_range: null
   title: 'The sampling rate '
-  ui_type: number
-- condition: null
-  customType: null
-  default: null
-  description: Insert an integer. Smaller values result in more accurate solutions.
-  integer: null
+  type: number
+- description: Insert an integer. Smaller values result in more accurate solutions.
   key: inputs.convThreshold
-  number_range: null
   title: The threshold for the convergence
-  ui_type: number
+  type: number
 version: 0.1.0

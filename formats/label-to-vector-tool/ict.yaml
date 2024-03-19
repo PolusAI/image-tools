@@ -1,52 +1,41 @@
 author:
 - Najib Ishaq
 - Nick Schaub
-citation: null
 contact: najib.ishaq@nih.gov
 container: polusai/label-to-vector-tool:0.7.1-dev0
 description: Convert labelled masks to flow-field vectors.
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: Input image collection to be processed by this plugin
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 - description: Image-name pattern to use when selecting images for processing.
-  io_format:
+  format:
   - filePattern
-  io_type: string
   name: filePattern
   required: false
+  type: string
 name: polusai/LabeltoVector
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/PolusAI/polus-plugins/tree/dev/formats/polus-vector-converter-plugins
 specVersion: 1.0.0
 title: Label to Vector
 ui:
-- condition: null
-  customType: null
-  description: Input image collection to be processed by this plugin
-  ext: null
+- description: Input image collection to be processed by this plugin
   key: inputs.inpDir
   title: Input collection
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Image-name pattern to use when selecting images for processing.
+  type: path
+- description: Image-name pattern to use when selecting images for processing.
   key: inputs.filePattern
-  regex: null
   title: File Pattern
-  toolbar: null
-  ui_type: text
+  type: text
 version: 0.7.1-dev0

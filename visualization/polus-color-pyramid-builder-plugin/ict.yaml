@@ -1,126 +1,94 @@
 author:
 - Nick Schaub
-citation: null
 contact: nick.schaub@nih.gov
 container: polusai/color-pyramid-builder-plugin:0.3.3
 description: Builds a DeepZoom color pyramid.
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: Input image collection to be processed by this plugin
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 - description: Filename pattern used to separate data
-  io_format:
+  format:
   - filePattern
-  io_type: string
   name: filePattern
   required: true
+  type: string
 - description: Color ordering up to 7 colors (e.g. 1,11,,,,5,6)
-  io_format:
+  format:
   - layout
-  io_type: string
   name: layout
   required: true
+  type: string
 - description: Set bounds (should be float-float, int-int, or blank, e.g. 0.01-0.99,0-16000,,,,,)
-  io_format:
+  format:
   - bounds
-  io_type: string
   name: bounds
   required: false
+  type: string
 - description: If true, transparency is related to pixel intensity, where black is
     fully transparent.
-  io_format:
+  format:
   - alpha
-  io_type: boolean
   name: alpha
   required: false
+  type: boolean
 - description: If stitching path is given, will assemble images in the collection
     according to the stitching vector.
-  io_format:
+  format:
   - stitchPath
-  io_type: path
   name: stitchPath
   required: false
+  type: path
 - description: Gray level fill intensity. Ignored if stitchPath is undefined.
-  io_format:
+  format:
   - background
-  io_type: number
   name: background
   required: false
+  type: number
 name: polusai/ColorPyramidBuilder
 outputs:
 - description: Output pyramid path.
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/labshare/polus-plugins
 specVersion: 1.0.0
 title: Color Pyramid Builder
 ui:
-- condition: null
-  customType: null
-  default: null
-  description: Filename pattern used to separate data
+- description: Filename pattern used to separate data
   key: inputs.filePattern
-  regex: null
   title: Filename pattern
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  description: Input image collection to be processed by this plugin
-  ext: null
+  type: text
+- description: Input image collection to be processed by this plugin
   key: inputs.inpDir
   title: Input collection
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Color ordering (e.g. 1,11,,,,5,6)
+  type: path
+- description: Color ordering (e.g. 1,11,,,,5,6)
   key: inputs.layout
-  regex: null
   title: Color layout
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: Set bounds (should be float-float, int-int, or blank, e.g. 0.01-0.99,0-16000,,,,,)
+  type: text
+- description: Set bounds (should be float-float, int-int, or blank, e.g. 0.01-0.99,0-16000,,,,,)
   key: inputs.bounds
-  regex: null
   title: Set rescaling bounds (optional)
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: If true, transparency is related to pixel intensity, where black is
+  type: text
+- description: If true, transparency is related to pixel intensity, where black is
     fully transparent.
   key: inputs.alpha
   title: Make black transparent (optional)
-  ui_type: checkbox
-- condition: null
-  customType: null
-  description: If true, transparency is related to pixel intensity, where black is
+  type: checkbox
+- description: If true, transparency is related to pixel intensity, where black is
     fully transparent.
-  ext: null
   key: inputs.stitchPath
   title: Stitching Vector (optional)
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Gray level fill intensity from 0-1. Ignored if stitchPath is undefined.
-  integer: null
+  type: path
+- description: Gray level fill intensity from 0-1. Ignored if stitchPath is undefined.
   key: inputs.background
-  number_range: null
   title: Background gray level (optional)
-  ui_type: number
+  type: number
 version: 0.3.3

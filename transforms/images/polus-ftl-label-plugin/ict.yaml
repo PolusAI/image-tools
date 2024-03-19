@@ -1,52 +1,41 @@
 author:
 - Nick Schaub
 - Najib Ishaq
-citation: null
 contact: nick.schaub@nih.gov
 container: labshare/polus-ftl-label-plugin:0.3.8
 description: Label objects in a 2d or 3d binary image.
-documentation: null
 entrypoint: '[python3, main.py]'
-hardware: null
 inputs:
 - description: Input image collection to be processed by this plugin
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 - description: City block connectivity
-  io_format:
+  format:
   - connectivity
-  io_type: number
   name: connectivity
   required: true
+  type: number
 name: labshare/FTLLabel
 outputs:
 - description: Output collection
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/labshare/polus-plugins
 specVersion: 1.0.0
 title: FTL Label
 ui:
-- condition: null
-  customType: null
-  description: Input image collection to be processed by this plugin
-  ext: null
+- description: Input image collection to be processed by this plugin
   key: inputs.inpDir
   title: Input collection
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: City block connectivity
-  integer: null
+  type: path
+- description: City block connectivity
   key: inputs.connectivity
-  number_range: null
   title: Connectivity
-  ui_type: number
+  type: number
 version: 0.3.9

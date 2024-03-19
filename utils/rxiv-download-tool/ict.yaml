@@ -1,67 +1,51 @@
 author:
 - Nick Schaub
 - Hamdah Shafqat
-citation: null
 contact: nick.schaub@nih.gov
 container: polusai/rxiv-download-tool:0.1.0-dev0
 description: This plugin allows to download data from Rxiv website.
-documentation: null
 entrypoint: python3 -m polus.images.utils.rxiv_download
-hardware: null
 inputs:
 - description: Pull records from open access archives.
-  io_format:
+  format:
   - rxiv
-  io_type: string
   name: rxiv
   required: true
+  type: string
 - description: Start date.
-  io_format:
+  format:
   - start
-  io_type: string
   name: start
   required: false
+  type: string
 - description: Generate an output preview.
-  io_format:
+  format:
   - preview
-  io_type: boolean
   name: preview
   required: false
+  type: boolean
 name: polusai/DownloadRxivtextdata
 outputs:
 - description: Output collection.
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/PolusAI/image-tools
 specVersion: 1.0.0
 title: Download Rxiv text data
 ui:
-- condition: null
-  customType: null
-  default: null
-  description: Pull records from open access archives.
+- description: Pull records from open access archives.
   key: inputs.rxiv
-  regex: null
   title: rxiv
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: Start date.
+  type: text
+- description: Start date.
   key: inputs.start
-  regex: null
   title: start
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: Generate an output preview.
+  type: text
+- description: Generate an output preview.
   key: inputs.preview
   title: Preview example output of this plugin
-  ui_type: checkbox
+  type: checkbox
 version: 0.1.0-dev0

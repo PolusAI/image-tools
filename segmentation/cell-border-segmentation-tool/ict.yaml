@@ -1,65 +1,51 @@
 author:
 - Nick Schaub
 - Hamdah Shafqat
-citation: null
 contact: nick.schaub@nih.gov
 container: polusai/cell-border-segmentation-tool:0.2.4-dev0
 description: Segment cell borders of epithelial cells.
-documentation: null
 entrypoint: python3 -m polus.images.segmentation.cell_border_segmentation
-hardware: null
 inputs:
 - description: Input image collection to be processed by this plugin.
-  io_format:
+  format:
   - inpDir
-  io_type: path
   name: inpDir
   required: true
+  type: path
 - description: Filename pattern used to separate data.
-  io_format:
+  format:
   - filePattern
-  io_type: string
   name: filePattern
   required: false
+  type: string
 - description: Generate an output preview.
-  io_format:
+  format:
   - preview
-  io_type: boolean
   name: preview
   required: false
+  type: boolean
 name: polusai/CellBorderSegmentation
 outputs:
 - description: Output collection.
-  io_format:
+  format:
   - outDir
-  io_type: path
   name: outDir
   required: true
+  type: path
 repository: https://github.com/polusai/polus-plugins
 specVersion: 1.0.0
 title: Cell Border Segmentation
 ui:
-- condition: null
-  customType: null
-  description: Input image collection to be processed by this plugin.
-  ext: null
+- description: Input image collection to be processed by this plugin.
   key: inputs.inpDir
   title: Input collection
-  ui_type: path
-- condition: null
-  customType: null
-  default: null
-  description: Filename pattern used to separate data.
+  type: path
+- description: Filename pattern used to separate data.
   key: inputs.filePattern
-  regex: null
   title: Filename pattern
-  toolbar: null
-  ui_type: text
-- condition: null
-  customType: null
-  default: null
-  description: Generate an output preview.
+  type: text
+- description: Generate an output preview.
   key: inputs.preview
   title: Preview example output of this plugin
-  ui_type: checkbox
+  type: checkbox
 version: 0.2.4-dev0
