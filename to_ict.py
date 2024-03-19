@@ -73,7 +73,6 @@ def main(
                 ict_ = ICT.from_wipp(manifest)
                 yaml_path = ict_.save_yaml(manifest.with_name("ict.yaml"))
                 validate(yaml_path)
-                # TODO remove null
                 converted += 1
 
             except BaseException as e:
