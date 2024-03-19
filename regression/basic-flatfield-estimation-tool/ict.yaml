@@ -1,0 +1,62 @@
+author:
+- Nick Schaub
+- Najib Ishaq
+contact: nick.schaub@nih.gov
+container: polusai/basic-flatfield-estimation-tool:2.1.2-dev0
+description: Generates images used for flatfield correction using the BaSiC algorithm.
+entrypoint: python3 -m polus.images.regression.basic_flatfield_estimation
+inputs:
+- description: Input image collection.
+  format:
+  - inpDir
+  name: inpDir
+  required: true
+  type: path
+- description: Filename pattern used to separate images by channel, timepoint, and
+    replicate.
+  format:
+  - filePattern
+  name: filePattern
+  required: true
+  type: string
+- description: Group images together for flatfield by variable.
+  format:
+  - groupBy
+  name: groupBy
+  required: false
+  type: string
+- description: Calculate darkfield image.
+  format:
+  - getDarkfield
+  name: getDarkfield
+  required: true
+  type: boolean
+name: polusai/FlatfieldEstimationusingBaSiCalgorithm.
+outputs:
+- description: Output data for the plugin
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/polusai/polus-plugins
+specVersion: 1.0.0
+title: Flatfield Estimation using BaSiC algorithm.
+ui:
+- description: Image collection...
+  key: inputs.inpDir
+  title: 'Input image collection: '
+  type: path
+- description: Use a filename pattern to calculate flatfield information by subsets
+  key: inputs.filePattern
+  title: 'Filename pattern: '
+  type: text
+- description: Group data together with varying variable values.
+  key: inputs.groupBy
+  title: 'Grouping Variables: '
+  type: text
+- description: If selected, will generate a darkfield image
+  key: inputs.getDarkfield
+  title: 'Calculate darkfield: '
+  type: checkbox
+version: 2.1.2-dev0

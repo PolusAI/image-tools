@@ -1,0 +1,67 @@
+author:
+- Madhuri Vihani
+- Nicholas Schaub
+- Hythem Sidky
+contact: Madhuri.Vihani@nih.gov
+container: polusai/precompute-volume-plugin:0.4.8
+description: This plugin generates precomputed volumes and meshes for labelled data
+  to view in Neuroglancer
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Input collection
+  format:
+  - inpDir
+  name: inpDir
+  required: true
+  type: path
+- description: Image or Segmentation
+  format:
+  - imageType
+  name: imageType
+  required: true
+  type: string
+- description: Pattern of the images in Input
+  format:
+  - filePattern
+  name: filePattern
+  required: false
+  type: string
+- description: Create meshes
+  format:
+  - mesh
+  name: mesh
+  required: false
+  type: boolean
+name: polusai/WIPPWidget
+outputs:
+- description: Precomputed output
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: WIPP Widget
+ui:
+- description: Collection name...
+  key: inputs.inpDir
+  title: 'Input collection: '
+  type: path
+- description: 'Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). '
+  key: inputs.filePattern
+  title: 'Image Pattern: '
+  type: text
+- description: Image or Segmentation?
+  fields:
+  - image
+  - segmentation
+  key: inputs.imageType
+  title: 'Image Type: '
+  type: select
+- condition: inputs.imageType==segmentation
+  default: false
+  key: inputs.mesh
+  title: 'Create meshes: '
+  type: checkbox
+version: 0.4.8

@@ -1,0 +1,67 @@
+author:
+- Nick Schaub
+- Anjali Taneja
+- Benjamin Houghton
+contact: nick.schaub@nih.gov
+container: polusai/imagej-filter-frangivesselness-plugin:0.4.2
+description: Applies the Frangi Vesselness filter to an input collection to highlight
+  vessel-like structures
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Operation to perform
+  format:
+  - opName
+  name: opName
+  required: true
+  type: string
+- description: Collection to be processed by this plugin
+  format:
+  - inpDir
+  name: inpDir
+  required: true
+  type: path
+- description: The physical distance between data points in the  image, can vary for
+    each dimension of the image.
+  format:
+  - spacing
+  name: spacing
+  required: true
+  type: array
+- description: The Frangi scale parameter
+  format:
+  - scale
+  name: scale
+  required: true
+  type: number
+name: polusai/ImageJfilterfrangiVesselness
+outputs:
+- description: Output collection
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: ImageJ filter frangiVesselness
+ui:
+- description: Operation to perform
+  fields:
+  - DefaultFrangi
+  key: inputs.opName
+  title: opName
+  type: select
+- description: Collection to be processed by this plugin
+  key: inputs.inpDir
+  title: inpDir
+  type: path
+- description: The physical distance between data points in the  image, can vary for
+    each dimension of the image.
+  key: inputs.spacing
+  title: spacing
+  type: text
+- description: The Frangi scale parameter
+  key: inputs.scale
+  title: scale
+  type: number
+version: 0.4.2

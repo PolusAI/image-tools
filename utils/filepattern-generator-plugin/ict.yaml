@@ -1,0 +1,64 @@
+author:
+- Nick Schaub
+- Hamdah Shafqat
+- Kevin Hannon
+contact: nick.schaub@nih.gov
+container: polusai/filepattern-generator-plugin:0.2.1
+description: Filepattern Generator plugin creates a csv or feather file containing
+  a number of new filepatterns, where each filepattern will subset the data in the
+  directory
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Input image collection to be processed by this plugin
+  format:
+  - inpDir
+  name: inpDir
+  required: true
+  type: path
+- description: Filepattern to parse image files
+  format:
+  - pattern
+  name: pattern
+  required: false
+  type: string
+- description: Number of images to generate collective filepattern
+  format:
+  - chunkSize
+  name: chunkSize
+  required: false
+  type: number
+- description: Select a parameter to generate filepatterns in specific order
+  format:
+  - groupBy
+  name: groupBy
+  required: false
+  type: string
+name: polusai/FilepatternGenerator
+outputs:
+- description: Output collection
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/PolusAI/polus-plugins
+specVersion: 1.0.0
+title: Filepattern Generator
+ui:
+- description: Input image collection
+  key: inputs.inpDir
+  title: Input Image collection
+  type: path
+- description: Filepattern to parse image files
+  key: inputs.pattern
+  title: Pattern
+  type: text
+- description: Number of images to generate collective filepattern
+  key: inputs.chunkSize
+  title: chunkSize
+  type: number
+- description: Select a parameter to generate filepatterns in specific order
+  key: inputs.groupBy
+  title: groupBy
+  type: text
+version: 0.2.1

@@ -1,0 +1,65 @@
+author:
+- Melanie Parham
+- Hamdah Shafqat
+contact: melanie.parham@axleinfo.com
+container: polusai/file-renaming-tool:0.2.4-dev0
+description: Rename and store image collection files in a new image collection
+entrypoint: python3 -m polus.images.formats.file_renaming
+inputs:
+- description: Filename pattern used to separate data
+  format:
+  - filePattern
+  name: filePattern
+  required: true
+  type: string
+- description: Input image collection to be processed by this plugin
+  format:
+  - inpDir
+  name: inpDir
+  required: true
+  type: path
+- description: Desired filename pattern used to rename and separate data
+  format:
+  - outFilePattern
+  name: outFilePattern
+  required: true
+  type: string
+- description: Get directory name incorporated in renamed files
+  format:
+  - mapDirectory
+  name: mapDirectory
+  required: false
+  type: string
+name: polusai/FileRenaming
+outputs:
+- description: Output collection
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/PolusAI/polus-plugins
+specVersion: 1.0.0
+title: File Renaming
+ui:
+- description: Filename pattern used to separate data
+  key: inputs.filePattern
+  title: Filename pattern
+  type: text
+- description: Input image collection to be processed by this plugin
+  key: inputs.inpDir
+  title: Input collection
+  type: path
+- description: Desired filename pattern used to rename and separate data
+  key: inputs.outFilePattern
+  title: Output filename pattern
+  type: text
+- description: Get directory name incorporated in renamed files
+  fields:
+  - raw
+  - map
+  - default
+  key: inputs.mapDirectory
+  title: mapDirectory
+  type: select
+version: 0.2.4-dev0

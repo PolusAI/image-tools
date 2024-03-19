@@ -1,0 +1,108 @@
+author:
+- Nick Schaub
+- Madhuri Vihani
+contact: nick.schaub@nih.gov
+container: polusai/binary-operations-tool:0.5.3-dev0
+description: Everything you need to start a WIPP plugin.
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Input image collection to be processed by this plugin
+  format:
+  - inpDir
+  name: inpDir
+  required: true
+  type: path
+- description: Pattern of the images in Input
+  format:
+  - filePattern
+  name: filePattern
+  required: false
+  type: string
+- description: Kernel size that should be used for transformation
+  format:
+  - kernel
+  name: kernel
+  required: false
+  type: number
+- description: The Binary Operations that will be done on the image
+  format:
+  - operation
+  name: operation
+  required: true
+  type: string
+- description: Structuring Shape (Default is Elliptical)
+  format:
+  - shape
+  name: shape
+  required: false
+  type: string
+- description: Minimum Area of objects to keep.
+  format:
+  - threshold
+  name: threshold
+  required: false
+  type: number
+- description: Number of times to perform an operation (when applicable).
+  format:
+  - iterations
+  name: iterations
+  required: false
+  type: number
+name: polusai/BinaryOperationsPlugin
+outputs:
+- description: Output collection
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/polusai/polus-plugins
+specVersion: 1.0.0
+title: Binary Operations Plugin
+ui:
+- description: Operations that will be used on image
+  fields:
+  - blackhat
+  - close
+  - dilate
+  - erode
+  - fillHoles
+  - invert
+  - morphologicalGradient
+  - open
+  - removeLarge
+  - removeSmall
+  - skeleton
+  - tophat
+  key: inputs.operation
+  title: Operations
+  type: select
+- description: 'Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). '
+  key: inputs.filePattern
+  title: 'Image Pattern: '
+  type: text
+- description: Input image collection to be processed by this plugin
+  key: inputs.inpDir
+  title: Input collection
+  type: path
+- description: Kernel size to use for operations
+  key: inputs.kernel
+  title: Kernel Size
+  type: number
+- description: Kernel shape to use for operations
+  fields:
+  - ellipse
+  - rect
+  - cross
+  key: inputs.shape
+  title: Structuring Shape (Default is Elliptical)
+  type: select
+- description: Threshold to use for operations
+  key: inputs.threshold
+  title: Threshold of area for objects in images
+  type: number
+- description: Number of iterations to perform
+  key: inputs.iterations
+  title: Iterations
+  type: number
+version: 0.5.3-dev0

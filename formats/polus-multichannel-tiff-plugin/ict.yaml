@@ -1,0 +1,50 @@
+author:
+- Nick Schaub
+contact: nick.schaub@nih.gov
+container: polusai/multichannel-tiff-plugin:0.2.3
+description: Create multichannel, ome-tif from an image collection.
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Input image collection to be processed by this plugin
+  format:
+  - inpDir
+  name: inpDir
+  required: true
+  type: path
+- description: Filename pattern used to separate data
+  format:
+  - filePattern
+  name: filePattern
+  required: true
+  type: string
+- description: Channel order
+  format:
+  - channelOrder
+  name: channelOrder
+  required: true
+  type: array
+name: polusai/MultichannelTiff
+outputs:
+- description: Output collection
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Multichannel Tiff
+ui:
+- description: Input image collection to be processed by this plugin
+  key: inputs.inpDir
+  title: Input collection
+  type: path
+- description: Filename pattern used to separate data
+  key: inputs.filePattern
+  title: Filename pattern
+  type: text
+- description: Order to place images in
+  key: inputs.channelOrder
+  title: Channel Order
+  type: text
+version: 0.2.3

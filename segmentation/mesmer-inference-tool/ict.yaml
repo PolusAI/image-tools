@@ -1,0 +1,101 @@
+author:
+- Vishakha Goyal
+- Hamdah Shafqat
+contact: vishakha.goyal@nih.gov
+container: polusai/mesmer-inference-tool:0.0.9-dev0
+description: WIPP plugin to run inference using MESMER.
+entrypoint: python3 -m polus.images.segmentation.mesmer_inference
+inputs:
+- description: Input image collection to be processed by this plugin.
+  format:
+  - inpDir
+  name: inpDir
+  required: true
+  type: path
+- description: Tile size for images. Default is 256.
+  format:
+  - tilesize
+  name: tilesize
+  required: false
+  type: number
+- description: Model path
+  format:
+  - modelPath
+  name: modelPath
+  required: false
+  type: path
+- description: Filename pattern to filter test data.
+  format:
+  - filePatternTest
+  name: filePatternTest
+  required: true
+  type: string
+- description: Filename pattern to filter nuclear data for whole cell segmentation.
+  format:
+  - filePatternWholeCell
+  name: filePatternWholeCell
+  required: false
+  type: string
+- description: Format to save predictions
+  format:
+  - fileExtension
+  name: fileExtension
+  required: true
+  type: string
+- description: Select which model to use. Default is mesmer.
+  format:
+  - model
+  name: model
+  required: true
+  type: string
+name: polusai/MesmerInference
+outputs:
+- description: Output collection
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/polusai/polus-plugins
+specVersion: 1.0.0
+title: Mesmer Inference
+ui:
+- description: Input intesity image collection to be processed by this plugin.
+  key: inputs.inpDir
+  title: Test intensity images
+  type: path
+- description: Tile size for input images.
+  key: inputs.tilesize
+  title: Tile Size
+  type: number
+- description: Path for model file.
+  key: inputs.modelPath
+  title: Model Path
+  type: path
+- description: Filename pattern to filter test data.
+  key: inputs.filePatternTest
+  title: FilePattern Test
+  type: text
+- description: Filename pattern to filter nuclear data for whole cell segmentation.
+  key: inputs.filePatternWholeCell
+  title: FilePattern Whole Cell
+  type: text
+- description: Format to save predictions
+  fields:
+  - .ome.tif
+  - .ome.zarr
+  - default
+  key: inputs.fileExtension
+  title: fileExtension
+  type: select
+- description: Choose the model
+  fields:
+  - mesmerNuclear
+  - mesmerWholeCell
+  - nuclear
+  - cytoplasm
+  - BYOM
+  key: inputs.model
+  title: Model Name
+  type: select
+version: 0.0.9-dev0
