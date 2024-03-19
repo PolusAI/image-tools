@@ -1,0 +1,107 @@
+author:
+- Vishakha Goyal
+- Hamdah Shafqat
+contact: vishakha.goyal@nih.gov
+container: polusai/mesmer-training-tool:0.0.7-dev0
+description: WIPP plugin to train PanopticNet model.
+entrypoint: python3 -m polus.images.segmentation.mesmer_training
+inputs:
+- description: Input training image collection to be processed by this plugin
+  format:
+  - trainingImages
+  name: trainingImages
+  required: true
+  type: path
+- description: Input training label collection to be processed by this plugin
+  format:
+  - trainingLabels
+  name: trainingLabels
+  required: true
+  type: path
+- description: Input testing image collection to be processed by this plugin
+  format:
+  - testingImages
+  name: testingImages
+  required: true
+  type: path
+- description: Input testing label collection to be processed by this plugin
+  format:
+  - testingLabels
+  name: testingLabels
+  required: true
+  type: path
+- description: Keras models
+  format:
+  - modelBackbone
+  name: modelBackbone
+  required: true
+  type: string
+- description: Pattern to parse file names.
+  format:
+  - filePattern
+  name: filePattern
+  required: false
+  type: string
+- description: tile size
+  format:
+  - tilesize
+  name: tilesize
+  required: false
+  type: number
+- description: Number of training iterations
+  format:
+  - iterations
+  name: iterations
+  required: false
+  type: number
+- description: batch size for training
+  format:
+  - batchSize
+  name: batchSize
+  required: false
+  type: number
+name: polusai/MESMERTraining
+outputs:
+- description: Output collection
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/polusai/polus-plugins
+specVersion: 1.0.0
+title: MESMER Training
+ui:
+- description: Input training image collection to be processed by this plugin
+  key: inputs.trainingImages
+  title: trainingImages
+  type: path
+- description: Input training label collection to be processed by this plugin
+  key: inputs.trainingLabels
+  title: trainingLabels
+  type: path
+- description: Input testing image collection to be processed by this plugin
+  key: inputs.testingImages
+  title: testingImages
+  type: path
+- description: Input testing label collection to be processed by this plugin
+  key: inputs.testingLabels
+  title: testingLabels
+  type: path
+- description: Pattern to parse file names.
+  key: inputs.filePattern
+  title: FilePattern
+  type: text
+- description: tile size. Default is 256.
+  key: inputs.tilesize
+  title: tile size
+  type: number
+- description: Number of training iterations. Default is 10.
+  key: inputs.iterations
+  title: training iterations
+  type: number
+- description: batch size. Default is 1.
+  key: inputs.batchSize
+  title: batch size
+  type: number
+version: 0.0.7-dev0

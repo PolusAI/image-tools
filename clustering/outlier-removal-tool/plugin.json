@@ -14,20 +14,23 @@
     "-m",
     "polus.images.clustering.outlier_removal"
   ],
-  "inputs": {
-    "inpDir": {
+  "inputs": [
+    {
+      "name": "inpDir",
       "type": "genericData",
       "title": "Input tabular data",
       "description": "Input tabular data.",
       "required": "True"
     },
-    "filePattern": {
+    {
+      "name": "filePattern",
       "type": "string",
       "title": "Filename pattern",
       "description": "Filename pattern used to separate data.",
       "required": "False"
     },
-    "method": {
+    {
+      "name": "method",
       "type": "enum",
       "title": "Methods",
       "description": "Select methods for outlier removal",
@@ -40,7 +43,8 @@
       },
       "required": "False"
     },
-    "outputType": {
+    {
+      "name": "outputType",
       "type": "enum",
       "title": "outputType",
       "description": "Select type of output file",
@@ -54,52 +58,59 @@
       },
       "required": "False"
     },
-    "preview": {
+    {
+      "name": "preview",
       "type": "boolean",
       "title": "Preview",
       "description": "Generate an output preview.",
       "required": "False"
     }
-  },
-  "outputs": {
-    "outDir": {
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
       "type": "genericData",
       "description": "Output collection."
     }
-  },
-  "ui": {
-    "inpDir": {
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
       "type": "genericData",
       "title": "Input tabular data",
       "description": "Input tabular data to be processed by this plugin.",
       "required": "True"
     },
-    "filePattern": {
+    {
+      "key": "inputs.filePattern",
       "type": "string",
       "title": "Filename pattern",
       "description": "Filename pattern used to separate data.",
       "required": "False",
       "default": ".*"
     },
-    "method": {
+    {
+      "key": "inputs.method",
       "type": "enum",
       "title": "method",
       "description": "Select method for outlier removal.",
       "required": "False",
       "default": "IsolationForest"
     },
-    "outputType": {
+    {
+      "key": "inputs.outputType",
       "type": "enum",
       "title": "outputType",
       "description": "Select output type.",
       "required": "False",
       "default": "inlier"
     },
-    "preview": {
+    {
+      "key": "inputs.preview",
       "type": "boolean",
       "title": "Preview",
       "description": "Generate an output preview.",
       "required": "False"
     }
-  }
+  ]
 }

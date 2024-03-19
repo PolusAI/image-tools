@@ -1,0 +1,40 @@
+author:
+- Nick Schaub
+contact: nick.schaub@nih.gov
+container: polusai/subset-data-plugin:0.1.2
+description: Create a new image collection that is a subset of an existing image collection.
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Filename pattern used to separate data
+  format:
+  - filePattern
+  name: filePattern
+  required: true
+  type: string
+- description: Input image collection to be processed by this plugin
+  format:
+  - inpDir
+  name: inpDir
+  required: true
+  type: path
+name: polusai/SubsetData
+outputs:
+- description: Output collection
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Subset Data
+ui:
+- description: Filename pattern used to separate data
+  key: inputs.filePattern
+  title: Filename pattern
+  type: text
+- description: Input image collection to be processed by this plugin
+  key: inputs.inpDir
+  title: Input collection
+  type: path
+version: 0.1.2

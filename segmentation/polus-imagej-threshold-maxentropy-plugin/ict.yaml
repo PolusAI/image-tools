@@ -1,0 +1,44 @@
+author:
+- Nick Schaub
+- Anjali Taneja
+- Benjamin Houghton
+contact: nick.schaub@nih.gov
+container: polusai/imagej-threshold-maxentropy-plugin:0.4.2
+description: Implements Kapur-Sahoo-Wong (Maximum Entropy) thresholding method.
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Operation to perform
+  format:
+  - opName
+  name: opName
+  required: true
+  type: string
+- description: The collection to be processed by this plugin
+  format:
+  - inpDir
+  name: inpDir
+  required: true
+  type: path
+name: polusai/ImageJthresholdmaxEntropy
+outputs:
+- description: Output collection
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: ImageJ threshold maxEntropy
+ui:
+- description: Operation to perform
+  fields:
+  - ApplyThresholdMethod$MaxEntropy
+  key: inputs.opName
+  title: opName
+  type: select
+- description: The collection to be processed by this plugin
+  key: inputs.inpDir
+  title: inpDir
+  type: path
+version: 0.4.2

@@ -1,0 +1,89 @@
+author:
+- Gauhar Bains
+- Nick Schaub
+contact: gauhar.bains@labshare.org
+container: polusai/image-registration-plugin:0.3.5
+description: This plugin registers an image collection
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Input image collection to be processed by this plugin
+  format:
+  - inpDir
+  name: inpDir
+  required: true
+  type: path
+- description: Filename pattern used to separate data
+  format:
+  - filePattern
+  name: filePattern
+  required: true
+  type: string
+- description: Template image to be used for image registration
+  format:
+  - template
+  name: template
+  required: true
+  type: string
+- description: variable to help identify which images need to be registered to each
+    other
+  format:
+  - registrationVariable
+  name: registrationVariable
+  required: true
+  type: string
+- description: variable to help identify which images have similar transformation
+  format:
+  - TransformationVariable
+  name: TransformationVariable
+  required: true
+  type: string
+- description: Projective (8 degrees of freedom), Affine (6 degrees of freedom), Partial
+    Affine (4 degrees of freedom)
+  format:
+  - method
+  name: method
+  required: true
+  type: string
+name: polusai/ImageRegistration
+outputs:
+- description: Output collection
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Image Registration
+ui:
+- description: Input image collection to be processed by this plugin
+  key: inputs.inpDir
+  title: Input collection
+  type: path
+- description: Filename pattern used to separate data
+  key: inputs.filePattern
+  title: Filename pattern
+  type: text
+- description: Template image to be used for image registration
+  key: inputs.template
+  title: Template Image
+  type: text
+- description: variable to help identify which images need to be registered to each
+    other
+  key: inputs.registrationVariable
+  title: Registration Variable
+  type: text
+- description: variable to help identify which images have similar transformation
+  key: inputs.TransformationVariable
+  title: Similar Transformation Variable
+  type: text
+- description: Projective (8 degrees of freedom), Affine (6 degrees of freedom), Partial
+    Affine (4 degrees of freedom)
+  fields:
+  - Projective
+  - Affine
+  - PartialAffine
+  key: inputs.method
+  title: Deformation method
+  type: select
+version: 0.3.5

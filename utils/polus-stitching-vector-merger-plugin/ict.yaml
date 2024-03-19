@@ -1,0 +1,70 @@
+author:
+- Gauhar Bains
+contact: gauhar.bains@labshare.org
+container: polusai/stitching-vector-merger-plugin:0.1.8
+description: This plugin merges stitching vector collections
+entrypoint: '[python3, main.py]'
+inputs:
+- description: 1st stitchingVector Collection
+  format:
+  - VectorCollection1
+  name: VectorCollection1
+  required: true
+  type: path
+- description: 2nd stitchingVector Collection
+  format:
+  - VectorCollection2
+  name: VectorCollection2
+  required: true
+  type: path
+- description: 3rd stitchingVector Collection
+  format:
+  - VectorCollection3
+  name: VectorCollection3
+  required: false
+  type: path
+- description: 4th stitchingVector Collection
+  format:
+  - VectorCollection4
+  name: VectorCollection4
+  required: false
+  type: path
+- description: 5th stitchingVector Collection
+  format:
+  - VectorCollection5
+  name: VectorCollection5
+  required: false
+  type: path
+name: polusai/MergeStitchingVector
+outputs:
+- description: Output collection
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Merge StitchingVector
+ui:
+- description: 1st stitchingVector Collection
+  key: inputs.VectorCollection1
+  title: Stitching Vector Collection 1
+  type: path
+- description: 2nd stitchingVector Collection
+  key: inputs.VectorCollection2
+  title: Stitching Vector Collection 2
+  type: path
+- description: 3rd stitchingVector Collection
+  key: inputs.VectorCollection3
+  title: Stitching Vector Collection 3
+  type: path
+- description: 4th stitchingVector Collection
+  key: inputs.VectorCollection4
+  title: Stitching Vector Collection 4
+  type: path
+- description: 5th stitchingVector Collection
+  key: inputs.VectorCollection5
+  title: Stitching Vector Collection 5
+  type: path
+version: 0.1.8

@@ -1,0 +1,50 @@
+author:
+- Nick Schaub
+contact: nick.schaub@nih.gov
+container: polusai/recycle-vector-plugin:1.5.0
+description: Apply existing stitching vector to an image collection.
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Stitching Vector.
+  format:
+  - stitchDir
+  name: stitchDir
+  required: true
+  type: path
+- description: Image Collection.
+  format:
+  - collectionDir
+  name: collectionDir
+  required: true
+  type: path
+- description: Filepattern to select files for vector recycling.
+  format:
+  - filepattern
+  name: filepattern
+  required: true
+  type: string
+name: polusai/RecycleExistingStitchingVector
+outputs:
+- description: Output stitching vector.
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Recycle Existing Stitching Vector
+ui:
+- description: Stitching vector to recycle
+  key: inputs.stitchDir
+  title: 'Input stitching vector: '
+  type: path
+- description: Image collection to apply stitching vector against
+  key: inputs.collectionDir
+  title: 'Input image collection: '
+  type: path
+- description: Filepattern to select files for vector recycling.
+  key: inputs.filepattern
+  title: 'Filepattern: '
+  type: text
+version: 1.5.0

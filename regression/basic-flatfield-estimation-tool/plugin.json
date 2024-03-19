@@ -64,7 +64,7 @@
       "description": "Group data together with varying variable values."
     },
     {
-      "key": "inputs.darkfield",
+      "key": "inputs.getDarkfield",
       "title": "Calculate darkfield: ",
       "description": "If selected, will generate a darkfield image"
     }
