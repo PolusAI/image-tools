@@ -127,12 +127,12 @@ class MIDRIC(CustomValidation):
                 v1 = {
                     ">=": {
                         "age_at_index": int(x.get("age_at_index")[0]),  # type:ignore
-                    },  # type:ignore
+                    },
                 }
                 v2 = {
                     "<=": {
                         "age_at_index": int(x.get("age_at_index")[1]),  # type:ignore
-                    },  # type:ignore
+                    },
                 }
                 fn.append(v1)
                 fn.append(v2)
