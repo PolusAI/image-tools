@@ -1,4 +1,4 @@
-FROM polusai/bfio:2.1.9
+FROM polusai/bfio:2.3.6
 
 # environment variables defined in polusai/bfio
 # ENV EXEC_DIR="/opt/executables"
@@ -9,6 +9,7 @@ ENV POLUS_LOG="INFO"
 
 ENV POLUS_IMG_EXT=".ome.tif"
 ENV POLUS_TAB_EXT=".csv"
+ENV MIDRC_API_KEY="credentials.json"
 
 # Work directory defined in the base container
 # WORKDIR ${EXEC_DIR}

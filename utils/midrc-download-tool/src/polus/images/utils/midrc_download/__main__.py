@@ -1,19 +1,14 @@
 """Package entrypoint for the midrc_download package."""
 
 # Base packages
-import json
 import logging
 from os import environ
 from pathlib import Path
-from utils import *
-from typing import Union
-from typing import List, Optional
-from typing import Any
+from typing import Optional
 
-import typer
 import polus.images.utils.midrc_download.midrc_download as md
 import polus.images.utils.midrc_download.utils as ut
-
+import typer
 
 logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
@@ -27,115 +22,122 @@ POLUS_IMG_EXT = environ.get("POLUS_IMG_EXT", ".ome.tif")
 
 app = typer.Typer(help="Midrc Download.")
 
-# def generate_preview(
-#     img_path: Path,
-#     out_dir: Path,
-# ) -> None:
-#     """Generate preview of the plugin outputs."""
-
-#     preview = {}
-
-#     with Path.open(out_dir / "preview.json", "w") as fw:
-#         json.dump(preview, fw, indent=2)
-
 
 @app.command()
-def main(
-    data_type: dataType = typer.Option(
+def main(  # noqa: PLR0913
+    midrc_type: ut.MIDRCTYPES = typer.Option(
         ...,
-        "--dataType",
-        "-d",
-        help="projectId.",
+        "--MidrcType",
+        "-mt",
+        help="The node_id in the data model utilized in queries and API requests.",
     ),
-    project_id: Optional[List[str]]= typer.Option(
+    project_id: Optional[list[str]] = typer.Option(
         None,
         "--projectId",
         "-p",
-        help="projectId.",
+        help="The code of the project that this dataset belongs.",
     ),
-    sex: Optional[List[str]]= typer.Option(
+    sex: Optional[list[str]] = typer.Option(
         None,
         "--sex",
         "-s",
-        help="Sex.",
+        help="A gender information.",
     ),
-    race: Optional[List[str]]= typer.Option(
+    race: Optional[list[str]] = typer.Option(
         None,
         "--race",
         "-r",
         help="Race.",
     ),
-    ethnicity: Optional[List[str]]= typer.Option(
+    ethnicity: Optional[list[str]] = typer.Option(
         None,
         "--ethnicity",
         "-e",
-        help="Ethnicity.",
+        help="A racial or cultural background.",
     ),
-    min_age: Optional[int]= typer.Option(
-        0,
-        "--minAge",
-        "-miA",
-        help="minAge.",
+    age_at_index: Optional[list[str]] = typer.Option(
+        None,
+        "--ageAtIndex",
+        "-a",
+        help="The age of the study participant.",
     ),
-    max_age: Optional[int]= typer.Option(
-        89,
-        "--maxAge",
-        "-mxA",
-        help="minAge.",
-    ),
-    study_modality: Optional[List[str]]= typer.Option(
-       None,
+    study_modality: Optional[list[str]] = typer.Option(
+        None,
         "--studyModality",
         "-sm",
-        help="studyModality.",
+        help="The modalities of the imaging study.",
     ),
-    body_part_examined: Optional[List[str]]= typer.Option(
+    body_part_examined: Optional[list[str]] = typer.Option(
         None,
         "--bodyPartExamined",
         "-b",
-        help="bodyPartExamined.",
+        help="Body Part Examined.",
     ),
-    loinc_contrast: Optional[List[str]]= typer.Option(
+    loinc_contrast: Optional[list[str]] = typer.Option(
         None,
         "--loincContrast",
         "-lc",
-        help="loincContrast.",
+        help="The indicator if the image was completed with or without contrast",
     ),
-    loinc_method: Optional[List[str]]= typer.Option(
+    loinc_method: Optional[list[str]] = typer.Option(
         None,
         "--loincMethod",
         "-lm",
-        help="loincMethod.",
+        help="The LOINC method or imaging modality associated with LOINC code.",
     ),
-    loinc_system: Optional[List[str]]= typer.Option(
-       None,
+    loinc_system: Optional[list[str]] = typer.Option(
+        None,
         "--loincSystem",
         "-ls",
-        help="loincSystem.",
+        help="The LOINC system or body part examined associated with LOINC code.",
     ),
-    study_year: Optional[int]= typer.Option(
-       None,
+    study_year: Optional[list[str]] = typer.Option(
+        None,
         "--studyYear",
         "-sy",
-        help="studyYear.",
+        help="The year when imaging study was performed.",
     ),
-    covid19_positive: Optional[List[str]]= typer.Option(
+    covid19_positive: Optional[list[str]] = typer.Option(
         None,
         "--covid19Positive",
         "-c",
-        help="covid19Positive.",
+        help="An indicator of whether patient has covid infection or not.",
     ),
-    first: Optional[int]= typer.Option(
+    source_node: Optional[list[str]] = typer.Option(
+        None,
+        "--sourceNode",
+        "-sn",
+        help="A package of image files and metadata related to several imaging series.",
+    ),
+    data_format: Optional[list[str]] = typer.Option(
+        None,
+        "--dataFormat",
+        "-df",
+        help="The file format, physical medium, or dimensions of the resource.",
+    ),
+    data_category: Optional[list[str]] = typer.Option(
+        None,
+        "--dataCategory",
+        "-dc",
+        help="Image files and metadata related to several imaging series.",
+    ),
+    data_type: Optional[list[str]] = typer.Option(
+        None,
+        "--dataType",
+        "-dt",
+        help="The file format, physical medium, or dimensions of the resource.",
+    ),
+    first: Optional[int] = typer.Option(
         None,
         "--first",
-        "-f",
-        help="first.",
+        "-fi",
+        help="Number of rows to return.",
     ),
-    offset: Optional[int]= typer.Option(
+    offset: Optional[int] = typer.Option(
         None,
         "--offset",
-        "-o",
-        help="offset.",
+        "-of",
+        help="Starting position.",
     ),
     out_dir: Path = typer.Option(
         ...,
@@ -154,15 +156,14 @@ def main(
         help="Preview of expected outputs (dry-run)",
         show_default=False,
     ),
-):
+) -> None:
     """Midrc Download."""
-    logger.info(f"dataType: {data_type}")
+    logger.info(f"MidrcType: {midrc_type}")
     logger.info(f"projectId: {project_id}")
     logger.info(f"sex: {sex}")
     logger.info(f"race: {race}")
     logger.info(f"ethnicity: {ethnicity}")
-    logger.info(f"minAge: {min_age}")
-    logger.info(f"maxAge: {max_age}")
+    logger.info(f"ageAtIndex: {age_at_index}")
     logger.info(f"studyModality: {study_modality}")
     logger.info(f"bodyPartExamined: {body_part_examined}")
     logger.info(f"loincContrast: {loinc_contrast}")
@@ -170,78 +171,58 @@ def main(
     logger.info(f"loincSystem: {loinc_system}")
     logger.info(f"studyYear: {study_year}")
     logger.info(f"covid19Positive: {covid19_positive}")
+    logger.info(f"sourceNode: {source_node}")
+    logger.info(f"dataFormat: {data_format}")
+    logger.info(f"dataCategory: {data_category}")
+    logger.info(f"dataType: {data_type}")
     logger.info(f"first: {first}")
     logger.info(f"offset: {offset}")
     logger.info(f"outDir: {out_dir}")
 
+    option_values = [
+        md.cred,
+        study_modality,
+        loinc_method,
+        midrc_type.value,
+        loinc_system,
+        study_year,
+        project_id,
+        sex,
+        race,
+        ethnicity,
+        age_at_index,
+        loinc_contrast,
+        body_part_examined,
+        covid19_positive,
+        source_node,
+        data_format,
+        data_category,
+        data_type,
+        first,
+        offset,
+        out_dir,
+    ]
 
+    params = ut.get_params(option_values)
 
-   
-    option_values = [md.cred, study_modality, loinc_method, data_type.value,
-                   loinc_system, study_year,project_id, sex, race, ethnicity, min_age, 
-                   max_age, loinc_contrast, body_part_examined, covid19_positive, 
-                   first, offset, out_dir
-                   ]
-    params = get_params(option_values)
+    if preview:
+        ut.generate_preview(out_dir)
+        logger.info(f"generating preview data in {out_dir}")
+    else:
+        model = md.MIDRIC(**params)
+        filter_obj = model.get_query(params)
 
-    model = md.MIDRIC_download(**params)
-    filter_obj = model.get_query(params)
+        sort_fields = [{"submitter_id": "asc"}]
 
-    sort_fields=[{"submitter_id": "asc"}]
-    data = model.download_request( data_type=data_type.value,
-                        fields=None,
-                        filter_object=filter_obj,
-                        sort_fields=sort_fields,
-                        first=first,
-                        offset=offset
-                        )
-    
-
-    study_uids = [i['study_uid'] for i in data]
-
-    filter_object={
-                        "AND": [
-                            {"IN": {"study_uid": study_uids}},
-                            {"IN": {"source_node": ut.SOURCE_NODE}},
-                        ]
-                    }
-    
-    data_file = model.download_request(data_type="data_file",
-                        fields=None,
-                        filter_object=filter_obj,
-                        sort_fields=sort_fields,
-                        first=first,
-                        offset=offset
-                   )
-    
-    model.download_data(data)
-    
-
-    
-    # if len(data ) > 0:
-    #     object_ids = [i['object_id'] for i in data  if 'object_id' in i] ## make a list of the file object_ids returned by our query
-    #     print("Query returned {} data files with {} object_ids.".format(len(data),len(object_ids)))
-    #     print("Data is a list with rows like this:\n\t {}".format(data))
-    # else:
-    #     print("Your query returned no data! Please, check that query parameters are valid.")
-
-    # data = model.raw_data_download(
-    #                     data_type=data_type.value,
-    #                     fields=None,
-    #                     filter_object=filter_obj)
-
-    
-
-    
-   
-    
-
-    # if preview:
-    #     generate_preview(inp_dir, out_dir)
-    #     logger.info(f"generating preview data in : {out_dir}.")
-    #     return
-
-    # midrc_download(inp_dir, filepattern, out_dir)
+        data = model.query_data(
+            midrc_type=midrc_type.value,
+            fields=None,
+            filter_object=filter_obj,
+            sort_fields=sort_fields,
+            first=first,
+            offset=offset,
+        )
+        model.download_data(data)
 
 
 if __name__ == "__main__":

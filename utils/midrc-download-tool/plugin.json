@@ -15,18 +15,146 @@
     "polus.images.utils.midrc_download"
   ],
   "inputs": {
-    "inpDir": {
-      "type": "collection",
-      "title": "Input collection",
-      "description": "Input image collection to be processed by this plugin.",
-      "required": "True"
+    "MidrcType": {
+      "type": "enum",
+      "title": "MidrcType",
+      "description": "MIDRC Data Commons types.",
+      "required": "True",
+      "options": {
+        "values": [
+          "imaging_study",
+          "case",
+          "data_file",
+          "annotation",
+          "measurement"
+        ]
+      }
     },
-    "filePattern": {
+    "projectId": {
       "type": "string",
-      "title": "Filename pattern",
-      "description": "Filename pattern used to separate data.",
+      "title": "projectId",
+      "description": "projectId.",
       "required": "False",
-      "default": ".*"
+      "default": null
+    },
+    "sex": {
+      "type": "string",
+      "title": "sex",
+      "description": "sex.",
+      "required": "False",
+      "default": null
+    },
+    "race": {
+      "type": "race",
+      "title": "race",
+      "description": "race.",
+      "required": "False",
+      "default": null
+    },
+    "ethnicity": {
+      "type": "string",
+      "title": "ethnicity",
+      "description": "ethnicity.",
+      "required": "False",
+      "default": null
+    },
+    "ageAtIndex": {
+      "type": "string",
+      "title": "ageAtIndex",
+      "description": "ageAtIndex.",
+      "required": "False",
+      "default": null
+    },
+    "studyModality": {
+      "type": "string",
+      "title": "studyModality",
+      "description": "studyModality.",
+      "required": "False",
+      "default": null
+    },
+    "bodyPartExamined": {
+      "type": "string",
+      "title": "bodyPartExamined",
+      "description": "bodyPartExamined.",
+      "required": "False",
+      "default": null
+    },
+    "loincContrast": {
+      "type": "string",
+      "title": "loincContrast",
+      "description": "loincContrast.",
+      "required": "False",
+      "default": null
+    },
+    "loincMethod": {
+      "type": "string",
+      "title": "loincMethod",
+      "description": "loincMethod.",
+      "required": "False",
+      "default": null
+    },
+    "loincSystem": {
+      "type": "string",
+      "title": "loincSystem",
+      "description": "oincSystem.",
+      "required": "False",
+      "default": null
+    },
+    "studyYear": {
+      "type": "string",
+      "title": "studyYear",
+      "description": "studyYear.",
+      "required": "False",
+      "default": null
+    },
+    "covid19Positive": {
+      "type": "string",
+      "title": "covid19Positive",
+      "description": "covid19Positive.",
+      "required": "False",
+      "default": null
+    },
+    "sourceNode": {
+      "type": "string",
+      "title": "sourceNode",
+      "description": "ssourceNode.",
+      "required": "False",
+      "default": null
+    },
+    "dataFormat": {
+      "type": "string",
+      "title": "dataFormat",
+      "description": "dataFormat.",
+      "required": "False",
+      "default": null
+    },
+    "dataCategory": {
+      "type": "string",
+      "title": "dataCategory",
+      "description": "dataCategory.",
+      "required": "False",
+      "default": null
+    },
+    "dataType": {
+      "type": "string",
+      "title": "dataType",
+      "description": "dataType.",
+      "required": "False",
+      "default": null
+    },
+    "first": {
+      "type": "number",
+      "title": "first",
+      "description": "first.",
+      "required": "False",
+      "default": null
+    },
+    "offset": {
+      "type": "number",
+      "title": "offset",
+      "description": "offset.",
+      "required": "False",
+      "default": null
     },
     "preview": {
       "type": "boolean",
@@ -43,18 +171,138 @@
     }
   },
   "ui": {
-    "inpDir": {
-      "type": "collection",
-      "title": "Input collection",
-      "description": "Input image collection to be processed by this plugin.",
-      "required": "True"
-    },
-    "filePattern": {
+    "MidrcType": {
       "type": "string",
-      "title": "Filename pattern",
-      "description": "Filename pattern used to separate data.",
+      "title": "MidrcType",
+      "description": "MidrcType.",
+      "required": "True",
+      "default": "imaging_study"
+    },
+    "projectId": {
+      "type": "string",
+      "title": "projectId",
+      "description": "projectId.",
       "required": "False",
-      "default": "False"
+      "default": null
+    },
+    "sex": {
+      "type": "string",
+      "title": "sex",
+      "description": "sex.",
+      "required": "False",
+      "default": null
+    },
+    "race": {
+      "type": "race",
+      "title": "race",
+      "description": "race.",
+      "required": "False",
+      "default": null
+    },
+    "ethnicity": {
+      "type": "string",
+      "title": "ethnicity",
+      "description": "ethnicity.",
+      "required": "False",
+      "default": null
+    },
+    "ageAtIndex": {
+      "type": "string",
+      "title": "ageAtIndex",
+      "description": "ageAtIndex.",
+      "required": "False",
+      "default": null
+    },
+    "studyModality": {
+      "type": "string",
+      "title": "studyModality",
+      "description": "studyModality.",
+      "required": "False",
+      "default": null
+    },
+    "bodyPartExamined": {
+      "type": "string",
+      "title": "bodyPartExamined",
+      "description": "bodyPartExamined.",
+      "required": "False",
+      "default": null
+    },
+    "loincContrast": {
+      "type": "string",
+      "title": "loincContrast",
+      "description": "loincContrast.",
+      "required": "False",
+      "default": null
+    },
+    "loincMethod": {
+      "type": "string",
+      "title": "loincMethod",
+      "description": "loincMethod.",
+      "required": "False",
+      "default": null
+    },
+    "loincSystem": {
+      "type": "string",
+      "title": "loincSystem",
+      "description": "oincSystem.",
+      "required": "False",
+      "default": null
+    },
+    "studyYear": {
+      "type": "string",
+      "title": "studyYear",
+      "description": "studyYear.",
+      "required": "False",
+      "default": null
+    },
+    "covid19Positive": {
+      "type": "string",
+      "title": "covid19Positive",
+      "description": "covid19Positive.",
+      "required": "False",
+      "default": null
+    },
+    "sourceNode": {
+      "type": "string",
+      "title": "sourceNode",
+      "description": "ssourceNode.",
+      "required": "False",
+      "default": null
+    },
+    "dataFormat": {
+      "type": "string",
+      "title": "dataFormat",
+      "description": "dataFormat.",
+      "required": "False",
+      "default": null
+    },
+    "dataCategory": {
+      "type": "string",
+      "title": "dataCategory",
+      "description": "dataCategory.",
+      "required": "False",
+      "default": null
+    },
+    "dataType": {
+      "type": "string",
+      "title": "dataType",
+      "description": "dataType.",
+      "required": "False",
+      "default": null
+    },
+    "first": {
+      "type": "number",
+      "title": "first",
+      "description": "first.",
+      "required": "False",
+      "default": null
+    },
+    "offset": {
+      "type": "number",
+      "title": "offset",
+      "description": "offset.",
+      "required": "False",
+      "default": null
     },
     "preview": {
       "type": "boolean",

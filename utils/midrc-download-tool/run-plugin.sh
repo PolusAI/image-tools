@@ -1,20 +1,32 @@
 #!/bin/bash
 
 version=$(<VERSION)
+datapath=$(readlink --canonicalize data)
 
-# Update with your data
-inpDir=/tmp/path/to/input
-outDir=/tmp/path/to/output
-filepattern="pattern"
+# inputs
+midrc_type="imaging_study"
+project_id='Open-A1'
+sex="Female"
+ethnicity="Hispanic or Latino"
+age="70,71"
+study_modality="CR"
+loinc_system="Chest"
+study_year="2022"
+first=1
+outDir=/data/output
 
 
-container_input_dir="/inpDir"
-container_output_dir="/outDir"
 
-docker run -v $inpDir:/${container_input_dir} \
-           -v $outDir:/${container_output_dir} \
-            --user $(id -u):$(id -g) \
-            polusai/midrc-download-plugin:${version} \
-            --inpDir ${container_input_dir} \
-            --filePattern ${filepattern} \
-            --outDir ${container_output_dir}
+docker run -v ${datapath}:${datapath} \
+            polusai/midrc-download-tool:${version} \
+            --studyModality $study_modality} \
+            --MidrcType ${midrc_type} \
+            --loincSystem ${loinc_system} \
+            --studyYear ${study_year} \
+            --projectId ${project_id} \
+            --sex ${sex} \
+            --ethnicity ${ethnicity} \
+            --ageAtIndex ${age} \
+            --first ${first} \
+            --offset ${file_pattern} \
+            --outDir ${out_dir}
