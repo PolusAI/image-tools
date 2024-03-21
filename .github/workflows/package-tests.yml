@@ -53,30 +53,6 @@ jobs:
             echo "::error::pre-commit hooks failed for ${{ matrix.package_name }}" && exit 1
           fi
 
-  tests:
-    name: Test | ${{ matrix.package_name }}
-    needs: package-filter
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.package-filter.outputs.matrix) }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
-      - name: Install Poetry
-        uses: abatilo/actions-poetry@v2
-      - name: Run tests
-        run: |
-          package_dir=${{ matrix.package_dir }}
-          cd $package_dir
-
-          poetry install
-          poetry run pytest -v
-
   docker:
     name: Docker | Build ${{ matrix.package_name }}
     needs: package-filter
@@ -108,3 +84,27 @@ jobs:
           cd "${{ matrix.package_dir }}"
           docker build . -t ${{ steps.docker_tag.outputs.tag }}
         # docker buildx build --platform linux/amd64,linux/arm64 -t ${tag} --push .
+
+  tests:
+    name: Test | ${{ matrix.package_name }}
+    needs: package-filter
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.package-filter.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v2
+      - name: Run tests
+        run: |
+          package_dir=${{ matrix.package_dir }}
+          cd $package_dir
+
+          poetry install
+          poetry run pytest -v
