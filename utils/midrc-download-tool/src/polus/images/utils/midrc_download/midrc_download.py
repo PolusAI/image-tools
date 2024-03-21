@@ -155,7 +155,7 @@ class MIDRIC(CustomValidation):
         self,
         midrc_type: str,
         fields: Union[list[str], None],
-        filter_object: Optional[str | list[str]] = None,
+        filter_object: Optional[Union[str, list[str]]] = None,
         sort_fields: Optional[list[str]] = None,
         accessibility: Optional[str] = None,
         first: Optional[int] = None,
