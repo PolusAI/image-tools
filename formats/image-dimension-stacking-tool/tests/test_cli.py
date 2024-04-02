@@ -3,6 +3,7 @@ from typer.testing import CliRunner
 from polus.images.formats.image_dimension_stacking.__main__ import app
 from pathlib import Path
 from typing import Union
+import pytest
 
 
 def test_cli(synthetic_images: tuple[Union[str, Path]], output_directory: Path) -> None:
@@ -25,6 +26,7 @@ def test_cli(synthetic_images: tuple[Union[str, Path]], output_directory: Path) 
     assert result.exit_code == 0
 
 
+@pytest.mark.skipif("not config.getoption('slow')")
 def test_multipattern_cli(
     synthetic_multi_images: Union[str, Path], output_directory: Path
 ) -> None:
