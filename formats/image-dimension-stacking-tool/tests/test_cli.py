@@ -1,7 +1,8 @@
 """Test Command line Tool."""
 from typer.testing import CliRunner
-from polus.plugins.formats.image_dimension_stacking.__main__ import app
-from tests.fixture import *
+from polus.images.formats.image_dimension_stacking.__main__ import app
+from pathlib import Path
+from typing import Union
 
 
 def test_cli(synthetic_images: tuple[Union[str, Path]], output_directory: Path) -> None:
@@ -22,7 +23,6 @@ def test_cli(synthetic_images: tuple[Union[str, Path]], output_directory: Path) 
     )
 
     assert result.exit_code == 0
-    clean_directories()
 
 
 def test_multipattern_cli(
@@ -46,7 +46,6 @@ def test_multipattern_cli(
     )
 
     assert result.exit_code == 0
-    clean_directories()
 
 
 def test_short_cli(
@@ -68,6 +67,3 @@ def test_short_cli(
     )
 
     assert result.exit_code == 0
-
-
-clean_directories()

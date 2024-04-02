@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import filepattern as fp
-import polus.plugins.formats.image_dimension_stacking.dimension_stacking as st
+import polus.images.formats.image_dimension_stacking.dimension_stacking as st
 import typer
 
 warnings.filterwarnings("ignore")

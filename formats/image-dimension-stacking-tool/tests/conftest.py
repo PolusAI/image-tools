@@ -22,6 +22,17 @@ def clean_directories() -> None:
             shutil.rmtree(d)
 
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Add options to pytest."""
+    parser.addoption(
+        "--downloads",
+        action="store_true",
+        dest="downloads",
+        default=False,
+        help="run tests that download large data files",
+    )
+
+
 @pytest.fixture()
 def output_directory() -> Union[str, Path]:
     """Create output directory."""

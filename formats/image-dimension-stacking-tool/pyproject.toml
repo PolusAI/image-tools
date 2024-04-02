@@ -1,8 +1,9 @@
 [tool.poetry]
-name = "polus-plugins-formats-image-dimension-stacking"
+name = "polus-images-formats-image-dimension-stacking"
 version = "0.1.1-dev"
 description = "Stacking multi-dimensional images"
 authors = [
+           "Nick Schaub <nick.schaub@nih.gov>",
            "Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>"
            ]
 readme = "README.md"

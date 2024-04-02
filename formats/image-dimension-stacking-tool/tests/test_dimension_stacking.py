@@ -2,12 +2,12 @@
 from pathlib import Path
 from typing import Union
 
-import polus.plugins.formats.image_dimension_stacking.dimension_stacking as ds
+import polus.images.formats.image_dimension_stacking.dimension_stacking as ds
 from bfio import BioReader
 from bfio import BioWriter
 
-from tests.fixture import *  # noqa: F403
-from tests.fixture import clean_directories
+from .conftest import *  # noqa:F403
+from .conftest import clean_directories
 
 
 def test_dimension_stacking(
@@ -39,7 +39,6 @@ def test_dimension_stacking(
         assert total_dimensions == br.Z
     if variable == "t":
         assert total_dimensions == br.T
-    clean_directories()
 
 
 def test_write_image_stack(
@@ -61,7 +60,6 @@ def test_write_image_stack(
                 ds.write_image_stack(file=file, di=0, group_by=variable, bw=bw)
     total_dimensions = 10
     assert len(list(output_directory.iterdir())) == total_dimensions
-    clean_directories()
 
 
 def test_z_distance(synthetic_images: tuple[Union[str, Path], str, str]) -> None:
