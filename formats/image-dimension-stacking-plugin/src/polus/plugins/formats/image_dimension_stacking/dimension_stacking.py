@@ -1,11 +1,13 @@
 """Image dimension stacking package."""
 import logging
+import re
 import time
 from concurrent.futures import as_completed
 from multiprocessing import cpu_count
 from pathlib import Path
 
 import filepattern as fp
+import numpy as np
 import preadator
 from bfio import BioReader
 from bfio import BioWriter
@@ -121,69 +123,74 @@ def dimension_stacking(
         out_dir : Path to output directory.
 
     """
-    dimensions = []
-    input_files = []
-
     fps = fp.FilePattern(inp_dir, file_pattern)
-    out_name = fps.output_name()
-
-    for fl in fps(group_by=group_by):
-        f1, f2 = fl
-        if f1[0][0] == group_by:
-            file_dim = f1[0][1]
-            file = f2[0][1][0]
-            input_files.append(file)
-            dimensions.append(file_dim)
+    groups = [fi[0] for fi, _ in fps(group_by=group_by)]
+    dimensions = [v for t in groups for v in t if isinstance(v, int)]
+    dim_min = min(dimensions)
+    dim_max = max(dimensions)
+    replace_value = f"({dim_min}-{dim_max})"
 
     # Get the number of layers to stack
     dim_size = len(dimensions)
 
-    with BioReader(input_files[0]) as br:
-        metadata = br.metadata
+    group_range = np.unique([len(f) for gp, f in fps(group_by=group_by)])[0]
 
-    with BioWriter(
-        out_dir.joinpath(out_name),
-        metadata=metadata,
-        max_workers=num_workers,
-    ) as bw:
-        # Adjust the dimensions before writing
-        if group_by == "c":
-            bw.C = dim_size
-        if group_by == "t":
-            bw.T = dim_size
-        if group_by == "z":
-            bw.Z = dim_size
-            bw.ps_z = z_distance(input_files[0])
+    for gi in range(0, group_range):
+        images = [f2[gi][1][0].name for f1, f2 in fps(group_by=group_by)]
+        input_files = [f2[gi][1][0] for f1, f2 in fps(group_by=group_by)]
+        pattern = fp.infer_pattern(files=images)
+        out_name = re.sub(r"\{(.*?)\}", replace_value, pattern)
+        with BioReader(input_files[0]) as br:
+            metadata = br.metadata
+        with BioWriter(
+            out_dir.joinpath(out_name),
+            metadata=metadata,
+            max_workers=num_workers,
+        ) as bw:
+            # Adjust the dimensions before writing
+            if group_by == "c":
+                bw.C = dim_size
+            if group_by == "t":
+                bw.T = dim_size
+            if group_by == "z":
+                bw.Z = dim_size
+                bw.ps_z = z_distance(Path(input_files[0]))
 
-        starttime = time.time()
-
-        with preadator.ProcessManager(
-            name=f"Stacking images of {group_by} dimensions",
-            num_processes=num_workers,
-            threads_per_process=4,
-        ) as pm:
-            threads = []
             for file, di in zip(input_files, range(0, dim_size)):
-                thread = pm.submit_thread(
-                    write_image_stack,
-                    file,
-                    di=di,
-                    group_by=group_by,
-                    bw=bw,
-                )
-                threads.append(thread)
-            pm.join_threads()
+                starttime = time.time()
 
-            for f in tqdm(
-                as_completed(threads),
-                total=len(threads),
-                mininterval=5,
-                desc=f"Stacking images of {group_by} dimensions",
-                initial=0,
-                unit_scale=True,
-                colour="cyan",
-            ):
-                f.result()
+                with preadator.ProcessManager(
+                    name=f"Stacking images of {group_by} dimensions",
+                    num_processes=num_workers,
+                    threads_per_process=4,
+                ) as pm:
+                    threads = []
+                    for file, di in zip(  # noqa: PLW2901
+                        input_files,
+                        range(0, dim_size),
+                    ):
+                        thread = pm.submit_thread(
+                            write_image_stack,
+                            file,
+                            di=di,
+                            group_by=group_by,
+                            bw=bw,
+                        )
+                        threads.append(thread)
+                    pm.join_threads()
 
-            endtime = (time.time() - starttime) / 60
-            logger.info(f"Total time taken for execution: {endtime:.4f} minutes")
+                    for f in tqdm(
+                        as_completed(threads),
+                        total=len(threads),
+                        mininterval=5,
+                        desc=f"Stacking images of {group_by} dimensions",
+                        initial=0,
+                        unit_scale=True,
+                        colour="cyan",
+                    ):
+                        f.result()
+
+                    endtime = (time.time() - starttime) / 60
+                    logger.info(
+                        f"Total time taken for execution: {endtime:.4f} minutes",
+                    )

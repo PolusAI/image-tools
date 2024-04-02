@@ -1,13 +1,17 @@
-# Image dimension stacking(0.1.0-dev)
+# Image dimension stacking(0.1.1-dev)
 
-This plugin leverages the [filepattern](https://filepattern2.readthedocs.io/en/latest/Home.html) library and employs the `groupBy` variable to enable the matching of image filenames, facilitating their stacking into multi-dimensional images.
+This plugin leverages the [filepattern](https://filepattern2.readthedocs.io/en/latest/Home.html) library and employs the filepattern `groupBy` functionality to enable the matching of image filenames, facilitating their stacking into multi-dimensional images.
+
+The filepattern must include the variables `c`, `t`, and `z`. If all these variables are present in the pattern, the plugin will group images according to the order `z, c, t`. If only one variable is present in the file pattern, the plugin will group images according to that variable.
+
+
 Currently, the plugin supports the following dimensions and user can choose the relevant variable for the `groupBy` input argument.
-1. multi-channel  `groupBy=c`\
-   For example `filePattern=x01_y01_p01_c{c:d+}.ome.tif`
-2. multi-zplanes  `groupBy=z`\
-   For example `filePattern=tubhiswt_C1-z{z:d+}.ome.tif`
-3. multi-timepoints  `groupBy=t`\
-   For example `filePattern=img00001_t{t:d+}_ch0.ome.tif`
+1.  `tubhiswt_z{z:d+}_c{c:d+}_t{t:d+}.ome.tif`\
+   Images are grouped based on `z` variable
+2. `tubhiswt_.*_.*_t{t:d+}.ome.tif`\
+   Images are grouped based on `t` variable
+3. `00001_01_{c:d+}.ome.tif`\
+   Images are grouped based on `c` variable
 
 #### Note:
 Filename patterns may consist of any other filepattern variables, combined with other valid regular expression arguments, excluding the `groupBy` variable.
@@ -33,16 +37,14 @@ This plugin takes three input argument and one output argument:
 |---------------|-------------------------|--------|--------|
 | `--inpDir`      | Input image collection  | Input  | Collection   |
 | `--filePattern` | Pattern to parse image files           | Input  | String |
-| `--groupBy` | A variable to group image files           | Input  | String |
 | `--outDir`      | Output image collection | Output | Collection   |
 | `--preview`        | Generate a JSON file to view outputs | Output | Boolean   |
 
 ### Run the Docker Container
 
 ```bash
-docker run -v /path/to/data:/data polusai/image-dimension-stacking-plugin:0.1.0-dev \
+docker run -v /path/to/data:/data polusai/image-dimension-stacking-plugin:0.1.1-dev \
   --inpDir "Path/To/Data" \
   --filePattern "tubhiswt_C1-z{z:d+}.ome.tif" \
-  --groupBy "z" \
   --outDir "Path/To/Output/Dir"
 ```

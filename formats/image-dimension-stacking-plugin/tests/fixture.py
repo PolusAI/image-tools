@@ -41,7 +41,6 @@ def inp_dir() -> Union[str, Path]:
         ("t", "image_x01_y01_t{t:d+}.ome.tif"),
     ],
 )
-# @pytest.fixture(params=[("c", "image_x01_y01_c{c:d+}.ome.tif")])
 def get_params(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the fixture."""
     return request.param
@@ -77,3 +76,41 @@ def synthetic_images(
             Path.unlink(inp)
 
     return inp_dir, variable, pattern
+
+
+@pytest.fixture()
+def synthetic_multi_images(
+    inp_dir: Union[str, Path],
+) -> Union[str, Path]:
+    """Generate random synthetic images."""
+    image_sizes = 1024
+
+    for i in range(0, 4):
+        im = np.zeros((image_sizes, image_sizes))
+        points = image_sizes * np.random.random((2, 10**2))
+        im[(points[0]).astype(int), (points[1]).astype(int)] = 1
+        im = filters.gaussian(im, sigma=image_sizes / (20.0 * 10))
+        outname_1 = f"tubhiswt_z00_c00_t{str(i).zfill(2)}.tif"
+        outname_2 = f"tubhiswt_z01_c00_t{str(i).zfill(2)}.tif"
+        outname_3 = f"tubhiswt_z00_c01_t{str(i).zfill(2)}.tif"
+        outname_4 = f"tubhiswt_z01_c01_t{str(i).zfill(2)}.tif"
+
+        io.imsave(Path(inp_dir, outname_1), im)
+        io.imsave(Path(inp_dir, outname_2), im)
+        io.imsave(Path(inp_dir, outname_3), im)
+        io.imsave(Path(inp_dir, outname_4), im)
+
+    for inp in Path(inp_dir).iterdir():
+        if inp.suffix == ".tif":
+            with BioReader(inp) as br:
+                img = br.read().squeeze()
+                outname = inp.stem + ".ome.tif"
+                with BioWriter(
+                    file_path=Path(inp_dir, outname),
+                    metadata=br.metadata,
+                ) as bw:
+                    bw[:] = img
+                    bw.close()
+            Path.unlink(inp)
+
+    return inp_dir

@@ -25,7 +25,7 @@ def test_dimension_stacking(
     )
 
     outfile = [
-        f for f in output_directory.iterdir() if f"{variable}(00-09).ome.tif" in f.name
+        f for f in output_directory.iterdir() if f"{variable}0(0-9).ome.tif" in f.name
     ]
     assert all(outfile) is True
     assert len(outfile) == 1

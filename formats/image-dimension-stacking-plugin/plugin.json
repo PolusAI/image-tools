@@ -1,13 +1,13 @@
 {
   "name": "Image Dimension Stacking",
-  "version": "0.1.0-dev",
+  "version": "0.1.1-dev",
   "title": "Stacking of image dimensions (c, z, t) to create a multidimensional image.",
   "description": "Stacking of image dimensions (c, z, t) to create a multidimensional image.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/PolusAI/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
-  "containerId": "polusai/image-dimension-stacking-plugin",
+  "containerId": "polusai/image-dimension-stacking-plugin:0.1.1-dev",
   "baseCommand": [
     "python3",
     "-m",
@@ -24,12 +24,6 @@
       "type": "string",
       "title": "Filename pattern",
       "description": "Filename pattern used to separate data.",
-      "required": "True"
-    },
-    "groupBy": {
-      "type": "string",
-      "title": "groupBy",
-      "description": "String variable to group image filenames by.",
       "required": "True"
     },
     "preview": {
@@ -56,12 +50,6 @@
       "type": "string",
       "title": "Filename pattern",
       "description": "Filename pattern used to separate data.",
-      "required": "True"
-    },
-    "groupBy": {
-      "type": "string",
-      "title": "groupBy",
-      "description": "String variable to group image filenames by.",
       "required": "True"
     },
     "preview": {

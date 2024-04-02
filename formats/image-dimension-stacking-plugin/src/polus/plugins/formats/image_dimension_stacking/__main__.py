@@ -53,12 +53,6 @@ def main(
         "-f",
         help="Filename pattern used to separate data.",
     ),
-    group_by: str = typer.Option(
-        ...,
-        "--groupBy",
-        "-g",
-        help="String variable to group image filenames by.",
-    ),
     out_dir: Path = typer.Option(
         ...,
         "--outDir",
@@ -75,7 +69,6 @@ def main(
     """Image dimension stacking plugin."""
     logger.info(f"--inpDir: {inp_dir}")
     logger.info(f"--filePattern: {file_pattern}")
-    logger.info(f"--groupBy: {group_by}")
     logger.info(f"--outDir: {out_dir}")
 
     if not inp_dir.exists():
@@ -86,13 +79,22 @@ def main(
         msg = "outDir does not exist"
         raise ValueError(msg, out_dir)
 
-    if group_by not in ["c", "t", "z"]:
-        msg = "Dimensions are not properly defined, Select c, t or z"
+    fps = fp.FilePattern(inp_dir, file_pattern)
+    list_val = ["c", "t", "z"]
+    variables = sorted([f for f in fps.get_variables() if f in list_val])
+
+    if len(variables) == 0:
+        msg = "Could not detect c, t or z variables in a pattern"
         raise ValueError(msg)
 
-    if len(group_by) != 1:
-        msg = f"{group_by} Only one variable is selected for dimension stacking"
-        raise ValueError(msg)
+    if variables == list_val or variables == ["z"]:
+        group_by = "z"
+
+    if variables == ["c", "t"] or variables == ["c"]:
+        group_by = "c"
+
+    if variables == ["t"]:
+        group_by = "t"
 
     if preview:
         generate_preview(out_dir=out_dir, file_pattern=file_pattern)
