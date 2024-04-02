@@ -25,6 +25,29 @@ def test_cli(synthetic_images: tuple[Union[str, Path]], output_directory: Path) 
     assert result.exit_code == 0
 
 
+def test_multipattern_cli(
+    synthetic_multi_images: Union[str, Path], output_directory: Path
+) -> None:
+    """Test the command line."""
+    inp_dir = synthetic_multi_images
+    pattern = "tubhiswt_z{z:d+}_c{c:d+}_t{t:d+}.ome.tif"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "--inpDir",
+            inp_dir,
+            "--filePattern",
+            pattern,
+            "--outDir",
+            output_directory,
+        ],
+    )
+
+    assert result.exit_code == 0
+
+
 def test_short_cli(
     synthetic_images: tuple[Union[str, Path]], output_directory: Path
 ) -> None:
