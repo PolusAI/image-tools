@@ -25,9 +25,9 @@ def clean_directories() -> None:
 def pytest_addoption(parser: pytest.Parser) -> None:
     """Add options to pytest."""
     parser.addoption(
-        "--downloads",
+        "--slow",
         action="store_true",
-        dest="downloads",
+        dest="slow",
         default=False,
         help="run tests that download large data files",
     )
