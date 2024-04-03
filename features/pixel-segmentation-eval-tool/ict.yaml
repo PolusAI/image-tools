@@ -1,0 +1,83 @@
+author:
+- Vishakha Goyal
+contact: vishakha.goyal@nih.gov
+container: polusai/pixel-segmentation-eval-tool:0.1.12-dev0
+description: Plugin to generate evaluation metrics for pixel-wise comparison of ground
+  truth and predicted images.
+entrypoint: python3 -m polus.images.features.pixel_segmentation_eval
+inputs:
+- description: Ground truth input image collection to be processed by this plugin.
+  format:
+  - GTDir
+  name: GTDir
+  required: true
+  type: path
+- description: Predicted input image collection to be processed by this plugin.
+  format:
+  - PredDir
+  name: PredDir
+  required: true
+  type: path
+- description: Number of classes.
+  format:
+  - inputClasses
+  name: inputClasses
+  required: true
+  type: number
+- description: Filename pattern to filter data.
+  format:
+  - filePattern
+  name: filePattern
+  required: false
+  type: string
+- description: Boolean to create separate result file per image. Default is false.
+  format:
+  - individualStats
+  name: individualStats
+  required: false
+  type: boolean
+- description: Boolean to calculate overall statistics across all images. Default
+    is false.
+  format:
+  - totalStats
+  name: totalStats
+  required: false
+  type: boolean
+name: polusai/PixelSegmentationEval
+outputs:
+- description: Output collection
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/polusai/polus-plugins
+specVersion: 1.0.0
+title: Pixel Segmentation Eval
+ui:
+- description: Ground truth input image collection to be processed by this plugin.
+  key: inputs.GTDir
+  title: Ground Truth Images
+  type: path
+- description: Predicted input image collection to be processed by this plugin.
+  key: inputs.PredDir
+  title: Predicted Images
+  type: path
+- description: Number of classes.
+  key: inputs.inputClasses
+  title: Number of Classes
+  type: number
+- description: Filename pattern to filter data.
+  key: inputs.filePattern
+  title: Input filename pattern
+  type: text
+- description: Boolean to create separate result file per image. Default is false.
+  key: inputs.individualStats
+  title: Individual statistics
+  type: checkbox
+- description: Boolean to calculate overall statistics across all images. Default
+    is false.
+  key: inputs.totalStats
+  title: Total statistics
+  type: checkbox
+version: 0.1.12-dev0

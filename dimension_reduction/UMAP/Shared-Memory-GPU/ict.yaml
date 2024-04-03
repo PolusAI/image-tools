@@ -1,0 +1,160 @@
+author:
+- Mahdi Maghrebi
+contact: author@ict.com
+container: labshare/polus-umap-cuda-plugin:0.1.0
+description: UMAP CUDA Code
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Input csv file containing the raw data
+  format:
+  - inputPath
+  name: inputPath
+  required: true
+  type: path
+- description: The desired number of Nearest Neighbors (NN) to be computed
+  format:
+  - K
+  name: K
+  required: true
+  type: number
+- description: The rate at which the sampling is conducted. The values closer to 1
+    provides more accurate results but the execution takes longer.
+  format:
+  - sampleRate
+  name: sampleRate
+  required: true
+  type: number
+- description: Dimension of the embedding space (usually 1-3)
+  format:
+  - DimLowSpace
+  name: DimLowSpace
+  required: true
+  type: number
+- description: The method for initialization of data in the embedding space
+  format:
+  - randomInitializing
+  name: randomInitializing
+  required: true
+  type: boolean
+- description: The number of training epochs
+  format:
+  - nEpochs
+  name: nEpochs
+  required: true
+  type: number
+- description: The variable that controls how tight (to each other) the data are placed
+    in the embedding space
+  format:
+  - minDist
+  name: minDist
+  required: true
+  type: number
+- description: The metric to compute the distance in the original space
+  format:
+  - distanceMetric
+  name: distanceMetric
+  required: true
+  type: string
+- description: The optional input needed for computation of some metrics
+  format:
+  - distanceV1
+  name: distanceV1
+  required: false
+  type: number
+- description: The optional input needed for computation of some metrics
+  format:
+  - distanceV2
+  name: distanceV2
+  required: false
+  type: number
+- description: The optional csv file representing a vector needed in computation of
+    some metrics
+  format:
+  - inputPathOptionalArray
+  name: inputPathOptionalArray
+  required: false
+  type: path
+name: labshare/UMAP(CUDA)
+outputs:
+- description: The full path to the output csv collection containing the coordinates
+    of data in the embedding space
+  format:
+  - outputPath
+  name: outputPath
+  required: true
+  type: path
+repository: https://github.com/polusai/image-tools
+specVersion: 1.0.0
+title: UMAP (CUDA)
+ui:
+- description: Insert the path to csv collection
+  key: inputs.inputPath
+  title: Input CSV collection
+  type: path
+- default: 15
+  description: Insert an integer
+  key: inputs.K
+  title: The desired number of Nearest Neighbours (NN) in the original space to be
+    computed
+  type: number
+- default: 0.9
+  description: Insert a value between 0 and 1
+  key: inputs.sampleRate
+  title: Sampling Rate
+  type: number
+- default: 2
+  description: Insert a value (usually 1-3)
+  key: inputs.DimLowSpace
+  title: Dimension of the embedding space
+  type: number
+- default: true
+  key: inputs.randomInitializing
+  title: Random initialization in the embedded space?
+  type: checkbox
+- default: 500
+  description: Insert an integer (usually 200-500)
+  key: inputs.nEpochs
+  title: The number of training epochs
+  type: number
+- default: 0.01
+  description: Insert a value between 0 and 1
+  key: inputs.minDist
+  title: min_dist
+  type: number
+- description: Select the metric
+  fields:
+  - euclidean
+  - manhattan
+  - minkowski
+  - cosine
+  - correlation
+  - bray_curtis
+  - ll_dirichlet
+  - jaccard
+  - dice
+  - categorical_distance
+  - ordinal_distance
+  - count_distance
+  - levenshtein
+  - standardisedEuclidean
+  - weightedMinkowski
+  - mahalanobis
+  key: inputs.distanceMetric
+  title: The metric to compute the distance in the original space
+  type: select
+- condition: inputs.distanceV1==value
+  description: Insert a value
+  key: inputs.distanceV1
+  title: 'The optional input #1 needed for the chosen metric'
+  type: number
+- condition: inputs.distanceV2==value
+  description: Insert a value
+  key: inputs.distanceV2
+  title: 'The optional input #2 needed for the chosen metric'
+  type: number
+- condition: inputs.inputPathOptionalArray==value
+  description: Insert the Path to csv collection
+  key: inputs.inputPathOptionalArray
+  title: The optional csv collection representing a vector needed for the chosen metric
+  type: path
+version: 0.1.0

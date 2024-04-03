@@ -1,0 +1,44 @@
+author:
+- Gauhar Bains
+contact: gauhar.bains@labshare.org
+container: polusai/intensity-projection-plugin:0.1.9
+description: Calculate volumetric intensity projections
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Input image collection to be processed by this plugin
+  format:
+  - inpDir
+  name: inpDir
+  required: true
+  type: path
+- description: Type of volumetric intensity projection
+  format:
+  - projectionType
+  name: projectionType
+  required: true
+  type: string
+name: polusai/IntensityProjectionPlugin
+outputs:
+- description: Output collection
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Intensity Projection Plugin
+ui:
+- description: Input image collection to be processed by this plugin
+  key: inputs.inpDir
+  title: Input collection
+  type: path
+- description: Type of volumetric intensity projection
+  fields:
+  - max
+  - min
+  - mean
+  key: inputs.projectionType
+  title: Projection Type
+  type: select
+version: 0.1.9

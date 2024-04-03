@@ -1,0 +1,117 @@
+author:
+- Jayapriya Nagarajan
+contact: jayapriya.nagarajan@nih.gov
+container: polusai/feature-extraction-plugin:0.12.2
+description: Extract shape and intensity features from images.
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Labeled image collection
+  format:
+  - segDir
+  name: segDir
+  required: false
+  type: path
+- description: Intensity image collection
+  format:
+  - intDir
+  name: intDir
+  required: false
+  type: path
+- description: To match intensity and labeled/segmented image
+  format:
+  - filePattern
+  name: filePattern
+  required: true
+  type: string
+- description: Pixel distance to calculate the neighbors touching cells
+  format:
+  - pixelDistance
+  name: pixelDistance
+  required: false
+  type: number
+- description: Select features for extraction
+  format:
+  - features
+  name: features
+  required: true
+  type: array
+- description: 'csvfile : singlecsv for saving values in one csv file and separate
+    csv to save values for each image in separate csv file'
+  format:
+  - csvfile
+  name: csvfile
+  required: true
+  type: string
+- description: Use embedded pixel size
+  format:
+  - embeddedpixelsize
+  name: embeddedpixelsize
+  required: false
+  type: boolean
+- description: Unit name
+  format:
+  - unitLength
+  name: unitLength
+  required: false
+  type: string
+- description: Enter the number of pixels per unit of the metric
+  format:
+  - pixelsPerunit
+  name: pixelsPerunit
+  required: false
+  type: number
+name: polusai/FeatureExtraction
+outputs:
+- description: Output collection
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Feature Extraction
+ui:
+- description: Labeled image collection
+  key: inputs.segDir
+  title: Label image collection
+  type: path
+- description: Intensity image collection
+  key: inputs.intDir
+  title: Intensity image collection
+  type: path
+- description: To match intensity and labeled/segmented images
+  key: inputs.filePattern
+  title: File pattern
+  type: text
+- description: Pixel distance to calculate the neighbors touching cells
+  key: inputs.pixelDistance
+  title: Pixel Distance
+  type: number
+- description: Select features
+  key: inputs.features
+  title: Features
+  type: text
+- description: Save csv file separately for each image or one csv for all images
+  fields:
+  - singlecsv
+  - separatecsv
+  key: inputs.csvfile
+  title: Output csv file
+  type: select
+- default: true
+  description: Use embedded pixel size
+  key: inputs.embeddedpixelsize
+  title: Embedded pixel size
+  type: checkbox
+- condition: inputs.embeddedpixelsize==false
+  description: Unit name
+  key: inputs.unitLength
+  title: Length of unit
+  type: text
+- condition: inputs.embeddedpixelsize==false
+  description: Enter the number of pixels per unit of the metric
+  key: inputs.pixelsPerunit
+  title: Pixels per unit
+  type: number
+version: 0.12.2

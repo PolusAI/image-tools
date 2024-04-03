@@ -1,0 +1,80 @@
+author:
+- Hamdah Shafqat
+contact: hamdahshafqat.abbasi@nih.gov
+container: polusai/tabular-to-microjson-tool:0.1.2-dev0
+description: Generates JSON from tabular data.
+entrypoint: python3 -m polus.images.visualization.tabular_to_microjson
+inputs:
+- description: Path to the input directory containing tabular data
+  format:
+  - inpDir
+  name: inpDir
+  required: true
+  type: path
+- description: Path to the input directory containing stitching vector
+  format:
+  - stitchDir
+  name: stitchDir
+  required: true
+  type: path
+- description: A filepattern, used to select tabular data to be converted
+  format:
+  - filePattern
+  name: filePattern
+  required: false
+  type: string
+- description: A filepattern, used to parse filenames in stitching vector
+  format:
+  - stitchPattern
+  name: stitchPattern
+  required: true
+  type: string
+- description: Variable to group filenames in stitching vector
+  format:
+  - groupBy
+  name: groupBy
+  required: false
+  type: string
+- description: Type of geometry coordinates
+  format:
+  - geometryType
+  name: geometryType
+  required: false
+  type: string
+name: polusai/TabularToMicrojson
+outputs:
+- description: Path to the output directory
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/PolusAI/polus-plugins
+specVersion: 1.0.0
+title: Tabular To Microjson
+ui:
+- description: Input generic data collection to be processed by this plugin
+  key: inputs.inpDir
+  title: Input generic collection
+  type: path
+- description: Input directory containing stitching vector
+  key: inputs.stitchDir
+  title: Input stitchDir
+  type: path
+- description: A filepattern, used to select tabular data
+  key: inputs.filePattern
+  title: Filepattern
+  type: text
+- description: A filepattern, used to parse filenames in stitching vector
+  key: inputs.stitchPattern
+  title: stitchPattern
+  type: text
+- description: Variable to group filenames in stitching vector
+  key: inputs.groupBy
+  title: groupBy
+  type: text
+- description: Type of geometry coordinates
+  key: inputs.geometryType
+  title: geometryType
+  type: text
+version: 0.1.2-dev0

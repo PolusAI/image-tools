@@ -1,0 +1,40 @@
+author:
+- Gauhar Bains
+contact: gauhar.bains@labshare.org
+container: polusai/aics-classic-seg-plugin:0.1.11
+description: The plugin integrates the allen cell structure segmenter into WIPP
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Configuration file for the workflow
+  format:
+  - configFile
+  name: configFile
+  required: true
+  type: path
+- description: Input image collection to be processed by this plugin
+  format:
+  - inpDir
+  name: inpDir
+  required: true
+  type: path
+name: polusai/AicsClassicSegmentation
+outputs:
+- description: Output collection
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Aics Classic Segmentation
+ui:
+- description: Configuration file for the workflow
+  key: inputs.configFile
+  title: Config File
+  type: path
+- description: Input image collection to be processed by this plugin
+  key: inputs.inpDir
+  title: Input collection
+  type: path
+version: 0.1.11

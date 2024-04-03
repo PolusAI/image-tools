@@ -3,7 +3,7 @@
   "version": "0.3.5-dev0",
   "title": "K-Means Clustering",
   "description": "Cluster the data using K-Means.",
-  "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov), Kelechi Nina Mezu (nina.mezu@nih.gov) Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
+  "author": "Jayapriya Nagarajan (jayapriya.nagarajan@nih.gov), Kelechi Nina Mezu (nina.mezu@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/polusai/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
@@ -59,6 +59,12 @@
       "type": "number",
       "description": "Number of clusters:",
       "required": "false"
+    },
+    {
+      "name": "preview",
+      "type": "boolean",
+      "description": "Output a JSON preview of outputs produced by this plugin",
+      "required": "false"
     }
   ],
   "outputs": [
@@ -103,12 +109,6 @@
       "title": "Enter number of clusters",
       "description": "Number of clusters:",
       "condition": "model.inputs.methods==Manual"
-    },
-    {
-      "key": "inputs.fileExtension",
-      "title": "FileExtension",
-      "description": "Desired file format of an ouput file",
-      "default": ".arrow"
     }
   ]
 }

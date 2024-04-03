@@ -1,0 +1,81 @@
+author:
+- Nick Schaub
+- Najib Ishaq
+contact: Nick.Schaub@nih.gov
+container: polusai/apply-flatfield-tool:2.0.1-dev0
+description: Apply a flatfield algorithm to a collection of images.
+entrypoint: python3 -m polus.images.transforms.images.apply_flatfield
+inputs:
+- description: Input image collection to be processed by this plugin
+  format:
+  - imgDir
+  name: imgDir
+  required: true
+  type: path
+- description: Filename pattern used to separate data and match with flatfied files
+  format:
+  - imgPattern
+  name: imgPattern
+  required: true
+  type: string
+- description: Image collection containing flatfield and/or darkfield images
+  format:
+  - ffDir
+  name: ffDir
+  required: true
+  type: path
+- description: Filename pattern used to match flatfield files to image files
+  format:
+  - ffPattern
+  name: ffPattern
+  required: true
+  type: string
+- description: Filename pattern used to match darkfield files to image files
+  format:
+  - dfPattern
+  name: dfPattern
+  required: false
+  type: string
+- description: Preview the output images' names without actually running computation
+  format:
+  - preview
+  name: preview
+  required: false
+  type: boolean
+name: polusai/ApplyFlatfield
+outputs:
+- description: Output collection
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Apply Flatfield
+ui:
+- description: Input image collection to be processed by this plugin
+  key: inputs.imgDir
+  title: Images to correct
+  type: path
+- description: Filename pattern used to separate data and match with flatfield files
+  key: inputs.imgPattern
+  title: Image pattern
+  type: text
+- description: Image collection containing flatfield and/or darkfield images
+  key: inputs.ffDir
+  title: Background images (flatfield/darkfield)
+  type: path
+- description: Filename pattern used to match flatfield files to image files
+  key: inputs.ffPattern
+  title: Flatfield file pattern
+  type: text
+- description: Filename pattern used to match darkfield files to image files
+  key: inputs.dfPattern
+  title: Darkfield file pattern
+  type: text
+- description: Preview the output images' names without actually running computation
+  key: inputs.preview
+  title: Preview Output
+  type: checkbox
+version: 2.0.1-dev0

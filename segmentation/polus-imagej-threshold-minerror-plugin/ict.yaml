@@ -1,0 +1,45 @@
+author:
+- Nick Schaub
+- Anjali Taneja
+- Benjamin Houghton
+contact: nick.schaub@nih.gov
+container: polusai/imagej-threshold-minerror-plugin:0.4.2
+description: An iterative implementation of Kittler and Illingworth's Minimum Error
+  thresholding.
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Operation to perform
+  format:
+  - opName
+  name: opName
+  required: true
+  type: string
+- description: Collection to be processed by this plugin
+  format:
+  - inpDir
+  name: inpDir
+  required: true
+  type: path
+name: polusai/ImageJthresholdminError
+outputs:
+- description: Output collection
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: ImageJ threshold minError
+ui:
+- description: Operation to perform
+  fields:
+  - ApplyThresholdMethod$MinError
+  key: inputs.opName
+  title: opName
+  type: select
+- description: Collection to be processed by this plugin
+  key: inputs.inpDir
+  title: inpDir
+  type: path
+version: 0.4.2

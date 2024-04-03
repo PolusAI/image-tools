@@ -1,0 +1,97 @@
+author:
+- Najib Ishaq
+contact: najib.ishaq@axleinfo.com
+container: polusai/autocropping-plugin:1.0.2
+description: Automatically remove noise and other useless sections from images.
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Input image collection to be processed by this plugin.
+  format:
+  - inputDir
+  name: inputDir
+  required: true
+  type: path
+- description: File pattern to use for grouping images.
+  format:
+  - filePattern
+  name: filePattern
+  required: true
+  type: string
+- description: Grouping variables for images.
+  format:
+  - groupBy
+  name: groupBy
+  required: true
+  type: string
+- description: Whether to crop along the x-axis
+  format:
+  - cropX
+  name: cropX
+  required: false
+  type: boolean
+- description: Whether to crop along the y-axis
+  format:
+  - cropY
+  name: cropY
+  required: false
+  type: boolean
+- description: Whether to crop along the z-axis
+  format:
+  - cropZ
+  name: cropZ
+  required: false
+  type: boolean
+- description: Whether to use gaussian smoothing on images to add more tolerance to
+    noise.
+  format:
+  - smoothing
+  name: smoothing
+  required: false
+  type: boolean
+name: polusai/Autocropping
+outputs:
+- description: Output collection
+  format:
+  - outputDir
+  name: outputDir
+  required: true
+  type: path
+repository: https://github.com/PolusAI/polus-plugins/transforms/images/polus-autocropping-plugin
+specVersion: 1.0.0
+title: Autocropping
+ui:
+- description: Input image collection to be processed by this plugin.
+  key: inputs.inputDir
+  title: Input collection
+  type: path
+- description: File pattern to use for grouping images.
+  key: inputs.filePattern
+  title: File Pattern
+  type: text
+- description: Variables to use for grouping images. Each group is cropped to the
+    same bounding-box.
+  key: inputs.groupBy
+  title: Grouping Variables
+  type: text
+- default: true
+  description: Whether to crop along the x-axis
+  key: inputs.cropX
+  title: Crop X
+  type: checkbox
+- default: true
+  description: Whether to crop along the y-axis
+  key: inputs.cropY
+  title: Crop Y
+  type: checkbox
+- default: true
+  description: Whether to crop along the z-axis
+  key: inputs.cropZ
+  title: Crop Z
+  type: checkbox
+- default: true
+  description: Whether to use gaussian smoothing on images to add more tolerance to
+    noise.
+  key: inputs.smoothing
+  title: Smoothing
+  type: checkbox
+version: 1.0.2

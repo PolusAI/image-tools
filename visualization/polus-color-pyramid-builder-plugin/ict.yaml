@@ -1,0 +1,94 @@
+author:
+- Nick Schaub
+contact: nick.schaub@nih.gov
+container: polusai/color-pyramid-builder-plugin:0.3.3
+description: Builds a DeepZoom color pyramid.
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Input image collection to be processed by this plugin
+  format:
+  - inpDir
+  name: inpDir
+  required: true
+  type: path
+- description: Filename pattern used to separate data
+  format:
+  - filePattern
+  name: filePattern
+  required: true
+  type: string
+- description: Color ordering up to 7 colors (e.g. 1,11,,,,5,6)
+  format:
+  - layout
+  name: layout
+  required: true
+  type: string
+- description: Set bounds (should be float-float, int-int, or blank, e.g. 0.01-0.99,0-16000,,,,,)
+  format:
+  - bounds
+  name: bounds
+  required: false
+  type: string
+- description: If true, transparency is related to pixel intensity, where black is
+    fully transparent.
+  format:
+  - alpha
+  name: alpha
+  required: false
+  type: boolean
+- description: If stitching path is given, will assemble images in the collection
+    according to the stitching vector.
+  format:
+  - stitchPath
+  name: stitchPath
+  required: false
+  type: path
+- description: Gray level fill intensity. Ignored if stitchPath is undefined.
+  format:
+  - background
+  name: background
+  required: false
+  type: number
+name: polusai/ColorPyramidBuilder
+outputs:
+- description: Output pyramid path.
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Color Pyramid Builder
+ui:
+- description: Filename pattern used to separate data
+  key: inputs.filePattern
+  title: Filename pattern
+  type: text
+- description: Input image collection to be processed by this plugin
+  key: inputs.inpDir
+  title: Input collection
+  type: path
+- description: Color ordering (e.g. 1,11,,,,5,6)
+  key: inputs.layout
+  title: Color layout
+  type: text
+- description: Set bounds (should be float-float, int-int, or blank, e.g. 0.01-0.99,0-16000,,,,,)
+  key: inputs.bounds
+  title: Set rescaling bounds (optional)
+  type: text
+- description: If true, transparency is related to pixel intensity, where black is
+    fully transparent.
+  key: inputs.alpha
+  title: Make black transparent (optional)
+  type: checkbox
+- description: If true, transparency is related to pixel intensity, where black is
+    fully transparent.
+  key: inputs.stitchPath
+  title: Stitching Vector (optional)
+  type: path
+- description: Gray level fill intensity from 0-1. Ignored if stitchPath is undefined.
+  key: inputs.background
+  title: Background gray level (optional)
+  type: number
+version: 0.3.3

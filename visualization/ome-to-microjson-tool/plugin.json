@@ -14,20 +14,23 @@
     "-m",
     "polus.images.visualization.ome_to_microjson"
   ],
-  "inputs": {
-    "inpDir": {
+  "inputs": [
+    {
+      "name": "inpDir",
       "type": "collection",
       "title": "Input collection",
       "description": "Input image collection to be processed by this plugin.",
       "required": "True"
     },
-    "filePattern": {
+    {
+      "name": "filePattern",
       "type": "string",
       "title": "Filename pattern",
       "description": "Filename pattern used to separate data.",
       "required": "False"
     },
-    "polygonType": {
+    {
+      "name": "polygonType",
       "type": "enum",
       "title": "Type of Polygon",
       "description": "Select polygon type from [rectangle, encoding].",
@@ -39,44 +42,50 @@
       },
       "required": "True"
     },
-    "preview": {
+    {
+      "name": "preview",
       "type": "boolean",
       "title": "Preview",
       "description": "Generate an output preview.",
       "required": "False"
     }
-  },
-  "outputs": {
-    "outDir": {
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
       "type": "collection",
       "description": "Output collection."
     }
-  },
-  "ui": {
-    "inpDir": {
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
       "type": "collection",
       "title": "Input collection",
       "description": "Input image collection to be processed by this plugin.",
       "required": "True"
     },
-    "filePattern": {
+    {
+      "key": "inputs.filePattern",
       "type": "string",
       "title": "Filename pattern",
       "description": "Filename pattern used to separate data.",
       "required": "False"
     },
-    "polygonType": {
+    {
+      "key": "inputs.polygonType",
       "type": "enum",
       "title": "Type of Polygon",
       "description": "Select polygon type from [rectangle, encoding].",
       "default": "encoding",
       "required": "True"
     },
-    "preview": {
+    {
+      "key": "inputs.preview",
       "type": "boolean",
       "title": "Preview example output of this plugin",
       "description": "Generate an output preview.",
       "required": "False"
     }
-  }
+  ]
 }

@@ -93,11 +93,6 @@
       "key": "inputs.modeltype",
       "title": "Select the distribution to be considered for modeling",
       "description": "Select either binomial or gaussian or Gamma or poisson or quasi or quasibinomial or quasipoisson or negativebinomial or multinomial"
-    },
-    {
-      "key": "inputs.outdir",
-      "title": "Output csv file",
-      "description": "Save output csv file containing summary of the glm model"
     }
   ]
 }

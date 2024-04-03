@@ -1,0 +1,37 @@
+author:
+- Melanie Parham
+contact: melanie.parham@nih.gov
+container: polusai/imaris-parser-plugin:0.3.3
+description: Parses metadata of Imaris files and outputs features in organized csv
+  format.
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Input image collection to be processed by this plugin
+  format:
+  - inpdir
+  name: inpdir
+  required: true
+  type: path
+name: polusai/ImarisParser
+outputs:
+- description: Metadata directory that stores overall data
+  format:
+  - metaoutdir
+  name: metaoutdir
+  required: true
+  type: path
+- description: Output collection
+  format:
+  - outdir
+  name: outdir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Imaris Parser
+ui:
+- description: Input image collection to be processed by this plugin
+  key: inputs.inpdir
+  title: Input collection
+  type: path
+version: 0.3.3
