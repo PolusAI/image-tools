@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "polus-plugins-clustering-feature-subsetting"
-version = "0.2.0-dev"
+name = "polus-images-clustering-feature-subsetting"
+version = "0.2.1-dev"
 description = "Subset data using a given feature."
 authors = [
            "Gauhar Bains <gauhar.bains@labshare.org>",

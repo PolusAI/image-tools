@@ -10,7 +10,7 @@ bump2version --config-file bumpversion.cfg --new-version ${version} --allow-dirt
 ./build-docker.sh
 
 # Push to dockerhub
-docker push polusai/feature-subsetting-plugin:${version}
+docker push polusai/feature-subsetting-tool:${version}
 
 # Run pytests
 python -m pytest -s tests

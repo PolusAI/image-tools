@@ -1,18 +1,18 @@
 {
   "name": "Feature Subsetting",
-  "version": "0.2.0-dev",
+  "version": "0.2.1-dev",
   "title": "Feature Subsetting",
   "description": "Subset data using a given feature.",
   "author": "Gauhar Bains (gauhar.bains@labshare.org) and Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-  "repository": "https://github.com/PolusAI/polus-plugins",
+  "repository": "https://github.com/PolusAI/image-tools",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/feature-subsetting-plugin:0.2.0-dev",
+  "containerId": "polusai/feature-subsetting-plugin:0.2.1-dev",
   "baseCommand": [
     "python3",
     "-m",
-    "polus.plugins.clustering.feature_subsetting"
+    "polus.images.clustering.feature_subsetting"
   ],
   "inputs": {
     "inpDir": {

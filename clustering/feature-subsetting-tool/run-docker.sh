@@ -17,7 +17,7 @@ writeOutput=true
 outDir=${datapath}/output
 
 docker run -v ${datapath}:${datapath} \
-            polusai/feature-subsetting-plugin:${version} \
+            polusai/feature-subsetting-tool:${version} \
             --inpDir ${inpDir} \
             --tabularDir ${tabularDir} \
             --filePattern ${filePattern} \

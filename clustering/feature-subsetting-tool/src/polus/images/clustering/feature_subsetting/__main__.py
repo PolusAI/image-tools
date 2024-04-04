@@ -1,10 +1,11 @@
-"""Feature Subsetting Plugin."""
+"""Feature Subsetting Tool."""
+
 import logging
 import shutil
 from pathlib import Path
 from typing import Optional
 
-import polus.plugins.clustering.feature_subsetting.feature_subset as fs
+import polus.images.clustering.feature_subsetting.feature_subset as fs
 import typer
 
 app = typer.Typer()

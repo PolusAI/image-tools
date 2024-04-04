@@ -1,6 +1,7 @@
 """Test Command line Tool."""
+
 from typer.testing import CliRunner
-from polus.plugins.clustering.feature_subsetting.__main__ import app
+from polus.images.clustering.feature_subsetting.__main__ import app
 import shutil
 from pathlib import Path
 

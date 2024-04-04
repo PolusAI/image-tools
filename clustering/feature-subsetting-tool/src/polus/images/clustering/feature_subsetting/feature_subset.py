@@ -1,4 +1,5 @@
-"""Feature Subsetting Plugin."""
+"""Feature Subsetting Tool."""
+
 import logging
 import os
 import shutil

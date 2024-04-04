@@ -1,8 +1,9 @@
 """Test Feature Subsetting Plugin."""
+
 import shutil
 from pathlib import Path
 
-import polus.plugins.clustering.feature_subsetting.feature_subset as fs
+import polus.images.clustering.feature_subsetting.feature_subset as fs
 
 
 def test_feature_subset(

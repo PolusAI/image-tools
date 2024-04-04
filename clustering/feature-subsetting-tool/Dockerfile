@@ -1,4 +1,4 @@
-FROM polusai/bfio:2.3.3
+FROM polusai/bfio:2.3.6
 
 # environment variables defined in polusai/bfio
 ENV EXEC_DIR="/opt/executables"
@@ -16,5 +16,5 @@ COPY README.md ${EXEC_DIR}
 RUN pip3 install ${EXEC_DIR} --no-cache
 
 
-ENTRYPOINT ["python3", "-m", "polus.plugins.clustering.feature_subsetting"]
+ENTRYPOINT ["python3", "-m", "polus.images.clustering.feature_subsetting"]
 CMD ["--help"]
