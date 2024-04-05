@@ -22,26 +22,27 @@ contents of `plugin.json` into the pop-up window and submit.
 
 This plugin takes 20 input arguments and 1 output argument. Please note that all inputs except `MidrcType` and `outDir` are optional
 
-| Name          | Description             | I/O    | Type   | Default
-|---------------|-------------------------|--------|--------|
-| MidrcType        | The node_id of the node in the data model utilized in queries and API requests | Input | string
-| projectId        | The code of the project that this dataset belongs | Input | string
-| sex   | A gender information | Input | string
+
+| Name          | Description                                                   | I/O    | Type          |
+|---------------|---------------------------------------------------------------|--------|---------------|
+| MidrcType    | The node_id of the node in the data model utilized in queries and API requests| Input  | string    |
+| projectId        | The code of the project that this dataset belongs| Input  | string    |
+| sex   | A gender information | Input | string |
 | race   | A race information | Input | string
-| ethnicity   | A racial or cultural background | Input | string
-| ageAtIndex   | The age of the study participant| Input | string
-| studyModality  | The modalities of the imaging study | Input | string
-| bodyPartExamined   | Body Part Examined | Input | string
-| loincContrast   | The LOINC indicator noting whether the image was completed with or without contrast | Input | string
-| loincMethod   | The LOINC method or imaging modality associated with the assigned LOINC code | Input | string
-| loincSystem   | The LOINC system or body part examined associated with the assigned LOINC code | Input | string
-| studyYear   | The year when imaging study was performed | Input | string
-| covid19Positive  | An indicator of whether patient has covid infection or not| Input | string
-| sourceNode  | A package of image files and metadata related to several imaging series | Input | string
-| dataFormat  | The file format, physical medium, or dimensions of the resource | Input | string
-| dataCategory  | Image files and metadata related to several imaging series | Input | string
-| dataType  | The file format, physical medium, or dimensions of the resource | Input | string
-| first  | Number of rows to return | Input | number
-| offset  | Starting position | Input | number
-| outDir        | Output collection | Output | genericData
-| preview   | Generate an output preview | Input | boolean | False
+| ethnicity   | A racial or cultural background | Input | string |
+| ageAtIndex   | The age of the study participant| Input | string |
+| studyModality  | The modalities of the imaging study | Input | string |
+| bodyPartExamined   | Body Part Examined | Input | string |
+| loincContrast   | The LOINC indicator noting whether the image was completed with or without contrast | Input | string |
+| loincMethod   | The LOINC method or imaging modality associated with the assigned LOINC code | Input | string |
+| loincSystem   | The LOINC system or body part examined associated with the assigned LOINC code | Input | string |
+| studyYear   | The year when imaging study was performed | Input | string |
+| covid19Positive  | An indicator of whether patient has covid infection or not| Input | string |
+| sourceNode  | A package of image files and metadata related to several imaging series | Input | string |
+| dataFormat  | The file format, physical medium, or dimensions of the resource | Input | string |
+| dataCategory  | Image files and metadata related to several imaging series | Input | string |
+| dataType  | The file format, physical medium, or dimensions of the resource | Input | string |
+| first  | Number of rows to return | Input | number |
+| offset  | Starting position | Input | number |
+| outDir        | Output collection | Output | genericData |
+| preview   | Generate an output preview | Input | boolean | False |
