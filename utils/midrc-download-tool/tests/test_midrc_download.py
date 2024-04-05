@@ -8,6 +8,7 @@ import pytest
 from .conftest import clean_directories
 
 
+@pytest.mark.skipif("not config.getoption('slow')")
 def test_midrc_download_get_query(
     genenerate_dict_params: pytest.FixtureRequest,
 ) -> None:
@@ -18,6 +19,7 @@ def test_midrc_download_get_query(
     clean_directories()
 
 
+@pytest.mark.skipif("not config.getoption('slow')")
 def test_midrc_download_query_data(
     genenerate_dict_params: pytest.FixtureRequest,
 ) -> None:
@@ -36,6 +38,7 @@ def test_midrc_download_query_data(
     clean_directories()
 
 
+@pytest.mark.skipif("not config.getoption('slow')")
 def test_midrc_download_download_data(
     genenerate_dict_params: pytest.FixtureRequest,
 ) -> None:

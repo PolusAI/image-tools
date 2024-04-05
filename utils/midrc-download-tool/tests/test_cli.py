@@ -16,6 +16,7 @@ from .conftest import clean_directories
 import time
 
 
+@pytest.mark.skipif("not config.getoption('slow')")
 def test_cli(genenerate_cli_params: pytest.FixtureRequest) -> None:
     """Test the command line."""
     runner = CliRunner()
