@@ -10,19 +10,19 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: '''active'' or ''inactive'' for whether to run in inference mode.'
   format:
-  - inferenceMode
+  - enum
   name: inferenceMode
   required: true
   type: string
 - description: Collection containing images on which to run inference.
   format:
-  - imagesInferenceDir
+  - collection
   name: imagesInferenceDir
   required: false
   type: path
 - description: Filename pattern for images on which to run inference.
   format:
-  - inferencePattern
+  - string
   name: inferencePattern
   required: false
   type: string
@@ -30,119 +30,119 @@ inputs:
     fresh, you must instead provide: ''modelName'', ''encoderBase'', ''encoderVariant'',
     ''encoderWeights'', and ''optimizerName''. See the README for available options.'
   format:
-  - pretrainedModel
+  - genericData
   name: pretrainedModel
   required: false
   type: path
 - description: Model architecture to use. Required if starting fresh.
   format:
-  - modelName
+  - enum
   name: modelName
   required: false
   type: string
 - description: The name of the base encoder to use.
   format:
-  - encoderBase
+  - enum
   name: encoderBase
   required: false
   type: string
 - description: The name of the specific variant to use.
   format:
-  - encoderVariant
+  - enum
   name: encoderVariant
   required: false
   type: string
 - description: The name of the pretrained weights to use.
   format:
-  - encoderWeights
+  - enum
   name: encoderWeights
   required: false
   type: string
 - description: Name of optimization algorithm to use for training the model. Required
     if starting fresh.
   format:
-  - optimizerName
+  - enum
   name: optimizerName
   required: false
   type: string
 - description: Size of each batch for training. If left unspecified, we use the maximum
     possible based on memory constraints.
   format:
-  - batchSize
+  - integer
   name: batchSize
   required: false
   type: number
 - description: Collection containing images to use for training.
   format:
-  - imagesTrainDir
+  - collection
   name: imagesTrainDir
   required: false
   type: path
 - description: Collection containing labels, i.e. the ground-truth, for the training
     images.
   format:
-  - labelsTrainDir
+  - collection
   name: labelsTrainDir
   required: false
   type: path
 - description: Filename pattern for training images and labels.
   format:
-  - trainPattern
+  - string
   name: trainPattern
   required: false
   type: string
 - description: Collection containing images to use for validation.
   format:
-  - imagesValidDir
+  - collection
   name: imagesValidDir
   required: false
   type: path
 - description: Collection containing labels, i.e. the ground-truth, for the validation
     images.
   format:
-  - labelsValidDir
+  - collection
   name: labelsValidDir
   required: false
   type: path
 - description: Filename pattern for validation images and labels.
   format:
-  - validPattern
+  - string
   name: validPattern
   required: false
   type: string
 - description: Which device to use for the model
   format:
-  - device
+  - string
   name: device
   required: false
   type: string
 - description: How often to save model checkpoints
   format:
-  - checkpointFrequency
+  - integer
   name: checkpointFrequency
   required: false
   type: number
 - description: Name of loss function to use.
   format:
-  - lossName
+  - enum
   name: lossName
   required: false
   type: string
 - description: Maximum number of epochs for which to continue training the model.
   format:
-  - maxEpochs
+  - integer
   name: maxEpochs
   required: false
   type: number
 - description: Maximum number of epochs to wait for model to improve.
   format:
-  - patience
+  - integer
   name: patience
   required: false
   type: number
 - description: Minimum improvement in loss to reset patience.
   format:
-  - minDelta
+  - number
   name: minDelta
   required: false
   type: number
@@ -151,7 +151,7 @@ outputs:
 - description: In training mode, this contains the trained model and checkpoints.
     In inference mode, this contains the output labels.
   format:
-  - outputDir
+  - genericData
   name: outputDir
   required: true
   type: path

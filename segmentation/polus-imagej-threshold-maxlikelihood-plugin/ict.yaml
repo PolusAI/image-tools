@@ -10,13 +10,13 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Operation to perform
   format:
-  - opName
+  - enum
   name: opName
   required: true
   type: string
 - description: Collection to be processed by this plugin
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
@@ -24,7 +24,7 @@ name: polusai/ImageJthresholdmaxLikelihood
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

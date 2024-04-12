@@ -7,7 +7,7 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Fcs file collection
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
@@ -15,7 +15,7 @@ name: polusai/FcstoCsvfileconverter
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - csvCollection
   name: outDir
   required: true
   type: path

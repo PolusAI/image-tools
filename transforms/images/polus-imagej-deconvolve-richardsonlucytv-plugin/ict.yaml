@@ -8,31 +8,31 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Op overloading method to perform
   format:
-  - opName
+  - enum
   name: opName
   required: true
   type: string
 - description: Collection to be processed by this plugin
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: The point spread function mask to be used
   format:
-  - psf
+  - collection
   name: psf
   required: true
   type: path
 - description: The maximum number of algorithm iterations
   format:
-  - maxIterations
+  - number
   name: maxIterations
   required: true
   type: number
 - description: The total variation regularization factor
   format:
-  - regularizationFactor
+  - number
   name: regularizationFactor
   required: true
   type: number
@@ -40,7 +40,7 @@ name: polusai/ImageJdeconvolverichardsonLucyTV
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

@@ -7,7 +7,7 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Image inputs for the plugin.
   format:
-  - input
+  - genericData
   name: input
   required: true
   type: path
@@ -15,7 +15,7 @@ name: polusai/OMETiledTiffConverter
 outputs:
 - description: Output data for the plugin
   format:
-  - output
+  - collection
   name: output
   required: true
   type: path

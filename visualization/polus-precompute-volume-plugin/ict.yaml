@@ -10,25 +10,25 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input collection
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: Image or Segmentation
   format:
-  - imageType
+  - enum
   name: imageType
   required: true
   type: string
 - description: Pattern of the images in Input
   format:
-  - filePattern
+  - string
   name: filePattern
   required: false
   type: string
 - description: Create meshes
   format:
-  - mesh
+  - boolean
   name: mesh
   required: false
   type: boolean
@@ -36,7 +36,7 @@ name: polusai/WIPPWidget
 outputs:
 - description: Precomputed output
   format:
-  - outDir
+  - pyramid
   name: outDir
   required: true
   type: path

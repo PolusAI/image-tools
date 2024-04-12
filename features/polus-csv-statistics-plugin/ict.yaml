@@ -7,25 +7,25 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: The csv statistics to generate
   format:
-  - statistics
+  - array
   name: statistics
   required: true
   type: array
 - description: Input csv collection to be processed by this plugin
   format:
-  - inpDir
+  - csvCollection
   name: inpDir
   required: true
   type: path
 - description: The filepattern of the images represented in the csv files
   format:
-  - filePattern
+  - string
   name: filePattern
   required: false
   type: string
 - description: The variable(s) to group the images by
   format:
-  - groupBy
+  - string
   name: groupBy
   required: false
   type: string
@@ -33,7 +33,7 @@ name: polusai/CSVStatistics
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - csvCollection
   name: outDir
   required: true
   type: path

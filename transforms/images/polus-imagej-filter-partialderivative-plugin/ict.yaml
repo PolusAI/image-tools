@@ -7,19 +7,19 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Op overloading method to perform.
   format:
-  - opName
+  - enum
   name: opName
   required: false
   type: string
 - description: Input image collection to be processed by this plugin
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: false
   type: path
 - description: Dimension in which the partial derivative should be applied
   format:
-  - dimension
+  - number
   name: dimension
   required: false
   type: number
@@ -27,7 +27,7 @@ name: polusai/ImageJfilterpartialDerivative
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

@@ -8,19 +8,19 @@ entrypoint: python3 -m polus.images.utils.rxiv_download
 inputs:
 - description: Pull records from open access archives.
   format:
-  - rxiv
+  - string
   name: rxiv
   required: true
   type: string
 - description: Start date.
   format:
-  - start
+  - string
   name: start
   required: false
   type: string
 - description: Generate an output preview.
   format:
-  - preview
+  - boolean
   name: preview
   required: false
   type: boolean
@@ -28,7 +28,7 @@ name: polusai/DownloadRxivtextdata
 outputs:
 - description: Output collection.
   format:
-  - outDir
+  - genericData
   name: outDir
   required: true
   type: path

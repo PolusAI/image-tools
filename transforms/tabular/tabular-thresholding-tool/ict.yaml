@@ -9,63 +9,63 @@ entrypoint: python3 -m polus.images.transforms.tabular.tabular_thresholding
 inputs:
 - description: Directory containing tabular data
   format:
-  - inpDir
+  - genericData
   name: inpDir
   required: true
   type: path
 - description: Pattern to parse input files
   format:
-  - filePattern
+  - string
   name: filePattern
   required: false
   type: string
 - description: FeatureName containing information about the position of non treated
     wells
   format:
-  - negControl
+  - string
   name: negControl
   required: true
   type: string
 - description: FeatureName containing information about the position of wells with
     known treatment outcome
   format:
-  - posControl
+  - string
   name: posControl
   required: false
   type: string
 - description: Name of the Variable for computing thresholds
   format:
-  - varName
+  - string
   name: varName
   required: true
   type: string
 - description: Name of the threshold method
   format:
-  - thresholdType
+  - enum
   name: thresholdType
   required: true
   type: string
 - description: False positive rate threshold value
   format:
-  - falsePositiverate
+  - number
   name: falsePositiverate
   required: false
   type: number
 - description: Number of Bins for otsu threshold
   format:
-  - numBins
+  - number
   name: numBins
   required: false
   type: number
 - description: Number of Standard deviation
   format:
-  - n
+  - number
   name: n
   required: false
   type: number
 - description: Output format
   format:
-  - outFormat
+  - enum
   name: outFormat
   required: true
   type: string
@@ -73,7 +73,7 @@ name: polusai/tabular-thresholding-plugin
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - genericData
   name: outDir
   required: true
   type: path

@@ -7,25 +7,25 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Op overloading method to perform
   format:
-  - opName
+  - enum
   name: opName
   required: false
   type: string
 - description: Input collection to be processed by this plugin
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: false
   type: path
 - description: The point spread function mask to be used
   format:
-  - psf
+  - collection
   name: psf
   required: false
   type: path
 - description: The maximum number of algorithm iterations
   format:
-  - maxIterations
+  - number
   name: maxIterations
   required: false
   type: number
@@ -33,7 +33,7 @@ name: polusai/ImageJdeconvolverichardsonLucy
 outputs:
 - description: The output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

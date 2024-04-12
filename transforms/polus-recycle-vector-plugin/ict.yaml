@@ -7,19 +7,19 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Stitching Vector.
   format:
-  - stitchDir
+  - stitchingVector
   name: stitchDir
   required: true
   type: path
 - description: Image Collection.
   format:
-  - collectionDir
+  - collection
   name: collectionDir
   required: true
   type: path
 - description: Filepattern to select files for vector recycling.
   format:
-  - filepattern
+  - string
   name: filepattern
   required: true
   type: string
@@ -27,7 +27,7 @@ name: polusai/RecycleExistingStitchingVector
 outputs:
 - description: Output stitching vector.
   format:
-  - outDir
+  - stitchingVector
   name: outDir
   required: true
   type: path

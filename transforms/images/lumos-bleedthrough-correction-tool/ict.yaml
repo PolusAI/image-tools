@@ -7,25 +7,25 @@ entrypoint: python3 -m polus.images.transforms.images.lumos_bleedthrough_correct
 inputs:
 - description: Input image collection to be processed by this plugin.
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: Filepattern for the images.
   format:
-  - filePattern
+  - string
   name: filePattern
   required: true
   type: string
 - description: Grouping variables for images.
   format:
-  - groupBy
+  - string
   name: groupBy
   required: true
   type: string
 - description: Number of fluorophores in the images.
   format:
-  - numFluorophores
+  - integer
   name: numFluorophores
   required: true
   type: number
@@ -33,7 +33,7 @@ name: polusai/LUMoSBleedthroughCorrectionPlugin
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

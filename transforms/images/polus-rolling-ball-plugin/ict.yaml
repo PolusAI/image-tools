@@ -8,19 +8,19 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input image collection to be processed by this plugin.
   format:
-  - inputDir
+  - collection
   name: inputDir
   required: true
   type: path
 - description: Radius of the ball used to perform background subtraction.
   format:
-  - ballRadius
+  - number
   name: ballRadius
   required: false
   type: number
 - description: Whether the images have a light or dark background.
   format:
-  - lightBackground
+  - boolean
   name: lightBackground
   required: false
   type: boolean
@@ -28,7 +28,7 @@ name: polusai/RollingBall
 outputs:
 - description: Output collection
   format:
-  - outputDir
+  - collection
   name: outputDir
   required: true
   type: path

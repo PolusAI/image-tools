@@ -8,26 +8,26 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Op overloading method to perform
   format:
-  - opName
+  - enum
   name: opName
   required: false
   type: string
 - description: Collection to be processed by this plugin
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: Kernel to be applied to image in correlation operation
   format:
-  - kernel
+  - collection
   name: kernel
   required: true
   type: path
 - description: 'The number of pixels to pad to each side of the image in each dimension:
     x,y'
   format:
-  - borderSize
+  - string
   name: borderSize
   required: true
   type: string
@@ -35,7 +35,7 @@ name: polusai/ImageJfiltercorrelate
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

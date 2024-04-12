@@ -7,31 +7,31 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input csv file collection
   format:
-  - inpdir
+  - csvCollection
   name: inpdir
   required: true
   type: path
 - description: Enter the column to be predicted
   format:
-  - predictcolumn
+  - string
   name: predictcolumn
   required: true
   type: string
 - description: Columns to be excluded from the dataset
   format:
-  - exclude
+  - string
   name: exclude
   required: false
   type: string
 - description: Select either primary or interaction or second order effects for modeling
   format:
-  - glmmethod
+  - enum
   name: glmmethod
   required: true
   type: string
 - description: Select the family to be considered for modeling
   format:
-  - modeltype
+  - enum
   name: modeltype
   required: true
   type: string
@@ -39,7 +39,7 @@ name: polusai/GeneralizedLinearModel
 outputs:
 - description: Output collection
   format:
-  - outdir
+  - csvCollection
   name: outdir
   required: true
   type: path

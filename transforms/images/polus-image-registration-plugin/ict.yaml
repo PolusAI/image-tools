@@ -8,39 +8,39 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input image collection to be processed by this plugin
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: Filename pattern used to separate data
   format:
-  - filePattern
+  - string
   name: filePattern
   required: true
   type: string
 - description: Template image to be used for image registration
   format:
-  - template
+  - string
   name: template
   required: true
   type: string
 - description: variable to help identify which images need to be registered to each
     other
   format:
-  - registrationVariable
+  - string
   name: registrationVariable
   required: true
   type: string
 - description: variable to help identify which images have similar transformation
   format:
-  - TransformationVariable
+  - string
   name: TransformationVariable
   required: true
   type: string
 - description: Projective (8 degrees of freedom), Affine (6 degrees of freedom), Partial
     Affine (4 degrees of freedom)
   format:
-  - method
+  - enum
   name: method
   required: true
   type: string
@@ -48,7 +48,7 @@ name: polusai/ImageRegistration
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path
