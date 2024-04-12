@@ -42,7 +42,7 @@ jobs:
         id: package-filter
         run: |
           PACKAGE_DIRS=""
-          COMPANION_FILES="VERSION .bumpversion.cfg plugin.json"
+          COMPANION_FILES="VERSION .bumpversion.cfg ict.yml"
 
           # echo the base ref
           base_ref=${{ github.base_ref }}
