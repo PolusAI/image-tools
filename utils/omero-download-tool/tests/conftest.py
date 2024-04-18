@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Union
 
 import pytest
+from polus.images.utils.omero_download.omero_download import DATATYPE
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -37,7 +38,11 @@ def output_directory() -> Union[str, Path]:
 
 @pytest.fixture(
     params=[
-        ("well", None, 1084),
+        (DATATYPE.WELL, None, 1084),
+        (DATATYPE.DATASET, "211129_pyomero", None),
+        (DATATYPE.SCREEN, "Inae_timeseries", None),
+        (DATATYPE.PROJECT, "NCI_IMS", None),
+        (DATATYPE.PLATE, None, 60),
     ],
 )
 def get_params(request: pytest.FixtureRequest) -> pytest.FixtureRequest:

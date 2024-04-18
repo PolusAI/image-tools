@@ -41,9 +41,9 @@
       "required": "False"
     },
     {
-      "name": "id",
+      "name": "objectId",
       "type": "integer",
-      "title": "id",
+      "title": "objectId",
       "description": "Identifier of the object to be downloaded.",
       "required": "False"
     },
@@ -79,9 +79,9 @@
       "required": "False"
     },
     {
-      "key": "inputs.id",
+      "key": "inputs.objectId",
       "type": "integer",
-      "title": "id",
+      "title": "objectId",
       "description": "Identifier of the object to be downloaded.",
       "required": "False"
     },

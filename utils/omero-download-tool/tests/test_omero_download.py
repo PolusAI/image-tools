@@ -22,7 +22,6 @@ def test_omero_download(
         out_dir=output_directory,
     )
     model.get_data()
-
     assert any(output_directory.iterdir()) is True
 
     clean_directories()

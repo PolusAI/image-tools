@@ -7,7 +7,7 @@ echo ${datapath}
 # Inputs
 out_dir=${datapath}/out
 dataType="well"
-id=1084
+objectId=1084
 
 
 # #Show the help options
@@ -17,5 +17,5 @@ docker run -v ${datapath}:${datapath} \
             polusai/omero-download-tool:${version} \
             --dataType ${dataType} \
             --name ${name} \
-            --id ${name} \
+            --objectId ${name} \
             --outDir ${out_dir}
