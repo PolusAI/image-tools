@@ -1,0 +1,15 @@
+name: myenv
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.9
+  - numpy=1.21.0
+  - ome:omero-py
+  - requests=*
+  - tqdm=*
+  - pydantic=*
+  - cryptography=*
+  - pip
+  - pip:
+    - preadator==0.4.0-dev2
