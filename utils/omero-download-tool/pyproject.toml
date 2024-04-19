@@ -10,6 +10,10 @@ packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "3.9.18"
+bfio = {version = "^2.3.6", extras = ["all"]}
+numpy = "1.21.0"
+typer = "^0.7.0"
+pydantic = "^2.5.3"
 
 [[tool.poetry.source]]
 name = "test"
@@ -30,3 +34,8 @@ ruff = "^0.0.270"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]
