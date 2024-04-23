@@ -1,14 +1,14 @@
 {
   "name": "Omero Download",
   "version": "0.1.0-dev0",
-  "title": "Retrieve data from the OMERO NCATS server",
+  "containerId": "polusai/omero-download-tool:0.1.0-dev0",
+  "title": "Omero Download",
   "description": "This plugin allows to retrieve the microscopy image data from the OMERO NCATS server.",
   "author": "Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/PolusAI/image-tools",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/omero-download-tool:0.1.0-dev0",
   "baseCommand": [
     "python3",
     "-m",
