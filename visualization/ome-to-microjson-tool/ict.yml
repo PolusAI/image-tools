@@ -1,10 +1,10 @@
 author:
 - Hamdah Shafqat
 contact: hamdahshafqat.abbasi@nih.gov
-container: polusai/microjson-to-ome-tool:0.1.5-dev0
-description: This plugin reconstruct binary images using polygon coordinates (rectangle,
-  encodings) of objects from microjson file.
-entrypoint: python3 -m polus.images.visualization.microjson_to_ome
+container: polusai/ome-to-microjson-tool:0.1.5-dev1
+description: This plugin converts binary segmentations to micojson of polygon coordinates
+  (rectangle, encodings) of binary segmentations.
+entrypoint: python3 -m polus.images.visualization.ome_to_microjson
 inputs:
 - description: Input image collection to be processed by this plugin.
   format:
@@ -18,13 +18,19 @@ inputs:
   name: filePattern
   required: false
   type: string
+- description: Select polygon type from [rectangle, encoding].
+  format:
+  - polygonType
+  name: polygonType
+  required: true
+  type: string
 - description: Generate an output preview.
   format:
   - preview
   name: preview
   required: false
   type: boolean
-name: polusai/Reconstructbinaryimageusingpolygoncoordinatesofobjects
+name: polusai/OmeToMicrojson
 outputs:
 - description: Output collection.
   format:
@@ -32,9 +38,9 @@ outputs:
   name: outDir
   required: true
   type: path
-repository: https://github.com/labshare/polus-plugins
+repository: https://github.com/polusai/polus-images
 specVersion: 1.0.0
-title: Reconstruct binary image using polygon coordinates of objects
+title: Ome To Microjson
 ui:
 - description: Input image collection to be processed by this plugin.
   key: inputs.inpDir
@@ -44,8 +50,15 @@ ui:
   key: inputs.filePattern
   title: Filename pattern
   type: text
+- description: Select polygon type from [rectangle, encoding].
+  fields:
+  - rectangle
+  - encoding
+  key: inputs.polygonType
+  title: Type of Polygon
+  type: select
 - description: Generate an output preview.
   key: inputs.preview
   title: Preview example output of this plugin
   type: checkbox
-version: 0.1.5-dev0
+version: 0.1.5-dev1

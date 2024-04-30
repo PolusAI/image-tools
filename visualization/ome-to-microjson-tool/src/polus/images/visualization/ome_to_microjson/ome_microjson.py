@@ -165,7 +165,7 @@ class OmeMicrojsonModel:
             with Path.open(Path(out_combined, out_file), "w") as fw:
                 for i, fl in zip(range(1, len(files) + 1), files()):
                     file = fl[1][0]
-                    line_number = self.get_line_number(file, "coordinatesystem")
+                    line_number = self.get_line_number(file, "multiscale")
                     total_lines = 0
                     with Path.open(Path(file)) as file:
                         for _ in file:
@@ -355,21 +355,19 @@ class OmeMicrojsonModel:
             type="FeatureCollection",
             properties=properties,
             features=features,
-            value_range=valrange_dict,
-            coordinatesystem={
+            valueRange=valrange_dict,
+            multiscale={
                 "axes": [
                     {
                         "name": "x",
                         "unit": "micrometer",
-                        "type": "cartesian",
-                        "pixelsPerUnit": 1,
+                        "type": "space",
                         "description": "x-axis",
                     },
                     {
                         "name": "y",
                         "unit": "micrometer",
-                        "type": "cartesian",
-                        "pixelsPerUnit": 1,
+                        "type": "space",
                         "description": "y-axis",
                     },
                 ],

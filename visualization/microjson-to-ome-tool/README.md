@@ -1,4 +1,4 @@
-# Microjson To Ome(v0.1.5-dev0)
+# Microjson To Ome(v0.1.5-dev1)
 
 This plugin reconstructs binary image from polygon coordinates reserved in microjson file format
 
