@@ -28,7 +28,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/ome-to-microjson-tool:0.1.5-dev0
+    dockerPull: polusai/ome-to-microjson-tool:0.1.5-dev1
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)
