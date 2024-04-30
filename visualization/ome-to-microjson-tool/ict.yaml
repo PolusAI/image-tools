@@ -1,7 +1,7 @@
 author:
 - Hamdah Shafqat
 contact: hamdahshafqat.abbasi@nih.gov
-container: polusai/ome-to-microjson-tool:0.1.5-dev0
+container: polusai/ome-to-microjson-tool:0.1.5-dev1
 description: This plugin create a microjson of polygon coordinates (rectangle, encodings)
   of binary segmentations.
 entrypoint: python3 -m polus.images.visualization.ome_to_microjson
@@ -61,4 +61,4 @@ ui:
   key: inputs.preview
   title: Preview example output of this plugin
   type: checkbox
-version: 0.1.5-dev0
+version: 0.1.5-dev1
