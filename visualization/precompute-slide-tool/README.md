@@ -1,4 +1,4 @@
-# Polus Precompute Slide Plugin (1.7.1)
+# Polus Precompute Slide Plugin (1.7.2-dev0)
 
 This WIPP plugin generates image pyramids in multiple viewing formats. Each
 output has a special filepattern variable that will be used to combine images
@@ -37,7 +37,22 @@ This plugin can take four types of input argument and one output argument:
 | Name          | Description                                           | I/O    | Type    |
 | ------------- | ----------------------------------------------------- | ------ | ------- |
 | `inpDir`      | Input image collection (Single Image Planes/Z Stacks) | Input  | Path    |
-| `pyramidType` | DeepZoom/Neuroglancer/Zarr                            | Input  | String  |
+| `pyramidType` | DeepZoom/Neuroglancer/Zarr                            | Input  | Enum    |
 | `filePattern` | Image pattern                                         | Input  | String  |
-| `imageType`   | Neuroglancer type (Intensity/Segmentation)            | Input  | String  |
+| `imageType`   | Neuroglancer type (Intensity/Segmentation)            | Input  | Enum    |
 | `outDir`      | Output image pyramid                                  | Output | Pyramid |
+
+### Pyramid Types
+
+Must be one of the following:
+
+- `DeepZoom`
+- `Neuroglancer`
+- `Zarr`
+
+### Image Types
+
+Must be one of the following:
+
+- `Intensity`
+- `Segmentation` (Neuroglancer only)
