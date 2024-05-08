@@ -8,13 +8,13 @@ entrypoint: python3 -m polus.images.formats.tabular_to_arrow
 inputs:
 - description: Filename pattern used to separate data
   format:
-  - filePattern
+  - enum
   name: filePattern
   required: true
   type: string
 - description: Input image collection to be processed by this plugin
   format:
-  - inpDir
+  - genericData
   name: inpDir
   required: true
   type: path
@@ -22,7 +22,7 @@ name: polusai/TabulartoArrow
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - genericData
   name: outDir
   required: true
   type: path

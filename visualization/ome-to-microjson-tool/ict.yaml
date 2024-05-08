@@ -8,25 +8,25 @@ entrypoint: python3 -m polus.images.visualization.ome_to_microjson
 inputs:
 - description: Input image collection to be processed by this plugin.
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: Filename pattern used to separate data.
   format:
-  - filePattern
+  - string
   name: filePattern
   required: false
   type: string
 - description: Select polygon type from [rectangle, encoding].
   format:
-  - polygonType
+  - enum
   name: polygonType
   required: true
   type: string
 - description: Generate an output preview.
   format:
-  - preview
+  - boolean
   name: preview
   required: false
   type: boolean
@@ -34,7 +34,7 @@ name: polusai/Convertbinarysegmentationstomicojson
 outputs:
 - description: Output collection.
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

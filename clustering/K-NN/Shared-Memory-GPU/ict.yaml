@@ -7,26 +7,26 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input csv file containing the raw data
   format:
-  - inputPath
+  - csvCollection
   name: inputPath
   required: true
   type: path
 - description: The desired number of Nearest Neighbors (NN) to be computed
   format:
-  - K
+  - number
   name: K
   required: true
   type: number
 - description: The rate at which the sampling is conducted. The values closer to 1
     provides more accurate results but the execution takes longer.
   format:
-  - sampleRate
+  - number
   name: sampleRate
   required: true
   type: number
 - description: The threshold for the convergence
   format:
-  - convThreshold
+  - number
   name: convThreshold
   required: true
   type: number
@@ -35,7 +35,7 @@ outputs:
 - description: The full path to the output csv collections containing indices and
     distances of K-NNs
   format:
-  - outputPath
+  - csvCollection
   name: outputPath
   required: true
   type: path

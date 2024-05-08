@@ -7,31 +7,31 @@ entrypoint: python3 -m polus.images.transforms.images.image_calculator
 inputs:
 - description: The first set of images
   format:
-  - primaryDir
+  - collection
   name: primaryDir
   required: true
   type: path
 - description: Filename pattern used to separate data
   format:
-  - primaryPattern
+  - string
   name: primaryPattern
   required: false
   type: string
 - description: The operation to perform
   format:
-  - operator
+  - enum
   name: operator
   required: true
   type: string
 - description: The second set of images
   format:
-  - secondaryDir
+  - collection
   name: secondaryDir
   required: true
   type: path
 - description: Filename pattern used to separate data
   format:
-  - secondaryPattern
+  - string
   name: secondaryPattern
   required: false
   type: string
@@ -39,7 +39,7 @@ name: polusai/ImageCalculator
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

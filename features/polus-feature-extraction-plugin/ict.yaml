@@ -7,56 +7,56 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Labeled image collection
   format:
-  - segDir
+  - collection
   name: segDir
   required: false
   type: path
 - description: Intensity image collection
   format:
-  - intDir
+  - collection
   name: intDir
   required: false
   type: path
 - description: To match intensity and labeled/segmented image
   format:
-  - filePattern
+  - string
   name: filePattern
   required: true
   type: string
 - description: Pixel distance to calculate the neighbors touching cells
   format:
-  - pixelDistance
+  - integer
   name: pixelDistance
   required: false
   type: number
 - description: Select features for extraction
   format:
-  - features
+  - array
   name: features
   required: true
   type: array
 - description: 'csvfile : singlecsv for saving values in one csv file and separate
     csv to save values for each image in separate csv file'
   format:
-  - csvfile
+  - enum
   name: csvfile
   required: true
   type: string
 - description: Use embedded pixel size
   format:
-  - embeddedpixelsize
+  - boolean
   name: embeddedpixelsize
   required: false
   type: boolean
 - description: Unit name
   format:
-  - unitLength
+  - string
   name: unitLength
   required: false
   type: string
 - description: Enter the number of pixels per unit of the metric
   format:
-  - pixelsPerunit
+  - number
   name: pixelsPerunit
   required: false
   type: number
@@ -64,7 +64,7 @@ name: polusai/FeatureExtraction
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - csvCollection
   name: outDir
   required: true
   type: path

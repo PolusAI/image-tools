@@ -8,25 +8,25 @@ entrypoint: python3 -m polus.images.transforms.images.image_assembler
 inputs:
 - description: Stitching vector for data
   format:
-  - stitchPath
+  - stitchingVector
   name: stitchPath
   required: true
   type: path
 - description: Input image collection to be processed by this plugin
   format:
-  - imgPath
+  - collection
   name: imgPath
   required: true
   type: path
 - description: Label images by timeslice rather than analyzing input image names
   format:
-  - timesliceNaming
+  - boolean
   name: timesliceNaming
   required: false
   type: boolean
 - description: Generate preview of outputs.
   format:
-  - preview
+  - boolean
   name: preview
   required: false
   type: boolean
@@ -34,7 +34,7 @@ name: polusai/ImageAssembler
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

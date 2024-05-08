@@ -9,38 +9,38 @@ entrypoint: python3 -m polus.images.features.feature_segmentation_eval
 inputs:
 - description: Ground truth feature collection to be processed by this plugin.
   format:
-  - GTDir
+  - genericData
   name: GTDir
   required: true
   type: path
 - description: Predicted feature collection to be processed by this plugin.
   format:
-  - PredDir
+  - genericData
   name: PredDir
   required: true
   type: path
 - description: Filename pattern used to separate data.
   format:
-  - filePattern
+  - string
   name: filePattern
   required: false
   type: string
 - description: Boolean to calculate number of bins for histogram by combining GT and
     Predicted Labels.
   format:
-  - combineLabels
+  - boolean
   name: combineLabels
   required: false
   type: boolean
 - description: Boolean to save output file as a single file.
   format:
-  - singleOutFile
+  - boolean
   name: singleOutFile
   required: false
   type: boolean
 - description: Generate an output preview.
   format:
-  - preview
+  - boolean
   name: preview
   required: false
   type: boolean
@@ -48,7 +48,7 @@ name: polusai/FeatureSegmentationEval
 outputs:
 - description: Output collection.
   format:
-  - outDir
+  - genericData
   name: outDir
   required: true
   type: path

@@ -8,43 +8,43 @@ entrypoint: python3 -m polus.images.regression.theia_bleedthrough_estimation
 inputs:
 - description: Input image collection.
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: File pattern to subset images.
   format:
-  - filePattern
+  - string
   name: filePattern
   required: false
   type: string
 - description: Variables to group together.
   format:
-  - groupBy
+  - string
   name: groupBy
   required: false
   type: string
 - description: Channel ordering by wavelength scale.
   format:
-  - channelOrdering
+  - string
   name: channelOrdering
   required: false
   type: string
 - description: Method to use for selecting tiles.
   format:
-  - selectionCriterion
+  - enum
   name: selectionCriterion
   required: false
   type: string
 - description: Number of adjacent channels to consider.
   format:
-  - channelOverlap
+  - number
   name: channelOverlap
   required: false
   type: number
 - description: Size of convolution kernels to learn.
   format:
-  - kernelSize
+  - number
   name: kernelSize
   required: false
   type: number
@@ -52,7 +52,7 @@ name: polusai/BleedThroughEstimation
 outputs:
 - description: Location for writing bleed-through components.
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

@@ -8,13 +8,13 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input image collection to be processed by this plugin
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: City block connectivity
   format:
-  - connectivity
+  - number
   name: connectivity
   required: true
   type: number
@@ -22,7 +22,7 @@ name: labshare/FTLLabel
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

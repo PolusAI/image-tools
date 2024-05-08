@@ -8,26 +8,26 @@ entrypoint: python3 -m polus.images.regression.basic_flatfield_estimation
 inputs:
 - description: Input image collection.
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: Filename pattern used to separate images by channel, timepoint, and
     replicate.
   format:
-  - filePattern
+  - string
   name: filePattern
   required: true
   type: string
 - description: Group images together for flatfield by variable.
   format:
-  - groupBy
+  - string
   name: groupBy
   required: false
   type: string
 - description: Calculate darkfield image.
   format:
-  - getDarkfield
+  - boolean
   name: getDarkfield
   required: true
   type: boolean
@@ -35,7 +35,7 @@ name: polusai/FlatfieldEstimationusingBaSiCalgorithm.
 outputs:
 - description: Output data for the plugin
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

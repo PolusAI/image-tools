@@ -7,37 +7,37 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Filename pattern used to match darkfield files to image files
   format:
-  - darkPattern
+  - string
   name: darkPattern
   required: false
   type: string
 - description: Image collection containing flatfield and/or darkfield images
   format:
-  - ffDir
+  - collection
   name: ffDir
   required: true
   type: path
 - description: Filename pattern used to match brightfield files to image files
   format:
-  - brightPattern
+  - string
   name: brightPattern
   required: true
   type: string
 - description: Input image collection to be processed by this plugin
   format:
-  - imgDir
+  - collection
   name: imgDir
   required: true
   type: path
 - description: Filename pattern used to separate data and match with flatfied files
   format:
-  - imgPattern
+  - string
   name: imgPattern
   required: true
   type: string
 - description: Filename pattern used to match photobleach files to image files
   format:
-  - photoPattern
+  - string
   name: photoPattern
   required: true
   type: string
@@ -45,7 +45,7 @@ name: polusai/ApplyFlatfield
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

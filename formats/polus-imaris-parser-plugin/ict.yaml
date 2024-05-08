@@ -8,7 +8,7 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input image collection to be processed by this plugin
   format:
-  - inpdir
+  - collection
   name: inpdir
   required: true
   type: path
@@ -16,13 +16,13 @@ name: polusai/ImarisParser
 outputs:
 - description: Metadata directory that stores overall data
   format:
-  - metaoutdir
+  - collection
   name: metaoutdir
   required: true
   type: path
 - description: Output collection
   format:
-  - outdir
+  - csvCollection
   name: outdir
   required: true
   type: path

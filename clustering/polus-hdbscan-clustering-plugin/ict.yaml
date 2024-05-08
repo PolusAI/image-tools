@@ -7,38 +7,38 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input CSV file collection
   format:
-  - inpDir
+  - csvCollection
   name: inpDir
   required: true
   type: path
 - description: Regular expression for optional row grouping.
   format:
-  - groupingPattern
+  - string
   name: groupingPattern
   required: false
   type: string
 - description: Whether to average data across groups. Requires grouping pattern to
     be defined.
   format:
-  - averageGroups
+  - boolean
   name: averageGroups
   required: false
   type: boolean
 - description: Name of column containing labels. Required for grouping pattern.
   format:
-  - labelCol
+  - string
   name: labelCol
   required: false
   type: string
 - description: Minimum cluster size
   format:
-  - minClusterSize
+  - integer
   name: minClusterSize
   required: true
   type: number
 - description: Increments outlier ID to 1
   format:
-  - incrementOutlierId
+  - boolean
   name: incrementOutlierId
   required: false
   type: boolean
@@ -46,7 +46,7 @@ name: polusai/HDBSCANClustering
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - csvCollection
   name: outDir
   required: true
   type: path

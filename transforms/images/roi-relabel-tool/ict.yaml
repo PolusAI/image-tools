@@ -8,13 +8,13 @@ entrypoint: python3 -m polus.images.transforms.images.roi_relabel
 inputs:
 - description: Input image collection to be processed by this plugin.
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: What operation to perform on the images.
   format:
-  - method
+  - enum
   name: method
   required: false
   type: string
@@ -22,7 +22,7 @@ name: polusai/RoIRelabel
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

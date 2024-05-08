@@ -7,25 +7,25 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input image collection to be processed by this plugin.
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: Number of spectral features to compute.
   format:
-  - numFeatures
+  - integer
   name: numFeatures
   required: true
   type: number
 - description: Calculate scale invariant features.
   format:
-  - scaleInvariant
+  - boolean
   name: scaleInvariant
   required: true
   type: boolean
 - description: Maximum number of faces for generated meshes.
   format:
-  - limitMeshSize
+  - integer
   name: limitMeshSize
   required: false
   type: number
@@ -33,7 +33,7 @@ name: polusai/ObjectSpectralfeaturization
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - csvCollection
   name: outDir
   required: true
   type: path

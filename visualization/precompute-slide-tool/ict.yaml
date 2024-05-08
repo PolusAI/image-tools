@@ -10,25 +10,25 @@ entrypoint: python3 -m polus.images.visualization.precompute_slide
 inputs:
 - description: Input collection
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: Build a DeepZoom, Neuroglancer, Zarr pyramid
   format:
-  - pyramidType
+  - enum
   name: pyramidType
   required: true
   type: string
 - description: Image is either Segmentation or Image
   format:
-  - imageType
+  - enum
   name: imageType
   required: false
   type: string
 - description: Pattern of the images in Input
   format:
-  - filePattern
+  - string
   name: filePattern
   required: false
   type: string
@@ -36,7 +36,7 @@ name: polusai/PrecomputeSlideViewer
 outputs:
 - description: Precomputed output
   format:
-  - outDir
+  - pyramid
   name: outDir
   required: true
   type: path

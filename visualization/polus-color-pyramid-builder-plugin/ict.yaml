@@ -7,45 +7,45 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input image collection to be processed by this plugin
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: Filename pattern used to separate data
   format:
-  - filePattern
+  - string
   name: filePattern
   required: true
   type: string
 - description: Color ordering up to 7 colors (e.g. 1,11,,,,5,6)
   format:
-  - layout
+  - string
   name: layout
   required: true
   type: string
 - description: Set bounds (should be float-float, int-int, or blank, e.g. 0.01-0.99,0-16000,,,,,)
   format:
-  - bounds
+  - string
   name: bounds
   required: false
   type: string
 - description: If true, transparency is related to pixel intensity, where black is
     fully transparent.
   format:
-  - alpha
+  - boolean
   name: alpha
   required: false
   type: boolean
 - description: If stitching path is given, will assemble images in the collection
     according to the stitching vector.
   format:
-  - stitchPath
+  - stitchingVector
   name: stitchPath
   required: false
   type: path
 - description: Gray level fill intensity. Ignored if stitchPath is undefined.
   format:
-  - background
+  - number
   name: background
   required: false
   type: number
@@ -53,7 +53,7 @@ name: polusai/ColorPyramidBuilder
 outputs:
 - description: Output pyramid path.
   format:
-  - outDir
+  - pyramid
   name: outDir
   required: true
   type: path

@@ -8,37 +8,37 @@ entrypoint: python3 -m polus.images.transforms.images.apply_flatfield
 inputs:
 - description: Input image collection to be processed by this plugin
   format:
-  - imgDir
+  - collection
   name: imgDir
   required: true
   type: path
 - description: Filename pattern used to separate data and match with flatfied files
   format:
-  - imgPattern
+  - string
   name: imgPattern
   required: true
   type: string
 - description: Image collection containing flatfield and/or darkfield images
   format:
-  - ffDir
+  - collection
   name: ffDir
   required: true
   type: path
 - description: Filename pattern used to match flatfield files to image files
   format:
-  - ffPattern
+  - string
   name: ffPattern
   required: true
   type: string
 - description: Filename pattern used to match darkfield files to image files
   format:
-  - dfPattern
+  - string
   name: dfPattern
   required: false
   type: string
 - description: Preview the output images' names without actually running computation
   format:
-  - preview
+  - boolean
   name: preview
   required: false
   type: boolean
@@ -46,7 +46,7 @@ name: polusai/ApplyFlatfield
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

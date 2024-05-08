@@ -9,43 +9,43 @@ entrypoint: python3 -m polus.images.clustering.k_means
 inputs:
 - description: Input tabular data
   format:
-  - inpDir
+  - genericData
   name: inpDir
   required: true
   type: path
 - description: Pattern to parse input files
   format:
-  - filePattern
+  - string
   name: filePattern
   required: false
   type: string
 - description: Select Manual or Elbow or Calinski Harabasz or Davies Bouldin methods
   format:
-  - methods
+  - enum
   name: methods
   required: true
   type: string
 - description: 'Enter minimum k-value:'
   format:
-  - minimumRange
+  - number
   name: minimumRange
   required: false
   type: number
 - description: 'Enter maximum k-value:'
   format:
-  - maximumRange
+  - number
   name: maximumRange
   required: false
   type: number
 - description: 'Number of clusters:'
   format:
-  - numOfClus
+  - number
   name: numOfClus
   required: false
   type: number
 - description: Output a JSON preview of outputs produced by this plugin
   format:
-  - preview
+  - boolean
   name: preview
   required: false
   type: boolean
@@ -53,7 +53,7 @@ name: polusai/K-MeansClustering
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - genericData
   name: outDir
   required: true
   type: path

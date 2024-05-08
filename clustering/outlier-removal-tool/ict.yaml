@@ -7,31 +7,31 @@ entrypoint: python3 -m polus.images.clustering.outlier_removal
 inputs:
 - description: Input tabular data.
   format:
-  - inpDir
+  - genericData
   name: inpDir
   required: true
   type: path
 - description: Filename pattern used to separate data.
   format:
-  - filePattern
+  - string
   name: filePattern
   required: false
   type: string
 - description: Select methods for outlier removal
   format:
-  - method
+  - enum
   name: method
   required: false
   type: string
 - description: Select type of output file
   format:
-  - outputType
+  - enum
   name: outputType
   required: false
   type: string
 - description: Generate an output preview.
   format:
-  - preview
+  - boolean
   name: preview
   required: false
   type: boolean
@@ -39,7 +39,7 @@ name: polusai/OutlierRemoval
 outputs:
 - description: Output collection.
   format:
-  - outDir
+  - genericData
   name: outDir
   required: true
   type: path
