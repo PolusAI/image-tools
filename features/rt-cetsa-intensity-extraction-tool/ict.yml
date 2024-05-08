@@ -1,0 +1,51 @@
+author:
+- Nick Schaub
+- Najib Ishaq
+contact: nick.schaub@nih.gov
+container: polusai/rt-cetsa-intensity-extraction-tool:0.1.0
+description: Extract well intensities from RT-CETSA plate images and masks.
+entrypoint: python3 -m polus.images.features.rt_cetsa_intensity_extraction
+inputs:
+- description: Input data collection to be processed by this tool
+  format:
+  - inpDir
+  name: inpDir
+  required: true
+  type: path
+- description: Filepattern to parse input files
+  format:
+  - pattern
+  name: pattern
+  required: false
+  type: string
+- description: Generate an output preview.
+  format:
+  - preview
+  name: preview
+  required: false
+  type: boolean
+name: polusai/RTCETSAIntensityExtraction
+outputs:
+- description: Output data
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/PolusAI/image-tools
+specVersion: 1.0.0
+title: RT-CETSA Intensity Extraction
+ui:
+- description: Input data collection
+  key: inputs.inpDir
+  title: Input data collection
+  type: path
+- description: Filepattern to parse input files
+  key: inputs.pattern
+  title: pattern
+  type: text
+- description: Generate an output preview.
+  key: inputs.preview
+  title: Preview example output of this plugin
+  type: checkbox
+version: 0.1.0
