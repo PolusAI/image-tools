@@ -8,19 +8,19 @@ entrypoint: python3 -m polus.images.visualization.microjson_to_ome
 inputs:
 - description: Input image collection to be processed by this plugin.
   format:
-  - inpDir
+  - genericData
   name: inpDir
   required: true
   type: path
 - description: Filename pattern used to separate data.
   format:
-  - filePattern
+  - string
   name: filePattern
   required: false
   type: string
 - description: Generate an output preview.
   format:
-  - preview
+  - boolean
   name: preview
   required: false
   type: boolean
@@ -28,7 +28,7 @@ name: polusai/MicrojsonToOme
 outputs:
 - description: Output collection.
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

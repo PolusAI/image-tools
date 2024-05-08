@@ -7,61 +7,61 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input image collection to be processed by this plugin
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: Filename pattern used to separate data
   format:
-  - filePattern
+  - string
   name: filePattern
   required: true
   type: string
 - description: variables to group by in a section
   format:
-  - groupVar
+  - string
   name: groupVar
   required: true
   type: string
 - description: variables to divide larger sections
   format:
-  - sectionVar
+  - string
   name: sectionVar
   required: false
   type: string
 - description: CSV collection containing features
   format:
-  - csvDir
+  - csvCollection
   name: csvDir
   required: true
   type: path
 - description: Feature to use to subset data
   format:
-  - feature
+  - string
   name: feature
   required: true
   type: string
 - description: Percentile to remove
   format:
-  - percentile
+  - number
   name: percentile
   required: true
   type: number
 - description: remove direction above or below percentile
   format:
-  - removeDirection
+  - enum
   name: removeDirection
   required: true
   type: string
 - description: Number of images to capture outside the cutoff
   format:
-  - padding
+  - string
   name: padding
   required: false
   type: string
 - description: write output image collection or not
   format:
-  - writeOutput
+  - boolean
   name: writeOutput
   required: false
   type: boolean
@@ -69,7 +69,7 @@ name: polusai/FeatureSubsetting
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

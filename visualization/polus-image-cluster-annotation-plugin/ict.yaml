@@ -8,19 +8,19 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input image file collection
   format:
-  - imgdir
+  - collection
   name: imgdir
   required: true
   type: path
 - description: Input csv file collection
   format:
-  - csvdir
+  - csvCollection
   name: csvdir
   required: true
   type: path
 - description: 'Enter border width:'
   format:
-  - borderwidth
+  - integer
   name: borderwidth
   required: false
   type: number
@@ -28,7 +28,7 @@ name: polusai/Imageclusterannotation
 outputs:
 - description: Output image collection
   format:
-  - outdir
+  - collection
   name: outdir
   required: true
   type: path

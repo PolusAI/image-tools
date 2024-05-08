@@ -7,26 +7,26 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input image collection to be processed by this plugin
   format:
-  - inpDir
+  - csvCollection
   name: inpDir
   required: true
   type: path
 - description: Should csv be removed from the filename when indicating which file
     a row in a csv file came from?
   format:
-  - stripExtension
+  - boolean
   name: stripExtension
   required: true
   type: boolean
 - description: Merging dimension
   format:
-  - dim
+  - enum
   name: dim
   required: true
   type: string
 - description: Perform column merge on all files with the same number of rows?
   format:
-  - sameRows
+  - boolean
   name: sameRows
   required: true
   type: boolean
@@ -34,7 +34,7 @@ name: polusai/CSVMerger
 outputs:
 - description: Output csv file
   format:
-  - outDir
+  - csvCollection
   name: outDir
   required: true
   type: path

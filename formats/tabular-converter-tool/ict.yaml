@@ -9,19 +9,19 @@ entrypoint: python3 -m polus.images.formats.tabular_converter
 inputs:
 - description: Input data collection to be processed by this plugin
   format:
-  - inpDir
+  - genericData
   name: inpDir
   required: true
   type: path
 - description: Pattern to parse input files
   format:
-  - filePattern
+  - string
   name: filePattern
   required: false
   type: string
 - description: File format of an output file
   format:
-  - fileExtension
+  - enum
   name: fileExtension
   required: true
   type: string
@@ -29,7 +29,7 @@ name: polusai/TabularConverter
 outputs:
 - description: Output directory
   format:
-  - outDir
+  - genericData
   name: outDir
   required: true
   type: path

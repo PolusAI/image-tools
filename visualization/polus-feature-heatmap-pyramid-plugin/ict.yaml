@@ -8,32 +8,32 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: CSV collection containing features
   format:
-  - features
+  - csvCollection
   name: features
   required: true
   type: path
 - description: Input image collection used to build a pyramid that this plugin will
     make an overlay for
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: Stitching vector used to buld the image pyramid.
   format:
-  - vector
+  - stitchingVector
   name: vector
   required: true
   type: path
 - description: Method used to create the heatmap
   format:
-  - method
+  - enum
   name: method
   required: true
   type: string
 - description: Store stitching vector in metadata instead of a stitching collection.
   format:
-  - vectorInMetadata
+  - boolean
   name: vectorInMetadata
   required: true
   type: boolean
@@ -41,13 +41,13 @@ name: polusai/FeatureHeatmapPyramid
 outputs:
 - description: Heatmap images
   format:
-  - outImages
+  - collection
   name: outImages
   required: true
   type: path
 - description: Heatmap vectors
   format:
-  - outVectors
+  - stitchingVector
   name: outVectors
   required: true
   type: path

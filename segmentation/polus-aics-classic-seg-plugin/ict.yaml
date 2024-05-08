@@ -7,13 +7,13 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Configuration file for the workflow
   format:
-  - configFile
+  - collection
   name: configFile
   required: true
   type: path
 - description: Input image collection to be processed by this plugin
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
@@ -21,7 +21,7 @@ name: polusai/AicsClassicSegmentation
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

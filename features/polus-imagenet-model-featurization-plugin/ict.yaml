@@ -7,19 +7,19 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input image collection to be processed by this plugin
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: Pre-trained ImageNet model to use for featurization
   format:
-  - model
+  - enum
   name: model
   required: true
   type: string
 - description: Resolution to which the input images are scaled
   format:
-  - resolution
+  - string
   name: resolution
   required: true
   type: string
@@ -27,7 +27,7 @@ name: polusai/ImageNetModelFeaturization
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - csvCollection
   name: outDir
   required: true
   type: path

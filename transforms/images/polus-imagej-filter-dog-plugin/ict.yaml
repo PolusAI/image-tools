@@ -8,37 +8,37 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Operation to peform
   format:
-  - opName
+  - enum
   name: opName
   required: true
   type: string
 - description: The collection to be processed by this plugin
   format:
-  - inpDIr
+  - collection
   name: inpDIr
   required: true
   type: path
 - description: The standard deviation of the first Gaussian filter
   format:
-  - sigma1
+  - number
   name: sigma1
   required: false
   type: number
 - description: The standard deviation of the second Gaussian filter
   format:
-  - sigma2
+  - number
   name: sigma2
   required: false
   type: number
 - description: The standard deviations of the first Gaussian filter (x,y)
   format:
-  - sigmas1
+  - array
   name: sigmas1
   required: false
   type: array
 - description: The standard deviations of the second Gaussian filter (x,y)
   format:
-  - sigmas2
+  - array
   name: sigmas2
   required: false
   type: array
@@ -46,7 +46,7 @@ name: polusai/ImageJfilterdog
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

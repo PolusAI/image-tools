@@ -8,38 +8,38 @@ entrypoint: python3 -m polus.images.features.pixel_segmentation_eval
 inputs:
 - description: Ground truth input image collection to be processed by this plugin.
   format:
-  - GTDir
+  - collection
   name: GTDir
   required: true
   type: path
 - description: Predicted input image collection to be processed by this plugin.
   format:
-  - PredDir
+  - collection
   name: PredDir
   required: true
   type: path
 - description: Number of classes.
   format:
-  - inputClasses
+  - number
   name: inputClasses
   required: true
   type: number
 - description: Filename pattern to filter data.
   format:
-  - filePattern
+  - string
   name: filePattern
   required: false
   type: string
 - description: Boolean to create separate result file per image. Default is false.
   format:
-  - individualStats
+  - boolean
   name: individualStats
   required: false
   type: boolean
 - description: Boolean to calculate overall statistics across all images. Default
     is false.
   format:
-  - totalStats
+  - boolean
   name: totalStats
   required: false
   type: boolean
@@ -47,7 +47,7 @@ name: polusai/PixelSegmentationEval
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - genericData
   name: outDir
   required: true
   type: path

@@ -9,19 +9,19 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input collection
   format:
-  - inpDir
+  - csvCollection
   name: inpDir
   required: true
   type: path
 - description: The number of bins in each graph
   format:
-  - bincount
+  - enum
   name: bincount
   required: true
   type: string
 - description: The scale used to generate the graphs
   format:
-  - scale
+  - enum
   name: scale
   required: false
   type: string
@@ -29,7 +29,7 @@ name: polusai/GraphPyramidBuilding
 outputs:
 - description: DeepZoom pyramid output
   format:
-  - outDir
+  - pyramid
   name: outDir
   required: true
   type: path

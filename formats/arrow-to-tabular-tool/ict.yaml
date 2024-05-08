@@ -8,13 +8,13 @@ entrypoint: python3 -m polus.images.formats.arrow_to_tabular
 inputs:
 - description: Output file type to convert from feather file
   format:
-  - fileFormat
+  - enum
   name: fileFormat
   required: true
   type: string
 - description: Input image collection to be processed by this plugin
   format:
-  - inpDir
+  - genericData
   name: inpDir
   required: true
   type: path
@@ -22,7 +22,7 @@ name: polusai/ArrowtoTabular
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - genericData
   name: outDir
   required: true
   type: path
