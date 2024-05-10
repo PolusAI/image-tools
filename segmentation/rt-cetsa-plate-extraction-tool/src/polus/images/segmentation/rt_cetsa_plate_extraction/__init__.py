@@ -29,6 +29,7 @@ def extract_plate(file_path: pathlib.Path) -> tuple[numpy.ndarray, numpy.ndarray
         params.bbox[2] : params.bbox[3],
     ].astype(image.dtype)
 
+    params = core.get_plate_params(rotated_image)
     mask = numpy.zeros_like(rotated_image, dtype=numpy.uint16)
     for i, (x, y) in enumerate(itertools.product(params.X, params.Y), start=1):
         rr, cc = disk((y, x), params.radii)
