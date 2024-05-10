@@ -9,11 +9,13 @@ from enum import Enum
 
 import bfio
 import numpy
+import numpy as np
 import pandas
 from skimage.draw import disk
 from skimage.transform import rotate
 
-TEMPERATURE_RANGE = [37, 95]
+ADD_TEMP = True
+TEMPERATURE_RANGE = [37, 90]
 
 
 class PlateSize(Enum):
@@ -40,7 +42,7 @@ PLATE_DIMS = {
 def extract_intensities(
     image_path: pathlib.Path,
     mask_path: pathlib.Path,
-) -> list[float]:
+) -> list[int]:
     """Extract well intensities from RT_CETSA image and mask.
 
     Args:
@@ -58,24 +60,25 @@ def extract_intensities(
     max_mask_index = numpy.max(mask)
     intensities = []
     for i in range(1, max_mask_index + 1):
-        mask_index = mask == i
-        mask_values = image[mask_index]
+        current_mask = mask == i
+        image[current_mask]
 
         # find a square bounding box around the mask
-        bbox = numpy.argwhere(mask_index)
+        bbox = numpy.argwhere(current_mask)
         bbox_x_min = numpy.min(bbox[0])
         bbox_x_max = numpy.max(bbox[0])
         bbox_y_min = numpy.min(bbox[1])
         bbox_y_max = numpy.max(bbox[1])
-        bbox_values = image[bbox_x_min:bbox_x_max, bbox_y_min:bbox_y_max]
 
-        # find the mean intensity of the background and the mask
-        mean_background = (numpy.sum(bbox_values) - numpy.sum(mask_values)) / (
-            bbox_values.size - mask_values.size
+        patch = image[bbox_y_min:bbox_y_max, bbox_x_min:bbox_x_max]
+        background = patch.ravel()
+        background.sort()
+        corrected_mean_intensity = int(
+            np.mean(patch) - np.mean(background[: int(0.05 * background.size)]),
         )
-        mean_intensities = numpy.mean(mask_values)
 
-        intensities.append(mean_intensities - mean_background)
+        # Subtract lowest pixel values from average pixel values
+        intensities.append(corrected_mean_intensity)
 
     return intensities
 
@@ -86,6 +89,7 @@ def index_to_battleship(x: int, y: int, size: PlateSize) -> str:
     Args:
         x: x-position of the well centerpoint
         y: y-position of the well centerpoint
+        size: size of the plate
 
     Returns:
         str: The string representation of the well index (i.e. A1)
@@ -96,10 +100,7 @@ def index_to_battleship(x: int, y: int, size: PlateSize) -> str:
         row = "A"
     row = row + string.ascii_uppercase[y % 26]
 
-    # TODO: uncomment this when we are ready to deploy, this is the standard notation
-    # if size.value >= 96:
-
-    return f"{row}{x+1}"
+    return f"{row}{x + 1:02d}" if size.value >= 96 else f"{row}{x + 1}"
 
 
 def build_df(
@@ -113,33 +114,47 @@ def build_df(
     Returns:
         Pandas DataFrame with well intensities.
     """
-    intensities: list[tuple[float, list[float]]] = []
+    intensities: list[tuple[float, list[int]]] = []
+
+    if not ADD_TEMP:
+        raise NotImplementedError
+
+    if len(file_paths) < 1:
+        raise ValueError(
+            "provide at least 2 images on the temperature interval"
+            + f"{TEMPERATURE_RANGE[0]}-{TEMPERATURE_RANGE[1]}",
+        )
+
     for i, (image_path, mask_path) in enumerate(file_paths):
         temp = TEMPERATURE_RANGE[0] + i / (len(file_paths) - 1) * (
             TEMPERATURE_RANGE[1] - TEMPERATURE_RANGE[0]
         )
-        intensities.append((temp, extract_intensities(image_path, mask_path)))
+        row = (temp, extract_intensities(image_path, mask_path))
+        intensities.append(row)
 
     # sort intensities by temperature
     intensities.sort(key=lambda x: x[0])
 
+    # check the first plate for number of wells
+    nb_wells = len(intensities[0][1])
+    plate_size = PlateSize(nb_wells)
+
     # build header
     header = ["Temperature"]
-    plate_size = PlateSize(len(intensities[0][1]))
+    plate_row = range(PLATE_DIMS[plate_size][0])
+    plate_col = range(PLATE_DIMS[plate_size][1])
 
-    for x, y in itertools.product(
-        range(PLATE_DIMS[plate_size][0]),
-        range(PLATE_DIMS[plate_size][1]),
-    ):
+    for y, x in itertools.product(plate_row, plate_col):
         header.append(index_to_battleship(x, y, plate_size))
 
     # build DataFrame
-    df = pandas.DataFrame(intensities, columns=header)
+    rows = [[round(measure[0], 1), *measure[1]] for measure in intensities]
+    df = pandas.DataFrame(rows, columns=header)
 
     # Set the temperature as the index
     df.set_index("Temperature", inplace=True)
 
-    # Sort the rows by temperature
+    # Sort the roxws by temperature
     df.sort_index(inplace=True)
 
     return df
