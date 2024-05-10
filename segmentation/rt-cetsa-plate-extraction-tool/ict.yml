@@ -1,12 +1,13 @@
 author:
 - Nick Schaub
 - Najib Ishaq
+- Antoine Gerardin
 contact: nick.schaub@nih.gov
 container: polusai/rt-cetsa-plate-extraction-tool:0.1.0
 description: Rotate and crop images of plates from RT-CETSA; then label the wells.
 entrypoint: python3 -m polus.images.segmentation.rt_cetsa_plate_extraction
 inputs:
-- description: Input data collection to be processed by this tool
+- description: Input directory containing the plate images
   format:
   - inpDir
   name: inpDir
@@ -14,8 +15,8 @@ inputs:
   type: path
 - description: Filepattern to parse input files
   format:
-  - pattern
-  name: pattern
+  - filePattern
+  name: filePattern
   required: false
   type: string
 - description: Generate an output preview.

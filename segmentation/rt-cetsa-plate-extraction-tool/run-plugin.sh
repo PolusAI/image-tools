@@ -14,7 +14,7 @@ LOGLEVEL=INFO
 
 docker run --mount type=bind,source=${datapath},target=/data/  \
             --env POLUS_LOG=${LOGLEVEL} \
-            polusai/rt-cetsa-moltprot-tool:${version} \
+            polusai/rt-cetsa-plate-extraction-tool:${version} \
             --inpDir ${inpDir} \
-            --pattern ${pattern} \
+            --filePattern ${pattern} \
             --outDir ${outDir}

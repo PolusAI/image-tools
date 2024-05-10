@@ -8,7 +8,10 @@ import pathlib
 import bfio
 import filepattern
 import typer
-from polus.images.segmentation.rt_cetsa_plate_extraction import extract_plate
+from polus.images.segmentation.rt_cetsa_plate_extraction.core import (
+    PlateExtractionError,
+)
+from polus.images.segmentation.rt_cetsa_plate_extraction.core import extract_plate
 
 # Initialize the logger
 logging.basicConfig(
@@ -27,7 +30,8 @@ app = typer.Typer()
 def main(
     inp_dir: pathlib.Path = typer.Option(
         ...,
-        help="Input directory containing the data files.",
+        "--inpDir",
+        help="Input directory containing the plate images.",
         exists=True,
         dir_okay=True,
         readable=True,
@@ -35,14 +39,17 @@ def main(
     ),
     pattern: str = typer.Option(
         ".+",
+        "--filePattern",
         help="Pattern to match the files in the input directory.",
     ),
     preview: bool = typer.Option(
         False,
+        "--preview",
         help="Preview the files that will be processed.",
     ),
     out_dir: pathlib.Path = typer.Option(
         ...,
+        "--outDir",
         help="Output directory to save the results.",
         exists=True,
         dir_okay=True,
@@ -63,24 +70,45 @@ def main(
     if preview:
         out_json = {
             "images": [
-                out_dir / "images" / f"{f.stem}{POLUS_IMG_EXT}" for f in inp_files
+                (out_dir / "images" / f"{f.stem}{POLUS_IMG_EXT}").as_posix()
+                for f in inp_files
             ],
             "masks": [
-                out_dir / "masks" / f"{f.stem}{POLUS_IMG_EXT}" for f in inp_files
+                (out_dir / "masks" / f"{f.stem}{POLUS_IMG_EXT}").as_posix()
+                for f in inp_files
             ],
         }
         with (out_dir / "preview.json").open("w") as f:
             json.dump(out_json, f, indent=2)
         return
 
+    (out_dir / "images").mkdir(parents=False, exist_ok=True)
+    (out_dir / "masks").mkdir(parents=False, exist_ok=True)
+
+    failed_detections = []
+
     for f in inp_files:  # type: ignore[assignment]
         logger.info(f"Processing file: {f}")
-        image, mask = extract_plate(f)
-        out_name = f.stem + POLUS_IMG_EXT  # type: ignore[attr-defined]
-        with bfio.BioWriter(out_dir / "images" / out_name) as writer:
-            writer[:] = image
-        with bfio.BioWriter(out_dir / "masks" / out_name) as writer:
-            writer[:] = mask
+        try:
+            image, mask = extract_plate(f)
+            out_name = f.stem + POLUS_IMG_EXT  # type: ignore[attr-defined]
+            with bfio.BioWriter(out_dir / "images" / out_name) as writer:
+                writer.dtype = image.dtype
+                writer.shape = image.shape
+                writer[:] = image
+            with bfio.BioWriter(out_dir / "masks" / out_name) as writer:
+                writer.dtype = mask.dtype
+                writer.shape = mask.shape
+                writer[:] = mask
+        except ValueError as e:
+            logger.error(e)
+            failed_detections.append(f)
+
+    if failed_detections:
+        filenames = [filepath.name for filepath in failed_detections]
+        raise PlateExtractionError(
+            f"{len(failed_detections)} plates could be processed sucessfully: {filenames}",
+        )
 
 
 if __name__ == "__main__":

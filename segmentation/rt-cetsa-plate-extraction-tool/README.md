@@ -1,7 +1,7 @@
-# RT_CETSA Moltprot Regression (v0.1.0)
+# RT_CETSA Plate Extraction Tool (v0.1.0)
 
-This WIPP plugin runs regression analysis for the RT-CETSA pipeline.
-The input csv file should be sorted by `Temperature` column.
+This tool extracts detect wells in a RT-CETSA plate image.
+It outputs a cropped and rotated image and the well detection mask.
 
 ## Building
 
@@ -16,9 +16,9 @@ If WIPP is running, navigate to the plugins page and add a new plugin. Paste the
 
 This plugin takes eight input argument and one output argument:
 
-| Name        | Description                                        | I/O    | Type        |
-|-------------|----------------------------------------------------|--------|-------------|
-| `--inpDir`  | Input data collection to be processed by this tool | Input  | genericData |
-| `--pattern` | Pattern to parse input files                       | Input  | string      |
-| `--outDir`  | Output file                                        | Output | genericData |
-| `--preview` | Generate JSON file with outputs                    | Output | JSON        |
+| Name            | Description                                        | I/O    | Type        |
+|-----------------|----------------------------------------------------|--------|-------------|
+| `--inpDir`      | Input data collection to be processed by this tool | Input  | genericData |
+| `--filePattern` | FilePattern to parse input files                   | Input  | string      |
+| `--outDir`      | Output dir                                         | Output | genericData |
+| `--preview`     | Generate JSON file with outputs                    | Output | JSON        |
