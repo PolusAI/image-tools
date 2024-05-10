@@ -96,9 +96,6 @@ def index_to_battleship(x: int, y: int, size: PlateSize) -> str:
         row = "A"
     row = row + string.ascii_uppercase[y % 26]
 
-    # TODO: uncomment this when we are ready to deploy, this is the standard notation
-    # if size.value >= 96:
-
     return f"{row}{x+1}"
 
 
@@ -122,6 +119,7 @@ def build_df(
 
     # sort intensities by temperature
     intensities.sort(key=lambda x: x[0])
+    rows: list[list[float]] = [[a, *b] for a, b in intensities]
 
     # build header
     header = ["Temperature"]
@@ -134,7 +132,7 @@ def build_df(
         header.append(index_to_battleship(x, y, plate_size))
 
     # build DataFrame
-    df = pandas.DataFrame(intensities, columns=header)
+    df = pandas.DataFrame(rows, columns=header)
 
     # Set the temperature as the index
     df.set_index("Temperature", inplace=True)
