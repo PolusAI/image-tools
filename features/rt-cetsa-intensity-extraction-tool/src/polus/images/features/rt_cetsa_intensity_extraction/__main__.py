@@ -26,6 +26,7 @@ app = typer.Typer()
 def main(
     inp_dir: pathlib.Path = typer.Option(
         ...,
+        "--inpDir",
         help="Input directory containing the data files.",
         exists=True,
         dir_okay=True,
@@ -34,14 +35,17 @@ def main(
     ),
     pattern: str = typer.Option(
         ".+",
+        "--filePattern",
         help="Pattern to match the files in the input directory.",
     ),
     preview: bool = typer.Option(
         False,
+        "--preview",
         help="Preview the files that will be processed.",
     ),
     out_dir: pathlib.Path = typer.Option(
         ...,
+        "--outDir",
         help="Output directory to save the results.",
         exists=True,
         dir_okay=True,
@@ -49,8 +53,8 @@ def main(
         resolve_path=True,
     ),
 ) -> None:
-    """CLI for rt-cetsa-plate-extraction-tool."""
-    logger.info("Starting the CLI for rt-cetsa-plate-extraction-tool.")
+    """CLI for rt-cetsa-intensity-extraction-tool."""
+    logger.info("Starting the CLI for rt-cetsa-v-extraction-tool.")
 
     logger.info(f"Input directory: {inp_dir}")
     logger.info(f"File Pattern: {pattern}")
@@ -58,24 +62,30 @@ def main(
 
     images_dir = inp_dir / "images"
     masks_dir = inp_dir / "masks"
-    assert images_dir.exists(), f"Images directory does not exist: {images_dir}"
-    assert masks_dir.exists(), f"Masks directory does not exist: {masks_dir}"
+    if not images_dir.exists():
+        raise FileNotFoundError(f"Images directory does not exist: {images_dir}")
+    if not masks_dir.exists():
+        raise FileNotFoundError(f"Masks directory does not exist: {masks_dir}")
 
     fp = filepattern.FilePattern(images_dir, pattern)
     img_files: list[pathlib.Path] = [f[1][0] for f in fp()]  # type: ignore[assignment]
     mask_files: list[pathlib.Path] = [masks_dir / f.name for f in img_files]  # type: ignore[assignment]
-    for f in mask_files:
-        assert f.exists(), f"Mask file does not exist: {f}"
 
-    inp_files = list(zip(img_files, mask_files))  # type: ignore[assignment]
+    for f in mask_files:
+        if not f.exists():
+            raise FileNotFoundError(f"Mask file does not exist: {f}")
+
+    row_files = list(zip(img_files, mask_files))
 
     if preview:
-        out_json = {"file": "plate.csv"}
-        with (out_dir / "preview.json").open("w") as writer:
-            json.dump(out_json, writer, indent=2)
+        vals = list(fp.get_unique_values(fp.get_variables()[0])[fp.get_variables()[0]])
+        out_json = {"files": [f"plate_({vals[0]}-{vals[-1]}).csv"]}
+        # TODO check mypy complains
+        with (out_dir / "preview.json").open("w") as f:  # type: ignore[assignment]
+            json.dump(out_json, f, indent=2)  # type: ignore
         return
 
-    df = build_df(inp_files)
+    df = build_df(row_files)
     df.to_csv(out_dir / "plate.csv")
 
 

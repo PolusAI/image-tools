@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Extract well intensities from RT-CETSA plate images and masks."
 authors = [
     "Nick Schaub <nick.schaub@nih.gov>",
+    "Antoine Gerardin <antoine.gerardin@nih.gov>",
     "Najib Ishaq <najib.ishaq@nih.gov>",
 ]
 readme = "README.md"
@@ -16,6 +17,7 @@ filepattern = "^2.0.5"
 pandas = "^2.2.2"
 numpy = "^1.26.4"
 bfio = "^2.3.6"
+scikit-image = "^0.22.0"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
