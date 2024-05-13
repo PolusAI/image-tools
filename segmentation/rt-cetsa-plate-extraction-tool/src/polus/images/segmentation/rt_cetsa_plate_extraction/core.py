@@ -1,9 +1,7 @@
 import itertools
-import pathlib
 from enum import Enum
 
 import numpy as np
-import tifffile
 from pydantic import BaseModel
 from scipy import ndimage as ndi
 from skimage.draw import disk
@@ -13,34 +11,6 @@ from skimage.transform import rotate
 
 class PlateExtractionError(Exception):
     """Raised if the plate could not be processed successfully."""
-
-
-def extract_plate(file_path: pathlib.Path) -> tuple[np.ndarray, np.ndarray]:
-    """Extract wells from an RT_CETSA plate image.
-
-    Args:
-        file_path: Path to the image file.
-
-    Returns:
-        Tuple containing the crop and rotated image and the mask of detected wells.
-    """
-    # TODO replace by bfio
-    image = tifffile.imread(file_path)
-
-    params = get_plate_params(image)
-    crop_and_rotated_image = rotate(image, params.rotate, preserve_range=True)[
-        params.bbox[0] : params.bbox[1],
-        params.bbox[2] : params.bbox[3],
-    ].astype(image.dtype)
-
-    wells_mask = np.zeros_like(crop_and_rotated_image, dtype=np.uint16)
-
-    for mask_label, (x, y) in enumerate(itertools.product(params.X, params.Y), start=1):
-        x_crop, y_crop = (x - params.bbox[2], y - params.bbox[0])
-        rr, cc = disk((y_crop, x_crop), params.radius)
-        wells_mask[rr, cc] = mask_label
-
-    return crop_and_rotated_image, wells_mask
 
 
 class PlateSize(Enum):
@@ -94,6 +64,28 @@ class PlateParams(BaseModel):
 
     Y: list[int]
     """The the y axis points for wells."""
+
+
+def crop_and_rotate(image: np.ndarray, params: PlateParams):
+    """Crop and rotate image according to plate params."""
+    return rotate(image, params.rotate, preserve_range=True)[
+        params.bbox[0] : params.bbox[1],
+        params.bbox[2] : params.bbox[3],
+    ].astype(image.dtype)
+
+
+def create_mask(params: PlateParams):
+    """Create a mask for all wells given the plate parameters."""
+    width = params.bbox[3] - params.bbox[2]
+    heigth = params.bbox[1] - params.bbox[0]
+    wells_mask = np.zeros((heigth, width), dtype=np.uint16)
+
+    for mask_label, (y, x) in enumerate(itertools.product(params.Y, params.X), start=1):
+        x_crop, y_crop = (x - params.bbox[2], y - params.bbox[0])
+        rr, cc = disk((y_crop, x_crop), params.radius)
+        wells_mask[rr, cc] = mask_label
+
+    return wells_mask
 
 
 def get_plate_params(image: np.ndarray) -> PlateParams:
