@@ -72,7 +72,10 @@ def main(
         logger.info(f"Using images subdirectory: {inp_dir}")
 
     fp = filepattern.FilePattern(inp_dir, pattern)
-    img_files: list[pathlib.Path] = [f[1][0] for f in fp()]  # type: ignore[assignment]
+    print(*[f[0] for f in fp()])
+
+    sorted_fp = sorted(fp, key=lambda f: f[0]["index"])
+    img_files: list[pathlib.Path] = [f[1][0] for f in sorted_fp]  # type: ignore[assignment]
 
     vals = list(fp.get_unique_values(fp.get_variables()[0])[fp.get_variables()[0]])
     out_filename = f"plate_({vals[0]}-{vals[-1]}).csv"
