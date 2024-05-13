@@ -1,7 +1,7 @@
 author:
 - Nick Schaub
-- Najib Ishaq
 - Antoine Gerardin
+- Najib Ishaq
 contact: nick.schaub@nih.gov
 container: polusai/rt-cetsa-plate-extraction-tool:0.1.0
 description: Rotate and crop images of plates from RT-CETSA; then label the wells.
