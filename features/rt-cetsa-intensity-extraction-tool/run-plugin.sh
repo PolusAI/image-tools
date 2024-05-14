@@ -4,7 +4,7 @@ datapath=$(readlink --canonicalize data)
 
 # Inputs
 inpDir=/data/input
-pattern=".*"
+filePattern=".*"
 
 # Output paths
 outDir=/data/output
@@ -16,5 +16,5 @@ docker run --mount type=bind,source=${datapath},target=/data/  \
             --env POLUS_LOG=${LOGLEVEL} \
             polusai/rt-cetsa-intensity-extraction-tool:${version} \
             --inpDir ${inpDir} \
-            --pattern ${pattern} \
+            --filePattern ${filePattern} \
             --outDir ${outDir}
