@@ -1,5 +1,6 @@
 author:
 - Nick Schaub
+- Antoine Gerardin
 - Najib Ishaq
 contact: nick.schaub@nih.gov
 container: polusai/rt-cetsa-intensity-extraction-tool:0.1.0
@@ -12,6 +13,12 @@ inputs:
   name: inpDir
   required: true
   type: path
+- description: filename of the plate mask
+  format:
+  - mask
+  name: mask
+  required: false
+  type: string
 - description: Filepattern to parse input files
   format:
   - pattern

@@ -33,18 +33,11 @@ def main(
         readable=True,
         resolve_path=True,
     ),
-    mask: pathlib.Path = typer.Option(
-        ...,
-        "--mask",
-        help="Path of the wells mask.",
-        exists=True,
-        readable=True,
-        resolve_path=True,
-    ),
-    pattern: str = typer.Option(
+    mask: str = typer.Option(None, "--mask", help="plate mask filename."),
+    filePattern: str = typer.Option(
         ".+",
         "--filePattern",
-        help="Pattern to match the files in the input directory.",
+        help="FilePattern to match the files in the input directory.",
     ),
     preview: bool = typer.Option(
         False,
@@ -64,15 +57,30 @@ def main(
     """CLI for rt-cetsa-intensity-extraction-tool."""
     logger.info("Starting the CLI for rt-cetsa-v-extraction-tool.")
     logger.info(f"Input directory: {inp_dir}")
-    logger.info(f"File Pattern: {pattern}")
+    logger.info(f"Mask filename: {mask}")
+    logger.info(f"File Pattern: {filePattern}")
     logger.info(f"Output directory: {out_dir}")
 
-    if (inp_dir / "images").exists():
-        inp_dir = inp_dir / "images"
-        logger.info(f"Using images subdirectory: {inp_dir}")
+    if not (inp_dir / "images").exists():
+        raise FileNotFoundError(f"no images subdirectory found in: {inp_dir}")
+    img_dir = inp_dir / "images"
+    logger.info(f"Using images subdirectory: {img_dir}")
 
-    fp = filepattern.FilePattern(inp_dir, pattern)
-    print(*[f[0] for f in fp()])
+    if not (inp_dir / "masks").exists():
+        raise FileNotFoundError(f"no masks subdirectory found in: {inp_dir}")
+
+    mask_dir = inp_dir / "masks"
+    if mask:
+        mask_file = mask_dir / mask
+        if not mask_file.exists():
+            raise FileNotFoundError(f"file {mask} does not exist in: {mask_dir}")
+    else:
+        if len(list(mask_dir.iterdir())) != 1:
+            raise FileExistsError(f"There should be a single mask in {mask_dir}")
+        mask_file = next(mask_dir.iterdir())
+    logger.info(f"Using mask: {mask_file}")
+
+    fp = filepattern.FilePattern(img_dir, filePattern)
 
     sorted_fp = sorted(fp, key=lambda f: f[0]["index"])
     img_files: list[pathlib.Path] = [f[1][0] for f in sorted_fp]  # type: ignore[assignment]
@@ -86,7 +94,7 @@ def main(
             json.dump(out_json, f, indent=2)  # type: ignore
         return
 
-    df = extract_signal(img_files, mask)
+    df = extract_signal(img_files, mask_file)
     df.to_csv(out_dir / out_filename)
 
 
