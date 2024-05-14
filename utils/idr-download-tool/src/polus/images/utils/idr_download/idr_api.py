@@ -2,59 +2,40 @@
 
 import logging
 import os
-import shutil
-from enum import Enum
+import warnings
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import as_completed
+from itertools import chain
 from itertools import product
 from pathlib import Path
 from typing import Any
 from typing import Optional
 
-import numpy as np
-from bfio import BioWriter
-from omero.gateway import BlitzGateway
-from omero.plugins.download import DownloadControl
-from pydantic import BaseModel as V2BaseModel
-from pydantic import model_validator
+import pandas as pd
+import polus.images.utils.idr_download.utils as ut
+import preadator
 import requests
+from omero.gateway import BlitzGateway
+from pydantic import BaseModel as V2BaseModel
+from tqdm import tqdm
 
-BASE_URL = "https://idr.openmicroscopy.org"
-HOST = "ws://idr.openmicroscopy.org/omero-ws"
-USPW = "public"
-SCREEN_URL = f"{BASE_URL}/api/v0/m/screens/"
+# Suppress all warnings
+warnings.filterwarnings("ignore")
 
 logger = logging.getLogger(__name__)
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
+BOOL = True
 
-# def generate_preview(
-#     path: Path,
-# ) -> None:
-#     """Generate preview of the plugin outputs."""
-#     prev_file = list(
-#         Path().cwd().parents[4].joinpath("examples").rglob(f"*{POLUS_EXT}"),
-#     )[0]
-
-#     shutil.copy(prev_file, path)
-
-
-class DATATYPE(str, Enum):
-    """Objects types."""
-
-    PROJECT = "project"
-    DATASET = "dataset"
-    SCREEN = "screen"
-    PLATE = "plate"
-    WELL = "well"
-    Default = "dataset"
 
 class Connection(V2BaseModel):
     """Establishes a connection to an idr api server using BlitzGateway.
 
     Args:
-        username:  The username for authentication.
-        password:  The password for authentication
         host: The IP address of the idr server.
-        port: Port used to establish a connection between client and server.
+        username:  The username for authentication.
+        password:  The password for authentication.
+        secure: Secure connection between client and server.
 
     Returns:
          BlitzGateway: A connection object to the IDR server.
@@ -62,123 +43,441 @@ class Connection(V2BaseModel):
 
     def _authentication(self) -> BlitzGateway:
         """Connection to an idr server using BlitzGateway."""
-        return BlitzGateway(
-            host=HOST,
-            username=USPW,
-            passwd=USPW,
+        connection = BlitzGateway(
+            host=ut.HOST,
+            username=ut.USPW,
+            passwd=ut.USPW,
             secure=True,
         )
+        connection.connect()
+        connection.c.enableKeepAlive(6)
 
-class CustomValidation(V2BaseModel):
-    """Properties with validation."""
+        return connection
 
-    data_type: str
+
+class Annotations(V2BaseModel):
+    """Retrieve annotations for each well or image individually."""
+
+    idx: int
+
+    def well_annotations(self) -> pd.DataFrame:
+        """Well Annotations."""
+        well_url = f"{ut.WELL_URL}{self.idx}/query/?query=Well-{self.idx}"
+        anno = requests.get(well_url, verify=BOOL, timeout=500).json()
+        return pd.DataFrame(anno["data"]["rows"], columns=anno["data"]["columns"])
+
+    def image_annotations(self) -> pd.DataFrame:
+        """Image Annotations."""
+        image_url = (
+            f"{ut.BASE_URL}/webclient/api/annotations/?type=map&image={self.idx}"
+        )
+        keys = []
+        values = []
+        for a in requests.get(image_url, verify=BOOL, timeout=500).json()[
+            "annotations"
+        ]:
+            for v in a["values"]:
+                keys.append(v[0])
+                values.append(v[1])
+        return pd.DataFrame([values], columns=[keys])
+
+
+class Collection(V2BaseModel):
+    """Establishes a connection to an idr api server using BlitzGateway.
+
+    Args:
+        data_type: The supported object types to be retreived.
+        out_dir:  Path to directory outputs.
+        name:  Name of the object to be downloaded.
+        object_id: Identifier of the object to be downloaded.
+    """
+
+    data_type: ut.DATATYPE
     out_dir: Path
     name: Optional[str] = None
     object_id: Optional[int] = None
 
-    @model_validator(mode="before")
-    @classmethod
-    def validate_data(cls, values: Any) -> Any:  # noqa: ANN401
-        """Validation of Paths."""
-        out_dir = values.get("out_dir")
-        data_type = values.get("data_type")
-        name = values.get("name")
-        object_id = values.get("object_id")
 
-        if not out_dir.exists():
-            msg = f"Output directory donot exist {out_dir}"
+class Project(Collection):
+    """Obtain the dataset IDs linked to each project."""
+
+    @property
+    def get_data(self) -> list[list[Any]]:
+        """Retrieve dataset IDs linked to each project."""
+        if self.name is not None:
+            project_dict = ut._all_projects_ids()
+            project_id = [i["id"] for i in project_dict if i["name"] == self.name]
+
+        if self.object_id is not None:
+            project_dict = ut._all_projects_ids()
+            project_id = [f["id"] for f in project_dict if f["id"] == self.object_id]
+
+        if len(project_id) == 0:
+            msg = f"Please provide valid name or id of the {self.data_type}"
             raise ValueError(msg)
 
-        conn_model = Connection(
-            host=HOST,
-            username=USPW,
-            password=USPW,
-            secure=True
-        )
-        conn = conn_model._authentication()
+        conn = Connection()._authentication()
         conn.connect()
 
-        response = requests.get(SCREEN_URL).json()
-        screen_names = []
-        screen_ids = []
-        for r in response['data']:
-            screen_names.append(r['Name'].split("-")[0])
-            screen_ids.append(r["@id"])
-    
-        if data_type == "screen":    
-            if not name in screen_names:
-                msg = f"Name of {data_type} is incorrect"
-                raise ValueError(msg)
-            if object_id is not None:
-                if not object_id in screen_ids:
-                    msg = f"Object id of {data_type} is incorrect"
-                    raise ValueError(msg)
-                
-        if data_type == "plate":
-            plate_dict = []
-            for i in screen_ids:
-                PLATES_URL = f"{BASE_URL}/webclient/api/plates/?id={i}"
-                for p in requests.get(PLATES_URL).json()['plates']:
-                    new_dict = {'id': p['id'], 'name': p['name']}
-                    plate_dict.append(new_dict)
+        dataset_list = []
+        for _, pid in enumerate(project_id):
+            project = conn.getObject(ut.DATATYPE.PROJECT, pid)
+            datasets = [dataset.getId() for dataset in project.listChildren()]
+            dataset_list.append(datasets)
 
-            if object_id is not None:
-                plate = conn.getObject("plate", object_id)
-                if not plate.__class__.__name__ == "_PlateWrapper":
-                    msg = f"Object id of {data_type} is incorrect"
-                    raise ValueError(msg)
-            
-            if name is not None:
-                for p in plate_dict:
-                    if name == p['name']:
-                        plate = conn.getObject("plate", p['id'])
-                        plate_name = plate.getName()
-                        if not name == plate_name:
-                            msg = f"Name of {data_type} is incorrect"
-                            raise ValueError(msg)
+        dataset_list = list(chain.from_iterable(dataset_list))
+        conn.close()
+
+        return dataset_list
+
+
+class Dataset(Collection):
+    """Download the IDR dataset object."""
+
+    @property
+    def get_data(self) -> None:
+        """Write all the images of the IDR dataset object."""
+        conn = Connection()._authentication()
+        conn.connect()
+        dataset = conn.getObject(ut.DATATYPE.DATASET, self.object_id)
+        if dataset.__class__.__name__ == ut.DATATYPE_MAPPING[self.data_type]:
+            dataset_name = dataset.getName()
+            dataset_dir = self.out_dir.joinpath(dataset_name)
+            dataset_dir.mkdir(parents=True, exist_ok=True)
+            anno_dir = self.out_dir.joinpath(Path("metadata", dataset_name))
+            anno_dir.mkdir(parents=True, exist_ok=True)
+            pd.DataFrame()
+            with ThreadPoolExecutor(max_workers=15) as executor:
+                for image in dataset.listChildren():
+                    image_id = image.getId()
+                    image_name = image.getName().split(".")[0]
+                    df_anno = Annotations(idx=image_id).image_annotations()
+                    df_anno.to_csv(
+                        Path(anno_dir, f"{dataset_name}_{image_name}.csv"),
+                        index=False,
+                    )
+                    for t, c, z in product(
+                        range(0, image.getSizeT()),
+                        range(0, image.getSizeC()),
+                        range(0, image.getSizeZ()),
+                    ):
+                        pixels = image.getPrimaryPixels().getPlane(
+                            theZ=z,
+                            theC=c,
+                            theT=t,
+                        )
+
+                        imagename = image.getName().split(".")[0]
+                        executor.submit(
+                            ut.saveimage(pixels, imagename, dataset_dir, z, c, t),
+                        )
+
+        conn.close()
+        if dataset.__class__.__name__ == "NoneType":
+            msg = f"Please provide valid name or id of the {self.data_type}"
+            raise ValueError(msg)
+
+
+class Screen(Collection):
+    """Obtain the plate IDs and names linked to each screen."""
+
+    @property
+    def plates(self) -> list[dict]:
+        """Retrieve the plate IDs and names linked to each screen."""
+        if self.name is not None:
+            screen_dict = [
+                {"id": i["@id"], "name": i["Name"].split("-")[0]}
+                for i in requests.get(ut.SCREEN_URL, verify=BOOL, timeout=500).json()[
+                    "data"
+                ]
+            ]
+            screen_id = [f["id"] for f in screen_dict if f["name"] == self.name]
+
+        if self.object_id is not None:
+            screen_dict = [
+                {"id": i["@id"], "name": i["Name"].split("-")[0]}
+                for i in requests.get(ut.SCREEN_URL, verify=BOOL, timeout=500).json()[
+                    "data"
+                ]
+            ]
+            screen_id = [f["id"] for f in screen_dict if f["id"] == self.object_id]
+
+        if len(screen_id) == 0:
+            msg = f"Please provide valid name or id of the {self.data_type}"
+            raise ValueError(msg)
+
+        plates_url = f"{ut.BASE_URL}/webclient/api/plates/?id={screen_id[0]}"
+        return [
+            {"id": p["id"], "name": p["name"]}
+            for p in requests.get(plates_url, verify=BOOL, timeout=500).json()["plates"]
+        ]
+
+
+class Plate(Collection):
+    """Download the IDR plate object."""
+
+    @property
+    def get_data(self) -> None:
+        """Save all images from the plate object."""
+        conn = Connection()._authentication()
+        conn.connect()
+        plate = conn.getObject(ut.DATATYPE.PLATE, self.object_id)
+        if plate.__class__.__name__ == ut.DATATYPE_MAPPING[self.data_type]:
+            plate_name = plate.getName()
+            plate_dir = self.out_dir.joinpath(plate_name)
+            anno_dir = self.out_dir.joinpath("metadata")
+            plate_dir.mkdir(parents=True, exist_ok=True)
+            anno_dir.mkdir(parents=True, exist_ok=True)
+            df = pd.DataFrame()
+            with ThreadPoolExecutor(max_workers=ut.NUM_THREADS) as executor:
+                threads = []
+                for _, well in enumerate(plate.listChildren()):
+                    data_type = "well"
+                    if well.__class__.__name__ == ut.DATATYPE_MAPPING[data_type]:
+                        indicies = well.countWellSample()
+                        well_name = well.getWellPos()
+                        well_id = well.getId()
+                        df_anno = Annotations(idx=well_id).well_annotations()
+                        data = [df, df_anno]
+                        df = pd.concat(data, ignore_index=True, sort=False)
+                        df.to_csv(Path(anno_dir, f"{plate_name}.csv"), index=False)
+                        for index in range(0, indicies):
+                            pixels = well.getImage(index).getPrimaryPixels()
+                            for t, c, z in product(
+                                range(0, pixels.getSizeT()),
+                                range(0, pixels.getSizeC()),
+                                range(0, pixels.getSizeZ()),
+                            ):
+                                image = pixels.getPlane(theZ=z, theC=c, theT=t)
+                                threads.append(
+                                    executor.submit(
+                                        ut.saveimage(
+                                            image,
+                                            well_name,
+                                            plate_dir,
+                                            z,
+                                            c,
+                                            t,
+                                            index,
+                                        ),
+                                    ),
+                                )
+
+            for future in tqdm(
+                as_completed(threads),
+                total=len(threads),
+                desc="Fetching wells",
+            ):
+                plate = future.result()
 
         conn.close()
 
 
-        
-        return values
-    
+class Well(Collection):
+    """Download the IDR well object."""
+
+    @property
+    def get_data(self) -> None:
+        """Save all images from the well object."""
+        conn = Connection()._authentication()
+        conn.connect()
+        well = conn.getObject(ut.DATATYPE.WELL, self.object_id)
+        if well.__class__.__name__ == ut.DATATYPE_MAPPING[self.data_type]:
+            indicies = well.countWellSample()
+            well_name = well.getWellPos()
+            well_id = well.getId()
+            df_anno = Annotations(idx=well_id).well_annotations()
+            well_dir = self.out_dir.joinpath(well_name)
+            well_dir.mkdir(parents=True, exist_ok=True)
+            anno_dir = self.out_dir.joinpath("metadata")
+            anno_dir.mkdir(parents=True, exist_ok=True)
+            df_anno.to_csv(Path(anno_dir, f"{well_id}_{well_name}.csv"), index=False)
+            with ThreadPoolExecutor(max_workers=ut.NUM_THREADS) as executor:
+                for index in range(0, indicies):
+                    pixels = well.getImage(index).getPrimaryPixels()
+                    for t, c, z in product(
+                        range(0, pixels.getSizeT()),
+                        range(0, pixels.getSizeC()),
+                        range(0, pixels.getSizeZ()),
+                    ):
+                        image = pixels.getPlane(theZ=z, theC=c, theT=t)
+                        executor.submit(
+                            ut.saveimage(image, well_name, well_dir, z, c, t, index),
+                        )
+        conn.close()
 
 
-class IdrDwonload(CustomValidation):
-    data_type: str
-    name: Optional[str] = None
-    object_id: Optional[int] = None
-    out_dir: Path
+class IdrDownload(Collection):
+    """Download the IDR objects."""
 
+    @property
+    def get_data(self) -> None:  # noqa : C901
+        """Save all images from the IDR objects."""
+        if self.data_type == ut.DATATYPE.SCREEN:
+            if self.name is not None:
+                sc = Screen(
+                    data_type=self.data_type,
+                    name=self.name,
+                    out_dir=self.out_dir,
+                )
+                logger.info(f"Downloading {self.data_type}: name={self.name}")
+            if self.object_id is not None:
+                sc = Screen(
+                    data_type=self.data_type,
+                    object_id=self.object_id,
+                    out_dir=self.out_dir,
+                )
+                logger.info(f"Downloading {self.data_type}: id={self.object_id}")
+            if self.name is not None and self.object_id is not None:
+                sc = Screen(
+                    data_type=self.data_type,
+                    name=self.name,
+                    object_id=self.object_id,
+                    out_dir=self.out_dir,
+                )
+                logger.info(
+                    f"Download {self.data_type}:name={self.name},id={self.object_id}",
+                )
+            if self.name is None and self.object_id is None:
+                msg = f"Both {self.data_type} name & {self.data_type} id is missing"
+                raise ValueError(msg)
+            plate_list = sc.plates
 
+            with preadator.ProcessManager(
+                name="Idr download",
+                num_processes=4,
+                threads_per_process=2,
+            ) as executor:
+                threads = []
+                for _, pl in enumerate(plate_list):
+                    plate_id = pl["id"]
+                    threads.append(
+                        executor.submit(
+                            Plate(
+                                data_type=ut.DATATYPE.PLATE,
+                                object_id=plate_id,
+                                out_dir=self.out_dir,
+                            ).get_data,
+                        ),
+                    )
 
+                for f in tqdm(
+                    as_completed(threads),
+                    total=len(threads),
+                    mininterval=5,
+                    desc=f"download plate {plate_id}",
+                    initial=0,
+                    unit_scale=True,
+                    colour="cyan",
+                ):
+                    f.result()
 
+        if self.data_type == ut.DATATYPE.PLATE:
+            if self.name is not None:
+                plate_id = [
+                    pl["id"] for pl in ut._all_plates_ids() if pl["name"] == self.name
+                ][0]
+                model = Plate(
+                    data_type=self.data_type,
+                    object_id=plate_id,
+                    out_dir=self.out_dir,
+                )
+                logger.info(f"Downloading {self.data_type}: name={self.name}")
+            if self.object_id is not None:
+                model = Plate(
+                    data_type=self.data_type,
+                    object_id=self.object_id,
+                    out_dir=self.out_dir,
+                )
+                logger.info(f"Downloading {self.data_type}: id={self.object_id}")
+            if self.name is not None and self.object_id is not None:
+                model = Plate(
+                    data_type=self.data_type,
+                    name=self.name,
+                    object_id=self.object_id,
+                    out_dir=self.out_dir,
+                )
+                logger.info(
+                    f"Download {self.data_type}:name={self.name},id={self.object_id}",
+                )
+            if self.name is None and self.object_id is None:
+                msg = f"Both {self.data_type} name & {self.data_type} id are missing"
+                raise ValueError(msg)
 
+        if self.data_type == ut.DATATYPE.WELL:
+            if self.object_id is None:
+                msg = f"Please provide objectID of {self.data_type}"
+                raise ValueError(msg)
 
+            model = Well(
+                data_type=self.data_type,
+                object_id=self.object_id,
+                out_dir=self.out_dir,
+            )
+        if self.data_type == ut.DATATYPE.PROJECT:
+            if self.object_id is None and self.name is None:
+                msg = f"Both {self.data_type} name & {self.data_type} id are missing"
+                raise ValueError(msg)
+            if self.name is not None:
+                model = Project(
+                    data_type=self.data_type,
+                    name=self.name,
+                    out_dir=self.out_dir,
+                )
+                logger.info(f"Downloading {self.data_type}: name={self.name}")
+            if self.object_id is not None:
+                model = Project(
+                    data_type=self.data_type,
+                    object_id=self.object_id,
+                    out_dir=self.out_dir,
+                )
+                logger.info(f"Downloading {self.data_type}: id={self.object_id}")
+            if self.name is not None and self.object_id is not None:
+                model = Project(
+                    data_type=self.data_type,
+                    name=self.name,
+                    object_id=self.object_id,
+                    out_dir=self.out_dir,
+                )
+                logger.info(
+                    f"Download {self.data_type}:name={self.name},id={self.object_id}",
+                )
 
-        #         URL = "https://idr.openmicroscopy.org/api/v0/m/screens/"
-        # response = requests.get(URL).json()
+            dataset_list = model.get_data
+            for d in enumerate(dataset_list):  # type:ignore
+                model = Dataset(  # type:ignore
+                    data_type="dataset",
+                    object_id=d,
+                    out_dir=self.out_dir,
+                ).get_data
 
-        # for r in response['data']:
-        #     print(r['Name'], r["@id"])
-        # data = conn.getObjects(data_type)
-        # ids = []
-        # names = []
-        # for d in data:
-        #     ids.append(d.getId())
-        #     names.append(d.getName())
-
-        # if name is not None and name not in names:
-        #     msg = f"No such file is available {data_type}: name={name}"
-        #     raise FileNotFoundError(msg)
-
-        # if object_id is not None and object_id not in ids:
-        #     msg = f"No such file is available {data_type}: object_id={object_id}"
-        #     raise FileNotFoundError(msg)
-        # conn.close()
-
-        # return values
-
-
+        if self.data_type == ut.DATATYPE.DATASET:
+            if self.object_id is None and self.name is None:
+                msg = f"Both {self.data_type} name & {self.data_type} id are missing"
+                raise ValueError(msg)
+            if self.name is not None:
+                dataset_ids = ut._all_datasets_ids()
+                data_id = [d["id"] for d in dataset_ids if d["name"] == self.name][0]
+                model = Dataset(
+                    data_type=self.data_type,
+                    object_id=data_id,
+                    out_dir=self.out_dir,
+                )
+                logger.info(f"Downloading {self.data_type}: name={self.name}")
+            if self.object_id is not None:
+                model = Dataset(
+                    data_type=self.data_type,
+                    object_id=self.object_id,
+                    out_dir=self.out_dir,
+                )
+                logger.info(f"Downloading {self.data_type}: id={self.object_id}")
+            if self.name is not None and self.object_id is not None:
+                model = Dataset(
+                    data_type=self.data_type,
+                    name=self.name,
+                    object_id=self.object_id,
+                    out_dir=self.out_dir,
+                )
+                logger.info(
+                    f"Download {self.data_type}:name={self.name},id={self.object_id}",
+                )

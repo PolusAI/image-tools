@@ -1,1 +1,1 @@
-"""Rxiv Download Plugin."""
+"""Idr Download Tool."""

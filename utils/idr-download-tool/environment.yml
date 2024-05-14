@@ -1,4 +1,4 @@
-name: idrenv
+name: myidrenv
 channels:
   - defaults
   - conda-forge

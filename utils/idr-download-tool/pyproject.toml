@@ -11,9 +11,11 @@ packages = [{include = "polus", from = "src"}]
 [tool.poetry.dependencies]
 python = "3.9.18"
 bfio = {version = "^2.3.6", extras = ["all"]}
-numpy = "1.21.0"
 typer = "^0.7.0"
 pydantic = "^2.5.3"
+pandas = "2.2.2"
+preadator = "0.4.0-dev2"
+tqdm = "^4.66.2"
 
 [[tool.poetry.source]]
 name = "test"

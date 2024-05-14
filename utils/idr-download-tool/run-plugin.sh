@@ -6,15 +6,16 @@ echo ${datapath}
 
 # Inputs
 out_dir=${datapath}/out
-rxiv="arXiv"
-start="2023-12-16"
+data_type="plate"
+object_id=3139
 
 
 # #Show the help options
-# #docker run polusai/rxiv-download-plugin:${version}
+# #docker run polusai/polusai/idr_download-tool:${version}
 
 docker run -v ${datapath}:${datapath} \
-            polusai/rxiv-download-plugin:${version} \
-            --rxiv ${rxiv} \
-            --start ${start} \
+            polusai/idr_download-tool:${version} \
+            --dataType ${data_type} \
+            --name ${name} \
+            --objectId ${object_id} \
             --outDir ${out_dir}

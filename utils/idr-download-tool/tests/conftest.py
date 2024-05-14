@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Union
 
 import pytest
+from polus.images.utils.idr_download.utils import DATATYPE
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -35,7 +36,15 @@ def output_directory() -> Union[str, Path]:
     return Path(tempfile.mkdtemp(dir=Path.cwd()))
 
 
-@pytest.fixture(params=["2023-12-16", "2023-12-17"])
+@pytest.fixture(
+    params=[
+        (DATATYPE.WELL, None, 1046940),
+        (DATATYPE.DATASET, "byn", None),
+        (DATATYPE.SCREEN, "idr0025", None),
+        (DATATYPE.PROJECT, "idr0146", None),
+        (DATATYPE.PLATE, "plate1_1_013", None),
+    ],
+)
 def get_params(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the fixture."""
     return request.param

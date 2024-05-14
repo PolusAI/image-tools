@@ -1,12 +1,13 @@
 """Idr Download Package."""
 
 import logging
-from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+import polus.images.utils.idr_download.idr_api as idr
+import polus.images.utils.idr_download.utils as ut
 import typer
-import polus.images.utils.idr_download.idr_api as id
+from polus.images.utils.idr_download.utils import DATATYPE
 
 app = typer.Typer()
 
@@ -18,10 +19,9 @@ logging.basicConfig(
 logger = logging.getLogger("polus.plugins.utils.idr_download")
 
 
-
 @app.command()
 def main(
-    data_type: id.DATATYPE = typer.Option(
+    data_type: DATATYPE = typer.Option(
         ...,
         "--dataType",
         "-d",
@@ -63,15 +63,14 @@ def main(
         out_dir.mkdir(exist_ok=True)
 
     if not preview:
-        model = id.IdrDwonload(
+        idr.IdrDownload(
             data_type=data_type.value,
             name=name,
             object_id=object_id,
             out_dir=out_dir,
         )
-        # model.get_data()
-    # else:
-    #     od.generate_preview(out_dir)
+    else:
+        ut.generate_preview(out_dir)
 
 
 if __name__ == "__main__":
