@@ -102,19 +102,29 @@ class Project(Collection):
     """Obtain the dataset IDs linked to each project."""
 
     @property
-    def get_data(self) -> list[list[Any]]:
+    def get_data(self) -> tuple[list[list[Any]], Path]:
         """Retrieve dataset IDs linked to each project."""
         if self.name is not None:
             project_dict = ut._all_projects_ids()
             project_id = [i["id"] for i in project_dict if i["name"] == self.name]
+            project_name = [
+                i["projectName"] for i in project_dict if i["name"] == self.name
+            ][0]
 
         if self.object_id is not None:
             project_dict = ut._all_projects_ids()
             project_id = [f["id"] for f in project_dict if f["id"] == self.object_id]
+            project_name = [
+                i["projectName"] for i in project_dict if i["id"] == project_id
+            ][0]
 
         if len(project_id) == 0:
             msg = f"Please provide valid name or id of the {self.data_type}"
             raise ValueError(msg)
+
+        dirpath = Path(self.out_dir, project_name)
+        if not dirpath.exists():
+            dirpath.mkdir(parents=True, exist_ok=False)
 
         conn = Connection()._authentication()
         conn.connect()
@@ -128,7 +138,7 @@ class Project(Collection):
         dataset_list = list(chain.from_iterable(dataset_list))
         conn.close()
 
-        return dataset_list
+        return dataset_list, dirpath
 
 
 class Dataset(Collection):
@@ -182,35 +192,39 @@ class Screen(Collection):
     """Obtain the plate IDs and names linked to each screen."""
 
     @property
-    def plates(self) -> list[dict]:
+    def plates(self) -> tuple[list[dict], Path]:
         """Retrieve the plate IDs and names linked to each screen."""
+        screen_dict = ut._all_screen_ids()
+
         if self.name is not None:
-            screen_dict = [
-                {"id": i["@id"], "name": i["Name"].split("-")[0]}
-                for i in requests.get(ut.SCREEN_URL, verify=BOOL, timeout=500).json()[
-                    "data"
-                ]
-            ]
-            screen_id = [f["id"] for f in screen_dict if f["name"] == self.name]
+            screen = [
+                {"id": f["id"], "name": f["screenName"]}
+                for f in screen_dict
+                if f["name"] == self.name
+            ][0]
 
         if self.object_id is not None:
-            screen_dict = [
-                {"id": i["@id"], "name": i["Name"].split("-")[0]}
-                for i in requests.get(ut.SCREEN_URL, verify=BOOL, timeout=500).json()[
-                    "data"
-                ]
-            ]
-            screen_id = [f["id"] for f in screen_dict if f["id"] == self.object_id]
+            screen = [
+                {"id": f["id"], "name": f["screenName"]}
+                for f in screen_dict
+                if f["id"] == self.object_id
+            ][0]
 
-        if len(screen_id) == 0:
+        if len(screen) == 0:
             msg = f"Please provide valid name or id of the {self.data_type}"
             raise ValueError(msg)
 
-        plates_url = f"{ut.BASE_URL}/webclient/api/plates/?id={screen_id[0]}"
+        dirpath = Path(self.out_dir, screen["name"])
+        if not dirpath.exists():
+            dirpath.mkdir(parents=True, exist_ok=False)
+
+        screen_id = screen["id"]
+
+        plates_url = f"{ut.BASE_URL}/webclient/api/plates/?id={screen_id}"
         return [
             {"id": p["id"], "name": p["name"]}
             for p in requests.get(plates_url, verify=BOOL, timeout=500).json()["plates"]
-        ]
+        ], dirpath
 
 
 class Plate(Collection):
@@ -315,21 +329,21 @@ class IdrDownload(Collection):
         """Save all images from the IDR objects."""
         if self.data_type == ut.DATATYPE.SCREEN:
             if self.name is not None:
-                sc = Screen(
+                sc, dirpath = Screen(
                     data_type=self.data_type,
                     name=self.name,
                     out_dir=self.out_dir,
                 ).plates
                 logger.info(f"Downloading {self.data_type}: name={self.name}")
             if self.object_id is not None:
-                sc = Screen(
+                sc, dirpath = Screen(
                     data_type=self.data_type,
                     object_id=self.object_id,
                     out_dir=self.out_dir,
                 ).plates
                 logger.info(f"Downloading {self.data_type}: id={self.object_id}")
             if self.name is not None and self.object_id is not None:
-                sc = Screen(
+                sc, dirpath = Screen(
                     data_type=self.data_type,
                     name=self.name,
                     object_id=self.object_id,
@@ -342,7 +356,6 @@ class IdrDownload(Collection):
                 msg = f"Both {self.data_type} name & {self.data_type} id is missing"
                 raise ValueError(msg)
             plate_list = sc
-
             with preadator.ProcessManager(
                 name="Idr download",
                 num_processes=4,
@@ -356,7 +369,7 @@ class IdrDownload(Collection):
                             Plate(
                                 data_type=ut.DATATYPE.PLATE,
                                 object_id=plate_id,
-                                out_dir=self.out_dir,
+                                out_dir=dirpath,
                             ).get_data,
                         ),
                     )
@@ -420,21 +433,21 @@ class IdrDownload(Collection):
                 msg = f"Both {self.data_type} name & {self.data_type} id are missing"
                 raise ValueError(msg)
             if self.name is not None:
-                dataset_list = Project(
+                dataset_list, dirpath = Project(
                     data_type=self.data_type,
                     name=self.name,
                     out_dir=self.out_dir,
                 ).get_data
                 logger.info(f"Downloading {self.data_type}: name={self.name}")
             if self.object_id is not None:
-                dataset_list = Project(
+                dataset_list, dirpath = Project(
                     data_type=self.data_type,
                     object_id=self.object_id,
                     out_dir=self.out_dir,
                 ).get_data
                 logger.info(f"Downloading {self.data_type}: id={self.object_id}")
             if self.name is not None and self.object_id is not None:
-                dataset_list = Project(
+                dataset_list, dirpath = Project(
                     data_type=self.data_type,
                     name=self.name,
                     object_id=self.object_id,
@@ -448,7 +461,7 @@ class IdrDownload(Collection):
                 Dataset(  # noqa:B018 # type:ignore
                     data_type=ut.DATATYPE.DATASET,
                     object_id=d,
-                    out_dir=self.out_dir,
+                    out_dir=dirpath,
                 ).get_data
 
         if self.data_type == ut.DATATYPE.DATASET:

@@ -68,7 +68,7 @@ def _all_screen_ids() -> list[dict]:
     screen_dict = []
     for r in requests.get(SCREEN_URL, verify=BOOL, timeout=500).json()["data"]:
         name = r["Name"].split("-")[0]
-        screen_dict.append({"id": r["@id"], "name": name})
+        screen_dict.append({"id": r["@id"], "name": name, "screenName": r["Name"]})
     return screen_dict
 
 
@@ -91,7 +91,7 @@ def _all_plates_ids() -> list[dict]:
         for future in tqdm(
             as_completed(futures),
             total=len(futures),
-            desc="Fetching datasets",
+            desc="Fetching plates",
         ):
             plates = future.result()
             all_plates_ids.extend(plates)
@@ -101,7 +101,7 @@ def _all_plates_ids() -> list[dict]:
 def _all_projects_ids() -> list[dict]:
     """Obtain all project IDs and names accessible through the IDR Web API."""
     return [
-        {"id": i["@id"], "name": i["Name"].split("-")[0]}
+        {"id": i["@id"], "name": i["Name"].split("-")[0], "projectName": i["Name"]}
         for i in requests.get(PROJECT_URL, verify=BOOL, timeout=500).json()["data"]
     ]
 
