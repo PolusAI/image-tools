@@ -5,10 +5,9 @@ import logging
 import os
 import pathlib
 
-import bfio
 import filepattern
 import typer
-from polus.images.segmentation.rt_cetsa_plate_extraction import extract_plate
+from polus.images.segmentation.rt_cetsa_plate_extraction import extract_plates
 
 # Initialize the logger
 logging.basicConfig(
@@ -59,28 +58,17 @@ def main(
 
     fp = filepattern.FilePattern(inp_dir, pattern)
     inp_files: list[pathlib.Path] = [f[1][0] for f in fp()]  # type: ignore[assignment]
+    inp_files.sort()
 
     if preview:
         out_json = {
-            "images": [
-                out_dir / "images" / f"{f.stem}{POLUS_IMG_EXT}" for f in inp_files
-            ],
-            "masks": [
-                out_dir / "masks" / f"{f.stem}{POLUS_IMG_EXT}" for f in inp_files
-            ],
+            "images": [f"{f.stem}.ome.tiff" for f in inp_files] + ["mask.ome.tiff"],
         }
         with (out_dir / "preview.json").open("w") as f:
             json.dump(out_json, f, indent=2)
         return
 
-    for f in inp_files:  # type: ignore[assignment]
-        logger.info(f"Processing file: {f}")
-        image, mask = extract_plate(f)
-        out_name = f.stem + POLUS_IMG_EXT  # type: ignore[attr-defined]
-        with bfio.BioWriter(out_dir / "images" / out_name) as writer:
-            writer[:] = image
-        with bfio.BioWriter(out_dir / "masks" / out_name) as writer:
-            writer[:] = mask
+    extract_plates(inp_files, out_dir)
 
 
 if __name__ == "__main__":

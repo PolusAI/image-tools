@@ -56,18 +56,13 @@ def main(
     logger.info(f"File Pattern: {pattern}")
     logger.info(f"Output directory: {out_dir}")
 
-    images_dir = inp_dir / "images"
-    masks_dir = inp_dir / "masks"
-    assert images_dir.exists(), f"Images directory does not exist: {images_dir}"
-    assert masks_dir.exists(), f"Masks directory does not exist: {masks_dir}"
-
-    fp = filepattern.FilePattern(images_dir, pattern)
+    fp = filepattern.FilePattern(inp_dir, pattern)
     img_files: list[pathlib.Path] = [f[1][0] for f in fp()]  # type: ignore[assignment]
-    mask_files: list[pathlib.Path] = [masks_dir / f.name for f in img_files]  # type: ignore[assignment]
-    for f in mask_files:
-        assert f.exists(), f"Mask file does not exist: {f}"
+    img_files.sort()
 
-    inp_files = list(zip(img_files, mask_files))  # type: ignore[assignment]
+    mask_path: pathlib.Path = inp_dir / "mask.ome.tiff"
+    if not mask_path.exists():
+        raise FileNotFoundError(f"Mask file does not exist: {mask_path}")
 
     if preview:
         out_json = {"file": "plate.csv"}
@@ -75,7 +70,7 @@ def main(
             json.dump(out_json, writer, indent=2)
         return
 
-    df = build_df(inp_files)
+    df = build_df(img_files, mask_path)
     df.to_csv(out_dir / "plate.csv")
 
 

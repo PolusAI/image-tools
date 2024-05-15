@@ -55,27 +55,13 @@ def extract_intensities(
     with bfio.BioReader(mask_path) as reader:
         mask = reader[:]
 
+    mean_background = numpy.mean(image[mask == 0])
+
     max_mask_index = numpy.max(mask)
     intensities = []
     for i in range(1, max_mask_index + 1):
-        mask_index = mask == i
-        mask_values = image[mask_index]
-
-        # find a square bounding box around the mask
-        bbox = numpy.argwhere(mask_index)
-        bbox_x_min = numpy.min(bbox[0])
-        bbox_x_max = numpy.max(bbox[0])
-        bbox_y_min = numpy.min(bbox[1])
-        bbox_y_max = numpy.max(bbox[1])
-        bbox_values = image[bbox_x_min:bbox_x_max, bbox_y_min:bbox_y_max]
-
-        # find the mean intensity of the background and the mask
-        mean_background = (numpy.sum(bbox_values) - numpy.sum(mask_values)) / (
-            bbox_values.size - mask_values.size
-        )
-        mean_intensities = numpy.mean(mask_values)
-
-        intensities.append(mean_intensities - mean_background)
+        mean_mask_intensities = numpy.mean(image[mask == i])
+        intensities.append(mean_mask_intensities - mean_background)
 
     return intensities
 
@@ -100,7 +86,8 @@ def index_to_battleship(x: int, y: int, size: PlateSize) -> str:
 
 
 def build_df(
-    file_paths: list[tuple[pathlib.Path, pathlib.Path]],
+    inp_paths: list[pathlib.Path],
+    mask_path: pathlib.Path,
 ) -> pandas.DataFrame:
     """Build a DataFrame with well intensities.
 
@@ -111,11 +98,11 @@ def build_df(
         Pandas DataFrame with well intensities.
     """
     intensities: list[tuple[float, list[float]]] = []
-    for i, (image_path, mask_path) in enumerate(file_paths):
-        temp = TEMPERATURE_RANGE[0] + i / (len(file_paths) - 1) * (
+    for i, f in enumerate(inp_paths):
+        temp = TEMPERATURE_RANGE[0] + i / (len(inp_paths) - 1) * (
             TEMPERATURE_RANGE[1] - TEMPERATURE_RANGE[0]
         )
-        intensities.append((temp, extract_intensities(image_path, mask_path)))
+        intensities.append((temp, extract_intensities(f, mask_path)))
 
     # sort intensities by temperature
     intensities.sort(key=lambda x: x[0])
