@@ -25,7 +25,7 @@ warnings.filterwarnings("ignore")
 logger = logging.getLogger(__name__)
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
-BOOL = True
+BOOL = False
 
 
 class Connection(V2BaseModel):
@@ -319,14 +319,14 @@ class IdrDownload(Collection):
                     data_type=self.data_type,
                     name=self.name,
                     out_dir=self.out_dir,
-                )
+                ).plates
                 logger.info(f"Downloading {self.data_type}: name={self.name}")
             if self.object_id is not None:
                 sc = Screen(
                     data_type=self.data_type,
                     object_id=self.object_id,
                     out_dir=self.out_dir,
-                )
+                ).plates
                 logger.info(f"Downloading {self.data_type}: id={self.object_id}")
             if self.name is not None and self.object_id is not None:
                 sc = Screen(
@@ -334,14 +334,14 @@ class IdrDownload(Collection):
                     name=self.name,
                     object_id=self.object_id,
                     out_dir=self.out_dir,
-                )
+                ).plates
                 logger.info(
                     f"Download {self.data_type}:name={self.name},id={self.object_id}",
                 )
             if self.name is None and self.object_id is None:
                 msg = f"Both {self.data_type} name & {self.data_type} id is missing"
                 raise ValueError(msg)
-            plate_list = sc.plates
+            plate_list = sc
 
             with preadator.ProcessManager(
                 name="Idr download",
@@ -377,26 +377,26 @@ class IdrDownload(Collection):
                 plate_id = [
                     pl["id"] for pl in ut._all_plates_ids() if pl["name"] == self.name
                 ][0]
-                model = Plate(
+                Plate(  # noqa:B018
                     data_type=self.data_type,
                     object_id=plate_id,
                     out_dir=self.out_dir,
-                )
+                ).get_data
                 logger.info(f"Downloading {self.data_type}: name={self.name}")
             if self.object_id is not None:
-                model = Plate(
+                Plate(  # noqa:B018
                     data_type=self.data_type,
                     object_id=self.object_id,
                     out_dir=self.out_dir,
-                )
+                ).get_data
                 logger.info(f"Downloading {self.data_type}: id={self.object_id}")
             if self.name is not None and self.object_id is not None:
-                model = Plate(
+                Plate(  # noqa:B018
                     data_type=self.data_type,
                     name=self.name,
                     object_id=self.object_id,
                     out_dir=self.out_dir,
-                )
+                ).get_data
                 logger.info(
                     f"Download {self.data_type}:name={self.name},id={self.object_id}",
                 )
@@ -409,44 +409,44 @@ class IdrDownload(Collection):
                 msg = f"Please provide objectID of {self.data_type}"
                 raise ValueError(msg)
 
-            model = Well(
+            Well(  # noqa:B018
                 data_type=self.data_type,
                 object_id=self.object_id,
                 out_dir=self.out_dir,
-            )
+            ).get_data
+
         if self.data_type == ut.DATATYPE.PROJECT:
             if self.object_id is None and self.name is None:
                 msg = f"Both {self.data_type} name & {self.data_type} id are missing"
                 raise ValueError(msg)
             if self.name is not None:
-                model = Project(
+                dataset_list = Project(
                     data_type=self.data_type,
                     name=self.name,
                     out_dir=self.out_dir,
-                )
+                ).get_data
                 logger.info(f"Downloading {self.data_type}: name={self.name}")
             if self.object_id is not None:
-                model = Project(
+                dataset_list = Project(
                     data_type=self.data_type,
                     object_id=self.object_id,
                     out_dir=self.out_dir,
-                )
+                ).get_data
                 logger.info(f"Downloading {self.data_type}: id={self.object_id}")
             if self.name is not None and self.object_id is not None:
-                model = Project(
+                dataset_list = Project(
                     data_type=self.data_type,
                     name=self.name,
                     object_id=self.object_id,
                     out_dir=self.out_dir,
-                )
+                ).get_data
                 logger.info(
                     f"Download {self.data_type}:name={self.name},id={self.object_id}",
                 )
 
-            dataset_list = model.get_data
-            for d in enumerate(dataset_list):  # type:ignore
-                model = Dataset(  # type:ignore
-                    data_type="dataset",
+            for d in dataset_list:
+                Dataset(  # noqa:B018 # type:ignore
+                    data_type=ut.DATATYPE.DATASET,
                     object_id=d,
                     out_dir=self.out_dir,
                 ).get_data
@@ -458,26 +458,26 @@ class IdrDownload(Collection):
             if self.name is not None:
                 dataset_ids = ut._all_datasets_ids()
                 data_id = [d["id"] for d in dataset_ids if d["name"] == self.name][0]
-                model = Dataset(
+                Dataset(  # noqa:B018
                     data_type=self.data_type,
                     object_id=data_id,
                     out_dir=self.out_dir,
-                )
+                ).get_data
                 logger.info(f"Downloading {self.data_type}: name={self.name}")
             if self.object_id is not None:
-                model = Dataset(
+                Dataset(  # noqa:B018
                     data_type=self.data_type,
                     object_id=self.object_id,
                     out_dir=self.out_dir,
-                )
+                ).get_data
                 logger.info(f"Downloading {self.data_type}: id={self.object_id}")
             if self.name is not None and self.object_id is not None:
-                model = Dataset(
+                Dataset(  # noqa:B018
                     data_type=self.data_type,
                     name=self.name,
                     object_id=self.object_id,
                     out_dir=self.out_dir,
-                )
+                ).get_data
                 logger.info(
                     f"Download {self.data_type}:name={self.name},id={self.object_id}",
                 )

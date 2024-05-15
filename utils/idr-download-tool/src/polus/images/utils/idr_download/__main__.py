@@ -63,12 +63,13 @@ def main(
         out_dir.mkdir(exist_ok=True)
 
     if not preview:
-        idr.IdrDownload(
+        idr.IdrDownload(  # noqa :B018
             data_type=data_type.value,
             name=name,
             object_id=object_id,
             out_dir=out_dir,
-        )
+        ).get_data
+
     else:
         ut.generate_preview(out_dir)
 
