@@ -58,7 +58,7 @@ def main(
 
     fp = filepattern.FilePattern(inp_dir, pattern)
     img_files: list[pathlib.Path] = [f[1][0] for f in fp()]  # type: ignore[assignment]
-    img_files.sort()
+    img_files.sort(key=lambda x: int(x.name.split(".")[0]))
 
     mask_path: pathlib.Path = inp_dir / "mask.ome.tiff"
     if not mask_path.exists():
