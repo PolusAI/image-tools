@@ -1,4 +1,4 @@
-name: myenv
+name: project_env
 channels:
   - defaults
   - conda-forge
@@ -9,5 +9,3 @@ dependencies:
   - ome:omero-py
   - pydantic=*
   - pip
-  - pip:
-    - preadator==0.4.0-dev2

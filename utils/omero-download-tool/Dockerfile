@@ -12,7 +12,7 @@ ENV OMERO_USERNAME=$OMERO_USERNAME
 ENV OMERO_PASSWORD=$OMERO_PASSWORD
 
 
-ARG conda_env=myenv
+ARG conda_env=project_env
 
 # Work directory defined in the base container
 WORKDIR ${EXEC_DIR}
@@ -26,7 +26,7 @@ COPY src ${EXEC_DIR}/src
 RUN conda env create -f environment.yml
 
 ENV PATH /opt/conda/envs/myenv/bin:$PATH
-RUN /bin/bash -c "source activate myenv"
+RUN /bin/bash -c "source activate project_env"
 
 RUN pip3 install ${EXEC_DIR} --no-cache-dir
 
