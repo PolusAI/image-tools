@@ -24,7 +24,7 @@ logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tiff")
 
 
-def extract_plates(inp_dir, pattern, out_dir):
+def extract_plates(inp_dir, pattern, out_dir) -> PlateParams:
     """Preprocess RT_cetsa images.
 
     Using the first plate image, determine plate params and create a plate mask.
@@ -39,6 +39,7 @@ def extract_plates(inp_dir, pattern, out_dir):
 
     (out_dir / "images").mkdir(parents=False, exist_ok=True)
     (out_dir / "masks").mkdir(parents=False, exist_ok=True)
+    (out_dir / "params").mkdir(parents=False, exist_ok=True)
 
     # extract plate params from first image
     first_image_path = inp_files[0]
@@ -46,6 +47,11 @@ def extract_plates(inp_dir, pattern, out_dir):
     first_image = tifffile.imread(first_image_path)
     params: PlateParams = get_plate_params(first_image)
     logger.info(f"Processing plate of size: {params.size.value}")
+
+    # save plate parameters
+    plate_path = out_dir / "params" / "plate.csv"
+    with plate_path.open("w") as f:
+        f.write(params.model_dump_json())
 
     # extract mask from first image
     mask = create_mask(params)
@@ -67,3 +73,5 @@ def extract_plates(inp_dir, pattern, out_dir):
             writer.dtype = cropped_and_rotated.dtype
             writer.shape = cropped_and_rotated.shape
             writer[:] = cropped_and_rotated
+
+    return params
