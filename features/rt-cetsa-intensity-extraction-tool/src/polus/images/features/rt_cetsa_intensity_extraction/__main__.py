@@ -33,7 +33,7 @@ def main(
         readable=True,
         resolve_path=True,
     ),
-    mask: str = typer.Option(None, "--mask", help="plate mask filename."),
+    params: str = typer.Option(None, "--params", help="plate params filename."),
     filePattern: str = typer.Option(
         ".+",
         "--filePattern",
@@ -57,7 +57,6 @@ def main(
     """CLI for rt-cetsa-intensity-extraction-tool."""
     logger.info("Starting the CLI for rt-cetsa-v-extraction-tool.")
     logger.info(f"Input directory: {inp_dir}")
-    logger.info(f"Mask filename: {mask}")
     logger.info(f"File Pattern: {filePattern}")
     logger.info(f"Output directory: {out_dir}")
 
@@ -66,19 +65,22 @@ def main(
     img_dir = inp_dir / "images"
     logger.info(f"Using images subdirectory: {img_dir}")
 
-    if not (inp_dir / "masks").exists():
-        raise FileNotFoundError(f"no masks subdirectory found in: {inp_dir}")
+    if params and not (inp_dir / "params").exists():
+        raise FileNotFoundError(f"no params subdirectory found in: {inp_dir}")
 
-    mask_dir = inp_dir / "masks"
-    if mask:
-        mask_file = mask_dir / mask
-        if not mask_file.exists():
-            raise FileNotFoundError(f"file {mask} does not exist in: {mask_dir}")
+    # Try the get params file
+    params_dir = inp_dir / "params"
+    if params:
+        params_file = params_dir / params
+        if not params_file.exists():
+            raise FileNotFoundError(f"file {params} does not exist in: {params_dir}")
     else:
-        if len(list(mask_dir.iterdir())) != 1:
-            raise FileExistsError(f"There should be a single mask in {mask_dir}")
-        mask_file = next(mask_dir.iterdir())
-    logger.info(f"Using mask: {mask_file}")
+        if len(list(params_dir.iterdir())) != 1:
+            raise FileExistsError(
+                f"There should be a single plate params file in {params_dir}",
+            )
+        params_file = next(params_dir.iterdir())
+    logger.info(f"Using plate params: {params_file}")
 
     fp = filepattern.FilePattern(img_dir, filePattern)
 
@@ -94,7 +96,7 @@ def main(
             json.dump(out_json, f, indent=2)  # type: ignore
         return
 
-    df = extract_signal(img_files, mask_file)
+    df = extract_signal(img_files, params_file)
     df.to_csv(out_dir / out_filename)
 
 

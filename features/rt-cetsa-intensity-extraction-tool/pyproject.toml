@@ -19,6 +19,7 @@ numpy = "^1.26.4"
 bfio = "^2.3.6"
 scikit-image = "^0.22.0"
 imagecodecs = "^2024.1.1"
+polus-tabular-regression-rt-cetsa-moltenprot = {path = "/Users/antoinegerardin/Documents/projects/tabular-tools/regression/rt-cetsa-moltenprot-tool"}
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"

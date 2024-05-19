@@ -11,6 +11,8 @@ import bfio
 import numpy
 import numpy as np
 import pandas
+from pydantic import BaseModel
+from pydantic_core import from_json
 
 logger = logging.getLogger(__file__)
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
@@ -23,6 +25,7 @@ class IntensityExtractionError(Exception):
     pass
 
 
+# TODO REMOVE Duplicate : This will cause problems when using plugins together
 class PlateSize(Enum):
     SIZE_6 = 6
     SIZE_12 = 12
@@ -33,6 +36,7 @@ class PlateSize(Enum):
     SIZE_1536 = 1536
 
 
+# TODO REMOVE Duplicate : This will cause problems when using plugins together
 PLATE_DIMS = {
     PlateSize.SIZE_6: (2, 3),
     PlateSize.SIZE_12: (3, 4),
@@ -42,6 +46,26 @@ PLATE_DIMS = {
     PlateSize.SIZE_384: (16, 24),
     PlateSize.SIZE_1536: (32, 48),
 }
+
+
+class PlateParams(BaseModel):
+    rotate: int
+    """Counterclockwise rotation of image in degrees."""
+
+    bbox: tuple[int, int, int, int]
+    """Bounding box of plate after rotation, [ymin,ymax,xmin,xmax]."""
+
+    size: PlateSize
+    """The plate size, also determines layout."""
+
+    radius: int
+    """Well radius."""
+
+    X: list[int]
+    """The the x axis points for wells."""
+
+    Y: list[int]
+    """The the y axis points for wells."""
 
 
 def extract_signal(
@@ -74,7 +98,7 @@ def extract_signal(
             TEMPERATURE_RANGE[1] - TEMPERATURE_RANGE[0]
         )
         try:
-            row = (temp, extract_wells_intensity(image_path, mask_path))
+            row = (temp, extract_wells_intensity_fast(image_path, mask_path))
             measures.append(row)
         except Exception as e:  # noqa
             raise IntensityExtractionError(
@@ -86,12 +110,17 @@ def extract_signal(
     # check the first plate for number of wells
     nb_wells = len(measures[0][1])
     plate_size = PlateSize(nb_wells)
-    plate_row = range(PLATE_DIMS[plate_size][0])
-    plate_col = range(PLATE_DIMS[plate_size][1])
-    plate_coords = itertools.product(plate_row, plate_col)
+    plate_row_count = range(PLATE_DIMS[plate_size][0])
+    plate_col_count = range(PLATE_DIMS[plate_size][1])
+    plate_coords = itertools.product(plate_row_count, plate_col_count)
 
     header = ["Temperature"] + [
-        alphanumeric_row(row, col, plate_size) for row, col in plate_coords
+        alphanumeric_row(
+            row,
+            col,
+            (PLATE_DIMS[plate_size][0], PLATE_DIMS[plate_size][1]),
+        )
+        for row, col in plate_coords
     ]
 
     # build dataframe
@@ -106,6 +135,60 @@ def extract_signal(
     df.sort_index(inplace=True)
 
     return df
+
+
+def extract_intensity(image: np.ndarray, x: int, y: int, r: int) -> int:
+    """Get the well intensity
+
+    Args:
+        image: _description_
+        x: x-position of the well centerpoint
+        y: y-position of the well centerpoint
+        r: radius of the well
+
+    Returns:
+        int: The background corrected mean well intensity
+    """
+    assert r >= 5
+
+    # get a large patch to find background pixels
+    x_min = max(x - r, 0)
+    x_max = min(x + r, image.shape[1])
+    y_min = max(y - r, 0)
+    y_max = min(y + r, image.shape[0])
+    patch = image[y_min:y_max, x_min:x_max]
+    background = patch.ravel()
+    background.sort()
+
+    # Subtract lowest pixel values from average center pixel values
+    return int(np.mean(patch) - np.median(background[: int(0.05 * background.size)]))
+
+
+def extract_wells_intensity_fast(
+    image_path: pathlib.Path,
+    mask_path: pathlib.Path,
+) -> list[int]:
+    """Extract well intensities from RT_CETSA image and mask.
+
+    Args:
+        image_path: Path to the RT_CETSA well plate image.
+        mask_path: Path to the corresponding params file.
+
+    Returns:
+        mean intensity for each wells.
+    """
+    with bfio.BioReader(image_path) as reader:
+        image = reader[:]
+    with mask_path.open("r") as f:
+        params = PlateParams(**from_json(f.read()))
+
+    intensities = []
+    for y, x in itertools.product(range(len(params.Y)), range(len(params.X))):
+        intensity = extract_intensity(image, params.X[x], params.Y[y], params.radius)
+        print(intensity)
+        intensities.append(intensity)
+
+    return intensities
 
 
 def extract_wells_intensity(
@@ -140,30 +223,40 @@ def extract_wells_intensity(
         bbox_y_min = numpy.min(bbox[1])
         bbox_y_max = numpy.max(bbox[1])
 
-        # compute corrected intensity
-        patch = image[bbox_y_min:bbox_y_max, bbox_x_min:bbox_x_max]
-        background = patch.ravel()
-        background.sort()
-        # Subtract lowest pixel values from average pixel values
-        corrected_mean_intensity = int(
-            np.mean(patch) - np.mean(background[: int(0.05 * background.size)]),
+        intensity = compute_well_intensity(
+            image,
+            bbox_y_min,
+            bbox_y_max,
+            bbox_x_min,
+            bbox_x_max,
         )
 
-        intensities.append(corrected_mean_intensity)
+        intensities.append(intensity)
 
     return intensities
 
 
-def alphanumeric_row(row: int, col: int, size: PlateSize) -> str:
+def compute_well_intensity(image, bbox_y_min, bbox_y_max, bbox_x_min, bbox_x_max):
+    # compute corrected intensity
+    patch = image[bbox_y_min:bbox_y_max, bbox_x_min:bbox_x_max]
+    background = patch.ravel()
+    background.sort()
+    # Subtract lowest pixel values from average pixel values
+    return int(
+        np.mean(patch) - np.mean(background[: int(0.05 * background.size)]),
+    )
+
+
+def alphanumeric_row(row: int, col: int, dims: tuple[int, int]) -> str:
     """Return alphanumeric row:
     For well plate size < 96, coordinates range from A1 to H12
     For well plate size >= 96, coordinates range from A01 to P24
     For well plate size 1536, coordinates range from A01 to AF48
     """
-    num_row = PLATE_DIMS[size][0]
-    num_col = PLATE_DIMS[size][1]
+    num_row, num_col = dims
+    size = num_row * num_col
     if row >= num_row or col >= num_col:
-        msg = f"({row},{col}) out of range for plate size {size.value}[{num_row},{num_col}]"
+        msg = f"({row},{col}) out of range for plate size {size}[{num_row},{num_col}]"
         raise ValueError(msg)
 
     row_alpha = ""
@@ -172,4 +265,4 @@ def alphanumeric_row(row: int, col: int, size: PlateSize) -> str:
         row -= 26
     row_alpha = row_alpha + string.ascii_uppercase[row % 26]
 
-    return f"{row_alpha}{col+1:02d}" if size.value >= 96 else f"{row_alpha}{col+1}"
+    return f"{row_alpha}{col+1:02d}" if size >= 96 else f"{row_alpha}{col+1}"
