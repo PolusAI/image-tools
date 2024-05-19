@@ -82,9 +82,15 @@ def main(
         params_file = next(params_dir.iterdir())
     logger.info(f"Using plate params: {params_file}")
 
+    # if not (inp_dir / "masks").exists():
+
+    # if mask:
+    #     if not mask_file.exists():
+    #     if len(list(mask_dir.iterdir())) != 1:
+
     fp = filepattern.FilePattern(img_dir, filePattern)
 
-    sorted_fp = sorted(fp, key=lambda f: f[0]["index"])
+    sorted_fp = sorted(fp(), key=lambda f: f[0]["index"])
     img_files: list[pathlib.Path] = [f[1][0] for f in sorted_fp]  # type: ignore[assignment]
 
     vals = list(fp.get_unique_values(fp.get_variables()[0])[fp.get_variables()[0]])
