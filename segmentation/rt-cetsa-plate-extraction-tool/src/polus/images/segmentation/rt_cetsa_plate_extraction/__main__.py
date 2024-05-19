@@ -76,6 +76,7 @@ def main(
             "masks": [
                 (Path("masks") / f"{inp_files[0].stem}{POLUS_IMG_EXT}").as_posix(),
             ],
+            "params": [Path("params") / "plate.csv"],
         }
 
         with (out_dir / "preview.json").open("w") as f:
