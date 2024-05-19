@@ -185,7 +185,6 @@ def extract_wells_intensity_fast(
     intensities = []
     for y, x in itertools.product(range(len(params.Y)), range(len(params.X))):
         intensity = extract_intensity(image, params.X[x], params.Y[y], params.radius)
-        print(intensity)
         intensities.append(intensity)
 
     return intensities
