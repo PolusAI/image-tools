@@ -31,7 +31,8 @@ def extract_plates(inp_dir, pattern, out_dir) -> PlateParams:
     Then crop and rotate all RT_cetsa images.
     """
     fp = filepattern.FilePattern(inp_dir, pattern)
-    inp_files: list[Path] = [f[1][0] for f in fp()]  # type: ignore[assignment]
+    sorted_fp = sorted(fp(), key=lambda f: f[0]["index"])
+    inp_files: list[Path] = [f[1][0] for f in sorted_fp]  # type: ignore[assignment]
 
     if len(inp_files) < 1:
         msg = "no input files captured by the pattern."
@@ -48,11 +49,6 @@ def extract_plates(inp_dir, pattern, out_dir) -> PlateParams:
     params: PlateParams = get_plate_params(first_image)
     logger.info(f"Processing plate of size: {params.size.value}")
 
-    # save plate parameters
-    plate_path = out_dir / "params" / "plate.csv"
-    with plate_path.open("w") as f:
-        f.write(params.model_dump_json())
-
     # extract mask from first image
     mask = create_mask(params)
     mask_path = out_dir / "masks" / (first_image_path.stem + POLUS_IMG_EXT)
@@ -65,13 +61,23 @@ def extract_plates(inp_dir, pattern, out_dir) -> PlateParams:
     # crop and rotate each image
     num_images = len(inp_files)
     for index, f in enumerate(inp_files):
-        logger.info(f"Processing Image {index}/{num_images}: {f}")
+        logger.info(f"Processing Image {index+1}/{num_images}: {f}")
         image = tifffile.imread(f)
         cropped_and_rotated = crop_and_rotate(image, params)
-        out_name = f.stem + POLUS_IMG_EXT
-        with bfio.BioWriter(out_dir / "images" / out_name) as writer:
+
+        if index == 1:
+            first_image = cropped_and_rotated
+
+        out_path = out_dir / "images" / (f.stem + POLUS_IMG_EXT)
+        with bfio.BioWriter(out_path) as writer:
             writer.dtype = cropped_and_rotated.dtype
             writer.shape = cropped_and_rotated.shape
             writer[:] = cropped_and_rotated
+
+    # save plate parameters for the first processed image.
+    params = get_plate_params(first_image)
+    plate_path = out_dir / "params" / "plate.csv"
+    with plate_path.open("w") as f:
+        f.write(params.model_dump_json())  # type: ignore
 
     return params
