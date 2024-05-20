@@ -81,7 +81,7 @@ def create_mask(params: PlateParams):
     wells_mask = np.zeros((heigth, width), dtype=np.uint16)
 
     for mask_label, (y, x) in enumerate(itertools.product(params.Y, params.X), start=1):
-        x_crop, y_crop = (x - params.bbox[2], y - params.bbox[0])
+        y_crop, x_crop = (y, x)
         rr, cc = disk((y_crop, x_crop), params.radius)
         wells_mask[rr, cc] = mask_label
 

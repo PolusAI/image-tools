@@ -55,7 +55,6 @@ def main(
 ) -> None:
     """CLI for rt-cetsa-plate-extraction-tool."""
     logger.info("Starting the CLI for rt-cetsa-plate-extraction-tool.")
-
     logger.info(f"Input directory: {inp_dir}")
     logger.info(f"File Pattern: {pattern}")
     logger.info(f"Output directory: {out_dir}")
