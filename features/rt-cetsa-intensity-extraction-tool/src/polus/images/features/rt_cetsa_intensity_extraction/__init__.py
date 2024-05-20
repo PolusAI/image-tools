@@ -144,23 +144,22 @@ def extract_intensity(image: np.ndarray, x: int, y: int, r: int) -> int:
         image: _description_
         x: x-position of the well centerpoint
         y: y-position of the well centerpoint
-        r: radius of the well
+        r: radius of the circle inscribed in the square area of interest.
 
     Returns:
         int: The background corrected mean well intensity
     """
-    assert r >= 5
-
-    # get a large patch to find background pixels
+    # we take a square area around the well center
     x_min = max(x - r, 0)
     x_max = min(x + r, image.shape[1])
     y_min = max(y - r, 0)
     y_max = min(y + r, image.shape[0])
+
     patch = image[y_min:y_max, x_min:x_max]
     background = patch.ravel()
     background.sort()
 
-    # Subtract lowest pixel values from average center pixel values
+    # Subtract lowest pixel values from average patch pixel values
     return int(np.mean(patch) - np.median(background[: int(0.05 * background.size)]))
 
 
@@ -183,8 +182,21 @@ def extract_wells_intensity_fast(
         params = PlateParams(**from_json(f.read()))
 
     intensities = []
+
+    # NOTE take half of the smallest distance between wells.
+    # this is close to what the original matlab code is doing
+    # and get us close to the value it was computing.
+    R = min(params.X[1] - params.X[0], params.Y[1] - params.Y[0]) // 2
+
+    logger.debug(
+        f"""
+        Average radius detected : {params.radius}
+        Radius
+        """,
+    )
+
     for y, x in itertools.product(range(len(params.Y)), range(len(params.X))):
-        intensity = extract_intensity(image, params.X[x], params.Y[y], params.radius)
+        intensity = extract_intensity(image, params.X[x], params.Y[y], R)
         intensities.append(intensity)
 
     return intensities
