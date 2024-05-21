@@ -42,8 +42,8 @@ ui:
   title: Input data collection
   type: path
 - description: Filepattern to parse input files
-  key: inputs.pattern
-  title: pattern
+  key: inputs.filePattern
+  title: filePattern
   type: text
 - description: Generate an output preview.
   key: inputs.preview

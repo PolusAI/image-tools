@@ -21,4 +21,4 @@ This plugin takes eight input argument and one output argument:
 | `--inpDir`      | Input data collection to be processed by this tool | Input  | genericData |
 | `--filePattern` | FilePattern to parse input files                   | Input  | string      |
 | `--outDir`      | Output dir                                         | Output | genericData |
-| `--preview`     | Generate JSON file with outputs                    | Output | JSON        |
+| `--preview`     | Generate JSON file with outputs                    | Output | JSON        | Optional
