@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "polus_images_features_rt_cetsa_intensity_extraction"
 version = "0.1.0"
-description = "Extract well intensities from RT-CETSA plate images and masks."
+description = "Extract well intensities from RT-CETSA plate images."
 authors = [
     "Nick Schaub <nick.schaub@nih.gov>",
     "Antoine Gerardin <antoine.gerardin@nih.gov>",
@@ -19,7 +19,8 @@ numpy = "^1.26.4"
 bfio = "^2.3.6"
 scikit-image = "^0.22.0"
 imagecodecs = "^2024.1.1"
-polus-tabular-regression-rt-cetsa-moltenprot = {path = "/Users/antoinegerardin/Documents/projects/tabular-tools/regression/rt-cetsa-moltenprot-tool"}
+polus-images-segmentation-rt-cetsa-plate-extraction = {path = "/Users/antoinegerardin/Documents/projects/polus-plugins/segmentation/rt-cetsa-plate-extraction-tool"}
+
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"

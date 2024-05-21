@@ -1,78 +1,37 @@
 """RT_CETSA Intensity Extraction Tool."""
+__version__ = "0.1.0"
 
 import itertools
 import logging
 import os
 import pathlib
 import string
-from enum import Enum
 
 import bfio
 import filepattern
 import numpy
 import numpy as np
 import pandas
-from pydantic import BaseModel
+from polus.images.segmentation.rt_cetsa_plate_extraction.core import PLATE_DIMS
+from polus.images.segmentation.rt_cetsa_plate_extraction.core import PlateParams
+from polus.images.segmentation.rt_cetsa_plate_extraction.core import PlateSize
 from pydantic_core import from_json
 
 logger = logging.getLogger(__file__)
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
-ADD_TEMP = True
-TEMPERATURE_RANGE = [37, 90]
-
 
 class IntensityExtractionError(Exception):
+    """Raise if an image could not be processed."""
+
     pass
-
-
-# TODO REMOVE Duplicate : This will cause problems when using plugins together
-class PlateSize(Enum):
-    SIZE_6 = 6
-    SIZE_12 = 12
-    SIZE_24 = 24
-    SIZE_48 = 48
-    SIZE_96 = 96
-    SIZE_384 = 384
-    SIZE_1536 = 1536
-
-
-# TODO REMOVE Duplicate : This will cause problems when using plugins together
-PLATE_DIMS = {
-    PlateSize.SIZE_6: (2, 3),
-    PlateSize.SIZE_12: (3, 4),
-    PlateSize.SIZE_24: (4, 6),
-    PlateSize.SIZE_48: (6, 8),
-    PlateSize.SIZE_96: (8, 12),
-    PlateSize.SIZE_384: (16, 24),
-    PlateSize.SIZE_1536: (32, 48),
-}
-
-
-class PlateParams(BaseModel):
-    rotate: int
-    """Counterclockwise rotation of image in degrees."""
-
-    bbox: tuple[int, int, int, int]
-    """Bounding box of plate after rotation, [ymin,ymax,xmin,xmax]."""
-
-    size: PlateSize
-    """The plate size, also determines layout."""
-
-    radius: int
-    """Well radius."""
-
-    X: list[int]
-    """The the x axis points for wells."""
-
-    Y: list[int]
-    """The the y axis points for wells."""
 
 
 def sort_and_extract_signal(
     img_dir: pathlib.Path,
     plate_params: pathlib.Path,
     file_pattern: str = "{index:d+}.ome.tiff",
+    temp_interval: tuple[int, int] = (37, 90),
 ):
     """Build a DataFrame with well intensity measurements for each temperature.
 
@@ -85,45 +44,47 @@ def sort_and_extract_signal(
         img_dir: path to the image input directory.
         file_pattern: filepattern used to sort the image.
         mask_path: path to the plate params file.
+        temp_interval: temperature range on which the img_dir are collected.
+            we assume a linear temperature increase to build the result dataframe.
 
     Returns:
         Pandas DataFrame.
     """
     img_files = sort_input_images(img_dir, file_pattern)
-    extract_signal(img_files, plate_params)
+    extract_signal(img_files, plate_params, temp_interval)
 
 
 def extract_signal(
     img_paths: list[pathlib.Path],
     plate_params: pathlib.Path,
+    temp_interval: tuple[int, int] = (37, 90),
 ) -> pandas.DataFrame:
     """Build a DataFrame with well intensity measurements for each temperature.
 
     Args:
         img_paths: List of sorted image paths.
         mask_path: path to the wells mask.
+        temp_interval: temperature range on which the img_dir are collected.
+            we assume a linear temperature increase to build the result dataframe.
 
     Returns:
         Pandas DataFrame.
     """
-    if not ADD_TEMP:
-        raise NotImplementedError
+    start_temp, end_temp = temp_interval
 
     num_images = len(img_paths)
 
     if num_images < 2:
         raise ValueError(
             "provide at least 2 images on the temperature interval "
-            + f"({TEMPERATURE_RANGE[0]}-{TEMPERATURE_RANGE[1]})",
+            + f"({start_temp}-{end_temp})",
         )
 
     measures: list[tuple[float, list[int]]] = []
     for index, image_path in enumerate(img_paths):
-        temp = TEMPERATURE_RANGE[0] + index / (num_images - 1) * (
-            TEMPERATURE_RANGE[1] - TEMPERATURE_RANGE[0]
-        )
+        temp = start_temp + index / (num_images - 1) * (end_temp - start_temp)
         try:
-            row = (temp, extract_wells_intensity_fast(image_path, plate_params))
+            row = (temp, extract_wells_intensity(image_path, plate_params))
             measures.append(row)
         except Exception as e:  # noqa
             raise IntensityExtractionError(
@@ -132,7 +93,7 @@ def extract_signal(
         logger.info(f"extracted intensity for image : {index+1}/{num_images}")
 
     # build header
-    # check the first plate for number of wells
+    # check the first plate for the plate dimensions
     nb_wells = len(measures[0][1])
     plate_size = PlateSize(nb_wells)
     plate_row_count = range(PLATE_DIMS[plate_size][0])
@@ -150,7 +111,7 @@ def extract_signal(
 
     # build dataframe
     # roundup temperature
-    rows = [[round(measure[0], 1), *measure[1]] for measure in measures]
+    rows = [[round(measure[0], 2), *measure[1]] for measure in measures]
     df = pandas.DataFrame(rows, columns=header)
 
     # Set the temperature as the index
@@ -188,7 +149,7 @@ def extract_intensity(image: np.ndarray, x: int, y: int, r: int) -> int:
     return int(np.mean(patch) - np.median(background[: int(0.05 * background.size)]))
 
 
-def extract_wells_intensity_fast(
+def extract_wells_intensity(
     image_path: pathlib.Path,
     mask_path: pathlib.Path,
 ) -> list[int]:
@@ -208,30 +169,26 @@ def extract_wells_intensity_fast(
 
     intensities = []
 
-    # NOTE take half of the smallest distance between wells.
-    # this is close to what the original matlab code is doing
-    # and get us close to the value it was computing.
-    R = min(params.X[1] - params.X[0], params.Y[1] - params.Y[0]) // 2
-
-    logger.debug(
-        f"""
-        Average radius detected : {params.radius}
-        Radius
-        """,
-    )
-
     for y, x in itertools.product(range(len(params.Y)), range(len(params.X))):
-        intensity = extract_intensity(image, params.X[x], params.Y[y], R)
+        intensity = extract_intensity(
+            image,
+            params.X[x],
+            params.Y[y],
+            params.roi_radius,
+        )
         intensities.append(intensity)
 
     return intensities
 
 
-def extract_wells_intensity(
+def extract_wells_intensity_from_mask(
     image_path: pathlib.Path,
     mask_path: pathlib.Path,
 ) -> list[int]:
-    """Extract well intensities from RT_CETSA image and mask.
+    """Extract well intensities from RT_CETSA images using a labeled mask.
+
+    This method is degree of magnitude solwer than extract_wells_intensity
+    and is just provided for convenience. Consider using extract_wells_intensity instead.
 
     Args:
         image_path: Path to the RT_CETSA well plate image.
@@ -247,10 +204,8 @@ def extract_wells_intensity(
 
     max_mask_index = numpy.max(mask)
     intensities = []
-
     for mask_label in range(1, max_mask_index + 1):
         # retrieve a bounding box around each well.
-        # NOTE this was originally much faster when relying on well positions.
         current_mask = mask == mask_label
         image[current_mask]
         bbox = numpy.argwhere(current_mask)
@@ -258,7 +213,6 @@ def extract_wells_intensity(
         bbox_x_max = numpy.max(bbox[0])
         bbox_y_min = numpy.min(bbox[1])
         bbox_y_max = numpy.max(bbox[1])
-
         intensity = compute_well_intensity(
             image,
             bbox_y_min,
@@ -266,14 +220,18 @@ def extract_wells_intensity(
             bbox_x_min,
             bbox_x_max,
         )
-
         intensities.append(intensity)
-
     return intensities
 
 
-def compute_well_intensity(image, bbox_y_min, bbox_y_max, bbox_x_min, bbox_x_max):
-    # compute corrected intensity
+def compute_well_intensity(
+    image: np.ndarray,
+    bbox_y_min: int,
+    bbox_y_max: int,
+    bbox_x_min: int,
+    bbox_x_max: int,
+):
+    """Compute corrected intensity."""
     patch = image[bbox_y_min:bbox_y_max, bbox_x_min:bbox_x_max]
     background = patch.ravel()
     background.sort()
@@ -305,6 +263,10 @@ def alphanumeric_row(row: int, col: int, dims: tuple[int, int]) -> str:
 
 
 def sort_input_images(img_dir: pathlib.Path, file_pattern: str) -> list[pathlib.Path]:
+    """Sort image with the provided filepattern.
+
+    If multiple indexing variables are provided, we only index using the first one.
+    """
     fp = filepattern.FilePattern(img_dir, file_pattern)
 
     if len(fp.get_variables()) == 0:
