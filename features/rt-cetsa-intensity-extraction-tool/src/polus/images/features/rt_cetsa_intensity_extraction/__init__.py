@@ -54,6 +54,30 @@ def sort_and_extract_signal(
     return extract_signal(img_files, plate_params, temp_interval)
 
 
+def sort_input_images(img_dir: pathlib.Path, file_pattern: str) -> list[pathlib.Path]:
+    """Sort image with the provided filepattern.
+
+    If multiple indexing variables are provided, we only index using the first one.
+    """
+    fp = filepattern.FilePattern(img_dir, file_pattern)
+
+    if len(fp.get_variables()) == 0:
+        msg = "A filepattern with one indexing variable is needed to sort the input images."
+        raise ValueError(
+            msg,
+        )
+
+    index = fp.get_variables()[0]
+    if len(fp.get_variables()) > 1:
+        logger.warning(
+            f"multiple indexing variables found in filepattern: {file_pattern}. Sorting filenames by {index}",
+        )
+
+    sorted_fp = sorted(fp(), key=lambda f: f[0][index])
+    img_files: list[pathlib.Path] = [f[1][0] for f in sorted_fp]  # type: ignore[assignment]
+    return img_files
+
+
 def extract_signal(
     img_paths: list[pathlib.Path],
     plate_params: pathlib.Path,
@@ -123,6 +147,38 @@ def extract_signal(
     return df
 
 
+def extract_wells_intensity(
+    image_path: pathlib.Path,
+    params_path: pathlib.Path,
+) -> list[int]:
+    """Extract well intensities from RT_CETSA image and mask.
+
+    Args:
+        image_path: Path to the RT_CETSA well plate image.
+        params_path: Path to the corresponding params file.
+
+    Returns:
+        corrected intensity for each well.
+    """
+    with bfio.BioReader(image_path) as reader:
+        image = reader[:]
+    with params_path.open("r") as f:
+        params = PlateParams(**from_json(f.read()))
+
+    intensities = []
+
+    for y, x in itertools.product(range(len(params.Y)), range(len(params.X))):
+        intensity = extract_intensity(
+            image,
+            params.X[x],
+            params.Y[y],
+            params.roi_radius,
+        )
+        intensities.append(intensity)
+
+    return intensities
+
+
 def extract_intensity(image: np.ndarray, x: int, y: int, r: int) -> int:
     """Get the well intensity
 
@@ -147,38 +203,6 @@ def extract_intensity(image: np.ndarray, x: int, y: int, r: int) -> int:
 
     # Subtract lowest pixel values from average patch pixel values
     return int(np.mean(patch) - np.median(background[: int(0.05 * background.size)]))
-
-
-def extract_wells_intensity(
-    image_path: pathlib.Path,
-    mask_path: pathlib.Path,
-) -> list[int]:
-    """Extract well intensities from RT_CETSA image and mask.
-
-    Args:
-        image_path: Path to the RT_CETSA well plate image.
-        mask_path: Path to the corresponding params file.
-
-    Returns:
-        mean intensity for each wells.
-    """
-    with bfio.BioReader(image_path) as reader:
-        image = reader[:]
-    with mask_path.open("r") as f:
-        params = PlateParams(**from_json(f.read()))
-
-    intensities = []
-
-    for y, x in itertools.product(range(len(params.Y)), range(len(params.X))):
-        intensity = extract_intensity(
-            image,
-            params.X[x],
-            params.Y[y],
-            params.roi_radius,
-        )
-        intensities.append(intensity)
-
-    return intensities
 
 
 def extract_wells_intensity_from_mask(
@@ -260,27 +284,3 @@ def alphanumeric_row(row: int, col: int, dims: tuple[int, int]) -> str:
     row_alpha = row_alpha + string.ascii_uppercase[row % 26]
 
     return f"{row_alpha}{col+1:02d}" if size >= 96 else f"{row_alpha}{col+1}"
-
-
-def sort_input_images(img_dir: pathlib.Path, file_pattern: str) -> list[pathlib.Path]:
-    """Sort image with the provided filepattern.
-
-    If multiple indexing variables are provided, we only index using the first one.
-    """
-    fp = filepattern.FilePattern(img_dir, file_pattern)
-
-    if len(fp.get_variables()) == 0:
-        msg = "A filepattern with one indexing variable is needed to sort the input images."
-        raise ValueError(
-            msg,
-        )
-
-    index = fp.get_variables()[0]
-    if len(fp.get_variables()) > 1:
-        logger.warning(
-            f"multiple indexing variables found in filepattern: {file_pattern}. Sorting filenames by {index}",
-        )
-
-    sorted_fp = sorted(fp(), key=lambda f: f[0][index])
-    img_files: list[pathlib.Path] = [f[1][0] for f in sorted_fp]  # type: ignore[assignment]
-    return img_files
