@@ -22,7 +22,7 @@ inputs:
       prefix: --params
     type: string?
   temp:
-    type: int[]
+    type: int[]?
     inputBinding:
       prefix: -temp=
       itemSeparator: " "
