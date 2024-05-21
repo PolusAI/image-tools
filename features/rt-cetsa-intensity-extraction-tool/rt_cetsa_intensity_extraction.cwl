@@ -13,14 +13,24 @@ inputs:
     inputBinding:
       prefix: --filePattern
     type: string?
-  preview:
-    inputBinding:
-      prefix: --preview
-    type: boolean?
   outDir:
     inputBinding:
       prefix: --outDir
     type: Directory
+  params:
+    inputBinding:
+      prefix: --params
+    type: string?
+  temp:
+    type: int[]
+    inputBinding:
+      prefix: -temp=
+      itemSeparator: " "
+      separate: false
+  preview:
+    inputBinding:
+      prefix: --preview
+    type: boolean?
 outputs:
   outDir:
     outputBinding:

@@ -54,6 +54,11 @@ def main(
         "--params",
         help="(Optional) plate params filename in the input params subdirectory.",
     ),
+    temp_interval: tuple[int, int] = typer.Option(
+        (37, 90),
+        "--temp",
+        help="(Optional) Temperature range. Default to [37,90]",
+    ),
     preview: bool = typer.Option(
         False,
         "--preview",
@@ -70,6 +75,9 @@ def main(
         raise FileNotFoundError(f"no images subdirectory found in: {inp_dir}")
     img_dir = inp_dir / "images"
     logger.info(f"Using images subdirectory: {img_dir}")
+
+    if temp_interval:
+        logger.info(f"Temperature interval: {temp_interval}")
 
     # Get plate params file and validate
     if params and not (inp_dir / "params").exists():

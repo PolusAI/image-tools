@@ -22,12 +22,6 @@
       "required": true
     },
     {
-      "name": "mask",
-      "type": "string",
-      "description": "filename of the plate mask.",
-      "required": false
-    },
-    {
       "name": "filePattern",
       "type": "string",
       "description": "filePattern to parse input files.",
@@ -38,6 +32,18 @@
       "name": "preview",
       "type": "boolean",
       "description": "Generate preview of outputs.",
+      "required": false
+    },
+    {
+      "name": "params",
+      "type": "boolean",
+      "description": "Plate params to use.",
+      "required": false
+    },
+    {
+      "name": "temp",
+      "type": "boolean",
+      "description": "Temperature range. Default to [37,90].",
       "required": false
     }
   ],
@@ -61,9 +67,19 @@
     },
     {
       "key": "inputs.filePattern",
-      "title": "filePattern",
+      "title": "FilePattern",
       "description": "File Pattern to parse input files.",
       "default": ".+"
+    },
+    {
+      "name": "inputs.params",
+      "title": "Params",
+      "description": "Plate params to use."
+    },
+    {
+      "name": "inputs.temp",
+      "title": "Temp",
+      "description": "Temperature range. Default to [37,90]."
     }
   ]
 }
