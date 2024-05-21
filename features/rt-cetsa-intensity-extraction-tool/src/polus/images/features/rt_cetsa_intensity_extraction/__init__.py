@@ -8,6 +8,7 @@ import string
 from enum import Enum
 
 import bfio
+import filepattern
 import numpy
 import numpy as np
 import pandas
@@ -68,14 +69,38 @@ class PlateParams(BaseModel):
     """The the y axis points for wells."""
 
 
+def sort_and_extract_signal(
+    img_dir: pathlib.Path,
+    plate_params: pathlib.Path,
+    file_pattern: str = "{index:d+}.ome.tiff",
+):
+    """Build a DataFrame with well intensity measurements for each temperature.
+
+    This is the top level method for this module and should be called by client's code.
+    In addition to extracting signal,
+    it sort images provided in the path provided according to file pattern.
+    For convenience, a default pattern using the existing RT Cetsa naming scheme is provided.
+
+    Args:
+        img_dir: path to the image input directory.
+        file_pattern: filepattern used to sort the image.
+        mask_path: path to the plate params file.
+
+    Returns:
+        Pandas DataFrame.
+    """
+    img_files = sort_input_images(img_dir, file_pattern)
+    extract_signal(img_files, plate_params)
+
+
 def extract_signal(
     img_paths: list[pathlib.Path],
-    mask_path: pathlib.Path,
+    plate_params: pathlib.Path,
 ) -> pandas.DataFrame:
     """Build a DataFrame with well intensity measurements for each temperature.
 
     Args:
-        img_paths: List of image paths.
+        img_paths: List of sorted image paths.
         mask_path: path to the wells mask.
 
     Returns:
@@ -98,7 +123,7 @@ def extract_signal(
             TEMPERATURE_RANGE[1] - TEMPERATURE_RANGE[0]
         )
         try:
-            row = (temp, extract_wells_intensity_fast(image_path, mask_path))
+            row = (temp, extract_wells_intensity_fast(image_path, plate_params))
             measures.append(row)
         except Exception as e:  # noqa
             raise IntensityExtractionError(
@@ -277,3 +302,23 @@ def alphanumeric_row(row: int, col: int, dims: tuple[int, int]) -> str:
     row_alpha = row_alpha + string.ascii_uppercase[row % 26]
 
     return f"{row_alpha}{col+1:02d}" if size >= 96 else f"{row_alpha}{col+1}"
+
+
+def sort_input_images(img_dir: pathlib.Path, file_pattern: str) -> list[pathlib.Path]:
+    fp = filepattern.FilePattern(img_dir, file_pattern)
+
+    if len(fp.get_variables()) == 0:
+        msg = "A filepattern with one indexing variable is needed to sort the input images."
+        raise ValueError(
+            msg,
+        )
+
+    index = fp.get_variables()[0]
+    if len(fp.get_variables()) > 1:
+        logger.warning(
+            f"multiple indexing variables found in filepattern: {file_pattern}. Sorting filenames by {index}",
+        )
+
+    sorted_fp = sorted(fp(), key=lambda f: f[0][index])
+    img_files: list[pathlib.Path] = [f[1][0] for f in sorted_fp]  # type: ignore[assignment]
+    return img_files

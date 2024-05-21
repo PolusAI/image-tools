@@ -8,6 +8,7 @@ import pathlib
 import filepattern
 import typer
 from polus.images.features.rt_cetsa_intensity_extraction import extract_signal
+from polus.images.features.rt_cetsa_intensity_extraction import sort_input_images
 
 # Initialize the logger
 logging.basicConfig(
@@ -19,6 +20,7 @@ logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tiff")
 
+# CLI options
 app = typer.Typer()
 
 
@@ -33,16 +35,10 @@ def main(
         readable=True,
         resolve_path=True,
     ),
-    params: str = typer.Option(None, "--params", help="plate params filename."),
     filePattern: str = typer.Option(
-        ".+",
+        "{index:d+}.ome.tiff",
         "--filePattern",
-        help="FilePattern to match the files in the input directory.",
-    ),
-    preview: bool = typer.Option(
-        False,
-        "--preview",
-        help="Preview the files that will be processed.",
+        help="FilePattern to match the files in the input images sub directory.",
     ),
     out_dir: pathlib.Path = typer.Option(
         ...,
@@ -52,6 +48,16 @@ def main(
         dir_okay=True,
         writable=True,
         resolve_path=True,
+    ),
+    params: str = typer.Option(
+        None,
+        "--params",
+        help="(Optional) plate params filename in the input params subdirectory.",
+    ),
+    preview: bool = typer.Option(
+        False,
+        "--preview",
+        help="(Optional) Preview the files that will be processed.",
     ),
 ) -> None:
     """CLI for rt-cetsa-intensity-extraction-tool."""
@@ -65,10 +71,9 @@ def main(
     img_dir = inp_dir / "images"
     logger.info(f"Using images subdirectory: {img_dir}")
 
+    # Get plate params file and validate
     if params and not (inp_dir / "params").exists():
         raise FileNotFoundError(f"no params subdirectory found in: {inp_dir}")
-
-    # Try the get params file
     params_dir = inp_dir / "params"
     if params:
         params_file = params_dir / params
@@ -82,11 +87,11 @@ def main(
         params_file = next(params_dir.iterdir())
     logger.info(f"Using plate params: {params_file}")
 
+    # validate filePattern and sort input images
+    img_files = sort_input_images(img_dir, filePattern)
+
+    # generate a unique name for the output file
     fp = filepattern.FilePattern(img_dir, filePattern)
-
-    sorted_fp = sorted(fp(), key=lambda f: f[0]["index"])
-    img_files: list[pathlib.Path] = [f[1][0] for f in sorted_fp]  # type: ignore[assignment]
-
     vals = list(fp.get_unique_values(fp.get_variables()[0])[fp.get_variables()[0]])
     out_filename = f"plate_({vals[0]}-{vals[-1]}).csv"
 
