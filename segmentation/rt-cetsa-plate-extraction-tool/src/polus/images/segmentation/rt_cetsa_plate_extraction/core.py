@@ -59,6 +59,9 @@ class PlateParams(BaseModel):
     radius: int
     """Well radius."""
 
+    roi_radius: int
+    """Radius of the region of interest."""
+
     X: list[int]
     """The the x axis points for wells."""
 
@@ -165,10 +168,14 @@ def get_plate_params(image: np.ndarray) -> PlateParams:
     Y = points[0]
     X = points[1]
 
+    # estimated distance from the well center we need to consider
+    roi_radius = min(X[1] - X[0], Y[1] - Y[0]) // 2
+
     return PlateParams(
         rotate=angle,
         size=plate_config,
         radius=int(radii_mean),
+        roi_radius=int(roi_radius),
         bbox=bbox,
         X=X,
         Y=Y,

@@ -7,7 +7,6 @@ from pathlib import Path
 
 import bfio
 import filepattern
-import tifffile
 from polus.images.segmentation.rt_cetsa_plate_extraction.core import PlateParams
 from polus.images.segmentation.rt_cetsa_plate_extraction.core import create_mask
 from polus.images.segmentation.rt_cetsa_plate_extraction.core import crop_and_rotate
@@ -44,9 +43,9 @@ def extract_plates(inp_dir, pattern, out_dir) -> PlateParams:
 
     # extract plate params from first image
     first_image_path = inp_files[0]
+    with bfio.BioReader(first_image_path) as reader:
+        first_image = reader[:]
 
-    # TODO Switch to bfio
-    first_image = tifffile.imread(first_image_path)
     params: PlateParams = get_plate_params(first_image)
 
     logger.info(f"Processing plate of size: {params.size.value}")
@@ -55,25 +54,26 @@ def extract_plates(inp_dir, pattern, out_dir) -> PlateParams:
     num_images = len(inp_files)
     for index, f in enumerate(inp_files):
         logger.info(f"Processing Image {index+1}/{num_images}: {f}")
-        image = tifffile.imread(f)
-        cropped_and_rotated = crop_and_rotate(image, params)
+        with bfio.BioReader(f) as reader:
+            image = reader[:]
+            cropped_and_rotated = crop_and_rotate(image, params)
 
-        if index == 1:
-            first_image = cropped_and_rotated
+            if index == 1:
+                first_image = cropped_and_rotated
 
-        out_path = out_dir / "images" / (f.stem + POLUS_IMG_EXT)
-        with bfio.BioWriter(out_path) as writer:
-            writer.dtype = cropped_and_rotated.dtype
-            writer.shape = cropped_and_rotated.shape
-            writer[:] = cropped_and_rotated
+            out_path = out_dir / "images" / (f.stem + POLUS_IMG_EXT)
+            with bfio.BioWriter(out_path) as writer:
+                writer.dtype = cropped_and_rotated.dtype
+                writer.shape = cropped_and_rotated.shape
+                writer[:] = cropped_and_rotated
 
-    # save plate parameters for the first processed image.
+    # save plate parameters for the first processed image
     processed_params = get_plate_params(first_image)
     plate_path = out_dir / "params" / "plate.csv"
     with plate_path.open("w") as f:
         f.write(processed_params.model_dump_json())  # type: ignore
 
-    # save the corresponding mask for reference.
+    # save the corresponding mask for reference
     mask = create_mask(processed_params)
     mask_path = out_dir / "masks" / (first_image_path.stem + POLUS_IMG_EXT)
     with bfio.BioWriter(mask_path) as writer:
