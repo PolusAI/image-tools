@@ -16,7 +16,6 @@ typer = "^0.7.0"
 filepattern = "^2.0.5"
 numpy = "^1.26.4"
 scikit-image = "0.22.0"
-tifffile = "^2024.5.3"
 bfio = "^2.3.6"
 
 [tool.poetry.group.dev.dependencies]
