@@ -51,7 +51,7 @@ def sort_and_extract_signal(
         Pandas DataFrame.
     """
     img_files = sort_input_images(img_dir, file_pattern)
-    extract_signal(img_files, plate_params, temp_interval)
+    return extract_signal(img_files, plate_params, temp_interval)
 
 
 def extract_signal(
@@ -187,7 +187,7 @@ def extract_wells_intensity_from_mask(
 ) -> list[int]:
     """Extract well intensities from RT_CETSA images using a labeled mask.
 
-    This method is degree of magnitude solwer than extract_wells_intensity
+    This method is degree of magnitude slower than extract_wells_intensity
     and is just provided for convenience. Consider using extract_wells_intensity instead.
 
     Args:
