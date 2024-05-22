@@ -16,7 +16,7 @@ typer = "^0.7.0"
 filepattern = "^2.0.5"
 numpy = "^1.26.4"
 scikit-image = "0.22.0"
-bfio = "^2.3.6"
+bfio = "2.3.6"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
