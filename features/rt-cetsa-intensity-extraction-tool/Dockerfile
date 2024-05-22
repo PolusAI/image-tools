@@ -14,6 +14,9 @@ COPY VERSION ${EXEC_DIR}
 COPY README.md ${EXEC_DIR}
 COPY src ${EXEC_DIR}/src
 
+RUN apt-get -y update
+RUN apt-get -y install git
+
 RUN pip3 install ${EXEC_DIR} --no-cache-dir
 
 ENTRYPOINT ["python3", "-m", "polus.images.features.rt_cetsa_intensity_extraction"]
