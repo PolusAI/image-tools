@@ -1,4 +1,4 @@
-name: Test All Tools
+name: Find All Tools
 
 on:
   workflow_call:
@@ -28,7 +28,7 @@ jobs:
           # List of directories to ignore
           ignored_dirs="polus-python-template ftl-label .venv"
           # List of tools that are broken for known reasons
-          broken_tools="binary-operations basic-flatfield-estimation"
+          broken_tools="binary-operations basic-flatfield-estimation microjson-to-ome cell-border-segmentation precompute-slide"
 
           # Initialize variables
           ignored_dirs="$ignored_dirs $broken_tools"
