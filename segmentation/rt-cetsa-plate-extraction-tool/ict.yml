@@ -3,7 +3,7 @@ author:
 - Antoine Gerardin
 - Najib Ishaq
 contact: nick.schaub@nih.gov
-container: polusai/rt-cetsa-plate-extraction-tool:0.2.0-dev0
+container: polusai/rt-cetsa-plate-extraction-tool:0.3.0-dev0
 description: Rotate and crop images of plates from RT-CETSA; then label the wells.
 entrypoint: python3 -m polus.images.segmentation.rt_cetsa_plate_extraction
 inputs:
@@ -49,4 +49,4 @@ ui:
   key: inputs.preview
   title: Preview example output of this plugin
   type: checkbox
-version: 0.2.0-dev0
+version: 0.3.0-dev0
