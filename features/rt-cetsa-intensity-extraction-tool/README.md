@@ -1,4 +1,4 @@
-# RT_CETSA Intensity Extraction Tool (v0.2.0-dev0)
+# RT_CETSA Intensity Extraction Tool (v0.3.0-dev0)
 
 This tool runs well intensities extraction for the RT-CETSA pipeline.
 
