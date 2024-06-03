@@ -37,7 +37,7 @@ UNITS = {
     "µm": 10**3,
     "nm": 1,
     "Å": 10**-1,
-    'UnitsLength.MICROMETER': 10**3,
+    "UnitsLength.MICROMETER": 10**3,
 }
 
 # Chunk Scale
@@ -222,7 +222,9 @@ def bfio_metadata_to_slide_info(
 
         resolution = [phys_x[0] * UNITS[str(phys_x[1])]]
         resolution.append(phys_y[0] * UNITS[str(phys_y[1])])
-        resolution.append(phys_z[0] * UNITS[str(phys_z[1])])  # Just used as a placeholder
+        resolution.append(
+            phys_z[0] * UNITS[str(phys_z[1])],
+        )  # Just used as a placeholder
         dtype = str(numpy.dtype(bfio_reader.dtype))
 
     num_scales = int(numpy.ceil(numpy.log2(max(sizes))))
