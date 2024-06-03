@@ -30,8 +30,7 @@ class IntensityExtractionError(Exception):
 def sort_and_extract_signal(
     img_dir: pathlib.Path,
     plate_params: pathlib.Path,
-    file_pattern: str = "{index:d+}.ome.tiff",
-    temp_interval: tuple[int, int] = (37, 90),
+    file_pattern: str,
 ):
     """Build a DataFrame with well intensity measurements for each temperature.
 
@@ -50,63 +49,47 @@ def sort_and_extract_signal(
     Returns:
         Pandas DataFrame.
     """
-    img_files = sort_input_images(img_dir, file_pattern)
-    return extract_signal(img_files, plate_params, temp_interval)
+    fps = sort_fps(img_dir, file_pattern)
+    return extract_signal(fps, plate_params)
 
 
-def sort_input_images(img_dir: pathlib.Path, file_pattern: str) -> list[pathlib.Path]:
+def sort_fps(img_dir: pathlib.Path, file_pattern: str):
     """Sort image with the provided filepattern.
 
     If multiple indexing variables are provided, we only index using the first one.
     """
-    fp = filepattern.FilePattern(img_dir, file_pattern)
+    fps = filepattern.FilePattern(img_dir, file_pattern)
 
-    if len(fp.get_variables()) == 0:
+    if len(fps.get_variables()) == 0:
         msg = "A filepattern with one indexing variable is needed to sort the input images."
         raise ValueError(
             msg,
         )
 
-    index = fp.get_variables()[0]
-    if len(fp.get_variables()) > 1:
-        logger.warning(
-            f"multiple indexing variables found in filepattern: {file_pattern}. Sorting filenames by {index}",
+    if "index" not in fps.get_variables() or "temp" not in fps.get_variables():
+        msg = "filepattern should contain at least two variables : index and temp"
+        raise ValueError(
+            msg,
         )
 
-    sorted_fp = sorted(fp(), key=lambda f: f[0][index])
-    img_files: list[pathlib.Path] = [f[1][0] for f in sorted_fp]  # type: ignore[assignment]
-    return img_files
+    return sorted(fps(), key=lambda f: f[0]["index"])
 
 
-def extract_signal(
-    img_paths: list[pathlib.Path],
-    plate_params: pathlib.Path,
-    temp_interval: tuple[int, int] = (37, 90),
-) -> pandas.DataFrame:
+def extract_signal(fps, plate_params: pathlib.Path) -> pandas.DataFrame:
     """Build a DataFrame with well intensity measurements for each temperature.
 
     Args:
-        img_paths: List of sorted image paths.
+        fp: filepatterns
         mask_path: path to the wells mask.
-        temp_interval: temperature range on which the img_dir are collected.
-            we assume a linear temperature increase to build the result dataframe.
 
     Returns:
         Pandas DataFrame.
     """
-    start_temp, end_temp = temp_interval
-
-    num_images = len(img_paths)
-
-    if num_images < 2:
-        raise ValueError(
-            "provide at least 2 images on the temperature interval "
-            + f"({start_temp}-{end_temp})",
-        )
-
     measures: list[tuple[float, list[int]]] = []
-    for index, image_path in enumerate(img_paths):
-        temp = start_temp + index / (num_images - 1) * (end_temp - start_temp)
+    num_images = len(fps)
+    for index, fp in enumerate(fps):
+        image_path = fp[1][0]
+        temp = fp[0]["temp"]
         try:
             row = (temp, extract_wells_intensity(image_path, plate_params))
             measures.append(row)

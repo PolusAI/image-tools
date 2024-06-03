@@ -8,7 +8,7 @@ import pathlib
 import filepattern
 import typer
 from polus.images.features.rt_cetsa_intensity_extraction import extract_signal
-from polus.images.features.rt_cetsa_intensity_extraction import sort_input_images
+from polus.images.features.rt_cetsa_intensity_extraction import sort_fps
 
 # Initialize the logger
 logging.basicConfig(
@@ -36,7 +36,7 @@ def main(
         resolve_path=True,
     ),
     filePattern: str = typer.Option(
-        "{index:d+}.ome.tiff",
+        "{index:d+}_{temp:fffff}.ome.tiff",
         "--filePattern",
         help="FilePattern to match the files in the input images sub directory.",
     ),
@@ -53,11 +53,6 @@ def main(
         None,
         "--params",
         help="(Optional) plate params filename in the input params subdirectory.",
-    ),
-    temp_interval: tuple[int, int] = typer.Option(
-        None,
-        "--temp",
-        help="(Optional) Temperature range.",
     ),
     preview: bool = typer.Option(
         False,
@@ -76,9 +71,6 @@ def main(
     img_dir = inp_dir / "images"
     logger.info(f"Using images subdirectory: {img_dir}")
 
-    if temp_interval:
-        logger.info(f"Temperature interval: {temp_interval}")
-
     # Get plate params file and validate
     if params and not (inp_dir / "params").exists():
         raise FileNotFoundError(f"no params subdirectory found in: {inp_dir}")
@@ -96,7 +88,7 @@ def main(
     logger.info(f"Using plate params: {params_file}")
 
     # validate filePattern and sort input images
-    img_files = sort_input_images(img_dir, filePattern)
+    img_files = sort_fps(img_dir, filePattern)
 
     # generate a unique name for the output file
     fp = filepattern.FilePattern(img_dir, filePattern)
