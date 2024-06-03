@@ -55,9 +55,9 @@ def main(
         help="(Optional) plate params filename in the input params subdirectory.",
     ),
     temp_interval: tuple[int, int] = typer.Option(
-        (37, 90),
+        None,
         "--temp",
-        help="(Optional) Temperature range. Default to [37,90]",
+        help="(Optional) Temperature range.",
     ),
     preview: bool = typer.Option(
         False,

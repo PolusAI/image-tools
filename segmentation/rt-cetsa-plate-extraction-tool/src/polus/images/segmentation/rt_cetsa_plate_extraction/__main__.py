@@ -59,6 +59,10 @@ def main(
     logger.info(f"File Pattern: {pattern}")
     logger.info(f"Output directory: {out_dir}")
 
+    if (inp_dir / "images").exists():
+        inp_dir = inp_dir / "images"
+        logger.info(f"Using images subdirectory: {inp_dir}")
+
     if preview:
         fp = filepattern.FilePattern(inp_dir, pattern)
         inp_files: list[Path] = [f[1][0] for f in fp()]  # type: ignore[assignment]

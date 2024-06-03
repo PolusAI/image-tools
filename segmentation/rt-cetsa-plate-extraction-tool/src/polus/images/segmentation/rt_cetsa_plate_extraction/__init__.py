@@ -7,11 +7,13 @@ from pathlib import Path
 
 import bfio
 import filepattern
+import numpy as np
 import tifffile
 from polus.images.segmentation.rt_cetsa_plate_extraction.core import PlateParams
 from polus.images.segmentation.rt_cetsa_plate_extraction.core import create_mask
 from polus.images.segmentation.rt_cetsa_plate_extraction.core import crop_and_rotate
 from polus.images.segmentation.rt_cetsa_plate_extraction.core import get_plate_params
+from skimage.filters import median
 
 logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
@@ -34,6 +36,8 @@ def extract_plates(inp_dir, pattern, out_dir) -> PlateParams:
     sorted_fp = sorted(fp(), key=lambda f: f[0]["index"])
     inp_files: list[Path] = [f[1][0] for f in sorted_fp]  # type: ignore[assignment]
 
+    print(sorted_fp)
+
     if len(inp_files) < 1:
         msg = "no input files captured by the pattern."
         raise ValueError(msg)
@@ -41,11 +45,20 @@ def extract_plates(inp_dir, pattern, out_dir) -> PlateParams:
     (out_dir / "images").mkdir(parents=False, exist_ok=True)
     (out_dir / "masks").mkdir(parents=False, exist_ok=True)
     (out_dir / "params").mkdir(parents=False, exist_ok=True)
+    (out_dir / "artifacts").mkdir(parents=False, exist_ok=True)
 
     # extract plate params from first image
     first_image_path = inp_files[0]
 
+    logger.info(f"extract plate params from first image: {first_image_path}")
+
     first_image = tifffile.imread(first_image_path)
+    first_image = median(first_image, footprint=np.ones((7, 7)))
+    out_path = out_dir / "artifacts" / (first_image_path.stem + POLUS_IMG_EXT)
+    with bfio.BioWriter(out_path) as writer:
+        writer.dtype = first_image.dtype
+        writer.shape = first_image.shape
+        writer[:] = first_image
 
     params: PlateParams = get_plate_params(first_image)
 
@@ -68,6 +81,7 @@ def extract_plates(inp_dir, pattern, out_dir) -> PlateParams:
             writer[:] = cropped_and_rotated
 
     # save plate parameters for the first processed image
+    first_image = median(first_image, footprint=np.ones((7, 7)))
     processed_params = get_plate_params(first_image)
     plate_path = out_dir / "params" / "plate.json"
     with plate_path.open("w") as f:
