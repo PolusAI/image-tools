@@ -88,7 +88,7 @@ def main(
     logger.info(f"Using plate params: {params_file}")
 
     # validate filePattern and sort input images
-    img_files = sort_fps(img_dir, filePattern)
+    fps = sort_fps(img_dir, filePattern)
 
     # generate a unique name for the output file
     fp = filepattern.FilePattern(img_dir, filePattern)
@@ -101,7 +101,7 @@ def main(
             json.dump(out_json, f, indent=2)  # type: ignore
         return
 
-    df = extract_signal(img_files, params_file)
+    df = extract_signal(fps, params_file)
     df.to_csv(out_dir / out_filename)
 
 

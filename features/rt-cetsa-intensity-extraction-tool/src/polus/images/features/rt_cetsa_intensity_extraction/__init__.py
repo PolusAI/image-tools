@@ -58,6 +58,9 @@ def sort_fps(img_dir: pathlib.Path, file_pattern: str):
 
     If multiple indexing variables are provided, we only index using the first one.
     """
+    print("img_dir", img_dir)
+    print("file_pattern", file_pattern)
+
     fps = filepattern.FilePattern(img_dir, file_pattern)
 
     if len(fps.get_variables()) == 0:
@@ -72,7 +75,7 @@ def sort_fps(img_dir: pathlib.Path, file_pattern: str):
             msg,
         )
 
-    return sorted(fps(), key=lambda f: f[0]["index"])
+    return fps()
 
 
 def extract_signal(fps, plate_params: pathlib.Path) -> pandas.DataFrame:
