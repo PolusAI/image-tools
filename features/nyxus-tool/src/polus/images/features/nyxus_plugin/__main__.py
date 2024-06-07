@@ -159,6 +159,7 @@ def main(  # noqa: PLR0913
                     file_extension,
                     pixel_per_micron,
                     neighbor_dist,
+                    single_roi,
                 )
                 threads.append(thread)
             pm.join_processes()
