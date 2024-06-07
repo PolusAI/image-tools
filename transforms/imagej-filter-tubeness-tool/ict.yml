@@ -1,0 +1,41 @@
+author:
+- Nick Schaub
+- Anjali Taneja
+- Benjamin Houghton
+- Najib Ishaq
+contact: nick.schaub@nih.gov
+container: polusai/imagej-filter-tubeness-tool:0.5.0-dev0
+description: "This plugin implements the filter tubeness operation"
+entrypoint: '[python3, -m, polus.images.transforms.imagej_filter_tubeness]'
+inputs:
+- description: The collection to be processed by this plugin
+  format:
+  - collection
+  name: inpDir
+  required: true
+  type: path
+- description: File pattern for the input images
+  name: pattern
+  required: true
+  type: string
+name: polusai/ImageJfiltertubeness
+outputs:
+- description: The output collection
+  format:
+  - collection
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: ImageJ filter tubeness
+ui:
+- description: The collection to be processed by this plugin
+  key: inputs.inpDir
+  title: inpDir
+  type: path
+- description: File pattern for the input images
+  key: inputs.pattern
+  title: pattern
+  type: string
+version: 0.5.0-dev0
