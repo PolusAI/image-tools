@@ -1,0 +1,57 @@
+author:
+- Nick Schaub
+- Anjali Taneja
+- Benjamin Houghton
+- Najib Ishaq
+contact: nick.schaub@nih.gov
+container: polusai/imagej-filter-frangivesselness-tool:0.5.0-dev0
+description: "This plugin implements the filter frangivesselness operation"
+entrypoint: '[python3, -m, polus.images.transforms.imagej_filter_frangivesselness]'
+inputs:
+- description: The collection to be processed by this plugin
+  format:
+  - collection
+  name: inpDir
+  required: true
+  type: path
+- description: File pattern for the input images
+  name: pattern
+  required: true
+  type: string
+- description: The physical distance between data points in the image, can vary for each dimension of the image. Single value or comma separated list of values
+  name: spacing
+  required: true
+  type: string
+- description: The Frangi scale parameter.
+  name: scale
+  required: true
+  type: number
+name: polusai/ImageJfilterfrangivesselness
+outputs:
+- description: The output collection
+  format:
+  - collection
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: ImageJ filter frangivesselness
+ui:
+- description: The collection to be processed by this plugin
+  key: inputs.inpDir
+  title: inpDir
+  type: path
+- description: File pattern for the input images
+  key: inputs.pattern
+  title: pattern
+  type: string
+- description: The physical distance between data points in the image, can vary for each dimension of the image. Single value or comma separated list of values
+  key: inputs.spacing
+  title: spacing
+  type: string
+- description: The Frangi scale parameter.
+  key: inputs.scale
+  title: scale
+  type: number
+version: 0.5.0-dev0
