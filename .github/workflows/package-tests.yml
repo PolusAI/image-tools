@@ -95,7 +95,12 @@ jobs:
         run: |
           cp .gitignore ${{ matrix.package_dir }}/.dockerignore
           cd "${{ matrix.package_dir }}"
-          docker build . -t ${{ steps.docker_tag.outputs.tag }}
+          if [ -f "build-docker.sh" ]; then
+            bash build-docker.sh
+          else
+            docker build . -t ${{ steps.docker_tag.outputs.tag }}
+          fi
+          bash build-docker.sh
         # docker buildx build --platform linux/amd64,linux/arm64 -t ${tag} --push .
 
   tests:
