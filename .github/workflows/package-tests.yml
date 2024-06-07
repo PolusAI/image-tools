@@ -130,7 +130,7 @@ jobs:
             conda activate project_env
             pip install -e ".[all]"
             conda install pytest
-            pytest -v
+            python -X faulthandler -m pytest -v -p no:faulthandler
             echo "conda_installed=true" >> $GITHUB_ENV
           else
             echo "conda_installed=false" >> $GITHUB_ENV
@@ -144,4 +144,5 @@ jobs:
           cd $package_dir
 
           poetry install
-          poetry run pytest -v
+          python -m pip install pytest pytest-sugar
+          python -X faulthandler -m pytest -v -p no:faulthandler
