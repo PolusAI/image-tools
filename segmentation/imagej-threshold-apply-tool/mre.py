@@ -6,7 +6,6 @@ import imagej
 import imagej.convert
 import numpy
 import scyjava
-from scyjava import jimport
 
 # Initialize the logger
 logging.basicConfig(
@@ -44,12 +43,9 @@ def example() -> None:
 
     # Convert to ImageJ types
     ij_img = imagej.convert.ndarray_to_img(ij, img)
-    ij_threshold = jimport("net.imglib2.type.numeric.integer.UnsignedByteType")(
-        threshold,
-    )
 
     # Apply the threshold
-    ij_img = ij.op().threshold().apply(ij_img, ij_threshold)
+    ij_img = ij.op().threshold().apply(ij_img, threshold)
 
     # Convert back to numpy
     img_out = imagej.convert.java_to_ndarray(ij, ij_img)
