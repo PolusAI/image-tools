@@ -2,7 +2,7 @@ author:
 - Nick Schaub
 - Hamdah Shafqat
 contact: nick.schaub@nih.gov
-container: polusai/nyxus-tool:0.1.7-dev0
+container: polusai/nyxus-tool:0.1.7-dev1
 description: Nyxus plugin allows to make use of parallel pocessing for extracting
   nyxus features
 entrypoint: python3 -m polus.images.features.nyxus_plugin
@@ -117,4 +117,4 @@ ui:
   key: inputs.singleRoi
   title: singleRoi
   type: checkbox
-version: 0.1.7-dev0
+version: 0.1.7-dev1
