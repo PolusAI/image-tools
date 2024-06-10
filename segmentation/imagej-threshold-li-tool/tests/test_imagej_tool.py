@@ -10,8 +10,8 @@ import bfio
 import numpy
 import pytest
 import typer.testing
-from polus.images.segmentation.imagej_threshold_isodata.__main__ import app
-from polus.images.segmentation.imagej_threshold_isodata.__main__ import main
+from polus.images.segmentation.imagej_threshold_li.__main__ import app
+from polus.images.segmentation.imagej_threshold_li.__main__ import main
 from skimage.data import binary_blobs
 
 
