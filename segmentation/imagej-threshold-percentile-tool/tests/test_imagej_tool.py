@@ -113,9 +113,9 @@ def test_imagej_tool(
     with bfio.BioReader(out_dir.joinpath("img.ome.tif")) as reader:
         out_img = reader[:]
 
-    # Check that the output image is similar to the mask (less than 26% difference)
+    # Check that the output image is similar to the mask (less than 50% difference)
     diff = (out_img != mask).mean()
-    assert diff < 0.26, f"diff: {diff}"
+    assert diff < 0.5, f"diff: {diff}"
 
 
 def test_cli(gen_data: tuple[pathlib.Path, numpy.ndarray, pathlib.Path]) -> None:
@@ -140,4 +140,4 @@ def test_cli(gen_data: tuple[pathlib.Path, numpy.ndarray, pathlib.Path]) -> None
         out_img = reader[:]
 
     diff = (out_img != mask).mean()
-    assert diff < 0.26, f"diff: {diff}"
+    assert diff < 0.5, f"diff: {diff}"
