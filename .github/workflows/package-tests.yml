@@ -142,9 +142,10 @@ jobs:
       - name: Run tests with poetry
         if: env.conda_installed == 'false'
         run: |
+          poetry config virtualenvs.create false
+
           package_dir=${{ matrix.package_dir }}
           cd $package_dir
 
           poetry install
-          python -m pip install pytest pytest-sugar
           python -X faulthandler -m pytest -v -p no:faulthandler
