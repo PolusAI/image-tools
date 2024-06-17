@@ -41,7 +41,7 @@ jobs:
     steps:
       - name: Debug | Repository Name
         run: |
-          echo "repo is ${{  github.repository }}"
+          echo "repo owner is ${{ github.repository_owner }}"
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -49,14 +49,14 @@ jobs:
           ref: ${{ github.event.inputs.branch }}
           persist-credentials: false
       - name: Token | Generate
-        if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
+        if: github.repository_owner == 'PolusAI'
         id: generate_token
         uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
       - name: Token | Use the token
-        if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
+        if: github.repository_owner == 'PolusAI'
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
@@ -90,7 +90,7 @@ jobs:
           echo "Released packages: ${released_packages}"
           echo "released_packages=${released_packages}" >> $GITHUB_OUTPUT
       - name: Git | Commit
-        if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}' && steps.bump_version.outputs.released == 'true'
+        if: github.repository_owner == 'PolusAI' && steps.bump_version.outputs.released == 'true'
         env:
           CI_COMMIT_AUTHOR: polusai-auth-helper[bot]
           CI_COMMIT_EMAIL: ${{ secrets.APP_ID }}+polusai-auth-helper[bot]@users.noreply.github.com
@@ -99,7 +99,7 @@ jobs:
           git config --global user.email "${{ env.CI_COMMIT_EMAIL }}"
           git commit -a -m "build: Bumped release version for ${{ steps.bump_version.outputs.released_packages }}"
       - name: Git | Push
-        if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}' && steps.bump_version.outputs.released == 'true'
+        if: github.repository_owner == 'PolusAI' && steps.bump_version.outputs.released == 'true'
         uses: ad-m/github-push-action@master
         with:
           force: true
@@ -157,7 +157,7 @@ jobs:
               || echo "success"
       - name: Docker | Push Image
         uses: docker/build-push-action@v5
-        if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
+        if: github.repository_owner == 'PolusAI'
         with:
           context: "{{defaultContext}}:${{ matrix.package_dir }}"
           push: true
