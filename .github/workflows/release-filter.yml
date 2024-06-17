@@ -1,0 +1,121 @@
+name: Pre-Release Filter
+
+on:
+  workflow_call:
+    outputs:
+      matrix:
+        description: "The directories containing the pre-release packages"
+        value: ${{ jobs.package-filter.outputs.matrix }}
+      list:
+        description: "The list of directories containing the pre-release packages"
+        value: ${{ jobs.package-filter.outputs.list }}
+      incomplete:
+        description: "The list of directories containing packages with missing companion files"
+        value: ${{ jobs.package-filter.outputs.incomplete }}
+
+permissions:
+  contents: read
+
+jobs:
+  package-filter:
+    name: Filter for pre-release packages
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.package-filter.outputs.matrix }}
+      list: ${{ steps.package-filter.outputs.list }}
+      incomplete: ${{ steps.package-filter.outputs.incomplete }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+      - name: Find pre-release Packages
+        id: package-filter
+        run: |
+          PACKAGE_DIRS=""
+          COMPANION_FILES="VERSION .bumpversion.cfg ict.yml"
+
+          # Get the names of all the files tracked by git in the repo
+          ALL_FILES=$(git ls-tree --full-tree -r --name-only HEAD)
+
+          for file in $ALL_FILES
+          do
+            pkg_dir=$(dirname ${file})
+            echo "The file is $file"
+
+            # Exclude the root directory
+            if [[ "$pkg_dir" = "." ]]
+            then
+              continue
+            fi
+
+            # Check if the file is a pyproject.toml file
+            if [[ "$(basename ${file})" = *"pyproject"* ]]
+            then
+              echo "Found a pyproject.toml file in $pkg_dir"
+
+              # Check that the package has all the necessary companion files
+              found_all=true
+              for companion_file in $COMPANION_FILES
+              do
+                echo "Checking for $companion_file in $pkg_dir"
+                if [ ! -f "${pkg_dir}/${companion_file}" ]
+                then
+                  found_all=false
+                  echo "::warning::${pkg_dir} does not have a $companion_file file"
+                fi
+              done
+
+              if [ $found_all = false ]
+              then
+                INCOMPLETE_DIRS="$INCOMPLETE_DIRS ${pkg_dir}"
+                continue
+              fi
+
+              # Check that the version is a dev version
+              echo "Checking for dev version in $pkg_dir"
+              if [[ $(cat $pkg_dir/VERSION) != *"dev"* ]]
+              then
+                PACKAGE_DIRS="$PACKAGE_DIRS ${pkg_dir}"
+                continue
+              fi
+            fi
+          done
+
+          # Trim leading whitespace
+          PACKAGE_DIRS=$(echo $PACKAGE_DIRS | xargs)
+          INCOMPLETE_DIRS=$(echo $INCOMPLETE_DIRS | xargs)
+
+          # Check if any packages were found
+          echo "The updated packages are $PACKAGE_DIRS"
+          if [ -z "$PACKAGE_DIRS" ]
+          then
+            echo "::error::No updated packages were found" && exit 1
+          fi
+
+          # Convert the package directories to JSON for the output matrix
+          JSON="{\"include\": ["
+          for package_dir in $PACKAGE_DIRS
+          do
+            package_name=$(basename $package_dir)
+            JSON_LINE="{\"package_dir\": \"${package_dir}\", \"package_name\": \"${package_name}\"},"
+            # Add the JSON line to the JSON string if it is not already included
+            if [ ! "$JSON" == *"$JSON_LINE"* ]
+            then
+              JSON="$JSON$JSON_LINE"
+            fi
+          done
+
+          # Remove trailing comma and add closing brackets
+          if [ "$JSON" == *"," ]
+          then
+            JSON="${JSON%?}"
+          fi
+          JSON="$JSON]}"
+
+          # Set the output
+          echo "matrix=$( echo "$JSON" )" >> $GITHUB_OUTPUT
+          echo "list=$( echo "$PACKAGE_DIRS" )" >> $GITHUB_OUTPUT
+          echo "incomplete=$( echo "$INCOMPLETE_DIRS" )" >> $GITHUB_OUTPUT
