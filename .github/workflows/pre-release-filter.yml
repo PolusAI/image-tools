@@ -35,7 +35,7 @@ jobs:
         id: package-filter
         run: |
           PACKAGE_DIRS=""
-          COMPANION_FILES="VERSION .bumpversion.cfg ict.yml"
+          COMPANION_FILES="VERSION .bumpversion.cfg"
 
           # Get the names of all the files tracked by git in the repo
           ALL_FILES=$(git ls-tree --full-tree -r --name-only HEAD)
@@ -68,6 +68,13 @@ jobs:
                 fi
               done
 
+              # Check if ict.yml or ict.yaml exists
+              if [ ! -f "${pkg_dir}/ict.yml" ] && [ ! -f "${pkg_dir}/ict.yaml" ]
+              then
+                found_all=false
+                echo "::warning::${pkg_dir} does not have an ict.yml or ict.yaml file"
+              fi
+
               if [ $found_all = false ]
               then
                 INCOMPLETE_DIRS="$INCOMPLETE_DIRS ${pkg_dir}"
@@ -76,7 +83,7 @@ jobs:
 
               # Check that the version is a dev version
               echo "Checking for dev version in $pkg_dir"
-              if [[ $(cat $pkg_dir/VERSION) != *"dev"* ]]
+              if [[ $(cat $pkg_dir/VERSION) =~ "dev" ]]
               then
                 PACKAGE_DIRS="$PACKAGE_DIRS ${pkg_dir}"
                 continue
