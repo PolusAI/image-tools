@@ -46,12 +46,14 @@ jobs:
           ref: ${{ github.event.inputs.branch }}
           persist-credentials: false
       - name: Token | Generate
+        if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
         id: generate_token
         uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
       - name: Token | Use the token
+        if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
@@ -94,7 +96,7 @@ jobs:
           git config --global user.email "${{ env.CI_COMMIT_EMAIL }}"
           git commit -a -m "build: Bumped release version for ${{ steps.bump_version.outputs.released_packages }}"
       - name: Git | Push
-        if: steps.bump_version.outputs.released == 'true'
+        if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}' && steps.bump_version.outputs.released == 'true'
         uses: ad-m/github-push-action@master
         with:
           force: true
