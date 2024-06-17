@@ -39,6 +39,9 @@ jobs:
     needs: pre-release-filter
     runs-on: ubuntu-latest
     steps:
+      - name: Debug | Repository Name
+        run: |
+          echo "repo is ${{  github.repository }}"
       - name: Checkout
         uses: actions/checkout@v4
         with:
