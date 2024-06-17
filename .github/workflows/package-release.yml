@@ -32,12 +32,10 @@ permissions:
 jobs:
   pre-release-filter:
     name: Filter for pre-release packages
-    if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
     uses: ./.github/workflows/pre-release-filter.yml
 
   package-release:
     name: Release Versions
-    if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
     needs: pre-release-filter
     runs-on: ubuntu-latest
     steps:
@@ -87,7 +85,7 @@ jobs:
           echo "Released packages: ${released_packages}"
           echo "released_packages=${released_packages}" >> $GITHUB_OUTPUT
       - name: Git | Commit
-        if: steps.bump_version.outputs.released == 'true'
+        if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}' && steps.bump_version.outputs.released == 'true'
         env:
           CI_COMMIT_AUTHOR: polusai-auth-helper[bot]
           CI_COMMIT_EMAIL: ${{ secrets.APP_ID }}+polusai-auth-helper[bot]@users.noreply.github.com
@@ -104,7 +102,6 @@ jobs:
 
   docker:
     name: Docker | ${{ matrix.package_name }}
-    if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
     needs: [pre-release-filter, package-release]
     strategy:
       fail-fast: false
@@ -155,6 +152,7 @@ jobs:
               || echo "success"
       - name: Docker | Push Image
         uses: docker/build-push-action@v5
+        if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
         with:
           context: "{{defaultContext}}:${{ matrix.package_dir }}"
           push: true
