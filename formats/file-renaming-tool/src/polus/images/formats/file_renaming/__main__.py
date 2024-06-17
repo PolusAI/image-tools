@@ -4,7 +4,6 @@ import logging
 import os
 import pathlib
 import re
-from re import Match
 from typing import Any
 from typing import Optional
 
@@ -22,8 +21,37 @@ logger = logging.getLogger("polus.images.formats.file_renaming")
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 
+def get_char_to_digit_grps(inp_pattern: str, out_pattern: str) -> list[str]:
+    """Return group names where input and output datatypes differ.
+
+    If the input pattern is a character and the output pattern is a
+    digit, return the named group associated with those patterns.
+
+    Args:
+        inp_pattern: Original input pattern.
+        out_pattern: Original output pattern.
+
+    Returns:
+        special_categories: Named groups with c to d conversion or [None].
+    """
+    logger.debug(f"get_char_to_digit_grps() inputs: {inp_pattern}, {out_pattern}")
+    #: Extract the group name and associated pattern (ex: {row:dd})
+    ingrp_and_pattern_tuples = re.findall(r"\{(\w+):([dc+]+)\}", inp_pattern)
+    outgrp_and_pattern_tuples = re.findall(r"\{(\w+):([dc+]+)\}", out_pattern)
+
+    #: Get group names where input pattern is c and output pattern is d
+    special_categories = []
+    for out_grp_name in dict(outgrp_and_pattern_tuples):
+        if dict(ingrp_and_pattern_tuples)[out_grp_name].startswith("c") and dict(
+            outgrp_and_pattern_tuples,
+        )[out_grp_name].startswith("d"):
+            special_categories.append(out_grp_name)
+    logger.debug(f"get_char_to_digit_grps() returns {special_categories}")
+    return special_categories
+
+
 @app.command()
-def main(  # noqa: PLR0913 D417 C901 PLR0912
+def main(  # noqa: PLR0913, D417
     inp_dir: pathlib.Path = typer.Option(
         ...,
         "--inpDir",
@@ -44,8 +72,8 @@ def main(  # noqa: PLR0913 D417 C901 PLR0912
         "--outFilePattern",
         help="Desired filename pattern used to rename and separate data",
     ),
-    map_directory: Optional[fr.MappingDirectory] = typer.Option(
-        fr.MappingDirectory.Default,
+    map_directory: Optional[bool] = typer.Option(
+        False,
         "--mapDirectory",
         help="Get folder name",
     ),
@@ -91,75 +119,24 @@ def main(  # noqa: PLR0913 D417 C901 PLR0912
         out_dir.exists()
     ), f"{out_dir} does not exists!! Please check output path again"
 
-    subdirs, subfiles = fr.get_data(inp_dir)
-    if subfiles:
-        assert len(subfiles) != 0, "Files are missing in input directory!!!"
-
-    if not map_directory:
-        fr.rename(
-            inp_dir,
-            out_dir,
-            file_pattern,
-            out_file_pattern,
-        )
-
-    elif map_directory:
-        if len(subdirs) == 1:
-            logger.info(
-                "Renaming files in a single directory.",
-            )
-            dir_pattern = r"^[A-Za-z0-9_]+$"
-            # Iterate over the directories and check if they match the pattern
-            matching_directory: Optional[Match[Any]] = re.match(
-                dir_pattern,
-                pathlib.Path(subdirs[0]).stem,
-            )
-            if matching_directory is not None:
-                matching_directory = matching_directory.group()
-            if f"{map_directory}" == "raw":
-                outfile_pattern = f"{matching_directory}_{out_file_pattern}"
-            if f"{map_directory}" == "map":
-                outfile_pattern = f"d1_{out_file_pattern}"
-
-            fr.rename(subdirs[0], out_dir, file_pattern, outfile_pattern)
-        if len(subdirs) > 1:
-            subnames = [pathlib.Path(sb).name for sb in subdirs]
-            sub_check = all(name == subnames[0] for name in subnames)
-
-            for i, sub in enumerate(subdirs):
-                assert (
-                    len([f for f in pathlib.Path(sub).iterdir() if f.is_file()]) != 0
-                ), "Files are missing in input directory!!!"
-                dir_pattern = r"^[A-Za-z0-9_]+$"
-                # Iterate over the directories and check if they match the pattern
-                matching_directories: Optional[Match[Any]] = re.match(
-                    dir_pattern,
-                    pathlib.Path(sub).stem,
-                )
-                if matching_directories is not None:
-                    matching_directories = matching_directories.group()
-
-                if not sub_check and f"{map_directory}" == "raw":
-                    outfile_pattern = f"{matching_directories}_{out_file_pattern}"
-                elif subnames and f"{map_directory}" == "raw":
-                    logger.error(
-                        "Subdirectoy names are same, should be different.",
-                    )
-                    break
-                else:
-                    outfile_pattern = f"d{i}_{out_file_pattern}"
-                fr.rename(sub, out_dir, file_pattern, outfile_pattern)
-
-    if preview:
+    if not preview:
+        fr.rename(inp_dir, out_dir, file_pattern, out_file_pattern, map_directory)
+    else:
         with pathlib.Path.open(pathlib.Path(out_dir, "preview.json"), "w") as jfile:
+            fr.rename(inp_dir, out_dir, file_pattern, out_file_pattern, map_directory)
             out_json: dict[str, Any] = {
                 "filepattern": out_file_pattern,
                 "outDir": [],
             }
             for file in out_dir.iterdir():
-                if file.is_file() and file.suffix != ".json":
+                if (
+                    file.is_file()
+                    and file.suffix != ".json"
+                    and not file.name.startswith(".")
+                ):
                     out_name = file.name
                     out_json["outDir"].append(out_name)
+                    pathlib.Path.unlink(file)
             json.dump(out_json, jfile, indent=2)
 
 
