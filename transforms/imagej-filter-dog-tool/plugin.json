@@ -1,0 +1,68 @@
+{
+  "name": "ImageJ filter dog",
+  "version": "0.5.0-dev0",
+  "title": "ImageJ filter dog",
+  "description": "This plugin implements the filter dog operation",
+  "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com), Najib Ishaq (najib.ishaq@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/polusai/image-tools",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-filter-dog-tool:0.5.0-dev0",
+  "inputs": [
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "The collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "pattern",
+      "type": "string",
+      "description": "The filepattern for the input images",
+      "required": false
+    },
+    {
+      "name": "sigmaL",
+      "type": "string",
+      "description": "Standard deviation for the first Gaussian. Single value or comma separated list of values",
+      "required": true
+    },
+    {
+      "name": "sigmaR",
+      "type": "string",
+      "description": "Standard deviation for the second Gaussian. Single value or comma separated list of values",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "The output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "The collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.pattern",
+      "title": "pattern",
+      "description": "The filepattern for the input images",
+      "default": ".*"
+    },
+    {
+      "key": "inputs.sigmaL",
+      "title": "sigmaL",
+      "description": "Standard deviation for the first Gaussian. Single value or comma separated list of values"
+    },
+    {
+      "key": "inputs.sigmaR",
+      "title": "sigmaR",
+      "description": "Standard deviation for the second Gaussian. Single value or comma separated list of values"
+    }
+  ]
+}
