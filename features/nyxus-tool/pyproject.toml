@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-features-nyxus-plugin"
-version = "0.1.7-dev0"
+version = "0.1.7-dev1"
 description = ""
 authors = [
            "Nick Schaub <nick.schaub@nih.gov>",
@@ -11,10 +11,10 @@ packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
-filepattern = "2.0.4"
+filepattern = "2.0.6"
 typer = "^0.7.0"
 tqdm = "^4.66.1"
-nyxus = "^0.7.3"
+nyxus = "^0.7.5"
 fastapi = "^0.92.0"
 astropy = "5.2.1"
 vaex = "^4.17.0"

@@ -48,7 +48,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/nyxus-tool:0.1.7-dev0
+    dockerPull: polusai/nyxus-tool:0.1.7-dev1
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)
