@@ -89,6 +89,16 @@ jobs:
 
           echo "Released packages: ${released_packages}"
           echo "released_packages=${released_packages}" >> $GITHUB_OUTPUT
+
+          # If no packages were released, then set released to false
+          if [ -z "${released_packages}" ]
+          then
+            echo "No packages were released"
+            echo "released=false" >> $GITHUB_OUTPUT
+          else
+            echo "Packages were released"
+            echo "released=true" >> $GITHUB_OUTPUT
+          fi
       - name: Git | Commit
         if: github.repository_owner == 'PolusAI' && steps.bump_version.outputs.released == 'true'
         env:
@@ -126,24 +136,8 @@ jobs:
           version=$(cat ${package_dir}/VERSION)
           tag=polusai/${{ matrix.package_name }}:${version}
           echo "tag=${tag}" >> $GITHUB_OUTPUT
-
-          if [ -f "${package_dir}/build-docker.sh" ]
-          then
-            echo "build-docker.sh exists"
-            echo "build_docker_exists=true" >> $GITHUB_ENV
-          else
-            echo "build-docker.sh does not exist"
-            echo "build_docker_exists=false" >> $GITHUB_ENV
-          fi
       - name: Docker | Setup Buildx
         uses: docker/setup-buildx-action@v3
-        if: env.build_docker_exists == 'false'
-      - name: Docker | Build Image
-        if: env.build_docker_exists == 'true'
-        run: |
-          cp .gitignore ${{ matrix.package_dir }}/.dockerignore
-          cd "${{ matrix.package_dir }}"
-          bash build-docker.sh
       - name: Docker | Login DockerHub
         uses: docker/login-action@v3
         with:
@@ -155,10 +149,13 @@ jobs:
           docker pull ${tag} > /dev/null \
               && $(echo "::error::${tag} already exists on DockerHub" && exit 1) \
               || echo "success"
+      - name: Docker | Setup Dockerfile
+        run: |
+          cp ${{ matrix.package_dir }}/Dockerfile .
+          cp .gitignore .dockerignore
       - name: Docker | Push Image
         uses: docker/build-push-action@v5
-        if: github.repository_owner == 'PolusAI'
         with:
-          context: "{{defaultContext}}:${{ matrix.package_dir }}"
-          push: true
+          context: .
+          push: ${{ github.repository_owner == 'PolusAI' }}
           tags: ${{ steps.docker_tag.outputs.tag }}
