@@ -37,6 +37,9 @@ jobs:
           PACKAGE_DIRS=""
           COMPANION_FILES="VERSION .bumpversion.cfg"
 
+          # TODO: Remove this line and its effects after debugging
+          ALLOWED_DIRS="segmentation/imagej-threshold-apply-tool segmentation/imagej-threshold-huang-tool"
+
           # Get the names of all the files tracked by git in the repo
           ALL_FILES=$(git ls-tree --full-tree -r --name-only HEAD)
 
@@ -48,6 +51,13 @@ jobs:
             # Exclude the root directory
             if [[ "$pkg_dir" = "." ]]
             then
+              continue
+            fi
+
+            # Check if the package directory is allowed
+            if [[ ! "$ALLOWED_DIRS" == *"$pkg_dir"* ]]
+            then
+              echo "Skipping $pkg_dir"
               continue
             fi
 

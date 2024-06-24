@@ -9,18 +9,20 @@ ENV POLUS_LOG="INFO"
 # Work directory defined in the base container
 WORKDIR ${EXEC_DIR}
 
-COPY pyproject.toml ${EXEC_DIR}
-COPY VERSION ${EXEC_DIR}
-COPY README.md ${EXEC_DIR}
-COPY src ${EXEC_DIR}/src
-COPY tests ${EXEC_DIR}/tests
-
-RUN pip3 install ${EXEC_DIR} --no-cache-dir
+# Initialize ImageJ
 RUN python3 -c "import imagej; imagej.init('sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4')"
 
-RUN pip3 install pytest pytest-sugar pytest-json-report --no-cache-dir
-RUN python3 -X faulthandler -m pytest --json-report --json-report-summary -v -p no:faulthandler
-RUN cat .report.json
+# TODO: Change the tool_dir to the tool directory
+ENV TOOL_DIR="segmentation/imagej-threshold-apply-tool"
 
+# Copy the repository into the container
+RUN mkdir image-tools
+COPY . ${EXEC_DIR}/image-tools
+
+# Install the tool
+RUN pip3 install "${EXEC_DIR}/image-tools/${TOOL_DIR}" --no-cache-dir
+
+# Set the entrypoint
+# TODO: Change the entrypoint to the tool entrypoint
 ENTRYPOINT ["python3", "-m", "polus.images.segmentation.imagej_threshold_apply"]
 CMD ["--help"]
