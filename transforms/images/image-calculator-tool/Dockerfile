@@ -9,10 +9,6 @@ ENV POLUS_LOG="INFO"
 # Work directory defined in the base container
 WORKDIR ${EXEC_DIR}
 
-# Initialize ImageJ
-RUN pip3 install pyimagej==1.4.1 jpype1==1.5.0 scyjava==1.9.1 imglyb==2.1.0
-RUN python3 -c "import imagej; imagej.init('sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4')"
-
 # TODO: Change the tool_dir to the tool directory
 ENV TOOL_DIR="transforms/images/image-calculator-tool"
 
