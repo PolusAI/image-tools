@@ -129,6 +129,21 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.inputs.branch }}
           persist-credentials: false
+      - name: Python | Setup
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Python | Install bump2version
+        run: |
+          python -m pip install --upgrade pip
+          pip install bump2version
+      - name: Python | Bump Version Release
+        id: bump_version
+        run: |
+          cur_dir=$GITHUB_WORKSPACE
+          cd ${{ matrix.package_dir }}
+          bump2version release --no-commit --allow-dirty
+          cd ${cur_dir}
       - name: Docker | Tag
         id: docker_tag
         run: |
