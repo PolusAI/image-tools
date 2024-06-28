@@ -42,7 +42,7 @@ jobs:
         id: package-filter
         run: |
           PACKAGE_DIRS=""
-          COMPANION_FILES="VERSION .bumpversion.cfg ict.yml"
+          COMPANION_FILES="VERSION .bumpversion.cfg"
 
           # echo the base ref
           base_ref=${{ github.base_ref }}
@@ -92,6 +92,13 @@ jobs:
                   echo "::error::${pkg_dir} does not have a $companion_file file" && exit 1
                 fi
               done
+
+              # Check if ict.yml or ict.yaml exists
+              if [ ! -f "${pkg_dir}/ict.yml" ] && [ ! -f "${pkg_dir}/ict.yaml" ]
+              then
+                found_all=false
+                echo "::warning::${pkg_dir} does not have an ict.yml or ict.yaml file"
+              fi
 
               # Check that the version is a dev version
               echo "Checking for dev version in $pkg_dir"
