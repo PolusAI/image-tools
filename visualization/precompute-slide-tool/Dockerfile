@@ -1,25 +1,25 @@
 FROM polusai/bfio:2.1.9
 
 # environment variables defined in polusai/bfio
-# ENV EXEC_DIR="/opt/executables"
-# ENV DATA_DIR="/data"
-# ENV POLUS_EXT=".ome.tif"
-# ENV POLUS_LOG="INFO" # Change to WARNING for fewer logs, and DEBUG for debugging
+ENV EXEC_DIR="/opt/executables"
+ENV POLUS_IMG_EXT=".ome.tif"
+ENV POLUS_TAB_EXT=".csv"
+ENV POLUS_LOG="INFO"
 
 # Work directory defined in the base container
-# WORKDIR ${EXEC_DIR}
+WORKDIR ${EXEC_DIR}
 
-COPY pyproject.toml ${EXEC_DIR}
-COPY VERSION ${EXEC_DIR}
-COPY README.md ${EXEC_DIR}
-COPY CHANGELOG.md ${EXEC_DIR}
-COPY src ${EXEC_DIR}/src
+# TODO: Change the tool_dir to the tool directory
+ENV TOOL_DIR="visualization/precompute-slide-tool"
 
-RUN pip3 install ${EXEC_DIR} --no-cache-dir
+# Copy the repository into the container
+RUN mkdir image-tools
+COPY . ${EXEC_DIR}/image-tools
 
-# TODO CHECK if we need this
-RUN python3 -c "import imageio; imageio.plugins.freeimage.download()"
+# Install the tool
+RUN pip3 install "${EXEC_DIR}/image-tools/${TOOL_DIR}" --no-cache-dir
 
-# Default command. Additional arguments are provided through the command line
+# Set the entrypoint
+# TODO: Change the entrypoint to the tool entrypoint
 ENTRYPOINT ["python3", "-m", "polus.images.visualization.precompute_slide"]
 CMD ["--help"]
