@@ -1,8 +1,23 @@
+
 #!/bin/bash
 
-cp -r ../imagej-threshold-apply-tool .
+# Change the name of the tool here
+tool_dir="segmentation"
+tool_name="imagej-threshold-mean-tool"
 
+# The version is read from the VERSION file
 version=$(<VERSION)
-docker build . -t polusai/imagej-threshold-mean-tool:${version}
+tag="polusai/${tool_name}:${version}"
+echo "Building docker image with tag: ${tag}"
 
-rm -rf imagej-threshold-apply-tool
+# The current directory and the repository root are saved in variables
+cur_dir=$(pwd)
+repo_root=$(git rev-parse --show-toplevel)
+
+# The Dockerfile and .dockerignore files are copied to the repository root before building the image
+cd ${repo_root}
+cp ./${tool_dir}/${tool_name}/Dockerfile .
+cp .gitingore .dockerignore
+docker build . -t ${tag}
+rm Dockerfile .dockerignore
+cd ${cur_dir}

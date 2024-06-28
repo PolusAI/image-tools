@@ -1,9 +1,23 @@
+
 #!/bin/bash
 
-mkdir segmentation
-cp -r ../../segmentation/imagej-threshold-apply-tool ./segmentation/.
+# Change the name of the tool here
+tool_dir="transforms"
+tool_name="imagej-filter-frangivesselness-tool"
 
+# The version is read from the VERSION file
 version=$(<VERSION)
-docker build . -t polusai/imagej-filter-frangivesselness-tool:${version}
+tag="polusai/${tool_name}:${version}"
+echo "Building docker image with tag: ${tag}"
 
-rm -rf ./segmentation
+# The current directory and the repository root are saved in variables
+cur_dir=$(pwd)
+repo_root=$(git rev-parse --show-toplevel)
+
+# The Dockerfile and .dockerignore files are copied to the repository root before building the image
+cd ${repo_root}
+cp ./${tool_dir}/${tool_name}/Dockerfile .
+cp .gitingore .dockerignore
+docker build . -t ${tag}
+rm Dockerfile .dockerignore
+cd ${cur_dir}

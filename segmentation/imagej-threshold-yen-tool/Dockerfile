@@ -9,28 +9,20 @@ ENV POLUS_LOG="INFO"
 # Work directory defined in the base container
 WORKDIR ${EXEC_DIR}
 
-# ImageJ setup
+# Initialize ImageJ
 RUN python3 -c "import imagej; imagej.init('sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4')"
 
-# Install the ImageJ Threshold Apply tool
-COPY imagej-threshold-apply-tool ${EXEC_DIR}/imagej-threshold-apply-tool
-RUN pip3 install ${EXEC_DIR}/imagej-threshold-apply-tool --no-cache-dir
+# TODO: Change the tool_dir to the tool directory
+ENV TOOL_DIR="segmentation/imagej-threshold-yen-tool"
 
-RUN mkdir ${EXEC_DIR}/imagej-threshold-yen-tool
-WORKDIR ${EXEC_DIR}/imagej-threshold-yen-tool
+# Copy the repository into the container
+RUN mkdir image-tools
+COPY . ${EXEC_DIR}/image-tools
 
-# Install the python package
-COPY pyproject.toml .
-COPY VERSION .
-COPY README.md .
-COPY src ./src
-COPY tests ./tests
+# Install the tool
+RUN pip3 install "${EXEC_DIR}/image-tools/${TOOL_DIR}" --no-cache-dir
 
-RUN pip3 install ${EXEC_DIR}/imagej-threshold-yen-tool --no-cache-dir
-
-RUN pip3 install scikit-image pytest pytest-sugar pytest-json-report --no-cache-dir
-RUN python3 -X faulthandler -m pytest --json-report --json-report-summary -v -p no:faulthandler
-RUN cat .report.json
-
+# Set the entrypoint
+# TODO: Change the entrypoint to the tool entrypoint
 ENTRYPOINT ["python3", "-m", "polus.images.segmentation.imagej_threshold_yen"]
 CMD ["--help"]
