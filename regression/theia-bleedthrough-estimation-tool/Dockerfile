@@ -36,8 +36,6 @@ ENV POLUS_TAB_EXT=".csv"
 ENV POLUS_LOG="INFO"
 ENV DATA_DIR="/data"
 
-RUN python3 -c "import imagej; imagej.init('sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4')"
-
 # TODO: Change the tool_dir to the tool directory
 ENV TOOL_DIR="regression/theia-bleedthrough-estimation-tool"
 
