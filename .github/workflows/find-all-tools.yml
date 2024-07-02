@@ -27,6 +27,8 @@ jobs:
         run: |
           # List of directories to ignore
           ignored_dirs="polus-python-template ftl-label .venv"
+
+          # TODO: Remove these after merging PR #547
           # List of tools that are broken for known reasons
           broken_tools="binary-operations basic-flatfield-estimation microjson-to-ome cell-border-segmentation precompute-slide vector-to-label"
 
