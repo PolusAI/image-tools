@@ -17,6 +17,7 @@ typer = "^0.7.0"
 nyxus = "^0.5.0"
 vaex = "^4.7.0"
 scikit_learn="^1.0.2"
+numpy = "<2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"

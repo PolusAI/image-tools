@@ -13,6 +13,7 @@ filepattern = "^2.0.4"
 typer = { version = "^0.7.0", extras = ["all"] }
 tqdm = "^4.65.0"
 scipy = "^1.11.0"
+numpy = "<2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.1"
