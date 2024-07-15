@@ -83,6 +83,14 @@ def extract_plates(inp_dir, pattern, out_dir) -> PlateParams:
     # save plate parameters for the first processed image
     first_image = median(first_image, footprint=np.ones((7, 7)))
     processed_params = get_plate_params(first_image)
+
+    if processed_params.size.value != params.size.value:
+        msg = f"""Could not correctly detect wells in cropped image.
+            Wells detected in original image: {params.size.value}
+            Wells detected in cropped image: {processed_params.size.value}
+        """
+        raise Exception(msg)
+
     plate_path = out_dir / "params" / "plate.json"
     with plate_path.open("w") as f:
         f.write(processed_params.model_dump_json())  # type: ignore

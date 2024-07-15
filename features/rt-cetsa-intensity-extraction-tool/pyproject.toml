@@ -19,7 +19,10 @@ numpy = "^1.26.4"
 bfio = "^2.3.6"
 scikit-image = "^0.22.0"
 imagecodecs = "^2024.1.1"
-polus-images-segmentation-rt-cetsa-plate-extraction = {git = "https://github.com/agerardin/image-tools.git", branch = "feat/rt_cetsa_new_data", subdirectory = "segmentation/rt-cetsa-plate-extraction-tool"}
+# polus-images-segmentation-rt-cetsa-plate-extraction = {git = "https://github.com/agerardin/image-tools.git", branch = "feat/rt_cetsa_new_data", subdirectory = "segmentation/rt-cetsa-plate-extraction-tool"}
+# polus-images-segmentation-rt-cetsa-plate-extraction = {git = "https://github.com/agerardin/image-tools.git", branch = "feat/rt_cetsa_new_data", subdirectory = "segmentation/rt-cetsa-plate-extraction-tool"}
+# polus-images-segmentation-rt-cetsa-plate-extraction = {path = "/Users/antoinegerardin/Documents/projects/polus-plugins/segmentation/rt-cetsa-plate-extraction-tool", develop=true}
+polus-images-segmentation-rt-cetsa-plate-extraction = {path = "/Users/antoinegerardin/Documents/projects/polus-plugins/segmentation/rt-cetsa-plate-extraction-tool", develop=true}
 
 
 [tool.poetry.group.dev.dependencies]

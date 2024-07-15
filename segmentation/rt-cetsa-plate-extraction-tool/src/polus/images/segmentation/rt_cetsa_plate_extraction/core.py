@@ -1,12 +1,23 @@
 import itertools
+import logging
+import os
 from enum import Enum
 
 import numpy as np
 from pydantic import BaseModel
 from scipy import ndimage as ndi
 from skimage.draw import disk
+from skimage.filters import threshold_isodata
+from skimage.filters import threshold_li
 from skimage.filters import threshold_otsu
 from skimage.transform import rotate
+
+logging.basicConfig(
+    format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
+    datefmt="%d-%b-%y %H:%M:%S",
+)
+logger = logging.getLogger(__file__)
+logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 
 class PlateExtractionError(Exception):
@@ -100,47 +111,66 @@ def get_plate_params(image: np.ndarray) -> PlateParams:
     Returns:
         PlateParams: The description of the plate.
     """
-    # Since RT-CETSA are generally high signal to noise,
-    # we use a Simple Otsu threshold to segment the well.
-    threshold = threshold_otsu(image)
+    # Try a few simple thresholding methods until we get a recognizable plate layout
+    threshold_methods = ["otsu", "li", "isodata"]
 
-    # Get initial well positions
-    cx, cy, radii, _ = detect_wells(image > threshold)
+    for threshold_method in threshold_methods:
+        if threshold_method == "otsu":
+            threshold = threshold_otsu(image)
+        elif threshold_method == "li":
+            threshold = threshold_li(image)
+        elif threshold_method == "isodata":
+            threshold = threshold_isodata(image)
 
-    # Calculate the counterclockwise rotations
-    locations = np.vstack([cx, cy]).T
-    transform = locations @ ROTATION
+        # Get initial well positions
+        cx, cy, radii, _ = detect_wells(image > threshold)
 
-    # Find the rotation that aligns the long edge of the plate horizontally
-    angle = np.argmin(transform.max(axis=0) - transform.min(axis=0))
+        # Calculate the counterclockwise rotations
+        locations = np.vstack([cx, cy]).T
+        transform = locations @ ROTATION
 
-    # Shortest rotation to alignment
-    if angle > 90:
-        angle -= 180
+        # Find the rotation that aligns the long edge of the plate horizontally
+        angle = np.argmin(transform.max(axis=0) - transform.min(axis=0))
 
-    # Rotate the plate and recalculate well positions
-    image_rotated = rotate(image, angle, preserve_range=True)
+        # Shortest rotation to alignment
+        if angle > 90:
+            angle -= 180
 
-    # Recalculate well positions
-    cx, cy, radii, _ = detect_wells(image_rotated > threshold)
+        # Rotate the plate and recalculate well positions
+        image_rotated = rotate(image, angle, preserve_range=True)
 
-    # Determine the plate layout
-    n_wells = len(cx)
-    plate_config = None
-    for layout in PlateSize:
-        error = abs(1 - n_wells / layout.value)
-        if error < 0.05:
-            plate_config = layout
+        # Recalculate well positions
+        cx, cy, radii, _ = detect_wells(image_rotated > threshold)
+
+        # Determine the plate layout
+        n_wells = len(cx)
+        plate_config = None
+        for layout in PlateSize:
+            error = abs(1 - n_wells / layout.value)
+            if error < 0.05:
+                plate_config = layout
+                break
+
+        if plate_config is not None:
             break
-    if plate_config is None:
+
         msg = f"Could not determine plate layout, detected {n_wells} wells."
-        raise ValueError(msg)
+        logger.error(msg)
+
+    if plate_config is None:
+        msg = f""""all attempted {len(threshold_methods)} thresholding methods failed : {threshold_methods}.
+        Could not determine plate layout.
+        """
+        raise PlateExtractionError(msg)
+
+    msg = f"Detected plate layout : {plate_config.value} ({n_wells} tentative wells. Thresholding method: {threshold_method})"
+    logger.info(msg)
 
     # Get the mean radius
     # all wells must have the same size.
     radii_mean = int(np.mean(radii))
 
-    # Get the bounding box after rotation
+    # Get the bounding box
     cx_min, cx_max = np.min(cx) - 2 * radii_mean, np.max(cx) + 2 * radii_mean
     cy_min, cy_max = np.min(cy) - 2 * radii_mean, np.max(cy) + 2 * radii_mean
     bbox = (int(cy_min), int(cy_max), int(cx_min), int(cx_max))
@@ -154,7 +184,8 @@ def get_plate_params(image: np.ndarray) -> PlateParams:
         z_count = 1
         Z = [z_pos[0]]
         for z in z_pos[1:]:
-            if abs(Z[z_index] - z) < radii_mean // 3:
+            # if abs(Z[z_index] - z) < radii_mean // 3:
+            if abs(Z[z_index] - z) < radii_mean:
                 Z[z_index] = (Z[z_index] * z_count + z) / (z_count + 1)
                 z_count += 1
             else:
@@ -167,6 +198,14 @@ def get_plate_params(image: np.ndarray) -> PlateParams:
 
     Y = points[0]
     X = points[1]
+
+    if len(Y) != PLATE_DIMS[plate_config][0]:
+        msg = f"detected {len(Y)} rows in plate of size {plate_config.value}. Should have been {PLATE_DIMS[plate_config][0]}."
+        raise Exception(msg)
+
+    if X is None or len(X) != PLATE_DIMS[plate_config][1]:
+        msg = f"detected {len(X)} rows in plate of size {plate_config.value}. Should have been {PLATE_DIMS[plate_config][1]}."
+        raise Exception(msg)
 
     # estimated distance from the well center we need to consider
     roi_radius = min(X[1] - X[0], Y[1] - Y[0]) // 2
