@@ -1,4 +1,4 @@
-# ImageJ threshold triangle (v0.5.0-dev0)
+# ImageJ threshold triangle (v0.5.0)
 
 This plugin implements the triangle threshold method. As described by [ImageJ](https://imagej.net/plugins/auto-threshold#triangle)
 the Triangle algorithm, a geometric method, cannot tell whether the data is

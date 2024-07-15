@@ -1,6 +1,6 @@
 {
   "name": "Outlier Removal",
-  "version": "0.2.7-dev0",
+  "version": "0.2.7",
   "title": "Outlier Removal",
   "description": "Remove outliers from the data.",
   "author": "Jayapriya Nagarajan (github.com/Priyaaxle) and Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/PolusAI/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/outlier-removal-tool:0.2.7-dev0",
+  "containerId": "polusai/outlier-removal-tool:0.2.7",
   "baseCommand": [
     "python3",
     "-m",

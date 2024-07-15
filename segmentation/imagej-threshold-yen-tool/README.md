@@ -1,4 +1,4 @@
-# ImageJ threshold yen (v0.5.0-dev0)
+# ImageJ threshold yen (v0.5.0)
 
 Applies Yen's threshold method to an input collection as described by
 [ImageJ](https://imagej.net/plugins/auto-threshold#yen).

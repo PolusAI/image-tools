@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-segmentation-cell-border-segmentation"
-version = "0.2.4-dev0"
+version = "0.2.4"
 description = "This plugin segments cell border of fluorescently labeled epithelial cells"
 authors = [
            "Nick Schaub <nick.schaub@nih.gov>",

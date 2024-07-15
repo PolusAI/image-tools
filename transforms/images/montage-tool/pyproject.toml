@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-transforms-images-montage"
-version = "0.5.1-dev0"
+version = "0.5.1"
 description = ""
 authors = ["Nicholas Schaub <nick.schaub@nih.gov>"]
 readme = "README.md"

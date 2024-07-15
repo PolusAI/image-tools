@@ -1,4 +1,4 @@
-# ImageJ filter dog v(0.5.0-dev0)
+# ImageJ filter dog v(0.5.0)
 
 This plugin applies the Difference of Gaussians algorithm to an input collection.
 The [DoG algorithm](https://en.wikipedia.org/wiki/Difference_of_Gaussians) involves blurring the input image with with two separate

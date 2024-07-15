@@ -1,4 +1,4 @@
-# ImageJ threshold huang (v0.5.1-dev0)
+# ImageJ threshold huang (v0.5.1)
 
 This plugin implements Huang's threshold method proposed in Image Thresholding by Minimizing the Measures of Fuzziness, Huang (1995).
 This method determines an optimal thresholding value such that the fuzziness measure between the original image and its binary version is minimized.

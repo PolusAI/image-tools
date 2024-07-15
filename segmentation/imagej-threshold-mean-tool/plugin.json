@@ -1,6 +1,6 @@
 {
   "name": "ImageJ threshold mean",
-  "version": "0.5.0-dev0",
+  "version": "0.5.0",
   "title": "ImageJ threshold mean",
   "description": "This plugin implements the mean thresholding operation",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com), Najib Ishaq (najib.ishaq@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/polusai/image-tools",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-threshold-mean-tool:0.5.0-dev0",
+  "containerId": "polusai/imagej-threshold-mean-tool:0.5.0",
   "inputs": [
     {
       "name": "inpDir",

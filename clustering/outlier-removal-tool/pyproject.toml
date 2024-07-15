@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-clustering-outlier-removal"
-version = "0.2.7-dev0"
+version = "0.2.7"
 description = "Remove outliers from the data."
 authors = [
            "Jayapriya Nagarajan <jayapriya.nagarajan@axleinfo.com>",

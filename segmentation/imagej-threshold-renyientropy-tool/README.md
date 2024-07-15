@@ -1,4 +1,4 @@
-# ImageJ threshold renyientropy (v0.5.0-dev0)
+# ImageJ threshold renyientropy (v0.5.0)
 
 Uses Renyi entropy method by Kapur, Sahoo, to threshold an input collection as
 described by [ImageJ](https://imagej.net/plugins/auto-threshold#renyientropy).

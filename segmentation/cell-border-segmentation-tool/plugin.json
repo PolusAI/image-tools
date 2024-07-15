@@ -1,6 +1,6 @@
 {
   "name": "Cell Border Segmentation",
-  "version": "0.2.4-dev0",
+  "version": "0.2.4",
   "title": "Cell Border Segmentation",
   "description": "Segment cell borders of epithelial cells.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat abbasi  (hamdahshafqat.abbasi@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/polusai/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/cell-border-segmentation-tool:0.2.4-dev0",
+  "containerId": "polusai/cell-border-segmentation-tool:0.2.4",
   "baseCommand": [
     "python3",
     "-m",
