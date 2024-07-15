@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-visualization-tabular-to-microjson"
-version = "0.1.2-dev0"
+version = "0.1.2"
 description = ""
 authors = ["Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>"]
 readme = "README.md"

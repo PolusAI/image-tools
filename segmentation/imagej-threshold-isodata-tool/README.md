@@ -1,4 +1,4 @@
-# ImageJ threshold isodata (v0.5.0-dev0)
+# ImageJ threshold isodata (v0.5.0)
 
 Iterative procedure based on the isodata algorithm of:  Picture Thresholding
 Using an Iterative Selection Method. (1978). IEEE Transactions on Systems, Man,

@@ -1,4 +1,4 @@
-# ImageJ threshold apply (v0.5.1-dev0)
+# ImageJ threshold apply (v0.5.1)
 
 This plugin applies a constant manual threshold value to an input collection.
 (Thresholding)[https://en.wikipedia.org/wiki/Thresholding_(image_processing)] converts all pixel values in an image to either 1 or 0 depending on

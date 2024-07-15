@@ -1,4 +1,4 @@
-# ImageJ image integral v(0.5.0-dev0)
+# ImageJ image integral v(0.5.0)
 
 This plugin applies the image integral algorithm to an input collection. The
 image integral algorithm is also known as a [Summed-area table](https://en.wikipedia.org/wiki/Summed-area_table), where each pixel

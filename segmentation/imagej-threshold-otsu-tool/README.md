@@ -1,4 +1,4 @@
-# ImageJ threshold otsu (v0.5.0-dev0)
+# ImageJ threshold otsu (v0.5.0)
 
 As described by [ImageJ](https://imagej.net/plugins/auto-threshold#otsu), Otsu’s
 threshold clustering algorithm searches for the threshold that minimizes

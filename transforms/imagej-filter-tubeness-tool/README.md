@@ -1,4 +1,4 @@
-# ImageJ filter tubeness v(0.5.0-dev0)
+# ImageJ filter tubeness v(0.5.0)
 
 This plugin filters a collection to produce a score for how tube-like each point in the image is.
 

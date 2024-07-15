@@ -1,4 +1,4 @@
-# ImageJ deconvolve richardsonlucytv v(0.5.0-dev0)
+# ImageJ deconvolve richardsonlucytv v(0.5.0)
 
 This plugin applies the [Richardson-Lucy Deconvolution](https://en.wikipedia.org/wiki/Richardson%E2%80%93Lucy_deconvolution) to input collection with
 a total variation regularization factor as described in (Richardson-Lucy

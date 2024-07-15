@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-segmentation-mesmer-training"
-version = "0.0.7-dev0"
+version = "0.0.7"
 description = ""
 authors = [
            "Vishakha Goyal <vishakha.goyal@nih.gov>",

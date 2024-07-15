@@ -1,4 +1,4 @@
-﻿# Outlier removal (v0.2.7-dev0)
+﻿# Outlier removal (v0.2.7)
 
 The outlier removal plugin removes the outliers from the data based on the method selected and outputs csv file. The output will have separate csv files for inliers and outliers. The input file should be in csv format.
 
