@@ -112,7 +112,7 @@ jobs:
         if: github.repository_owner == 'PolusAI' && steps.bump_version.outputs.released == 'true'
         uses: ad-m/github-push-action@master
         with:
-          force: true
+          force: false
           github_token: ${{ steps.generate_token.outputs.token }}
 
   docker:
