@@ -1,4 +1,4 @@
-# ImageJ threshold percentile (v0.5.0)
+# ImageJ threshold percentile (v0.5.1-dev0)
 
 As described by [ImageJ](https://imagej.net/plugins/auto-threshold#percentile)
 this plugin assumes the fraction of foreground pixels to be 0.5. This method was

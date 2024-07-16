@@ -1,4 +1,4 @@
-# ImageJ deconvolve richardsonlucy v(0.5.0)
+# ImageJ deconvolve richardsonlucy v(0.5.1-dev0)
 
 This plugin applies the [Richardson-Lucy Deconvolution](https://en.wikipedia.org/wiki/Richardson%E2%80%93Lucy_deconvolution) to input collection. This
 is an iterative process that can recover an underlying blurred image if the psf

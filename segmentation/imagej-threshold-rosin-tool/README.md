@@ -1,4 +1,4 @@
-# ImageJ threshold rosin (v0.5.0)
+# ImageJ threshold rosin (v0.5.1-dev0)
 
 Implements Rosin's thresholding method for unimodal distributions. This method
 assumes that the histogram of the image has a unimodal distirbution.

@@ -1,4 +1,4 @@
-# ImageJ filter correlate v(0.5.0)
+# ImageJ filter correlate v(0.5.1-dev0)
 
 The plugin applies a correlation operation to an input image with a user
 specified kernel. A correlation operation is similar to a
