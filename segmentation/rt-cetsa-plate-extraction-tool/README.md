@@ -1,4 +1,4 @@
-# RT_CETSA Plate Extraction Tool (v0.3.0-dev0)
+# RT_CETSA Plate Extraction Tool (v0.4.0-dev0)
 
 This tool extracts detect wells in a RT-CETSA plate image.
 It outputs a cropped and rotated image and the well detection mask.

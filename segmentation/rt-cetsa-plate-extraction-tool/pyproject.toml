@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus_images_segmentation_rt_cetsa_plate_extraction"
-version = "0.3.0-dev0"
+version = "0.4.0-dev0"
 description = "Rotate and crop images of plates from RT-CETSA; then label the wells."
 authors = [
     "Nick Schaub <nick.schaub@nih.gov>",
