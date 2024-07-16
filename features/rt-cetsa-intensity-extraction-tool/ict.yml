@@ -3,7 +3,7 @@ author:
 - Antoine Gerardin
 - Najib Ishaq
 contact: nick.schaub@nih.gov
-container: polusai/rt-cetsa-intensity-extraction-tool:0.3.0-dev0
+container: polusai/rt-cetsa-intensity-extraction-tool:0.4.0-dev0
 description: Extract well intensities from RT-CETSA plate images and masks.
 entrypoint: python3 -m polus.images.features.rt_cetsa_intensity_extraction
 inputs:
@@ -69,4 +69,4 @@ ui:
   key: inputs.preview
   title: Preview example output of this plugin
   type: checkbox
-version: 0.3.0-dev0
+version: 0.4.0-dev0

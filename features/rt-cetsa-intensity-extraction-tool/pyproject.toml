@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus_images_features_rt_cetsa_intensity_extraction"
-version = "0.3.0-dev0"
+version = "0.4.0-dev0"
 description = "Extract well intensities from RT-CETSA plate images."
 authors = [
     "Nick Schaub <nick.schaub@nih.gov>",

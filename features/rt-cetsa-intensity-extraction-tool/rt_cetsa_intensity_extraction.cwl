@@ -38,7 +38,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/rt-cetsa-intensity-extraction-tool:0.3.0-dev0
+    dockerPull: polusai/rt-cetsa-intensity-extraction-tool:0.4.0-dev0
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)
