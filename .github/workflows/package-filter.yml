@@ -140,31 +140,38 @@ jobs:
           echo "The updated packages are $PACKAGE_DIRS"
           if [ -z "$PACKAGE_DIRS" ]
           then
-            echo "::error::No updated packages were found" && exit 1
-          fi
-          echo "The number of updated packages is $NUM_PACKAGES"
+            echo "::warning::No updated packages were found"
 
-          # Convert the package directories to JSON for the output matrix
-          JSON="{\"include\": ["
-          for package_dir in $PACKAGE_DIRS
-          do
-            package_name=$(basename $package_dir)
-            JSON_LINE="{\"package_dir\": \"${package_dir}\", \"package_name\": \"${package_name}\"},"
-            # Add the JSON line to the JSON string if it is not already included
-            if [ ! "$JSON" == *"$JSON_LINE"* ]
+            echo "matrix={\"include\": []}" >> $GITHUB_OUTPUT
+            echo "list=" >> $GITHUB_OUTPUT
+            echo "num_packages=0" >> $GITHUB_OUTPUT
+
+          else
+            echo "The number of updated packages is $NUM_PACKAGES"
+
+            # Convert the package directories to JSON for the output matrix
+            JSON="{\"include\": ["
+            for package_dir in $PACKAGE_DIRS
+            do
+              package_name=$(basename $package_dir)
+              JSON_LINE="{\"package_dir\": \"${package_dir}\", \"package_name\": \"${package_name}\"},"
+              # Add the JSON line to the JSON string if it is not already included
+              if [ ! "$JSON" == *"$JSON_LINE"* ]
+              then
+                JSON="$JSON$JSON_LINE"
+              fi
+            done
+
+            # Remove trailing comma and add closing brackets
+            if [ "$JSON" == *"," ]
             then
-              JSON="$JSON$JSON_LINE"
+              JSON="${JSON%?}"
             fi
-          done
+            JSON="$JSON]}"
 
-          # Remove trailing comma and add closing brackets
-          if [ "$JSON" == *"," ]
-          then
-            JSON="${JSON%?}"
+            # Set the output
+            echo "matrix=$( echo "$JSON" )" >> $GITHUB_OUTPUT
+            echo "list=$( echo "$PACKAGE_DIRS" )" >> $GITHUB_OUTPUT
+            echo "num_packages=$NUM_PACKAGES" >> $GITHUB_OUTPUT
+
           fi
-          JSON="$JSON]}"
-
-          # Set the output
-          echo "matrix=$( echo "$JSON" )" >> $GITHUB_OUTPUT
-          echo "list=$( echo "$PACKAGE_DIRS" )" >> $GITHUB_OUTPUT
-          echo "num_packages=$NUM_PACKAGES" >> $GITHUB_OUTPUT
