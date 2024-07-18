@@ -63,7 +63,17 @@ jobs:
           echo "The comparison point is ${comparison_point}"
 
           # Get the changed files
-          changed_files=$(git diff --name-only ${comparison_point}...)
+          # the `--diff-filter=ACMR` flag filters out deleted files. The filters are as follows:
+          # A: Added
+          # C: Copied
+          # M: Modified
+          # R: Renamed
+          # D: Deleted
+          # T: Type changed (for example, regular file or symlink or submodule)
+          # U: Unmerged
+          # X: Unknown
+          # B: Broken pairing
+          changed_files=$(git diff --diff-filter=ACMR --name-only ${comparison_point}...)
           # echo the changed files
           echo "The changed files are $changed_files"
 
