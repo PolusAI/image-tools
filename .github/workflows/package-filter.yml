@@ -20,6 +20,9 @@ on:
       list:
         description: "The list of directories containing the updated packages"
         value: ${{ jobs.package-filter.outputs.list }}
+      num_packages:
+        description: "The number of updated packages"
+        value: ${{ jobs.package-filter.outputs.num_packages }}
 
 permissions:
   contents: read
@@ -31,6 +34,7 @@ jobs:
     outputs:
       matrix: ${{ steps.package-filter.outputs.matrix }}
       list: ${{ steps.package-filter.outputs.list }}
+      num_packages: ${{ steps.package-filter.outputs.num_packages }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,6 +45,7 @@ jobs:
       - name: Find Updated Packages
         id: package-filter
         run: |
+          NUM_PACKAGES=0
           PACKAGE_DIRS=""
           COMPANION_FILES="VERSION .bumpversion.cfg"
 
@@ -123,6 +128,7 @@ jobs:
                 fi
               fi
 
+              NUM_PACKAGES=$((NUM_PACKAGES+1))
               PACKAGE_DIRS="$PACKAGE_DIRS ${pkg_dir}"
             fi
           done
@@ -136,6 +142,7 @@ jobs:
           then
             echo "::error::No updated packages were found" && exit 1
           fi
+          echo "The number of updated packages is $NUM_PACKAGES"
 
           # Convert the package directories to JSON for the output matrix
           JSON="{\"include\": ["
@@ -160,3 +167,4 @@ jobs:
           # Set the output
           echo "matrix=$( echo "$JSON" )" >> $GITHUB_OUTPUT
           echo "list=$( echo "$PACKAGE_DIRS" )" >> $GITHUB_OUTPUT
+          echo "num_packages=$NUM_PACKAGES" >> $GITHUB_OUTPUT

@@ -27,6 +27,7 @@ jobs:
   pre-commit:
     name: Pre-commit | ${{ matrix.package_name }}
     needs: package-filter
+    if: ${{ needs.package-filter.outputs.num_packages > 0 }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.package-filter.outputs.matrix) }}
@@ -56,6 +57,7 @@ jobs:
   docker:
     name: Docker | Build ${{ matrix.package_name }}
     needs: package-filter
+    if: ${{ needs.package-filter.outputs.num_packages > 0 }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.package-filter.outputs.matrix) }}
@@ -106,6 +108,7 @@ jobs:
   tests:
     name: Test | ${{ matrix.package_name }}
     needs: package-filter
+    if: ${{ needs.package-filter.outputs.num_packages > 0 }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.package-filter.outputs.matrix) }}
