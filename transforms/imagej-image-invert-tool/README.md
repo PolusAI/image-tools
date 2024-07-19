@@ -1,4 +1,4 @@
-# ImageJ image invert v(0.5.0)
+# ImageJ image invert v(0.5.1-dev0)
 
 This plugin invert the pixels values of the input collection. Where the highest
 pixel intensities become the lowest and the lowest pixel intensities become the

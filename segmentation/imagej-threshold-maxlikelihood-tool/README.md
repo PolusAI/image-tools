@@ -1,4 +1,4 @@
-# ImageJ threshold maxlikelihood (v0.5.0)
+# ImageJ threshold maxlikelihood (v0.5.1-dev0)
 
 Implements a maximum likelihood threshold method using the [EM algorithm](https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm)
 by Dempster, Laird, Rubin and Glasbey:
