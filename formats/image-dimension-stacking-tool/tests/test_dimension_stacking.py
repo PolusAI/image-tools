@@ -1,4 +1,5 @@
 """Testing of image dimension stacking."""
+
 from pathlib import Path
 from typing import Union
 

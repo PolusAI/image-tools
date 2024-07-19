@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-formats-image-dimension-stacking"
-version = "0.1.1-dev"
+version = "0.1.1-dev0"
 description = "Stacking multi-dimensional images"
 authors = [
            "Nick Schaub <nick.schaub@nih.gov>",
@@ -18,13 +18,7 @@ tqdm = "^4.66.1"
 filepattern = "^2.0.4"
 pydantic = "^1.10.4"
 preadator="0.4.0.dev2"
-
-
-[[tool.poetry.source]]
-name = "test"
-url = "https://test.pypi.org/simple/"
-default = false
-secondary = true
+numpy = "<2.0.0"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
