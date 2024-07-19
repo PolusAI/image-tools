@@ -1,4 +1,4 @@
-# Image dimension stacking(0.1.1-dev)
+# Image dimension stacking(0.1.1-dev2)
 
 This plugin leverages the [filepattern](https://filepattern2.readthedocs.io/en/latest/Home.html) library and employs the filepattern `groupBy` functionality to enable the matching of image filenames, facilitating their stacking into multi-dimensional images.
 
