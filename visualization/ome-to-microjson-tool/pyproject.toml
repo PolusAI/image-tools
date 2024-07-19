@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-visualization-ome-to-microjson"
-version = "0.1.5"
+version = "0.1.6-dev0"
 description = "This plugin create a microjson of polygon coordinates of binary and label segmentations"
 authors = ["Hamdah Shafqat abbasi  <hamdahshafqat.abbasi@nih.gov>"]
 readme = "README.md"
@@ -19,6 +19,7 @@ llvmlite = "^0.40.1"
 vaex = "^4.17.0"
 scikit-image = "^0.20.0"
 memory-profiler = "^0.61.0"
+pyarrow = ">=16.0,<17.0"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
