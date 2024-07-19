@@ -1,13 +1,13 @@
 {
   "name": "Image Dimension Stacking",
-  "version": "0.1.1-dev1",
+  "version": "0.1.1-dev2",
   "title": "Stacking of image dimensions (c, z, t) to create a multidimensional image.",
   "description": "Stacking of image dimensions (c, z, t) to create a multidimensional image.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/PolusAI/image-tools",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
-  "containerId": "polusai/image-dimension-stacking-tool:0.1.1-dev1",
+  "containerId": "polusai/image-dimension-stacking-tool:0.1.1-dev2",
   "baseCommand": [
     "python3",
     "-m",
