@@ -1,4 +1,4 @@
-# ImageJ filter derivativegauss v(0.5.1-dev0)
+# ImageJ filter derivativegauss v(0.5.1)
 
 This plugin applies the nth derivative of a Gaussian to an input collection. The
 plugin takes as input the standard deviations of the 2-Dimensional Gaussian for

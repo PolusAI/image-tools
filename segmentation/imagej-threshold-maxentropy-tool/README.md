@@ -1,4 +1,4 @@
-# ImageJ threshold maxentropy (v0.5.1-dev0)
+# ImageJ threshold maxentropy (v0.5.1)
 
 Implements Kapur-Sahoo-Wong (Maximum Entropy) thresholding method as
 described in: Kapur, J. N., Sahoo, P. K., & Wong, A. K. C. (1985). A new method

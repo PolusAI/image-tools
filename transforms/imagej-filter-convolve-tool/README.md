@@ -1,4 +1,4 @@
-# ImageJ filter convolve v(0.5.1-dev0)
+# ImageJ filter convolve v(0.5.1)
 
 This plugin performs a [convolution](https://en.wikipedia.org/wiki/Convolution) operation using a user specified kernel to an
 input collection.

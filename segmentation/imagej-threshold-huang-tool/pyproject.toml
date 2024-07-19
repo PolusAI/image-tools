@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-segmentation-imagej-threshold-huang"
-version = "0.5.2-dev0"
+version = "0.5.2"
 description = ""
 authors = [
     "Nick Schaub <nick.schaub@nih.gov>",

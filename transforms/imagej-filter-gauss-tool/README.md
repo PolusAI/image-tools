@@ -1,4 +1,4 @@
-# ImageJ filter gauss v(0.5.1-dev0)
+# ImageJ filter gauss v(0.5.1)
 
 This plugin applies a Gaussian Convolutional filter to an input collection.
 

@@ -1,4 +1,4 @@
-# ImageJ threshold minerror (v0.5.1-dev0)
+# ImageJ threshold minerror (v0.5.1)
 
 An iterative implementation of Kittler and Illingworth’s Minimum Error
 thresholding as described by [ImageJ](https://imagej.net/plugins/auto-threshold#minerrori).
