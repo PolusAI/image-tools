@@ -1,9 +1,11 @@
 """Test Command line Tool."""
-from typer.testing import CliRunner
-from polus.images.formats.image_dimension_stacking.__main__ import app
+
 from pathlib import Path
 from typing import Union
+
+from typer.testing import CliRunner
 import pytest
+from polus.images.formats.image_dimension_stacking.__main__ import app
 
 
 def test_cli(synthetic_images: tuple[Union[str, Path]], output_directory: Path) -> None:
