@@ -1,0 +1,51 @@
+author:
+- Nick Schaub
+- Hamdah Shafqat Abbasi
+contact: melanie.parham@axleinfo.com
+container: polusai/image-dimension-stacking-tool:0.1.1-dev2
+description: Stacking of image dimensions (c, z, t) to create a multidimensional image.
+entrypoint: python3 -m polus.images.formats.image_dimension_stacking
+inputs:
+- description: Input image collection to be processed by this plugin.
+  format:
+  - collection
+  name: inpDir
+  required: true
+  type: path
+- description: Filename pattern used to separate data
+  format:
+  - string
+  name: filePattern
+  required: true
+  type: string
+- description: Generate an output preview
+  format:
+  - boolean
+  name: preview
+  required: false
+  type: boolean
+name: polusai/ImageDimensionStacking
+outputs:
+- description: Output collection
+  format:
+  - collection
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/PolusAI/polus-plugins
+specVersion: 1.0.0
+title: Image Dimension Stacking
+ui:
+- description: Input image collection to be processed by this plugin
+  key: inputs.inpDir
+  title: Input collection
+  type: path
+- description: Filename pattern used to separate data
+  key: inputs.filePattern
+  title: Filename pattern
+  type: text
+- description: Generate an output preview
+  key: inputs.preview
+  title: Generate preview
+  type: boolean
+version: 0.1.1-dev0
