@@ -1,4 +1,4 @@
-# ImageJ threshold huang (v0.5.1-dev0)
+# ImageJ threshold huang (v0.5.1)
 
 This plugin implements the [default thresholding method](https://imagej.net/plugins/auto-threshold#default) from ImageJ 1.x. The
 default method as explained by ImageJ is a variation of the IsoData algorithm.

@@ -1,4 +1,4 @@
-# ImageJ filter frangivesselness v(0.5.1-dev0)
+# ImageJ filter frangivesselness v(0.5.1)
 
 Applies the Frangi Vesselness filter to an input collection to highlight
 vessel-like structures.

@@ -1,6 +1,6 @@
 {
   "name": "ImageJ filter sobel",
-  "version": "0.5.1-dev0",
+  "version": "0.5.1",
   "title": "ImageJ filter sobel",
   "description": "This plugin implements the filter sobel operation",
   "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com), Najib Ishaq (najib.ishaq@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/polusai/image-tools",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/imagej-filter-sobel-tool:0.5.1-dev0",
+  "containerId": "polusai/imagej-filter-sobel-tool:0.5.1",
   "inputs": [
     {
       "name": "inpDir",

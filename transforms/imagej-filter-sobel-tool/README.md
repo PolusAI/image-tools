@@ -1,4 +1,4 @@
-# ImageJ filter sobel v(0.5.1-dev0)
+# ImageJ filter sobel v(0.5.1)
 
 This plugin applies the Sobel operator to an input collection
 

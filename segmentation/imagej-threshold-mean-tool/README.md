@@ -1,4 +1,4 @@
-# ImageJ threshold mean (v0.5.1-dev0)
+# ImageJ threshold mean (v0.5.1)
 
 
 Uses the mean of grey levels as the threshold. It is used by some other methods

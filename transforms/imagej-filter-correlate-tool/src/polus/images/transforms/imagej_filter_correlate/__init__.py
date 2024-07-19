@@ -1,7 +1,7 @@
 """Provides the ImageJ filter correlate tool."""
 
 
-__version__ = "0.5.1-dev0"
+__version__ = "0.5.1"
 
 
 import logging

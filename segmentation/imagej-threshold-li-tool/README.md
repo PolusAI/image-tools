@@ -1,4 +1,4 @@
-# ImageJ threshold li (v0.5.1-dev0)
+# ImageJ threshold li (v0.5.1)
 
 Implements Li’s Minimum Cross Entropy thresholding method based on the iterative
 version of the algorithm. This is an iterative method to find the threshold
