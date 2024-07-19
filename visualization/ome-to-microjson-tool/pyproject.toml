@@ -19,6 +19,7 @@ llvmlite = "^0.40.1"
 vaex = "^4.17.0"
 scikit-image = "^0.20.0"
 memory-profiler = "^0.61.0"
+pyarrow = ">=16.0,<17.0"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
