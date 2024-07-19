@@ -1,7 +1,7 @@
 author:
 - Nick Schaub
 - Hamdah Shafqat Abbasi
-contact: melanie.parham@axleinfo.com
+contact: nick.schaub@nih.gov
 container: polusai/image-dimension-stacking-tool:0.1.1-dev3
 description: Stacking of image dimensions (c, z, t) to create a multidimensional image.
 entrypoint: python3 -m polus.images.formats.image_dimension_stacking
@@ -32,7 +32,7 @@ outputs:
   name: outDir
   required: true
   type: path
-repository: https://github.com/PolusAI/polus-plugins
+repository: https://github.com/PolusAI/image-tools
 specVersion: 1.0.0
 title: Image Dimension Stacking
 ui:
