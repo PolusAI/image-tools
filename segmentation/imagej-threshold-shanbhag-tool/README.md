@@ -1,4 +1,4 @@
-# ImageJ threshold shanbhag (v0.5.0)
+# ImageJ threshold shanbhag (v0.5.1-dev0)
 
 Implements Shanbhag's extension of Kapur's Renyi Entropy method. This method
 includes a distance from the threshold in the entropy measure. More information

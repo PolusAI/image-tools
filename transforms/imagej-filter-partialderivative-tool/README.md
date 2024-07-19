@@ -1,4 +1,4 @@
-# ImageJ filter partialderivative v(0.5.0)
+# ImageJ filter partialderivative v(0.5.1-dev0)
 
 ImageJ op that applies partial derivative filter to input collection.
 

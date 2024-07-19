@@ -1,4 +1,4 @@
-# ImageJ threshold intermodes (v0.5.0)
+# ImageJ threshold intermodes (v0.5.1-dev0)
 
 As described by [ImageJ](https://imagej.net/plugins/auto-threshold#intermodes) this plugin implements the threshold method described in
 Prewitt, J. M. S., & Mendelsohn, M. L. (2006). THE ANALYSIS OF CELL IMAGES*.

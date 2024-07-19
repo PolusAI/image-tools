@@ -1,4 +1,4 @@
-# ImageJ filter addpoissonnoise v(0.5.0)
+# ImageJ filter addpoissonnoise v(0.5.1-dev0)
 
 This plugin adds noise of a [Poisson](https://en.wikipedia.org/wiki/Poisson_distribution) distribution to an input image using the
 implementation in D. E. Knuth. Art of Computer Programming, Volume 2:

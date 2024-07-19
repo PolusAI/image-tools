@@ -1,4 +1,4 @@
-# ImageJ threshold minimum (v0.5.0)
+# ImageJ threshold minimum (v0.5.1-dev0)
 
 As described by [ImageJ](https://imagej.net/plugins/auto-threshold#minimum) this
 operation is similar to the Intermodes method, this assumes a bimodal histogram.

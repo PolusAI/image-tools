@@ -1,4 +1,4 @@
-# ImageJ threshold moments (v0.5.0)
+# ImageJ threshold moments (v0.5.1-dev0)
 
 Tsai’s method attempts to preserve the moments of the original image in the
 thresholded result as described by [ImageJ](https://imagej.net/plugins/auto-threshold#moments).
