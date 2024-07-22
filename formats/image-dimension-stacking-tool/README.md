@@ -1,4 +1,4 @@
-# Image dimension stacking(0.1.1)
+# Image dimension stacking(0.1.2-dev1)
 
 This plugin leverages the [filepattern](https://filepattern2.readthedocs.io/en/latest/Home.html) library and employs the filepattern `groupBy` functionality to enable the matching of image filenames, facilitating their stacking into multi-dimensional images.
 
@@ -43,7 +43,7 @@ This plugin takes three input argument and one output argument:
 ### Run the Docker Container
 
 ```bash
-docker run -v /path/to/data:/data polusai/image-dimension-stacking-plugin:0.1.1-dev \
+docker run -v /path/to/data:/data polusai/image-dimension-stacking-plugin:0.1.2-dev1-dev \
   --inpDir "Path/To/Data" \
   --filePattern "tubhiswt_C1-z{z:d+}.ome.tif" \
   --outDir "Path/To/Output/Dir"
