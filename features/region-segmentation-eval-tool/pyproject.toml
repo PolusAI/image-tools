@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-features-region-segmentation-eval"
-version = "0.2.6-dev0"
+version = "0.2.6"
 description = ""
 authors = [
            "Vishakha Goyal <vishakha.goyal@nih.gov>",
