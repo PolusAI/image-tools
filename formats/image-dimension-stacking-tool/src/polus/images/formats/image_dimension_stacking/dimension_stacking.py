@@ -1,4 +1,5 @@
 """Image dimension stacking package."""
+import os
 import logging
 import re
 import time
@@ -15,6 +16,7 @@ from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
 
 chunk_size = 1024
 
@@ -75,7 +77,9 @@ def z_distance(file: Path) -> tuple[float, str]:
         return ps_z
 
 
-def write_image_stack(file: Path, di: int, group_by: str, bw: BioWriter) -> None:
+def write_image_stack(
+    file: Path, di: int, group_by: str, bw: BioWriter, backend: str
+) -> None:
     """Write image stack.
 
     This function writes stacked images of either dimensions (z, c, t).
@@ -139,13 +143,27 @@ def dimension_stacking(
         images = [f2[gi][1][0].name for f1, f2 in fps(group_by=group_by)]
         input_files = [f2[gi][1][0] for f1, f2 in fps(group_by=group_by)]
         pattern = fp.infer_pattern(files=images)
+        extension = re.split(r"\.", pattern)[1]
+        if extension == "ome":
+            READ_BACKEND = "tensorstore"
+        else:
+            READ_BACKEND = "bioformats"
+
+        if POLUS_IMG_EXT == ".ome.tif":
+            WRITE_BACKEND = "python"
+        if POLUS_IMG_EXT == ".ome.zarr":
+            WRITE_BACKEND = "tensorstore"
+
         out_name = re.sub(r"\{(.*?)\}", replace_value, pattern)
+        out_name = re.split(r"\.", out_name)[0] + POLUS_IMG_EXT
+
         with BioReader(input_files[0]) as br:
             metadata = br.metadata
         with BioWriter(
             out_dir.joinpath(out_name),
             metadata=metadata,
             max_workers=num_workers,
+            backend=WRITE_BACKEND,
         ) as bw:
             # Adjust the dimensions before writing
             if group_by == "c":
