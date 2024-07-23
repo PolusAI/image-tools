@@ -1,6 +1,6 @@
 """Image dimension stacking package."""
-import os
 import logging
+import os
 import re
 import time
 from concurrent.futures import as_completed
@@ -78,7 +78,7 @@ def z_distance(file: Path) -> tuple[float, str]:
 
 
 def write_image_stack(
-    file: Path, di: int, group_by: str, bw: BioWriter, backend: str
+    file: Path, di: int, group_by: str, bw: BioWriter, backend: str,
 ) -> None:
     """Write image stack.
 
@@ -143,11 +143,7 @@ def dimension_stacking(
         images = [f2[gi][1][0].name for f1, f2 in fps(group_by=group_by)]
         input_files = [f2[gi][1][0] for f1, f2 in fps(group_by=group_by)]
         pattern = fp.infer_pattern(files=images)
-        extension = re.split(r"\.", pattern)[1]
-        if extension == "ome":
-            READ_BACKEND = "tensorstore"
-        else:
-            READ_BACKEND = "bioformats"
+        re.split(r"\.", pattern)[1]
 
         if POLUS_IMG_EXT == ".ome.tif":
             WRITE_BACKEND = "python"
