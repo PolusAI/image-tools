@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
+POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.zarr")
 
 chunk_size = 1024
 
@@ -78,7 +78,7 @@ def z_distance(file: Path) -> tuple[float, str]:
 
 
 def write_image_stack(
-    file: Path, di: int, group_by: str, bw: BioWriter, backend: str,
+    file: Path, di: int, group_by: str, bw: BioWriter
 ) -> None:
     """Write image stack.
 
@@ -143,7 +143,6 @@ def dimension_stacking(
         images = [f2[gi][1][0].name for f1, f2 in fps(group_by=group_by)]
         input_files = [f2[gi][1][0] for f1, f2 in fps(group_by=group_by)]
         pattern = fp.infer_pattern(files=images)
-        re.split(r"\.", pattern)[1]
 
         if POLUS_IMG_EXT == ".ome.tif":
             WRITE_BACKEND = "python"
@@ -155,11 +154,13 @@ def dimension_stacking(
 
         with BioReader(input_files[0]) as br:
             metadata = br.metadata
+
         with BioWriter(
             out_dir.joinpath(out_name),
             metadata=metadata,
             max_workers=num_workers,
             backend=WRITE_BACKEND,
+            Z=dim_size
         ) as bw:
             # Adjust the dimensions before writing
             if group_by == "c":

@@ -58,7 +58,7 @@
 #                 output_directory.joinpath(file.name),
 #                 metadata=metadata,
 #             ) as bw:
-#                 ds.write_image_stack(file=file, di=0, group_by=variable, bw=bw, backend='python')
+#                 ds.write_image_stack(file=file, di=0, group_by=variable, bw=bw)
 #     total_dimensions = 10
 #     assert len(list(output_directory.iterdir())) == total_dimensions
 
