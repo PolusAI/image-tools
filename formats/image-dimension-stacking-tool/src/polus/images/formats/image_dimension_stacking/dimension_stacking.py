@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.zarr")
+POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
 
 chunk_size = 1024
 
@@ -77,9 +77,7 @@ def z_distance(file: Path) -> tuple[float, str]:
         return ps_z
 
 
-def write_image_stack(
-    file: Path, di: int, group_by: str, bw: BioWriter
-) -> None:
+def write_image_stack(file: Path, di: int, group_by: str, bw: BioWriter) -> None:
     """Write image stack.
 
     This function writes stacked images of either dimensions (z, c, t).
@@ -112,7 +110,7 @@ def write_image_stack(
                                 bw[y:y_max, x:x_max, di : di + 1, 0, 0] = tile
 
 
-def dimension_stacking(
+def dimension_stacking(  # noqa:C901
     inp_dir: Path,
     file_pattern: str,
     group_by: str,
@@ -145,9 +143,9 @@ def dimension_stacking(
         pattern = fp.infer_pattern(files=images)
 
         if POLUS_IMG_EXT == ".ome.tif":
-            WRITE_BACKEND = "python"
+            backend = "python"
         if POLUS_IMG_EXT == ".ome.zarr":
-            WRITE_BACKEND = "tensorstore"
+            backend = "tensorstore"
 
         out_name = re.sub(r"\{(.*?)\}", replace_value, pattern)
         out_name = re.split(r"\.", out_name)[0] + POLUS_IMG_EXT
@@ -155,12 +153,27 @@ def dimension_stacking(
         with BioReader(input_files[0]) as br:
             metadata = br.metadata
 
+        z_size = 1
+        t_size = 1
+        c_size = 1
+
+        if group_by == "c":
+            c_size = dim_size
+        elif group_by == "t":
+            t_size = dim_size
+        elif group_by == "z":
+            z_size = dim_size
+        else:
+            pass
+
         with BioWriter(
             out_dir.joinpath(out_name),
             metadata=metadata,
             max_workers=num_workers,
-            backend=WRITE_BACKEND,
-            Z=dim_size
+            backend=backend,
+            Z=z_size,
+            C=c_size,
+            T=t_size,
         ) as bw:
             # Adjust the dimensions before writing
             if group_by == "c":
