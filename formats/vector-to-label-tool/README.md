@@ -1,4 +1,4 @@
-# Vector to Label (v0.7.2-dev0)
+# Vector to Label (v0.7.2)
 
 Here we provide the vector-to-label plugin to convert vector fields to labeled images.
 We have new algorithms for this conversion that are more accurate than the ones used in the [CellPose](https://www.nature.com/articles/s41592-020-01018-x.epdf?sharing_token=yrCA1mB-y9TR8-RC8w_CPdRgN0jAjWel9jnR3ZoTv0Ms-A3TbUG5N7s_6d3I7lMImMDE6cyl-17ubiknffX50r-dX1un0XSIQ2PGYWsCV1du16fIaipcHNxste8FMByEL75Ek_S2_UEVkSk7lCFllWEVogGWJwmQkBC9uKq9UEA%3D) [(github)](https://github.com/MouseLand/cellpose).
