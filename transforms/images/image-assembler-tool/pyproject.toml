@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-transforms-images-image-assembler"
-version = "1.4.2-dev0"
+version = "1.4.2"
 description = "A scalable image assembler plugin."
 authors = ["Nick Schaub <nick.schaub@nih.gov>", "Antoine Gerardin <antoine.gerardin@gmail.com>"]
 readme = "README.md"

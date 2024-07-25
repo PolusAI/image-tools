@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-formats-vector-to-label"
-version = "0.7.2-dev0"
+version = "0.7.2"
 description = ""
 authors = [
     "Najib Ishaq <najib.ishaq@nih.gov>",
