@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
+POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.zarr")
 
 chunk_size = 1024
 
@@ -110,7 +110,7 @@ def write_image_stack(file: Path, di: int, group_by: str, bw: BioWriter) -> None
                                 bw[y:y_max, x:x_max, di : di + 1, 0, 0] = tile
 
 
-def dimension_stacking(  # noqa:C901
+def dimension_stacking(
     inp_dir: Path,
     file_pattern: str,
     group_by: str,
@@ -176,49 +176,43 @@ def dimension_stacking(  # noqa:C901
             T=t_size,
         ) as bw:
             # Adjust the dimensions before writing
-            if group_by == "c":
-                bw.C = dim_size
-            if group_by == "t":
-                bw.T = dim_size
             if group_by == "z":
-                bw.Z = dim_size
                 bw.ps_z = z_distance(Path(input_files[0]))
 
-            for file, di in zip(input_files, range(0, dim_size)):
+            with preadator.ProcessManager(
+                name=f"Stacking images of {group_by} dimensions",
+                num_processes=num_workers,
+                threads_per_process=4,
+            ) as pm:
                 starttime = time.time()
-
-                with preadator.ProcessManager(
-                    name=f"Stacking images of {group_by} dimensions",
-                    num_processes=num_workers,
-                    threads_per_process=4,
-                ) as pm:
-                    threads = []
-                    for file, di in zip(  # noqa: PLW2901
-                        input_files,
-                        range(0, dim_size),
-                    ):
-                        thread = pm.submit_thread(
-                            write_image_stack,
-                            file,
-                            di=di,
-                            group_by=group_by,
-                            bw=bw,
-                        )
-                        threads.append(thread)
-                    pm.join_threads()
-
-                    for f in tqdm(
-                        as_completed(threads),
-                        total=len(threads),
-                        mininterval=5,
-                        desc=f"Stacking images of {group_by} dimensions",
-                        initial=0,
-                        unit_scale=True,
-                        colour="cyan",
-                    ):
-                        f.result()
-
-                    endtime = (time.time() - starttime) / 60
-                    logger.info(
-                        f"Total time taken for execution: {endtime:.4f} minutes",
+                threads = []
+                for file, di in zip(
+                    input_files,
+                    range(0, dim_size),
+                ):
+                    thread = pm.submit_thread(
+                        write_image_stack,
+                        file,
+                        di=di,
+                        group_by=group_by,
+                        bw=bw,
                     )
+                    threads.append(thread)
+
+                pm.join_threads()
+
+                for f in tqdm(
+                    as_completed(threads),
+                    total=len(threads),
+                    mininterval=1,
+                    desc=f"Stacking images of {group_by} dimensions",
+                    initial=0,
+                    unit_scale=True,
+                    colour="cyan",
+                ):
+                    f.result()
+
+                endtime = (time.time() - starttime) / 60
+                logger.info(
+                    f"Total time taken for execution: {endtime:.4f} minutes",
+                )
