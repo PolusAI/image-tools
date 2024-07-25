@@ -1,4 +1,4 @@
-# Image Assembler (1.4.1)
+# Image Assembler (1.4.2-dev0)
 
 This WIPP plugin assembles images into a stitched image using an image stitching
 vector. It can assemble 2d and z-stacked images. When assembling z-stacked images,

@@ -1,4 +1,4 @@
-FROM polusai/label-to-vector-plugin:0.7.0-dev30
+FROM polusai/bfio:2.4.1
 
 # environment variables defined in polusai/bfio
 ENV EXEC_DIR="/opt/executables"

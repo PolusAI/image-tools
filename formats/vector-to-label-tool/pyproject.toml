@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-formats-vector-to-label"
-version = "0.7.1"
+version = "0.7.2-dev0"
 description = ""
 authors = [
     "Najib Ishaq <najib.ishaq@nih.gov>",
@@ -12,7 +12,7 @@ packages = [{include = "polus", from = "src"}]
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
 polus-images-formats-label-to-vector = { path = "../label-to-vector-tool/", develop = true }
-bfio = {version = "2.1.9", extras = ["all"]}
+bfio = {version = "^2.1", extras = ["all"]}
 filepattern = "^2.0.1"
 numpy = "~1.24.4"
 tqdm = "^4.66.1"
