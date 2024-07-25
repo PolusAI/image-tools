@@ -1,5 +1,6 @@
 """Image dimension stacking package."""
 import logging
+import os
 import re
 import time
 from concurrent.futures import as_completed
@@ -15,6 +16,7 @@ from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.zarr")
 
 chunk_size = 1024
 
@@ -139,58 +141,78 @@ def dimension_stacking(
         images = [f2[gi][1][0].name for f1, f2 in fps(group_by=group_by)]
         input_files = [f2[gi][1][0] for f1, f2 in fps(group_by=group_by)]
         pattern = fp.infer_pattern(files=images)
+
+        if POLUS_IMG_EXT == ".ome.tif":
+            backend = "python"
+        if POLUS_IMG_EXT == ".ome.zarr":
+            backend = "tensorstore"
+
         out_name = re.sub(r"\{(.*?)\}", replace_value, pattern)
+        out_name = re.split(r"\.", out_name)[0] + POLUS_IMG_EXT
+
         with BioReader(input_files[0]) as br:
             metadata = br.metadata
+
+        z_size = 1
+        t_size = 1
+        c_size = 1
+
+        if group_by == "c":
+            c_size = dim_size
+        elif group_by == "t":
+            t_size = dim_size
+        elif group_by == "z":
+            z_size = dim_size
+        else:
+            pass
+
         with BioWriter(
             out_dir.joinpath(out_name),
             metadata=metadata,
             max_workers=num_workers,
+            backend=backend,
+            Z=z_size,
+            C=c_size,
+            T=t_size,
         ) as bw:
             # Adjust the dimensions before writing
-            if group_by == "c":
-                bw.C = dim_size
-            if group_by == "t":
-                bw.T = dim_size
             if group_by == "z":
-                bw.Z = dim_size
                 bw.ps_z = z_distance(Path(input_files[0]))
 
-            for file, di in zip(input_files, range(0, dim_size)):
+            with preadator.ProcessManager(
+                name=f"Stacking images of {group_by} dimensions",
+                num_processes=num_workers,
+                threads_per_process=4,
+            ) as pm:
                 starttime = time.time()
-
-                with preadator.ProcessManager(
-                    name=f"Stacking images of {group_by} dimensions",
-                    num_processes=num_workers,
-                    threads_per_process=4,
-                ) as pm:
-                    threads = []
-                    for file, di in zip(  # noqa: PLW2901
-                        input_files,
-                        range(0, dim_size),
-                    ):
-                        thread = pm.submit_thread(
-                            write_image_stack,
-                            file,
-                            di=di,
-                            group_by=group_by,
-                            bw=bw,
-                        )
-                        threads.append(thread)
-                    pm.join_threads()
-
-                    for f in tqdm(
-                        as_completed(threads),
-                        total=len(threads),
-                        mininterval=5,
-                        desc=f"Stacking images of {group_by} dimensions",
-                        initial=0,
-                        unit_scale=True,
-                        colour="cyan",
-                    ):
-                        f.result()
-
-                    endtime = (time.time() - starttime) / 60
-                    logger.info(
-                        f"Total time taken for execution: {endtime:.4f} minutes",
+                threads = []
+                for file, di in zip(
+                    input_files,
+                    range(0, dim_size),
+                ):
+                    thread = pm.submit_thread(
+                        write_image_stack,
+                        file,
+                        di=di,
+                        group_by=group_by,
+                        bw=bw,
                     )
+                    threads.append(thread)
+
+                pm.join_threads()
+
+                for f in tqdm(
+                    as_completed(threads),
+                    total=len(threads),
+                    mininterval=1,
+                    desc=f"Stacking images of {group_by} dimensions",
+                    initial=0,
+                    unit_scale=True,
+                    colour="cyan",
+                ):
+                    f.result()
+
+                endtime = (time.time() - starttime) / 60
+                logger.info(
+                    f"Total time taken for execution: {endtime:.4f} minutes",
+                )
