@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Union
 
 import polus.images.formats.image_dimension_stacking.dimension_stacking as ds
+import pytest
 from bfio import BioReader
 from bfio import BioWriter
 
@@ -11,6 +12,8 @@ from .conftest import *  # noqa:F403
 from .conftest import clean_directories
 
 
+# Later Todo
+@pytest.mark.skipif("not config.getoption('slow')")
 def test_dimension_stacking(
     synthetic_images: tuple[Union[str, Path], str, str],
     output_directory: Path,
@@ -28,6 +31,7 @@ def test_dimension_stacking(
     outfile = [
         f for f in output_directory.iterdir() if f"{variable}0(0-9).ome.tif" in f.name
     ]
+
     assert all(outfile) is True
     assert len(outfile) == 1
 
