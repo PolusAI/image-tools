@@ -1,0 +1,63 @@
+{
+  "name": "Kaggle Nuclei Segmentation",
+  "version": "0.1.5-dev1",
+  "title": "Kaggle Nuclei Segmentation",
+  "description": "Segments cell nuclei using U-Net in Tensorflow. Neural net architecture and pretrained weights are taken from Data Science Bowl 2018 entry by Muhammad Asim",
+  "author": "Gauhar Bains,  Konstantin Taletskiy,Nick Schaub , Hamdah Shafqat Abbasi (gauhar.bains@labshare.org, Konstantin.Taletskiy@labshare.org, nick.schaub@nih.gov, hamdahshafqat.abbasi@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/PolusAI/image-tools",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/kaggle-nuclei-segmentation-tool:0.1.5-dev1",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.images.segmentation.kaggle_nuclei_segmentation"
+  ],
+  "inputs": [
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Input image collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "filePattern",
+      "type": "string",
+      "description": "Filename pattern used to separate data",
+      "required": false,
+      "default": ".*"
+    },
+    {
+      "name": "preview",
+      "type": "boolean",
+      "description": "Generate an output preview.",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "Input collection",
+      "description": "Input image collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "Filename pattern",
+      "description": "Filename pattern used to separate data",
+      "default": ".*"
+    },
+    {
+      "key": "inputs.preview",
+      "title": "preview",
+      "description": "Generate an output preview."
+    }
+  ]
+}
