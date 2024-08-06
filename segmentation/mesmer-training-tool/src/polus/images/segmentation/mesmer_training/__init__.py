@@ -1,5 +1,5 @@
 """Mesmer Training."""
 
-__version__ = "0.0.7-dev0"
+__version__ = "0.0.8"
 
 from . import train

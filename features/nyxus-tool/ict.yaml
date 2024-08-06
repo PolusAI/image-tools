@@ -9,55 +9,55 @@ entrypoint: python3 -m polus.images.features.nyxus_plugin
 inputs:
 - description: Collection containing intensity images
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: Collection containing label images, i.e. groundtruth images
   format:
-  - segDir
+  - collection
   name: segDir
   required: true
   type: path
 - description: Filepattern to parse intensity images
   format:
-  - intPattern
+  - string
   name: intPattern
   required: true
   type: string
 - description: Filepattern to parse label images
   format:
-  - segPattern
+  - string
   name: segPattern
   required: true
   type: string
 - description: Features or feature groups to be extracted by nyxus plugin
   format:
-  - features
+  - array
   name: features
   required: false
   type: array
 - description: Output file format
   format:
-  - fileExtension
+  - enum
   name: fileExtension
   required: true
   type: string
 - description: Pixel distance between neighboring cells
   format:
-  - neighborDist
+  - number
   name: neighborDist
   required: false
   type: number
 - description: Pixel size in micrometer
   format:
-  - pixelPerMicron
+  - number
   name: pixelPerMicron
   required: false
   type: number
 - description: Consider intensity image as single roi and ignoring segmentation mask
   format:
-  - singleRoi
+  - boolean
   name: singleRoi
   required: false
   type: boolean
@@ -65,7 +65,7 @@ name: polusai/Nyxusplugin
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

@@ -8,19 +8,19 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Collection to be processed by this plugin
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: The macro directory to run on the input collection
   format:
-  - macroDir
+  - genericData
   name: macroDir
   required: true
   type: path
 - description: The maximum number of macro attempts
   format:
-  - maxIterations
+  - number
   name: maxIterations
   required: false
   type: number
@@ -28,7 +28,7 @@ name: polusai/ImageJMacroPlugin
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

@@ -1,6 +1,6 @@
 {
   "name": "Rxiv-Download",
-  "version": "0.1.0-dev0",
+  "version": "0.1.0",
   "title": "Download Rxiv text data",
   "description": "This plugin allows to download data from Rxiv website.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/PolusAI/image-tools",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/rxiv-download-tool:0.1.0-dev0",
+  "containerId": "polusai/rxiv-download-tool:0.1.0",
   "baseCommand": [
     "python3",
     "-m",

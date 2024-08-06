@@ -11,25 +11,25 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input image collection to be processed by this plugin
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: Filepattern to parse image files
   format:
-  - pattern
+  - string
   name: pattern
   required: false
   type: string
 - description: Number of images to generate collective filepattern
   format:
-  - chunkSize
+  - number
   name: chunkSize
   required: false
   type: number
 - description: Select a parameter to generate filepatterns in specific order
   format:
-  - groupBy
+  - string
   name: groupBy
   required: false
   type: string
@@ -37,7 +37,7 @@ name: polusai/FilepatternGenerator
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - genericData
   name: outDir
   required: true
   type: path

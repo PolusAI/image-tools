@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "polus-images-segmentation-kaggle-nuclei-segmentation"
+version = "0.1.5-dev1"
+description = "Segments cell nuclei using U-Net in Tensorflow. Neural net architecture and pretrained weights are taken from Data Science Bowl 2018 entry by Muhammad Asim"
+authors = ["Gauhar Bains,  Konstantin Taletskiy,Nick Schaub , Hamdah Shafqat Abbasi <gauhar.bains@labshare.org, Konstantin.Taletskiy@labshare.org, nick.schaub@nih.gov, hamdahshafqat.abbasi@nih.gov>"]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+bfio = {version = "2.1.9", extras = ["all"]}
+filepattern = ">=2.0.4,<3.0"
+typer = "^0.7.0"
+tensorflow = "^2.15.0"
+opencv-python-headless = "^4.9.0.80"
+
+[tool.poetry.group.dev.dependencies]
+bump2version = "^1.0.1"
+pytest = "^7.4"
+pytest-sugar = "^0.9.6"
+pre-commit = "^3.2.1"
+black = "^23.3.0"
+mypy = "^1.1.1"
+ruff = "^0.0.270"
+ipykernel = "^6.29.0"
+scikit-image = "0.19.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]

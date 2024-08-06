@@ -8,43 +8,43 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input image collection to be processed by this plugin
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
 - description: Pattern of the images in Input
   format:
-  - filePattern
+  - string
   name: filePattern
   required: false
   type: string
 - description: Kernel size that should be used for transformation
   format:
-  - kernel
+  - number
   name: kernel
   required: false
   type: number
 - description: The Binary Operations that will be done on the image
   format:
-  - operation
+  - enum
   name: operation
   required: true
   type: string
 - description: Structuring Shape (Default is Elliptical)
   format:
-  - shape
+  - enum
   name: shape
   required: false
   type: string
 - description: Minimum Area of objects to keep.
   format:
-  - threshold
+  - number
   name: threshold
   required: false
   type: number
 - description: Number of times to perform an operation (when applicable).
   format:
-  - iterations
+  - number
   name: iterations
   required: false
   type: number
@@ -52,7 +52,7 @@ name: polusai/BinaryOperationsPlugin
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path

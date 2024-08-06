@@ -7,37 +7,37 @@ entrypoint: python3 -m polus.images.visualization.tabular_to_microjson
 inputs:
 - description: Path to the input directory containing tabular data
   format:
-  - inpDir
+  - genericData
   name: inpDir
   required: true
   type: path
 - description: Path to the input directory containing stitching vector
   format:
-  - stitchDir
+  - genericData
   name: stitchDir
   required: true
   type: path
 - description: A filepattern, used to select tabular data to be converted
   format:
-  - filePattern
+  - string
   name: filePattern
   required: false
   type: string
 - description: A filepattern, used to parse filenames in stitching vector
   format:
-  - stitchPattern
+  - string
   name: stitchPattern
   required: true
   type: string
 - description: Variable to group filenames in stitching vector
   format:
-  - groupBy
+  - string
   name: groupBy
   required: false
   type: string
 - description: Type of geometry coordinates
   format:
-  - geometryType
+  - string
   name: geometryType
   required: false
   type: string
@@ -45,7 +45,7 @@ name: polusai/TabularToMicrojson
 outputs:
 - description: Path to the output directory
   format:
-  - outDir
+  - genericData
   name: outDir
   required: true
   type: path

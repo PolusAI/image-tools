@@ -1,0 +1,48 @@
+[tool.poetry]
+name = "polus-images-transforms-imagej-image-integral"
+version = "0.5.1"
+description = ""
+authors = [
+    "Nick Schaub <nick.schaub@nih.gov>",
+    "Benjamin Houghton <benjamin.houghton@axleinfo.com>",
+    "Najib Ishaq <najib.ishaq@nih.gov>",
+]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12,!=3.9.7"
+pyimagej = "1.4.1"
+jpype1 = "1.5.0"
+scyjava="1.9.1"
+bfio = { version = "^2.3.6", extras = ["all"] }
+numpy = "^1.26.4"
+typer = "0.7.0"
+imglyb = "2.1.0"
+filepattern = "^2.0.6"
+tqdm = "^4.66.4"
+polus_images_segmentation_imagej_threshold_apply = { path = "../../segmentation/imagej-threshold-apply-tool", develop = true }
+
+[tool.poetry.group.dev.dependencies]
+bump2version = "^1.0.1"
+pre-commit = "^3.0.4"
+pytest = "^7.2.1"
+pytest-cov = "^4.0.0"
+pytest-sugar = "^0.9.6"
+pytest-xdist = "^3.2.0"
+scikit-image = "0.22"
+scipy = "^1.13.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+extend = "../../ruff.toml"
+extend-ignore = [
+    "ANN401",  # typing.Any is required for converting to/from Java types.
+    "PLW0603",  # Updating global state for ImageJ stuff.
+    "PLR0915",  # Some functions are just too long.
+    "PLR0912",  # And some have too many branches.
+    "C901",  # And so, they are too complex.
+]

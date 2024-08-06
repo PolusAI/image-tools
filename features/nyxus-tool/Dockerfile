@@ -4,16 +4,22 @@ FROM polusai/bfio:2.3.3
 ENV EXEC_DIR="/opt/executables"
 ENV POLUS_IMG_EXT=".ome.tif"
 ENV POLUS_TAB_EXT=".csv"
+ENV POLUS_LOG="INFO"
 
 # Work directory defined in the base container
 WORKDIR ${EXEC_DIR}
 
-COPY pyproject.toml ${EXEC_DIR}
-COPY VERSION ${EXEC_DIR}
-COPY README.md ${EXEC_DIR}
-COPY src ${EXEC_DIR}/src
+# TODO: Change the tool_dir to the tool directory
+ENV TOOL_DIR="features/nyxus-tool"
 
-RUN pip3 install ${EXEC_DIR} --no-cache-dir
+# Copy the repository into the container
+RUN mkdir image-tools
+COPY . ${EXEC_DIR}/image-tools
 
-ENTRYPOINT ["python3", "-m", "polus.images.features.nyxus_plugin"]
+# Install the tool
+RUN pip3 install "${EXEC_DIR}/image-tools/${TOOL_DIR}" --no-cache-dir
+
+# Set the entrypoint
+# TODO: Change the entrypoint to the tool entrypoint
+ENTRYPOINT ["python3", "-m", "polus.images.features.nyxus"]
 CMD ["--help"]

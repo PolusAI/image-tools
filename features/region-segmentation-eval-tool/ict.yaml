@@ -9,63 +9,63 @@ entrypoint: python3 -m polus.images.features.region_segmentation_eval
 inputs:
 - description: Ground truth input image collection to be processed by this plugin.
   format:
-  - gtDir
+  - collection
   name: gtDir
   required: true
   type: path
 - description: Predicted input image collection to be processed by this plugin.
   format:
-  - predDir
+  - collection
   name: predDir
   required: true
   type: path
 - description: Number of classes.
   format:
-  - inputClasses
+  - number
   name: inputClasses
   required: true
   type: number
 - description: Boolean to calculate individual image statistics.Default is false.
   format:
-  - individualData
+  - boolean
   name: individualData
   required: false
   type: boolean
 - description: Boolean to calculate summary of individual images.Default is false.
   format:
-  - individualSummary
+  - boolean
   name: individualSummary
   required: false
   type: boolean
 - description: Boolean to calculate overall statistics across all images.Default is
     false.
   format:
-  - totalStats
+  - boolean
   name: totalStats
   required: false
   type: boolean
 - description: Boolean to calculate summary across all images.Default is false.
   format:
-  - totalSummary
+  - boolean
   name: totalSummary
   required: false
   type: boolean
 - description: Importance of radius/diameter to find centroid distance. Should be
     between (0,2]. Default is 0.5.
   format:
-  - radiusFactor
+  - string
   name: radiusFactor
   required: false
   type: string
 - description: IoU theshold. Default is 0.
   format:
-  - iouScore
+  - string
   name: iouScore
   required: false
   type: string
 - description: Filename pattern to filter data.
   format:
-  - filePattern
+  - string
   name: filePattern
   required: false
   type: string
@@ -73,7 +73,7 @@ name: polusai/RegionSegmentationEval
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - genericData
   name: outDir
   required: true
   type: path

@@ -7,31 +7,31 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: 1st stitchingVector Collection
   format:
-  - VectorCollection1
+  - stitchingVector
   name: VectorCollection1
   required: true
   type: path
 - description: 2nd stitchingVector Collection
   format:
-  - VectorCollection2
+  - stitchingVector
   name: VectorCollection2
   required: true
   type: path
 - description: 3rd stitchingVector Collection
   format:
-  - VectorCollection3
+  - stitchingVector
   name: VectorCollection3
   required: false
   type: path
 - description: 4th stitchingVector Collection
   format:
-  - VectorCollection4
+  - stitchingVector
   name: VectorCollection4
   required: false
   type: path
 - description: 5th stitchingVector Collection
   format:
-  - VectorCollection5
+  - stitchingVector
   name: VectorCollection5
   required: false
   type: path
@@ -39,7 +39,7 @@ name: polusai/MergeStitchingVector
 outputs:
 - description: Output collection
   format:
-  - outDir
+  - stitchingVector
   name: outDir
   required: true
   type: path

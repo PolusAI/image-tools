@@ -1,14 +1,22 @@
 #!/bin/bash
 
+# Change the name of the tool here
+tool_dir="visualization"
+tool_name="precompute-slide-tool"
+
+# The version is read from the VERSION file
 version=$(<VERSION)
-docker build . -t polusai/precompute-slide-tool:${version}
+tag="polusai/${tool_name}:${version}"
+echo "Building docker image with tag: ${tag}"
 
-# Build for arm using buildx
-# docker buildx build --load --platform linux/arm64/v8 --tag polusai/precompute-slide-tool:${version} .
+# The current directory and the repository root are saved in variables
+cur_dir=$(pwd)
+repo_root=$(git rev-parse --show-toplevel)
 
-# Muli-platform deployment for the container (does not work currently)
-# docker buildx build --platform linux/arm64,linux/arm64/v8 --tag polusai/precompute-slide-tool:${version}
-
-# Muli-platform deployment for the container (does not work currently)
-# docker buildx build --platform linux/arm64,linux/arm64 --tag polusai/precompute-slide-tool:${version} --attest type=provenance,mode=min .
-# docker buildx build --load -t polusai/precompute-slide-tool:${version}  .
+# The Dockerfile and .dockerignore files are copied to the repository root before building the image
+cd ${repo_root}
+cp ./${tool_dir}/${tool_name}/Dockerfile .
+cp .gitignore .dockerignore
+docker build . -t ${tag}
+rm Dockerfile .dockerignore
+cd ${cur_dir}

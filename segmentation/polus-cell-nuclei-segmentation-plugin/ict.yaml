@@ -10,7 +10,7 @@ entrypoint: '[python3, main.py]'
 inputs:
 - description: Input Image Collection for the plugin.
   format:
-  - inpDir
+  - collection
   name: inpDir
   required: true
   type: path
@@ -18,7 +18,7 @@ name: polusai/CellNucleiSegmentaionusingU-net
 outputs:
 - description: Output Image Collection for the plugin.
   format:
-  - outDir
+  - collection
   name: outDir
   required: true
   type: path
