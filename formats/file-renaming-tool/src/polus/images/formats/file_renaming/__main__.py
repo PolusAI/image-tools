@@ -8,6 +8,7 @@ from re import Match
 from typing import Any
 from typing import Optional
 
+import numpy as np
 import typer
 from polus.images.formats.file_renaming import file_renaming as fr
 
@@ -23,7 +24,7 @@ logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 
 @app.command()
-def main(  # noqa: PLR0913 D417 C901 PLR0912
+def main(  # noqa: PLR0913 D417 C901 PLR0912 PLR0915
     inp_dir: pathlib.Path = typer.Option(
         ...,
         "--inpDir",
@@ -104,6 +105,17 @@ def main(  # noqa: PLR0913 D417 C901 PLR0912
         )
 
     elif map_directory:
+        file_ext = re.split("\\.", file_pattern)[-1]
+
+        subdirs = np.unique(
+            [
+                sub
+                for sub in subdirs
+                for f in pathlib.Path(sub).rglob("*")
+                if f.suffix == f".{file_ext}"
+            ],
+        )
+
         if len(subdirs) == 1:
             logger.info(
                 "Renaming files in a single directory.",
@@ -122,6 +134,9 @@ def main(  # noqa: PLR0913 D417 C901 PLR0912
                 outfile_pattern = f"d1_{out_file_pattern}"
 
             fr.rename(subdirs[0], out_dir, file_pattern, outfile_pattern)
+            logger.info(
+                "Finished renaming files.",
+            )
         if len(subdirs) > 1:
             subnames = [pathlib.Path(sb).name for sb in subdirs]
             sub_check = all(name == subnames[0] for name in subnames)
@@ -149,6 +164,9 @@ def main(  # noqa: PLR0913 D417 C901 PLR0912
                 else:
                     outfile_pattern = f"d{i}_{out_file_pattern}"
                 fr.rename(sub, out_dir, file_pattern, outfile_pattern)
+                logger.info(
+                    "Finished renaming files.",
+                )
 
     if preview:
         with pathlib.Path.open(pathlib.Path(out_dir, "preview.json"), "w") as jfile:
