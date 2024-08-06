@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "polus-images-clustering-hdbscan-clustering"
+version = "0.4.8-dev0"
+description = "Cluster the data using HDBSCAN."
+authors = [
+           "Jayapriya Nagarajan <jayapriya.nagarajan@axleinfo.com>",
+           "Hythem Sidky <hythem.sidky@nih.gov>",
+           "Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>"
+           ]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+filepattern = "^2.0.4"
+typer = "^0.7.0"
+tqdm = "^4.64.1"
+preadator="0.4.0.dev2"
+vaex = "^4.17.0"
+hdbscan = "^0.8.34rc1"
+
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.3.3"
+bump2version = "^1.0.1"
+pytest = "^7.3.2"
+pytest-xdist = "^3.3.1"
+pytest-sugar = "^0.9.7"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
