@@ -26,11 +26,13 @@ class CreateData:
 
     def input_directory(self) -> pathlib.Path:
         """Create temporary input directory."""
-        return tempfile.mkdtemp(dir=self.dirpath)
+        tempdir = tempfile.mkdtemp()
+        return tempdir
 
     def output_directory(self) -> pathlib.Path:
         """Create temporary output directory."""
-        return tempfile.mkdtemp(dir=self.dirpath)
+        tempdir = tempfile.mkdtemp()
+        return tempdir
 
     def runcommands(self, inputs, inp_pattern, out_pattern) -> click.testing.Result:
         """Run command line arguments."""
@@ -146,7 +148,6 @@ def test_invalid_input_raises_error(poly):
     d.clean_directories()
 
 
-@pytest.mark.skip(reason="Skip in git actions")
 def test_non_alphanum_inputs_percentage_sign(poly):
     """Testing of filename with non alphanumeric inputs such as percentage sign."""
     d = CreateData()
@@ -157,7 +158,6 @@ def test_non_alphanum_inputs_percentage_sign(poly):
     d.clean_directories()
 
 
-@pytest.mark.skip(reason="Skip in git actions")
 def test_numeric_fixed_width(poly):
     """Testing of filename with numeric fixed length."""
     d = CreateData()
@@ -168,7 +168,6 @@ def test_numeric_fixed_width(poly):
     d.clean_directories()
 
 
-@pytest.mark.skip(reason="Skip in git actions")
 def test_alphanumeric_fixed_width(poly):
     """Testing of filename with alphanumeric fixed length."""
     d = CreateData()
@@ -179,7 +178,6 @@ def test_alphanumeric_fixed_width(poly):
     d.clean_directories()
 
 
-@pytest.mark.skip(reason="Skip in git actions")
 def test_alphanumeric_variable_width(poly):
     """Testing of filename with alphanumeric variable width."""
     d = CreateData()
@@ -190,7 +188,6 @@ def test_alphanumeric_variable_width(poly):
     d.clean_directories()
 
 
-@pytest.mark.skip(reason="Skip in git actions")
 def test_two_chan_to_digit(poly):
     """Testing conversion of two channels to digits."""
     d = CreateData()
@@ -201,7 +198,6 @@ def test_two_chan_to_digit(poly):
     d.clean_directories()
 
 
-@pytest.mark.skip(reason="Skip in git actions")
 def test_three_chan_to_digit(poly):
     """Test conversion of three channels to digits."""
     d = CreateData()
@@ -212,7 +208,6 @@ def test_three_chan_to_digit(poly):
     d.clean_directories()
 
 
-@pytest.mark.skip(reason="Skip in git actions")
 def test_three_char_chan(poly):
     """Test conversion of three character channels to digits."""
     d = CreateData()
@@ -223,7 +218,6 @@ def test_three_char_chan(poly):
     d.clean_directories()
 
 
-@pytest.mark.skip(reason="Skip in git actions")
 def test_varied_digits(poly):
     """Test varied digits."""
     d = CreateData()
@@ -234,7 +228,6 @@ def test_varied_digits(poly):
     d.clean_directories()
 
 
-@pytest.mark.skip(reason="Skip in git actions")
 def test_spaces(poly):
     """Test non-alphanumeric chars such as spaces."""
     d = CreateData()
@@ -245,7 +238,6 @@ def test_spaces(poly):
     d.clean_directories()
 
 
-@pytest.mark.skip(reason="Skip in git actions")
 def test_non_alphanum_float(poly):
     """Test non-alphanumeric chars such as spaces, periods, commas, brackets."""
     d = CreateData()
@@ -256,7 +248,6 @@ def test_non_alphanum_float(poly):
     d.clean_directories()
 
 
-@pytest.mark.skip(reason="Skip in git actions")
 def test_specify_len_valid_input():
     """Test of sepcifying length."""
     test_cases = [
