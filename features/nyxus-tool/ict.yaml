@@ -1,0 +1,120 @@
+author:
+- Nick Schaub
+- Hamdah Shafqat
+contact: nick.schaub@nih.gov
+container: polusai/nyxus-tool:0.1.7-dev0
+description: Nyxus plugin allows to make use of parallel pocessing for extracting
+  nyxus features
+entrypoint: python3 -m polus.images.features.nyxus_plugin
+inputs:
+- description: Collection containing intensity images
+  format:
+  - collection
+  name: inpDir
+  required: true
+  type: path
+- description: Collection containing label images, i.e. groundtruth images
+  format:
+  - collection
+  name: segDir
+  required: true
+  type: path
+- description: Filepattern to parse intensity images
+  format:
+  - string
+  name: intPattern
+  required: true
+  type: string
+- description: Filepattern to parse label images
+  format:
+  - string
+  name: segPattern
+  required: true
+  type: string
+- description: Features or feature groups to be extracted by nyxus plugin
+  format:
+  - array
+  name: features
+  required: false
+  type: array
+- description: Output file format
+  format:
+  - enum
+  name: fileExtension
+  required: true
+  type: string
+- description: Pixel distance between neighboring cells
+  format:
+  - number
+  name: neighborDist
+  required: false
+  type: number
+- description: Pixel size in micrometer
+  format:
+  - number
+  name: pixelPerMicron
+  required: false
+  type: number
+- description: Consider intensity image as single roi and ignoring segmentation mask
+  format:
+  - boolean
+  name: singleRoi
+  required: false
+  type: boolean
+name: polusai/Nyxusplugin
+outputs:
+- description: Output collection
+  format:
+  - collection
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/PolusAI/polus-plugins
+specVersion: 1.0.0
+title: Nyxus plugin
+ui:
+- description: Input image collection
+  key: inputs.inpDir
+  title: inpDir
+  type: path
+- description: Label image collection
+  key: inputs.segDir
+  title: segDir
+  type: path
+- description: Filepattern to parse intensity images
+  key: inputs.intPattern
+  title: intPattern
+  type: text
+- description: Filepattern to parse label images
+  key: inputs.segPattern
+  title: segPattern
+  type: text
+- description: Features or feature groups to be extracted by nyxus plugin
+  key: inputs.features
+  title: features
+  type: text
+- description: Ouput file format
+  fields:
+  - .arrow
+  - .feather
+  - .csv
+  - default
+  key: inputs.fileExtension
+  title: fileExtension
+  type: select
+- default: 5
+  description: Pixel distance between neighboring cells
+  key: inputs.neighborDist
+  title: neighborDist
+  type: number
+- default: 1.0
+  description: Pixel size in micrometer
+  key: inputs.pixelPerMicron
+  title: pixelPerMicron
+  type: number
+- default: false
+  description: Consider intensity image as single roi and ignoring segmentation mask
+  key: inputs.singleRoi
+  title: singleRoi
+  type: checkbox
+version: 0.1.7-dev0

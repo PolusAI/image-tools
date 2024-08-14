@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-transforms-images-image-calculator"
-version = "0.2.2-dev0"
+version = "0.2.2"
 description = ""
 authors = [
     "Nicholas Schaub <nick.schaub@nih.gov>",

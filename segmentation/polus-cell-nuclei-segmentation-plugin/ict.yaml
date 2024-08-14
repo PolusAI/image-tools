@@ -1,0 +1,33 @@
+author:
+- Gauhar Bains
+- Konstantin Taletskiy
+- Nick Schaub
+contact: gauhar.bains@labshare.org
+container: polusai/cell-nuclei-segmentation-plugin:0.1.4
+description: ' Segments cell nuclei using U-Net in Tensorflow. Neural net architecture
+  and pretrained weights are taken from Data Science Bowl 2018 entry by Muhammad Asim'
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Input Image Collection for the plugin.
+  format:
+  - collection
+  name: inpDir
+  required: true
+  type: path
+name: polusai/CellNucleiSegmentaionusingU-net
+outputs:
+- description: Output Image Collection for the plugin.
+  format:
+  - collection
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Cell Nuclei Segmentaion using U-net
+ui:
+- description: Pick a collection...
+  key: inputs.inpDir
+  title: 'Image Collection: '
+  type: path
+version: 0.1.4

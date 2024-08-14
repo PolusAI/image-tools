@@ -1,10 +1,10 @@
 {
   "name": "Binary Operations Plugin",
-  "version": "0.5.3-dev0",
-  "containerId": "polusai/binary-operations-tool:0.5.3-dev0",
+  "version": "0.5.3",
+  "containerId": "polusai/binary-operations-tool:0.5.3",
   "title": "Binary Operations Plugin",
   "description": "Everything you need to start a WIPP plugin.",
-  "authors": "nicholas-schaub (nick.schaub@nih.gov), Madhuri Vihani",
+  "author": "Nick Schaub (nick.schaub@nih.gov), Madhuri Vihani",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/polusai/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",

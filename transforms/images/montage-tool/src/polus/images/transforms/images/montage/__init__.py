@@ -1,6 +1,6 @@
 """The image montaging tool."""
 
-__version__ = "0.5.1-dev0"
+__version__ = "0.5.1"
 
 
 from .montage import generate_montage_patterns

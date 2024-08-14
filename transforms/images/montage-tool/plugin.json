@@ -1,6 +1,6 @@
 {
   "name": "Montage",
-  "version": "0.5.1-dev0",
+  "version": "0.5.1",
   "title": "Montage",
   "description": "Advanced montaging plugin.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Benjamin Houghton (benjamin.houghton@axleinfo.com)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/PolusAI/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/montage-tool:0.5.1-dev0",
+  "containerId": "polusai/montage-tool:0.5.1",
   "baseCommand": [
     "python3",
     "-m",

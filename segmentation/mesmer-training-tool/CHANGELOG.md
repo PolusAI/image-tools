@@ -1,4 +1,4 @@
-# mesmer-training-plugin(v0.0.7-dev0)
+# mesmer-training-plugin(v0.0.8)
 
 1. This plugin is updated only to the new plugin standards
 2. `--filePattern` is added as an input argument to parse image files.

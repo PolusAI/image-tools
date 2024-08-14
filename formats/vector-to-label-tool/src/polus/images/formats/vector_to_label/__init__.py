@@ -3,4 +3,4 @@
 from . import dynamics
 from . import helpers
 
-__version__ = "0.7.1-dev0"
+__version__ = "0.7.2"

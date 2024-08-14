@@ -1,3 +1,6 @@
+# Other files
+**/**/.venv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -157,7 +160,7 @@ cython_debug/
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#.idea/
+.idea/
 
 # vscode
 .vscode
@@ -165,11 +168,6 @@ cython_debug/
 # test data directory
 data
 
-# local manifests
-src/polus/plugins/_plugins/manifests/*
-
-# allow python scripts inside manifests dir
-!src/polus/plugins/_plugins/manifests/*.py
 
 #macOS
 *.DS_Store

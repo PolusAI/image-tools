@@ -1,0 +1,67 @@
+author:
+- Nick Schaub
+- Anjali Taneja
+- Benjamin Houghton
+- Najib Ishaq
+contact: nick.schaub@nih.gov
+container: polusai/imagej-deconvolve-richardsonlucytv-tool:0.5.0-dev0
+description: "This plugin implements the deconvolve richardsonlucytv operation"
+entrypoint: '[python3, -m, polus.images.transforms.imagej_deconvolve_richardsonlucytv]'
+inputs:
+- description: The collection to be processed by this plugin
+  format:
+  - collection
+  name: inpDir
+  required: true
+  type: path
+- description: File pattern for the input images
+  name: pattern
+  required: true
+  type: string
+- description: The collection containing the PSF image
+  format:
+  - collection
+  name: psfDir
+  required: true
+  type: path
+- description: The maximum number of iterations
+  name: maxIterations
+  required: true
+  type: integer
+- description: The regularization factor to use for the deconvolution
+  name: regularizationFactor
+  required: true
+  type: number
+name: polusai/ImageJdeconvolverichardsonlucytv
+outputs:
+- description: The output collection
+  format:
+  - collection
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: ImageJ deconvolve richardsonlucytv
+ui:
+- description: The collection to be processed by this plugin
+  key: inputs.inpDir
+  title: inpDir
+  type: path
+- description: File pattern for the input images
+  key: inputs.pattern
+  title: pattern
+  type: string
+- description: The collection containing the PSF image
+  key: inputs.psfDir
+  title: psfDir
+  type: path
+- description: The maximum number of iterations
+  key: inputs.maxIterations
+  title: maxIterations
+  type: integer
+- description: The regularization factor to use for the deconvolution
+  key: inputs.regularizationFactor
+  title: regularizationFactor
+  type: number
+version: 0.5.0-dev0

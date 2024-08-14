@@ -50,13 +50,13 @@ For Example
 └── BBBC001
     └── raw
         ├── Ground_Truth
-        │   └── groundtruth_images
-        │       ├── AS_09125_050118150001_A03f00d0.tif
-        │       ├── AS_09125_050118150001_A03f01d0.tif
-        │       ├── AS_09125_050118150001_A03f02d0.tif
-        │       ├── AS_09125_050118150001_A03f03d0.tif
-        │       ├── AS_09125_050118150001_A03f04d0.tif
-        │       └── AS_09125_050118150001_A03f05d0.tif
+        │   └── groundtruth_images
+        │       ├── AS_09125_050118150001_A03f00d0.tif
+        │       ├── AS_09125_050118150001_A03f01d0.tif
+        │       ├── AS_09125_050118150001_A03f02d0.tif
+        │       ├── AS_09125_050118150001_A03f03d0.tif
+        │       ├── AS_09125_050118150001_A03f04d0.tif
+        │       └── AS_09125_050118150001_A03f05d0.tif
         └── Images
             └── human_ht29_colon_cancer_1_images
                 ├── AS_09125_050118150001_A03f00d0.tif

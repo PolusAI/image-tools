@@ -7,16 +7,6 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      num-commits:
-        description: "The of commits to check for updated packages. If 0, the action will check all commits on the branch. For any larger value, the action will check the last n commits for any updated packages."
-        required: true
-        default: 1
-        type: number
-      ignore-missing-dev:
-        description: "If true, the action will ignore packages that do not have a dev version. Otherwise, the action will fail if any package does not have a dev version."
-        required: true
-        default: true
-        type: boolean
       repo_name:
         description: 'Name of the base repository. The user can ignore this input if the action is triggered from the base repository.'
         required: true
@@ -24,16 +14,6 @@ on:
         default: 'image-tools'
   workflow_call:
     inputs:
-      num-commits:
-        description: "The of commits to check for updated packages. If 0, the action will check all commits on the master branch. For any larger value, the action will check the last n commits for any updated packages."
-        required: true
-        default: 1
-        type: number
-      ignore-missing-dev:
-        description: "If true, the action will ignore packages that do not have a dev version. Otherwise, the action will fail if any package does not have a dev version."
-        required: true
-        default: true
-        type: boolean
       repo_name:
         description: 'Name of the base repository'
         required: true
@@ -50,20 +30,18 @@ permissions:
   contents: write
 
 jobs:
-  package-filter:
-    name: Filter for updated packages
-    if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
-    uses: ./.github/workflows/package-filter.yml
-    with:
-      num-commits: ${{ fromJson(github.event.inputs.num-commits) }}
-      ignore-missing-dev: ${{ fromJson(github.event.inputs.ignore-missing-dev) }}
+  pre-release-filter:
+    name: Filter for pre-release packages
+    uses: ./.github/workflows/pre-release-filter.yml
 
   package-release:
     name: Release Versions
-    if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
-    needs: package-filter
+    needs: pre-release-filter
     runs-on: ubuntu-latest
     steps:
+      - name: Debug | Repository Name
+        run: |
+          echo "repo owner is ${{ github.repository_owner }}"
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -71,12 +49,14 @@ jobs:
           ref: ${{ github.event.inputs.branch }}
           persist-credentials: false
       - name: Token | Generate
+        if: github.repository_owner == 'PolusAI'
         id: generate_token
         uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
       - name: Token | Use the token
+        if: github.repository_owner == 'PolusAI'
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
@@ -95,24 +75,12 @@ jobs:
           cur_dir=$GITHUB_WORKSPACE
           released_packages=""
 
-          for pkg_dir in ${{ needs.package-filter.outputs.list }}
+          for pkg_dir in ${{ needs.pre-release-filter.outputs.list }}
           do
             echo "Bumping version for ${pkg_dir}"
             cd "${pkg_dir}"
-            # check if the package has a dev version
-            if [[ "$(cat VERSION)" != *dev* ]]
-            then
-              msg="${pkg_dir} does not have a dev version"
-              if ${{ github.event.inputs.ignore-missing-dev }}
-              then
-                echo "::warning::${msg}"
-              else
-                echo "::error::${msg}" && exit 1
-              fi
-            else
-              bump2version release --no-commit --allow-dirty
-              released_packages="${released_packages} ${pkg_dir}"
-            fi
+            bump2version release --no-commit --allow-dirty
+            released_packages="${released_packages} ${pkg_dir}"
             cd ${cur_dir}
           done
 
@@ -121,8 +89,18 @@ jobs:
 
           echo "Released packages: ${released_packages}"
           echo "released_packages=${released_packages}" >> $GITHUB_OUTPUT
+
+          # If no packages were released, then set released to false
+          if [ -z "${released_packages}" ]
+          then
+            echo "No packages were released"
+            echo "released=false" >> $GITHUB_OUTPUT
+          else
+            echo "Packages were released"
+            echo "released=true" >> $GITHUB_OUTPUT
+          fi
       - name: Git | Commit
-        if: steps.bump_version.outputs.released == 'true'
+        if: github.repository_owner == 'PolusAI' && steps.bump_version.outputs.released == 'true'
         env:
           CI_COMMIT_AUTHOR: polusai-auth-helper[bot]
           CI_COMMIT_EMAIL: ${{ secrets.APP_ID }}+polusai-auth-helper[bot]@users.noreply.github.com
@@ -131,19 +109,18 @@ jobs:
           git config --global user.email "${{ env.CI_COMMIT_EMAIL }}"
           git commit -a -m "build: Bumped release version for ${{ steps.bump_version.outputs.released_packages }}"
       - name: Git | Push
-        if: steps.bump_version.outputs.released == 'true'
+        if: github.repository_owner == 'PolusAI' && steps.bump_version.outputs.released == 'true'
         uses: ad-m/github-push-action@master
         with:
-          force: true
+          force: false
           github_token: ${{ steps.generate_token.outputs.token }}
 
   docker:
     name: Docker | ${{ matrix.package_name }}
-    if: github.repository == 'polusai/${{ github.event.inputs.repo_name }}'
-    needs: [package-filter, package-release]
+    needs: [pre-release-filter, package-release]
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.package-filter.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.pre-release-filter.outputs.matrix) }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -152,11 +129,25 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.inputs.branch }}
           persist-credentials: false
+      - name: Python | Setup
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Python | Install bump2version
+        run: |
+          python -m pip install --upgrade pip
+          pip install bump2version
+      - name: Python | Bump Version Release
+        id: bump_version
+        run: |
+          cur_dir=$GITHUB_WORKSPACE
+          cd ${{ matrix.package_dir }}
+          bump2version release --no-commit --allow-dirty
+          cd ${cur_dir}
       - name: Docker | Tag
         id: docker_tag
         run: |
           package_dir="${{ matrix.package_dir }}"
-          cp .gitignore ${package_dir}/.dockerignore
           version=$(cat ${package_dir}/VERSION)
           tag=polusai/${{ matrix.package_name }}:${version}
           echo "tag=${tag}" >> $GITHUB_OUTPUT
@@ -173,9 +164,13 @@ jobs:
           docker pull ${tag} > /dev/null \
               && $(echo "::error::${tag} already exists on DockerHub" && exit 1) \
               || echo "success"
+      - name: Docker | Setup Dockerfile
+        run: |
+          cp ${{ matrix.package_dir }}/Dockerfile .
+          cp .gitignore .dockerignore
       - name: Docker | Push Image
         uses: docker/build-push-action@v5
         with:
-          context: "{{defaultContext}}:${{ matrix.package_dir }}"
-          push: true
+          context: .
+          push: ${{ github.repository_owner == 'PolusAI' }}
           tags: ${{ steps.docker_tag.outputs.tag }}

@@ -3,4 +3,4 @@
 from . import tile_selectors
 from . import utils
 
-__version__ = "0.5.2-dev0"
+__version__ = "0.5.2"

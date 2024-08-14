@@ -1,0 +1,71 @@
+author:
+- Madhuri Vihani
+- Nick Schaub
+- Antoine Gerardin
+- Najib Ishaq
+contact: Madhuri.Vihani@nih.gov
+container: polusai/precompute-slide-tool:1.7.1-dev0
+description: Precomputes a plane series in DeepZoom, Neuroglancer, or OME Zarr format.
+entrypoint: python3 -m polus.images.visualization.precompute_slide
+inputs:
+- description: Input collection
+  format:
+  - collection
+  name: inpDir
+  required: true
+  type: path
+- description: Build a DeepZoom, Neuroglancer, Zarr pyramid
+  format:
+  - enum
+  name: pyramidType
+  required: true
+  type: string
+- description: Image is either Segmentation or Image
+  format:
+  - enum
+  name: imageType
+  required: false
+  type: string
+- description: Pattern of the images in Input
+  format:
+  - string
+  name: filePattern
+  required: false
+  type: string
+name: polusai/PrecomputeSlideViewer
+outputs:
+- description: Precomputed output
+  format:
+  - pyramid
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/LabShare/polus-plugins
+specVersion: 1.0.0
+title: Precompute Slide Viewer
+ui:
+- description: Collection name...
+  key: inputs.inpDir
+  title: 'Input collection: '
+  type: path
+- description: Build a DeepZoom, Neuroglancer, or Zarr pyramid?
+  fields:
+  - DeepZoom
+  - Neuroglancer
+  - Zarr
+  key: inputs.pyramidType
+  title: 'Pyramid Type: '
+  type: select
+- condition: inputs.pyramidType==Neuroglancer
+  description: Intensity or Segmentation?
+  fields:
+  - Intensity
+  - Segmentation
+  key: inputs.imageType
+  title: 'Image Type: '
+  type: select
+- description: 'Pattern of images in input collection (image_r{rrr}_c{ccc}_z{zzz}.ome.tif). '
+  key: inputs.filePattern
+  title: 'Image Pattern: '
+  type: text
+version: 1.7.2

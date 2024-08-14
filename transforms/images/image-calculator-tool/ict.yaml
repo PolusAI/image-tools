@@ -1,0 +1,81 @@
+author:
+- Nick Schaub
+contact: nick.schaub@nih.gov
+container: polusai/image-calculator-tool:0.2.2-dev0
+description: Perform simple mathematical operations on images.
+entrypoint: python3 -m polus.images.transforms.images.image_calculator
+inputs:
+- description: The first set of images
+  format:
+  - collection
+  name: primaryDir
+  required: true
+  type: path
+- description: Filename pattern used to separate data
+  format:
+  - string
+  name: primaryPattern
+  required: false
+  type: string
+- description: The operation to perform
+  format:
+  - enum
+  name: operator
+  required: true
+  type: string
+- description: The second set of images
+  format:
+  - collection
+  name: secondaryDir
+  required: true
+  type: path
+- description: Filename pattern used to separate data
+  format:
+  - string
+  name: secondaryPattern
+  required: false
+  type: string
+name: polusai/ImageCalculator
+outputs:
+- description: Output collection
+  format:
+  - collection
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Image Calculator
+ui:
+- description: The first set of images
+  key: inputs.primaryDir
+  title: First image collection
+  type: path
+- description: Filename pattern used to separate data
+  key: inputs.primaryPattern
+  title: Filename pattern
+  type: text
+- description: The operation to perform
+  fields:
+  - add
+  - subtract
+  - multiply
+  - divide
+  - and
+  - or
+  - xor
+  - min
+  - max
+  - absdiff
+  key: inputs.operator
+  title: Operation
+  type: select
+- description: The second set of images
+  key: inputs.secondaryDir
+  title: Second image collection
+  type: path
+- description: Filename pattern used to separate data
+  key: inputs.secondaryPattern
+  title: Filename pattern
+  type: text
+version: 0.2.2-dev0

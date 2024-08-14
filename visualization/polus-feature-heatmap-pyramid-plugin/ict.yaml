@@ -1,0 +1,75 @@
+author:
+- Nick Schaub
+contact: nick.schaub@nih.gov
+container: polusai/feature-heatmap-pyramid-plugin:0.2.0
+description: Build a heatmap pyramid for features values in a csv as an overlay for
+  another pyramid.
+entrypoint: '[python3, main.py]'
+inputs:
+- description: CSV collection containing features
+  format:
+  - csvCollection
+  name: features
+  required: true
+  type: path
+- description: Input image collection used to build a pyramid that this plugin will
+    make an overlay for
+  format:
+  - collection
+  name: inpDir
+  required: true
+  type: path
+- description: Stitching vector used to buld the image pyramid.
+  format:
+  - stitchingVector
+  name: vector
+  required: true
+  type: path
+- description: Method used to create the heatmap
+  format:
+  - enum
+  name: method
+  required: true
+  type: string
+- description: Store stitching vector in metadata instead of a stitching collection.
+  format:
+  - boolean
+  name: vectorInMetadata
+  required: true
+  type: boolean
+name: polusai/FeatureHeatmapPyramid
+outputs:
+- description: Heatmap images
+  format:
+  - collection
+  name: outImages
+  required: true
+  type: path
+- description: Heatmap vectors
+  format:
+  - stitchingVector
+  name: outVectors
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Feature Heatmap Pyramid
+ui:
+- description: CSV collection containing features
+  key: inputs.features
+  title: Features
+  type: path
+- description: Input image collection used to build a pyramid that this plugin will
+    make an overlay for
+  key: inputs.inpDir
+  title: Input collection
+  type: path
+- description: Stitching vector used to buld the image pyramid.
+  key: inputs.vector
+  title: Stitching Vector
+  type: path
+- description: Store stitching vectors in metadata of the output image collection.
+  key: inputs.vectorInMetadata
+  title: Store stitching vector in collection metadata
+  type: checkbox
+version: 0.2.0

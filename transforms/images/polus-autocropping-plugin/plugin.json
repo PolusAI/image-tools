@@ -77,19 +77,22 @@
       "description": "Variables to use for grouping images. Each group is cropped to the same bounding-box."
     },
     {
-      "name": "inputs.cropX",
+      "key": "inputs.cropX",
+      "title": "Crop X",
       "type": "boolean",
       "description": "Whether to crop along the x-axis",
       "default": "true"
     },
     {
-      "name": "inputs.cropY",
+      "key": "inputs.cropY",
+      "title": "Crop Y",
       "type": "boolean",
       "description": "Whether to crop along the y-axis",
       "default": "true"
     },
     {
-      "name": "inputs.cropZ",
+      "key": "inputs.cropZ",
+      "title": "Crop Z",
       "type": "boolean",
       "description": "Whether to crop along the z-axis",
       "default": "true"

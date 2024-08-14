@@ -58,17 +58,17 @@ def main(  # noqa: PLR0913
         resolve_path=True,
     ),
     pyramid_type: PyramidType = typer.Option(
-        ...,
+        "Zarr",
         "--pyramidType",
         "-p",
         help="type of pyramid. Must be one of ['Neuroglancer','DeepZoom', 'Zarr']",
         case_sensitive=False,
     ),
     image_type: ImageType = typer.Option(
-        ...,
+        "Intensity",
         "--imageType",
         "-t",
-        help="type of image. Must be one of ['image','segmentation']",
+        help="type of image. Must be one of ['Intensity','Segmentation']",
         case_sensitive=False,
     ),
     preview: bool = typer.Option(

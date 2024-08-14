@@ -1,2 +1,0 @@
-filepattern>=1.4.5
-pandas>=1.1.3

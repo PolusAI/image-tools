@@ -1,6 +1,6 @@
 {
   "name": "Microjson To Ome",
-  "version": "0.1.5-dev0",
+  "version": "0.1.5",
   "title": "Reconstruct binary image using polygon coordinates of objects",
   "description": "This plugin reconstruct binary images using polygon coordinates (rectangle, encodings) of objects from microjson file.",
   "author": "Hamdah Shafqat abbasi  (hamdahshafqat.abbasi@nih.gov)",
@@ -8,56 +8,63 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/microjson-to-ome-tool:0.1.5-dev0",
+  "containerId": "polusai/microjson-to-ome-tool:0.1.5",
   "baseCommand": [
     "python3",
     "-m",
     "polus.images.visualization.microjson_to_ome"
   ],
-  "inputs": {
-    "inpDir": {
+  "inputs": [
+    {
+      "name": "inpDir",
       "type": "genericData",
       "title": "Input collection",
       "description": "Input image collection to be processed by this plugin.",
       "required": "True"
     },
-    "filePattern": {
+    {
+      "name": "filePattern",
       "type": "string",
       "title": "Filename pattern",
       "description": "Filename pattern used to separate data.",
       "required": "False"
     },
-    "preview": {
+    {
+      "name": "preview",
       "type": "boolean",
       "title": "Preview",
       "description": "Generate an output preview.",
       "required": "False"
     }
-  },
-  "outputs": {
-    "outDir": {
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
       "type": "collection",
       "description": "Output collection."
     }
-  },
-  "ui": {
-    "inpDir": {
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
       "type": "genericData",
       "title": "Input collection",
       "description": "Input image collection to be processed by this plugin.",
       "required": "True"
     },
-    "filePattern": {
+    {
+      "key": "inputs.filePattern",
       "type": "string",
       "title": "Filename pattern",
       "description": "Filename pattern used to separate data.",
       "required": "False"
     },
-    "preview": {
+    {
+      "key": "inputs.preview",
       "type": "boolean",
       "title": "Preview example output of this plugin",
       "description": "Generate an output preview.",
       "required": "False"
     }
-  }
+  ]
 }

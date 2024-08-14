@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-transforms-images-binary-operations"
-version = "0.5.3-dev0"
+version = "0.5.3"
 description = ""
 authors = ["nicholas-schaub <nick.schaub@nih.gov>", "Madhuri Vihani"]
 readme = "README.md"

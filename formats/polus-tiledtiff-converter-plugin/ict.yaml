@@ -1,0 +1,30 @@
+author:
+- Nick Schaub
+contact: nick.schaub@nih.gov
+container: polusai/tiledtiff-converter-plugin:1.1.2
+description: Convert any Bioformats image file type to tiled tiff.
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Image inputs for the plugin.
+  format:
+  - genericData
+  name: input
+  required: true
+  type: path
+name: polusai/OMETiledTiffConverter
+outputs:
+- description: Output data for the plugin
+  format:
+  - collection
+  name: output
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: OME Tiled Tiff Converter
+ui:
+- description: Pick a collection...
+  key: inputs.input
+  title: 'Image Collection: '
+  type: path
+version: 1.1.2
