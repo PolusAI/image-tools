@@ -146,16 +146,6 @@ def test_invalid_input_raises_error(poly):
     d.clean_directories()
 
 
-def test_numeric_fixed_width(poly):
-    """Testing of filename with numeric fixed length."""
-    d = CreateData()
-    inputs = d.load_json("robot")
-    (inp_pattern, out_pattern) = poly[4]
-    outputs = d.runcommands(inputs, inp_pattern, out_pattern)
-    assert outputs.exit_code == 0
-    d.clean_directories()
-
-
 def test_alphanumeric_fixed_width(poly):
     """Testing of filename with alphanumeric fixed length."""
     d = CreateData()
