@@ -1,4 +1,5 @@
 """Testing of File Renaming."""
+
 import json
 import pathlib
 import shutil
@@ -8,11 +9,9 @@ from typing import Any, DefaultDict
 import click
 import pytest
 from typer.testing import CliRunner
-import pytest
 
 from polus.images.formats.file_renaming import file_renaming as fr
 from polus.images.formats.file_renaming.__main__ import app as app
-
 
 runner = CliRunner()
 
@@ -143,6 +142,28 @@ def test_invalid_input_raises_error(poly):
     inputs = d.load_json("duplicate_channels_to_digit")
     (inp_pattern, out_pattern) = poly[0]
     d.runcommands(inputs, inp_pattern, out_pattern)
+    d.clean_directories()
+
+
+@pytest.mark.skip(reason="Fails in git action")
+def test_non_alphanum_inputs_percentage_sign(poly):
+    """Testing of filename with non alphanumeric inputs such as percentage sign."""
+    d = CreateData()
+    inputs = d.load_json("percentage_file")
+    (inp_pattern, out_pattern) = poly[3]
+    outputs = d.runcommands(inputs, inp_pattern, out_pattern)
+    assert outputs.exit_code == 0
+    d.clean_directories()
+
+
+@pytest.mark.skip(reason="Fails in git action")
+def test_numeric_fixed_width(poly):
+    """Testing of filename with numeric fixed length."""
+    d = CreateData()
+    inputs = d.load_json("robot")
+    (inp_pattern, out_pattern) = poly[4]
+    outputs = d.runcommands(inputs, inp_pattern, out_pattern)
+    assert outputs.exit_code == 0
     d.clean_directories()
 
 
