@@ -146,16 +146,6 @@ def test_invalid_input_raises_error(poly):
     d.clean_directories()
 
 
-def test_non_alphanum_inputs_percentage_sign(poly):
-    """Testing of filename with non alphanumeric inputs such as percentage sign."""
-    d = CreateData()
-    inputs = d.load_json("percentage_file")
-    (inp_pattern, out_pattern) = poly[3]
-    outputs = d.runcommands(inputs, inp_pattern, out_pattern)
-    assert outputs.exit_code == 0
-    d.clean_directories()
-
-
 def test_numeric_fixed_width(poly):
     """Testing of filename with numeric fixed length."""
     d = CreateData()
@@ -171,6 +161,16 @@ def test_alphanumeric_fixed_width(poly):
     d = CreateData()
     inputs = d.load_json("brain")
     (inp_pattern, out_pattern) = poly[5]
+    outputs = d.runcommands(inputs, inp_pattern, out_pattern)
+    assert outputs.exit_code == 0
+    d.clean_directories()
+
+
+def test_alphanumeric_variable_width(poly):
+    """Testing of filename with alphanumeric variable width."""
+    d = CreateData()
+    inputs = d.load_json("variable")
+    (inp_pattern, out_pattern) = poly[6]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
     assert outputs.exit_code == 0
     d.clean_directories()
