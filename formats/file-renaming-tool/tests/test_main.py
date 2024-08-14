@@ -156,7 +156,6 @@ def test_non_alphanum_inputs_percentage_sign(poly):
     d.clean_directories()
 
 
-@pytest.mark.skip(reason="Fails in git action")
 def test_numeric_fixed_width(poly):
     """Testing of filename with numeric fixed length."""
     d = CreateData()
@@ -167,6 +166,7 @@ def test_numeric_fixed_width(poly):
     d.clean_directories()
 
 
+@pytest.mark.skip(reason="Fails in git action")
 def test_alphanumeric_fixed_width(poly):
     """Testing of filename with alphanumeric fixed length."""
     d = CreateData()
