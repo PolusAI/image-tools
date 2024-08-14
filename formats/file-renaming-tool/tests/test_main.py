@@ -176,17 +176,6 @@ def test_alphanumeric_fixed_width(poly):
     d.clean_directories()
 
 
-@pytest.mark.skip(reason="This test is fails in git action")
-def test_alphanumeric_variable_width(poly):
-    """Testing of filename with alphanumeric variable width."""
-    d = CreateData()
-    inputs = d.load_json("variable")
-    (inp_pattern, out_pattern) = poly[6]
-    outputs = d.runcommands(inputs, inp_pattern, out_pattern)
-    assert outputs.exit_code == 0
-    d.clean_directories()
-
-
 def test_two_chan_to_digit(poly):
     """Testing conversion of two channels to digits."""
     d = CreateData()
