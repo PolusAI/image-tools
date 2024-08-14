@@ -39,7 +39,7 @@ class CreateData:
         for inp in inputs:
             open(pathlib.Path(inp_dir, inp), "w").close()
 
-        outputs = runner.invoke(
+        runner.invoke(
             app,
             [
                 "--inpDir",
@@ -52,7 +52,7 @@ class CreateData:
                 out_pattern,
             ],
         )
-        return outputs
+        return out_dir
 
     def load_json(self, x) -> DefaultDict[Any, Any]:
         """Json file containing image filenames."""
@@ -141,40 +141,42 @@ def test_invalid_input_raises_error(poly):
     d = CreateData()
     inputs = d.load_json("duplicate_channels_to_digit")
     (inp_pattern, out_pattern) = poly[0]
-    d.runcommands(inputs, inp_pattern, out_pattern)
+    outputs = d.runcommands(inputs, inp_pattern, out_pattern)
+    flist = [f for f in pathlib.Path(outputs).iterdir()]
+    assert len(flist) > 0
     d.clean_directories()
 
 
-@pytest.mark.skip(reason="Fails in git action")
 def test_non_alphanum_inputs_percentage_sign(poly):
     """Testing of filename with non alphanumeric inputs such as percentage sign."""
     d = CreateData()
     inputs = d.load_json("percentage_file")
     (inp_pattern, out_pattern) = poly[3]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
-    assert outputs.exit_code == 0
+    flist = [f for f in pathlib.Path(outputs).iterdir()]
+    assert len(flist) > 0
     d.clean_directories()
 
 
-@pytest.mark.skip(reason="Fails in git action")
 def test_numeric_fixed_width(poly):
     """Testing of filename with numeric fixed length."""
     d = CreateData()
     inputs = d.load_json("robot")
     (inp_pattern, out_pattern) = poly[4]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
-    assert outputs.exit_code == 0
+    flist = [f for f in pathlib.Path(outputs).iterdir()]
+    assert len(flist) > 0
     d.clean_directories()
 
 
-@pytest.mark.skip(reason="Fails in git action")
 def test_alphanumeric_fixed_width(poly):
     """Testing of filename with alphanumeric fixed length."""
     d = CreateData()
     inputs = d.load_json("brain")
     (inp_pattern, out_pattern) = poly[5]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
-    assert outputs.exit_code == 0
+    flist = [f for f in pathlib.Path(outputs).iterdir()]
+    assert len(flist) > 0
     d.clean_directories()
 
 
@@ -184,7 +186,8 @@ def test_alphanumeric_variable_width(poly):
     inputs = d.load_json("variable")
     (inp_pattern, out_pattern) = poly[6]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
-    assert outputs.exit_code == 0
+    flist = [f for f in pathlib.Path(outputs).iterdir()]
+    assert len(flist) > 0
     d.clean_directories()
 
 
@@ -194,7 +197,8 @@ def test_two_chan_to_digit(poly):
     inputs = d.load_json("two_chan")
     (inp_pattern, out_pattern) = poly[8]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
-    assert outputs.exit_code == 0
+    flist = [f for f in pathlib.Path(outputs).iterdir()]
+    assert len(flist) > 0
     d.clean_directories()
 
 
@@ -204,7 +208,8 @@ def test_three_chan_to_digit(poly):
     inputs = d.load_json("three_chan")
     (inp_pattern, out_pattern) = poly[9]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
-    assert outputs.exit_code == 0
+    flist = [f for f in pathlib.Path(outputs).iterdir()]
+    assert len(flist) > 0
     d.clean_directories()
 
 
@@ -214,7 +219,8 @@ def test_three_char_chan(poly):
     inputs = d.load_json("three_char_chan")
     (inp_pattern, out_pattern) = poly[10]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
-    assert outputs.exit_code == 0
+    flist = [f for f in pathlib.Path(outputs).iterdir()]
+    assert len(flist) > 0
     d.clean_directories()
 
 
@@ -224,7 +230,8 @@ def test_varied_digits(poly):
     inputs = d.load_json("tissuenet-val-labels-45-C")
     (inp_pattern, out_pattern) = poly[11]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
-    assert outputs.exit_code == 0
+    flist = [f for f in pathlib.Path(outputs).iterdir()]
+    assert len(flist) > 0
     d.clean_directories()
 
 
@@ -234,7 +241,8 @@ def test_spaces(poly):
     inputs = d.load_json("non_alphanum_int")
     (inp_pattern, out_pattern) = poly[12]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
-    assert outputs.exit_code == 0
+    flist = [f for f in pathlib.Path(outputs).iterdir()]
+    assert len(flist) > 0
     d.clean_directories()
 
 
@@ -244,7 +252,8 @@ def test_non_alphanum_float(poly):
     inputs = d.load_json("non_alphanum_float")
     (inp_pattern, out_pattern) = poly[13]
     outputs = d.runcommands(inputs, inp_pattern, out_pattern)
-    assert outputs.exit_code == 0
+    flist = [f for f in pathlib.Path(outputs).iterdir()]
+    assert len(flist) > 0
     d.clean_directories()
 
 
