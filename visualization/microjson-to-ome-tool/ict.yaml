@@ -1,51 +1,52 @@
 author:
-- Hamdah Shafqat
+  - Hamdah Shafqat
 contact: hamdahshafqat.abbasi@nih.gov
-container: polusai/microjson-to-ome-tool:0.1.5-dev0
-description: This plugin reconstruct binary images using polygon coordinates (rectangle,
+container: polusai/microjson-to-ome-tool:0.1.5-dev1
+description:
+  This plugin reconstruct binary images using polygon coordinates (rectangle,
   encodings) of objects from microjson file.
 entrypoint: python3 -m polus.images.visualization.microjson_to_ome
 inputs:
-- description: Input image collection to be processed by this plugin.
-  format:
-  - genericData
-  name: inpDir
-  required: true
-  type: path
-- description: Filename pattern used to separate data.
-  format:
-  - string
-  name: filePattern
-  required: false
-  type: string
-- description: Generate an output preview.
-  format:
-  - boolean
-  name: preview
-  required: false
-  type: boolean
-name: polusai/Reconstructbinaryimageusingpolygoncoordinatesofobjects
+  - description: Input image collection to be processed by this plugin.
+    format:
+      - genericData
+    name: inpDir
+    required: true
+    type: path
+  - description: Filename pattern used to separate data.
+    format:
+      - string
+    name: filePattern
+    required: false
+    type: string
+  - description: Generate an output preview.
+    format:
+      - boolean
+    name: preview
+    required: false
+    type: boolean
+name: polusai/microjsontoome.cwl
 outputs:
-- description: Output collection.
-  format:
-  - collection
-  name: outDir
-  required: true
-  type: path
-repository: https://github.com/labshare/polus-plugins
+  - description: Output collection.
+    format:
+      - collection
+    name: outDir
+    required: true
+    type: path
+repository: https://github.com/polusai/image-tools
 specVersion: 1.0.0
 title: Reconstruct binary image using polygon coordinates of objects
 ui:
-- description: Input image collection to be processed by this plugin.
-  key: inputs.inpDir
-  title: Input collection
-  type: path
-- description: Filename pattern used to separate data.
-  key: inputs.filePattern
-  title: Filename pattern
-  type: text
-- description: Generate an output preview.
-  key: inputs.preview
-  title: Preview example output of this plugin
-  type: checkbox
-version: 0.1.5-dev0
+  - description: Input image collection to be processed by this plugin.
+    key: inputs.inpDir
+    title: Input collection
+    type: path
+  - description: Filename pattern used to separate data.
+    key: inputs.filePattern
+    title: Filename pattern
+    type: text
+  - description: Generate an output preview.
+    key: inputs.preview
+    title: Preview example output of this plugin
+    type: checkbox
+version: 0.1.5-dev1
