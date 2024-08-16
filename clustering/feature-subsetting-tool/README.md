@@ -1,4 +1,4 @@
-# Feature Data Subset(v0.2.1-dev)
+# Feature Data Subset(0.2.1-dev0)
 
 This WIPP plugin subsets data based on a given feature. It works in conjunction with the `polus-feature-extraction-plugin`, where the feature extraction plugin can be used to extract the features such as the mean intensity of every image in the input image collection.
 

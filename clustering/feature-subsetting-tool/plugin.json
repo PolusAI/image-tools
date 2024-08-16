@@ -1,6 +1,6 @@
 {
   "name": "Feature Subsetting",
-  "version": "0.2.1-dev",
+  "version": "0.2.1-dev0",
   "title": "Feature Subsetting",
   "description": "Subset data using a given feature.",
   "author": "Gauhar Bains (gauhar.bains@labshare.org) and Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
@@ -8,166 +8,155 @@
   "repository": "https://github.com/PolusAI/image-tools",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/feature-subsetting-plugin:0.2.1-dev",
+  "containerId": "polusai/feature-subsetting-tool:0.2.1-dev0",
   "baseCommand": [
     "python3",
     "-m",
     "polus.images.clustering.feature_subsetting"
   ],
-  "inputs": {
-    "inpDir": {
+  "inputs": [
+    {
+      "name": "inpDir",
       "type": "collection",
-      "title": "Input image directory",
-      "description": "Input image directory.",
-      "required": "True"
+      "description": "Input image directory",
+      "required": true
     },
-    "tabularDir": {
+    {
+      "name": "tabularDir",
       "type": "genericData",
-      "title": "Input tabular directory",
-      "description": "Path to directory containing tabular data.",
-      "required": "True"
+      "description": "Path to directory containing tabular data",
+      "required": true
     },
-    "filePattern": {
+    {
+      "name": "filePattern",
       "type": "string",
-      "title": "Filename pattern",
       "description": "Filename pattern used to separate data.",
-      "required": "True"
+      "required": true
     },
-    "imageFeature": {
+    {
+      "name": "imageFeature",
       "type": "string",
-      "title": "imageFeature",
       "description": "Feature in tabular data containing image filenames.",
-      "required": "True"
+      "required": true
     },
-    "tabularFeature": {
+    {
+      "name": "tabularFeature",
       "type": "string",
-      "title": "tabularFeature",
-      "description": "Feature in tabular data to subset image data.",
-      "required": "True"
+      "description": "Feature in tabular data to subset image data",
+      "required": true
     },
-    "padding": {
+    {
+      "name": "padding",
       "type": "integer",
-      "title": "padding",
       "description": "Number of images to capture outside the cutoff.",
-      "required": "False"
+      "required": false
     },
-    "groupVar": {
+    {
+      "name": "groupVar",
       "type": "string",
-      "title": "groupVar",
       "description": "variables to group by in a section.",
-      "required": "True"
+      "required": true
     },
-    "percentile": {
-      "type": "float",
-      "title": "percentile",
+    {
+      "name": "percentile",
+      "type": "number",
       "description": "Percentile to remove.",
-      "required": "True"
+      "required": true
     },
-    "removeDirection": {
+    {
+      "name": "removeDirection",
       "type": "string",
-      "title": "removeDirection",
-      "description": "Remove direction above or below percentile.",
-      "required": "False",
+      "description": "Remove direction above or below percentile",
+      "required": false,
       "default": "Below"
     },
-    "sectionVar": {
+    {
+      "name": "sectionVar",
       "type": "string",
-      "title": "sectionVar",
       "description": "Variables to divide larger sections.",
-      "required": "False"
+      "required": false
     },
-    "writeOutput": {
+    {
+      "name": "writeOutput",
       "type": "boolean",
-      "title": "writeOutput",
       "description": "Write output image collection or not.",
-      "required": "False"
+      "required": false
     },
-    "preview": {
+    {
+      "name": "preview",
       "type": "boolean",
-      "title": "Preview",
-      "description": "Generate an output preview.",
-      "required": "False"
+      "description": "Generate an output preview",
+      "required": false
     }
-  },
-  "outputs": {
-    "outDir": {
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
       "type": "genericData",
-      "description": "Output collection."
+      "description": "Output collection"
     }
-  },
-  "ui": {
-    "inpDir": {
-      "type": "collection",
-      "title": "Input image directory",
-      "description": "Input image directory.",
-      "required": "True"
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Path to Input image directory"
     },
-    "tabularDir": {
-      "type": "genericData",
-      "title": "Input tabular directory",
-      "description": "Path to directory containing tabular data.",
-      "required": "True"
+    {
+      "key": "inputs.tabularDir",
+      "title": "tabularDir",
+      "description": "Input tabular directory"
     },
-    "filePattern": {
-      "type": "string",
-      "title": "Filename pattern",
-      "description": "Filename pattern used to separate data.",
-      "required": "True"
+    {
+      "key": "inputs.filePattern",
+      "title": "filepattern",
+      "description": "A filepattern, used to select data for conversion"
     },
-    "imageFeature": {
-      "type": "string",
+    {
+      "key": "inputs.imageFeature",
       "title": "imageFeature",
-      "description": "Feature in tabular data containing image filenames.",
-      "required": "True"
+      "description": "Feature in tabular data containing image filenames"
     },
-    "tabularFeature": {
-      "type": "string",
+    {
+      "key": "inputs.tabularFeature",
       "title": "tabularFeature",
-      "description": "Feature in tabular data to subset image data.",
-      "required": "True"
+      "description": "Feature in tabular data to subset image data."
     },
-    "padding": {
-      "type": "integer",
+    {
+      "key": "inputs.padding",
       "title": "padding",
-      "description": "Number of images to capture outside the cutoff.",
-      "required": "False"
+      "description": "Number of images to capture outside the cutoff."
     },
-    "groupVar": {
-      "type": "string",
+    {
+      "key": "inputs.groupVar",
       "title": "groupVar",
-      "description": "variables to group by in a section.",
-      "required": "True"
+      "description": "Variables to group by in a section."
     },
-    "percentile": {
-      "type": "float",
+    {
+      "key": "inputs.percentile",
       "title": "percentile",
-      "description": "Percentile to remove.",
-      "required": "True"
+      "description": "Percentile to remove."
     },
-    "removeDirection": {
-      "type": "string",
+    {
+      "key": "inputs.removeDirection",
       "title": "removeDirection",
-      "description": "Remove direction above or below percentile.",
-      "required": "False",
-      "default": "Below"
+      "description": "Remove direction above or below percentile."
     },
-    "sectionVar": {
-      "type": "string",
+    {
+      "key": "inputs.sectionVar",
       "title": "sectionVar",
-      "description": "Variables to divide larger sections.",
-      "required": "False"
+      "description": "Variables to divide larger sections."
     },
-    "writeOutput": {
-      "type": "boolean",
+    {
+      "key": "inputs.writeOutput",
       "title": "writeOutput",
-      "description": "Write output image collection or not.",
-      "required": "False"
+      "description": "Write output image collection or not."
     },
-    "preview": {
-      "type": "boolean",
-      "title": "Preview",
+    {
+      "key": "inputs.preview",
+      "title": "preview",
       "description": "Generate an output preview.",
-      "required": "False"
+      "default": false
     }
-  }
+  ]
 }
