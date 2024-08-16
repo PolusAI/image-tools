@@ -34,7 +34,7 @@ This plugin takes 2 input arguments and
 | --------------- | ------------------------------------------------------------ | ------ | ----------- |
 | `--dataType`      | Object types to be retreived from Omero Server                    | Input  | String      |
 | `--name  `      | Name of an object                   | Input  | String      |
-| `--id  `      |  Identification of an object of an object                 | Input  | Integer      |
+| `--objectId  `      |  Identification of an object of an object                 | Input  | Integer      |
 | `--outDir`      | Directory to store the downloaded data                  | Output | genericData |
 | `--preview`      | Generate a JSON file with outputs                  | Output | JSON |
 
@@ -42,4 +42,4 @@ This plugin takes 2 input arguments and
 
 ## Sample docker command:
 ```bash
-docker run -e OMERO_USERNAME=$OMERO_USERNAME -e OMERO_PASSWORD=$OMERO_PASSWORD -v /home/ec2-user/data/:/home/ec2-user/data/ polusai/omero-download-tool:0.1.0-dev0 --dataType="plate" --id=108 --outDir=/home/ec2-user/data/output```
+docker run -e OMERO_USERNAME=$OMERO_USERNAME -e OMERO_PASSWORD=$OMERO_PASSWORD -v /home/ec2-user/data/:/home/ec2-user/data/ polusai/omero-download-tool:0.1.0-dev0 --dataType="plate" --objectId=108 --outDir=/home/ec2-user/data/output```

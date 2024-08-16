@@ -1,13 +1,14 @@
 """Omero Download Tool."""
 
+import json
 import logging
 import os
-import shutil
 from enum import Enum
 from itertools import product
 from pathlib import Path
 from typing import Any
 from typing import Optional
+from typing import Union
 
 import numpy as np
 from bfio import BioWriter
@@ -30,8 +31,16 @@ def generate_preview(
     path: Path,
 ) -> None:
     """Generate preview of the plugin outputs."""
-    source_path = Path().cwd().parents[4].joinpath("examples")
-    shutil.copytree(source_path, path, dirs_exist_ok=True)
+    with Path.open(Path(path).joinpath("preview.json"), "w") as fw:
+        flist = [
+            f"B{index}_f0_z0_t0_c{c}.ome.tif" for index in range(10) for c in range(2)
+        ]
+        out_files: dict[str, Union[list, str]] = {
+            r"filepattern": ".*.ome.tif",
+            "outDir": [],
+        }
+        out_files["outDir"].append(flist)  # type: ignore
+        json.dump(out_files, fw, indent=2)
 
 
 class DATATYPE(str, Enum):
