@@ -1,0 +1,65 @@
+author:
+- Hythem Sidky
+contact: hythem.sidky@axleinfo.com
+container: polusai/imagenet-model-featurization-plugin:0.1.3
+description: Image featurization using models pre-trained on ImageNet
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Input image collection to be processed by this plugin
+  format:
+  - collection
+  name: inpDir
+  required: true
+  type: path
+- description: Pre-trained ImageNet model to use for featurization
+  format:
+  - enum
+  name: model
+  required: true
+  type: string
+- description: Resolution to which the input images are scaled
+  format:
+  - string
+  name: resolution
+  required: true
+  type: string
+name: polusai/ImageNetModelFeaturization
+outputs:
+- description: Output collection
+  format:
+  - csvCollection
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: ImageNet Model Featurization
+ui:
+- description: Input image collection to be processed by this plugin
+  key: inputs.inpDir
+  title: Input collection
+  type: path
+- description: Pre-trained ImageNet model to use for featurization
+  fields:
+  - Xception
+  - VGG16
+  - VGG19
+  - ResNet50
+  - ResNet101
+  - ResNet152
+  - ResNet50V2
+  - ResNet101V2
+  - ResNet152V2
+  - InceptionV3
+  - InceptionResNetV2
+  - DenseNet121
+  - DenseNet169
+  - DenseNet201
+  key: inputs.model
+  title: Model
+  type: select
+- description: Resolution to which the input images are scaled
+  key: inputs.resolution
+  title: Image Resolution
+  type: text
+version: 0.1.3

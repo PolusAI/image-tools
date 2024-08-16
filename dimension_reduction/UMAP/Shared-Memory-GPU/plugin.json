@@ -1,169 +1,169 @@
 {
-    "name": "UMAP (CUDA)",
-    "version": "0.1.0",
-    "title": "UMAP (CUDA)",
-    "description": "UMAP CUDA Code",
-    "author": "Mahdi Maghrebi",
-    "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-    "containerId": "labshare/polus-umap-cuda-plugin:0.1.0",
-    "inputs": [
-        {
-            "name": "inputPath",
-            "type": "csvCollection",
-            "description": "Input csv file containing the raw data",
-            "required": "True"
-        },
-        {
-            "name": "K",
-            "type": "number",
-            "description": "The desired number of Nearest Neighbors (NN) to be computed",
-            "required": "True"
-        },
-        {
-            "name": "sampleRate",
-            "type": "number",
-            "description": "The rate at which the sampling is conducted. The values closer to 1 provides more accurate results but the execution takes longer.",
-            "required": "True"
-        },
-        {
-            "name": "DimLowSpace",
-            "type": "number",
-            "description": "Dimension of the embedding space (usually 1-3)",
-            "required": "True"
-        },
-        {
-            "name": "randomInitializing",
-            "type": "boolean",
-            "description": "The method for initialization of data in the embedding space",
-            "required": "True"
-        },
-        {
-            "name": "n_epochs",
-            "type": "number",
-            "description": "The number of training epochs",
-            "required": "True"
-        },
-        {
-            "name": "min_dist",
-            "type": "number",
-            "description": "The variable that controls how tight (to each other) the data are placed in the embedding space",
-            "required": "True"
-        },
-        {
-            "name": "distanceMetric",
-            "type": "enum",
-			"options": {
-				"values": [
-					"euclidean",
-                    "manhattan",
-  					"minkowski",
-                    "cosine",
-					"correlation",
-                    "bray_curtis",                                        
-					"ll_dirichlet",
-                    "jaccard",
-					"dice",
-                    "categorical_distance",
-					"ordinal_distance",
-                    "count_distance",                      
-					"levenshtein",
-                    "standardisedEuclidean",
-					"weightedMinkowski",
-                    "mahalanobis"  
-				]
-			},
-            "description": "The metric to compute the distance in the original space",
-            "required": "True"
-        },
-        {
-            "name": "distanceV1",
-            "type": "number",
-            "description": "The optional input needed for computation of some metrics",
-            "required": "False"
-        },
-        {
-            "name": "distanceV2",
-            "type": "number",
-            "description": "The optional input needed for computation of some metrics",
-            "required": "False"
-        },
-        {
-            "name": "inputPathOptionalArray",
-            "type": "csvCollection",
-            "description": "The optional csv file representing a vector needed in computation of some metrics",
-            "required": "False"
-        }
-    ],
-    "outputs": [
-        {
-            "name": "outputPath",
-            "type": "csvCollection",
-            "description": "The full path to the output csv collection containing the coordinates of data in the embedding space"
-        }
-    ],
-    "ui": [
-        {
-            "key": "inputs.inputPath",
-            "title": "Input CSV collection",
-            "description": "Insert the path to csv collection"
-        },
-        {
-            "key": "inputs.K",
-			"title": "The desired number of Nearest Neighbours (NN) in the original space to be computed",
-			"description": "Insert an integer",
-            "default": 15 			
-        },
-        {
-            "key": "inputs.sampleRate",
-            "title": "Sampling Rate",
-            "description": "Insert a value between 0 and 1",
-            "default": 0.9           
-        },
-        {
-            "key": "inputs.DimLowSpace",
-            "title": "Dimension of the embedding space",
-            "description": "Insert a value (usually 1-3)",
-            "default": 2          
-        },
-        {
-            "key": "inputs.randomInitializing",
-            "title": "Random initialization in the embedded space?",
-            "default": true
-        },
-        {
-            "key": "inputs.n_epochs",
-            "title": "The number of training epochs",
-            "description": "Insert an integer (usually 200-500)",
-            "default": 500
-        },
-        {
-            "key": "inputs.min_dist",
-            "title": "min_dist",
-            "description": "Insert a value between 0 and 1",
-            "default": 0.01
-        },
-        {
-            "key": "inputs.distanceMetric",
-            "title": "The metric to compute the distance in the original space",            
-            "description": "Select the metric"
-        },
-        {
-            "key": "inputs.distanceV1",
-            "title": "The optional input #1 needed for the chosen metric",      
-            "description": "Insert a value",
-            "condition": "model.inputs.distanceMetric==['weightedMinkowski','minkowski','ordinal_distance','count_distance','levenshtein']"        
-        },
-        {
-            "key": "inputs.distanceV2",
-            "title": "The optional input #2 needed for the chosen metric",  
-            "description": "Insert a value",
-            "condition": "model.inputs.distanceMetric==['count_distance','levenshtein']"           
-        },
-        {
-            "key": "inputs.inputPathOptionalArray",
-            "title": "The optional csv collection representing a vector needed for the chosen metric",
-            "description": "Insert the Path to csv collection",
-            "condition": "model.inputs.distanceMetric==['standardisedEuclidean','weightedMinkowski','mahalanobis']"
-        }
-    ]
+  "name": "UMAP (CUDA)",
+  "version": "0.1.0",
+  "title": "UMAP (CUDA)",
+  "description": "UMAP CUDA Code",
+  "author": "Mahdi Maghrebi",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "containerId": "labshare/polus-umap-cuda-plugin:0.1.0",
+  "inputs": [
+    {
+      "name": "inputPath",
+      "type": "csvCollection",
+      "description": "Input csv file containing the raw data",
+      "required": "True"
+    },
+    {
+      "name": "K",
+      "type": "number",
+      "description": "The desired number of Nearest Neighbors (NN) to be computed",
+      "required": "True"
+    },
+    {
+      "name": "sampleRate",
+      "type": "number",
+      "description": "The rate at which the sampling is conducted. The values closer to 1 provides more accurate results but the execution takes longer.",
+      "required": "True"
+    },
+    {
+      "name": "DimLowSpace",
+      "type": "number",
+      "description": "Dimension of the embedding space (usually 1-3)",
+      "required": "True"
+    },
+    {
+      "name": "randomInitializing",
+      "type": "boolean",
+      "description": "The method for initialization of data in the embedding space",
+      "required": "True"
+    },
+    {
+      "name": "nEpochs",
+      "type": "number",
+      "description": "The number of training epochs",
+      "required": "True"
+    },
+    {
+      "name": "minDist",
+      "type": "number",
+      "description": "The variable that controls how tight (to each other) the data are placed in the embedding space",
+      "required": "True"
+    },
+    {
+      "name": "distanceMetric",
+      "type": "enum",
+      "options": {
+        "values": [
+          "euclidean",
+          "manhattan",
+          "minkowski",
+          "cosine",
+          "correlation",
+          "bray_curtis",
+          "ll_dirichlet",
+          "jaccard",
+          "dice",
+          "categorical_distance",
+          "ordinal_distance",
+          "count_distance",
+          "levenshtein",
+          "standardisedEuclidean",
+          "weightedMinkowski",
+          "mahalanobis"
+        ]
+      },
+      "description": "The metric to compute the distance in the original space",
+      "required": "True"
+    },
+    {
+      "name": "distanceV1",
+      "type": "number",
+      "description": "The optional input needed for computation of some metrics",
+      "required": "False"
+    },
+    {
+      "name": "distanceV2",
+      "type": "number",
+      "description": "The optional input needed for computation of some metrics",
+      "required": "False"
+    },
+    {
+      "name": "inputPathOptionalArray",
+      "type": "csvCollection",
+      "description": "The optional csv file representing a vector needed in computation of some metrics",
+      "required": "False"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outputPath",
+      "type": "csvCollection",
+      "description": "The full path to the output csv collection containing the coordinates of data in the embedding space"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inputPath",
+      "title": "Input CSV collection",
+      "description": "Insert the path to csv collection"
+    },
+    {
+      "key": "inputs.K",
+      "title": "The desired number of Nearest Neighbours (NN) in the original space to be computed",
+      "description": "Insert an integer",
+      "default": 15
+    },
+    {
+      "key": "inputs.sampleRate",
+      "title": "Sampling Rate",
+      "description": "Insert a value between 0 and 1",
+      "default": 0.9
+    },
+    {
+      "key": "inputs.DimLowSpace",
+      "title": "Dimension of the embedding space",
+      "description": "Insert a value (usually 1-3)",
+      "default": 2
+    },
+    {
+      "key": "inputs.randomInitializing",
+      "title": "Random initialization in the embedded space?",
+      "default": true
+    },
+    {
+      "key": "inputs.nEpochs",
+      "title": "The number of training epochs",
+      "description": "Insert an integer (usually 200-500)",
+      "default": 500
+    },
+    {
+      "key": "inputs.minDist",
+      "title": "min_dist",
+      "description": "Insert a value between 0 and 1",
+      "default": 0.01
+    },
+    {
+      "key": "inputs.distanceMetric",
+      "title": "The metric to compute the distance in the original space",
+      "description": "Select the metric"
+    },
+    {
+      "key": "inputs.distanceV1",
+      "title": "The optional input #1 needed for the chosen metric",
+      "description": "Insert a value",
+      "condition": "model.inputs.distanceMetric==['weightedMinkowski','minkowski','ordinal_distance','count_distance','levenshtein']"
+    },
+    {
+      "key": "inputs.distanceV2",
+      "title": "The optional input #2 needed for the chosen metric",
+      "description": "Insert a value",
+      "condition": "model.inputs.distanceMetric==['count_distance','levenshtein']"
+    },
+    {
+      "key": "inputs.inputPathOptionalArray",
+      "title": "The optional csv collection representing a vector needed for the chosen metric",
+      "description": "Insert the Path to csv collection",
+      "condition": "model.inputs.distanceMetric==['standardisedEuclidean','weightedMinkowski','mahalanobis']"
+    }
+  ]
 }

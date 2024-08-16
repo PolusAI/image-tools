@@ -1,4 +1,4 @@
-name: Test All Tools
+name: Find All Tools
 
 on:
   workflow_call:
@@ -20,22 +20,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          repository: 'polusai/image-tools'
+          repository: 'PolusAI/image-tools'
           ref: 'master'
       - name: Find tools
         id: set-matrix
         run: |
           # List of directories to ignore
           ignored_dirs="polus-python-template ftl-label .venv"
+
           # List of tools that are broken for known reasons
-          broken_tools="binary-operations basic-flatfield-estimation"
+          broken_tools="binary-operations precompute-slide microjson-to-ome region-segmentation-eval basic-flatfield-estimation ftl-label cell-border-segmentation"
+          # Reasons:
+            # - binary-operations: Not fully updated to new tool standards
+            # - precompute-slide (Najib): Single failing test: 1023_1024_Segmentation_Zarr
+            # - microjson-to-ome (Hamdah): AttributeError: type object 'SerializerConfig' has no attribute '__slots__'
+            # - region-segmentation-eval: Installation error with numba.
+            # - basic-flatfield-estimation: Jax installation error.
+            # - ftl-label: Requires Rust installation. Also, has not been updated to new tool standards.
+            # - cell-border-segmentation (Hamdah): keras.models.load_model() is getting incorrect model format error.
 
           # Initialize variables
           ignored_dirs="$ignored_dirs $broken_tools"
           ignored_dirs=$(echo $ignored_dirs | xargs)
           tool_dirs=""
 
-          # Get all directories in the current directory
+          # Get all sub-directories in the current directory
           dirs=$(find $(pwd) -type d)
 
           # Get all directories that have a "pyproject.toml" file

@@ -1,0 +1,81 @@
+author:
+- Nick Schaub
+- Benjamin Houghton
+contact: nick.schaub@nih.gov
+container: polusai/montage-tool:0.5.1-dev0
+description: Advanced montaging plugin.
+entrypoint: python3 -m polus.images.transforms.images.montage
+inputs:
+- description: Filename pattern used to parse data
+  format:
+  - string
+  name: filePattern
+  required: true
+  type: string
+- description: Input image collection to be processed by this plugin
+  format:
+  - collection
+  name: inpDir
+  required: true
+  type: path
+- description: Specify montage organization
+  format:
+  - array
+  name: layout
+  required: false
+  type: array
+- description: Spacing between images at the lowest subgrid
+  format:
+  - integer
+  name: imageSpacing
+  required: false
+  type: number
+- description: Input image collection to be processed by this plugin
+  format:
+  - integer
+  name: gridSpacing
+  required: false
+  type: number
+- description: Axes to flip when creating the montage
+  format:
+  - string
+  name: flipAxis
+  required: false
+  type: string
+name: polusai/Montage
+outputs:
+- description: Output collection
+  format:
+  - stitchingVector
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/PolusAI/polus-plugins
+specVersion: 1.0.0
+title: Montage
+ui:
+- description: Filename pattern used to parse data
+  key: inputs.filePattern
+  title: Filename pattern
+  type: text
+- description: Input image collection to be processed by this plugin
+  key: inputs.inpDir
+  title: Input collection
+  type: path
+- description: Specify montage organization
+  key: inputs.layout
+  title: Grid layout
+  type: text
+- description: Space between images
+  key: inputs.imageSpacing
+  title: Image spacing
+  type: number
+- description: Spacing between subgrids
+  key: inputs.gridSpacing
+  title: Grid spacing multiplier
+  type: number
+- description: Axes to flip when laying out images.
+  key: inputs.flipAxis
+  title: Flip Axis
+  type: text
+version: 0.5.1-dev0

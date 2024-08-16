@@ -1,5 +1,5 @@
 """Binary operations tool."""
-__version__ = "0.5.3-dev0"
+__version__ = "0.5.3"
 
 from . import utils
 from .binops import Operation

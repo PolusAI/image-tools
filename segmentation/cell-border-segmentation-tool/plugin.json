@@ -1,6 +1,6 @@
 {
   "name": "Cell Border Segmentation",
-  "version": "0.2.4-dev0",
+  "version": "0.2.4",
   "title": "Cell Border Segmentation",
   "description": "Segment cell borders of epithelial cells.",
   "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat abbasi  (hamdahshafqat.abbasi@nih.gov)",
@@ -8,56 +8,63 @@
   "repository": "https://github.com/polusai/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/cell-border-segmentation-tool:0.2.4-dev0",
+  "containerId": "polusai/cell-border-segmentation-tool:0.2.4",
   "baseCommand": [
     "python3",
     "-m",
     "polus.images.segmentation.cell_border_segmentation"
   ],
-  "inputs": {
-    "inpDir": {
+  "inputs": [
+    {
+      "name": "inpDir",
       "type": "collection",
       "title": "Input collection",
       "description": "Input image collection to be processed by this plugin.",
       "required": "True"
     },
-    "filePattern": {
+    {
+      "name": "filePattern",
       "type": "string",
       "title": "Filename pattern",
       "description": "Filename pattern used to separate data.",
       "required": "False"
     },
-    "preview": {
+    {
+      "name": "preview",
       "type": "boolean",
       "title": "Preview",
       "description": "Generate an output preview.",
       "required": "False"
     }
-  },
-  "outputs": {
-    "outDir": {
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
       "type": "collection",
       "description": "Output collection."
     }
-  },
-  "ui": {
-    "inpDir": {
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
       "type": "collection",
       "title": "Input collection",
       "description": "Input image collection to be processed by this plugin.",
       "required": "True"
     },
-    "filePattern": {
+    {
+      "key": "inputs.filePattern",
       "type": "string",
       "title": "Filename pattern",
       "description": "Filename pattern used to separate data.",
       "required": "False"
     },
-    "preview": {
+    {
+      "key": "inputs.preview",
       "type": "boolean",
       "title": "Preview example output of this plugin",
       "description": "Generate an output preview.",
       "required": "False"
     }
-  }
+  ]
 }

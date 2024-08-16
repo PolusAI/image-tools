@@ -1,0 +1,53 @@
+author:
+- Najib Ishaq
+contact: najib.ishaq@axleinfo.com
+container: polusai/rolling-ball-plugin:1.0.2
+description: A WIPP plugin to perform background subtraction using the rolling-ball
+  algorithm.
+entrypoint: '[python3, main.py]'
+inputs:
+- description: Input image collection to be processed by this plugin.
+  format:
+  - collection
+  name: inputDir
+  required: true
+  type: path
+- description: Radius of the ball used to perform background subtraction.
+  format:
+  - number
+  name: ballRadius
+  required: false
+  type: number
+- description: Whether the images have a light or dark background.
+  format:
+  - boolean
+  name: lightBackground
+  required: false
+  type: boolean
+name: polusai/RollingBall
+outputs:
+- description: Output collection
+  format:
+  - collection
+  name: outputDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Rolling Ball
+ui:
+- description: Input image collection to be processed by this plugin.
+  key: inputs.inputDir
+  title: Input collection
+  type: path
+- default: 25
+  description: Radius of the ball used to perform background subtraction.
+  key: inputs.ballRadius
+  title: Ball Radius
+  type: number
+- default: false
+  description: Whether the images have a light or dark background.
+  key: inputs.lightBackground
+  title: Light Background
+  type: checkbox
+version: 1.0.2

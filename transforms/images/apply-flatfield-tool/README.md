@@ -1,5 +1,6 @@
 # Apply Flatfield Plugin (v2.0.1-dev1)
 
+
 This WIPP plugin applies a flatfield operation on every image in a collection.
 The algorithm used to apply the flatfield is as follows:
 

@@ -1,7 +1,7 @@
 {
   "name": "Precompute Slide",
-  "version": "1.7.1-dev0",
-  "containerId": "polusai/precompute-slide-tool:1.7.1-dev0",
+  "version": "1.7.2",
+  "containerId": "polusai/precompute-slide-tool:1.7.2",
   "baseCommand": [
     "python3",
     "-m",
@@ -36,12 +36,12 @@
     },
     {
       "name": "imageType",
-      "description": "Image is either Segmentation or Image",
+      "description": "Image is either Segmentation or Intensity",
       "type": "enum",
       "options": {
         "values": [
-          "image",
-          "segmentation"
+          "Intensity",
+          "Segmentation"
         ]
       },
       "required": false
@@ -70,13 +70,15 @@
     {
       "key": "inputs.pyramidType",
       "title": "Pyramid Type: ",
-      "description": "Build a DeepZoom, Neuroglancer, or Zarr pyramid?"
+      "description": "Build a DeepZoom, Neuroglancer, or Zarr pyramid?",
+      "default": "Zarr"
     },
     {
       "key": "inputs.imageType",
       "title": "Image Type: ",
       "description": "Image or Segmentation?",
-      "condition": "inputs.pyramidType==Neuroglancer"
+      "condition": "inputs.pyramidType==Neuroglancer",
+      "default": "Intensity"
     },
     {
       "key": "inputs.filePattern",

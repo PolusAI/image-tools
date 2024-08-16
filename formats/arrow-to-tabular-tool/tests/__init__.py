@@ -1,1 +1,0 @@
-"""Arrow to Tabular."""
