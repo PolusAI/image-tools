@@ -1,0 +1,1 @@
+"""Idr Download Tool."""
