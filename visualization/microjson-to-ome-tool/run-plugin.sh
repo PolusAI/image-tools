@@ -12,7 +12,7 @@ out_dir=${datapath}/output
 # docker run polusai/microjson-to-ome-plugin:${version}
 
 docker run -v ${datapath}:${datapath} \
-            polusai/microjson-to-ome-plugin:${version} \
+            polusai/microjson-to-ome-tool:${version} \
             --inpDir ${inp_dir} \
             --filePattern ${file_pattern} \
             --outDir ${out_dir}

@@ -54,13 +54,13 @@ data = {
 @pytest.fixture()
 def inp_dir() -> Union[str, Path]:
     """Create directory for saving json data."""
-    return Path(tempfile.mkdtemp(dir=Path.cwd()))
+    return Path(tempfile.mkdtemp())
 
 
 @pytest.fixture()
 def output_directory() -> Union[str, Path]:
     """Create output directory."""
-    return Path(tempfile.mkdtemp(dir=Path.cwd()))
+    return Path(tempfile.mkdtemp())
 
 
 @pytest.fixture(
