@@ -26,6 +26,13 @@
       "description": "Filename pattern used to separate data.",
       "required": "True"
     },
+    "axis": {
+      "type": "string",
+      "title": "Axis",
+      "description": "Axis to stack. One of 'c', 'z', 't'.",
+      "required": "False",
+      "default": "z"
+    },
     "preview": {
       "type": "boolean",
       "title": "Preview",
@@ -51,6 +58,13 @@
       "title": "Filename pattern",
       "description": "Filename pattern used to separate data.",
       "required": "True"
+    },
+    "axis": {
+      "type": "string",
+      "title": "Axis",
+      "description": "Axis to stack. One of 'c', 'z', 't'.",
+      "required": "False",
+      "default": "z"
     },
     "preview": {
       "type": "boolean",
