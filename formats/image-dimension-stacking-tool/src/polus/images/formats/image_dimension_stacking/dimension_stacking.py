@@ -25,9 +25,9 @@ def write_stack(
         axis: Axis to stack images along.
         out_path: Path to output directory.
     """
-    logger.info(f"Stacking images along {axis} axis.")
-    logger.info(f"Input: {inp_paths}")
-    logger.info(f"Output: {out_path}")
+    logger.debug(f"Stacking images along {axis} axis.")
+    logger.debug(f"Input: {inp_paths}")
+    logger.debug(f"Output: {out_path}")
 
     # Get the metadata from the first image
     with bfio.BioReader(inp_paths[0]) as reader:
@@ -91,9 +91,12 @@ def copy_stack(
         logger.error(msg)
         raise ValueError(msg)
 
-    logger.info("Copying images.")
-    logger.info(f"Input: {inp_paths}")
-    logger.info(f"Output: {out_path}")
+    logger.debug("Copying images.")
+    logger.debug(f"Input: {inp_paths}")
+    logger.debug(f"Output: {out_path}")
+
+    for i, p in enumerate(inp_paths):
+        logger.info(f"Copying image {i} from {p.name} to {out_path.name}")
 
     # Get the metadata from the first image
     with bfio.BioReader(inp_paths[0]) as reader:
@@ -105,22 +108,31 @@ def copy_stack(
         if axis.value == "z":
             writer.Z = len(inp_paths)
             writer.ps_z = z_unit_distance
+            writer[:, :, 0, :, :] = reader[:, :, 0, :, :]
         elif axis.value == "c":
             writer.C = len(inp_paths)
+            writer[:, :, :, 0, :] = reader[:, :, :, 0, :]
         elif axis.value == "t":
             writer.T = len(inp_paths)
+            writer[:, :, :, :, 0] = reader[:, :, :, :, 0]
+
+        # writer[0:utils.TILE_SIZE, 0:utils.TILE_SIZE, 0, 0, 0] = numpy.zeros(
+
+        # for y_min in range(0, writer.Y, utils.TILE_SIZE):
+
+        #     for x_min in range(0, writer.X, utils.TILE_SIZE):
 
         for i, p in enumerate(inp_paths):
-            copy_zarr_stack(p, i, axis, writer)
+            copy_zarr_stack(p, i, axis, out_path)
 
-    logger.info(f"Done copying {out_path}")
+    logger.debug(f"Done copying {out_path}")
 
 
 def copy_zarr_stack(
     inp_path: pathlib.Path,
     index: int,
     axis: utils.StackableAxis,
-    writer: bfio.BioWriter,
+    out_path: bfio.BioWriter,
 ) -> None:
     """Copy image stack.
 
@@ -133,23 +145,23 @@ def copy_zarr_stack(
         inp_path: Path to input image file.
         index: Index along dimension being stacked.
         axis: Name of the axis being stacked.
-        writer: Writer of the output zarr file.
+        out_path: Path to output zarr file.
     """
     base_path = inp_path / "0"
-    destination = writer._file_path / "0"
+    destination = out_path / "0"
 
     for src in base_path.rglob("*"):
         chunk = str(src.relative_to(base_path))
         if chunk.startswith("."):
-            logger.info(f"Skipping {chunk}")
+            logger.debug(f"Skipping {chunk}")
             continue
 
-        logger.info(f"src: {src}")
-        logger.info(f"Chunk: {chunk}")
+        logger.debug(f"src: {src}")
+        logger.debug(f"Chunk: {chunk}")
 
-        dims = chunk.split(".") if "." in chunk else chunk.split("/")
+        dims = chunk.split("." if "." in chunk else "/")
 
-        logger.info(f"dims: {dims}")
+        logger.debug(f"dims: {dims}")
 
         if len(dims) >= 3:  # noqa: PLR2004
             if axis.value == "z":
@@ -160,15 +172,15 @@ def copy_zarr_stack(
                 dims[0] = str(index)
 
         new_slice = "/".join(dims)
-        logger.info(f"New slice: {new_slice}")
+        logger.debug(f"New slice: {new_slice}")
 
         destination.joinpath(new_slice).parent.mkdir(parents=True, exist_ok=True)
         dest = destination.joinpath(new_slice)
 
-        logger.info(f"Copying {src} to {dest}")
+        logger.debug(f"Copying {src} to {dest}")
         if src.is_file():
             shutil.copyfile(src, dest)
         else:
             shutil.copytree(src, dest, dirs_exist_ok=True)
 
-    logger.info(f"Done copying {inp_path} to {writer._file_path}")
+    logger.debug(f"Done copying {inp_path} to {out_path}")
