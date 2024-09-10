@@ -9,6 +9,7 @@ import warnings
 import filepattern
 import tqdm
 import typer
+from polus.images.formats.image_dimension_stacking import copy_stack
 from polus.images.formats.image_dimension_stacking import utils
 from polus.images.formats.image_dimension_stacking import write_stack
 
@@ -95,7 +96,10 @@ def main(
         desc="Stacking groups",
         total=len(groups),
     ):
-        write_stack(inp_paths, axis, out_path)
+        if str(out_path).endswith(".ome.zarr"):
+            copy_stack(inp_paths, axis, out_path)
+        else:
+            write_stack(inp_paths, axis, out_path)
 
 
 if __name__ == "__main__":

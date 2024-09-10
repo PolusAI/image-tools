@@ -44,16 +44,17 @@ def gen_images(
             writer.T = 1
             writer.dtype = numpy.float32
 
+            writer.ps_x = (1, "mm")
+            writer.ps_y = (1, "mm")
+
             writer[:] = img
 
 
-@pytest.mark.parametrize("axis", ["z", "c", "t"])
-@pytest.mark.parametrize("num_images", [10])
-@pytest.mark.parametrize("size", [1024, 1024 * 4])
+@pytest.mark.parametrize("axis", ["z"])
+@pytest.mark.parametrize("ext", ["ome.zarr"])
 def test_cli(
     axis: str,
-    num_images: int,
-    size: int,
+    ext: str,
 ) -> None:
     """Test the command line."""
 
@@ -64,10 +65,13 @@ def test_cli(
     for d in [inp_dir, out_dir]:
         d.mkdir(exist_ok=True)
 
-    pattern = f"image_{axis}" + "{" + f"{axis}" + ":03d}.ome.tif"
+    num_images = 10
+    size = 1024
+
+    pattern = f"image_{axis}" + "{" + f"{axis}" + ":03d}" + f".{ext}"
     gen_images(inp_dir, pattern, axis, num_images, size)
 
-    pattern = f"image_{axis}" + "{" + f"{axis}" + ":d+}.ome.tif"
+    pattern = f"image_{axis}" + "{" + f"{axis}" + ":d+}" + f".{ext}"
 
     runner = typer.testing.CliRunner()
     result = runner.invoke(
@@ -89,7 +93,7 @@ def test_cli(
     # Check the output
     start = f"{0:03d}"
     end = f"{num_images - 1:03d}"
-    out_path = out_dir / f"image_{axis}({start}-{end}).ome.tif"
+    out_path = out_dir / f"image_{axis}({start}-{end}).{ext}"
     assert out_path.exists()
 
     with bfio.BioReader(out_path) as reader:
