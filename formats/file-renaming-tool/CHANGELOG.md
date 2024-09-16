@@ -1,4 +1,10 @@
-## [0.2.4-dev0] - 2024-01-17
+## [0.2.4-dev1] - 2024-03-01
 ### Added
-- Pytests to test this plugin
-- Added a support for recursively searching for files within a directory and its subdirectories of specified pattern by passing value either raw or map for `mapDirectory` input argument.
+- Integrated filepattern python package
+
+
+### Changed
+- Discarded old functions for parsing files.
+- Modified input argument "mapDirectory" from string to boolean
+- Removed bunch of test which were suppose to test some old functionalities of filerenaming plugin
+- Updated base container docker container
