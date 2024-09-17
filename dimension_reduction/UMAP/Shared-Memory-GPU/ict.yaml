@@ -142,17 +142,17 @@ ui:
   key: inputs.distanceMetric
   title: The metric to compute the distance in the original space
   type: select
-- condition: inputs.distanceV1==value
+- condition: "['weightedMinkowski', 'minkowski', 'ordinal_distance', 'count_distance', 'levenshtein'].includes(model.inputs.distanceMetric)"
   description: Insert a value
   key: inputs.distanceV1
   title: 'The optional input #1 needed for the chosen metric'
   type: number
-- condition: inputs.distanceV2==value
+- condition: "['count_distance', 'levenshtein'].includes(model.inputs.distanceMetric)"
   description: Insert a value
   key: inputs.distanceV2
   title: 'The optional input #2 needed for the chosen metric'
   type: number
-- condition: inputs.inputPathOptionalArray==value
+- condition: "['standardisedEuclidean','weightedMinkowski','mahalanobis'].includes(model.inputs.distanceMetric)"
   description: Insert the Path to csv collection
   key: inputs.inputPathOptionalArray
   title: The optional csv collection representing a vector needed for the chosen metric
