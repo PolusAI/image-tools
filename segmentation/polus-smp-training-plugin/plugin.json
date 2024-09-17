@@ -370,14 +370,14 @@
             "key": "inputs.imagesInferenceDir",
             "title": "imagesInferenceDir",
             "description": "Collection containing images on which to run inference.",
-            "condition": "model.inputs.inferenceMode==active"
+            "condition": "model.inputs.inferenceMode=='active'"
         },
         {
             "key": "inputs.inferencePattern",
             "title": "inferencePattern",
             "description": "Filename pattern for images on which to run inference.",
             "default": ".*",
-            "condition": "model.inputs.inferenceMode==active"
+            "condition": "model.inputs.inferenceMode=='active'"
         },
         {
             "key": "inputs.pretrainedModel",
@@ -413,51 +413,51 @@
             "title": "optimizerName",
             "description": "Name of optimization algorithm to use for training the model. Required if starting fresh.",
             "default": "Adam",
-            "condition": "model.inputs.inferenceMode==inactive"
+            "condition": "model.inputs.inferenceMode=='inactive'"
         },
         {
             "key": "inputs.batchSize",
             "title": "batchSize",
             "description": "Size of each batch for training. If left unspecified, we use the maximum possible based on memory constraints.",
-            "condition": "model.inputs.inferenceMode==inactive"
+            "condition": "model.inputs.inferenceMode=='inactive'"
         },
         {
             "key": "inputs.imagesTrainDir",
             "title": "imagesTrainDir",
             "description": "Collection containing images to use for training.",
-            "condition": "model.inputs.inferenceMode==inactive"
+            "condition": "model.inputs.inferenceMode=='inactive'"
         },
         {
             "key": "inputs.labelsTrainDir",
             "title": "labelsTrainDir",
             "description": "Collection containing labels, i.e. the ground-truth, for the training images.",
-            "condition": "model.inputs.inferenceMode==inactive"
+            "condition": "model.inputs.inferenceMode=='inactive'"
         },
         {
             "key": "inputs.trainPattern",
             "title": "trainPattern",
             "description": "Filename pattern for training images and labels.",
             "default": ".*",
-            "condition": "model.inputs.inferenceMode==inactive"
+            "condition": "model.inputs.inferenceMode=='inactive'"
         },
         {
             "key": "inputs.imagesValidDir",
             "title": "imagesValidDir",
             "description": "Collection containing images to use for validation.",
-            "condition": "model.inputs.inferenceMode==inactive"
+            "condition": "model.inputs.inferenceMode=='inactive'"
         },
         {
             "key": "inputs.labelsValidDir",
             "title": "labelsValidDir",
             "description": "Collection containing labels, i.e. the ground-truth, for the validation images.",
-            "condition": "model.inputs.inferenceMode==inactive"
+            "condition": "model.inputs.inferenceMode=='inactive'"
         },
         {
             "key": "inputs.validPattern",
             "title": "validPattern",
             "description": "Filename pattern for validation images and labels.",
             "default": ".*",
-            "condition": "model.inputs.inferenceMode==inactive"
+            "condition": "model.inputs.inferenceMode=='inactive'"
         },
         {
             "key": "inputs.device",
@@ -469,35 +469,35 @@
             "key": "inputs.checkpointFrequency",
             "title": "checkpointFrequency",
             "description": "How often to save model checkpoints",
-            "condition": "model.inputs.inferenceMode==inactive"
+            "condition": "model.inputs.inferenceMode=='inactive'"
         },
         {
             "key": "inputs.lossName",
             "title": "lossName",
             "description": "Name of loss function to use.",
             "default": "JaccardLoss",
-            "condition": "model.inputs.inferenceMode==inactive"
+            "condition": "model.inputs.inferenceMode=='inactive'"
         },
         {
             "key": "inputs.maxEpochs",
             "title": "maxEpochs",
             "description": "Maximum number of epochs for which to continue training the model.",
             "default": 100,
-            "condition": "model.inputs.inferenceMode==inactive"
+            "condition": "model.inputs.inferenceMode=='inactive'"
         },
         {
             "key": "inputs.patience",
             "title": "patience",
             "description": "Maximum number of epochs to wait for model to improve.",
             "default": 10,
-            "condition": "model.inputs.inferenceMode==inactive"
+            "condition": "model.inputs.inferenceMode=='inactive'"
         },
         {
             "key": "inputs.minDelta",
             "title": "minDelta",
             "description": "Minimum improvement in loss to reset patience.",
             "default": 0.0001,
-            "condition": "model.inputs.inferenceMode==inactive"
+            "condition": "model.inputs.inferenceMode=='inactive'"
         }
     ],
     "validators": [
