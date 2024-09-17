@@ -166,12 +166,12 @@ ui:
   key: inputs.inferenceMode
   title: inferenceMode
   type: select
-- condition: inputs.inferenceMode==active
+- condition: inputs.inferenceMode=='active'
   description: Collection containing images on which to run inference.
   key: inputs.imagesInferenceDir
   title: imagesInferenceDir
   type: path
-- condition: inputs.inferenceMode==active
+- condition: inputs.inferenceMode=='active'
   description: Filename pattern for images on which to run inference.
   key: inputs.inferencePattern
   title: inferencePattern
@@ -347,7 +347,7 @@ ui:
   key: inputs.encoderWeights
   title: encoderWeights
   type: select
-- condition: inputs.inferenceMode==inactive
+- condition: inputs.inferenceMode=='inactive'
   description: Name of optimization algorithm to use for training the model. Required
     if starting fresh.
   fields:
@@ -365,40 +365,40 @@ ui:
   key: inputs.optimizerName
   title: optimizerName
   type: select
-- condition: inputs.inferenceMode==inactive
+- condition: inputs.inferenceMode=='inactive'
   description: Size of each batch for training. If left unspecified, we use the maximum
     possible based on memory constraints.
   key: inputs.batchSize
   title: batchSize
   type: number
-- condition: inputs.inferenceMode==inactive
+- condition: inputs.inferenceMode=='inactive'
   description: Collection containing images to use for training.
   key: inputs.imagesTrainDir
   title: imagesTrainDir
   type: path
-- condition: inputs.inferenceMode==inactive
+- condition: inputs.inferenceMode=='inactive'
   description: Collection containing labels, i.e. the ground-truth, for the training
     images.
   key: inputs.labelsTrainDir
   title: labelsTrainDir
   type: path
-- condition: inputs.inferenceMode==inactive
+- condition: inputs.inferenceMode=='inactive'
   description: Filename pattern for training images and labels.
   key: inputs.trainPattern
   title: trainPattern
   type: text
-- condition: inputs.inferenceMode==inactive
+- condition: inputs.inferenceMode=='inactive'
   description: Collection containing images to use for validation.
   key: inputs.imagesValidDir
   title: imagesValidDir
   type: path
-- condition: inputs.inferenceMode==inactive
+- condition: inputs.inferenceMode=='inactive'
   description: Collection containing labels, i.e. the ground-truth, for the validation
     images.
   key: inputs.labelsValidDir
   title: labelsValidDir
   type: path
-- condition: inputs.inferenceMode==inactive
+- condition: inputs.inferenceMode=='inactive'
   description: Filename pattern for validation images and labels.
   key: inputs.validPattern
   title: validPattern
@@ -407,12 +407,12 @@ ui:
   key: inputs.device
   title: device
   type: text
-- condition: inputs.inferenceMode==inactive
+- condition: inputs.inferenceMode=='inactive'
   description: How often to save model checkpoints
   key: inputs.checkpointFrequency
   title: checkpointFrequency
   type: number
-- condition: inputs.inferenceMode==inactive
+- condition: inputs.inferenceMode=='inactive'
   description: Name of loss function to use.
   fields:
   - JaccardLoss
@@ -426,19 +426,19 @@ ui:
   key: inputs.lossName
   title: lossName
   type: select
-- condition: inputs.inferenceMode==inactive
+- condition: inputs.inferenceMode=='inactive'
   default: 100
   description: Maximum number of epochs for which to continue training the model.
   key: inputs.maxEpochs
   title: maxEpochs
   type: number
-- condition: inputs.inferenceMode==inactive
+- condition: inputs.inferenceMode=='inactive'
   default: 10
   description: Maximum number of epochs to wait for model to improve.
   key: inputs.patience
   title: patience
   type: number
-- condition: inputs.inferenceMode==inactive
+- condition: inputs.inferenceMode=='inactive'
   default: 0.0001
   description: Minimum improvement in loss to reset patience.
   key: inputs.minDelta
