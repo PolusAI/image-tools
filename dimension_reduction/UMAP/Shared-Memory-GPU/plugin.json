@@ -11,43 +11,43 @@
       "name": "inputPath",
       "type": "csvCollection",
       "description": "Input csv file containing the raw data",
-      "required": "True"
+      "required": true
     },
     {
       "name": "K",
       "type": "number",
       "description": "The desired number of Nearest Neighbors (NN) to be computed",
-      "required": "True"
+      "required": true
     },
     {
       "name": "sampleRate",
       "type": "number",
       "description": "The rate at which the sampling is conducted. The values closer to 1 provides more accurate results but the execution takes longer.",
-      "required": "True"
+      "required": true
     },
     {
       "name": "DimLowSpace",
       "type": "number",
       "description": "Dimension of the embedding space (usually 1-3)",
-      "required": "True"
+      "required": true
     },
     {
       "name": "randomInitializing",
       "type": "boolean",
       "description": "The method for initialization of data in the embedding space",
-      "required": "True"
+      "required": true
     },
     {
       "name": "nEpochs",
       "type": "number",
       "description": "The number of training epochs",
-      "required": "True"
+      "required": true
     },
     {
       "name": "minDist",
       "type": "number",
       "description": "The variable that controls how tight (to each other) the data are placed in the embedding space",
-      "required": "True"
+      "required": true
     },
     {
       "name": "distanceMetric",
@@ -73,25 +73,25 @@
         ]
       },
       "description": "The metric to compute the distance in the original space",
-      "required": "True"
+      "required": true
     },
     {
       "name": "distanceV1",
       "type": "number",
       "description": "The optional input needed for computation of some metrics",
-      "required": "False"
+      "required": false
     },
     {
       "name": "distanceV2",
       "type": "number",
       "description": "The optional input needed for computation of some metrics",
-      "required": "False"
+      "required": false
     },
     {
       "name": "inputPathOptionalArray",
       "type": "csvCollection",
       "description": "The optional csv file representing a vector needed in computation of some metrics",
-      "required": "False"
+      "required": false
     }
   ],
   "outputs": [
@@ -151,19 +151,19 @@
       "key": "inputs.distanceV1",
       "title": "The optional input #1 needed for the chosen metric",
       "description": "Insert a value",
-      "condition": "model.inputs.distanceMetric==['weightedMinkowski','minkowski','ordinal_distance','count_distance','levenshtein']"
+      "condition": "['weightedMinkowski', 'minkowski', 'ordinal_distance', 'count_distance', 'levenshtein'].includes(model.inputs.distanceMetric)"
     },
     {
       "key": "inputs.distanceV2",
       "title": "The optional input #2 needed for the chosen metric",
       "description": "Insert a value",
-      "condition": "model.inputs.distanceMetric==['count_distance','levenshtein']"
+      "condition": "['count_distance', 'levenshtein'].includes(model.inputs.distanceMetric)"
     },
     {
       "key": "inputs.inputPathOptionalArray",
       "title": "The optional csv collection representing a vector needed for the chosen metric",
       "description": "Insert the Path to csv collection",
-      "condition": "model.inputs.distanceMetric==['standardisedEuclidean','weightedMinkowski','mahalanobis']"
+      "condition": "['standardisedEuclidean','weightedMinkowski','mahalanobis'].includes(model.inputs.distanceMetric)"
     }
   ]
 }
