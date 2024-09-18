@@ -1,4 +1,4 @@
-# OME Converter (v0.3.2)
+# OME Converter (v0.3.3-dev1)
 
 This WIPP plugin converts BioFormats supported data types to the
 OME Zarr or OME TIF file format. This is not a complete implementation, rather it implements a file
