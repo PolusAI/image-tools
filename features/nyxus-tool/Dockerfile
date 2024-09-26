@@ -1,4 +1,4 @@
-FROM polusai/bfio:2.3.3
+FROM polusai/bfio:2.4.3
 
 # environment variables defined in polusai/bfio
 ENV EXEC_DIR="/opt/executables"
@@ -21,5 +21,5 @@ RUN pip3 install "${EXEC_DIR}/image-tools/${TOOL_DIR}" --no-cache-dir
 
 # Set the entrypoint
 # TODO: Change the entrypoint to the tool entrypoint
-ENTRYPOINT ["python3", "-m", "polus.images.features.nyxus"]
+ENTRYPOINT ["python3", "-m", "polus.images.features.nyxus_tool"]
 CMD ["--help"]

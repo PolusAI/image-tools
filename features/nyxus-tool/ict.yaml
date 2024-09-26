@@ -6,7 +6,7 @@ container: polusai/nyxus-tool:0.1.8-dev0
 description:
   Nyxus plugin allows to make use of parallel pocessing for extracting
   nyxus features
-entrypoint: python3 -m polus.images.features.nyxus_plugin
+entrypoint: python3 -m polus.images.features.nyxus_tool
 inputs:
   - description: Collection containing intensity images
     format:
@@ -70,7 +70,7 @@ outputs:
     name: outDir
     required: true
     type: path
-repository: https://github.com/PolusAI/polus-plugins
+repository: https://github.com/PolusAI/image-tools
 specVersion: 1.0.0
 title: Nyxus plugin
 ui:
@@ -118,4 +118,4 @@ ui:
     key: inputs.singleRoi
     title: singleRoi
     type: checkbox
-version: 0.1.7-dev0
+version: 0.1.8-dev0
