@@ -11,7 +11,6 @@ import filepattern as fp
 import preadator
 import typer
 from polus.images.formats.ome_converter.image_converter import NUM_THREADS
-from polus.images.formats.ome_converter.image_converter import Extension
 from polus.images.formats.ome_converter.image_converter import convert_image
 from tqdm import tqdm
 
@@ -24,6 +23,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("polus.images.formats.ome_converter")
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
+POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
 
 
 @app.command()
@@ -42,11 +42,6 @@ def main(
         ".+",
         "--filePattern",
         help="A filepattern defining the images to be converted",
-    ),
-    file_extension: Extension = typer.Option(
-        Extension,
-        "--fileExtension",
-        help="Type of data conversion",
     ),
     out_dir: pathlib.Path = typer.Option(
         ...,
@@ -68,7 +63,6 @@ def main(
     logger.info(f"inpDir = {inp_dir}")
     logger.info(f"outDir = {out_dir}")
     logger.info(f"filePattern = {pattern}")
-    logger.info(f"fileExtension = {file_extension}")
 
     fps = fp.FilePattern(inp_dir, pattern)
 
@@ -79,7 +73,7 @@ def main(
                 "outDir": [],
             }
             for file in fps():
-                out_name = str(file[1][0].name.split(".")[0]) + file_extension
+                out_name = str(file[1][0].name.split(".")[0]) + POLUS_IMG_EXT
                 out_json["outDir"].append(out_name)
             json.dump(out_json, jfile, indent=2)
         return
@@ -93,14 +87,14 @@ def main(
         for files in fps():
             file = files[1][0]
             threads.append(
-                executor.submit_process(convert_image, file, file_extension, out_dir),
+                executor.submit_process(convert_image, file, POLUS_IMG_EXT, out_dir),
             )
 
         for f in tqdm(
             as_completed(threads),
             total=len(threads),
             mininterval=5,
-            desc=f"converting images to {file_extension}",
+            desc=f"converting images to {POLUS_IMG_EXT}",
             initial=0,
             unit_scale=True,
             colour="cyan",

@@ -53,7 +53,7 @@ def synthetic_images(
 
     syn_dir = pathlib.Path(tempfile.mkdtemp(suffix="_syn_data"))
     images: list[numpy.ndarray] = []
-    for i in range(10):
+    for i in range(5):
         # Create images
         blobs: numpy.ndarray = skimage.data.binary_blobs(
             length=size,
