@@ -21,7 +21,7 @@ out_dir=/data/path_to_output
 # docker run polusai/nyxus-plugin:${version}
 
 docker run --mount type=bind,source=${datapath},target=/data/ \
-            polusai/nyxus-plugin:${version} \
+            polusai/nyxus-tool:${version} \
             --inpDir ${inp_dir} \
             --segDir ${seg_dir} \
             --outDir ${out_dir} \
