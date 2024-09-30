@@ -28,6 +28,8 @@ else:
 
 
 def write_image(
+    br: BioReader,
+    c: int,
     image: np.ndarray,
     out_path: pathlib.Path,
     max_workers: int,
@@ -40,8 +42,8 @@ def write_image(
     and manages channel names based on the provided BioReader.
 
     Args:
-        c: The index of the channel in the image.
         br:  An instance of BioReader containing metadata for the image.
+        c: The index of the channel in the image.
         image: The image data to be written.
         out_path: Path to an output image.
         max_workers: The maximum number of worker threads to use for writing.
@@ -54,7 +56,8 @@ def write_image(
         max_workers,
     ) as bw:
         # Handling of parsing channels when channels names are not provided.
-        # if bw.channel_names != [None]:
+        if bw.channel_names != [None]:
+            bw.channel_names = [br.channel_names[c]]
         bw.C = 1
         bw.T = 1
         bw.Z = 1
@@ -126,6 +129,8 @@ def convert_image(
                     t,
                 ]
                 write_image(
+                    br=br,
+                    c=c,
                     image=image,
                     out_path=out_path,
                     max_workers=NUM_THREADS,
