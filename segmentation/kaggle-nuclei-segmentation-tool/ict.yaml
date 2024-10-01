@@ -1,0 +1,54 @@
+author:
+- Gauhar Bains
+- Konstantin Taletskiy
+- Nick Schaub
+- Hamdah Shafqat
+contact: gauhar.bains@labshare.org
+container: polusai/kaggle-nuclei-segmentation-tool:0.1.5-dev2
+description: Segments cell nuclei using U-Net in Tensorflow. Neural net architecture
+  and pretrained weights are taken from Data Science Bowl 2018 entry by Muhammad Asim
+entrypoint: python3 -m polus.images.segmentation.kaggle_nuclei_segmentation
+inputs:
+- description: Input image collection to be processed by this plugin
+  format:
+  - collection
+  name: inpDir
+  required: true
+  type: path
+- description: Filename pattern used to separate data
+  format:
+  - string
+  name: filePattern
+  required: false
+  type: string
+- description: Generate an output preview.
+  format:
+  - boolean
+  name: preview
+  required: false
+  type: boolean
+name: polusai/KaggleNucleiSegmentation
+outputs:
+- description: Output collection
+  format:
+  - collection
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/PolusAI/image-tools
+specVersion: 1.0.0
+title: Kaggle Nuclei Segmentation
+ui:
+- description: Input image collection to be processed by this plugin
+  key: inputs.inpDir
+  title: Input collection
+  type: path
+- description: Filename pattern used to separate data
+  key: inputs.filePattern
+  title: Filename pattern
+  type: text
+- description: Generate an output preview.
+  key: inputs.preview
+  title: preview
+  type: checkbox
+version: 0.1.5-dev2
