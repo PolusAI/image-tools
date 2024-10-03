@@ -1,6 +1,6 @@
 """Ome Converter."""
 
-__version__ = "0.3.3-dev1"
+__version__ = "0.3.3-dev2"
 
 from .image_converter import batch_convert
 from .image_converter import convert_image
