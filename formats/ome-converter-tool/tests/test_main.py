@@ -59,7 +59,6 @@ def test_image_converter_omezarr(
 def test_cli(
     synthetic_images: tuple[list[np.ndarray], pathlib.Path],
     output_directory: pathlib.Path,
-    file_extension: str,
 ) -> None:
     """Test Cli."""
     _, inp_dir = synthetic_images
@@ -71,8 +70,6 @@ def test_cli(
             inp_dir,
             "--filePattern",
             ".+",
-            "--fileExtension",
-            file_extension,
             "--outDir",
             output_directory,
         ],

@@ -1,14 +1,14 @@
 {
   "name": "OME Converter",
-  "version": "0.3.2",
+  "version": "0.3.3-dev3",
   "title": "OME Converter",
   "description": "Convert Bioformats supported format to OME Zarr or OME TIF",
   "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-  "repository": "https://github.com/PolusAI/polus-plugins",
+  "repository": "https://github.com/PolusAI/image-tools",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/ome-converter-tool:0.3.2",
+  "containerId": "polusai/ome-converter-tool:0.3.3-dev3",
   "baseCommand": [
     "python3",
     "-m",
@@ -25,20 +25,6 @@
       "name": "filePattern",
       "type": "string",
       "description": "A filepattern, used to select data to be converted",
-      "required": true
-    },
-    {
-      "name": "fileExtension",
-      "type": "enum",
-      "description": "Type of data conversion",
-      "default": "default",
-      "options": {
-        "values": [
-          ".ome.tif",
-          ".ome.zarr",
-          "default"
-        ]
-      },
       "required": true
     }
   ],
@@ -59,12 +45,6 @@
       "key": "inputs.filePattern",
       "title": "Filepattern",
       "description": "A filepattern, used to select data for conversion"
-    },
-    {
-      "key": "inputs.fileExtension",
-      "title": "fileExtension",
-      "description": "Type of data conversion",
-      "default": ".ome.tif"
     }
   ]
 }

@@ -1,4 +1,4 @@
-# OME Converter (v0.3.2)
+# OME Converter (v0.3.3-dev3)
 
 This WIPP plugin converts BioFormats supported data types to the
 OME Zarr or OME TIF file format. This is not a complete implementation, rather it implements a file
@@ -23,12 +23,16 @@ contents of `plugin.json` into the pop-up window and submit.
 
 ## Options
 
-This plugin takes 3 input arguments and 1 output argument:
+This plugin takes 2 input arguments and 1 output argument:
 
 | Name             | Description                                                  | I/O    | Type        |
 |------------------|--------------------------------------------------------------|--------|-------------|
 | `--inpDir`       | Input generic data collection to be processed by this plugin | Input  | genericData |
 | `--filePattern`  | A filepattern, used to select data for conversion            | Input  | string      |
-| `--fileExtension`| A desired file format for conversion                         | Input  | enum        |
 | `--outDir`       | Output collection                                            | Output | genericData |
 | `--preview`      | Generate a JSON file with outputs                            | Output | JSON        |
+
+## Docker Command
+
+```bash
+docker run -e POLUS_IMG_EXT=".ome.zarr" -v /Users/username/:/Users/username/ polusai/ome-converter-tool:0.3.3-dev3 --inpDir=/Users/path/to/Images/ --filePattern=".*.tif" --outDir=/Users/path/to/outputs

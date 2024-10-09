@@ -10,7 +10,6 @@ import numpy
 import pytest
 import requests
 import skimage.data
-import skimage.io
 import skimage.measure
 
 
@@ -52,15 +51,18 @@ def synthetic_images(
     size, extension = get_params
 
     syn_dir = pathlib.Path(tempfile.mkdtemp(suffix="_syn_data"))
+
     images: list[numpy.ndarray] = []
-    for i in range(10):
-        # Create images
-        blobs: numpy.ndarray = skimage.data.binary_blobs(
-            length=size,
-            volume_fraction=0.05,
-            blob_size_fraction=0.05,
+    # Create a random number generator
+    rng = numpy.random.default_rng()
+
+    for i in range(3):
+        syn_img: numpy.ndarray = rng.integers(
+            low=0,
+            high=256,
+            size=(size, size),
+            dtype=numpy.uint8,
         )
-        syn_img: numpy.ndarray = skimage.measure.label(blobs)
         outname = f"syn_image_{i}{extension}"
 
         # Save image
