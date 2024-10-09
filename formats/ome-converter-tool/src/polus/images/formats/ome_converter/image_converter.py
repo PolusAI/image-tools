@@ -116,6 +116,9 @@ def convert_image(
                     ),
                 )
 
+            # Initialize the complete_image if not done yet
+            final_image = np.zeros((br.Y, br.X, 1, 1, 1), dtype=br.dtype)
+
             # Process each tile in the image using itertools.product
             for y, x in product(range(0, br.Y, TILE_SIZE), range(0, br.X, TILE_SIZE)):
                 y_max = min(br.Y, y + TILE_SIZE)
@@ -128,13 +131,16 @@ def convert_image(
                     c,
                     t,
                 ]
-                write_image(
-                    br=br,
-                    c=c,
-                    image=image,
-                    out_path=out_path,
-                    max_workers=NUM_THREADS,
-                )
+                # Place the tile into the correct position in the complete image
+                final_image[y:y_max, x:x_max, z, c, t] = image
+
+            write_image(
+                br=br,
+                c=c,
+                image=final_image,
+                out_path=out_path,
+                max_workers=NUM_THREADS,
+            )
 
 
 def batch_convert(
