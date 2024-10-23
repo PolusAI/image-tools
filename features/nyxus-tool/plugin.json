@@ -1,18 +1,18 @@
 {
   "name": "Nyxus plugin",
-  "version": "0.1.8",
-  "containerId": "polusai/nyxus-tool:0.1.8",
+  "version": "0.1.8-dev0",
+  "containerId": "polusai/nyxus-tool:0.1.8-dev0",
   "title": "Nyxus plugin",
   "description": "Nyxus plugin allows to make use of parallel pocessing for extracting nyxus features",
   "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-  "repository": "https://github.com/PolusAI/polus-plugins",
+  "repository": "https://github.com/PolusAI/image-tools",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
   "baseCommand": [
     "python3",
     "-m",
-    "polus.images.features.nyxus_plugin"
+    "polus.images.features.nyxus_tool"
   ],
   "inputs": [
     {

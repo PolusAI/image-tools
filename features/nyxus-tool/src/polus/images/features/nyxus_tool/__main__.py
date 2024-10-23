@@ -1,4 +1,5 @@
 """Nyxus Plugin."""
+
 import json
 import logging
 import os
@@ -12,10 +13,10 @@ from typing import Optional
 import filepattern as fp
 import preadator
 import typer
-from polus.images.features.nyxus_plugin.nyxus_func import nyxus_func
-from polus.images.features.nyxus_plugin.utils import FEATURE_GROUP
-from polus.images.features.nyxus_plugin.utils import FEATURE_LIST
-from polus.images.features.nyxus_plugin.utils import Extension
+from polus.images.features.nyxus_tool.nyxus_func import nyxus_func
+from polus.images.features.nyxus_tool.utils import FEATURE_GROUP
+from polus.images.features.nyxus_tool.utils import FEATURE_LIST
+from polus.images.features.nyxus_tool.utils import Extension
 from tqdm import tqdm
 
 # #Import environment variables
@@ -28,7 +29,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
     datefmt="%d-%b-%y %H:%M:%S",
 )
-logger = logging.getLogger("polus.images.features.nyxus_plugin")
+logger = logging.getLogger("polus.images.features.nyxus_tool")
 
 
 @app.command()

@@ -1,4 +1,5 @@
 """Nyxus Plugin."""
+
 from pathlib import Path
 import shutil
 import tempfile
@@ -11,8 +12,8 @@ from typing import Union
 from skimage import filters, io, measure
 from typer.testing import CliRunner
 
-from polus.images.features.nyxus_plugin.__main__ import app as app
-from polus.images.features.nyxus_plugin.nyxus_func import nyxus_func
+from polus.images.features.nyxus_tool.__main__ import app as app
+from polus.images.features.nyxus_tool.nyxus_func import nyxus_func
 
 runner = CliRunner()
 
