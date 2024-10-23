@@ -1,10 +1,6 @@
 class: CommandLineTool
 cwlVersion: v1.2
 inputs:
-  fileExtension:
-    inputBinding:
-      prefix: --fileExtension
-    type: string
   filePattern:
     inputBinding:
       prefix: --filePattern
@@ -24,7 +20,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/ome-converter-tool:0.3.2-dev0
+    dockerPull: polusai/ome-converter-tool:0.3.3-dev3
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)
