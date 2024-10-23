@@ -1,4 +1,4 @@
-# Kaggle Nuclei Segmentation (v0.1.5-dev1)
+# Kaggle Nuclei Segmentation (v0.1.5-dev2)
 
 Segments cell nuclei using U-Net in Tensorflow.
 
