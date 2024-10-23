@@ -59,7 +59,7 @@ ui:
   key: inputs.imageType
   title: 'Image Type: '
   type: select
-- condition: inputs.imageType==segmentation
+- condition: inputs.imageType=='segmentation'
   default: false
   key: inputs.mesh
   title: 'Create meshes: '
