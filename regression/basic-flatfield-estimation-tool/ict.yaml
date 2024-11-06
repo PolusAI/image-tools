@@ -1,62 +1,63 @@
 author:
-- Nick Schaub
-- Najib Ishaq
+  - Nick Schaub
+  - Najib Ishaq
 contact: nick.schaub@nih.gov
-container: polusai/basic-flatfield-estimation-tool:2.1.3-dev0-dev0
+container: polusai/basic-flatfield-estimation-tool:2.1.3-dev0
 description: Generates images used for flatfield correction using the BaSiC algorithm.
 entrypoint: python3 -m polus.images.regression.basic_flatfield_estimation
 inputs:
-- description: Input image collection.
-  format:
-  - collection
-  name: inpDir
-  required: true
-  type: path
-- description: Filename pattern used to separate images by channel, timepoint, and
-    replicate.
-  format:
-  - string
-  name: filePattern
-  required: true
-  type: string
-- description: Group images together for flatfield by variable.
-  format:
-  - string
-  name: groupBy
-  required: false
-  type: string
-- description: Calculate darkfield image.
-  format:
-  - boolean
-  name: getDarkfield
-  required: true
-  type: boolean
+  - description: Input image collection.
+    format:
+      - collection
+    name: inpDir
+    required: true
+    type: path
+  - description:
+      Filename pattern used to separate images by channel, timepoint, and
+      replicate.
+    format:
+      - string
+    name: filePattern
+    required: true
+    type: string
+  - description: Group images together for flatfield by variable.
+    format:
+      - string
+    name: groupBy
+    required: false
+    type: string
+  - description: Calculate darkfield image.
+    format:
+      - boolean
+    name: getDarkfield
+    required: true
+    type: boolean
 name: polusai/FlatfieldEstimationusingBaSiCalgorithm.
 outputs:
-- description: Output data for the plugin
-  format:
-  - collection
-  name: outDir
-  required: true
-  type: path
-repository: https://github.com/polusai/polus-plugins
+  - description: Output data for the plugin
+    format:
+      - collection
+    name: outDir
+    required: true
+    type: path
+repository: https://github.com/polusai/image-tools
 specVersion: 1.0.0
 title: Flatfield Estimation using BaSiC algorithm.
 ui:
-- description: Image collection...
-  key: inputs.inpDir
-  title: 'Input image collection: '
-  type: path
-- description: Use a filename pattern to calculate flatfield information by subsets
-  key: inputs.filePattern
-  title: 'Filename pattern: '
-  type: text
-- description: Group data together with varying variable values.
-  key: inputs.groupBy
-  title: 'Grouping Variables: '
-  type: text
-- description: If selected, will generate a darkfield image
-  key: inputs.getDarkfield
-  title: 'Calculate darkfield: '
-  type: checkbox
-version: 2.1.3-dev0-dev0
+  - description: Image collection...
+    key: inputs.inpDir
+    title: "Input image collection: "
+    type: path
+  - description: Use a filename pattern to calculate flatfield information by subsets
+    key: inputs.filePattern
+    title: "Filename pattern: "
+    type: text
+  - description: Group data together with varying variable values.
+    key: inputs.groupBy
+    title: "Grouping Variables: "
+    type: text
+  - description: If selected, will generate a darkfield image
+    key: inputs.getDarkfield
+    title: "Calculate darkfield: "
+    type: checkbox
+version: 2.1.3-dev0
