@@ -1,6 +1,6 @@
 {
   "name": "OME Converter",
-  "version": "0.3.3-dev3",
+  "version": "0.3.3-dev4",
   "title": "OME Converter",
   "description": "Convert Bioformats supported format to OME Zarr or OME TIF",
   "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/PolusAI/image-tools",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/ome-converter-tool:0.3.3-dev3",
+  "containerId": "polusai/ome-converter-tool:0.3.3-dev4",
   "baseCommand": [
     "python3",
     "-m",

@@ -3,9 +3,9 @@
 import logging
 import os
 import pathlib
+import platform
 from concurrent.futures import as_completed
 from itertools import product
-from sys import platform
 from typing import Optional
 
 import filepattern as fp
@@ -20,11 +20,19 @@ logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 TILE_SIZE = 2**13
 
-
-if platform.startswith("linux"):
-    NUM_THREADS = len(os.sched_getaffinity(0)) // 2  # type: ignore
+# Determine the number of worker threads based on the platform and environment
+if platform.system().lower() == "linux":
+    try:
+        # Use the number of CPUs available to the current process
+        NUM_THREADS = len(os.sched_getaffinity(0)) // 2  # type: ignore
+    except AttributeError:
+        # Fallback if os.sched_getaffinity is not available
+        NUM_THREADS = os.cpu_count() // 2  # type: ignore
 else:
-    NUM_THREADS = os.cpu_count()  # type: ignore
+    # Use os.cpu_count() for non-Linux platforms
+    NUM_THREADS = os.cpu_count() // 2  # type: ignore
+
+NUM_THREADS = max(1, NUM_THREADS)
 
 
 def write_image(
