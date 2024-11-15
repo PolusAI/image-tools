@@ -11,6 +11,7 @@ packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
+bfio = {version = "^2.4.5", extras = ["all"]}
 filepattern = "2.0.4"
 typer = "^0.7.0"
 tqdm = "^4.66.1"
