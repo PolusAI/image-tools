@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+import warnings
 from concurrent.futures import as_completed
 from multiprocessing import cpu_count
 from pathlib import Path
@@ -11,13 +12,18 @@ from typing import Any
 from typing import Optional
 
 import filepattern as fp
+import numpy as np
 import preadator
 import typer
+from bfio import BioReader
 from polus.images.features.nyxus_tool.nyxus_func import nyxus_func
 from polus.images.features.nyxus_tool.utils import FEATURE_GROUP
 from polus.images.features.nyxus_tool.utils import FEATURE_LIST
 from polus.images.features.nyxus_tool.utils import Extension
 from tqdm import tqdm
+
+# Suppress all warnings
+warnings.filterwarnings("ignore")
 
 # #Import environment variables
 POLUS_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
@@ -140,17 +146,23 @@ def main(  # noqa: PLR0913
             json.dump(out_json, jfile, indent=2)
 
     for s_image in seg_images():
+        seg_path = s_image[1][0]
+        with BioReader(seg_path) as br:
+            seg_image = br.read()
+            # Skip if the number of unique objects is 1
+            if len(np.unique(seg_image)) == 1:
+                continue
         i_image = int_images.get_matching(**dict(s_image[0].items()))
 
         with preadator.ProcessManager(
-            name="compute nyxus feature",
+            name="compute nyxus features",
             num_processes=num_workers,
             threads_per_process=2,
         ) as pm:
             threads = []
             for fl in i_image:
                 file = fl[1]
-                logger.debug(f"Compute nyxus feature {file}")
+                logger.debug(f"Compute nyxus feature for {file}")
                 thread = pm.submit_process(
                     nyxus_func,
                     file,
