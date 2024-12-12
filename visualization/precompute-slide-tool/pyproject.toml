@@ -6,19 +6,20 @@ authors = [
     "Madhuri Vihani <Madhuri.Vihani@nih.gov>",
     "Nick Schaub <Nick.Schaub@nih.gov>",
     "Antoine Gerardin <antoine.gerardin@nih.gov>",
-    "Najib Ishaq <najib.ishaq@nih.gov>"
+    "Najib Ishaq <najib.ishaq@nih.gov>",
+    "Bengt Ljungquist <bengt.ljungquist@nih.gov>"
 ]
 readme = "README.md"
 packages = [ { include = "polus", from = "src" } ]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.12"
+python = ">=3.10,<3.12"
 typer = "^0.7.0"
 numpy = "~1.25.2"
-bfio = { version = "2.3.3", extras = ["all"] }
+bfio = { version = "2.4.5", extras = ["all"] }
 preadator = "0.4.0.dev2"
 filepattern = "^2.0.4"
-imageio = "^2.33.1"
+imageio = "^2.36.1"
 
 [tool.poetry.group.dev.dependencies]
 zarr = "^2.16.1"
