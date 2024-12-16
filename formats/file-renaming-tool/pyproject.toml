@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "polus-images-formats-file-renaming"
-version = "0.2.4"
-description = "Rename and store image collection files in a new image collection"
+version = "0.2.4-dev2"
+description = "Convert BioFormats datatypes to ome.tif or ome.zarr file format"
 authors = [
-"Melanie Parham <melanie.parham@axleinfo.com>",
-"Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>"
+    "Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>",
+    "Melanie Parham <melanie.parham@axleinfo.com>",
 ]
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]
@@ -26,3 +26,8 @@ pytest = "^7.2.1"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]
