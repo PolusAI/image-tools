@@ -264,7 +264,8 @@ def letters_to_int(named_grp: str, all_matches: list) -> dict:
     """Alphabetically number matches for the given named group for all files.
 
     Make a dictionary where each key is a match for each filename and
-    the corresponding value is a number indicating its alphabetical rank.
+    the corresponding value is a number indicating its alphabetical rank,
+    with single-letter keys sorted first, followed by double-letter keys.
 
     Args:
         named_grp: Group with c in input pattern and d in out pattern.
@@ -274,13 +275,16 @@ def letters_to_int(named_grp: str, all_matches: list) -> dict:
         cat_index_dict: dict key=category name, value=index after sorting.
     """
     logger.debug(f"letters_to_int() inputs: {named_grp}, {all_matches}")
-    #: Generate list of strings belonging to the given category (element).
-    alphabetized_matches = sorted(
-        {namedgrp_match_dict[named_grp] for namedgrp_match_dict in all_matches},
-    )
-    str_alphabetindex_dict = {}
-    for i in range(0, len(alphabetized_matches)):
-        str_alphabetindex_dict[alphabetized_matches[i]] = i
+
+    # Generate a set of unique matches for the given group
+    matches = {namedgrp_match_dict[named_grp] for namedgrp_match_dict in all_matches}
+
+    # Sort with single-letter keys first, then double-letter keys
+    alphabetized_matches = sorted(matches, key=lambda x: (len(x) > 1, x))
+
+    # Create a dictionary mapping each match to its alphabetical rank
+    str_alphabetindex_dict = {match: i for i, match in enumerate(alphabetized_matches)}
+
     logger.debug(f"letters_to_int() returns {str_alphabetindex_dict}")
     return str_alphabetindex_dict
 
