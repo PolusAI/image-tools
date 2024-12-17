@@ -1,4 +1,6 @@
-#!/bin/bash
+!/bin/bash
+
+
 version=$(<VERSION)
 datapath=$(readlink --canonicalize data)
 
@@ -11,7 +13,7 @@ mapDirectory=true
 outDir=/data/output
 
 # Show the help options
-docker run polusai/file-renaming-plugin:${version}
+docker run polusai/file-renaming-tool:${version}
 
 # Run the plugin
 docker run --mount type=bind,source=${datapath},target=/data/ \
