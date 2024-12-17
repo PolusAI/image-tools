@@ -16,15 +16,15 @@
   ],
   "inputs": [
     {
-      "name": "filePattern",
-      "type": "string",
-      "description": "Filename pattern used to separate data",
-      "required": true
-    },
-    {
       "name": "inpDir",
       "type": "collection",
       "description": "Input image collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "filePattern",
+      "type": "string",
+      "description": "Filename pattern used to separate data",
       "required": true
     },
     {
@@ -49,14 +49,14 @@
   ],
   "ui": [
     {
-      "key": "inputs.filePattern",
-      "title": "Filename pattern",
-      "description": "Filename pattern used to separate data"
-    },
-    {
       "key": "inputs.inpDir",
       "title": "Input collection",
       "description": "Input image collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "Filename pattern",
+      "description": "Filename pattern used to separate data"
     },
     {
       "key": "inputs.outFilePattern",
