@@ -1,4 +1,4 @@
-# File Renaming(0.2.4-dev2)
+# File Renaming(v0.2.5-dev0)
 This WIPP plugin uses supplied file naming patterns to dynamically
 rename and save files in an image collection to a new image collection.
 
@@ -16,10 +16,10 @@ naming conventions.
 `newdata_x001_y001_c002.tif`
 `newdata_x001_y001_c003.tif`
 
- * **User input pattern:**
+ * **filePattern:**
 `img_x{row:dd}_y{col:dd}_{channel:c+}.ome.tif`
 
- * **User output pattern:**
+ * **outFilePattern:**
 `newdata_x{row:ddd}_y{col:ddd}_c{channel:ddd}.ome.tif`
 
 * The user can format the output digit using the number of digits
@@ -38,7 +38,41 @@ exception:
 then the script sorts the strings that match the character pattern and
 assigns numbers 0+ to them.
 
-* New optional feature `mapDirectory` implemented to include directory name in renamed files. This plugin also handles nested directories and one level up directory name is added  to renamed files if `raw` value passed, `map` for mapped subdirectories `d0, d1, d2, ... dn` and if not passed then no directory name is added in renamed files.
+* Implemented a new optional boolean feature `mapDirectory` to append mapped directory names in renamed files.
+
+
+## Renaming files within a complex nested directory structure:
+In specific scenarios where users need to rename files within nested subdirectories, this functionality can be leveraged by providing an appropriate pattern
+
+For Example
+
+```
+└── BBBC001
+    └── raw
+        ├── Ground_Truth
+        │   └── groundtruth_images
+        │       ├── AS_09125_050118150001_A03f00d0.tif
+        │       ├── AS_09125_050118150001_A03f01d0.tif
+        │       ├── AS_09125_050118150001_A03f02d0.tif
+        │       ├── AS_09125_050118150001_A03f03d0.tif
+        │       ├── AS_09125_050118150001_A03f04d0.tif
+        │       └── AS_09125_050118150001_A03f05d0.tif
+        └── Images
+            └── human_ht29_colon_cancer_1_images
+                ├── AS_09125_050118150001_A03f00d0.tif
+                ├── AS_09125_050118150001_A03f01d0.tif
+                ├── AS_09125_050118150001_A03f02d0.tif
+                ├── AS_09125_050118150001_A03f03d0.tif
+                ├── AS_09125_050118150001_A03f04d0.tif
+                └── AS_09125_050118150001_A03f05d0.tif
+
+```
+
+Now, renaming files within the `human_ht29_colon_cancer_1_images` is achievable by providing a `filepattern` such as `/.*/.*/.*/Images/(?P<directory>.*)/.*_{row:c}{col:dd}f{f:dd}d{channel:d}.tif`, and specifying `outFilePattern` as `x{row:dd}_y{col:dd}_p{f:dd}_c{channel:d}.tif`. If the mapDirectory option is not utilized, the raw directory name will be appended in the renamed files. To handle directory names containing both letters and digits, employ `(?P<directory>.*)`; use `{directory:c+}` or `{directory:d+}` if it contains solely letters or digits, respectively.
+
+#### Note:
+To extract directory names, the pattern should start with a backslash
+
 
 
 Contact [Melanie Parham](mailto:melanie.parham@axleinfo.com), [Hamdah Shafqat abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more
@@ -67,5 +101,5 @@ This plugin takes three input argument and one output argument:
 | `--filePattern`    | Input filename pattern            | Input    | string     |
 | `--outDir`         | Output collection                 | Output   | collection |
 | `--outFilePattern` | Output filename pattern           | Input    | string     |
-| `--mapDirectory`   | Directory name (`raw`, `map`)     | Input    | enum       |
+| `--mapDirectory`   | Extract mapped directory name     | Input    | boolean    |
 | `--preview`        | Generate a JSON file with outputs | Output   | JSON       |

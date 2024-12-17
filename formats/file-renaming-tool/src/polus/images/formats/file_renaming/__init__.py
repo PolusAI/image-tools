@@ -1,4 +1,4 @@
 """File Renaming."""
-__version__ = "0.2.4-dev2"
+__version__ = "0.2.5-dev0"
 
 from . import file_renaming
