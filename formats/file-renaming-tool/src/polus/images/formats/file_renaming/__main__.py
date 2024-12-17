@@ -82,8 +82,8 @@ def main(  # noqa: PLR0913 D417 C901 PLR0912 PLR0915
     logger.info(f"outFilePattern = {out_file_pattern}")
     logger.info(f"mapDirectory = {map_directory}")
 
-    inp_dir = inp_dir.resolve()
-    out_dir = out_dir.resolve()
+    inp_dir = pathlib.Path(inp_dir).resolve()
+    out_dir = pathlib.Path(inp_dir).resolve()
 
     assert (
         inp_dir.exists()
