@@ -32,11 +32,6 @@ def main(  # noqa: PLR0913, D417
         "--filePattern",
         help="Filename pattern used to separate data",
     ),
-    out_dir: pathlib.Path = typer.Option(
-        ...,
-        "--outDir",
-        help="Path to image collection storing copies of renamed files",
-    ),
     out_file_pattern: str = typer.Option(
         ...,
         "--outFilePattern",
@@ -46,6 +41,11 @@ def main(  # noqa: PLR0913, D417
         False,
         "--mapDirectory",
         help="Get folder name",
+    ),
+    out_dir: pathlib.Path = typer.Option(
+        ...,
+        "--outDir",
+        help="Path to image collection storing copies of renamed files",
     ),
     preview: Optional[bool] = typer.Option(
         False,
