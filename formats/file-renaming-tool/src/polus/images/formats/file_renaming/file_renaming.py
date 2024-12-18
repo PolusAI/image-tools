@@ -142,7 +142,7 @@ def letters_to_int(named_grp: str, all_matches: list) -> dict:
     return str_alphabetindex_dict
 
 
-def rename(  # noqa: C901
+def rename(  # noqa: C901 PLR0915
     inp_dir: pathlib.Path,
     out_dir: pathlib.Path,
     file_pattern: str,
@@ -160,7 +160,19 @@ def rename(  # noqa: C901
     """
     logger.info("Start renaming files")
 
-    files = fp.FilePattern(inp_dir, file_pattern, recursive=True)
+    # Check if the directory is empty without creating a full list
+    file_count = sum(1 for _ in inp_dir.iterdir())
+
+    if file_count == 0:
+        msg = f"Input directory is empty: {file_count} files found."
+        raise ValueError(msg)
+
+    logger.info(f"Number of files found: {file_count}")
+
+    if map_directory is True:
+        files = fp.FilePattern(inp_dir, file_pattern, recursive=True)
+    else:
+        files = fp.FilePattern(inp_dir, file_pattern)
 
     if len(files) == 0:
         msg = f"Please define filePattern: {file_pattern} again!!"
