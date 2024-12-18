@@ -187,6 +187,7 @@ def rename(  # noqa: C901
     numbered_categories = {}
     for named_grp in char_to_digit_categories:
         numbered_categories[named_grp] = letters_to_int(named_grp, inp_files)
+
     # Check named groups that need c->d conversion
     for named_grp in char_to_digit_categories:
         for i in range(0, len(inp_files)):
