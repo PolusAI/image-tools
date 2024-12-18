@@ -38,7 +38,7 @@ outputs:
     name: outDir
     required: true
     type: path
-repository: https://github.com/PolusAI/polus-plugins
+repository: https://github.com/PolusAI/image-tools
 specVersion: 1.0.0
 title: File Renaming
 ui:
