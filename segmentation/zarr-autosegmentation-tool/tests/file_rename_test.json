@@ -1,0 +1,103 @@
+{
+  "bleed_through_estimation_fixed_chars": [
+    "r001_c001_z000.ome.tif",
+    "r002_c001_z001.ome.tif",
+    "r001_c001_z000.ome.tif"
+  ],
+  "duplicate_channels_to_digit": [
+    "r001_c001_GFP.ome.tif",
+    "r002_c001_GFP.ome.tif",
+    "r001_c001_YFP.ome.tif"
+  ],
+  "percentage_file": [
+    "%033_c333_z5050.ome.tif",
+    "%444_c123_z50493.ome.tif"
+  ],
+  "robot": [
+    "003011-3-001001002.tif",
+    "005008-4-001001001.tif",
+    "006003-2-001001002.tif",
+    "006005-2-001001001.tif",
+    "007005-1-001001001.tif",
+    "007011-3-001001002.tif",
+    "006008-4-001001002.tif",
+    "006004-1-001001001.tif",
+    "007010-2-001001001.tif"
+  ],
+  "brain": [
+    "S1_R3_C1-C11_A1_y001_x010_c005.ome.tif",
+    "S1_R3_C1-C11_A1_y011_x021_c005.ome.tif",
+    "S1_R1_C1-C11_A1_y013_x007_c003.ome.tif",
+    "S1_R2_C1-C11_A1_y007_x006_c004.ome.tif",
+    "S1_R2_C1-C11_A1_y005_x012_c003.ome.tif",
+    "S1_R5_C1-C11_A1_y009_x016_c005.ome.tif",
+    "S1_R2_C1-C11_A1_y002_x018_c000.ome.tif"
+  ],
+  "variable": [
+    "S1_R4_C1-C11_A1_y2_x011_c6.ome.tif",
+    "S1_R4_C1-C11_A1_y1_x4_c4.ome.tif",
+    "S1_R1_C1-C11_A1_y7_x0_c0.ome.tif",
+    "S1_R2_C1-C11_A1_y011_x7_c8.ome.tif",
+    "S1_R5_C1-C11_A1_y012_x3_c4.ome.tif",
+    "S1_R2_C1-C11_A1_y3_x0_c6.ome.tif",
+    "S1_R2_C1-C11_A1_y7_x5_c3.ome.tif",
+    "S1_R2_C1-C11_A1_y011_x4_c6.ome.tif",
+    "S1_R2_C1-C11_A1_y2_x018_c0.ome.tif"
+  ],
+  "parenthesis": [
+    "img_x01_y01_(TXRED).tif",
+    "img_x01_y01_(GFP).tif",
+    "img_x01_y01_(DAPI).tif"
+  ],
+  "two_chan": [
+    "img_x01_y01_TXRED_TXYELLOW.tif",
+    "img_x01_y02_GFP_YFP.tif",
+    "img_x03_y03_DAPI_DAPIYELLOW.tif"
+  ],
+  "three_chan": [
+    "img_x01_y01_TXRED_TXYELLOW_ABC.tif",
+    "img_x01_y02_GFP_YFP_DEF.tif",
+    "img_x03_y03_DAPI_DAPIYELLOW_GHI.tif"
+  ],
+  "non_alphanum_int": [
+    "img x01 y01 TXRED.tif",
+    "img x01 y02 GFP.tif",
+    "img x03 y03 DAPI.tif"
+  ],
+  "non_alphanum_float": [
+    "img x01.22 y01 TXRED.tif",
+    "img x01.33 y02 GFP.tif",
+    "img x03.44 y03 DAPI.tif"
+  ],
+  "kph-kirill": [
+    "0(01-16)0(01-24)-(1-4)-002.ome.tif",
+    "0(01-16)0(01-24)-(1-4)-001.ome.tif",
+    "0(01-16)0(01-24)-(1-4)-003.ome.tif"
+  ],
+  "three_char_chan": [
+    "img x01 y01 GFP.tif",
+    "img x02 y02 YFP.tif",
+    "img x03 y02 ABC.tif",
+    "img x04 y00 DEF.tif"
+  ],
+  "tissuenet-val-labels-45-C": [
+    "p0_y4_r730_c1.ome.tif",
+    "p2_y0_r36_c1.ome.tif",
+    "p4_y1_r232_c1.ome.tif",
+    "p0_y4_r731_c1.ome.tif",
+    "p2_y0_r37_c1.ome.tif",
+    "p4_y1_r233_c1.ome.tif",
+    "p0_y4_r732_c1.ome.tif",
+    "p2_y0_r38_c1.ome.tif",
+    "p4_y1_r234_c1.ome.tif",
+    "p1_y3_r365_c1.ome.tif",
+    "p3_y5_r110_c1.ome.tif",
+    "p5_y4_r18_c1.ome.tif",
+    "p1_y3_r366_c1.ome.tif",
+    "p3_y5_r111_c1.ome.tif",
+    "p5_y4_r19_c1.ome.tif",
+    "p1_y3_r367_c1.ome.tif",
+    "p3_y5_r112_c1.ome.tif",
+    "p5_y4_r20_c1.ome.tif"
+  ]
+}
