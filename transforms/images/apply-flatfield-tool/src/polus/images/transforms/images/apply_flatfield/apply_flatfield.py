@@ -4,6 +4,7 @@ import logging
 import operator
 import pathlib
 import typing
+import numpy as np
 
 import bfio
 import numpy
@@ -135,6 +136,7 @@ def _unshade_batch(
     out_dir: pathlib.Path,
     ff_image: numpy.ndarray,
     df_image: typing.Optional[numpy.ndarray] = None,
+    keep_orig_dtype : typing.Optional[bool] = True,
 ) -> None:
     """Apply flatfield correction to a batch of images.
 
@@ -167,6 +169,15 @@ def _unshade_batch(
         img_stack -= df_image
 
     img_stack /= ff_image + 1e-8
+
+    if keep_orig_dtype:
+        orig_dtype = images[0].dtype
+        max_val = numpy.iinfo(orig_dtype).max
+
+        # clamp values to the original dtype range
+        img_stack[img_stack < 0] = 0
+        img_stack[img_stack > max_val] = max_val
+        img_stack = np.round(img_stack).astype(orig_dtype)
 
     # Save outputs
     with preadator.ProcessManager(
