@@ -69,6 +69,11 @@ def main(  # noqa: PLR0913
         "--preview",
         help="Preview the output without saving.",
     ),
+    keep_orig_dtype: typing.Optional[bool] = typer.Option(
+        True,
+        "--keepOrigDtype",
+        help="Keep the original dtype of the input images.",
+    )
 ) -> None:
     """CLI for the Apply Flatfield plugin.
 
@@ -87,6 +92,7 @@ def main(  # noqa: PLR0913
     logger.info(f"dfPattern = {df_pattern}")
     logger.info(f"outDir = {out_dir}")
     logger.info(f"preview = {preview}")
+    logger.info(f"keepOrigDtype = {keep_orig_dtype}")
 
     out_files = apply(
         img_dir=img_dir,
@@ -96,6 +102,7 @@ def main(  # noqa: PLR0913
         df_pattern=df_pattern,
         out_dir=out_dir,
         preview=preview,
+        keep_orig_dtype=keep_orig_dtype,
     )
 
     if preview:
