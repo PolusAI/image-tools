@@ -1,4 +1,5 @@
-# Apply Flatfield Plugin (v2.0.1)
+# Apply Flatfield Plugin (v2.0.1-dev1)
+
 
 This WIPP plugin applies a flatfield operation on every image in a collection.
 The algorithm used to apply the flatfield is as follows:
@@ -54,4 +55,5 @@ Command line options:
 | `--ffPattern`    | Filename pattern used to match flatfield files to image files         | Input  | string     |
 | `--dfPattern`    | Filename pattern used to match darkfield files to image files         | Input  | string     |
 | `--outDir`       | Output collection                                                     | Output | collection |
+| `--dataType`     | Save image in original data type                                      | Input  | boolean    |
 | `--preview`      | Preview the output images' names without actually running computation | Input  | boolean    |

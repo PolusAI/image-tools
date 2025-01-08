@@ -26,4 +26,5 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --ffDir ${ffDir} \
             --ffPattern ${ffPattern} \
             --ffPattern ${dfPattern} \
-            --outDir ${outDir}
+            --outDir ${outDir} \
+            --dataType
