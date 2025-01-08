@@ -27,6 +27,7 @@ def apply(  # noqa: PLR0913
     df_pattern: typing.Optional[str],
     out_dir: pathlib.Path,
     preview: bool = False,
+    keep_orig_dtype: typing.Optional[bool] = True,
 ) -> list[pathlib.Path]:
     """Run batch-wise flatfield correction on the image collection.
 
@@ -42,6 +43,9 @@ def apply(  # noqa: PLR0913
         saved.
         preview: if True, return the paths to the images that would be saved
         without actually performing any other computation.
+        keep_orig_dtype: if True, the output images will be saved with the same
+        dtype as the input images. If False, the output images will be saved as
+        float32.
     """
     img_fp = FilePattern(str(img_dir), img_pattern)
     img_variables = img_fp.get_variables()
@@ -83,7 +87,8 @@ def apply(  # noqa: PLR0913
         if preview:
             out_files.extend(img_paths)
         else:
-            _unshade_images(img_paths, out_dir, ff_path, df_path)
+            _unshade_images(img_paths, out_dir, ff_path, df_path,
+                            keep_orig_dtype)
 
     return out_files
 
@@ -93,6 +98,7 @@ def _unshade_images(
     out_dir: pathlib.Path,
     ff_path: pathlib.Path,
     df_path: typing.Optional[pathlib.Path],
+    keep_orig_dtype: typing.Optional[bool] = True,
 ) -> None:
     """Remove the given flatfield components from all images and save outputs.
 
@@ -101,6 +107,9 @@ def _unshade_images(
         out_dir: directory to save the corrected images
         ff_path: path to the flatfield image
         df_path: path to the darkfield image
+        keep_orig_dtype: if True, the output images will be saved with the same
+        dtype as the input images. If False, the output images will be saved as
+        float32.
     """
     logger.info(f"Applying flatfield correction to {len(img_paths)} images ...")
     logger.info(f"{ff_path.name = } ...")
@@ -128,6 +137,7 @@ def _unshade_images(
             out_dir,
             ff_image,
             df_image,
+            keep_orig_dtype
         )
 
 
@@ -145,6 +155,9 @@ def _unshade_batch(
         out_dir: directory to save the corrected images
         ff_image: component to be used for flatfield correction
         df_image: component to be used for flatfield correction
+        keep_orig_dtype: if True, the output images will be saved with the same
+        dtype as the input images. If False, the output images will be saved as
+        float32.
     """
     # Load images
     with preadator.ProcessManager(
