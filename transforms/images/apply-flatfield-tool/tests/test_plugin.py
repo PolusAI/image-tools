@@ -21,19 +21,24 @@ def _make_random_image(
     path: pathlib.Path,
     rng: numpy.random.Generator,
     size: int,
+    dtype: numpy.dtype = numpy.float32,
 ) -> None:
     with bfio.BioWriter(path) as writer:
         writer.X = size
         writer.Y = size
-        writer.dtype = numpy.float32
-
-        writer[:] = rng.random(size=(size, size), dtype=writer.dtype)
+        writer.dtype = dtype
+        if dtype == numpy.float32:
+            writer[:] = rng.random(size=(size, size), dtype=writer.dtype)
+        else:
+            writer[:] = rng.integers(low=0, high=numpy.iinfo(writer.dtype).max,
+                                    size=(size, size), dtype=writer.dtype)
 
 
 FixtureReturnType = tuple[pathlib.Path, str, pathlib.Path, str]
 
 
-def gen_once(num_groups: int, img_size: int) -> FixtureReturnType:
+def gen_once(num_groups: int, img_size: int,
+            dtype : numpy.dtype=numpy.float32) -> FixtureReturnType:
     """Generate a set of random images for testing."""
 
     img_pattern = "img_x{x}_c{c}.ome.tif"
@@ -45,15 +50,19 @@ def gen_once(num_groups: int, img_size: int) -> FixtureReturnType:
     rng = numpy.random.default_rng(42)
 
     for i in range(num_groups):
-        ff_path = ff_dir.joinpath(f"{ff_pattern.format(c=i + 1)}_flatfield.ome.tif")
-        _make_random_image(ff_path, rng, img_size)
+        ff_path = ff_dir.joinpath(
+            f"{ff_pattern.format(c=i + 1)}_flatfield.ome.tif"
+        )
+        _make_random_image(ff_path, rng, img_size, dtype)
 
-        df_path = ff_dir.joinpath(f"{ff_pattern.format(c=i + 1)}_darkfield.ome.tif")
-        _make_random_image(df_path, rng, img_size)
+        df_path = ff_dir.joinpath(
+            f"{ff_pattern.format(c=i + 1)}_darkfield.ome.tif"
+        )
+        _make_random_image(df_path, rng, img_size, dtype)
 
         for j in range(10):  # 10 images in each group
             img_path = img_dir.joinpath(img_pattern.format(x=j + 1, c=i + 1))
-            _make_random_image(img_path, rng, img_size)
+            _make_random_image(img_path, rng, img_size, dtype)
 
     image_names = list(sorted(p.name for p in img_dir.iterdir()))
     logger.debug(f"Generated {image_names} images in {img_dir}")
@@ -68,8 +77,12 @@ def gen_once(num_groups: int, img_size: int) -> FixtureReturnType:
 
 NUM_GROUPS = [1, 4]
 IMG_SIZES = [1024, 4096]
-PARAMS = list(itertools.product(NUM_GROUPS, IMG_SIZES))
-IDS = [f"{num_groups}_{img_size}" for num_groups, img_size in PARAMS]
+IMG_DTYPE = [numpy.float32, numpy.uint16]
+KEEP_ORIG_DTYPE = [True, False]
+PARAMS = list(itertools.product(NUM_GROUPS, IMG_SIZES, IMG_DTYPE,
+                                KEEP_ORIG_DTYPE))
+IDS = [f"{num_groups}_{img_size}_{dtype}_{keep_orig}" \
+       for num_groups, img_size, dtype, keep_orig in PARAMS]
 
 
 @pytest.fixture(params=PARAMS, ids=IDS)
@@ -77,10 +90,11 @@ def gen_images(request: pytest.FixtureRequest) -> FixtureReturnType:
     """Generate a set of random images for testing."""
     num_groups: int
     img_size: int
-    num_groups, img_size = request.param
-    img_dir, img_pattern, ff_dir, ff_pattern = gen_once(num_groups, img_size)
+    num_groups, img_size, dtype, keep_orig = request.param
+    img_dir, img_pattern, ff_dir, ff_pattern = gen_once(num_groups, img_size,
+                                                        dtype)
 
-    yield img_dir, img_pattern, ff_dir, ff_pattern
+    yield img_dir, img_pattern, ff_dir, ff_pattern, keep_orig
 
     # Cleanup
     shutil.rmtree(img_dir)
@@ -90,7 +104,7 @@ def gen_images(request: pytest.FixtureRequest) -> FixtureReturnType:
 def test_estimate(gen_images: FixtureReturnType) -> None:
     """Test the `estimate` function."""
 
-    img_dir, img_pattern, ff_dir, ff_pattern = gen_images
+    img_dir, img_pattern, ff_dir, ff_pattern, keep_orig = gen_images
     out_dir = pathlib.Path(tempfile.mkdtemp(suffix="out_dir"))
 
     apply(
@@ -100,10 +114,11 @@ def test_estimate(gen_images: FixtureReturnType) -> None:
         ff_pattern=f"{ff_pattern}_flatfield.ome.tif",
         df_pattern=f"{ff_pattern}_darkfield.ome.tif",
         out_dir=out_dir,
+        keep_orig_dtype=keep_orig
     )
 
-    img_names = [p.name for p in img_dir.iterdir()]
-    out_names = [p.name for p in out_dir.iterdir()]
+    img_names = sorted([p.name for p in img_dir.iterdir()])
+    out_names = sorted([p.name for p in out_dir.iterdir()])
 
     for name in img_names:
         assert name in out_names, f"{name} not in {out_names}"
