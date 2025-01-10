@@ -185,12 +185,16 @@ def _unshade_batch(
 
     if keep_orig_dtype:
         orig_dtype = images[0].dtype
-        max_val = numpy.iinfo(orig_dtype).max
-
-        # clamp values to the original dtype range
-        img_stack[img_stack < 0] = 0
-        img_stack[img_stack > max_val] = max_val
-        img_stack = np.round(img_stack).astype(orig_dtype)
+        # if integer type
+        if np.issubdtype(orig_dtype, np.integer):
+            min_val = numpy.iinfo(orig_dtype).min
+            max_val = numpy.iinfo(orig_dtype).max
+            # clamp values to the original dtype range
+            img_stack[img_stack < min_val] = min_val
+            img_stack[img_stack > max_val] = max_val
+            img_stack = np.round(img_stack).astype(orig_dtype)
+        elif np.issubdtype(orig_dtype, np.floating):
+            img_stack = img_stack.astype(orig_dtype)
 
     # Save outputs
     with preadator.ProcessManager(
