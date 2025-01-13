@@ -6,8 +6,7 @@ import pathlib
 import typing
 
 import typer
-from polus.images.transforms.images.apply_flatfield import apply
-from polus.images.transforms.images.apply_flatfield import utils
+from polus.images.transforms.images.apply_flatfield import apply, utils
 
 # Initialize the logger
 logging.basicConfig(
@@ -73,7 +72,7 @@ def main(  # noqa: PLR0913
         True,
         "--keepOrigDtype",
         help="Keep the original dtype of the input images.",
-    )
+    ),
 ) -> None:
     """CLI for the Apply Flatfield plugin.
 

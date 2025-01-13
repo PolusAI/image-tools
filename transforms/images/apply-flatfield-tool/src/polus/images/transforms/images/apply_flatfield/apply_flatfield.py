@@ -4,10 +4,10 @@ import logging
 import operator
 import pathlib
 import typing
-import numpy as np
 
 import bfio
 import numpy
+import numpy as np
 import preadator
 import tqdm
 from filepattern import FilePattern
@@ -28,7 +28,7 @@ def apply(  # noqa: PLR0913
     out_dir: pathlib.Path,
     preview: bool = False,
     keep_orig_dtype: typing.Optional[bool] = True,
-) -> list[pathlib.Path]:
+) -> typing.List[pathlib.Path]:
     """Run batch-wise flatfield correction on the image collection.
 
     Args:
@@ -87,14 +87,13 @@ def apply(  # noqa: PLR0913
         if preview:
             out_files.extend(img_paths)
         else:
-            _unshade_images(img_paths, out_dir, ff_path, df_path,
-                            keep_orig_dtype)
+            _unshade_images(img_paths, out_dir, ff_path, df_path, keep_orig_dtype)
 
     return out_files
 
 
 def _unshade_images(
-    img_paths: list[pathlib.Path],
+    img_paths: typing.List[pathlib.Path],
     out_dir: pathlib.Path,
     ff_path: pathlib.Path,
     df_path: typing.Optional[pathlib.Path],
@@ -133,20 +132,16 @@ def _unshade_images(
         total=len(batch_indices) - 1,
     ):
         _unshade_batch(
-            img_paths[i_start:i_end],
-            out_dir,
-            ff_image,
-            df_image,
-            keep_orig_dtype
+            img_paths[i_start:i_end], out_dir, ff_image, df_image, keep_orig_dtype
         )
 
 
 def _unshade_batch(
-    batch_paths: list[pathlib.Path],
+    batch_paths: typing.List[pathlib.Path],
     out_dir: pathlib.Path,
     ff_image: numpy.ndarray,
     df_image: typing.Optional[numpy.ndarray] = None,
-    keep_orig_dtype : typing.Optional[bool] = True,
+    keep_orig_dtype: typing.Optional[bool] = True,
 ) -> None:
     """Apply flatfield correction to a batch of images.
 
