@@ -172,23 +172,42 @@ def _unshade_batch(
     images = [img for _, img in sorted(images, key=operator.itemgetter(0))]
     img_stack = numpy.stack(images, axis=0).astype(numpy.float32)
 
+    # find min and max values of original images (across last 2 axes)
+    def get_min_max(img_stack):
+        min_val = img_stack.min(axis=(-1, -2), keepdims=True)
+        max_val = img_stack.max(axis=(-1, -2), keepdims=True)
+        return min_val, max_val
+
+    min_orig, max_orig = get_min_max(img_stack)  # dim: n_images x 1 x 1
+
     # Apply flatfield correction
     if df_image is not None:
         img_stack -= df_image
 
     img_stack /= ff_image + 1e-8
 
+    # calculate min and max values of corrected images
+    min_new, max_new = get_min_max(img_stack)
+
+    # scale corrected images to original range
+    img_stack = (img_stack - min_new) / (max_new - min_new) * (
+        max_orig - min_orig
+    ) + min_orig
+
     if keep_orig_dtype:
         orig_dtype = images[0].dtype
         # if integer type
         if np.issubdtype(orig_dtype, np.integer):
-            min_val = numpy.iinfo(orig_dtype).min
-            max_val = numpy.iinfo(orig_dtype).max
-            # clamp values to the original dtype range
-            img_stack[img_stack < min_val] = min_val
-            img_stack[img_stack > max_val] = max_val
+            # clip out of range values for orig dtype
+            dtype_info = np.iinfo(orig_dtype)
+            img_stack = np.clip(img_stack, dtype_info.min, dtype_info.max)
+
+            # round and cast to original dtype
             img_stack = np.round(img_stack).astype(orig_dtype)
+
         elif np.issubdtype(orig_dtype, np.floating):
+            # floating point image, clamp to [0,1]
+            img_stack = np.clip(img_stack, 0.0, 1.0)
             img_stack = img_stack.astype(orig_dtype)
 
     # Save outputs
