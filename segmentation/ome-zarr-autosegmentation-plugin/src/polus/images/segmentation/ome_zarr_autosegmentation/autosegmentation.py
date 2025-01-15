@@ -32,7 +32,7 @@ def get_device():
 def init_sam2_predictor(checkpoint_path):
     """Initialize SAM2 predictor with given checkpoint"""
     device = get_device()
-    model = build_sam2("configs/sam2.1/sam2.1_hiera_s.yaml", checkpoint_path, device=str(device))
+    model = build_sam2("configs/sam2.1/sam2.1_hiera_l.yaml", checkpoint_path, device=str(device))
     return SAM2AutomaticMaskGenerator(model)
 
 
@@ -213,7 +213,7 @@ def autosegment_dataset(input_dataset_path: Path | str, output_dataset_path: Pat
 
     segmentations = []
     sam2_predictor = init_sam2_predictor(
-        "../models/sam2.1_hiera_small.pt",
+        "../models/sam2.1_hiera_large.pt",
     )
     for z in range(num_slices):
         slice_data = volume[z].compute()
