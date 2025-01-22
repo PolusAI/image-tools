@@ -59,6 +59,11 @@ def main(  # noqa: PLR0913
         "--geometryType",
         help="Type of Geometry",
     ),
+    tile_json: Optional[bool] = typer.Option(
+        False,
+        "--tileJson",
+        help="Tile JSON layer",
+    ),
     out_dir: pathlib.Path = typer.Option(
         ...,
         "--outDir",
@@ -77,6 +82,7 @@ def main(  # noqa: PLR0913
     logger.info(f"geometryType = {geometry_type}")
     logger.info(f"stitchPattern = {stitch_pattern}")
     logger.info(f"groupBy = {group_by}")
+    logger.info(f"tile_json = {tile_json}")
     logger.info(f"outDir = {out_dir}")
 
     inp_dir = inp_dir.resolve()
@@ -86,27 +92,19 @@ def main(  # noqa: PLR0913
 
     files = [file[1][0] for file in fps()]
 
+    stitch_path = [
+        st for st in stitch_dir.iterdir() if st.suffix == ".txt" and st.is_file()
+    ][0]
+
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
         for file in tqdm(files, desc="Creating overlays", total=len(files)):
-            fname = pathlib.Path(file).stem
-            stitch_path = stitch_dir.joinpath(f"{fname}.txt")
-            if geometry_type == "Polygon":
-                poly = mo.PolygonSpec(
-                    stitch_path=str(stitch_path),
-                    stitch_pattern=stitch_pattern,
-                    group_by=group_by,
-                )
-            else:
-                poly = mo.PointSpec(
-                    stitch_path=str(stitch_path),
-                    stitch_pattern=stitch_pattern,
-                    group_by=group_by,
-                )
-
             micro_model = mo.RenderOverlayModel(
                 file_path=file,
-                coordinates=poly.get_coordinates,
                 geometry_type=geometry_type,
+                stitch_path=stitch_path,
+                stitch_pattern=stitch_pattern,
+                group_by=group_by,
+                tile_json=tile_json,
                 out_dir=out_dir,
             )
             executor.submit(micro_model.microjson_overlay)
