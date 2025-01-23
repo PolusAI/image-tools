@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "polus-images-formats-pyramid-generator-3d"
+version = "0.1.0"
+description = "Generate 3D or Volume Image Pyramid"
+authors = ["Ji Liu <ji.liu@axleinfo.com>"]
+readme = "README.md"
+packages = [{include = "polus", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.12"
+bfio = {version = ">=2.3.3,<3.0", extras = ["all"]}
+filepattern = ">=2.0.4,<3.0"
+typer = "^0.7.0"
+
+[tool.poetry.group.dev.dependencies]
+bump2version = "^1.0.1"
+pytest = "^8.3"
+pytest-sugar = "^1.0"
+pytest-xdist = "^3.6"
+pre-commit = "^3.8"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]
