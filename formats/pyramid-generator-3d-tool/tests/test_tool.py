@@ -23,8 +23,14 @@ _OPTION_NAMES_VOL = [
     "--outDir",
     "--outImgName",
 ]
-_OPTION_NAMES_PY3D = ["--subCmd", "--zarrDir", "--baseScaleKey", "--numLevels"]
-_OPTION_NAMES_VOL_PY3D = _OPTION_NAMES_VOL + _OPTION_NAMES_PY3D[2:]
+_OPTION_NAMES_PY3D = [
+    "--subCmd",
+    "--zarrDir",
+    "--outDir",
+    "--baseScaleKey",
+    "--numLevels",
+]
+_OPTION_NAMES_VOL_PY3D = _OPTION_NAMES_VOL + _OPTION_NAMES_PY3D[-2:]
 
 OPTION_NAMES_VOL = tuple(_OPTION_NAMES_VOL)
 OPTION_NAMES_PY3D = tuple(_OPTION_NAMES_PY3D)
@@ -139,6 +145,8 @@ def test_cli(gen_image_collection, default_params):
         "--subCmd",
         "Py3D",
         "--zarrDir",
+        out_dir,
+        "--outDir",
         out_dir,
         "--baseScaleKey",
         base_scale_key,

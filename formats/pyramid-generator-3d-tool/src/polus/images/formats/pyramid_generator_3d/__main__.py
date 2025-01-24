@@ -92,28 +92,6 @@ def inp_dir_callback(ctx: typer.Context, value: typing.Union[pathlib.Path, None]
     return value.resolve() if value else value
 
 
-def out_dir_callback(ctx: typer.Context, value: typing.Union[pathlib.Path, None]):
-    """Determine validity of output directory if using Vol subcommand.
-
-    Args:
-        ctx (typer.Context): typer context object
-        value (pathlib.Path): passed in parameter value
-    """
-    if ctx.obj["sub_cmd"].startswith("Vol"):
-        if not value:
-            raise typer.BadParameter(
-                "Output directory is required for volume generation."
-            )
-        if not value.exists():
-            raise typer.BadParameter("Output directory does not exist.")
-        if not value.is_dir():
-            raise typer.BadParameter("Output directory is not a directory.")
-        if not os.access(value, os.W_OK):
-            raise typer.BadParameter("Output directory is not writable.")
-
-    return value.resolve() if value else value
-
-
 def py3d_option_callback(
     ctx: typer.Context, param: typer.CallbackParam, value: typing.Any
 ):
@@ -195,10 +173,13 @@ def main(
         callback=vol_option_callback,
     ),
     out_dir: pathlib.Path = typer.Option(
-        None,
+        ...,
         "--outDir",
-        help="Output directory for 3D pyramid generation.",
-        callback=out_dir_callback,
+        help="Output directory.",
+        exists=True,
+        file_okay=False,
+        writable=True,
+        resolve_path=True,
     ),
     out_img_name: str = typer.Option(
         None,
