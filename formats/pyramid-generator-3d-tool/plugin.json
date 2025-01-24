@@ -15,25 +15,73 @@
     "polus.images.formats.pyramid_generator_3d"
   ],
   "inputs": {
+    "subCmd": {
+      "type": "enum",
+      "options": {
+        "values": [
+          "Vol",
+          "Py3D"
+        ]
+      },
+      "title": "Subcommand",
+      "description": "Subcommand to invoke. Options are Vol and Py3D.",
+      "required": "True"
+    },
+    "zarrDir": {
+      "type": "collection",
+      "title": "Zarr array directory",
+      "description": "Directory to Zarr arrays for generating 3D pyramid.",
+      "required": "False"
+    },
     "inpDir": {
       "type": "collection",
       "title": "Input collection",
       "description": "Input image collection to be processed by this tool.",
-      "required": "True"
+      "required": "False"
     },
     "filePattern": {
       "type": "string",
       "title": "Filename pattern",
-      "description": "Filename pattern used to separate data.",
-      "required": "False",
-      "default": ".*"
+      "description": "Filename pattern used to select images.",
+      "required": "False"
     },
-    "preview": {
-      "type": "boolean",
-      "title": "Preview",
-      "description": "Generate an output preview.",
+    "groupBy": {
+      "type": "enum",
+      "options": {
+        "values": [
+          "t",
+          "z",
+          "c"
+        ]
+      },
+      "title": "Group by",
+      "description": "Grouping variable for images. Options are 't', 'z', 'c'.",
+      "required": "False"
+    },
+    "outDir": {
+      "type": "collection",
+      "title": "Output directory",
+      "description": "Path of output directory.",
+      "required": "True"
+    },
+    "outImgName": {
+      "type": "string",
+      "title": "Output image name",
+      "description": "Output name for Zarr arrays when using volume generation.",
+      "required": "False"
+    },
+    "baseScaleKey":{
+      "type": "number",
+      "title": "Base scale key",
+      "description": "Base scale key for 3D pyramid generation. Default to 0.",
       "required": "False",
-      "default": "False"
+      "default": "0"
+    },
+    "numLevels":{
+      "type": "number",
+      "title": "Number of levels",
+      "description": "Number of levels for 3D pyramid.",
+      "required": "False"
     }
   },
   "outputs": {
@@ -42,26 +90,51 @@
       "description": "Output collection."
     }
   },
-  "ui": {
-    "inpDir": {
-      "type": "collection",
-      "title": "Input collection",
-      "description": "Input image collection to be processed by this tool.",
-      "required": "True"
+  "ui": [
+    {
+      "key":"inputs.subCmd",
+      "title": "Subcommand",
+      "description": "Subcommand to invoke. Options are Vol and Py3D."
     },
-    "filePattern": {
-      "type": "string",
-      "title": "Filename pattern",
-      "description": "Filename pattern used to separate data.",
-      "required": "False",
-      "default": "False"
+    {
+      "key": "inputs.zarrDir",
+      "title": "Zarr array directory",
+      "description": "Directory to Zarr arrays for generating 3D pyramid."
     },
-    "preview": {
-      "type": "boolean",
+    {
+      "key": "inputs.inpDir",
+      "title": "Image directory",
+      "description": "Path to directory containing images or path to a single image."
+    },
+    {
+      "key": "inputs.filePattern",
       "title": "Filename pattern",
-      "description": "Generate an output preview.",
-      "required": "False",
-      "default": "False"
+      "description": "Filename pattern used to find images."
+    },
+    {
+      "key": "inputs.groupBy",
+      "title": "Group by",
+      "description": "Grouping variable for images. Options are 't', 'z', 'c'."
+    },
+    {
+      "key": "inputs.outDir",
+      "title": "Output directory",
+      "description": "Path of output directory."
+    },
+    {
+      "key": "inputs.outImgName",
+      "title": "Output image name",
+      "description": "Output name for Zarr arrays when using volume generation."
+    },
+    {
+      "key": "inputs.baseScaleKey",
+      "title": "Base scale key",
+      "description": "Base scale key for 3D pyramid generation. Default to 0."
+    },
+    {
+      "key": "inputs.numLevels",
+      "title": "Number of levels",
+      "description": "Number of levels for 3D pyramid."
     }
-  }
+  ]
 }
