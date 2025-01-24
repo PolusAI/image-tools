@@ -28,15 +28,15 @@ python3 -m polus.images.formats.pyramid_generator_3d --subCmd Vol --inpDir /path
 ### 3D Pyramid
 Use `Py3D` subcommand to generate 3D pyramid from either <ins>(1) a directory with Zarr array</ins> or <ins>(2) a directory of images</ins>.
 #### From Zarr directory
-When generating from a Zarr directory, the ***required*** options are `--zarrDir` and `--numLevels`. `--baseScaleKey` defaults to 0.
+When generating from a Zarr directory, the ***required*** options are `--zarrDir`, `--outDir`, and `--numLevels`. `--baseScaleKey` defaults to 0. Since the output will be written into the Zarr directory, use the same directory for `--zarrDir` and `--outDir`.
 Example usage:
 ```
-python -m polus.images.formats.pyramid_generator_3d --subCmd Py3D --zarrDir /path/to/zarr/array --baseScaleKey 0 --numLevels 2
+python -m polus.images.formats.pyramid_generator_3d --subCmd Py3D --zarrDir /path/to/zarr/array --outDir /path/to/zarr/array --baseScaleKey 0 --numLevels 2
 ```
 
 #### From image collection
 When generating directly from an image collection, the current tool firsts calls the volume generation routine first to generate Zarr array, from which 3D pyramid is subsequently generated. Thus, all options required for `Vol` subcommand are required in addition to the required options of `Py3D` (excluding `--zarrDir`).
-Together, the ***required*** options are `--inpDir`, `--filePattern`, `--groupBy`, `outDir`, `--outImgName`, `--numLevels`. `--baseScaleKey` defaults to 0.
+Together, the ***required*** options are `--inpDir`, `--filePattern`, `--groupBy`, `--outDir`, `--outImgName`, `--numLevels`. `--baseScaleKey` defaults to 0.
 Example usage:
 ```
 python -m polus.images.formats.pyramid_generator_3d --subCmd Py3D --inpDir /path/to/input/images --filePattern img_r{r:ddd}_c{c:ddd}.ome.tif --groupBy c --outDir /path/to/output --outImgName test_output --baseScaleKey 0 --numLevels 2
