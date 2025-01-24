@@ -8,8 +8,16 @@ from argolid import PyramidGenerator3D, VolumeGenerator
 class SubCommand(str, Enum):
     """SubCommand."""
 
-    Py3D = "Py3D"  # only perform 3D pyramid generation
-    Vol = "Vol"  # only perform volume generation
+    Py3D = "Py3D"  # Perform 3D pyramid generation from zarr arrays or from image collection
+    Vol = "Vol"  # Perform volume generation from image collection
+
+
+class GroupBy(str, Enum):
+    """GroupBy."""
+
+    t = "t"
+    z = "z"
+    c = "c"
 
 
 def gen_volume(

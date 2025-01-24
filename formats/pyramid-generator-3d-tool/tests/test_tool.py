@@ -213,7 +213,7 @@ def gen_bad_params(sub_cmd, option_names):
     for i, key in enumerate(key_lst):
         lst.append((lst_tmp, sub_cmd))
         # create a string that formats the current time
-        missing_names_lst.append(f"subCmd={sub_cmd}, missing {key}.")
+        missing_names_lst.append(f"subCmd={sub_cmd}, missing {key} ")
         if i == len(key_lst) - 1:  # skip the last key
             break
         lst_tmp.append(key)

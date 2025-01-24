@@ -7,6 +7,7 @@ import typing
 
 import typer
 from polus.images.formats.pyramid_generator_3d.pyramid_generator_3d import (
+    GroupBy,
     SubCommand,
     gen_py3d,
     gen_volume,
@@ -20,8 +21,6 @@ POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
 logger = logging.getLogger("polus.images.formats.pyramid_generator_3d")
 logger.setLevel(POLUS_LOG)
 
-POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
-POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".csv")
 app = typer.Typer()
 
 
@@ -35,7 +34,7 @@ def sub_cmd_callback(ctx: typer.Context, value: SubCommand) -> SubCommand:
         value (str): passed in parameter value
     """
     ctx.ensure_object(dict)
-    ctx.obj["cmd"] = "Py3D" if value == SubCommand.Py3D else "Vol"
+    ctx.obj["sub_cmd"] = "Py3D" if value == SubCommand.Py3D else "Vol"
     return value
 
 
@@ -61,11 +60,13 @@ def vol_option_callback(
         ctx (typer.Context): typer context object
         value (str): passed in parameter value
     """
-    if ctx.obj["cmd"] == "Vol" or ctx.obj["cmd"] == "Vol_Py3D":
+    if ctx.obj["sub_cmd"].startswith("Vol"):
         if not value:
             raise typer.BadParameter(
                 f"--{_camal_case(param.name)} are required for volume generation."
             )
+    if param.name == "group_by":
+        ctx.obj["group_by"] = value
     return value
 
 
@@ -76,7 +77,7 @@ def inp_dir_callback(ctx: typer.Context, value: typing.Union[pathlib.Path, None]
         ctx (typer.Context): typer context object
         value (pathlib.Path): passed in parameter value
     """
-    if ctx.obj["cmd"] == "Vol" or ctx.obj["cmd"] == "Vol_Py3D":
+    if ctx.obj["sub_cmd"].startswith("Vol"):
         if not value:
             raise typer.BadParameter(
                 "Input directory is required for volume generation."
@@ -98,7 +99,7 @@ def out_dir_callback(ctx: typer.Context, value: typing.Union[pathlib.Path, None]
         ctx (typer.Context): typer context object
         value (pathlib.Path): passed in parameter value
     """
-    if ctx.obj["cmd"] == "Vol" or ctx.obj["cmd"] == "Vol_Py3D":
+    if ctx.obj["sub_cmd"].startswith("Vol"):
         if not value:
             raise typer.BadParameter(
                 "Output directory is required for volume generation."
@@ -122,7 +123,7 @@ def py3d_option_callback(
         ctx (typer.Context): typer context object
         value (int): passed in parameter value
     """
-    if ctx.obj["cmd"] == "Py3D":
+    if ctx.obj["sub_cmd"] == "Py3D":
         if not value:
             raise typer.BadParameter(
                 f"--{_camal_case(param.name)} is required for 3D pyramid generation."
@@ -137,7 +138,7 @@ def zarr_dir_callback(ctx: typer.Context, value: typing.Union[pathlib.Path, None
         ctx (typer.Context): typer context object
         value (pathlib.Path): passed in parameter value
     """
-    if ctx.obj["cmd"] == "Py3D":
+    if ctx.obj["sub_cmd"] == "Py3D":
         if value:  # use zarr directory
             if not value.exists():
                 raise typer.BadParameter("Zarr directory does not exist.")
@@ -147,10 +148,10 @@ def zarr_dir_callback(ctx: typer.Context, value: typing.Union[pathlib.Path, None
                 raise typer.BadParameter("Zarr directory is not readable.")
         else:  # None value, use inpDir instead
             # change context label
-            ctx.obj["cmd"] = "Vol_Py3D"
+            ctx.obj["sub_cmd"] = "Vol_Py3D"
             logger.info(
-                "Zarr dir not provided, using inpDir to perform first "
-                "volume generation, and then 3D pyramid generation."
+                "Zarr dir not provided, using inpDir to perform volume "
+                "generation first, and then 3D pyramid generation."
             )
 
     # fully resolve path
@@ -187,7 +188,7 @@ def main(
         help="File pattern for selecting images for 3D pyramid generation.",
         callback=vol_option_callback,
     ),
-    group_by: str = typer.Option(
+    group_by: GroupBy = typer.Option(
         None,
         "--groupBy",
         help="Image dimension, e.g., 'z', to group images for 3D pyramid generation.",
@@ -222,7 +223,8 @@ def main(
     # need to determine type based on stored context custom object. nevertheless
     # other param checks are correct based on the sub_cmd value
     # seems to be problem specific to using typer callback and enum
-    sub_cmd = ctx.obj["cmd"]
+    sub_cmd = ctx.obj["sub_cmd"]
+    group_by = ctx.obj.get("group_by", None)
     logger.info("Starting pyramid_generator_3d...")
     logger.info("subCmd: %s", sub_cmd)
     logger.info("zarrDir: %s", zarr_dir)
