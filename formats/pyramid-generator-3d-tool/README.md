@@ -11,7 +11,7 @@ This tool offers 2 subcommands: `Vol` and `Py3D`, for volume generation and 3D p
 |`--inpDir`   | Directory to input image collection. Required if `--zarrDir` is unspecified.|Input|collection|
 |`--filePattern` | File pattern for discovering images in `--inpDir`.                       |Input|collection|
 |`--groupBy` | Grouping variable for images. Options are `t`, `z`, `c`.                     |Input|string|
-|`--outDir`  | Output directory.                                                            |Output|collection|
+|`--outDir`  | Path of output directory.                                                    |Output|collection|
 |`--outImgName` | Output name for Zarr arrays when using volume generation.                 |Input|string|
 |`--baseScaleKey`| Base scale key for 3D pyramid generation. Default to 0.                  |Input|integer|
 |`--numLevels` | Number of levels for 3D pyramid.                                           |Input|integer|
