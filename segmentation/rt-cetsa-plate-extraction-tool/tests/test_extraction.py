@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+
 def test_extraction():
     """To pacify git actions.
 
