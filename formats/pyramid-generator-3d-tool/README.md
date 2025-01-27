@@ -42,6 +42,29 @@ Example usage:
 python -m polus.images.formats.pyramid_generator_3d --subCmd Py3D --inpDir /path/to/input/images --filePattern img_r{r:ddd}_c{c:ddd}.ome.tif --groupBy c --outDir /path/to/output --outImgName test_output --baseScaleKey 0 --numLevels 2
 ```
 
+## Testing with real data
+
+1. install ome-zarr
+```
+pip install ome-zarr
+```
+
+2. download an example dataset
+```
+cd <input_dir>
+ome_zarr download https://uk1s3.embassy.ebi.ac.uk/idr/zarr/v0.1/1884807.zarr
+```
+
+More dataset can be found [here](https://www.openmicroscopy.org/2020/11/04/zarr-data.html). To download other dataset, replace the link in the command above with other links copied from the "S3-entrypoint" column from the website.
+
+3. modify .zarray file under `<input_dir>/1884807.zarr/0`, i.e., delete the first element in "chunks" and "shape", which correspond to the T dimension.
+
+4. run the following command:
+```
+python -m polus.images.formats.pyramid_generator_3d --subCmd Py3D --zarrDir <input_path>/1884807.zarr --outDir <input_path>/1884807.zarr --baseScaleKey 0 --numLevels 2
+```
+Pyramid data will be written into the same folder.
+
 ## Building
 
 To build the Docker image for the tool, run `./build-docker.sh`.
