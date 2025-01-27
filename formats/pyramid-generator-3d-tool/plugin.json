@@ -1,6 +1,6 @@
 {
   "name": "pyramid_generator_3d",
-  "version": "0.1.0",
+  "version": "0.1.1-dev0",
   "title": "pyramid_generator_3d",
   "description": "Generate 3D or Volume Image Pyramid",
   "author": "Ji Liu (ji.liu@axleinfo.com)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/polusAI/tabular-tools",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/pyramid-generator-3d-tool:0.1.0",
+  "containerId": "polusai/pyramid-generator-3d-tool:0.1.1-dev0",
   "baseCommand": [
     "python3",
     "-m",

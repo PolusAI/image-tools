@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-formats-pyramid-generator-3d"
-version = "0.1.0"
+version = "0.1.1-dev0"
 description = "Generate 3D or Volume Image Pyramid"
 authors = ["Ji Liu <ji.liu@axleinfo.com>"]
 readme = "README.md"

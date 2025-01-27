@@ -1,4 +1,4 @@
-# pyramid_generator_3d (0.1.0)
+# pyramid_generator_3d (0.1.1-dev0)
 
 Generate 3D Image Pyramid from an image collection or Zarr directory. This plugin is a wrapper for argolid.
 This tool offers 2 subcommands: `Vol` and `Py3D`, for volume generation and 3D pyramid generation respectively. See [Usage](##usage) section for details.

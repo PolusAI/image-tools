@@ -47,7 +47,7 @@ outputs:
 
 requirements:
   DockerRequirement:
-    dockerPull: polusai/pyramid-generator-3d-tool:0.1.0
+    dockerPull: polusai/pyramid-generator-3d-tool:0.1.1-dev0
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)
