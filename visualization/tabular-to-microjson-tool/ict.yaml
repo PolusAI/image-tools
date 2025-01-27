@@ -1,7 +1,7 @@
 author:
 - Hamdah Shafqat
 contact: hamdahshafqat.abbasi@nih.gov
-container: polusai/tabular-to-microjson-tool:0.1.2-dev0
+container: polusai/tabular-to-microjson-tool:0.1.4-dev0
 description: Generates JSON from tabular data.
 entrypoint: python3 -m polus.images.visualization.tabular_to_microjson
 inputs:
@@ -35,6 +35,12 @@ inputs:
   name: groupBy
   required: false
   type: string
+- description: TileJSON layer
+  format:
+  - boolean
+  name: tileJson
+  required: false
+  type: boolean
 - description: Type of geometry coordinates
   format:
   - string
@@ -49,7 +55,7 @@ outputs:
   name: outDir
   required: true
   type: path
-repository: https://github.com/PolusAI/polus-plugins
+repository: https://github.com/PolusAI/image-tools
 specVersion: 1.0.0
 title: Tabular To Microjson
 ui:
@@ -77,4 +83,9 @@ ui:
   key: inputs.geometryType
   title: geometryType
   type: text
-version: 0.1.2-dev0
+- default: false
+  description: TileJSON layer
+  key: inputs.tileJson
+  title: tileJson
+  type: checkbox
+version: 0.1.4-dev0

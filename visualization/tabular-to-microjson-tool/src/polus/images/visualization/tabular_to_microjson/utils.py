@@ -1,6 +1,9 @@
 """Render Overlay."""
+
+import json
 import logging
 import os
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 from typing import Optional
@@ -16,6 +19,7 @@ from microjson.tilemodel import TileModel
 from microjson.tilewriter import TileWriter
 from microjson.tilewriter import extract_fields_ranges_enums
 from microjson.tilewriter import getbounds
+from pydantic import PydanticModelField
 from pydantic import field_validator
 
 logger = logging.getLogger(__name__)
@@ -25,7 +29,7 @@ POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".csv")
 EXT = (".arrow", ".feather")
 
 
-def convert_pyarrow_dataframe(file_path: Path):
+def convert_pyarrow_dataframe(file_path: Path) -> None:
     """The PyArrow reading of tabular data with (".csv", ".feather", ".arrow") format.
 
     Args:
@@ -50,18 +54,19 @@ def convert_pyarrow_dataframe(file_path: Path):
 
 
 def get_row_features(
-    file: str, datarows: list[dict[str, Optional[str]]], columns: list[str],
+    file: str,
+    datarows: list[dict[str, Optional[str]]],
+    columns: list[str],
 ) -> list[dict[str, Optional[str]]]:
-    """Retrieves the features of all rows from 'datarows' that match the given 'file' based on the 'intensity_image' key.
-    If no matching rows are found, returns a list containing a single dictionary with 'None' values for each specified column.
+    """Retrieves 'datarows' features matching the 'file' by 'intensity_image'.
 
     Args:
-        file: The intensity image filename to match against the 'intensity_image' key in 'datarows'.
-        datarows: A list of dictionaries representing rows, each containing string keys and optional string values.
+        file: The intensity image filename to match the intensity_image key in datarows.
+        datarows: A list of dictionaries with string keys and optional string values.
         columns: A list of column names to extract from the matching rows.
 
     Returns:
-        List: A list of dictionaries containing the features of the matching rows, or a single dictionary with 'None' for each column if no matches are found.
+        A list of matching rows or a dictionary with 'None' if no matches..
     """
     matching_rows = [
         {key: row.get(key) for key in columns}
@@ -99,7 +104,7 @@ class StitchingValidator(BaseOverlayModel):
     stitch_pattern: str
 
     @field_validator("stitch_path")
-    def validate_stitch_path(cls, value: Path) -> Path:
+    def validate_stitch_path(cls, value: Path) -> Path:  # noqa: N805
         """Validate stitch path."""
         if not Path(value).exists():
             msg = "Stitching path does not exists!! Please do check path again"
@@ -113,23 +118,24 @@ class StitchingValidator(BaseOverlayModel):
             if not f.readlines():
                 msg = "Stitching vector is empty so grid positions cannot be defined"
                 raise ValueError(msg)
-
         return value
 
     @field_validator("stitch_pattern")
-    def validate_stitch_pattern(cls, value: str, info: Any) -> str:
+    def validate_stitch_pattern(
+        cls,  # noqa: N805
+        value: str,
+        info: PydanticModelField,
+    ) -> str:
         """Validate stitch pattern based on stitch path."""
         stitch_path = info.data.get("stitch_path")
         if not stitch_path:
             msg = "stitch_path must be provided first."
             raise ValueError(msg)
 
-        # Example logic for validating the pattern
         if not stitch_path.suffix:
             msg = "stitch_path must point to a valid file with an extension."
             raise ValueError(msg)
 
-        # Replace this with the actual logic for validating the pattern
         files = fp.FilePattern(stitch_path, value)
         if len(files) == 0:
             msg = "Unable to parse file with the provided stitch pattern."
@@ -206,3 +212,93 @@ def convert_microjson_tile_json(microjson_path: Path) -> None:
         # Initialize the TileHandler
         handler = TileWriter(tile_model, pbf=True)
         handler.microjson2tiles(microjson_path, validate=False)
+
+
+def create_example_microjson(
+    features_data: list[dict[str, Any]],
+) -> dict[str, Sequence[str]]:
+    """Create a MicroJSON FeatureCollection from a list of feature data.
+
+    Args:
+        features_data: A list of dictionaries containing data for each feature.
+
+    Returns:
+        A MicroJSON FeatureCollection.
+    """
+    micro_json = {"type": "FeatureCollection", "features": []}
+
+    for feature in features_data:
+        geometry = {"type": "Polygon", "coordinates": [feature["coordinates"]]}
+
+        properties = {
+            key: value for key, value in feature.items() if key not in ["coordinates"]
+        }
+
+        micro_json["features"].append(  # type: ignore
+            {"type": "Feature", "geometry": geometry, "properties": properties},
+        )
+
+    return micro_json
+
+
+def preview_data(out_dir: Path) -> None:
+    """Create a example  MicroJSON FeatureCollection from a list of feature data."""
+    features_data = [
+        {
+            "coordinates": [
+                [0.0, 0.0],
+                [1034.0, 0.0],
+                [1034.0, 1034.0],
+                [0.0, 1034.0],
+                [0.0, 0.0],
+            ],
+            "experiment": "ncgca-sod1-p1 ck180618n1",
+            "row_number": 1,
+            "col_number": 1,
+            "well": "A01",
+            "plate": "CD_SOD1_2_E1023884__1",
+            "neg_controls": 1,
+            "pos_controls": 0,
+            "intensity_image": "x00_y01_c0.ome.tif",
+            "Count": 333,
+            "FPR": 0.0390,
+            "OTSU": 0.195,
+            "NSIGMA": 0.024,
+        },
+        {
+            "coordinates": [
+                [1034.0, 0.0],
+                [2068.0, 0.0],
+                [2068.0, 1034.0],
+                [1034.0, 1034.0],
+                [1034.0, 0.0],
+            ],
+            "experiment": "ncgca-sod1-p1 ck180618n1",
+            "row_number": 1,
+            "col_number": 2,
+            "well": "A02",
+            "plate": "CD_SOD1_2_E1023884__1",
+            "neg_controls": 0,
+            "pos_controls": 0,
+            "intensity_image": "x00_y02_c0.ome.tif",
+            "Count": 363,
+            "FPR": 0.190,
+            "OTSU": 0.413,
+            "NSIGMA": 0.123,
+        },
+        {
+            "coordinates": [
+                [2068.0, 0.0],
+                [3102.0, 0.0],
+                [3102.0, 1034.0],
+                [2068.0, 1034.0],
+                [2068.0, 0.0],
+            ],
+        },
+    ]
+
+    microjson_output = create_example_microjson(features_data)  # type: ignore
+    out_file = out_dir.joinpath("example_data.json")
+
+    with Path.open(out_file, "w") as json_file:
+        json.dump(microjson_output, json_file, indent=2)

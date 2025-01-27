@@ -1,4 +1,5 @@
 """Render Overlay."""
+
 import ast
 import logging
 import os
@@ -102,8 +103,8 @@ class PointSpec(ut.StitchingValidator):
 
     Returns:
         A list of dictionaries, each containing:
-            - "file": The parsed filename.
-            - "coordinates": A tuple representing the centroid of the calculated rectangle.
+            - file: The parsed filename.
+            - coordinates: A tuple for the centroid of the rectangle.
 
     """
 
@@ -173,7 +174,8 @@ class RenderOverlayModel(ut.StitchingValidator):
 
     file_path: Path = Field(..., description="Input file path.")
     geometry_type: str = Field(
-        ..., description="Type of geometry: 'polygon' or 'point'",
+        ...,
+        description="Type of geometry: 'polygon' or 'point'",
     )
     stitch_path: Path
     stitch_pattern: str
@@ -207,14 +209,15 @@ class RenderOverlayModel(ut.StitchingValidator):
                 msg = f"No data found in the file: {value}"
                 raise ValueError(msg)
 
-        except Exception as e:
+        except FileNotFoundError as e:
             msg = f"Error reading file '{value}': {e}"
-            raise ValueError(msg)
+            raise ValueError(msg) from None
 
         return value
 
     @field_validator("geometry_type")
-    def validate_geometry_type(cls, value: str) -> str:
+    def validate_geometry_type(cls, value: str) -> str:  # noqa: N805
+        """Validate geometry."""
         valid_types = {"Polygon", "Point"}
         if value not in valid_types:
             msg = f"Invalid geometry type. Expected one of {valid_types}."
@@ -284,7 +287,10 @@ class RenderOverlayModel(ut.StitchingValidator):
             columns = [col for col in data.column_names if col not in excolumns]
 
             datarows = (row for batch in data.to_batches() for row in batch.to_pylist())
-            datarows = sorted(datarows, key=lambda x: x["intensity_image"])
+            datarows = sorted(
+                datarows,
+                key=lambda x: x["intensity_image"],
+            )  # type:ignore
 
             features: list[mj.Feature] = []
 
@@ -300,7 +306,7 @@ class RenderOverlayModel(ut.StitchingValidator):
                     properties.update(sub_dict)
 
                 GeometryClass = getattr(mj, self.geometry_type)  # noqa: N806
-                cor_value = ast.literal_eval(cor)
+                cor_value = ast.literal_eval(cor)  # type: ignore
 
                 geometry = GeometryClass(
                     type=self.geometry_type,

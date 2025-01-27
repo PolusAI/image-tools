@@ -1,4 +1,4 @@
-# Tabular To Microjson(v0.1.1)
+# Tabular To Microjson(v0.1.4-dev0)
 
 This plugin uses [MICROJSON](https://github.com/bengtl/microjson/tree/dev) python library to generate JSON from tabular data which can be used in
 [RENDER UI](https://render.ci.ncats.io/?imageUrl=https://files.scb-ncats.io/pyramids/Idr0033/precompute/41744/x(00-15)_y(01-24)_p0(1-9)_c(1-5)/)
@@ -10,7 +10,7 @@ Note: The filenames of tabular and stitching vector should be same
 
 Note: Currently this plugin supports two geometry types `Polygon` and `Point`.A future work requires additional support of more geometry types in this plugin.
 
-Currently this plugins handles only three file formats supported by vaex.
+Currently this plugins handles only three file formats supported by pyarrow.
 1. csv
 2. arrow
 3. feather
@@ -42,6 +42,7 @@ This plugin can take seven input arguments and one output argument:
 | `stitchPattern`   | Pattern to parse filenames in stitching vector        | Input  | string       |
 | `groupBy`         | Variable to group filenames in  stitching vector | Input  | string       |
 | `geometryType`    | Geometry type (Polygon, Point)                        | Input  | string       |
+| `tileJson`    | TileJSON layer                                        | Input  | boolean       |
 | `outDir`          | Output directory for overlays                         | Output | string       |
 | `preview`      | Generate a JSON file with outputs                     | Output | JSON            |
 
@@ -57,6 +58,7 @@ docker run -v /data:/data polusai/tabular-to-microjson-plugin:0.1.1 \
   --stitchPattern "x{x:dd}_y{y:dd}_c{c:d}.ome.tif" \
   --groupBy None \
   --geometryType "Polygon" \
+  --tileJson \
   --outDir /data/output \
   --preview
 ```

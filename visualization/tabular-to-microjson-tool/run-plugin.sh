@@ -14,15 +14,14 @@ group_by=None
 out_dir=${datapath}/output
 
 
-# # # Show the help options
-# # # docker run polusai/tabular-to-microjson-plugin:${version}
 
 docker run -v ${datapath}:${datapath} \
-            polusai/tabular-to-microjson-plugin:${version} \
+            polusai/tabular-to-microjson-tool:${version} \
             --inpDir ${inp_dir} \
             --stitchDir ${stitch_dir} \
             --filePattern ${file_pattern} \
             --stitchPattern ${stitch_pattern} \
             --groupBy ${group_by} \
             --geometryType ${geometry_type} \
+            --tileJson \
             --outDir ${out_dir}

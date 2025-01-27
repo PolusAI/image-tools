@@ -1,14 +1,15 @@
 """Tabular to microjson package."""
+
 import logging
 import os
 import pathlib
-import shutil
 import warnings
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import cpu_count
 from typing import Optional
 
 import filepattern as fp
+import polus.images.visualization.tabular_to_microjson.utils as ut
 import typer
 from polus.images.visualization.tabular_to_microjson import microjson_overlay as mo
 from tqdm import tqdm
@@ -96,26 +97,22 @@ def main(  # noqa: PLR0913
         st for st in stitch_dir.iterdir() if st.suffix == ".txt" and st.is_file()
     ][0]
 
-    with ThreadPoolExecutor(max_workers=num_workers) as executor:
-        for file in tqdm(files, desc="Creating overlays", total=len(files)):
-            micro_model = mo.RenderOverlayModel(
-                file_path=file,
-                geometry_type=geometry_type,
-                stitch_path=stitch_path,
-                stitch_pattern=stitch_pattern,
-                group_by=group_by,
-                tile_json=tile_json,
-                out_dir=out_dir,
-            )
-            executor.submit(micro_model.microjson_overlay)
+    if not preview:
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            for file in tqdm(files, desc="Creating overlays", total=len(files)):
+                micro_model = mo.RenderOverlayModel(
+                    file_path=file,
+                    geometry_type=geometry_type,
+                    stitch_path=stitch_path,
+                    stitch_pattern=stitch_pattern,
+                    group_by=group_by,
+                    tile_json=tile_json,
+                    out_dir=out_dir,
+                )
+                executor.submit(micro_model.microjson_overlay)
 
-    if preview:
-        shutil.copy(
-            pathlib.Path(__file__)
-            .parents[5]
-            .joinpath(f"examples/example_overlay_{geometry_type}.json"),
-            out_dir,
-        )
+    else:
+        ut.preview_data(out_dir)
 
 
 if __name__ == "__main__":
