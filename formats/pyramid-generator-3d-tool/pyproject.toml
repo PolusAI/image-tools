@@ -12,6 +12,7 @@ bfio = {version = ">=2.3.3,<3.0", extras = ["all"]}
 filepattern = ">=2.0.4,<3.0"
 typer = "0.7.0"
 argolid = "^0.0.6"
+lxml = "^5.3.0"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
