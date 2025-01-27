@@ -1,4 +1,4 @@
-FROM polusai/bfio:2.1.9
+FROM polusai/bfio:2.4.7
 
 # environment variables defined in polusai/bfio
 ENV EXEC_DIR="/opt/executables"
@@ -10,7 +10,7 @@ ENV POLUS_LOG="INFO"
 WORKDIR ${EXEC_DIR}
 
 # TODO: Change the tool_dir to the tool directory
-ENV TOOL_DIR="formats/pyramid-generator-3d"
+ENV TOOL_DIR="formats/pyramid-generator-3d-tool"
 
 # Copy the repository into the container
 RUN mkdir image-tools
