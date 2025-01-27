@@ -226,7 +226,7 @@ def main(
     if sub_cmd.endswith("Py3D"):
         logger.info("Starting 3D Pyramid Generation...")
         # use out_dir if zarr_dir is None. volume generation outputs zarr to out_dir
-        zarr_dir = zarr_dir if zarr_dir else out_dir
+        zarr_dir = zarr_dir if zarr_dir else out_dir / out_img_name
         gen_py3d(zarr_dir, base_scale_key, num_levels)
         logger.info("3D pyramid generation completed.")
 
