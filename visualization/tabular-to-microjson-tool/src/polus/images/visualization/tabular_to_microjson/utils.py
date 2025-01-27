@@ -19,7 +19,6 @@ from microjson.tilemodel import TileModel
 from microjson.tilewriter import TileWriter
 from microjson.tilewriter import extract_fields_ranges_enums
 from microjson.tilewriter import getbounds
-from pydantic import PydanticModelField
 from pydantic import field_validator
 
 logger = logging.getLogger(__name__)
@@ -124,7 +123,7 @@ class StitchingValidator(BaseOverlayModel):
     def validate_stitch_pattern(
         cls,  # noqa: N805
         value: str,
-        info: PydanticModelField,
+        info: Any,  # noqa: ANN401
     ) -> str:
         """Validate stitch pattern based on stitch path."""
         stitch_path = info.data.get("stitch_path")
