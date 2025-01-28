@@ -1,0 +1,116 @@
+author:
+- Ji Liu
+contact: ji.liu@axleinfo.com
+container: polusai/pyramid-generator-3d-tool:0.1.1-dev0
+description: "This plugin generates 3D image pyramid."
+entrypoint: '[python3, -m, polus.images.formats.pyramid_generator_3d]'
+inputs:
+- description: Subcommand to invoke. Options are Vol and Py3D.
+  format:
+  - enum
+  name: subCmd
+  required: true
+  type: string
+- description: Directory to Zarr arrays for generating 3D pyramid.
+  format:
+  - collection
+  name: zarrDir
+  required: false
+  type: path
+- description: Input image collection to be processed by this tool.
+  format:
+  - collection
+  name: inpDir
+  required: false
+  type: path
+- description: Filename pattern used to select images from inpDir.
+  format:
+  - string
+  name: filePattern
+  required: false
+  type: string
+- description: Grouping variable for images. Options are 't', 'z', 'c'.
+  format:
+  - enum
+  name: groupBy
+  required: false
+  type: string
+- description: Path of output directory.
+  format:
+  - collection
+  name: outDir
+  required: true
+  type: path
+- description: Output name for Zarr arrays when using volume generation.
+  format:
+  - string
+  name: outImgName
+  required: false
+  type: string
+- description: Base scale key for 3D pyramid generation. Default to 0.
+  format:
+  - integer
+  name: baseScaleKey
+  required: false
+  type: integer
+- description: Number of levels for 3D pyramid.
+  format:
+  - integer
+  name: numLevels
+  required: false
+  type: integer
+outputs:
+- description: Path of output directory.
+  format:
+  - collection
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/PolusAI/image-tools
+specVersion: 1.0.0
+title: 3D Pyramid Generator Plugin
+ui:
+- description: Subcommand to invoke. Options are Vol and Py3D.
+  fields:
+  - Vol
+  - Py3D
+  key: inputs.subCmd
+  title: Subcommand
+  type: select
+- description: Directory to Zarr arrays for generating 3D pyramid.
+  key: inputs.zarrDir
+  title: Directory to zarr arrays
+  type: path
+- description: Input image collection to be processed by this tool.
+  key: inputs.inpDir
+  title: Input directory
+  type: path
+- description: Filename pattern used to select images from inpDir.
+  key: inputs.filePattern
+  title: File pattern
+  type: string
+- description: Grouping variable for images. Options are 't', 'z', 'c'.
+  fields:
+  - t
+  - z
+  - c
+  key: inputs.groupBy
+  title: Group by
+  type: select
+- description: Path of output directory.
+  key: inputs.outDir
+  title: Output directory
+  type: path
+- description: Output name for Zarr arrays when using volume generation.
+  key: inputs.outImgName
+  title: Output image name
+  type: string
+- description: Base scale key for 3D pyramid generation. Default to 0.
+  key: inputs.baseScaleKey
+  title: Base scale key
+  type: integer
+- description: Number of levels for 3D pyramid.
+  key: inputs.numLevels
+  title: Number of levels
+  type: integer
+version: 0.1.1-dev0
