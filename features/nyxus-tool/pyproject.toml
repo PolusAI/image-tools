@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-features-nyxus-tool"
-version = "0.1.8-dev0"
+version = "0.1.8"
 description = ""
 authors = [
            "Nick Schaub <nick.schaub@nih.gov>",

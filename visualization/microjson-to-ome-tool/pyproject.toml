@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-visualization-microjson-to-ome"
-version = "0.1.5-dev1"
+version = "0.1.5"
 description = "This plugin reconstructs binary images from polygon coordinates"
 authors = ["Hamdah Shafqat abbasi  <hamdahshafqat.abbasi@nih.gov>"]
 readme = "README.md"

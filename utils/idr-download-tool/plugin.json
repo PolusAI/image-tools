@@ -1,7 +1,7 @@
 {
   "name": "Idr Download",
-  "version": "0.1.0-dev0",
-  "containerId": "polusai/idr-download-tool:0.1.0-dev0",
+  "version": "0.1.0",
+  "containerId": "polusai/idr-download-tool:0.1.0",
   "title": "Omero Download",
   "description": "This plugin allows to retrieve the microscopy image data from the https://idr.openmicroscopy.org.",
   "author": "Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
