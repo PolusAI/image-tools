@@ -139,21 +139,28 @@ def test_cli(gen_image_collection, default_params):
     ]
     result = runner.invoke(app, param_list)
     assert result.exit_code == 0
+    # check presence of .zarray file
+    assert Path(out_dir / out_img_name / "0" / ".zarray").exists()
 
     # do test with Py3D, using previous output as input
     param_list = [
         "--subCmd",
         "Py3D",
         "--zarrDir",
-        out_dir,
+        out_dir / out_img_name,
         "--outDir",
-        out_dir,
+        out_dir / out_img_name,
         "--baseScaleKey",
         base_scale_key,
         "--numLevels",
         num_levels,
     ]
     result = runner.invoke(app, param_list)
+    assert result.exit_code == 0
+
+    # check presence of .zarray file
+    for level in range(1, num_levels + 1):
+        assert Path(out_dir / out_img_name / f"{level}" / ".zarray").exists()
 
     # remove all file and folders in out_dir
     for item in out_dir.iterdir():
