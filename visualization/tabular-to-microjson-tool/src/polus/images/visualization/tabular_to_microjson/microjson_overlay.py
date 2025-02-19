@@ -1,19 +1,21 @@
 """Render Overlay."""
+
 import ast
 import logging
 import os
 from pathlib import Path
 from typing import Any
 from typing import Optional
-from typing import Union
 
 import filepattern as fp
 import microjson.model as mj
 import numpy as np
-import pydantic
-import vaex
-from pydantic import root_validator
-from pydantic import validator
+import polus.images.visualization.tabular_to_microjson.utils as ut
+import pyarrow as pa
+import pyarrow.csv as pcsv
+import pyarrow.feather as pa_feather
+from pydantic import Field
+from pydantic import field_validator
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -22,75 +24,7 @@ POLUS_TAB_EXT = os.environ.get("POLUS_TAB_EXT", ".csv")
 EXT = (".arrow", ".feather")
 
 
-def convert_vaex_dataframe(file_path: Path) -> vaex.dataframe.DataFrame:
-    """The vaex reading of tabular data with (".csv", ".feather", ".arrow") format.
-
-    Args:
-        file_path: Path to tabular data.
-
-    Returns:
-        A vaex dataframe.
-    """
-    if file_path.name.endswith(".csv"):
-        return vaex.read_csv(Path(file_path), convert=True, chunk_size=5_000_000)
-    if file_path.name.endswith(EXT):
-        return vaex.open(Path(file_path))
-    return None
-
-
-class CustomOverlayModel(pydantic.BaseModel):
-    """Setting up configuration for pydantic base model."""
-
-    class Config:
-        """Model configuration."""
-
-        extra = "allow"
-        allow_population_by_field_name = True
-
-
-class Validator(CustomOverlayModel):
-    """Validate stiching vector path and stiching pattern fields.
-
-    This validates values passed for stitch_path and stitch_pattern attributes.
-
-    Args:
-        stitch_path: Path to the stitching vector, containing x and y image positions.
-        stitch_pattern: Pattern to parse image filenames in stitching vector.
-
-    Returns:
-        Attribute values
-
-    """
-
-    stitch_path: str
-    stitch_pattern: str
-
-    @root_validator(pre=True)
-    def validate_stitch_path(cls, values: dict) -> dict:  # noqa: N805
-        """Validate stitch path and stitch pattern."""
-        stitch_path = values.get("stitch_path")
-        stitch_pattern = values.get("stitch_pattern")
-        if stitch_path is not None and not Path(stitch_path).exists():
-            msg = "Stitching path does not exists!! Please do check path again"
-            raise ValueError(msg)
-        if stitch_path is not None and Path(stitch_path).exists():
-            with Path.open(Path(stitch_path)) as f:
-                line = f.readlines()
-                if line is None:
-                    msg = (
-                        "Stitching vector is empty so grid positions cannot be defined"
-                    )
-                    raise ValueError(msg)
-        if stitch_path is not None and Path(stitch_path).exists():
-            files = fp.FilePattern(stitch_path, stitch_pattern)
-            if len(files) == 0:
-                msg = "Define stitch pattern again!!! as it is unable to parse file"
-                raise ValueError(msg)
-
-        return values
-
-
-class PolygonSpec(Validator):
+class PolygonSpec(ut.StitchingValidator):
     """Polygon is a two-dimensional planar shape with straight sides.
 
     This generates rectangular polygon coordinates from (x, y) coordinate positions.
@@ -105,11 +39,8 @@ class PolygonSpec(Validator):
 
     """
 
-    stitch_path: str
-    stitch_pattern: str
     group_by: Optional[str] = None
 
-    @property
     def get_coordinates(self) -> list[Any]:
         """Generate rectangular polygon coordinates."""
         files = fp.FilePattern(self.stitch_path, self.stitch_pattern)
@@ -158,10 +89,12 @@ class PolygonSpec(Validator):
         return mapped_coordinates
 
 
-class PointSpec(Validator):
-    """Polygon is a two-dimensional planar shape with straight sides.
+class PointSpec(ut.StitchingValidator):
+    """Generate mapped coordinates for rectangular polygons based on image positions.
 
-    This generates rectangular polygon coordinates from (x, y) coordinate positions.
+    This class calculates the centroid positions of rectangular polygons derived from
+    (x, y) coordinate positions in a stitching vector. It supports optional grouping
+    of filenames for structured output.
 
     Args:
         stitch_path: Path to the stitching vector, containing x and y image positions.
@@ -169,21 +102,22 @@ class PointSpec(Validator):
         group_by: Variable to group image filenames in stitching vector.
 
     Returns:
-        A list of tuples of centroids of a rectangular polygon..
+        A list of dictionaries, each containing:
+            - file: The parsed filename.
+            - coordinates: A tuple for the centroid of the rectangle.
 
     """
 
-    stitch_path: str
+    stitch_path: Path
     stitch_pattern: str
     group_by: Optional[str] = None
 
-    @property
     def get_coordinates(self) -> list[Any]:
         """Generate rectangular polygon coordinates."""
         files = fp.FilePattern(self.stitch_path, self.stitch_pattern)
-        self.group_by = None if self.group_by == "None" else self.group_by
+        self.group_by = None if self.group_by in {None, "None"} else self.group_by
 
-        if self.group_by is not None:
+        if self.group_by:
             var_list = files.get_unique_values()
             var_dict = {k: len(v) for k, v in var_list.items() if k == self.group_by}
             gp_value = var_dict[self.group_by]
@@ -225,90 +159,112 @@ class PointSpec(Validator):
         return mapped_coordinates
 
 
-class ValidatedProperties(mj.Properties):
-    """Properties with validation."""
-
-    @validator("string", pre=True, each_item=True)
-    def validate_str(
-        cls,
-        v: Union[str, None],
-    ) -> str:  # noqa: N805
-        """Validate string."""
-        if v is None:
-            return ""
-        return v
-
-    @validator("numeric", pre=True, each_item=True)
-    def validate_num(
-        cls,
-        v: Union[int, None],
-    ) -> Union[int, None]:  # noqa: N805
-        """Validate numeric."""
-        if v is None:
-            return np.nan
-        return v
-
-
-class RenderOverlayModel(CustomOverlayModel):
+class RenderOverlayModel(ut.StitchingValidator):
     """Generate JSON overlays using microjson python package.
 
     Args:
         file_path: Path to input file.
-        coordinates: List of geometry coordinates.
-        geometry_type: Type of geometry (Polygon, Points, bbbox).
+        geometry_type: Type of geometry (Polygon, Points).
+        stitch_path: Path to the stitching vector, containing x and y image positions.
+        stitch_pattern: Pattern to parse image filenames in stitching vector.
+        group_by: Variable to group image filenames in stitching vector.
+        tile_json: Convert microjson to tile json pyramid.
         out_dir: Path to output directory.
     """
 
-    file_path: Path
-    coordinates: list[Any]
-    geometry_type: str
+    file_path: Path = Field(..., description="Input file path.")
+    geometry_type: str = Field(
+        ...,
+        description="Type of geometry: 'polygon' or 'point'",
+    )
+    stitch_path: Path
+    stitch_pattern: str
+    group_by: Optional[str] = None
+    tile_json: Optional[bool] = False
     out_dir: Path
 
-    @pydantic.validator("file_path", pre=True)
+    @field_validator("file_path")
     def validate_file_path(cls, value: Path) -> Path:  # noqa: N805
-        """Validate file path."""
+        """Validate file path and check data integrity."""
         if not Path(value).exists():
-            msg = "File path does not exists!! Please do check path again"
+            msg = "File path does not exist! Please check the path again."
             raise ValueError(msg)
-        if (
-            Path(value).exists()
-            and not Path(value).name.startswith(".")
-            and Path(value).name.endswith(".csv")
-        ):
-            data = vaex.read_csv(Path(value))
-            if data.shape[0] | data.shape[1] == 0:
-                msg = "data doesnot exists"
+
+        file_ext = Path(value).suffix.lower()
+
+        try:
+            if file_ext == ".csv":
+                table = pcsv.read_csv(str(value))
+            elif file_ext == ".arrow":
+                with pa.memory_map(str(value), "r") as mfile:
+                    table = pa.ipc.open_file(mfile).read_all()
+            elif file_ext == ".feather":
+                table = pa_feather.read_table(str(value))
+            else:
+                msg = f"Unsupported file format: {file_ext}"
                 raise ValueError(msg)
 
-        elif (
-            Path(value).exists()
-            and not Path(value).name.startswith(".")
-            and Path(value).name.endswith(EXT)
-        ):
-            data = vaex.open(Path(value))
-            if data.shape[0] | data.shape[1] == 0:
-                msg = "data doesnot exists"
+            # Validate table contents
+            if table.num_rows == 0 or table.num_columns == 0:
+                msg = f"No data found in the file: {value}"
                 raise ValueError(msg)
+
+        except FileNotFoundError as e:
+            msg = f"Error reading file '{value}': {e}"
+            raise ValueError(msg) from None
 
         return value
+
+    @field_validator("geometry_type")
+    def validate_geometry_type(cls, value: str) -> str:  # noqa: N805
+        """Validate geometry."""
+        valid_types = {"Polygon", "Point"}
+        if value not in valid_types:
+            msg = f"Invalid geometry type. Expected one of {valid_types}."
+            raise ValueError(msg)
+        return value
+
+    def get_coordinates(self) -> list[dict[str, Any]]:
+        """Generate coordinates using the specified geometry type."""
+        if self.geometry_type == "Polygon":
+            spec = PolygonSpec(
+                stitch_path=self.stitch_path,
+                stitch_pattern=self.stitch_pattern,
+                group_by=self.group_by,
+            )
+        elif self.geometry_type == "Point":
+            spec = PointSpec(
+                stitch_path=self.stitch_path,
+                stitch_pattern=self.stitch_pattern,
+                group_by=self.group_by,
+            )
+        else:
+            msg = f"Unsupported geometry type: {self.geometry_type}"
+            raise ValueError(msg)
+
+        return spec.get_coordinates()
 
     @property
     def microjson_overlay(self) -> None:
         """Create microjson overlays in JSON Format."""
         if self.file_path.name.endswith((".csv", ".feather", ".arrow")):
-            data = convert_vaex_dataframe(self.file_path)
+            data = ut.convert_pyarrow_dataframe(self.file_path)
+
             des_columns = [
                 feature
-                for feature in data.get_column_names()
-                if data.data_type(feature) == str
+                for feature in data.column_names
+                if data[feature].type == pa.string()
             ]
-
             int_columns = [
                 feature
-                for feature in data.get_column_names()
-                if data.data_type(feature) == int or data.data_type(feature) == float
+                for feature in data.column_names
+                if (
+                    data[feature].type == pa.int32()
+                    or data[feature].type == pa.int64()
+                    or data[feature].type == pa.float32()
+                    or data[feature].type == pa.float64()
+                )
             ]
-
             if len(int_columns) == 0:
                 msg = "Features with integer datatype do not exist"
                 raise ValueError(msg)
@@ -317,92 +273,66 @@ class RenderOverlayModel(CustomOverlayModel):
                 msg = "Descriptive features do not exist"
                 raise ValueError(msg)
 
-            data["geometry_type"] = np.repeat(self.geometry_type, data.shape[0])
-            data["type"] = np.repeat("Feature", data.shape[0])
+            # Adding new columns
+            geometry_col = pa.array(np.repeat(self.geometry_type, len(data)))
+            sub_geometry = pa.array(np.repeat("Rectangle", len(data)))
+            type_col = pa.array(np.repeat("Feature", len(data)))
 
-            excolumns = ["geometry_type", "type"]
+            data = data.append_column("geometry_type", geometry_col)
+            data = data.append_column("sub_type", sub_geometry)
+            data = data.append_column("type", type_col)
 
-            des_columns = [col for col in des_columns if col not in excolumns]
+            excolumns = ["geometry_type", "sub_type", "type"]
+
+            columns = [col for col in data.column_names if col not in excolumns]
+
+            datarows = (row for batch in data.to_batches() for row in batch.to_pylist())
+            datarows = sorted(
+                datarows,
+                key=lambda x: x["intensity_image"],
+            )  # type:ignore
 
             features: list[mj.Feature] = []
 
-            for d, cor in zip(data.iterrows(), self.coordinates):
-                _, row = d
-                if row["intensity_image"] == cor["file"]:
-                    desc = [{key: row[key]} for key in des_columns]
-                    nume = [{key: row[key]} for key in int_columns]
+            coordinates = self.get_coordinates()
 
-                    descriptive_dict = {}
-                    for sub_dict in desc:
-                        descriptive_dict.update(sub_dict)
+            for m in coordinates:
+                file, cor = m.get("file"), m.get("coordinates")
 
-                    numeric_dict = {}
-                    for sub_dict in nume:
-                        numeric_dict.update(sub_dict)
+                row_feats = ut.get_row_features(file, datarows, columns)
 
-                    GeometryClass = getattr(mj, row["geometry_type"])  # noqa: N806
-                    cor_value = ast.literal_eval(cor["coordinates"])
-                    geometry = GeometryClass(
-                        type=row["geometry_type"],
-                        coordinates=cor_value,
-                    )
+                properties = {}
+                for sub_dict in row_feats:
+                    properties.update(sub_dict)
 
-                    # create a new properties object dynamically
-                    properties = ValidatedProperties(
-                        string=descriptive_dict,
-                        numeric=numeric_dict,
-                    )
+                GeometryClass = getattr(mj, self.geometry_type)  # noqa: N806
+                cor_value = ast.literal_eval(cor)  # type: ignore
 
-                    # Create a new Feature object
-                    feature = mj.MicroFeature(
-                        type=row["type"],
-                        geometry=geometry,
-                        properties=properties,
-                    )
-                    features.append(feature)
+                geometry = GeometryClass(
+                    type=self.geometry_type,
+                    subtype="Rectangle",
+                    coordinates=cor_value,
+                )
+                feature = mj.MicroFeature(
+                    type="Feature",
+                    geometry=geometry,
+                    properties=properties,
+                )
 
-            valrange = [
-                {i: {"min": data[i].min(), "max": data[i].max()}} for i in int_columns
-            ]
-            valrange_dict = {}
-            for sub_dict in valrange:
-                valrange_dict.update(sub_dict)
-
-            # Create a list of descriptive fields
-            descriptive_fields = des_columns
+                features.append(feature)
 
             # Create a new FeatureCollection object
             feature_collection = mj.MicroFeatureCollection(
                 type="FeatureCollection",
                 features=features,
-                value_range=valrange_dict,
-                descriptive_fields=descriptive_fields,
-                coordinatesystem={
-                    "axes": [
-                        {
-                            "name": "x",
-                            "unit": "micrometer",
-                            "type": "cartesian",
-                            "pixelsPerUnit": 1,
-                            "description": "x-axis",
-                        },
-                        {
-                            "name": "y",
-                            "unit": "micrometer",
-                            "type": "cartesian",
-                            "pixelsPerUnit": 1,
-                            "description": "y-axis",
-                        },
-                    ],
-                    "origo": "top-left",
-                },
             )
+
+            out_name = Path(self.out_dir, f"{self.file_path.stem}_overlay.json")
 
             if len(feature_collection.model_dump_json()) == 0:
                 msg = "JSON file is empty"
                 raise ValueError(msg)
             if len(feature_collection.model_dump_json()) > 0:
-                out_name = Path(self.out_dir, f"{self.file_path.stem}_overlay.json")
                 with Path.open(out_name, "w") as f:
                     f.write(
                         feature_collection.model_dump_json(
@@ -411,3 +341,7 @@ class RenderOverlayModel(CustomOverlayModel):
                         ),
                     )
                     logger.info(f"Saving overlay json file: {out_name}")
+
+            if self.tile_json:
+                logger.info(f"Generating tileJSON: {out_name}")
+                ut.convert_microjson_tile_json(out_name)
