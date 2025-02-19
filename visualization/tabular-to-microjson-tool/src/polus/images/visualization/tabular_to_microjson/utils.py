@@ -190,7 +190,7 @@ def convert_microjson_tile_json(microjson_path: Path) -> None:
         # Instantiate TileModel with your settings
         tile_model = TileModel(
             tilejson="3.0.0",
-            tiles=["tiles/{z}/{x}/{y}.pbf"],  # Local path or URL
+            tiles=["{z}/{x}/{y}.pbf"],  # Local path or URL
             name="Example Tile Layer",
             description="A TileJSON example incorporating MicroJSON data",
             version="1.0.0",
@@ -205,11 +205,13 @@ def convert_microjson_tile_json(microjson_path: Path) -> None:
         # Create the root model with your TileModel instance
         tileobj = TileJSON(root=tile_model)
 
-        with Path.open(out_dir.joinpath("metadata.json"), "w") as f:
+        tilepath = out_dir.joinpath("metadata.json")
+        with Path.open(tilepath, "w") as f:
             f.write(tileobj.model_dump_json(indent=2))
 
-        # Initialize the TileHandler
+        # # Initialize the TileHandler
         handler = TileWriter(tile_model, pbf=True)
+        os.chdir(tilepath.parent)
         handler.microjson2tiles(microjson_path, validate=False)
 
 
