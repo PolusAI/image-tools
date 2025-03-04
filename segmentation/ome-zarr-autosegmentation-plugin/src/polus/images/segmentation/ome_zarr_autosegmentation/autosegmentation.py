@@ -38,81 +38,33 @@ def init_sam2_predictor(checkpoint_path):
 
 def generate_segmentation_mask(predictor, image):
     """Generate segmentation mask for given PIL image."""
-    # Convert PIL image to numpy array
     img_array = np.array(image)
 
-    # Convert grayscale to RGB if necessary
     if len(img_array.shape) == 2 or (
         len(img_array.shape) == 3 and img_array.shape[2] == 1
     ):
         # Stack the single channel three times to create RGB
         img_array = np.stack([img_array] * 3, axis=-1)
 
-    # Ensure array is in correct format (H, W, C)
     if len(img_array.shape) != 3 or img_array.shape[2] != 3:
         raise ValueError(f"Unexpected image shape: {img_array.shape}")
 
-    # Generate masks
     with torch.inference_mode():
         masks = predictor.generate(img_array)
 
-    # Convert list of mask dictionaries to numpy array
-    mask_array = np.stack([mask["segmentation"] for mask in masks], axis=0)
-    return mask_array
-
-
-def create_segmentation_overlay(image, masks, colors=None):
-    """Create a new image showing segmentation masks with different colors."""
-    if len(masks) == 0:
-        return Image.new("RGB", image.size, (0, 0, 0))
-
-    # Generate random colors if none provided
-    if colors is None:
-        colors = []
-        for i in range(len(masks)):
-            # Distribute hues evenly around color wheel
-            hue = i / len(masks)
-            h = hue * 6
-            c = int(255)
-            x = int(255 * (1 - abs(h % 2 - 1)))
-
-            if h < 1:
-                rgb = (c, x, 0)
-            elif h < 2:
-                rgb = (x, c, 0)
-            elif h < 3:
-                rgb = (0, c, x)
-            elif h < 4:
-                rgb = (0, x, c)
-            elif h < 5:
-                rgb = (x, 0, c)
-            else:
-                rgb = (c, 0, x)
-
-            colors.append(rgb)
-
-    # Create a black background image
-    result = Image.new("RGB", image.size, (0, 0, 0))
-
-    # Add each mask with its color
-    for i, mask in enumerate(masks):
-        mask_img = Image.fromarray((mask * 255).astype(np.uint8)).convert("L")
-        overlay = Image.new("RGB", image.size, colors[i])
-        result = Image.composite(overlay, result, mask_img)
-
-    return result
-
+    height, width = img_array.shape[:2]
+    label_image = np.zeros((height, width), dtype=np.uint16)
+    
+    for idx, mask in enumerate(masks, start=1):  # Start from 1, leaving 0 as background
+        label_image[mask["segmentation"]] = idx
+    
+    return label_image
 
 def segment_image(predictor, image):
-    # Generate masks
-    masks = generate_segmentation_mask(predictor, image)
-
-    # Create visualization
-    return create_segmentation_overlay(image, masks)
-
+    return generate_segmentation_mask(predictor, image)
 
 def create_zarr_from_segmentations(segmentations, original_dataset_path, output_dataset_path):
-    """Create an OME-ZARR dataset from segmentation PNGs matching original structure."""
+    """Create an OME-ZARR dataset from segmentation masks with unique instance labels."""
     # Get original structure
     location = parse_url(original_dataset_path)
     reader = Reader(location)
@@ -129,56 +81,45 @@ def create_zarr_from_segmentations(segmentations, original_dataset_path, output_
     output_path = pathlib.Path(output_dataset_path)
     if output_path.exists():
         import shutil
-
         shutil.rmtree(output_path)
     output_path.mkdir(parents=True)
 
-    # Create store with nested directory settings
-    store = zarr.DirectoryStore(
-        str(output_path), dimension_separator="/"
-    )  # Use '/' for nested directories
+    store = zarr.DirectoryStore(str(output_path), dimension_separator="/")
     root = zarr.group(store)
 
     # Get dimensions from first mask
     first_mask = np.array(segmentations[0])
-    if len(first_mask.shape) == 3:
-        first_mask = first_mask[..., 0]
 
     # Create array matching original dimensions
     if ndim == 5:  # (T, C, Z, Y, X)
         masks = np.zeros(
             (1, 1, len(segmentations), first_mask.shape[0], first_mask.shape[1]),
-            dtype=np.uint8,
+            dtype=np.uint16,
         )
     else:  # (C, Z, Y, X)
         masks = np.zeros(
             (1, len(segmentations), first_mask.shape[0], first_mask.shape[1]),
-            dtype=np.uint8,
+            dtype=np.uint16,
         )
 
-    # Load all masks
     print(f"Loading {len(segmentations)} segmentation masks...")
     for i, segmentation in enumerate(segmentations):
         mask = np.array(segmentation)
-        if len(mask.shape) == 3:
-            mask = mask[..., 0]
         if ndim == 5:
             masks[0, 0, i] = mask
         else:
             masks[0, i] = mask
 
-    # Create pyramid using nearest neighbor for labels
     scaler = ome_zarr.scale.Scaler()
     pyramid = scaler.nearest(masks)
 
-    # Write with nested directory structure
     write_multiscale(
         pyramid=pyramid,
         group=root,
         axes=axes,
         storage_options={
             "chunks": original_chunks,
-            "dimension_separator": "/",  # Ensure nested directory structure
+            "dimension_separator": "/",
         },
     )
 
@@ -252,3 +193,5 @@ def autosegmentation(inp_dir: Path, out_dir: Path):
         None
     """
     autosegment_dataset(inp_dir, out_dir)
+
+    
