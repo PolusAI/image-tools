@@ -6,6 +6,7 @@ import pathlib
 from concurrent.futures import as_completed
 from typing import Any
 from typing import Optional
+from typing import Union
 
 import filepattern as fp
 import preadator
@@ -26,17 +27,24 @@ logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
 
 
+def parse_input_dir(value: str) -> Union[pathlib.Path, list[str]]:
+    """Parse inp_dir as either a directory path or a comma-separated list of files."""
+    if "," in value:
+        return [f.strip() for f in value.split(",")]
+    path = pathlib.Path(value)
+    if not (path.exists() and path.is_dir()):
+        msg = f"Directory {path} does not exist"
+        raise typer.BadParameter(msg)
+    return path
+
+
 @app.command()
 def main(
-    inp_dir: pathlib.Path = typer.Option(
+    inp_dir: str = typer.Option(
         ...,
         "--inpDir",
         help="Input generic data collection to be processed by this plugin",
-        exists=True,
-        resolve_path=True,
-        readable=True,
-        file_okay=False,
-        dir_okay=True,
+        callback=parse_input_dir,
     ),
     pattern: str = typer.Option(
         ".+",

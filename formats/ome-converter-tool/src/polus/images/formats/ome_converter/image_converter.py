@@ -125,7 +125,7 @@ def convert_image(
                 )
 
             # Initialize the complete_image if not done yet
-            final_image = np.zeros((br.Y, br.X), dtype=br.dtype)
+            final_image = np.zeros((br.Y, br.X, br.Z, br.C, br.T), dtype=br.dtype)
 
             # Process each tile in the image using itertools.product
             for y, x in product(range(0, br.Y, TILE_SIZE), range(0, br.X, TILE_SIZE)):
@@ -141,7 +141,7 @@ def convert_image(
                 ]
 
                 # Place the tile into the correct position in the complete image
-                final_image[y:y_max, x:x_max] = image
+                final_image[y:y_max, x:x_max, z, c, t] = image
 
             write_image(
                 br=br,
