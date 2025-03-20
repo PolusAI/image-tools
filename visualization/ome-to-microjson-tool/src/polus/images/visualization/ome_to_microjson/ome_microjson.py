@@ -1,4 +1,5 @@
 """Ome micojson package."""
+
 import ast
 import enum
 import logging
@@ -13,6 +14,7 @@ from pathlib import Path
 from sys import platform
 from typing import Any
 from typing import Union
+from typing import Optional
 
 import filepattern as fp
 import microjson.model as mj
@@ -22,12 +24,13 @@ import vaex
 from bfio import BioReader
 from skimage import measure
 from skimage import morphology
+import polus.images.visualization.ome_to_microjson.utils as ut
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-TILE_SIZE = 1024
+TILE_SIZE = 512
 if platform == "linux" or platform == "linux2":
     NUM_THREADS = len(os.sched_getaffinity(0))  # type: ignore
 else:
@@ -56,11 +59,13 @@ class OmeMicrojsonModel:
         out_dir: Path,
         file_path: str,
         polygon_type: PolygonType,
+        tile_json: Optional[bool] = False,
     ) -> None:
         """Convert each object polygons (series of points, rectangle) to microjson."""
         self.out_dir = out_dir
         self.file_path = file_path
         self.polygon_type = polygon_type
+        self.tile_json = tile_json
         self.min_label_length = 1
         self.min_unique_labels = 0
         self.max_unique_labels = 2
@@ -77,6 +82,7 @@ class OmeMicrojsonModel:
                     range(0, self.br.X, TILE_SIZE),
                 ),
             ):
+
                 y_max = min([self.br.Y, y + TILE_SIZE])
                 x_max = min([self.br.X, x + TILE_SIZE])
                 image = self.br[y:y_max, x:x_max, z : z + 1]
@@ -152,7 +158,7 @@ class OmeMicrojsonModel:
         self._tile_read()
         out_combined = Path(self.out_dir, "tmp")
         out_file = (
-            Path(self.file_path).name.split(".")[0]
+            Path(self.file_path).name.rsplit(".", 1)[0]
             + "_"
             + str(self.polygon_type.value)
             + ".json"
@@ -165,59 +171,70 @@ class OmeMicrojsonModel:
             with Path.open(Path(out_combined, out_file), "w") as fw:
                 for i, fl in zip(range(1, len(files) + 1), files()):
                     file = fl[1][0]
-                    line_number = self.get_line_number(file, "coordinatesystem")
                     total_lines = 0
                     with Path.open(Path(file)) as file:
                         for _ in file:
                             total_lines += 1
-                    if line_number is not None:
-                        index = (total_lines - line_number) + 3
+                    if total_lines is not None:
                         outname = re.split(r"[_\.]+", file.name)[:-2]
                         outname = "_".join(outname) + ".json"  # type: ignore
-                        df = Path.open(Path(file))
+                        df = Path.open(Path(file.name))
                         data = df.readlines()
                         if i == 1:
-                            endline = data[-index].rstrip() + ","
-                            sfdata = data[:-index] + [endline]
+                            endline = data[-3].rstrip() + ","
+                            sfdata = data[:-3] + [endline]
                         elif i > 1 and i < len(files):
-                            endline = data[-index].rstrip() + ","
-                            sfdata = data[3:-index] + [endline]
+                            endline = data[-3].rstrip() + ","
+                            sfdata = data[3:-3] + [endline]
                         else:
                             sfdata = data[3:]
                         fw.writelines(sfdata)
-                        Path(file).unlink()
+                        Path(file.name).unlink()
                     else:
                         msg = "Invalid Microjson file!!! Please do check it again"
                         raise ValueError(
                             msg,
                         )
+
         self.cleaning_directories()
+        outname = self.out_dir.joinpath(out_file)
+        if self.tile_json:
+            logger.info(f"Generating tileJSON: {outname}")
+            ut.convert_microjson_tile_json(Path(outname))
 
     def segmentations_encodings(
         self,
         label_image: np.ndarray,
         x: int,
         y: int,
-    ) -> tuple[Any, list[list[list[Any]]]]:
-        """Calculate object boundries as series of vertices/points forming a polygon."""
+    ) -> tuple[list[int], list[list[tuple[float, float]]]]:
+        """Calculate object boundaries as series of vertices/points forming a polygon."""
         label, coordinates = [], []
-        objects = scipy.ndimage.measurements.find_objects(label_image)
-        for i in range(len(objects) + 1):
-            mask = np.zeros((label_image.shape[0], label_image.shape[1]))
-            mask[(label_image == i)] = 1
-            contour_thresh = 0.8
+        unique_labels = np.unique(label_image)
+
+        for i in unique_labels:
+            if i == 0:  # Skip background
+                continue
+            mask = np.zeros_like(label_image, dtype=np.uint8)
+            mask[label_image == i] = 1
+            contour_thresh = 0.0
             contour = measure.find_contours(mask, contour_thresh)
+
             if (
-                len(contour) > self.min_unique_labels
+                len(contour) >= self.min_unique_labels
                 and len(contour) < self.max_unique_labels
-                and len(contour[0] > self.min_label_length)
+                and (contour and len(contour[0]) >= self.min_label_length)
             ):
-                contour = np.flip(contour, axis=1)
-                seg_encodings = contour.ravel().tolist()
+                # Take the first contour (assuming one per object)
+                contour_array = np.flip(contour, axis=1)
+                seg_encodings = contour_array.ravel().tolist()
                 poly = [
-                    [xi + x, yi + y]
+                    (xi + x, yi + y)
                     for xi, yi in zip(seg_encodings[1::2], seg_encodings[::2])
                 ]
+                if poly and poly[0] != poly[-1]:
+                    poly.append(poly[0])
+
                 label.append(i)
                 coordinates.append(poly)
 
@@ -264,7 +281,6 @@ class OmeMicrojsonModel:
         """Create microjson overlays in JSON Format."""
         x_dimension = np.repeat(self.br.X, len(label))
         y_dimension = np.repeat(self.br.Y, len(label))
-        channel = np.repeat(self.br.C, len(label))
         filename = Path(self.file_path)
         image_name = np.repeat(filename.name, len(label))
 
@@ -272,7 +288,6 @@ class OmeMicrojsonModel:
             Image=image_name,
             X=x_dimension,
             Y=y_dimension,
-            Channel=channel,
             Label=label,
         )
         data["geometry_type"] = np.repeat("Polygon", data.shape[0])
@@ -282,7 +297,6 @@ class OmeMicrojsonModel:
             "Image",
             "X",
             "Y",
-            "Channel",
             "Label",
             "geometry_type",
             "type",
@@ -296,41 +310,32 @@ class OmeMicrojsonModel:
             msg = "Invalid vaex dataframe!! Please do check path again"
             raise ValueError(msg)
 
-        str_columns = list(
+        columns = list(
             filter(
-                lambda feature: feature in ["Image", "X", "Y", "Channel"],
-                data.get_column_names(),
-            ),
-        )
-        int_columns = list(
-            filter(
-                lambda feature: feature in ["Label"],
+                lambda feature: feature in ["Image", "X", "Y", "Label"],
                 data.get_column_names(),
             ),
         )
 
-        if len(int_columns) == 0:
+        if len(columns) == 0:
             msg = "Features with integer datatype do not exist"
             raise ValueError(msg)
 
         features: list[mj.Feature] = []
         for (_, row), cor in zip(data.iterrows(), coordinates):  # type: ignore
-            numerical = [{key: row[key]} for key in int_columns]
+            numerical = [{key: row[key]} for key in columns]
 
-            numeric_dict = {}
+            properties = {}
             for sub_dict in numerical:
-                numeric_dict.update(sub_dict)
+                properties.update(sub_dict)
 
             GeometryClass = getattr(mj, row["geometry_type"])  # noqa: N806
             if self.polygon_type == PolygonType.RECTANGLE:
-                cor_value = list(ast.literal_eval(cor))
+                cor_value = ast.literal_eval(cor)
             else:
                 cor_value = cor
 
             geometry = GeometryClass(type=row["geometry_type"], coordinates=[cor_value])
-
-            # create a new properties object dynamically
-            properties = mj.Properties(numeric=numeric_dict)
 
             # Create a new Feature object
             feature = mj.MicroFeature(
@@ -340,47 +345,17 @@ class OmeMicrojsonModel:
             )
             features.append(feature)
 
-        valrange = [{i: {"min": 1.0, "max": data[i].max()}} for i in int_columns]
-        valrange_dict = {}
-        for sub_dict in valrange:
-            valrange_dict.update(sub_dict)
-
-        desc_meta = {key: f"{data[key].values[0]}" for key in str_columns}
-
-        # create a new properties for each image
-        properties = mj.Properties(string=desc_meta)
-
         # Create a new FeatureCollection object
         feature_collection = mj.MicroFeatureCollection(
             type="FeatureCollection",
-            properties=properties,
             features=features,
-            value_range=valrange_dict,
-            coordinatesystem={
-                "axes": [
-                    {
-                        "name": "x",
-                        "unit": "micrometer",
-                        "type": "cartesian",
-                        "pixelsPerUnit": 1,
-                        "description": "x-axis",
-                    },
-                    {
-                        "name": "y",
-                        "unit": "micrometer",
-                        "type": "cartesian",
-                        "pixelsPerUnit": 1,
-                        "description": "y-axis",
-                    },
-                ],
-                "origo": "top-left",
-            },
         )
         fname = re.split(r"[\W']+", str(Path(self.file_path).name))  # type: ignore
         fname = "_".join(fname[:-2])  # type: ignore
         outname = (
             str(fname) + "_" + str(self.polygon_type.value) + "_" + str(i) + ".json"
         )
+
         if len(feature_collection.model_dump_json()) == 0:
             msg = "JSON file is empty"
             raise ValueError(msg)

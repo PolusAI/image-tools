@@ -43,6 +43,12 @@
       "required": "True"
     },
     {
+      "name": "tileJson",
+      "description": "TileJSON layer",
+      "type": "boolean",
+      "required": false
+    },
+    {
       "name": "preview",
       "type": "boolean",
       "title": "Preview",
@@ -79,6 +85,12 @@
       "description": "Select polygon type from [rectangle, encoding].",
       "default": "encoding",
       "required": "True"
+    },
+    {
+      "key": "inputs.tileJson",
+      "title": "tileJson",
+      "description": "TileJSON layer",
+      "default": false
     },
     {
       "key": "inputs.preview",

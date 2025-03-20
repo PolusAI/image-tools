@@ -1,4 +1,5 @@
 """Ome micojson package."""
+
 import logging
 import shutil
 import time
@@ -6,11 +7,12 @@ import warnings
 from concurrent.futures import ProcessPoolExecutor
 from os import environ
 from pathlib import Path
-
 import filepattern as fp
 import polus.images.visualization.ome_to_microjson.ome_microjson as sm
+import polus.images.visualization.ome_to_microjson.utils as ut
 import typer
 from tqdm import tqdm
+from typing import Optional
 
 warnings.filterwarnings("ignore")
 
@@ -57,6 +59,11 @@ def main(
         "-t",
         help="Desired polygon type.",
     ),
+    tile_json: Optional[bool] = typer.Option(
+        False,
+        "--tileJson",
+        help="Tile JSON layer",
+    ),
     out_dir: Path = typer.Option(
         ...,
         "--outDir",
@@ -74,7 +81,9 @@ def main(
     logger.info(f"inpDir: {inp_dir}")
     logger.info(f"filePattern: {file_pattern}")
     logger.info(f"polygonType: {polygon_type}")
+    logger.info(f"tile_json = {tile_json}")
     logger.info(f"outDir: {out_dir}")
+
     starttime = time.time()
 
     if not inp_dir.exists():
@@ -82,8 +91,8 @@ def main(
         raise ValueError(msg, inp_dir)
 
     if not out_dir.exists():
-        msg = "outDir does not exist"
-        raise ValueError(msg, out_dir)
+        msg = "Create outDir as it does not exist"
+        Path(out_dir).mkdir(exist_ok=True, parents=True)
 
     files = fp.FilePattern(inp_dir, file_pattern)
 
@@ -91,22 +100,27 @@ def main(
         msg = "No image files are detected. Please check filepattern again!"
         raise ValueError(msg)
 
-    with ProcessPoolExecutor(max_workers=sm.NUM_THREADS) as executor:
-        for _, f in enumerate(tqdm(files())):
-            model = sm.OmeMicrojsonModel(
-                out_dir=out_dir,
-                file_path=str(f[1][0]),
-                polygon_type=polygon_type,
-            )
-            executor.submit(model.write_single_json())
-
     if preview:
-        generate_preview(out_dir)
+        ut.preview_data(out_dir)
         logger.info(f"generating preview data in {out_dir}")
 
-    endtime = (time.time() - starttime) / 60
-    logger.info(f"Total time taken for execution: {endtime:.4f} minutes")
-    logger.info(f"Total time taken for a single file: {endtime/len(files):.4f} minutes")
+    else:
+
+        with ProcessPoolExecutor(max_workers=sm.NUM_THREADS) as executor:
+            for _, f in enumerate(tqdm(files())):
+                model = sm.OmeMicrojsonModel(
+                    out_dir=out_dir,
+                    file_path=str(f[1][0]),
+                    polygon_type=polygon_type,
+                    tile_json=tile_json,
+                )
+                executor.submit(model.write_single_json())
+
+        endtime = (time.time() - starttime) / 60
+        logger.info(f"Total time taken for execution: {endtime:.4f} minutes")
+        logger.info(
+            f"Total time taken for a single file: {endtime/len(files):.4f} minutes"
+        )
 
 
 if __name__ == "__main__":
