@@ -3,15 +3,16 @@ import json
 import logging
 import os
 import pathlib
+from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures import as_completed
 from typing import Any
 from typing import Optional
 from typing import Union
 
 import filepattern as fp
-import preadator
 import typer
 from polus.images.formats.ome_converter.image_converter import NUM_THREADS
+from polus.images.formats.ome_converter.image_converter import POLUS_IMG_EXT
 from polus.images.formats.ome_converter.image_converter import convert_image
 from tqdm import tqdm
 
@@ -24,7 +25,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("polus.images.formats.ome_converter")
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
-POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
 
 
 def parse_input_dir(value: str) -> Union[pathlib.Path, list[str]]:
@@ -86,21 +86,17 @@ def main(
             json.dump(out_json, jfile, indent=2)
         return
 
-    with preadator.ProcessManager(
-        name="ome_converter",
-        num_processes=NUM_THREADS,
-        threads_per_process=2,
-    ) as executor:
-        threads = []
+    # Use ProcessPoolExecutor for multiprocessing
+    with ProcessPoolExecutor(max_workers=NUM_THREADS) as executor:
+        futures = []
         for files in fps():
             file = files[1][0]
-            threads.append(
-                executor.submit_process(convert_image, file, POLUS_IMG_EXT, out_dir),
-            )
+            futures.append(executor.submit(convert_image, file, POLUS_IMG_EXT, out_dir))
 
+        # Process results with progress bar
         for f in tqdm(
-            as_completed(threads),
-            total=len(threads),
+            as_completed(futures),
+            total=len(futures),
             mininterval=5,
             desc=f"converting images to {POLUS_IMG_EXT}",
             initial=0,
