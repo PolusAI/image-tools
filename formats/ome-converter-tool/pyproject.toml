@@ -12,11 +12,10 @@ packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
-bfio = {version = "2.4.7", extras = ["all"]}
+bfio = {version = "^2.4.7", extras = ["all"]}
 filepattern = "^2.0.4"
 typer = "^0.7.0"
 tqdm = "^4.64.1"
-preadator = "0.4.0-dev2"
 numpy = "<2.0.0"
 
 [tool.poetry.group.dev.dependencies]
