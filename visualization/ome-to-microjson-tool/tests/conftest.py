@@ -2,15 +2,17 @@
 
 Set up all data used in tests.
 """
+
 import tempfile
 from pathlib import Path
 from typing import Union
 
 import numpy as np
 import pytest
-import skimage as sk
 from polus.images.visualization.ome_to_microjson.ome_microjson import PolygonType
+from skimage import filters
 from skimage import io
+from skimage import measure
 
 TILE_SIZE = 1024
 max_unique_labels = 2
@@ -34,6 +36,12 @@ def inp_dir() -> Union[str, Path]:
 
 
 @pytest.fixture()
+def seg_dir() -> Union[str, Path]:
+    """Create directory for saving groundtruth labelled images."""
+    return Path(tempfile.mkdtemp(dir=Path.cwd()))
+
+
+@pytest.fixture()
 def output_directory() -> Union[str, Path]:
     """Create output directory."""
     return Path(tempfile.mkdtemp(dir=Path.cwd()))
@@ -48,52 +56,32 @@ def image_sizes(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
 @pytest.fixture()
 def synthetic_images(
     inp_dir: Union[str, Path],
+    seg_dir: Union[str, Path],
     image_sizes: pytest.FixtureRequest,
-) -> Union[str, Path]:
+) -> tuple[Path, Path]:
     """Generate random synthetic images."""
+    inp_dir = Path(inp_dir)
+    seg_dir = Path(seg_dir)
     for i in range(2):
         im = np.zeros((image_sizes, image_sizes))
-        blobs = sk.data.binary_blobs(
-            length=image_sizes,
-            volume_fraction=0.01,
-            blob_size_fraction=0.03,
-        )
-        im[blobs > 0] = 1
-        binary_img = f"x01_y01_r{i}_c1.tif"
-        binary_img = Path(inp_dir, binary_img)  # type: ignore
-        io.imsave(binary_img, im)
-    return inp_dir
+        points = image_sizes * np.random.random((2, 10**2))
+        im[(points[0]).astype(int), (points[1]).astype(int)] = 1
+        im = filters.gaussian(im, sigma=image_sizes / (20.0 * 10))
+        blobs = im > im.mean()
+        lab_blobs = measure.label(blobs, background=0)
+        intname = f"y04_r{i}_c1.ome.tif"
+        segname = f"y04_r{i}_c1.ome.tif"
+        int_name = Path(inp_dir, intname)
+        seg_name = Path(seg_dir, segname)
+        io.imsave(int_name, im)
+        io.imsave(seg_name, lab_blobs)
+    return inp_dir, seg_dir
 
 
 @pytest.fixture(params=["rectangle", "encoding"])
 def get_params(request: pytest.FixtureRequest) -> list[str]:
     """To get the parameter of the fixture."""
     return request.param
-
-
-@pytest.fixture(params=[10000, 20000, 30000])
-def large_image_sizes(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
-    """To get the parameter of the fixture."""
-    return request.param
-
-
-@pytest.fixture()
-def large_synthetic_images(
-    inp_dir: Union[str, Path],
-    large_image_sizes: pytest.FixtureRequest,
-) -> tuple[Union[str, Path], int]:
-    """Generate large random synthetic images."""
-    im = np.zeros((large_image_sizes, large_image_sizes))
-    blobs = sk.data.binary_blobs(
-        length=large_image_sizes,
-        volume_fraction=0.01,
-        blob_size_fraction=0.03,
-    )
-    im[blobs > 0] = 1
-    binary_img = "x01_y01_r1_c1.tif"
-    binary_img = Path(inp_dir, binary_img)  # type: ignore
-    io.imsave(binary_img, im)
-    return inp_dir, large_image_sizes
 
 
 @pytest.fixture(params=[PolygonType.RECTANGLE, PolygonType.ENCODING])
