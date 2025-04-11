@@ -1,14 +1,14 @@
 {
-  "name": "Ome_to_microjson",
-  "version": "0.1.6",
-  "title": "Convert binary segmentations to micojson",
+  "name": "Ome To Microjson",
+  "version": "0.1.7-dev0",
+  "title": "Ome To Microjson",
   "description": "This plugin create a microjson of polygon coordinates (rectangle, encodings) of binary segmentations.",
   "author": "Hamdah Shafqat abbasi  (hamdahshafqat.abbasi@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
-  "repository": "https://github.com/labshare/polus-plugins",
+  "repository": "https://github.com/polusai/image-tools",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/ome-to-microjson-tool:0.1.6",
+  "containerId": "polusai/ome-to-microjson-tool:0.1.7-dev0",
   "baseCommand": [
     "python3",
     "-m",
@@ -16,18 +16,25 @@
   ],
   "inputs": [
     {
-      "name": "inpDir",
-      "type": "collection",
-      "title": "Input collection",
-      "description": "Input image collection to be processed by this plugin.",
-      "required": "True"
+      "name": "intDir",
+      "type": "genericData",
+      "title": "Intensity Collection",
+      "description": "Path to input directory containing intensity images.",
+      "required": true
+    },
+    {
+      "name": "segDir",
+      "type": "genericData",
+      "title": "Segmentation Collection",
+      "description": "Path to input directory containing binary or label images.",
+      "required": true
     },
     {
       "name": "filePattern",
       "type": "string",
       "title": "Filename pattern",
       "description": "Filename pattern used to separate data.",
-      "required": "False"
+      "required": true
     },
     {
       "name": "polygonType",
@@ -40,7 +47,7 @@
           "encoding"
         ]
       },
-      "required": "True"
+      "required": true
     },
     {
       "name": "tileJson",
@@ -49,34 +56,68 @@
       "required": false
     },
     {
+      "name": "features",
+      "type": "array",
+      "description": "Features or feature groups to be extracted by nyxus plugin",
+      "required": false,
+      "options": {
+        "items": {
+          "type": "string",
+          "title": "Features or feature groups to be extracted by nyxus plugin",
+          "widget": "string"
+        }
+      }
+    },
+    {
+      "name": "neighborDist",
+      "description": "Pixel distance between neighboring cells",
+      "type": "integer",
+      "default": 5,
+      "required": false
+    },
+    {
+      "name": "pixelPerMicron",
+      "description": "Pixel size in micrometer",
+      "type": "number",
+      "default": 1.0,
+      "required": false
+    },
+    {
       "name": "preview",
       "type": "boolean",
       "title": "Preview",
       "description": "Generate an output preview.",
-      "required": "False"
+      "required": false
     }
   ],
   "outputs": [
     {
       "name": "outDir",
-      "type": "collection",
+      "type": "genericData",
       "description": "Output collection."
     }
   ],
   "ui": [
     {
-      "key": "inputs.inpDir",
-      "type": "collection",
-      "title": "Input collection",
-      "description": "Input image collection to be processed by this plugin.",
-      "required": "True"
+      "key": "inputs.intDir",
+      "type": "genericData",
+      "title": "Intensity Collection",
+      "description": "Path to input directory containing intensity images",
+      "required": true
+    },
+    {
+      "key": "inputs.segDir",
+      "type": "genericData",
+      "title": "Segmentation Collection",
+      "description": "Path to input directory containing binary or label images",
+      "required": true
     },
     {
       "key": "inputs.filePattern",
       "type": "string",
       "title": "Filename pattern",
       "description": "Filename pattern used to separate data.",
-      "required": "False"
+      "required": true
     },
     {
       "key": "inputs.polygonType",
@@ -84,7 +125,7 @@
       "title": "Type of Polygon",
       "description": "Select polygon type from [rectangle, encoding].",
       "default": "encoding",
-      "required": "True"
+      "required": true
     },
     {
       "key": "inputs.tileJson",
@@ -93,11 +134,29 @@
       "default": false
     },
     {
+      "key": "inputs.features",
+      "title": "features",
+      "description": "Features or feature groups to be extracted by nyxus plugin",
+      "default": "ALL"
+    },
+    {
+      "key": "inputs.neighborDist",
+      "title": "neighborDist",
+      "description": "Pixel distance between neighboring cells",
+      "default": 5
+    },
+    {
+      "key": "inputs.pixelPerMicron",
+      "title": "pixelPerMicron",
+      "description": "Pixel size in micrometer",
+      "default": 1.0
+    },
+    {
       "key": "inputs.preview",
       "type": "boolean",
       "title": "Preview example output of this plugin",
       "description": "Generate an output preview.",
-      "required": "False"
+      "required": false
     }
   ]
 }

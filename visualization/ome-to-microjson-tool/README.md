@@ -1,9 +1,6 @@
-# Ome-to-microjson-plugin(v0.1.6)
+# Ome-to-microjson-plugin(0.1.7-dev0)
 
-This plugin generate a microjson of polygon coordinates of binary or label segmentations
-
-This plugin uses [MICROJSON](https://github.com/bengtl/microjson/tree/dev) python library to generate polygon encodings for each object (Region of Interest) of binary segmented image in microjson format which can be used in [RENDER UI](https://render.ci.ncats.io/?imageUrl=https://files.scb-ncats.io/pyramids/Idr0033/precompute/41744/x(00-15)_y(01-24)_p0(1-9)_c(1-5)/)
-application for visualization of microscopy images overlay with segmentations encodings.
+This plugin generates polygon coordinates (rectangle or encoding) for objects in binary or label images and extracts Nyxus features for each object, saving them in a JSON-based format using the [MICROJSON](https://github.com/bengtl/microjson/tree/dev) Python library. The output can be visualized in the [RENDER UI](https://render.ci.ncats.io/?imageUrl=https://files.scb-ncats.io/pyramids/Idr0033/precompute/41744/x(00-15)_y(01-24)_p0(1-9)_c(1-5)/) application, enabling overlay of segmentation encodings on microscopy images
 
 Currently this plugin supports two Polygon types
 1. rectangle
@@ -23,6 +20,8 @@ Contact [Hamdah Shafqat Abbasi](mailto:hamdahshafqat.abbasi@nih.gov) for more in
 For more information on WIPP, visit the
 [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
+
+
 ## Building
 
 To build the Docker image for the conversion plugin, run
@@ -39,9 +38,13 @@ This plugin can take four input arguments and one output argument:
 
 | Name              | Description                                           | I/O    | Type         |
 |-------------------|-------------------------------------------------------|--------|--------------|
-| `inpDir`          | Input directory                                       | Input  | string         |
+| `intDir`          | Input directory containing intensity images                                     | Input  | string         |
+| `segpDir`          | Input directory containing binary or label images                                      | Input  | string         |
 | `filePattern`     | Pattern to parse image filenames                    | Input  | string       |
 | `polygonType`            | Polygon type (rectangle, encoding)                        | Input  | enum       |
+| `features`            | [Nyxus Features](https://pypi.org/project/nyxus/)                       | Input  | string      |
+| `neighborDist`            | Distance between two neighbor objects                        | Input  | integer       |
+| `pixelPerMicron`            | Pixel Size in micrometer                        | Input  | float       |
 | `outDir`          | Output directory                        | Output | string       |
 | `preview`      | Generate a JSON file with outputs                     | Output | JSON            |
 
@@ -50,10 +53,16 @@ This plugin can take four input arguments and one output argument:
 ### Run the Docker Container
 
 ```bash
-docker run -v /data:/data polusai/ome-to-microjson-plugin:0.1.6-dev \
-  --inpDir /data/input \
-  --filePattern ".*.ome.tif" \
+docker run -v /data:/data polusai/ome-to-microjson-tool:0.1.7-dev0 \
+  --intDir /data/input \
+  --segDir /data/segmentations \
+  --filePattern "x{x:d+}_y{y:d+}_p{p:d+}_c{c:d+}.ome.tif" \
   --polygonType "encoding" \
+  --features "ALL" \
+  --neighborDist 5.0 \
+  --polygonType "encoding" \
+   --pixelPerMicron 1.0 \
   --outDir /data/output \
-  --preview
+  --tileJson
+
 ```

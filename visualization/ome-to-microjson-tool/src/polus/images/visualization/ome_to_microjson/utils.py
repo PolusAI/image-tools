@@ -3,9 +3,9 @@
 import json
 import logging
 import os
-from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
+
+import microjson.model as mj
 from microjson.tilemodel import TileJSON
 from microjson.tilemodel import TileLayer
 from microjson.tilemodel import TileModel
@@ -13,9 +13,96 @@ from microjson.tilewriter import TileWriter
 from microjson.tilewriter import extract_fields_ranges_enums
 from microjson.tilewriter import getbounds
 
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+
+FEATURE_GROUP = {
+    "ALL_INTENSITY",
+    "ALL_MORPHOLOGY",
+    "BASIC_MORPHOLOGY",
+    "ALL_GLCM",
+    "ALL_GLRLM",
+    "ALL_GLSZM",
+    "ALL_GLDM",
+    "ALL_NGTDM",
+    "ALL_EASY",
+    "ALL",
+}
+FEATURE_LIST = {
+    "INTEGRATED_INTENSITY",
+    "MEAN",
+    "MAX",
+    "MEDIAN",
+    "STANDARD_DEVIATION",
+    "MODE",
+    "SKEWNESS",
+    "KURTOSIS",
+    "HYPERSKEWNESS",
+    "HYPERFLATNESS",
+    "MEAN_ABSOLUTE_DEVIATION",
+    "ENERGY",
+    "ROOT_MEAN_SQUARED",
+    "ENTROPY",
+    "UNIFORMITY",
+    "UNIFORMITY_PIU",
+    "P01",
+    "P10",
+    "P25",
+    "P75",
+    "P90",
+    "P99",
+    "INTERQUARTILE_RANGE",
+    "ROBUST_MEAN_ABSOLUTE_DEVIATION",
+    "MASS_DISPLACEMENT",
+    "AREA_PIXELS_COUNT",
+    "COMPACTNESS",
+    "BBOX_YMIN",
+    "BBOX_XMIN",
+    "BBOX_HEIGHT",
+    "BBOX_WIDTH",
+    "MINOR_AXIS_LENGTH",
+    "MAGOR_AXIS_LENGTH",
+    "ECCENTRICITY",
+    "ORIENTATION",
+    "ROUNDNESS",
+    "NUM_NEIGHBORS",
+    "PERCENT_TOUCHING",
+    "EXTENT",
+    "CONVEX_HULL_AREA",
+    "SOLIDITY",
+    "PERIMETER",
+    "EQUIVALENT_DIAMETER",
+    "EDGE_MEAN",
+    "EDGE_MAX",
+    "EDGE_MIN",
+    "EDGE_STDDEV_INTENSITY",
+    "CIRCULARITY",
+    "EROSIONS_2_VANISH",
+    "EROSIONS_2_VANISH_COMPLEMENT",
+    "FRACT_DIM_BOXCOUNT",
+    "FRACT_DIM_PERIMETER",
+    "GLCM",
+    "GLRLM",
+    "GLSZM",
+    "GLDM",
+    "NGTDM",
+    "ZERNIKE2D",
+    "FRAC_AT_D",
+    "RADIAL_CV",
+    "MEAN_FRAC",
+    "GABOR",
+    "ALL_INTENSITY",
+    "ALL_MORPHOLOGY",
+    "BASIC_MORPHOLOGY",
+    "ALL_GLCM",
+    "ALL_GLRLM",
+    "ALL_GLSZM",
+    "ALL_GLDM",
+    "ALL_NGTDM",
+    "ALL_EASY",
+    "ALL",
+}
 
 
 def convert_microjson_tile_json(microjson_path: Path) -> None:
@@ -49,7 +136,7 @@ def convert_microjson_tile_json(microjson_path: Path) -> None:
 
         # # create the tiles directory
         out_dir = microjson_path.parent.joinpath(
-            Path(Path(microjson_path.name).stem).joinpath("tiles")
+            Path(Path(microjson_path.name).stem).joinpath("tiles"),
         )
 
     if not out_dir.exists():
@@ -92,7 +179,8 @@ def convert_microjson_tile_json(microjson_path: Path) -> None:
     handler.microjson2tiles(microjson_path, validate=False)
 
 
-def generate_feature_collection():
+def generate_feature_collection() -> mj.MicroFeatureCollection:
+    """Generate microjson feature collection."""
     return {
         "type": "FeatureCollection",
         "features": [
@@ -165,7 +253,7 @@ def generate_feature_collection():
                             [44.0, 481.7],
                             [45.0, 481.7],
                             [46.0, 481.7],
-                        ]
+                        ],
                     ],
                 },
                 "properties": {
@@ -174,14 +262,15 @@ def generate_feature_collection():
                     "Y": 2384,
                     "Label": 1,
                 },
-            }
+            },
         ],
     }
 
 
 def preview_data(out_dir: Path) -> None:
+    """Get Preview Data."""
     microjson_output = generate_feature_collection()
     out_file = out_dir.joinpath("example_data.json")
 
-    with open(out_file, "w") as json_file:
+    with Path.open(out_file, "w") as json_file:
         json.dump(microjson_output, json_file, indent=2)
