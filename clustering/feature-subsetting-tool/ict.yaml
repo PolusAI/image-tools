@@ -1,0 +1,141 @@
+author:
+  - Gauhar Bains
+contact: gauhar.bains@labshare.org
+container: polusai/feature-subsetting-tool:0.2.1-dev0
+description: Subset data using a given feature.
+entrypoint: python3 -m polus.images.clustering.feature_subsetting
+inputs:
+  - description: Input image directory
+    format:
+      - collection
+    name: inpDir
+    required: true
+    type: path
+  - description: Path to directory containing tabular data
+    format:
+      - genericData
+    name: tabularDir
+    required: true
+    type: path
+  - description: Filename pattern used to separate data.
+    format:
+      - string
+    name: filePattern
+    required: true
+    type: string
+  - description: Feature in tabular data containing image filenames.
+    format:
+      - string
+    name: imageFeature
+    required: true
+    type: string
+  - description: Feature in tabular data to subset image data
+    format:
+      - string
+    name: tabularFeature
+    required: true
+    type: string
+  - description: Number of images to capture outside the cutoff.
+    format:
+      - integer
+    name: padding
+    required: false
+    type: number
+  - description: variables to group by in a section.
+    format:
+      - string
+    name: groupVar
+    required: true
+    type: string
+  - description: Percentile to remove.
+    format:
+      - number
+    name: percentile
+    required: true
+    type: number
+  - description: Remove direction above or below percentile
+    format:
+      - string
+    name: removeDirection
+    required: false
+    type: string
+  - description: Variables to divide larger sections.
+    format:
+      - string
+    name: sectionVar
+    required: false
+    type: string
+  - description: Write output image collection or not.
+    format:
+      - boolean
+    name: writeOutput
+    required: false
+    type: boolean
+  - description: Generate an output preview
+    format:
+      - boolean
+    name: preview
+    required: false
+    type: boolean
+name: polusai/FeatureSubsetting
+outputs:
+  - description: Output collection
+    format:
+      - genericData
+    name: outDir
+    required: true
+    type: path
+repository: https://github.com/PolusAI/image-tools
+specVersion: 1.0.0
+title: Feature Subsetting
+ui:
+  - description: Path to Input image directory
+    key: inputs.inpDir
+    title: inpDir
+    type: path
+  - description: Input tabular directory
+    key: inputs.tabularDir
+    title: tabularDir
+    type: path
+  - description: A filepattern, used to select data for conversion
+    key: inputs.filePattern
+    title: filepattern
+    type: text
+  - description: Feature in tabular data containing image filenames
+    key: inputs.imageFeature
+    title: imageFeature
+    type: text
+  - description: Feature in tabular data to subset image data.
+    key: inputs.tabularFeature
+    title: tabularFeature
+    type: text
+  - description: Number of images to capture outside the cutoff.
+    key: inputs.padding
+    title: padding
+    type: number
+  - description: Variables to group by in a section.
+    key: inputs.groupVar
+    title: groupVar
+    type: text
+  - description: Percentile to remove.
+    key: inputs.percentile
+    title: percentile
+    type: number
+  - description: Remove direction above or below percentile.
+    key: inputs.removeDirection
+    title: removeDirection
+    type: text
+  - description: Variables to divide larger sections.
+    key: inputs.sectionVar
+    title: sectionVar
+    type: text
+  - description: Write output image collection or not.
+    key: inputs.writeOutput
+    title: writeOutput
+    type: checkbox
+  - default: false
+    description: Generate an output preview.
+    key: inputs.preview
+    title: preview
+    type: checkbox
+version: 0.2.1-dev0

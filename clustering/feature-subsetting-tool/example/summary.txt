@@ -1,0 +1,14 @@
+------------------------------------------------
+
+ Files :
+
+x00_y01_p03_c1.ome.tif -----> x00_y01_p01_c1.ome.tif
+x00_y01_p03_c2.ome.tif -----> x00_y01_p01_c2.ome.tif
+x00_y01_p03_c3.ome.tif -----> x00_y01_p01_c3.ome.tif
+x00_y01_p03_c4.ome.tif -----> x00_y01_p01_c4.ome.tif
+x00_y01_p03_c5.ome.tif -----> x00_y01_p01_c5.ome.tif
+x00_y01_p04_c1.ome.tif -----> x00_y01_p02_c1.ome.tif
+x00_y01_p04_c2.ome.tif -----> x00_y01_p02_c2.ome.tif
+x00_y01_p04_c3.ome.tif -----> x00_y01_p02_c3.ome.tif
+x00_y01_p04_c4.ome.tif -----> x00_y01_p02_c4.ome.tif
+x00_y01_p04_c5.ome.tif -----> x00_y01_p02_c5.ome.tif

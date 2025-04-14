@@ -1,0 +1,162 @@
+{
+  "name": "Feature Subsetting",
+  "version": "0.2.1-dev0",
+  "title": "Feature Subsetting",
+  "description": "Subset data using a given feature.",
+  "author": "Gauhar Bains (gauhar.bains@labshare.org) and Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/PolusAI/image-tools",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/feature-subsetting-tool:0.2.1-dev0",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.images.clustering.feature_subsetting"
+  ],
+  "inputs": [
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "Input image directory",
+      "required": true
+    },
+    {
+      "name": "tabularDir",
+      "type": "genericData",
+      "description": "Path to directory containing tabular data",
+      "required": true
+    },
+    {
+      "name": "filePattern",
+      "type": "string",
+      "description": "Filename pattern used to separate data.",
+      "required": true
+    },
+    {
+      "name": "imageFeature",
+      "type": "string",
+      "description": "Feature in tabular data containing image filenames.",
+      "required": true
+    },
+    {
+      "name": "tabularFeature",
+      "type": "string",
+      "description": "Feature in tabular data to subset image data",
+      "required": true
+    },
+    {
+      "name": "padding",
+      "type": "integer",
+      "description": "Number of images to capture outside the cutoff.",
+      "required": false
+    },
+    {
+      "name": "groupVar",
+      "type": "string",
+      "description": "variables to group by in a section.",
+      "required": true
+    },
+    {
+      "name": "percentile",
+      "type": "number",
+      "description": "Percentile to remove.",
+      "required": true
+    },
+    {
+      "name": "removeDirection",
+      "type": "string",
+      "description": "Remove direction above or below percentile",
+      "required": false,
+      "default": "Below"
+    },
+    {
+      "name": "sectionVar",
+      "type": "string",
+      "description": "Variables to divide larger sections.",
+      "required": false
+    },
+    {
+      "name": "writeOutput",
+      "type": "boolean",
+      "description": "Write output image collection or not.",
+      "required": false
+    },
+    {
+      "name": "preview",
+      "type": "boolean",
+      "description": "Generate an output preview",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "genericData",
+      "description": "Output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "Path to Input image directory"
+    },
+    {
+      "key": "inputs.tabularDir",
+      "title": "tabularDir",
+      "description": "Input tabular directory"
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "filepattern",
+      "description": "A filepattern, used to select data for conversion"
+    },
+    {
+      "key": "inputs.imageFeature",
+      "title": "imageFeature",
+      "description": "Feature in tabular data containing image filenames"
+    },
+    {
+      "key": "inputs.tabularFeature",
+      "title": "tabularFeature",
+      "description": "Feature in tabular data to subset image data."
+    },
+    {
+      "key": "inputs.padding",
+      "title": "padding",
+      "description": "Number of images to capture outside the cutoff."
+    },
+    {
+      "key": "inputs.groupVar",
+      "title": "groupVar",
+      "description": "Variables to group by in a section."
+    },
+    {
+      "key": "inputs.percentile",
+      "title": "percentile",
+      "description": "Percentile to remove."
+    },
+    {
+      "key": "inputs.removeDirection",
+      "title": "removeDirection",
+      "description": "Remove direction above or below percentile."
+    },
+    {
+      "key": "inputs.sectionVar",
+      "title": "sectionVar",
+      "description": "Variables to divide larger sections."
+    },
+    {
+      "key": "inputs.writeOutput",
+      "title": "writeOutput",
+      "description": "Write output image collection or not."
+    },
+    {
+      "key": "inputs.preview",
+      "title": "preview",
+      "description": "Generate an output preview.",
+      "default": false
+    }
+  ]
+}
