@@ -20,7 +20,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/ome-converter-tool:0.3.4-dev0
+    dockerPull: polusai/ome-converter-tool:0.3.4-dev1
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)
