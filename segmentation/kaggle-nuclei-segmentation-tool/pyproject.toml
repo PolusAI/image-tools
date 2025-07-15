@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-segmentation-kaggle-nuclei-segmentation"
-version = "0.1.5-dev2"
+version = "0.1.5"
 description = "Segments cell nuclei using U-Net in Tensorflow. Neural net architecture and pretrained weights are taken from Data Science Bowl 2018 entry by Muhammad Asim"
 authors = ["Gauhar Bains,  Konstantin Taletskiy,Nick Schaub , Hamdah Shafqat Abbasi <gauhar.bains@labshare.org, Konstantin.Taletskiy@labshare.org, nick.schaub@nih.gov, hamdahshafqat.abbasi@nih.gov>"]
 readme = "README.md"

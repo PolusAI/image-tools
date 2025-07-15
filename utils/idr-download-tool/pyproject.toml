@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-utils-idr-download"
-version = "0.1.0-dev0"
+version = "0.1.0"
 description = "Retrieve the microscopy image data from the idr server"
 authors = [
            "Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>"
