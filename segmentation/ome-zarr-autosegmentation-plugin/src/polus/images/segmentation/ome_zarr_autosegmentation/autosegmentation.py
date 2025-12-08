@@ -1,14 +1,10 @@
 import json
 import os
+import pathlib
+import shutil
 from typing import Dict, List, Tuple
 
 import dask.array as da
-
-os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-
-import pathlib
-import shutil
 import numpy as np
 import torch
 import zarr
@@ -19,6 +15,9 @@ from ngff_zarr import (
 from PIL import Image
 from sam2.automatic_mask_generator import SAM2AutomaticMaskGenerator
 from sam2.build_sam import build_sam2
+
+os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 CHUNK_SIZE = 1024  # Size of each chunk (1024×1024 pixels)
 CHUNK_OVERLAP = 100  # Overlap between chunks (100 pixels on each side)
@@ -158,27 +157,25 @@ def initialize_job(
         output_path.mkdir(parents=True)
         processed_slices = []
         progress = {"processed_slices": processed_slices, "total_slices": 0}
+        with open(progress_file, "w") as f:
+            json.dump(progress, f)
 
     return progress, resuming, processed_slices
 
 
 def initialize_zarr_store(
-    output_path: pathlib.Path, original_path: pathlib.Path, dtype=np.uint16
+    output_path: pathlib.Path, original_dataset_path: pathlib.Path, dtype=np.uint16
 ) -> zarr.Group:
     """
     Copy the original dataset to the output location, which we will modify later
     """
-    print(f"Copying original dataset from {original_path} to {output_path}")
-
-    # Make sure output directory exists
-    os.makedirs(output_path, exist_ok=True)
+    print(f"Copying original dataset from {original_dataset_path} to {output_path}")
 
     # Copy the original dataset to the output location
-    if os.path.exists(original_path) and original_path != output_path:
-        # Copy zarr directory contents
-        for item in os.listdir(original_path):
-            s = os.path.join(original_path, item)
-            d = os.path.join(output_path, item)
+    if original_dataset_path != output_path:
+        for item in original_dataset_path.iterdir():
+            s = original_dataset_path / item.name
+            d = output_path / item.name
             if os.path.isdir(s):
                 shutil.copytree(s, d, dirs_exist_ok=True)
             else:
@@ -294,6 +291,7 @@ def process_slice(
     slice_data = volume[slice_index]
     # Check if the slice is small enough to process directly
     if slice_data.shape[0] <= CHUNK_SIZE and slice_data.shape[1] <= CHUNK_SIZE:
+        slice_data = np.array(slice_data)
         slice_data = normalize_to_uint8(slice_data)
         img = Image.fromarray(slice_data)
         segmentation = generate_segmentation_mask(predictor, img)
@@ -340,9 +338,7 @@ def process_slice(
 
 
 def autosegment_dataset(input_dir: pathlib.Path, output_path: pathlib.Path):
-    progress, resuming, processed_slices = (
-        initialize_job(output_path)
-    )
+    progress, resuming, processed_slices = initialize_job(output_path)
 
     multiscales = from_ngff_zarr(input_dir)
     image_data = multiscales.images[0]  # Get the highest resolution image
@@ -424,10 +420,8 @@ def autosegmentation(input_dir: pathlib.Path, output_dir: pathlib.Path):
 
     Args:
         input_dir: input directory to process
-        filepattern: filepattern to filter inputs
         output_dir: output ome-zarr directory
     Returns:
         None
     """
     autosegment_dataset(input_dir, output_dir)
-    
