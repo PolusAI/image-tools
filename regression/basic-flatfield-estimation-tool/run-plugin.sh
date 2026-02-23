@@ -4,7 +4,7 @@ version=$(<VERSION)
 datapath=$(readlink --canonicalize ./data)
 echo "${datapath}"
 
-docker run polusai/basic-flatfield-estimation-plugin:"${version}"
+docker run polusai/basic-flatfield-estimation-tool:"${version}"
 
 # Parameters
 inpDir=/data/inputs
@@ -15,7 +15,7 @@ groupBy="cr"
 #            --gpus=all \
 docker run --mount type=bind,source="${datapath}",target=/data \
             --user "$(id -u)":"$(id -g)" \
-            polusai/basic-flatfield-estimation-plugin:"${version}" \
+            polusai/basic-flatfield-estimation-tool:"${version}" \
             --inpDir ${inpDir} \
             --outDir ${outDir} \
             --filePattern ${filePattern} \

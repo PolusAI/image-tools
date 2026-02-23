@@ -1,4 +1,4 @@
-"""Helpers for basic flatfield estimation plugin."""
+"""Helpers for basic flatfield estimation tool."""
 import concurrent.futures
 import logging
 import multiprocessing
@@ -66,7 +66,7 @@ def get_output_path(image_paths: list[pathlib.Path]) -> str:
     # Try to infer a filename
     try:
         fp = filepattern.FilePattern(
-            path=str(image_paths[0].parent),
+            input=str(image_paths[0].parent),
             pattern=filepattern.infer_pattern(
                 files=[path.name for path in image_paths],
             ),
