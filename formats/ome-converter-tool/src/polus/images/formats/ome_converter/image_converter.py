@@ -31,7 +31,7 @@ def get_num_threads() -> int:
         else:
             cpu_count = os.cpu_count() or 1  # fallback if None
         return max(1, cpu_count // 2)
-    except Exception:
+    except (AttributeError, OSError):
         return 1
 
 NUM_THREADS: int = get_num_threads()

@@ -49,17 +49,15 @@ def _collect_files(
     if isinstance(inp, (str, pathlib.Path)):
         dir_path = pathlib.Path(inp) if isinstance(inp, str) else inp
         if not dir_path.is_dir():
-            raise ValueError(f"Input path is not a directory: {dir_path}")
+            msg= f"Input path is not a directory: {dir_path}"
+            raise ValueError(msg)
         fps = fp.FilePattern(dir_path, pattern)
         return [files[1][0] for files in fps()]
 
-    elif isinstance(inp, list):
+    if isinstance(inp, list):
         return [pathlib.Path(p) if isinstance(p, str) else p for p in inp]
-    else:
-        raise TypeError(
-            f"Unsupported input type: {type(inp).__name__}. "
-            "Expected str, Path, or list[Path/str]."
-        )
+    msg = "Expected str, Path, or list[Path/str]"
+    raise TypeError(msg)
 
 
 def write_preview(
