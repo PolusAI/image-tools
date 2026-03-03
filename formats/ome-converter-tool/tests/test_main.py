@@ -71,7 +71,7 @@ def test_cli(
             "--filePattern",
             ".+",
             "--outDir",
-            str(output_directory), 
+            str(output_directory),
         ],
     )
 
