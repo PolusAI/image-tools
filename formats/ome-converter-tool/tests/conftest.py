@@ -5,10 +5,11 @@ import pathlib
 import shutil
 import tempfile
 import typing
-import skimage
+
 import numpy
 import pytest
 import requests
+import skimage
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -41,7 +42,7 @@ def get_params(request) -> tuple[int, str]:  # noqa: ANN001
     return request.param
 
 
-@pytest.fixture()
+@pytest.fixture
 def synthetic_images(
     get_params: tuple[int, str],
 ) -> typing.Generator[tuple[list[numpy.ndarray], pathlib.Path], None, None]:
@@ -73,7 +74,7 @@ def synthetic_images(
     shutil.rmtree(syn_dir)
 
 
-@pytest.fixture()
+@pytest.fixture
 def output_directory() -> typing.Generator[pathlib.Path, None, None]:
     """Generate random synthetic images."""
     out_dir = pathlib.Path(tempfile.mkdtemp(suffix="_out_dir"))
@@ -81,7 +82,7 @@ def output_directory() -> typing.Generator[pathlib.Path, None, None]:
     shutil.rmtree(out_dir)
 
 
-@pytest.fixture()
+@pytest.fixture
 def download_images() -> typing.Generator[pathlib.Path, None, None]:
     """Download test."""
     imagelist = {

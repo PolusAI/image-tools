@@ -3,8 +3,8 @@ import logging
 import os
 import pathlib
 import platform
-from concurrent.futures import as_completed
 from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import as_completed
 from itertools import product
 from typing import Optional
 
@@ -19,17 +19,22 @@ logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 TILE_SIZE = 2**13
 POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
 
-# NUM_THREADS: default to half of CPU cores, min 1
-if "NUM_THREADS" in os.environ:
-    NUM_THREADS = max(1, int(os.environ["NUM_THREADS"]))
-else:
+
+def get_num_threads() -> int:
+    """Determine default number of threads (half CPU cores, min 1)."""
+    # Allow environment override
+    if "NUM_THREADS" in os.environ:
+        return max(1, int(os.environ["NUM_THREADS"]))
     try:
-        if platform.system().lower() == "linux":
-            NUM_THREADS = max(1, len(os.sched_getaffinity(0)) // 2)
+        if platform.system().lower() == "linux" and hasattr(os, "sched_getaffinity"):
+            cpu_count = len(os.sched_getaffinity(0))
         else:
-            NUM_THREADS = max(1, os.cpu_count() // 2)
-    except TypeError:
-        NUM_THREADS = 1  # fallback if cpu_count returns None
+            cpu_count = os.cpu_count() or 1  # fallback if None
+        return max(1, cpu_count // 2)
+    except Exception:
+        return 1
+
+NUM_THREADS: int = get_num_threads()
 
 # NUM_WORKERS: default to 1 process
 NUM_WORKERS = max(1, int(os.environ.get("NUM_WORKERS", "1")))
@@ -73,11 +78,11 @@ def get_num_series(inp_image: pathlib.Path) -> int:
         return 1
 
 
-def convert_image(
+def convert_image( # noqa:C901,PLR0912
     inp_image: pathlib.Path,
     file_extension: str,
     out_dir: pathlib.Path,
-) -> None:  # noqa: C901
+) -> None:
     """Convert bioformats supported datatypes to ome.tif or ome.zarr file format."""
     # First, determine the number of series
     num_series = get_num_series(inp_image)
@@ -221,5 +226,5 @@ def batch_convert(
         ):
             try:
                 f.result()
-            except Exception as e:
+            except (OSError, ValueError) as e:
                 logger.error(f"Failed to convert file: {e}")

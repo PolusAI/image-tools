@@ -23,11 +23,7 @@ logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 
 def parse_input_dir(value: str) -> pathlib.Path | list[pathlib.Path]:
-    """Parse input as either:
-
-    - a directory path, which must exist
-    - a comma-separated list of file paths (strings).
-    """
+    """Parse a directory or comma-separated file paths."""
     if "," in value:
         files = [
             pathlib.Path(f.strip()).expanduser().resolve()
@@ -46,14 +42,24 @@ def parse_input_dir(value: str) -> pathlib.Path | list[pathlib.Path]:
 
 
 def _collect_files(
-    inp: pathlib.Path | list[pathlib.Path],
+    inp: str | pathlib.Path | list[pathlib.Path],
     pattern: str,
 ) -> list[pathlib.Path]:
     """Normalize input into a list of files."""
-    if isinstance(inp, pathlib.Path):
-        fps = fp.FilePattern(inp, pattern)
-        return [f[1][0] for f in fps()]
-    return list(inp)
+    if isinstance(inp, (str, pathlib.Path)):
+        dir_path = pathlib.Path(inp) if isinstance(inp, str) else inp
+        if not dir_path.is_dir():
+            raise ValueError(f"Input path is not a directory: {dir_path}")
+        fps = fp.FilePattern(dir_path, pattern)
+        return [files[1][0] for files in fps()]
+
+    elif isinstance(inp, list):
+        return [pathlib.Path(p) if isinstance(p, str) else p for p in inp]
+    else:
+        raise TypeError(
+            f"Unsupported input type: {type(inp).__name__}. "
+            "Expected str, Path, or list[Path/str]."
+        )
 
 
 def write_preview(
@@ -107,7 +113,7 @@ def main(
     logger.info(f"filePattern = {file_pattern}")
     logger.info(f"preview     = {preview}")
 
-    files = _collect_files(inp_dir, file_pattern)
+    files = _collect_files(inp_dir, file_pattern) # type: ignore
     logger.info(f"Found {len(files)} file(s) to process.")
 
     if preview:

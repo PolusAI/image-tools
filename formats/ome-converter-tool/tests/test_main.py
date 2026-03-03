@@ -67,11 +67,11 @@ def test_cli(
         app,
         [
             "--inpDir",
-            inp_dir,
+            str(inp_dir),
             "--filePattern",
             ".+",
             "--outDir",
-            output_directory,
+            str(output_directory), 
         ],
     )
 
