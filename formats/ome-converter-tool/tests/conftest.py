@@ -5,12 +5,10 @@ import pathlib
 import shutil
 import tempfile
 import typing
-
+import skimage
 import numpy
 import pytest
 import requests
-import skimage.data
-import skimage.measure
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:

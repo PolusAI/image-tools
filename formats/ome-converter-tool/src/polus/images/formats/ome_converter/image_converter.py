@@ -4,11 +4,11 @@ import os
 import pathlib
 import platform
 from concurrent.futures import as_completed
+from concurrent.futures import ProcessPoolExecutor
 from itertools import product
 from typing import Optional
 
 import filepattern as fp
-import preadator
 from bfio import BioReader
 from bfio import BioWriter
 from tqdm import tqdm
@@ -77,7 +77,7 @@ def convert_image(
     inp_image: pathlib.Path,
     file_extension: str,
     out_dir: pathlib.Path,
-) -> None: # noqa: C901
+) -> None:  # noqa: C901
     """Convert bioformats supported datatypes to ome.tif or ome.zarr file format."""
     # First, determine the number of series
     num_series = get_num_series(inp_image)
@@ -203,12 +203,9 @@ def batch_convert(
         logger.warning("No files found to process.")
         return
 
-    with preadator.ProcessManager(
-        name="ome_converter",
-        num_processes=NUM_WORKERS,
-        threads_per_process=NUM_THREADS,
+    with ProcessPoolExecutor(
+        max_workers=NUM_WORKERS,
     ) as executor:
-        futures = []
         futures = [
             executor.submit(convert_image, file, POLUS_IMG_EXT, out_dir)
             for file in files
@@ -222,4 +219,7 @@ def batch_convert(
             unit_scale=True,
             colour="cyan",
         ):
-            f.result()
+            try:
+                f.result()
+            except Exception as e:
+                logger.error(f"Failed to convert file: {e}")
