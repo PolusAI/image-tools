@@ -3,13 +3,12 @@ import logging
 import os
 import pathlib
 import platform
-from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures import as_completed
 from itertools import product
 from typing import Optional
 
 import filepattern as fp
-import numpy as np
+import preadator
 from bfio import BioReader
 from bfio import BioWriter
 from tqdm import tqdm
@@ -19,62 +18,21 @@ logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 TILE_SIZE = 2**13
 POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
-NUM_THREADS_ENV = os.environ.get("NUM_THREADS")
 
-if not NUM_THREADS_ENV or NUM_THREADS_ENV == "1":
-    if platform.system().lower() == "linux":
-        try:
-            NUM_THREADS = len(os.sched_getaffinity(0)) // 2  # type: ignore
-        except AttributeError:
-            cpu_count = os.cpu_count()
-            NUM_THREADS = cpu_count // 2 if cpu_count is not None else 1
-    else:
-        cpu_count = os.cpu_count()
-        NUM_THREADS = cpu_count // 2 if cpu_count is not None else 1
+# NUM_THREADS: default to half of CPU cores, min 1
+if "NUM_THREADS" in os.environ:
+    NUM_THREADS = max(1, int(os.environ["NUM_THREADS"]))
 else:
-    NUM_THREADS = int(NUM_THREADS_ENV)  # Convert str to int safely
+    try:
+        if platform.system().lower() == "linux":
+            NUM_THREADS = max(1, len(os.sched_getaffinity(0)) // 2)
+        else:
+            NUM_THREADS = max(1, os.cpu_count() // 2)
+    except TypeError:
+        NUM_THREADS = 1  # fallback if cpu_count returns None
 
-NUM_THREADS = max(1, NUM_THREADS)  # Ensure at least 1 thread, type is int
-
-
-def write_image(
-    br: BioReader,
-    c: int,
-    image: np.ndarray,
-    out_path: pathlib.Path,
-    max_workers: int,
-) -> None:
-    """Write an image to OME-TIFF or OME-ZARR format using BioFormats.
-
-    This function converts a given image to the OME-TIFF or OME-ZARR format,
-    ensuring that the data type is compatible and handling any necessary
-    byte order adjustments. It utilizes the BioWriter for writing the image
-    and manages channel names based on the provided BioReader.
-
-    Args:
-        br:  An instance of BioReader containing metadata for the image.
-        c: The index of the channel in the image.
-        image: The image data to be written.
-        out_path: Path to an output image.
-        max_workers: The maximum number of worker threads to use for writing.
-    """
-    if image.dtype == ">u2":
-        image = image.byteswap().newbyteorder("<")
-
-    with BioWriter(
-        out_path,
-        max_workers,
-    ) as bw:
-        # Handling of parsing channels when channels names are not provided.
-        if bw.channel_names != [None]:
-            bw.channel_names = [br.channel_names[c]]
-        bw.C = 1
-        bw.T = 1
-        bw.Z = 1
-        bw.X = image.shape[1]
-        bw.Y = image.shape[0]
-        bw.dtype = image.dtype
-        bw[:] = image
+# NUM_WORKERS: default to 1 process
+NUM_WORKERS = max(1, int(os.environ.get("NUM_WORKERS", "1")))
 
 
 def get_num_series(inp_image: pathlib.Path) -> int:
@@ -88,7 +46,7 @@ def get_num_series(inp_image: pathlib.Path) -> int:
     """
     try:
         # Open the specific file with BioReader
-        br = BioReader(inp_image, max_workers=1)
+        br = BioReader(inp_image, max_workers=NUM_THREADS)
 
         # Initialize series count
         num_series = 1
@@ -119,12 +77,14 @@ def convert_image(
     inp_image: pathlib.Path,
     file_extension: str,
     out_dir: pathlib.Path,
-) -> None:
+) -> None: # noqa: C901
     """Convert bioformats supported datatypes to ome.tif or ome.zarr file format."""
     # First, determine the number of series
     num_series = get_num_series(inp_image)
+
     logger.info(f"Detected {num_series} series/levels in image {inp_image.name}")
 
+    files_written = 0
     # Process each series independently
     for idx in range(num_series):
         logger.info(f"Processing levels {idx} of {inp_image.name}")
@@ -163,7 +123,7 @@ def convert_image(
                     if br.Z > 1:
                         suffix_parts.append(f"_z{z}")
                     if num_series > 1:
-                        suffix_parts.append(f"_level_{idx}")
+                        suffix_parts.append(f"_s{idx}")
 
                     # Apply combined suffix
                     if suffix_parts:
@@ -175,8 +135,37 @@ def convert_image(
                             ),
                         )
 
-                    # Try primary method first, then fall back to chunked approach
-                    process_single_view(br, c, t, z, out_path)
+                    with BioWriter(
+                        out_path,
+                        max_workers=NUM_THREADS,
+                        metadata=br.metadata,
+                    ) as bw:
+                        bw.C = 1
+                        bw.T = 1
+                        bw.Z = 1
+                        if bw.channel_names != [None]:
+                            bw.channel_names = [br.channel_names[c]]
+
+                        for y in range(0, br.Y, TILE_SIZE):
+                            y_max = min(br.Y, y + TILE_SIZE)
+                            for x in range(0, br.X, TILE_SIZE):
+                                x_max = min(br.X, x + TILE_SIZE)
+                                bw[
+                                    y:y_max,
+                                    x:x_max,
+                                    0,
+                                    0,
+                                    0,
+                                ] = br[
+                                    y:y_max,
+                                    x:x_max,
+                                    z : z + 1,
+                                    c,
+                                    t,
+                                ]
+
+                    files_written += 1
+                    logger.debug(f"Written: {out_path.name}")
 
         except (OSError, ValueError) as e:
             logger.error(
@@ -184,88 +173,8 @@ def convert_image(
             )
 
 
-def process_single_view(
-    br: "BioReader",
-    c: int,
-    t: int,
-    z: int,
-    out_path: pathlib.Path,
-) -> None:
-    """Process a single view (t,c,z) from a BioReader."""
-    try:
-        # Try direct read first
-        final_image = br[:, :, z, c, t]
-
-        write_image(
-            br=br,
-            c=c,
-            image=final_image,
-            out_path=out_path,
-            max_workers=NUM_THREADS,
-        )
-        logger.debug(f"Successfully processed {out_path.name} using direct read")
-
-    except (OSError, ValueError) as e:
-        logger.warning(
-            f"Direct read failed for {out_path.name}, trying chunked approach: {e!s}",
-        )
-        try:
-            # Fallback to chunked approach
-            actual_y, actual_x = br.Y, br.X
-
-            if actual_y <= 0 or actual_x <= 0:
-                logger.error(
-                    f"Invalid dimensions: {actual_y}x{actual_x} for {out_path.name}",
-                )
-                return
-
-            final_image = np.zeros((actual_y, actual_x), dtype=br.dtype)
-
-            # Use smaller chunks for problematic images
-            chunk_size = min(TILE_SIZE, min(actual_y, actual_x) // 2)
-
-            # Track successful chunks for debugging
-            total_chunks = 0
-            successful_chunks = 0
-
-            for y in range(0, actual_y, chunk_size):
-                for x in range(0, actual_x, chunk_size):
-                    y_max = min(actual_y, y + chunk_size)
-                    x_max = min(actual_x, x + chunk_size)
-                    total_chunks += 1
-
-                    try:
-                        chunk = br[y:y_max, x:x_max, z, c, t]
-                        final_image[y:y_max, x:x_max] = chunk
-                        successful_chunks += 1
-                    except (OSError, ValueError) as e:
-                        logger.warning(
-                            f"Failed to read chunk at ({y}:{y_max}, {x}:{x_max}): {e}",
-                        )
-
-            logger.info(
-                f"Chunked read: {successful_chunks}/{total_chunks} successfully",
-            )
-
-            write_image(
-                br=br,
-                c=c,
-                image=final_image,
-                out_path=out_path,
-                max_workers=NUM_THREADS,
-            )
-            logger.debug(
-                f"Successfully processed {out_path.name} using chunked approach",
-            )
-
-        except (OSError, ValueError) as e:
-            logger.error(
-                f"Failed to process {out_path.name} with chunked approach: {e!s}",
-            )
-
-
 def batch_convert(
-    inp_dir: pathlib.Path,
+    inp_dir: pathlib.Path | list[pathlib.Path],
     out_dir: pathlib.Path,
     file_pattern: Optional[str],
     file_extension: str,
@@ -283,16 +192,27 @@ def batch_convert(
     logger.info(f"file_pattern = {file_pattern}")
     logger.info(f"file_extension = {file_extension}")
 
-    file_pattern = ".+" if file_pattern is None else file_pattern
+    if isinstance(inp_dir, pathlib.Path):
+        file_pattern = ".+" if file_pattern is None else file_pattern
+        fps = fp.FilePattern(inp_dir, file_pattern)
+        files = [files[1][0] for files in fps()]
+    else:
+        files = list(inp_dir)
 
-    fps = fp.FilePattern(inp_dir, file_pattern)
+    if not files:
+        logger.warning("No files found to process.")
+        return
 
-    with ProcessPoolExecutor(max_workers=NUM_THREADS) as executor:
+    with preadator.ProcessManager(
+        name="ome_converter",
+        num_processes=NUM_WORKERS,
+        threads_per_process=NUM_THREADS,
+    ) as executor:
         futures = []
-        for files in fps():
-            file = files[1][0]
-            futures.append(executor.submit(convert_image, file, POLUS_IMG_EXT, out_dir))
-
+        futures = [
+            executor.submit(convert_image, file, POLUS_IMG_EXT, out_dir)
+            for file in files
+        ]
         for f in tqdm(
             as_completed(futures),
             total=len(futures),
