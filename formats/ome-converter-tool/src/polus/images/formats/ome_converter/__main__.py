@@ -49,7 +49,7 @@ def _collect_files(
     if isinstance(inp, (str, pathlib.Path)):
         dir_path = pathlib.Path(inp) if isinstance(inp, str) else inp
         if not dir_path.is_dir():
-            msg= f"Input path is not a directory: {dir_path}"
+            msg = f"Input path is not a directory: {dir_path}"
             raise ValueError(msg)
         fps = fp.FilePattern(dir_path, pattern)
         return [files[1][0] for files in fps()]
@@ -111,7 +111,7 @@ def main(
     logger.info(f"filePattern = {file_pattern}")
     logger.info(f"preview     = {preview}")
 
-    files = _collect_files(inp_dir, file_pattern) # type: ignore
+    files = _collect_files(inp_dir, file_pattern)  # type: ignore
     logger.info(f"Found {len(files)} file(s) to process.")
 
     if preview:

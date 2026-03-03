@@ -34,6 +34,7 @@ def get_num_threads() -> int:
     except (AttributeError, OSError):
         return 1
 
+
 NUM_THREADS: int = get_num_threads()
 
 # NUM_WORKERS: default to 1 process
@@ -78,7 +79,7 @@ def get_num_series(inp_image: pathlib.Path) -> int:
         return 1
 
 
-def convert_image( # noqa:C901,PLR0912
+def convert_image(  # noqa: C901
     inp_image: pathlib.Path,
     file_extension: str,
     out_dir: pathlib.Path,
