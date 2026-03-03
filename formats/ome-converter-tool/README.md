@@ -35,4 +35,12 @@ This plugin takes 2 input arguments and 1 output argument:
 ## Docker Command
 
 ```bash
-docker run -e POLUS_IMG_EXT=".ome.zarr" --e  NUM_THREADS=4 -v /Users/username/:/Users/username/ polusai/ome-converter-tool:0.3.4-dev2 --inpDir=/Users/path/to/Images/ --filePattern=".*.tif" --outDir=/Users/path/to/outputs
+docker run \
+  -e POLUS_IMG_EXT=".ome.zarr" \
+  -e NUM_THREADS=4 \
+  -e NUM_WORKERS=2 \
+  -v /Users/username/:/Users/username/ \
+  polusai/ome-converter-tool:0.3.4-dev2 \
+  --inpDir=/Users/path/to/Images/ \
+  --filePattern=".*.tif" \
+  --outDir=/Users/path/to/outputs
