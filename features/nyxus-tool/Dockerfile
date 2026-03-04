@@ -1,25 +1,35 @@
-FROM polusai/bfio:2.4.3
+FROM polusai/bfio:2.4.5
 
-# environment variables defined in polusai/bfio
 ENV EXEC_DIR="/opt/executables"
 ENV POLUS_IMG_EXT=".ome.tif"
 ENV POLUS_TAB_EXT=".csv"
 ENV POLUS_LOG="INFO"
 
-# Work directory defined in the base container
 WORKDIR ${EXEC_DIR}
 
-# TODO: Change the tool_dir to the tool directory
-ENV TOOL_DIR="features/nyxus-tool"
+# Copy the tool
+COPY . ${EXEC_DIR}/nyxus-tool
 
-# Copy the repository into the container
-RUN mkdir image-tools
-COPY . ${EXEC_DIR}/image-tools
+# Install build dependencies — compiler + Python headers
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    g++ \
+    gcc \
+    python3-dev \              
+    && rm -rf /var/lib/apt/lists/*
 
-# Install the tool
-RUN pip3 install "${EXEC_DIR}/image-tools/${TOOL_DIR}" --no-cache-dir
+# Upgrade pip/setuptools/wheel (good practice)
+RUN python3 -m pip install --upgrade pip setuptools wheel
 
-# Set the entrypoint
-# TODO: Change the entrypoint to the tool entrypoint
+# Now install your package — annoy should build successfully
+RUN pip3 install "${EXEC_DIR}/nyxus-tool" --no-cache-dir
+
+# Clean up build tools to reduce image size
+RUN apt-get purge -y --auto-remove \
+    g++ \
+    gcc \
+    python3-dev \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 ENTRYPOINT ["python3", "-m", "polus.images.features.nyxus_tool"]
 CMD ["--help"]

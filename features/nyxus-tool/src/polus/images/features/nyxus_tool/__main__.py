@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+import warnings
 from concurrent.futures import as_completed
 from multiprocessing import cpu_count
 from pathlib import Path
@@ -11,16 +12,22 @@ from typing import Any
 from typing import Optional
 
 import filepattern as fp
-import preadator
+import numpy as np
 import typer
+from bfio import BioReader
+from concurrent.futures import ProcessPoolExecutor
 from polus.images.features.nyxus_tool.nyxus_func import nyxus_func
 from polus.images.features.nyxus_tool.utils import FEATURE_GROUP
 from polus.images.features.nyxus_tool.utils import FEATURE_LIST
 from polus.images.features.nyxus_tool.utils import Extension
 from tqdm import tqdm
 
+# Suppress all warnings
+warnings.filterwarnings("ignore")
+
 # #Import environment variables
 POLUS_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
+num_workers = max(cpu_count() - 1, 1)
 
 app = typer.Typer()
 
@@ -140,18 +147,20 @@ def main(  # noqa: PLR0913
             json.dump(out_json, jfile, indent=2)
 
     for s_image in seg_images():
+        seg_path = s_image[1][0]
+        with BioReader(seg_path) as br:
+            seg_image = br.read()
+            # Skip if the number of unique objects is 1
+            if len(np.unique(seg_image)) == 1:
+                continue
         i_image = int_images.get_matching(**dict(s_image[0].items()))
 
-        with preadator.ProcessManager(
-            name="compute nyxus feature",
-            num_processes=num_workers,
-            threads_per_process=2,
-        ) as pm:
-            threads = []
+        with ProcessPoolExecutor(max_workers=num_workers) as executor:
+            futures = []
             for fl in i_image:
                 file = fl[1]
-                logger.debug(f"Compute nyxus feature {file}")
-                thread = pm.submit_process(
+                logger.debug(f"Compute nyxus feature for {file}")
+                fut = executor.submit(
                     nyxus_func,
                     file,
                     s_image[1],
@@ -161,11 +170,10 @@ def main(  # noqa: PLR0913
                     pixel_per_micron,
                     neighbor_dist,
                 )
-                threads.append(thread)
-            pm.join_processes()
+                futures.append(fut)
             for f in tqdm(
-                as_completed(threads),
-                total=len(threads),
+                as_completed(futures),
+                total=len(futures),
                 mininterval=5,
                 desc=f"converting images to {file_extension}",
                 initial=0,

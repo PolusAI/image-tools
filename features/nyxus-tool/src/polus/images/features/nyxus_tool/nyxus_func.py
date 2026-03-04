@@ -50,25 +50,37 @@ def nyxus_func(  # noqa: PLR0913
 
     nyx.set_params(**nyx_params)
 
-    if f"{file_extension}" == "arrowipc":
-        ext = ".arrow"
-    elif f"{file_extension}" == "parquet":
-        ext = ".parquet"
-    elif f"{file_extension}" == "pandas":
-        ext = ".csv"
+    if hasattr(file_extension, "value"):
+        file_ext = str(file_extension.value).lower().strip()
+    else:
+        file_ext = str(file_extension).lower().strip()
+
+    ext_map = {
+        "arrowipc": ".arrow",
+        "parquet": ".parquet",
+        "pandas": ".csv",
+    }
+
+    try:
+        ext = ext_map[file_ext]
+    except KeyError:
+        raise ValueError(
+            f"Unsupported file_extension '{file_extension}'. "
+            f"Must be one of {list(ext_map)}"
+        )
 
     for i_file in int_file:
-        out_name = i_file.name.replace("".join(i_file.suffixes), f"{ext}")
+        out_name = i_file.name.replace("".join(i_file.suffixes), ext)
         output_path = str(pathlib.Path(out_dir, out_name))
 
         feats = nyx.featurize_files(
             intensity_files=[str(i_file)],
             mask_files=[str(seg_file[0])],
             single_roi=single_roi,
-            output_type=f"{file_extension}",
+            output_type=file_ext,
             output_path=output_path,
         )
 
-    if f"{file_extension}" == "pandas":
-        vf = vaex.from_pandas(feats)
-        vf.export_csv(path=output_path, chunk_size=chunk_size)
+        if file_ext == "pandas":
+            vf = vaex.from_pandas(feats)
+            vf.export_csv(path=output_path, chunk_size=chunk_size)

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-features-nyxus-tool"
-version = "0.1.8"
+version = "0.1.8-dev2"
 description = ""
 authors = [
            "Nick Schaub <nick.schaub@nih.gov>",
@@ -11,10 +11,11 @@ packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
-filepattern = "2.0.4"
-typer = "^0.7.0"
+bfio =  "2.4.5"
+filepattern = "2.1.4"
+typer = "0.24.1"
 tqdm = "^4.66.1"
-nyxus = "^0.8.2"
+nyxus = "0.11.0"
 vaex = "^4.17.0"
 preadator = "0.4.0.dev2"
 pytest-sugar = "^0.9.7"
