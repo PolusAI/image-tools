@@ -79,7 +79,7 @@ def get_num_series(inp_image: pathlib.Path) -> int:
         return 1
 
 
-def convert_image(  # noqa: C901
+def convert_image(
     inp_image: pathlib.Path,
     file_extension: str,
     out_dir: pathlib.Path,
@@ -91,6 +91,15 @@ def convert_image(  # noqa: C901
     logger.info(f"Detected {num_series} series/levels in image {inp_image.name}")
 
     files_written = 0
+    if inp_image.suffix:
+        extension_len = 6
+        extension = "".join(
+            s for s in inp_image.suffixes[-2:] if len(s) < extension_len
+        )
+        base_name = inp_image.name.replace(extension, file_extension)
+    else:
+        base_name = f"{inp_image.name}{file_extension}"
+
     # Process each series independently
     for idx in range(num_series):
         logger.info(f"Processing levels {idx} of {inp_image.name}")
@@ -104,42 +113,23 @@ def convert_image(  # noqa: C901
 
                 # Process each view (t, c, z)
                 for t, c, z in product(range(br.T), range(br.C), range(br.Z)):
-                    # Build the output path
-                    if inp_image.suffix:
-                        extension_len = 6
-                        extension = "".join(
-                            [
-                                suffix
-                                for suffix in inp_image.suffixes[-2:]
-                                if len(suffix) < extension_len
-                            ],
-                        )
-                        out_path = out_dir.joinpath(
-                            inp_image.name.replace(extension, file_extension),
-                        )
-                    else:
-                        out_path = out_dir.joinpath(f"{inp_image.name}{file_extension}")
-
                     # Build suffix components
-                    suffix_parts = []
-                    if br.C > 1:
-                        suffix_parts.append(f"_c{c}")
-                    if br.T > 1:
-                        suffix_parts.append(f"_t{t}")
-                    if br.Z > 1:
-                        suffix_parts.append(f"_z{z}")
-                    if num_series > 1:
-                        suffix_parts.append(f"_s{idx}")
+                    suffix = "".join(
+                        [
+                            f"_c{c}" if br.C > 1 else "",
+                            f"_t{t}" if br.T > 1 else "",
+                            f"_z{z}" if br.Z > 1 else "",
+                            f"_s{idx}" if num_series > 1 else "",
+                        ],
+                    )
 
                     # Apply combined suffix
-                    if suffix_parts:
-                        suffix = "".join(suffix_parts)
-                        out_path = out_dir.joinpath(
-                            out_path.name.replace(
-                                file_extension,
-                                f"{suffix}{file_extension}",
-                            ),
-                        )
+                    out_name = (
+                        base_name.replace(file_extension, f"{suffix}{file_extension}")
+                        if suffix
+                        else base_name
+                    )
+                    out_path = out_dir.joinpath(out_name)
 
                     with BioWriter(
                         out_path,
