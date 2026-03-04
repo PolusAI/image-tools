@@ -16,10 +16,12 @@ outDir=/data/output
 docker run polusai/file-renaming-tool:${version}
 
 # Run the plugin
+
 docker run --mount type=bind,source=${datapath},target=/data/ \
+            -e NUM_THREADS=4 \
             polusai/file-renaming-tool:${version} \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
             --outFilePattern ${outFilePattern} \
-            --mapDirectory
+            --mapDirectory \
             --outDir ${outDir}

@@ -7,3 +7,8 @@
 ### Added
 - Integrated filepattern in this tool
 - Modified the sorting dictionary letters key with respect to length
+
+## [0.2.5-dev0] - 2026-03-04
+### Added
+- Updated dependencies and base container image
+- refactored code

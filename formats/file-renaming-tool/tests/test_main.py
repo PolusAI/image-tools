@@ -3,14 +3,13 @@ import json
 import pathlib
 import shutil
 import tempfile
-from typing import Any, DefaultDict
+from typing import cast
 
 import click
 import pytest
+from polus.images.formats.file_renaming import filerenaming as fr
+from polus.images.formats.file_renaming.__main__ import app
 from typer.testing import CliRunner
-
-from polus.images.formats.file_renaming import file_renaming as fr
-from polus.images.formats.file_renaming.__main__ import app as app
 
 runner = CliRunner()
 
@@ -18,27 +17,32 @@ runner = CliRunner()
 class CreateData:
     """Generate tabular data with several different file format."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Define instance attributes."""
         self.dirpath = pathlib.Path(__file__).parent
         self.jsonpath = self.dirpath.joinpath("file_rename_test.json")
 
     def input_directory(self) -> pathlib.Path:
         """Create temporary input directory."""
-        return tempfile.mkdtemp(dir=self.dirpath)
+        return pathlib.Path(tempfile.mkdtemp(dir=self.dirpath))
 
     def output_directory(self) -> pathlib.Path:
         """Create temporary output directory."""
-        return tempfile.mkdtemp(dir=self.dirpath)
+        return pathlib.Path(tempfile.mkdtemp(dir=self.dirpath))
 
-    def runcommands(self, inputs, inp_pattern, out_pattern) -> click.testing.Result:
+    def runcommands(
+        self,
+        inputs: list[str],
+        inp_pattern: str,
+        out_pattern: str,
+    ) -> click.testing.Result:
         """Run command line arguments."""
         inp_dir = self.input_directory()
         out_dir = self.output_directory()
         for inp in inputs:
-            open(pathlib.Path(inp_dir, inp), "w").close()
+            pathlib.Path.open(pathlib.Path(inp_dir, inp), "w").close()
 
-        outputs = runner.invoke(
+        return runner.invoke(
             app,
             [
                 "--inpDir",
@@ -51,13 +55,12 @@ class CreateData:
                 out_pattern,
             ],
         )
-        return outputs
 
-    def load_json(self, x) -> DefaultDict[Any, Any]:
+    def load_json(self, x: str) -> list[str]:
         """Json file containing image filenames."""
-        with open(self.jsonpath) as file:
+        with pathlib.Path.open(self.jsonpath) as file:
             data = json.load(file)
-        return data[x]
+        return list(data[x])
 
     def clean_directories(self) -> None:
         """Remove files."""
@@ -125,17 +128,17 @@ fixture_params = [
             "0({mo:dd}-{day:dd})0({mo2:dd}-{day2:dd})-({a:d}-{b:d})-{col:ddd}.ome.tif",
             "0({mo:ddd}-{day:ddd})0{mo2:dd}-{day2:dd})-({a:dd}-{b:dd})-{col:ddd}.ome.tif",
         ),
-    ]
+    ],
 ]
 
 
 @pytest.fixture(params=fixture_params)
-def poly(request):
+def poly(request: pytest.FixtureRequest) -> list[tuple[str, str]]:
     """To get the parameter of the fixture."""
-    return request.param
+    return cast(list[tuple[str, str]], request.param)
 
 
-def test_invalid_input_raises_error(poly):
+def test_invalid_input_raises_error(poly: list[tuple[str, str]]) -> None:
     """Testing of invalid input filepattern."""
     d = CreateData()
     inputs = d.load_json("duplicate_channels_to_digit")
@@ -144,7 +147,7 @@ def test_invalid_input_raises_error(poly):
     d.clean_directories()
 
 
-def test_non_alphanum_inputs_percentage_sign(poly):
+def test_non_alphanum_inputs_percentage_sign(poly: list[tuple[str, str]]) -> None:
     """Testing of filename with non alphanumeric inputs such as percentage sign."""
     d = CreateData()
     inputs = d.load_json("percentage_file")
@@ -154,7 +157,7 @@ def test_non_alphanum_inputs_percentage_sign(poly):
     d.clean_directories()
 
 
-def test_numeric_fixed_width(poly):
+def test_numeric_fixed_width(poly: list[tuple[str, str]]) -> None:
     """Testing of filename with numeric fixed length."""
     d = CreateData()
     inputs = d.load_json("robot")
@@ -164,7 +167,7 @@ def test_numeric_fixed_width(poly):
     d.clean_directories()
 
 
-def test_alphanumeric_fixed_width(poly):
+def test_alphanumeric_fixed_width(poly: list[tuple[str, str]]) -> None:
     """Testing of filename with alphanumeric fixed length."""
     d = CreateData()
     inputs = d.load_json("brain")
@@ -174,7 +177,7 @@ def test_alphanumeric_fixed_width(poly):
     d.clean_directories()
 
 
-def test_alphanumeric_variable_width(poly):
+def test_alphanumeric_variable_width(poly: list[tuple[str, str]]) -> None:
     """Testing of filename with alphanumeric variable width."""
     d = CreateData()
     inputs = d.load_json("variable")
@@ -184,7 +187,7 @@ def test_alphanumeric_variable_width(poly):
     d.clean_directories()
 
 
-def test_two_chan_to_digit(poly):
+def test_two_chan_to_digit(poly: list[tuple[str, str]]) -> None:
     """Testing conversion of two channels to digits."""
     d = CreateData()
     inputs = d.load_json("two_chan")
@@ -194,7 +197,7 @@ def test_two_chan_to_digit(poly):
     d.clean_directories()
 
 
-def test_three_chan_to_digit(poly):
+def test_three_chan_to_digit(poly: list[tuple[str, str]]) -> None:
     """Test conversion of three channels to digits."""
     d = CreateData()
     inputs = d.load_json("three_chan")
@@ -204,7 +207,7 @@ def test_three_chan_to_digit(poly):
     d.clean_directories()
 
 
-def test_three_char_chan(poly):
+def test_three_char_chan(poly: list[tuple[str, str]]) -> None:
     """Test conversion of three character channels to digits."""
     d = CreateData()
     inputs = d.load_json("three_char_chan")
@@ -214,7 +217,7 @@ def test_three_char_chan(poly):
     d.clean_directories()
 
 
-def test_varied_digits(poly):
+def test_varied_digits(poly: list[tuple[str, str]]) -> None:
     """Test varied digits."""
     d = CreateData()
     inputs = d.load_json("tissuenet-val-labels-45-C")
@@ -224,7 +227,7 @@ def test_varied_digits(poly):
     d.clean_directories()
 
 
-def test_spaces(poly):
+def test_spaces(poly: list[tuple[str, str]]) -> None:
     """Test non-alphanumeric chars such as spaces."""
     d = CreateData()
     inputs = d.load_json("non_alphanum_int")
@@ -234,7 +237,7 @@ def test_spaces(poly):
     d.clean_directories()
 
 
-def test_non_alphanum_float(poly):
+def test_non_alphanum_float(poly: list[tuple[str, str]]) -> None:
     """Test non-alphanumeric chars such as spaces, periods, commas, brackets."""
     d = CreateData()
     inputs = d.load_json("non_alphanum_float")
@@ -244,7 +247,7 @@ def test_non_alphanum_float(poly):
     d.clean_directories()
 
 
-def test_specify_len_valid_input():
+def test_specify_len_valid_input() -> None:
     """Test of sepcifying length."""
     test_cases = [
         (
@@ -260,7 +263,7 @@ def test_specify_len_valid_input():
         assert result == to_val
 
 
-def test_get_char_to_digit_grps_returns_unique_keys_valid_input():
+def test_get_char_to_digit_grps_returns_unique_keys_valid_input() -> None:
     """Test of getting characters to digit groups."""
     test_cases = [
         (
@@ -277,7 +280,7 @@ def test_get_char_to_digit_grps_returns_unique_keys_valid_input():
         assert result == to_val
 
 
-def test_str_to_int_valid_input():
+def test_str_to_int_valid_input() -> None:
     """Test of string to integer."""
     test_cases = [
         (
@@ -327,7 +330,7 @@ def test_str_to_int_valid_input():
         assert result == to_val
 
 
-def test_letters_to_int_returns_cat_index_dict_valid_input():
+def test_letters_to_int_returns_cat_index_dict_valid_input() -> None:
     """Test of letter to integers."""
     test_cases = [
         (
@@ -348,7 +351,7 @@ def test_letters_to_int_returns_cat_index_dict_valid_input():
                 },
             ],
             ({"DAPI": 0, "GFP": 1, "TXRED": 2}),
-        )
+        ),
     ]
     for test_case in test_cases:
         (from_val1, from_val2, to_val) = test_case
@@ -357,11 +360,11 @@ def test_letters_to_int_returns_cat_index_dict_valid_input():
 
 
 @pytest.mark.xfail
-def test_letters_to_int_returns_error_invalid_input():
+def test_letters_to_int_returns_error_invalid_input() -> None:
     """Test of invalid inputs."""
     test_cases = [
         (
-            (2),
+            ("2"),
             [
                 {
                     "row": 1,
@@ -385,7 +388,8 @@ def test_letters_to_int_returns_error_invalid_input():
 
 
 @pytest.fixture
-def create_subfolders():
+def create_subfolders() -> tuple[pathlib.Path, str, str, str, str]:
+    """Create temporary input subfolders with test files."""
     data = {
         "complex": [
             [
@@ -399,7 +403,7 @@ def create_subfolders():
             "(?P<directory>.*)/AS_09125_050118150001_{row:c}{col:dd}f{f:dd}d{channel:d}.tif",
             "x{row:dd}_y{col:dd}_p{f:dd}{channel:d}_c01.tif",
             "True",
-        ]
+        ],
     }
     name = "complex"
     d = CreateData()
@@ -409,31 +413,31 @@ def create_subfolders():
         if not pathlib.Path(dirname).exists():
             pathlib.Path(dirname).mkdir(parents=True, exist_ok=True)
         for fl in data[name][0]:
-            temp_file = open(pathlib.Path(dirname, fl), "w")
+            temp_file = pathlib.Path.open(pathlib.Path(dirname, fl), "w")
             temp_file.close()
 
     return (
         pathlib.Path(dir_path),
-        data[name][1],
-        data[name][2],
-        data[name][3],
-        data[name][4],
+        str(data[name][1]),
+        str(data[name][2]),
+        str(data[name][3]),
+        str(data[name][4]),
     )
 
 
-def test_cli(create_subfolders: pytest.FixtureRequest) -> None:
+def test_cli(create_subfolders: tuple[pathlib.Path, str, str, str, str]) -> None:
     """Test Cli."""
-    dir_path, _, file_pattern, out_file_pattern, map_directory = create_subfolders
+    dir_path, _, file_pattern, out_file_pattern, _ = create_subfolders
 
     d = CreateData()
     out_dir = d.output_directory()
     params = [
         "--inpDir",
-        dir_path,
+        str(dir_path),
         "--filePattern",
         file_pattern,
         "--outDir",
-        out_dir,
+        str(out_dir),
         "--outFilePattern",
         out_file_pattern,
         "--mapDirectory",

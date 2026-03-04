@@ -4,12 +4,9 @@ import os
 import pathlib
 import re
 import shutil
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
-from multiprocessing import cpu_count
-from sys import platform
 from typing import Any
-from typing import Optional
 
 import filepattern as fp
 from tqdm import tqdm
@@ -17,10 +14,19 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
-if platform == "linux" or platform == "linux2":
-    NUM_THREADS = len(os.sched_getaffinity(0))  # type: ignore
-else:
-    NUM_THREADS = max(cpu_count() // 2, 2)
+
+def get_num_threads() -> int:
+    """Return thread count from NUM_THREADS env or a safe I/O-bound default."""
+    try:
+        if env := os.getenv("NUM_THREADS"):
+            return max(1, int(env))
+    except ValueError:
+        pass
+
+    return min(32, (os.cpu_count() or 1) * 4)
+
+
+NUM_THREADS = get_num_threads()
 
 
 def specify_len(out_pattern: str) -> str:
@@ -94,7 +100,7 @@ def get_char_to_digit_grps(inp_pattern: str, out_pattern: str) -> list[str]:
     return special_categories
 
 
-def str_to_int(dictionary: dict) -> dict:
+def str_to_int(dictionary: dict[str, Any]) -> dict[str, Any]:
     """If a number in the dictionary is in str format, convert to int.
 
     Args:
@@ -107,13 +113,13 @@ def str_to_int(dictionary: dict) -> dict:
     for key, value in dictionary.items():
         try:
             fixed_dictionary[key] = int(value)
-        except Exception:  # noqa: BLE001
+        except (ValueError, TypeError):
             fixed_dictionary[key] = value
     logger.debug(f"str_to_int() returns {fixed_dictionary}")
     return fixed_dictionary
 
 
-def letters_to_int(named_grp: str, all_matches: list) -> dict:
+def letters_to_int(named_grp: str, all_matches: list[dict[str, Any]]) -> dict[str, int]:
     """Alphabetically number matches for the given named group for all files.
 
     Make a dictionary where each key is a match for each filename and
@@ -142,12 +148,114 @@ def letters_to_int(named_grp: str, all_matches: list) -> dict:
     return str_alphabetindex_dict
 
 
-def rename(  # noqa: C901 PLR0915
+def _prepare_file_matches(
+    inp_dir: pathlib.Path,
+    file_pattern: str,
+    out_file_pattern: str,
+    map_directory: bool | None = False,
+) -> tuple[list[Any], list[str], str, bool, dict[str, Any] | None]:
+    """Validate inputs and prepare transformed file matches.
+
+    Returns:
+        Tuple of (inp_files, fpaths, out_pattern_fstring, check_dir_var, map_dict)
+    """
+    # Check if the directory is empty without creating a full list
+    file_count = sum(1 for _ in inp_dir.iterdir())
+    if file_count == 0:
+        msg = f"Input directory is empty: {file_count} files found."
+        raise ValueError(msg)
+
+    logger.info(f"Number of files found: {file_count}")
+
+    recursive = bool(map_directory)
+    files = fp.FilePattern(inp_dir, file_pattern, recursive=recursive)
+
+    if len(files) == 0:
+        msg = f"Please define filePattern: {file_pattern} again!"
+        raise ValueError(msg)
+
+    inp_files: list[Any] = [file[0] for file in files()]
+    fpaths: list[str] = [file[1] for file in files()]
+
+    # Integrate format strings into outFilePattern to specify digit/char len
+    out_pattern_fstring = specify_len(out_file_pattern)
+
+    # List named groups where input pattern=char & output pattern=digit
+    char_to_digit_categories = get_char_to_digit_grps(file_pattern, out_file_pattern)
+
+    # Convert numbers from strings to integers, if applicable
+    for i in range(len(inp_files)):
+        inp_files[i] = str_to_int(inp_files[i])
+
+    # Populate dict if any matches need to be converted from char to digit
+    # Key=named group, Value=Int representing matched chars
+    numbered = {grp: letters_to_int(grp, inp_files) for grp in char_to_digit_categories}
+
+    # Check named groups that need c->d conversion
+    for named_grp in char_to_digit_categories:
+        for i in range(len(inp_files)):
+            if inp_files[i].get(named_grp):
+                #: Replace original matched letter with new digit
+                inp_files[i][named_grp] = numbered[named_grp][inp_files[i][named_grp]]
+
+    # To create a dictionary mapping for folder names,
+    # The keys represent folder names and the values represent corresponding mappings.
+    check_dir_var = bool([d for d in inp_files if "directory" in list(d.keys())])
+    map_dict = None
+    if map_directory:
+        if not check_dir_var:
+            logger.error("directory variable is not included in filepattern correctly")
+        else:
+            subdirs = sorted({d["directory"] for d in inp_files if d["directory"]})
+            map_dict = dict(zip(subdirs, [f"d{i}" for i in range(1, len(subdirs) + 1)]))
+
+    return inp_files, fpaths, out_pattern_fstring, check_dir_var, map_dict
+
+
+class _ResolvePathArgs:
+    """Arguments for _resolve_output_path."""
+
+    def __init__(  # noqa: PLR0913
+        self,
+        match: dict[str, Any],
+        out_dir: pathlib.Path,
+        out_pattern_fstring: str,
+        check_dir_var: bool,
+        map_directory: bool | None,
+        map_dict: dict[str, Any] | None,
+    ) -> None:
+        self.match = match
+        self.out_dir = out_dir
+        self.out_pattern_fstring = out_pattern_fstring
+        self.check_dir_var = check_dir_var
+        self.map_directory = map_directory
+        self.map_dict = map_dict
+
+
+def _resolve_output_path(args: _ResolvePathArgs) -> pathlib.Path | None:
+    """Resolve the output file path for a single file match."""
+    # Apply str formatting to change digit or char length
+    out_name = args.out_pattern_fstring.format(**args.match)
+
+    if not args.check_dir_var:
+        return pathlib.Path(args.out_dir, out_name)
+
+    directory = args.match.get("directory")
+    if args.map_directory:
+        if not args.map_dict or directory not in args.map_dict:
+            logger.error(f"{directory} is not provided in filePattern")
+            return None
+        return pathlib.Path(args.out_dir, f"{args.map_dict[directory]}_{out_name}")
+
+    return pathlib.Path(args.out_dir, f"{directory}_{out_name}")
+
+
+def rename(
     inp_dir: pathlib.Path,
     out_dir: pathlib.Path,
     file_pattern: str,
     out_file_pattern: str,
-    map_directory: Optional[bool] = False,
+    map_directory: bool | None = False,
 ) -> None:
     """Scalable Extraction of Nyxus Features.
 
@@ -160,110 +268,33 @@ def rename(  # noqa: C901 PLR0915
     """
     logger.info("Start renaming files")
 
-    # Check if the directory is empty without creating a full list
-    file_count = sum(1 for _ in inp_dir.iterdir())
+    (
+        inp_files,
+        fpaths,
+        out_pattern_fstring,
+        check_dir_var,
+        map_dict,
+    ) = _prepare_file_matches(inp_dir, file_pattern, out_file_pattern, map_directory)
 
-    if file_count == 0:
-        msg = f"Input directory is empty: {file_count} files found."
-        raise ValueError(msg)
-
-    logger.info(f"Number of files found: {file_count}")
-
-    if map_directory is True:
-        files = fp.FilePattern(inp_dir, file_pattern, recursive=True)
-    else:
-        files = fp.FilePattern(inp_dir, file_pattern)
-
-    if len(files) == 0:
-        msg = f"Please define filePattern: {file_pattern} again!!"
-        raise ValueError(
-            msg,
-        )
-
-    inp_files: list[Any] = [file[0] for file in files()]
-    fpaths: list[str] = [file[1] for file in files()]
-
-    #: Integrate format strings into outFilePattern to specify digit/char len
-    out_pattern_fstring = specify_len(out_file_pattern)
-
-    #: List named groups where input pattern=char & output pattern=digit
-    char_to_digit_categories = get_char_to_digit_grps(file_pattern, out_file_pattern)
-
-    #: Convert numbers from strings to integers, if applicable
-    for i in range(0, len(inp_files)):
-        tmp_match = inp_files[i]
-        inp_files[i] = str_to_int(tmp_match)
-
-    #: Populate dict if any matches need to be converted from char to digit
-    #: Key=named group, Value=Int representing matched chars
-    numbered_categories = {}
-    for named_grp in char_to_digit_categories:
-        numbered_categories[named_grp] = letters_to_int(named_grp, inp_files)
-
-    # Check named groups that need c->d conversion
-    for named_grp in char_to_digit_categories:
-        for i in range(0, len(inp_files)):
-            if inp_files[i].get(named_grp):
-                #: Replace original matched letter with new digit
-                inp_files[i][named_grp] = numbered_categories[named_grp][
-                    inp_files[i][named_grp]
-                ]
-    # To create a dictionary mapping for folder names,
-    # The keys represent folder names and the values represent corresponding mappings.
-    check_dir_var = bool([d for d in inp_files if "directory" in list(d.keys())])
-    if map_directory:
-        if check_dir_var is False:
-            logger.error("directory variable is not included in filepattern correctly")
-
-        else:
-            subdirs = sorted({d["directory"] for d in inp_files if d["directory"]})
-            map_dirs = [f"d{i}" for i in range(1, len(subdirs) + 1)]
-            map_dict = dict(zip(subdirs, map_dirs))
-
-    with ProcessPoolExecutor(max_workers=NUM_THREADS) as executor:
+    with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
         threads = []
         for match, p in zip(inp_files, fpaths):
-            if check_dir_var is True:
-                # Apply str formatting to change digit or char length
-                out_name = out_pattern_fstring.format(**match)
-                if map_directory:
-                    try:
-                        out_path = pathlib.Path(
-                            out_dir,
-                            f"{map_dict[match['directory']]}_{out_name}",
-                        )
-                    except ValueError:
-                        logger.error(
-                            f"{match['directory']} is not provided in filePattern",
-                        )
-
-                if not map_directory:
-                    try:
-                        out_path = pathlib.Path(
-                            out_dir,
-                            f"{ match['directory']}_{out_name}",
-                        )
-                    except ValueError:
-                        logger.error(
-                            f"{match['directory']} is not provided in filePattern",
-                        )
-
+            try:
+                args = _ResolvePathArgs(
+                    match,
+                    out_dir,
+                    out_pattern_fstring,
+                    check_dir_var,
+                    map_directory,
+                    map_dict,
+                )
+                out_path = _resolve_output_path(args)
+                if out_path is None:
+                    continue
                 old_file_name = pathlib.Path(inp_dir, p[0])
                 threads.append(executor.submit(shutil.copy2, old_file_name, out_path))
-
-            if check_dir_var is False and not map_directory:
-                try:
-                    # Apply str formatting to change digit or char length
-                    out_name = out_pattern_fstring.format(**match)
-                    out_path = pathlib.Path(out_dir, out_name)
-                    old_file_name = pathlib.Path(inp_dir, p[0])
-                    threads.append(
-                        executor.submit(shutil.copy2, old_file_name, out_path),
-                    )
-                except ValueError:
-                    logger.error(
-                        f"filePattern:{file_pattern} is incorrectly defined!!!",
-                    )
+            except ValueError:
+                logger.error(f"filePattern:{file_pattern} is incorrectly defined!!!")
 
         for f in tqdm(
             as_completed(threads),

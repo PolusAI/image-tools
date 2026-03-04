@@ -4,10 +4,10 @@ import logging
 import os
 import pathlib
 from typing import Any
-from typing import Optional
 
 import typer
-from polus.images.formats.file_renaming import file_renaming as fr
+
+from polus.images.formats.file_renaming.filerenaming import rename
 
 app = typer.Typer()
 
@@ -37,7 +37,8 @@ def main(  # noqa: PLR0913, D417
         "--outFilePattern",
         help="Desired filename pattern used to rename and separate data",
     ),
-    map_directory: Optional[bool] = typer.Option(
+    map_directory: bool
+    | None = typer.Option(
         False,
         "--mapDirectory",
         help="Get folder name",
@@ -47,7 +48,8 @@ def main(  # noqa: PLR0913, D417
         "--outDir",
         help="Path to image collection storing copies of renamed files",
     ),
-    preview: Optional[bool] = typer.Option(
+    preview: bool
+    | None = typer.Option(
         False,
         "--preview",
         help="Output a JSON preview of files",
@@ -82,18 +84,19 @@ def main(  # noqa: PLR0913, D417
     inp_dir = pathlib.Path(inp_dir).resolve()
     out_dir = pathlib.Path(out_dir).resolve()
 
-    assert (
-        inp_dir.exists()
-    ), f"{inp_dir} does not exists!! Please check input path again"
-    assert (
-        out_dir.exists()
-    ), f"{out_dir} does not exists!! Please check output path again"
+    if not inp_dir.is_dir():
+        typer.echo(f"Error: Input directory not found: {inp_dir}", err=True)
+        raise typer.Exit(1)
+
+    if not out_dir.exists():
+        typer.echo(f"Creating output directory: {out_dir}")
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     if not preview:
-        fr.rename(inp_dir, out_dir, file_pattern, out_file_pattern, map_directory)
+        rename(inp_dir, out_dir, file_pattern, out_file_pattern, map_directory)
     else:
         with pathlib.Path.open(pathlib.Path(out_dir, "preview.json"), "w") as jfile:
-            fr.rename(inp_dir, out_dir, file_pattern, out_file_pattern, map_directory)
+            rename(inp_dir, out_dir, file_pattern, out_file_pattern, map_directory)
             out_json: dict[str, Any] = {
                 "filepattern": out_file_pattern,
                 "outDir": [],

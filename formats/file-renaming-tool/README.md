@@ -1,6 +1,12 @@
 # File Renaming(v0.2.5-dev0)
-This WIPP plugin uses supplied file naming patterns to dynamically
-rename and save files in an image collection to a new image collection.
+This WIPP plugin renames files in an image collection (typically microscopy images) using powerful, user-defined filename patterns for both input matching and output naming.
+
+It is particularly useful for:
+- Standardizing file names across experiments
+- Converting channel names (GFP, DAPI, TXRED…) to numeric indices
+- Adding zero-padding consistently
+- Reorganizing naming schemes
+- Working with nested directory structures
 
 ## Example Usage
 * The user can upload an image collection where all files contain similar
@@ -21,6 +27,8 @@ naming conventions.
 
  * **outFilePattern:**
 `newdata_x{row:ddd}_y{col:ddd}_c{channel:ddd}.ome.tif`
+
+**Important rules:**
 
 * The user can format the output digit using the number of digits
 specified in the output format.
@@ -47,7 +55,7 @@ In specific scenarios where users need to rename files within nested subdirector
 For Example
 
 ```
-└── BBBC001
+BBBC001
     └── raw
         ├── Ground_Truth
         │   └── groundtruth_images
@@ -68,7 +76,7 @@ For Example
 
 ```
 
-Now, renaming files within the `human_ht29_colon_cancer_1_images` is achievable by providing a `filepattern` such as `/.*/.*/.*/Images/(?P<directory>.*)/.*_{row:c}{col:dd}f{f:dd}d{channel:d}.tif`, and specifying `outFilePattern` as `x{row:dd}_y{col:dd}_p{f:dd}_c{channel:d}.tif`. If the mapDirectory option is not utilized, the raw directory name will be appended in the renamed files. To handle directory names containing both letters and digits, employ `(?P<directory>.*)`; use `{directory:c+}` or `{directory:d+}` if it contains solely letters or digits, respectively.
+Now, renaming files within the `human_ht29_colon_cancer_1_images` is achievable by providing a `filepattern` such as `/.*/Images/(?P<directory>.*)/.*_{row:c}{col:dd}f{f:dd}d{channel:d}.tif`, and specifying `outFilePattern` as `x{row:dd}_y{col:dd}_p{f:dd}_c{channel:d}.tif`. If the mapDirectory option is not utilized, the raw directory name will be appended in the renamed files. To handle directory names containing both letters and digits, employ `(?P<directory>.*)`; use `{directory:c+}` or `{directory:d+}` if it contains solely letters or digits, respectively.
 
 #### Note:
 To extract directory names, the pattern should start with a backslash
@@ -90,6 +98,38 @@ To build the Docker image for the conversion plugin, run
 
 If WIPP is running, navigate to the plugins page and add a new plugin.
 Paste the contents of `plugin.json` into the pop-up window and submit.
+
+## Docker / CLI Examples
+
+Basic
+
+```
+docker run --rm \
+  -v "/path/to/input/images:/data/input" \
+  -v "/path/to/output:/data/output" \
+  polusai/file-renaming-tool:0.2.5-dev0 \
+    --inpDir         /data/input \
+    --outDir         /data/output \
+    --filePattern    'img_x{row:dd}_y{col:dd}_{channel:c+}.tif' \
+    --outFilePattern 'r{row:03d}_c{col:03d}_ch{channel:03d}.ome.tif'
+
+
+```
+Directory mapping
+
+```
+docker run --rm \
+  -v "/path/to/dataset:/data" \
+  polusai/file-renaming-tool:0.2.5-dev0 \
+    --inpDir         /data/input \
+    --outDir         /data/output \
+    --filePattern    '/.*/.*/.*/Images/(?P<directory>.*)/.*_{row:c}{col:dd}f{f:dd}d{channel:d}.tif' \
+    --outFilePattern 'x{row:dd}_y{col:dd}_p{f:dd}_c{channel:d}_dir{directory}.tif' \
+    --mapDirectory
+
+
+```
+
 
 ## Options
 
