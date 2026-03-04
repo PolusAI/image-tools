@@ -13,7 +13,7 @@ mapDirectory=true
 outDir=/data/output
 
 # Show the help options
-docker run polusai/file-renaming-tool:${version}
+# docker run polusai/file-renaming-tool:${version}
 
 # Run the plugin
 

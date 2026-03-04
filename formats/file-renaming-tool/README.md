@@ -123,7 +123,7 @@ docker run --rm \
   polusai/file-renaming-tool:0.2.5-dev0 \
     --inpDir         /data/input \
     --outDir         /data/output \
-    --filePattern    '/.*/.*/.*/Images/(?P<directory>.*)/.*_{row:c}{col:dd}f{f:dd}d{channel:d}.tif' \
+    --filePattern    '/.*/Images/(?P<directory>.*)/.*_{row:c}{col:dd}f{f:dd}d{channel:d}.tif' \
     --outFilePattern 'x{row:dd}_y{col:dd}_p{f:dd}_c{channel:d}_dir{directory}.tif' \
     --mapDirectory
 
