@@ -9,8 +9,7 @@ import typing
 import numpy
 import pytest
 import requests
-import skimage.data
-import skimage.measure
+import skimage
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:

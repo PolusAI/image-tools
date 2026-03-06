@@ -2,13 +2,13 @@ author:
   - Nick Schaub
   - Hamdah Shafqat
 contact: nick.schaub@nih.gov
-container: polusai/ome-converter-tool:0.3.3
+container: polusai/ome-converter-tool:0.3.4-dev2
 description: Convert Bioformats supported format to OME Zarr or OME TIF
 entrypoint: python3 -m polus.images.formats.ome_converter
 inputs:
   - description: Input generic data collection to be processed by this plugin
     format:
-      - genericData
+      - string
     name: inpDir
     required: true
     type: path
@@ -38,4 +38,4 @@ ui:
     key: inputs.filePattern
     title: Filepattern
     type: text
-version: 0.3.3
+version: 0.3.4-dev2

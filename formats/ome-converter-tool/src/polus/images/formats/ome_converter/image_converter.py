@@ -1,16 +1,14 @@
 """Ome Converter."""
-
 import logging
 import os
 import pathlib
+import platform
+from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures import as_completed
 from itertools import product
-from sys import platform
 from typing import Optional
 
 import filepattern as fp
-import numpy as np
-import preadator
 from bfio import BioReader
 from bfio import BioWriter
 from tqdm import tqdm
@@ -19,52 +17,66 @@ logger = logging.getLogger(__name__)
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 TILE_SIZE = 2**13
+POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
 
 
-if platform.startswith("linux"):
-    NUM_THREADS = len(os.sched_getaffinity(0)) // 2  # type: ignore
-else:
-    NUM_THREADS = os.cpu_count()  # type: ignore
+def get_num_threads() -> int:
+    """Determine default number of threads (half CPU cores, min 1)."""
+    # Allow environment override
+    if "NUM_THREADS" in os.environ:
+        return max(1, int(os.environ["NUM_THREADS"]))
+    try:
+        if platform.system().lower() == "linux" and hasattr(os, "sched_getaffinity"):
+            cpu_count = len(os.sched_getaffinity(0))
+        else:
+            cpu_count = os.cpu_count() or 1  # fallback if None
+        return max(1, cpu_count // 2)
+    except (AttributeError, OSError):
+        return 1
 
 
-def write_image(
-    br: BioReader,
-    c: int,
-    image: np.ndarray,
-    out_path: pathlib.Path,
-    max_workers: int,
-) -> None:
-    """Write an image to OME-TIFF or OME-ZARR format using BioFormats.
+NUM_THREADS: int = get_num_threads()
 
-    This function converts a given image to the OME-TIFF or OME-ZARR format,
-    ensuring that the data type is compatible and handling any necessary
-    byte order adjustments. It utilizes the BioWriter for writing the image
-    and manages channel names based on the provided BioReader.
+# NUM_WORKERS: default to 1 process
+NUM_WORKERS = max(1, int(os.environ.get("NUM_WORKERS", "1")))
+
+
+def get_num_series(inp_image: pathlib.Path) -> int:
+    """Get the number of series/levels in an individual image file.
 
     Args:
-        br:  An instance of BioReader containing metadata for the image.
-        c: The index of the channel in the image.
-        image: The image data to be written.
-        out_path: Path to an output image.
-        max_workers: The maximum number of worker threads to use for writing.
-    """
-    if image.dtype == ">u2":
-        image = image.byteswap().newbyteorder("<")
+        inp_image: Path to the input image file.
 
-    with BioWriter(
-        out_path,
-        max_workers,
-    ) as bw:
-        # Handling of parsing channels when channels names are not provided.
-        if bw.channel_names != [None]:
-            bw.channel_names = [br.channel_names[c]]
-        bw.C = 1
-        bw.T = 1
-        bw.Z = 1
-        bw.X = image.shape[1]
-        bw.Y = image.shape[0]
-        bw.dtype = image.dtype
-        bw[:] = image
+    Returns:
+        int: Number of series/levels in the image.
+    """
+    try:
+        # Open the specific file with BioReader
+        br = BioReader(inp_image, max_workers=NUM_THREADS)
+
+        # Initialize series count
+        num_series = 1
+        # For formats with metadata.images, verify it's for this file only
+        if hasattr(br.metadata, "images"):
+            # Check if images relate to this specific file
+            image_count = len(br.metadata.images)
+            num_series = image_count
+            logger.debug(
+                f"count:{num_series} for {inp_image.name}",
+            )
+
+        # Log and return result
+        logger.info(f"File {inp_image.name} has {num_series}")
+
+        # Clean up
+        br.close()
+        del br
+
+        return num_series
+
+    except (OSError, ValueError) as e:
+        logger.error(f"Error determining number of series for {inp_image}: {e!s}")
+        return 1
 
 
 def convert_image(
@@ -72,79 +84,93 @@ def convert_image(
     file_extension: str,
     out_dir: pathlib.Path,
 ) -> None:
-    """Convert bioformats supported datatypes to ome.tif or ome.zarr file format.
+    """Convert bioformats supported datatypes to ome.tif or ome.zarr file format."""
+    # First, determine the number of series
+    num_series = get_num_series(inp_image)
 
-    Args:
-        inp_image: Path of an input image.
-        file_extension: Type of data conversion.
-        out_dir: Path to output directory.
-    """
-    # Loop through timepoints, channels and z-slices
-    with BioReader(inp_image, max_workers=NUM_THREADS) as br:
-        for t, c, z in product(range(br.T), range(br.C), range(br.Z)):
-            extension = "".join(
-                [
-                    suffix
-                    for suffix in inp_image.suffixes[-2:]
-                    if len(suffix) < 6  # noqa: PLR2004
-                ],
-            )
+    logger.info(f"Detected {num_series} series/levels in image {inp_image.name}")
 
-            out_path = out_dir.joinpath(
-                inp_image.name.replace(extension, file_extension),
-            )
-            if br.C > 1:
-                out_path = out_dir.joinpath(
-                    out_path.name.replace(
-                        file_extension,
-                        f"_c{c}" + file_extension,
-                    ),
-                )
-            if br.T > 1:
-                out_path = out_dir.joinpath(
-                    out_path.name.replace(
-                        file_extension,
-                        f"_t{t}" + file_extension,
-                    ),
+    files_written = 0
+    if inp_image.suffix:
+        extension_len = 6
+        extension = "".join(
+            s for s in inp_image.suffixes[-2:] if len(s) < extension_len
+        )
+        base_name = inp_image.name.replace(extension, file_extension)
+    else:
+        base_name = f"{inp_image.name}{file_extension}"
+
+    # Process each series independently
+    for idx in range(num_series):
+        logger.info(f"Processing levels {idx} of {inp_image.name}")
+
+        try:
+            # Explicitly set the series/level parameter when opening the file
+            with BioReader(inp_image, max_workers=NUM_THREADS, level=idx) as br:
+                logger.debug(
+                    f"Level {idx}: T={br.T}, C={br.C}, Z={br.Z}, Y={br.Y}, X={br.X}",
                 )
 
-            if br.Z > 1:
-                out_path = out_dir.joinpath(
-                    out_path.name.replace(
-                        file_extension,
-                        f"_z{z}" + file_extension,
-                    ),
-                )
+                # Process each view (t, c, z)
+                for t, c, z in product(range(br.T), range(br.C), range(br.Z)):
+                    # Build suffix components
+                    suffix = "".join(
+                        [
+                            f"_c{c}" if br.C > 1 else "",
+                            f"_t{t}" if br.T > 1 else "",
+                            f"_z{z}" if br.Z > 1 else "",
+                            f"_s{idx}" if num_series > 1 else "",
+                        ],
+                    )
 
-            # Initialize the complete_image if not done yet
-            final_image = np.zeros((br.Y, br.X, 1, 1, 1), dtype=br.dtype)
+                    # Apply combined suffix
+                    out_name = (
+                        base_name.replace(file_extension, f"{suffix}{file_extension}")
+                        if suffix
+                        else base_name
+                    )
+                    out_path = out_dir.joinpath(out_name)
 
-            # Process each tile in the image using itertools.product
-            for y, x in product(range(0, br.Y, TILE_SIZE), range(0, br.X, TILE_SIZE)):
-                y_max = min(br.Y, y + TILE_SIZE)
-                x_max = min(br.X, x + TILE_SIZE)
+                    with BioWriter(
+                        out_path,
+                        max_workers=NUM_THREADS,
+                        metadata=br.metadata,
+                    ) as bw:
+                        bw.C = 1
+                        bw.T = 1
+                        bw.Z = 1
+                        if bw.channel_names != [None]:
+                            bw.channel_names = [br.channel_names[c]]
 
-                image = br[
-                    y:y_max,
-                    x:x_max,
-                    z,
-                    c,
-                    t,
-                ]
-                # Place the tile into the correct position in the complete image
-                final_image[y:y_max, x:x_max, z, c, t] = image
+                        for y in range(0, br.Y, TILE_SIZE):
+                            y_max = min(br.Y, y + TILE_SIZE)
+                            for x in range(0, br.X, TILE_SIZE):
+                                x_max = min(br.X, x + TILE_SIZE)
+                                bw[
+                                    y:y_max,
+                                    x:x_max,
+                                    0,
+                                    0,
+                                    0,
+                                ] = br[
+                                    y:y_max,
+                                    x:x_max,
+                                    z : z + 1,
+                                    c,
+                                    t,
+                                ]
 
-            write_image(
-                br=br,
-                c=c,
-                image=final_image,
-                out_path=out_path,
-                max_workers=NUM_THREADS,
+                    files_written += 1
+                    logger.debug(f"Written: {out_path.name}")
+
+        except (OSError, ValueError) as e:
+            logger.error(
+                f"Failed to process series {idx} of {inp_image.name}: {e!s}",
             )
 
 
 def batch_convert(
-    inp_dir: pathlib.Path,
+    inp_dir: pathlib.Path | list[pathlib.Path],
     out_dir: pathlib.Path,
     file_pattern: Optional[str],
     file_extension: str,
@@ -162,29 +188,34 @@ def batch_convert(
     logger.info(f"file_pattern = {file_pattern}")
     logger.info(f"file_extension = {file_extension}")
 
-    file_pattern = ".+" if file_pattern is None else file_pattern
+    if isinstance(inp_dir, pathlib.Path):
+        file_pattern = ".+" if file_pattern is None else file_pattern
+        fps = fp.FilePattern(inp_dir, file_pattern)
+        files = [files[1][0] for files in fps()]
+    else:
+        files = list(inp_dir)
 
-    fps = fp.FilePattern(inp_dir, file_pattern)
+    if not files:
+        logger.warning("No files found to process.")
+        return
 
-    with preadator.ProcessManager(
-        name="ome_converter",
-        num_processes=NUM_THREADS,
-        threads_per_process=2,
+    with ProcessPoolExecutor(
+        max_workers=NUM_WORKERS,
     ) as executor:
-        threads = []
-        for files in fps():
-            file = files[1][0]
-            threads.append(
-                executor.submit(convert_image, file, file_extension, out_dir),
-            )
-
+        futures = [
+            executor.submit(convert_image, file, POLUS_IMG_EXT, out_dir)
+            for file in files
+        ]
         for f in tqdm(
-            as_completed(threads),
-            total=len(threads),
+            as_completed(futures),
+            total=len(futures),
             mininterval=5,
-            desc=f"converting images to {file_extension}",
+            desc=f"converting images to {POLUS_IMG_EXT}",
             initial=0,
             unit_scale=True,
             colour="cyan",
         ):
-            f.result()
+            try:
+                f.result()
+            except (OSError, ValueError) as e:
+                logger.error(f"Failed to convert file: {e}")
