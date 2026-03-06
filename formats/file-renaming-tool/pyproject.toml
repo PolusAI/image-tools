@@ -1,19 +1,20 @@
 [tool.poetry]
 name = "polus-images-formats-file-renaming"
-version = "0.2.4"
-description = "Rename and store image collection files in a new image collection"
+version = "0.2.5-dev0"
+description = "Convert BioFormats datatypes to ome.tif or ome.zarr file format"
 authors = [
-"Melanie Parham <melanie.parham@axleinfo.com>",
-"Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>"
+    "Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>",
+    "Melanie Parham <melanie.parham@axleinfo.com>",
 ]
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.12"
-typer = "^0.7.0"
+python = ">=3.11,<3.13"
+typer = "0.24.1"
 tqdm = "^4.64.1"
-numpy = "^1.26.3"
+numpy = ">2.0.0"
+filepattern = "2.1.4"
 
 [tool.poetry.group.dev.dependencies]
 bump2version = "^1.0.1"
@@ -23,6 +24,26 @@ flake8 = "^6.0.0"
 mypy = "^1.0.1"
 pytest = "^7.2.1"
 
+[tool.mypy]
+mypy_path = "src"
+strict = true
+warn_unreachable = true
+warn_no_return = true
+
+[[tool.mypy.overrides]]
+module = "filepattern"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "filepattern.*"
+ignore_missing_imports = true
+
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]

@@ -3,14 +3,11 @@ import json
 import logging
 import os
 import pathlib
-import re
-from re import Match
 from typing import Any
-from typing import Optional
 
-import numpy as np
 import typer
-from polus.images.formats.file_renaming import file_renaming as fr
+
+from polus.images.formats.file_renaming.filerenaming import rename
 
 app = typer.Typer()
 
@@ -24,7 +21,7 @@ logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
 
 
 @app.command()
-def main(  # noqa: PLR0913 D417 C901 PLR0912 PLR0915
+def main(  # noqa: PLR0913, D417
     inp_dir: pathlib.Path = typer.Option(
         ...,
         "--inpDir",
@@ -35,22 +32,24 @@ def main(  # noqa: PLR0913 D417 C901 PLR0912 PLR0915
         "--filePattern",
         help="Filename pattern used to separate data",
     ),
-    out_dir: pathlib.Path = typer.Option(
-        ...,
-        "--outDir",
-        help="Path to image collection storing copies of renamed files",
-    ),
     out_file_pattern: str = typer.Option(
         ...,
         "--outFilePattern",
         help="Desired filename pattern used to rename and separate data",
     ),
-    map_directory: Optional[fr.MappingDirectory] = typer.Option(
-        fr.MappingDirectory.Default,
+    map_directory: bool
+    | None = typer.Option(
+        False,
         "--mapDirectory",
         help="Get folder name",
     ),
-    preview: Optional[bool] = typer.Option(
+    out_dir: pathlib.Path = typer.Option(
+        ...,
+        "--outDir",
+        help="Path to image collection storing copies of renamed files",
+    ),
+    preview: bool
+    | None = typer.Option(
         False,
         "--preview",
         help="Output a JSON preview of files",
@@ -82,102 +81,35 @@ def main(  # noqa: PLR0913 D417 C901 PLR0912 PLR0915
     logger.info(f"outFilePattern = {out_file_pattern}")
     logger.info(f"mapDirectory = {map_directory}")
 
-    inp_dir = inp_dir.resolve()
-    out_dir = out_dir.resolve()
+    inp_dir = pathlib.Path(inp_dir).resolve()
+    out_dir = pathlib.Path(out_dir).resolve()
 
-    assert (
-        inp_dir.exists()
-    ), f"{inp_dir} does not exists!! Please check input path again"
-    assert (
-        out_dir.exists()
-    ), f"{out_dir} does not exists!! Please check output path again"
+    if not inp_dir.is_dir():
+        typer.echo(f"Error: Input directory not found: {inp_dir}", err=True)
+        raise typer.Exit(1)
 
-    subdirs, subfiles = fr.get_data(inp_dir)
-    if subfiles:
-        assert len(subfiles) != 0, "Files are missing in input directory!!!"
+    if not out_dir.exists():
+        typer.echo(f"Creating output directory: {out_dir}")
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    if not map_directory:
-        fr.rename(
-            inp_dir,
-            out_dir,
-            file_pattern,
-            out_file_pattern,
-        )
-
-    elif map_directory:
-        file_ext = re.split("\\.", file_pattern)[-1]
-
-        subdirs = np.unique(
-            [
-                sub
-                for sub in subdirs
-                for f in pathlib.Path(sub).rglob("*")
-                if f.suffix == f".{file_ext}"
-            ],
-        )
-
-        if len(subdirs) == 1:
-            logger.info(
-                "Renaming files in a single directory.",
-            )
-            dir_pattern = r"^[A-Za-z0-9_]+$"
-            # Iterate over the directories and check if they match the pattern
-            matching_directory: Optional[Match[Any]] = re.match(
-                dir_pattern,
-                pathlib.Path(subdirs[0]).stem,
-            )
-            if matching_directory is not None:
-                matching_directory = matching_directory.group()
-            if f"{map_directory}" == "raw":
-                outfile_pattern = f"{matching_directory}_{out_file_pattern}"
-            if f"{map_directory}" == "map":
-                outfile_pattern = f"d1_{out_file_pattern}"
-
-            fr.rename(subdirs[0], out_dir, file_pattern, outfile_pattern)
-            logger.info(
-                "Finished renaming files.",
-            )
-        if len(subdirs) > 1:
-            subnames = [pathlib.Path(sb).name for sb in subdirs]
-            sub_check = all(name == subnames[0] for name in subnames)
-
-            for i, sub in enumerate(subdirs):
-                assert (
-                    len([f for f in pathlib.Path(sub).iterdir() if f.is_file()]) != 0
-                ), "Files are missing in input directory!!!"
-                dir_pattern = r"^[A-Za-z0-9_]+$"
-                # Iterate over the directories and check if they match the pattern
-                matching_directories: Optional[Match[Any]] = re.match(
-                    dir_pattern,
-                    pathlib.Path(sub).stem,
-                )
-                if matching_directories is not None:
-                    matching_directories = matching_directories.group()
-
-                if not sub_check and f"{map_directory}" == "raw":
-                    outfile_pattern = f"{matching_directories}_{out_file_pattern}"
-                elif subnames and f"{map_directory}" == "raw":
-                    logger.error(
-                        "Subdirectoy names are same, should be different.",
-                    )
-                    break
-                else:
-                    outfile_pattern = f"d{i}_{out_file_pattern}"
-                fr.rename(sub, out_dir, file_pattern, outfile_pattern)
-                logger.info(
-                    "Finished renaming files.",
-                )
-
-    if preview:
+    if not preview:
+        rename(inp_dir, out_dir, file_pattern, out_file_pattern, map_directory)
+    else:
         with pathlib.Path.open(pathlib.Path(out_dir, "preview.json"), "w") as jfile:
+            rename(inp_dir, out_dir, file_pattern, out_file_pattern, map_directory)
             out_json: dict[str, Any] = {
                 "filepattern": out_file_pattern,
                 "outDir": [],
             }
             for file in out_dir.iterdir():
-                if file.is_file() and file.suffix != ".json":
+                if (
+                    file.is_file()
+                    and file.suffix != ".json"
+                    and not file.name.startswith(".")
+                ):
                     out_name = file.name
                     out_json["outDir"].append(out_name)
+                    pathlib.Path.unlink(file)
             json.dump(out_json, jfile, indent=2)
 
 

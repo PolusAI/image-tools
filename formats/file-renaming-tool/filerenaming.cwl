@@ -12,7 +12,7 @@ inputs:
   mapDirectory:
     inputBinding:
       prefix: --mapDirectory
-    type: string?
+    type: boolean?
   outDir:
     inputBinding:
       prefix: --outDir
@@ -28,7 +28,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/file-renaming-tool:0.2.4-dev0
+    dockerPull: polusai/file-renaming-tool:0.2.5-dev0
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)
