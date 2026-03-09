@@ -2,7 +2,6 @@
 
 import tempfile
 from pathlib import Path
-from typing import Union
 
 import numpy as np
 import pytest
@@ -23,19 +22,19 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 
 @pytest.fixture()
-def inp_dir() -> Union[str, Path]:
+def inp_dir() -> str | Path:
     """Create directory for saving intensity images."""
     return Path(tempfile.mkdtemp(dir=Path.cwd()))
 
 
 @pytest.fixture()
-def seg_dir() -> Union[str, Path]:
+def seg_dir() -> str | Path:
     """Create directory for saving groundtruth labelled images."""
     return Path(tempfile.mkdtemp(dir=Path.cwd()))
 
 
 @pytest.fixture()
-def output_directory() -> Union[str, Path]:
+def output_directory() -> str | Path:
     """Create output directory."""
     return Path(tempfile.mkdtemp(dir=Path.cwd()))
 
@@ -48,10 +47,10 @@ def image_sizes(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
 
 @pytest.fixture()
 def synthetic_images(
-    inp_dir: Union[str, Path],
-    seg_dir: Union[str, Path],
+    inp_dir: str | Path,
+    seg_dir: str | Path,
     image_sizes: pytest.FixtureRequest,
-) -> tuple[Union[str, Path], Union[str, Path]]:
+) -> tuple[str | Path, str | Path]:
     """Generate random synthetic images."""
     for i in range(10):
         im = np.zeros((image_sizes, image_sizes))

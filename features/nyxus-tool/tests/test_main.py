@@ -2,9 +2,7 @@
 
 from pathlib import Path
 import shutil
-from typing import Union
 
-import pandas as pd
 import pytest
 import vaex
 
@@ -28,8 +26,8 @@ def clean_directories() -> None:
 
 
 def test_run_nyxus_object_features(
-    synthetic_images: tuple[Union[str, Path], Union[str, Path]],
-    output_directory: Union[str, Path],
+    synthetic_images: tuple[str | Path, str | Path],
+    output_directory: str | Path,
     get_params: pytest.FixtureRequest,
 ) -> None:
     """Test object-level feature extraction."""
@@ -60,8 +58,8 @@ def test_run_nyxus_object_features(
 
 
 def test_run_nyxus_whole_image_features(
-    synthetic_images: tuple[Union[str, Path], Union[str, Path]],
-    output_directory: Union[str, Path],
+    synthetic_images: tuple[str | Path, str | Path],
+    output_directory: str | Path,
     get_params: pytest.FixtureRequest,
 ) -> None:
     """Test whole-image feature extraction."""
@@ -90,8 +88,8 @@ def test_run_nyxus_whole_image_features(
 
 
 def test_cli(
-    synthetic_images: tuple[Union[str, Path], Union[str, Path]],
-    output_directory: Union[str, Path],
+    synthetic_images: tuple[str | Path, str | Path],
+    output_directory: str | Path,
     get_params: pytest.FixtureRequest,
 ) -> None:
     """Test CLI execution."""
@@ -123,8 +121,8 @@ def test_cli(
 
 
 def test_cli_single_roi(
-    synthetic_images: tuple[Union[str, Path], Union[str, Path]],
-    output_directory: Union[str, Path],
+    synthetic_images: tuple[str | Path, str | Path],
+    output_directory: str | Path,
     get_params: pytest.FixtureRequest,
 ) -> None:
     """Test CLI with single ROI mode."""
