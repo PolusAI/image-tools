@@ -38,31 +38,19 @@ inputs:
     name: features
     required: false
     type: array
-  - description: Output file format
-    format:
-      - enum
-    name: fileExtension
-    required: true
-    type: string
-  - description: Pixel distance between neighboring cells
-    format:
-      - number
-    name: neighborDist
-    required: false
-    type: number
-  - description: Pixel size in micrometer
-    format:
-      - number
-    name: pixelPerMicron
-    required: false
-    type: number
   - description: Consider intensity image as single roi and ignoring segmentation mask
     format:
       - boolean
     name: singleRoi
     required: false
     type: boolean
-name: polusai/Nyxusplugin
+  - description: Nyxus parameters in KEY=VALUE format (repeatable)
+    format:
+      - array
+    name: kwargs
+    required: false
+    type: array
+name: polusai/Nyxustool
 outputs:
   - description: Output collection
     format:
@@ -72,7 +60,7 @@ outputs:
     type: path
 repository: https://github.com/PolusAI/image-tools
 specVersion: 1.0.0
-title: Nyxus plugin
+title: Nyxus tool
 ui:
   - description: Input image collection
     key: inputs.inpDir
@@ -94,28 +82,13 @@ ui:
     key: inputs.features
     title: features
     type: text
-  - description: Ouput file format
-    fields:
-      - .arrow
-      - .feather
-      - .csv
-      - default
-    key: inputs.fileExtension
-    title: fileExtension
-    type: select
-  - default: 5
-    description: Pixel distance between neighboring cells
-    key: inputs.neighborDist
-    title: neighborDist
-    type: number
-  - default: 1.0
-    description: Pixel size in micrometer
-    key: inputs.pixelPerMicron
-    title: pixelPerMicron
-    type: number
-  - default: false
-    description: Consider intensity image as single roi and ignoring segmentation mask
+  - description: Consider intensity image as single roi and ignoring segmentation mask
     key: inputs.singleRoi
     title: singleRoi
     type: checkbox
+    default: false
+  - description: Nyxus parameters (repeatable KEY=VALUE, e.g. neighbor_distance=5)
+    key: inputs.kwargs
+    title: Nyxus kwargs
+    type: text
 version: 0.1.8-dev2

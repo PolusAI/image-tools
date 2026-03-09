@@ -5,10 +5,6 @@ inputs:
     inputBinding:
       prefix: --features
     type: string?
-  fileExtension:
-    inputBinding:
-      prefix: --fileExtension
-    type: string
   inpDir:
     inputBinding:
       prefix: --inpDir
@@ -17,18 +13,10 @@ inputs:
     inputBinding:
       prefix: --intPattern
     type: string
-  neighborDist:
-    inputBinding:
-      prefix: --neighborDist
-    type: double?
   outDir:
     inputBinding:
       prefix: --outDir
     type: Directory
-  pixelPerMicron:
-    inputBinding:
-      prefix: --pixelPerMicron
-    type: double?
   segDir:
     inputBinding:
       prefix: --segDir
@@ -41,6 +29,13 @@ inputs:
     inputBinding:
       prefix: --singleRoi
     type: boolean?
+  kwargs:
+    inputBinding:
+      prefix: --kwargs
+    type:
+    - "null"
+    - type: array
+      items: string
 outputs:
   outDir:
     outputBinding:
