@@ -178,9 +178,7 @@ class NyxusKwargType:
         return key, raw
 
 
-# -----------------------------
-# Validate and parse kwargs
-# -----------------------------
+# parse kwargs
 def parse_nyxus_kwargs(kwargs: dict) -> dict:
     """Validate and set defaults for Nyxus parameters."""
     parsed = {}
