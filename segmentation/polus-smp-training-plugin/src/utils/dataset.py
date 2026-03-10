@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import List
 from typing import Union
 
 import albumentations
@@ -34,20 +33,19 @@ class Dataset(TorchDataset):
         [
             torchvision.transforms.ToTensor(),
             augmentations.LocalNorm(
-                radius=128
+                radius=128,
             ),  # TODO(Najib): Replace with Global Norm
             torch.nn.Sigmoid(),
-        ]
+        ],
     )
 
     def __init__(
         self,
         images: numpy.ndarray,
-        labels: Union[numpy.ndarray, List[Path]],
+        labels: Union[numpy.ndarray, list[Path]],
         augs=None,
         preprocessing=None,
-    ):
-
+    ) -> None:
         self.inference_mode = isinstance(labels, list)
         self.images, self.labels = images, labels
 
@@ -57,7 +55,6 @@ class Dataset(TorchDataset):
             self.preprocessing = preprocessing
 
     def __getitem__(self, index: int):
-
         if self.inference_mode:
             return str(self.labels[index])
 
@@ -78,13 +75,14 @@ class Dataset(TorchDataset):
         label_tile = label_tile[None, ...]
 
         if image_tile.shape != label_tile.shape:
+            msg = f"Image Tile {image_tile.shape} and Label Tile {label_tile.shape} do not have matching shapes."
             raise ValueError(
-                f"Image Tile {image_tile.shape} and Label Tile {label_tile.shape} do not have matching shapes."
+                msg,
             )
 
         return image_tile, label_tile
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.images)
 
 
@@ -93,14 +91,14 @@ class MultiEpochsDataLoader(TorchDataLoader):
     Explain what this is supposed to do and why have it at all.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._DataLoader__initialized = False
         self.batch_sampler = _RepeatSampler(self.batch_sampler)
         self._DataLoader__initialized = True
         self.iterator = super().__iter__()
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.batch_sampler.sampler)
 
     def __iter__(self):
@@ -108,13 +106,14 @@ class MultiEpochsDataLoader(TorchDataLoader):
             yield next(self.iterator)
 
 
-class _RepeatSampler(object):
+class _RepeatSampler:
     """Sampler that repeats forever.
+
     Args:
-        sampler (Sampler)
+        sampler (Sampler).
     """
 
-    def __init__(self, sampler):
+    def __init__(self, sampler) -> None:
         self.sampler = sampler
 
     def __iter__(self):
@@ -123,15 +122,14 @@ class _RepeatSampler(object):
 
 
 class Tile(torch.nn.Module):
-    """Tile an input"""
+    """Tile an input."""
 
-    def __init__(self, tile_size=(512, 512)):
-        super(Tile, self).__init__()
+    def __init__(self, tile_size=(512, 512)) -> None:
+        super().__init__()
 
         self.tile_size = tile_size
 
     def forward(self, x):
-        
         with torch.no_grad():
             n, c, h, w = x.shape
 
@@ -153,7 +151,7 @@ class Tile(torch.nn.Module):
 
             # Reshape the data into proper torch format
             x = x.permute(0, 1, 2, 4, 3, 5).reshape(
-                -1, c, self.tile_size[0], self.tile_size[1]
+                -1, c, self.tile_size[0], self.tile_size[1],
             )
 
         # Return both the tiled input and the shape of the original tensor
@@ -161,10 +159,9 @@ class Tile(torch.nn.Module):
 
 
 class UnTile(Tile):
-    """Untile an input"""
+    """Untile an input."""
 
     def forward(self, x, output_shape):
-
         with torch.no_grad():
             n, c, h, w = x.shape
 
@@ -175,15 +172,14 @@ class UnTile(Tile):
 
             # Reshape the data into tiles
             x = x.reshape(
-                n_images, c, h_tiles, w_tiles, self.tile_size[0], self.tile_size[1]
+                n_images, c, h_tiles, w_tiles, self.tile_size[0], self.tile_size[1],
             )
 
             # Reconstruct original image size
             x = x.permute(0, 1, 2, 4, 3, 5)
 
             x = x.reshape(
-                n_images, c, h_tiles * self.tile_size[0], w_tiles * self.tile_size[1]
+                n_images, c, h_tiles * self.tile_size[0], w_tiles * self.tile_size[1],
             )
-            x = x[:, :, : output_shape[2], : output_shape[3]]
+            return x[:, :, : output_shape[2], : output_shape[3]]
 
-        return x

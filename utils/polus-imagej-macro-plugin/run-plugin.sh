@@ -17,4 +17,3 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --macro ${macro} \
             --outDir ${outDir} \
             --maxIterations ${maxIterations}
-            

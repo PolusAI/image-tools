@@ -1,7 +1,7 @@
 FROM tensorflow/tensorflow:2.11.0-gpu
 
 COPY VERSION /
-		
+
 ARG EXEC_DIR="/opt/executables"
 ARG DATA_DIR="/data"
 

@@ -10,7 +10,6 @@
   "citation": "",
   "containerId": "polusai/recycle-vector-plugin:1.5.0",
   "inputs": [
-
     {
       "name": "stitchDir",
       "type": "stitchingVector",

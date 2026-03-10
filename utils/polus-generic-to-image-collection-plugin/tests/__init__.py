@@ -1,7 +1,9 @@
 from unittest import TestSuite
+
 from .version_test import VersionTest
 
 test_cases = (VersionTest,)
+
 
 def load_tests(loader, tests, pattern):
     suite = TestSuite()

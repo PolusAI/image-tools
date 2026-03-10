@@ -4,9 +4,10 @@ import os
 import typing
 from pathlib import Path
 
-from bfio import BioReader, BioWriter
-from filepattern import FilePattern
 import numpy as np
+from bfio import BioReader
+from bfio import BioWriter
+from filepattern import FilePattern
 from preadator import ProcessManager
 
 FILE_EXT = os.environ.get("POLUS_EXT", None)
@@ -16,13 +17,12 @@ assert FILE_EXT in [".ome.tif", ".ome.zarr"]
 
 
 def unshade_images(
-    flist: typing.List[Path],
+    flist: list[Path],
     out_dir: Path,
     flatfield: np.ndarray,
-    darkfield: np.ndarray = None,
+    darkfield: typing.Optional[np.ndarray] = None,
 ):
     with ProcessManager.process():
-
         # Initialize the output
         X = flatfield.shape[1]
         Y = flatfield.shape[0]
@@ -51,7 +51,6 @@ def unshade_images(
         def save_output(fname, ind):
             with ProcessManager.thread() as active_threads:
                 with BioReader(fname["file"], max_workers=active_threads.count) as br:
-
                     # replace the file name extension if needed
                     inp_image = fname["file"]
                     extension = "".join(
@@ -59,10 +58,10 @@ def unshade_images(
                             suffix
                             for suffix in inp_image.suffixes[-2:]
                             if len(suffix) < 6
-                        ]
+                        ],
                     )
                     out_path = out_dir.joinpath(
-                        inp_image.name.replace(extension, FILE_EXT)
+                        inp_image.name.replace(extension, FILE_EXT),
                     )
 
                     with BioWriter(
@@ -79,13 +78,12 @@ def unshade_images(
 
 
 def unshade_batch(
-    files: typing.List[Path],
+    files: list[Path],
     out_dir: Path,
     brightfield: Path,
     darkfield: typing.Optional[Path] = None,
     photobleach: typing.Optional[Path] = None,
 ):
-
     with BioReader(brightfield, max_workers=2) as bf:
         brightfield_image = bf[:, :, :, 0, 0].squeeze()
 
@@ -98,7 +96,6 @@ def unshade_batch(
         batches.append(len(files))
 
     for i_start, i_end in zip(batches[:-1], batches[1:]):
-
         ProcessManager.submit_process(
             unshade_images,
             files[i_start:i_end],
@@ -119,28 +116,26 @@ def main(
     darkPattern: typing.Optional[str] = None,
     photoPattern: typing.Optional[str] = None,
 ) -> None:
-
-    """Start a process for each set of brightfield/darkfield/photobleach patterns"""
+    """Start a process for each set of brightfield/darkfield/photobleach patterns."""
     # Create the FilePattern objects to handle file access
     ff_files = FilePattern(ffDir, brightPattern)
     fp = FilePattern(imgDir, imgPattern)
-    if darkPattern != None and darkPattern != "":
+    if darkPattern is not None and darkPattern != "":
         dark_files = FilePattern(ffDir, darkPattern)
-    if photoPattern != None and photoPattern != "":
+    if photoPattern is not None and photoPattern != "":
         photo_files = FilePattern(
-            str(Path(ffDir).parents[0].joinpath("metadata").absolute()), photoPattern
+            str(Path(ffDir).parents[0].joinpath("metadata").absolute()), photoPattern,
         )
 
     group_by = [v for v in fp.variables if v not in ff_files.variables]
-    GROUPED = group_by + ["file"]
+    GROUPED = [*group_by, "file"]
 
     ProcessManager.init_processes("main", "unshade")
     logger.info(f"Running with {ProcessManager.num_processes()} processes.")
 
     for files in fp(group_by=group_by):
-
         flat_path = ff_files.get_matching(
-            **{k.upper(): v for k, v in files[0].items() if k not in GROUPED}
+            **{k.upper(): v for k, v in files[0].items() if k not in GROUPED},
         )[0]["file"]
         if flat_path is None:
             logger.warning("Could not find a flatfield image, skipping...")
@@ -148,7 +143,7 @@ def main(
 
         if darkPattern is not None and darkPattern != "":
             dark_path = dark_files.get_matching(
-                **{k.upper(): v for k, v in files[0].items() if k not in GROUPED}
+                **{k.upper(): v for k, v in files[0].items() if k not in GROUPED},
             )[0]["file"]
 
             if dark_path is None:
@@ -157,7 +152,7 @@ def main(
 
         if photoPattern is not None and photoPattern != "":
             photo_path = photo_files.get_matching(
-                **{k.upper(): v for k, v in files[0].items() if k not in GROUPED}
+                **{k.upper(): v for k, v in files[0].items() if k not in GROUPED},
             )[0]["file"]
 
             if photo_path is None:
@@ -168,7 +163,6 @@ def main(
 
         unshade_batch(files, outDir, flat_path, dark_path, photo_path)
 
-    # ProcessManager.join_processes()
 
 
 if __name__ == "__main__":
@@ -230,28 +224,28 @@ if __name__ == "__main__":
         required=False,
     )
     parser.add_argument(
-        "--outDir", dest="outDir", type=str, help="Output collection", required=True
+        "--outDir", dest="outDir", type=str, help="Output collection", required=True,
     )
 
     # Parse the arguments
     args = parser.parse_args()
     darkPattern = args.darkPattern
-    logger.info("darkPattern = {}".format(darkPattern))
+    logger.info(f"darkPattern = {darkPattern}")
     ffDir = Path(args.ffDir)
     # catch the case that ffDir is the output within a workflow
     if Path(ffDir).joinpath("images").is_dir():
         ffDir = ffDir.joinpath("images")
-    logger.info("ffDir = {}".format(ffDir))
+    logger.info(f"ffDir = {ffDir}")
     brightPattern = args.brightPattern
-    logger.info("brightPattern = {}".format(brightPattern))
+    logger.info(f"brightPattern = {brightPattern}")
     imgDir = Path(args.imgDir)
-    logger.info("imgDir = {}".format(imgDir))
+    logger.info(f"imgDir = {imgDir}")
     imgPattern = args.imgPattern
-    logger.info("imgPattern = {}".format(imgPattern))
+    logger.info(f"imgPattern = {imgPattern}")
     photoPattern = args.photoPattern
-    logger.info("photoPattern = {}".format(photoPattern))
+    logger.info(f"photoPattern = {photoPattern}")
     outDir = Path(args.outDir)
-    logger.info("outDir = {}".format(outDir))
+    logger.info(f"outDir = {outDir}")
 
     logger.info(f"Output file extension = {FILE_EXT}")
 

@@ -18,7 +18,7 @@ To build the Docker image for the conversion plugin, run
 
 ## Input Filename Pattern
 
-This plugin uses the 
+This plugin uses the
 [filepattern](https://github.com/LabShare/polus-plugins/tree/master/utils/polus-filepattern-util)
 utility to indicate which files to stack. In particular, defining a filename
 variable is surrounded by `{}`, and the variable name and number of spaces

@@ -16,7 +16,7 @@ At the moment this plugin supports label images with two dimensions only. We wil
 <img src="./image.png">
 
 
-**a -** Original image contains 67 unique label objects 
+**a -** Original image contains 67 unique label objects
 **b -** Image with 16 detected border objects
 **c -** Removing Border objects and sequential relabelling
 
@@ -41,7 +41,3 @@ This plugin takes two input arguments and
 | `--inpDir`    | Input image directory                                         | Input  | collection    |
 | `--pattern`   | Filepattern to parse image files                              | Input  | string        |
 | `--outDir`    | Output collection                                             | Output | collection    |
-
-
-
-

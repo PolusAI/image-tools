@@ -3,8 +3,10 @@ import logging
 import math
 import os
 import pathlib
+from collections.abc import Sequence
 from multiprocessing import cpu_count
-from typing import List, Optional, Sequence, Union
+from typing import Optional
+from typing import Union
 
 import filepattern
 import numpy as np
@@ -84,7 +86,7 @@ totalStats_header = [
 
 
 def metrics(
-    tp: Union[float, int], fp: int, fn: int, tn: Union[float, int]
+    tp: Union[float, int], fp: int, fn: int, tn: Union[float, int],
 ) -> Sequence[float]:
     """Compute evaluation metrics.
 
@@ -207,7 +209,7 @@ def metrics(
 
 def write_outfile(
     x,
-    header: List[str],
+    header: list[str],
     out_name: pathlib.Path,
     chunk_size: int,
 ) -> None:
@@ -267,153 +269,133 @@ def evaluation(
             tile_grid_size = 1
             tile_size = tile_grid_size * 2048
             # Set up the BioReader
-            with BioReader(file_name, max_workers=cpu_count()) as br_pred:
-                with BioReader(
-                    pathlib.Path(gt_dir, file_name.name), max_workers=cpu_count()
-                ) as br_gt:
-                    # Loop through z-slices
-                    logger.info(f"Evaluating image {file_name}")
-                    for cl in range(1, input_classes + 1):
-                        tn = 0
-                        tp = 0
-                        fp = 0
-                        fn = 0
-                        for z in range(br_gt.Z):
-                            # Loop across the length of the image
-                            for y in range(0, br_gt.Y, tile_size):
-                                y_max = min([br_gt.Y, y + tile_size])
-                                # Loop across the depth of the image
-                                for x in range(0, br_gt.X, tile_size):
-                                    x_max = min([br_gt.X, x + tile_size])
-                                    y_true = np.squeeze(
-                                        br_gt[y:y_max, x:x_max, z : z + 1, 0, 0]  # noqa
-                                    )
-                                    y_pred = np.squeeze(
-                                        br_pred[
-                                            y:y_max, x:x_max, z : z + 1, 0, 0  # noqa
-                                        ]  # noqa
-                                    )
-                                    if input_classes == 1:
-                                        y_true = (
-                                            (y_true > 0).astype("uint8") * 1
-                                        ).flatten()
-                                        y_pred = (
-                                            (y_pred > 0).astype("uint8") * 1
-                                        ).flatten()
-                                    else:
-                                        y_true = y_true.flatten()
-                                        y_pred = y_pred.flatten()
+            with BioReader(file_name, max_workers=cpu_count()) as br_pred, BioReader(
+                pathlib.Path(gt_dir, file_name.name), max_workers=cpu_count(),
+            ) as br_gt:
+                # Loop through z-slices
+                logger.info(f"Evaluating image {file_name}")
+                for cl in range(1, input_classes + 1):
+                    tn = 0
+                    tp = 0
+                    fp = 0
+                    fn = 0
+                    for z in range(br_gt.Z):
+                        # Loop across the length of the image
+                        for y in range(0, br_gt.Y, tile_size):
+                            y_max = min([br_gt.Y, y + tile_size])
+                            # Loop across the depth of the image
+                            for x in range(0, br_gt.X, tile_size):
+                                x_max = min([br_gt.X, x + tile_size])
+                                y_true = np.squeeze(
+                                    br_gt[y:y_max, x:x_max, z : z + 1, 0, 0]  # noqa
+                                )
+                                y_pred = np.squeeze(
+                                    br_pred[
+                                        y:y_max, x:x_max, z : z + 1, 0, 0  # noqa
+                                    ]  # noqa
+                                )
+                                if input_classes == 1:
+                                    y_true = (
+                                        (y_true > 0).astype("uint8") * 1
+                                    ).flatten()
+                                    y_pred = (
+                                        (y_pred > 0).astype("uint8") * 1
+                                    ).flatten()
+                                else:
+                                    y_true = y_true.flatten()
+                                    y_pred = y_pred.flatten()
 
-                                    for i in range(len(y_true)):
-                                        if y_true[i] == cl:
-                                            if y_true[i] == y_pred[i]:
-                                                tp += 1
-                                            else:
-                                                fn += 1
+                                for i in range(len(y_true)):
+                                    if y_true[i] == cl:
+                                        if y_true[i] == y_pred[i]:
+                                            tp += 1
                                         else:
-                                            if y_pred[i] == cl:
-                                                fp += 1
-                                            else:
-                                                tn += 1
+                                            fn += 1
+                                    else:
+                                        if y_pred[i] == cl:
+                                            fp += 1
+                                        else:
+                                            tn += 1
 
-                        if tp == 0:
-                            tp_ = 1e-20
-                        else:
-                            tp_ = tp
-                        if tn == 0:
-                            tn_ = 1e-20
-                        else:
-                            tn_ = tn
-                        (
-                            iou,
-                            tpr,
-                            precision,
-                            tnr,
-                            npv,
-                            fnr,
-                            fpr,
-                            fdr,
-                            fr,
-                            prev,
-                            accuracy,
-                            ba,
-                            fscore,
-                            f1_score,
-                            pt,
-                            mcc,
-                            fmi,
-                            bi,
-                            mkn,
-                            ck,
-                            mm,
-                            amm,
-                            ari,
-                        ) = metrics(tp_, fp, fn, tn_)
-                        data = [
-                            file_name.name,
-                            cl,
-                            tp,
-                            tn,
-                            fp,
-                            fn,
-                            iou,
-                            tpr,
-                            precision,
-                            tnr,
-                            npv,
-                            fnr,
-                            fpr,
-                            fdr,
-                            fr,
-                            prev,
-                            accuracy,
-                            ba,
-                            fscore,
-                            f1_score,
-                            pt,
-                            mcc,
-                            fmi,
-                            bi,
-                            mkn,
-                            ck,
-                            mm,
-                            amm,
-                            ari,
-                        ]
+                    tp_ = 1e-20 if tp == 0 else tp
+                    tn_ = 1e-20 if tn == 0 else tn
+                    (
+                        iou,
+                        tpr,
+                        precision,
+                        tnr,
+                        npv,
+                        fnr,
+                        fpr,
+                        fdr,
+                        fr,
+                        prev,
+                        accuracy,
+                        ba,
+                        fscore,
+                        f1_score,
+                        pt,
+                        mcc,
+                        fmi,
+                        bi,
+                        mkn,
+                        ck,
+                        mm,
+                        amm,
+                        ari,
+                    ) = metrics(tp_, fp, fn, tn_)
+                    data = [
+                        file_name.name,
+                        cl,
+                        tp,
+                        tn,
+                        fp,
+                        fn,
+                        iou,
+                        tpr,
+                        precision,
+                        tnr,
+                        npv,
+                        fnr,
+                        fpr,
+                        fdr,
+                        fr,
+                        prev,
+                        accuracy,
+                        ba,
+                        fscore,
+                        f1_score,
+                        pt,
+                        mcc,
+                        fmi,
+                        bi,
+                        mkn,
+                        ck,
+                        mm,
+                        amm,
+                        ari,
+                    ]
 
-                        if individual_stats:
-                            individual_file = pathlib.Path(
-                                out_dir, f"{file_name.name}{POLUS_TAB_EXT}"
-                            )
-                            write_outfile(
-                                data,
-                                header,
-                                individual_file,
-                                chunk_size
-                            )
-
-                        result.append(data)
-                        filename = pathlib.Path(out_dir, f"result{POLUS_TAB_EXT}")
-                        write_outfile(
-                            result, header, filename, chunk_size
+                    if individual_stats:
+                        individual_file = pathlib.Path(
+                            out_dir, f"{file_name.name}{POLUS_TAB_EXT}",
                         )
+                        write_outfile(data, header, individual_file, chunk_size)
 
-                        if total_stats:
-                            TP[cl] += tp
-                            TN[cl] += tn
-                            FP[cl] += fp
-                            FN[cl] += fn
+                    result.append(data)
+                    filename = pathlib.Path(out_dir, f"result{POLUS_TAB_EXT}")
+                    write_outfile(result, header, filename, chunk_size)
+
+                    if total_stats:
+                        TP[cl] += tp
+                        TN[cl] += tn
+                        FP[cl] += fp
+                        FN[cl] += fn
 
         if total_stats:
             for cl in range(1, input_classes + 1):
-                if TP[cl] == 0:
-                    TP_ = 1e-20
-                else:
-                    TP_ = TP[cl]
-                if TN[cl] == 0:
-                    TN_ = 1e-20
-                else:
-                    TN_ = TN[cl]
+                TP_ = 1e-20 if TP[cl] == 0 else TP[cl]
+                TN_ = 1e-20 if TN[cl] == 0 else TN[cl]
                 (
                     iou,
                     tpr,
@@ -471,9 +453,7 @@ def evaluation(
                 ]
 
             overall_file = pathlib.Path(out_dir, f"total_stats_result{POLUS_TAB_EXT}")
-            write_outfile(
-                data, totalStats_header, overall_file, chunk_size
-            )
+            write_outfile(data, totalStats_header, overall_file, chunk_size)
             logger.info(f"total_stats_result{POLUS_TAB_EXT}")
 
     finally:

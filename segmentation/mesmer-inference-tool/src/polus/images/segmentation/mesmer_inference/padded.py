@@ -4,15 +4,18 @@ import logging
 import math
 import os
 import pathlib
+from collections.abc import Sequence
 from timeit import default_timer
-from typing import List, Sequence, Tuple
 
 import cv2
 import filepattern
 import numpy as np
 import tensorflow as tf
-from bfio import BioReader, BioWriter
-from deepcell.applications import CytoplasmSegmentation, Mesmer, NuclearSegmentation
+from bfio import BioReader
+from bfio import BioWriter
+from deepcell.applications import CytoplasmSegmentation
+from deepcell.applications import Mesmer
+from deepcell.applications import NuclearSegmentation
 from deepcell.model_zoo.panopticnet import PanopticNet
 from deepcell.utils.data_utils import reshape_matrix
 from deepcell_toolbox.deep_watershed import deep_watershed
@@ -48,20 +51,22 @@ tile_size = 2048
 
 
 def padding(
-    image: np.ndarray, shape_1: int, shape_2: int, second: bool, size: int
-) -> Tuple[np.ndarray, Sequence[int]]:
+    image: np.ndarray, shape_1: int, shape_2: int, second: bool, size: int,
+) -> tuple[np.ndarray, Sequence[int]]:
     """Image padding.
 
     UNET expects height and width of the image to be 256 x 256
     This function adds the required reflective padding to make the image
     dimensions a multiple of 256 x 256. This will enable us to extract tiles
     of size 256 x 256 which can be processed by the network'.
+
     Args:
         image: Intensity images.
         shape_1: Y image dimension.
         shape_2:: X image dimension.
         second: If True, height and width of padding is determined from image dimension otherwise calculated from input arguments shape_1 and shape_2.
         size: Desired size of padded image.
+
     Returns:
         final_image: padded image.
         pad_dimensions: Number of pixels added to (top, bottom, left, right) of padded image.
@@ -105,7 +110,7 @@ def padding(
 
     # Add relective Padding
     final_image = cv2.copyMakeBorder(
-        image, top, bottom, left, right, cv2.BORDER_REFLECT
+        image, top, bottom, left, right, cv2.BORDER_REFLECT,
     )
 
     # return padded image and pad dimensions
@@ -127,6 +132,7 @@ def get_data(
         shape_2:: X image dimension.
         second: if True, height and width of padding is determined from image dimension otherwise calculated from input arguments shape_1 and shape_2.
         size: Desired size of padded image.
+
     Returns:
         final_image: padded image.
         pad_dimensions: Number of pixels added to (top, bottom, left, right) of padded image.
@@ -147,7 +153,7 @@ def get_data(
                         tile = np.squeeze(
                             br[y_min:y_max, x_min:x_max, z : z + 1, 0, 0]  # noqa
                         )
-                        if tile.shape[0] < shape_1 or tile.shape[1] < shape_2:  # noqa
+                        if tile.shape[0] < shape_1 or tile.shape[1] < shape_2:
                             shape_1 = max(tile.shape[0], shape_1)
                             shape_2 = max(tile.shape[1], shape_2)
                             second = False
@@ -167,20 +173,20 @@ def get_data(
                                         br_whole[
                                             y_min:y_max,
                                             x_min:x_max,
-                                            z : z + 1,  # noqa
+                                            z : z + 1,
                                             0,
-                                            0,  # noqa
-                                        ]
+                                            0,
+                                        ],
                                     )
                                     padded_img_cyto, _ = padding(
-                                        tile_whole, shape_1, shape_2, second, size
+                                        tile_whole, shape_1, shape_2, second, size,
                                     )
                                     image = np.stack(
-                                        (padded_img, padded_img_cyto), axis=-1
+                                        (padded_img, padded_img_cyto), axis=-1,
                                     )
                             else:
                                 im1 = np.zeros(
-                                    (padded_img.shape[0], padded_img.shape[1])
+                                    (padded_img.shape[0], padded_img.shape[1]),
                                 )
                                 image = np.stack((padded_img, im1), axis=-1)
                         elif f"{model}" == "mesmerWholeCell":
@@ -193,16 +199,16 @@ def get_data(
                                     br_whole[
                                         y_min:y_max,
                                         x_min:x_max,
-                                        z : z + 1,  # noqa
+                                        z : z + 1,
                                         0,
-                                        0,  # noqa
+                                        0,
                                     ]  # noqa
                                 )
                                 padded_img_nuclear, _ = padding(
-                                    tile_whole, shape_1, shape_2, second, size
+                                    tile_whole, shape_1, shape_2, second, size,
                                 )
                                 image = np.stack(
-                                    (padded_img_nuclear, padded_img), axis=-1
+                                    (padded_img_nuclear, padded_img), axis=-1,
                                 )
                         else:
                             image = np.expand_dims(padded_img, axis=-1)
@@ -212,7 +218,7 @@ def get_data(
 
 def save_data(
     inp_dir: pathlib.Path,
-    y_pred: List[np.ndarray],
+    y_pred: list[np.ndarray],
     size: int,
     file_pattern: str,
     model: Model,
@@ -261,11 +267,11 @@ def save_data(
                                 shape_1, shape_2 = tile.shape[0], tile.shape[1]
 
                             padded_img, pad_dimensions = padding(
-                                tile, shape_1, shape_2, second, size
+                                tile, shape_1, shape_2, second, size,
                             )
 
                             out_img = np.zeros(
-                                (padded_img.shape[0], padded_img.shape[1])
+                                (padded_img.shape[0], padded_img.shape[1]),
                             )
 
                             if f"{model}" == "BYOM":
@@ -273,8 +279,8 @@ def save_data(
                                     for j in range(int(padded_img.shape[1] / size)):
                                         new_img = np.squeeze(y_pred[ind])
                                         out_img[
-                                            i * size : (i + 1) * size,  # noqa
-                                            j * size : (j + 1) * size,  # noqa
+                                            i * size : (i + 1) * size,
+                                            j * size : (j + 1) * size,
                                         ] = new_img
                                         ind += 1
                             else:
@@ -283,8 +289,8 @@ def save_data(
 
                             top_pad, bottom_pad, left_pad, right_pad = pad_dimensions
                             output = out_img[
-                                top_pad : out_img.shape[0] - bottom_pad,  # noqa
-                                left_pad : out_img.shape[1] - right_pad,  # noqa
+                                top_pad : out_img.shape[0] - bottom_pad,
+                                left_pad : out_img.shape[1] - right_pad,
                             ]
                             output = output.astype(np.uint16)
 
@@ -300,8 +306,8 @@ def save_data(
                             )
 
                             final = output[
-                                y_overlap : y_max - y_min + y_overlap,  # noqa
-                                x_overlap : x_max - x_min + x_overlap,  # noqa
+                                y_overlap : y_max - y_min + y_overlap,
+                                x_overlap : x_max - x_min + x_overlap,
                             ]
                             output_image_5channel = np.zeros(
                                 (final.shape[0], final.shape[1], 1, 1, 1),
@@ -310,7 +316,7 @@ def save_data(
 
                             output_image_5channel[:, :, 0, 0, 0] = final
                             bw[
-                                y_min:y_max, x_min:x_max, 0:1, 0, 0
+                                y_min:y_max, x_min:x_max, 0:1, 0, 0,
                             ] = output_image_5channel
 
 
@@ -366,7 +372,7 @@ def predict_(
     watershed_time = default_timer() - start
 
     logger.info(
-        f"Watershed segmentation of shape {outputs[0].shape} in {watershed_time} seconds."
+        f"Watershed segmentation of shape {outputs[0].shape} in {watershed_time} seconds.",
     )
 
     y_pred = []
@@ -432,7 +438,7 @@ def run(
             output = app.predict(X_test)
 
         save_data(
-            inp_dir, output, size, file_pattern_1, model, file_extension, out_path
+            inp_dir, output, size, file_pattern_1, model, file_extension, out_path,
         )
         logger.info("Segmentation complete.")
     elif f"{model}" == "BYOM":

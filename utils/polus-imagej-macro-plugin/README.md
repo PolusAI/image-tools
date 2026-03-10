@@ -1,15 +1,15 @@
 # ImageJ Macro Plugin
 
 The plugin implements the ImageJ macro. Any macro can be run on an image as long
-as the macro is performed on some input image. Note that running ImageJ macros 
-in headless mode is not yet fully supported by 
-[pyimagej](https://github.com/imagej/pyimagej); therefore, there are several 
+as the macro is performed on some input image. Note that running ImageJ macros
+in headless mode is not yet fully supported by
+[pyimagej](https://github.com/imagej/pyimagej); therefore, there are several
 items which are important to note when scripting macros.
 
 1. All macros must have this line at the top `setBatchMode(true);`. If this is
 not present the plugin will fail to find the input image.
 
-2. After the macro has been run on the input image it will retrieve the image 
+2. After the macro has been run on the input image it will retrieve the image
 with the same title as the input image + '-output'. An example of how to achieve
 this in the macro script is below.
 
@@ -23,12 +23,12 @@ run("Gaussian Blur...", "sigma=10");
 rename(original + "-output");
 ```
 
-3. To ensure the macro was performed on the correct image the output image must 
+3. To ensure the macro was performed on the correct image the output image must
 be a different version of the original input image or the plugin will fail. The
 optional `--maxIterations` argument (defaults to 10) can be used to specify
 how many times a macro should be attempted before terminating the plugin.
 
-For more information on what this plugin does, contact the author, Benjamin 
+For more information on what this plugin does, contact the author, Benjamin
 Houghton (benjamin.houghton@axleinfo.com).
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).

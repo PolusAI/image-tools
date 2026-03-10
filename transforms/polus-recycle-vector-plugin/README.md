@@ -11,7 +11,7 @@ multi-channel image and apply the same stitching vector to the other channels.
 This plugin creates a new stitching vector that will apply an existing single
 stitching vector to a different set of images.
 
-This plugin uses 
+This plugin uses
 [filepatterns](https://filepattern.readthedocs.io/en/latest/),
 which is a variant of regular expressions similar to what
 [MIST](https://github.com/usnistgov/MIST)
@@ -25,7 +25,7 @@ variable name and number of spaces dedicated to the variable are denoted by
 repeated characters for the variable. For example, if all filenames follow the
 structure `filename_TTT.ome.tif`, where TTT indicates the timepoint the image
 was captured at, then the filename pattern would be `filename_{ttt}.ome.tif` or
-`filename_{t+}.ome.tif`. For more information on `filepattern`, see the 
+`filename_{t+}.ome.tif`. For more information on `filepattern`, see the
 [documentation](https://filepattern.readthedocs.io/en/latest/).
 
 ## Build the plugin
@@ -48,4 +48,3 @@ This plugin takes 3 input arguments and 1 output argument:
 | `--collectionDir`   | Image collection                                       | Input  | collection      |
 | `--filepattern`     | `filepattern` for filenames in image collection        | Input  | String          |
 | `--outDir`          | Output stitching vector                                | Output | stitchingVector |
-

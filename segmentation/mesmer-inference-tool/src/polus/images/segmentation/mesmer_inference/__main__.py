@@ -2,12 +2,14 @@
 import json
 import logging
 import pathlib
-from typing import Any, Optional
+from typing import Any
+from typing import Optional
 
 import filepattern as fp
 import typer
-
-from polus.images.segmentation.mesmer_inference.padded import Extension, Model, run
+from polus.images.segmentation.mesmer_inference.padded import Extension
+from polus.images.segmentation.mesmer_inference.padded import Model
+from polus.images.segmentation.mesmer_inference.padded import run
 
 # Initialize the logger
 logging.basicConfig(
@@ -29,16 +31,16 @@ def main(
         help="Input testing image collection to be processed by this plugin.",
     ),
     tile_size: Optional[str] = typer.Option(
-        "256", "--tileSize", help="Input image tile size. Default 256x256."
+        "256", "--tileSize", help="Input image tile size. Default 256x256.",
     ),
     model_path: Optional[pathlib.Path] = typer.Option(
-        None, "--modelPath", help="Path to weights file."
+        None, "--modelPath", help="Path to weights file.",
     ),
     file_pattern_test: str = typer.Option(
-        ..., "--filePatternTest", help="Filename pattern to filter data."
+        ..., "--filePatternTest", help="Filename pattern to filter data.",
     ),
     file_pattern_whole_cell: Optional[str] = typer.Option(
-        None, "--filePatternWholeCell", help="Filename pattern to filter nuclear data."
+        None, "--filePatternWholeCell", help="Filename pattern to filter nuclear data.",
     ),
     file_extension: Extension = typer.Option(
         Extension.Default,
@@ -48,7 +50,7 @@ def main(
     model: Model = typer.Option(Model.Default, "--model", help="Model name."),
     out_dir: pathlib.Path = typer.Option(..., "--outDir", help="Output collection"),
     preview: Optional[bool] = typer.Option(
-        False, "--preview", help="Output a JSON preview of files"
+        False, "--preview", help="Output a JSON preview of files",
     ),
 ) -> None:
     """Mesmer Plugin image segmentation using PanopticNet model."""

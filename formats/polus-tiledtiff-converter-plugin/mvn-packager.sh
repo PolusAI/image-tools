@@ -1,4 +1,4 @@
 #!/bin/bash
 
 mvn clean install
-mvn assembly:single 
+mvn assembly:single

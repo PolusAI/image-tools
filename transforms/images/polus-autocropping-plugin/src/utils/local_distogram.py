@@ -1,28 +1,26 @@
 __author__ = """Romain Picard"""
-__email__ = 'romain.picard@oakbits.com'
-__version__ = '1.6.0'
+__email__ = "romain.picard@oakbits.com"
+__version__ = "1.6.0"
 
 import math
 from bisect import bisect_left
 from functools import reduce
 from itertools import accumulate
 from operator import itemgetter
-from typing import List
 from typing import Optional
-from typing import Tuple
 
 EPSILON = 1e-5
-Bin = Tuple[float, int]
+Bin = tuple[float, int]
 
 
 # bins is a tuple of (cut point, count)
-class Distogram(object):
-    """ Compressed representation of a distribution.
-    """
-    __slots__ = 'bin_count', 'bins', 'min', 'max', 'diffs', 'min_diff', 'weighted_diff'
+class Distogram:
+    """Compressed representation of a distribution."""
 
-    def __init__(self, bin_count: int = 100, weighted_diff: bool = False):
-        """ Creates a new Distogram object
+    __slots__ = "bin_count", "bins", "min", "max", "diffs", "min_diff", "weighted_diff"
+
+    def __init__(self, bin_count: int = 100, weighted_diff: bool = False) -> None:
+        """Creates a new Distogram object.
 
         Args:
             bin_count: [Optional] the number of bins to use.
@@ -32,23 +30,22 @@ class Distogram(object):
             A Distogram object.
         """
         self.bin_count: int = bin_count
-        self.bins: List[Bin] = list()
+        self.bins: list[Bin] = []
         self.min: Optional[float] = None
         self.max: Optional[float] = None
-        self.diffs: Optional[List[float]] = None
+        self.diffs: Optional[list[float]] = None
         self.min_diff: Optional[float] = None
         self.weighted_diff: bool = weighted_diff
 
 
-def _linspace(start: float, stop: float, num: int) -> List[float]:
+def _linspace(start: float, stop: float, num: int) -> list[float]:
     if num == 1:
         return [stop]
     step = (stop - start) / float(num)
-    values = [start + step * i for i in range(num + 1)]
-    return values
+    return [start + step * i for i in range(num + 1)]
 
 
-def _moment(x: List[float], counts: List[float], c: float, n: int) -> float:
+def _moment(x: list[float], counts: list[float], c: float, n: int) -> float:
     m = (ci * (v - c) ** n for i, (ci, v) in enumerate(zip(counts, x)))
     return sum(m) / sum(counts)
 
@@ -83,7 +80,6 @@ def _update_diffs(h: Distogram, i: int) -> None:
         if update_min is True:
             h.min_diff = min(h.diffs)
 
-    return
 
 
 def _trim(h: Distogram) -> Distogram:
@@ -117,7 +113,7 @@ def _trim_in_place(h: Distogram, value: float, c: int, i: int):
     return h
 
 
-def _compute_diffs(h: Distogram) -> List[float]:
+def _compute_diffs(h: Distogram) -> list[float]:
     if h.weighted_diff is True:
         diffs = [
             (v2 - v1) * math.log(EPSILON + min(f1, f2))
@@ -146,7 +142,7 @@ def _search_in_place_index(h: Distogram, new_value: float, index: int) -> int:
 
 
 def update(h: Distogram, value: float, count: int = 1) -> Distogram:
-    """ Adds a new element to the distribution.
+    """Adds a new element to the distribution.
 
     Args:
         h: A Distogram object.
@@ -173,8 +169,7 @@ def update(h: Distogram, value: float, count: int = 1) -> Distogram:
     if index > 0 and len(h.bins) >= h.bin_count:
         in_place_index = _search_in_place_index(h, value, index)
         if in_place_index > 0:
-            h = _trim_in_place(h, value, count, in_place_index)
-            return h
+            return _trim_in_place(h, value, count, in_place_index)
 
     if index == -1:
         h.bins.append((value, count))
@@ -193,12 +188,11 @@ def update(h: Distogram, value: float, count: int = 1) -> Distogram:
     if (h.max is None) or (h.max < value):
         h.max = value
 
-    h = _trim(h)
-    return h
+    return _trim(h)
 
 
 def merge(h1: Distogram, h2: Distogram) -> Distogram:
-    """ Merges two Distogram objects
+    """Merges two Distogram objects.
 
     Args:
         h1: First Distogram.
@@ -208,16 +202,15 @@ def merge(h1: Distogram, h2: Distogram) -> Distogram:
         A Distogram object being the composition of h1 and h2. The number of
         bins in this Distogram is equal to the number of bins in h1.
     """
-    h = reduce(
+    return reduce(
         lambda residual, b: update(residual, *b),
         h2.bins,
         h1,
     )
-    return h
 
 
 def count_at(h: Distogram, value: float):
-    """ Counts the number of elements present in the distribution up to value.
+    """Counts the number of elements present in the distribution up to value.
 
     Args:
         h: A Distogram object.
@@ -259,7 +252,7 @@ def count_at(h: Distogram, value: float):
 
 
 def count(h: Distogram) -> float:
-    """ Counts the number of elements in the distribution.
+    """Counts the number of elements in the distribution.
 
     Args:
         h: A Distogram object.
@@ -270,8 +263,8 @@ def count(h: Distogram) -> float:
     return sum((f for _, f in h.bins))
 
 
-def bounds(h: Distogram) -> Tuple[float, float]:
-    """ Returns the min and max values of the distribution.
+def bounds(h: Distogram) -> tuple[float, float]:
+    """Returns the min and max values of the distribution.
 
     Args:
         h: A Distogram object.
@@ -283,7 +276,7 @@ def bounds(h: Distogram) -> Tuple[float, float]:
 
 
 def mean(h: Distogram) -> float:
-    """ Returns the mean of the distribution.
+    """Returns the mean of the distribution.
 
     Args:
         h: A Distogram object.
@@ -296,7 +289,7 @@ def mean(h: Distogram) -> float:
 
 
 def variance(h: Distogram) -> float:
-    """ Returns the variance of the distribution.
+    """Returns the variance of the distribution.
 
     Args:
         h: A Distogram object.
@@ -309,7 +302,7 @@ def variance(h: Distogram) -> float:
 
 
 def stddev(h: Distogram) -> float:
-    """ Returns the standard deviation of the distribution.
+    """Returns the standard deviation of the distribution.
 
     Args:
         h: A Distogram object.
@@ -321,8 +314,8 @@ def stddev(h: Distogram) -> float:
     return math.sqrt(variance(h))
 
 
-def histogram(h: Distogram, ucount: int = 100) -> List[Tuple[float, float]]:
-    """ Returns a histogram of the distribution
+def histogram(h: Distogram, ucount: int = 100) -> list[tuple[float, float]]:
+    """Returns a histogram of the distribution.
 
     Args:
         h: A Distogram object.
@@ -336,20 +329,19 @@ def histogram(h: Distogram, ucount: int = 100) -> List[Tuple[float, float]]:
         bins in the Distogram object.
     """
     if len(h.bins) < h.bin_count:
-        raise ValueError("not enough elements in distribution")
+        msg = "not enough elements in distribution"
+        raise ValueError(msg)
 
-    bin_bounds = _linspace(h.min, h.max, num=ucount+1)
+    bin_bounds = _linspace(h.min, h.max, num=ucount + 1)
     counts = [count_at(h, e) for e in bin_bounds[1:-1]]
-    u = [
-        (b, new - last)
-        for b, new, last in zip(bin_bounds[1:], counts[1:], counts[:-1])
+    return [
+        (b, new - last) for b, new, last in zip(bin_bounds[1:], counts[1:], counts[:-1])
     ]
 
-    return u
 
 
 def quantile(h: Distogram, value: float) -> Optional[float]:
-    """ Returns a quantile of the distribution
+    """Returns a quantile of the distribution.
 
     Args:
         h: A Distogram object.

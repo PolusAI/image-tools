@@ -24,4 +24,3 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --pattern ${pattern} \
             --chunkSize ${chunkSize} \
             --groupBy ${groupBy} \
-            

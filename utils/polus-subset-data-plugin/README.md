@@ -28,4 +28,3 @@ This plugin takes one input argument and one output argument:
 | `--filePattern` | Filename pattern used to separate data                | Input  | string     |
 | `--inpDir`      | Input image collection to be processed by this plugin | Input  | collection |
 | `--outDir`      | Output collection                                     | Output | collection |
-

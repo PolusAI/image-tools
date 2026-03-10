@@ -10,7 +10,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Instal Conda    
+# Instal Conda
 ENV PATH $CONDA_DIR/bin:$PATH
 RUN wget --quiet https://repo.continuum.io/miniconda/Miniconda$CONDA_PYTHON_VERSION-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
 echo 'export PATH=$CONDA_DIR/bin:$PATH' > /etc/profile.d/conda.sh && \
@@ -18,11 +18,11 @@ echo 'export PATH=$CONDA_DIR/bin:$PATH' > /etc/profile.d/conda.sh && \
     rm -rf /tmp/* && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-    
+
 RUN mkdir -p /home/PCA
 WORKDIR /home/PCA
 
-RUN conda install flask numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing pandas dask   && \              
+RUN conda install flask numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing pandas dask   && \
     conda install -c pytorch magma-cuda101
 
 RUN git clone --recursive https://github.com/pytorch/pytorch

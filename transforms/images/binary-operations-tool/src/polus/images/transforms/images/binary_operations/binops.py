@@ -3,30 +3,30 @@
 import logging
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
+from typing import Union
 
 import cv2
 import numpy
-from bfio import BioReader, BioWriter
+from bfio import BioReader
+from bfio import BioWriter
 from filepattern import FilePattern
 from preadator import ProcessManager
 
-from .utils import (
-    TileTuple,
-    blackhat,
-    close_,
-    dilate,
-    erode,
-    fill_holes,
-    invert,
-    iterate_tiles,
-    morphgradient,
-    open_,
-    remove_large,
-    remove_small,
-    skeletonize,
-    tophat,
-)
+from .utils import TileTuple
+from .utils import blackhat
+from .utils import close_
+from .utils import dilate
+from .utils import erode
+from .utils import fill_holes
+from .utils import invert
+from .utils import iterate_tiles
+from .utils import morphgradient
+from .utils import open_
+from .utils import remove_large
+from .utils import remove_small
+from .utils import skeletonize
+from .utils import tophat
 
 logger = logging.getLogger(__name__)
 
@@ -132,9 +132,8 @@ def binary_op(
     else:
         extra_arguments = None
 
-    out_image = OPERATION_DICT[operation](image, kernel=se, n=extra_arguments)
+    return OPERATION_DICT[operation](image, kernel=se, n=extra_arguments)
 
-    return out_image
 
 
 def _tile_thread(
@@ -149,22 +148,21 @@ def _tile_thread(
     iterations: int = 1,
     threshold: Optional[int] = None,
 ):
-    with ProcessManager.thread():
-        with BioReader(filepath) as br:
-            # read a tile of BioReader
-            tile = br[window_slice]
+    with ProcessManager.thread(), BioReader(filepath) as br:
+        # read a tile of BioReader
+        tile = br[window_slice]
 
-            out_tile = binary_op(
-                image=tile,
-                operation=operation,
-                structuring_shape=structuring_shape,
-                kernel=kernel,
-                iterations=iterations,
-                threshold=threshold,
-            )
+        out_tile = binary_op(
+            image=tile,
+            operation=operation,
+            structuring_shape=structuring_shape,
+            kernel=kernel,
+            iterations=iterations,
+            threshold=threshold,
+        )
 
-            # finalize the output
-            writer[step_slice] = out_tile[0:step_size, 0:step_size]
+        # finalize the output
+        writer[step_slice] = out_tile[0:step_size, 0:step_size]
 
 
 def scalable_binary_op(
@@ -224,7 +222,7 @@ def scalable_binary_op(
         window_size: int = step_size + (2 * extra_padding)
 
         for window_slice, step_slice in iterate_tiles(
-            shape=bfio_shape, window_size=window_size, step_size=step_size
+            shape=bfio_shape, window_size=window_size, step_size=step_size,
         ):
             # info on the Slices for debugging
             ProcessManager.submit_thread(
@@ -316,5 +314,5 @@ def batch_binary_ops(
     else:
         raise RuntimeError(
             "No data to process. Make sure the input directory is correct "
-            + "and that the filepattern matches files in the input directory."
+            + "and that the filepattern matches files in the input directory.",
         )

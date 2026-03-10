@@ -13,4 +13,4 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --user "$(id -u):$(id -g)" \
             polusai/generic-to-image-collection-plugin:${version} \
             --inpDir ${inpDir} \
-            --outDir ${outDir} 
+            --outDir ${outDir}

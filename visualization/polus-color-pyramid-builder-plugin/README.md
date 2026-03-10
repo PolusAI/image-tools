@@ -76,4 +76,3 @@ This plugin takes one input argument and one output argument:
 | `--layout`      | Color ordering (e.g. 1,11,,,,5,6)                                                  | Input  | string     |
 | `--bounds`      | Set bounds (should be float-float, int-int, or blank, e.g. 0.01-0.99,0-16000,,,,,) | Input  | string     |
 | `--outDir`      | Output pyramid path.                                                               | Output | pyramid    |
-

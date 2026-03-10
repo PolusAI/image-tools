@@ -2,60 +2,60 @@
 
 The feature extraction plugin extracts shape and intensity based features from images and outputs csv file.The input image should be in OME tiled tiff format.
 These are the features that can be extracted from this plugin:
-   1. Area - 
+   1. Area -
          Number of pixels in the region.
-   2. Perimeter - 
+   2. Perimeter -
          The length of the outside boundary of the region.
-   3. Orientation - 
+   3. Orientation -
          Angle between the 0th axis and the major axis of the ellipse that has same second moments as the region.
-   4. Convex area - 
+   4. Convex area -
          Number of pixels of convex hull image.
-   5. Eccentricity - 
+   5. Eccentricity -
          Ratio of focal distance over the major axis length.
-   6. Equivalent diameter - 
+   6. Equivalent diameter -
          The diameter of a circle with the same area as the region.
-   7. Solidity - 
+   7. Solidity -
          Ratio of pixels in the region to pixels of convex hull image.
-   8. Centroid - 
+   8. Centroid -
          The center point of the region. Centroid x and y indicates the (x,y) coordinates.
-   9. Neighbors - 
+   9. Neighbors -
          The number of neighbors touching the object.
-   10. Maximum feret - 
+   10. Maximum feret -
          The longest distance between any two points in the region (maximum caliber diameter) is calculated. The feret diameter for number of angles (0-180 degrees) are calculated and their maximum is selected.
-   11. Minimum feret - 
+   11. Minimum feret -
          The minimum caliber diameter is calculated. The feret diameter for number of angles (0-180 degrees) are calculated and their minimum is selected.
-   12. Polygonality score - 
+   12. Polygonality score -
          The score ranges from -infinity to 10. Score 10 indicates the object shape is polygon and score -infinity indicates the object shape is not polygon.
-   13. Hexagonality score - 
+   13. Hexagonality score -
          The score ranges from -infinity to 10. Score 10 indicates the object shape is hexagon and score -infinity indicates the object shape is not hexagon.
-   14. Hexagonality standard deviation - 
+   14. Hexagonality standard deviation -
          Dispersion of hexagonality_score relative to its mean.
-   15. Euler number - 
+   15. Euler number -
          Euler characteristic of the region.
-   16. Major axis length - 
+   16. Major axis length -
          The length of major axis of the ellipse that has the same normalized second central moments as the region.
-   17. Minor axis length - 
+   17. Minor axis length -
          The length of minor axis of the ellipse that has the same normalized second central moments as the region.
-   18. Bounding Box - 
+   18. Bounding Box -
 	 Position and size of the smallest box containing the region.
-	 Bounding box xmin and ymin indicates the (x,y) coordinates.Bounding box width and height indicates the width and height of the box respectively. 
-   18. Mean intensity - 
+	 Bounding box xmin and ymin indicates the (x,y) coordinates.Bounding box width and height indicates the width and height of the box respectively.
+   18. Mean intensity -
          Mean intensity value of the region.
-   19. Median - 
+   19. Median -
          The median value of pixels in the region.
-   20. Mode - 
+   20. Mode -
          The mode value of pixels in the region.
-   21. Maximum intensity - 
+   21. Maximum intensity -
          Maximum intensity value in the region.
-   22. Minimum intensity - 
+   22. Minimum intensity -
          Minimum intensity value in the region.
-   23. Skewness - 
+   23. Skewness -
          The third order moment about the mean.
-   24. Kurtosis - 
+   24. Kurtosis -
          The fourth order moment about the mean.
-   25. Entropy - 
+   25. Entropy -
          Entropy is a measure of randomness. It is the amount of information in the region.
-   26. Standard deviation - 
+   26. Standard deviation -
          Dispersion of image gray level intensities
 
 The features are calculated using scikit-image (https://scikit-image.org/docs/dev/api/skimage.measure.html#skimage.measure.regionprops).
@@ -74,14 +74,14 @@ Filepattern will sort alphabetically the files in the labeled image folder and i
 If specific pattern is mentioned as input, then filepattern will get matches from labeled image folder and intensity image folder based on that pattern.
 
 ### Pixel distance:
-Enter value for this parameter if neighbors touching cells needs to be calculated. The default value is 5. This is an optional parameter. 
+Enter value for this parameter if neighbors touching cells needs to be calculated. The default value is 5. This is an optional parameter.
 
 ### Features:
 Choose the features that need to be extracted. Multiple features can be selected. If all the 26 features are required, then choose ‘all’ option.
 
 ### Csvfile:
 There are 2 options available under this category.
-Separatecsv - Allows to save all the features extracted for each image in separate csv file. 
+Separatecsv - Allows to save all the features extracted for each image in separate csv file.
 Singlecsv - Allows to save all the features extracted from all the images in the same csv file.
 
 ### Embedded pixel size:

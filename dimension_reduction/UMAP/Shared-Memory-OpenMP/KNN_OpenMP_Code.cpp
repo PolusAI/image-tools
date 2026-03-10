@@ -1,26 +1,26 @@
 #include <vector>
 #include <iostream>
-#include <stdio.h>      
-#include <stdlib.h>     
-#include <time.h>      
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <list>
 #include <string>
 #include <math.h>
 #include <fstream>
 #include <float.h>
-#include <boost/iostreams/stream.hpp> 
+#include <boost/iostreams/stream.hpp>
 #include "KNN_OpenMP_Code.h"
-#include "Metrics.h"  
+#include "Metrics.h"
 #include <omp.h>
-#include <boost/iostreams/device/mapped_file.hpp> 
-#include <boost/iostreams/stream.hpp>    
+#include <boost/iostreams/device/mapped_file.hpp>
+#include <boost/iostreams/stream.hpp>
 
 using boost::iostreams::mapped_file_source;
-using boost::iostreams::stream;	
+using boost::iostreams::stream;
 using namespace std;
 
 /**
- * Read the output of linux command execution 
+ * Read the output of linux command execution
  * @param  cmd  is the linux command to be executed
  * @return the output from the execution of the linux command
  */
@@ -40,21 +40,21 @@ std::string exec(const char* cmd) {
 /**
  * Compute K-NN following the algorithm for shared-memory K-NN
  * @param filePath The full path to the input file containig the dataset.
- * @param N Size of Dataset without the header (i.e.(#Rows in dataset)-1).	 
- * @param Dim Dimension of Dataset (#Columns) 
+ * @param N Size of Dataset without the header (i.e.(#Rows in dataset)-1).
+ * @param Dim Dimension of Dataset (#Columns)
  * @param K the desired number of Nearest Neighbours to be computed
  * @param sampleRate The rate at which we do sampling
  * @param convThreshold Convergance Threshold
- * @param logFile The errors and informational messages are outputted to the log file 
+ * @param logFile The errors and informational messages are outputted to the log file
  * @param distanceMetric is the metric to compute the distance between the points in high-D space, by deafult should be euclidean
  * @param distanceV1 is the first optional variable needed for computing distance in some metrics
- * @param distanceV2 is the second optional variable needed for computing distance in some metrics	
- * @param filePathOptionalArray The full path to optional array for the distance metric computation 	 
- * @return B_Index indices of K-NN for each data point 	 
- * @return B_Dist corresponding distance for K-NN indices stored in B_Index	 
+ * @param distanceV2 is the second optional variable needed for computing distance in some metrics
+ * @param filePathOptionalArray The full path to optional array for the distance metric computation
+ * @return B_Index indices of K-NN for each data point
+ * @return B_Dist corresponding distance for K-NN indices stored in B_Index
  */
 //void computeKNNs(string filePath, const int N, const int Dim, const int K, float sampleRate, const int convThreshold,int** B_Index,double** B_Dist, ofstream& logFile){
-void computeKNNs(string filePath, const int N, const int Dim, const int K, float sampleRate, const int convThreshold,int** B_Index,double** B_Dist, ofstream& logFile, string distanceMetric, float distanceV1, float distanceV2, string filePathOptionalArray){ 
+void computeKNNs(string filePath, const int N, const int Dim, const int K, float sampleRate, const int convThreshold,int** B_Index,double** B_Dist, ofstream& logFile, string distanceMetric, float distanceV1, float distanceV2, string filePathOptionalArray){
 
 	logFile<<"------------Starting K-NN Solution------------"<<endl;
 	cout<<"------------Starting K-NN Solution------------"<<endl;
@@ -88,7 +88,7 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 	 * An approximation of zero in computing distances. Two points with the distance
 	 * smaller than epsilon are considered as one point.
 	 */
-	double epsilon = 1e-10; 
+	double epsilon = 1e-10;
 	short* allEntriesFilled = new short[N];
 	/**
 	 * At first, let's Read Dataset from Input File Using Memory Mapping
@@ -167,12 +167,12 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 	 */
 	auto UpdateNN = [&](int u1, int u2, double distance, int flag = 1) {
 
-		if(allEntriesFilled[u1]==0){		
-			for (int j = 0; j < K; j++) {	
+		if(allEntriesFilled[u1]==0){
+			for (int j = 0; j < K; j++) {
 				if (B_Dist[u1][j] < 0) {
-				
+
 				    for (int jj = 0; jj < j; jj++) {if (B_Index[u1][jj] == u2) return 0;}
-				
+
 					B_Dist[u1][j] = distance;
 					B_Index[u1][j] = u2;
 					B_IsNew[u1][j] = flag;
@@ -194,7 +194,7 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 					index = j;
 				}
 			}
-			if (index == -1) { logFile << "Error"; } 
+			if (index == -1) { logFile << "Error"; }
 			if (distance < max) {
 				B_Dist[u1][index] = distance;
 				B_Index[u1][index] = u2;
@@ -257,14 +257,14 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 		 */
 		int c_criteria = 0;
 		int abort=0;
-		
+
 		for (int i = 0; i < N; ++i) {
 			if (abort != 0) break;
-			
-            #pragma omp parallel for schedule(dynamic) 
+
+            #pragma omp parallel for schedule(dynamic)
 			for (int it = 0; it < New_Final_List[i].size(); ++it) {
 				int par1= New_Final_List[i][it];
-                
+
 				for (int it2 = it+1; it2 < New_Final_List[i].size(); ++it2) {
 					int par2= New_Final_List[i][it2];
 					if (par1 != par2 && abort ==0) {
@@ -275,18 +275,18 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 						 * @param *it and *it2 indices of the desired points in input dataset
 						 * @param Dim is #columns (or features) in input dataset
 						 * @param distanceV1 is the first optional variable needed for computing distance in some metrics
-						 * @param distanceV2 is the second optional variable needed for computing distance in some metrics	
-						 * @param filePathOptionalArray The full path to optional array for the distance metric computation 
-						 * @param logFile The errors and informational messages are outputted to the log file 
-						 * @return spatial distance between points two points 
-						 */					
+						 * @param distanceV2 is the second optional variable needed for computing distance in some metrics
+						 * @param filePathOptionalArray The full path to optional array for the distance metric computation
+						 * @param logFile The errors and informational messages are outputted to the log file
+						 * @return spatial distance between points two points
+						 */
 						double dista = computeDistance (distanceMetric, dataPoints, par1, par2, Dim, distanceV1, distanceV2, filePathOptionalArray, logFile);
 
 						if (dista < epsilon) {
-							logFile << "Found Duplicate Data for Points "<< par1 << " and " << par2 <<endl;; 
-							cout << "Found Duplicate Data for Points "<< par1 << " and " << par2 <<endl; 
+							logFile << "Found Duplicate Data for Points "<< par1 << " and " << par2 <<endl;;
+							cout << "Found Duplicate Data for Points "<< par1 << " and " << par2 <<endl;
 							abort=1;
-							iterate = false; 
+							iterate = false;
 						}
 						#pragma omp critical
 					    {
@@ -309,12 +309,10 @@ void computeKNNs(string filePath, const int N, const int Dim, const int K, float
 			Sampled_Reverse_New_Index[i].clear();
 			New_Final_List[i].clear();
 		}
-	}	
+	}
 
 	delete[] dataPoints;
 	logFile<<"------------Ending of K-NN Solution------------"<<endl;
 	cout<<"------------Ending of K-NN Solution------------"<<endl;
 	return;
 }
-
-

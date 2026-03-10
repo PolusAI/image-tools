@@ -1,11 +1,13 @@
 """Region segmentation eval package."""
-import enum
 import logging
 import math
 import os
 import pathlib
+from collections.abc import Sequence
 from multiprocessing import cpu_count
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any
+from typing import Optional
+from typing import Union
 
 import cv2
 import filepattern
@@ -87,7 +89,7 @@ header_individual_summary = [
 ]
 
 
-def ccl(img: np.ndarray) -> Tuple[np.ndarray, int, float, float]:
+def ccl(img: np.ndarray) -> tuple[np.ndarray, int, float, float]:
     """Run connected component labeling function of opencv on input image.
 
     Args:
@@ -105,7 +107,7 @@ def ccl(img: np.ndarray) -> Tuple[np.ndarray, int, float, float]:
 
 
 def get_image(
-    im: np.ndarray, tile_size: int, X: int, Y: int, x_max: int, y_max: int
+    im: np.ndarray, tile_size: int, X: int, Y: int, x_max: int, y_max: int,
 ) -> np.ndarray:
     """Get tiled images based on tile size and set all right and lower border cells to 0.
 
@@ -176,8 +178,8 @@ def metrics(tp: Union[float, int], fp: int, fn: int) -> Sequence[float]:
 
 
 def find_over_under(
-    dict_result: Dict, data: List[List[Union[str, int, float]]]
-) -> Tuple[List[List[Union[str, int, float]]], int, int]:
+    dict_result: dict, data: list[list[Union[str, int, float]]],
+) -> tuple[list[list[Union[str, int, float]]], int, int]:
     """Find number of over and under segmented cells.
 
     Args:
@@ -250,7 +252,8 @@ def evaluation(
         else:
             radius_factor = 1
     else:
-        raise ValueError("radius_factor not provided")
+        msg = "radius_factor not provided"
+        raise ValueError(msg)
 
     total_files = 0
     result = []
@@ -280,271 +283,238 @@ def evaluation(
             file_name = file[1][0]
             tile_grid_size = 1
             tile_size = tile_grid_size * 2048
-            with BioReader(file_name, max_workers=cpu_count()) as br_pred:
-                with BioReader(
-                    pathlib.Path(gt_dir / file_name.name),
-                    max_workers=cpu_count(),
-                ) as br_gt:
-                    logger.info(f"Evaluating image {file_name}")
-                    total_files += 1
+            with BioReader(file_name, max_workers=cpu_count()) as br_pred, BioReader(
+                pathlib.Path(gt_dir / file_name.name),
+                max_workers=cpu_count(),
+            ) as br_gt:
+                logger.info(f"Evaluating image {file_name}")
+                total_files += 1
 
-                    if individual_summary:
-                        mean_centroid = [0] * (input_classes + 1)
-                        mean_iou = [0] * (input_classes + 1)
+                if individual_summary:
+                    mean_centroid = [0] * (input_classes + 1)
+                    mean_iou = [0] * (input_classes + 1)
 
-                    totalCells = [0] * (input_classes + 1)
-                    tp = [0] * (input_classes + 1)
-                    fp = [0] * (input_classes + 1)
-                    fn = [0] * (input_classes + 1)
-                    over_segmented = [0] * (input_classes + 1)
-                    under_segmented = [0] * (input_classes + 1)
-                    for z in range(br_gt.Z):
-                        # Loop across the length of the image
-                        for y in range(0, br_gt.Y, tile_size):
-                            y_max = min([br_gt.Y, y + tile_size])
-                            for x in range(0, br_gt.X, tile_size):  # noqa
-                                x_max = min([br_gt.X, x + tile_size])
-                                im_gt = np.squeeze(
-                                    br_gt[y:y_max, x:x_max, z : z + 1, 0, 0]  # noqa
-                                )
-                                im_pred = np.squeeze(
-                                    br_pred[y:y_max, x:x_max, z : z + 1, 0, 0]  # noqa
-                                )
+                totalCells = [0] * (input_classes + 1)
+                tp = [0] * (input_classes + 1)
+                fp = [0] * (input_classes + 1)
+                fn = [0] * (input_classes + 1)
+                over_segmented = [0] * (input_classes + 1)
+                under_segmented = [0] * (input_classes + 1)
+                for z in range(br_gt.Z):
+                    # Loop across the length of the image
+                    for y in range(0, br_gt.Y, tile_size):
+                        y_max = min([br_gt.Y, y + tile_size])
+                        for x in range(0, br_gt.X, tile_size):
+                            x_max = min([br_gt.X, x + tile_size])
+                            im_gt = np.squeeze(
+                                br_gt[y:y_max, x:x_max, z : z + 1, 0, 0]  # noqa
+                            )
+                            im_pred = np.squeeze(
+                                br_pred[y:y_max, x:x_max, z : z + 1, 0, 0]  # noqa
+                            )
 
-                                if input_classes > 1:
-                                    classes = np.unique(im_gt)
+                            classes = np.unique(im_gt) if input_classes > 1 else [1]
+                            for cl in classes:
+                                if len(classes) > 1:
+                                    im_pred = np.where(im_pred == cl, cl, 0)
+                                    im_gt = np.where(im_gt == cl, cl, 0)
+                                    im_pred, _, _, _ = ccl(np.uint8(im_pred))
+                                    im_gt, _, _, _ = ccl(np.uint8(im_gt))
+
+                                im_gt = get_image(
+                                    im_gt,
+                                    tile_size,
+                                    br_gt.X,
+                                    br_gt.Y,
+                                    x_max,
+                                    y_max,
+                                ).astype(int)
+                                im_pred = get_image(
+                                    im_pred,
+                                    tile_size,
+                                    br_pred.X,
+                                    br_pred.Y,
+                                    x_max,
+                                    y_max,
+                                ).astype(int)
+                                props = skimage.measure.regionprops(im_pred)
+                                numLabels_pred = np.unique(im_pred)
+
+                                if numLabels_pred[0] != 0:
+                                    numLabels_pred = np.insert(numLabels_pred, 0, 0)
+                                centroids_pred = np.zeros((len(numLabels_pred), 2))
+                                i = 1
+                                for prop in props:
+                                    centroids_pred[i] = prop.centroid[::-1]
+                                    i += 1
+
+                                list_matches = []
+                                props = skimage.measure.regionprops(im_gt)
+                                numLabels_gt = np.unique(im_gt)
+
+                                if numLabels_gt[0] != 0:
+                                    numLabels_gt = np.insert(numLabels_gt, 0, 0)
+                                centroids_gt = np.zeros((len(numLabels_gt), 2))
+                                diameters = np.zeros(len(numLabels_gt))
+                                i = 1
+                                for prop in props:
+                                    centroids_gt[i] = prop.centroid[::-1]
+                                    diameters[i] = prop.minor_axis_length
+                                    i += 1
+
+                                dict_result: dict[str, Any] = {}
+                                data = [None] * (numLabels_gt.max() + 1)
+
+                                if len(centroids_pred) > 4:
+                                    numberofNeighbors = 5
                                 else:
-                                    classes = [1]
-                                for cl in classes:
-                                    if len(classes) > 1:
-                                        im_pred = np.where(im_pred == cl, cl, 0)
-                                        im_gt = np.where(im_gt == cl, cl, 0)
-                                        im_pred, _, _, _ = ccl(np.uint8(im_pred))
-                                        im_gt, _, _, _ = ccl(np.uint8(im_gt))
-
-                                    im_gt = get_image(
-                                        im_gt,
-                                        tile_size,
-                                        br_gt.X,
-                                        br_gt.Y,
-                                        x_max,
-                                        y_max,
-                                    ).astype(int)
-                                    im_pred = get_image(
-                                        im_pred,
-                                        tile_size,
-                                        br_pred.X,
-                                        br_pred.Y,
-                                        x_max,
-                                        y_max,
-                                    ).astype(int)
-                                    props = skimage.measure.regionprops(im_pred)
-                                    numLabels_pred = np.unique(im_pred)
-
-                                    if numLabels_pred[0] != 0:
-                                        numLabels_pred = np.insert(numLabels_pred, 0, 0)
-                                    centroids_pred = np.zeros((len(numLabels_pred), 2))
-                                    i = 1
-                                    for prop in props:
-                                        centroids_pred[i] = prop.centroid[::-1]
-                                        i += 1
-
-                                    list_matches = []
-                                    props = skimage.measure.regionprops(im_gt)
-                                    numLabels_gt = np.unique(im_gt)
-
-                                    if numLabels_gt[0] != 0:
-                                        numLabels_gt = np.insert(numLabels_gt, 0, 0)
-                                    centroids_gt = np.zeros((len(numLabels_gt), 2))
-                                    diameters = np.zeros(len(numLabels_gt))
-                                    i = 1
-                                    for prop in props:
-                                        centroids_gt[i] = prop.centroid[::-1]
-                                        diameters[i] = prop.minor_axis_length
-                                        i += 1
-
-                                    dict_result: dict[str, Any] = {}
-                                    data = [None] * (numLabels_gt.max() + 1)
-
-                                    if len(centroids_pred) > 4:
-                                        numberofNeighbors = 5
-                                    else:
-                                        numberofNeighbors = len(centroids_pred)
-                                    nbrs = NearestNeighbors(
-                                        n_neighbors=numberofNeighbors,
-                                        algorithm="ball_tree",
-                                    ).fit(centroids_pred)
-                                    for i in range(1, len(centroids_gt)):
-                                        distance, index = nbrs.kneighbors(
-                                            np.array([centroids_gt[i]])
-                                        )
-                                        index = index.flatten()
-                                        componentMask_gt = (
-                                            im_gt == numLabels_gt[i]
+                                    numberofNeighbors = len(centroids_pred)
+                                nbrs = NearestNeighbors(
+                                    n_neighbors=numberofNeighbors,
+                                    algorithm="ball_tree",
+                                ).fit(centroids_pred)
+                                for i in range(1, len(centroids_gt)):
+                                    distance, index = nbrs.kneighbors(
+                                        np.array([centroids_gt[i]]),
+                                    )
+                                    index = index.flatten()
+                                    componentMask_gt = (
+                                        im_gt == numLabels_gt[i]
+                                    ).astype("uint8") * 1
+                                    dict_result.setdefault(numLabels_gt[i], [])
+                                    for idx in index:
+                                        componentMask_pred_ = (
+                                            im_pred == numLabels_pred[idx]
                                         ).astype("uint8") * 1
-                                        dict_result.setdefault(numLabels_gt[i], [])
-                                        for idx in index:
-                                            componentMask_pred_ = (
-                                                im_pred == numLabels_pred[idx]
-                                            ).astype("uint8") * 1
-                                            if (
-                                                componentMask_pred_ > 0
-                                            ).sum() > 2 and idx != 0:
-                                                if (
-                                                    componentMask_gt[
-                                                        int(centroids_pred[idx][1]),
-                                                        int(centroids_pred[idx][0]),
-                                                    ]
-                                                    == 1
-                                                    or componentMask_pred_[
-                                                        int(centroids_gt[i][1]),
-                                                        int(centroids_gt[i][0]),
-                                                    ]
-                                                    == 1
-                                                ):
-                                                    dict_result[numLabels_gt[i]].append(
-                                                        numLabels_pred[idx]
-                                                    )
-
-                                    for i in range(1, len(centroids_gt)):
-                                        distance, index = nbrs.kneighbors(
-                                            np.array([centroids_gt[i]])
-                                        )
-                                        index = index.flatten()
-                                        componentMask_gt = (
-                                            im_gt == numLabels_gt[i]
-                                        ).astype("uint8") * 1
-                                        match = index[0]
-                                        dis = distance.flatten()[0]
-                                        componentMask_pred = (
-                                            im_pred == numLabels_pred[match]
-                                        ).astype("uint8") * 1
-
-                                        intersection = np.logical_and(
-                                            componentMask_pred, componentMask_gt
-                                        )
-                                        union = np.logical_or(
-                                            componentMask_pred, componentMask_gt
-                                        )
-                                        iou_score_cell = np.sum(intersection) / np.sum(
-                                            union
-                                        )
                                         if (
-                                            dis < (diameters[i] / 2) * radius_factor
-                                            and match not in list_matches
-                                            and iou_score_cell > iou_score
+                                            componentMask_pred_ > 0
+                                        ).sum() > 2 and idx != 0 and (
+                                            componentMask_gt[
+                                                int(centroids_pred[idx][1]),
+                                                int(centroids_pred[idx][0]),
+                                            ]
+                                            == 1
+                                            or componentMask_pred_[
+                                                int(centroids_gt[i][1]),
+                                                int(centroids_gt[i][0]),
+                                            ]
+                                            == 1
                                         ):
-                                            tp[cl] += 1
-                                            list_matches.append(match)
-                                            condition = "TP"
-                                            centroids_pred[match] = [0.0, 0.0]
-                                            totalCells[cl] += 1
-                                        else:
-                                            fn[cl] += 1
-                                            condition = "FN"
+                                            dict_result[numLabels_gt[i]].append(
+                                                numLabels_pred[idx],
+                                            )
 
-                                        if condition == "TP" and individual_summary:
-                                            mean_centroid[cl] += dis
-                                            mean_iou[cl] += iou_score_cell
+                                for i in range(1, len(centroids_gt)):
+                                    distance, index = nbrs.kneighbors(
+                                        np.array([centroids_gt[i]]),
+                                    )
+                                    index = index.flatten()
+                                    componentMask_gt = (
+                                        im_gt == numLabels_gt[i]
+                                    ).astype("uint8") * 1
+                                    match = index[0]
+                                    dis = distance.flatten()[0]
+                                    componentMask_pred = (
+                                        im_pred == numLabels_pred[match]
+                                    ).astype("uint8") * 1
 
-                                        data[numLabels_gt[i]] = [
-                                            dis,
-                                            cl,
-                                            iou_score_cell,
-                                            numLabels_gt[i],
-                                            dict_result.get(numLabels_gt[i]),
-                                            condition,  # type: ignore
-                                        ]
+                                    intersection = np.logical_and(
+                                        componentMask_pred, componentMask_gt,
+                                    )
+                                    union = np.logical_or(
+                                        componentMask_pred, componentMask_gt,
+                                    )
+                                    iou_score_cell = np.sum(intersection) / np.sum(
+                                        union,
+                                    )
+                                    if (
+                                        dis < (diameters[i] / 2) * radius_factor
+                                        and match not in list_matches
+                                        and iou_score_cell > iou_score
+                                    ):
+                                        tp[cl] += 1
+                                        list_matches.append(match)
+                                        condition = "TP"
+                                        centroids_pred[match] = [0.0, 0.0]
+                                        totalCells[cl] += 1
+                                    else:
+                                        fn[cl] += 1
+                                        condition = "FN"
 
-                                    (
-                                        data,
-                                        over_segmented_,
-                                        under_segmented_,
-                                    ) = find_over_under(  # type: ignore
-                                        dict_result, data  # type: ignore
+                                    if condition == "TP" and individual_summary:
+                                        mean_centroid[cl] += dis
+                                        mean_iou[cl] += iou_score_cell
+
+                                    data[numLabels_gt[i]] = [
+                                        dis,
+                                        cl,
+                                        iou_score_cell,
+                                        numLabels_gt[i],
+                                        dict_result.get(numLabels_gt[i]),
+                                        condition,  # type: ignore
+                                    ]
+
+                                (
+                                    data,
+                                    over_segmented_,
+                                    under_segmented_,
+                                ) = find_over_under(  # type: ignore
+                                    dict_result, data,  # type: ignore
+                                )
+
+                                over_segmented[cl] += over_segmented_
+                                under_segmented[cl] += under_segmented_
+
+                                if individual_data:
+                                    ind_data: list[Any] = []
+                                    for i in range(0, numLabels_gt.max() + 1):
+                                        if data[i] is not None:
+                                            ind_data.append(data[i])
+                                    df_ind_data = pd.DataFrame(ind_data)
+                                    if df_ind_data.shape[1] == 6:
+                                        df_ind_data = pd.DataFrame(
+                                            ind_data,
+                                            columns=header_individual_data[:-1],
+                                        )
+                                    else:
+                                        df_ind_data = pd.DataFrame(
+                                            ind_data,
+                                            columns=header_individual_data,
+                                        )
+
+                                    vf_ind_data = vaex.from_pandas(df_ind_data)
+                                    outname_ind_data = pathlib.Path(
+                                        out_dir,
+                                        f"cells_{file_name.name}{POLUS_TAB_EXT}",
+                                    )
+                                    if f"{POLUS_TAB_EXT}" in [
+                                        ".feather",
+                                        ".arrow",
+                                    ]:
+                                        vf_ind_data.export_feather(outname_ind_data)
+                                    else:
+                                        vf_ind_data.export_csv(
+                                            path=outname_ind_data,
+                                            chunk_size=chunk_size,
+                                        )
+                                    logger.info(
+                                        f"cells_{file_name.name}{POLUS_TAB_EXT}",
                                     )
 
-                                    over_segmented[cl] += over_segmented_
-                                    under_segmented[cl] += under_segmented_
+                                for i in range(1, len(centroids_pred)):
+                                    if (
+                                        centroids_pred[i][0] != 0.0
+                                        and centroids_pred[i][1] != 0.0
+                                    ):
+                                        componentMask_pred = (
+                                            im_pred == numLabels_pred[i]
+                                        ).astype("uint8") * 1
+                                        if (componentMask_pred > 0).sum() > 2:
+                                            fp[cl] += 1
 
-                                    if individual_data:
-                                        ind_data: List[Any] = []
-                                        for i in range(0, numLabels_gt.max() + 1):
-                                            if data[i] is not None:
-                                                ind_data.append(data[i])
-                                        df_ind_data = pd.DataFrame(ind_data)
-                                        if df_ind_data.shape[1] == 6:
-                                            df_ind_data = pd.DataFrame(
-                                                ind_data,
-                                                columns=header_individual_data[:-1],
-                                            )
-                                        else:
-                                            df_ind_data = pd.DataFrame(
-                                                ind_data,
-                                                columns=header_individual_data,
-                                            )
-
-                                        vf_ind_data = vaex.from_pandas(df_ind_data)
-                                        outname_ind_data = pathlib.Path(
-                                            out_dir,
-                                            f"cells_{file_name.name}{POLUS_TAB_EXT}",
-                                        )
-                                        if f"{POLUS_TAB_EXT}" in [
-                                            ".feather",
-                                            ".arrow",
-                                        ]:
-                                            vf_ind_data.export_feather(outname_ind_data)
-                                        else:
-                                            vf_ind_data.export_csv(
-                                                path=outname_ind_data,
-                                                chunk_size=chunk_size,
-                                            )
-                                        logger.info(
-                                            f"cells_{file_name.name}{POLUS_TAB_EXT}"
-                                        )
-
-                                    for i in range(1, len(centroids_pred)):
-                                        if (
-                                            centroids_pred[i][0] != 0.0
-                                            and centroids_pred[i][1] != 0.0
-                                        ):
-                                            componentMask_pred = (
-                                                im_pred == numLabels_pred[i]
-                                            ).astype("uint8") * 1
-                                            if (componentMask_pred > 0).sum() > 2:
-                                                fp[cl] += 1
-
-                    for cl in range(1, input_classes + 1):
-                        if tp[cl] == 0:
-                            (
-                                iou,
-                                tpr,
-                                precision,
-                                fnr,
-                                fdr,
-                                fscore,
-                                f1_score,
-                                fmi,
-                            ) = metrics(1e-20, fp[cl], fn[cl])
-                        else:
-                            (
-                                iou,
-                                tpr,
-                                precision,
-                                fnr,
-                                fdr,
-                                fscore,
-                                f1_score,
-                                fmi,
-                            ) = metrics(tp[cl], fp[cl], fn[cl])
-                        data_result = [
-                            file_name.name,
-                            cl,
-                            tp[cl],
-                            fp[cl],
-                            fn[cl],
-                            over_segmented[cl],
-                            under_segmented[cl],
+                for cl in range(1, input_classes + 1):
+                    if tp[cl] == 0:
+                        (
                             iou,
                             tpr,
                             precision,
@@ -553,72 +523,100 @@ def evaluation(
                             fscore,
                             f1_score,
                             fmi,
-                        ]
+                        ) = metrics(1e-20, fp[cl], fn[cl])
+                    else:
+                        (
+                            iou,
+                            tpr,
+                            precision,
+                            fnr,
+                            fdr,
+                            fscore,
+                            f1_score,
+                            fmi,
+                        ) = metrics(tp[cl], fp[cl], fn[cl])
+                    data_result = [
+                        file_name.name,
+                        cl,
+                        tp[cl],
+                        fp[cl],
+                        fn[cl],
+                        over_segmented[cl],
+                        under_segmented[cl],
+                        iou,
+                        tpr,
+                        precision,
+                        fnr,
+                        fdr,
+                        fscore,
+                        f1_score,
+                        fmi,
+                    ]
 
-                        result.append(data_result)
-                        df_result = pd.DataFrame(result, columns=header)
-                        vf_result = vaex.from_pandas(df_result)
-                        filename = pathlib.Path(out_dir, f"result{POLUS_TAB_EXT}")
-                        if f"{POLUS_TAB_EXT}" in [".feather", ".arrow"]:
-                            vf_result.export_feather(filename)
+                    result.append(data_result)
+                    df_result = pd.DataFrame(result, columns=header)
+                    vf_result = vaex.from_pandas(df_result)
+                    filename = pathlib.Path(out_dir, f"result{POLUS_TAB_EXT}")
+                    if f"{POLUS_TAB_EXT}" in [".feather", ".arrow"]:
+                        vf_result.export_feather(filename)
+                    else:
+                        vf_result.export_csv(path=filename, chunk_size=chunk_size)
+                    logger.info(f"Saving result{POLUS_TAB_EXT}")
+
+                    if total_summary:
+                        total_iou[cl] += iou
+                        total_tpr[cl] += tpr
+                        total_precision[cl] += precision
+                        total_fnr[cl] += fnr
+                        total_fdr[cl] += fdr
+                        total_fscore[cl] += fscore
+                        total_f1_score[cl] += f1_score
+                        total_fmi[cl] += fmi
+
+                    if total_stats:
+                        TP[cl] += tp[cl]
+                        FP[cl] += fp[cl]
+                        FN[cl] += fn[cl]
+                        total_over_segmented[cl] += over_segmented[cl]
+                        total_under_segmented[cl] += under_segmented[cl]
+
+                if individual_summary:
+                    for cl in range(1, input_classes + 1):
+                        if totalCells[cl] == 0:
+                            data_individualSummary = [
+                                file_name.name,
+                                cl,
+                                0,
+                                0,
+                            ]
+                            ind_sum.append(data_individualSummary)
                         else:
-                            vf_result.export_csv(path=filename, chunk_size=chunk_size)
-                        logger.info(f"Saving result{POLUS_TAB_EXT}")
-
-                        if total_summary:
-                            total_iou[cl] += iou
-                            total_tpr[cl] += tpr
-                            total_precision[cl] += precision
-                            total_fnr[cl] += fnr
-                            total_fdr[cl] += fdr
-                            total_fscore[cl] += fscore
-                            total_f1_score[cl] += f1_score
-                            total_fmi[cl] += fmi
-
-                        if total_stats:
-                            TP[cl] += tp[cl]
-                            FP[cl] += fp[cl]
-                            FN[cl] += fn[cl]
-                            total_over_segmented[cl] += over_segmented[cl]
-                            total_under_segmented[cl] += under_segmented[cl]
-
-                    if individual_summary:
-                        for cl in range(1, input_classes + 1):
-                            if totalCells[cl] == 0:
-                                data_individualSummary = [
-                                    file_name.name,
-                                    cl,
-                                    0,
-                                    0,
-                                ]
-                                ind_sum.append(data_individualSummary)
-                            else:
-                                mean_centroid[cl] = mean_centroid[cl] / totalCells[cl]
-                                mean_iou[cl] = mean_iou[cl] / totalCells[cl]
-                                data_individualSummary = [
-                                    file_name.name,
-                                    cl,
-                                    mean_centroid[cl],
-                                    mean_iou[cl],
-                                ]
-                                ind_sum.append(data_individualSummary)
-                        df_ind_sum = pd.DataFrame(
-                            ind_sum, columns=header_individual_summary
+                            mean_centroid[cl] = mean_centroid[cl] / totalCells[cl]
+                            mean_iou[cl] = mean_iou[cl] / totalCells[cl]
+                            data_individualSummary = [
+                                file_name.name,
+                                cl,
+                                mean_centroid[cl],
+                                mean_iou[cl],
+                            ]
+                            ind_sum.append(data_individualSummary)
+                    df_ind_sum = pd.DataFrame(
+                        ind_sum, columns=header_individual_summary,
+                    )
+                    vf_ind_sum = vaex.from_pandas(df_ind_sum)
+                    outname_individualSummary = pathlib.Path(
+                        out_dir, f"individual_image_summary{POLUS_TAB_EXT}",
+                    )
+                    if f"{POLUS_TAB_EXT}" in [".feather", ".arrow"]:
+                        vf_ind_sum.export_feather(outname_individualSummary)
+                        logger.info(
+                            f"Saving individual_image_summary{POLUS_TAB_EXT}",
                         )
-                        vf_ind_sum = vaex.from_pandas(df_ind_sum)
-                        outname_individualSummary = pathlib.Path(
-                            out_dir, f"individual_image_summary{POLUS_TAB_EXT}"
+                    else:
+                        vf_ind_sum.export_csv(
+                            path=outname_individualSummary,
+                            chunk_size=chunk_size,
                         )
-                        if f"{POLUS_TAB_EXT}" in [".feather", ".arrow"]:
-                            vf_ind_sum.export_feather(outname_individualSummary)
-                            logger.info(
-                                f"Saving individual_image_summary{POLUS_TAB_EXT}"
-                            )
-                        else:
-                            vf_ind_sum.export_csv(
-                                path=outname_individualSummary,
-                                chunk_size=chunk_size,
-                            )
 
         if total_summary and total_files != 0:
             for cl in range(1, input_classes + 1):
@@ -696,7 +694,7 @@ def evaluation(
                 df_total_stats.columns = header_total_stats
                 vf_total_stats = vaex.from_pandas(df_total_stats)
                 overall_file = pathlib.Path(
-                    out_dir, f"total_stats_result{POLUS_TAB_EXT}"
+                    out_dir, f"total_stats_result{POLUS_TAB_EXT}",
                 )
                 if f"{POLUS_TAB_EXT}" in [".feather", ".arrow"]:
                     vf_total_stats.export_feather(overall_file)

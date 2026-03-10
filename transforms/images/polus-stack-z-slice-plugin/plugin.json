@@ -10,7 +10,6 @@
   "citation": "",
   "containerId": "polusai/stack-z-slice-plugin:1.2.4",
   "inputs": [
-
     {
       "name": "inpDir",
       "type": "collection",

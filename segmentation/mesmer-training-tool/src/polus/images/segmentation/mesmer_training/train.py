@@ -8,10 +8,13 @@ import pathlib
 import filepattern
 import numpy as np
 from bfio import BioReader
-from deepcell import image_generators, losses
+from deepcell import image_generators
+from deepcell import losses
 from deepcell.model_zoo.panopticnet import PanopticNet
 from deepcell.utils.data_utils import reshape_matrix
-from deepcell.utils.train_utils import count_gpus, get_callbacks, rate_scheduler
+from deepcell.utils.train_utils import count_gpus
+from deepcell.utils.train_utils import get_callbacks
+from deepcell.utils.train_utils import rate_scheduler
 from tensorflow.keras.losses import MSE
 from tensorflow.keras.optimizers import Adam
 
@@ -88,7 +91,7 @@ class MesmerTrain:
         iterations: int,
         batch_size: int,
         out_dir: pathlib.Path,
-    ):
+    ) -> None:
         """Define Instance attributes."""
         self.xtrain_path = xtrain_path
         self.ytrain_path = ytrain_path
@@ -143,7 +146,7 @@ class MesmerTrain:
         def _semantic_loss(y_true, y_pred):
             if n_classes > 1:
                 return 0.01 * losses.weighted_categorical_crossentropy(
-                    y_true, y_pred, n_classes=n_classes
+                    y_true, y_pred, n_classes=n_classes,
                 )
             return MSE(y_true, y_pred)
 
@@ -176,7 +179,6 @@ class MesmerTrain:
             include_top=True,
         )
 
-        # norm_method = 'whole_image'  # data normalization
         lr = 1e-5
         optimizer = Adam(lr=lr, clipnorm=0.001)
         lr_sched = rate_scheduler(lr=lr, decay=0.99)

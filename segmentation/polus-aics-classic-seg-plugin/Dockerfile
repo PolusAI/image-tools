@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install build-essential -y \
     && apt-get -y install git
 
 COPY VERSION /
-		
+
 ARG EXEC_DIR="/opt/executables"
 ARG DATA_DIR="/data"
 

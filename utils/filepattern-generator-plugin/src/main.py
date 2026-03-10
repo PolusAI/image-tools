@@ -1,8 +1,13 @@
-import argparse, logging, os, time, filepattern
-from pathlib import Path
-from typing import Dict, Optional, Tuple
-from itertools import combinations
+import argparse
 import json
+import logging
+import os
+import time
+from itertools import combinations
+from pathlib import Path
+from typing import Optional
+
+import filepattern
 
 
 def get_grouping(
@@ -10,8 +15,7 @@ def get_grouping(
     pattern: Optional[str],
     groupBy: Optional[str],
     chunkSize: Optional[int] = None,
-) -> Tuple[str, int]:
-
+) -> tuple[str, int]:
     """This function produces the best combination of variables for a given chunksize
     Args:
         inpDir (Path): Path to Image files
@@ -19,9 +23,8 @@ def get_grouping(
         groupBy (str, optional): Specify variable to group image filenames
         chunk_size (str, optional): Number of images to generate collective filepattern
     Returns:
-        variables for grouping image filenames, count
+        variables for grouping image filenames, count.
     """
-
     fp = filepattern.FilePattern(inpDir, pattern)
 
     # Get the number of unique values for each variable
@@ -68,13 +71,13 @@ def get_grouping(
     return best_group, best_count
 
 
-def save_generator_outputs(x: Dict[str, int], outDir: Path):
+def save_generator_outputs(x: dict[str, int], outDir: Path):
     """Convert dictionary of filepatterns and number of image files which can be parsed with each filepattern to json file
     Args:
         x (Dict): A dictionary of filepatterns and number of image files which can be parsed with each filepattern
         outDir (Path): Path to save the outputs
     Returns:
-        json file with array of file patterns
+        json file with array of file patterns.
     """
     data = json.loads('{"filePatterns": []}')
     with open(os.path.join(outDir, "file_patterns.json"), "w") as cwlout:
@@ -82,7 +85,6 @@ def save_generator_outputs(x: Dict[str, int], outDir: Path):
             data["filePatterns"].append(key)
         json.dump(data, cwlout)
 
-    return
 
 
 def main(
@@ -92,7 +94,6 @@ def main(
     groupBy: str,
     outDir: Path,
 ):
-
     starttime = time.time()
 
     # If the pattern isn't given, try to infer one
@@ -102,7 +103,7 @@ def main(
         except ValueError:
             logger.error(
                 "Could not infer a filepattern from the input files, "
-                + "and no filepattern was provided."
+                + "and no filepattern was provided.",
             )
             raise
 
@@ -119,7 +120,7 @@ def main(
         fp_temp = filepattern.FilePattern(inpDir, fps[-1])
         counts.append(sum(len(f) for f in fp_temp))
 
-    assert sum(counts) == len([f for f in fp])
+    assert sum(counts) == len(list(fp))
 
     save_generator_outputs(dict(zip(fps, counts)), outDir)
 
@@ -128,7 +129,6 @@ def main(
 
 
 if __name__ == "__main__":
-
     # Import environment variables
     POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
 
@@ -143,7 +143,7 @@ if __name__ == "__main__":
     # Argument parsing
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(
-        prog="main", description="Filepattern generator Plugin"
+        prog="main", description="Filepattern generator Plugin",
     )
     # Input arguments
     parser.add_argument(
@@ -176,7 +176,7 @@ if __name__ == "__main__":
         required=False,
     )
     parser.add_argument(
-        "--outDir", dest="outDir", type=str, help="Output collection", required=True
+        "--outDir", dest="outDir", type=str, help="Output collection", required=True,
     )
 
     # Parse the arguments
@@ -185,15 +185,15 @@ if __name__ == "__main__":
 
     if inpDir.joinpath("images").is_dir():
         inpDir = inpDir.joinpath("images").absolute()
-    logger.info("inputDir = {}".format(inpDir))
+    logger.info(f"inputDir = {inpDir}")
     outDir = Path(args.outDir)
-    logger.info("outDir = {}".format(outDir))
+    logger.info(f"outDir = {outDir}")
     pattern = args.pattern
-    logger.info("pattern = {}".format(pattern))
+    logger.info(f"pattern = {pattern}")
     chunkSize = args.chunkSize
-    logger.info("chunkSize = {}".format(chunkSize))
+    logger.info(f"chunkSize = {chunkSize}")
     groupBy = args.groupBy
-    logger.info("groupBy = {}".format(groupBy))
+    logger.info(f"groupBy = {groupBy}")
 
     main(
         inpDir=inpDir,

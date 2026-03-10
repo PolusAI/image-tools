@@ -21,7 +21,6 @@ data = {
 
 class Test_Filepattern_Generator(unittest.TestCase):
     def setUp(self) -> None:
-
         self.inpDir = inpDir
         self.pattern = pattern
         self.chunkSize = chunkSize

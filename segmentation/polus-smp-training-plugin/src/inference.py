@@ -1,14 +1,15 @@
 import pathlib
-import typing
+from concurrent.futures import ThreadPoolExecutor
 
 import bfio
 import numpy
 import torch
 from segmentation_models_pytorch.base import SegmentationModel
 from tqdm import tqdm
-from concurrent.futures import ThreadPoolExecutor
 
-from utils import Dataset, Tile, UnTile
+from utils import Dataset
+from utils import Tile
+from utils import UnTile
 
 # TILE_SIZE must be a multiple of 1024
 TILE_SIZE = 2048
@@ -17,35 +18,27 @@ BATCH_SIZE = 1
 
 
 def thread_loader(image_path, device):
-
     with bfio.BioReader(image_path) as reader:
-
         image = reader[:]
 
-    image = Dataset.preprocessing(image.astype(numpy.float32)).to(device)
-    return image
+    return Dataset.preprocessing(image.astype(numpy.float32)).to(device)
 
 
 def thread_save(image_path, output_dir: pathlib.Path, prediction, i):
-
-    with bfio.BioReader(image_path) as reader:
-
-        with bfio.BioWriter(
-            output_dir.joinpath(image_path.name), metadata=reader.metadata
-        ) as writer:
-
-            writer.dtype = numpy.float32
-            writer[:] = prediction[i, 0, :-1, :-1].cpu().numpy()
+    with bfio.BioReader(image_path) as reader, bfio.BioWriter(
+        output_dir.joinpath(image_path.name), metadata=reader.metadata,
+    ) as writer:
+        writer.dtype = numpy.float32
+        writer[:] = prediction[i, 0, :-1, :-1].cpu().numpy()
 
 
 def run_inference(
     *,
     model: SegmentationModel,
     device: torch.device,
-    image_paths: typing.List[pathlib.Path],
+    image_paths: list[pathlib.Path],
     output_dir: pathlib.Path,
 ):
-
     if torch.cuda.device_count() > 1:
         model = torch.nn.DataParallel(model)
     tile = Tile(tile_size=(MODEL_TILE_SIZE, MODEL_TILE_SIZE))
@@ -71,7 +64,7 @@ def run_inference(
         paths = batches[0]
 
         for batch in tqdm(
-            batches[1:], desc=f"running inference on {len(image_paths)} images"
+            batches[1:], desc=f"running inference on {len(image_paths)} images",
         ):
             # Load the data
             patch = torch.stack([t.result() for t in load_threads], axis=0)
@@ -82,7 +75,6 @@ def run_inference(
                 load_threads.append(executor.submit(thread_loader, image_path, device))
 
             with torch.no_grad():
-
                 patch, shape = tile(patch)
                 prediction = model.forward(patch.to(device))
                 prediction = untile(prediction, shape)
@@ -93,7 +85,7 @@ def run_inference(
 
             for i in range(len(paths)):
                 save_threads.append(
-                    executor.submit(thread_save, paths[i], output_dir, prediction, i)
+                    executor.submit(thread_save, paths[i], output_dir, prediction, i),
                 )
 
             paths = batch
@@ -113,10 +105,9 @@ def run_inference(
 
         for i in range(len(paths)):
             save_threads.append(
-                executor.submit(thread_save, paths[i], output_dir, prediction, i)
+                executor.submit(thread_save, paths[i], output_dir, prediction, i),
             )
 
         for t in save_threads:
             t.result()
 
-    return

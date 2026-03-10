@@ -5,7 +5,6 @@ import numpy
 from bfio import BioReader
 from bfio import BioWriter
 from skimage import restoration
-
 from src.rolling_ball import rolling_ball
 
 
@@ -24,21 +23,19 @@ class CorrectnessTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.infile = tempfile.NamedTemporaryFile(suffix='.ome.tif')
-        cls.outfile = tempfile.NamedTemporaryFile(suffix='.ome.tif')
+        cls.infile = tempfile.NamedTemporaryFile(suffix=".ome.tif")
+        cls.outfile = tempfile.NamedTemporaryFile(suffix=".ome.tif")
 
         with BioWriter(cls.infile.name) as writer:
             writer.X = cls.image_shape[0]
             writer.Y = cls.image_shape[1]
 
             writer[:] = cls.random_image[:]
-        return
 
     @classmethod
     def tearDownClass(cls) -> None:
         cls.infile.close()
         cls.outfile.close()
-        return
 
     def test_correctness(self):
         # calculate the result with the plugin code
@@ -56,9 +53,10 @@ class CorrectnessTest(unittest.TestCase):
             plugin_result = reader[:]
 
         # calculate the true result
-        background = restoration.rolling_ball(self.random_image, radius=self.ball_radius)
+        background = restoration.rolling_ball(
+            self.random_image, radius=self.ball_radius,
+        )
         true_result = self.random_image - background
 
         # assert correctness
-        self.assertTrue(numpy.all(numpy.equal(true_result, plugin_result)), f'The plugin resulted in a different image')
-        return
+        assert numpy.all(numpy.equal(true_result, plugin_result)), "The plugin resulted in a different image"
