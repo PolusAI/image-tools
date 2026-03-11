@@ -50,3 +50,7 @@ addopts = [
 filterwarnings = [
   "ignore:.*maven_scijava_repository.*:DeprecationWarning",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# Legacy module name (N999); descriptor uses cls not self (N805).
+"utils/bbbc-download-plugin/**/BBBC_model.py" = ["N999", "N805"]

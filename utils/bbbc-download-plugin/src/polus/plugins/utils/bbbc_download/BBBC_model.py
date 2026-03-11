@@ -1,46 +1,58 @@
-from typing import List, Dict, Union, Optional
-import shutil
+"""BBBC dataset models and download logic."""  # noqa: N999
+from __future__ import annotations
+
+import contextlib
+import logging
 import os
+import shutil
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import as_completed
 from multiprocessing import cpu_count
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from typing import Generic
+from typing import TypeVar
+from typing import cast
 from zipfile import ZipFile
 
-from polus.plugins.utils.bbbc_download.download import download, get_url, remove_macosx
-
-
-import logging
-
-import requests
-import pandas as pd
-import numpy as np
-from tqdm import tqdm
 import bs4
-from bfio import BioWriter
-from skimage import io
-import pyarrow as pa
+import numpy as np
+import pandas as pd
 import pyarrow.parquet as pq
-import logging
-
-from pydantic import BaseModel, field_validator, model_validator
+import requests
+from bfio import BioWriter
+from polus.plugins.utils.bbbc_download.download import download
+from polus.plugins.utils.bbbc_download.download import get_url
+from polus.plugins.utils.bbbc_download.download import remove_macosx
+from pydantic import BaseModel
+from pydantic import field_validator
+from pydantic import model_validator
+from skimage import io
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
 
-class _ClassProperty:
-    """Descriptor so that MyClass.attr returns the result of a classmethod when accessed."""
+_T = TypeVar("_T")
 
-    def __init__(self, f):
+
+class _ClassProperty(Generic[_T]):
+    """Descriptor: MyClass.attr returns the result of a classmethod when accessed."""
+
+    def __init__(self, f: Callable[..., _T]) -> None:
         self.f = f
 
-    def __get__(self, obj, owner):
-        return self.f(owner) if owner is not None else None
+    def __get__(self, obj: object, owner: type) -> _T:
+        if owner is None:
+            msg = "ClassProperty accessed without owner"
+            raise RuntimeError(msg)
+        return self.f(owner)
 
 
 BASE_URL = "https://bbbc.broadinstitute.org/"
 tables = pd.read_html(BASE_URL + "image_sets")[:3]
 root = Path("/BBBC").absolute()
-    
+
 
 exception_sets = [
     "BBBC019",
@@ -57,7 +69,7 @@ tables[0] = tables[0].rename(
         tables[0].columns[3]: "Fields per sample",
         tables[0].columns[5]: "Total Images",
         tables[0].columns[6]: "Ground truth",
-    }
+    },
 )
 
 
@@ -68,15 +80,15 @@ class Metadata(BaseModel):
     name: str
 
     @model_validator(mode="after")
-    def valid_data(self) -> "Metadata":
+    def valid_data(self) -> Metadata:  # noqa: D102
         if not self.path.exists():
-            raise ValueError("No metadata")
+            msg = "No metadata"
+            raise ValueError(msg)
         return self
 
     @property
     def size(self) -> int:
         """Returns the size of the dataset's metadata in bytes."""
-
         raw_path = root.joinpath(self.name, "raw/Metadata")
         standard_path = root.joinpath(self.name, "standard/Metadata")
         raw_sum = sum(os.path.getsize(file) for file in raw_path.rglob("*"))
@@ -92,15 +104,15 @@ class GroundTruth(BaseModel):
     name: str
 
     @model_validator(mode="after")
-    def valid_data(self) -> "GroundTruth":
+    def valid_data(self) -> GroundTruth:  # noqa: D102
         if not self.path.exists():
-            raise ValueError("No ground truth")
+            msg = "No ground truth"
+            raise ValueError(msg)
         return self
 
     @property
     def size(self) -> int:
         """Returns the size of the dataset's ground truth in bytes."""
-
         raw_path = root.joinpath(self.name, "raw/Ground_Truth")
         standard_path = root.joinpath(self.name, "standard/Ground_Truth")
         raw_sum = sum(os.path.getsize(file) for file in raw_path.rglob("*"))
@@ -116,15 +128,15 @@ class Images(BaseModel):
     name: str
 
     @model_validator(mode="after")
-    def valid_data(self) -> "Images":
+    def valid_data(self) -> Images:  # noqa: D102
         if not self.path.exists():
-            raise ValueError("No images")
+            msg = "No images"
+            raise ValueError(msg)
         return self
 
     @property
     def size(self) -> int:
         """Returns the size of the dataset's images in bytes."""
-
         raw_path = root.joinpath(self.name, "raw/Images")
         standard_path = root.joinpath(self.name, "standard/Images")
         raw_sum = sum(os.path.getsize(file) for file in raw_path.rglob("*"))
@@ -138,16 +150,16 @@ class BBBCDataset(BaseModel):
 
     Attributes:
         name: The name of the dataset.
-        images: An Images object that contains information about the dataset's images
-        ground_truth: A GroundTruth object that contains information about the dataset's ground truth
-        metadata: A Metadata object that contains information about the dataset's metadata
+        images: Images object for the dataset's images.
+        ground_truth: GroundTruth object for the dataset's ground truth.
+        metadata: Metadata object for the dataset's metadata.
     """
 
     name: str
-    images: Optional[Images] = None
-    ground_truth: Optional[GroundTruth] = None
-    metadata: Optional[Metadata] = None
-    output_path: Optional[Path]= None
+    images: Images | None = None
+    ground_truth: GroundTruth | None = None
+    metadata: Metadata | None = None
+    output_path: Path | None = None
 
     @field_validator("name")
     @classmethod
@@ -160,17 +172,18 @@ class BBBCDataset(BaseModel):
         Returns:
             The name provided if validation is successful.
         """
-
-        if v not in list(BBBC.combined_table["Accession"]):
-            raise ValueError(
-                v
-                + " is an invalid dataset name. Valid dataset names belong to an existing BBBC dataset."
+        combined = cast(pd.DataFrame, BBBC.combined_table)
+        if v not in list(combined["Accession"]):
+            msg = (
+                f"{v} is an invalid dataset name. "
+                "Valid names belong to an existing BBBC dataset."
             )
+            raise ValueError(msg)
 
         return v
 
     @classmethod
-    def create_dataset(cls, name: str) -> Union["BBBCDataset", None]:
+    def create_dataset(cls, name: str) -> BBBCDataset | None:
         """Creates a dataset.
 
         Args:
@@ -179,32 +192,27 @@ class BBBCDataset(BaseModel):
         Returns:
             A new instance of a Dataset object or None if the validation fails.
         """
-
         try:
             if name in exception_sets:
                 dataset_class = globals()[name]
-
                 return dataset_class(name=name)
-            else:
-                return BBBCDataset(name=name)
+            return BBBCDataset(name=name)
         except ValueError as e:
             logger.info(f"{e}")
 
             return None
 
     @property
-    def info(self) -> Dict[str, Union[str, np.int64]]:
-        """Provides information about the dataset such as its description and total images.
+    def info(self) -> dict[str, str | np.int64]:
+        """Provide dataset info (description, total images, etc.).
 
         Returns:
             A dictionary that contains information about the dataset.
         """
-
-        table = BBBC.combined_table
-
+        table = cast(pd.DataFrame, BBBC.combined_table)
         row = table.loc[table["Accession"] == self.name]
 
-        info = {
+        return {
             "Description": row["Description"].values[0],
             "Mode": row["Mode"].values[0],
             "Fields per sample": row["Fields per sample"].values[0],
@@ -213,24 +221,25 @@ class BBBCDataset(BaseModel):
             "Ground truth types": self._ground_truth_types(),
         }
 
-        return info
-
     @property
     def size(self) -> int:
         """Returns the size of the dataset in bytes."""
-
-        dataset_path = self.output_path.joinpath("BBBC",self.name)
+        if self.output_path is None:
+            return 0
+        dataset_path = self.output_path.joinpath("BBBC", self.name)
 
         return sum(os.path.getsize(file) for file in dataset_path.rglob("*"))
 
-    def _ground_truth_types(self) -> List[str]:
+    def _ground_truth_types(self) -> list[str]:
         """Provides the types of ground truth used by the dataset.
 
         Returns:
             A list of strings where each string is a type of ground truth.
         """
-
-        res = requests.get("https://bbbc.broadinstitute.org/image_sets")
+        res = requests.get(
+            "https://bbbc.broadinstitute.org/image_sets",
+            timeout=30,
+        )
         soup = bs4.BeautifulSoup(res.content, "html.parser")
         types = []
 
@@ -243,63 +252,57 @@ class BBBCDataset(BaseModel):
                         types.append(link.attrs["href"].split("#")[-1])
 
                     return types
+        return []
 
-    def _init_data(self,download_path:Path) -> None:
-        """Initializes the images, ground_truth, and metadata attributes of the dataset."""
-        download_path=download_path.joinpath("BBBC")
+    def _init_data(self, download_path: Path) -> None:
+        """Initialize images, ground_truth, and metadata from download_path."""
+        download_path = download_path.joinpath("BBBC")
 
         images_path = download_path.joinpath(self.name, "raw/Images")
         truth_path = download_path.joinpath(self.name, "raw/Ground_Truth")
         meta_path = download_path.joinpath(self.name, "raw/Metadata")
 
-        try:
+        with contextlib.suppress(ValueError):
             self.images = Images(path=images_path, name=self.name)
-        except ValueError:
-            pass
 
-        try:
+        with contextlib.suppress(ValueError):
             self.ground_truth = GroundTruth(path=truth_path, name=self.name)
-        except ValueError:
-            pass
 
-        try:
+        with contextlib.suppress(ValueError):
             self.metadata = Metadata(path=meta_path, name=self.name)
-        except ValueError:
-            pass
 
-        if self.images == None:
+        if self.images is None:
             logger.info(f"{self.name} has no images")
 
-        if self.ground_truth == None and self.metadata == None:
+        if self.ground_truth is None and self.metadata is None:
             logger.info(f"{self.name} has no ground truth or metadata")
 
-        return
-
-    def raw(self,download_path: Path) -> None:
+    def raw(self, download_path: Path) -> None:
         """Download the dataset's raw data."""
-        self.output_path=download_path
+        self.output_path = download_path
 
-        download(self.name,download_path)
+        download(self.name, download_path)
         self._init_data(download_path)
-
-        return
 
     def standard(self, extension: str) -> None:
         """Standardize the dataset's raw data.
 
         Args:
-            extension: The extension of the standard image. Can be ".ome.tif" or ".ome.zarr".
+            extension: Standard image extension: ".ome.tif" or ".ome.zarr".
         """
-
         if extension not in [".ome.tif", ".ome.zarr"]:
             logger.info(
-                f"ERROR: {extension} is an invalid extension for standardization. Must be .ome.tif or .ome.zarr."
+                "ERROR: %s is an invalid extension for standardization. "
+                "Must be .ome.tif or .ome.zarr.",
+                extension,
             )
             return
 
-        if self.images == None:
+        if self.images is None:
             logger.info(
-                f"ERROR: Images for {self.name} have not been downloaded so they cannot be standardized."
+                "ERROR: Images for %s have not been downloaded so they cannot be "
+                "standardized.",
+                self.name,
             )
             return
 
@@ -311,11 +314,14 @@ class BBBCDataset(BaseModel):
         if not standard_folder.exists():
             standard_folder.mkdir(parents=True, exist_ok=True)
 
-        for i, row in df.iterrows():
+        image_ndim_2d = 2
+        for _, row in df.iterrows():
             func = globals()[self.name + "_mapping"]
             out_file = func(row, extension)
             raw_image = io.imread(row["Path"])
-            num_channels = 1 if len(raw_image.shape) == 2 else raw_image.shape[2]
+            num_channels = (
+                1 if len(raw_image.shape) == image_ndim_2d else raw_image.shape[2]
+            )
 
             if row["Image Type"] == "Intensity":
                 sub_folder = "Images"
@@ -324,7 +330,7 @@ class BBBCDataset(BaseModel):
             elif row["Image Type"] == "Metadata":
                 sub_folder = "Metadata"
             else:
-                logger.info(f"ERROR: Invalid value for attribute Image Type")
+                logger.info("ERROR: Invalid value for attribute Image Type")
                 return
 
             save_path = standard_folder.joinpath(sub_folder)
@@ -348,27 +354,30 @@ class BBBCDataset(BaseModel):
 
 
 class BBBC019(BBBCDataset):
-    def raw(self,download_path:Path) -> None:
-        download(self.name,download_path)
-        self.output_path=download_path
-        save_location=download_path.joinpath("BBBC")
+    """BBBC019 dataset with custom raw download/organization."""
+
+    def raw(self, download_path: Path) -> None:
+        """Download and organize BBBC019 raw data."""
+        download(self.name, download_path)
+        self.output_path = download_path
+        save_location = download_path.joinpath("BBBC")
 
         # Separate images from ground truth
         save_location = save_location.joinpath("BBBC019")
         images_folder = save_location.joinpath("raw/Images")
         truth_folder = save_location.joinpath("raw/Ground_Truth")
-        for set in [
+        for folder in [
             x
             for x in images_folder.iterdir()
             if x.name not in [".DS_Store", "__MACOSX"]
         ]:
             for obj in [
                 x
-                for x in set.iterdir()
+                for x in folder.iterdir()
                 if x.name not in ["images", "measures.mat", "desktop.ini", ".DS_Store"]
             ]:
-                src = images_folder.joinpath(set.name, obj.name)
-                dst = truth_folder.joinpath(set.name, obj.name)
+                src = images_folder.joinpath(folder.name, obj.name)
+                dst = truth_folder.joinpath(folder.name, obj.name)
 
                 if dst.exists():
                     try:
@@ -378,17 +387,17 @@ class BBBC019(BBBCDataset):
                 else:
                     shutil.move(src, dst)
 
-
         self._init_data(download_path)
-
-        return
 
 
 class BBBC029(BBBCDataset):
-    def raw(self,download_path:Path) -> None:
-        logger.info(f"Started downloading BBBC029")
-        self.output_path=download_path
-        save_location=download_path.joinpath("BBBC")
+    """BBBC029 dataset with custom raw download/organization."""
+
+    def raw(self, download_path: Path) -> None:
+        """Download and organize BBBC029 raw data."""
+        logger.info("Started downloading BBBC029")
+        self.output_path = download_path
+        save_location = download_path.joinpath("BBBC")
 
         save_location = save_location.joinpath("BBBC029", "raw")
 
@@ -409,33 +418,34 @@ class BBBC029(BBBCDataset):
             "BBBC029",
         )
 
-        logger.info(f"BBBC029 has finished downloading")
-        images_folder=save_location.joinpath("Images")
-        truth_folder=save_location.joinpath("Ground_Truth")
-        remove_macosx("BBBC029",images_folder)
-        remove_macosx("BBBC029",truth_folder)
-        source_directory=images_folder.joinpath("images")
+        logger.info("BBBC029 has finished downloading")
+        images_folder = save_location.joinpath("Images")
+        truth_folder = save_location.joinpath("Ground_Truth")
+        remove_macosx("BBBC029", images_folder)
+        remove_macosx("BBBC029", truth_folder)
+        source_directory = images_folder.joinpath("images")
         for source_file in source_directory.glob("*"):
             destination_file = images_folder / source_file.name
             shutil.move(source_file, destination_file)
-        shutil.rmtree(source_directory)   
+        shutil.rmtree(source_directory)
 
-        source_directory=truth_folder.joinpath("ground_truth")
+        source_directory = truth_folder.joinpath("ground_truth")
         for source_file in source_directory.glob("*"):
             destination_file = truth_folder / source_file.name
             shutil.move(source_file, destination_file)
-        shutil.rmtree(source_directory)  
+        shutil.rmtree(source_directory)
 
         self._init_data(download_path)
 
-        return
-
 
 class BBBC041(BBBCDataset):
-    def raw(self,download_path:Path) -> None:
-        download(self.name,download_path)
-        self.output_path=download_path
-        save_location=download_path.joinpath("BBBC")
+    """BBBC041 dataset with custom raw download/organization."""
+
+    def raw(self, download_path: Path) -> None:
+        """Download and organize BBBC041 raw data."""
+        download(self.name, download_path)
+        self.output_path = download_path
+        save_location = download_path.joinpath("BBBC")
 
         # Separate images from ground truth
         save_location = save_location.joinpath("BBBC041")
@@ -443,7 +453,8 @@ class BBBC041(BBBCDataset):
 
         if not save_location.joinpath("raw/Ground_Truth").exists():
             save_location.joinpath("raw/Ground_Truth").mkdir(
-                parents=True, exist_ok=True
+                parents=True,
+                exist_ok=True,
             )
 
         for file in file_names:
@@ -451,20 +462,21 @@ class BBBC041(BBBCDataset):
             dst = save_location.joinpath("raw/Ground_Truth")
 
             if dst.joinpath(file).exists():
-                os.remove(src)
+                src.unlink(missing_ok=True)
             else:
                 shutil.move(src, dst)
 
         self._init_data(download_path)
 
-        return
-
 
 class BBBC042(BBBCDataset):
-    def raw(self,download_path:Path) -> None:
-        logger.info(f"Started downloading BBBC042")
-        self.output_path=download_path
-        save_location=download_path.joinpath("BBBC")
+    """BBBC042 dataset with custom raw download/organization."""
+
+    def raw(self, download_path: Path) -> None:
+        """Download and organize BBBC042 raw data."""
+        logger.info("Started downloading BBBC042")
+        self.output_path = download_path
+        save_location = download_path.joinpath("BBBC")
 
         save_location = save_location.joinpath("BBBC042", "raw")
 
@@ -485,22 +497,23 @@ class BBBC042(BBBCDataset):
             "BBBC042",
         )
 
-        logger.info(f"BBBC042 has finished downloading")
-        images_folder=save_location.joinpath("Images")
-        truth_folder=save_location.joinpath("Ground_Truth")
-        remove_macosx("BBBC029",images_folder)
-        remove_macosx("BBBC029",truth_folder)
+        logger.info("BBBC042 has finished downloading")
+        images_folder = save_location.joinpath("Images")
+        truth_folder = save_location.joinpath("Ground_Truth")
+        remove_macosx("BBBC042", images_folder)
+        remove_macosx("BBBC042", truth_folder)
 
         self._init_data(download_path)
 
-        return
-
 
 class BBBC046(BBBCDataset):
+    """BBBC046 dataset with custom raw download/organization."""
+
     def raw(self, download_path: Path) -> None:
-        download(self.name,download_path)
-        self.output_path=download_path
-        save_location=download_path.joinpath("BBBC")
+        """Download and organize BBBC046 raw data."""
+        download(self.name, download_path)
+        self.output_path = download_path
+        save_location = download_path.joinpath("BBBC")
 
         # Separate images from ground truth
         try:
@@ -509,11 +522,16 @@ class BBBC046(BBBCDataset):
             truth_folder = save_location.joinpath("raw/Ground_Truth")
 
             # Extract these files because they do not extract automatically
-            for file in ["OE-ID350-AR-1.zip", "OE-ID350-AR-2.zip", "OE-ID350-AR-4.zip", "OE-ID350-AR-8.zip"]:
+            for file in [
+                "OE-ID350-AR-1.zip",
+                "OE-ID350-AR-2.zip",
+                "OE-ID350-AR-4.zip",
+                "OE-ID350-AR-8.zip",
+            ]:
                 with ZipFile(images_folder.joinpath(file), "r") as zfile:
                     zfile.extractall(images_folder)
 
-                os.remove(images_folder.joinpath(file))
+                images_folder.joinpath(file).unlink(missing_ok=True)
 
             if not truth_folder.exists():
                 truth_folder.mkdir(parents=True, exist_ok=True)
@@ -522,7 +540,8 @@ class BBBC046(BBBCDataset):
             for folder in images_folder.iterdir():
                 if not truth_folder.joinpath(folder.name).exists():
                     truth_folder.joinpath(folder.name).mkdir(
-                        parents=True, exist_ok=True
+                        parents=True,
+                        exist_ok=True,
                     )
 
                 # Move ground truth data to Ground Truth folder
@@ -532,42 +551,42 @@ class BBBC046(BBBCDataset):
                         dst = truth_folder.joinpath(folder.name, obj.name)
 
                         if dst.exists():
-                            os.remove(src)
+                            src.unlink(missing_ok=True)
                         else:
                             shutil.move(src, dst)
 
             self._init_data(download_path)
-        except Exception as e:
+        except (OSError, ValueError) as e:
             logger.info(
-                f"BBBC046 downloaded successfully but an error occurred when organizing raw data."
+                "BBBC046 downloaded successfully but an error occurred when "
+                "organizing raw data.",
             )
-            logger.info(f"ERROR: {str(e)}")
-
-        return
+            logger.info("ERROR: %s", e)
 
 
 class BBBC054(BBBCDataset):
-    def raw(self, download_path:Path) -> None:
-        download(self.name,download_path)
-        self.output_path=download_path
-        save_location=download_path.joinpath("BBBC")
+    """BBBC054 dataset with custom raw download/organization."""
+
+    def raw(self, download_path: Path) -> None:
+        """Download and organize BBBC054 raw data."""
+        download(self.name, download_path)
+        self.output_path = download_path
+        save_location = download_path.joinpath("BBBC")
 
         # Separate images from ground truth
         save_location = save_location.joinpath(self.name)
         src = save_location.joinpath("raw/Images", "Replicate1annotation.csv")
         dst = save_location.joinpath("raw/Ground_Truth", "Replicate1annotation.csv")
 
-        if not dst.exists():
-            dst.mkdir(parents=True, exist_ok=True)
+        if not dst.parent.exists():
+            dst.parent.mkdir(parents=True, exist_ok=True)
 
         if dst.exists():
-            os.remove(src)
+            src.unlink(missing_ok=True)
         else:
             shutil.move(src, dst)
 
         self._init_data(download_path)
-
-        return
 
 
 class IDAndSegmentation:
@@ -582,17 +601,21 @@ class IDAndSegmentation:
     table: pd.DataFrame = tables[0]
 
     @_ClassProperty
-    def datasets(cls) -> List[BBBCDataset]:
+    def datasets(cls) -> list[BBBCDataset]:  # noqa: N805
         """Returns a list of all datasets in the table.
 
         Returns:
             A list containing a Dataset object for each dataset in the table.
         """
-        return [BBBCDataset.create_dataset(name) for name in cls.table["Accession"]]
+        return [
+            d
+            for name in cls.table["Accession"]
+            if (d := BBBCDataset.create_dataset(name)) is not None
+        ]
 
     @classmethod
     def raw(cls, download_path: Path) -> None:
-        """Downloads raw data for every dataset in this table"""
+        """Downloads raw data for every dataset in this table."""
         num_workers = max(cpu_count(), 2)
         threads = []
 
@@ -601,7 +624,9 @@ class IDAndSegmentation:
                 threads.append(executor.submit(dataset.raw, download_path))
 
             for f in tqdm(
-                as_completed(threads), desc=f"Downloading data", total=len(threads)
+                as_completed(threads),
+                desc="Downloading data",
+                total=len(threads),
             ):
                 f.result()
 
@@ -618,17 +643,21 @@ class PhenotypeClassification:
     table: pd.DataFrame = tables[1]
 
     @_ClassProperty
-    def datasets(cls) -> List[BBBCDataset]:
+    def datasets(cls) -> list[BBBCDataset]:  # noqa: N805
         """Returns a list of all datasets in the table.
 
         Returns:
             A list containing a Dataset object for each dataset in the table.
         """
-        return [BBBCDataset.create_dataset(name) for name in cls.table["Accession"]]
+        return [
+            d
+            for name in cls.table["Accession"]
+            if (d := BBBCDataset.create_dataset(name)) is not None
+        ]
 
     @classmethod
     def raw(cls, download_path: Path) -> None:
-        """Downloads raw data for every dataset in this table"""
+        """Downloads raw data for every dataset in this table."""
         num_workers = max(cpu_count(), 2)
         threads = []
 
@@ -637,7 +666,9 @@ class PhenotypeClassification:
                 threads.append(executor.submit(dataset.raw, download_path))
 
             for f in tqdm(
-                as_completed(threads), desc=f"Downloading data", total=len(threads)
+                as_completed(threads),
+                desc="Downloading data",
+                total=len(threads),
             ):
                 f.result()
 
@@ -654,17 +685,21 @@ class ImageBasedProfiling:
     table: pd.DataFrame = tables[2]
 
     @_ClassProperty
-    def datasets(cls) -> List[BBBCDataset]:
+    def datasets(cls) -> list[BBBCDataset]:  # noqa: N805
         """Returns a list of all datasets in the table.
 
         Returns:
             A list containing a Dataset object for each dataset in the table.
         """
-        return [BBBCDataset.create_dataset(name) for name in cls.table["Accession"]]
+        return [
+            d
+            for name in cls.table["Accession"]
+            if (d := BBBCDataset.create_dataset(name)) is not None
+        ]
 
     @classmethod
     def raw(cls, download_path: Path) -> None:
-        """Downloads raw data for every dataset in this table"""
+        """Downloads raw data for every dataset in this table."""
         num_workers = max(cpu_count(), 2)
         threads = []
 
@@ -673,7 +708,9 @@ class ImageBasedProfiling:
                 threads.append(executor.submit(dataset.raw, download_path))
 
             for f in tqdm(
-                as_completed(threads), desc=f"Downloading data", total=len(threads)
+                as_completed(threads),
+                desc="Downloading data",
+                total=len(threads),
             ):
                 f.result()
 
@@ -687,31 +724,32 @@ class BBBC:
     """
 
     @_ClassProperty
-    def datasets(cls) -> List[BBBCDataset]:
+    def datasets(cls) -> list[BBBCDataset]:  # noqa: N805
         """Returns a list of all datasets in BBBC.
 
         Returns:
             A list containing a Dataset object for each dataset in BBBC.
         """
-        table = BBBC.combined_table
-        return [BBBCDataset.create_dataset(name) for name in table["Accession"]]
+        table = cast(pd.DataFrame, BBBC.combined_table)
+        return [
+            d
+            for name in table["Accession"]
+            if (d := BBBCDataset.create_dataset(name)) is not None
+        ]
 
     @_ClassProperty
-    def combined_table(cls) -> pd.DataFrame:
-        """Combines each table on https://bbbc.broadinstitute.org/image_sets into a single table.
+    def combined_table(cls) -> pd.DataFrame:  # noqa: N805
+        """Combine image_sets tables into a single table.
 
         Returns:
             A pandas DataFrame representation of the combined table.
         """
-
         # Combine each table into one table
-        combined_table = (
+        return (
             pd.concat(tables)
             .drop(columns=["Ground truth"])
             .drop_duplicates("Accession")
         )
-
-        return combined_table
 
     @classmethod
     def raw(cls, download_path: Path) -> None:
@@ -724,6 +762,8 @@ class BBBC:
                 threads.append(executor.submit(dataset.raw, download_path))
 
             for f in tqdm(
-                as_completed(threads), desc=f"Downloading data", total=len(threads)
+                as_completed(threads),
+                desc="Downloading data",
+                total=len(threads),
             ):
                 f.result()
