@@ -38,7 +38,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.12'
       - name: Install Poetry
         uses: abatilo/actions-poetry@v2
       - name: Install pre-commit
@@ -121,7 +121,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.12'
       - name: Install Conda
         uses: conda-incubator/setup-miniconda@v2
       - name: Run tests with conda
