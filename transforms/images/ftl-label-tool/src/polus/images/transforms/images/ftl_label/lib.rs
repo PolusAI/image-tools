@@ -11,17 +11,17 @@ pub fn extract_tile<'py>(
     py: Python<'py>,
     polygon_set: &PolygonSet,
     coordinates: (usize, usize, usize, usize, usize, usize),
-) -> &'py PyArrayDyn<usize> {
+) -> Bound<'py, PyArrayDyn<usize>> {
     let tile = polygon_set._extract_tile(coordinates);
-    tile.into_pyarray(py)
+    // numpy 0.22: into_pyarray_bound returns Bound<'py, PyArrayDyn<T>>
+    tile.into_pyarray_bound(py)
 }
 
-/// Generates a Python-class for interfacing with Python.
+/// Python module — pyo3 0.22 signature.
 #[pymodule]
-fn ftl_rust(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn ftl_rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PolygonSet>()?;
     m.add_function(wrap_pyfunction!(extract_tile, m)?)?;
-
     Ok(())
 }
 
@@ -42,7 +42,6 @@ mod tests {
         path.push("input_array");
         path.push(format!("test_infile_{}.npy", count));
         println!("reading path {:?}", path);
-
         read_npy(path).unwrap()
     }
 
@@ -61,7 +60,6 @@ mod tests {
 
         ys.par_iter().for_each(|&y| {
             let y_max = std::cmp::min(n_rows, y + tile_size);
-
             xs.par_iter().for_each(|&x| {
                 let x_max = std::cmp::min(n_cols, x + tile_size);
                 let tile = data.slice(s![.., y..y_max, x..x_max]).into_dyn();
@@ -70,7 +68,6 @@ mod tests {
         });
 
         polygon_set.digest();
-
         assert_eq!(polygon_set.len(), count, "wrong number of polygons");
     }
 }
