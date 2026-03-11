@@ -47,3 +47,6 @@ profile = "black"
 addopts = [
   "--import-mode=importlib",
 ]
+filterwarnings = [
+  "ignore:.*maven_scijava_repository.*:DeprecationWarning",
+]
