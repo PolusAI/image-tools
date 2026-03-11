@@ -21,7 +21,7 @@ docker run --mount type=bind,source="${data_path}",target=/data/ \
             --user "$(id -u)":"$(id -g)" \
             --env POLUS_LOG="${POLUS_LOG}" \
             --env POLUS_IMG_EXT="${POLUS_IMG_EXT}" \
-            polusaiftl-label-plugin:"${version}" \
+            polusai/ftl-label-tool:"${version}" \
             --inpDir ${inpDir} \
             --connectivity ${connectivity} \
             --binarizationThreshold ${binarizationThreshold} \

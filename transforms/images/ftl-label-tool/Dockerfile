@@ -1,16 +1,16 @@
 # Compile ftl.pyx
-FROM python:3.9
+FROM python:3.13
 ARG EXEC_DIR="/opt/executables"
 RUN mkdir -p ${EXEC_DIR}/executables
 COPY src ${EXEC_DIR}/.
 WORKDIR ${EXEC_DIR}
-RUN pip3 install --upgrade cython==3.0.0a9 \
-    && pip3 install numpy==1.21.4 --no-cache-dir \
+RUN pip3 install --upgrade cython==3.0.11 setuptools \
+    && pip3 install numpy==2.1.0 --no-cache-dir \
     && python3 setup.py build_ext --inplace
 RUN cp executables/* . && rm -rf executables
 
 # Build the plugin container
-FROM python:3.9-slim
+FROM python:3.13-slim
 
 # Get essential packages
 RUN apt-get update && \
