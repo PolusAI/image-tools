@@ -50,7 +50,7 @@ def extract_nested_zips(name: str,zip_path:Path, extract_path:Path):
 
     for nested_zip_file in nested_zip_files:
         nested_extract_path = nested_zip_file.parent
-        extract_nested_zips(nested_zip_file, nested_extract_path)
+        extract_nested_zips(name, nested_zip_file, nested_extract_path)
         
 
 def get_url(url: str, save_location: Path, name: str) -> None:

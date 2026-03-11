@@ -9,19 +9,32 @@ from zipfile import ZipFile
 from polus.plugins.utils.bbbc_download.download import download, get_url, remove_macosx
 
 
-import pydantic
+import logging
+
 import requests
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
 import bs4
 from bfio import BioWriter
-import vaex
 from skimage import io
 import pyarrow as pa
 import pyarrow.parquet as pq
 import logging
+
+from pydantic import BaseModel, field_validator, model_validator
+
 logger = logging.getLogger(__name__)
+
+
+class _ClassProperty:
+    """Descriptor so that MyClass.attr returns the result of a classmethod when accessed."""
+
+    def __init__(self, f):
+        self.f = f
+
+    def __get__(self, obj, owner):
+        return self.f(owner) if owner is not None else None
 
 
 BASE_URL = "https://bbbc.broadinstitute.org/"
@@ -48,19 +61,17 @@ tables[0] = tables[0].rename(
 )
 
 
-class Metadata(pydantic.BaseModel):
+class Metadata(BaseModel):
     """Class that contains information about a dataset's metadata."""
 
     path: Path
     name: str
 
-    @pydantic.root_validator()
-    @classmethod
-    def valid_data(cls, values: dict) -> dict:
-        if not values["path"].exists():
+    @model_validator(mode="after")
+    def valid_data(self) -> "Metadata":
+        if not self.path.exists():
             raise ValueError("No metadata")
-
-        return values
+        return self
 
     @property
     def size(self) -> int:
@@ -74,19 +85,17 @@ class Metadata(pydantic.BaseModel):
         return raw_sum + standard_sum
 
 
-class GroundTruth(pydantic.BaseModel):
+class GroundTruth(BaseModel):
     """Class that contains information about a dataset's ground truth."""
 
     path: Path
     name: str
 
-    @pydantic.root_validator()
-    @classmethod
-    def valid_data(cls, values: dict) -> dict:
-        if not values["path"].exists():
+    @model_validator(mode="after")
+    def valid_data(self) -> "GroundTruth":
+        if not self.path.exists():
             raise ValueError("No ground truth")
-
-        return values
+        return self
 
     @property
     def size(self) -> int:
@@ -100,19 +109,17 @@ class GroundTruth(pydantic.BaseModel):
         return raw_sum + standard_sum
 
 
-class Images(pydantic.BaseModel):
+class Images(BaseModel):
     """Class that contains information about a dataset's images."""
 
     path: Path
     name: str
 
-    @pydantic.root_validator()
-    @classmethod
-    def valid_data(cls, values: dict) -> dict:
-        if not values["path"].exists():
+    @model_validator(mode="after")
+    def valid_data(self) -> "Images":
+        if not self.path.exists():
             raise ValueError("No images")
-
-        return values
+        return self
 
     @property
     def size(self) -> int:
@@ -126,7 +133,7 @@ class Images(pydantic.BaseModel):
         return raw_sum + standard_sum
 
 
-class BBBCDataset(pydantic.BaseModel):
+class BBBCDataset(BaseModel):
     """Class that models a BBBC dataset.
 
     Attributes:
@@ -142,7 +149,7 @@ class BBBCDataset(pydantic.BaseModel):
     metadata: Optional[Metadata] = None
     output_path: Optional[Path]= None
 
-    @pydantic.validator("name")
+    @field_validator("name")
     @classmethod
     def valid_name(cls, v: str) -> str:
         """Validates the name of the dataset.
@@ -299,7 +306,7 @@ class BBBCDataset(pydantic.BaseModel):
         standard_folder = Path(root, self.name, "standard")
         arrow_file = Path("arrow", self.name + ".arrow")
         arrow_table = pq.read_table(arrow_file)
-        df = vaex.from_arrow_table(arrow_table)
+        df = arrow_table.to_pandas()
 
         if not standard_folder.exists():
             standard_folder.mkdir(parents=True, exist_ok=True)
@@ -574,27 +581,24 @@ class IDAndSegmentation:
     name: str = "Identification and segmentation"
     table: pd.DataFrame = tables[0]
 
-    @classmethod
-    @property
+    @_ClassProperty
     def datasets(cls) -> List[BBBCDataset]:
         """Returns a list of all datasets in the table.
 
         Returns:
             A list containing a Dataset object for each dataset in the table.
         """
-
         return [BBBCDataset.create_dataset(name) for name in cls.table["Accession"]]
 
     @classmethod
-    def raw(cls,download_path:Path) -> None:
+    def raw(cls, download_path: Path) -> None:
         """Downloads raw data for every dataset in this table"""
-
         num_workers = max(cpu_count(), 2)
         threads = []
 
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             for dataset in IDAndSegmentation.datasets:
-                threads.append(executor.submit(dataset.raw(download_path)))
+                threads.append(executor.submit(dataset.raw, download_path))
 
             for f in tqdm(
                 as_completed(threads), desc=f"Downloading data", total=len(threads)
@@ -613,27 +617,24 @@ class PhenotypeClassification:
     name: str = "Phenotype classification"
     table: pd.DataFrame = tables[1]
 
-    @classmethod
-    @property
+    @_ClassProperty
     def datasets(cls) -> List[BBBCDataset]:
         """Returns a list of all datasets in the table.
 
         Returns:
             A list containing a Dataset object for each dataset in the table.
         """
-
         return [BBBCDataset.create_dataset(name) for name in cls.table["Accession"]]
 
     @classmethod
-    def raw(cls,download_path:Path) -> None:
+    def raw(cls, download_path: Path) -> None:
         """Downloads raw data for every dataset in this table"""
-
         num_workers = max(cpu_count(), 2)
         threads = []
 
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             for dataset in PhenotypeClassification.datasets:
-                threads.append(executor.submit(dataset.raw(download_path)))
+                threads.append(executor.submit(dataset.raw, download_path))
 
             for f in tqdm(
                 as_completed(threads), desc=f"Downloading data", total=len(threads)
@@ -652,27 +653,24 @@ class ImageBasedProfiling:
     name: str = "Image-based Profiling"
     table: pd.DataFrame = tables[2]
 
-    @classmethod
-    @property
+    @_ClassProperty
     def datasets(cls) -> List[BBBCDataset]:
         """Returns a list of all datasets in the table.
 
         Returns:
             A list containing a Dataset object for each dataset in the table.
         """
-
         return [BBBCDataset.create_dataset(name) for name in cls.table["Accession"]]
 
     @classmethod
-    def raw(cls,download_path:Path) -> None:
+    def raw(cls, download_path: Path) -> None:
         """Downloads raw data for every dataset in this table"""
-
         num_workers = max(cpu_count(), 2)
         threads = []
 
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             for dataset in ImageBasedProfiling.datasets:
-                threads.append(executor.submit(dataset.raw(download_path)))
+                threads.append(executor.submit(dataset.raw, download_path))
 
             for f in tqdm(
                 as_completed(threads), desc=f"Downloading data", total=len(threads)
@@ -688,21 +686,17 @@ class BBBC:
     Read more about BBBC here: https://bbbc.broadinstitute.org.
     """
 
-    @classmethod
-    @property
+    @_ClassProperty
     def datasets(cls) -> List[BBBCDataset]:
         """Returns a list of all datasets in BBBC.
 
         Returns:
             A list containing a Dataset object for each dataset in BBBC.
         """
-
         table = BBBC.combined_table
-
         return [BBBCDataset.create_dataset(name) for name in table["Accession"]]
 
-    @classmethod
-    @property
+    @_ClassProperty
     def combined_table(cls) -> pd.DataFrame:
         """Combines each table on https://bbbc.broadinstitute.org/image_sets into a single table.
 
@@ -720,15 +714,14 @@ class BBBC:
         return combined_table
 
     @classmethod
-    def raw(cls,download_path:Path) -> None:
+    def raw(cls, download_path: Path) -> None:
         """Downloads raw data for every dataset."""
-
         num_workers = max(cpu_count(), 2)
         threads = []
 
         with ThreadPoolExecutor(max_workers=num_workers) as executor:
             for dataset in BBBC.datasets:
-                threads.append(executor.submit(dataset.raw(download_path)))
+                threads.append(executor.submit(dataset.raw, download_path))
 
             for f in tqdm(
                 as_completed(threads), desc=f"Downloading data", total=len(threads)
