@@ -33,7 +33,7 @@ repos:
     rev: "23.3.0"
     hooks:
       - id: black
-        language_version: python3.9
+        language_version: python3.12
         exclude: |
           (?x)(
             ^src\/polus\/plugins\/_plugins\/models\/pydanticv1\/\w*Schema.py$|
