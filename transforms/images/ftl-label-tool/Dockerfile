@@ -1,49 +1,49 @@
-# Compile ftl.pyx
-FROM python:3.13
-ARG EXEC_DIR="/opt/executables"
-RUN mkdir -p ${EXEC_DIR}/executables
-COPY src ${EXEC_DIR}/.
-WORKDIR ${EXEC_DIR}
-RUN pip3 install --upgrade cython==3.0.11 setuptools \
-    && pip3 install numpy==2.1.0 --no-cache-dir \
-    && python3 setup.py build_ext --inplace
-RUN cp executables/* . && rm -rf executables
+FROM polusai/bfio:2.5.0
 
-# Build the plugin container
-FROM python:3.13-slim
-
-# Get essential packages
-RUN apt-get update && \
-    apt-get install -y build-essential curl && \
-    apt-get update
-
-# Get Rust
-RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
-
-ENV PATH="/root/.cargo/bin:${PATH}"
-
-ARG EXEC_DIR="/ftl-rust"
-ARG DATA_DIR="/data"
-
-RUN mkdir -p ${EXEC_DIR}/{src, ftl_rust} && mkdir -p ${DATA_DIR}/{inputs, outputs}
-
-COPY . ${EXEC_DIR}/
-
-COPY --from=0 /opt/executables ${EXEC_DIR}/src
-
-WORKDIR ${EXEC_DIR}
-
-RUN pip3 install -r ${EXEC_DIR}/src/requirements.txt --no-cache-dir \
-    && pip3 install -r rust_requirements.txt --no-cache-dir \
-    && python3 rust_setup.py install
-
-WORKDIR ${EXEC_DIR}/src
-
+# Environment variables defined in polusai/bfio
+ENV EXEC_DIR="/opt/executables"
 ENV POLUS_IMG_EXT=".ome.tif"
 ENV POLUS_TAB_EXT=".csv"
 ENV POLUS_LOG="INFO"
+ENV NUM_THREADS=8
 
-RUN ls -la ${EXEC_DIR}
+WORKDIR ${EXEC_DIR}
 
-ENTRYPOINT ["python3", "/ftl-rust/src/main.py"]
+ENV TOOL_DIR="transforms/images/ftl-label-tool"
+
+# Install system dependencies:
+# - python3.11-dev: Python headers required to compile C/C++ extensions (Python.h)
+# - build-essential: gcc/g++ compiler
+# - curl: needed to download rustup
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        python3.11-dev \
+        build-essential \
+        curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Copy the repository
+RUN mkdir -p image-tools
+COPY . ${EXEC_DIR}/image-tools
+
+# Install build dependencies
+RUN pip3 install \
+        "setuptools>=68.0" \
+        "setuptools-rust>=1.9.0" \
+        "cython>=3.0.11" \
+        "numpy>2.0.0" \
+        wheel \
+        --no-cache-dir
+
+# Install the tool (compiles Cython + Rust extensions)
+RUN pip3 install "${EXEC_DIR}/image-tools/${TOOL_DIR}" \
+        --no-build-isolation \
+        --no-cache-dir
+
+ENTRYPOINT ["python3", "-m", "polus.images.transforms.images.ftl_label"]
 CMD ["--help"]

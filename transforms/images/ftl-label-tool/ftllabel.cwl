@@ -20,7 +20,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: labshare/polus-ftl-label-plugin:0.3.8
+    dockerPull: polusai/ftl-label-tool:1.0.0-dev0
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)
