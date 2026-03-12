@@ -1,10 +1,22 @@
-*.png
+# Compiled extensions
 *.so
+*.pyd
+
+# Cython annotation
 *.html
-*.cpp
-*.npy
-build
-dist
-ftl_rust.egg-info
-target
-Cargo.lock
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Rust build output
+target/
+
+# Logs
+*.log

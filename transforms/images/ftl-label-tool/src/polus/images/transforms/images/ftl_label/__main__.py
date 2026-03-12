@@ -1,18 +1,18 @@
 """FTL Label Tool."""
 import logging
 import os
+from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
-import typer
-import ftl
 import numpy
+import typer
 from bfio import BioReader
 from bfio import BioWriter
 from ftl_rust import PolygonSet
-from multiprocessing.pool import ThreadPool
 
 try:
     import ftl
+
     FTL_CYTHON_AVAILABLE = True
 except ImportError:
     ftl = None  # type: ignore[assignment]
@@ -21,7 +21,7 @@ except ImportError:
 app = typer.Typer()
 
 POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
-POLUS_EXT = os.environ.get("POLUS_EXT", ".ome.tif")  
+POLUS_EXT = os.environ.get("POLUS_EXT", ".ome.tif")
 _NUM_THREADS: int = int(os.environ.get("NUM_THREADS", os.cpu_count() or 1))
 
 # Initialize the logger
@@ -34,6 +34,7 @@ logger.setLevel(POLUS_LOG)
 
 
 def get_output_name(filename: str) -> str:
+    """Generate the output filename using the configured extension."""
     name = filename.split(".ome")[0]
     return f"{name}{POLUS_EXT}"
 
@@ -89,38 +90,40 @@ def label_cython(args: tuple[Path, Path, int, float]) -> bool | None:
         True on success, None if the image was skipped.
     """
     input_path, output_path, connectivity, bin_thresh = args
-    with BioReader(input_path, max_workers=_NUM_THREADS) as reader:
-        with BioWriter(
-                output_path,
-                max_workers=_NUM_THREADS,
-                metadata=reader.metadata,
-            ) as writer:
-                # Load an image and convert to binary
-                image = numpy.squeeze(reader[..., 0, 0])
+    with BioReader(input_path, max_workers=_NUM_THREADS) as reader, BioWriter(
+        output_path,
+        max_workers=_NUM_THREADS,
+        metadata=reader.metadata,
+    ) as writer:
+        # Load an image and convert to binary
+        image = numpy.squeeze(reader[..., 0, 0])
 
-                # If the image has float values, binarize it using the threshold
-                if image.dtype == numpy.float32 or image.dtype == numpy.float64:
-                    image = (image > bin_thresh).astype(numpy.uint8)
+        # If the image has float values, binarize it using the threshold
+        if image.dtype == numpy.float32 or image.dtype == numpy.float64:
+            image = (image > bin_thresh).astype(numpy.uint8)
 
-                if not numpy.any(image):
-                    writer.dtype = numpy.uint8
-                    writer[:] = numpy.zeros_like(image, dtype=numpy.uint8)
-                    return None
+        if not numpy.any(image):
+            writer.dtype = numpy.uint8
+            writer[:] = numpy.zeros_like(image, dtype=numpy.uint8)
+            return None
 
-                image = image > 0
-                if connectivity > image.ndim:
-                    logger.warning(
-                        f"{input_path.name}: Connectivity is not less than or equal to the number of image dimensions, "
-                        f"skipping this image. connectivity={connectivity}, ndim={image.ndim}",
-                    )
-                    return None
+        image = image > 0
+        if connectivity > image.ndim:
+            logger.warning(
+                (
+                    f"{input_path.name}: Connectivity is not less than or equal to "
+                    f"the number of image dimensions, skipping this image. "
+                    f"connectivity={connectivity}, ndim={image.ndim}"
+                ),
+            )
+            return None
 
-                # Run the labeling algorithm
-                labels = ftl.label_nd(image, connectivity)
+        # Run the labeling algorithm
+        labels = ftl.label_nd(image, connectivity)
 
-                # Save the image
-                writer.dtype = labels.dtype
-                writer[:] = labels
+        # Save the image
+        writer.dtype = labels.dtype
+        writer[:] = labels
     return True
 
 
@@ -173,13 +176,11 @@ def main(
         binarization_threshold: Threshold for binarizing float probability images.
         out_dir: Path to the output image collection.
     """
-
     logger.info(f"inpDir                = {inp_dir}")
     logger.info(f"connectivity          = {connectivity}")
     logger.info(f"binarizationThreshold = {binarization_threshold:.2f}")
     logger.info(f"outDir                = {out_dir}")
     logger.info(f"threads               = {_NUM_THREADS}")
-
 
     # Get all file names in inpDir image collection
     if inp_dir.joinpath("images").is_dir():
@@ -212,13 +213,21 @@ def main(
 
         skipped = results.count(None)
         if skipped:
-            logger.warning(f"{skipped} small image(s) were skipped (empty or mismatched connectivity).")
+            logger.warning(
+                (
+                    f"{skipped} small image(s) were skipped "
+                    " (empty or mismatched connectivity)."
+                ),
+            )
 
-        # Large files: Rust handles tiling and internal parallelism 
+        # Large files: Rust handles tiling and internal parallelism
     if large_files:
         for infile in large_files:
             outfile = out_dir / get_output_name(infile.name)
-            PolygonSet(connectivity, binarization_threshold).read_from(infile).write_to(outfile)
+            PolygonSet(connectivity, binarization_threshold).read_from(infile).write_to(
+                outfile,
+            )
+
 
 if __name__ == "__main__":
     app()
