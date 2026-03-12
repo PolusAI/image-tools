@@ -39,7 +39,7 @@ Create a local folder to emulate WIPP data folder with the name `<LOCAL_WIPP_FOL
 |   └── output
 ```
 
-Then, run the docker container 
+Then, run the docker container
 ```bash
 docker run -v <LOCAL_WIPP_FOLDER>:/data/inputs labshare/polus-notebook-plugin:0.4.0 \
   --input /data/inputs/input \

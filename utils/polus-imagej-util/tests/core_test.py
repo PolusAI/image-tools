@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 src_dir = Path(__file__).parents[1].joinpath("{{cookiecutter.project_slug}}/src")
 print(src_dir)
@@ -8,15 +8,17 @@ sys.path.append(str(src_dir))
 import ij_converter
 
 if __name__ == "__main__":
-    import imagej
-    import scyjava
-    import traceback
     import sys
+    import traceback
+    from pathlib import Path
+
+    import imagej
     import imglyb
     import jpype
     import numpy as np
-    from bfio import BioReader, BioWriter
-    from pathlib import Path
+    import scyjava
+    from bfio import BioReader
+    from bfio import BioWriter
 
     # Bioformats throws a debug message, disable the loci debugger to mute it
     def disable_loci_logs():
@@ -29,15 +31,9 @@ if __name__ == "__main__":
 
     # This is the version of ImageJ pre-downloaded into the docker container
     ij = imagej.init(
-        "sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4", headless=True
+        "sc.fiji:fiji:2.1.1+net.imagej:imagej-legacy:0.37.4", headless=True,
     )
 
-    # ArrayImgs = scyjava.jimport('net.imglib2.img.array.ArrayImgs')
-    # UnsafeUtil = scyjava.jimport('net.imglib2.img.basictypelongaccess.unsafe.UnsafeUtil')
-    # Arrays = scyjava.jimport('java.util.Arrays')
-    # OwningFloatUnsafe = scyjava.jimport('net.imglib2.img.basictypelongaccess.unsafe.owning.OwningFloatUnsafe')
-    # Fraction = scyjava.jimport('net.imglib2.util.Fraction')
-    # LongStream = scyjava.jimport('java.util.stream.LongStream')
 
     NUMPY_TYPES = {
         "uint8": (np.uint8, imglyb.types.UnsignedByteType),
@@ -55,14 +51,14 @@ if __name__ == "__main__":
 
     def tester(t, ij):
         try:
-            print("Testing {} data type...".format(t))
+            print(f"Testing {t} data type...")
             shape = (2048, 2048)
             print("Creating Array...")
             array = np.random.randint(0, 255, size=shape, dtype=np.uint16)
             print("Converting Array...")
             array = NUMPY_TYPES[t][0](array)
             dtype0 = ij.py.dtype(array)
-            print("The initial data type is {}".format(dtype0))
+            print(f"The initial data type is {dtype0}")
             temp_path = Path(__file__).with_name("data-convert-temp")
             print("Writing image array to file...")
             with BioWriter(temp_path) as writer:
@@ -74,37 +70,35 @@ if __name__ == "__main__":
             arr = BioReader(temp_path)
             print("Getting data type after reading image...")
             dtype1 = ij.py.dtype(arr[:, :, 0:1, 0, 0])
-            print("Data type after reading image is {}".format(dtype1))
-            # print('Trying to convert to PlanarImg')
-            # planarimg = ij.planar(arr)
+            print(f"Data type after reading image is {dtype1}")
             if dtype0 != dtype1:
-                print("Manully forcing data type back to {}".format(dtype0))
+                print(f"Manully forcing data type back to {dtype0}")
                 arr = NUMPY_TYPES[t][0](arr[:, :, 0:1, 0, 0])
                 print("Converting to Java object...")
                 arr = ij_converter.to_java(ij, np.squeeze(arr), "ArrayImg")
                 print("Getting data type after manually forcing...")
                 dtype2 = ij.py.dtype(arr)
-                print("Data type after manual forcing is {}".format(dtype2))
+                print(f"Data type after manual forcing is {dtype2}")
                 val_dtype = dtype2
             else:
                 arr = ij_converter.to_java(
-                    ij, np.squeeze(arr[:, :, 0:1, 0, 0]), "ArrayImg"
+                    ij, np.squeeze(arr[:, :, 0:1, 0, 0]), "ArrayImg",
                 )
                 val_dtype = dtype1
 
             value = 5
             print(
                 "Converting input (value) to Java primitive type {}...".format(
-                    val_dtype
-                )
+                    val_dtype,
+                ),
             )
             val = ij_converter.to_java(ij, value, t, val_dtype)
             print("Calling ImageJ op...")
-            out = ij.op().math().add(arr, val)
-            print("The op was SUCCESSFUL with data type {}".format(t))
+            ij.op().math().add(arr, val)
+            print(f"The op was SUCCESSFUL with data type {t}")
 
         except:
-            print("Testing data type {} was NOT SUCCESSFUL".format(t))
+            print(f"Testing data type {t} was NOT SUCCESSFUL")
             print(traceback.format_exc())
 
         finally:

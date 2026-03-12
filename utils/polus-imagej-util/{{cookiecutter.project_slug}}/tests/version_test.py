@@ -3,12 +3,10 @@ from pathlib import Path
 
 
 class VersionTest(unittest.TestCase):
-
     version_path = Path(__file__).parent.parent.joinpath("VERSION")
     json_path = Path(__file__).parent.parent.joinpath("plugin.json")
 
     def test_plugin_manifest(self):
-
         # Get the plugin version
         with open(self.version_path, "r") as file:
             version = file.readline()
@@ -22,5 +20,4 @@ class VersionTest(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     unittest.main()

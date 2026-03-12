@@ -1,0 +1,38 @@
+# Created by pytest automatically.
+
+# Python cache
+
+__pycache__/
+
+*.pyo
+
+*.pyd
+
+.DS_Store
+
+.pytest_cache/
+
+*.pyc
+
+uv.lock
+pre-commit-config.yaml
+
+
+
+# Virtual environments
+
+.venv/
+
+venv/
+
+
+
+
+# Build artifacts
+
+build/
+
+dist/
+
+*.egg-info/
+PUSH_AND_PR.md

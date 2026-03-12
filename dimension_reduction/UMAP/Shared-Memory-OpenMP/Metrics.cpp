@@ -35,7 +35,7 @@ double log_beta(double x, double y){
 		double value = -log(b);
 		for (int i = 1; i < int(a); ++i) value += log(i) - log(b + i);
 		return value;
-	}    
+	}
 	else return approx_log_Gamma(x) + approx_log_Gamma(y) - approx_log_Gamma(x + y);
 }
 
@@ -50,15 +50,15 @@ double log_single_beta(double x){
  * @param *it and *it2 indices of the desired points in input dataset
  * @param Dim is #columns (or features) in input dataset
  * @param distanceV1 is the first optional variable needed for computing distance in some metrics
- * @param distanceV2 is the second optional variable needed for computing distance in some metrics	
- * @param filePathOptionalArray The full path to optional array for the distance metric computation 
- * @param logFile The errors and informational messages are outputted to the log file 
- * @return spatial distance between points two points 
+ * @param distanceV2 is the second optional variable needed for computing distance in some metrics
+ * @param filePathOptionalArray The full path to optional array for the distance metric computation
+ * @param logFile The errors and informational messages are outputted to the log file
+ * @return spatial distance between points two points
  */
 double computeDistance (string distanceKeyword, double** dataPoints, int it, int it2, int Dim, float distanceV1, float distanceV2, string filePathOptionalArray, ofstream & logFile){
 
 	/**
-	 * We first focus on computing the distance from a few Metrics that depend on input array from the user  
+	 * We first focus on computing the distance from a few Metrics that depend on input array from the user
 	 */
 	if (filePathOptionalArray !=""){
 		/**
@@ -70,14 +70,14 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 		if (RecordCounts != Dim) {
 		logFile<<"ALERT: The Optional Vector has different length than the number of features in the input data set"<<endl;
 		cout<<"ALERT: The Optional Vector has different length than the number of features in the input data set"<<endl;
-        exit(1);		
+        exit(1);
 		}
 		/**
 		 * Compute the dimension of input array (#Columns)
 		 */
 		int featureCounts;
 		string cmd2="head -n 1 "+ filePathOptionalArray + " |tr '\\,' '\\n' |wc -l ";
-		featureCounts = stoi(exec(cmd2.c_str())); 
+		featureCounts = stoi(exec(cmd2.c_str()));
 
 		logFile << "The length of the Optional Vector used in Metric computation is "<< RecordCounts <<" and its dimension is " << featureCounts << endl;
 		cout << "The length of the Optional Vector used in Metric computation is "<< RecordCounts <<" and its dimension is " << featureCounts << endl;
@@ -119,7 +119,7 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 			double result = 0.0, tmp;
 			for (int i = 0; i < Dim; ++i) {
 				tmp = dataPoints[it][i] - dataPoints[it2][i];
-				result += (tmp * tmp)/inputArray[i][0];  
+				result += (tmp * tmp)/inputArray[i][0];
 			}
 			return sqrt(result);
 		}
@@ -127,7 +127,7 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 		else if (distanceKeyword =="weightedMinkowski") {
 			double result = 0.0;
 			for (int i = 0; i < Dim; ++i) {
-				result += pow(inputArray[i][0] * abs(dataPoints[it][i] - dataPoints[it2][i]), distanceV1);  
+				result += pow(inputArray[i][0] * abs(dataPoints[it][i] - dataPoints[it2][i]), distanceV1);
 			}
 			return pow(result, 1.0/distanceV1);
 		}
@@ -151,7 +151,7 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 	}
 
 	/**
-	 * All other distance metrics that do not depend on input array from the user will be computed below 
+	 * All other distance metrics that do not depend on input array from the user will be computed below
 	 */
 	if (distanceKeyword =="euclidean") {
 		double tmp = 0;
@@ -173,8 +173,8 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 		double tmp = 0;
 		for (int i = 0; i < Dim; ++i) {
 			tmp += pow(abs(dataPoints[it][i] - dataPoints[it2][i]), distanceV1);
-		}   
-		return pow(tmp, (1.0 / distanceV1) );  
+		}
+		return pow(tmp, (1.0 / distanceV1) );
 	}
 
 	else if (distanceKeyword =="cosine") {
@@ -186,33 +186,33 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 		}
 		if (norm_x < epsilon && norm_y < epsilon) return 0.0;
 		else if (norm_x < epsilon || norm_y < epsilon) return 1.0;
-		else return 1.0 - (result / sqrt(norm_x * norm_y)); 
+		else return 1.0 - (result / sqrt(norm_x * norm_y));
 	}
 
-	else if (distanceKeyword =="correlation") {  
+	else if (distanceKeyword =="correlation") {
 		double mu_x=0.0, norm_x=0.0;
 		double mu_y=0.0, norm_y=0.0;
 		double  dot_product = 0.0;
 
 		for (int i = 0; i < Dim; ++i) {
 			mu_x += dataPoints[it][i];
-			mu_y += dataPoints[it2][i];	  
+			mu_y += dataPoints[it2][i];
 		}
 		mu_x /=Dim;
 		mu_y /=Dim;
 
-		double shifted_x,shifted_y; 
+		double shifted_x,shifted_y;
 		for (int i = 0; i < Dim; ++i) {
 			shifted_x = dataPoints[it][i] - mu_x;
 			shifted_y = dataPoints[it2][i]- mu_y;
 			norm_x += shifted_x * shifted_x;
 			norm_y += shifted_y * shifted_y;
-			dot_product += shifted_x * shifted_y;	  	  	  
+			dot_product += shifted_x * shifted_y;
 		}
 
 		if (norm_x < epsilon && norm_y < epsilon) return 0.0;
 		else if (dot_product < epsilon)  return 1.0;
-		else  return 1.0 - (dot_product / sqrt(norm_x * norm_y));    
+		else  return 1.0 - (dot_product / sqrt(norm_x * norm_y));
 	}
 
 	else if (distanceKeyword =="braycurtis") {
@@ -231,7 +231,7 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 		double n1,n2;
 		for (int i = 0; i < Dim; ++i) {
 			n1 +=dataPoints[it][i];
-			n2 +=dataPoints[it2][i];	
+			n2 +=dataPoints[it2][i];
 		}
 		double log_b = 0.0, self_denom1 = 0.0, self_denom2 = 0.0;
 
@@ -243,8 +243,8 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 			}
 			else {
 				if (dataPoints[it][i] > 0.9) self_denom1 += log_single_beta(dataPoints[it][i]);
-				if (dataPoints[it2][i] > 0.9) self_denom2 += log_single_beta(dataPoints[it2][i]);	  
-			}  	    
+				if (dataPoints[it2][i] > 0.9) self_denom2 += log_single_beta(dataPoints[it2][i]);
+			}
 		}
 
 		return sqrt(1.0 / n2 * (log_b - log_beta(n1, n2) - (self_denom2 - log_single_beta(n2)))
@@ -252,7 +252,7 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 	}
 
 	else if (distanceKeyword =="jaccard") {
-		int x_true, y_true, num_non_zero=0, num_equal=0; 
+		int x_true, y_true, num_non_zero=0, num_equal=0;
 
 		for (int i = 0; i < Dim; ++i) {
 			if ( dataPoints[it][i] < epsilon) x_true=0;
@@ -262,7 +262,7 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 			else y_true=1;
 
 			if (x_true==1 || y_true==1) ++num_non_zero;
-			if (x_true==1 && y_true==1) ++num_equal;    
+			if (x_true==1 && y_true==1) ++num_equal;
 		}
 
 		if (num_non_zero == 0) return 0.0;
@@ -279,7 +279,7 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 			else y_true=1;
 
 			if (x_true==1 && y_true==1) ++num_true_true;
-			if (x_true != y_true) ++num_not_equal;    
+			if (x_true != y_true) ++num_not_equal;
 		}
 
 		if (num_not_equal==0) return 0.0;
@@ -316,7 +316,7 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 		for (int k = lo; k < hi; ++k) {
 			result += k * log_lambda - poisson_lambda - log_k_factorial;
 			log_k_factorial += log(k);
-		}    
+		}
 		return result/normalisation;
 	}
 
@@ -337,7 +337,7 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 		float minVal,deletion_cost,insertion_cost;
 		for (int i=0; i<x_len; ++i){
 			v1[i] = i + 1;
-			for (int j=0; j<y_len; ++j){      
+			for (int j=0; j<y_len; ++j){
 				deletion_cost = v0[j + 1] + 1;
 				insertion_cost = v1[j] + 1;
 
@@ -357,7 +357,7 @@ double computeDistance (string distanceKeyword, double** dataPoints, int it, int
 			if (minVal> max_distance) return float(max_distance)/normalisation;
 
 		}
-		return v0[y_len] / normalisation; 
+		return v0[y_len] / normalisation;
 	}
 	else {
 			logFile << "Wrong input for metric name!" << endl;

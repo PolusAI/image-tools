@@ -1,12 +1,11 @@
-from kubernetes import client, config
-from kubernetes.client.rest import ApiException
 import argparse
+
+from kubernetes import client
+from kubernetes import config
 
 
 def setup_k8s_api():
-    """
-    Common actions to setup Kubernetes API access to Argo workflows
-    """
+    """Common actions to setup Kubernetes API access to Argo workflows."""
     config.load_incluster_config()  # Only works inside of JupyterLab Pod
 
     return client.CustomObjectsApi()
@@ -20,17 +19,27 @@ namespace = "default"  # str | The custom resource's namespace
 plural = "workflows"  # str | The custom resource's plural name. For TPRs this would be lowercase plural kind.
 
 
-if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser(prog='main', description='Build Docker Container')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(prog="main", description="Build Docker Container")
 
     # Add command-line argument for plugin name, docker repo and version
-    parser.add_argument('--plugin_name', dest='plugin_name', type=str,
-                        help='Plugin Name', required=True)
-    parser.add_argument('--docker_hub_repo', dest='docker_hub_repo', type=str,
-                        help='Docker Repo Name', required=True)
-    parser.add_argument('--version', dest='version', type=str,
-                        help='Docker Image Version', required=True)
+    parser.add_argument(
+        "--plugin_name", dest="plugin_name", type=str, help="Plugin Name", required=True,
+    )
+    parser.add_argument(
+        "--docker_hub_repo",
+        dest="docker_hub_repo",
+        type=str,
+        help="Docker Repo Name",
+        required=True,
+    )
+    parser.add_argument(
+        "--version",
+        dest="version",
+        type=str,
+        help="Docker Image Version",
+        required=True,
+    )
 
     # Parse the arguments
     args = parser.parse_args()
@@ -38,14 +47,14 @@ if __name__ == '__main__':
     docker_hub_repo = args.docker_hub_repo
     docker_version = args.version
 
-    generated_name = "build-polus-imagej-{}".format(plugin_name)
-    print('generated_name: {}'.format(generated_name))
+    generated_name = f"build-polus-imagej-{plugin_name}"
+    print(f"generated_name: {generated_name}")
 
-    subpath = "temp/plugins/polus-imagej-{}".format(plugin_name)
-    print('subpath: {}'.format(subpath))
+    subpath = f"temp/plugins/polus-imagej-{plugin_name}"
+    print(f"subpath: {subpath}")
 
-    destination = 'polusai/{}:{}'.format(docker_hub_repo, docker_version)
-    print('destination: {}'.format(destination))
+    destination = f"polusai/{docker_hub_repo}:{docker_version}"
+    print(f"destination: {destination}")
 
     body = {
         "apiVersion": "argoproj.io/v1alpha1",
@@ -58,9 +67,7 @@ if __name__ == '__main__':
                     "name": "kaniko-secret",
                     "secret": {
                         "secretName": "labshare-docker",
-                        "items": [
-                            {"key": ".dockerconfigjson", "path": "config.json"}
-                        ],
+                        "items": [{"key": ".dockerconfigjson", "path": "config.json"}],
                     },
                 },
                 {
@@ -76,7 +83,7 @@ if __name__ == '__main__':
                         "args": [
                             "--dockerfile=/workspace/Dockerfile",
                             "--context=dir:///workspace",
-                            "--destination={}".format(destination)
+                            f"--destination={destination}",
                         ],
                         "volumeMounts": [
                             {
@@ -86,13 +93,15 @@ if __name__ == '__main__':
                             {
                                 "name": "workdir",
                                 "mountPath": "/workspace",
-                                "subPath": subpath
+                                "subPath": subpath,
                             },
                         ],
                     },
-                }
+                },
             ],
         },
     }
 
-    api_response = api_instance.create_namespaced_custom_object(group, version, namespace, plural, body)
+    api_response = api_instance.create_namespaced_custom_object(
+        group, version, namespace, plural, body,
+    )

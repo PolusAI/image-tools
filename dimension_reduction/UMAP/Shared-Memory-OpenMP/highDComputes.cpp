@@ -1,8 +1,8 @@
 /**
- * Extra Functions needed for computations 
+ * Extra Functions needed for computations
  */
 
-#include <math.h> 
+#include <math.h>
 #include <float.h>
 #include <iostream>
 
@@ -10,7 +10,7 @@ using namespace std;
 
 
 /**
- * Compute B_Index and B_Dist for the closest points (K-NNs) 
+ * Compute B_Index and B_Dist for the closest points (K-NNs)
  */
 void findMin(int** B_Index,double** B_Dist, int N,int K,int* B_Index_Min,double* B_Dist_Min){
 
@@ -40,7 +40,7 @@ void findSigma(double ** B_Dist, double * B_Dist_Min, double * SigmaValues, int 
 	double target=log2(K);
 	/**
 	 * Design Parameters to estimate SigmaValues
-	 */	
+	 */
 	const int iterations=640;
 	const double Error=1e-5;
 
@@ -74,7 +74,3 @@ void findSigma(double ** B_Dist, double * B_Dist_Min, double * SigmaValues, int 
 		SigmaValues[i] = sigma;
 	}
 }
-
-
-
-

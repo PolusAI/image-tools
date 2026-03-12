@@ -1,6 +1,6 @@
 # Polus Precompute Volume Plugin
 
-This WIPP plugin turns all tiled tiff images in an image collection into a [Neuroglancer precomputed format](https://github.com/google/neuroglancer/tree/master/src/neuroglancer/datasource/precomputed). The tiled tiff format and associated metadata is accessed using bfio and uses the third party library neurogen. 
+This WIPP plugin turns all tiled tiff images in an image collection into a [Neuroglancer precomputed format](https://github.com/google/neuroglancer/tree/master/src/neuroglancer/datasource/precomputed). The tiled tiff format and associated metadata is accessed using bfio and uses the third party library neurogen.
 
 This plugin can also creates meshes if the imagetype is 'segmentation'
 
@@ -26,4 +26,3 @@ This plugin takes one input argument and one output argument:
 | `imageType`    | Image/Segmentation              | Input  | String  |
 | `mesh`         | Generate Mesh for Labelled Data | Input  | Boolean |
 | `imagepattern` | Image pattern                   | Input  | String  |
-

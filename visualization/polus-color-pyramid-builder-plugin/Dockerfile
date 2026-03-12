@@ -2,7 +2,7 @@
 FROM polusai/bfio:2.1.9
 
 COPY VERSION /
-		
+
 ARG EXEC_DIR="/opt/executables"
 ARG DATA_DIR="/data"
 

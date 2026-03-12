@@ -1,5 +1,8 @@
-import argparse, logging, filepattern
+import argparse
+import logging
 from pathlib import Path
+
+import filepattern
 
 # Initialize the logger
 logging.basicConfig(
@@ -19,7 +22,6 @@ def close_vectors(vectors):
 
 
 def main(stitch_dir: Path, collection_dir: Path, output_dir: Path, pattern: str):
-
     if pattern in [None, ".+", ".*"]:
         pattern = filepattern.infer_pattern([f.name for f in collection_dir.iterdir()])
         logger.info(f"Inferred filepattern: {pattern}")
@@ -62,7 +64,7 @@ def main(stitch_dir: Path, collection_dir: Path, output_dir: Path, pattern: str)
                 else:
                     singulars[variable] = -1
             elif (
-                variable in singulars.keys()
+                variable in singulars
                 and vps[vector.name].uniques[variable] != singulars[variable]
             ):
                 singulars[variable] = None if singulars[variable] != -1 else -1
@@ -71,8 +73,7 @@ def main(stitch_dir: Path, collection_dir: Path, output_dir: Path, pattern: str)
 
     vector_count = 1
     for vector in vectors:
-
-        logger.info("Processing vector: {}".format(str(vector.absolute())))
+        logger.info(f"Processing vector: {vector.absolute()!s}")
 
         sp = vps[vector.name]
 
@@ -92,7 +93,7 @@ def main(stitch_dir: Path, collection_dir: Path, output_dir: Path, pattern: str)
                 key.upper(): value for key, value in v[0].items() if key in group_by
             }
             variables.update(matching)
-            
+
             fmatch = fp.get_matching(**variables)
 
             for f in fmatch:
@@ -103,11 +104,9 @@ def main(stitch_dir: Path, collection_dir: Path, output_dir: Path, pattern: str)
                         if vector_groups[-1] != key:
                             temp_dict[f[key]] = {}
                         else:
-                            fname = "img-global-positions-{}.txt".format(
-                                vector_count
-                            )
+                            fname = f"img-global-positions-{vector_count}.txt"
                             vector_count += 1
-                            logger.info("Creating vector: {}".format(fname))
+                            logger.info(f"Creating vector: {fname}")
                             temp_dict[f[key]] = open(
                                 str(Path(output_dir).joinpath(fname).absolute()),
                                 "w",
@@ -125,7 +124,7 @@ def main(stitch_dir: Path, collection_dir: Path, output_dir: Path, pattern: str)
                         v[0]["posY"],
                         v[0]["gridX"],
                         v[0]["gridY"],
-                    )
+                    ),
                 )
 
         # Close all open stitching vectors
@@ -135,11 +134,10 @@ def main(stitch_dir: Path, collection_dir: Path, output_dir: Path, pattern: str)
 
 
 if __name__ == "__main__":
-
     # Setup the Argument parsing
     logger.info("Parsing arguments...")
     parser = argparse.ArgumentParser(
-        prog="main", description="Extract individual fields of view from a czi file."
+        prog="main", description="Extract individual fields of view from a czi file.",
     )
 
     parser.add_argument(
@@ -180,9 +178,9 @@ if __name__ == "__main__":
         inpDir = collection_dir.joinpath("images").absolute()
     pattern = args.pattern
     output_dir = Path(args.output_dir)
-    logger.info("stitch_dir = {}".format(stitch_dir))
-    logger.info("collection_dir = {}".format(collection_dir))
-    logger.info("filepattern = {}".format(pattern))
-    logger.info("output_dir = {}".format(output_dir))
+    logger.info(f"stitch_dir = {stitch_dir}")
+    logger.info(f"collection_dir = {collection_dir}")
+    logger.info(f"filepattern = {pattern}")
+    logger.info(f"output_dir = {output_dir}")
 
     main(stitch_dir, collection_dir, output_dir, pattern)

@@ -21,8 +21,8 @@ class CorrectnessTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.infile = tempfile.NamedTemporaryFile(suffix='.ome.tif')
-        cls.outfile = tempfile.NamedTemporaryFile(suffix='.ome.tif')
+        cls.infile = tempfile.NamedTemporaryFile(suffix=".ome.tif")
+        cls.outfile = tempfile.NamedTemporaryFile(suffix=".ome.tif")
 
         random_image = numpy.random.randint(
             low=0,
@@ -47,18 +47,28 @@ class CorrectnessTest(unittest.TestCase):
         with BioReader(self.infile.name) as reader:
             for index in range(self.num_strips):
                 for axis in (0, 1):
-                    tiles = list(helpers.iter_strip(Path(self.infile.name), index, axis))
+                    tiles = list(
+                        helpers.iter_strip(Path(self.infile.name), index, axis)
+                    )
                     self.assertEqual(len(tiles), self.num_strips)
 
                     for i, (x, x_max, y, y_max) in enumerate(tiles):
                         tile = reader[y:y_max, x:x_max, 0:1, 0, 0]
                         tile = tile if axis == 0 else numpy.transpose(tile)
-                        true_rows = self.hanging if index == (self.num_strips - 1) else constants.TILE_STRIDE
-                        true_cols = self.hanging if i == (self.num_strips - 1) else constants.TILE_STRIDE
+                        true_rows = (
+                            self.hanging
+                            if index == (self.num_strips - 1)
+                            else constants.TILE_STRIDE
+                        )
+                        true_cols = (
+                            self.hanging
+                            if i == (self.num_strips - 1)
+                            else constants.TILE_STRIDE
+                        )
                         self.assertEqual(
                             tile.shape,
                             (true_rows, true_cols),
-                            f'index {index}, axis {axis}, tile {i}, shape {tile.shape}'
+                            f"index {index}, axis {axis}, tile {i}, shape {tile.shape}",
                         )
         return
 
@@ -84,8 +94,8 @@ class CorrectnessTest(unittest.TestCase):
             crop_axes=(True, True, True),
             smoothing=True,
         )
-        self.assertTrue(0 <= x1 < x2 <= self.image_size, f'{x1, x2}')
-        self.assertTrue(0 <= y1 < y2 <= self.image_size, f'{y1, y2}')
+        self.assertTrue(0 <= x1 < x2 <= self.image_size, f"{x1, x2}")
+        self.assertTrue(0 <= y1 < y2 <= self.image_size, f"{y1, y2}")
 
     def test_bbox_superset(self):
         bounding_boxes = [
@@ -99,5 +109,5 @@ class CorrectnessTest(unittest.TestCase):
         self.assertEqual((8, 22, 60, 71, 106, 180), bounding_box)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -22,36 +22,21 @@ ABSTRACT_ITERABLES = [
     "Iterable",
 ]
 
-IMG_ARRAYS = [
-    "ArrayImg"
-]
+IMG_ARRAYS = ["ArrayImg"]
 
 ABSTRACT_SCALARS = [
     "RealType",
 ]
 
-FLOAT_PRIMITIVES = [
-    "double",
-    "float",
-    "long"
-]
+FLOAT_PRIMITIVES = ["double", "float", "long"]
 
-INT_PRIMITIVES = [
-    "int",
-    "short"
-]
+INT_PRIMITIVES = ["int", "short"]
 
-CHAR_PRIMITIVES = [
-    "char"
-]
+CHAR_PRIMITIVES = ["char"]
 
-BYTE_PRIMITIVES = [
-    "byte"
-]
+BYTE_PRIMITIVES = ["byte"]
 
-BOOL_PRIMITIVES = [
-    "boolean"
-]
+BOOL_PRIMITIVES = ["boolean"]
 
 # Recognize array objects as primitive objects + '[]'
 FLOAT_ARRAYS = [s + "[]" for s in FLOAT_PRIMITIVES]
@@ -86,14 +71,11 @@ def _java_setup():
         "byte": jpype.JByte,
         "boolean": jpype.JBoolean,
     }
-    PRIMITIVE_FLOAT_ARRAYS = {
-        "double[]": jpype.JDouble[:],
-        "float[]": jpype.JFloat[:]
-    }
+    PRIMITIVE_FLOAT_ARRAYS = {"double[]": jpype.JDouble[:], "float[]": jpype.JFloat[:]}
     PRIMITIVE_INT_ARRAYS = {
         "int[]": jpype.JInt[:],
         "short[]": jpype.JShort[:],
-        "long[]": jpype.JLong[:]
+        "long[]": jpype.JLong[:],
     }
     PRIMITIVE_CHAR_ARRAYS = {
         "char[]": jpype.JChar[:],
@@ -104,6 +86,7 @@ def _java_setup():
     PRIMITIVE_BOOL_ARRAYS = {
         "boolean[]": jpype.JBoolean[:],
     }
+
 
 scyjava.when_jvm_starts(_java_setup)
 
@@ -122,33 +105,21 @@ JAVA_CONVERT.update(
 #     t: lambda s,t,st: IMGLYB_PRIMITIVES[str(st)](s) for t in SCALARS
 # })
 JAVA_CONVERT.update(
-    {
-        t: lambda s, t, st: PRIMITIVES[t](float(s)) for t in FLOAT_PRIMITIVES
-        }
+    {t: lambda s, t, st: PRIMITIVES[t](float(s)) for t in FLOAT_PRIMITIVES}
+)
+JAVA_CONVERT.update({t: lambda s, t, st: PRIMITIVES[t](int(s)) for t in INT_PRIMITIVES})
+JAVA_CONVERT.update({t: lambda s, t, st: PRIMITIVES[t](s) for t in CHAR_PRIMITIVES})
+JAVA_CONVERT.update(
+    {t: lambda s, t, st: PRIMITIVES[t](np.int8(s)) for t in BYTE_PRIMITIVES}
+)
+JAVA_CONVERT.update(
+    {t: lambda s, t, st: PRIMITIVES[t](bool(s)) for t in BOOL_PRIMITIVES}
 )
 JAVA_CONVERT.update(
     {
-        t: lambda s, t, st: PRIMITIVES[t](int(s)) for t in INT_PRIMITIVES
-        }
-)
-JAVA_CONVERT.update(
-    {
-        t: lambda s, t, st: PRIMITIVES[t](s) for t in CHAR_PRIMITIVES
-        }
-)
-JAVA_CONVERT.update(
-    {
-        t: lambda s, t, st: PRIMITIVES[t](np.int8(s)) for t in BYTE_PRIMITIVES
-        }
-)
-JAVA_CONVERT.update(
-    {
-        t: lambda s, t, st: PRIMITIVES[t](bool(s)) for t in BOOL_PRIMITIVES
-        }
-)
-JAVA_CONVERT.update(
-    {
-        t: lambda s, t, st: PRIMITIVE_FLOAT_ARRAYS[t]([float(si) for si in s.split(",")])
+        t: lambda s, t, st: PRIMITIVE_FLOAT_ARRAYS[t](
+            [float(si) for si in s.split(",")]
+        )
         for t in FLOAT_ARRAYS
     }
 )
@@ -167,7 +138,9 @@ JAVA_CONVERT.update(
 # TODO: Test funciton(s) with imagej op that requires byte array
 JAVA_CONVERT.update(
     {
-        t: lambda s, t, st: PRIMITIVE_BYTE_ARRAYS[t]([np.int8(si) for si in s.split(",")])
+        t: lambda s, t, st: PRIMITIVE_BYTE_ARRAYS[t](
+            [np.int8(si) for si in s.split(",")]
+        )
         for t in BYTE_ARRAYS
     }
 )
@@ -183,22 +156,17 @@ JAVA_CONVERT.update(
         for t in ABSTRACT_ITERABLES
     }
 )
-JAVA_CONVERT.update(
-    {
-        t: lambda s, ij: imglyb.util._to_imglib(s) 
-        for t in IMG_ARRAYS
-        }
-)
+JAVA_CONVERT.update({t: lambda s, ij: imglyb.util._to_imglib(s) for t in IMG_ARRAYS})
+
 
 def to_java(ij, np_array, imagej_type, java_dtype=None):
-
     if ij == None:
         raise ValueError("No imagej instance found.")
 
     if isinstance(np_array, type(None)):
         return jpype.JObject(None, type)
-    
-    # TODO: Define how null objects should be converted from python to java 
+
+    # TODO: Define how null objects should be converted from python to java
     # if java_type == "null":
     #     return jpype.JObject(None, type)
 
@@ -218,7 +186,6 @@ def to_java(ij, np_array, imagej_type, java_dtype=None):
 
 
 def from_java(ij, java_array, java_type):
-
     if ij == None:
         raise ValueError("No imagej instance found.")
 

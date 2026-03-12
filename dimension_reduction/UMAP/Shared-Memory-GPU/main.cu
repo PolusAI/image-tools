@@ -1,15 +1,15 @@
 /**
  * @author      Mahdi Maghrebi <mahdi.maghrebi@nih.gov>
- * This code is the CUDA implementation for UMAP algorithm used in dimension reduction. 
+ * This code is the CUDA implementation for UMAP algorithm used in dimension reduction.
  * The reference paper is “UMAP: Uniform Manifold Approximation and Projection for Dimension Reduction“, by McInnes et al., 2018 (https://arxiv.org/abs/1802.03426)
  * May 2020
  */
 
 #include <vector>
 #include <iostream>
-#include <stdio.h>      
-#include <stdlib.h>     
-#include <time.h>      
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <list>
 #include <string>
 #include <math.h>
@@ -33,7 +33,7 @@ using namespace Eigen;
 
 int main(int argc, char ** argv) {
 	/**
-	 * The errors and informational messages are outputted to the log file 
+	 * The errors and informational messages are outputted to the log file
 	 */
 	ofstream logFile;
 	string logFileName="Setting.txt";
@@ -53,7 +53,7 @@ int main(int argc, char ** argv) {
 	 * distanceMetric is the metric to compute the distance between the points in high-D space, by deafult should be euclidean
 	 * distanceV1 is the first optional variable needed for computing distance in some metrics
 	 * distanceV2 is the second optional variable needed for computing distance in some metrics
-	 * inputPathOptionalArray is the full path to the directory that contains a csv file of the optional array needed for computing distance in some metrics. 
+	 * inputPathOptionalArray is the full path to the directory that contains a csv file of the optional array needed for computing distance in some metrics.
 	 */
 	string filePath, filePathOptionalArray="", outputPath, LogoutputPath, inputPath;
 	int K,DimLowSpace,n_epochs;
@@ -153,29 +153,29 @@ int main(int argc, char ** argv) {
 	logFile<<"The full path to the input file: "<< filePath<<endl;
 	logFile<<"The full path to the output file: "<< outputPath<<endl;
 	logFile<<"The desired number of NN to be computed: "<< K <<endl;
-	logFile<<"The sampleRate(The rate at which we do sampling): "<< sampleRate <<endl;  
-	logFile<<"The Dimension of Low-D Space: "<< DimLowSpace <<endl; 
+	logFile<<"The sampleRate(The rate at which we do sampling): "<< sampleRate <<endl;
+	logFile<<"The Dimension of Low-D Space: "<< DimLowSpace <<endl;
 	logFile << std::boolalpha;
-	logFile<<"Random Initialization of Points in Low-D Space: "<< randomInitializing <<endl; 
-	logFile<<"The number of training epochs: "<< n_epochs <<endl; 
-	logFile<<"The chosen min_dist parameter: "<< min_dist <<endl; 	
-	logFile<<"The metric to compute the distance between the points in high-D space: "<< distanceMetric <<endl; 
-	logFile<<"The optional variable 1 for the distance: "<< distanceV1 <<endl; 
+	logFile<<"Random Initialization of Points in Low-D Space: "<< randomInitializing <<endl;
+	logFile<<"The number of training epochs: "<< n_epochs <<endl;
+	logFile<<"The chosen min_dist parameter: "<< min_dist <<endl;
+	logFile<<"The metric to compute the distance between the points in high-D space: "<< distanceMetric <<endl;
+	logFile<<"The optional variable 1 for the distance: "<< distanceV1 <<endl;
 	logFile<<"The optional variable 2 for the distance: "<< distanceV2 <<endl;
-	logFile<<"The full path to optional array for the distance metric computation: "<< filePathOptionalArray <<endl;	
+	logFile<<"The full path to optional array for the distance metric computation: "<< filePathOptionalArray <<endl;
 
 	cout<<"------------The following Input Arguments were read------------"<<endl;
 	cout<<"The full path to the input file: "<< filePath<<endl;
 	cout<<"The full path to the output file: "<< outputPath<<endl;
 	cout<<"The desired number of NN to be computed: "<< K <<endl;
-	cout<<"The sampleRate(The rate at which we do sampling): "<< sampleRate <<endl;   
-	cout<<"The Dimension of Low-D Space: "<< DimLowSpace <<endl; 
+	cout<<"The sampleRate(The rate at which we do sampling): "<< sampleRate <<endl;
+	cout<<"The Dimension of Low-D Space: "<< DimLowSpace <<endl;
 	cout << std::boolalpha;
-	cout<<"Random Initialization of Points in Low-D Space: "<< randomInitializing <<endl; 
-	cout<<"The number of training epochs: "<< n_epochs <<endl; 
-	cout<<"The chosen min_dist parameter: "<< min_dist <<endl; 	
-	cout<<"The metric to compute the distance between the points in high-D space: "<< distanceMetric <<endl; 
-	cout<<"The optional variable 1 for the distance: "<< distanceV1 <<endl; 
+	cout<<"Random Initialization of Points in Low-D Space: "<< randomInitializing <<endl;
+	cout<<"The number of training epochs: "<< n_epochs <<endl;
+	cout<<"The chosen min_dist parameter: "<< min_dist <<endl;
+	cout<<"The metric to compute the distance between the points in high-D space: "<< distanceMetric <<endl;
+	cout<<"The optional variable 1 for the distance: "<< distanceV1 <<endl;
 	cout<<"The optional variable 2 for the distance: "<< distanceV2 <<endl;
 	cout<<"The full path to optional array for the distance metric computation: "<< filePathOptionalArray <<endl;
 	/**
@@ -191,37 +191,37 @@ int main(int argc, char ** argv) {
 	 */
 	int Dim;
 	string cmd2="head -n 1 "+ filePath + " |tr '\\,' '\\n' |wc -l ";
-	Dim = stoi(exec(cmd2.c_str())); 
+	Dim = stoi(exec(cmd2.c_str()));
 	logFile<<"The Dimension of Dataset Features(Number of Columns in inputfile): "<< Dim <<endl;
 	cout<<"The Dimension of Dataset Features(Number of Columns in inputfile): "<< Dim <<endl;
 
 	if (K > N) {
 		logFile<<" The desired number of NN has exceeded the size of dataset "<<endl;
-		cout<<" The desired number of NN has exceeded the size of dataset "<<endl;   
+		cout<<" The desired number of NN has exceeded the size of dataset "<<endl;
 		return 1;
 	}
 
-	logFile<<"------------END of INPUT READING------------"<< endl;	
+	logFile<<"------------END of INPUT READING------------"<< endl;
 	cout<<"------------END of INPUT READING------------"<< endl;
-	
-	/**
-	 * Query about the number of available CPU processors and set it as OpenMP threads
-	 */	
-	int nProcessors = omp_get_num_procs();
-    omp_set_num_threads(nProcessors-1);
-	cout <<"Total Number of Processes in the OpenMP Parallel Region = "<< nProcessors-1 <<endl;	
-	
-	srand(17);	
 
 	/**
-	 * convThreshold: Convergance Threshold of K-NN. A fixed integer is used here instead of delta*N*K. 
-	 */		 
+	 * Query about the number of available CPU processors and set it as OpenMP threads
+	 */
+	int nProcessors = omp_get_num_procs();
+    omp_set_num_threads(nProcessors-1);
+	cout <<"Total Number of Processes in the OpenMP Parallel Region = "<< nProcessors-1 <<endl;
+
+	srand(17);
+
+	/**
+	 * convThreshold: Convergance Threshold of K-NN. A fixed integer is used here instead of delta*N*K.
+	 */
 	const int convThreshold=5;
 	/**
 	 * indices of K-NN for each data point
 	 */
 	int** B_Index = new int*[N];
-	for (int i = 0; i < N; ++i) { B_Index[i] = new int[K]; }	
+	for (int i = 0; i < N; ++i) { B_Index[i] = new int[K]; }
 	/**
 	 * corresponding distance for K-NN indices stored in B_Index
 	 */
@@ -230,30 +230,30 @@ int main(int argc, char ** argv) {
 	/**
 	 * Compute K-NN following the algorithm for shared-memory K-NN
 	 * @param filePath The full path to the input file containig the dataset.
-	 * @param N Size of Dataset without the header (i.e.(#Rows in dataset)-1).	 
-	 * @param Dim Dimension of Dataset (#Columns) 
+	 * @param N Size of Dataset without the header (i.e.(#Rows in dataset)-1).
+	 * @param Dim Dimension of Dataset (#Columns)
 	 * @param K the desired number of Nearest Neighbours to be computed
 	 * @param sampleRate The rate at which we do sampling
 	 * @param convThreshold Convergance Threshold
 	 * @param logFile The errors and informational messages are outputted to the log file
 	 * @param distanceMetric is the metric to compute the distance between the points in high-D space, by deafult should be euclidean
 	 * @param distanceV1 is the first optional variable needed for computing distance in some metrics
-	 * @param distanceV2 is the second optional variable needed for computing distance in some metrics	
+	 * @param distanceV2 is the second optional variable needed for computing distance in some metrics
 	 * @param filePathOptionalArray The full path to optional array for the distance metric computation
-	 * @return B_Index indices of K-NN for each data point 	 
-	 * @return B_Dist corresponding distance for K-NN indices stored in B_Index	 
+	 * @return B_Index indices of K-NN for each data point
+	 * @return B_Dist corresponding distance for K-NN indices stored in B_Index
 	 */
 	computeKNNs(filePath, N, Dim, K, sampleRate, convThreshold,B_Index,B_Dist, logFile, distanceMetric, distanceV1, distanceV2,filePathOptionalArray);
 
 	bool flag=false;
 	for (int i = 0; i < N; ++i) {
 		for (int j = 0; j < K; ++j) {
-			if (B_Dist[i][j] < 0) {         
+			if (B_Dist[i][j] < 0) {
 				logFile<<"ALERT: A distance in high-D space was computed as negative, use this program with caution"<<endl;
-				cout<<"ALERT: A distance in high-D space was computed as negative, use this program with caution"<<endl; 
+				cout<<"ALERT: A distance in high-D space was computed as negative, use this program with caution"<<endl;
 				flag=true;
-				break; 
-			}     
+				break;
+			}
 		}
 		if (flag) break;
 	}
@@ -261,12 +261,12 @@ int main(int argc, char ** argv) {
 	int* B_Index_Min = new int[N];
 	double* B_Dist_Min = new double[N];
 	/**
-	 * Compute B_Index and B_Dist for the closest points (K-NNs) 
-	 * @param B_Index indices of K-NN for each data point 	
+	 * Compute B_Index and B_Dist for the closest points (K-NNs)
+	 * @param B_Index indices of K-NN for each data point
 	 * @param B_Dist corresponding distance for K-NN indices stored in B_Index
-	 * @param N Size of Dataset without the header (i.e.(#Rows in dataset)-1). 
-	 * @param K the desired number of Nearest Neighbours to be computed	 	 	 	 
-	 * @return B_Index_Min B_Index for the closest point 
+	 * @param N Size of Dataset without the header (i.e.(#Rows in dataset)-1).
+	 * @param K the desired number of Nearest Neighbours to be computed
+	 * @return B_Index_Min B_Index for the closest point
 	 * @return B_Dist_Min B_Dist for the corresponding B_Index_Min
 	 */
 	findMin(B_Index,B_Dist, N,K,B_Index_Min,B_Dist_Min);
@@ -276,9 +276,9 @@ int main(int argc, char ** argv) {
 	 * Compute SigmaValues for each data point (Smooth approximator to K-NN distance) iteratively
 	 * @param B_Dist corresponding distance for K-NN indices stored in B_Index
 	 * @param B_Dist_Min B_Dist for the corresponding B_Index_Min
-	 * @param N Size of Dataset without the header (i.e.(#Rows in dataset)-1). 
-	 * @param K the desired number of Nearest Neighbours to be computed	
-	 * @return SigmaValues An array of Sigma Values for data 	 	 	 
+	 * @param N Size of Dataset without the header (i.e.(#Rows in dataset)-1).
+	 * @param K the desired number of Nearest Neighbours to be computed
+	 * @return SigmaValues An array of Sigma Values for data
 	 */
 	findSigma(B_Dist, B_Dist_Min,SigmaValues, N, K);
 
@@ -286,20 +286,20 @@ int main(int argc, char ** argv) {
 	 * To save memory space, "Sparse Matrix" data structure is used here
 	 * SparseMatrix by default is oriented column-major
 	 */
-	SparseMatrix<float> adjacencyMatrixA(N,N), adjacencyMatrixAT(N,N), graphSM(N,N);	 
+	SparseMatrix<float> adjacencyMatrixA(N,N), adjacencyMatrixAT(N,N), graphSM(N,N);
 	typedef Eigen::Triplet<float> T;
 	std::vector<T> tripletList;
 	tripletList.reserve(N*K);
 
 	for (int i=0; i<N; ++i){
 		for (int j=0; j<K; ++j){
-			int point2=B_Index[i][j]; 
+			int point2=B_Index[i][j];
 			float tmp=exp((B_Dist_Min[i]-B_Dist[i][j])/SigmaValues[i]);
 			tripletList.push_back(T(i,point2,tmp));
 		}
 	}
 
-	adjacencyMatrixA.setFromTriplets(tripletList.begin(), tripletList.end());		
+	adjacencyMatrixA.setFromTriplets(tripletList.begin(), tripletList.end());
 	adjacencyMatrixAT=adjacencyMatrixA.transpose();
 	graphSM=adjacencyMatrixA+adjacencyMatrixAT;
 	graphSM -=adjacencyMatrixA.cwiseProduct(adjacencyMatrixAT);
@@ -308,10 +308,10 @@ int main(int argc, char ** argv) {
 	for (int k=0; k<graphSM.outerSize(); ++k){
 		float sum=0;
 		for (SparseMatrix<float>::InnerIterator it(graphSM,k); it; ++it) {
-			sum += it.value(); 
-			if (it.value() > MaxWeight) MaxWeight=it.value();  
+			sum += it.value();
+			if (it.value() > MaxWeight) MaxWeight=it.value();
 		}
-	} 
+	}
 
 	delete [] SigmaValues;
 	delete [] B_Dist_Min;
@@ -323,50 +323,50 @@ int main(int argc, char ** argv) {
 	cout<<"------------Setting Low-D Space Design------------"<<endl;
 
 	/**
-	 * embedding is the coordinates of the points in the low-D space  
+	 * embedding is the coordinates of the points in the low-D space
 	 */
 	double** embedding = new double*[N];
-	for (int i = 0; i < N; ++i) { embedding[i] = new double[DimLowSpace]; }    
+	for (int i = 0; i < N; ++i) { embedding[i] = new double[DimLowSpace]; }
 
 	logFile<<"------------Starting Initialization in the Low-D Space------------"<<endl;
 	cout<<"------------Starting Initialization in the Low-D Space------------"<<endl;
 	/**
 	 * Initializes the data points in low-D space
 	 * @param randomInitializing the methodology for Initialization of data in low-D space
-	 * @param logFile contains the errors and informational messages 
-	 * @param N Size of Dataset without the header (i.e.(#Rows in dataset)-1). 
+	 * @param logFile contains the errors and informational messages
+	 * @param N Size of Dataset without the header (i.e.(#Rows in dataset)-1).
 	 * @param graph contains undirected weights (similarities) in the form of a matrix of size NxN
-	 * @param DimLowSpace Dimension of Low-D space 	 	 
-	 * @return embedding is the coordinates of the points in the low-D space	 	 	 
+	 * @param DimLowSpace Dimension of Low-D space
+	 * @return embedding is the coordinates of the points in the low-D space
 	 */
 	Initialization (randomInitializing, embedding, logFile, N, graphSM, MaxWeight, DimLowSpace, n_epochs);
 
 	logFile<<"------------Starting Estimating Hyper-Parameters a and b ------------"<<endl;
 	cout<<"------------Starting Estimating Hyper-Parameters a and b ------------"<<endl;
 	/**
-	 * Hyper-Parameters a and b which needs to be estimated by data fitting. 
+	 * Hyper-Parameters a and b which needs to be estimated by data fitting.
 	 */
 	float aValue, bValue;
 	float spread=1.0;
 	/**
 	 *  Estimation of Hyper-Parameters a and b by curve fitting and using Levenberg-Marquardt solution
-	 */		
+	 */
 	estimateParameters(aValue, bValue, min_dist, spread, logFile);
 
 	logFile<<"The Estimated Values for a is "<< aValue << " and for b is "<< bValue <<endl;
 	cout<<"The Estimated Values for a is "<< aValue << " and for b is "<< bValue <<endl;
 
-	logFile<<"------------Starting Solution for Stochastic Gradient Descent (SGD)------------"<<endl;	
+	logFile<<"------------Starting Solution for Stochastic Gradient Descent (SGD)------------"<<endl;
 	cout<<"------------Starting Solution for Stochastic Gradient Descent (SGD)------------"<<endl;
 	/**
 	 *  alpha is the initial learning rate for the SGD. alpha starts from 1 and decreases in each epoch iteration
-	 */	
-	float alpha=1.0;  
+	 */
+	float alpha=1.0;
 	/**
-	 * epochs_per_sample is a vector of edges with the values proportional to the values in graph 
-	 * epochs_per_sample represents the epoch weight for edges where the edge with the highest similarity will get the value of 1 
-	 * and all other edges will get a proportional epoch weight scaled from it. epochs_per_sample is used as a measure to include an edge in 
-	 * SGD computations. The edge with the highest similarity will be used at every epoch iteration. 
+	 * epochs_per_sample is a vector of edges with the values proportional to the values in graph
+	 * epochs_per_sample represents the epoch weight for edges where the edge with the highest similarity will get the value of 1
+	 * and all other edges will get a proportional epoch weight scaled from it. epochs_per_sample is used as a measure to include an edge in
+	 * SGD computations. The edge with the highest similarity will be used at every epoch iteration.
 	 * head is a vector containing the head index of the edge
 	 * tail is a vector containing the tail index of the edge
 	 */
@@ -375,16 +375,16 @@ int main(int argc, char ** argv) {
 
 	for (int k=0; k<graphSM.outerSize(); ++k){
 		for (SparseMatrix<float>::InnerIterator it(graphSM,k); it; ++it) {
-			if (it.value() <  MaxWeight/n_epochs) continue;  
+			if (it.value() <  MaxWeight/n_epochs) continue;
 			epochs_per_sample.push_back(MaxWeight/it.value());
 			head.push_back(it.col());
-			tail.push_back(it.row()); 
+			tail.push_back(it.row());
 		}
 	}
 	/**
 	 *  Making 1D array for the coordinates of the points in Low-D space and transfer it to GPU memory
-	 */	
-	double* embedding1D = new double[N*DimLowSpace]; 
+	 */
+	double* embedding1D = new double[N*DimLowSpace];
 	for (int i = 0; i < N; ++i)
 		for (int j = 0; j < DimLowSpace; ++j)
 			embedding1D[i*DimLowSpace+j]=embedding[i][j];
@@ -392,16 +392,16 @@ int main(int argc, char ** argv) {
 	double *device_embedding1D;
 	cudaMalloc ((void **) &device_embedding1D, N*DimLowSpace*sizeof(double));
 	gpuErrchk(cudaPeekAtLastError());
-	cudaMemcpy (device_embedding1D,embedding1D , N*DimLowSpace*sizeof(double),cudaMemcpyHostToDevice); 
+	cudaMemcpy (device_embedding1D,embedding1D , N*DimLowSpace*sizeof(double),cudaMemcpyHostToDevice);
 	gpuErrchk(cudaPeekAtLastError());
 
 	/**
 	 * edgeCounts is total number of edges in the high-D space graph
-	 */	 
+	 */
 	int edgeCounts=epochs_per_sample.size();
 	/**
 	 * Converting some vectors to array pointers and transfer them to GPU memory
-	 */	 	
+	 */
 	float * pointer_epochs_per_sample = new float [edgeCounts];
 	int * pointer_head= new int[edgeCounts];
 	int * pointer_tail= new int[edgeCounts];
@@ -415,28 +415,28 @@ int main(int argc, char ** argv) {
 	int * device_head, *device_tail;
 	cudaMalloc ((void **) &device_head, edgeCounts*sizeof(int));
 	gpuErrchk(cudaPeekAtLastError());
-	cudaMalloc ((void **) &device_tail, edgeCounts*sizeof(int));            
+	cudaMalloc ((void **) &device_tail, edgeCounts*sizeof(int));
 	gpuErrchk(cudaPeekAtLastError());
-	cudaMemcpy (device_head, pointer_head, edgeCounts*sizeof(int),cudaMemcpyHostToDevice); 	
+	cudaMemcpy (device_head, pointer_head, edgeCounts*sizeof(int),cudaMemcpyHostToDevice);
 	gpuErrchk(cudaPeekAtLastError());
-	cudaMemcpy (device_tail, pointer_tail, edgeCounts*sizeof(int),cudaMemcpyHostToDevice); 	 			
+	cudaMemcpy (device_tail, pointer_tail, edgeCounts*sizeof(int),cudaMemcpyHostToDevice);
 	gpuErrchk(cudaPeekAtLastError());
-	
+
 	/**
 	 * Allocate memory in GPU for some arrays
 	 * device_epoch_of_next_sample is an index of the epoch state of the edges. If it is less than epoch index, we will use the edge in the computation
-	 * device_epoch_of_next_negative_sample is an index of the epoch state of the edges for sampling from non-connected surrounding points. 
-	 */	
-	float* device_epochs_per_sample, *device_epoch_of_next_sample, *device_epochs_per_negative_sample, *device_epoch_of_next_negative_sample;	
+	 * device_epoch_of_next_negative_sample is an index of the epoch state of the edges for sampling from non-connected surrounding points.
+	 */
+	float* device_epochs_per_sample, *device_epoch_of_next_sample, *device_epochs_per_negative_sample, *device_epoch_of_next_negative_sample;
 	cudaMalloc ((void **) &device_epochs_per_sample, edgeCounts*sizeof(float));
 	gpuErrchk(cudaPeekAtLastError());
 	cudaMalloc ((void **) &device_epoch_of_next_sample, edgeCounts*sizeof(float));
 	gpuErrchk(cudaPeekAtLastError());
 	cudaMalloc ((void **) &device_epochs_per_negative_sample, edgeCounts*sizeof(float));
 	gpuErrchk(cudaPeekAtLastError());
-	cudaMalloc ((void **) &device_epoch_of_next_negative_sample, edgeCounts*sizeof(float));	
+	cudaMalloc ((void **) &device_epoch_of_next_negative_sample, edgeCounts*sizeof(float));
 	gpuErrchk(cudaPeekAtLastError());
-	cudaMemcpy (device_epochs_per_sample, pointer_epochs_per_sample, edgeCounts*sizeof(float),cudaMemcpyHostToDevice); 	
+	cudaMemcpy (device_epochs_per_sample, pointer_epochs_per_sample, edgeCounts*sizeof(float),cudaMemcpyHostToDevice);
 	gpuErrchk(cudaPeekAtLastError());
 	/**
 	 *  requiredBlocks is the required number of thread blocks in GPU computes
@@ -452,19 +452,19 @@ int main(int argc, char ** argv) {
 	 *  Create curand state on GPU for random number generation and initialize it
 	 */
 	curandState *device_state;
-	cudaMalloc(&device_state, edgeCounts*sizeof(curandState));		
+	cudaMalloc(&device_state, edgeCounts*sizeof(curandState));
 	gpuErrchk(cudaPeekAtLastError());
 	setup_curand<<<requiredBlocks,TPB>>>(device_state);
 	gpuErrchk(cudaPeekAtLastError());
-	gpuErrchk(cudaDeviceSynchronize());		
+	gpuErrchk(cudaDeviceSynchronize());
 	/**
 	 *  move_other is equal to 1 if not embedding new previously unseen points to low-D space
 	 */
-	const int move_other=1; 
+	const int move_other=1;
 	/**
 	 *  The main training loop in SGD solver
-	 */   
-	for (int n = 1; n <= n_epochs; ++n) { 
+	 */
+	for (int n = 1; n <= n_epochs; ++n) {
 
 		if (n%100 == 0){
 			logFile << "SGD iteration = "<<n<<" from "<< n_epochs <<endl;
@@ -476,12 +476,12 @@ int main(int argc, char ** argv) {
 		gpuErrchk(cudaPeekAtLastError());
 		gpuErrchk(cudaDeviceSynchronize());
 
-		alpha=1.0-((float)n)/n_epochs;    	
+		alpha=1.0-((float)n)/n_epochs;
 	}
 	/**
-	 *  Copy the new coordinates of data points in the Low-D space from GPU to CPU 
+	 *  Copy the new coordinates of data points in the Low-D space from GPU to CPU
 	 */
-	cudaMemcpy (embedding1D, device_embedding1D, N*DimLowSpace*sizeof(double),cudaMemcpyDeviceToHost); 
+	cudaMemcpy (embedding1D, device_embedding1D, N*DimLowSpace*sizeof(double),cudaMemcpyDeviceToHost);
 	gpuErrchk(cudaPeekAtLastError());
 	/**
 	 *  Free the memory on GPU
@@ -496,7 +496,7 @@ int main(int argc, char ** argv) {
 	cout<<"------------Starting Outputing the Results------------"<<endl;
 	/**
 	 * Output the coordinates of the projected data in the low-D space
-	 */ 
+	 */
 	ofstream embeddedSpacefile;
 	embeddedSpacefile.open(outputPath);
 
@@ -506,10 +506,10 @@ int main(int argc, char ** argv) {
 	}
 
 	for (int i = 0; i < N; ++i) {
-		for (int j = 0; j < DimLowSpace; ++j) {		
+		for (int j = 0; j < DimLowSpace; ++j) {
 			if (j==DimLowSpace-1) {
-				embeddedSpacefile<< embedding1D[i*DimLowSpace+j]<<endl;}	
-			else {embeddedSpacefile<< embedding1D[i*DimLowSpace+j]<<",";}		
+				embeddedSpacefile<< embedding1D[i*DimLowSpace+j]<<endl;}
+			else {embeddedSpacefile<< embedding1D[i*DimLowSpace+j]<<",";}
 		}
 	}
 
@@ -525,9 +525,9 @@ int main(int argc, char ** argv) {
 	delete [] embedding;
 	/**
 	 * copy Logfile to the file system which could be accessed outside the docker container
-	 */ 
+	 */
 	string cmd3="cp "+ logFileName+"  "+LogoutputPath;
-	// To remove the returning messages, we can switch to the following command 
+	// To remove the returning messages, we can switch to the following command
 	//	string cmd3="cp "+ logFileName+"  "+LogoutputPath+ " 2>&1 /dev/null";
 	string outputCmd3 = exec(cmd3.c_str());
 

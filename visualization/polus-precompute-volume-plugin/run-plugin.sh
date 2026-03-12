@@ -1,7 +1,7 @@
 version=$(<VERSION)
 datapath=$(readlink --canonicalize ../data/)
 
-# Inputs: these parameters can be changed 
+# Inputs: these parameters can be changed
 inpDir=/data/input/ # relative directory for where the input data is saved
 imageType=segmentation #image or segmentation
 mesh=True #boolean

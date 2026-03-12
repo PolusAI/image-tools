@@ -1,7 +1,7 @@
 import logging
+import math
 import typing
 
-import math
 import torch
 import torchvision
 from albumentations.core.transforms_interface import BasicTransform
@@ -22,12 +22,12 @@ logger = logging.getLogger("augmentations")
 logger.setLevel(helpers.POLUS_LOG)
 
 
-class LocalNorm(object):
+class LocalNorm:
     def __init__(
         self,
         radius: int = 16,
         max_response: typing.Union[int, float] = 6,
-    ):
+    ) -> None:
         self.radius: int = radius
         self.window_size: int = 2 * radius
         self.max_response: float = float(max_response)
@@ -82,42 +82,39 @@ class LocalNorm(object):
 
 
 class GlobalNorm:
-    # TODO(Najib)
     pass
 
 
 class PoissonTransform(BasicTransform):
     """Apply poisson noise to float32 images."""
 
-    def __init__(self, peak: int, p: float = 0.5):
-        """
-        Args:
-            peak: [1-10] high values introduces more noise in the image.
-            p: probability of applying the transform.
+    def __init__(self, peak: int, p: float = 0.5) -> None:
+        """Args:
+        peak: [1-10] high values introduces more noise in the image.
+        p: probability of applying the transform.
         """
         if not 1 <= peak <= 10:
             message = f"'peak' must be in the range [1, 10]. Got {peak} instead."
             logger.error(message)
             raise ValueError(message)
 
-        super(PoissonTransform, self).__init__(p=p)
+        super().__init__(p=p)
         self.peak: int = peak
 
     def apply(self, image: Tensor, **_):
         value = torch.tensor(math.exp(10 - self.peak))
 
         if torch.any(torch.isnan(image)):
-            message = f"image had nan values."
+            message = "image had nan values."
             logger.error(message)
             raise ValueError(message)
 
         if torch.any(torch.lt(image, 0)):
-            message = f"image had negative values."
+            message = "image had negative values."
             logger.error(message)
             raise ValueError(message)
 
-        noisy_image = torch.poisson(image * value).float() / value
-        return noisy_image
+        return torch.poisson(image * value).float() / value
 
     def update_params(self, params, **kwargs):
         if hasattr(self, "peak"):
@@ -130,9 +127,9 @@ class PoissonTransform(BasicTransform):
 
     def get_params_dependent_on_targets(
         self,
-        params: typing.Dict[str, typing.Any],
-    ) -> typing.Dict[str, typing.Any]:
+        params: dict[str, typing.Any],
+    ) -> dict[str, typing.Any]:
         raise NotImplementedError
 
-    def get_transform_init_args_names(self) -> typing.Tuple[str, ...]:
+    def get_transform_init_args_names(self) -> tuple[str, ...]:
         raise NotImplementedError

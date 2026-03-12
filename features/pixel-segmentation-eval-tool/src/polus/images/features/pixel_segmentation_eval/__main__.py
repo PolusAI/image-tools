@@ -2,14 +2,13 @@
 import json
 import logging
 import pathlib
-from typing import Any, Optional
+from typing import Any
+from typing import Optional
 
 import filepattern as fp
 import typer
-from polus.images.features.pixel_segmentation_eval.evaluate import (
-    evaluation,
-    POLUS_TAB_EXT
-)
+from polus.images.features.pixel_segmentation_eval.evaluate import POLUS_TAB_EXT
+from polus.images.features.pixel_segmentation_eval.evaluate import evaluation
 
 # Initialize the logger
 logging.basicConfig(
@@ -36,7 +35,7 @@ def main(
     ),
     input_classes: int = typer.Option(1, "--inputClasses", help="Number of Classes"),
     file_pattern: Optional[str] = typer.Option(
-        ".+", "--filePattern", help="Filename pattern to filter data."
+        ".+", "--filePattern", help="Filename pattern to filter data.",
     ),
     individual_stats: Optional[bool] = typer.Option(
         False,
@@ -50,7 +49,7 @@ def main(
     ),
     out_dir: pathlib.Path = typer.Option(..., "--outDir", help="Output collection"),
     preview: Optional[bool] = typer.Option(
-        False, "--preview", help="Output a JSON preview of files"
+        False, "--preview", help="Output a JSON preview of files",
     ),
 ) -> None:
     """To generate evaluation metrics for pixel-wise comparison of ground truth and predicted images."""
@@ -68,7 +67,7 @@ def main(
 
     assert (
         gt_dir.exists()
-    ), f"{gt_dir} does not exist!! Please check input path again"  # noqa
+    ), f"{gt_dir} does not exist!! Please check input path again"
     assert (
         pred_dir.exists()
     ), f"{pred_dir} does not exist!! Please check input path again"
@@ -77,7 +76,6 @@ def main(
     ), f"{out_dir} does not exist!! Please check output path again"
 
     fps = fp.FilePattern(pred_dir, file_pattern)
-
 
     if preview:
         with open(pathlib.Path(out_dir, "preview.json"), "w") as jfile:

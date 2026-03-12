@@ -1,14 +1,15 @@
 """Binary operations and processing utilities."""
 
 import logging
-from typing import Any, Generator, Tuple
+from collections.abc import Generator
+from typing import Any
 
 import cv2
 import numpy as np
 
 logger = logging.getLogger("utils")
 
-TileTuple = Tuple[slice, slice, slice, slice, slice]
+TileTuple = tuple[slice, slice, slice, slice, slice]
 
 
 def invert(image: np.ndarray, **kwargs) -> np.ndarray:
@@ -29,8 +30,7 @@ def dilate(image: np.ndarray, kernel: Any, n: int = 1) -> np.ndarray:
     Returns:
         The dilated image
     """
-    dilatedimg = cv2.dilate(image, kernel, iterations=n)
-    return dilatedimg
+    return cv2.dilate(image, kernel, iterations=n)
 
 
 def erode(image: np.ndarray, kernel: Any, n: int = 1) -> np.ndarray:
@@ -46,8 +46,7 @@ def erode(image: np.ndarray, kernel: Any, n: int = 1) -> np.ndarray:
     Returns:
         The eroded image.
     """
-    erodedimg = cv2.erode(image, kernel, iterations=n)
-    return erodedimg
+    return cv2.erode(image, kernel, iterations=n)
 
 
 def open_(image: np.ndarray, kernel: int, n: int = 1) -> np.ndarray:
@@ -63,8 +62,7 @@ def open_(image: np.ndarray, kernel: int, n: int = 1) -> np.ndarray:
     Returns:
         The opened image.
     """
-    openimg = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
-    return openimg
+    return cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
 
 
 def close_(image: np.ndarray, kernel: int, n: Any = 1) -> np.ndarray:
@@ -80,8 +78,7 @@ def close_(image: np.ndarray, kernel: int, n: Any = 1) -> np.ndarray:
     Returns:
         The closed image.
     """
-    closeimg = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
-    return closeimg
+    return cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
 
 
 def morphgradient(image: np.ndarray, kernel: Any, n: int = 1) -> np.ndarray:
@@ -98,8 +95,7 @@ def morphgradient(image: np.ndarray, kernel: Any, n: int = 1) -> np.ndarray:
     Returns:
         The morphological gradient of the input image.
     """
-    mg = cv2.morphologyEx(image, cv2.MORPH_GRADIENT, kernel)
-    return mg
+    return cv2.morphologyEx(image, cv2.MORPH_GRADIENT, kernel)
 
 
 def fill_holes(image: np.ndarray, kernel: Any = None, n: int = 0) -> np.ndarray:
@@ -119,15 +115,14 @@ def fill_holes(image: np.ndarray, kernel: Any = None, n: int = 0) -> np.ndarray:
     image_dtype = image.dtype
     image = cv2.convertScaleAbs(image)
     contour, _ = cv2.findContours(
-        image, mode=cv2.RETR_CCOMP, method=cv2.CHAIN_APPROX_SIMPLE
+        image, mode=cv2.RETR_CCOMP, method=cv2.CHAIN_APPROX_SIMPLE,
     )
 
     for cnt in contour:
         cv2.drawContours(image, [cnt], 0, 1, -1)
 
-    image = image.astype(image_dtype)
+    return image.astype(image_dtype)
 
-    return image
 
 
 def skeletonize(image: np.ndarray, kernel: Any, n: int = 0) -> np.ndarray:
@@ -172,8 +167,7 @@ def tophat(image: np.ndarray, kernel: Any, n: int = 0) -> np.ndarray:
     Returns:
         An image with tophat operation performed on it.
     """
-    tophat = cv2.morphologyEx(image, cv2.MORPH_TOPHAT, kernel)
-    return tophat
+    return cv2.morphologyEx(image, cv2.MORPH_TOPHAT, kernel)
 
 
 def blackhat(image: np.ndarray, kernel: Any = None, n: int = 0) -> np.ndarray:
@@ -187,8 +181,7 @@ def blackhat(image: np.ndarray, kernel: Any = None, n: int = 0) -> np.ndarray:
     Returns:
         An image with blackhat performed on it.
     """
-    blackhat = cv2.morphologyEx(image, cv2.MORPH_BLACKHAT, kernel)
-    return blackhat
+    return cv2.morphologyEx(image, cv2.MORPH_BLACKHAT, kernel)
 
 
 def remove_small(image: np.ndarray, kernel: Any = None, n: int = 2) -> np.ndarray:
@@ -208,9 +201,8 @@ def remove_small(image: np.ndarray, kernel: Any = None, n: int = 2) -> np.ndarra
 
     uniques[counts < n] = 0
 
-    image_out = uniques[inverse].reshape(image.shape)
+    return uniques[inverse].reshape(image.shape)
 
-    return image_out
 
 
 def remove_large(image: np.ndarray, kernel: Any = None, n: int = 0) -> np.ndarray:
@@ -231,14 +223,13 @@ def remove_large(image: np.ndarray, kernel: Any = None, n: int = 0) -> np.ndarra
 
     uniques[counts > n] = 0
 
-    image_out = uniques[inverse].reshape(image.shape)
+    return uniques[inverse].reshape(image.shape)
 
-    return image_out
 
 
 def iterate_tiles(
-    shape: tuple, window_size: int, step_size: int
-) -> Generator[Tuple[TileTuple, TileTuple], None, None]:
+    shape: tuple, window_size: int, step_size: int,
+) -> Generator[tuple[TileTuple, TileTuple], None, None]:
     """Iterate through tiles of an image.
 
     Args:

@@ -1,10 +1,8 @@
 import logging
 import os
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
-from typing import List
 from typing import Optional
-from typing import Tuple
 
 import numpy
 import torch
@@ -13,31 +11,31 @@ from filepattern import FilePattern
 from tqdm import tqdm
 
 __all__ = [
-    'POLUS_LOG',
-    'TILE_STRIDE',
-    'Tiles',
-    'get_labels_mapping',
-    'get_tiles_mapping',
-    'get_device_memory',
+    "POLUS_LOG",
+    "TILE_STRIDE",
+    "Tiles",
+    "get_labels_mapping",
+    "get_tiles_mapping",
+    "get_device_memory",
 ]
 
-POLUS_LOG = getattr(logging, os.environ.get('POLUS_LOG', 'INFO'))
+POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
 
 TILE_STRIDE = 256
 
 # List of 5-tuples of (file-path, x_min, x_max, y_min, y_max)
-Tiles = List[Tuple[Path, int, int, int, int]]
+Tiles = list[tuple[Path, int, int, int, int]]
 
 
 def get_labels_mapping(
-        images_fp: FilePattern,
-        labels_fp: Optional[FilePattern],
-) -> Tuple[numpy.ndarray, numpy.ndarray]:
-    """ Creates a filename map between images and labels
-    In the case where image filenames have different filename 
+    images_fp: FilePattern,
+    labels_fp: Optional[FilePattern],
+) -> tuple[numpy.ndarray, numpy.ndarray]:
+    """Creates a filename map between images and labels
+    In the case where image filenames have different filename
     pattern than label filenames, this function creates a map
-    between the corresponding images and labels
-    
+    between the corresponding images and labels.
+
     Args:
         images_fp: filepattern object for images
         labels_fp: filepattern object for labels
@@ -46,31 +44,21 @@ def get_labels_mapping(
         dictionary containing mapping between image & label names
     """
     # TODO(Najib): Get this working again. This used to do many-to-one matching
-    # labels_map = {
     #     file[0]['file']: labels_fp.get_matching(**{
-    #         k.upper(): v
     #         for k, v in file[0].items()
     #         if k != 'file'
     #     })[0]['file']
     #     for file in images_fp()
-    # }
-    # image_array = numpy.zeros((len(images_fp())))
-    
-    image_list = list()
-    image_paths = [
-        Path(file[0]['file']).resolve()
-        for file in images_fp()
-    ]
 
-    label_list = list()
-    label_paths = [
-        Path(file[0]['file']).resolve()
-        for file in labels_fp()
-    ]
+    image_list = []
+    image_paths = [Path(file[0]["file"]).resolve() for file in images_fp()]
+
+    label_list = []
+    label_paths = [Path(file[0]["file"]).resolve() for file in labels_fp()]
 
     for image_file, label_file in tqdm(
-            zip(image_paths, label_paths),
-            desc=f'loading {len(image_paths)} images',
+        zip(image_paths, label_paths),
+        desc=f"loading {len(image_paths)} images",
     ):
         # TODO(Najib): Use set intersection to find matching pairs and raise warning about unmatched images/labels.
         if label_file is not None:
@@ -98,7 +86,9 @@ def get_labels_mapping(
     return image_array, label_array
 
 
-def iter_tiles_2d(image_path: Path) -> Generator[Tuple[Path, int, int, int, int], None, None]:
+def iter_tiles_2d(
+    image_path: Path,
+) -> Generator[tuple[Path, int, int, int, int], None, None]:
     # TODO(Najib): Open relevant PR to bfio for tile-iterators
     with BioReader(image_path) as reader:
         y_end, x_end = reader.Y, reader.X
@@ -116,19 +106,19 @@ def iter_tiles_2d(image_path: Path) -> Generator[Tuple[Path, int, int, int, int]
             yield image_path, y_min, y_max, x_min, x_max
 
 
-def get_tiles_mapping(image_paths: List[Path]) -> Tiles:
-    """ creates a tile map for the Dataset class
-    This function iterates over all the files in the input 
-    collection and creates a dictionary that can be used in 
-    __getitem__ function in the Dataset class. 
-    
+def get_tiles_mapping(image_paths: list[Path]) -> Tiles:
+    """Creates a tile map for the Dataset class
+    This function iterates over all the files in the input
+    collection and creates a dictionary that can be used in
+    __getitem__ function in the Dataset class.
+
     Args:
         image_paths: The paths to the images.
-        
+
     Returns:
         All tile mappings
     """
-    tiles: Tiles = list()
+    tiles: Tiles = []
 
     for file_name in image_paths:
         tiles.extend(iter_tiles_2d(file_name))
@@ -137,11 +127,10 @@ def get_tiles_mapping(image_paths: List[Path]) -> Tiles:
 
 
 def get_device_memory(device: torch.device) -> int:
-    """ Calculates the amount of memory available on the given device.
-    """
-    if 'cpu' in device.type:
-        _, _, free_memory = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
-        free_memory *= (1024 ** 2)
+    """Calculates the amount of memory available on the given device."""
+    if "cpu" in device.type:
+        _, _, free_memory = map(int, os.popen("free -t -m").readlines()[-1].split()[1:])
+        free_memory *= 1024**2
         # Use up to a quarter of RAM for CPU training
         free_memory = free_memory // 4
     else:

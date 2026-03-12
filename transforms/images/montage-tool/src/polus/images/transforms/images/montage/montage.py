@@ -2,16 +2,15 @@
 import logging
 import math
 import pathlib
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional
+from typing import Union
 
 from bfio import BioReader
 from filepattern import FilePattern
 
-from .utils import (
-    DictWriter,
-    VectorWriter,
-    subpattern,
-)
+from .utils import DictWriter
+from .utils import VectorWriter
+from .utils import subpattern
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,7 @@ MULTIPLIER = 4
 
 
 def _get_xy_index(
-    files: list[dict], dims: str, layout: list[str], flip_axis: List[str]
+    files: list[dict], dims: str, layout: list[str], flip_axis: list[str],
 ):
     """Get the x and y indices from a list of filename dictionaries.
 
@@ -101,8 +100,8 @@ def _get_xy_index(
 
 
 def image_position(
-    index: Dict[str, int], layout_dimensions: Dict[str, List]
-) -> Tuple[int, int, int, int]:
+    index: dict[str, int], layout_dimensions: dict[str, list],
+) -> tuple[int, int, int, int]:
     """Calculate the image position in the montage from a set of dimensions.
 
     Args:
@@ -141,13 +140,13 @@ def image_position(
 def montage(
     pattern: str,
     inp_dir: pathlib.Path,
-    layout_list: List[str],
+    layout_list: list[str],
     out_dir: pathlib.Path,
     image_spacing: int = SPACING,
     grid_spacing: int = MULTIPLIER,
-    flip_axis: List[str] = [],
+    flip_axis: list[str] = [],
     file_index: int = -1,
-) -> Optional[Dict[str, Union[int, str]]]:
+) -> Optional[dict[str, Union[int, str]]]:
     """Generate montage positions for a collection of images.
 
     This function generates a single stitching vector for a collection of images to
@@ -171,7 +170,7 @@ def montage(
     fp = FilePattern(inp_dir, pattern, suppress_warnings=True)
 
     # Layout dimensions, used to calculate positions later on
-    layout_dimensions: Dict[str, list] = {
+    layout_dimensions: dict[str, list] = {
         "grid_size": [
             [] for r in range(len(layout_list))
         ],  # number of tiles in each dimension in the subgrid
@@ -208,10 +207,10 @@ def montage(
 
         # Set the pixel and tile dimensions
         layout_dimensions["tile_size"][len(layout_list) - 1].append(
-            [grid_width, grid_height]
+            [grid_width, grid_height],
         )
         layout_dimensions["size"][len(layout_list) - 1].append(
-            [grid_width * grid_size[0], grid_height * grid_size[1]]
+            [grid_width * grid_size[0], grid_height * grid_size[1]],
         )
 
     # Find the largest subgrid size for the lowest subgrid
@@ -310,8 +309,8 @@ def montage(
 def generate_montage_patterns(
     pattern: str,
     inp_dir: pathlib.Path,
-    layout_list: List[str],
-) -> List[str]:
+    layout_list: list[str],
+) -> list[str]:
     """Generate filepatterns from an existing filepattern, one for each montage."""
     # Set up the file pattern parser
     fp = FilePattern(inp_dir, pattern)
@@ -330,7 +329,7 @@ def generate_montage_patterns(
 
     sp = []
     for files in planes:
-        sp.append(subpattern(filepattern=pattern, values={k: v for k, v in files[0]}))
+        sp.append(subpattern(filepattern=pattern, values=dict(files[0])))
 
     return sp
 
@@ -338,8 +337,8 @@ def generate_montage_patterns(
 def montage_all(
     pattern: str,
     inp_dir: pathlib.Path,
-    layout: List[str],
-    flip_axis: List[str],
+    layout: list[str],
+    flip_axis: list[str],
     out_dir: pathlib.Path,
     image_spacing: int = SPACING,
     grid_spacing: int = MULTIPLIER,
@@ -349,10 +348,11 @@ def montage_all(
     for lt in layout:
         if len(lt) > 2 or len(lt) < 1:
             logger.error(
-                "Each layout subgrid must have one or two variables assigned to it."
+                "Each layout subgrid must have one or two variables assigned to it.",
             )
+            msg = "Each layout subgrid must have one or two variables assigned to it."
             raise ValueError(
-                "Each layout subgrid must have one or two variables assigned to it."
+                msg,
             )
 
     patterns = generate_montage_patterns(pattern, inp_dir, layout)

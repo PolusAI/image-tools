@@ -10,9 +10,9 @@ polus plugin and add it to the polus plugins directory structure.
 4. (optional) Create a dedicated environment with conda or venv.
 5.  Install the dependencies: `poetry install`
 6. Ignore changes to `cookiecutter.json` using: `git update-index --assume-unchanged cookiecutter.json`
-7. Modify `cookiecutter.json` to include author and plugin information.`plugin_package` should always start with `polus.plugins`. 
+7. Modify `cookiecutter.json` to include author and plugin information.`plugin_package` should always start with `polus.plugins`.
 ** NOTE: ** Do not edit values in brackets ({}) as they are edited by cookiecutter directly.
-Those are automatically generated from the previous entries. If your plugin is called 
+Those are automatically generated from the previous entries. If your plugin is called
 "Awesome Function", then the plugin folder and docker container will have the name `awesome-function-plugin`.
 8. Create your plugin skeleton: ` python -m cookiecutter . --no-input`
 

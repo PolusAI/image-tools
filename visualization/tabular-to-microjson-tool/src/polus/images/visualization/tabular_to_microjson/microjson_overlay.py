@@ -232,7 +232,7 @@ class ValidatedProperties(mj.Properties):
     def validate_str(
         cls,
         v: Union[str, None],
-    ) -> str:  # noqa: N805
+    ) -> str:
         """Validate string."""
         if v is None:
             return ""
@@ -242,7 +242,7 @@ class ValidatedProperties(mj.Properties):
     def validate_num(
         cls,
         v: Union[int, None],
-    ) -> Union[int, None]:  # noqa: N805
+    ) -> Union[int, None]:
         """Validate numeric."""
         if v is None:
             return np.nan

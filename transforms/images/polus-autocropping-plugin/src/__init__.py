@@ -1,2 +1,2 @@
-from . import utils
 from . import autocrop
+from . import utils

@@ -17,5 +17,4 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             --env POLUS_LOG=${LOGLEVEL} \
             labshare/polus-polus-czi-extract-plugin:${version} \
             --inpDir ${inpDir} \
-            --outDir ${outDir} 
-            
+            --outDir ${outDir}

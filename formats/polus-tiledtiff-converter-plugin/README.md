@@ -1,21 +1,21 @@
 # Tiled Tiff Conversion Plugin
 
-This WIPP plugin takes any image type supported by Bioformats and converts it 
-to an OME tiled tiff. The tiled storage format is helpful for loading and 
-displaying huge images efficiently by loading only the necessary tiles (rather 
-than loading a single, large image). For file formats with a pyramid-like 
-structure with multiple resolutions (or series), this plugin only saves the 
+This WIPP plugin takes any image type supported by Bioformats and converts it
+to an OME tiled tiff. The tiled storage format is helpful for loading and
+displaying huge images efficiently by loading only the necessary tiles (rather
+than loading a single, large image). For file formats with a pyramid-like
+structure with multiple resolutions (or series), this plugin only saves the
 first series to a tiff (usually, the first series is the highest resolution).
 
 The current need for this plugin is that WIPP's tiled tiff conversion process
 only grabs the first image plane, while this plugin grabs all image planes in a
 series. Ultimately, this permits complete data conversion (including all
 channels, z-positions, and time points). Each image plane (defined as a single
-z-slice, channel, or time point) gets saved as a separate image. Suppose an 
-image has multiple slices for a given dimension (z-slice, channel, or time 
-point). In that case, the file name will include an indicator for the 
-particular slice. For example, an image named `Image.czi` that has two 
-z-slices, two channels, and two time points will have the following files 
+z-slice, channel, or time point) gets saved as a separate image. Suppose an
+image has multiple slices for a given dimension (z-slice, channel, or time
+point). In that case, the file name will include an indicator for the
+particular slice. For example, an image named `Image.czi` that has two
+z-slices, two channels, and two time points will have the following files
 exported by this plugin:
 
 ```bash
@@ -55,7 +55,7 @@ This plugin takes one input argument and one output argument:
 
 ## Example Code
 
-Download an example dataset and convert the data to tiled tiff using the tiled 
+Download an example dataset and convert the data to tiled tiff using the tiled
 tiff converter plugin.
 
 ```Linux
@@ -70,13 +70,13 @@ docker run -v ${PWD}:/$basedir polusai/tiledtiff-converter-plugin:1.1.1 \
 --output /$basedir/"output/"
 ```
 
-Navigate to the `examples/output/` directory to visualize the tiles using a 
+Navigate to the `examples/output/` directory to visualize the tiles using a
 tool such as bfio.
 
 ## Viewing the results using Python
 
-To run the code below, install the required dependencies by running 
-`pip install bfio` and `pip install matplotlib`. The following code was 
+To run the code below, install the required dependencies by running
+`pip install bfio` and `pip install matplotlib`. The following code was
 tested with versions `bfio==2.1.9`, `matplotlib==3.5.1`, and `pathlib==1.0.1`.
 
 ```Python

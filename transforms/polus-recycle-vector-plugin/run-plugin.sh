@@ -20,5 +20,4 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             polusai/recycle-vector-plugin:${version} \
             --stitchDir ${stitchDir} \
             --collectionDir ${collectionDir} \
-            --outDir ${outDir} 
-            
+            --outDir ${outDir}

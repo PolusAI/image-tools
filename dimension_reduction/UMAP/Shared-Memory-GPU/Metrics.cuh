@@ -19,7 +19,7 @@ __device__ double log_betaGPU(double x, double y){
 		double value = -log(b);
 		for (int i = 1; i < int(a); ++i) value += log(i) - log(b + i);
 		return value;
-	}    
+	}
 	else return approx_log_GammaGPU(x) + approx_log_GammaGPU(y) - approx_log_GammaGPU(x + y);
 }
 
@@ -38,7 +38,7 @@ __device__ double distanceCompute(int Dim, double * device_dataPointsGPU, int pa
 		double output;
 		for (int i=0; i<Dim; ++i){
 			double tmp = device_dataPointsGPU[par1*Dim+i] - device_dataPointsGPU[par2*Dim+i];
-			output += tmp * tmp; 
+			output += tmp * tmp;
 		}
 		return sqrt(output);
 	}
@@ -53,8 +53,8 @@ __device__ double distanceCompute(int Dim, double * device_dataPointsGPU, int pa
 		double tmp = 0;
 		for (int i = 0; i < Dim; ++i) {
 			tmp += pow(abs(device_dataPointsGPU[par1*Dim+i] - device_dataPointsGPU[par2*Dim+i]), distanceV1);
-		}   
-		return pow(tmp, (1.0 / distanceV1) );  
+		}
+		return pow(tmp, (1.0 / distanceV1) );
 	}
 	else if (metricID ==4) { //cosine
 		double result = 0.0, norm_x = 0.0, norm_y = 0.0;
@@ -65,7 +65,7 @@ __device__ double distanceCompute(int Dim, double * device_dataPointsGPU, int pa
 		}
 		if (norm_x < epsilon && norm_y < epsilon) return 0.0;
 		else if (norm_x < epsilon || norm_y < epsilon) return 1.0;
-		else return 1.0 - (result / sqrt(norm_x * norm_y)); 
+		else return 1.0 - (result / sqrt(norm_x * norm_y));
 	}
 	else if (metricID ==5) {  //correlation
 		double mu_x=0.0, norm_x=0.0;
@@ -74,23 +74,23 @@ __device__ double distanceCompute(int Dim, double * device_dataPointsGPU, int pa
 
 		for (int i = 0; i < Dim; ++i) {
 			mu_x += device_dataPointsGPU[par1*Dim+i];
-			mu_y += device_dataPointsGPU[par2*Dim+i];	  
+			mu_y += device_dataPointsGPU[par2*Dim+i];
 		}
 		mu_x /=Dim;
 		mu_y /=Dim;
 
-		double shifted_x,shifted_y; 
+		double shifted_x,shifted_y;
 		for (int i = 0; i < Dim; ++i) {
 			shifted_x = device_dataPointsGPU[par1*Dim+i] - mu_x;
 			shifted_y = device_dataPointsGPU[par2*Dim+i] - mu_y;
 			norm_x += shifted_x * shifted_x;
 			norm_y += shifted_y * shifted_y;
-			dot_product += shifted_x * shifted_y;	  	  	  
+			dot_product += shifted_x * shifted_y;
 		}
 
 		if (norm_x < epsilon && norm_y < epsilon) return 0.0;
 		else if (dot_product < epsilon)  return 1.0;
-		else  return 1.0 - (dot_product / sqrt(norm_x * norm_y));    
+		else  return 1.0 - (dot_product / sqrt(norm_x * norm_y));
 	}
 	else if (metricID ==6) {  //bray_curtis
 		double numerator = 0.0, denominator = 0.0;
@@ -107,7 +107,7 @@ __device__ double distanceCompute(int Dim, double * device_dataPointsGPU, int pa
 		double n1,n2;
 		for (int i = 0; i < Dim; ++i) {
 			n1 +=device_dataPointsGPU[par1*Dim+i];
-			n2 +=device_dataPointsGPU[par2*Dim+i];	
+			n2 +=device_dataPointsGPU[par2*Dim+i];
 		}
 		double log_b = 0.0, self_denom1 = 0.0, self_denom2 = 0.0;
 
@@ -119,15 +119,15 @@ __device__ double distanceCompute(int Dim, double * device_dataPointsGPU, int pa
 			}
 			else {
 				if (device_dataPointsGPU[par1*Dim+i] > 0.9) self_denom1 += log_single_betaGPU(device_dataPointsGPU[par1*Dim+i]);
-				if (device_dataPointsGPU[par2*Dim+i] > 0.9) self_denom2 += log_single_betaGPU(device_dataPointsGPU[par2*Dim+i]);	  
-			}  	    
+				if (device_dataPointsGPU[par2*Dim+i] > 0.9) self_denom2 += log_single_betaGPU(device_dataPointsGPU[par2*Dim+i]);
+			}
 		}
 
 		return sqrt(1.0 / n2 * (log_b - log_betaGPU(n1, n2) - (self_denom2 - log_single_betaGPU(n2)))
 				+ 1.0 / n1 * (log_b - log_betaGPU(n2, n1) - (self_denom1 - log_single_betaGPU(n1))) );
 	}
 	else if (metricID ==8) { //jaccard
-		int x_true, y_true, num_non_zero=0, num_equal=0; 
+		int x_true, y_true, num_non_zero=0, num_equal=0;
 
 		for (int i = 0; i < Dim; ++i) {
 			if ( device_dataPointsGPU[par1*Dim+i] < epsilon) x_true=0;
@@ -137,7 +137,7 @@ __device__ double distanceCompute(int Dim, double * device_dataPointsGPU, int pa
 			else y_true=1;
 
 			if (x_true==1 || y_true==1) ++num_non_zero;
-			if (x_true==1 && y_true==1) ++num_equal;    
+			if (x_true==1 && y_true==1) ++num_equal;
 		}
 
 		if (num_non_zero == 0) return 0.0;
@@ -154,7 +154,7 @@ __device__ double distanceCompute(int Dim, double * device_dataPointsGPU, int pa
 			else y_true=1;
 
 			if (x_true==1 && y_true==1) ++num_true_true;
-			if (x_true != y_true) ++num_not_equal;    
+			if (x_true != y_true) ++num_not_equal;
 		}
 
 		if (num_not_equal==0) return 0.0;
@@ -191,7 +191,7 @@ __device__ double distanceCompute(int Dim, double * device_dataPointsGPU, int pa
 		for (int k = lo; k < hi; ++k) {
 			result += k * log_lambda - poisson_lambda - log_k_factorial;
 			log_k_factorial += log(k);
-		}    
+		}
 		return result/normalisation;
 	}
 
@@ -212,7 +212,7 @@ __device__ double distanceCompute(int Dim, double * device_dataPointsGPU, int pa
 		float minVal,deletion_cost,insertion_cost;
 		for (int i=0; i<x_len; ++i){
 			v1[i] = i + 1;
-			for (int j=0; j<y_len; ++j){      
+			for (int j=0; j<y_len; ++j){
 				deletion_cost = v0[j + 1] + 1;
 				insertion_cost = v1[j] + 1;
 
@@ -232,11 +232,10 @@ __device__ double distanceCompute(int Dim, double * device_dataPointsGPU, int pa
 			if (minVal> max_distance) return float(max_distance)/normalisation;
 
 		}
-		return v0[y_len] / normalisation; 
+		return v0[y_len] / normalisation;
 	}
 	else {
 		printf("Wrong input for GPU metric name!");
 	}
 return -1;
-} 
-
+}

@@ -57,7 +57,7 @@ pipeline {
                                         image.push()
                                         image.push(dockerVersion)
                                     }
-                                    
+
                                     env.PROJECT_NAME = "${pluginName}"
                                     env.FULL_DESC = readFile(file: 'README.md')
                                     env.BRIEF_DESC = "${PROJECT_URL}/tree/master/${PROJECT_NAME}"

@@ -1,8 +1,8 @@
+import logging
 import os
 import shutil
-from pathlib import Path
-import logging
 from os import environ
+from pathlib import Path
 
 logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
@@ -14,15 +14,14 @@ logger.setLevel(POLUS_LOG)
 
 
 def create_repository_directories(source_dir):
-    """ Buid the correct directories inside polus-plugins.
+    """Buid the correct directories inside polus-plugins.
     The directory structure must conforms to the plugin's spec :
         - dash-separated word in identifier.
         - folder hierarchy matches package namespace minus "polus.plugins"
         - plugin's folder name reflects the plugin package name but ends with "-plugin"
     Ex: polus.plugins.package1.package2.awesome_function becomes
-    package1/package2/awesome-function-plugin
+    package1/package2/awesome-function-plugin.
     """
-
     # try to find the project's root, otherwise we stay in the
     # staging directory
     final_dir = source_dir.parent
@@ -31,7 +30,7 @@ def create_repository_directories(source_dir):
             final_dir = folder
             break
 
-    # by default we create a plugin directory at the root    
+    # by default we create a plugin directory at the root
     target_dir = final_dir
 
     # figure out if additional directories need to be created at the root
@@ -50,8 +49,8 @@ def create_repository_directories(source_dir):
     os.makedirs(target_dir, exist_ok=True)
 
     return target_dir
- 
- 
+
+
 def move_project_source_to_final_location():
     """Move staged files to the the final target repo."""
     source_dir = Path(os.getcwd())
@@ -59,5 +58,5 @@ def move_project_source_to_final_location():
     logger.debug(f"moving sources from {source_dir} to {target_dir}")
     shutil.move(source_dir, target_dir)
 
+
 # NOTE do not create folder structure with the repo at the moment.
-# move_project_source_to_final_location()

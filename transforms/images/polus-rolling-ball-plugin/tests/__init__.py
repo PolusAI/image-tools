@@ -1,6 +1,7 @@
 from unittest import TestSuite
-from .version_test import VersionTest
+
 from .correctness_test import CorrectnessTest
+from .version_test import VersionTest
 
 test_cases = (
     VersionTest,

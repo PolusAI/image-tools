@@ -38,18 +38,18 @@ public class TiledOmeTiffConverterMain {
 
 	private static final Logger LOG = Logger.getLogger(
 			TiledOmeTiffConverterMain.class.getName());
-	
+
 	/**
 	 * WIPP Plugin entrance point
-	 * 
+	 *
 	 * This function handles arguments passed in from the command line, finds
 	 * all Bioformats compatible input files, and starts a tiled tiff conversion
 	 * thread for each file.
-	 * 
+	 *
 	 * Note: Bioformats supports importing images from txt, csv, and excel
 	 * spreadsheet formats. This plugin deliberately excludes txt, csv, and
 	 * excel spreadsheet formats from conversion.
-	 * 
+	 *
 	 * @param args
 	 * @throws IOException
 	 * @throws Exception
@@ -58,7 +58,7 @@ public class TiledOmeTiffConverterMain {
 		/*
 		 * Plugin Initialization
 		 */
-		
+
 		// Setup the thread logger
 		Logger TLOG = Logger.getLogger(TiledOmeTiffConverter.class.getName());
 		TLOG.setUseParentHandlers(false);
@@ -69,10 +69,10 @@ public class TiledOmeTiffConverterMain {
 		handler.setFormatter(customFormatter);
 
 		TLOG.addHandler(handler);
-		
+
 		// set Bioformats logger level to avoid standard errors
 		DebugTools.setRootLevel("error");
-		
+
 		// sanity checks
 		int i = 0;
 		LOG.log(Level.INFO, "argument length=" + args.length);
@@ -122,17 +122,17 @@ public class TiledOmeTiffConverterMain {
 
 		LOG.info("tileSizeXPix=" + tileSizeXPix);
 		LOG.info("tileSizeYPix=" + tileSizeYPix);
-		
+
 		/*
 		 * Parse files, skipping over txt, csv, xls, and xlsx file types
 		 */
         File[] images =  inputFolder.listFiles(new FilenameFilter() {
         	String[] suffixes = (new ImageReader()).getSuffixes();
-        	
+
 			public boolean accept(File dir, String name) {
 				for (String ftype : suffixes) {
-					if (name.toLowerCase().endsWith("csv") || 
-							name.toLowerCase().endsWith("txt") || 
+					if (name.toLowerCase().endsWith("csv") ||
+							name.toLowerCase().endsWith("txt") ||
 							name.toLowerCase().endsWith("xlsx") ||
 							name.toLowerCase().endsWith("xls")) {
 						LOG.info("File will not be converted to tiled tiff: " + name);
@@ -155,7 +155,7 @@ public class TiledOmeTiffConverterMain {
         if (!created && !outputFolder.exists()) {
             throw new IOException("Can not create folder " + outputFolder);
         }
-		
+
         /*
          * Start file conversion threads
          */
@@ -163,7 +163,7 @@ public class TiledOmeTiffConverterMain {
         int p = Math.max(1,Math.min(16,Runtime.getRuntime().availableProcessors()/2));
         ExecutorService pool = Executors.newFixedThreadPool(p);
 		LOG.log(Level.INFO, "Starting tile tiff converter with " + p + " threads...");
-        
+
 		// Create the threads and run
         for (File image : images) {
 			String baseFile = outputFileDir.concat(File.separator).concat(FilenameUtils.getBaseName(image.getName())).concat(".ome.tif");
@@ -186,7 +186,7 @@ public class TiledOmeTiffConverterMain {
 			for (int z = 0; z < reader.getSizeZ(); ++z) {
 				for (int c = 0; c < reader.getSizeC(); ++c) {
 					for (int t = 0; t < reader.getSizeT(); ++t) {
-						
+
 						String outFile = baseFile;
 						if (reader.getSizeC()>1) {
 							outFile = outFile.replace(".ome.tif", "_c" + String.format("%0" + width + "d", c) + ".ome.tif");
@@ -197,7 +197,7 @@ public class TiledOmeTiffConverterMain {
 						if (reader.getSizeZ()>1) {
 							outFile = outFile.replace(".ome.tif", "_z" + String.format("%0" + width + "d", z) + ".ome.tif");
 						}
-						
+
 						TiledOmeTiffConverter tiledReadWriter = new TiledOmeTiffConverter(reader, outFile, z, c, t);
 						pool.execute(tiledReadWriter);
 					}
@@ -209,13 +209,13 @@ public class TiledOmeTiffConverterMain {
 
 		int exitVal = 0;
 		String err = "";
-		
+
 		if (exitVal != 0){
 			throw new RuntimeException(err);
 		}
-		
+
 		pool.shutdown();
-		LOG.info("The end of tile tiff conversion!!");  
+		LOG.info("The end of tile tiff conversion!!");
 	}
 }
 
@@ -233,5 +233,5 @@ class CustomLogger extends Formatter {
         sb.append(record.getLevel()).append(":");
         sb.append(record.getMessage()).append('\n');
         return sb.toString();
-    }    
+    }
 }

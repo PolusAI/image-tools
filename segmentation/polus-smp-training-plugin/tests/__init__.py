@@ -1,4 +1,5 @@
 from unittest import TestSuite
+
 from tests.model_test import ModelTest
 from tests.tile_test import TileTest
 

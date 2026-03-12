@@ -8,7 +8,9 @@ repos:
         exclude: (.*?)\.(h5)$
       - id: check-case-conflict
       - id: check-json
+        exclude: .*\{\{.*
       - id: pretty-format-json
+        exclude: .*\{\{.*
         args:
           - "--autofix"
           - "--indent=2"
@@ -17,6 +19,13 @@ repos:
       - id: check-xml
       - id: check-yaml
       - id: debug-statements
+        exclude: |
+          (?x)(
+            test_[a-zA-Z0-9_]+\.py$|
+            [a-zA-Z0-9_]+_test\.py$|
+            conftest\.py$|
+            .*\{\{.*
+          )
       - id: detect-aws-credentials
         args:
           - "--allow-missing-credentials"
@@ -25,6 +34,7 @@ repos:
       - id: mixed-line-ending
         args: ["--fix=lf"]
         description: Forces to replace line ending by the UNIX 'lf' character.
+        exclude: \.(bat|ps1|cmd)$
       - id: trailing-whitespace
         exclude: ".bumpversion.cfg"
       - id: check-merge-conflict
@@ -33,11 +43,13 @@ repos:
     rev: "23.3.0"
     hooks:
       - id: black
+        files: ^transforms/images/apply-flatfield-tool/
         language_version: python3.9
         exclude: |
           (?x)(
             ^src\/polus\/plugins\/_plugins\/models\/pydanticv1\/\w*Schema.py$|
-            ^src\/polus\/plugins\/_plugins\/models\/pydanticv2\/\w*Schema.py$
+            ^src\/polus\/plugins\/_plugins\/models\/pydanticv2\/\w*Schema.py$|
+            .*\{\{.*
           )
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
@@ -45,11 +57,13 @@ repos:
     rev: "v0.0.274"
     hooks:
       - id: ruff
+        files: ^transforms/images/apply-flatfield-tool/
         exclude: |
           (?x)(
             test_[a-zA-Z0-9]+.py$|
             ^src\/polus\/plugins\/_plugins\/models\/pydanticv1\/\w*Schema.py$|
-            ^src\/polus\/plugins\/_plugins\/models\/pydanticv2\/\w*Schema.py$
+            ^src\/polus\/plugins\/_plugins\/models\/pydanticv2\/\w*Schema.py$|
+            .*\{\{.*
           )
         args: [--fix]
 
@@ -57,10 +71,12 @@ repos:
     rev: "v1.4.0"
     hooks:
       - id: mypy
+        files: ^transforms/images/apply-flatfield-tool/
         exclude: |
           (?x)(
             test_[a-zA-Z0-9]+.py$|
             ^src\/polus\/plugins\/_plugins\/models\/pydanticv1\/\w*Schema.py$|
-            ^src\/polus\/plugins\/_plugins\/models\/pydanticv2\/\w*Schema.py$
+            ^src\/polus\/plugins\/_plugins\/models\/pydanticv2\/\w*Schema.py$|
+            .*\{\{.*
           )
         additional_dependencies: [types-requests==2.31.0.1]

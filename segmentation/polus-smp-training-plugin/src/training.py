@@ -3,10 +3,7 @@ import os
 import sys
 from pathlib import Path
 from typing import Any
-from typing import Dict
-from typing import List
 from typing import Optional
-from typing import Tuple
 from xmlrpc.client import Boolean
 
 import albumentations as albu
@@ -27,11 +24,9 @@ from segmentation_models_pytorch.utils.train import ValidEpoch
 from torch.nn.modules.loss import _Loss as TorchLoss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader as TorchDataLoader
-from torch.utils.tensorboard import SummaryWriter
 
 import utils
 
-# writer = SummaryWriter()
 sys.path.append(os.path.dirname(__file__))
 
 logging.basicConfig(
@@ -43,9 +38,9 @@ logger.setLevel(utils.POLUS_LOG)
 
 
 def initialize_model(
-    checkpoint: Dict[str, Any],
+    checkpoint: dict[str, Any],
     device: torch.device,
-) -> Tuple[SegmentationModel, Optimizer]:
+) -> tuple[SegmentationModel, Optimizer]:
     """Initializes a model from a Checkpoint. A checkpoint knows the:
 
         * 'model_name': The architecture of the model in use.
@@ -88,7 +83,7 @@ def initialize_model(
 
     # noinspection PyArgumentList
     optimizer = utils.OPTIMIZERS[checkpoint["optimizer_name"]](
-        params=model.parameters()
+        params=model.parameters(),
     )
 
     if checkpoint["final_epoch"] > 0:
@@ -101,15 +96,15 @@ def initialize_model(
 def configure_augmentations():
     # TODO: These are the default augmentation we do for training.
     #  We will add WIPP arguments for configuring custom augmentations.
-    transforms = [
+    return [
         albu.RandomCrop(height=256, width=256),
         utils.PoissonTransform(peak=10, p=0.3),
         albu.RandomBrightnessContrast(brightness_limit=0.8, contrast_limit=0.4, p=0.2),
         albu.ShiftScaleRotate(
-            scale_limit=0.5, rotate_limit=0, shift_limit=0, p=0.5, border_mode=0
+            scale_limit=0.5, rotate_limit=0, shift_limit=0, p=0.5, border_mode=0,
         ),
         albu.PadIfNeeded(
-            min_height=256, min_width=256, always_apply=True, border_mode=0
+            min_height=256, min_width=256, always_apply=True, border_mode=0,
         ),
         albu.OneOf(
             [
@@ -121,7 +116,6 @@ def configure_augmentations():
         ),
     ]
 
-    return transforms
 
 
 def initialize_dataloader(
@@ -158,7 +152,7 @@ def initialize_dataloader(
         augs=configure_augmentations() if mode == "training" else None,
     )
 
-    loader = utils.MultiEpochsDataLoader(
+    return utils.MultiEpochsDataLoader(
         dataset=dataset,
         num_workers=4,
         batch_size=batch_size,
@@ -167,17 +161,16 @@ def initialize_dataloader(
         drop_last=True,
     )
 
-    return loader
 
 
 def initialize_epoch_iterators(
     *,
     model: SegmentationModel,
     loss: TorchLoss,
-    metrics: List[Metric],
+    metrics: list[Metric],
     device: torch.device,
     optimizer: Optimizer,
-) -> Tuple[TrainEpoch, ValidEpoch]:
+) -> tuple[TrainEpoch, ValidEpoch]:
     """Initializes the training and validation iterators that train the model
         for each epoch.
 
@@ -193,9 +186,9 @@ def initialize_epoch_iterators(
     """
     logger.info("Initializing Epoch Iterators...")
 
-    epoch_kwargs = dict(
-        model=model, loss=loss, metrics=metrics, device=device, verbose=True
-    )
+    epoch_kwargs = {
+        "model": model, "loss": loss, "metrics": metrics, "device": device, "verbose": True,
+    }
     trainer = smp.utils.train.TrainEpoch(optimizer=optimizer, **epoch_kwargs)
     validator = smp.utils.train.ValidEpoch(**epoch_kwargs)
 
@@ -210,13 +203,11 @@ def _log_epoch(
     logs: str = ", ".join(f"{k}: {v:.8f}" for k, v in logs.items())
     logger.info(f"{mode} logs: {logs}")
     with open(file_path, "a") as outfile:
-        outfile.write(f"{str(logs)}\n")
-    return
+        outfile.write(f"{logs!s}\n")
 
 
 def batch_update_train(trainer, x, y):
-    """
-    TODO(Madhuri): Docs and type hints
+    """TODO(Madhuri): Docs and type hints.
 
     Args:
         trainer:
@@ -235,8 +226,7 @@ def batch_update_train(trainer, x, y):
 
 
 def batch_update_valid(validator, x, y):
-    """
-    TODO(Madhuri): Docs and type hints
+    """TODO(Madhuri): Docs and type hints.
 
     Args:
         validator:
@@ -253,16 +243,15 @@ def batch_update_valid(validator, x, y):
 
 
 def start_training(
-    epoch_iterators: Tuple[TrainEpoch, ValidEpoch],
-    dataloaders: Tuple[TorchDataLoader, TorchDataLoader],
-    early_stopping: Tuple[int, int, float],
-    checkpoint: Dict[str, Any],
+    epoch_iterators: tuple[TrainEpoch, ValidEpoch],
+    dataloaders: tuple[TorchDataLoader, TorchDataLoader],
+    early_stopping: tuple[int, int, float],
+    checkpoint: dict[str, Any],
     checkpoint_frequency: int,
     output_dir: Path,
     prof=None,
 ) -> int:
-    """
-    TODO(Madhuri): Docs
+    """TODO(Madhuri): Docs.
 
     Args:
         epoch_iterators:
@@ -296,8 +285,8 @@ def start_training(
                     5 * "-",
                     f"Epoch: {epoch_index}/{num_epochs + starting_epoch}",
                     5 * "-",
-                )
-            )
+                ),
+            ),
         )
 
         train_logs = {
@@ -332,7 +321,7 @@ def start_training(
 
         for valid_x, valid_y in valid_loader:  # iterating through the valid batches
             valid_x, valid_y = valid_x.to(validator.device), valid_y.to(
-                validator.device
+                validator.device,
             )
             valid_loss, valid_y_pred = batch_update_valid(validator, valid_x, valid_y)
 
@@ -358,7 +347,7 @@ def start_training(
                 "final_epoch": epoch_index,
                 "model_state_dict": trainer.model.state_dict(),
                 "optimizer_state_dict": trainer.optimizer.state_dict(),
-            }
+            },
         )
 
         current_loss = valid_logs[validator.loss.__name__]
@@ -372,19 +361,19 @@ def start_training(
             epochs_without_improvement += 1
             if epochs_without_improvement >= patience:
                 logger.info(
-                    f"No improvement for {patience} epochs. Stopping training early..."
+                    f"No improvement for {patience} epochs. Stopping training early...",
                 )
                 break
 
         logger.info(
-            f"Epochs without Improvement: {epochs_without_improvement} of {patience}"
+            f"Epochs without Improvement: {epochs_without_improvement} of {patience}",
         )
 
         if checkpoint_frequency is not None:
             if (epoch_index % checkpoint_frequency) == 0:
                 # noinspection PyUnboundLocalVariable
                 torch.save(
-                    trainer.model, checkpoints_dir.joinpath(f"model_{epoch_index}.pth")
+                    trainer.model, checkpoints_dir.joinpath(f"model_{epoch_index}.pth"),
                 )
                 torch.save(
                     checkpoint,
@@ -406,10 +395,10 @@ def start_training(
 
 def train_model(
     *,
-    dataloaders: Tuple[TorchDataLoader, TorchDataLoader],
-    epoch_iterators: Tuple[TrainEpoch, ValidEpoch],
-    early_stopping: Tuple[int, int, float],
-    checkpoint: Dict[str, Any],
+    dataloaders: tuple[TorchDataLoader, TorchDataLoader],
+    epoch_iterators: tuple[TrainEpoch, ValidEpoch],
+    early_stopping: tuple[int, int, float],
+    checkpoint: dict[str, Any],
     checkpoint_frequency: int,
     output_dir: Path,
     tensorboard_profiler: Boolean,
@@ -432,7 +421,6 @@ def train_model(
         The total number of epochs for which the model has been trained by this
             plugin.
     """
-
     # TODO(Najib): Figure out how this will work with WIPP outputs
     if tensorboard_profiler:
         tensorboard_dir = output_dir.joinpath("tensorboard")
@@ -440,13 +428,12 @@ def train_model(
         with torch.profiler.profile(
             schedule=torch.profiler.schedule(wait=1, warmup=1, active=3, repeat=2),
             on_trace_ready=torch.profiler.tensorboard_trace_handler(
-                str(tensorboard_dir)
+                str(tensorboard_dir),
             ),
             record_shapes=True,
             profile_memory=True,
             with_stack=True,
         ) as prof:
-
             epoch = start_training(
                 epoch_iterators,
                 dataloaders,
@@ -457,7 +444,6 @@ def train_model(
                 prof=prof,
             )
     else:
-
         epoch = start_training(
             epoch_iterators,
             dataloaders,

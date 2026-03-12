@@ -41,4 +41,3 @@ This plugin takes one input argument and one output argument:
 | `--model`      | Pre-trained ImageNet model to use for featurization   | Input  | enum          |
 | `--resolution` | Resolution to which the input images are scaled       | Input  | string        |
 | `--outDir`     | Output collection                                     | Output | csvCollection |
-

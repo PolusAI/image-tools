@@ -2,12 +2,13 @@
 import json
 import logging
 import pathlib
-from typing import Any, Optional
+from typing import Any
+from typing import Optional
 
 import filepattern as fp
 import typer
+from polus.images.features.region_segmentation_eval import evaluate
 from polus.images.features.region_segmentation_eval.evaluate import POLUS_TAB_EXT
-from polus.images.features.region_segmentation_eval import evaluate as evaluate
 
 # Initialize the logger
 logging.basicConfig(
@@ -59,11 +60,11 @@ def main(
     ),
     iou_score: Optional[float] = typer.Option(0.0, "--iouScore", help="IoU theshold"),
     file_pattern: Optional[str] = typer.Option(
-        ".+", "--filePattern", help="Filename pattern to filter data."
+        ".+", "--filePattern", help="Filename pattern to filter data.",
     ),
     out_dir: pathlib.Path = typer.Option(..., "--outDir", help="Output collection"),
     preview: Optional[bool] = typer.Option(
-        False, "--preview", help="Output a JSON preview of files"
+        False, "--preview", help="Output a JSON preview of files",
     ),
 ) -> None:
     """Convert bioformat supported image datatypes conversion to ome.tif or ome.zarr file format."""
@@ -125,7 +126,7 @@ def main(
         total_summary,
         radius_factor,
         iou_score,
-        file_pattern
+        file_pattern,
     )
 
 

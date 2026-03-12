@@ -22,7 +22,7 @@ import ome.xml.model.primitives.PositiveInteger;
 /**
  * Based off of the example from
  * https://docs.openmicroscopy.org/bio-formats/5.9.1/developers/tiling.html
- * 
+ *
  * One optimization this method uses is reading/writing multiple tiles
  * simultaneously (up to 16 at a time). This can be set using the xMulti and
  * yMulti variables.
@@ -35,7 +35,7 @@ public class TiledOmeTiffConverter implements Runnable {
 	 */
 
 	private static final Logger LOG = Logger.getLogger(TiledOmeTiffConverter.class.getName());
-	
+
 	private ImageReader reader;
 	private String inputFile;
 	private String outputFile;
@@ -49,7 +49,7 @@ public class TiledOmeTiffConverter implements Runnable {
 
 	/**
 	 * Class constructor
-	 * 
+	 *
 	 * @param reader		ImageReader to convert to .ome.tif
 	 * @param outputFile	Complete path to export file
 	 * @param Z				The z-slice to export
@@ -63,10 +63,10 @@ public class TiledOmeTiffConverter implements Runnable {
 		this.C = C;
 		this.T = T;
 	}
-	
+
 	/**
 	 * Initialize the OME Tiff writer
-	 * 
+	 *
 	 * @param omexml		Base metadata to import
 	 * @return
 	 * @throws FormatException
@@ -81,7 +81,7 @@ public class TiledOmeTiffConverter implements Runnable {
 		// set up the writer and associate it with the output file
 		OMETiffWriter writer = new OMETiffWriter();
 		writer.setMetadataRetrieve(omexml);
-		
+
 	    // set output file properties
 	    try {
 			this.tileSizeX = writer.setTileSizeX(tileSizeX);
@@ -92,28 +92,28 @@ public class TiledOmeTiffConverter implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	    
+
 		omexml = (IMetadata) writer.getMetadataRetrieve();
 		omexml.setPixelsSizeZ(new PositiveInteger(1), 0);
 		omexml.setPixelsSizeC(new PositiveInteger(1), 0);
 		omexml.setPixelsSizeT(new PositiveInteger(1), 0);
-		
+
 		return writer;
 	}
 
 	/**
 	 * Read input file and write output file in tiles
-	 * 
+	 *
 	 * The input files is read in tiles of size (tileSizeX, tileSizeY), with
 	 * only one z-slice at a time. Each channel and time-point (if present) are
 	 * saved to separate files.
-	 * 
+	 *
 	 * It is important to save images in tiles, since Bioformats indexes pixels
 	 * using signed integers (32 bits). This means that loading a full image
 	 * plane larger than 2GB will throw an indexing error. Saving in tiles also
 	 * has the benefit of being memory efficient, so it can be run on small
 	 * nodes.
-	 * 
+	 *
 	 * @throws FormatException
 	 * @throws DependencyException
 	 * @throws ServiceException
@@ -136,9 +136,9 @@ public class TiledOmeTiffConverter implements Runnable {
 		int bpp = FormatTools.getBytesPerPixel(reader.getPixelType());
 		int tilePlaneSize = xMulti * yMulti * tileSizeX * tileSizeY * reader.getRGBChannelCount() * bpp;
 		byte[] buf = new byte[tilePlaneSize];
-					
+
 		OMETiffWriter writer = this.init_writer(omexml);
-		
+
 		int width = reader.getSizeX();
 		int height = reader.getSizeY();
 
@@ -147,15 +147,15 @@ public class TiledOmeTiffConverter implements Runnable {
 		int nYTiles = height / (yMulti * tileSizeY);
 		if (nXTiles * tileSizeX * xMulti != width) nXTiles++;
 		if (nYTiles * tileSizeY * yMulti != height) nYTiles++;
-	
+
 		int index = reader.getIndex(this.Z, this.C, this.T);
 		for (int y=0; y<nYTiles; y++) {
 			for (int x=0; x<nXTiles; x++) {
-				
+
 				int tileX = x * tileSizeX * xMulti;
 				int tileY = y * tileSizeY * yMulti;
 
-				
+
 				int effTileSizeX = (tileX + tileSizeX * xMulti) < width ? tileSizeX * xMulti: width - tileX;
 				int effTileSizeY = (tileY + tileSizeY * yMulti) < height ? tileSizeY * yMulti : height - tileY;
 

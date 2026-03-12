@@ -1,6 +1,6 @@
 # Multichannel Tiff
 
-The multi-channel tiff plugin uses a 
+The multi-channel tiff plugin uses a
 [filename pattern](https://github.com/LabShare/polus-plugins/tree/master/utils/polus-filepattern-util)
 to assign images to a multi-channel ome tiff. Only channels indicated in the
 `channelOrder` are included in the multi-channel tiff, and channels are placed

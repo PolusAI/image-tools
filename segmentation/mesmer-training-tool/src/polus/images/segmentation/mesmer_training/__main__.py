@@ -1,13 +1,13 @@
 """Mesmer Training."""
 import json
-import os
 import logging
+import os
 import pathlib
-from typing import Any, Optional
+from typing import Any
+from typing import Optional
 
 import typer
-
-from polus.images.segmentation.mesmer_training import train as train
+from polus.images.segmentation.mesmer_training import train
 
 # Initialize the logger
 logging.basicConfig(
@@ -44,23 +44,23 @@ def main(
         help="Input testing label collection to be processed by this plugin.",
     ),
     model_backbone: train.BACKBONES = typer.Option(
-        train.BACKBONES.DEFAULT, "--modelBackbone", help="DeepCell model backbones."
+        train.BACKBONES.DEFAULT, "--modelBackbone", help="DeepCell model backbones.",
     ),
     file_pattern: Optional[str] = typer.Option(
-        ".+", "--filePattern", help="Pattern to parse file names."
+        ".+", "--filePattern", help="Pattern to parse file names.",
     ),
     tile_size: Optional[int] = typer.Option(
-        256, "--tileSize", help="Input image tile size. Default 256x256."
+        256, "--tileSize", help="Input image tile size. Default 256x256.",
     ),
     iterations: Optional[int] = typer.Option(
-        10, "--iterations", help="Number of training iterations. Default is 10."
+        10, "--iterations", help="Number of training iterations. Default is 10.",
     ),
     batch_size: Optional[int] = typer.Option(
-        1, "--batchSize", help="Batch Size. Default is 1.."
+        1, "--batchSize", help="Batch Size. Default is 1..",
     ),
     out_dir: pathlib.Path = typer.Option(..., "--outDir", help="Output collection"),
     preview: Optional[bool] = typer.Option(
-        False, "--preview", help="Output a JSON preview of files"
+        False, "--preview", help="Output a JSON preview of files",
     ),
 ) -> None:
     """Mesmer training."""

@@ -35,5 +35,3 @@ This plugin takes four input argument if methods other than 'Manual' is selected
 | `--csvdir`      | Input csv collection   | Input  | csvCollection   |
 | `--borderwidth` | Enter border width     | Input  | integer         |
 | `--outdir`      | Output collection      | Output | imageCollection |
-
-

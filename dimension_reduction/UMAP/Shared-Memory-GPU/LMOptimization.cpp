@@ -100,7 +100,7 @@ void estimateParameters(float &a, float &b, float min_dist, float spread, ofstre
 	std::vector<float> y_values;
 
 	/**
-	 * The interval used for data fitting 
+	 * The interval used for data fitting
 	 * The values were adopted from https://github.com/lmcinnes/umap/blob/master/umap/umap_.py#L1138
 	 */
 	const float minInterval=0;
@@ -110,7 +110,7 @@ void estimateParameters(float &a, float &b, float min_dist, float spread, ofstre
 
 	for (int i = 0; i<intervalCounts; ++i){
 
-		float tmp=minInterval+float(i)/float(intervalCounts)*(maxInterval-minInterval);    
+		float tmp=minInterval+float(i)/float(intervalCounts)*(maxInterval-minInterval);
 		x_values.push_back(tmp);
 
 		if (tmp <= min_dist) y_values.push_back(1.0);
