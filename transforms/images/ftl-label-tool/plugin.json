@@ -22,6 +22,12 @@
       "required": true
     },
     {
+      "name": "filePattern",
+      "type": "string",
+      "description": "A filepattern, used to select data to be labelled",
+      "required": true
+    },
+    {
       "name": "connectivity",
       "type": "integer",
       "description": "City block connectivity",
@@ -46,6 +52,11 @@
       "key": "inputs.inpDir",
       "title": "Input collection",
       "description": "Input image collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "Filepattern",
+      "description": "A filepattern, used to select data for conversion"
     },
     {
       "key": "inputs.connectivity",

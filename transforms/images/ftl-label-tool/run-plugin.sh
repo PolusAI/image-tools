@@ -11,6 +11,7 @@ POLUS_IMG_EXT=".ome.tif"
 
 # Inputs
 inpDir=/data/input-2d
+filePattern=".*"
 connectivity=1
 binarizationThreshold=0.5
 
@@ -23,6 +24,7 @@ docker run --mount type=bind,source="${data_path}",target=/data/ \
             --env POLUS_IMG_EXT="${POLUS_IMG_EXT}" \
             polusai/ftl-label-tool:"${version}" \
             --inpDir ${inpDir} \
+            --filePattern ${filePattern} \
             --connectivity ${connectivity} \
             --binarizationThreshold ${binarizationThreshold} \
             --outDir ${outDir}
