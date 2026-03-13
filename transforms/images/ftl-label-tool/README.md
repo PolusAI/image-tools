@@ -29,13 +29,21 @@ On macOS ARM64 (Apple Silicon), all images are automatically routed through the 
 
 To see detailed documentation for the `Rust` implementation you need to:
 
-* Install [Rust](https://doc.rust-lang.org/stable/book/ch01-01-installation.html),
+## Installation
+
+Install [Rust](https://doc.rust-lang.org/stable/book/ch01-01-installation.html),
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 source "$HOME/.cargo/env"
 ```
+## Rust documentation
+To generate and view the full Rust API docs:
 
-## Installation
+```bash
+cargo doc --open
+```
+
+
 #### From source (recommended for development)
 ```bash
 # 1. Clone the repo
@@ -66,17 +74,21 @@ This plugin takes one input argument and one output argument:
 | Name                      | Description                                                          | I/O    | Type       |
 | ------------------------- | -------------------------------------------------------------------- | ------ | ---------- |
 | `--inpDir`                | Input image collection to be processed by this plugin                | Input  | collection |
+| `--filePattern`           | File pattern used to select input images from the input collection   | Input  | string     |
 | `--connectivity`          | City block connectivity                                              | Input  | number     |
 | `--binarizationThreshold` | For images containing probability values. Must be between 0 and 1.0. | Input  | number     |
 | `--outDir`                | Output collection                                                    | Output | collection |
 
 ## Usage
+# Run FTL label
+
 ```bash
 python -m polus.images.transforms.images.ftl_label \
     --inpDir /path/to/input \
-    --outDir /path/to/output \
+    --filePattern ".*.ome.tif" \
     --connectivity 1 \
-    --binarizationThreshold 0.5
+    --binarizationThreshold 0.5 \
+    --outDir /path/to/output
 ```
 
 ## Docker
@@ -88,24 +100,12 @@ To build the Docker image for the conversion plugin, run `./build-docker.sh`.
 ```bash
 basedir=$(basename ${PWD})
 
-docker run -v ${PWD}:/$basedir polusai/ftl-label-tool:0.3.12 \
+docker run -v ${PWD}:/$basedir polusai/ftl-label-tool:1.0.0-dev0 \
     --inpDir /$basedir/images/ \
-    --outDir /$basedir/output/ \
+    --filePattern ".*.ome.tif" \
     --connectivity 1 \
-    --binarizationThreshold 0.5
-```
-
-## Example
-
-```bash
-
-# Run FTL label
-
-python -m polus.images.transforms.images.ftl_label \
-    --inpDir /path/to/images/ \
-    --outDir /path/to/output/  \
-    --connectivity 1 \
-    --binarizationThreshold 0.5
+    --binarizationThreshold 0.5 \
+    --outDir /$basedir/output/
 ```
 
 
@@ -129,13 +129,6 @@ SciKit's documentation has a good illustration for 2D:
      [ ]           [ ]  [ ]  [ ]
 ```
 
-
-## Rust documentation
-To generate and view the full Rust API docs:
-
-```bash
-cargo doc --open
-```
 
 ## To Do
 The following optimizations should be added to increase the speed or decrease the memory used by the plugin.

@@ -1,9 +1,17 @@
 class: CommandLineTool
 cwlVersion: v1.2
 inputs:
+  filePattern:
+    inputBinding:
+      prefix: --filePattern
+    type: string
   connectivity:
     inputBinding:
       prefix: --connectivity
+    type: double
+  binarizationThreshold:
+    inputBinding:
+      prefix: --binarizationThreshold
     type: double
   inpDir:
     inputBinding:

@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy
 import typer
+import filepattern as fp
 from bfio import BioReader
 from bfio import BioWriter
 from ftl_rust import PolygonSet
@@ -21,7 +22,7 @@ except ImportError:
 app = typer.Typer()
 
 POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
-POLUS_EXT = os.environ.get("POLUS_EXT", ".ome.tif")
+POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
 _NUM_THREADS: int = int(os.environ.get("NUM_THREADS", os.cpu_count() or 1))
 
 # Initialize the logger
@@ -36,7 +37,7 @@ logger.setLevel(POLUS_LOG)
 def get_output_name(filename: str) -> str:
     """Generate the output filename using the configured extension."""
     name = filename.split(".ome")[0]
-    return f"{name}{POLUS_EXT}"
+    return f"{name}{POLUS_IMG_EXT}"
 
 
 def filter_by_size(
@@ -139,6 +140,11 @@ def main(
         readable=True,
         resolve_path=True,
     ),
+    file_pattern: str = typer.Option(
+        ".+",
+        "--filePattern",
+        help="A filepattern defining the mask images to be labelled",
+    ),
     connectivity: int = typer.Option(
         ...,
         "--connectivity",
@@ -172,11 +178,13 @@ def main(
 
     Args:
         inp_dir: Path to the input image collection.
+        file_pattern: Input file pattern.
         connectivity: City block connectivity (1 = face, 2 = edge, 3 = corner).
         binarization_threshold: Threshold for binarizing float probability images.
         out_dir: Path to the output image collection.
     """
     logger.info(f"inpDir                = {inp_dir}")
+    logger.info(f"filePattern           = {file_pattern}")
     logger.info(f"connectivity          = {connectivity}")
     logger.info(f"binarizationThreshold = {binarization_threshold:.2f}")
     logger.info(f"outDir                = {out_dir}")
@@ -186,9 +194,11 @@ def main(
     if inp_dir.joinpath("images").is_dir():
         inp_dir = inp_dir / "images"
 
-    files = [f for f in inp_dir.iterdir() if f.is_file() and f.name.endswith(POLUS_EXT)]
+    fps = fp.FilePattern(inp_dir, file_pattern)
+
+    files = [files[1][0] for files in fps()]
     if not files:
-        logger.warning(f"No {POLUS_EXT} files found in {inp_dir}")
+        logger.warning(f"No files found in {inp_dir}, check provided filepattern")
         raise typer.Exit(0)
 
     small_files, large_files = filter_by_size(files, 500)
