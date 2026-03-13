@@ -1,9 +1,9 @@
 {
-  "name": "Nyxus plugin",
-  "version": "0.1.8",
-  "containerId": "polusai/nyxus-tool:0.1.8",
-  "title": "Nyxus plugin",
-  "description": "Nyxus plugin allows to make use of parallel pocessing for extracting nyxus features",
+  "name": "Nyxus tool",
+  "version": "0.1.8-dev2",
+  "containerId": "polusai/nyxus-tool:0.1.8-dev2",
+  "title": "Nyxus tool",
+  "description": "Extracts Nyxus features from intensity and label image pairs using parallel processing",
   "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
   "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
   "repository": "https://github.com/PolusAI/image-tools",
@@ -57,40 +57,22 @@
       }
     },
     {
-      "name": "fileExtension",
-      "type": "enum",
-      "description": "Output file format",
-      "default": "default",
-      "options": {
-        "values": [
-          ".arrow",
-          ".feather",
-          ".csv",
-          "default"
-        ]
-      },
-      "required": true
-    },
-    {
-      "name": "neighborDist",
-      "description": "Pixel distance between neighboring cells",
-      "type": "number",
-      "options": null,
-      "required": false
-    },
-    {
-      "name": "pixelPerMicron",
-      "description": "Pixel size in micrometer",
-      "type": "number",
-      "options": null,
-      "required": false
-    },
-    {
       "name": "singleRoi",
       "description": "Consider intensity image as single roi and ignoring segmentation mask",
       "type": "boolean",
       "options": null,
       "required": false
+    },
+    {
+      "name": "kwargs",
+      "type": "array",
+      "description": "Nyxus parameters as KEY=VALUE pairs",
+      "required": false,
+      "options": {
+        "items": {
+          "type": "string"
+        }
+      }
     }
   ],
   "outputs": [
@@ -130,28 +112,15 @@
       "default": "ALL"
     },
     {
-      "key": "inputs.fileExtension",
-      "title": "fileExtension",
-      "description": "Ouput file format",
-      "default": "pandas"
-    },
-    {
-      "key": "inputs.neighborDist",
-      "title": "neighborDist",
-      "description": "Pixel distance between neighboring cells",
-      "default": 5
-    },
-    {
-      "key": "inputs.pixelPerMicron",
-      "title": "pixelPerMicron",
-      "description": "Pixel size in micrometer",
-      "default": 1.0
-    },
-    {
       "key": "inputs.singleRoi",
       "title": "singleRoi",
       "description": "Consider intensity image as single roi and ignoring segmentation mask",
       "default": false
+    },
+    {
+      "key": "inputs.kwargs",
+      "title": "Nyxus Parameters",
+      "description": "Advanced parameters (repeatable KEY=VALUE)"
     }
   ]
 }
