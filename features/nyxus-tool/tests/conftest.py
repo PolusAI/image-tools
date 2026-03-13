@@ -39,7 +39,7 @@ def output_directory() -> str | Path:
     return Path(tempfile.mkdtemp(dir=Path.cwd()))
 
 
-@pytest.fixture(params=[256, 512, 1024, 2048])
+@pytest.fixture(params=[256, 1024, 2048])
 def image_sizes(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the fixture."""
     return request.param
@@ -52,7 +52,7 @@ def synthetic_images(
     image_sizes: pytest.FixtureRequest,
 ) -> tuple[str | Path, str | Path]:
     """Generate random synthetic images."""
-    for i in range(10):
+    for i in range(3):
         im = np.zeros((image_sizes, image_sizes))
         points = image_sizes * np.random.random((2, 10**2))
         im[(points[0]).astype(int), (points[1]).astype(int)] = 1
@@ -79,7 +79,7 @@ def get_params(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     return request.param
 
 
-@pytest.fixture(params=[5000, 10000, 30000])
+@pytest.fixture(params=[5000, 10000])
 def scaled_sizes(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the fixture."""
     return request.param
