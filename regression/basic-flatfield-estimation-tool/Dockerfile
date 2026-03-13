@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:2.12.0-gpu
+FROM tensorflow/tensorflow:2.15.0-gpu
 
 # cat /etc/os-release
 #
@@ -15,18 +15,29 @@ FROM tensorflow/tensorflow:2.12.0-gpu
 # VERSION_CODENAME=focal
 # UBUNTU_CODENAME=focal
 
-# Instal Python
+# Install Python 3.12 from source (not available in deadsnakes PPA for Ubuntu 20.04)
 RUN apt update && \
-    apt install software-properties-common -y && \
-    add-apt-repository ppa:deadsnakes/ppa && \
-    apt install python3.9 python3.9-distutils curl -y && \
-    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
-    python3.9 get-pip.py && \
+    apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev \
+    libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev curl git && \
+    cd /tmp && \
+    wget https://www.python.org/ftp/python/3.12.7/Python-3.12.7.tgz && \
+    tar -xzf Python-3.12.7.tgz && \
+    cd Python-3.12.7 && \
+    ./configure --enable-optimizations --prefix=/usr/local && \
+    make -j$(nproc) && \
+    make altinstall && \
+    cd / && \
+    rm -rf /tmp/Python-3.12.7* && \
+    apt remove -y build-essential wget && \
     apt autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
-# Symbolic link to python3.9
-RUN ln -sf /usr/bin/python3.9 /usr/bin/python3
+# Install pip and create symbolic links
+RUN ln -sf /usr/local/bin/python3.12 /usr/bin/python3 && \
+    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && \
+    /usr/local/bin/python3.12 get-pip.py && \
+    rm get-pip.py && \
+    ln -sf /usr/local/bin/pip3.12 /usr/bin/pip3
 RUN mkdir /.cache && chmod 777 /.cache
 
 # environment variables defined in polusai/bfio
@@ -47,7 +58,13 @@ RUN mkdir image-tools
 COPY . ${EXEC_DIR}/image-tools
 
 # Install the tool
-RUN pip3 install "${EXEC_DIR}/image-tools/${TOOL_DIR}" --no-cache-dir
+WORKDIR ${EXEC_DIR}/image-tools/${TOOL_DIR}
+RUN pip3 install . --no-cache-dir
+WORKDIR ${EXEC_DIR}
+
+
+# Install flytekit
+RUN pip3 install "flytekit>=1.16.15" --no-cache-dir
 
 # Set the entrypoint
 # TODO: Change the entrypoint to the tool entrypoint

@@ -33,7 +33,19 @@ of `plugin.json` into the pop-up window and submit.
 
 ## Running tests
 
-To run the tests, the command is `pytest`. This will run all tests in the `tests` directory.
+To run the tests, use `uv run pytest`. This will run all tests in the `tests` directory.
+
+## Installation
+
+Install dependencies using uv:
+```bash
+uv sync
+```
+
+Or with dev dependencies:
+```bash
+uv sync --dev
+```
 
 Since this plugin is only a thin wrapper around the `basicpy` package, the tests are limited to verifying that the plugin is able to run and that the output images are generated.
 The tests do not verify that the output images are correct.
