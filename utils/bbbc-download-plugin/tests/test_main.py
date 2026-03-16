@@ -46,7 +46,7 @@ def test_delete_macosx(macosx_directory) -> None:
 
 def test_bbbc_datasets() -> None:
     """Test to check if all the datasets on the BBBC website are recognized."""
-    d_test = BBBC_model.BBBC.datasets
+    d_test = BBBC_model.BBBC.datasets()
     assert len(d_test) == 50
 
 
@@ -60,19 +60,19 @@ def test_raw(output_directory) -> None:
 
 def test_IDAndSegmentation() -> None:
     """Test to check if all the datasets on the Identification and segmentation table are recognized."""
-    d_test_IDAndSegmentation = BBBC_model.IDAndSegmentation.datasets
+    d_test_IDAndSegmentation = BBBC_model.IDAndSegmentation.datasets()
     assert len(d_test_IDAndSegmentation) == 32
 
 
 def test_PhenotypeClassification() -> None:
     """Test to check if all the datasets on the Phenotype CLassification table are recognized."""
-    d_test_PhenotypeClassification = BBBC_model.PhenotypeClassification.datasets
+    d_test_PhenotypeClassification = BBBC_model.PhenotypeClassification.datasets()
     assert len(d_test_PhenotypeClassification) == 14
 
 
 def test_ImageBasedProfiling() -> None:
     """Test to check if all the datasets on the Image based profiling table are recognized."""
-    d_test_ImageBasedProfiling = BBBC_model.ImageBasedProfiling.datasets
+    d_test_ImageBasedProfiling = BBBC_model.ImageBasedProfiling.datasets()
     assert len(d_test_ImageBasedProfiling) == 6
 
 

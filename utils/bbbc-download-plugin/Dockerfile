@@ -1,4 +1,4 @@
-FROM polusai/bfio:2.1.9
+FROM python:3.13-slim
 
 # environment variables defined in polusai/bfio
 ENV EXEC_DIR="/opt/executables"
