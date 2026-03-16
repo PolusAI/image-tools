@@ -9,10 +9,11 @@ ENV POLUS_LOG="INFO"
 # Work directory defined in the base container
 WORKDIR ${EXEC_DIR}
 
-COPY pyproject.toml ${EXEC_DIR}
-COPY VERSION ${EXEC_DIR}
-COPY README.md ${EXEC_DIR}
-COPY src ${EXEC_DIR}/src
+# When building from repo root: -f utils/bbbc-download-plugin/Dockerfile .
+COPY utils/bbbc-download-plugin/pyproject.toml ${EXEC_DIR}
+COPY utils/bbbc-download-plugin/VERSION ${EXEC_DIR}
+COPY utils/bbbc-download-plugin/README.md ${EXEC_DIR}
+COPY utils/bbbc-download-plugin/src ${EXEC_DIR}/src
 
 RUN pip3 install ${EXEC_DIR} --no-cache-dir
 
