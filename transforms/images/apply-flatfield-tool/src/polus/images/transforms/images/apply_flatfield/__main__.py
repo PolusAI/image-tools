@@ -64,6 +64,11 @@ def main(  # noqa: PLR0913
         resolve_path=True,
         file_okay=False,
     ),
+    data_type: typing.Optional[bool] = typer.Option(
+        False,
+        "--dataType",
+        help="Save images in original data type.",
+    ),
     preview: bool = typer.Option(
         False,
         "--preview",
@@ -86,6 +91,7 @@ def main(  # noqa: PLR0913
     logger.info(f"ffPattern = {ff_pattern}")
     logger.info(f"dfPattern = {df_pattern}")
     logger.info(f"outDir = {out_dir}")
+    logger.info(f"dataType = {data_type}")
     logger.info(f"preview = {preview}")
 
     out_files = apply(
@@ -95,6 +101,7 @@ def main(  # noqa: PLR0913
         ff_pattern=ff_pattern,
         df_pattern=df_pattern,
         out_dir=out_dir,
+        data_type=data_type,
         preview=preview,
     )
 
