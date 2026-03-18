@@ -16,6 +16,7 @@ scipy = ">=1.8"
 networkx = "^3.0"
 tqdm = "^4.65.0"
 watchdog = "3.0.0"  # Pinning this because: https://github.com/gorakhargosh/watchdog/issues/1030
+scikit-image = ">=0.25.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.1"
