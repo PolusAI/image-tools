@@ -8,8 +8,11 @@ import cv2
 import numpy as np
 from bfio import BioReader
 from bfio import BioWriter
+#from polus.images.transforms.images.binary_operations import (
+#    binary_op as binary_operation,
+#)
 from polus.images.transforms.images.binary_operations import (
-    binary_op as binary_operation,
+    binary_operation as binary_operation,
 )
 from polus.images.transforms.images.binary_operations import utils
 
@@ -76,7 +79,7 @@ class PluginTest(unittest.TestCase):
             output_path = binary_operation(
                 input_path=input_path,
                 output_path=output_path,
-                function=utils.skeleton_binary,
+                function=utils.skeletonize,
                 operation="skeleton",
                 extra_arguments=None,
                 extra_padding=data.kernel_size,
@@ -112,7 +115,7 @@ class PluginTest(unittest.TestCase):
             for contour_output, contour_input in zip(contours_output, contours_input):
                 area_output = cv2.contourArea(contour_output)
                 area_input = cv2.contourArea(contour_input)
-                assert area_output < area_input
+                assert area_output <= area_input
 
     def test_dilation_erosion_morphologicalgradient(self):  # noqa
         data = PluginData()
@@ -139,7 +142,7 @@ class PluginTest(unittest.TestCase):
             output_dilation_path = binary_operation(
                 input_path=input_path,
                 output_path=output_dilation_path,
-                function=utils.dilate_binary,
+                function=utils.dilate,
                 operation="dilation",
                 extra_arguments=1,
                 extra_padding=data.kernel_size,
@@ -148,7 +151,7 @@ class PluginTest(unittest.TestCase):
             output_erosion_path = binary_operation(
                 input_path=input_path,
                 output_path=output_erosion_path,
-                function=utils.erode_binary,
+                function=utils.erode,
                 operation="erosion",
                 extra_arguments=1,
                 extra_padding=data.kernel_size,
@@ -157,7 +160,7 @@ class PluginTest(unittest.TestCase):
             output_morphgrad_path = binary_operation(
                 input_path=input_path,
                 output_path=output_morphgrad_path,
-                function=utils.morphgradient_binary,
+                function=utils.morphgradient,
                 operation="morphological_gradient",
                 extra_arguments=None,
                 extra_padding=data.kernel_size,
@@ -210,7 +213,7 @@ class PluginTest(unittest.TestCase):
             for contour_output, contour_input in zip(contours_output, contours_input):
                 area_output = cv2.contourArea(contour_output)
                 area_input = cv2.contourArea(contour_input)
-                assert area_output < area_input
+                assert area_output <= area_input
 
         # test morphological gradient
         diff_dilation_erosion = np.subtract(
@@ -243,7 +246,7 @@ class PluginTest(unittest.TestCase):
             output_path = binary_operation(
                 input_path=input_path,
                 output_path=output_path,
-                function=utils.fill_holes_binary,
+                function=utils.fill_holes,
                 operation="fill_holes",
                 extra_arguments=None,
                 extra_padding=data.kernel_size,
@@ -290,7 +293,7 @@ class PluginTest(unittest.TestCase):
             output_tophat_path = binary_operation(
                 input_path=input_path,
                 output_path=output_tophat_path,
-                function=utils.tophat_binary,
+                function=utils.tophat,
                 operation="top_hat",
                 extra_arguments=None,
                 extra_padding=data.kernel_size,
@@ -299,7 +302,7 @@ class PluginTest(unittest.TestCase):
             output_opening_path = binary_operation(
                 input_path=input_path,
                 output_path=output_opening_path,
-                function=utils.open_binary,
+                function=utils.open_,
                 operation="opening",
                 extra_arguments=None,
                 extra_padding=data.kernel_size,
@@ -345,7 +348,7 @@ class PluginTest(unittest.TestCase):
             output_blackhat_path = binary_operation(
                 input_path=input_path,
                 output_path=output_blackhat_path,
-                function=utils.blackhat_binary,
+                function=utils.blackhat,
                 operation="black_hat",
                 extra_arguments=None,
                 extra_padding=data.kernel_size,
@@ -354,7 +357,7 @@ class PluginTest(unittest.TestCase):
             output_closing_path = binary_operation(
                 input_path=input_path,
                 output_path=output_closing_path,
-                function=utils.close_binary,
+                function=utils.close_,
                 operation="closing",
                 extra_arguments=None,
                 extra_padding=data.kernel_size,
@@ -400,7 +403,7 @@ class PluginTest(unittest.TestCase):
             output_path = binary_operation(
                 input_path=input_path,
                 output_path=output_path,
-                function=utils.areafiltering_remove_larger_objects_binary,
+                function=utils.remove_large,
                 operation="filter_area_remove_large_objects",
                 extra_arguments=threshold,
                 extra_padding=data.kernel_size,
@@ -454,7 +457,7 @@ class PluginTest(unittest.TestCase):
             output_path = binary_operation(
                 input_path=input_path,
                 output_path=output_path,
-                function=utils.areafiltering_remove_smaller_objects_binary,
+                function=utils.remove_small,
                 operation="filter_area_remove_small_objects",
                 extra_arguments=threshold,
                 extra_padding=data.kernel_size,

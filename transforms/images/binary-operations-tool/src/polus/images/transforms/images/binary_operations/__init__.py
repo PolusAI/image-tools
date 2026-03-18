@@ -20,3 +20,4 @@ from .utils import remove_large
 from .utils import remove_small
 from .utils import skeletonize
 from .utils import tophat
+from .binops import binary_operation

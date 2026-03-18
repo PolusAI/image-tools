@@ -9,7 +9,6 @@ import cv2
 import numpy
 from bfio import BioReader, BioWriter
 from filepattern import FilePattern
-from preadator import ProcessManager
 
 from .utils import (
     TileTuple,
@@ -135,6 +134,106 @@ def binary_op(
     out_image = OPERATION_DICT[operation](image, kernel=se, n=extra_arguments)
 
     return out_image
+
+
+# Map test operation strings to Operation enum (for kernel/n logic only)
+OPERATION_ALIASES = {
+    "skeleton": Operation.SKELETON,
+    "black_hat": Operation.BLACK_HAT,
+    "top_hat": Operation.TOP_HAT,
+    "closing": Operation.CLOSE,
+    "opening": Operation.OPEN,
+    "dilation": Operation.DILATE,
+    "erosion": Operation.ERODE,
+    "fill_holes": Operation.FILL_HOLES,
+    "morphological_gradient": Operation.MORPHOLOGICAL_GRADIENT,
+    "filter_area_remove_large_objects": Operation.REMOVE_LARGE,
+    "filter_area_remove_small_objects": Operation.REMOVE_SMALL,
+}
+
+
+def binary_operation(
+    *,
+    input_path: Union[str, Path],
+    output_path: Union[str, Path],
+    function,  # callable from utils, same signature as OPERATION_DICT entries
+    operation: str,
+    extra_arguments: Optional[int] = None,
+    extra_padding: int = 3,
+    override: bool = False,
+    structuring_shape: Union[str, StructuringShape] = StructuringShape.ELLIPSE,
+) -> Path:
+    """Run a binary operation on a file. Same kernel/n logic as binary_op."""
+    input_path = Path(input_path)
+    output_path = Path(output_path)
+
+    if not override and output_path.exists():
+        return output_path
+
+    # --- Same parsing as binary_op ---
+    if isinstance(structuring_shape, str):
+        structuring_shape = StructuringShape(structuring_shape)
+    op_enum = OPERATION_ALIASES.get(operation)
+    if op_enum is None:
+        op_enum = Operation.SKELETON
+    kernel = extra_padding
+
+    cv2_struct = getattr(cv2, f"MORPH_{structuring_shape.value.upper()}")
+
+    if op_enum in REQUIRE_STRUCTURING_SHAPE:
+        se = cv2.getStructuringElement(cv2_struct, (kernel, kernel))
+    else:
+        se = None
+
+    if op_enum in [Operation.REMOVE_LARGE, Operation.REMOVE_SMALL]:
+        n = extra_arguments
+    elif op_enum in [Operation.ERODE, Operation.DILATE]:
+        n = extra_arguments if extra_arguments is not None else 1
+    else:
+        n = extra_arguments if extra_arguments is not None else 0
+
+    # --- Read (file layer) ---
+    with BioReader(input_path, backend="python") as br:
+        metadata = br.metadata
+        image = numpy.squeeze(br[:, :, :, 0, 0])
+
+    # --- Binary ops that lose labels: run per label so output preserves labels ---
+    if op_enum in (
+        Operation.CLOSE,
+        Operation.BLACK_HAT,
+        Operation.FILL_HOLES,
+        Operation.SKELETON,
+    ) and image.dtype in (numpy.uint8, numpy.uint16, numpy.uint32):
+        labels = numpy.unique(image)
+        labels = labels[labels > 0]
+        out_image = numpy.zeros_like(image)
+        ## Restricted assignment:
+        restrict_op = op_enum in (Operation.CLOSE, Operation.BLACK_HAT)
+        for label in labels:
+            mask = (image == label).astype(numpy.uint8)
+            filled = function(mask, kernel=se, n=n)
+            if restrict_op:
+                out_image[(filled > 0) & (image == label)] = label
+            else:
+                out_image[filled > 0] = label
+        # --- Same call as binary_op: function(image, kernel=se, n=...) ---
+    else:  
+        out_image = function(image, kernel=se, n=n)
+
+    # --- Write (file layer) ---
+    # Restore 5D for bfio: Y, X, Z, C, T
+    if out_image.ndim == 2:
+        # (Y, X) -> (Y, X, 1, 1, 1)
+        out_image = out_image[:, :, numpy.newaxis, numpy.newaxis, numpy.newaxis]
+    elif out_image.ndim == 3:
+        # (Y, X, Z) -> (Y, X, Z, 1, 1)
+        out_image = out_image[:, :, :, numpy.newaxis, numpy.newaxis]
+
+    with BioWriter(output_path, metadata=metadata, backend="python") as bw:
+        bw.dtype = out_image.dtype
+        bw[:] = out_image
+
+    return output_path
 
 
 def _tile_thread(
