@@ -177,4 +177,4 @@ data
 node_modules
 
 #uv 
-transforms/images/binary-operations-tool/uv.lock
+transforms/images/*/uv.lock
