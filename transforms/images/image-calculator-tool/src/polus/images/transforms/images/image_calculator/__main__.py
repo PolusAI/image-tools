@@ -3,10 +3,10 @@
 import json
 import logging
 import pathlib
+from concurrent.futures import ProcessPoolExecutor
 
 import filepattern
 import typer
-from concurrent.futures import ProcessPoolExecutor
 from polus.images.transforms.images import image_calculator
 
 # Initialize the logger
@@ -122,7 +122,7 @@ def main(  # noqa: PLR0913
                                 match,
                                 out_dir,
                                 operation,
-                            )
+                            ),
                         )
 
         if preview:
