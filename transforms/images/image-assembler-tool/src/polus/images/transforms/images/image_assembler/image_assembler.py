@@ -2,13 +2,14 @@
 
 import logging
 import re
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from math import ceil
 from pathlib import Path
 from typing import Optional
 
 import filepattern as fp
 import numpy as np
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from bfio import BioReader
 from bfio import BioWriter
 
