@@ -1,6 +1,8 @@
-import unittest, json
+import json
+import unittest
 from pathlib import Path
 import urllib.request as request
+from urllib.error import HTTPError, URLError
 
 class VersionTest(unittest.TestCase):
     """ Verify VERSION is correct """
@@ -29,11 +31,13 @@ class VersionTest(unittest.TestCase):
         # Get the plugin version
         with open(self.version_path,'r') as file:
             version = file.readline()
-            
-        response = json.load(request.urlopen(self.url))
+        try:
+            response = json.load(request.urlopen(self.url))
+        except (HTTPError, URLError):
+            self.skipTest("Docker Hub unreachable or returned error (e.g. 403)")
         if len(response['results']) == 0:
             self.fail('Could not find repository or no containers are in the repository.')
-        latest_tag = json.load(response)['results'][0]['name']
+        latest_tag = response['results'][0]['name']
         
         self.assertEqual(latest_tag,version)
 
