@@ -2,12 +2,12 @@ import argparse
 import logging
 import os
 import typing
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from pathlib import Path
 
 from bfio import BioReader, BioWriter
 from filepattern import FilePattern
 import numpy as np
-from preadator import ProcessManager
 
 FILE_EXT = os.environ.get("POLUS_EXT", None)
 FILE_EXT = FILE_EXT if FILE_EXT is not None else ".ome.tif"
@@ -21,61 +21,57 @@ def unshade_images(
     flatfield: np.ndarray,
     darkfield: np.ndarray = None,
 ):
-    with ProcessManager.process():
+    max_workers = 5
+    # Initialize the output
+    X = flatfield.shape[1]
+    Y = flatfield.shape[0]
+    N = len(flist)
 
-        # Initialize the output
-        X = flatfield.shape[1]
-        Y = flatfield.shape[0]
-        N = len(flist)
+    img_stack = np.zeros((N, Y, X), dtype=np.float32)
 
-        img_stack = np.zeros((N, Y, X), dtype=np.float32)
+    # Load the images
+    def load_and_store(fname, ind):
+        with BioReader(fname["file"], max_workers=max_workers) as br:
+            img_stack[ind, ...] = np.squeeze(br[:, :, 0, 0, 0])
 
-        # Load the images
-        def load_and_store(fname, ind):
-            with ProcessManager.thread() as active_threads:
-                with BioReader(fname["file"], max_workers=active_threads.count) as br:
-                    img_stack[ind, ...] = np.squeeze(br[:, :, 0, 0, 0])
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [
+            executor.submit(load_and_store, fname, ind)
+            for ind, fname in enumerate(flist)
+        ]
+        for f in futures:
+            f.result()
 
-        for ind, fname in enumerate(flist):
-            ProcessManager.submit_thread(load_and_store, fname, ind)
+    # Apply flatfield correction
+    if darkfield is not None:
+        img_stack -= darkfield
 
-        ProcessManager.join_threads(5)
+    img_stack /= flatfield
 
-        # Apply flatfield correction
-        if darkfield is not None:
-            img_stack -= darkfield
+    # Save outputs
+    def save_output(fname, ind):
+        with BioReader(fname["file"], max_workers=max_workers) as br:
+            inp_image = fname["file"]
+            extension = "".join(
+                [suffix for suffix in inp_image.suffixes[-2:] if len(suffix) < 6]
+            )
+            out_path = out_dir.joinpath(
+                inp_image.name.replace(extension, FILE_EXT)
+            )
+            with BioWriter(
+                out_path,
+                metadata=br.metadata,
+                max_workers=max_workers,
+            ) as bw:
+                bw[:] = img_stack[ind].astype(bw.dtype)
 
-        img_stack /= flatfield
-
-        # Save outputs
-        def save_output(fname, ind):
-            with ProcessManager.thread() as active_threads:
-                with BioReader(fname["file"], max_workers=active_threads.count) as br:
-
-                    # replace the file name extension if needed
-                    inp_image = fname["file"]
-                    extension = "".join(
-                        [
-                            suffix
-                            for suffix in inp_image.suffixes[-2:]
-                            if len(suffix) < 6
-                        ]
-                    )
-                    out_path = out_dir.joinpath(
-                        inp_image.name.replace(extension, FILE_EXT)
-                    )
-
-                    with BioWriter(
-                        out_path,
-                        metadata=br.metadata,
-                        max_workers=active_threads.count,
-                    ) as bw:
-                        bw[:] = img_stack[ind].astype(bw.dtype)
-
-        for ind, fname in enumerate(flist):
-            ProcessManager.submit_thread(save_output, fname, ind)
-
-        ProcessManager.join_threads(5)
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [
+            executor.submit(save_output, fname, ind)
+            for ind, fname in enumerate(flist)
+        ]
+        for f in futures:
+            f.result()
 
 
 def unshade_batch(
@@ -97,17 +93,19 @@ def unshade_batch(
     if batches[-1] != len(files):
         batches.append(len(files))
 
-    for i_start, i_end in zip(batches[:-1], batches[1:]):
-
-        ProcessManager.submit_process(
-            unshade_images,
-            files[i_start:i_end],
-            out_dir,
-            brightfield_image,
-            darkfield_image,
-        )
-
-    ProcessManager.join_processes()
+    with ProcessPoolExecutor() as executor:
+        futures = [
+            executor.submit(
+                unshade_images,
+                files[i_start:i_end],
+                out_dir,
+                brightfield_image,
+                darkfield_image,
+            )
+            for i_start, i_end in zip(batches[:-1], batches[1:])
+        ]
+        for f in futures:
+            f.result()
 
 
 def main(
@@ -133,9 +131,6 @@ def main(
 
     group_by = [v for v in fp.variables if v not in ff_files.variables]
     GROUPED = group_by + ["file"]
-
-    ProcessManager.init_processes("main", "unshade")
-    logger.info(f"Running with {ProcessManager.num_processes()} processes.")
 
     for files in fp(group_by=group_by):
 
@@ -167,8 +162,6 @@ def main(
             photo_path = None
 
         unshade_batch(files, outDir, flat_path, dark_path, photo_path)
-
-    # ProcessManager.join_processes()
 
 
 if __name__ == "__main__":

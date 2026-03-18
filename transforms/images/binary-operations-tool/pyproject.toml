@@ -5,7 +5,7 @@ requires-python = ">=3.11"
 
 [tool.poetry]
 name = "polus-images-transforms-images-binary-operations"
-version = "0.5.6-dev0"
+version = "0.5.4-dev0"
 description = ""
 authors = ["nicholas-schaub <nick.schaub@nih.gov>", "Madhuri Vihani"]
 readme = "README.md"

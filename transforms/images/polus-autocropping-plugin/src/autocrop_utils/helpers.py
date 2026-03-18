@@ -1,4 +1,3 @@
-"""Helpers for tiles, strips, distograms, gradients, and bounding boxes."""
 from collections.abc import Generator
 from pathlib import Path
 from typing import Optional

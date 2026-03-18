@@ -1,10 +1,19 @@
-import argparse, logging, math, filepattern, time, queue
+import argparse
+import logging
+import math
+import filepattern
+import time
+import queue
+import os
+from concurrent.futures import ProcessPoolExecutor
+from pathlib import Path
 from bfio import BioReader, BioWriter
-import pathlib
-from preadator import ProcessManager
 
-logging.basicConfig(format='%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s',
-                    datefmt='%d-%b-%y %H:%M:%S')
+logging.basicConfig(
+    format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
+    datefmt="%d-%b-%y %H:%M:%S",
+)
+logger = logging.getLogger("main")
 
 # length/width of the chunk each _merge_layers thread processes at once
 chunk_size = 8192
@@ -17,44 +26,46 @@ UNITS = {'m':  10**9,
          'nm': 1,
          'Å':  10**-1}
 
-def _merge_layers(input_files,output_path):
-    
-    with ProcessManager.process(output_path.name):
+def _merge_layers(input_files, output_path):
+    max_workers = max(1, (os.cpu_count() or 4) // 2)
 
-        # Get the number of layers to stack
-        z_size = 0
-        for f in input_files:
-            with BioReader(f['file']) as br:
-                z_size += br.z
-                
-        # Get some basic info about the files to stack
-        with BioReader(input_files[0]['file']) as br:
+    # Get the number of layers to stack
+    z_size = 0
+    for f in input_files:
+        with BioReader(f["file"]) as br:
+            z_size += br.z
 
-            # Get the physical z-distance if available, set to physical x if not
-            ps_z = br.ps_z
-            
-            # If the z-distances are undefined, average the x and y together
-            if None in ps_z:
-                # Get the size and units for x and y
-                x_val,x_units = br.ps_x
-                y_val,y_units = br.ps_y
-                
-                # Convert x and y values to the same units and average
-                z_val = (x_val*UNITS[x_units] + y_val*UNITS[y_units])/2
-                
-                # Set z units to the smaller of the units between x and y
-                z_units = x_units if UNITS[x_units] < UNITS[y_units] else y_units
-                
-                # Convert z to the proper unit scale
-                z_val /= UNITS[z_units]
-                ps_z = (z_val,z_units)
-                ProcessManager.log('Could not find physical z-size. Using the average of x & y {}.'.format(ps_z))
+    # Get some basic info about the files to stack
+    with BioReader(input_files[0]["file"]) as br:
+        # Get the physical z-distance if available, set to physical x if not
+        ps_z = br.ps_z
 
-            # Hold a reference to the metadata once the file gets closed
-            metadata = br.metadata
+        # If the z-distances are undefined, average the x and y together
+        if None in ps_z:
+            # Get the size and units for x and y
+            x_val, x_units = br.ps_x
+            y_val, y_units = br.ps_y
 
-        # Create the output file within a context manager
-        with BioWriter(output_path,metadata=metadata,max_workers=ProcessManager._active_threads) as bw:
+            # Convert x and y values to the same units and average
+            z_val = (x_val * UNITS[x_units] + y_val * UNITS[y_units]) / 2
+
+            # Set z units to the smaller of the units between x and y
+            z_units = x_units if UNITS[x_units] < UNITS[y_units] else y_units
+
+            # Convert z to the proper unit scale
+            z_val /= UNITS[z_units]
+            ps_z = (z_val, z_units)
+            logger.info(
+                "Could not find physical z-size. Using the average of x & y {}.".format(
+                    ps_z
+                )
+            )
+
+        # Hold a reference to the metadata once the file gets closed
+        metadata = br.metadata
+
+    # Create the output file within a context manager
+    with BioWriter(output_path, metadata=metadata, max_workers=max_workers) as bw:
 
             # Adjust the dimensions before writing
             bw.z = z_size
@@ -67,7 +78,7 @@ def _merge_layers(input_files,output_path):
             for file in input_files:
 
                 # Open an image
-                with BioReader(file['file'],max_workers=ProcessManager._active_threads) as br:
+                with BioReader(file["file"], max_workers=max_workers) as br:
 
                     # Open z-layers one at a time
                     for z in range(br.z):
@@ -84,9 +95,10 @@ def _merge_layers(input_files,output_path):
 
                         zi += 1
 
-                # update the BioWriter in case the ProcessManager found more threads
-                bw.max_workers = ProcessManager._active_threads
-                
+                # update the BioWriter max_workers
+                bw.max_workers = max_workers
+
+
 def main(input_dir: pathlib.Path,
          file_pattern: str,
          output_dir: pathlib.Path
@@ -95,14 +107,14 @@ def main(input_dir: pathlib.Path,
     # create the filepattern object
     fp = filepattern.FilePattern(input_dir,file_pattern)
     
-    for files in fp(group_by='z'):
-
-        output_name = fp.output_name(files)
-        output_file = output_dir.joinpath(output_name)
-
-        ProcessManager.submit_process(_merge_layers,files,output_file)
-    
-    ProcessManager.join_processes()
+    with ProcessPoolExecutor() as executor:
+        futures = []
+        for files in fp(group_by="z"):
+            output_name = fp.output_name(files)
+            output_file = output_dir.joinpath(output_name)
+            futures.append(executor.submit(_merge_layers, files, output_file))
+        for f in futures:
+            f.result()
 
 if __name__ == "__main__":
     # Initialize the main thread logger
@@ -126,12 +138,9 @@ if __name__ == "__main__":
         input_dir = input_dir.joinpath("images")
     output_dir = pathlib.Path(args.output_dir)
     file_pattern = args.file_pattern
-    logger.info(f'input_dir = {input_dir}')
-    logger.info(f'output_dir = {output_dir}')
-    logger.info(f'file_pattern = {file_pattern}')
-    logger.info(f'max_threads: {ProcessManager.num_processes()}')
-    
-    ProcessManager.init_processes('main','stack')
+    logger.info(f"input_dir = {input_dir}")
+    logger.info(f"output_dir = {output_dir}")
+    logger.info(f"file_pattern = {file_pattern}")
 
     main(input_dir,
          file_pattern,

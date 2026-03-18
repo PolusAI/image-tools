@@ -19,5 +19,4 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             polusai/remove-border-objects-plugin:${version} \
             --inpDir ${inpDir} \
             --pattern ${pattern} \
-            --outDir ${outDir} 
-            
+            --outDir ${outDir}

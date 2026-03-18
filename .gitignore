@@ -184,6 +184,8 @@ uv.lock
 #husky
 node_modules
 
+#uv 
+transforms/images/*/uv.lock
 
 # uv lockfiles (generated; ignore in all nested projects)
 **/uv.lock

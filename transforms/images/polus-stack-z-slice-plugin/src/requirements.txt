@@ -1,2 +1,1 @@
-filepattern==1.4.7
-preadator==0.2.0
+filepattern>=2.2.1
