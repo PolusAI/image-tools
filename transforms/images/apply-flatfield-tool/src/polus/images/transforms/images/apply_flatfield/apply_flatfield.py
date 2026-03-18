@@ -4,11 +4,11 @@ import logging
 import operator
 import pathlib
 import typing
+from concurrent.futures import ProcessPoolExecutor
 
 import bfio
 import numpy
 import tqdm
-from concurrent.futures import ProcessPoolExecutor
 from filepattern import FilePattern
 
 from . import utils
