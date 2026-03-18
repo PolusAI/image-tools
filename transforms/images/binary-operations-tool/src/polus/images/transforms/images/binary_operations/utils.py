@@ -55,7 +55,11 @@ def erode(image: np.ndarray, kernel: StructuringElement, n: int = 1) -> np.ndarr
     return cv2.erode(image, kernel, iterations=n)
 
 
-def open_(image: np.ndarray, kernel: StructuringElement, _n: int = 1) -> np.ndarray:
+def open_(
+    image: np.ndarray,
+    kernel: StructuringElement,
+    n: int = 1,  # noqa: ARG001
+) -> np.ndarray:
     """Perform a binary opening operation.
 
     The opening operation is similar to running an erosion followed by a dilation.
@@ -71,7 +75,11 @@ def open_(image: np.ndarray, kernel: StructuringElement, _n: int = 1) -> np.ndar
     return cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
 
 
-def close_(image: np.ndarray, kernel: StructuringElement, _n: int = 1) -> np.ndarray:
+def close_(
+    image: np.ndarray,
+    kernel: StructuringElement,
+    n: int = 1,  # noqa: ARG001
+) -> np.ndarray:
     """Perform a binary closing operation.
 
     Closing is similar to running a dilation followed by an erosion.
@@ -90,7 +98,7 @@ def close_(image: np.ndarray, kernel: StructuringElement, _n: int = 1) -> np.nda
 def morphgradient(
     image: np.ndarray,
     kernel: StructuringElement,
-    _n: int = 1,
+    n: int = 1,  # noqa: ARG001
 ) -> np.ndarray:
     """Calculate the morphological gradient.
 
@@ -110,8 +118,8 @@ def morphgradient(
 
 def fill_holes(
     image: np.ndarray,
-    _kernel: StructuringElement | None = None,
-    _n: int = 0,
+    kernel: StructuringElement | None = None,  # noqa: ARG001
+    n: int = 0,  # noqa: ARG001
 ) -> np.ndarray:
     """Fill holes in objects.
 
@@ -143,7 +151,7 @@ def fill_holes(
 def skeletonize(
     image: np.ndarray,
     kernel: StructuringElement,
-    _n: int = 0,
+    n: int = 0,  # noqa: ARG001
 ) -> np.ndarray:
     """Skeletonize objects in an image.
 
@@ -175,7 +183,11 @@ def skeletonize(
     return skel
 
 
-def tophat(image: np.ndarray, kernel: StructuringElement, _n: int = 0) -> np.ndarray:
+def tophat(
+    image: np.ndarray,
+    kernel: StructuringElement,
+    n: int = 0,  # noqa: ARG001
+) -> np.ndarray:
     """Difference between the input image and opening of the image.
 
     Args:
@@ -192,7 +204,7 @@ def tophat(image: np.ndarray, kernel: StructuringElement, _n: int = 0) -> np.nda
 def blackhat(
     image: np.ndarray,
     kernel: StructuringElement | None = None,
-    _n: int = 0,
+    n: int = 0,  # noqa: ARG001
 ) -> np.ndarray:
     """Difference between the closing of the input image and input image.
 
@@ -209,7 +221,7 @@ def blackhat(
 
 def remove_small(
     image: np.ndarray,
-    _kernel: StructuringElement | None = None,
+    kernel: StructuringElement | None = None,  # noqa: ARG001
     n: int = 2,
 ) -> np.ndarray:
     """Remove small objects from the image.
@@ -233,7 +245,7 @@ def remove_small(
 
 def remove_large(
     image: np.ndarray,
-    _kernel: StructuringElement | None = None,
+    kernel: StructuringElement | None = None,  # noqa: ARG001
     n: int = 0,
 ) -> np.ndarray:
     """Remove small objects from the image.
