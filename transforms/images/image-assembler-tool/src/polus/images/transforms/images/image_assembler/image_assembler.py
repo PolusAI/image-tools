@@ -8,9 +8,9 @@ from typing import Optional
 
 import filepattern as fp
 import numpy as np
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from bfio import BioReader
 from bfio import BioWriter
-from preadator import ProcessManager
 
 logging.basicConfig(format="%(name)-8s - %(levelname)-8s - %(message)s")
 logger = logging.getLogger("image-assembler")
@@ -73,9 +73,9 @@ def assemble_images(
     """
     vector_patterns = collect_stitching_vector_patterns(stitch_path)
 
-    with ProcessManager(name="image-assembler", log_level="INFO") as pm:
-        for vector_file, pattern in vector_patterns:
-            pm.submit_process(
+    with ProcessPoolExecutor() as executor:
+        futures = [
+            executor.submit(
                 assemble_image,
                 vector_file,
                 pattern,
@@ -83,7 +83,10 @@ def assemble_images(
                 img_path,
                 output_path,
             )
-        pm.join_processes()
+            for vector_file, pattern in vector_patterns
+        ]
+        for f in futures:
+            f.result()
 
 
 def collect_stitching_vector_patterns(
@@ -277,18 +280,21 @@ def assemble_image(
         # This requires multiple reads and copies and a final write.
         # This is a slow IObound process so it can benefit from multithreading
         # in order to overlap reads/writes.
-        output_name = output_image_path.name
-        with ProcessManager(name="assemble_" + output_name, log_level="INFO") as pm:
-            for row in range(chunk_grid_row):
-                for col in range(chunk_grid_col):
-                    pm.submit_thread(
-                        assemble_chunk,
-                        row,
-                        col,
-                        chunks[row][col],
-                        bw,
-                        img_path,
-                    )
+        with ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(
+                    assemble_chunk,
+                    row,
+                    col,
+                    chunks[row][col],
+                    bw,
+                    img_path,
+                )
+                for row in range(chunk_grid_row)
+                for col in range(chunk_grid_col)
+            ]
+            for f in futures:
+                f.result()
 
 
 def assemble_chunk(
@@ -301,9 +307,6 @@ def assemble_chunk(
     img_path: Path,
 ) -> None:
     """Assemble a chunk of data from all the fovs it overlaps with.
-
-    We pass the BioWriter as an argument to the task because we cannot initialize
-    the process state with preadator.
 
     Args:
         row: row of the chunk in the grid of chunks

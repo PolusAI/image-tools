@@ -5,8 +5,8 @@ import logging
 import pathlib
 
 import filepattern
-import preadator
 import typer
+from concurrent.futures import ProcessPoolExecutor
 from polus.images.transforms.images import image_calculator
 
 # Initialize the logger
@@ -77,14 +77,11 @@ def main(  # noqa: PLR0913
     fp_primary = filepattern.FilePattern(primary_dir, primary_pattern)
     fp_secondary = filepattern.FilePattern(secondary_dir, secondary_pattern)
 
-    with preadator.ProcessManager(
-        name="Image Calculator",
-        num_processes=image_calculator.MAX_WORKERS,
-        threads_per_process=2,
-    ) as manager:
+    with ProcessPoolExecutor(max_workers=image_calculator.MAX_WORKERS) as manager:
         preview_files = []
         group: dict[str, int]
         files: list[pathlib.Path]
+        futures = []
         for group, files in fp_primary():
             for file in files:
                 logger.info(f"Processing {file.name} ...")
@@ -118,19 +115,22 @@ def main(  # noqa: PLR0913
                     match = matches.pop()
 
                     if not preview:
-                        manager.submit_process(
-                            image_calculator.process_image,
-                            file,
-                            match,
-                            out_dir,
-                            operation,
+                        futures.append(
+                            manager.submit(
+                                image_calculator.process_image,
+                                file,
+                                match,
+                                out_dir,
+                                operation,
+                            )
                         )
 
         if preview:
             with out_dir.joinpath("preview.json").open("w") as writer:
                 json.dump({"files": preview_files}, writer)
         else:
-            manager.join_processes()
+            for f in futures:
+                f.result()
 
 
 if __name__ == "__main__":

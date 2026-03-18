@@ -1,33 +1,40 @@
 """Primary functions for performing binary operations."""
 
 import logging
+import os
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Union
+from typing import Callable
+from typing import Optional
+from typing import Union
 
 import cv2
 import numpy
-from bfio import BioReader, BioWriter
+from bfio import BioReader
+from bfio import BioWriter
 from filepattern import FilePattern
 
-from .utils import (
-    TileTuple,
-    blackhat,
-    close_,
-    dilate,
-    erode,
-    fill_holes,
-    invert,
-    iterate_tiles,
-    morphgradient,
-    open_,
-    remove_large,
-    remove_small,
-    skeletonize,
-    tophat,
-)
+from .utils import TileTuple
+from .utils import blackhat
+from .utils import close_
+from .utils import dilate
+from .utils import erode
+from .utils import fill_holes
+from .utils import invert
+from .utils import iterate_tiles
+from .utils import morphgradient
+from .utils import open_
+from .utils import remove_large
+from .utils import remove_small
+from .utils import skeletonize
+from .utils import tophat
 
 logger = logging.getLogger(__name__)
+
+MAX_THREAD_WORKERS = max(1, (os.cpu_count() or 4))
+MAX_PROCESS_WORKERS = max(1, (os.cpu_count() or 4))
 
 
 class Operation(str, Enum):
@@ -66,7 +73,7 @@ REQUIRE_STRUCTURING_SHAPE = [
     Operation.SKELETON,
 ]
 
-OPERATION_DICT = {
+OPERATION_DICT: dict[Operation, Callable[..., numpy.ndarray]] = {
     Operation.INVERT: invert,
     Operation.OPEN: open_,
     Operation.CLOSE: close_,
@@ -82,10 +89,10 @@ OPERATION_DICT = {
 }
 
 
-def binary_op(
+def binary_op(  # noqa: PLR0913
     image: numpy.ndarray,
     operation: Union[Operation, str],
-    structuring_shape: Union[str, StructuringShape] = StructuringShape.ELLIPSE,
+    structuring_shape: Union[str, StructuringShape, int] = StructuringShape.ELLIPSE,
     kernel: int = 3,
     iterations: int = 1,
     threshold: Optional[int] = None,
@@ -109,7 +116,9 @@ def binary_op(
         The image after performing the binary operation.
     """
     # Parse inputs
-    if isinstance(structuring_shape, str):
+    if isinstance(structuring_shape, int):
+        structuring_shape = StructuringShape.ELLIPSE
+    elif isinstance(structuring_shape, str):
         structuring_shape = StructuringShape(structuring_shape)
     if isinstance(operation, str):
         operation = Operation(operation)
@@ -131,9 +140,7 @@ def binary_op(
     else:
         extra_arguments = None
 
-    out_image = OPERATION_DICT[operation](image, kernel=se, n=extra_arguments)
-
-    return out_image
+    return OPERATION_DICT[operation](image, kernel=se, n=extra_arguments)
 
 
 # Map test operation strings to Operation enum (for kernel/n logic only)
@@ -152,11 +159,16 @@ OPERATION_ALIASES = {
 }
 
 
-def binary_operation(
+# bfio array dimensionality for 2D/3D images
+_NDIM_2D = 2
+_NDIM_3D = 3
+
+
+def binary_operation(  # noqa: PLR0912, PLR0913
     *,
     input_path: Union[str, Path],
     output_path: Union[str, Path],
-    function,  # callable from utils, same signature as OPERATION_DICT entries
+    function: Callable[..., numpy.ndarray],
     operation: str,
     extra_arguments: Optional[int] = None,
     extra_padding: int = 3,
@@ -216,16 +228,15 @@ def binary_operation(
                 out_image[(filled > 0) & (image == label)] = label
             else:
                 out_image[filled > 0] = label
-        # --- Same call as binary_op: function(image, kernel=se, n=...) ---
-    else:  
+    else:
         out_image = function(image, kernel=se, n=n)
 
     # --- Write (file layer) ---
     # Restore 5D for bfio: Y, X, Z, C, T
-    if out_image.ndim == 2:
+    if out_image.ndim == _NDIM_2D:
         # (Y, X) -> (Y, X, 1, 1, 1)
         out_image = out_image[:, :, numpy.newaxis, numpy.newaxis, numpy.newaxis]
-    elif out_image.ndim == 3:
+    elif out_image.ndim == _NDIM_3D:
         # (Y, X, Z) -> (Y, X, Z, 1, 1)
         out_image = out_image[:, :, :, numpy.newaxis, numpy.newaxis]
 
@@ -236,45 +247,40 @@ def binary_operation(
     return output_path
 
 
-def _tile_thread(
+def _tile_thread(  # noqa: PLR0913
     filepath: Path,
     window_slice: TileTuple,
     step_slice: TileTuple,
     step_size: int,
     writer: BioWriter,
     operation: Union[Operation, str],
-    structuring_shape: Union[str, StructuringShape] = StructuringShape.ELLIPSE,
+    structuring_shape: Union[str, StructuringShape, int] = StructuringShape.ELLIPSE,
     kernel: int = 3,
     iterations: int = 1,
     threshold: Optional[int] = None,
-):
-    with ProcessManager.thread():
-        with BioReader(filepath) as br:
-            # read a tile of BioReader
-            tile = br[window_slice]
-
-            out_tile = binary_op(
-                image=tile,
-                operation=operation,
-                structuring_shape=structuring_shape,
-                kernel=kernel,
-                iterations=iterations,
-                threshold=threshold,
-            )
-
-            # finalize the output
-            writer[step_slice] = out_tile[0:step_size, 0:step_size]
+) -> None:
+    with BioReader(filepath) as br:
+        tile = br[window_slice]
+        out_tile = binary_op(
+            image=tile,
+            operation=operation,
+            structuring_shape=structuring_shape,
+            kernel=kernel,
+            iterations=iterations,
+            threshold=threshold,
+        )
+        writer[step_slice] = out_tile[0:step_size, 0:step_size]
 
 
-def scalable_binary_op(
+def scalable_binary_op(  # noqa: PLR0913
     filepath: Path,
     out_dir: Path,
     operation: Union[Operation, str],
-    structuring_shape: Union[str, StructuringShape] = StructuringShape.ELLIPSE,
+    structuring_shape: Union[str, StructuringShape, int] = StructuringShape.ELLIPSE,
     kernel: int = 3,
     iterations: int = 1,
     threshold: Optional[int] = None,
-):
+) -> None:
     """Run a binary operation on an arbitrarily sized image.
 
     Use this to run a binary operation on an image that is too large to fit into RAM.
@@ -295,76 +301,80 @@ def scalable_binary_op(
             `remove_small`. When `remove_large`, objects above the threshold are
             removed.Defaults to None.
     """
-    if ProcessManager._thread_executor is None:
-        ProcessManager.init_threads()
-
     if threshold is None:
-        assert kernel is not None, "The kernel size must be a positive number."
+        if kernel is None:
+            msg = "The kernel size must be a positive number."
+            raise ValueError(msg)
         extra_padding = kernel
     else:
         extra_padding = 512
 
-    if operation in [Operation.REMOVE_LARGE, Operation.REMOVE_SMALL]:
-        assert (
-            threshold is not None
-        ), "If removing large or small objects, the threshold value must be set."
+    if (
+        operation in [Operation.REMOVE_LARGE, Operation.REMOVE_SMALL]
+        and threshold is None
+    ):
+        msg = "If removing large or small objects, the threshold value must be set."
+        raise ValueError(
+            msg,
+        )
 
-    # Create the output file path
     out_path = out_dir.joinpath(filepath.name)
 
     with BioReader(filepath) as br:
         metadata = br.metadata
-
-    with BioWriter(out_path, metadata=metadata) as bw:
-        assert br.shape == bw.shape
         bfio_shape: tuple = br.shape
-
         step_size: int = 8 * br._TILE_SIZE
         window_size: int = step_size + (2 * extra_padding)
 
-        for window_slice, step_slice in iterate_tiles(
-            shape=bfio_shape, window_size=window_size, step_size=step_size
-        ):
-            # info on the Slices for debugging
-            ProcessManager.submit_thread(
+    with (
+        BioWriter(out_path, metadata=metadata) as bw,
+        ThreadPoolExecutor(max_workers=MAX_THREAD_WORKERS) as executor,
+    ):
+        futures = [
+            executor.submit(
                 _tile_thread,
-                filepath=filepath,
-                window_slice=window_slice,
-                step_slice=step_slice,
-                step_size=step_size,
-                writer=bw,
-                operation=operation,
-                structuring_shape=structuring_shape,
-                kernel=kernel,
-                iterations=iterations,
-                threshold=threshold,
+                filepath,
+                window_slice,
+                step_slice,
+                step_size,
+                bw,
+                operation,
+                structuring_shape,
+                kernel,
+                iterations,
+                threshold,
             )
+            for window_slice, step_slice in iterate_tiles(
+                shape=bfio_shape,
+                window_size=window_size,
+                step_size=step_size,
+            )
+        ]
+        for fut in futures:
+            fut.result()
 
-        ProcessManager.join_threads()
 
-
-def _batch_process(
+def _batch_process(  # noqa: PLR0913
     filepath: Path,
     out_dir: Path,
     operation: Union[Operation, str],
-    structuring_shape: Union[str, StructuringShape] = StructuringShape.ELLIPSE,
+    structuring_shape: Union[str, StructuringShape, int] = StructuringShape.ELLIPSE,
     kernel: int = 3,
     iterations: int = 1,
     threshold: Optional[int] = None,
-):
-    with ProcessManager.process(filepath.name):
-        scalable_binary_op(
-            filepath=filepath,
-            out_dir=out_dir,
-            operation=operation,
-            structuring_shape=structuring_shape,
-            kernel=kernel,
-            iterations=iterations,
-            threshold=threshold,
-        )
+) -> None:
+    scalable_binary_op(
+        filepath=filepath,
+        out_dir=out_dir,
+        operation=operation,
+        structuring_shape=structuring_shape,
+        kernel=kernel,
+        iterations=iterations,
+        threshold=threshold,
+    )
 
 
-def batch_binary_ops(
+def batch_binary_ops(  # noqa: PLR0913
     inp_dir: Path,
     out_dir: Path,
     operation: str,
@@ -373,7 +383,7 @@ def batch_binary_ops(
     structuring_shape: Union[StructuringShape, int] = StructuringShape.ELLIPSE,
     iterations: int = 1,
     threshold: Optional[int] = None,
-):
+) -> None:
     """Run binary operations on a batch of images.
 
     The inputs are mostly consistent with the `scalable_binary_op` function, except the
@@ -394,26 +404,40 @@ def batch_binary_ops(
             `remove_small`. When `remove_large`, objects above the threshold are
             removed.Defaults to None.
     """
-    ProcessManager.init_processes()
-
     fp = FilePattern(inp_dir, pattern=file_pattern)
+    tasks: list[
+        tuple[
+            Path,
+            Path,
+            str,
+            Union[StructuringShape, int],
+            int,
+            int,
+            Optional[int],
+        ]
+    ] = []
     for _, files in fp():
         for file in files:
-            ProcessManager.submit_process(
-                _batch_process,
-                Path(file),
-                out_dir,
-                operation,
-                structuring_shape,
-                kernel,
-                iterations,
-                threshold,
+            tasks.append(
+                (
+                    Path(file),
+                    out_dir,
+                    operation,
+                    structuring_shape,
+                    kernel,
+                    iterations,
+                    threshold,
+                ),
             )
 
-    if len(ProcessManager._processes) > 0:
-        ProcessManager.join_processes()
-    else:
-        raise RuntimeError(
+    if not tasks:
+        msg = (
             "No data to process. Make sure the input directory is correct "
-            + "and that the filepattern matches files in the input directory."
+            "and that the filepattern matches files in the input directory."
         )
+        raise RuntimeError(msg)
+
+    with ProcessPoolExecutor(max_workers=MAX_PROCESS_WORKERS) as executor:
+        futures = [executor.submit(_batch_process, *t) for t in tasks]
+        for fut in futures:
+            fut.result()
