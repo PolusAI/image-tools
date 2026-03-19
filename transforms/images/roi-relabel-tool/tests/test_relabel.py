@@ -25,7 +25,7 @@ def gen_blobs(length: int, i: int) -> numpy.ndarray:
         length=length,
         blob_size_fraction=0.02,
         volume_fraction=0.1,
-        seed=i,
+        rng=numpy.random.default_rng(i),
     ).astype(numpy.uint32)
 
     return image * (2**i)
