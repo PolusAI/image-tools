@@ -87,6 +87,7 @@ jobs:
   tests:
     name: Test | ${{ matrix.package_name }}
     needs: package-filter
+    timeout-minutes: 30
     if: ${{ needs.package-filter.outputs.num_packages > 0 }}
     strategy:
       fail-fast: false
