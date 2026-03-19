@@ -2,26 +2,31 @@
 import logging
 import math
 import pathlib
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Optional
+from typing import Union
 
 from bfio import BioReader
 from filepattern import FilePattern
 
-from .utils import (
-    DictWriter,
-    VectorWriter,
-    subpattern,
-)
+from .utils import DictWriter
+from .utils import VectorWriter
+from .utils import subpattern
 
 logger = logging.getLogger(__name__)
 
 SPACING = 10
 MULTIPLIER = 4
+DIMS_LEN_TWO = 2
+LAYOUT_MIN_LEN = 1
+LAYOUT_MAX_LEN = 2
 
 
 def _get_xy_index(
-    files: list[dict], dims: str, layout: list[str], flip_axis: List[str]
-):
+    files: list[dict],
+    dims: str,
+    layout: list[str],
+    flip_axis: list[str],
+) -> list[int]:
     """Get the x and y indices from a list of filename dictionaries.
 
     The FilePattern iterate function returns a list of dictionaries containing a
@@ -47,9 +52,9 @@ def _get_xy_index(
     Outputs:
         grid_dims - Dimensions of the grid
     """
-    grid_dims = []
+    grid_dims: list[int] = []
 
-    if len(dims) == 2:
+    if len(dims) == DIMS_LEN_TWO:
         # get row and column vals
         cols = [index[dims[0]] for index, _ in files[1]]
         rows = [index[dims[1]] for index, _ in files[1]]
@@ -101,8 +106,9 @@ def _get_xy_index(
 
 
 def image_position(
-    index: Dict[str, int], layout_dimensions: Dict[str, List]
-) -> Tuple[int, int, int, int]:
+    index: dict[str, int],
+    layout_dimensions: dict[str, list],
+) -> tuple[int, int, int, int]:
     """Calculate the image position in the montage from a set of dimensions.
 
     Args:
@@ -138,16 +144,16 @@ def image_position(
     return pos_x, pos_y, grid_x, grid_y
 
 
-def montage(
+def montage(  # noqa: C901, PLR0912, PLR0913, PLR0915
     pattern: str,
     inp_dir: pathlib.Path,
-    layout_list: List[str],
+    layout_list: list[str],
     out_dir: pathlib.Path,
     image_spacing: int = SPACING,
     grid_spacing: int = MULTIPLIER,
-    flip_axis: List[str] = [],
+    flip_axis: Optional[list[str]] = None,
     file_index: int = -1,
-) -> Optional[Dict[str, Union[int, str]]]:
+) -> Optional[Union[dict[str, Union[int, str]], list[dict[str, Union[str, int]]]]]:
     """Generate montage positions for a collection of images.
 
     This function generates a single stitching vector for a collection of images to
@@ -168,10 +174,12 @@ def montage(
             index value. If set to -1, returns a list of dictionaries indicating file
             positions instead. Defaults to -1.
     """
+    if flip_axis is None:
+        flip_axis = []
     fp = FilePattern(inp_dir, pattern, suppress_warnings=True)
 
     # Layout dimensions, used to calculate positions later on
-    layout_dimensions: Dict[str, list] = {
+    layout_dimensions: dict[str, list] = {
         "grid_size": [
             [] for r in range(len(layout_list))
         ],  # number of tiles in each dimension in the subgrid
@@ -208,10 +216,10 @@ def montage(
 
         # Set the pixel and tile dimensions
         layout_dimensions["tile_size"][len(layout_list) - 1].append(
-            [grid_width, grid_height]
+            [grid_width, grid_height],
         )
         layout_dimensions["size"][len(layout_list) - 1].append(
-            [grid_width * grid_size[0], grid_height * grid_size[1]]
+            [grid_width * grid_size[0], grid_height * grid_size[1]],
         )
 
     # Find the largest subgrid size for the lowest subgrid
@@ -278,17 +286,18 @@ def montage(
     # Build each 2-Dimensional stitching vector plane
     fname = f"img-global-positions-{file_index}.txt"
     logger.debug(f"Building stitching vector {fname}")
-    fpath = str(pathlib.Path(out_dir).joinpath(fname).absolute())
+    fpath = pathlib.Path(out_dir).joinpath(fname).absolute()
 
+    writer_cls: Union[type[DictWriter], type[VectorWriter]]
     if file_index == -1:
-        Writer = DictWriter
+        writer_cls = DictWriter
         logger.debug("Using DictWriter for output")
     else:
-        Writer = VectorWriter
+        writer_cls = VectorWriter
         logger.debug("Using VectorWriter for output")
 
     # Use VectorWriter rather than a file object to prepare for using other formats
-    with Writer(fpath) as fw:
+    with writer_cls(fpath) as fw:
         correlation = 0
         for plane in planes:
             for index, f in plane[1]:
@@ -310,15 +319,19 @@ def montage(
 def generate_montage_patterns(
     pattern: str,
     inp_dir: pathlib.Path,
-    layout_list: List[str],
-) -> List[str]:
+    layout_list: list[str],
+) -> list[str]:
     """Generate filepatterns from an existing filepattern, one for each montage."""
     # Set up the file pattern parser
     fp = FilePattern(inp_dir, pattern)
 
     # Make sure the filepattern contains at least all the grid variables
     for grid in layout_list:
-        assert all(d in fp.get_variables() for d in grid)
+        if not all(d in fp.get_variables() for d in grid):
+            msg = f"Filepattern must contain all layout variables; missing from {grid}"
+            raise ValueError(
+                msg,
+            )
 
     groups = set(fp.get_variables())
     for layout in layout_list:
@@ -330,16 +343,16 @@ def generate_montage_patterns(
 
     sp = []
     for files in planes:
-        sp.append(subpattern(filepattern=pattern, values={k: v for k, v in files[0]}))
+        sp.append(subpattern(filepattern=pattern, values=dict(files[0])))
 
     return sp
 
 
-def montage_all(
+def montage_all(  # noqa: PLR0913
     pattern: str,
     inp_dir: pathlib.Path,
-    layout: List[str],
-    flip_axis: List[str],
+    layout: list[str],
+    flip_axis: list[str],
     out_dir: pathlib.Path,
     image_spacing: int = SPACING,
     grid_spacing: int = MULTIPLIER,
@@ -347,12 +360,13 @@ def montage_all(
     """Montage all images."""
     # Make sure each grid layer has 1 or 2 values
     for lt in layout:
-        if len(lt) > 2 or len(lt) < 1:
+        if len(lt) > LAYOUT_MAX_LEN or len(lt) < LAYOUT_MIN_LEN:
             logger.error(
-                "Each layout subgrid must have one or two variables assigned to it."
+                "Each layout subgrid must have one or two variables assigned to it.",
             )
+            msg = "Each layout subgrid must have one or two variables assigned to it."
             raise ValueError(
-                "Each layout subgrid must have one or two variables assigned to it."
+                msg,
             )
 
     patterns = generate_montage_patterns(pattern, inp_dir, layout)

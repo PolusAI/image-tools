@@ -1,10 +1,13 @@
 """Utilities for the image montaging utility."""
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Optional
+from typing import Union
+
+CLASSIC_VALUE_LEN = 2
 
 
-def subpattern(filepattern: str, values: Dict[str, Union[int, str]]) -> str:
+def subpattern(filepattern: str, values: dict[str, Union[int, str]]) -> str:
     """Generate a filepattern, replacing variables with defined values.
 
     This function takes in a filepattern and defined static values, generating a new
@@ -40,7 +43,7 @@ def subpattern(filepattern: str, values: Dict[str, Union[int, str]]) -> str:
         if variable in values:
             new_value = str(values[variable])
 
-            if not (len(value) == 2 and value[1] == "+"):
+            if not (len(value) == CLASSIC_VALUE_LEN and value[1] == "+"):
                 new_value = new_value.zfill(len(value))
             filepattern = filepattern.replace(match.group(0), new_value)
 
@@ -52,7 +55,7 @@ class VectorWriter:
 
     string = "file: {}; corr: {}; position: ({}, {}); grid: ({}, {});\n"
 
-    def __init__(self, path: Path):
+    def __init__(self, path: Path) -> None:
         """Initialize a stitching vector writer.
 
         Args:
@@ -61,11 +64,10 @@ class VectorWriter:
         self.fh = path
 
     def __enter__(self):  # noqa
-        self.fo = open(self.fh, "w")
-
+        self.fo = Path(self.fh).open("w")
         return self
 
-    def write(
+    def write(  # noqa: PLR0913
         self,
         file_name: str,
         correlation: str,
@@ -85,7 +87,7 @@ class VectorWriter:
             grid_y: The y-grid position.
         """
         self.fo.write(
-            self.string.format(file_name, correlation, pos_x, pos_y, grid_x, grid_y)
+            self.string.format(file_name, correlation, pos_x, pos_y, grid_x, grid_y),
         )
 
     def __exit__(self, exc_type, exc_val, exc_tb):  # noqa
@@ -98,20 +100,20 @@ class VectorWriter:
 class DictWriter:
     """A dictionary writer for stitching vectors."""
 
-    def __init__(self, path: Optional[Path] = None):
+    def __init__(self, _path: Optional[Path] = None) -> None:
         """Initialize a dictionary vector writer.
 
         The primary purpose of this is for in-memory abstraction of a stitching vector.
 
         Args:
-            path: Not used for this writer.
+            _path: Not used for this writer (kept for API compatibility).
         """
-        self.fh: List[Dict[str, Union[str, int]]] = []
+        self.fh: list[dict[str, Union[str, int]]] = []
 
     def __enter__(self):  # noqa
         return self
 
-    def write(
+    def write(  # noqa: PLR0913
         self,
         file_name: str,
         correlation: str,
@@ -130,7 +132,7 @@ class DictWriter:
             grid_x: The x-grid position.
             grid_y: The y-grid position.
         """
-        data: Dict[str, Union[str, int]] = {
+        data: dict[str, Union[str, int]] = {
             "file_name": file_name,
             "correlation": correlation,
             "pox_x": pos_x,
