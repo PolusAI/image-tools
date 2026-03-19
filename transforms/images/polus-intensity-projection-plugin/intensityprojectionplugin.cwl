@@ -20,7 +20,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/intensity-projection-plugin:0.1.9
+    dockerPull: polusai/intensity-projection-plugin:0.1.10
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)

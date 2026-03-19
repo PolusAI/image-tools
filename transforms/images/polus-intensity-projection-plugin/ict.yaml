@@ -1,7 +1,7 @@
 author:
 - Gauhar Bains
 contact: gauhar.bains@labshare.org
-container: polusai/intensity-projection-plugin:0.1.9
+container: polusai/intensity-projection-plugin:0.1.10
 description: Calculate volumetric intensity projections
 entrypoint: '[python3, main.py]'
 inputs:
@@ -41,4 +41,4 @@ ui:
   key: inputs.projectionType
   title: Projection Type
   type: select
-version: 0.1.9
+version: 0.1.10
