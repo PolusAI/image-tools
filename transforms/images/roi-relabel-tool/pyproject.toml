@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-transforms-images-roi-relabel"
-version = "0.2.5"
+version = "0.2.6-dev0"
 description = ""
 authors = ["Najib Ishaq <najib.ishaq@nih.gov>"]
 readme = "README.md"
