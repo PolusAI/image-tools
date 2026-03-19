@@ -30,8 +30,8 @@ def get_output_name(
     # Try to infer a filename
     try:
         fp = filepattern.FilePattern(
-            path=str(image_paths[0].parent),
-            pattern=filepattern.infer_pattern(
+            str(image_paths[0].parent),
+            filepattern.infer_pattern(
                 files=[path.name for path in image_paths],
             ),
         )
