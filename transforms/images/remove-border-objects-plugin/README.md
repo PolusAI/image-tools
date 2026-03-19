@@ -1,6 +1,6 @@
 # Remove border objects
 
-**Version:** v0.1.1
+**Version:** v0.1.2
 
 Remove border objects plugin clear objects which touch image borders and squentially relabelling of image objects
 
