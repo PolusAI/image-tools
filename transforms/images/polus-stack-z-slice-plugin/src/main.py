@@ -1,13 +1,16 @@
+"""CLI entrypoint: stack tiled TIFF slices into a single volumetric OME-TIFF."""
+from __future__ import annotations
+
 import argparse
 import logging
-import math
-import filepattern
-import time
-import queue
 import os
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
-from bfio import BioReader, BioWriter
+from typing import Any
+
+import filepattern
+from bfio import BioReader
+from bfio import BioWriter
 
 logging.basicConfig(
     format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
@@ -19,14 +22,18 @@ logger = logging.getLogger("main")
 chunk_size = 8192
 
 # Units for conversion
-UNITS = {'m':  10**9,
-         'cm': 10**7,
-         'mm': 10**6,
-         'µm': 10**3,
-         'nm': 1,
-         'Å':  10**-1}
+UNITS = {
+    "m": 10**9,
+    "cm": 10**7,
+    "mm": 10**6,
+    "µm": 10**3,
+    "nm": 1,
+    "Å": 10**-1,
+}
 
-def _merge_layers(input_files, output_path):
+
+def _merge_layers(input_files: list[dict[str, Any]], output_path: Path) -> None:
+    """Stack input BioFormats files along Z and write a single OME-TIFF."""
     max_workers = max(1, (os.cpu_count() or 4) // 2)
 
     # Get the number of layers to stack
@@ -57,8 +64,8 @@ def _merge_layers(input_files, output_path):
             ps_z = (z_val, z_units)
             logger.info(
                 "Could not find physical z-size. Using the average of x & y {}.".format(
-                    ps_z
-                )
+                    ps_z,
+                ),
             )
 
         # Hold a reference to the metadata once the file gets closed
@@ -66,47 +73,48 @@ def _merge_layers(input_files, output_path):
 
     # Create the output file within a context manager
     with BioWriter(output_path, metadata=metadata, max_workers=max_workers) as bw:
+        # Adjust the dimensions before writing
+        bw.z = z_size
+        bw.ps_z = ps_z
 
-            # Adjust the dimensions before writing
-            bw.z = z_size
-            bw.ps_z = ps_z
+        # ZIndex tracking for the output file
+        zi = 0
 
-            # ZIndex tracking for the output file
-            zi = 0
+        # Start stacking
+        for file in input_files:
+            # Open an image
+            with BioReader(file["file"], max_workers=max_workers) as br:
+                # Open z-layers one at a time
+                for z in range(br.z):
+                    # Use tiled reading in x&y to conserve memory
+                    # At most, [chunk_size, chunk_size] pixels are loaded
+                    for xs in range(0, br.x, chunk_size):
+                        xe = min([br.x, xs + chunk_size])
 
-            # Start stacking
-            for file in input_files:
+                        for ys in range(0, br.y, chunk_size):
+                            ye = min([br.y, ys + chunk_size])
 
-                # Open an image
-                with BioReader(file["file"], max_workers=max_workers) as br:
+                            bw[ys:ye, xs:xe, zi : zi + 1, ...] = br[
+                                ys:ye,
+                                xs:xe,
+                                z : z + 1,
+                                ...,
+                            ]
 
-                    # Open z-layers one at a time
-                    for z in range(br.z):
+                    zi += 1
 
-                        # Use tiled reading in x&y to conserve memory
-                        # At most, [chunk_size, chunk_size] pixels are loaded
-                        for xs in range(0,br.x,chunk_size):
-                            xe = min([br.x,xs + chunk_size])
-
-                            for ys in range(0,br.y,chunk_size):
-                                ye = min([br.y,ys + chunk_size])
-
-                                bw[ys:ye,xs:xe,zi:zi+1,...] = br[ys:ye,xs:xe,z:z+1,...]
-
-                        zi += 1
-
-                # update the BioWriter max_workers
-                bw.max_workers = max_workers
+            # update the BioWriter max_workers
+            bw.max_workers = max_workers
 
 
-def main(input_dir: pathlib.Path,
-         file_pattern: str,
-         output_dir: pathlib.Path
-         ) -> None:
-    
+def main(input_dir: Path, file_pattern: str, output_dir: Path) -> None:
+    """Group input files by Z via filepattern.
+
+    Merge each group in a worker process.
+    """
     # create the filepattern object
-    fp = filepattern.FilePattern(input_dir,file_pattern)
-    
+    fp = filepattern.FilePattern(input_dir, file_pattern)
+
     with ProcessPoolExecutor() as executor:
         futures = []
         for files in fp(group_by="z"):
@@ -116,32 +124,52 @@ def main(input_dir: pathlib.Path,
         for f in futures:
             f.result()
 
+
 if __name__ == "__main__":
     # Initialize the main thread logger
-    logger = logging.getLogger('main')
+    logger = logging.getLogger("main")
     logger.setLevel(logging.INFO)
 
     # Setup the Argument parsing
-    logger.info('Parsing arguments...')
-    parser = argparse.ArgumentParser(prog='main', description='Compile individual tiled tiff images into a single volumetric tiled tiff.')
+    logger.info("Parsing arguments...")
+    parser = argparse.ArgumentParser(
+        prog="main",
+        description=(
+            "Compile individual tiled TIFF images into a single volumetric "
+            "tiled TIFF."
+        ),
+    )
 
-    parser.add_argument('--inpDir', dest='input_dir', type=str,
-                        help='Path to folder with tiled tiff files', required=True)
-    parser.add_argument('--outDir', dest='output_dir', type=str,
-                        help='The output directory for ome.tif files', required=True)
-    parser.add_argument('--filePattern', dest='file_pattern', type=str,
-                        help='A filename pattern specifying variables in filenames.', required=True)
+    parser.add_argument(
+        "--inpDir",
+        dest="input_dir",
+        type=str,
+        help="Path to folder with tiled tiff files",
+        required=True,
+    )
+    parser.add_argument(
+        "--outDir",
+        dest="output_dir",
+        type=str,
+        help="The output directory for ome.tif files",
+        required=True,
+    )
+    parser.add_argument(
+        "--filePattern",
+        dest="file_pattern",
+        type=str,
+        help="A filename pattern specifying variables in filenames.",
+        required=True,
+    )
 
     args = parser.parse_args()
-    input_dir = pathlib.Path(args.input_dir)
+    input_dir = Path(args.input_dir)
     if input_dir.joinpath("images").is_dir():
         input_dir = input_dir.joinpath("images")
-    output_dir = pathlib.Path(args.output_dir)
+    output_dir = Path(args.output_dir)
     file_pattern = args.file_pattern
     logger.info(f"input_dir = {input_dir}")
     logger.info(f"output_dir = {output_dir}")
     logger.info(f"file_pattern = {file_pattern}")
 
-    main(input_dir,
-         file_pattern,
-         output_dir)
+    main(input_dir, file_pattern, output_dir)
