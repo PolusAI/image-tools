@@ -4,10 +4,11 @@ import os
 from pathlib import Path
 from typing import List, Tuple
 
+import os
 import numpy
+from concurrent.futures import ThreadPoolExecutor
 from bfio import BioReader
 from bfio import BioWriter
-from preadator import ProcessManager
 
 import ftl
 from ftl_rust import PolygonSet
@@ -64,46 +65,45 @@ def filter_by_size(file_paths: List[Path], size_threshold: int) -> Tuple[List[Pa
 
 
 def label_cython(input_path: Path, output_path: Path, connectivity: int):
-    """ Label the input image and writes labels back out.
+    """Label the input image and writes labels back out.
 
     Args:
         input_path: Path to input image.
         output_path: Path for output image.
         connectivity: Connectivity kind.
     """
-    with ProcessManager.thread() as active_threads:
-        with BioReader(
-            input_path,
-            max_workers=active_threads.count,
-        ) as reader:
+    max_workers = max(1, (os.cpu_count() or 4) // 2)
+    with BioReader(input_path, max_workers=max_workers) as reader:
+        with BioWriter(
+            output_path,
+            max_workers=max_workers,
+            metadata=reader.metadata,
+        ) as writer:
+            # Load an image and convert to binary
+            image = numpy.squeeze(reader[..., 0, 0])
 
-            with BioWriter(
-                output_path,
-                max_workers=active_threads.count,
-                metadata=reader.metadata,
-            ) as writer:
-                # Load an image and convert to binary
-                image = numpy.squeeze(reader[..., 0, 0])
+            if not numpy.any(image):
+                writer.dtype = numpy.uint8
+                writer[:] = numpy.zeros_like(image, dtype=numpy.uint8)
+                return True
 
-                if not numpy.any(image):
-                    writer.dtype = numpy.uint8
-                    writer[:] = numpy.zeros_like(image, dtype=numpy.uint8)
-                    return
+            image = image > 0
+            if connectivity > image.ndim:
+                logger.warning(
+                    "%s: Connectivity is not less than or equal to the number of image dimensions, "
+                    "skipping this image. connectivity=%s, ndim=%s",
+                    input_path.name,
+                    connectivity,
+                    image.ndim,
+                )
+                return False
 
-                image = (image > 0)
-                if connectivity > image.ndim:
-                    ProcessManager.log(
-                        f'{input_path.name}: Connectivity is not less than or equal to the number of image dimensions, '
-                        f'skipping this image. connectivity={connectivity}, ndim={image.ndim}'
-                    )
-                    return
+            # Run the labeling algorithm
+            labels = ftl.label_nd(image, connectivity)
 
-                # Run the labeling algorithm
-                labels = ftl.label_nd(image, connectivity)
-
-                # Save the image
-                writer.dtype = labels.dtype
-                writer[:] = labels
+            # Save the image
+            writer.dtype = labels.dtype
+            writer[:] = labels
     return True
 
 
@@ -146,30 +146,33 @@ if __name__ == "__main__":
     assert _output_dir.exists(), f'{_output_dir } does not exist.'
     logger.info(f'outDir = {_output_dir}')
 
-    # We only need a thread manager since labeling and image reading/writing
-    # release the gil
-    ProcessManager.init_threads()
-
     # Get all file names in inpDir image collection
-    _files = list(filter(
-        lambda _file: _file.is_file() and _file.name.endswith('.ome.tif'),
-        _input_dir.iterdir()
-    ))
+    _files = list(
+        filter(
+            lambda _file: _file.is_file() and _file.name.endswith(".ome.tif"),
+            _input_dir.iterdir(),
+        )
+    )
     _small_files, _large_files = filter_by_size(_files, 500)
 
-    logger.info(f'processing {len(_files)} images in total...')
-    logger.info(f'processing {len(_small_files)} small images with cython...')
-    logger.info(f'processing {len(_large_files)} large images with rust')
+    logger.info("processing %s images in total...", len(_files))
+    logger.info("processing %s small images with cython...", len(_small_files))
+    logger.info("processing %s large images with rust", len(_large_files))
 
     if _small_files:
-        for _infile in _small_files:
-            ProcessManager.submit_thread(
-                label_cython,
-                _infile,
-                _output_dir.joinpath(get_output_name(_infile.name)),
-                _connectivity,
-            )
-        ProcessManager.join_threads()
+        max_workers = max(1, (os.cpu_count() or 4) // 2)
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [
+                executor.submit(
+                    label_cython,
+                    _infile,
+                    _output_dir.joinpath(get_output_name(_infile.name)),
+                    _connectivity,
+                )
+                for _infile in _small_files
+            ]
+            for f in futures:
+                f.result()
 
     if _large_files:
         for _infile in _large_files:
