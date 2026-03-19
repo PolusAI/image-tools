@@ -1,6 +1,6 @@
 [project]
 name = "polus-image-registration-plugin"
-version = "0.3.5"
+version = "0.3.6"
 description = "This plugin registers an image collection"
 requires-python = ">=3.13"
 dependencies = [
