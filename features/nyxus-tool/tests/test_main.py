@@ -11,8 +11,7 @@ from typer.testing import CliRunner
 from polus.images.features.nyxus_tool.__main__ import app
 from polus.images.features.nyxus_tool.nyxus_func import (
     run_nyxus_object_features,
-    run_nyxus_whole_image_features,
-    _write_features,
+    run_nyxus_whole_image_features
 )
 
 runner = CliRunner()
