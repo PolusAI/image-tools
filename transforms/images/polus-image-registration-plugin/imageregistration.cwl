@@ -36,7 +36,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/image-registration-plugin:0.3.5
+    dockerPull: polusai/image-registration-plugin:0.3.6
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)
