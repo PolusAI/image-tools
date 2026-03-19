@@ -2,4 +2,3 @@ Cython>=3.0.0
 numpy>=2.4.3
 bfio[all]>=2.5.0
 filepattern>=2.2.1
-

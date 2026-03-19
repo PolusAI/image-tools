@@ -35,7 +35,7 @@ WORKDIR ${EXEC_DIR}
 
 RUN pip3 install -r ${EXEC_DIR}/src/requirements.txt --no-cache-dir \
     && pip3 install -r rust_requirements.txt --no-cache-dir \
-    && python3 rust_setup.py install
+    && python3 src/rust_setup.py install
 
 WORKDIR ${EXEC_DIR}/src
 

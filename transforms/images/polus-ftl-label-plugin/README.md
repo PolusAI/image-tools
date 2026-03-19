@@ -31,7 +31,7 @@ To see detailed documentation for the `Rust` implementation you need to:
 That last command will generate documentation and open a new tab in your default web browser.
 
 We determine whether to use the `Cython` or `Rust` implementation on a per-image basis depending on the size of that image.
-If we expect the image to occupy less than `500MB` of memory, we use the `Cython` implementation otherwise we use the `Rust` implementation. 
+If we expect the image to occupy less than `500MB` of memory, we use the `Cython` implementation otherwise we use the `Rust` implementation.
 
 For more information on WIPP, visit the
 [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
@@ -83,7 +83,7 @@ docker run -v ${PWD}:/$basedir labshare/polus-ftl-label-plugin:0.3.10 \
 # View the results using bfio and matplotlib
 # Let's run directly on the host since we just need the python backend.
 pip install bfio==2.1.9 matplotlib==3.5.1
-python3 SimpleTiledTiffViewer.py --inpDir images_ome/ --outDir output/
+python3 src/simple_tiled_tiff_viewer.py --inpDir images_ome/ --outDir output/
 ```
 
 **NOTE:**
