@@ -1,6 +1,6 @@
 {
   "name": "Autocropping",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "title": "Autocropping",
   "description": "Automatically remove noise and other useless sections from images.",
   "author": "Najib Ishaq (najib.ishaq@axleinfo.com)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/PolusAI/polus-plugins/transforms/images/polus-autocropping-plugin",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/autocropping-plugin:1.0.2",
+  "containerId": "polusai/autocropping-plugin:1.0.3",
   "inputs": [
     {
       "name": "inputDir",
