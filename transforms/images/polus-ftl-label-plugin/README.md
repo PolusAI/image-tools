@@ -75,7 +75,7 @@ docker run -v ${PWD}:/$basedir labshare/polus-tiledtiff-converter-plugin:1.1.0 \
 
 # Run the FTL label plugin
 mkdir output
-docker run -v ${PWD}:/$basedir labshare/polus-ftl-label-plugin:0.3.10 \
+docker run -v ${PWD}:/$basedir labshare/polus-ftl-label-plugin:0.3.11 \
 --inpDir /$basedir/"images_ome/" \
 --outDir /$basedir/"output/" \
 --connectivity 1
