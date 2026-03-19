@@ -1,9 +1,10 @@
+"""Constants for autocropping (logging, threading, distogram, gradient)."""
 import logging
 import os
 from multiprocessing import cpu_count
 
-POLUS_LOG = getattr(logging, os.environ.get('POLUS_LOG', 'INFO'))
-POLUS_EXT = os.environ.get('POLUS_EXT', '.ome.tif')
+POLUS_LOG = getattr(logging, os.environ.get("POLUS_LOG", "INFO"))
+POLUS_EXT = os.environ.get("POLUS_EXT", ".ome.tif")
 
 NUM_THREADS = max(1, int(cpu_count() * 0.8))
 TILE_STRIDE = 1024 * 2  # TODO: Measure impact of making this larger

@@ -14,3 +14,10 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.mypy]
+python_version = "3.13"
+# Package lives under src/ (autocrop_utils avoids clash with repo-root utils/)
+mypy_path = "src"
+explicit_package_bases = true
+namespace_packages = true
