@@ -178,3 +178,7 @@ data
 
 #husky
 node_modules
+
+
+# uv lockfiles (generated; ignore in all nested projects)
+**/uv.lock
