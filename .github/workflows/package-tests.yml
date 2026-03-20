@@ -2,15 +2,9 @@ name: Package tests
 
 on:
   pull_request:
-    branches:
-      - main
-      - master
-      - dev
+    branches: [main, master, dev]
   push:
-    branches-ignore:
-      - main
-      - master
-      - dev
+    branches-ignore: [main, master, dev]
   workflow_call:
 
 permissions:
@@ -33,26 +27,30 @@ jobs:
       matrix: ${{ fromJson(needs.package-filter.outputs.matrix) }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install Poetry
-        uses: abatilo/actions-poetry@v2
-      - name: Install pre-commit
-        run: |
-          pip install pre-commit
-      - name: Run pre-commit hooks and check for changes
+
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Install and run pre-commit
         run: |
           cd "${{ matrix.package_dir }}"
+          uv sync --all-extras
+          uv run pre-commit run \
+            --from-ref ${{ github.event.pull_request.base.sha || github.event.before }} \
+            --to-ref ${{ github.event.pull_request.head.sha || github.sha }}
 
-          poetry run pre-commit run --files ./**/**
-          if [[ $(git status --porcelain) ]]
-          then
-            echo "::error::pre-commit hooks failed for ${{ matrix.package_name }}" && exit 1
-          fi
+      - name: Show dirty files (if pre-commit failed)
+        if: failure()
+        run: |
+          cd "${{ matrix.package_dir }}"
+          git status --porcelain
+          git diff
 
   docker:
     name: Docker | Build ${{ matrix.package_name }}
@@ -63,92 +61,70 @@ jobs:
       matrix: ${{ fromJson(needs.package-filter.outputs.matrix) }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Check if Dockerfile exists
-        id: check_dockerfile
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Docker | Build Image
         run: |
-          if [ -f "${{ matrix.package_dir }}/Dockerfile" ]; then
-            echo "Dockerfile exists"
-            echo "dockerfile_exists=true" >> $GITHUB_ENV
-          else
-            echo "Dockerfile does not exist"
-            echo "dockerfile_exists=false" >> $GITHUB_ENV
+          if [ ! -f "${{ matrix.package_dir }}/Dockerfile" ]; then
+            echo "No Dockerfile found, skipping"
+            exit 0
           fi
-      - name: Docker | Tag
-        id: docker_tag
-        if: env.dockerfile_exists == 'true'
-        run: |
           version=$(cat ${{ matrix.package_dir }}/VERSION)
           tag=polusai/${{ matrix.package_name }}:${version}
-          echo "tag will be ${tag}"
-          echo "tag=${tag}" >> $GITHUB_OUTPUT
-      - name: Docker | Setup Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Docker | Check if Image exists
-        if: env.dockerfile_exists == 'true'
-        run: |
-          tag=${{ steps.docker_tag.outputs.tag }}
           docker pull ${tag} > /dev/null \
-              && $(echo "::error::${tag} already exists on DockerHub" && exit 1) \
-              || echo "success"
-      - name: Docker | Build Image
-        if: env.dockerfile_exists == 'true'
-        run: |
+            && (echo "::error::${tag} already exists on DockerHub" && exit 1) \
+            || echo "Image does not exist, safe to build"
           cp .gitignore ${{ matrix.package_dir }}/.dockerignore
           cd "${{ matrix.package_dir }}"
           if [ -f "build-docker.sh" ]; then
             bash build-docker.sh
           else
-            docker build . -t ${{ steps.docker_tag.outputs.tag }}
+            docker build . -t ${tag}
           fi
-          bash build-docker.sh
-        # docker buildx build --platform linux/amd64,linux/arm64 -t ${tag} --push .
 
   tests:
     name: Test | ${{ matrix.package_name }}
     needs: package-filter
+    timeout-minutes: 30
     if: ${{ needs.package-filter.outputs.num_packages > 0 }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.package-filter.outputs.matrix) }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           lfs: true
-      - name: Set up Python
-        uses: actions/setup-python@v5
+
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install Conda
-        uses: conda-incubator/setup-miniconda@v2
+
       - name: Run tests with conda
-        run: |
-          package_dir=${{ matrix.package_dir }}
-          cd $package_dir
-          if [ -f "environment.yml" ]; then
-            conda init bash
-            source ~/.bashrc
-            conda env create -f environment.yml
-            conda activate project_env
-            pip install -e ".[all]"
-            conda install pytest
-            python -X faulthandler -m pytest -v -p no:faulthandler
-            echo "conda_installed=true" >> $GITHUB_ENV
-          else
-            echo "conda_installed=false" >> $GITHUB_ENV
-          fi
-      - name: Install Poetry
-        uses: abatilo/actions-poetry@v2
-      - name: Run tests with poetry
-        if: env.conda_installed == 'false'
-        run: |
-          poetry config virtualenvs.create false
+        if: ${{ hashFiles(format('{0}/environment.yml', matrix.package_dir)) != '' }}
+        uses: conda-incubator/setup-miniconda@v2
 
-          package_dir=${{ matrix.package_dir }}
-          cd $package_dir
-
-          poetry install
+      - name: Run tests with conda
+        if: ${{ hashFiles(format('{0}/environment.yml', matrix.package_dir)) != '' }}
+        shell: bash -l {0}
+        run: |
+          cd ${{ matrix.package_dir }}
+          conda env create -f environment.yml
+          conda activate project_env
+          pip install -e ".[all]"
+          conda install pytest -y
           python -X faulthandler -m pytest -v -p no:faulthandler
+
+      - name: Run tests with uv
+        if: ${{ hashFiles(format('{0}/environment.yml', matrix.package_dir)) == '' }}
+        uses: astral-sh/setup-uv@v4
+
+      - name: Run tests with uv
+        if: ${{ hashFiles(format('{0}/environment.yml', matrix.package_dir)) == '' }}
+        run: |
+          cd ${{ matrix.package_dir }}
+          uv sync --all-extras || uv pip install -e ".[all]"
+          uv pip install pytest
+          uv run python -X faulthandler -m pytest -v -p no:faulthandler
