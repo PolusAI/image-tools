@@ -1,6 +1,6 @@
 [project]
 name = "polus-intensity-projection-plugin"
-version = "0.1.9"
+version = "0.1.10"
 description = "Calculate volumetric intensity projections"
 requires-python = ">=3.13"
 dependencies = [
