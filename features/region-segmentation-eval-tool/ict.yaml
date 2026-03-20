@@ -1,0 +1,126 @@
+author:
+- Vishakha Goyal
+- Hamdah Shafqat
+contact: vishakha.goyal@nih.gov
+container: polusai/region-segmentation-eval-tool:0.2.5-dev0
+description: Plugin to generate evaluation metrics for region-wise comparison of ground
+  truth and predicted images.
+entrypoint: python3 -m polus.images.features.region_segmentation_eval
+inputs:
+- description: Ground truth input image collection to be processed by this plugin.
+  format:
+  - collection
+  name: gtDir
+  required: true
+  type: path
+- description: Predicted input image collection to be processed by this plugin.
+  format:
+  - collection
+  name: predDir
+  required: true
+  type: path
+- description: Number of classes.
+  format:
+  - number
+  name: inputClasses
+  required: true
+  type: number
+- description: Boolean to calculate individual image statistics.Default is false.
+  format:
+  - boolean
+  name: individualData
+  required: false
+  type: boolean
+- description: Boolean to calculate summary of individual images.Default is false.
+  format:
+  - boolean
+  name: individualSummary
+  required: false
+  type: boolean
+- description: Boolean to calculate overall statistics across all images.Default is
+    false.
+  format:
+  - boolean
+  name: totalStats
+  required: false
+  type: boolean
+- description: Boolean to calculate summary across all images.Default is false.
+  format:
+  - boolean
+  name: totalSummary
+  required: false
+  type: boolean
+- description: Importance of radius/diameter to find centroid distance. Should be
+    between (0,2]. Default is 0.5.
+  format:
+  - string
+  name: radiusFactor
+  required: false
+  type: string
+- description: IoU theshold. Default is 0.
+  format:
+  - string
+  name: iouScore
+  required: false
+  type: string
+- description: Filename pattern to filter data.
+  format:
+  - string
+  name: filePattern
+  required: false
+  type: string
+name: polusai/RegionSegmentationEval
+outputs:
+- description: Output collection
+  format:
+  - genericData
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/polusai/polus-plugins
+specVersion: 1.0.0
+title: Region Segmentation Eval
+ui:
+- description: Ground truth input image collection to be processed by this plugin.
+  key: inputs.gtDir
+  title: Ground Truth Images
+  type: path
+- description: Predicted input image collection to be processed by this plugin.
+  key: inputs.predDir
+  title: Predicted Images
+  type: path
+- description: Number of classes.
+  key: inputs.inputClasses
+  title: Number of Classes
+  type: number
+- description: Boolean to calculate individual image statistics.Default is false.
+  key: inputs.individualData
+  title: Individual Image Data
+  type: checkbox
+- description: Boolean to calculate summary of individual images.Default is false.
+  key: inputs.individualSummary
+  title: Individual Image Summary
+  type: checkbox
+- description: Boolean to calculate overall statistics across all images.Default is
+    false.
+  key: inputs.totalStats
+  title: Total Statistics
+  type: checkbox
+- description: Boolean to calculate summary across all images.Default is false.
+  key: inputs.totalSummary
+  title: Summary for all Images
+  type: checkbox
+- description: Importance of radius/diameter to find centroid distance. Should be
+    between (0,2]. Default is 0.5.
+  key: inputs.radiusFactor
+  title: Radius Factor
+  type: text
+- description: IoU theshold. Default is 0.
+  key: inputs.iouScore
+  title: IoU Score
+  type: text
+- description: Filename pattern to filter data.
+  key: inputs.filePattern
+  title: FilePattern
+  type: text
+version: 0.2.5-dev0

@@ -1,0 +1,130 @@
+name: Package tests
+
+on:
+  pull_request:
+    branches: [main, master, dev]
+  push:
+    branches-ignore: [main, master, dev]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  package-filter:
+    name: Filter for updated package
+    uses: ./.github/workflows/package-filter.yml
+    with:
+      num-commits: 0
+      ignore-missing-dev: false
+
+  pre-commit:
+    name: Pre-commit | ${{ matrix.package_name }}
+    needs: package-filter
+    if: ${{ needs.package-filter.outputs.num_packages > 0 }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.package-filter.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Install and run pre-commit
+        run: |
+          cd "${{ matrix.package_dir }}"
+          uv sync --all-extras
+          uv run pre-commit run \
+            --from-ref ${{ github.event.pull_request.base.sha || github.event.before }} \
+            --to-ref ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Show dirty files (if pre-commit failed)
+        if: failure()
+        run: |
+          cd "${{ matrix.package_dir }}"
+          git status --porcelain
+          git diff
+
+  docker:
+    name: Docker | Build ${{ matrix.package_name }}
+    needs: package-filter
+    if: ${{ needs.package-filter.outputs.num_packages > 0 }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.package-filter.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Docker | Build Image
+        run: |
+          if [ ! -f "${{ matrix.package_dir }}/Dockerfile" ]; then
+            echo "No Dockerfile found, skipping"
+            exit 0
+          fi
+          version=$(cat ${{ matrix.package_dir }}/VERSION)
+          tag=polusai/${{ matrix.package_name }}:${version}
+          docker pull ${tag} > /dev/null \
+            && (echo "::error::${tag} already exists on DockerHub" && exit 1) \
+            || echo "Image does not exist, safe to build"
+          cp .gitignore ${{ matrix.package_dir }}/.dockerignore
+          cd "${{ matrix.package_dir }}"
+          if [ -f "build-docker.sh" ]; then
+            bash build-docker.sh
+          else
+            docker build . -t ${tag}
+          fi
+
+  tests:
+    name: Test | ${{ matrix.package_name }}
+    needs: package-filter
+    timeout-minutes: 30
+    if: ${{ needs.package-filter.outputs.num_packages > 0 }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.package-filter.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run tests with conda
+        if: ${{ hashFiles(format('{0}/environment.yml', matrix.package_dir)) != '' }}
+        uses: conda-incubator/setup-miniconda@v2
+
+      - name: Run tests with conda
+        if: ${{ hashFiles(format('{0}/environment.yml', matrix.package_dir)) != '' }}
+        shell: bash -l {0}
+        run: |
+          cd ${{ matrix.package_dir }}
+          conda env create -f environment.yml
+          conda activate project_env
+          pip install -e ".[all]"
+          conda install pytest -y
+          python -X faulthandler -m pytest -v -p no:faulthandler
+
+      - name: Run tests with uv
+        if: ${{ hashFiles(format('{0}/environment.yml', matrix.package_dir)) == '' }}
+        uses: astral-sh/setup-uv@v4
+
+      - name: Run tests with uv
+        if: ${{ hashFiles(format('{0}/environment.yml', matrix.package_dir)) == '' }}
+        run: |
+          cd ${{ matrix.package_dir }}
+          uv sync --all-extras || uv pip install -e ".[all]"
+          uv pip install pytest
+          uv run python -X faulthandler -m pytest -v -p no:faulthandler

@@ -1,0 +1,64 @@
+author:
+- Hamdah Shafqat
+contact: hamdahshafqat.abbasi@nih.gov
+container: polusai/ome-to-microjson-tool:0.1.5-dev0
+description: This plugin create a microjson of polygon coordinates (rectangle, encodings)
+  of binary segmentations.
+entrypoint: python3 -m polus.images.visualization.ome_to_microjson
+inputs:
+- description: Input image collection to be processed by this plugin.
+  format:
+  - collection
+  name: inpDir
+  required: true
+  type: path
+- description: Filename pattern used to separate data.
+  format:
+  - string
+  name: filePattern
+  required: false
+  type: string
+- description: Select polygon type from [rectangle, encoding].
+  format:
+  - enum
+  name: polygonType
+  required: true
+  type: string
+- description: Generate an output preview.
+  format:
+  - boolean
+  name: preview
+  required: false
+  type: boolean
+name: polusai/Convertbinarysegmentationstomicojson
+outputs:
+- description: Output collection.
+  format:
+  - collection
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/labshare/polus-plugins
+specVersion: 1.0.0
+title: Convert binary segmentations to micojson
+ui:
+- description: Input image collection to be processed by this plugin.
+  key: inputs.inpDir
+  title: Input collection
+  type: path
+- description: Filename pattern used to separate data.
+  key: inputs.filePattern
+  title: Filename pattern
+  type: text
+- description: Select polygon type from [rectangle, encoding].
+  fields:
+  - rectangle
+  - encoding
+  key: inputs.polygonType
+  title: Type of Polygon
+  type: select
+- description: Generate an output preview.
+  key: inputs.preview
+  title: Preview example output of this plugin
+  type: checkbox
+version: 0.1.5-dev0

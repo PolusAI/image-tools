@@ -1,37 +1,16 @@
 {
     "author": "Data Scientist",
-    "email": "data.scientist@labshare.org",
-    "github_username": "datascientist",
-    "project_name": "WIPP Widget",
-    "project_short_description": "Everything you need to start a WIPP plugin.",
-    "version": "0.1.0",
-    "use_bfio": true,
-    "use_filepattern": true,
-    "use_java": false,
-    "_inputs": {
-        "inpDir": {
-            "type": "collection",
-            "title": "Input collection",
-            "description": "Input image collection to be processed by this plugin",
-            "required": "True"
-        },
-        "filePattern": {
-            "type": "string",
-            "title": "Filename pattern",
-            "description": "Filename pattern used to separate data",
-            "required": "False"
-        }
-    },
-    "_outputs": {
-        "outDir": {
-            "type": "collection",
-            "description": "Output collection"
-        }
-    },
-    
-    "project_slug": "polus-{{ cookiecutter.project_name|lower|replace(' ', '-') }}-plugin",
+    "author_email": "data.scientist@labshare.org",
+    "plugin_name": "Awesome Plugin",
+    "plugin_package": "polus.plugins.package1.package2.awesome_function",
+    "plugin_description": "An awesome function.",
+    "plugin_version": "0.1.0",
 
-    "_extensions": [
-        "jinja2_ospath.extensions.OSPathExtension"
-    ]
+    "package_folders": "{%set folders = cookiecutter.plugin_package.replace('.', '/') %}{{folders}}",
+    "package_name": "{% set packages = cookiecutter.plugin_package.split('.') %}{{ packages | last }}",
+    "project_name": "{% set project_name = cookiecutter.plugin_package.replace('_', '-').replace('.', '-') %}{{ project_name }}",
+    "plugin_slug": "{% set plugin_slug = cookiecutter.package_name.replace('_', '-') %}polus-{{plugin_slug}}-plugin",
+    "container_name": "{% set container_name = ('-').join(cookiecutter.plugin_slug.split('-')[1:])%}{{ container_name }}",
+    "container_id": "polusai/{{cookiecutter.container_name}}",
+    "container_version": "{{cookiecutter.plugin_version}}"
 }

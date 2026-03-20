@@ -1,0 +1,46 @@
+{
+  "name": "ImageJ threshold percentile",
+  "version": "0.5.1",
+  "title": "ImageJ threshold percentile",
+  "description": "This plugin implements the percentile thresholding operation",
+  "author": "Nick Schaub (nick.schaub@nih.gov), Anjali Taneja, Benjamin Houghton (benjamin.houghton@axleinfo.com), Najib Ishaq (najib.ishaq@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/polusai/image-tools",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "",
+  "containerId": "polusai/imagej-threshold-percentile-tool:0.5.1",
+  "inputs": [
+    {
+      "name": "inpDir",
+      "type": "collection",
+      "description": "The collection to be processed by this plugin",
+      "required": true
+    },
+    {
+      "name": "pattern",
+      "type": "string",
+      "description": "The filepattern for the input images",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "collection",
+      "description": "The output collection"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "inpDir",
+      "description": "The collection to be processed by this plugin"
+    },
+    {
+      "key": "inputs.pattern",
+      "title": "pattern",
+      "description": "The filepattern for the input images",
+      "default": ".*"
+    }
+  ]
+}

@@ -1,0 +1,177 @@
+name: Package Filter
+
+on:
+  workflow_call:
+    inputs:
+      num-commits:
+        description: "The of commits to check for updated packages. If 0, the action will assume that it is running on a non-default branch and will check all commits on the current branch against the default branch. For any larger value, the action will check the last n commits for any updated packages."
+        required: true
+        default: 0
+        type: number
+      ignore-missing-dev:
+        description: "If true, the action will ignore packages that do not have a dev version. Otherwise, the action will fail if any package does not have a dev version."
+        required: true
+        default: false
+        type: boolean
+    outputs:
+      matrix:
+        description: "The directories containing the updated packages"
+        value: ${{ jobs.package-filter.outputs.matrix }}
+      list:
+        description: "The list of directories containing the updated packages"
+        value: ${{ jobs.package-filter.outputs.list }}
+      num_packages:
+        description: "The number of updated packages"
+        value: ${{ jobs.package-filter.outputs.num_packages }}
+
+permissions:
+  contents: read
+
+jobs:
+  package-filter:
+    name: Filter for updated packages
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.package-filter.outputs.matrix }}
+      list: ${{ steps.package-filter.outputs.list }}
+      num_packages: ${{ steps.package-filter.outputs.num_packages }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+      - name: Find Updated Packages
+        id: package-filter
+        run: |
+          NUM_PACKAGES=0
+          PACKAGE_DIRS=""
+          COMPANION_FILES="VERSION .bumpversion.cfg"
+
+          # echo the base ref
+          base_ref=${{ github.base_ref }}
+          if [ -z "$base_ref" ]
+          then
+            base_ref="${{ github.event.repository.default_branch }}"
+            echo "::warning::Action not running on PR, defaulting to base branch to $base_ref"
+          fi
+          echo "The base ref is $base_ref"
+
+          # Get the comparison point in the repo
+          if [ ${{ inputs.num-commits }} == 0 ]
+          then
+            comparison_point="origin/${base_ref}"
+          else
+            comparison_point="HEAD~${{ inputs.num-commits }}"
+          fi
+          echo "The comparison point is ${comparison_point}"
+
+          # Get the changed files
+          # the `--diff-filter=ACMR` flag filters out deleted files. The filters are as follows:
+          # A: Added
+          # C: Copied
+          # M: Modified
+          # R: Renamed
+          # D: Deleted
+          # T: Type changed (for example, regular file or symlink or submodule)
+          # U: Unmerged
+          # X: Unknown
+          # B: Broken pairing
+          changed_files=$(git diff --diff-filter=ACMR --name-only ${comparison_point}...)
+          # echo the changed files
+          echo "The changed files are $changed_files"
+
+          for changed_file in $changed_files
+          do
+            pkg_dir=$(dirname ${changed_file})
+            echo "The file is $changed_file"
+
+            # Exclude the root directory
+            if [[ "$pkg_dir" = "." ]]
+            then
+              continue
+            fi
+
+            # Check if the changed file is a pyproject.toml file
+            if [[ "$(basename ${changed_file})" = *"pyproject"* ]]
+            then
+              echo "Found a pyproject.toml file in $pkg_dir"
+
+              # Check that the package has all the necessary companion files
+              for companion_file in $COMPANION_FILES
+              do
+                echo "Checking for $companion_file in $pkg_dir"
+                if [ ! -f "${pkg_dir}/${companion_file}" ]
+                then
+                  echo "::error::${pkg_dir} does not have a $companion_file file" && exit 1
+                fi
+              done
+
+              # Check if ict.yml or ict.yaml exists
+              if [ ! -f "${pkg_dir}/ict.yml" ] && [ ! -f "${pkg_dir}/ict.yaml" ]
+              then
+                found_all=false
+                echo "::warning::${pkg_dir} does not have an ict.yml or ict.yaml file"
+              fi
+
+              # Check that the version is a dev version
+              echo "Checking for dev version in $pkg_dir"
+              if [[ $(cat $pkg_dir/VERSION) != *"dev"* ]]
+              then
+                msg="${pkg_dir} does not have a dev version"
+                if [ ${{ inputs.ignore-missing-dev }} ]
+                then
+                  echo "::warning::${msg}"
+                else
+                  echo "::error::${msg}" && exit 1
+                fi
+              fi
+
+              NUM_PACKAGES=$((NUM_PACKAGES+1))
+              PACKAGE_DIRS="$PACKAGE_DIRS ${pkg_dir}"
+            fi
+          done
+
+          # Trim leading whitespace
+          PACKAGE_DIRS=$(echo $PACKAGE_DIRS | xargs)
+
+          # Check if any packages were found
+          echo "The updated packages are $PACKAGE_DIRS"
+          if [ -z "$PACKAGE_DIRS" ]
+          then
+            echo "::warning::No updated packages were found"
+
+            echo "matrix={\"include\": []}" >> $GITHUB_OUTPUT
+            echo "list=" >> $GITHUB_OUTPUT
+            echo "num_packages=0" >> $GITHUB_OUTPUT
+
+          else
+            echo "The number of updated packages is $NUM_PACKAGES"
+
+            # Convert the package directories to JSON for the output matrix
+            JSON="{\"include\": ["
+            for package_dir in $PACKAGE_DIRS
+            do
+              package_name=$(basename $package_dir)
+              JSON_LINE="{\"package_dir\": \"${package_dir}\", \"package_name\": \"${package_name}\"},"
+              # Add the JSON line to the JSON string if it is not already included
+              if [ ! "$JSON" == *"$JSON_LINE"* ]
+              then
+                JSON="$JSON$JSON_LINE"
+              fi
+            done
+
+            # Remove trailing comma and add closing brackets
+            if [ "$JSON" == *"," ]
+            then
+              JSON="${JSON%?}"
+            fi
+            JSON="$JSON]}"
+
+            # Set the output
+            echo "matrix=$( echo "$JSON" )" >> $GITHUB_OUTPUT
+            echo "list=$( echo "$PACKAGE_DIRS" )" >> $GITHUB_OUTPUT
+            echo "num_packages=$NUM_PACKAGES" >> $GITHUB_OUTPUT
+
+          fi

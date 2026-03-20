@@ -1,140 +1,112 @@
-# WIPP Plugin Cookie Cutter (for Python)
+# WIPP Plugin Cookie Cutter (for Python) (1.1.0-dev0)
 
-This repository is a cookie cutter template that gives the basic structure of a
-WIPP plugin, and it's specially tailored to Python and Linux. However, even if
-the code base for the plugin is not Python, it is still useful for generating
-a basic skeleton of a plugin.
+This repository is a cookie cutter template that creates the basic scaffold structure of a
+polus plugin and add it to the polus plugins directory structure.
 
 ## How to use
-
 1. Clone `polus-plugins` and change to the polus-plugins directory
-2. Install the requirements: `pip install -r ./utils/polus-python-template/requirements.txt`
-3. Ignore changes to `cookiecutter.json` using: `git update-index --assume-unchanged ./utils/polus-python-template/cookiecutter.json`
-4. Modify `cookiecutter.json` to include author and plugin information.
-5. Create your plugin skeleton: `cookiecutter ./utils/polus-python-template/ --no-input`
+2. `cd /utils/polus-python-template/`
+3. (optional) Install poetry if not available.
+4. (optional) Create a dedicated environment with conda or venv.
+5.  Install the dependencies: `poetry install`
+6. Ignore changes to `cookiecutter.json` using: `git update-index --assume-unchanged cookiecutter.json`
+7. Modify `cookiecutter.json` to include author and plugin information.`plugin_package` should always start with `polus.plugins`. 
+** NOTE: ** Do not edit values in brackets ({}) as they are edited by cookiecutter directly.
+Those are automatically generated from the previous entries. If your plugin is called 
+"Awesome Function", then the plugin folder and docker container will have the name `awesome-function-plugin`.
+8. Create your plugin skeleton: ` python -m cookiecutter . --no-input`
 
-** NOTE: ** Do not modify `project_slug`. This is automatically generated from
-the name of the plugin. If your plugin is called "Awesome Segmentation", then
-the plugin folder and docker container will have the name
-`polus-awesome-segmentation-plugin`.
 
-## What's New?
+## Plugin Standard
+The generated plugin will be compatible with polus most up-to-date guidelines :
+see [standard guidelines](https://labshare.atlassian.net/wiki/spaces/WIPP/pages/3275980801/Python+Plugin+Standards)
 
-## bump2version
+The code generated provides out-of-box support for :
+    - customizing the plugin code.
+    - implementing tests.
+    - creating and running a container.
+    - managing versioning.
+    - updating documentation (README, CHANGELOG).
+    - maintaining a WIPP manifest (plugin.json).
+
+
+## Executing the plugin
+
+The plugin should be run as a package.
+To install the package :
+
+`pip install .`
+
+The skeleton code can be run this way :
+From the plugin's top directory (with the default values):
+
+`python -m polus.plugins1.package1.package2.awesome_function -i /tmp/inp -o /tmp/out`
+
+This should print some logs with the provided inputs and outputs and return.
+
+## Running tests
+Plugin's developer should use `pytest`.
+Some simple tests have been added to the template as examples.
+Before submitting a PR to `polus-plugins`, other unit tests should be created and added to the `tests`
+directory.
+
+To run tests :
+
+From the plugin's top directory, type `python -m pytest`.
+Depending on how you have set up your environment, you may be able to run the pytest cli directly `pytest`. See pytest doc for how the project source directory is scanned to collect tests.
+This should run a test successfully and return.
+
+
+## Creating and running a container
+
+` ./build-docker.sh &&  ./run-plugin.sh`
+
+Build the docker image and run the container.
+
+### DockerFile
+A docker image is build from a base image with common dependencies pre-installed.
+The image entrypoint will run the plugin's package entrypoint.
+
+### build-docker.sh
+Run this script to build the container.
+
+### run-plugin.sh
+Run the container locally.
+
+
+## Customize the plugin
+
+### Project code
+
+A set of common dependencies are added to `pyproject.toml`.
+Update according to your needs.
+
+### Managing versioning
 
 Making sure that the file version is consistent across files in a plugin can be
 challenging, so the Python template now uses
 [bump2version](https://github.com/c4urself/bump2version)
 to help manage versioning. This automatically changes the `VERSION` and
 `plugin.json` files to the next version, preventing you from having to remember
-to change the version in all 3 places. The `bumpversion.cfg` can be modified to
+to change the version everywhere. The `bumpversion.cfg` can be modified to
 change the version in other files as well.
 
 To use this feature:
-1. `pip install bump2version`
-2. `bump2version --config-file bumpversion.cfg`
-3. If an error is thrown about uncommited work, use the `--alow-dirty` option
+`bump2version --config-file bumpversion.cfg`
 
-## unittest
+### Documentation
 
-A simple `unittest` has been added to the template that verifies the `VERSION`
-matches the `plugin.json` version information. Before submitting a PR to
-`polus-plugins`, other unit tests should be created and added to the `tests`
-directory. The test classes that are created should be added to the tuple
-`test_cases` in `tests/__init__.py`.
-
-## run-plugin.sh
-
-A new shell script (`run-plugin.sh`) has been added to help setup testing of
-docker containers locally. It comes configured with the proper `docker run`
-command already set up so that input variables just need to be defined.
-
-## Explanation of File Structure and Settings
-
-### General Structure
-
-In general, the structure of a plugin should have the following files as a minimum:
-
-```
-plugin-root/
-    - VERSION*
-    - build-docker.sh
-    - run-plugin.sh
-    - bumpversion.cfg
-    - Dockerfile*
-    - README.md*
-    - plugin.json*
-    - src/
-        - main.py
-        - requirements.txt
-    - tests/
-        - __init__.py
-        - version_test.py
-```
-
-Files with a `*` at the end indicate files that are necessary. If none of the
-other files are modified, there are some built in tools to simplify
-containerization and deployment of existing code to WIPP.
-
-### VERSION
-
-This indicates the version of the plugin. It should follow the
-[semantic versioning](https://semver.org/) standard (for example `2.0.0`). The
-only thing that should be in this file is the version. The cookie cutter
-template defaults to `0.1.0`.
-
-This file is used to tag the docker container built with the `build-docker.sh`
-script and by Jenkins if the plugin is merged into `labshare/polus-plugins`.
-
-### Dockerfile
-
-This is a basic dockerfile. In general, this should contain all the necessary
-tools to run a basic Python plugin.
-
-The Dockerfile uses Debian Linux (slim buster) with Python 3.9 installed on it
-as the base image ([python:3.9-slim](https://hub.docker.com/_/python)).
-
-If `use_bfio` is set to true, then `labshare/polus-bfio-util` is used as the
-base image.
-
-If `use_java` is set to true, then the container uses a version of
-`labshare/polus-bfio-util` that comes with Java, javabridge, and bioformats.
-
-If `use_filepattern` is set to true, then `requirements.txt` will be generated
-to include `filepattern` and `main.py` will have some boilerplate code for
-using the `filepattern` package.
-
-For more information, check out the repositories for
-[javabridge](https://github.com/LeeKamentsky/python-javabridge),
-[python-bioformats](https://github.com/CellProfiler/python-bioformats),
-and [bfio](https://github.com/Nicholas-Schaub/polus-plugins/tree/master/utils/polus-bfio-util).
-
-### README.md
+#### README.md
 
 A basic description of what the plugin does. This should define all the inputs
-and outputs. Cookiecutter should autogenerate the input and output table, but
-double check to make sure.
+and outputs.
 
-### plugin.json
+#### CHANGELOG.md
+
+Documents updates made to the plugin.
+
+
+### WIPP manifest (plugin.json).
 
 This file defines the input and output variables for WIPP, and defines the UI
-components showed to the user. This should be automatically generated for basic
-variable types, but may need to be modified to work properly.
-
-### build-docker.sh
-
-This file builds a docker container using the name of the plugin and a tag using
-`VERSION`.
-
-### src/main.py
-
-This is the file called from the commandline from the docker container. Cookie
-cutter autogenerates some basic code based on the inputs specified in the
-cookiecutter json, for example there is code to parse commandline arguments. If
-the name of this file is changed, then the `Dockerfile` will need to be modified
-with the name of the new file.
-
-### src/requirements.txt
-
-This file should contain a list of the packages (including versions) that are
-used by the plugin. It is important to make this as simple as possible.
+components showed to the user.

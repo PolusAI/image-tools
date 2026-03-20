@@ -1,0 +1,176 @@
+name: Package Release
+
+env:
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo_name:
+        description: 'Name of the base repository. The user can ignore this input if the action is triggered from the base repository.'
+        required: true
+        type: string
+        default: 'image-tools'
+  workflow_call:
+    inputs:
+      repo_name:
+        description: 'Name of the base repository'
+        required: true
+        type: string
+    secrets:
+      DOCKER_USERNAME:
+        description: 'Docker Hub username'
+        required: true
+      DOCKER_TOKEN:
+        description: 'Docker Hub password'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  pre-release-filter:
+    name: Filter for pre-release packages
+    uses: ./.github/workflows/pre-release-filter.yml
+
+  package-release:
+    name: Release Versions
+    needs: pre-release-filter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debug | Repository Name
+        run: |
+          echo "repo owner is ${{ github.repository_owner }}"
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.branch }}
+          persist-credentials: false
+      - name: Token | Generate
+        if: github.repository_owner == 'PolusAI'
+        id: generate_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+      - name: Token | Use the token
+        if: github.repository_owner == 'PolusAI'
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+        run: |
+          gh api octocat
+      - name: Python | Setup
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Python | Install bump2version
+        run: |
+          python -m pip install --upgrade pip
+          pip install bump2version
+      - name: Python | Bump Version Release
+        id: bump_version
+        run: |
+          cur_dir=$GITHUB_WORKSPACE
+          released_packages=""
+
+          for pkg_dir in ${{ needs.pre-release-filter.outputs.list }}
+          do
+            echo "Bumping version for ${pkg_dir}"
+            cd "${pkg_dir}"
+            bump2version release --no-commit --allow-dirty
+            released_packages="${released_packages} ${pkg_dir}"
+            cd ${cur_dir}
+          done
+
+          # Trim leading whitespace
+          released_packages=$(echo "${released_packages}" | xargs)
+
+          echo "Released packages: ${released_packages}"
+          echo "released_packages=${released_packages}" >> $GITHUB_OUTPUT
+
+          # If no packages were released, then set released to false
+          if [ -z "${released_packages}" ]
+          then
+            echo "No packages were released"
+            echo "released=false" >> $GITHUB_OUTPUT
+          else
+            echo "Packages were released"
+            echo "released=true" >> $GITHUB_OUTPUT
+          fi
+      - name: Git | Commit
+        if: github.repository_owner == 'PolusAI' && steps.bump_version.outputs.released == 'true'
+        env:
+          CI_COMMIT_AUTHOR: polusai-auth-helper[bot]
+          CI_COMMIT_EMAIL: ${{ secrets.APP_ID }}+polusai-auth-helper[bot]@users.noreply.github.com
+        run: |
+          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+          git config --global user.email "${{ env.CI_COMMIT_EMAIL }}"
+          git commit -a -m "build: Bumped release version for ${{ steps.bump_version.outputs.released_packages }}"
+      - name: Git | Push
+        if: github.repository_owner == 'PolusAI' && steps.bump_version.outputs.released == 'true'
+        uses: ad-m/github-push-action@master
+        with:
+          force: false
+          github_token: ${{ steps.generate_token.outputs.token }}
+
+  docker:
+    name: Docker | ${{ matrix.package_name }}
+    needs: [pre-release-filter, package-release]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.pre-release-filter.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.branch }}
+          persist-credentials: false
+      - name: Python | Setup
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Python | Install bump2version
+        run: |
+          python -m pip install --upgrade pip
+          pip install bump2version
+      - name: Python | Bump Version Release
+        id: bump_version
+        run: |
+          cur_dir=$GITHUB_WORKSPACE
+          cd ${{ matrix.package_dir }}
+          bump2version release --no-commit --allow-dirty
+          cd ${cur_dir}
+      - name: Docker | Tag
+        id: docker_tag
+        run: |
+          package_dir="${{ matrix.package_dir }}"
+          version=$(cat ${package_dir}/VERSION)
+          tag=polusai/${{ matrix.package_name }}:${version}
+          echo "tag=${tag}" >> $GITHUB_OUTPUT
+      - name: Docker | Setup Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Docker | Login DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+      - name: Docker | Check if Image exists
+        run: |
+          tag=${{ steps.docker_tag.outputs.tag }}
+          docker pull ${tag} > /dev/null \
+              && $(echo "::error::${tag} already exists on DockerHub" && exit 1) \
+              || echo "success"
+      - name: Docker | Setup Dockerfile
+        run: |
+          cp ${{ matrix.package_dir }}/Dockerfile .
+          cp .gitignore .dockerignore
+      - name: Docker | Push Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ github.repository_owner == 'PolusAI' }}
+          tags: ${{ steps.docker_tag.outputs.tag }}
