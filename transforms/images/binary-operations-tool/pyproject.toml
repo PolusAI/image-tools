@@ -1,18 +1,18 @@
 [tool.poetry]
 name = "polus-images-transforms-images-binary-operations"
-version = "0.5.3"
+version = "0.5.4-dev0"
 description = ""
 authors = ["nicholas-schaub <nick.schaub@nih.gov>", "Madhuri Vihani"]
 readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-bfio = {version = "2.1.9", extras = ["all"]}
-typer = "^0.7.0"
-filepattern = "^2.0.4"
+python = ">=3.13"
+bfio = ">=2.5.0"
+typer = ">=0.24.0"
+filepattern = ">=2.2.1"
 opencv-python = "^4.7.0.72"
-preadator = "^0.2.0"
+numpy = ">=2.4.3"
 
 
 [tool.poetry.group.dev.dependencies]

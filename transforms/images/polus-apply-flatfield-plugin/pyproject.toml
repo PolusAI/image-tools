@@ -1,0 +1,18 @@
+[project]
+name = "polus-apply-flatfield-plugin"
+version = "1.2.0"
+requires-python = ">=3.13"
+dependencies = [
+    "bfio>=2.5.0",
+    "filepattern>=2.2.1",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools]
+py-modules = ["main"]
