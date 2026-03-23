@@ -15,4 +15,4 @@ docker run --mount type=bind,source=${datapath},target=/data/ \
             polusai/stack-z-slice-plugin:${version} \
             --filePattern ${filePattern} \
             --inpDir ${inpDir} \
-            --outDir ${outDir} 
+            --outDir ${outDir}
