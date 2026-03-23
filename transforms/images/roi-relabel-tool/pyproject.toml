@@ -1,3 +1,8 @@
+[project]
+name = "polus-images-transforms-images-roi-relabel"
+version = "0.2.6-dev0"
+requires-python = ">=3.11"
+
 [tool.poetry]
 name = "polus-images-transforms-images-roi-relabel"
 version = "0.2.6-dev0"
@@ -7,11 +12,11 @@ readme = "README.md"
 packages = [{include = "polus", from = "src"}]
 
 [tool.poetry.dependencies]
-python = ">=3.13"
+python = ">=3.11"
 bfio = ">=2.5.0"
 filepattern = ">=2.2.1"
 typer = ">=0.24.0"
-numpy = ">=2.4.3"
+numpy = ">=1.26.4"
 scipy = ">=1.8"
 networkx = "^3.0"
 tqdm = "^4.65.0"
