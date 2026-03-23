@@ -1,7 +1,7 @@
 [project]
 name = "polus-stack-z-slice-plugin"
 version = "1.2.4"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 dependencies = [
     "bfio>=2.5.0",
     "filepattern>=2.2.1",
