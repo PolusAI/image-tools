@@ -2,7 +2,7 @@ author:
 - Gauhar Bains
 - Nick Schaub
 contact: gauhar.bains@labshare.org
-container: polusai/image-registration-plugin:0.3.5
+container: polusai/image-registration-plugin:0.3.6
 description: This plugin registers an image collection
 entrypoint: '[python3, main.py]'
 inputs:
@@ -86,4 +86,4 @@ ui:
   key: inputs.method
   title: Deformation method
   type: select
-version: 0.3.5
+version: 0.3.6
