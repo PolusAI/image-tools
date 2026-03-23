@@ -2,9 +2,9 @@
 name = "polus-image-registration-plugin"
 version = "0.3.6"
 description = "This plugin registers an image collection"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 dependencies = [
-    "numpy>=2.4.3",
+    "numpy>=1.26.4",
     "opencv-python-headless>=4.7.0",
     "filepattern>=2.2.1",
 ]
