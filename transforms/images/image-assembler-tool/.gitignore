@@ -1,7 +1,5 @@
-preadator_package
-
 poetry.lock
+uv.lock
 
 out
 data
-
