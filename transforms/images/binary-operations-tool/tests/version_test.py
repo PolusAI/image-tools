@@ -1,3 +1,5 @@
+"""Tests for version and plugin manifest."""
+
 import json
 import unittest
 from pathlib import Path
@@ -13,11 +15,11 @@ class VersionTest(unittest.TestCase):
     def test_plugin_manifest(self):  # noqa
         """Tests VERSION matches the version in the plugin manifest."""
         # Get the plugin version
-        with open(self.version_path) as file:
+        with self.version_path.open() as file:
             version = file.readline().strip()
 
         # Load the plugin manifest
-        with open(self.json_path) as file:
+        with self.json_path.open() as file:
             plugin_json = json.load(file)
 
         assert plugin_json["version"] == version
