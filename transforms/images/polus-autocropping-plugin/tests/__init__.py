@@ -1,6 +1,9 @@
+"""Tests for the polus-autocropping-plugin."""
+import unittest
 from unittest import TestSuite
-from .version_test import VersionTest
+
 from .test_autocrop import CorrectnessTest
+from .version_test import VersionTest
 
 test_cases = (
     VersionTest,
@@ -8,9 +11,14 @@ test_cases = (
 )
 
 
-def load_tests(loader, tests, pattern):
+def load_tests(
+    loader: unittest.TestLoader,
+    _tests: unittest.TestSuite,
+    _pattern: str,
+) -> unittest.TestSuite:
+    """Build a test suite from loader and test cases."""
     suite = TestSuite()
     for test_class in test_cases:
-        tests = loader.loadTestsFromTestCase(test_class)
-        suite.addTests(tests)
+        loaded = loader.loadTestsFromTestCase(test_class)
+        suite.addTests(loaded)
     return suite

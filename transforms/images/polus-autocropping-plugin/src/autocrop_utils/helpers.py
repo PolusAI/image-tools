@@ -1,4 +1,5 @@
-from collections import Generator
+"""Helpers for tiles, strips, distograms, gradients, and bounding boxes."""
+from collections.abc import Generator
 from pathlib import Path
 from typing import Optional
 
@@ -13,8 +14,6 @@ from . import local_distogram as distogram
 #  unpublished version of distogram. Once that PR is merged and the pypi package
 #  is updated,, I plan on coming back here to add distogram to requirements.txt
 
-""" The generator of coordinates of a tile as (y_min, y_max, x_min, x_max).
-"""
 TileIndices = Generator[tuple[int, int, int, int], None, None]
 
 """
@@ -25,8 +24,12 @@ z2, y2 and x2 are exclusive.
 BoundingBox = tuple[int, int, int, int, int, int]
 
 
-def distogram_from_batch(values: list[float], bin_count: int, weighted_diff: bool) -> distogram.Distogram:
-    """ Create a distogram from a batch of values rather than a stream of values.
+def distogram_from_batch(
+    values: list[float],
+    bin_count: int,
+    weighted_diff: bool,
+) -> distogram.Distogram:
+    """Create a distogram from a batch of values rather than a stream of values.
 
     Sometimes, O(n.log(n)) is faster than O(n). Python's built-in sort function is
      fast enough that it allows us to outperform the theoretically faster update
@@ -40,34 +43,34 @@ def distogram_from_batch(values: list[float], bin_count: int, weighted_diff: boo
     Returns:
         A Distogram
     """
-    values = list(sorted(values))
-    step = len(values) // bin_count
-    values = [values[i: i + step] for i in range(0, len(values), step)]
-    bins = [(v[0], len(v)) for v in values]
+    sorted_vals: list[float] = sorted(values)
+    step = len(sorted_vals) // bin_count
+    chunks: list[list[float]] = [
+        sorted_vals[i : i + step] for i in range(0, len(sorted_vals), step)
+    ]
+    bins = [(chunk[0], len(chunk)) for chunk in chunks]
 
     h = distogram.Distogram(bin_count, weighted_diff)
     h.bins = bins
-    h.min = values[0]
-    h.max = values[-1]
+    h.min = chunks[0][0]
+    h.max = chunks[-1][-1]
 
     # noinspection PyProtectedMember
     h.diffs = distogram._compute_diffs(h)
     return h
 
 
-def replace_extension(name: str, new_extension: str = None) -> str:
-    """ Replaces the extension in the name of an input image with `POLUS_EXT`
-     for writing corresponding output images. """
+def replace_extension(name: str, new_extension: Optional[str] = None) -> str:
+    """Replace the extension with POLUS_EXT for writing output images.
+
+    Uses the name of an input image.
+    """
     new_extension = constants.POLUS_EXT if new_extension is None else new_extension
-    return (
-        name
-        .replace('.ome.tif', new_extension)
-        .replace('.ome.zarr', new_extension)
-    )
+    return name.replace(".ome.tif", new_extension).replace(".ome.zarr", new_extension)
 
 
 def iter_tiles_2d(file_path: Path) -> TileIndices:
-    """ A Generator of tile_indices in a 3d image.
+    """A Generator of tile_indices in a 3d image.
 
     Args:
         file_path: Path to the image.
@@ -88,7 +91,7 @@ def iter_tiles_2d(file_path: Path) -> TileIndices:
 
 
 def iter_strip(file_path: Path, index: int, axis: int) -> TileIndices:
-    """ A Generator of tile_indices in the indexed strip along the given axis.
+    """A Generator of tile_indices in the indexed strip along the given axis.
 
     Args:
         file_path: Path to the image.
@@ -125,7 +128,7 @@ def iter_strip(file_path: Path, index: int, axis: int) -> TileIndices:
 
 
 def rolling_mean(values: list[float], *, prepend_zeros: bool = False) -> list[float]:
-    """ Compute a rolling mean over a list of values.
+    """Compute a rolling mean over a list of values.
 
     This implementation is faster than using numpy.convolve
 
@@ -137,21 +140,24 @@ def rolling_mean(values: list[float], *, prepend_zeros: bool = False) -> list[fl
         A list of rolling-mean values.
     """
     if prepend_zeros:
-        zeros = [0.] * constants.WINDOW_SIZE
+        zeros = [0.0] * constants.WINDOW_SIZE
         values = zeros + values
 
     sums = numpy.cumsum(values)
-    means = [
+    return [
         abs(float(a - b)) / constants.WINDOW_SIZE
-        for a, b in zip(sums[constants.WINDOW_SIZE:], sums[:-constants.WINDOW_SIZE])
+        for a, b in zip(sums[constants.WINDOW_SIZE :], sums[: -constants.WINDOW_SIZE])
     ]
-    return means
 
 
-def smoothed_gradients(values: list[float], *, prepend_zeros: bool = False) -> list[float]:
-    """ Compute the smoothed gradients between smoothed adjacent values from the given list of values.
+def smoothed_gradients(
+    values: list[float],
+    *,
+    prepend_zeros: bool = False,
+) -> list[float]:
+    """Compute smoothed gradients between adjacent values (after smoothing).
 
-    This implementation is faster than using numpy.convolve
+    This implementation is faster than using numpy.convolve.
 
     Args:
         values: A list of raw values.
@@ -163,16 +169,16 @@ def smoothed_gradients(values: list[float], *, prepend_zeros: bool = False) -> l
     smoothed_values = rolling_mean(values, prepend_zeros=prepend_zeros)
 
     raw_gradients = [
-        float(a - b)
-        for a, b in zip(smoothed_values[1:], smoothed_values[:-1])
+        float(a - b) for a, b in zip(smoothed_values[1:], smoothed_values[:-1])
     ]
 
     return rolling_mean(raw_gradients, prepend_zeros=prepend_zeros)
 
 
 def find_spike(values: list[float], threshold: float) -> Optional[tuple[int, float]]:
-    """ Returns the index and value of the first gradient that is greater than
-     or equal to the given threshold. If no such gradient exists, returns None.
+    """Return index and value of the first gradient >= threshold.
+
+    If no such gradient exists, returns None.
 
     Args:
         values: A list of entropy-gradient values.
@@ -189,11 +195,9 @@ def find_spike(values: list[float], threshold: float) -> Optional[tuple[int, flo
 
 
 def bounding_box_superset(bounding_boxes: list[BoundingBox]) -> BoundingBox:
-    """ Given a list of bounding-boxes, determine the bounding-box that bounds
-     all given bounding-boxes.
+    """Determine the bounding-box that bounds all given bounding-boxes.
 
-    This is used to ensure that all images in a group are cropped in a
-    consistent manner.
+    Used to ensure all images in a group are cropped consistently.
 
     Args:
         bounding_boxes: A list of bounding boxes.
