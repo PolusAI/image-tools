@@ -1,0 +1,28 @@
+[package]
+authors = ["Najib Ishaq <najib.ishaq@axleinfo.com>"]
+name = "ftl-rust"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "ftl_rust"
+path = "src/polus/images/transforms/images/ftl_label/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# numpy 0.22 is the first release supporting Python numpy >=2.0 and ndarray 0.16.
+# pyo3, numpy, and ndarray must be kept in lockstep:
+#   numpy 0.22  →  pyo3 0.22  +  ndarray 0.16
+pyo3    = { version = "0.22", features = ["extension-module"] }
+numpy   = "0.22"
+ndarray = { version = "0.16", features = ["rayon"] }
+rayon   = "1.10"
+
+[dev-dependencies]
+memmap2     = "0.9"
+ndarray-npy = "0.9"
+criterion   = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name    = "ftl_rust"
+harness = false

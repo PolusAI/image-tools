@@ -1,4 +1,4 @@
-# FTL Label
+# FTL Label (v1.0.0-dev0)
 
 This plugin performs a transformation on binary images which, in a certain limiting case, can be thought of as segmentation.
 
@@ -23,27 +23,44 @@ This lets it scale to arbitrarily large sizes but does make it slower than the C
 However, most of the bottleneck is in the interface between `Python` and `Rust`.
 The Rust implementation works with 2d and 3d images.
 
+We determine whether to use the `Cython` or `Rust` implementation on a per-image basis depending on the size of that image. If we expect the image to occupy less than `500MB` of memory, we use the `Cython` implementation otherwise we use the `Rust` implementation.
+On macOS ARM64 (Apple Silicon), all images are automatically routed through the Rust backend.
+
+
 To see detailed documentation for the `Rust` implementation you need to:
- * Install [Rust](https://doc.rust-lang.org/stable/book/ch01-01-installation.html),
- * add Cargo to your `PATH`, and
- * run from the terminal (in this directory): `cargo doc --open`.
 
-That last command will generate documentation and open a new tab in your default web browser.
+## Installation
 
-We determine whether to use the `Cython` or `Rust` implementation on a per-image basis depending on the size of that image.
-If we expect the image to occupy less than `500MB` of memory, we use the `Cython` implementation otherwise we use the `Rust` implementation. 
+Install [Rust](https://doc.rust-lang.org/stable/book/ch01-01-installation.html),
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source "$HOME/.cargo/env"
+```
+## Rust documentation
+To generate and view the full Rust API docs:
 
-For more information on WIPP, visit the
-[official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
+```bash
+cargo doc --open
+```
 
-## To do
 
-The following optimizations should be added to increase the speed or decrease the memory used by the plugin.
-1. Implement existing specialized C++ methods that accelerate the run length encoding operation by a factor of 5-10
+#### From source (recommended for development)
+```bash
+# 1. Clone the repo
+git clone <repo-url>
+cd ftl-label-tool
 
-## Building
+# 2. Create a virtual environment
+uv venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 
-To build the Docker image for the conversion plugin, run `./build-docker.sh`.
+# 3. Install the package (compiles Cython + Rust extensions)
+uv pip install -e .
+
+# 4. Install the package with optional dependencies
+uv pip install ".[dev]"
+
+```
 
 ## Install WIPP Plugin
 
@@ -54,39 +71,45 @@ Paste the contents of `plugin.json` into the pop-up window and submit.
 
 This plugin takes one input argument and one output argument:
 
-| Name             | Description                                           | I/O    | Type       |
-|------------------|-------------------------------------------------------|--------|------------|
-| `--inpDir`       | Input image collection to be processed by this plugin | Input  | collection |
-| `--connectivity` | City block connectivity                               | Input  | number     |
-| `--outDir`       | Output collection                                     | Output | collection |
+| Name                      | Description                                                          | I/O    | Type       |
+| ------------------------- | -------------------------------------------------------------------- | ------ | ---------- |
+| `--inpDir`                | Input image collection to be processed by this plugin                | Input  | collection |
+| `--filePattern`           | File pattern used to select input images from the input collection   | Input  | string     |
+| `--connectivity`          | City block connectivity                                              | Input  | number     |
+| `--binarizationThreshold` | For images containing probability values. Must be between 0 and 1.0. | Input  | number     |
+| `--outDir`                | Output collection                                                    | Output | collection |
 
-## Example Code
-```Linux
-# Download some example *.tif files
-wget https://github.com/stardist/stardist/releases/download/0.1.0/dsb2018.zip
-unzip dsb2018.zip
-mv dsb2018/test/masks/ images/
+## Usage
+# Run FTL label
 
-# Convert the *.tif files to *.ome.tif tiled tif format using bfio.
-basedir=$(basename ${PWD})
-docker run -v ${PWD}:/$basedir labshare/polus-tiledtiff-converter-plugin:1.1.0 \
-  --input /$basedir/images/ \
-  --output /$basedir/images_ome/
-
-# Run the FTL label plugin
-mkdir output
-docker run -v ${PWD}:/$basedir labshare/polus-ftl-label-plugin:0.3.10 \
---inpDir /$basedir/"images_ome/" \
---outDir /$basedir/"output/" \
---connectivity 1
-
-# View the results using bfio and matplotlib
-# Let's run directly on the host since we just need the python backend.
-pip install bfio==2.1.9 matplotlib==3.5.1
-python3 SimpleTiledTiffViewer.py --inpDir images_ome/ --outDir output/
+```bash
+python -m polus.images.transforms.images.ftl_label \
+    --inpDir /path/to/input \
+    --filePattern ".*.ome.tif" \
+    --connectivity 1 \
+    --binarizationThreshold 0.5 \
+    --outDir /path/to/output
 ```
 
-**NOTE:**
+## Docker
+#### Building
+To build the Docker image for the conversion plugin, run `./build-docker.sh`.
+
+#### Run
+
+```bash
+basedir=$(basename ${PWD})
+
+docker run -v ${PWD}:/$basedir polusai/ftl-label-tool:1.0.0-dev0 \
+    --inpDir /$basedir/images/ \
+    --filePattern ".*.ome.tif" \
+    --connectivity 1 \
+    --binarizationThreshold 0.5 \
+    --outDir /$basedir/output/
+```
+
+
+**Connectivity:**
 Connectivity uses [SciKit's](https://scikit-image.org/docs/dev/api/skimage.measure.html#skimage.measure.label) notation for connectedness, which we call cityblock notation.
 As you increase the connectivity, you increase the number of pixel jumps away from the center point.
 For example, in 2D there are 4 neighbors using 1-connectivity and 8 neighbors using 2-connectivity,
@@ -95,7 +118,8 @@ Each new jump must be orthogonal to all previous jumps.
 This means that `connectivity` should have a minimum value of `1` and a maximum value equal to the dimensionality of the images.
 
 SciKit's documentation has a good illustration for 2D:
-```
+
+```text
 1-connectivity     2-connectivity     diagonal connection close-up
 
      [ ]           [ ]  [ ]  [ ]             [ ]
@@ -104,3 +128,15 @@ SciKit's documentation has a good illustration for 2D:
       |               /  |  \             hop 1
      [ ]           [ ]  [ ]  [ ]
 ```
+
+
+## To Do
+The following optimizations should be added to increase the speed or decrease the memory used by the plugin.
+
+1. Implement existing specialized C++ methods that accelerate the run length encoding operation by a factor of 5-10
+
+## For more information
+To generate and view the full Rust API docs:
+
+For more information on WIPP, visit the
+[official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
