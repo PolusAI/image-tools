@@ -1,11 +1,11 @@
 [project]
 name = "polus-remove-border-objects-plugin"
 version = "0.1.1"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 dependencies = [
     "bfio>=2.5.0",
     "filepattern>=2.2.1",
-    "numpy>=2.4.3",
+    "numpy>=1.26.4",
     "scikit-image>=0.25",
 ]
 
