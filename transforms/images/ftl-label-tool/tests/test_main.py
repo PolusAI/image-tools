@@ -15,6 +15,8 @@ def run_cli_test(dataset_dir: pathlib.Path, output_dir: pathlib.Path):
         [
             "--inpDir",
             str(dataset_dir),
+            "--filePattern",
+            ".*.ome.tif",
             "--outDir",
             str(output_dir),
             "--connectivity",
