@@ -1,25 +1,14 @@
-FROM polusai/bfio:2.1.9
-
-# environment variables defined in polusai/bfio
-ENV EXEC_DIR="/opt/executables"
-ENV POLUS_IMG_EXT=".ome.tif"
-ENV POLUS_TAB_EXT=".csv"
-ENV POLUS_LOG="INFO"
-
-# Work directory defined in the base container
+# Build from repo root (monorepo) or from this tool directory — both work.
+FROM polusai/bfio:2.5.0
+ENV EXEC_DIR="/opt/executables" POLUS_IMG_EXT=".ome.tif" POLUS_TAB_EXT=".csv" POLUS_LOG="INFO"
 WORKDIR ${EXEC_DIR}
-
-# TODO: Change the tool_dir to the tool directory
 ENV TOOL_DIR="transforms/images/image-calculator-tool"
-
-# Copy the repository into the container
-RUN mkdir image-tools
+RUN mkdir -p image-tools
 COPY . ${EXEC_DIR}/image-tools
-
-# Install the tool
-RUN pip3 install "${EXEC_DIR}/image-tools/${TOOL_DIR}" --no-cache-dir
-
-# Set the entrypoint
-# TODO: Change the entrypoint to the tool entrypoint
+RUN pip3 install -U pip setuptools wheel \
+  && python3 -c 'import sys; assert sys.version_info>=(3,11)' \
+  && R="${EXEC_DIR}/image-tools" && M="$R/$TOOL_DIR" \
+  && if [ -f "$M/pyproject.toml" ]; then pip3 install --no-cache-dir "$M"; \
+     else pip3 install --no-cache-dir "$R"; fi
 ENTRYPOINT ["python3", "-m", "polus.images.transforms.images.image_calculator"]
 CMD ["--help"]
