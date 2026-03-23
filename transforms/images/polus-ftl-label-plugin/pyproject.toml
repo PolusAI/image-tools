@@ -1,2 +1,17 @@
+[project]
+name = "polus-ftl-label-plugin"
+version = "0.3.11"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26.4",
+    "bfio>=2.5.0",
+]
+
 [build-system]
 requires = ["setuptools>=41.0.0", "wheel", "setuptools_rust>=0.10.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.mypy]
+python_version = "3.11"
+explicit_package_bases = true
+ignore_missing_imports = true

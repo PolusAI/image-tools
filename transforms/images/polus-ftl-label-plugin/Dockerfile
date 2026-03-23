@@ -1,48 +1,19 @@
-# Compile ftl.pyx
-FROM python:3.9
-ARG EXEC_DIR="/opt/executables"
-RUN mkdir -p ${EXEC_DIR}/executables
-COPY src ${EXEC_DIR}/.
-WORKDIR ${EXEC_DIR}
-RUN pip3 install --upgrade cython==3.0.0a9 \
-    && pip3 install numpy==1.21.4 --no-cache-dir \
-    && python3 setup.py build_ext --inplace
-RUN cp executables/* . && rm -rf executables
-
-# Build the plugin container
-FROM python:3.9-slim
-
-# Get essential packages
-RUN apt-get update && \
-    apt-get install -y build-essential curl && \
-    apt-get update
-
-# Get Rust
-RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
-
+# Build from repo root (monorepo) or from this tool directory — both work.
+# setuptools_rust needs a Rust toolchain for this plugin.
+FROM polusai/bfio:2.5.0
+RUN apt-get update && apt-get install -y --no-install-recommends curl build-essential \
+  && curl -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable \
+  && rm -rf /var/lib/apt/lists/*
 ENV PATH="/root/.cargo/bin:${PATH}"
-
-ARG EXEC_DIR="/ftl-rust"
-ARG DATA_DIR="/data"
-
-RUN mkdir -p ${EXEC_DIR}/{src, ftl_rust} && mkdir -p ${DATA_DIR}/{inputs, outputs}
-
-COPY . ${EXEC_DIR}/
-
-COPY --from=0 /opt/executables ${EXEC_DIR}/src
-
+ENV EXEC_DIR="/opt/executables" POLUS_IMG_EXT=".ome.tif" POLUS_TAB_EXT=".csv" POLUS_LOG="INFO"
 WORKDIR ${EXEC_DIR}
-
-RUN pip3 install -r ${EXEC_DIR}/src/requirements.txt --no-cache-dir \
-    && pip3 install -r rust_requirements.txt --no-cache-dir \
-    && python3 rust_setup.py install
-
-WORKDIR ${EXEC_DIR}/src
-
-# Change to .ome.zarr to save output images as zarr files.
-ENV POLUS_EXT=".ome.tif"
-
-# Change to WARNING for fewer logs, or DEBUG for debugging.
-ENV POLUS_LOG="INFO"
-
-ENTRYPOINT ["python3", "/opt/executables/src/main.py"]
+ENV TOOL_DIR="transforms/images/polus-ftl-label-plugin"
+RUN mkdir -p image-tools
+COPY . ${EXEC_DIR}/image-tools
+RUN pip3 install -U pip setuptools wheel \
+  && python3 -c 'import sys; assert sys.version_info>=(3,11)' \
+  && R="${EXEC_DIR}/image-tools" && M="$R/$TOOL_DIR" \
+  && if [ -f "$M/pyproject.toml" ]; then pip3 install --no-cache-dir "$M"; \
+     else pip3 install --no-cache-dir "$R"; fi
+ENTRYPOINT ["python3", "-m", "main"]
+CMD ["--help"]

@@ -1,6 +1,6 @@
+"""Setuptools entry for building the ftl_rust Rust extension."""
 from setuptools import setup
 from setuptools_rust import RustExtension
-
 
 setup(
     name="ftl-rust",
