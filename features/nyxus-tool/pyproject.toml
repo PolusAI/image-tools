@@ -31,15 +31,15 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "bump2version>=1.0.1",
-  "pre-commit>=3.0.4",
-  "black>=23.1.0",
-  "flake8>=6.0.0",
-  "mypy>=1.0.0",
-  "pytest>=7.2.1",
+  "pre-commit>=4.5.1",
+  "black>=26.3.1",
+  "flake8>=7.3.0",
+  "mypy>=1.19.1",
+  "pytest>=9.0.2",
   "pytest-sugar==1.1.1",
-  "ipykernel>=6.21.2",
-  "requests==2.32.5",
-  "scikit-image==0.24.0",
+  "ipykernel>=7.2.0",
+  "requests>=2.32.5",
+  "scikit-image>=0.26.0",
   "pyarrow==23.0.1"
 ]
 
