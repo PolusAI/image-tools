@@ -78,4 +78,3 @@ def synthetic_images(
 def get_params(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the fixture."""
     return request.param
-
