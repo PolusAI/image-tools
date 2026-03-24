@@ -9,20 +9,22 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [
-    "bfio>=2.4.7,<3.0.0",
-    "filepattern>=2.1.4,<3.0.0",
+    "bfio>=2.5.0",
+    "filepattern>=2.2.4",
     "typer>=0.24.1,<0.25.0",
     "numpy>=2.0.0",
-    "tqdm>=4.67.3,<5.0.0",
+    "tqdm==4.67.3",
     "basicpy @ git+https://github.com/ndonyapour/BaSiCPy.git@chore/update-supported-python",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "bump2version>=1.0.1,<2.0.0",
-    "pre-commit>=4.5.1,<5.0.0",
-    "pytest>=9.0.2,<10.0.0",
-    "pytest-cov>=7.0.0,<8.0.0",
+    "bump2version>=1.0.1",
+    "pre-commit>=4.5.1",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "pytest>=7.2.1",
+    "pytest-cov>=7.0.0",
     "pytest-sugar>=1.1.1,<2.0.0",
     "pytest-xdist>=3.8.0,<4.0.0",
 ]
