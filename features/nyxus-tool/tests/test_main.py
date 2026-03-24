@@ -162,5 +162,4 @@ def test_cli_single_roi(
 
     assert result.exit_code == 0
     assert any(output_directory.iterdir())
-
     clean_directories()
