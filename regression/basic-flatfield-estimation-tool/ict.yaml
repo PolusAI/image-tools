@@ -31,6 +31,12 @@ inputs:
   name: getDarkfield
   required: true
   type: boolean
+- description: If true, write preview.json listing output filenames without running estimation.
+  format:
+  - boolean
+  name: preview
+  required: false
+  type: boolean
 name: polusai/FlatfieldEstimationusingBaSiCalgorithm.
 outputs:
 - description: Output data for the plugin
@@ -59,4 +65,8 @@ ui:
   key: inputs.getDarkfield
   title: 'Calculate darkfield: '
   type: checkbox
-version: 2.1.2-dev0
+- description: If selected, writes preview.json with planned output filenames and skips estimation
+  key: inputs.preview
+  title: 'Preview outputs only: '
+  type: checkbox
+version: 2.1.4-dev1

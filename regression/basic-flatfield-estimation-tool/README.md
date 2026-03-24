@@ -1,8 +1,8 @@
 # BaSiC Flatfield Correction (v2.1.4-dev1)
 
 This WIPP plugin will take a collection of images and use the BaSiC flatfield
-correction algorithm to generate a flatfield image, a darkfield image, and a
-photobleach offset. BaSiC was originally described by Peng et al in
+correction algorithm to generate a flatfield image and optionally a darkfield
+image. BaSiC was originally described by Peng et al in
 [A BaSiC tool for background and shading correction of optical microscopy images](https://doi.org/10.1038/ncomms14836).
 
 This Python implementation was developed in part using a Matlab repository that
@@ -33,7 +33,14 @@ of `plugin.json` into the pop-up window and submit.
 
 ## Running tests
 
-To run the tests, use `uv run pytest`. This will run all tests in the `tests` directory.
+Install dev dependencies (pytest, etc.), then run pytest:
+
+```bash
+uv sync --extra dev
+uv run pytest
+```
+
+This runs all tests in the `tests` directory.
 
 ## Installation
 
@@ -42,9 +49,15 @@ Install dependencies using uv:
 uv sync
 ```
 
-Or with dev dependencies:
+Or including dev dependencies (linters, pytest, pre-commit) from
+`[project.optional-dependencies]`:
 ```bash
-uv sync --dev
+uv sync --extra dev
+```
+
+To install every optional extra at once:
+```bash
+uv sync --all-extras
 ```
 
 Since this plugin is only a thin wrapper around the `basicpy` package, the tests are limited to verifying that the plugin is able to run and that the output images are generated.
@@ -53,14 +66,14 @@ This check is performed by the `basicpy` package, which has its own tests.
 
 ## Options
 
-This plugin takes 4 input arguments and 1 output argument:
+This plugin takes five input arguments and one output collection. Photobleach is
+not implemented (`basicpy` does not expose it yet); see the note above.
 
-| Name            | Description                                                 | I/O    | Type    |
-|-----------------|-------------------------------------------------------------|--------|---------|
-| `--inpDir`      | Path to input images                                        | Input  | String  |
-| `--getDarkfield`   | If 'true', will calculate darkfield image                   | Input  | Boolean |
-| `--photobleach` | If 'true', will calculate photobleach scalar                | Input  | Boolean |
-| `--filePattern` | File pattern to subset data                                 | Input  | String  |
-| `--groupBy`     | Variables to group together                                 | Input  | String  |
-| `--outDir`      | Output image collection                                     | Output | String  |
-| `--preview`     | Preview the names of output images without running any code | Input | Boolean |
+| Name              | Description                                                                 | I/O    | Type    |
+|-------------------|-----------------------------------------------------------------------------|--------|---------|
+| `--inpDir`        | Path to input images                                                        | Input  | String  |
+| `--outDir`        | Output image collection (or destination for `preview.json` in preview mode) | Output | String  |
+| `--filePattern`   | File pattern to subset data                                                 | Input  | String  |
+| `--groupBy`       | Variables to group together (empty string if none)                        | Input  | String  |
+| `--getDarkfield`  | If set, estimate and write darkfield as well as flatfield                   | Input  | Boolean |
+| `--preview`       | Write `preview.json` listing planned output filenames; skip estimation      | Input  | Boolean |

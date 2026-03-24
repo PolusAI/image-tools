@@ -38,6 +38,12 @@
       "type": "boolean",
       "description": "Calculate darkfield image.",
       "required": true
+    },
+    {
+      "name": "preview",
+      "type": "boolean",
+      "description": "If true, write preview.json listing output filenames without running estimation.",
+      "required": false
     }
   ],
   "outputs": [
@@ -67,6 +73,11 @@
       "key": "inputs.getDarkfield",
       "title": "Calculate darkfield: ",
       "description": "If selected, will generate a darkfield image"
+    },
+    {
+      "key": "inputs.preview",
+      "title": "Preview outputs only: ",
+      "description": "If selected, writes preview.json with planned output filenames and skips estimation"
     }
   ]
 }

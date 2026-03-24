@@ -21,6 +21,11 @@ inputs:
     inputBinding:
       prefix: --outDir
     type: Directory
+  preview:
+    default: false
+    inputBinding:
+      prefix: --preview
+    type: boolean
 outputs:
   outDir:
     outputBinding:
