@@ -46,7 +46,7 @@ def _read_output_file(file_path: Path, suffix: str):
 def test_run_nyxus_object_features(
     synthetic_images: tuple[Path, Path],
     output_directory: Path,
-    get_params,
+    get_params: tuple[str, str],
 ) -> None:
     inp_dir, seg_dir = synthetic_images
     fileext, feat = get_params
@@ -76,7 +76,7 @@ def test_run_nyxus_object_features(
 def test_run_nyxus_whole_image_features(
     synthetic_images: tuple[Path, Path],
     output_directory: Path,
-    get_params,
+    get_params: tuple[str, str],
 ) -> None:
     inp_dir, _ = synthetic_images
     fileext, feat = get_params
@@ -104,7 +104,7 @@ def test_run_nyxus_whole_image_features(
 def test_cli(
     synthetic_images: tuple[Path, Path],
     output_directory: Path,
-    get_params,
+    get_params: tuple[str, str],
 ) -> None:
     inp_dir, seg_dir = synthetic_images
     _, feat = get_params
@@ -136,7 +136,7 @@ def test_cli(
 def test_cli_single_roi(
     synthetic_images: tuple[Path, Path],
     output_directory: Path,
-    get_params,
+    get_params: tuple[str, str],
 ) -> None:
     inp_dir, seg_dir = synthetic_images
     _, feat = get_params
