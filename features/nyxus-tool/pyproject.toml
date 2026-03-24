@@ -20,7 +20,7 @@ authors = [
 
 dependencies = [
   "bfio==2.5.0",
-  "filepattern==2.1.4",
+  "filepattern==2.2.4",
   "typer==0.24.1",
   "tqdm==4.67.3",
   "nyxus==0.11.0",
