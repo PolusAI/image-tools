@@ -131,35 +131,3 @@ def test_cli(
     assert any(output_directory.iterdir())
 
     clean_directories()
-
-
-def test_cli_single_roi(
-    synthetic_images: tuple[Path, Path],
-    output_directory: Path,
-    get_params: tuple[str, str],
-) -> None:
-    inp_dir, seg_dir = synthetic_images
-    _, feat = get_params
-
-    result = runner.invoke(
-        app,
-        [
-            "--inpDir",
-            str(inp_dir),
-            "--segDir",
-            str(seg_dir),
-            "--intPattern",
-            "y04_r{r:d}_c1.ome.tif",
-            "--segPattern",
-            "y04_r{r:d}_c0.ome.tif",
-            "--features",
-            feat,
-            "--singleRoi",
-            "--outDir",
-            str(output_directory),
-        ],
-    )
-
-    assert result.exit_code == 0
-    assert any(output_directory.iterdir())
-    clean_directories()

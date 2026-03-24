@@ -39,7 +39,7 @@ def output_directory() -> str | Path:
     return Path(tempfile.mkdtemp(dir=Path.cwd()))
 
 
-@pytest.fixture(params=[512])
+@pytest.fixture(params=[256, 512, 1024])
 def image_sizes(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the fixture."""
     return request.param
