@@ -141,11 +141,8 @@ def main(  # noqa: C901, PLR0913
                 f"No segmentation images found in {seg_dir} with pattern {seg_pattern}"
             )
             raise ValueError(msg)
-    tab_ext = POLUS_TAB_EXT
+    tab_ext = ".csv" if POLUS_TAB_EXT == "pandas" else POLUS_TAB_EXT
     if preview:
-        if tab_ext == "pandas":
-            tab_ext = "csv"
-
         write_preview(int_images, config.out_dir, tab_ext, int_pattern)
         return
 
