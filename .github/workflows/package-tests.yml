@@ -116,7 +116,15 @@ jobs:
           conda activate project_env
           pip install -e ".[all]"
           conda install pytest -y
+          set +e
           python -X faulthandler -m pytest -v -p no:faulthandler
+          rc=$?
+          set -e
+          if [ "$rc" -eq 5 ]; then
+            echo "No tests collected (pytest exit 5); treating as success."
+            exit 0
+          fi
+          exit "$rc"
 
       - name: Run tests with uv
         if: ${{ hashFiles(format('{0}/environment.yml', matrix.package_dir)) == '' }}
@@ -128,4 +136,12 @@ jobs:
           cd ${{ matrix.package_dir }}
           uv sync --all-extras || uv pip install -e ".[all]"
           uv pip install pytest
+          set +e
           uv run python -X faulthandler -m pytest -v -p no:faulthandler
+          rc=$?
+          set -e
+          if [ $rc -eq 5 ]; then
+            echo "No tests found; skipping test step"
+            exit 0
+          fi
+          exit "$rc"
