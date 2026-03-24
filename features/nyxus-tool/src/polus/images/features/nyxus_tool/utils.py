@@ -52,6 +52,8 @@ def validate_paths(*paths: Path) -> None:
         typer.BadParameter: If a path does not exist.
     """
     for p in paths:
+        if p is None:
+            continue
         if not p.exists():
             msg = f"{p} does not exist"
             raise typer.BadParameter(msg)

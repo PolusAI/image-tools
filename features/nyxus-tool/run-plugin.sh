@@ -18,7 +18,7 @@ features="BASIC_MORPHOLOGY,ALL_INTENSITY"
 
 # Output format – now via environment variable
 # Options: pandas (.csv), arrowipc (.arrow), parquet (.parquet)
-export POLUS_TAB_EXT="pandas"
+export POLUS_TAB_EXT=".csv"
 
 # Nyxus advanced parameters – now passed via --kwargs
 kwargs=(

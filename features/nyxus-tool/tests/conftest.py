@@ -39,7 +39,7 @@ def output_directory() -> str | Path:
     return Path(tempfile.mkdtemp(dir=Path.cwd()))
 
 
-@pytest.fixture(params=[256])
+@pytest.fixture(params=[256, 512, 1024])
 def image_sizes(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the fixture."""
     return request.param
@@ -70,7 +70,9 @@ def synthetic_images(
 
 @pytest.fixture(
     params=[
-        ("pandas", ".csv", "MEAN"),
+        (".csv", "MEAN"),
+        (".arrow", "MEAN"),
+        (".parquet", "MEDIAN"),
     ],
 )
 def get_params(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
@@ -78,7 +80,7 @@ def get_params(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     return request.param
 
 
-@pytest.fixture(params=[5000])
+@pytest.fixture(params=[2000, 50000, 20000])
 def scaled_sizes(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the fixture."""
     return request.param

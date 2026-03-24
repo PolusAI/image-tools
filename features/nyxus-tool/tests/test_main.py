@@ -2,39 +2,57 @@
 
 from pathlib import Path
 import shutil
-
-import pytest
-import vaex
-
 from typer.testing import CliRunner
 
 from polus.images.features.nyxus_tool.__main__ import app
 from polus.images.features.nyxus_tool.nyxus_func import (
     run_nyxus_object_features,
-    run_nyxus_whole_image_features
+    run_nyxus_whole_image_features,
 )
 
 runner = CliRunner()
 
 
 def clean_directories() -> None:
-    """Remove temporary directories."""
+    """Remove temporary directories starting with 'tmp'."""
     for d in Path.cwd().iterdir():
         if d.is_dir() and d.name.startswith("tmp"):
             shutil.rmtree(d)
 
 
-def test_run_nyxus_object_features(
-    synthetic_images: tuple[str | Path, str | Path],
-    output_directory: str | Path,
-    get_params: pytest.FixtureRequest,
-) -> None:
-    """Test object-level feature extraction."""
-    inp_dir, seg_dir = synthetic_images
-    fileext, EXT, feat = get_params
+def _read_output_file(file_path: Path, suffix: str):
+    """Read CSV, Arrow, or Parquet output safely."""
+    if suffix == ".csv":
+        import pandas as pd
 
-    int_files = sorted(Path(inp_dir).glob("*c1.ome.tif"))
-    seg_files = sorted(Path(seg_dir).glob("*c0.ome.tif"))
+        return pd.read_csv(file_path)
+
+    elif suffix == ".arrow":
+        import pyarrow.ipc as ipc
+
+        with open(file_path, "rb") as f:
+            reader = ipc.open_file(f)
+            return reader.read_all().to_pandas()
+
+    elif suffix == ".parquet":
+        import pandas as pd
+
+        return pd.read_parquet(file_path)
+
+    else:
+        raise ValueError(f"Unsupported suffix {suffix}")
+
+
+def test_run_nyxus_object_features(
+    synthetic_images: tuple[Path, Path],
+    output_directory: Path,
+    get_params,
+) -> None:
+    inp_dir, seg_dir = synthetic_images
+    fileext, feat = get_params
+
+    int_files = sorted(inp_dir.glob("*c1.ome.tif"))
+    seg_files = sorted(seg_dir.glob("*c0.ome.tif"))
 
     for int_file, seg_file in zip(int_files, seg_files):
         run_nyxus_object_features(
@@ -45,27 +63,25 @@ def test_run_nyxus_object_features(
             file_extension=fileext,
         )
 
-    outputs = list(Path(output_directory).iterdir())
+    outputs = list(output_directory.iterdir())
+    assert len(outputs) > 0, f"No outputs found in {output_directory}"
+    assert outputs[0].suffix == fileext
 
-    assert len(outputs) > 0
-    assert outputs[0].suffix == EXT
-
-    vdf = vaex.open(outputs[0])
-    assert vdf.shape is not None
+    df = _read_output_file(outputs[0], fileext)
+    assert df.shape is not None
 
     clean_directories()
 
 
 def test_run_nyxus_whole_image_features(
-    synthetic_images: tuple[str | Path, str | Path],
-    output_directory: str | Path,
-    get_params: pytest.FixtureRequest,
+    synthetic_images: tuple[Path, Path],
+    output_directory: Path,
+    get_params,
 ) -> None:
-    """Test whole-image feature extraction."""
     inp_dir, _ = synthetic_images
-    fileext, EXT, feat = get_params
+    fileext, feat = get_params
 
-    int_files = sorted(Path(inp_dir).glob("*c1.ome.tif"))
+    int_files = sorted(inp_dir.glob("*c1.ome.tif"))
 
     for int_file in int_files:
         run_nyxus_whole_image_features(
@@ -75,25 +91,23 @@ def test_run_nyxus_whole_image_features(
             file_extension=fileext,
         )
 
-    outputs = list(Path(output_directory).iterdir())
+    outputs = list(output_directory.iterdir())
+    assert len(outputs) > 0, f"No outputs found in {output_directory}"
+    assert outputs[0].suffix == fileext
 
-    assert len(outputs) > 0
-    assert outputs[0].suffix == EXT
-
-    vdf = vaex.open(outputs[0])
-    assert vdf.shape is not None
+    df = _read_output_file(outputs[0], fileext)
+    assert df.shape is not None
 
     clean_directories()
 
 
 def test_cli(
-    synthetic_images: tuple[str | Path, str | Path],
-    output_directory: str | Path,
-    get_params: pytest.FixtureRequest,
+    synthetic_images: tuple[Path, Path],
+    output_directory: Path,
+    get_params,
 ) -> None:
-    """Test CLI execution."""
     inp_dir, seg_dir = synthetic_images
-    fileext, _, feat = get_params
+    _, feat = get_params
 
     result = runner.invoke(
         app,
@@ -114,19 +128,18 @@ def test_cli(
     )
 
     assert result.exit_code == 0
-    assert any(Path(output_directory).iterdir())
+    assert any(output_directory.iterdir())
 
     clean_directories()
 
 
 def test_cli_single_roi(
-    synthetic_images: tuple[str | Path, str | Path],
-    output_directory: str | Path,
-    get_params: pytest.FixtureRequest,
+    synthetic_images: tuple[Path, Path],
+    output_directory: Path,
+    get_params,
 ) -> None:
-    """Test CLI with single ROI mode."""
     inp_dir, seg_dir = synthetic_images
-    _, _, feat = get_params
+    _, feat = get_params
 
     result = runner.invoke(
         app,
@@ -148,6 +161,6 @@ def test_cli_single_roi(
     )
 
     assert result.exit_code == 0
-    assert any(Path(output_directory).iterdir())
+    assert any(output_directory.iterdir())
 
     clean_directories()

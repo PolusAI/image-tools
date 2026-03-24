@@ -24,7 +24,6 @@ dependencies = [
   "typer==0.24.1",
   "tqdm==4.67.3",
   "nyxus==0.11.0",
-  "vaex==4.19.0",
   "numpy>2.0.0"
 ]
 
@@ -40,7 +39,8 @@ dev = [
   "pytest-sugar==1.1.1",
   "ipykernel>=6.21.2",
   "requests==2.32.5",
-  "scikit-image==0.24.0"
+  "scikit-image==0.24.0",
+  "pyarrow==23.0.1"
 ]
 
 

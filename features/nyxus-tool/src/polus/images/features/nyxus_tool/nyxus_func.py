@@ -4,13 +4,8 @@ import pathlib
 from typing import Any
 
 import numpy as np
-import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
-import vaex
 from bfio import BioReader
 from nyxus import Nyxus
-from pyarrow import ipc
 
 from .utils import Extension
 
@@ -18,82 +13,29 @@ logger = logging.getLogger(__name__)
 
 chunk_size = 100_000
 
-_EXT_MAP: dict[str, str] = {
-    "arrowipc": ".arrow",
-    "parquet": ".parquet",
-    "pandas": ".csv",
+
+# Map: extension -> (nyxus_output_type, file_suffix)
+_EXT_MAP: dict[str, tuple[str, str]] = {
+    ".csv": ("pandas", ".csv"),
+    ".arrow": ("arrowipc", ".arrow"),
+    ".parquet": ("parquet", ".parquet"),
 }
 
 
-def _resolve_file_ext(file_extension: Extension) -> tuple[str, str]:
-    """Resolve a file extension enum/string to (file_ext, suffix).
-
-    Args:
-        file_extension: Extension enum value or plain string.
-
-    Returns:
-        A tuple of (file_ext, suffix), e.g. ("arrowipc", ".arrow").
-
-    Raises:
-        ValueError: If the extension is not supported.
-    """
+def _resolve_file_ext(file_extension: Extension | str) -> tuple[str, str]:
+    """Resolve extension into (nyxus_output_type, file_suffix)."""
     if hasattr(file_extension, "value"):
-        file_ext = str(file_extension.value).lower().strip()
+        ext = str(file_extension.value).lower().strip()
     else:
-        file_ext = str(file_extension).lower().strip()
+        ext = str(file_extension).lower().strip()
 
-    try:
-        suffix = _EXT_MAP[file_ext]
-    except KeyError as err:
+    if ext not in _EXT_MAP:
         msg = f"Invalid extension '{file_extension}'. Options: {list(_EXT_MAP)}"
         raise ValueError(
             msg,
-        ) from err
+        )
 
-    return file_ext, suffix
-
-
-def _write_features(
-    feats: pd.DataFrame | str,
-    file_ext: str,
-    output_path: pathlib.Path,
-) -> None:
-    """Write a features DataFrame to disk in the requested format."""
-    if isinstance(feats, str):
-        feats_path = pathlib.Path(feats)
-
-        if feats_path.suffix == ".csv":
-            feats = pd.read_csv(feats_path)
-
-        elif feats_path.suffix in [".arrow", ".feather"]:
-            # Use normal open() instead of memory_map
-            with feats_path.open("rb") as f:
-                feats = ipc.open_file(f).read_all().to_pandas()
-
-        elif feats_path.suffix == ".parquet":
-            feats = pq.read_table(str(feats_path)).to_pandas()
-
-        else:
-            msg = f"Unsupported Nyxus output format: {feats_path}"
-            raise ValueError(msg)
-
-    # ---- Write output ----
-    if file_ext == "pandas":
-        vf = vaex.from_pandas(feats)
-        vf.export_csv(path=str(output_path), chunk_size=100_000)
-
-    else:
-        table = pa.Table.from_pandas(feats)
-
-        if file_ext == "arrowipc":
-            with pa.OSFile(str(output_path), "wb") as sink, ipc.new_file(
-                sink,
-                table.schema,
-            ) as writer:
-                writer.write(table)
-
-        elif file_ext == "parquet":
-            pq.write_table(table, str(output_path))
+    return _EXT_MAP[ext]
 
 
 def run_nyxus_object_features(  # noqa: PLR0913
@@ -133,15 +75,25 @@ def run_nyxus_object_features(  # noqa: PLR0913
         out_name = i_file.name.replace("".join(i_file.suffixes), suffix)
         output_path = pathlib.Path(out_dir, out_name)
 
-        feats = nyx.featurize_files(
-            intensity_files=[str(i_file)],
-            mask_files=[str(seg_file[0])],
-            single_roi=False,
-            output_type=file_ext,
-            output_path=str(output_path),
-        )
-
-        _write_features(feats, file_ext, output_path)
+        # Nyxus write the file directly for all formats:
+        # - "pandas"   -> writes .csv
+        # - "arrowipc" -> writes .arrow
+        # - "parquet"  -> writes .parquet
+        if file_ext != "pandas":
+            nyx.featurize_files(
+                intensity_files=[str(i_file)],
+                mask_files=[str(seg_file[0])],
+                single_roi=False,
+                output_type=file_ext,
+                output_path=str(output_path),
+            )
+        else:
+            feat = nyx.featurize_files(
+                intensity_files=[str(i_file)],
+                mask_files=[str(seg_file[0])],
+                single_roi=False,
+            )
+            feat.to_csv(str(output_path), index=False)
 
 
 def run_nyxus_whole_image_features(
@@ -151,7 +103,15 @@ def run_nyxus_whole_image_features(
     file_extension: Extension,
     kwargs: dict[str, Any] | None = None,
 ) -> None:
-    """Extract Nyxus features for full intensity images."""
+    """Extract Nyxus features for full intensity images.
+
+    Args:
+        int_file : Path to intensity image.
+        out_dir : Path to output directory.
+        features : List of features to compute.
+        file_extension: Output file format (Extension enum or string).
+        kwargs: Additional parameters passed to Nyxus.set_params().
+    """
     nyx = Nyxus(features)
 
     if kwargs is None:
@@ -164,13 +124,13 @@ def run_nyxus_whole_image_features(
     logger.info("Running Nyxus whole-image feature extraction")
 
     with BioReader(int_file) as br:
-        image = br.read()
+        image = br.read().squeeze()
 
     mask = np.ones(image.shape[:2], dtype=np.uint8)
-
-    feats = nyx.featurize(image, mask)
-
     out_name = int_file.name.replace("".join(int_file.suffixes), suffix)
     output_path = pathlib.Path(out_dir, out_name)
-
-    _write_features(feats, file_ext, output_path)
+    if file_ext != "pandas":
+        nyx.featurize(image, mask, output_type=file_ext, output_path=str(output_path))
+    else:
+        feats = nyx.featurize(image, mask)
+        feats.to_csv(str(output_path), index=False)

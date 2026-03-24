@@ -23,7 +23,7 @@ For more information on WIPP, visit the [official WIPP page](https://isg.nist.go
 
 - `--singleRoi` mode treats each intensity image as one whole-object ROI (ignores segmentation mask)
 - Nyxus parameters (e.g., `neighbor_distance`, `pixels_per_micron`) are passed via repeatable `--kwargs KEY=VALUE`
-- Output file extension (format) is controlled via environment variable `POLUS_TAB_EXT` (default: `pandas`; options: `pandas`, `arrowipc`, `parquet`)
+- Output file extension (format) is controlled via environment variable `POLUS_TAB_EXT` (default: `.csv`; options: `.csv`, `.arrow`, `.parquet`)
 
 
 ## Building

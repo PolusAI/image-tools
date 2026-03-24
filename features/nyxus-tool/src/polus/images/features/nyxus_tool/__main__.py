@@ -56,7 +56,7 @@ def main(  # noqa: C901, PLR0913
         help="Input image directory",
     ),
     seg_dir: Path = typer.Option(
-        ...,
+        None,
         "--segDir",
         help="Input label images",
     ),
@@ -112,7 +112,7 @@ def main(  # noqa: C901, PLR0913
 
     config = NyxusConfig(
         inp_dir=inp_dir.resolve(),
-        seg_dir=seg_dir.resolve(),
+        seg_dir=seg_dir.resolve() if seg_dir is not None else None,
         out_dir=out_dir.resolve(),
         features=features,
         single_roi=single_roi,
@@ -124,18 +124,23 @@ def main(  # noqa: C901, PLR0913
         json.dumps({**config.__dict__, "kwargs": user_kwargs}, indent=1, default=str),
     )
     int_images = fp.FilePattern(inp_dir, int_pattern)
-    seg_images = fp.FilePattern(seg_dir, seg_pattern)
-
     if len(int_images) == 0:
         msg = f"No intensity images found in {inp_dir} with pattern {int_pattern}"
         raise ValueError(
             msg,
         )
+    seg_images = None
 
-    if not single_roi and len(seg_images) == 0:
-        msg = f"No segmentation images found in {seg_dir}"
-        raise ValueError(msg)
-
+    if not single_roi:
+        if seg_dir is None:
+            msg = "segDir is required when not running in single ROI mode"
+            raise typer.BadParameter(msg)
+        seg_images = fp.FilePattern(seg_dir, seg_pattern)
+        if len(seg_images) == 0:
+            msg = (
+                f"No segmentation images found in {seg_dir} with pattern {seg_pattern}"
+            )
+            raise ValueError(msg)
     tab_ext = POLUS_TAB_EXT
     if preview:
         if tab_ext == "pandas":
@@ -167,7 +172,7 @@ def main(  # noqa: C901, PLR0913
         else:
             logger.info("Running Nyxus with segmentation masks")
 
-            for s_image in seg_images():
+            for s_image in seg_images():  # type: ignore[misc]
                 seg_path = s_image[1][0]
 
                 with BioReader(seg_path) as br:
