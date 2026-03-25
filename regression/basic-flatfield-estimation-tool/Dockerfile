@@ -62,10 +62,6 @@ WORKDIR ${EXEC_DIR}/image-tools/${TOOL_DIR}
 RUN pip3 install . --no-cache-dir
 WORKDIR ${EXEC_DIR}
 
-
-# Install flytekit
-RUN pip3 install "flytekit>=1.16.15" --no-cache-dir
-
 # Set the entrypoint
 # TODO: Change the entrypoint to the tool entrypoint
 ENTRYPOINT ["python3", "-m", "polus.images.regression.basic_flatfield_estimation"]
