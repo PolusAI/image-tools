@@ -1,5 +1,4 @@
 /data
-poetry.lock
 requirements.txt
 **/__pycache__
 **/*.so
