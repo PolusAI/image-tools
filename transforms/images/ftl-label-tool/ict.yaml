@@ -1,0 +1,54 @@
+author:
+- Nick Schaub
+- Najib Ishaq
+- Hamdah Shafqat Abbasi
+contact: nick.schaub@nih.gov
+container: polusai/ftl-label-tool:1.0.0-dev0
+description: Label objects in a 2d or 3d binary image.
+entrypoint: python3 -m polus.images.transforms.images.ftl_label
+inputs:
+- description: Input image collection to be processed by this plugin
+  format:
+  - collection
+  name: inpDir
+  required: true
+  type: path
+- description: A filepattern, used to select data to be converted
+  format:
+    - string
+  name: filePattern
+  required: false
+  type: string
+- description: City block connectivity
+  format:
+  - number
+  name: connectivity
+  required: true
+  type: integer
+- description: Binarization threshold for probability images
+  format:
+    - number
+  name: binarizationThreshold
+  required: false
+  type: number
+name: polusai/FTLLabel
+outputs:
+- description: Output collection
+  format:
+  - collection
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/PolusAI/image-tools
+specVersion: 1.0.0
+title: FTL Label
+ui:
+- description: Input image collection to be processed by this plugin
+  key: inputs.inpDir
+  title: Input collection
+  type: path
+- description: City block connectivity
+  key: inputs.connectivity
+  title: Connectivity
+  type: integer
+version: 1.0.0-dev0

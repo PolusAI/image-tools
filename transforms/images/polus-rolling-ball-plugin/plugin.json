@@ -1,6 +1,6 @@
 {
   "name": "Rolling Ball",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "title": "Rolling Ball",
   "description": "A WIPP plugin to perform background subtraction using the rolling-ball algorithm.",
   "author": "Najib Ishaq (najib.ishaq@axleinfo.com)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/labshare/polus-plugins",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/rolling-ball-plugin:1.0.2",
+  "containerId": "polusai/rolling-ball-plugin:1.0.3",
   "inputs": [
     {
       "name": "inputDir",

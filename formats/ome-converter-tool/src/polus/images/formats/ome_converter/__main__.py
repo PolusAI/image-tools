@@ -3,16 +3,13 @@ import json
 import logging
 import os
 import pathlib
-from concurrent.futures import as_completed
 from typing import Any
 from typing import Optional
 
 import filepattern as fp
-import preadator
 import typer
-from polus.images.formats.ome_converter.image_converter import NUM_THREADS
-from polus.images.formats.ome_converter.image_converter import convert_image
-from tqdm import tqdm
+from polus.images.formats.ome_converter.image_converter import POLUS_IMG_EXT
+from polus.images.formats.ome_converter.image_converter import batch_convert
 
 app = typer.Typer()
 
@@ -23,22 +20,71 @@ logging.basicConfig(
 )
 logger = logging.getLogger("polus.images.formats.ome_converter")
 logger.setLevel(os.environ.get("POLUS_LOG", logging.INFO))
-POLUS_IMG_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
+
+
+def parse_input_dir(value: str) -> pathlib.Path | list[pathlib.Path]:
+    """Parse a directory or comma-separated file paths."""
+    if "," in value:
+        files = [
+            pathlib.Path(f.strip()).expanduser().resolve()
+            for f in value.split(",")
+            if f.strip()
+        ]
+        if not files:
+            msg = "Empty file list provided"
+            raise typer.BadParameter(msg)
+        return files
+    path = pathlib.Path(value).expanduser().resolve()
+    if not path.is_dir():
+        msg = f"Directory {path} does not exist"
+        raise typer.BadParameter(msg)
+    return path
+
+
+def _collect_files(
+    inp: str | pathlib.Path | list[pathlib.Path],
+    pattern: str,
+) -> list[pathlib.Path]:
+    """Normalize input into a list of files."""
+    if isinstance(inp, (str, pathlib.Path)):
+        dir_path = pathlib.Path(inp) if isinstance(inp, str) else inp
+        if not dir_path.is_dir():
+            msg = f"Input path is not a directory: {dir_path}"
+            raise ValueError(msg)
+        fps = fp.FilePattern(dir_path, pattern)
+        return [files[1][0] for files in fps()]
+
+    if isinstance(inp, list):
+        return [pathlib.Path(p) if isinstance(p, str) else p for p in inp]
+    msg = "Expected str, Path, or list[Path/str]"
+    raise TypeError(msg)
+
+
+def write_preview(
+    out_dir: pathlib.Path,
+    file_pattern: str,
+    files: list[pathlib.Path],
+) -> None:
+    """Write a JSON preview of the files that would be converted."""
+    preview: dict[str, Any] = {
+        "filePattern": file_pattern,
+        "outDir": [f.stem + POLUS_IMG_EXT for f in files],
+    }
+    preview_path = out_dir / "preview.json"
+    with preview_path.open("w") as f:
+        json.dump(preview, f, indent=2)
+    logger.info(f"Preview written to {preview_path}")
 
 
 @app.command()
 def main(
-    inp_dir: pathlib.Path = typer.Option(
+    inp_dir: str = typer.Option(
         ...,
         "--inpDir",
         help="Input generic data collection to be processed by this plugin",
-        exists=True,
-        resolve_path=True,
-        readable=True,
-        file_okay=False,
-        dir_okay=True,
+        callback=parse_input_dir,
     ),
-    pattern: str = typer.Option(
+    file_pattern: str = typer.Option(
         ".+",
         "--filePattern",
         help="A filepattern defining the images to be converted",
@@ -62,44 +108,22 @@ def main(
     """Convert bioformat supported image datatypes conversion to ome.tif or ome.zarr."""
     logger.info(f"inpDir = {inp_dir}")
     logger.info(f"outDir = {out_dir}")
-    logger.info(f"filePattern = {pattern}")
+    logger.info(f"filePattern = {file_pattern}")
+    logger.info(f"preview     = {preview}")
 
-    fps = fp.FilePattern(inp_dir, pattern)
+    files = _collect_files(inp_dir, file_pattern)  # type: ignore
+    logger.info(f"Found {len(files)} file(s) to process.")
 
     if preview:
-        with out_dir.joinpath("preview.json").open("w") as jfile:
-            out_json: dict[str, Any] = {
-                "filepattern": pattern,
-                "outDir": [],
-            }
-            for file in fps():
-                out_name = str(file[1][0].name.split(".")[0]) + POLUS_IMG_EXT
-                out_json["outDir"].append(out_name)
-            json.dump(out_json, jfile, indent=2)
+        write_preview(out_dir, file_pattern, files)
         return
 
-    with preadator.ProcessManager(
-        name="ome_converter",
-        num_processes=NUM_THREADS,
-        threads_per_process=2,
-    ) as executor:
-        threads = []
-        for files in fps():
-            file = files[1][0]
-            threads.append(
-                executor.submit_process(convert_image, file, POLUS_IMG_EXT, out_dir),
-            )
-
-        for f in tqdm(
-            as_completed(threads),
-            total=len(threads),
-            mininterval=5,
-            desc=f"converting images to {POLUS_IMG_EXT}",
-            initial=0,
-            unit_scale=True,
-            colour="cyan",
-        ):
-            f.result()
+    batch_convert(
+        inp_dir=inp_dir,
+        out_dir=out_dir,
+        file_pattern=file_pattern,
+        file_extension=POLUS_IMG_EXT,
+    )
 
 
 if __name__ == "__main__":

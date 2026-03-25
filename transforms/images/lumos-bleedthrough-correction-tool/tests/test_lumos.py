@@ -32,7 +32,7 @@ def _make_blobs(
         length=length,
         blob_size_fraction=0.025,
         volume_fraction=0.25,
-        seed=42,
+        rng=42,
     ).astype(numpy.float32)
 
     image = (image / image.max()) / c_max

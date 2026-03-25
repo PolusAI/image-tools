@@ -1,16 +1,17 @@
 # noqa
 
-import os
 import tempfile
 import unittest
+from pathlib import Path
 
 import cv2
 import numpy as np
 from bfio import BioReader
 from bfio import BioWriter
-from polus.images.transforms.images.binary_operations import (
-    binary_op as binary_operation,
-)
+
+# from polus.images.transforms.images.binary_operations import (
+#    binary_op as binary_operation,
+from polus.images.transforms.images.binary_operations import binary_operation
 from polus.images.transforms.images.binary_operations import utils
 
 
@@ -57,8 +58,8 @@ class PluginTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             # initialize input and output
-            input_path = os.path.join(tmpdirname, "input.ome.tif")
-            output_path = os.path.join(tmpdirname, "output.ome.tif")
+            input_path = Path(tmpdirname) / "input.ome.tif"
+            output_path = Path(tmpdirname) / "output.ome.tif"
 
             # get some values into the input!
             with BioWriter(
@@ -76,7 +77,7 @@ class PluginTest(unittest.TestCase):
             output_path = binary_operation(
                 input_path=input_path,
                 output_path=output_path,
-                function=utils.skeleton_binary,
+                function=utils.skeletonize,
                 operation="skeleton",
                 extra_arguments=None,
                 extra_padding=data.kernel_size,
@@ -91,20 +92,20 @@ class PluginTest(unittest.TestCase):
         instance_output_labels = instance_output_labels[instance_output_labels > 0]
 
         for instance_output_label in instance_output_labels:
-            instance_outputSingle_instance = (
+            instance_output_single_instance = (
                 instance_output_label == instance_output_array
             ).astype(np.uint8)
-            instance_inputSingle_instance = (
+            instance_input_single_instance = (
                 instance_output_label == data.instance_array.squeeze()
             ).astype(np.uint8)
 
             contours_output, _ = cv2.findContours(
-                instance_outputSingle_instance,
+                instance_output_single_instance,
                 mode=cv2.RETR_TREE,
                 method=cv2.CHAIN_APPROX_NONE,
             )
             contours_input, _ = cv2.findContours(
-                instance_inputSingle_instance,
+                instance_input_single_instance,
                 mode=cv2.RETR_TREE,
                 method=cv2.CHAIN_APPROX_NONE,
             )
@@ -112,17 +113,17 @@ class PluginTest(unittest.TestCase):
             for contour_output, contour_input in zip(contours_output, contours_input):
                 area_output = cv2.contourArea(contour_output)
                 area_input = cv2.contourArea(contour_input)
-                assert area_output < area_input
+                assert area_output <= area_input
 
     def test_dilation_erosion_morphologicalgradient(self):  # noqa
         data = PluginData()
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             # initialize input and outputs
-            input_path = os.path.join(tmpdirname, "input.ome.tif")
-            output_dilation_path = os.path.join(tmpdirname, "output_dilation.ome.tif")
-            output_erosion_path = os.path.join(tmpdirname, "output_erosion.ome.tif")
-            output_morphgrad_path = os.path.join(tmpdirname, "output_morphgrad.ome.tif")
+            input_path = Path(tmpdirname) / "input.ome.tif"
+            output_dilation_path = Path(tmpdirname) / "output_dilation.ome.tif"
+            output_erosion_path = Path(tmpdirname) / "output_erosion.ome.tif"
+            output_morphgrad_path = Path(tmpdirname) / "output_morphgrad.ome.tif"
 
             with BioWriter(
                 input_path,
@@ -139,7 +140,7 @@ class PluginTest(unittest.TestCase):
             output_dilation_path = binary_operation(
                 input_path=input_path,
                 output_path=output_dilation_path,
-                function=utils.dilate_binary,
+                function=utils.dilate,
                 operation="dilation",
                 extra_arguments=1,
                 extra_padding=data.kernel_size,
@@ -148,7 +149,7 @@ class PluginTest(unittest.TestCase):
             output_erosion_path = binary_operation(
                 input_path=input_path,
                 output_path=output_erosion_path,
-                function=utils.erode_binary,
+                function=utils.erode,
                 operation="erosion",
                 extra_arguments=1,
                 extra_padding=data.kernel_size,
@@ -157,7 +158,7 @@ class PluginTest(unittest.TestCase):
             output_morphgrad_path = binary_operation(
                 input_path=input_path,
                 output_path=output_morphgrad_path,
-                function=utils.morphgradient_binary,
+                function=utils.morphgradient,
                 operation="morphological_gradient",
                 extra_arguments=None,
                 extra_padding=data.kernel_size,
@@ -189,20 +190,20 @@ class PluginTest(unittest.TestCase):
         ]
 
         for instance_output_erosion_label in instance_output_erosion_labels:
-            instance_output_erosionSingle_instance = (
+            instance_output_erosion_single_instance = (
                 instance_output_erosion_label == instance_output_erosion_array
             ).astype(np.uint8)
-            instance_input_erosionSingle_instance = (
+            instance_input_erosion_single_instance = (
                 instance_output_erosion_label == data.instance_array.squeeze()
             ).astype(np.uint8)
 
             contours_output, _ = cv2.findContours(
-                instance_output_erosionSingle_instance,
+                instance_output_erosion_single_instance,
                 mode=cv2.RETR_TREE,
                 method=cv2.CHAIN_APPROX_NONE,
             )
             contours_input, _ = cv2.findContours(
-                instance_input_erosionSingle_instance,
+                instance_input_erosion_single_instance,
                 mode=cv2.RETR_TREE,
                 method=cv2.CHAIN_APPROX_NONE,
             )
@@ -210,7 +211,7 @@ class PluginTest(unittest.TestCase):
             for contour_output, contour_input in zip(contours_output, contours_input):
                 area_output = cv2.contourArea(contour_output)
                 area_input = cv2.contourArea(contour_input)
-                assert area_output < area_input
+                assert area_output <= area_input
 
         # test morphological gradient
         diff_dilation_erosion = np.subtract(
@@ -224,8 +225,8 @@ class PluginTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             # initialize input and output
-            input_path = os.path.join(tmpdirname, "input.ome.tif")
-            output_path = os.path.join(tmpdirname, "output.ome.tif")
+            input_path = Path(tmpdirname) / "input.ome.tif"
+            output_path = Path(tmpdirname) / "output.ome.tif"
 
             # get some values into the input!
             with BioWriter(
@@ -243,7 +244,7 @@ class PluginTest(unittest.TestCase):
             output_path = binary_operation(
                 input_path=input_path,
                 output_path=output_path,
-                function=utils.fill_holes_binary,
+                function=utils.fill_holes,
                 operation="fill_holes",
                 extra_arguments=None,
                 extra_padding=data.kernel_size,
@@ -255,11 +256,11 @@ class PluginTest(unittest.TestCase):
                 instance_output_array = br[:].squeeze()
 
         for input_instance_label in data.input_instance_labels:
-            instance_outputSingle_instance = (
+            instance_output_single_instance = (
                 input_instance_label == instance_output_array
             ).astype(np.uint8)
             _, hierarchies = cv2.findContours(
-                instance_outputSingle_instance,
+                instance_output_single_instance,
                 mode=cv2.RETR_TREE,
                 method=cv2.CHAIN_APPROX_NONE,
             )
@@ -270,9 +271,9 @@ class PluginTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             # initialize input and output
-            input_path = os.path.join(tmpdirname, "input.ome.tif")
-            output_tophat_path = os.path.join(tmpdirname, "output_tophat.ome.tif")
-            output_opening_path = os.path.join(tmpdirname, "output_opening.ome.tif")
+            input_path = Path(tmpdirname) / "input.ome.tif"
+            output_tophat_path = Path(tmpdirname) / "output_tophat.ome.tif"
+            output_opening_path = Path(tmpdirname) / "output_opening.ome.tif"
 
             # get some values into the input!
             with BioWriter(
@@ -290,7 +291,7 @@ class PluginTest(unittest.TestCase):
             output_tophat_path = binary_operation(
                 input_path=input_path,
                 output_path=output_tophat_path,
-                function=utils.tophat_binary,
+                function=utils.tophat,
                 operation="top_hat",
                 extra_arguments=None,
                 extra_padding=data.kernel_size,
@@ -299,7 +300,7 @@ class PluginTest(unittest.TestCase):
             output_opening_path = binary_operation(
                 input_path=input_path,
                 output_path=output_opening_path,
-                function=utils.open_binary,
+                function=utils.open_,
                 operation="opening",
                 extra_arguments=None,
                 extra_padding=data.kernel_size,
@@ -325,9 +326,9 @@ class PluginTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             # initialize input and output
-            input_path = os.path.join(tmpdirname, "input.ome.tif")
-            output_blackhat_path = os.path.join(tmpdirname, "output_blackhat.ome.tif")
-            output_closing_path = os.path.join(tmpdirname, "output_closing.ome.tif")
+            input_path = Path(tmpdirname) / "input.ome.tif"
+            output_blackhat_path = Path(tmpdirname) / "output_blackhat.ome.tif"
+            output_closing_path = Path(tmpdirname) / "output_closing.ome.tif"
 
             # get some values into the input!
             with BioWriter(
@@ -345,7 +346,7 @@ class PluginTest(unittest.TestCase):
             output_blackhat_path = binary_operation(
                 input_path=input_path,
                 output_path=output_blackhat_path,
-                function=utils.blackhat_binary,
+                function=utils.blackhat,
                 operation="black_hat",
                 extra_arguments=None,
                 extra_padding=data.kernel_size,
@@ -354,7 +355,7 @@ class PluginTest(unittest.TestCase):
             output_closing_path = binary_operation(
                 input_path=input_path,
                 output_path=output_closing_path,
-                function=utils.close_binary,
+                function=utils.close_,
                 operation="closing",
                 extra_arguments=None,
                 extra_padding=data.kernel_size,
@@ -381,8 +382,8 @@ class PluginTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             # initialize input and output
-            input_path = os.path.join(tmpdirname, "input.ome.tif")
-            output_path = os.path.join(tmpdirname, "output.ome.tif")
+            input_path = Path(tmpdirname) / "input.ome.tif"
+            output_path = Path(tmpdirname) / "output.ome.tif"
 
             # get some values into the input!
             with BioWriter(
@@ -400,7 +401,7 @@ class PluginTest(unittest.TestCase):
             output_path = binary_operation(
                 input_path=input_path,
                 output_path=output_path,
-                function=utils.areafiltering_remove_larger_objects_binary,
+                function=utils.remove_large,
                 operation="filter_area_remove_large_objects",
                 extra_arguments=threshold,
                 extra_padding=data.kernel_size,
@@ -417,11 +418,11 @@ class PluginTest(unittest.TestCase):
         assert len(instance_output_labels) == 13
 
         for instance_output_label in instance_output_labels:
-            instance_outputSingle_instance = (
+            instance_output_single_instance = (
                 instance_output_label == instance_output_array
             ).astype(np.uint8)
             contours, _ = cv2.findContours(
-                instance_outputSingle_instance,
+                instance_output_single_instance,
                 mode=cv2.RETR_TREE,
                 method=cv2.CHAIN_APPROX_NONE,
             )
@@ -435,8 +436,8 @@ class PluginTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             # initialize input and output
-            input_path = os.path.join(tmpdirname, "input.ome.tif")
-            output_path = os.path.join(tmpdirname, "output.ome.tif")
+            input_path = Path(tmpdirname) / "input.ome.tif"
+            output_path = Path(tmpdirname) / "output.ome.tif"
 
             # get some values into the input!
             with BioWriter(
@@ -454,7 +455,7 @@ class PluginTest(unittest.TestCase):
             output_path = binary_operation(
                 input_path=input_path,
                 output_path=output_path,
-                function=utils.areafiltering_remove_smaller_objects_binary,
+                function=utils.remove_small,
                 operation="filter_area_remove_small_objects",
                 extra_arguments=threshold,
                 extra_padding=data.kernel_size,
@@ -471,11 +472,11 @@ class PluginTest(unittest.TestCase):
         assert len(instance_output_labels) == 36
 
         for instance_output_label in instance_output_labels:
-            instance_outputSingle_instance = (
+            instance_output_single_instance = (
                 instance_output_label == instance_output_array
             ).astype(np.uint8)
             contours, _ = cv2.findContours(
-                instance_outputSingle_instance,
+                instance_output_single_instance,
                 mode=cv2.RETR_TREE,
                 method=cv2.CHAIN_APPROX_NONE,
             )

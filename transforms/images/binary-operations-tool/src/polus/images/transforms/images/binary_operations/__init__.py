@@ -1,11 +1,12 @@
 """Binary operations tool."""
-__version__ = "0.5.3"
+__version__ = "0.5.6-dev0"
 
 from . import utils
 from .binops import Operation
 from .binops import StructuringShape
 from .binops import batch_binary_ops
 from .binops import binary_op
+from .binops import binary_operation
 from .binops import scalable_binary_op
 from .utils import blackhat
 from .utils import close_

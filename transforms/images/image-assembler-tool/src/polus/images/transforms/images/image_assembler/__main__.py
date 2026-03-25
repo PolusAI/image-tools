@@ -1,7 +1,6 @@
 """Package entrypoint for Image Assembler."""
 import json
 import logging
-import typing
 from os import environ
 from pathlib import Path
 
@@ -38,7 +37,7 @@ def generate_preview(
         timeslice_naming,
     )
 
-    preview: dict[str, typing.Union[list, str]] = {
+    preview: dict[str, list[str]] = {
         "outputDir": [],
     }
 

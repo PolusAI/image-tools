@@ -4,10 +4,10 @@ import logging
 import operator
 import pathlib
 import typing
+from concurrent.futures import ProcessPoolExecutor
 
 import bfio
 import numpy
-import preadator
 import tqdm
 from filepattern import FilePattern
 
@@ -145,18 +145,11 @@ def _unshade_batch(
         df_image: component to be used for flatfield correction
     """
     # Load images
-    with preadator.ProcessManager(
-        name="unshade_batch::load",
-        num_processes=utils.MAX_WORKERS,
-        threads_per_process=2,
-    ) as load_executor:
-        load_futures = []
-        for i, inp_path in enumerate(batch_paths):
-            load_futures.append(
-                load_executor.submit_process(utils.load_img, inp_path, i),
-            )
-
-        load_executor.join_processes()
+    with ProcessPoolExecutor(max_workers=utils.MAX_WORKERS) as load_executor:
+        load_futures = [
+            load_executor.submit(utils.load_img, inp_path, i)
+            for i, inp_path in enumerate(batch_paths)
+        ]
         images = [f.result() for f in load_futures]
 
     images = [img for _, img in sorted(images, key=operator.itemgetter(0))]
@@ -169,11 +162,10 @@ def _unshade_batch(
     img_stack /= ff_image + 1e-8
 
     # Save outputs
-    with preadator.ProcessManager(
-        name="unshade_batch::save",
-        num_processes=utils.MAX_WORKERS,
-        threads_per_process=2,
-    ) as save_executor:
-        for inp_path, img in zip(batch_paths, img_stack):
-            save_executor.submit_process(utils.save_img, inp_path, img, out_dir)
-        save_executor.join_processes()
+    with ProcessPoolExecutor(max_workers=utils.MAX_WORKERS) as save_executor:
+        futures = [
+            save_executor.submit(utils.save_img, inp_path, img, out_dir)
+            for inp_path, img in zip(batch_paths, img_stack)
+        ]
+        for f in futures:
+            f.result()

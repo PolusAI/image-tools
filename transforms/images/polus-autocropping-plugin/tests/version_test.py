@@ -1,26 +1,25 @@
+"""Version and manifest tests for polus-autocropping-plugin."""
 import json
 import unittest
 from pathlib import Path
 
 
 class VersionTest(unittest.TestCase):
+    """Check plugin version matches manifest."""
 
     version_path = Path(__file__).parent.parent.joinpath("VERSION")
     json_path = Path(__file__).parent.parent.joinpath("plugin.json")
 
-    def test_plugin_manifest(self):
-        # Get the plugin version
-        with open(self.version_path, 'r') as file:
-            version = file.readline()
+    def test_plugin_manifest(self) -> None:
+        """Plugin version in VERSION matches plugin.json and containerId."""
+        with self.version_path.open() as file:
+            version = file.readline().strip()
 
-        # Load the plugin manifest
-        with open(self.json_path, 'r') as file:
+        with self.json_path.open() as file:
             plugin_json = json.load(file)
 
-        self.assertEqual(plugin_json['version'], version)
-        self.assertTrue(plugin_json['containerId'].endswith(version))
-
-        return
+        assert plugin_json["version"] == version
+        assert plugin_json["containerId"].endswith(version)
 
 
 if __name__ == "__main__":
