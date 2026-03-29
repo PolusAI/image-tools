@@ -1,7 +1,7 @@
 {
   "name": "Precompute Slide",
-  "version": "1.7.2",
-  "containerId": "polusai/precompute-slide-tool:1.7.2",
+  "version": "1.7.3-dev0",
+  "containerId": "polusai/precompute-slide-tool:1.7.3-dev0",
   "baseCommand": [
     "python3",
     "-m",
