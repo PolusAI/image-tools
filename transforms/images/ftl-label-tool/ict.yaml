@@ -3,7 +3,7 @@ author:
 - Najib Ishaq
 - Hamdah Shafqat Abbasi
 contact: nick.schaub@nih.gov
-container: polusai/ftl-label-tool:1.0.0-dev0
+container: labshare/polus-ftl-label-plugin:0.3.11
 description: Label objects in a 2d or 3d binary image.
 entrypoint: python3 -m polus.images.transforms.images.ftl_label
 inputs:
@@ -50,5 +50,5 @@ ui:
 - description: City block connectivity
   key: inputs.connectivity
   title: Connectivity
-  type: integer
-version: 1.0.0-dev0
+  type: number
+version: 0.3.11

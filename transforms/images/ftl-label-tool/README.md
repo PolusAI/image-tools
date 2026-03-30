@@ -31,13 +31,8 @@ To see detailed documentation for the `Rust` implementation you need to:
 
 ## Installation
 
-Install [Rust](https://doc.rust-lang.org/stable/book/ch01-01-installation.html),
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-source "$HOME/.cargo/env"
-```
-## Rust documentation
-To generate and view the full Rust API docs:
+We determine whether to use the `Cython` or `Rust` implementation on a per-image basis depending on the size of that image.
+If we expect the image to occupy less than `500MB` of memory, we use the `Cython` implementation otherwise we use the `Rust` implementation.
 
 ```bash
 cargo doc --open
@@ -82,13 +77,23 @@ This plugin takes one input argument and one output argument:
 ## Usage
 # Run FTL label
 
-```bash
-python -m polus.images.transforms.images.ftl_label \
-    --inpDir /path/to/input \
-    --filePattern ".*.ome.tif" \
-    --connectivity 1 \
-    --binarizationThreshold 0.5 \
-    --outDir /path/to/output
+# Convert the *.tif files to *.ome.tif tiled tif format using bfio.
+basedir=$(basename ${PWD})
+docker run -v ${PWD}:/$basedir labshare/polus-tiledtiff-converter-plugin:1.1.0 \
+  --input /$basedir/images/ \
+  --output /$basedir/images_ome/
+
+# Run the FTL label plugin
+mkdir output
+docker run -v ${PWD}:/$basedir labshare/polus-ftl-label-plugin:0.3.11 \
+--inpDir /$basedir/"images_ome/" \
+--outDir /$basedir/"output/" \
+--connectivity 1
+
+# View the results using bfio and matplotlib
+# Let's run directly on the host since we just need the python backend.
+pip install bfio==2.1.9 matplotlib==3.5.1
+python3 src/simple_tiled_tiff_viewer.py --inpDir images_ome/ --outDir output/
 ```
 
 ## Docker

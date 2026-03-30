@@ -26,5 +26,4 @@ docker run --mount type=bind,source="${data_path}",target=/data/ \
             --inpDir ${inpDir} \
             --filePattern ${filePattern} \
             --connectivity ${connectivity} \
-            --binarizationThreshold ${binarizationThreshold} \
             --outDir ${outDir}
