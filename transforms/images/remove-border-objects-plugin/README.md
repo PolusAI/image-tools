@@ -1,14 +1,14 @@
-# Remove border objects plugin
+# Remove border objects
 
 
-Remove border objects plugin clear objects which touch image borders and squentially relabelling of image objects 
+Remove border objects plugin clear objects which touch image borders and squentially relabelling of image objects
 
 Contact [Hamdah Shafqat Abbasi](mailto: hamdah.abbasi@axleinfo.com) for more information.
 
 For more information on WIPP, visit the [official WIPP page](https://isg.nist.gov/deepzoomweb/software/wipp).
 
 ## To Do
-At the moment this plugin supports label images with two dimensions only. We will add support for higher dimensions later on.
+At the moment this plugin supports label images with two dimensions only. We will add support for higher dimensions later.
 
 
 ## Description
