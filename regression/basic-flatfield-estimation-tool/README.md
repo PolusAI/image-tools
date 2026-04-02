@@ -33,10 +33,11 @@ of `plugin.json` into the pop-up window and submit.
 
 ## Running tests
 
-Install dev dependencies (pytest, etc.), then run pytest:
+From this directory, install the project in editable mode with the `dev` extra,
+then run pytest:
 
 ```bash
-uv sync --extra dev
+uv pip install -e ".[dev]"
 uv run pytest
 ```
 
@@ -44,21 +45,17 @@ This runs all tests in the `tests` directory.
 
 ## Installation
 
-Install dependencies using uv:
+Create a virtual environment if you do not already have one (`uv venv`), then
+from this directory:
+
+**Runtime dependencies only (editable install):**
+
 ```bash
-uv sync
+uv pip install -e .
 ```
 
-Or including dev dependencies (linters, pytest, pre-commit) from
-`[project.optional-dependencies]`:
-```bash
-uv sync --extra dev
-```
-
-To install every optional extra at once:
-```bash
-uv sync --all-extras
-```
+This project defines a single optional extra (`dev`). If more extras are added
+later, install them with `uv pip install -e ".[extra1,extra2]"` as needed.
 
 Since this plugin is only a thin wrapper around the `basicpy` package, the tests are limited to verifying that the plugin is able to run and that the output images are generated.
 The tests do not verify that the output images are correct.
