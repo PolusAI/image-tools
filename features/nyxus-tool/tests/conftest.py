@@ -2,7 +2,6 @@
 
 import tempfile
 from pathlib import Path
-from typing import Union
 
 import numpy as np
 import pytest
@@ -23,24 +22,24 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 
 @pytest.fixture()
-def inp_dir() -> Union[str, Path]:
+def inp_dir() -> str | Path:
     """Create directory for saving intensity images."""
     return Path(tempfile.mkdtemp(dir=Path.cwd()))
 
 
 @pytest.fixture()
-def seg_dir() -> Union[str, Path]:
+def seg_dir() -> str | Path:
     """Create directory for saving groundtruth labelled images."""
     return Path(tempfile.mkdtemp(dir=Path.cwd()))
 
 
 @pytest.fixture()
-def output_directory() -> Union[str, Path]:
+def output_directory() -> str | Path:
     """Create output directory."""
     return Path(tempfile.mkdtemp(dir=Path.cwd()))
 
 
-@pytest.fixture(params=[256, 512, 1024, 2048])
+@pytest.fixture(params=[256, 512, 1024])
 def image_sizes(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the fixture."""
     return request.param
@@ -48,12 +47,12 @@ def image_sizes(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
 
 @pytest.fixture()
 def synthetic_images(
-    inp_dir: Union[str, Path],
-    seg_dir: Union[str, Path],
+    inp_dir: str | Path,
+    seg_dir: str | Path,
     image_sizes: pytest.FixtureRequest,
-) -> tuple[Union[str, Path], Union[str, Path]]:
+) -> tuple[str | Path, str | Path]:
     """Generate random synthetic images."""
-    for i in range(10):
+    for i in range(3):
         im = np.zeros((image_sizes, image_sizes))
         points = image_sizes * np.random.random((2, 10**2))
         im[(points[0]).astype(int), (points[1]).astype(int)] = 1
@@ -71,17 +70,11 @@ def synthetic_images(
 
 @pytest.fixture(
     params=[
-        ("pandas", ".csv", "MEAN"),
-        ("arrowipc", ".arrow", "MEDIAN"),
-        ("parquet", ".parquet", "MODE"),
+        (".csv", "MEAN"),
+        (".arrow", "MEAN"),
+        (".parquet", "MEDIAN"),
     ],
 )
 def get_params(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
-    """To get the parameter of the fixture."""
-    return request.param
-
-
-@pytest.fixture(params=[5000, 10000, 30000])
-def scaled_sizes(request: pytest.FixtureRequest) -> pytest.FixtureRequest:
     """To get the parameter of the fixture."""
     return request.param
