@@ -51,6 +51,14 @@ convention = "google"
   "S101",  # Use of assert detected.
   "PLR2004",  # Use of magic values detected.
 ]
+# WIPP-style CLI names and legacy class name; keep lint noise low until refactor.
+"transforms/images/remove-border-objects-plugin/src/*.py" = [
+  "N801",
+  "N803",
+  "N816",
+  "ANN001",
+  "ANN201",
+]
 
 [isort]
 force-single-line = true
