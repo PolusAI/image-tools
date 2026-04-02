@@ -1,24 +1,9 @@
 FROM tensorflow/tensorflow:2.15.0-gpu
 
-# cat /etc/os-release
-#
-# NAME="Ubuntu"
-# VERSION="20.04.5 LTS (Focal Fossa)"
-# ID=ubuntu
-# ID_LIKE=debian
-# PRETTY_NAME="Ubuntu 20.04.5 LTS"
-# VERSION_ID="20.04"
-# HOME_URL="https://www.ubuntu.com/"
-# SUPPORT_URL="https://help.ubuntu.com/"
-# BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
-# PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
-# VERSION_CODENAME=focal
-# UBUNTU_CODENAME=focal
-
 # Install Python 3.12 from source (not available in deadsnakes PPA for Ubuntu 20.04)
 RUN apt update && \
     apt install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev \
-    libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev curl git && \
+    libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev liblzma-dev curl git && \
     cd /tmp && \
     wget https://www.python.org/ftp/python/3.12.7/Python-3.12.7.tgz && \
     tar -xzf Python-3.12.7.tgz && \
@@ -59,7 +44,8 @@ COPY . ${EXEC_DIR}/image-tools
 
 # Install the tool
 WORKDIR ${EXEC_DIR}/image-tools/${TOOL_DIR}
-RUN pip3 install . --no-cache-dir
+# Fresh get-pip can lag; upgrade pip for PEP 517 / git URL dependency handling.
+RUN pip3 install --upgrade pip && pip3 install . --no-cache-dir
 WORKDIR ${EXEC_DIR}
 
 # Set the entrypoint
