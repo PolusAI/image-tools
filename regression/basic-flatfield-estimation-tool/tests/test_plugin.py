@@ -6,6 +6,7 @@ components, we only need to test that the plugin is able to run the
 should produce and save the two components as output images.
 """
 
+import json
 import pathlib
 import shutil
 import tempfile
@@ -122,3 +123,39 @@ def test_cli(gen_images: tuple[str, pathlib.Path, pathlib.Path]) -> None:
     out_names = [p.name for p in out_dir.iterdir()]
     assert flatfield_out in out_names, f"{flatfield_out} not in {out_names}"
     assert darkfield_out in out_names, f"{darkfield_out} not in {out_names}"
+
+
+def test_cli_preview_flatfield_only(
+    gen_images: tuple[str, pathlib.Path, pathlib.Path],
+) -> None:
+    """Preview mode writes preview.json with flatfield name only (no darkfield)."""
+    pattern, inp_dir, out_dir = gen_images
+
+    runner = typer.testing.CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "--inpDir",
+            str(inp_dir),
+            "--outDir",
+            str(out_dir),
+            "--filePattern",
+            pattern,
+            "--groupBy",
+            "",
+            "--preview",
+        ],
+    )
+
+    assert result.exit_code == 0
+
+    preview_path = out_dir.joinpath("preview.json")
+    assert preview_path.is_file()
+
+    paths = list(filter(lambda p: p.name.endswith(".ome.tif"), inp_dir.iterdir()))
+    base_output = utils.get_output_path(paths)
+    suffix = utils.get_suffix(base_output)
+    flatfield_out = base_output.replace(suffix, "_flatfield.ome.tif")
+
+    payload = json.loads(preview_path.read_text())
+    assert payload["files"] == [flatfield_out]

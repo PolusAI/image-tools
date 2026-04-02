@@ -21,6 +21,11 @@ inputs:
     inputBinding:
       prefix: --outDir
     type: Directory
+  preview:
+    default: false
+    inputBinding:
+      prefix: --preview
+    type: boolean
 outputs:
   outDir:
     outputBinding:
@@ -28,7 +33,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/basic-flatfield-estimation-tool:2.1.2-dev0
+    dockerPull: polusai/basic-flatfield-estimation-tool:2.1.4-dev1
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)
