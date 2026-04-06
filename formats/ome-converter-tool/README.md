@@ -1,4 +1,4 @@
-# OME Converter (v0.3.4-dev2)
+# OME Converter (v0.3.4)
 
 This WIPP plugin converts BioFormats supported data types to the
 OME Zarr or OME TIF file format. This is not a complete implementation, rather it implements a file
@@ -40,7 +40,7 @@ docker run \
   -e NUM_THREADS=4 \
   -e NUM_WORKERS=2 \
   -v /Users/username/:/Users/username/ \
-  polusai/ome-converter-tool:0.3.4-dev2 \
+  polusai/ome-converter-tool:0.3.4 \
   --inpDir=/Users/path/to/Images/ \
   --filePattern=".*.tif" \
   --outDir=/Users/path/to/outputs

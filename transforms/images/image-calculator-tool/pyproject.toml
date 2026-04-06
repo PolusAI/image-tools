@@ -1,11 +1,11 @@
 [project]
 name = "polus-images-transforms-images-image-calculator"
-version = "0.2.4-dev0"
+version = "0.2.4"
 requires-python = ">=3.11"
 
 [tool.poetry]
 name = "polus-images-transforms-images-image-calculator"
-version = "0.2.4-dev0"
+version = "0.2.4"
 description = ""
 authors = [
     "Nicholas Schaub <nick.schaub@nih.gov>",

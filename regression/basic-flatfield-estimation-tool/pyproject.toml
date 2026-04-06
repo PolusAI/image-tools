@@ -1,6 +1,6 @@
 [project]
 name = "polus-images-regression-basic-flatfield-estimation"
-version = "2.1.4-dev1"
+version = "2.1.4"
 description = ""
 authors = [
     {name = "Nick Schaub", email = "nick.schaub@nih.gov"},

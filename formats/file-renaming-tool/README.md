@@ -1,4 +1,4 @@
-# File Renaming(v0.2.5-dev0)
+# File Renaming(v0.2.5)
 This WIPP plugin renames files in an image collection (typically microscopy images) using powerful, user-defined filename patterns for both input matching and output naming.
 
 It is particularly useful for:
@@ -107,7 +107,7 @@ Basic
 docker run --rm \
   -v "/path/to/input/images:/data/input" \
   -v "/path/to/output:/data/output" \
-  polusai/file-renaming-tool:0.2.5-dev0 \
+  polusai/file-renaming-tool:0.2.5 \
     --inpDir         /data/input \
     --outDir         /data/output \
     --filePattern    'img_x{row:dd}_y{col:dd}_{channel:c+}.tif' \
@@ -120,7 +120,7 @@ Directory mapping
 ```
 docker run --rm \
   -v "/path/to/dataset:/data" \
-  polusai/file-renaming-tool:0.2.5-dev0 \
+  polusai/file-renaming-tool:0.2.5 \
     --inpDir         /data/input \
     --outDir         /data/output \
     --filePattern    '/.*/Images/(?P<directory>.*)/.*_{row:c}{col:dd}f{f:dd}d{channel:d}.tif' \

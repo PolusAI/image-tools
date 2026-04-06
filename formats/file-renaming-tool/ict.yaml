@@ -2,7 +2,7 @@ author:
   - Hamdah Shafqat
   - Melanie Parham
 contact: hamdahshafqat.abbasi@nih.gov
-container: polusai/file-renaming-tool:0.2.5-dev0
+container: polusai/file-renaming-tool:0.2.5
 description: Rename and store image collection files in a new image collection
 entrypoint: python3 -m polus.images.formats.file_renaming
 inputs:
@@ -58,4 +58,4 @@ ui:
     key: inputs.mapDirectory
     title: mapDirectory
     type: checkbox
-version: 0.2.5-dev0
+version: 0.2.5

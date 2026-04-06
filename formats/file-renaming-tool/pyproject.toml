@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "polus-images-formats-file-renaming"
-version = "0.2.5-dev0"
+version = "0.2.5"
 description = "Convert BioFormats datatypes to ome.tif or ome.zarr file format"
 authors = [
     "Hamdah Shafqat abbasi <hamdahshafqat.abbasi@nih.gov>",

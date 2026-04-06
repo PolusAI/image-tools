@@ -1,11 +1,11 @@
 [project]
 name = "polus-images-transforms-images-montage"
-version = "0.5.2-dev0"
+version = "0.5.2"
 requires-python = ">=3.11"
 
 [tool.poetry]
 name = "polus-images-transforms-images-montage"
-version = "0.5.2-dev0"
+version = "0.5.2"
 description = ""
 authors = ["Nicholas Schaub <nick.schaub@nih.gov>"]
 readme = "README.md"
