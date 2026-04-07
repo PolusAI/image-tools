@@ -4,7 +4,6 @@ import json
 import pathlib
 
 import numpy as np
-import pytest
 from bfio import BioReader
 from typer.testing import CliRunner
 
