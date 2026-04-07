@@ -2,12 +2,14 @@
 import logging
 import os
 import pathlib
+import time
 from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures import as_completed
 from typing import Optional
 
 import filepattern as fp
 import numpy as np
+import torch
 from bfio import BioReader
 from bfio import BioWriter
 from cellpose import models
@@ -50,32 +52,25 @@ def _read_2d(
     br: BioReader,
     z: int,
     t: int,
-    channel_cyto: int,
-    channel_nuc: int,
+    channel: int,
 ) -> np.ndarray:
-    """Read one Z-plane and return an image suitable for cellpose v4.
+    """Read one Z-plane and return a 2D grayscale array for cellpose v4.
 
-    In cellpose v4 the ``channels`` parameter is deprecated.  Images are
-    passed directly: ``(Y, X)`` for a single cytoplasm channel, or
-    ``(Y, X, 2)`` with channel 0 = cytoplasm and channel 1 = nucleus.
+    BioReader stores images as 5D ``(Y, X, Z, C, T)``. A single Z-plane and
+    channel are sliced out and squeezed to ``(Y, X)`` — the shape cellpose v4
+    expects for a grayscale input. The caller decides whether to pass the
+    cytoplasm or nucleus channel index.
 
     Args:
         br: Open BioReader instance.
         z: Z-index to read.
         t: T-index to read.
-        channel_cyto: 0-indexed bfio channel for cytoplasm.
-        channel_nuc: 0-indexed bfio channel for nucleus (-1 = none).
+        channel: 0-indexed bfio channel to read (cytoplasm or nucleus).
 
     Returns:
-        numpy array (Y, X) for grayscale or (Y, X, 2) for two-channel.
+        numpy array of shape ``(Y, X)``.
     """
-    cyto = np.squeeze(br[:, :, z : z + 1, channel_cyto : channel_cyto + 1, t : t + 1])
-
-    if channel_nuc >= 0 and channel_nuc < br.C and channel_nuc != channel_cyto:
-        nuc = np.squeeze(br[:, :, z : z + 1, channel_nuc : channel_nuc + 1, t : t + 1])
-        return np.stack([cyto, nuc], axis=-1)  # (Y, X, 2): ch0=cyto, ch1=nuc
-
-    return cyto  # (Y, X)
+    return np.squeeze(br[:, :, z : z + 1, channel : channel + 1, t : t + 1])
 
 
 def _read_3d(
@@ -157,6 +152,7 @@ def segment_image(  # noqa: PLR0913
     batch_size: int = 8,
     augment: bool = False,
     flow3d_smooth: Optional[str] = None,
+    gpu_id: int = 0,
 ) -> None:
     """Segment a single image file using Cellpose and write a label mask.
 
@@ -211,11 +207,21 @@ def segment_image(  # noqa: PLR0913
             the 3-D flow field. Provide a single value (e.g. ``"1.0"``) or a
             comma-separated ZYX triple (e.g. ``"2.0,1.0,1.0"``). ``"0"``
             disables smoothing. Only used when ``do_3d=True``.
+        gpu_id: Index of the GPU device to use (e.g. ``0``, ``1``). Only
+            relevant when ``use_gpu=True``. Assigned automatically by
+            ``batch_segment`` when multiple GPUs are available.
     """
+    t0 = time.perf_counter()
     logger.info(f"Processing: {inp_image.name}")
 
     norm_pct = _parse_norm_percentile(norm_percentile)
     smooth = _parse_flow3d_smooth(flow3d_smooth)
+
+    # Pin this worker to the assigned GPU before creating the model so that
+    # each worker in a multi-GPU setup uses a different device.
+    if use_gpu and torch.cuda.is_available():
+        torch.cuda.set_device(gpu_id)
+        logger.debug(f"Using GPU {gpu_id} for {inp_image.name}")
 
     # CellposeModel replaces the old Cellpose wrapper in v4.
     # pretrained_model accepts model names ('cpsam', 'cyto3', …) directly.
@@ -265,7 +271,8 @@ def segment_image(  # noqa: PLR0913
                 bw[:, :, :, 0, t] = masks_out
             else:
                 for z in range(br.Z):
-                    img = _read_2d(br, z, t, channel_cyto, channel_nuc)
+                    channel = channel_nuc if channel_cyto < 0 else channel_cyto
+                    img = _read_2d(br, z, t, channel)
                     masks, _, _ = model.eval(
                         img,
                         stitch_threshold=stitch_threshold,
@@ -275,7 +282,8 @@ def segment_image(  # noqa: PLR0913
                         masks = cp_utils.remove_edge_masks(masks)
                     bw[:, :, z, 0, t] = masks.astype(np.uint32)
 
-    logger.info(f"Saved: {out_path.name}")
+    elapsed = time.perf_counter() - t0
+    logger.info(f"Saved: {out_path.name} ({elapsed:.1f}s)")
 
 
 def batch_segment(  # noqa: PLR0913
@@ -300,6 +308,7 @@ def batch_segment(  # noqa: PLR0913
     batch_size: int = 8,
     augment: bool = False,
     flow3d_smooth: Optional[str] = None,
+    num_workers: int = NUM_WORKERS,
 ) -> None:
     """Run Cellpose segmentation on a batch of images.
 
@@ -332,6 +341,9 @@ def batch_segment(  # noqa: PLR0913
         augment: Use tile augmentation during inference.
         flow3d_smooth: 3-D flow smoothing sigma as a single value or
             ``"z,y,x"`` triple.
+        num_workers: Number of parallel worker processes. Defaults to the
+            ``NUM_WORKERS`` environment variable (default ``1``). Set to the
+            number of available GPUs for maximum multi-GPU throughput.
     """
     if isinstance(inp_dir, pathlib.Path):
         pattern = file_pattern or ".+"
@@ -344,9 +356,24 @@ def batch_segment(  # noqa: PLR0913
         logger.warning("No files found matching the given pattern.")
         return
 
-    logger.info(f"Found {len(files)} file(s) to segment.")
+    # Detect available GPUs and distribute files across them round-robin.
+    # Falls back to gpu_id=0 on CPU-only runs or single-GPU hosts.
+    num_gpus = torch.cuda.device_count() if use_gpu else 1
+    num_gpus = max(num_gpus, 1)
 
-    with ProcessPoolExecutor(max_workers=NUM_WORKERS) as executor:
+    logger.info(
+        f"Found {len(files)} file(s) to segment | "
+        f"workers={num_workers} | "
+        f"GPUs={num_gpus if use_gpu else 'CPU'} | "
+        f"model={model_type}"
+    )
+    if use_gpu and num_gpus > 1:
+        logger.info(f"Multi-GPU mode: distributing across {num_gpus} GPU(s).")
+
+    failed = 0
+    t_start = time.perf_counter()
+
+    with ProcessPoolExecutor(max_workers=num_workers) as executor:
         futures = {
             executor.submit(
                 segment_image,
@@ -370,8 +397,9 @@ def batch_segment(  # noqa: PLR0913
                 batch_size,
                 augment,
                 flow3d_smooth,
+                idx % num_gpus,
             ): f
-            for f in files
+            for idx, f in enumerate(files)
         }
         for future in tqdm(
             as_completed(futures),
@@ -384,4 +412,13 @@ def batch_segment(  # noqa: PLR0913
             try:
                 future.result()
             except (OSError, RuntimeError, ValueError) as exc:
+                failed += 1
                 logger.error(f"Failed to segment {futures[future].name}: {exc}")
+
+    total = time.perf_counter() - t_start
+    succeeded = len(files) - failed
+    logger.info(
+        f"Batch complete: {succeeded}/{len(files)} succeeded, "
+        f"{failed} failed | total time: {total:.1f}s "
+        f"({total / len(files):.1f}s/image avg)"
+    )

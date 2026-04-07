@@ -230,6 +230,52 @@ Use `-e CUDA_VISIBLE_DEVICES=1` to target a specific GPU on a multi-GPU host.
 
 ---
 
+### Multi-GPU (Linux — Docker)
+
+The tool automatically distributes images across all available GPUs using
+round-robin assignment. No extra flags are needed — passing `--gpus all`
+exposes all GPUs to the container and the tool detects them via
+`torch.cuda.device_count()` at runtime.
+
+Set `NUM_WORKERS` to match the number of GPUs so each GPU gets its own
+dedicated worker process:
+
+```bash
+docker run --gpus all \
+  -e NUM_WORKERS=4 \
+  -v /path/to/data:/data \
+  polusai/cellpose-inference-tool:0.1.0 \
+  --inpDir=/data/images \
+  --filePattern=".+" \
+  --modelType=cyto3 \
+  --batchSize=16 \
+  --useGpu \
+  --outDir=/data/masks
+```
+
+**How it works:**
+
+| Image index | Assigned GPU (`idx % num_gpus`) |
+|---|---|
+| 0, 4, 8, … | GPU 0 |
+| 1, 5, 9, … | GPU 1 |
+| 2, 6, 10, … | GPU 2 |
+| 3, 7, 11, … | GPU 3 |
+
+The tool logs the GPU assignment at startup:
+```
+Multi-GPU mode: distributing across 4 GPU(s).
+```
+And prints a summary when done:
+```
+Batch complete: 100/100 succeeded, 0 failed | total time: 240.3s (2.4s/image avg)
+```
+
+**Tip:** set `NUM_WORKERS` equal to the number of GPUs. Using more workers
+than GPUs causes multiple workers to share a GPU, which may reduce throughput.
+
+---
+
 ### Apple Silicon GPU — MPS (M1/M2/M3/M4, native only)
 
 Docker on macOS runs inside a Linux VM and **cannot access the Metal GPU**.
