@@ -1,6 +1,6 @@
 # Cellpose Inference Tool (v0.1.0)
 
-A WIPP plugin that segments cells and nuclei in fluorescence microscopy images
+A plugin that segments cells and nuclei in fluorescence microscopy images
 using the [Cellpose](https://github.com/MouseLand/cellpose) deep-learning
 model. Images are read and written through
 [bfio](https://github.com/PolusAI/bfio), enabling support for the full range
@@ -23,6 +23,32 @@ Features:
   the GPU PyTorch wheel; see [GPU note](#gpu-support) below).
 - **OME output** — label masks are written as `uint32` OME-TIFF / OME-Zarr,
   compatible with downstream WIPP plugins.
+
+## Local Development Install
+
+These steps install the tool in an isolated environment for local development
+or testing (without Docker).
+
+**Prerequisites:** Python ≥ 3.10, [uv](https://github.com/astral-sh/uv)
+
+```bash
+# 1. Clone the monorepo
+git clone https://github.com/PolusAI/image-tools.git
+cd image-tools/segmentation/cellpose-inference-tool
+
+# 2. Install uv (if not already present)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 3. Create a virtual environment and install dependencies
+uv venv --python 3.10
+source .venv/bin/activate
+uv pip install -e ".[dev]"
+# 4. Run the CLI
+python -m polus.images.segmentation.cellpose_inference \
+  --inpDir /path/to/images \
+  --filePattern ".+" \
+  --outDir /path/to/masks
+```
 
 ## Building
 
@@ -207,18 +233,8 @@ Use `-e CUDA_VISIBLE_DEVICES=1` to target a specific GPU on a multi-GPU host.
 ### Apple Silicon GPU — MPS (M1/M2/M3/M4, native only)
 
 Docker on macOS runs inside a Linux VM and **cannot access the Metal GPU**.
-To use the M-series GPU, run the tool natively (outside Docker):
-
-```bash
-pip install "polus-images-segmentation-cellpose-inference"
-
-python -m polus.images.segmentation.cellpose_inference \
-  --inpDir /path/to/images \
-  --filePattern ".+" \
-  --modelType cyto3 \
-  --useGpu \
-  --outDir /path/to/masks
-```
+To use the M-series GPU, follow the [Local Development Install](#local-development-install)
+steps and pass `--useGpu` when running the CLI.
 
 PyTorch's MPS backend is supported on macOS 12.3+ with any Apple Silicon chip.
 
@@ -235,6 +251,11 @@ Each input image produces one label mask with the same stem name and the
 extension controlled by `POLUS_IMG_EXT` (default `.ome.tif`). The mask is a
 `uint32` image where each unique non-zero integer identifies one segmented cell.
 Background pixels are `0`.
+
+## Authors
+
+- Hamdah Shafqat Abbasi <hamdahshafqat.abbasi@nih.gov>
+- Nick Schaub <nick.schaub@nih.gov>
 
 ## References
 
