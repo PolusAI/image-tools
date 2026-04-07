@@ -9,10 +9,26 @@ import numpy as np
 import pytest
 import skimage.draw
 import skimage.io
+from cellpose import models
 
-# ---------------------------------------------------------------------------
+# Model name used across tests — cyto3 is reliable on simple bright-disk images
+# and is downloaded once per session via the fixture below.
+TEST_MODEL = "cyto3"
+
+# Session fixtures
+
+
+@pytest.fixture(scope="session", autouse=True)
+def prefetch_model() -> None:
+    """Download the cyto3 model weights once before any test runs.
+
+    Without this, each test (and each subprocess spawned by batch_segment)
+    would trigger a fresh download, causing slow CI runs and timeouts.
+    """
+    models.CellposeModel(pretrained_model=TEST_MODEL, gpu=False)
+
+
 # Helpers
-# ---------------------------------------------------------------------------
 
 _DEFAULT_DTYPE: np.dtype = np.dtype("uint16")
 
@@ -60,9 +76,7 @@ def _make_cell_image(
     return img
 
 
-# ---------------------------------------------------------------------------
 # Fixtures
-# ---------------------------------------------------------------------------
 
 
 @pytest.fixture(params=[(128, ".tif")])

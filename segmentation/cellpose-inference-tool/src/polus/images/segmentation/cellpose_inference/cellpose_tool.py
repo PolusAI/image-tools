@@ -30,9 +30,7 @@ _MAX_EXT_PART_LEN = 6  # short suffixes like ".ome" vs longer ones
 _NORM_PERCENTILE_PARTS = 2  # "low,high" → exactly two values
 
 
-# ---------------------------------------------------------------------------
 # Internal helpers
-# ---------------------------------------------------------------------------
 
 
 def _output_path(inp_image: pathlib.Path, out_dir: pathlib.Path) -> pathlib.Path:
@@ -126,9 +124,7 @@ def _parse_flow3d_smooth(
     return parts[0] if len(parts) == 1 else parts
 
 
-# ---------------------------------------------------------------------------
 # Public API
-# ---------------------------------------------------------------------------
 
 
 def segment_image(  # noqa: PLR0913

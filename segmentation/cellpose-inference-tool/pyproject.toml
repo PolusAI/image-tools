@@ -21,6 +21,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest>=7.2.1",
+    "pytest-timeout>=2.3.1",
     "scikit-image>=0.26.0",
 ]
 dev = [
@@ -48,3 +49,4 @@ warn_no_return = true
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 addopts = "-p no:cacheprovider"
+timeout = 300

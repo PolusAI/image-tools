@@ -11,18 +11,12 @@ from polus.images.segmentation.cellpose_inference.__main__ import app
 from polus.images.segmentation.cellpose_inference.cellpose_tool import batch_segment
 from polus.images.segmentation.cellpose_inference.cellpose_tool import segment_image
 from tests.conftest import CELL_DIAMETER_PX
+from tests.conftest import TEST_MODEL
 
 runner = CliRunner()
 
-# cyto3 is a well-tested model that works on simple bright-disk images and is
-# reliably cached after the first download.  cpsam requires a larger download
-# and is skipped here to keep CI stable.
-_MODEL = "cyto3"
 
-
-# ---------------------------------------------------------------------------
 # Unit tests
-# ---------------------------------------------------------------------------
 
 
 def test_segment_image(
@@ -36,7 +30,7 @@ def test_segment_image(
     segment_image(
         inp_image=inp_file,
         out_dir=output_directory,
-        model_type=_MODEL,
+        model_type=TEST_MODEL,
         diameter=CELL_DIAMETER_PX,
     )
 
@@ -62,7 +56,7 @@ def test_batch_segment(
         inp_dir=inp_dir,
         out_dir=output_directory,
         file_pattern=".+",
-        model_type=_MODEL,
+        model_type=TEST_MODEL,
         diameter=CELL_DIAMETER_PX,
     )
 
@@ -79,9 +73,7 @@ def test_batch_segment(
         assert mask.max() > 0, f"No cells detected in {out_file.name}"
 
 
-# ---------------------------------------------------------------------------
 # CLI tests
-# ---------------------------------------------------------------------------
 
 
 def test_cli_preview(
