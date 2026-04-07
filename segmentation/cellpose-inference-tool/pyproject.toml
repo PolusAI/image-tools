@@ -1,0 +1,46 @@
+[project]
+name = "polus-images-segmentation-cellpose-inference"
+version = "0.1.0"
+description = "Cell and nucleus segmentation using the Cellpose deep-learning model"
+authors = [
+    {name = "Hamdah Shafqat Abbasi", email = "hamdahshafqat.abbasi@nih.gov"}
+]
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "bfio==2.5.0",
+    "filepattern==2.1.4",
+    "typer==0.24.1",
+    "tqdm>=4.64.1",
+    "numpy>2.0.0",
+    "cellpose==4.1.1",
+    "torch>=2.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "bump2version>=1.0.1",
+    "pre-commit>=3.0.4",
+    "pytest>=7.2.1",
+    "ipykernel>=6.21.2",
+    "scikit-image>=0.26.0",
+    "matplotlib>=3.9.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = true
+
+[tool.mypy]
+files = "."
+strict = true
+warn_unreachable = true
+warn_no_return = true
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+addopts = "-p no:cacheprovider"

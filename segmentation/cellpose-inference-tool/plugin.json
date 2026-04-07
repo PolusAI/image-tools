@@ -1,0 +1,248 @@
+{
+  "name": "Cellpose Inference",
+  "version": "0.1.0",
+  "title": "Cellpose Inference",
+  "description": "Cell and nucleus segmentation using the Cellpose deep-learning model",
+  "author": "Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
+  "institution": "National Center for Advancing Translational Sciences, National Institutes of Health",
+  "repository": "https://github.com/PolusAI/image-tools",
+  "website": "https://ncats.nih.gov/preclinical/core/informatics",
+  "citation": "Stringer et al. Nature Methods 18, 100-106 (2021). https://doi.org/10.1038/s41592-020-01018-x",
+  "containerId": "polusai/cellpose-inference-tool:0.1.0",
+  "baseCommand": [
+    "python3",
+    "-m",
+    "polus.images.segmentation.cellpose_inference"
+  ],
+  "inputs": [
+    {
+      "name": "inpDir",
+      "type": "path",
+      "description": "Input image collection to be segmented",
+      "required": true
+    },
+    {
+      "name": "filePattern",
+      "type": "string",
+      "description": "Filepattern to select images inside inpDir",
+      "required": false
+    },
+    {
+      "name": "modelType",
+      "type": "string",
+      "description": "Pretrained Cellpose model. Default: cpsam (SAM-based, v4+). Legacy: cyto3, cyto2, cyto, nuclei, bact_omni, cyto2_omni",
+      "required": false
+    },
+    {
+      "name": "channelCyto",
+      "type": "integer",
+      "description": "0-indexed channel for cytoplasm signal",
+      "required": false
+    },
+    {
+      "name": "channelNuc",
+      "type": "integer",
+      "description": "0-indexed channel for nucleus signal (-1 = none)",
+      "required": false
+    },
+    {
+      "name": "diameter",
+      "type": "number",
+      "description": "Expected cell diameter in pixels (0 = automatic estimation)",
+      "required": false
+    },
+    {
+      "name": "minSize",
+      "type": "integer",
+      "description": "Minimum number of pixels per mask (-1 disables the filter)",
+      "required": false
+    },
+    {
+      "name": "flowThreshold",
+      "type": "number",
+      "description": "Maximum allowed flow error for accepted masks. 0 disables this QC step",
+      "required": false
+    },
+    {
+      "name": "cellprobThreshold",
+      "type": "number",
+      "description": "Cell-probability threshold. Lower values keep more detections",
+      "required": false
+    },
+    {
+      "name": "niter",
+      "type": "integer",
+      "description": "Dynamics iterations (0 = auto, proportional to diameter). Increase for elongated ROIs",
+      "required": false
+    },
+    {
+      "name": "do3D",
+      "type": "boolean",
+      "description": "Run full 3-D segmentation across the Z-stack",
+      "required": false
+    },
+    {
+      "name": "stitchThreshold",
+      "type": "number",
+      "description": "IoU threshold for stitching 2-D masks across Z-planes (0 = disabled, only when do3D=False)",
+      "required": false
+    },
+    {
+      "name": "anisotropy",
+      "type": "number",
+      "description": "Z/XY voxel size ratio for 3-D segmentation. 1.0 = isotropic voxels",
+      "required": false
+    },
+    {
+      "name": "flow3dSmooth",
+      "type": "string",
+      "description": "Gaussian sigma for 3-D flow smoothing. Single value or ZYX triple 'z,y,x'. 0 = disabled",
+      "required": false
+    },
+    {
+      "name": "noNorm",
+      "type": "boolean",
+      "description": "Disable image normalisation",
+      "required": false
+    },
+    {
+      "name": "normPercentile",
+      "type": "string",
+      "description": "Normalisation percentile range as 'low,high' (e.g. '1.0,99.0'). Ignored when noNorm=True",
+      "required": false
+    },
+    {
+      "name": "batchSize",
+      "type": "integer",
+      "description": "Number of image tiles per network forward pass. Increase on high-VRAM GPUs",
+      "required": false
+    },
+    {
+      "name": "augment",
+      "type": "boolean",
+      "description": "Tile image with overlapping tiles and flip for augmented inference",
+      "required": false
+    },
+    {
+      "name": "useGpu",
+      "type": "boolean",
+      "description": "Use GPU acceleration. Cellpose auto-selects CUDA (NVIDIA) \u2192 MPS (Apple Silicon) \u2192 CPU",
+      "required": false
+    },
+    {
+      "name": "excludeOnEdges",
+      "type": "boolean",
+      "description": "Discard masks that touch the border of the image",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "outDir",
+      "type": "genericData",
+      "description": "Output collection of uint32 label masks"
+    }
+  ],
+  "ui": [
+    {
+      "key": "inputs.inpDir",
+      "title": "Input image collection",
+      "description": "Input image collection to be segmented"
+    },
+    {
+      "key": "inputs.filePattern",
+      "title": "Filepattern",
+      "description": "Filepattern to select images inside inpDir"
+    },
+    {
+      "key": "inputs.modelType",
+      "title": "Model type",
+      "description": "Pretrained Cellpose model"
+    },
+    {
+      "key": "inputs.channelCyto",
+      "title": "Cytoplasm channel",
+      "description": "0-indexed channel for cytoplasm signal"
+    },
+    {
+      "key": "inputs.channelNuc",
+      "title": "Nucleus channel",
+      "description": "0-indexed channel for nucleus signal (-1 = none)"
+    },
+    {
+      "key": "inputs.diameter",
+      "title": "Cell diameter (px)",
+      "description": "Expected cell diameter in pixels (0 = auto)"
+    },
+    {
+      "key": "inputs.minSize",
+      "title": "Minimum mask size (px)",
+      "description": "Minimum number of pixels per mask (-1 = off)"
+    },
+    {
+      "key": "inputs.flowThreshold",
+      "title": "Flow threshold",
+      "description": "Maximum allowed flow error (0 = disabled)"
+    },
+    {
+      "key": "inputs.cellprobThreshold",
+      "title": "Cell probability threshold",
+      "description": "Cell-probability threshold"
+    },
+    {
+      "key": "inputs.niter",
+      "title": "Dynamics iterations",
+      "description": "0 = auto; increase for elongated ROIs"
+    },
+    {
+      "key": "inputs.do3D",
+      "title": "3-D segmentation",
+      "description": "Run full 3-D segmentation across the Z-stack"
+    },
+    {
+      "key": "inputs.stitchThreshold",
+      "title": "Stitch threshold",
+      "description": "IoU threshold for stitching 2-D masks across Z (0 = off)"
+    },
+    {
+      "key": "inputs.anisotropy",
+      "title": "Anisotropy",
+      "description": "Z/XY voxel size ratio (1.0 = isotropic)"
+    },
+    {
+      "key": "inputs.flow3dSmooth",
+      "title": "3-D flow smoothing",
+      "description": "Gaussian sigma for 3-D flow smoothing (0 = off)"
+    },
+    {
+      "key": "inputs.noNorm",
+      "title": "Disable normalisation",
+      "description": "Disable image normalisation"
+    },
+    {
+      "key": "inputs.normPercentile",
+      "title": "Normalisation percentile",
+      "description": "Normalisation range as 'low,high' (e.g. '1.0,99.0')"
+    },
+    {
+      "key": "inputs.batchSize",
+      "title": "Batch size",
+      "description": "Number of tiles per forward pass"
+    },
+    {
+      "key": "inputs.augment",
+      "title": "Augment",
+      "description": "Augmented tiled inference"
+    },
+    {
+      "key": "inputs.useGpu",
+      "title": "Use GPU",
+      "description": "Use GPU acceleration (auto-selects CUDA \u2192 MPS \u2192 CPU)"
+    },
+    {
+      "key": "inputs.excludeOnEdges",
+      "title": "Exclude on edges",
+      "description": "Discard masks touching image borders"
+    }
+  ]
+}
