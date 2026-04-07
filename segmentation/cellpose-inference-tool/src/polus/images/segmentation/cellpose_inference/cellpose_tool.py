@@ -365,7 +365,7 @@ def batch_segment(  # noqa: PLR0913
         f"Found {len(files)} file(s) to segment | "
         f"workers={num_workers} | "
         f"GPUs={num_gpus if use_gpu else 'CPU'} | "
-        f"model={model_type}"
+        f"model={model_type}",
     )
     if use_gpu and num_gpus > 1:
         logger.info(f"Multi-GPU mode: distributing across {num_gpus} GPU(s).")
@@ -420,5 +420,5 @@ def batch_segment(  # noqa: PLR0913
     logger.info(
         f"Batch complete: {succeeded}/{len(files)} succeeded, "
         f"{failed} failed | total time: {total:.1f}s "
-        f"({total / len(files):.1f}s/image avg)"
+        f"({total / len(files):.1f}s/image avg)",
     )
