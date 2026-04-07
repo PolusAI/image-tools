@@ -1,5 +1,6 @@
 """Cellpose Inference Tool - core segmentation logic."""
 import logging
+import multiprocessing
 import os
 import pathlib
 import time
@@ -369,7 +370,10 @@ def batch_segment(  # noqa: PLR0913
     failed = 0
     t_start = time.perf_counter()
 
-    with ProcessPoolExecutor(max_workers=num_workers) as executor:
+    # Use spawn context to avoid PyTorch/CUDA deadlocks on Linux where the
+    # default fork context can hang after PyTorch threads are initialised.
+    _ctx = multiprocessing.get_context("spawn")
+    with ProcessPoolExecutor(max_workers=num_workers, mp_context=_ctx) as executor:
         futures = {
             executor.submit(
                 segment_image,
