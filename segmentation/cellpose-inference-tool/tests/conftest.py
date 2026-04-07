@@ -19,7 +19,7 @@ TEST_MODEL = "cyto3"
 
 
 @pytest.fixture(scope="session", autouse=True)
-def prefetch_model() -> None:
+def _prefetch_model() -> None:
     """Download the cyto3 model weights once before any test runs.
 
     Without this, each test (and each subprocess spawned by batch_segment)
