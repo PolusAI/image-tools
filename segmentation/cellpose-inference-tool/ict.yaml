@@ -1,0 +1,220 @@
+author:
+  - Hamdah Shafqat Abbasi
+contact: hamdahshafqat.abbasi@nih.gov
+container: polusai/cellpose-inference-tool:0.1.0
+description: Cell and nucleus segmentation using the Cellpose deep-learning model
+entrypoint: python3 -m polus.images.segmentation.cellpose_inference
+inputs:
+  - description: Input image collection to be segmented
+    format:
+      - path
+    name: inpDir
+    required: true
+    type: path
+  - description: Filepattern to select images inside inpDir
+    format:
+      - string
+    name: filePattern
+    required: false
+    type: string
+  - description: "Pretrained Cellpose model. Default: cpsam (SAM-based, v4+). Legacy: cyto3, cyto2, cyto, nuclei, bact_omni, cyto2_omni"
+    format:
+      - string
+    name: modelType
+    required: false
+    type: string
+  - description: 0-indexed channel for cytoplasm signal
+    format:
+      - integer
+    name: channelCyto
+    required: false
+    type: integer
+  - description: 0-indexed channel for nucleus signal (-1 = none)
+    format:
+      - integer
+    name: channelNuc
+    required: false
+    type: integer
+  - description: Expected cell diameter in pixels (0 = automatic estimation)
+    format:
+      - number
+    name: diameter
+    required: false
+    type: number
+  - description: Minimum number of pixels per mask (-1 disables the filter)
+    format:
+      - integer
+    name: minSize
+    required: false
+    type: integer
+  - description: Maximum allowed flow error for accepted masks. 0 disables this QC step
+    format:
+      - number
+    name: flowThreshold
+    required: false
+    type: number
+  - description: Cell-probability threshold. Lower values keep more detections
+    format:
+      - number
+    name: cellprobThreshold
+    required: false
+    type: number
+  - description: Dynamics iterations (0 = auto). Increase (e.g. 2000) for elongated ROIs
+    format:
+      - integer
+    name: niter
+    required: false
+    type: integer
+  - description: Run full 3-D segmentation across the Z-stack
+    format:
+      - boolean
+    name: do3D
+    required: false
+    type: boolean
+  - description: IoU threshold for stitching 2-D masks across Z-planes (0 = disabled, only when do3D=False)
+    format:
+      - number
+    name: stitchThreshold
+    required: false
+    type: number
+  - description: Z/XY voxel size ratio for 3-D segmentation (1.0 = isotropic)
+    format:
+      - number
+    name: anisotropy
+    required: false
+    type: number
+  - description: Gaussian sigma for 3-D flow smoothing. Single value or ZYX triple 'z,y,x'. 0 = disabled
+    format:
+      - string
+    name: flow3dSmooth
+    required: false
+    type: string
+  - description: Disable image normalisation
+    format:
+      - boolean
+    name: noNorm
+    required: false
+    type: boolean
+  - description: "Normalisation percentile range as 'low,high' (e.g. '1.0,99.0'). Ignored when noNorm=True"
+    format:
+      - string
+    name: normPercentile
+    required: false
+    type: string
+  - description: Number of image tiles per network forward pass. Increase on high-VRAM GPUs
+    format:
+      - integer
+    name: batchSize
+    required: false
+    type: integer
+  - description: Tile image with overlapping tiles and flip for augmented inference
+    format:
+      - boolean
+    name: augment
+    required: false
+    type: boolean
+  - description: Use GPU acceleration. Cellpose auto-selects CUDA (NVIDIA) → MPS (Apple Silicon) → CPU
+    format:
+      - boolean
+    name: useGpu
+    required: false
+    type: boolean
+  - description: Discard masks that touch the border of the image
+    format:
+      - boolean
+    name: excludeOnEdges
+    required: false
+    type: boolean
+name: polusai/CellposeInference
+outputs:
+  - description: Output collection of uint32 label masks
+    format:
+      - genericData
+    name: outDir
+    required: true
+    type: path
+repository: https://github.com/PolusAI/image-tools
+specVersion: 1.0.0
+title: Cellpose Inference
+ui:
+  - description: Input image collection to be segmented
+    key: inputs.inpDir
+    title: Input image collection
+    type: path
+  - description: Filepattern to select images inside inpDir
+    key: inputs.filePattern
+    title: Filepattern
+    type: text
+  - description: Pretrained Cellpose model
+    key: inputs.modelType
+    title: Model type
+    type: text
+  - description: 0-indexed channel for cytoplasm signal
+    key: inputs.channelCyto
+    title: Cytoplasm channel
+    type: integer
+  - description: 0-indexed channel for nucleus signal (-1 = none)
+    key: inputs.channelNuc
+    title: Nucleus channel
+    type: integer
+  - description: Expected cell diameter in pixels (0 = auto)
+    key: inputs.diameter
+    title: Cell diameter (px)
+    type: number
+  - description: Minimum number of pixels per mask (-1 = off)
+    key: inputs.minSize
+    title: Minimum mask size (px)
+    type: integer
+  - description: Maximum allowed flow error (0 = disabled)
+    key: inputs.flowThreshold
+    title: Flow threshold
+    type: number
+  - description: Cell-probability threshold
+    key: inputs.cellprobThreshold
+    title: Cell probability threshold
+    type: number
+  - description: 0 = auto; increase for elongated ROIs
+    key: inputs.niter
+    title: Dynamics iterations
+    type: integer
+  - description: Run full 3-D segmentation
+    key: inputs.do3D
+    title: 3-D segmentation
+    type: checkbox
+  - description: IoU threshold for stitching 2-D masks across Z (0 = off)
+    key: inputs.stitchThreshold
+    title: Stitch threshold
+    type: number
+  - description: Z/XY voxel size ratio (1.0 = isotropic)
+    key: inputs.anisotropy
+    title: Anisotropy
+    type: number
+  - description: Gaussian sigma for 3-D flow smoothing (0 = off)
+    key: inputs.flow3dSmooth
+    title: 3-D flow smoothing
+    type: text
+  - description: Disable image normalisation
+    key: inputs.noNorm
+    title: Disable normalisation
+    type: checkbox
+  - description: "Normalisation range as 'low,high' (e.g. '1.0,99.0')"
+    key: inputs.normPercentile
+    title: Normalisation percentile
+    type: text
+  - description: Number of tiles per forward pass
+    key: inputs.batchSize
+    title: Batch size
+    type: integer
+  - description: Augmented tiled inference
+    key: inputs.augment
+    title: Augment
+    type: checkbox
+  - description: Use GPU acceleration (auto-selects CUDA → MPS → CPU)
+    key: inputs.useGpu
+    title: Use GPU
+    type: checkbox
+  - description: Discard masks touching image borders
+    key: inputs.excludeOnEdges
+    title: Exclude on edges
+    type: checkbox
+version: 0.1.0
