@@ -95,11 +95,14 @@ jobs:
           PACKAGE_DIRS=$(echo $PACKAGE_DIRS | xargs)
           INCOMPLETE_DIRS=$(echo $INCOMPLETE_DIRS | xargs)
 
-          # Check if any packages were found
           echo "The updated packages are $PACKAGE_DIRS"
           if [ -z "$PACKAGE_DIRS" ]
           then
-            echo "::error::No updated packages were found" && exit 1
+            echo "::warning::No pre-release packages found (no complete package has dev in VERSION). Nothing to release."
+            echo 'matrix={"include":[]}' >> $GITHUB_OUTPUT
+            echo "list=" >> $GITHUB_OUTPUT
+            echo "incomplete=$( echo "$INCOMPLETE_DIRS" )" >> $GITHUB_OUTPUT
+            exit 0
           fi
 
           # Convert the package directories to JSON for the output matrix
