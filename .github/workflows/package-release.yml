@@ -37,6 +37,7 @@ jobs:
   package-release:
     name: Release Versions
     needs: pre-release-filter
+    if: ${{ needs.pre-release-filter.outputs.list != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Debug | Repository Name
@@ -118,6 +119,7 @@ jobs:
   docker:
     name: Docker | ${{ matrix.package_name }}
     needs: [pre-release-filter, package-release]
+    if: ${{ needs.pre-release-filter.outputs.list != '' }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.pre-release-filter.outputs.matrix) }}
