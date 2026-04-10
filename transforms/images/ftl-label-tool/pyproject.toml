@@ -1,6 +1,6 @@
 [project]
 name = "polus-images-segmentation-ftl-label"
-version = "1.0.0"
+version = "1.0.1-dev0"
 description = "Label objects in a 2D or 3D binary image using the FTL connected component algorithm."
 readme = "README.md"
 requires-python = ">=3.11,<3.13"

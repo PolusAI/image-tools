@@ -3,7 +3,7 @@ author:
 - Najib Ishaq
 - Hamdah Shafqat Abbasi
 contact: nick.schaub@nih.gov
-container: polusai/ftl-label-tool:1.0.0
+container: polusai/ftl-label-tool:1.0.1-dev0
 description: Label objects in a 2d or 3d binary image.
 entrypoint: python3 -m polus.images.transforms.images.ftl_label
 inputs:
@@ -40,7 +40,7 @@ outputs:
   required: true
   type: path
 repository: https://github.com/PolusAI/image-tools
-specVersion: 1.0.0
+specVersion: 1.0.1-dev0
 title: FTL Label
 ui:
 - description: Input image collection to be processed by this plugin
@@ -51,4 +51,4 @@ ui:
   key: inputs.connectivity
   title: Connectivity
   type: integer
-version: 1.0.0
+version: 1.0.1-dev0
