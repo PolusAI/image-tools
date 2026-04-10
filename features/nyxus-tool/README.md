@@ -1,4 +1,4 @@
-# Nyxus-tool(v0.1.8-dev2)
+# Nyxus-tool(v0.1.8)
 
 
 Parallelized feature extraction from intensity + label image pairs using the **[Nyxus](https://pypi.org/project/nyxus/)** library.
@@ -44,7 +44,7 @@ See `run-plugin.sh` for a template.
 ```bash
 docker run --rm -v /path/to/data:/data \
   -e POLUS_TAB_EXT=pandas \
-  polusai/nyxus-tool:0.1.8-dev2 \
+  polusai/nyxus-tool:0.1.8 \
   --inpDir      /data/intensity \
   --segDir      /data/segmentation \
   --intPattern  'p00{z}_x{x+}_y{y+}_wx{t}_wy{p}_c{c}.ome.tif' \

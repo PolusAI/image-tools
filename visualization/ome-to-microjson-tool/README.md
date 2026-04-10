@@ -1,4 +1,4 @@
-# Ome-to-microjson-plugin(0.1.7-dev0)
+# Ome-to-microjson-plugin(0.1.7)
 
 This plugin generates polygon coordinates (rectangle or encoding) for objects in binary or label images and extracts Nyxus features for each object, saving them in a JSON-based format using the [MICROJSON](https://github.com/bengtl/microjson/tree/dev) Python library. The output can be visualized in the [RENDER UI](https://render.ci.ncats.io/?imageUrl=https://files.scb-ncats.io/pyramids/Idr0033/precompute/41744/x(00-15)_y(01-24)_p0(1-9)_c(1-5)/) application, enabling overlay of segmentation encodings on microscopy images
 
@@ -53,7 +53,7 @@ This plugin can take four input arguments and one output argument:
 ### Run the Docker Container
 
 ```bash
-docker run -v /data:/data polusai/ome-to-microjson-tool:0.1.7-dev0 \
+docker run -v /data:/data polusai/ome-to-microjson-tool:0.1.7 \
   --intDir /data/input \
   --segDir /data/segmentations \
   --filePattern "x{x:d+}_y{y:d+}_p{p:d+}_c{c:d+}.ome.tif" \

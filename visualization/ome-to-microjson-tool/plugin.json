@@ -1,6 +1,6 @@
 {
   "name": "Ome To Microjson",
-  "version": "0.1.7-dev0",
+  "version": "0.1.7",
   "title": "Ome To Microjson",
   "description": "This plugin create a microjson of polygon coordinates (rectangle, encodings) of binary segmentations.",
   "author": "Hamdah Shafqat abbasi  (hamdahshafqat.abbasi@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/polusai/image-tools",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "",
-  "containerId": "polusai/ome-to-microjson-tool:0.1.7-dev0",
+  "containerId": "polusai/ome-to-microjson-tool:0.1.7",
   "baseCommand": [
     "python3",
     "-m",

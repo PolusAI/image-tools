@@ -2,7 +2,7 @@ author:
   - Nick Schaub
   - Hamdah Shafqat
 contact: nick.schaub@nih.gov
-container: polusai/nyxus-tool:0.1.8-dev2
+container: polusai/nyxus-tool:0.1.8
 description:
   Nyxus plugin allows to make use of parallel pocessing for extracting
   nyxus features
@@ -91,4 +91,4 @@ ui:
     key: inputs.kwargs
     title: Nyxus kwargs
     type: text
-version: 0.1.8-dev2
+version: 0.1.8

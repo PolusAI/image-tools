@@ -1,7 +1,7 @@
 {
   "name": "Nyxus tool",
-  "version": "0.1.8-dev2",
-  "containerId": "polusai/nyxus-tool:0.1.8-dev2",
+  "version": "0.1.8",
+  "containerId": "polusai/nyxus-tool:0.1.8",
   "title": "Nyxus tool",
   "description": "Extracts Nyxus features from intensity and label image pairs using parallel processing",
   "author": "Nick Schaub (nick.schaub@nih.gov), Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
