@@ -1,4 +1,4 @@
-# Cellpose Inference Tool (v0.1.0)
+# Cellpose Inference Tool (v0.1.1-dev0)
 
 A plugin that segments cells and nuclei in fluorescence microscopy images
 using the [Cellpose](https://github.com/MouseLand/cellpose) deep-learning
@@ -147,7 +147,7 @@ docker run \
   -e POLUS_IMG_EXT=".ome.tif" \
   -e NUM_WORKERS=1 \
   -v /path/to/data:/data \
-  polusai/cellpose-inference-tool:0.1.0 \
+  polusai/cellpose-inference-tool:0.1.1-dev0 \
   --inpDir=/data/images \
   --filePattern=".*\.tif" \
   --modelType=cyto3 \
@@ -166,7 +166,7 @@ docker run \
 ```bash
 docker run \
   -v /path/to/data:/data \
-  polusai/cellpose-inference-tool:0.1.0 \
+  polusai/cellpose-inference-tool:0.1.1-dev0 \
   --inpDir=/data/images \
   --filePattern=".+" \
   --modelType=cyto3 \
@@ -180,7 +180,7 @@ docker run \
 ```bash
 docker run \
   -v /path/to/data:/data \
-  polusai/cellpose-inference-tool:0.1.0 \
+  polusai/cellpose-inference-tool:0.1.1-dev0 \
   --inpDir=/data/z_stacks \
   --filePattern=".+" \
   --modelType=cyto3 \
@@ -217,7 +217,7 @@ Toolkit mounts the host CUDA libraries at runtime.
 docker run --gpus all \
   -e CUDA_VISIBLE_DEVICES=0 \
   -v /path/to/data:/data \
-  polusai/cellpose-inference-tool:0.1.0 \
+  polusai/cellpose-inference-tool:0.1.1-dev0 \
   --inpDir=/data/images \
   --filePattern=".+" \
   --modelType=cyto3 \
@@ -244,7 +244,7 @@ dedicated worker process:
 docker run --gpus all \
   -e NUM_WORKERS=4 \
   -v /path/to/data:/data \
-  polusai/cellpose-inference-tool:0.1.0 \
+  polusai/cellpose-inference-tool:0.1.1-dev0 \
   --inpDir=/data/images \
   --filePattern=".+" \
   --modelType=cyto3 \

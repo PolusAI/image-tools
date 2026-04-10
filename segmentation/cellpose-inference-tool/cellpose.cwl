@@ -92,7 +92,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/cellpose-inference-tool:0.1.0
+    dockerPull: polusai/cellpose-inference-tool:0.1.1-dev0
   InitialWorkDirRequirement:
     listing:
       - entry: $(inputs.outDir)
