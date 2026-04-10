@@ -1,22 +1,28 @@
 author:
 - Hamdah Shafqat
 contact: hamdahshafqat.abbasi@nih.gov
-container: polusai/ome-to-microjson-tool:0.1.5-dev0
+container: polusai/ome-to-microjson-tool:0.1.7-dev0
 description: This plugin create a microjson of polygon coordinates (rectangle, encodings)
   of binary segmentations.
 entrypoint: python3 -m polus.images.visualization.ome_to_microjson
 inputs:
-- description: Input image collection to be processed by this plugin.
+- description: Path to input directory containing intensity images.
   format:
-  - collection
-  name: inpDir
+  - genericData
+  name: intDir
+  required: true
+  type: path
+- description: Path to input directory containing binary or label images.
+  format:
+  - genericData
+  name: segDir
   required: true
   type: path
 - description: Filename pattern used to separate data.
   format:
   - string
   name: filePattern
-  required: false
+  required: true
   type: string
 - description: Select polygon type from [rectangle, encoding].
   format:
@@ -24,27 +30,55 @@ inputs:
   name: polygonType
   required: true
   type: string
+- description: TileJSON layer
+  format:
+  - boolean
+  name: tileJson
+  required: false
+  type: boolean
+- description: Features or feature groups to be extracted by nyxus plugin
+  format:
+  - array
+  name: features
+  required: false
+  type: array
+- description: Pixel distance between neighboring cells
+  format:
+  - integer
+  name: neighborDist
+  required: false
+  type: number
+- description: Pixel size in micrometer
+  format:
+  - number
+  name: pixelPerMicron
+  required: false
+  type: number
 - description: Generate an output preview.
   format:
   - boolean
   name: preview
   required: false
   type: boolean
-name: polusai/Convertbinarysegmentationstomicojson
+name: polusai/OmeToMicrojson
 outputs:
 - description: Output collection.
   format:
-  - collection
+  - genericData
   name: outDir
   required: true
   type: path
-repository: https://github.com/labshare/polus-plugins
+repository: https://github.com/polusai/image-tools
 specVersion: 1.0.0
-title: Convert binary segmentations to micojson
+title: Ome To Microjson
 ui:
-- description: Input image collection to be processed by this plugin.
-  key: inputs.inpDir
-  title: Input collection
+- description: Path to input directory containing intensity images
+  key: inputs.intDir
+  title: Intensity Collection
+  type: path
+- description: Path to input directory containing binary or label images
+  key: inputs.segDir
+  title: Segmentation Collection
   type: path
 - description: Filename pattern used to separate data.
   key: inputs.filePattern
@@ -57,8 +91,27 @@ ui:
   key: inputs.polygonType
   title: Type of Polygon
   type: select
+- default: false
+  description: TileJSON layer
+  key: inputs.tileJson
+  title: tileJson
+  type: checkbox
+- description: Features or feature groups to be extracted by nyxus plugin
+  key: inputs.features
+  title: features
+  type: text
+- default: 5
+  description: Pixel distance between neighboring cells
+  key: inputs.neighborDist
+  title: neighborDist
+  type: number
+- default: 1.0
+  description: Pixel size in micrometer
+  key: inputs.pixelPerMicron
+  title: pixelPerMicron
+  type: number
 - description: Generate an output preview.
   key: inputs.preview
   title: Preview example output of this plugin
   type: checkbox
-version: 0.1.5-dev0
+version: 0.1.7-dev0
