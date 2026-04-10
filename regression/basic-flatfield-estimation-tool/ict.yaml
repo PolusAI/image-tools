@@ -2,7 +2,7 @@ author:
 - Nick Schaub
 - Najib Ishaq
 contact: nick.schaub@nih.gov
-container: polusai/basic-flatfield-estimation-tool:2.1.4-dev1
+container: polusai/basic-flatfield-estimation-tool:2.1.5-dev0
 description: Generates images used for flatfield correction using the BaSiC algorithm.
 entrypoint: python3 -m polus.images.regression.basic_flatfield_estimation
 inputs:
@@ -69,4 +69,4 @@ ui:
   key: inputs.preview
   title: 'Preview outputs only: '
   type: checkbox
-version: 2.1.4-dev1
+version: 2.1.5-dev0

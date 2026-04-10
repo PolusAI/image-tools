@@ -1,7 +1,7 @@
 [package]
 authors = ["Najib Ishaq <najib.ishaq@axleinfo.com>"]
 name = "ftl-rust"
-version = "0.1.0"
+version = "1.0.1-dev0"
 edition = "2021"
 
 [lib]
