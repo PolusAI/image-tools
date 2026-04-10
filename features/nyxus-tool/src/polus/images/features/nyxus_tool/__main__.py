@@ -3,44 +3,60 @@
 import json
 import logging
 import os
-import re
+import warnings
+from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures import as_completed
-from multiprocessing import cpu_count
 from pathlib import Path
-from typing import Any
-from typing import Optional
 
 import filepattern as fp
-import preadator
+import numpy as np
 import typer
-from polus.images.features.nyxus_tool.nyxus_func import nyxus_func
-from polus.images.features.nyxus_tool.utils import FEATURE_GROUP
-from polus.images.features.nyxus_tool.utils import FEATURE_LIST
-from polus.images.features.nyxus_tool.utils import Extension
+from bfio import BioReader
+from polus.images.features.nyxus_tool.nyxus_func import run_nyxus_object_features
+from polus.images.features.nyxus_tool.nyxus_func import run_nyxus_whole_image_features
+from polus.images.features.nyxus_tool.utils import NUM_WORKERS
+from polus.images.features.nyxus_tool.utils import POLUS_TAB_EXT
+from polus.images.features.nyxus_tool.utils import NyxusConfig
+from polus.images.features.nyxus_tool.utils import NyxusKwargType
+from polus.images.features.nyxus_tool.utils import validate_features
+from polus.images.features.nyxus_tool.utils import validate_paths
+from polus.images.features.nyxus_tool.utils import write_preview
 from tqdm import tqdm
-
-# #Import environment variables
-POLUS_EXT = os.environ.get("POLUS_IMG_EXT", ".ome.tif")
 
 app = typer.Typer()
 
+
+def configure_logging() -> None:
+    """Configure logging based on environment variable."""
+    log_level = os.getenv("POLUS_LOG", "INFO").upper()
+    level = getattr(logging, log_level, logging.INFO)
+
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s - %(name)-30s - %(levelname)-8s - %(message)s",
+        datefmt="%d-%b-%y %H:%M:%S",
+        force=True,
+    )
+
+
+# Suppress all warnings
+warnings.filterwarnings("ignore")
+
+
 # Initialize the logger
-logging.basicConfig(
-    format="%(asctime)s - %(name)-8s - %(levelname)-8s - %(message)s",
-    datefmt="%d-%b-%y %H:%M:%S",
-)
+configure_logging()
 logger = logging.getLogger("polus.images.features.nyxus_tool")
 
 
 @app.command()
-def main(  # noqa: PLR0913
+def main(  # noqa: C901, PLR0913
     inp_dir: Path = typer.Option(
         ...,
         "--inpDir",
-        help="Input image data collection to be processed by this plugin",
+        help="Input image directory",
     ),
     seg_dir: Path = typer.Option(
-        ...,
+        None,
         "--segDir",
         help="Input label images",
     ),
@@ -54,125 +70,143 @@ def main(  # noqa: PLR0913
         "--segPattern",
         help="Pattern use to parse segmentation image filenames",
     ),
-    features: Optional[list[str]] = typer.Option(
+    features: list[str] = typer.Option(
         ["ALL"],
         "--features",
         help="Nyxus features to be extracted",
+        callback=validate_features,
     ),
-    file_extension: Extension = typer.Option(
-        Extension.DEFAULT,
-        "--fileExtension",
-        help="File format of an output file.",
-    ),
-    neighbor_dist: Optional[int] = typer.Option(
-        5,
-        "--neighborDist",
-        help="Number of Pixels between Neighboring cells",
-    ),
-    pixel_per_micron: Optional[float] = typer.Option(
-        1.0,
-        "--pixelPerMicron",
-        help="Number of pixels per micrometer",
-    ),
-    single_roi: Optional[bool] = typer.Option(
+    single_roi: bool = typer.Option(
         False,
         "--singleRoi",
         help="Consider intensity image as single roi and ignoring segmentation mask",
+    ),
+    kwargs: list[str]
+    | None = typer.Option(
+        None,
+        "--kwargs",
+        help="Nyxus KEY=VALUE params",
     ),
     out_dir: Path = typer.Option(
         ...,
         "--outDir",
         help="Output directory",
     ),
-    preview: Optional[bool] = typer.Option(
+    preview: bool = typer.Option(
         False,
         "--preview",
         help="Output a JSON preview of files",
     ),
 ) -> None:
     """Scaled Nyxus plugin allows to extract features from labelled images."""
-    logger.info(f"inpDir = {inp_dir}")
-    logger.info(f"segDir = {seg_dir}")
-    logger.info(f"outDir = {out_dir}")
-    logger.info(f"intPattern = {int_pattern}")
-    logger.info(f"segPattern = {seg_pattern}")
-    logger.info(f"features = {features}")
-    logger.info(f"fileExtension = {file_extension}")
-    logger.info(f"neighborDist = {neighbor_dist}")
-    logger.info(f"pixelPerMicron = {pixel_per_micron}")
-    logger.info(f"singleRoi = {single_roi}")
+    validate_paths(inp_dir, seg_dir, out_dir)
 
-    inp_dir = inp_dir.resolve()
-    out_dir = out_dir.resolve()
+    kwarg_dict: dict[str, object] = {}
+    user_kwargs: dict[str, str] = {}
 
-    assert inp_dir.exists(), f"{inp_dir} does not exist!! Please check input path again"
-    assert seg_dir.exists(), f"{seg_dir} does not exist!! Please check input path again"
-    assert (
-        out_dir.exists()
-    ), f"{out_dir} does not exist!! Please check output path again"
+    if kwargs:
+        for kv in kwargs:
+            key, value = NyxusKwargType()(kv)
+            kwarg_dict[key] = value
+            user_kwargs[key] = kv.split("=", 1)[1]
 
-    features = [re.split(",", f) for f in features][0]  # type: ignore
+    config = NyxusConfig(
+        inp_dir=inp_dir.resolve(),
+        seg_dir=seg_dir.resolve() if seg_dir is not None else None,
+        out_dir=out_dir.resolve(),
+        features=features,
+        single_roi=single_roi,
+        kwargs=user_kwargs,
+    )
 
-    assert all(
-        f in FEATURE_GROUP.union(FEATURE_LIST) for f in features  # type: ignore
-    ), "One or more feature selections were invalid"
-
-    # Adding * to the start and end of nyxus group features
-    features = [(f"*{f}*") if f in FEATURE_GROUP else f for f in features]
-
-    num_workers = max([cpu_count(), 2])
-
+    logger.info(
+        "Configuration: %s",
+        json.dumps({**config.__dict__, "kwargs": user_kwargs}, indent=1, default=str),
+    )
     int_images = fp.FilePattern(inp_dir, int_pattern)
-    seg_images = fp.FilePattern(seg_dir, seg_pattern)
+    if len(int_images) == 0:
+        msg = f"No intensity images found in {inp_dir} with pattern {int_pattern}"
+        raise ValueError(
+            msg,
+        )
+    seg_images = None
 
+    if not single_roi:
+        if seg_dir is None:
+            msg = "segDir is required when not running in single ROI mode"
+            raise typer.BadParameter(msg)
+        seg_images = fp.FilePattern(seg_dir, seg_pattern)
+        if len(seg_images) == 0:
+            msg = (
+                f"No segmentation images found in {seg_dir} with pattern {seg_pattern}"
+            )
+            raise ValueError(msg)
+    tab_ext = ".csv" if POLUS_TAB_EXT == "pandas" else POLUS_TAB_EXT
     if preview:
-        with Path.open(Path(out_dir, "preview.json"), "w") as jfile:
-            out_json: dict[str, Any] = {
-                "filepattern": int_pattern,
-                "outDir": [],
-            }
-            for file in int_images():
-                out_name = file[1][0].name.replace(
-                    "".join(file[1][0].suffixes),
-                    f"{file_extension}",
-                )
-                out_json["outDir"].append(out_name)
-            json.dump(out_json, jfile, indent=2)
+        write_preview(int_images, config.out_dir, tab_ext, int_pattern)
+        return
 
-    for s_image in seg_images():
-        i_image = int_images.get_matching(**dict(s_image[0].items()))
+    with ProcessPoolExecutor(max_workers=NUM_WORKERS) as executor:
+        futures = []
 
-        with preadator.ProcessManager(
-            name="compute nyxus feature",
-            num_processes=num_workers,
-            threads_per_process=2,
-        ) as pm:
-            threads = []
-            for fl in i_image:
-                file = fl[1]
-                logger.debug(f"Compute nyxus feature {file}")
-                thread = pm.submit_process(
-                    nyxus_func,
+        #  Whole image features
+        if single_roi:
+            logger.info("Running Nyxus in single ROI mode")
+
+            for int_img in int_images():
+                file = int_img[1][0]
+                fut = executor.submit(
+                    run_nyxus_whole_image_features,
                     file,
-                    s_image[1],
                     out_dir,
                     features,
-                    file_extension,
-                    pixel_per_micron,
-                    neighbor_dist,
+                    tab_ext,
+                    kwargs=kwarg_dict,
                 )
-                threads.append(thread)
-            pm.join_processes()
-            for f in tqdm(
-                as_completed(threads),
-                total=len(threads),
-                mininterval=5,
-                desc=f"converting images to {file_extension}",
-                initial=0,
-                unit_scale=True,
-                colour="cyan",
-            ):
-                f.result()
+                futures.append(fut)
+
+        #  Image object Features
+        else:
+            logger.info("Running Nyxus with segmentation masks")
+
+            for s_image in seg_images():  # type: ignore[misc]
+                seg_path = s_image[1][0]
+
+                with BioReader(seg_path) as br:
+                    seg_image = br.read()
+
+                    if len(np.unique(seg_image)) == 1:
+                        logger.debug("Skipping empty segmentation %s", seg_path)
+                        continue
+
+                i_images = int_images.get_matching(**dict(s_image[0].items()))
+
+                for fl in i_images:
+                    file = fl[1]
+
+                    logger.info("Submitting Nyxus job for %s", file)
+
+                    fut = executor.submit(
+                        run_nyxus_object_features,
+                        file,
+                        s_image[1],
+                        out_dir,
+                        features,
+                        tab_ext,
+                        kwargs=kwarg_dict,
+                    )
+
+                    futures.append(fut)
+
+        for f in tqdm(
+            as_completed(futures),
+            total=len(futures),
+            mininterval=5,
+            desc=f"Computing features ({tab_ext})",
+            unit_scale=True,
+            colour="cyan",
+        ):
+            f.result()
 
 
 if __name__ == "__main__":
