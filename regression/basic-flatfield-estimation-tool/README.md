@@ -1,4 +1,4 @@
-# BaSiC Flatfield Correction (v2.1.4)
+# BaSiC Flatfield Correction (v2.1.4-dev0)
 
 This WIPP plugin will take a collection of images and use the BaSiC flatfield
 correction algorithm to generate a flatfield image and optionally a darkfield
