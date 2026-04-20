@@ -15,6 +15,7 @@ dependencies = [
     "numpy>=2.0.0",
     "tqdm==4.67.3",
     "basicpy @ git+https://github.com/ndonyapour/BaSiCPy.git@chore/update-supported-python",
+    "jgo==1.1.0",
 ]
 
 [project.optional-dependencies]

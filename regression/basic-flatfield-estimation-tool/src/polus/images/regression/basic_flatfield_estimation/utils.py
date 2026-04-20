@@ -47,8 +47,13 @@ def get_image_stack(image_paths: list[pathlib.Path]) -> numpy.ndarray:
         random.shuffle(image_paths)
         image_paths = image_paths[:n]
 
-    images = []
-    with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor:
+    ctx = multiprocessing.get_context("spawn")
+    images: list[tuple[int, numpy.ndarray]] = []
+
+    with concurrent.futures.ProcessPoolExecutor(
+        max_workers=5,
+        mp_context=ctx,
+    ) as executor:
         futures = []
         for i, path in enumerate(image_paths):
             futures.append(executor.submit(_load_img, path, i))
