@@ -33,7 +33,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/basic-flatfield-estimation-tool:2.1.4-dev1
+    dockerPull: polusai/basic-flatfield-estimation-tool:2.1.5-dev0
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)

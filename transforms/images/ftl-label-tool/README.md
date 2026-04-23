@@ -1,4 +1,4 @@
-# FTL Label (v1.0.0)
+# FTL Label (v1.0.1-dev0)
 
 This plugin performs a transformation on binary images which, in a certain limiting case, can be thought of as segmentation.
 
@@ -100,7 +100,7 @@ To build the Docker image for the conversion plugin, run `./build-docker.sh`.
 ```bash
 basedir=$(basename ${PWD})
 
-docker run -v ${PWD}:/$basedir polusai/ftl-label-tool:1.0.0 \
+docker run -v ${PWD}:/$basedir polusai/ftl-label-tool:1.0.1-dev0 \
     --inpDir /$basedir/images/ \
     --filePattern ".*.ome.tif" \
     --connectivity 1 \

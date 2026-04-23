@@ -1,6 +1,6 @@
 {
   "name": "Cellpose Inference",
-  "version": "0.1.0",
+  "version": "0.1.1-dev0",
   "title": "Cellpose Inference",
   "description": "Cell and nucleus segmentation using the Cellpose deep-learning model",
   "author": "Hamdah Shafqat Abbasi (hamdahshafqat.abbasi@nih.gov)",
@@ -8,7 +8,7 @@
   "repository": "https://github.com/PolusAI/image-tools",
   "website": "https://ncats.nih.gov/preclinical/core/informatics",
   "citation": "Stringer et al. Nature Methods 18, 100-106 (2021). https://doi.org/10.1038/s41592-020-01018-x",
-  "containerId": "polusai/cellpose-inference-tool:0.1.0",
+  "containerId": "polusai/cellpose-inference-tool:0.1.1-dev0",
   "baseCommand": [
     "python3",
     "-m",

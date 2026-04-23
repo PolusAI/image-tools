@@ -1,6 +1,6 @@
 [project]
 name = "polus-images-segmentation-cellpose-inference"
-version = "0.1.0"
+version = "0.1.1-dev0"
 description = "Cell and nucleus segmentation using the Cellpose deep-learning model"
 authors = [
     {name = "Hamdah Shafqat Abbasi", email = "hamdahshafqat.abbasi@nih.gov"},

@@ -1,7 +1,7 @@
 author:
   - Hamdah Shafqat Abbasi
 contact: hamdahshafqat.abbasi@nih.gov
-container: polusai/cellpose-inference-tool:0.1.0
+container: polusai/cellpose-inference-tool:0.1.1-dev0
 description: Cell and nucleus segmentation using the Cellpose deep-learning model
 entrypoint: python3 -m polus.images.segmentation.cellpose_inference
 inputs:
@@ -217,4 +217,4 @@ ui:
     key: inputs.excludeOnEdges
     title: Exclude on edges
     type: checkbox
-version: 0.1.0
+version: 0.1.1-dev0
