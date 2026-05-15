@@ -1,4 +1,4 @@
-#!/bin/bash
+# #!/bin/bash
 
 # Change the name of the tool here
 tool_dir="features"
@@ -13,10 +13,7 @@ echo "Building docker image with tag: ${tag}"
 cur_dir=$(pwd)
 repo_root=$(git rev-parse --show-toplevel)
 
-# The Dockerfile and .dockerignore files are copied to the repository root before building the image
-cd ${repo_root}
-cp ./${tool_dir}/${tool_name}/Dockerfile .
-cp .gitignore .dockerignore
-docker build . -t ${tag}
-rm Dockerfile .dockerignore
+# Build directly from the project directory so COPY . picks up pyproject.toml
+docker build --no-cache ${repo_root}/${tool_dir}/${tool_name} -t ${tag}
+
 cd ${cur_dir}
