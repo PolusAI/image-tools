@@ -1,0 +1,11 @@
+name: project_env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python==3.9.18
+  - numpy==1.21.0
+  - bfio=*
+  - ome:omero-py
+  - pydantic=*
+  - pip

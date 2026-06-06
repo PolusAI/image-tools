@@ -1,0 +1,68 @@
+author:
+- Hamdah Shafqat
+contact: hamdahshafqat.abbasi@nih.gov
+container: polusai/omero-download-tool:0.1.0-dev0
+description: This plugin allows to retrieve the microscopy image data from the OMERO
+  NCATS server.
+entrypoint: python3 -m polus.images.utils.omero_download
+inputs:
+- description: The supported object types to be retreived.
+  format:
+  - dataType
+  name: dataType
+  required: true
+  type: string
+- description: Name of the object to be downloaded.
+  format:
+  - name
+  name: name
+  required: false
+  type: string
+- description: Identifier of the object to be downloaded.
+  format:
+  - objectId
+  name: objectId
+  required: false
+  type: number
+- description: Generate an output preview.
+  format:
+  - preview
+  name: preview
+  required: false
+  type: boolean
+name: polusai/OmeroDownload
+outputs:
+- description: Output collection.
+  format:
+  - outDir
+  name: outDir
+  required: true
+  type: path
+repository: https://github.com/PolusAI/image-tools
+specVersion: 1.0.0
+title: Omero Download
+ui:
+- description: The supported object types to be retreived.
+  fields:
+  - project
+  - dataset
+  - screen
+  - plate
+  - well
+  - default
+  key: inputs.dataType
+  title: dataType
+  type: select
+- description: Name of the object to be downloaded.
+  key: inputs.name
+  title: name
+  type: text
+- description: Identifier of the object to be downloaded.
+  key: inputs.objectId
+  title: objectId
+  type: number
+- description: Generate an output preview.
+  key: inputs.preview
+  title: Preview example output of this plugin
+  type: checkbox
+version: 0.1.0-dev0
