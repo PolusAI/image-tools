@@ -1,0 +1,7 @@
+steps:
+  ome-zarr-autosegmentation:
+    in:
+      inpDir: !ii input_directory
+      outDir: !ii output_directory
+    out:
+    - outDir: !& output_directory
