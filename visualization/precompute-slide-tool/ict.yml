@@ -68,4 +68,4 @@ ui:
   key: inputs.filePattern
   title: 'Image Pattern: '
   type: text
-version: 1.7.2
+version: 1.7.3-dev0
