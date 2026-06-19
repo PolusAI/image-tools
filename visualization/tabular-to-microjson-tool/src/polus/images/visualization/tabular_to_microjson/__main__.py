@@ -1,14 +1,15 @@
 """Tabular to microjson package."""
+
 import logging
 import os
 import pathlib
-import shutil
 import warnings
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import cpu_count
 from typing import Optional
 
 import filepattern as fp
+import polus.images.visualization.tabular_to_microjson.utils as ut
 import typer
 from polus.images.visualization.tabular_to_microjson import microjson_overlay as mo
 from tqdm import tqdm
@@ -59,6 +60,11 @@ def main(  # noqa: PLR0913
         "--geometryType",
         help="Type of Geometry",
     ),
+    tile_json: Optional[bool] = typer.Option(
+        False,
+        "--tileJson",
+        help="Tile JSON layer",
+    ),
     out_dir: pathlib.Path = typer.Option(
         ...,
         "--outDir",
@@ -77,6 +83,7 @@ def main(  # noqa: PLR0913
     logger.info(f"geometryType = {geometry_type}")
     logger.info(f"stitchPattern = {stitch_pattern}")
     logger.info(f"groupBy = {group_by}")
+    logger.info(f"tile_json = {tile_json}")
     logger.info(f"outDir = {out_dir}")
 
     inp_dir = inp_dir.resolve()
@@ -86,38 +93,26 @@ def main(  # noqa: PLR0913
 
     files = [file[1][0] for file in fps()]
 
-    with ThreadPoolExecutor(max_workers=num_workers) as executor:
-        for file in tqdm(files, desc="Creating overlays", total=len(files)):
-            fname = pathlib.Path(file).stem
-            stitch_path = stitch_dir.joinpath(f"{fname}.txt")
-            if geometry_type == "Polygon":
-                poly = mo.PolygonSpec(
-                    stitch_path=str(stitch_path),
+    stitch_path = [
+        st for st in stitch_dir.iterdir() if st.suffix == ".txt" and st.is_file()
+    ][0]
+
+    if not preview:
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            for file in tqdm(files, desc="Creating overlays", total=len(files)):
+                micro_model = mo.RenderOverlayModel(
+                    file_path=file,
+                    geometry_type=geometry_type,
+                    stitch_path=stitch_path,
                     stitch_pattern=stitch_pattern,
                     group_by=group_by,
+                    tile_json=tile_json,
+                    out_dir=out_dir,
                 )
-            else:
-                poly = mo.PointSpec(
-                    stitch_path=str(stitch_path),
-                    stitch_pattern=stitch_pattern,
-                    group_by=group_by,
-                )
+                executor.submit(micro_model.microjson_overlay)
 
-            micro_model = mo.RenderOverlayModel(
-                file_path=file,
-                coordinates=poly.get_coordinates,
-                geometry_type=geometry_type,
-                out_dir=out_dir,
-            )
-            executor.submit(micro_model.microjson_overlay)
-
-    if preview:
-        shutil.copy(
-            pathlib.Path(__file__)
-            .parents[5]
-            .joinpath(f"examples/example_overlay_{geometry_type}.json"),
-            out_dir,
-        )
+    else:
+        ut.preview_data(out_dir)
 
 
 if __name__ == "__main__":

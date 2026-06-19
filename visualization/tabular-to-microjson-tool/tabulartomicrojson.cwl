@@ -29,6 +29,10 @@ inputs:
     inputBinding:
       prefix: --stitchPattern
     type: string
+  tileJson:
+    inputBinding:
+      prefix: --tileJson
+    type: boolean?
 outputs:
   outDir:
     outputBinding:
@@ -36,7 +40,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/tabular-to-microjson-tool:0.1.2-dev0
+    dockerPull: polusai/tabular-to-microjson-tool:0.1.4-dev0
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)
